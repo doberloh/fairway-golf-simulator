@@ -494,6 +494,14 @@ The band has to be narrow, and the first attempt was not. `|land| < 2.5` looks l
 
 ±0.4 m reaches the same 0.50 m smoothness as the widest band. Non-coastal biomes pay nothing — the clause is a closure that returns false for them, and pnw generation was unchanged.
 
+## A lake could be dropped on top of a pond
+
+The separation test in `addLargeLakes` consulted `accepted` — the lakes this pass has already placed — and nothing else, so a lake was free to land on a pond that had existed since the hole was generated. Measured across twelve courses: **pond-pond overlaps 0, lake-lake 0, lake-pond 10.** The two working checks hid the missing one.
+
+They do not merely touch. Each body carries its own fitted water level, so the worst overlapping pair had surfaces **14.19 m apart** — one body's plane hanging in the air over the other's basin, with two sets of banks cut through each other underneath.
+
+Ponds are held in hole-local coordinates and lakes are placed in world coordinates, which is most of why the check was never written. Adding it costs nothing: **0 overlaps and all 36 requested lakes still placed.**
+
 ## Tees beside a creek, and a river that read as a trench
 
 Reported on seed WANDER-7321 hole 5: tee boxes painted as plain semi-rough, and the channel in front of them too steep. Both were real and neither was the one I expected.
