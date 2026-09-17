@@ -1,0 +1,265 @@
+// Turns the vendored CC0 model packs into one compact binary that the single
+// file build can carry.
+//
+// Run: node tools/build-meshes.mjs
+// Reads:  vendor/<pack>/*.glb
+// Writes: src/asset-meshes.js
+//
+// Nothing from the packs ships as-is. Textures are irrelevant (Kenney's models
+// carry none -- colour is a baseColorFactor per material), and the material
+// colours themselves are dropped too: every surface is classified into a role
+// (bark, leaf, stone, dirt, accent) by its material name, and the running game
+// paints those roles from the biome palette. That is what lets one imported
+// mesh serve seven biomes instead of dragging its own art direction in.
+//
+// Positions are quantised to int16 against each model's own bounds and normals
+// to int8, which is roughly a third of the float encoding and visually free at
+// the sizes these are drawn.
+import {readFileSync, writeFileSync, readdirSync, existsSync} from 'node:fs';
+import {join, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const VENDOR = join(ROOT, 'vendor');
+
+// Material name -> the palette role the game paints it with.
+const ROLE_OF = name => {
+ const n = name.toLowerCase();
+ if (n.includes('leafs') || n.startsWith('grass') || n.includes('corn') || n.includes('green')) return 'leaf';
+ if (n.includes('wood') || n.includes('bark') || n.includes('birch')) return 'bark';
+ if (n.includes('stone') || n.includes('rock')) return 'stone';
+ if (n.includes('dirt') || n.includes('sand')) return 'dirt';
+ return 'accent';
+};
+export const ROLES = ['bark', 'leaf', 'stone', 'dirt', 'accent'];
+
+// Which models we actually take, and what each stands in for in the game.
+const PICK = {
+ conifer: ['tree_pineTallA', 'tree_pineTallB', 'tree_pineTallC', 'tree_pineTallD',
+  'tree_pineRoundA', 'tree_pineRoundC', 'tree_pineRoundE',
+  'tree_pineSmallA', 'tree_pineSmallC', 'tree_pineDefaultA', 'tree_pineDefaultB'],
+ broadleaf: ['tree_oak', 'tree_default', 'tree_detailed', 'tree_fat', 'tree_tall',
+  'tree_thin', 'tree_simple', 'tree_small', 'tree_blocks', 'tree_plateau'],
+ palm: ['tree_palm', 'tree_palmBend', 'tree_palmShort', 'tree_palmTall'],
+ cactus: ['cactus_short', 'cactus_tall', 'Cactus_1', 'Cactus_2', 'Cactus_3', 'Cactus_4', 'Cactus_5'],
+ rock: ['rock_largeA', 'rock_largeB', 'rock_largeC', 'rock_largeD', 'rock_largeE', 'rock_largeF',
+  'rock_smallA', 'rock_smallB', 'rock_smallC', 'rock_smallD', 'rock_smallE',
+  'rock_tallA', 'rock_tallB', 'rock_tallC', 'rock_tallD', 'rock_tallE'],
+ bush: ['plant_bush', 'plant_bushDetailed', 'plant_bushLarge', 'plant_bushSmall'],
+ grass: ['grass', 'grass_large', 'grass_leafs'],
+ flower: ['flower_purpleA', 'flower_redA', 'flower_yellowA'],
+ // Quaternius (OBJ). Taken only where the Kenney kit has no counterpart: its
+ // models carry several times the vertices, so duplicating coverage we already
+ // have costs about a megabyte of packed geometry for no visible gain. The
+ // desert is the gap -- Kenney has two cacti and nothing arid.
+ arid: ['CommonTree_Dead_1', 'CommonTree_Dead_3', 'CommonTree_Dead_5'],
+ // Houses. Unlike the nature kits these carry a texture atlas rather than a
+ // colour per material, so they keep their UVs and ship the atlas with them --
+ // role tinting alone would flatten a whole house to one colour.
+ house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
+  'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
+  'building-type-q', 'building-type-s'],
+};
+
+const COMPONENT = {5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array};
+const COUNT = {SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4};
+
+function readGlb(file) {
+ const buf = readFileSync(file);
+ if (buf.readUInt32LE(0) !== 0x46546c67) throw Error(`${file} is not a GLB`);
+ const jsonLength = buf.readUInt32LE(12);
+ const json = JSON.parse(buf.subarray(20, 20 + jsonLength).toString('utf8'));
+ // The binary chunk follows the JSON chunk, both 4-byte aligned.
+ let offset = 20 + jsonLength;
+ let bin = null;
+ while (offset < buf.length) {
+  const length = buf.readUInt32LE(offset), type = buf.readUInt32LE(offset + 4);
+  if (type === 0x004e4942) { bin = buf.subarray(offset + 8, offset + 8 + length); break; }
+  offset += 8 + length;
+ }
+ return {json, bin};
+}
+
+function accessor(json, bin, index) {
+ const a = json.accessors[index], view = json.bufferViews[a.bufferView];
+ const Type = COMPONENT[a.componentType], per = COUNT[a.type];
+ const start = (view.byteOffset || 0) + (a.byteOffset || 0);
+ // Copy rather than view: the GLB buffer is not guaranteed to be aligned for
+ // the typed array, and a misaligned view throws.
+ const bytes = bin.subarray(start, start + a.count * per * Type.BYTES_PER_ELEMENT);
+ return new Type(new Uint8Array(bytes).buffer, 0, a.count * per);
+}
+
+// Pull every primitive out of a model, grouped by the role its material maps to.
+function extract(file) {
+ const {json, bin} = readGlb(file);
+ const byRole = new Map();
+ // Models are authored with a node transform, so bake it in rather than
+ // shipping a transform the runtime has to remember to apply.
+ const nodeOf = new Map();
+ (json.nodes || []).forEach(n => { if (n.mesh !== undefined) nodeOf.set(n.mesh, n); });
+ for (const [meshIndex, mesh] of (json.meshes || []).entries()) {
+  const node = nodeOf.get(meshIndex);
+  const s = node?.scale || [1, 1, 1], t = node?.translation || [0, 0, 0];
+  for (const prim of mesh.primitives) {
+   const material = json.materials?.[prim.material]?.name || 'accent';
+   const role = ROLE_OF(material);
+   const position = accessor(json, bin, prim.attributes.POSITION);
+   const normal = prim.attributes.NORMAL !== undefined ? accessor(json, bin, prim.attributes.NORMAL) : null;
+   const index = prim.indices !== undefined ? accessor(json, bin, prim.indices) : null;
+   const uv = prim.attributes.TEXCOORD_0 !== undefined && json.materials?.[prim.material]?.pbrMetallicRoughness?.baseColorTexture
+    ? accessor(json, bin, prim.attributes.TEXCOORD_0) : null;
+   const group = byRole.get(role) || {position: [], normal: [], index: [], uv: []};
+   const base = group.position.length / 3;
+   for (let i = 0; i < position.length; i += 3) {
+    group.position.push(position[i] * s[0] + t[0], position[i + 1] * s[1] + t[1], position[i + 2] * s[2] + t[2]);
+    group.normal.push(normal ? normal[i] : 0, normal ? normal[i + 1] : 1, normal ? normal[i + 2] : 0);
+    if (uv) group.uv.push(uv[(i / 3) * 2], uv[(i / 3) * 2 + 1]);
+   }
+   if (index) for (const v of index) group.index.push(base + v);
+   else for (let i = 0; i < position.length / 3; i++) group.index.push(base + i);
+   byRole.set(role, group);
+  }
+ }
+ return byRole;
+}
+
+// Quaternius ships OBJ rather than GLB. Same treatment: group faces by the
+// material they use, keep geometry, discard everything else. Faces may be
+// quads or larger, so fan-triangulate them.
+function extractObj(file) {
+ const text = readFileSync(file, 'utf8');
+ const v = [], vn = [], byRole = new Map();
+ let role = 'accent';
+ for (const line of text.split(String.fromCharCode(10))) {
+  const part = line.trim().split(/\s+/);
+  if (part[0] === 'v') v.push([+part[1], +part[2], +part[3]]);
+  else if (part[0] === 'vn') vn.push([+part[1], +part[2], +part[3]]);
+  else if (part[0] === 'usemtl') role = ROLE_OF(part[1] || '');
+  else if (part[0] === 'f') {
+   const group = byRole.get(role) || {position: [], normal: [], index: [], seen: new Map()};
+   const corner = part.slice(1).map(token => {
+    const [vi, , ni] = token.split('/');
+    // OBJ indices are 1-based and may be negative (relative to the end).
+    const pi = +vi < 0 ? v.length + +vi : +vi - 1;
+    const pn = ni ? (+ni < 0 ? vn.length + +ni : +ni - 1) : -1;
+    // Share a vertex between the faces that reference it. Emitting one per face
+    // corner instead multiplies the vertex count roughly sixfold, which showed
+    // up immediately as a megabyte of packed geometry.
+    const key = pi + '/' + pn;
+    const hit = group.seen.get(key);
+    if (hit !== undefined) return hit;
+    const at = group.position.length / 3;
+    group.position.push(...(v[pi] || [0, 0, 0]));
+    group.normal.push(...(pn >= 0 && vn[pn] ? vn[pn] : [0, 1, 0]));
+    group.seen.set(key, at);
+    return at;
+   });
+   for (let i = 1; i + 1 < corner.length; i++) group.index.push(corner[0], corner[i], corner[i + 1]);
+   byRole.set(role, group);
+  }
+ }
+ return byRole;
+}
+
+const models = {}, chunks = [];
+let cursor = 0;
+const push = typed => {
+ const bytes = Buffer.from(typed.buffer, typed.byteOffset, typed.byteLength);
+ // Every block starts 4-byte aligned so the runtime can view it directly.
+ const pad = (4 - (cursor % 4)) % 4;
+ if (pad) { chunks.push(Buffer.alloc(pad)); cursor += pad; }
+ const at = cursor;
+ chunks.push(bytes); cursor += bytes.length;
+ return at;
+};
+
+let taken = 0, missing = [];
+for (const [family, names] of Object.entries(PICK)) {
+ for (const name of names) {
+  let file = null;
+  for (const pack of readdirSync(VENDOR)) {
+   const candidate = join(VENDOR, pack, `${name}.glb`);
+   if (existsSync(candidate)) { file = candidate; break; }
+  }
+  let objFile = null;
+  if (!file) for (const pack of readdirSync(VENDOR)) {
+   const candidate = join(VENDOR, pack, `${name}.obj`);
+   if (existsSync(candidate)) { objFile = candidate; break; }
+  }
+  if (!file && !objFile) { missing.push(name); continue; }
+  const byRole = file ? extract(file) : extractObj(objFile);
+  // Normalise: centred on x/z, sitting on y=0, one unit tall. The game then
+  // scales every instance itself, exactly as it does its procedural shapes.
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (const g of byRole.values())
+   for (let i = 0; i < g.position.length; i += 3) {
+    minX = Math.min(minX, g.position[i]); maxX = Math.max(maxX, g.position[i]);
+    minY = Math.min(minY, g.position[i + 1]); maxY = Math.max(maxY, g.position[i + 1]);
+    minZ = Math.min(minZ, g.position[i + 2]); maxZ = Math.max(maxZ, g.position[i + 2]);
+   }
+  const height = Math.max(maxY - minY, 1e-6), cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+  const radius = Math.max(maxX - minX, maxZ - minZ) / 2 / height;
+  // Half-extents on each axis, relative to height. Houses are fitted to a
+  // width x height x depth box so the drawn building matches the oriented box
+  // physics collides against; a single radius cannot express that.
+  const rx = (maxX - minX) / 2 / height, rz = (maxZ - minZ) / 2 / height;
+  const parts = [];
+  for (const [role, g] of byRole) {
+   const count = g.position.length / 3;
+   const position = new Int16Array(count * 3), normal = new Int8Array(count * 3);
+   for (let i = 0; i < count; i++) {
+    // Quantised against a fixed +-2 unit box in normalised space, which every
+    // one of these models sits inside once scaled to unit height.
+    position[i * 3] = Math.round(((g.position[i * 3] - cx) / height) * 16384);
+    position[i * 3 + 1] = Math.round(((g.position[i * 3 + 1] - minY) / height) * 16384);
+    position[i * 3 + 2] = Math.round(((g.position[i * 3 + 2] - cz) / height) * 16384);
+    for (let k = 0; k < 3; k++) normal[i * 3 + k] = Math.max(-127, Math.min(127, Math.round(g.normal[i * 3 + k] * 127)));
+   }
+   const index = new Uint16Array(g.index);
+   const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
+   if (g.uv && g.uv.length === count * 2) {
+    const uv = new Uint16Array(count * 2);
+    for (let i = 0; i < uv.length; i++) uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] * 65535)));
+    part.uvAt = push(uv);
+   }
+   parts.push(part);
+  }
+  models[name] = {family, height: 1, radius: +radius.toFixed(4), rx: +rx.toFixed(4), rz: +rz.toFixed(4), textured: parts.some(p => p.uvAt !== undefined), parts};
+  taken++;
+ }
+}
+
+// The house atlases. These are palette grids, so a house takes all of its colour
+// from one of them -- every roof in a given atlas is the same swatch. Kenney
+// ships three recoloured variations alongside the default for exactly that
+// reason, and carrying all four is what stops a street being one colour.
+// 12 KB each.
+const atlases = [];
+for (const pack of readdirSync(VENDOR))
+ for (const file of ['colormap.png', 'variation-a.png', 'variation-b.png', 'variation-c.png']) {
+  const candidate = join(VENDOR, pack, file);
+  if (existsSync(candidate)) atlases.push(readFileSync(candidate).toString('base64'));
+ }
+const binary = Buffer.concat(chunks);
+const out = `// GENERATED by tools/build-meshes.mjs -- do not edit by hand.
+// Geometry distilled from the CC0 packs in vendor/, stripped of all materials:
+// each part carries only a role that the biome palette paints at runtime.
+// Positions are int16 against a unit-height model, normals int8. See
+// ATTRIBUTION.md for the sources and their licences.
+export const MESH_ROLES=${JSON.stringify(ROLES)};
+export const MESH_MODELS=${JSON.stringify(models)};
+export const MESH_ATLASES=${JSON.stringify(atlases.map(a => 'data:image/png;base64,' + a))};
+const B64="${binary.toString('base64')}";
+let bytes=null;
+export function meshBytes(){
+ if(bytes)return bytes;
+ const raw=atob(B64);bytes=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+ return bytes;
+}
+`;
+writeFileSync(join(ROOT, 'src', 'asset-meshes.js'), out);
+console.log(`models: ${taken}${missing.length ? `, missing: ${missing.join(', ')}` : ''}`);
+console.log(`binary: ${(binary.length / 1024).toFixed(1)} KB -> base64 ${(binary.toString('base64').length / 1024).toFixed(1)} KB`);
+console.log(`module: ${(out.length / 1024).toFixed(1)} KB`);

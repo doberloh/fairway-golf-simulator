@@ -1,0 +1,24 @@
+{
+  "name": "fairway-browser-golf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "bridge": "node bridge/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "bridge:debug": "node bridge/server.mjs --debug"
+  },
+  "dependencies": {
+    "three": "0.186.0",
+    "ws": "8.21.3",
+    "lucide": "1.44.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.0",
+    "vite-plugin-singlefile": "2.3.3"
+  },
+  "license": "MIT"
+}

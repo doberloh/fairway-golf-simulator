@@ -1,0 +1,1585 @@
+import {addHomes} from './homes.js';
+import {addStreams} from './streams.js';
+import {landscapeGeometry} from './landscape-edge.js';
+import {Line2} from 'three/addons/lines/Line2.js';
+import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
+import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
+import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
+import {aimTarget,createShotEffects} from './shot-visuals.js';
+import {mapLayout,mapPoint,tilePlacement} from './course-map.js';
+import {clubColour} from './dispersion.js';
+import {greenHeatTile} from './green-map.js';
+import {createGreenReading} from './green-reading.js';
+import {TEE_COLORS,greenGradient} from './course-plan.js';
+import {greenDistance} from './course.js';
+import {cameraRig,loadCamera} from './camera-prefs.js';
+// The amber every tracer used to be, kept as the fallback for a trail that
+// names no golfer.
+const SHOT_LINE_COLOR='#ffe0a0';
+import {groundGeometry,groundMaterial} from './ground.js';
+import {rangeTargets} from './range.js';
+
+// A flagstick, to the dimensions that are actually specified.
+//
+// HEIGHT IS NOT REGULATED. The Equipment Rules govern the flagstick's DIAMETER
+// and say nothing at all about how tall it is -- which is the opposite of what
+// everyone assumes, this author included. Seven feet is near-universal
+// convention rather than a rule, and this is exactly seven feet because there is
+// no reason to be a rounded 2.13 m and miss it by 3.6 mm.
+//
+// The diameters below are the regulated ones and both pass: 14 mm at the top
+// against a 50.8 mm limit, and 18 mm where it meets the green against the 19 mm
+// limit that applies from 76 mm above the surface to 76 mm below. One millimetre
+// of margin on that second one, so do not thicken the base without checking it.
+const FLAGSTICK_HEIGHT=7*0.3048, FLAGSTICK_TOP_R=.007, FLAGSTICK_BASE_R=.009;
+import {toonRamp} from './textures.js';
+import * as T from 'three';
+import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
+import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile} from './course.js';
+import {addVegetation} from './vegetation.js';
+import {playerCameraPose,flightCameraPose,followPose,framedForBall} from './camera.js';
+import {R,CUP_RADIUS,YARD,clamp} from './physics.js';
+import {teeAim} from './camera-tours.js';
+import {tierOf} from './graphics.js';
+import {CSM} from 'three/addons/csm/CSM.js';
+import {makeGodRays} from './godrays.js';
+import {applyCloudShadows,cloudShadowUniforms} from './cloud-shadows.js';
+import {makeClouds} from './clouds.js';
+import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWaterField} from './mist.js';
+
+import {makeBloom} from './bloom.js';
+import {hideForProbe,restoreAfterProbe,flowFor} from './water-bodies.js';
+const TAU=Math.PI*2;
+// Channel surfaces carry a per-vertex bank weight so the water feathers out at
+// the waterline instead of ending on a hard alpha step. Geometries without the
+// attribute (ponds, ocean) get the WebGL default of 0, meaning "no bank here".
+// The shoreline fade, as GLSL rather than as a function, because still water
+// needs it AND more -- and a second `onBeforeCompile` replaces the first
+// rather than adding to it. Setting one on a material that already had one is
+// how the shore fade silently disappeared from every pond once still water
+// grew ripples of its own.
+const SHORE_VERT=['#include <common>','#include <common>\nattribute float shore;varying float vShore;'];
+const SHORE_VERT2=['#include <begin_vertex>','#include <begin_vertex>\nvShore=shore;'];
+const SHORE_FRAG=['#include <common>','#include <common>\nvarying float vShore;'];
+const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
+// Ripples with no tile in them, for water with no reflection to carry it.
+// The water surface, generated rather than sampled. See `dressWater`.
+const WATER_NOISE=`
+uniform float waterTime;uniform float waterChop;uniform float waterSwell;
+// Metres per second, in world XZ. Zero on a pond, along the channel on a creek.
+uniform vec2 waterFlow;
+varying vec3 vWaterWorld;
+// Value noise, hashed from the world position itself: no tile, no texture
+// lookup, and a pattern that is different at every pond on the course.
+float wHash(vec2 p){
+ vec3 q=fract(vec3(p.xyx)*vec3(.1031,.1030,.0973));
+ q+=dot(q,q.yzx+33.33);
+ return fract((q.x+q.y)*q.z);
+}
+float wNoise(vec2 p){
+ vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
+ return mix(mix(wHash(i),wHash(i+vec2(1.,0.)),u.x),
+            mix(wHash(i+vec2(0.,1.)),wHash(i+vec2(1.,1.)),u.x),u.y)*2.-1.;
+}
+// Two octaves, each drifting on its own bearing. Crossing drifts are what stop
+// a wave field reading as one sheet sliding past.
+float wFbm(vec2 p,float t){
+ return .64*wNoise(p+vec2(.041,.029)*t)
+      + .30*wNoise(p*2.13+vec2(19.7,-7.3)+vec2(-.052,.061)*t);
+}
+// The height of the surface: a broad swell, and a finer chop whose sampling
+// position the swell warps, which is the cheapest thing that makes the small
+// waves ride over the big ones instead of lying on top of them.
+float wHeight(vec2 p,float t){
+ vec2 sp=p*.15;
+ float sh=wFbm(sp,t*.45);
+ return sh*waterSwell*2.2+wFbm(p*.8+vec2(sh,-sh)*.7,t)*waterChop;
+}
+// FLOW, THE WAY WATER2 DOES IT (Vlachos, SIGGRAPH 2010).
+//
+// Pushing a wave field along a flow vector stretches it without bound: after a
+// few seconds a creek is smeared into streaks. The fix is not to push it
+// further but to sample it at TWO phases half a cycle apart, cross-fade
+// between them, and reset each one while it is invisible. The reset never
+// shows because nothing is on screen at the moment it jumps.
+//
+// Still water skips it: with no flow the two phases are the same field, so a
+// pond -- which is most of the water on most courses, and most of the pixels --
+// takes the single-sample path and pays nothing for a feature it does not use.
+const float WATER_CYCLE=6.;
+float wFlowHeight(vec2 p,float t){
+ // One assignment and one return: two returns translate to HLSL as a temp the
+ // compiler cannot prove is written on every path, and it says so every launch.
+ float h=0.;
+ if(dot(waterFlow,waterFlow)<1e-6){
+  h=wHeight(p,t);
+ }else{
+  float hc=WATER_CYCLE*.5;
+  float o0=fract(t/WATER_CYCLE)*WATER_CYCLE;
+  float o1=fract(t/WATER_CYCLE+.5)*WATER_CYCLE;
+  h=mix(wHeight(p-waterFlow*o0,t),wHeight(p-waterFlow*o1,t),abs(hc-o0)/hc);
+ }
+ return h;
+}
+// The normal, from finite differences of that height field.
+vec3 wRipple(vec2 p,float t){
+ const float e=.25;
+ float h=wFlowHeight(p,t);
+ vec2 g=vec2(wFlowHeight(p+vec2(e,0.),t)-h,wFlowHeight(p+vec2(0.,e),t)-h)*4.;
+ return vec3(clamp(g,-1.,1.),1.);
+}
+`;
+function shoreFade(material){
+ material.onBeforeCompile=shader=>{
+  shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2);
+  shader.fragmentShader=shader.fragmentShader.replace(...SHORE_FRAG)
+   .replace('#include <opaque_fragment>',SHORE_ALPHA+'\n#include <opaque_fragment>');
+ };
+ material.customProgramCacheKey=()=>'water-shore-fade-v1';
+ return material;
+}
+// Shallow water reveals its painted bed; deep water hides it. One curve drives
+// both the plain meshes and the reflective surface so they agree at a shoreline.
+const waterOpacity=(depth,ocean)=>ocean?.93:clamp(.5+depth*.11,.5,.88);
+// The glow ball. A real night-golf ball is a bright yellow-green, and the colour
+// does more work than the brightness: it separates the ball from turf that has
+// gone grey-blue under moonlight.
+// Spot lights fall off as 1/d^2 here, so intensity is in the same units as that
+// square. A raised mast costs brightness before it gains any: at 23 m over a
+// target 20 m out the throw is 30.5 m against 26.9 m at the old 18 m, and the
+// square of that ratio is 1.29 -- so about a third of this number only buys back
+// what the extra height spent. The rest is the asked-for lift.
+const FLOOD_INTENSITY=4200;
+// Half-angle of the cone, so the full spread is twice this. Widened along with
+// the mast: a taller pole aimed with the old cone lit a tighter circle from
+// further away, which is the opposite of what raising it was for.
+const FLOOD_CONE=1.15;
+// How many poles may be live lights at once. Set above the 141 the longest
+// eighteen-hole course produces, so in practice every pole is lit and the
+// nearest-first fallback never runs -- it exists so a future course that grows
+// past this degrades instead of stalling.
+const FLOOD_LAMP_CAP=192;
+// Small maps on purpose: these light a pool of fairway a few dozen metres
+// across, not a whole course, and six of them at 1024 is 24 MB for shadows
+// nobody looks at closely at night.
+const FLOOD_SHADOW_SIZE=512;
+// How many water bodies get a probe of their own. Past this they share the
+// nearest one: the cost is one-off, but a dozen cubemaps is still a dozen.
+const WATER_PROBE_CAP=8;
+// HOW FAST THE WATER MOVES. The one number to change.
+//
+// Every drift in the water shaders is a fixed rate multiplied by the ripple
+// clock, so this scales all of them together -- the procedural chop and swell
+// and the tiled map alike -- and it does it without recompiling a shader. The
+// individual rates are in WATER_NOISE and in the tiled branch of
+// `dressWater`, and they are ratios to each other rather than speeds; this
+// is the speed. 0 freezes the surface.
+const WATER_SPEED=10;
+// THE BALL'S CONTACT SHADOW.
+//
+// A soft disc, darkest at the middle and gone at the rim. Squared falloff rather
+// than linear because a linear gradient reads as a grey coin with an edge, and
+// the whole job of this is to have no edge -- it is standing in for contact
+// occlusion, which has no boundary either.
+//
+// Generated rather than shipped: it is 64 pixels of greyscale, and a file would
+// have to be inlined into the offline build to say the same thing.
+function contactShadow(){
+ const size=64,c=document.createElement('canvas');c.width=c.height=size;
+ const ctx=c.getContext('2d'),image=ctx.createImageData(size,size),mid=(size-1)/2;
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const d=Math.hypot(x-mid,y-mid)/mid,i=(y*size+x)*4;
+  const a=Math.max(0,1-d);
+  image.data[i]=image.data[i+1]=image.data[i+2]=0;
+  image.data[i+3]=Math.round(255*a*a);
+ }
+ ctx.putImageData(image,0,0);
+ const t=new T.CanvasTexture(c);t.needsUpdate=true;return t;
+}
+// How far the ball's shadow may run from the ball before it stops being about
+// the ball, and how long a low sun may stretch it. Both are looks.
+const BALL_SHADOW_REACH=1.5,BALL_SHADOW_STRETCH=3;
+const GLOW_BALL=new T.Color('#b4ff72');
+
+// Radial falloff for the halo, built numerically rather than on a canvas so this
+// module never needs a DOM. Squared falloff reads as a glow; linear reads as a
+// disc with a soft edge.
+function haloTexture(){
+ const size=64,d=new Uint8Array(size*size*4);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const i=(y*size+x)*4;
+  const dx=(x+.5)/size*2-1,dy=(y+.5)/size*2-1;
+  const f=Math.max(0,1-Math.hypot(dx,dy));
+  const v=Math.round(255*f*f*f);
+  d[i]=d[i+1]=d[i+2]=255;d[i+3]=v;
+ }
+ const t=new T.DataTexture(d,size,size);t.needsUpdate=true;return t;
+}
+
+// Sky colours the clock moves between. Held here rather than in daylight.js
+// because they belong to this sky shader, not to the solar model.
+const WHITE=new T.Color(1,1,1);
+const CLOUD_DAY=new T.Color(.97,.975,.96);
+const GLOW_DAY=new T.Color(1,.72,.35),GLOW_NIGHT=new T.Color(.42,.52,.78);
+const DISC_DAY=new T.Color(1,.96,.83),DISC_NIGHT=new T.Color(.88,.92,1);
+
+// A tracer stops a ball's radius short of where the ball ended, so it comes out
+// of the BACK of the ball rather than from under it. Ending at the centre means
+// the ball covers the last 21 mm of line, and a hop smaller than the ball --
+// which most of the interesting ones are -- hides behind the thing that made it.
+function trimToBall(points){
+ const kept=[...points];
+ let owed=R;
+ while(kept.length>1&&owed>0){
+  const last=kept[kept.length-1],prev=kept[kept.length-2];
+  const span=Math.hypot(last.x-prev.x,last.y-prev.y,last.z-prev.z);
+  if(span>owed){
+   const f=owed/span;
+   kept[kept.length-1]={x:last.x+(prev.x-last.x)*f,y:last.y+(prev.y-last.y)*f,z:last.z+(prev.z-last.z)*f};
+   owed=0;
+  }else{owed-=span;kept.pop();}
+ }
+ return kept;
+}
+
+export class GolfView{
+ constructor(canvas,quality='medium'){
+  this.canvas=canvas;this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
+  // The clock is session state, not course state. `hour` is null until a course
+  // is built, where the biome's own default supplies the opening light.
+  this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
+  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};
+  // The bearing the wind blows TOWARD, as a unit vector in world XZ -- the same
+  // convention `shot-visuals.js` and `clouds.js` already use.
+  this.windVec={value:new T.Vector2(0,1)};this.resources=[];this.resize();new ResizeObserver(()=>this.resize()).observe(canvas.parentElement);
+ }
+ // Applies everything a tier can change live. Grass density and foliage detail
+ // are baked into the scene graph, so those need a course rebuild instead --
+ // graphics.needsRebuild says which changes require one.
+ // Shadow frustum and bias both follow the tier: a denser map can afford a
+ // smaller bias, which is what tightens a shadow where it meets its caster.
+ // CSM owns its own directional lights, so the single sun stops lighting and
+ // stops casting once cascades take over -- leaving both on would double the
+ // sunlight and shadow the scene twice.
+ makeCascades(sunDir,color,intensity){
+  this.csm=new CSM({camera:this.camera,parent:this.group,cascades:this.quality.cascades,
+   maxFar:this.quality.shadowFar,mode:'practical',shadowMapSize:this.quality.shadow.size,
+   shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
+   lightDirection:sunDir.clone().negate().normalize(),lightMargin:400});
+  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
+  this.sun.castShadow=false;this.sun.intensity=0;
+ }
+ // Both patches run on the same shader. Their chunk targets are disjoint --
+ // ours touches <common>, <color_fragment> and <begin_vertex>, CSM touches the
+ // two lights chunks -- but CSM assigns onBeforeCompile rather than wrapping it,
+ // so ours has to be put back or every turf shader in the game goes blank.
+ setupCascadeMaterial(material){
+  if(!this.csm||!material||material.userData.csm)return;
+  const ours=material.onBeforeCompile;
+  this.csm.setupMaterial(material);
+  const theirs=material.onBeforeCompile;
+  material.onBeforeCompile=function(shader,renderer){ours?.call(this,shader,renderer);theirs.call(this,shader,renderer);};
+  material.userData.csm=true;material.needsUpdate=true;
+ }
+ // Every material that takes part in lighting has to be registered. A lit
+ // material without CSM's define falls through to three's stock loop, which
+ // sums all three cascade lights at full intensity, and since each cascade's
+ // shadow map covers only its own depth band a fragment shadowed in one is
+ // still lit by the other two. That triples the light and thins the shadows to
+ // roughly a third -- and it does it silently. Missing MeshToonMaterial here
+ // once already washed out the turf and every tree, which is the whole scene.
+ // Only MeshBasicMaterial is genuinely unlit.
+ registerCascadeMaterials(){
+  if(!this.csm&&!this.cloudUniforms&&!this.mistUniforms)return;
+  const mats=o=>o.material?(Array.isArray(o.material)?o.material:[o.material]):[];
+  const register=m=>{
+   // Mist first, and without the isLit test: unlit materials still take fog,
+   // and the landscape ring on the horizon is MeshBasicMaterial. Leaving it out
+   // would hang a crisp edge of world behind a hazy course.
+   if(this.mistUniforms)applyMistTo(m,this.mistUniforms);
+   if(!GolfView.isLit(m))return;
+   this.setupCascadeMaterial(m);
+   // Clouds after cascades: CSM assigns onBeforeCompile rather than wrapping
+   // it, so anything installed before it is lost.
+   if(this.cloudUniforms)applyCloudShadows(m,this.cloudUniforms);
+  };
+  this.group.traverse(o=>{for(const m of mats(o))register(m);});
+  for(const m of this.lazyMaterials||[])register(m);
+  // A material added later and never registered has no symptom except a washed
+  // out picture, so say so loudly rather than let it be found in a screenshot.
+  //
+  // The guard has to check the same two places the registration does. It used to
+  // walk only the scene graph, which is why it stayed silent about the grass:
+  // a traverse cannot miss what a traverse cannot see.
+  let missed=0;const kinds=new Set();
+  const audit=m=>{if(GolfView.isLit(m)&&!m.userData.csm){missed++;kinds.add(m.type);}};
+  if(this.csm){
+   this.group.traverse(o=>{for(const m of mats(o))audit(m);});
+   for(const m of this.lazyMaterials||[])audit(m);
+  }
+  if(missed)console.warn(`Fairway: ${missed} lit material(s) escaped cascade registration (${[...kinds].join(', ')}). They will be lit by every cascade at once and wash out.`);
+ }
+ // Props shade the way the rest of the scene does. Flagsticks, cups, tee
+ // markers, signs, the clubhouse and the ball were the last PBR left in a
+ // cartoon frame, answering a falling sun on a different curve from the ground
+ // they stand on. One ramp per course, shared.
+ //
+ // Water is deliberately NOT routed through here: it needs metalness and a
+ // reflection, and toon has neither.
+ surfaceMaterial(color,opts={}){
+  const {roughness,flatShading,...toonOpts}=opts;
+  if(this.style!=='cartoon')return new T.MeshStandardMaterial({color,roughness:roughness??1,...opts});
+  this.propRamp=this.propRamp||toonRamp(this);
+  return new T.MeshToonMaterial({color,gradientMap:this.propRamp,...toonOpts});
+ }
+ static isLit(m){return !!m&&!!(m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||m.isMeshToonMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial);}
+ applyShadowSpan(){
+  if(!this.sun||this.csm)return;
+  const span=this.quality.shadowSpan,bias=this.quality.shadowBias;
+  Object.assign(this.sun.shadow.camera,{left:-span.half,right:span.half,top:span.top,bottom:span.bottom,near:1,far:span.far});
+  this.sun.shadow.camera.updateProjectionMatrix();
+  this.sun.shadow.normalBias=bias.normal;this.sun.shadow.bias=bias.constant;this.sun.shadow.radius=this.quality.shadow.radius;
+ }
+ // WHICH GROUND CUES ARE ON. A float write into uniforms the material already
+ // holds -- never a define and never a rebuild, because changing a define
+ // recompiles every lit material in the scene, which is the trap the floodlight
+ // toggle fell into for two and a half seconds.
+ //
+ // Re-applied on every course build as well as on every change, because the
+ // material is rebuilt with the world and comes back at its own defaults.
+ setGroundCues(cues){
+  this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true}),...(cues||{})};
+  const u=this.terrain?.material?.userData?.cues;
+  if(!u)return this.groundCues;
+  u.cueRelief.value=this.groundCues.relief?1:0;
+  u.cueSlope.value=this.groundCues.slopeTint?1:0;
+  u.cueContours.value=this.groundCues.contours?1:0;
+  u.cueStripes.value=this.groundCues.stripes===false?0:1;
+  return this.groundCues;
+ }
+ // THE GROUND'S OWN SHADOW. A mesh flag, not a material one, so it changes the
+ // shadow pass and not the shader program -- nothing recompiles.
+ setTerrainShadows(on){
+  this.terrainShadows=on!==false;
+  if(this.terrain)this.terrain.castShadow=this.terrainShadows;
+ }
+ // THE WATER REFLECTION, on or off. Off leaves the render target holding
+ // whatever it last drew, which nothing samples once the pass stops -- the
+ // surface falls back to its environment map like every other body.
+ // OFF MEANS OFF, not frozen. Skipping the reflection render alone left the
+ // water sampling whatever was last drawn into the target -- a stale image that
+ // looks like a working reflection until you move, which is why the switch
+ // appeared to do nothing. The reflector is hidden and the body's own plain mesh
+ // comes back, which is exactly what every other body on the course already is.
+ // WHAT THE WATER REFLECTS -- not whether it reflects at all.
+ //
+ // This used to switch a planar mirror on and off, because a mirror was the
+ // only reflection there was. Now every body carries a cubemap probe of its own
+ // surroundings and the switch chooses what goes in it: the course, or the sky
+ // alone. Neither costs anything per frame; the difference is the probe pass at
+ // course build, and a look.
+ setReflections(on){
+  this.waterReflectsCourse=on!==false;
+  for(const b of this.waterBodies||[]){
+   const m=b.mesh.material;
+   const want=this.waterReflectsCourse?b.probe??null:null;
+   if(m.envMap!==want){m.envMap=want;m.needsUpdate=true;}
+  }
+ }
+ applyQuality(name){
+  this.quality=tierOf(name);
+  this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.quality.pixelRatio));
+  this.renderer.shadowMap.type=T.PCFShadowMap;
+  if(this.sun){
+   this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
+   this.sun.shadow.radius=this.quality.shadow.radius;
+   // A shadow map already allocated at the old size has to go before three will
+   // build one at the new size.
+   this.sun.shadow.map?.dispose();this.sun.shadow.map=null;
+   this.sun.shadow.needsUpdate=true;
+  }
+  if(this.scene?.fog){const f=this.quality.fog;this.scene.fog.near=f.near;this.scene.fog.far=f.far;}
+  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}
+  this.applyShadowSpan();
+  this.renderer.shadowMap.needsUpdate=true;
+  // The constructor calls this before the camera exists, and resize() reaches
+  // straight for camera.aspect.
+  if(this.camera)this.resize();
+ }
+ resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();}
+ disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.scene.remove(this.group);}
+ build(world,style='cartoon',holeIndex=0){
+  style='cartoon';
+  this.disposeCourse();this.updateGrass=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  // Shared materials belonging to systems that build their meshes later. A
+  // scene-graph traverse cannot find those: the near-field grass owns one
+  // material for every tile but has no tiles until the camera moves, so at
+  // registration time its group is empty and its material is invisible to a
+  // walk of the scene.
+  this.lazyMaterials=[];
+  const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
+  this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
+  this.renderer.toneMappingExposure=blue?1:toon?1.0:.94;
+  this.hemi=add(new T.HemisphereLight(blue?'#a4dcea':'#cce5ff',blue?'#2d4054':'#777855',1.15));
+  // The clock only ever tints these; they stay the base it returns to.
+  this.hemiSkyBase=this.hemi.color.clone();this.hemiGroundBase=this.hemi.groundColor.clone();
+  this.skyBgBase=this.scene.background.clone();this.fogBase=this.scene.fog.color.clone();
+  this.hemiBaseIntensity=1.15;
+  // Blueprint is a diagram, not a place: it keeps its flat even light and
+  // ignores the clock entirely.
+  this.timed=!blue;this.baseExposure=blue?1:toon?1.0:.94;
+  // Each biome opens at the hour that reproduces the light it always had, so
+  // an existing course looks unchanged until the slider moves.
+  if(this.daylight.hour===null)this.daylight.hour=this.daylight.syncToLocal?localHour():defaultHour(bio.sun);
+  const solar=solarState(this.daylight.hour,bio.sun);this.solar=solar;
+  const sunDir=this.timed?solar.direction.clone():new T.Vector3(-.6,Math.sin(bio.sun*Math.PI/180),-.5).normalize();
+  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':world.settings.biome==='autumn'?'#ffcc8e':'#fff0d6',blue?1.5:2.8));
+  this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:2.8;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
+  // Cascaded shadows: one frustum that follows the camera can only cover the
+  // ground around it, so anything further away is lit as though nothing stands
+  // between it and the sun. Cascades give each distance band its own map.
+  if(this.quality.cascades&&!blue)this.makeCascades(sunDir,this.sun.color,this.sun.intensity);this.applyShadowSpan();add(this.sun.target);this.sunDir=sunDir;
+  this.addSky(sunDir);
+  this.addLandscape();
+  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color('#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
+  const terrain=groundGeometry(world.groundGrid);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
+  // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
+  // buildings shaded the turf but the turf shaded nothing -- a ridge did not
+  // darken the hollow behind it, and undulation was readable only from the
+  // green-reading overlays or by watching a ball roll. Self-shadowing is what
+  // gives a landscape its shape at a low sun.
+  //
+  // It is one draw call per cascade, and the geometry is already built, so the
+  // cost is the vertex work times the cascade count. The normal bias in every
+  // quality tier is what keeps a surface shadowing itself from turning into
+  // acne; if that ever needs raising, raise it there rather than here, because
+  // the cascades share it.
+  // Set through `setTerrainShadows` just below, so the stored choice wins.
+  this.terrain.castShadow=true;this.targets.push(this.terrain);
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));}this.addHoleDetails(h);}
+  if(world.settings.biome==='island'||world.settings.biome==='links')this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
+  addStreams(this);
+  // EVERY BODY OF WATER IS THE SAME THING NOW.
+  //
+  // There used to be two kinds: a planar mirror on whichever body scored
+  // highest, and a plain tinted sheet on the other twelve. That split is where
+  // the popping came from -- a planar reflection is one plane and one extra
+  // render of the whole scene, so a course with thirteen ponds can afford
+  // exactly one, and the mirror had to be handed around as the camera moved.
+  // Every handoff was one pond turning from water into varnish and another
+  // turning back. Nothing is handed around any more.
+  if(this.waterBodies.length){
+   this.waterTime={value:0};
+   this.waterSpeed=WATER_SPEED;
+   this.waterChop={value:.55};this.waterSwell={value:.45};
+   for(const b of this.waterBodies)this.dressWater(b.mesh.material,b);
+   // THE PROBE IS TAKEN HERE, not in `refreshEnvironment`. The sky is built
+   // before the water is, so the refresh that runs from `addSky` finds no bodies
+   // to probe for and returns -- and the next one is an elevation threshold
+   // away, which on a still afternoon never comes.
+   this.refreshWaterEnvironment();
+   this.setReflections(this.waterReflectsCourse!==false);}
+  addVegetation(this);addHomes(this);
+  this.addClubhouse();
+  this.addFloodlights();
+  if(world.holes[0]?.range)this.addRangeTargets();
+  // The saved preference applies to every course built after it, not only to
+  // the one that was on screen when the box was ticked.
+  this.setFloodlights(this.daylight?.floodlights);
+  if(blue){const grids=new T.GridHelper(Math.max(world.halfX,world.halfZ)*2,50,'#93bdb8','#335e71');grids.position.y=4;add(grids);}
+  this.ball=add(new T.Mesh(new T.SphereGeometry(R,24,16),this.surfaceMaterial('#fffdf3',{roughness:.35,emissive:GLOW_BALL,emissiveIntensity:0})));
+  // NOT castShadow. A golf ball is 4.3 cm across and the sun's shadow map covers
+  // 280-370 m: measured, the ball is 0.16 of a texel on low and 0.47 on ultra, so
+  // it has never once drawn a shadow at any tier. The flag was costing a draw
+  // call in the shadow pass to render nothing. `ballShadow` below is the
+  // contact darkening that actually puts the ball on the ground.
+  this.ball.castShadow=false;
+  this.ballShadow=add(new T.Mesh(new T.CircleGeometry(1,24),new T.MeshBasicMaterial(
+   {color:'#000',transparent:true,opacity:.42,depthWrite:false,map:contactShadow()})));
+  this.ballShadow.rotation.x=-Math.PI/2;this.resources.push(this.ballShadow.material.map);
+  // Radius where the ball is touching, and how dark it gets there. Both are a
+  // look rather than a measurement -- there is no correct size for a cue that
+  // stands in for contact occlusion -- so `lab.ballShadow()` moves them live.
+  this.ballShadowRadius??=R*3;this.ballShadowInk??=.42;
+  // Built now, at zero, rather than switched on when night falls. Adding a light
+  // to a scene changes the lighting uniforms and forces three to recompile every
+  // material in it -- a stall of hundreds of milliseconds, and it would land on
+  // exactly the frame the sun went down.
+  this.ballLight=new T.PointLight(GLOW_BALL,0,18,2);this.ball.add(this.ballLight);
+  // A sprite halo so the glow is not ultra-only. On ultra the bloom pass adds a
+  // real flare over the top of it; below that, this is the whole effect.
+  const halo=haloTexture();this.resources.push(halo);
+  this.ballHalo=new T.Sprite(new T.SpriteMaterial({map:halo,color:GLOW_BALL,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:0}));
+  this.ballHalo.scale.setScalar(R*9);this.ballHalo.visible=false;this.ball.add(this.ballHalo);
+  this.ballRing=add(new T.Mesh(new T.RingGeometry(.45,.51,64),new T.MeshBasicMaterial({color:'#fff8d9',side:T.DoubleSide})));this.ringBase=this.ballRing.material.color.clone();this.ballRing.rotation.x=-Math.PI/2;
+  this.aimLine=add(new Line2(new LineGeometry(),new LineMaterial({color:'#fff5d2',linewidth:3.5,transparent:true,opacity:.82,depthWrite:false})));
+  this.effects=createShotEffects(this);add(this.effects.group);
+  this.trail=add(new Line2(new LineGeometry(),new LineMaterial({color:'#ffe9a2',linewidth:4.5,transparent:true,opacity:.95,depthWrite:false})));this.trailBase=this.trail.material.color.clone();
+  // Every tracer of the hole so far, drawn only when the hole is over. One Line2
+  // cannot hold several separate strokes -- it would join the end of one shot to
+  // the start of the next with a line across the fairway -- so they get a line
+  // each, pooled and reused rather than rebuilt per hole.
+  this.shotLines=[];this.shotGroup=new T.Group();add(this.shotGroup);
+  // The team's balls during a scramble selection. Built empty; `build` runs on
+  // every course, so the pool has to be reset with the scene it lives in.
+  this.pickBalls=[];this.pickGroup=new T.Group();add(this.pickGroup);
+  this.aimRing=add(new T.Mesh(new T.RingGeometry(2.5,2.7,64),new T.MeshBasicMaterial({color:'#fff4cd',side:T.DoubleSide})));this.aimRing.rotation.x=-Math.PI/2;
+  if(this.config.mode==='free'){const pose=playerCameraPose(this.course,this.course.tee,0,this.config);this.camera.position.set(pose.eye.x,pose.eye.y,pose.eye.z);this.look.set(pose.target.x,pose.target.y,pose.target.z);this.wasFree=false;}this.setHole(holeIndex,true);this.renderer.shadowMap.needsUpdate=true;
+  // Real clouds in the sky, and the discs they shade the ground with. Built
+  // before material registration, because every lit material reads the discs.
+  if(this.quality.mist&&!blue){
+   this.mistUniforms=mistUniforms();
+   // Baked once here rather than sampled per frame: where the water is cannot
+   // change while a course is loaded.
+   const field=bakeWaterField(world);
+   const texture=setWaterField(this.mistUniforms,field);
+   if(texture)this.resources.push(texture);
+  }
+  if(this.quality.clouds&&!blue){
+   this.cloudUniforms=cloudShadowUniforms();
+   this.cloudUniforms.cloudDepth.value=this.quality.clouds;
+   this.cloudUniforms.cloudSun.value.copy(sunDir).normalize();
+   this.clouds=makeClouds(this,world.seed);
+   // Share the vectors rather than copying them each frame: moving a cloud then
+   // updates the shadow it casts, with nothing to keep in step.
+   this.cloudUniforms.cloudDiscs.value=this.clouds.discs;
+   this.group.add(this.clouds.group);
+  }else{this.cloudUniforms=null;this.clouds=null;}
+  this.registerCascadeMaterials();
+  this.godRays=this.quality.godRays?makeGodRays(this):null;
+  this.bloom=this.quality.bloom?makeBloom(this):null;
+  this.warmUp();
+ }
+ // Compile every shader now, while the loading overlay is still up.
+ //
+ // Nothing did this, so each material variant was compiled the first time an
+ // object using it entered view -- which is during play, as the ball flies or the
+ // camera turns. Measured over 900 frames of a sweeping aim, the first pass
+ // produced a burst of six frames between 21 and 71 ms; a second pass over the
+ // same ground produced none at all and compiled zero shaders, which is what a
+ // first-appearance cost looks like. Moving it here puts it on the screen that
+ // already says the course is being built.
+ warmUp(){
+  // The near-field grass builds lazily and shares one material, so with no tile
+  // yet made a scene walk cannot find it and it would compile on the first step
+  // the player takes. Warm enough of the ring to put it in the scene -- bounded
+  // by time, because this also runs on a plain hole change with no overlay up.
+  const until=performance.now()+70;
+  while(this.updateGrass?.()&&performance.now()<until);
+  try{this.renderer.compile(this.scene,this.camera);}
+  catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
+  this.warmFloodlights();
+ }
+ // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
+ //
+ // The lamps are invisible until the player switches them on, so `compile` above
+ // walks a scene with no spot lights in it and builds the daylight programs
+ // only. Switching the floodlights on then changes the number of lights in the
+ // render state, and three recompiles EVERY lit material in the scene --
+ // measured at 2541 ms on a nine-hole course with 57 lamps. Two and a half
+ // seconds of frozen picture, on a checkbox. Every toggle after it costs 12 ms,
+ // which is what a one-off compile looks like.
+ //
+ // Only the LAMPS are made visible, never the masts and heads: a light at zero
+ // intensity shows nothing, so a frame landing in this window looks the same,
+ // while un-hiding the rig would pop a row of poles onto a daylit course.
+ //
+ // `compileAsync` where the browser has it, so the driver can build the programs
+ // off the main thread instead of adding the whole cost to course generation.
+ warmFloodlights(){
+  // RUN ON EVERY WARM, not once per course. `setHole` warms again per hole
+  // because the flag, the cup, the rings and the ball are per-hole objects built
+  // after the course was -- and a one-shot guard here meant exactly those three
+  // materials still compiled on the first toggle, which is 270 ms on an
+  // eighteen-hole studio world where the light count is high enough to make each
+  // program slow to build. Compiling an already-compiled scene is a cache
+  // lookup, so the repeat costs nothing.
+  const lamps=this.floodLamps;
+  if(!lamps?.length||this.floodlit)return;
+  const rig=this.floodlights,rigWas=rig?.visible;
+  // The lamps are already in the walk -- they are never hidden. What is hidden
+  // is the RIG: masts and heads, and the mast has a lit material of its own that
+  // would otherwise compile on the first toggle. Put back SYNCHRONOUSLY once the
+  // call returns: `compileAsync` walks the scene and creates the programs before
+  // it resolves, only the driver's link is deferred, so no frame can land with a
+  // row of poles standing on a daylit course.
+  if(rig)rig.visible=true;
+  try{
+   const done=this.renderer.compileAsync?.(this.scene,this.camera)
+    ??this.renderer.compile(this.scene,this.camera);
+   done?.catch?.(e=>console.warn('Fairway: floodlight pre-compile skipped',e));
+  }catch(e){console.warn('Fairway: floodlight pre-compile skipped',e);}
+  finally{if(rig)rig.visible=rigWas;}
+ }
+ makeHazardAtlas(){
+  // The centre and shape of each GREEN, which is what the ground shader needs to
+  // know where to paint one. It is not the cup: feeding the pin here painted the
+  // green around wherever the hole happened to be cut, so the grass you saw was
+  // offset from the green you actually played -- surface() measures from the
+  // green's own centre -- and the pin looked dead centre on every hole because
+  // the green was being drawn around it.
+  const cupData=new Float32Array(this.world.holes.length*2*4);for(const h of this.world.holes){const g=h.green??h.pin;cupData.set([g.x,g.z,h.greenSize,h.greenAspect],h.hole*8);cupData.set([h.pin.x,h.pin.z,0,0],h.hole*8+4);}this.cupAtlas=new T.DataTexture(cupData,2,this.world.holes.length,T.RGBAFormat,T.FloatType);this.cupAtlas.minFilter=this.cupAtlas.magFilter=T.NearestFilter;this.cupAtlas.needsUpdate=true;this.resources.push(this.cupAtlas);
+  const rows=this.world.holes.length,data=new Float32Array(24*rows*4);for(const h of this.world.holes){const hazards=[...h.bunkers,...h.ponds];hazards.slice(0,12).forEach((b,j)=>{const i=(h.hole*24+j*2)*4;data.set([b.x,b.z,b.rx,b.rz,b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07],i);});}this.hazardAtlas=new T.DataTexture(data,24,rows,T.RGBAFormat,T.FloatType);this.hazardAtlas.minFilter=this.hazardAtlas.magFilter=T.NearestFilter;this.hazardAtlas.needsUpdate=true;this.resources.push(this.hazardAtlas);
+  const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas=new T.DataTexture(bankData,512,rows*4,T.RGBAFormat,T.FloatType);this.bankAtlas.minFilter=this.bankAtlas.magFilter=T.LinearFilter;this.bankAtlas.needsUpdate=true;this.resources.push(this.bankAtlas);
+ }
+ addWaterBody(geometry,level,depth,center,ocean=false,stream=false){
+  const blue=this.style==='blueprint',toon=this.style==='cartoon',real=this.style==='realistic',tint=new T.Color(blue?'#398ca2':toon?new T.Color(this.world.bio.water).lerp(new T.Color('#8eb8b2'),.27):this.world.bio.water);if(real&&depth<2)tint.lerp(new T.Color('#9fba98'),.35*(1-depth/2));
+  const mesh=new T.Mesh(geometry,shoreFade(new T.MeshStandardMaterial({color:tint,metalness:real?.2:.45,roughness:real?.16:.12,transparent:true,opacity:waterOpacity(depth,ocean),depthWrite:false,envMapIntensity:1.2})));mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.015;this.group.add(mesh);mesh.material.userData.waterBase=mesh.material.color.clone();this.waterBodies.push({mesh,level,depth,center,ocean,stream});
+ }
+ // A body with no reflector of its own, made to look like WATER anyway.
+ //
+ // It cannot mirror the course; that is a whole extra render of the scene and
+ // only one body gets it. But a mirror was never what makes water read as
+ // water. What does is that you can SEE INTO IT -- clear over the shallows
+ // where the bed shows through, colouring as it deepens, and turning to sky at
+ // a grazing angle. A pond opaque at every angle reads as poured concrete
+ // however it is tinted, which is exactly what was reported.
+ //
+ // FRESNEL IS THE WHOLE TRICK. Looking down into water you see the bottom;
+ // looking across it you see the sky. One term, from the angle between the eye
+ // and the surface, drives both -- and because it needs no reflection texture
+ // it costs nothing and works on every body at once.
+ //
+ // The normal map stays, but quietly: enough to break the specular into moving
+ // glints so the surface is not one mirror blob, not enough to read as a
+ // texture laid over the top.
+ // ONE TREATMENT FOR EVERY BODY OF WATER ON THE COURSE.
+ //
+ // Clear where you look into it, sky where you look across it, and its own
+ // surroundings reflected out of a cubemap probe taken when the course was
+ // built. Nothing here is decided per frame and nothing is shared between
+ // bodies, so there is no state that can change under the camera and nothing
+ // that can pop.
+ dressWater(material,body){
+  if(!material)return;
+  // Smooth and metallic enough for the probe to read as a REFLECTION rather
+  // than an ambient tint. PMREM blurs by roughness, so at 0.14 the course came
+  // back as a wash of green; water is a near-mirror and should be treated as one.
+  material.roughness=.05;material.metalness=.62;material.envMapIntensity=2.1;
+  const time=this.waterTime,chop=this.waterChop,swell=this.waterSwell;
+  // Per body, because it is the one thing about the surface that differs
+  // between a creek and a pond.
+  const f=flowFor(body),flow={value:new T.Vector2(f.x,f.y)};
+  material.onBeforeCompile=shader=>{
+   shader.uniforms.waterTime=time;
+   shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
+   shader.uniforms.waterFlow=flow;
+   shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
+    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+   shader.fragmentShader=shader.fragmentShader
+    .replace(...SHORE_FRAG)
+    .replace('#include <common>','#include <common>'+WATER_NOISE)
+    .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>'+`
+     {
+      vec3 r=wRipple(vWaterWorld.xz,waterTime);
+      normal=normalize(normal+vec3(r.xy*.5,0.));
+     }`)
+    .replace('#include <opaque_fragment>',`
+     {
+      // 1 looking straight down into it, 0 edge on.
+      float facing=abs(dot(normalize(vViewPosition),normal));
+      // Schlick, near enough. Water runs from about 2% reflectance face on to
+      // 100% at grazing, which is why a lake is a mirror from the tee and a
+      // window from a bridge over it.
+      float fres=.02+.98*pow(1.-facing,5.);
+      // Clear where you look into it, the material's own depth-based opacity
+      // where you look across it.
+      diffuseColor.a*=mix(.22,1.,clamp(fres*1.6,0.,1.));
+      // The sky takes over as it turns edge on, so the surface still reads as a
+      // surface where it has gone opaque.
+      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.35+vec3(.06),fres);
+     }
+     ${SHORE_ALPHA}
+#include <opaque_fragment>`);
+  };
+  material.customProgramCacheKey=()=>'fairway-water-v1';
+  material.needsUpdate=true;
+ }
+
+ addSky(sunDir){
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':this.world.settings.biome==='autumn'?'#819eae':'#478fbf')},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:this.world.settings.biome==='desert'?.15:this.world.settings.biome==='links'?.8:.48},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
+ float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
+ float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
+ // Stars are cells on the sky dome, nearly all of them empty. Quantising the
+ // view direction rather than screen space is what makes them hold still
+ // against the sky while the camera turns.
+ // Rodrigues. Rotating the sampling direction turns the entire star field as
+ // one rigid sphere, so the constellations hold their shapes while they wheel.
+ vec3 spin(vec3 v,vec3 axis,float a){
+  float c=cos(a),s=sin(a);
+  return v*c+cross(axis,v)*s+axis*dot(axis,v)*(1.-c);
+ }
+ float starLayer(vec3 d,float scale,float density,float t){
+  vec3 p=d*scale,i=floor(p),f=p-i;
+  float h=hash3(i);
+  vec3 c=vec3(hash3(i+1.3),hash3(i+2.7),hash3(i+5.1));
+  float core=smoothstep(.42,0.,length(f-c));core*=core*core;
+  return step(1.-density,h)*core*(.55+.45*sin(t*1.7+h*63.));
+ }
+ void main(){vec3 d=normalize(vSky);float h=max(d.y,0.);vec3 col=mix(horizon,top,pow(h,.55));float glow=pow(max(dot(d,sun),0.),64.);col+=glowColor*glow*.35;col=mix(col,discColor,smoothstep(.99955,.9998,dot(d,sun)));
+  // Stars go in before the clouds, so a cloud drifting over puts them out.
+  if(starness>.001){vec3 sd=spin(d,starAxis,starAngle);float sf=starLayer(sd,150.,.05,skyTime)+starLayer(sd,70.,.02,skyTime*.6)*1.7;col+=vec3(.82,.88,1.)*sf*starness*smoothstep(0.,.16,d.y);}
+  vec2 q=d.xz/max(d.y+.14,.09)*2.8;float n=fbm(q+vec2(skyTime*.008,skyTime*.003));float clouds=smoothstep(.55-cloud*.18,.76-cloud*.16,n)*smoothstep(.02,.15,h);col=mix(col,cloudLight,clouds*.83*cloudAmount);gl_FragColor=vec4(col,1.);
+ #include <tonemapping_fragment>
+ #include <colorspace_fragment>
+ }`});
+    const sky=new T.Mesh(new T.SphereGeometry(7500,32,16),material);this.sky=sky;this.skyMaterial=material;this.group.add(sky);this.skyTopBase=material.uniforms.top.value.clone();this.skyHorizonBase=material.uniforms.horizon.value.clone();
+  // Capture the sky for physically based material reflections. Kept as its own
+  // pass because a moving sun has to be able to run it again.
+  this.envScene=new T.Scene();this.envScene.add(sky.clone());this.refreshEnvironment();
+ }
+ // The one part of a moving sun that is not a uniform write: PMREM convolves a
+ // cubemap, which is milliseconds, so it runs on an elevation threshold rather
+ // than per frame. Cheap to be lazy about, because the turf and the trees are
+ // MeshToonMaterial and toon materials never sample scene.environment -- the
+ // map only reaches props, so staleness costs almost nothing on screen.
+ refreshEnvironment(){
+  if(!this.envScene)return;
+  const pmrem=new T.PMREMGenerator(this.renderer),env=pmrem.fromScene(this.envScene,.04,.1,10000);
+  this.environment?.dispose();this.environment=env;this.scene.environment=env.texture;pmrem.dispose();
+  this.envElevation=this.solar?this.solar.elevation:null;
+  this.refreshWaterEnvironment();
+ }
+ // REFLECTIONS ON EVERY BODY, WITHOUT A REFLECTOR ON EVERY BODY.
+ //
+ // A planar reflector is exact and costs a whole extra render of the scene per
+ // body PER FRAME, which is why only one body gets one. A probe answers the same
+ // question once: render the course into a small cubemap, convolve it, and let a
+ // water material sample it as its environment. No per-frame cost at all.
+ //
+ // ONE PROBE PER BODY, not one for the course. The first version took a single
+ // probe at the first body's centre and gave it to all thirteen -- so every pond
+ // reflected the same patch of trees, which at distance is a soft tint rather
+ // than a reflection and reads as nothing at all. A pond reflects what is around
+ // THAT pond or it is not reflecting.
+ //
+ // The cost is a one-off: six faces at 128 pixels square per body, during course
+ // generation, behind the screen that already says the landscape is being built.
+ // Capped, because a links course can carry a dozen bodies and the cap is what
+ // stops an unusual course paying for all of them; past it, a body borrows the
+ // nearest probe, which is the closest thing to right that is free.
+ refreshWaterEnvironment(){
+  if(!this.waterBodies?.length||!this.group)return;
+  // The water must not photograph itself: a probe that can see other water
+  // surfaces bakes them in, and one that can see its own is a feedback loop.
+  const shown=hideForProbe(this.waterBodies);
+  try{
+   if(!this.waterCubeTarget){
+    // The tier's old planar-reflection size, repurposed: it is the one number
+    // in the tier that was ever about reflection resolution.
+    const px=Math.max(64,Math.min(256,Math.round((this.quality.reflection||512)/4)));
+    this.waterCubeTarget=new T.WebGLCubeRenderTarget(px,{type:T.HalfFloatType});
+    this.resources.push(this.waterCubeTarget);
+   }
+   for(const env of this.waterEnvironments||[])env.dispose();
+   this.waterEnvironments=[];
+   const pmrem=new T.PMREMGenerator(this.renderer);
+   const cam=new T.CubeCamera(1,20000,this.waterCubeTarget);
+   // Biggest first, so the cap spends its probes on the bodies a player looks at.
+   const order=this.waterBodies.map((b,i)=>({b,i,
+    size:b.mesh.geometry.boundingSphere?.radius??(b.mesh.geometry.computeBoundingSphere(),b.mesh.geometry.boundingSphere?.radius??1)}))
+    .sort((x,y)=>y.size-x.size);
+   const probed=[];
+   for(const {b} of order.slice(0,WATER_PROBE_CAP)){
+    cam.position.set(b.center?.x??0,b.level+4,b.center?.z??0);
+    cam.update(this.renderer,this.scene);
+    const env=pmrem.fromCubemap(this.waterCubeTarget.texture);
+    this.waterEnvironments.push(env);
+    b.probe=env.texture;b.mesh.material.envMap=this.waterReflectsCourse===false?null:env.texture;
+    b.mesh.material.needsUpdate=true;
+    probed.push({b,env});
+   }
+   // Everything past the cap borrows the nearest probe rather than falling back
+   // to the sky, which would put one pond in a different world from its neighbour.
+   for(const {b} of order.slice(WATER_PROBE_CAP)){
+    let best=probed[0];
+    for(const p of probed){
+     const d=(q)=>Math.hypot((q.b.center?.x??0)-(b.center?.x??0),(q.b.center?.z??0)-(b.center?.z??0));
+     if(d(p)<d(best))best=p;
+    }
+    if(best){b.probe=best.env.texture;
+     b.mesh.material.envMap=this.waterReflectsCourse===false?null:best.env.texture;
+     b.mesh.material.needsUpdate=true;}
+   }
+   pmrem.dispose();
+  }catch(e){console.warn('Fairway: water environment probe skipped',e);}
+  finally{
+   restoreAfterProbe(shown);
+  }
+ }
+ addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world),new T.MeshBasicMaterial());this.group.add(this.landscape);}
+ addHoleDetails(h){
+  const group=this.group,blue=this.style==='blueprint',p=h.worldPin,y=h.height(h.pin.x,h.pin.z),white=this.surfaceMaterial('#f8f4df',{roughness:.55});
+  const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
+  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;this.flagsticks[h.hole]=assembly;
+  const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
+  // Kept so the range's green can be moved without rebuilding the world. Every
+  // one of these was positioned in WORLD coordinates above, and the flagstick's
+  // two parts live in an assembly whose own y is driven by the hole-out lift
+  // animation -- so they are moved individually rather than by shifting a parent.
+  this.greenProps[h.hole]={pole,flag,cup,liner,floor};
+  // Markers straddle the line of play, which runs to the middle of the fairway
+  // where the fairway begins -- not to the pin. On a dogleg the two differ by
+  // more than ten degrees, so markers squared to the green aim at trees.
+  const target=teeAim(h);
+  for(const [name,t] of Object.entries(h.tees)){
+   const dx=target.x-t.x,dz=target.z-t.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
+   for(const side of [-4,4]){
+    // Perpendicular to the line of play, set a metre back from the tee centre.
+    const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
+    const marker=new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
+    marker.position.set(q.x,h.height(x,z)+.085,q.z);group.add(marker);
+   }
+  }
+  // Numbered tee sign, timber posts, and a timber bench beside every tee.
+  const c=document.createElement('canvas');c.width=128;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203f30';ctx.fillRect(0,0,128,160);ctx.strokeStyle='#b9c4a0';ctx.strokeRect(6,6,116,148);ctx.textAlign='center';ctx.fillStyle='#f5efd9';ctx.font='52px Georgia';ctx.fillText(String(h.hole+1).padStart(2,'0'),64,73);ctx.font='15px sans-serif';ctx.fillText('PAR '+h.par,64,107);ctx.fillText(Math.round(h.routeLength/YARD)+' YD',64,134);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
+  const q=h.toWorld({x:-9,z:2}),sign=new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));sign.position.set(q.x,h.height(-9,2)+1.55,q.z);sign.rotation.y=h.rotation;group.add(sign);const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));post.position.set(q.x,h.height(-9,2)+.5,q.z);group.add(post);
+ }
+ // Move the range's green, without rebuilding anything.
+ //
+ // This is cheap for one specific reason: the ground shader reads the green's
+ // position, size and shape from a row of the CUP ATLAS, not from the hole's
+ // length or from the terrain. So the painted green follows four floats. The
+ // props are ordinary meshes and get carried across by hand.
+ //
+ // It only holds because the range is FLAT and its green has no contour. On a
+ // real hole the terrain itself is cut to the green at build time, and moving
+ // one would need the ground grid rebuilt.
+ setRangeGreen(){
+  const h=this.world.holes[0];
+  if(!h?.range)return;
+  const data=this.cupAtlas?.image?.data;
+  if(data){data.set([h.green.x,h.green.z,h.greenSize,h.greenAspect],h.hole*8);data.set([h.pin.x,h.pin.z,0,0],h.hole*8+4);this.cupAtlas.needsUpdate=true;}
+  const props=this.greenProps?.[h.hole];
+  if(props){
+   const p=h.toWorld(h.pin),y=h.height(h.pin.x,h.pin.z);
+   props.pole.position.set(p.x,y+1.065,p.z);
+   props.flag.position.set(p.x+.24,y+1.95,p.z);
+   props.cup.position.set(p.x,y-.0575,p.z);
+   props.liner.position.set(p.x,y-.0254-.0448,p.z);
+   props.floor.position.set(p.x,y-.115,p.z);
+  }
+  // Built against the old green position, so it has to go. The range forces the
+  // reading tools off anyway; this covers anyone turning them back on.
+  if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid=null;this.reading=null;}
+ }
+ // The driving range's aiming targets: a coloured circle, an oversized flag and
+ // a sign carrying the number.
+ //
+ // All three are SCENERY. The circle is a disc laid on the turf, not a putting
+ // surface -- the ground shader and localSurface both know exactly one green per
+ // hole, so a ball landing here bounces as range turf. Colour is the quick cue
+ // and the sign is the authoritative one; see range.js for why the ramp avoids
+ // blue.
+ addRangeTargets(){
+  const h=this.world.holes[0],group=this.group;
+  for(const t of rangeTargets()){
+   const c=h.toWorld({x:t.x,z:t.z}),y=h.height(t.x,t.z);
+   // Laid 2 cm proud of the turf and told to lose depth ties, because the field
+   // is dead flat: a disc exactly coplanar with the ground z-fights across its
+   // whole face rather than at an edge, and flat ground is the worst case for it.
+   const offset={polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2};
+   const disc=new T.Mesh(new T.CircleGeometry(t.radius,64),this.surfaceMaterial(t.color,{roughness:.95,...offset}));
+   disc.rotation.x=-Math.PI/2;disc.position.set(c.x,y+.02,c.z);disc.receiveShadow=true;group.add(disc);
+   // A painted rim. Without it a disc is just a coloured patch of ground and
+   // reads as a hazard or a scorch mark; the hard white edge is what makes it
+   // read as a marking somebody put there. It also survives haze better than the
+   // fill does, which is what keeps the far targets legible.
+   const rim=new T.Mesh(new T.RingGeometry(t.radius,t.radius+.9,64),
+    this.surfaceMaterial('#f4f7ef',{roughness:.9,...offset}));
+   rim.rotation.x=-Math.PI/2;rim.position.set(c.x,y+.025,c.z);group.add(rim);
+
+   // A taller stick and a bigger flag than a hole's. A 2 m flagstick at 300 yd
+   // is a few pixels; these have to be picked out from the mats, which is the
+   // one place anyone ever looks at them from.
+   const pole=new T.Mesh(new T.CylinderGeometry(.03,.04,3.6,10),this.surfaceMaterial('#f8f4df',{roughness:.55}));
+   pole.position.set(c.x,y+1.8,c.z);pole.castShadow=true;group.add(pole);
+   const geo=new T.PlaneGeometry(1.05,.7,12,4);
+   for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}
+   geo.computeVertexNormals();
+   const flag=new T.Mesh(geo,this.surfaceMaterial(t.color,{side:T.DoubleSide,roughness:.6}));
+   flag.position.set(c.x+.52,y+3.15,c.z);group.add(flag);
+   // Into the same list the hole flags use, so it catches the same breeze.
+   this.flags.push(flag);
+
+   // The sign stands BEHIND its target, square to the mats. Beside it would put
+   // it off the mown field on the outer targets; behind keeps every sign on the
+   // one sight line a player actually uses.
+   //
+   // It grows with distance. A fixed-size board legible at 50 yd is unreadable
+   // at 300, and every one of these is read from the same spot, so holding the
+   // ANGULAR size roughly even is the honest choice rather than a perspective
+   // trick -- real ranges make their far boards bigger for the same reason.
+   const height=Math.min(7,Math.max(3,2.2+t.yards*.014)),width=height*1.55;
+   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=330;
+   const ctx=canvas.getContext('2d');
+   ctx.fillStyle='#16241b';ctx.fillRect(0,0,512,330);
+   ctx.strokeStyle=t.color;ctx.lineWidth=14;ctx.strokeRect(18,18,476,294);
+   ctx.textAlign='center';
+   ctx.fillStyle=t.color;ctx.font='bold 210px Georgia';ctx.fillText(String(t.yards),256,228);
+   ctx.fillStyle='#dfe7d6';ctx.font='54px sans-serif';ctx.fillText('YARDS',256,292);
+   const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;this.resources.push(tex);
+   const board=new T.Mesh(new T.BoxGeometry(width,height,.28),this.surfaceMaterial('#ffffff',{map:tex,roughness:.85}));
+   const sz=t.z+t.radius+5,sw=h.toWorld({x:t.x,z:sz}),sy=h.height(t.x,sz);
+   board.position.set(sw.x,sy+1.5+height/2,sw.z);
+   // Half a turn so the mapped face looks back down the field at the mats: the
+   // box carries one material, so the far side shows the number mirrored.
+   board.rotation.y=h.rotation+Math.PI;
+   board.castShadow=true;group.add(board);
+   for(const side of [-1,1]){
+    const post=new T.Mesh(new T.CylinderGeometry(.11,.13,1.5+height/2,8),this.surfaceMaterial('#645340'));
+    const pw=h.toWorld({x:t.x+side*width*.32,z:sz});
+    post.position.set(pw.x,sy+(1.5+height/2)/2,pw.z);post.castShadow=true;group.add(post);
+   }
+  }
+ }
+ // Course floodlighting for night play.
+ //
+ // Placement comes from floodlights.js and is anchored to published sports
+ // lighting practice; see RESEARCH.md. This is the rendering half, and it makes
+ // one decision worth stating: EVERY pole is geometry, but only a few are
+ // lights. A scene with sixty live spot lights is unplayable, and a player can
+ // only see the pools thrown by the ones near them, so four follow the ball.
+ //
+ // The poles are built once and hidden. Building them on demand would put their
+ // material in exactly the position the grass was in -- created after the scene
+ // walk that registers cascade materials, and therefore lit by all three
+ // cascades at once. Built here, the ordinary registration finds them.
+ addFloodlights(){
+  const w=this.world,poles=[];
+  for(const h of w.holes)for(const p of polesFor(h)){
+   // Which hole a pole belongs to. Shadows are spent on the hole being played,
+   // so the pole has to know which one that is.
+   // A fairway pole aims at the middle of its own corridor; a green pole aims at
+   // the green. Aiming a green pole at h.center(z) points it at a corridor
+   // centre extrapolated past the end of the hole, which is nowhere.
+   const target=p.green?(h.green??h.pin):{x:h.center(p.z),z:p.z};
+   const base=h.toWorld({x:p.x,z:p.z}),aim=h.toWorld(target);
+   poles.push({hole:h.hole,x:base.x,z:base.z,y:w.height(base.x,base.z),height:p.height,
+    aimX:aim.x,aimZ:aim.z,aimY:w.height(aim.x,aim.z)});
+  }
+  this.poles=poles;
+  if(!poles.length)return;
+  const group=new T.Group();group.name='Floodlights';group.visible=false;
+  this.group.add(group);this.floodlights=group;
+  // A mast and a head, instanced across the whole course: two draw calls for
+  // every pole on eighteen holes.
+  const mast=new T.InstancedMesh(new T.CylinderGeometry(.16,.34,1,8),
+   this.surfaceMaterial('#71787d',{roughness:.75}),poles.length);
+  // The heads are their own light source and read as lit whatever the hour, so
+  // they are genuinely unlit -- MeshBasicMaterial, and no cascade registration.
+  const head=new T.InstancedMesh(new T.BoxGeometry(3.1,.85,1.15),
+   new T.MeshBasicMaterial({color:'#fff6d8'}),poles.length);
+  const dummy=new T.Object3D();
+  poles.forEach((p,i)=>{
+   dummy.position.set(p.x,p.y+p.height/2,p.z);dummy.rotation.set(0,0,0);
+   dummy.scale.set(1,p.height,1);dummy.updateMatrix();mast.setMatrixAt(i,dummy.matrix);
+   dummy.scale.set(1,1,1);dummy.position.set(p.x,p.y+p.height+.5,p.z);
+   // Turned to face the middle of the corridor, so the bank of lamps reads as
+   // aimed at the hole rather than bolted on square.
+   dummy.rotation.set(0,Math.atan2(p.aimX-p.x,p.aimZ-p.z),0);
+   dummy.updateMatrix();head.setMatrixAt(i,dummy.matrix);
+  });
+  mast.castShadow=true;mast.receiveShadow=true;
+  mast.computeBoundingSphere();head.computeBoundingSphere();
+  group.add(mast,head);
+  // Made once, moved, and NEVER HIDDEN. Shadows are off on purpose: a shadow map
+  // per lamp per frame is the whole budget many times over, and the sun is below
+  // the horizon when these are on, so CSM has nothing to draw anyway.
+  //
+  // VISIBLE FROM BIRTH, AT ZERO INTENSITY. Three counts the VISIBLE lights in a
+  // scene to build its lighting uniforms, so hiding these and showing them again
+  // changes the light count and recompiles every lit material in the scene --
+  // measured at 2541 ms of frozen picture on a nine-hole course with 57 lamps,
+  // on a checkbox, and 12 ms on every toggle after it. Left visible, the light
+  // count never changes: the programs are built once while the course is being
+  // generated and the switch costs nothing at all.
+  //
+  // What that trades is a permanently wider light loop in every fragment, in
+  // daylight too. Measured on this machine it is inside the noise -- 8.3 ms
+  // median with the lamps present against 8.5 ms without -- but it IS real work,
+  // and a machine that is fragment-bound would feel it. The ball light next to
+  // `this.ball` is built the same way for the same reason.
+  //
+  // A FIXED FEW OF THEM CAST, decided here and never changed. The number of
+  // shadow-casting lights is part of the shader program key exactly as the light
+  // count is, so switching `castShadow` at runtime recompiles the scene the same
+  // way hiding a lamp did. The casters are the first lamps in the pool and
+  // `updateFloodlights` hands those lamps to the hole being played, so the
+  // shadows follow the player without the flag ever moving.
+  //
+  // `shadow.autoUpdate` is what stops them costing anything in daylight: with it
+  // off three skips the depth pass entirely, and a stale map behind a lamp at
+  // zero intensity contributes nothing.
+  const casters=this.quality.floodShadows??0;
+  this.floodLamps=Array.from({length:Math.min(poles.length,FLOOD_LAMP_CAP)},(_,i)=>{
+   const lamp=new T.SpotLight('#fff4d2',0,POLE_REACH*2,FLOOD_CONE,.55,2);
+   lamp.visible=true;lamp.intensity=0;
+   lamp.castShadow=i<casters;
+   if(lamp.castShadow){
+    lamp.shadow.mapSize.set(FLOOD_SHADOW_SIZE,FLOOD_SHADOW_SIZE);
+    lamp.shadow.bias=this.quality.shadowBias.constant;
+    lamp.shadow.normalBias=this.quality.shadowBias.normal;
+    lamp.shadow.autoUpdate=false;lamp.shadow.needsUpdate=false;
+   }
+   this.group.add(lamp,lamp.target);
+   return lamp;
+  });
+ }
+ // Shown or hidden as a whole. Nothing is built here, so a player toggling this
+ // twice a hole costs nothing but a visibility flag and four light intensities.
+ setFloodlights(on){
+  const lit=!!on&&!!this.floodlights;
+  if(this.floodlights)this.floodlights.visible=lit;
+  // INTENSITY ONLY. `visible` is what three counts, and changing the count is
+  // what costs two and a half seconds. The shadow maps are switched with
+  // `autoUpdate` rather than `castShadow`, which is part of the same key.
+  for(const lamp of this.floodLamps||[]){
+   lamp.intensity=lit?FLOOD_INTENSITY:0;
+   if(lamp.castShadow){lamp.shadow.autoUpdate=lit;lamp.shadow.needsUpdate=lit;}
+  }
+  this.floodlit=lit;
+ }
+ // Follows the point being played rather than the camera: a camera chasing a
+ // ball down a fairway is behind the action, and lighting from it would light
+ // the ground the ball has already left.
+ updateFloodlights(focus){
+  if(!this.floodlit||!this.floodLamps)return;
+  // Every pole is lit while there are few enough of them to afford, which on any
+  // course this generator builds is all of them: a nine takes 57 and the longest
+  // eighteen 141, and measured on a night course the difference between four
+  // live lights and all of them is nothing -- 8.5 ms median either way, because
+  // none of them casts a shadow. Past the cap the nearest follow the ball, which
+  // is what the whole scene used to do.
+  // The hole being played gets the first lamps, and the first lamps are the ones
+  // that cast shadows. Everything else lights the course without casting.
+  const near=orderPoles(this.poles,this.course?.hole,focus,this.floodLamps.length);
+  this.floodLamps.forEach((lamp,i)=>{
+   const p=near[i];
+   // A lamp with no pole to stand on is dimmed, not hidden -- same reason.
+   lamp.intensity=p?FLOOD_INTENSITY:0;
+   if(!p)return;
+   lamp.position.set(p.x,p.y+p.height,p.z);
+   lamp.target.position.set(p.aimX,p.aimY,p.aimZ);
+   lamp.target.updateMatrixWorld();
+  });
+ }
+ addClubhouse(){
+  // Compact routes can put another green behind the first tee. Find an open,
+  // dry site for the building instead of assuming that space is unused.
+  const w=this.world,h=w.holes[0];let site=null;
+  for(let r=65;r<=230;r+=20)for(let a=0;a<Math.PI*2;a+=Math.PI/16){const p=h.toWorld({x:Math.sin(a)*r,z:Math.cos(a)*r}),corners=[[-18,-12],[-18,12],[18,-12],[18,12],[0,0]].map(([x,z])=>({x:p.x+x,z:p.z+z}));if(corners.some(q=>w.surface(q.x,q.z)!=='rough'||w.nearest(q.x,q.z).d<8||w.land(q.x,q.z)<1))continue;const heights=corners.map(q=>w.height(q.x,q.z)),spread=Math.max(...heights)-Math.min(...heights);if(spread>3||w.trees.some(t=>Math.abs(t.x-p.x)<20+t.r&&Math.abs(t.z-p.z)<14+t.r))continue;const score=r+spread*20;if(!site||score<site.score)site={p,y:Math.max(...heights),score};}
+  if(!site)return;const {p,y}=site;const mat=this.surfaceMaterial(this.world.settings.biome==='desert'?'#d0b189':'#ebe3cd',{roughness:.9});const building=new T.Mesh(new T.BoxGeometry(24,7,13),mat);building.position.set(p.x,y+3.5,p.z);building.castShadow=true;building.receiveShadow=true;this.group.add(building);const roof=new T.Mesh(new T.ConeGeometry(18,5,4),this.surfaceMaterial('#39493f',{roughness:.6}));roof.rotation.y=Math.PI/4;roof.scale.z=.65;roof.position.set(p.x,y+9,p.z);roof.castShadow=true;this.group.add(roof);for(let i=-4;i<=4;i++){const window=new T.Mesh(new T.PlaneGeometry(1.4,3.3),this.surfaceMaterial('#8ab5bf',{metalness:.8,roughness:.12}));window.position.set(p.x+i*2.5,y+3.3,p.z+6.52);this.group.add(window);}}
+ setHole(index,instant=false){this.registerCascadeMaterials();
+  // Warmed again per hole, not only per course: the flag, the cup, the rings
+  // and the ball's own materials are per-hole objects, and a first compile of
+  // any of them lands mid-shot. Compiling an already-compiled scene is a cache
+  // lookup, so the repeat costs nothing.
+  if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp());}
+for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
+ setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
+ setGreenReading(){
+  if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.greenGrid=null;this.reading=null;
+  if(!this.config.greenGrid&&!this.config.greenFlow&&!this.config.greenHeat)return;
+  this.reading=createGreenReading(this.course);this.greenGrid=this.reading.group;this.reading.grid.visible=!!this.config.greenGrid;this.reading.flow.visible=!!this.config.greenFlow;this.reading.heatmap.visible=!!this.config.greenHeat;this.readingEpoch=this.elapsed;this.greenGrid.visible=!this.readingHidden;this.group.add(this.greenGrid);
+ }
+ // Hiding the reading tools while the ball is moving, without tearing them down:
+ // rebuilding walks every triangle of the green, which is far too much work to do
+ // twice a shot, and the overlay has to come straight back for the next putt.
+ setReadingHidden(hidden){
+  this.readingHidden=!!hidden;
+  if(this.greenGrid)this.greenGrid.visible=!this.readingHidden;
+ }
+ // A scatter of resting positions, for looking at a group of shots rather than
+ // one. Points rather than balls: a hundred spheres with trails is a different
+ // and much larger job, and what a dispersion test wants to show is the pattern.
+ setScatter(points){
+  if(this.scatter){this.group.remove(this.scatter);this.scatter.geometry.dispose();this.scatter.material.dispose();this.scatter=null;}
+  if(!points||!points.length)return;
+  const places=points.map(q=>{const w=this.course.toWorld(q);return new T.Vector3(w.x,this.course.height(q.x,q.z)+.035,w.z);});
+  const geometry=new T.BufferGeometry().setFromPoints(places);
+  const material=new T.PointsMaterial({color:'#fff3c4',size:.11,transparent:true,opacity:.95,depthWrite:false});
+  material.onBeforeCompile=sh=>sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>',
+   '#include <clipping_planes_fragment>'+String.fromCharCode(10)+'if(length(gl_PointCoord-vec2(.5))>.5)discard;');
+  this.scatter=new T.Points(geometry,material);this.scatter.renderOrder=4;this.group.add(this.scatter);
+ }
+ liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
+ updateGreenGrid(){this.reading?.update(this.elapsed-this.readingEpoch);}
+ setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
+ // WHAT PUTS THE BALL ON THE GROUND.
+ //
+ // A shadow does two things as the thing casting it rises: it spreads, and it
+ // fades. Doing only the first gives a ball towing a dinner plate; doing only
+ // the second gives a hard dot that blinks out. Both, and the eye reads height
+ // off it without being told.
+ //
+ // Squared fade, so the darkening holds while the ball is near the turf -- which
+ // is the whole point of it, and where a linear fade has already half gone.
+ // AT REST, A CAST SHADOW AND A CONTACT SHADOW ARE VERY NEARLY THE SAME MARK.
+ // A resting ball's centre is 2.1 cm up, so with the sun at 30 degrees its cast
+ // shadow is offset 3.7 cm -- less than one ball. That is why this is not a
+ // second mesh: the contact disc simply leans and stretches away from the sun,
+ // which is what the real thing does at this scale.
+ //
+ // The offset is capped. A true shadow runs away from a ball in flight until the
+ // two are unrelated, and a mark that far from the ball has stopped being a cue
+ // about the ball.
+ placeBallShadow(x,z,groundY,ballY){
+  if(!this.ballShadow)return;
+  this.ballShadowAt={x,z,groundY,ballY};
+  const lift=Math.max(0,ballY-groundY);
+  // Beyond eight metres the ball is read against the sky, and a mark on the
+  // ground a long way from it is a distraction rather than a cue.
+  const t=Math.min(1,lift/8);
+  // Never under a ball that is below the ground: in a cup, or in the water.
+  this.ballShadow.visible=t<1&&ballY>=groundY-.01;
+  if(!this.ballShadow.visible)return;
+  const radius=this.ballShadowRadius*(1+t*4.5);
+  // Sun elevation drives both: a low sun throws a long shadow a long way, a high
+  // one throws a short shadow straight down. Below the horizon there is no cast
+  // shadow at all and the disc stays round -- what is left is contact occlusion,
+  // which does not care where the sun is.
+  const dir=this.sunDir,sinE=dir?Math.max(0,dir.y):1;
+  const flat=Math.hypot(dir?.x??0,dir?.z??0);
+  if(sinE>.05&&flat>1e-4){
+   // Away from the sun, along the ground.
+   const dx=-dir.x/flat,dz=-dir.z/flat;
+   const offset=Math.min(BALL_SHADOW_REACH,lift*(flat/sinE));
+   this.ballShadow.position.set(x+dx*offset,groundY+.012,z+dz*offset);
+   // Stretched along that line by 1/sin(elevation), which is the projection of a
+   // sphere onto the ground, capped so a sunrise does not draw a runway.
+   const stretch=Math.min(BALL_SHADOW_STRETCH,1/sinE);
+   this.ballShadow.scale.set(radius*stretch,radius,1);
+   this.ballShadow.rotation.set(-Math.PI/2,0,Math.atan2(-dz,dx));
+  }else{
+   this.ballShadow.position.set(x,groundY+.012,z);
+   this.ballShadow.scale.set(radius,radius,1);
+   this.ballShadow.rotation.set(-Math.PI/2,0,0);
+  }
+  this.ballShadow.material.opacity=this.ballShadowInk*(1-t)*(1-t);
+ }
+ setPutting(config){
+  this.putting=config;if(this.puttingRings){this.group.remove(this.puttingRings);this.puttingRings.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.puttingRings=new T.Group();this.group.add(this.puttingRings);if(!config||config.mode==='holeout')return;
+  const h=this.course;[config.one,config.two,config.three].forEach((yards,i)=>{const points=[],radius=yards*YARD;for(let j=0;j<256;j++){const a=j/256*TAU,b=(j+1)/256*TAU,pts=[a,b].map(t=>({x:h.pin.x+Math.cos(t)*radius,z:h.pin.z+Math.sin(t)*radius}));if(pts.some(p=>h.surface(p.x,p.z)!=='green'))continue;for(const p of pts){const w=h.toWorld(p);points.push(new T.Vector3(w.x,h.height(p.x,p.z)+.025,w.z));}}const line=new T.LineSegments(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:['#f7f6ae','#edb351','#e68670'][i],transparent:true,opacity:.85,depthWrite:false}));this.puttingRings.add(line);});
+ }
+
+ // Scratch space for a line's points, grown when a longer one is asked for and
+ // reused for every write after that.
+ aimScratch(points){
+  if(!this._aimScratch||this._aimScratch.length<points*3)this._aimScratch=new Float32Array(points*3);
+  return this._aimScratch;
+ }
+ // Write a line's geometry in place instead of replacing it.
+ //
+ // setAim runs on every frame an arrow key is held, and it used to build a
+ // Vector3 per point, flatten them into a fresh array and swap in a whole new
+ // LineGeometry: about 44 KB and several hundred throwaway objects a frame,
+ // 2.6 MB/s at 60 Hz. The cost is not CPU -- that measured 0.06 ms -- it is
+ // garbage, and it surfaced as an occasional 90 ms frame with no shader
+ // compiling and no terrain tile building to blame.
+ //
+ // The buffer is allocated once at the length needed and rewritten after that,
+ // with instanceCount deciding how much of it draws and only the written part
+ // uploaded. Callers still own `visible`.
+ writeLine(line,flat,count){
+  const segments=Math.max(0,count-1);
+  let attr=line.geometry.attributes.instanceStart;
+  if(!attr||attr.data.array.length<segments*6){
+   line.geometry.setPositions(new Float32Array(Math.max(segments,64)*6));
+   attr=line.geometry.attributes.instanceStart;
+   // Whatever sits past instanceCount is stale, and computeBoundingSphere reads
+   // the whole attribute -- so the sphere would be wrong and the line could be
+   // culled from a view it is plainly inside.
+   line.frustumCulled=false;
+  }
+  const buffer=attr.data,a=buffer.array;
+  for(let i=0;i<segments;i++){
+   const from=i*3,to=from+3,at=i*6;
+   a[at]=flat[from];a[at+1]=flat[from+1];a[at+2]=flat[from+2];
+   a[at+3]=flat[to];a[at+4]=flat[to+1];a[at+5]=flat[to+2];
+  }
+  buffer.clearUpdateRanges?.();
+  buffer.addUpdateRange?.(0,segments*6);
+  buffer.needsUpdate=true;
+  line.geometry.instanceCount=segments;
+  return segments;
+ }
+ setAim(degrees,distance){
+  const start=this.localBall||this.course.tee,steps=Math.max(60,Math.ceil(distance/.75));
+  const flat=this.aimScratch(steps+1);
+  for(let i=0;i<=steps;i++){
+   const p=aimTarget(start,degrees,distance*i/steps),v=this.course.toWorld(p),at=i*3;
+   flat[at]=v.x;flat[at+1]=this.course.height(p.x,p.z)+.10;flat[at+2]=v.z;
+  }
+  this.writeLine(this.aimLine,flat,steps+1);
+  this.aimRing.position.set(flat[steps*3],flat[steps*3+1],flat[steps*3+2]);
+  this.aimRing.scale.setScalar(Math.min(1,Math.max(.015,distance/60)));
+ }
+ // Draws a path the ball will actually take rather than a straight bearing, so a
+ // breaking putt shows its curve. Points arrive in hole-local coordinates.
+ setAimPath(points,distance){
+  if(points.length<2)return;
+  // Same line, so it writes the same way: two writers replacing and rewriting the
+  // one geometry would undo each other's buffer every time the club changed.
+  const flat=this.aimScratch(points.length);
+  points.forEach((q,i)=>{
+   const v=this.course.toWorld(q),at=i*3;
+   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.10;flat[at+2]=v.z;
+  });
+  this.writeLine(this.aimLine,flat,points.length);
+  const last=(points.length-1)*3;
+  this.aimRing.position.set(flat[last],flat[last+1],flat[last+2]);
+  this.aimRing.scale.setScalar(Math.min(1,Math.max(.015,distance/60)));
+ }
+ // The tracer runs through the centre of the ball. It used to be lifted 40 mm,
+ // which is nearly two ball radii on a 21 mm ball, so the line floated clear
+ // above the thing it was tracing. The recorded y IS the centre.
+ // The tracer stops a ball's radius short of the ball, so it comes out of the
+ // back of it rather than from under it. Ending at the centre means the ball
+ // covers the last 21 mm of line, and a hop smaller than the ball -- which most
+ // of the interesting ones are -- is hidden behind the thing that made it.
+ setTrail(points){
+  this.trail.visible=points.length>1;if(points.length<2)return;
+  const kept=trimToBall(points);
+  if(kept.length<2){this.trail.visible=false;return;}
+  this.trail.geometry.dispose();
+  this.trail.geometry=new LineGeometry().setPositions(kept.flatMap(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];}));
+ }
+ // The tracers of a finished hole, all at once. Dimmer and thinner than the live
+ // one, because this is the record of what happened rather than the thing that is
+ // happening.
+ // A trail is `{points, colour}`. Four golfers' tracers over one fairway in one
+ // amber answered nothing -- the summary orbit exists to show who went where,
+ // and every line being the same colour is exactly the information it withheld.
+ //
+ // The bare-array and missing-colour branches are defensive, not a supported
+ // second shape: every caller goes through `pushTrail`, which records the golfer
+ // and their colour. They exist so a trail from anywhere else draws in the old
+ // amber rather than black, which is what an unset `Color` gives you.
+ setShotHistory(shots){
+  for(const line of this.shotLines)line.visible=false;
+  shots.forEach((trail,i)=>{
+   const points=Array.isArray(trail)?trail:trail?.points;
+   const kept=trimToBall(points||[]);
+   if(kept.length<2)return;
+   let line=this.shotLines[i];
+   if(!line){
+    line=new Line2(new LineGeometry(),new LineMaterial({color:SHOT_LINE_COLOR,linewidth:3,transparent:true,opacity:.72,depthWrite:false}));
+    this.shotLines[i]=line;this.shotGroup.add(line);
+   }
+   // Lines are POOLED and reused across holes and players, so the colour is set
+   // every time rather than only when one is created -- otherwise trail 2 keeps
+   // whoever hit trail 2 on the previous hole.
+   line.material.color.set(trail?.colour||SHOT_LINE_COLOR);
+   line.geometry.dispose();
+   line.geometry=new LineGeometry().setPositions(kept.flatMap(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];}));
+   line.visible=true;
+  });
+ }
+ clearShotHistory(){for(const line of this.shotLines)line.visible=false;}
+ // EVERY BALL THE TEAM HIT, ON THE COURSE, WHILE ONE IS BEING CHOSEN.
+ //
+ // A scramble choice used to be a list of buttons naming a golfer and a yardage.
+ // That is the one thing a list cannot tell you: whether the shorter one is
+ // behind a bunker, or the longer one is on the wrong tier. The balls are drawn
+ // where they lie, in the colour of the golfer who hit them, and each carries a
+ // beam so it can be found from the far side of a fairway.
+ //
+ // Pooled like the tracers: at most four, rebuilt on every step through them.
+ setCandidateBalls(list=[],active=-1){
+  if(!this.pickGroup)return;
+  for(const b of this.pickBalls)b.group.visible=false;
+  list.forEach((c,i)=>{
+   let b=this.pickBalls[i];
+   if(!b){
+    const group=new T.Group();
+    const ball=new T.Mesh(new T.SphereGeometry(R*1.6,20,14),new T.MeshBasicMaterial({color:'#ffffff'}));
+    const ring=new T.Mesh(new T.RingGeometry(.52,.66,48),new T.MeshBasicMaterial({color:'#ffffff',side:T.DoubleSide,transparent:true,depthWrite:false}));
+    ring.rotation.x=-Math.PI/2;
+    // Depth-written beams would be occluded by a rise between you and the ball,
+    // which is exactly when you most need to know where it is.
+    const beam=new T.Mesh(new T.CylinderGeometry(.11,.11,9,10),new T.MeshBasicMaterial({color:'#ffffff',transparent:true,depthWrite:false,depthTest:false}));
+    beam.position.y=4.5;beam.renderOrder=3;
+    group.add(ball,ring,beam);
+    this.pickGroup.add(group);
+    b=this.pickBalls[i]={group,ball,ring,beam};
+   }
+   const v=this.course.toWorld(c.position),h=this.course.height(c.position.x,c.position.z);
+   b.group.position.set(v.x,h,v.z);
+   b.ball.position.y=R*1.6;b.ring.position.y=.02;
+   const colour=c.colour||'#ffe0a0';
+   for(const part of [b.ball,b.ring,b.beam])part.material.color.set(colour);
+   // The one being looked at stands up; the others stay legible but quiet, so
+   // the choice reads at a glance from anywhere on the hole.
+   const on=i===active;
+   b.ring.scale.setScalar(on?1.7:1);
+   b.ring.material.opacity=on?1:.4;
+   b.beam.material.opacity=on?.62:.2;
+   b.beam.scale.y=on?1:.55;
+   b.group.visible=true;
+  });
+ }
+ clearCandidateBalls(){for(const b of this.pickBalls||[])b.group.visible=false;}
+ // A high, slow orbit of the whole hole, so every tracer is in one frame while
+ // the scorecard is up. Radius and height come off the hole's own length: a
+ // 130 yard par three should not be framed from where a 600 yard par five is.
+ summaryOrbit(seconds){
+  const h=this.course;if(!h)return;
+  const mid={x:h.center(h.length*.5),z:h.length*.5};
+  const c=h.toWorld(mid),ground=h.height(mid.x,mid.z);
+  const angle=Math.PI+seconds*.055,radius=Math.max(115,h.length*.62);
+  this.targetPos.set(c.x+Math.sin(angle)*radius,ground+Math.max(62,h.length*.34),c.z+Math.cos(angle)*radius);
+  this.targetLook.set(c.x,ground+4,c.z);
+  this.trackingBall=false;
+ }
+ hitEffects(p,aim,lie,speed){this.effects.hit(p,aim,lie,speed);}
+ setCamera(p,aim,instant=false){
+  this.trackingBall=false;const c=this.config,h=this.course;
+  if(c.mode==='free'){if(!this.wasFree){this.targetPos.copy(this.camera.position);this.freeYaw=Math.atan2(this.look.x-this.camera.position.x,this.look.z-this.camera.position.z);this.freePitch=Math.asin(T.MathUtils.clamp((this.look.y-this.camera.position.y)/Math.max(.001,this.look.distanceTo(this.camera.position)),-1,1));this.wasFree=true;}this.updateFreeLook();return;}
+  this.wasFree=false;
+  if(c.mode==='overview'){this.targetPos.set(-this.world.halfX*.4,Math.max(this.world.halfX/Math.min(1,this.camera.aspect),this.world.halfZ)*2.8,-this.world.halfZ*1.1);this.targetLook.set(0,0,40);}
+  else if(c.mode==='green'){const q=h.worldPin;this.targetPos.set(q.x+28,h.height(h.pin.x,h.pin.z)+21,q.z+34);this.targetLook.set(q.x,h.height(h.pin.x,h.pin.z),q.z);}
+  // THE RIG, not the raw config. In simulator mode the height, the setback and
+  // the field of view come from the bay's measurements instead of the sliders,
+  // and the lateral offset is forced to zero -- a golfer stands behind the ball,
+  // not beside it, and "always the same view from behind" is the whole point.
+  // ON THE GREEN THE CAMERA BACKS OFF UNTIL THE BALL IS IN FRAME. A putt is aimed
+  // from the ball, so the ball has to be on screen; everywhere else it may sit
+  // below the bottom edge, which is where it is in the room.
+  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;}
+  // Overview and the green view keep the chosen angle: neither is a view from
+  // where anybody is standing, so a bay's measurements say nothing about them.
+  if(c.mode!=='player')this.camera.fov=c.fov;this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
+ }
+ updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}
+ rotateFree(dx,dy){this.freeYaw-=dx*.004;this.freePitch=T.MathUtils.clamp(this.freePitch-dy*.003,-1.48,1.48);this.updateFreeLook();}
+ moveFree(dt,forward,right,up,fast=false){const speed=this.config.freeSpeed*(fast?3:1)*dt,dir=new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch));this.targetPos.addScaledVector(dir,forward*speed);this.targetPos.x-=Math.cos(this.freeYaw)*right*speed;this.targetPos.z+=Math.sin(this.freeYaw)*right*speed;this.targetPos.y+=up*speed;this.targetPos.x=T.MathUtils.clamp(this.targetPos.x,-this.world.halfX-400,this.world.halfX+400);this.targetPos.z=T.MathUtils.clamp(this.targetPos.z,-this.world.halfZ-400,this.world.halfZ+400);this.targetPos.y=T.MathUtils.clamp(this.targetPos.y,Math.max(this.world.waterLevel+1,this.world.height(this.targetPos.x,this.targetPos.z)+(this.config.freeFloor??1.2)),1800);this.updateFreeLook();}
+ flyToHole(index){const h=this.world.holes[index],p=h.toWorld({x:36,z:h.length-45});this.config.mode='free';this.wasFree=true;this.targetPos.set(p.x,h.height(36,h.length-45)+38,p.z);this.freeYaw=Math.atan2(h.worldPin.x-p.x,h.worldPin.z-p.z);this.freePitch=-.48;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
+ // The glow ball, and the two things around it that would otherwise stay lit for
+ // a daytime that is no longer happening: the aim ring and the shot trail.
+ //
+ // Emissive intensity is set so the ball clears the bloom threshold on ultra --
+ // the flare is the bloom pass finding it, not a second effect. The sprite halo
+ // carries the tiers that have no bloom.
+ updateGlowBall(solar,daylight){
+  if(!this.ball)return;
+  const glow=daylight.glowBall===false?0:solar.lamplight;
+  this.ball.material.emissiveIntensity=glow*1.76;
+  this.ballLight.intensity=glow*2.08;
+  this.ballHalo.visible=glow>.01;
+  this.ballHalo.material.opacity=glow*.4;
+  // The ring and the trail are unlit materials, so nothing else would ever dim
+  // them; left alone they stay daylight-bright against a dark course.
+  this.ballRing.material.color.copy(this.ringBase).lerp(GLOW_BALL,glow);
+  this.trail.material.color.copy(this.trailBase).lerp(GLOW_BALL,glow);
+ }
+ // Advance the clock and apply the light that follows from it. Everything here
+ // is a uniform write and costs nothing per frame; CSM re-reads lightDirection
+ // inside its own update(), so a moving sun never needs updateFrustums().
+ updateDaylight(dt){
+  if(!this.timed||!this.world)return;
+  const d=this.daylight;
+  if(d.rate)d.hour=advance(d.hour,d.rate,dt);
+  const solar=solarState(d.hour,this.world.bio.sun);this.solar=solar;
+  this.sunDir.copy(solar.direction);
+  // One directional light by day, or the cascades' own set; both take the same
+  // colour and direction so the swap at dusk is invisible.
+  const key=this.sunBase.clone().lerp(solar.keyTint,solar.keyTintAmount);
+  const keyIntensity=solar.keyScale*this.sunBaseIntensity+solar.moonIntensity;
+  if(!this.csm){this.sun.color.copy(key);this.sun.intensity=keyIntensity;}
+  for(const light of this.csm?.lights||[]){light.color.copy(key);light.intensity=keyIntensity;}
+  if(this.csm)this.csm.lightDirection.copy(solar.direction).negate().normalize();
+  const t=solar.tintAmount;
+  this.hemi.color.copy(this.hemiSkyBase).lerp(solar.tint,t);
+  this.hemi.groundColor.copy(this.hemiGroundBase).lerp(solar.groundTint,t);
+  this.hemi.intensity=this.hemiBaseIntensity*solar.hemiScale;
+  this.renderer.toneMappingExposure=this.baseExposure*solar.exposureScale;
+  if(this.skyMaterial){
+   const u=this.skyMaterial.uniforms;u.sun.value.copy(solar.direction);
+   // The dome's crown holds its colour a little longer than its horizon, which
+   // is the order the real sky loses the light.
+   u.top.value.copy(this.skyTopBase).lerp(solar.tint,t*.88);
+   u.horizon.value.copy(this.skyHorizonBase).lerp(solar.tint,t);
+   // The painted clouds take the same tint as the air. They were mixing toward
+   // a hardcoded near-white, which is why they stayed daylight-bright against a
+   // midnight sky -- the one thing in the scene the clock could not reach.
+   u.cloudLight.value.copy(CLOUD_DAY).lerp(solar.tint,t*.92);
+   // The sun's halo and its disc cool off as the moon takes over.
+   u.glowColor.value.copy(GLOW_DAY).lerp(GLOW_NIGHT,1-solar.dayness);
+   u.discColor.value.copy(DISC_DAY).lerp(DISC_NIGHT,1-solar.dayness);
+   u.starness.value=solar.starness;u.starAngle.value=starRotation(d.hour);
+  }
+  this.updateGlowBall(solar,d);
+  // Fog and background track the horizon, or the sky detaches from the land.
+  this.scene.background?.copy?.(this.skyBgBase).lerp(solar.tint,t);
+  this.scene.fog?.color.copy(this.fogBase).lerp(solar.tint,t);
+  this.cloudUniforms?.cloudSun.value.copy(solar.direction).normalize();
+  if(this.mistUniforms){
+   const u=this.mistUniforms,p=profileFor(this.world.settings.biome),damp=mistAmount(d.hour);
+   // Mist is lit by the sky, so it takes the air's own colour and sits a little
+   // brighter than it. Tying it to the fog colour means it warms at dawn and
+   // goes blue after dark without a second set of constants to keep in step.
+   u.mistColor.value.copy(this.scene.fog.color).lerp(WHITE,.22);
+   // Both derived from a stated visibility in metres rather than tuned by eye.
+   // The haze never fully clears -- it is what gives distance its depth -- while
+   // the sheet arrives and leaves with the morning.
+   // Switched off, the sheet and the haze both go. The scene fog stays: that is
+   // the distance cue the whole landscape is drawn against, and removing it
+   // shows the edge of the world rather than a clear day.
+   const weather=d.fog===false?0:1;
+   const density=mistDensities(p,damp*weather,this.quality.mist*weather);
+   u.mistDensity.value=density.haze;
+   u.sheetDensity.value=density.sheet;
+   u.waterDensity.value=density.water;
+   // Anchored to the water level, which is where fog actually pools: terrain is
+   // generated around this height whatever the biome's nominal altitude says,
+   // so a hollow fills and a ridge stands clear of it.
+   u.mistBase.value=this.world.waterLevel;
+   u.mistTime.value=this.elapsed;
+  }
+  // Water is tinted by the clock like the fog and the sky. Without it a pond
+  // glowed biome teal under a night sky while the course around it went dark.
+  for(const body of this.waterBodies||[]){
+   const base=body.mesh?.material?.userData?.waterBase;
+   if(base)body.mesh.material.color.copy(base).lerp(solar.tint,solar.tintAmount);
+  }
+  if(this.envElevation===null||Math.abs(solar.elevation-this.envElevation)>(this.style==='cartoon'?6:3))this.refreshEnvironment();
+  d.elapsedSinceSave+=dt;
+  // localStorage is synchronous; writing the hour every frame would be a stall
+  // for a value nobody reads until the next launch.
+  // Not while the menu has borrowed the clock: the backdrop shows its own hour,
+  // and a periodic save would write that over the one the player chose.
+  if(d.elapsedSinceSave>30){d.elapsedSinceSave=0;if(!this.borrowedClock)saveDaylight(d);}
+ }
+ // `putting` does not change the RIG -- one camera means one pose for every
+ // shot, a putt included -- it only pins the look on the cup while the ball is
+ // rolling, so the hole stays still on screen instead of drifting around it.
+ follow(p,aim,putting=false){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
+  const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
+
+ render(dt){
+  // The still bodies' own clock. Their ripples are the only thing that tells a
+  // pond with no reflector from a sheet of glass, so it runs whatever else is
+  // happening -- including while the ball is in the air.
+  if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
+  this.clouds?.update(dt);
+  this.updateDaylight(dt);
+  const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}const t=1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.csm){
+   // Zoomed all the way out, stretch the cascades over the whole course so every
+   // tree keeps its shadow. Ultra only: the cost is resolution up close, and in
+   // overview there is nothing up close to spend it on.
+   const reach=this.config.mode==='overview'&&this.quality.overviewShadowFar?this.quality.overviewShadowFar:this.quality.shadowFar;
+   if(this.csm.maxFar!==reach){this.csm.maxFar=reach;this.csm.updateFrustums();}
+   this.camera.updateMatrixWorld();this.csm.update();
+  }this.bloom?.begin(this.renderer);
+  this.renderer.render(this.scene,this.camera);
+  this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color);
+  if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
+ project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);return{x:(v.x*.5+.5)*this.canvas.clientWidth,y:(-.5*v.y+.5)*this.canvas.clientHeight,visible:v.z<1&&v.z>-1};}
+ pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
+}
+export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;ctx.fillStyle=world.settings.biome==='island'?'#6eb8c0':'#e0e5d5';ctx.fillRect(0,0,w,h);
+ // The nav rides on the CANVAS beside its transform. Five call sites draw this
+ // map from four different places, and threading a pan/zoom argument through
+ // all of them is how one of them ends up not having it -- which would read as
+ // the map resetting itself in that one mode.
+ const transform=mapLayout(course,w,h,full,position,canvas.mapNav,canvas.mapFocus),scale=transform.scale,to=(x,z,hole=course)=>mapPoint(transform,full?hole.toWorld({x,z}):{x,z});canvas.mapTransform=transform;canvas.dataset.courseSeed=world.seed;canvas.dataset.holeNumber=String(course.hole+1);canvas.setAttribute('aria-label',full?`${world.holes.length}-hole course map · ${world.seed}`:`Hole ${course.hole+1} map · ${world.seed} · playing direction up`);
+
+ if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.settings.biome==='island'&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
+  // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
+  //
+  // This used to be drawn at `w/2 - halfX*scale`, which silently assumes the
+  // map is centred on the world origin. `mapPoint` is `w/2 - (p - c)*scale`,
+  // and `withNav` moves that centre for pan AND for zoom -- so the background
+  // scaled about the middle of the canvas while every fairway, pond and bunker
+  // translated about the map centre, and the two slid apart as you zoomed. The
+  // terrain appeared to move independently of the course drawn on it.
+  //
+  // Deriving the placement from `mapPoint` is what makes that impossible, which
+  // is the whole reason `tilePlacement` exists; this was the one tile that was
+  // not using it.
+  const bg=tilePlacement(transform,{x:0,z:0,rx:world.halfX,rz:world.halfZ},world.mapBackground.width,world.mapBackground.height);
+  ctx.save();ctx.translate(bg.x,bg.y);ctx.scale(bg.sx,bg.sy);ctx.drawImage(world.mapBackground,0,0);ctx.restore();}
+
+ for(const hole of full?world.holes:[course]){
+  ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,'#a1b481'],[0,'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
+  for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
+  for(const p of hole.bunkers){ctx.fillStyle='#efe0b9';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
+  for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLORS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
+  // The disc is the green, so it is drawn around the green's centre; the number
+  // that labels the hole goes with it.
+  const centre=hole.green??hole.pin;
+  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle='#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px sans-serif';ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
+ }
+ if(aimPoint){const from=to(position.x,position.z),target=to(aimPoint.x,aimPoint.z);ctx.save();ctx.strokeStyle='#fff1ac';ctx.lineWidth=3.5;ctx.setLineDash([8,6]);ctx.lineDashOffset=-time*22;ctx.beginPath();ctx.moveTo(...from);ctx.lineTo(...target);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#294c39';ctx.lineWidth=2;ctx.fillStyle='#ffed9e';ctx.beginPath();ctx.arc(...target,5,0,TAU);ctx.fill();ctx.stroke();ctx.restore();}
+ ctx.save();if(full){ctx.beginPath();ctx.rect(w/2-world.halfX*scale,h/2-world.halfZ*scale,world.halfX*2*scale,world.halfZ*2*scale);ctx.clip();}
+ // THE GREEN, READ FROM ABOVE. Only while framed on it: at hole scale the tile
+ // would be a few coloured pixels, and every other view already shows the green
+ // as a flat disc.
+ if(transform.focus==='green'&&canvas.mapHeat!==false){
+  try{
+   const tile=greenHeatTile(course);
+   if(!tile.flat){
+    // THE TILE IS PROJECTED, NOT FITTED INTO A BOX. `mapPoint` is
+    // `w/2 - (p - c) * scale` on BOTH axes, so the map is the world turned
+    // through 180 degrees; the tile's pixel (0,0) is minimum x and minimum z,
+    // which lands bottom-RIGHT on screen. Normalising the destination
+    // rectangle -- which is what this did first -- puts the image the right
+    // size in the right place and 180 degrees out, so the high side of the
+    // green was painted over the low side. Deriving the transform from the
+    // same `to()` the outline uses cannot disagree with it; the negative
+    // scales carry the flip.
+    const place=tilePlacement(transform,tile.bounds,tile.canvas.width,tile.canvas.height);
+    ctx.save();ctx.imageSmoothingEnabled=true;
+    ctx.translate(place.x,place.y);ctx.scale(place.sx,place.sy);
+    ctx.drawImage(tile.canvas,0,0);
+    ctx.restore();
+   }
+  }catch{ /* a green that cannot be sampled simply is not painted */ }
+ }
+ for(const stream of world.streams?.streams||[]){ctx.strokeStyle='#79aeb4';ctx.lineJoin='round';ctx.lineCap='round';for(let i=1;i<stream.points.length;i++){const a=stream.points[i-1],b=stream.points[i],p=mapPoint(transform,full?a:course.toLocal(a)),q=mapPoint(transform,full?b:course.toLocal(b));ctx.lineWidth=Math.max(1,(a.width+b.width)*.5*scale);ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(...q);ctx.stroke();}}
+ // Houses only read on the full-course map; on a hole map they are clutter
+ // around the corridor the player is actually aiming down.
+ if(full){
+  ctx.fillStyle='#c8bda4';ctx.strokeStyle='#8d8471';ctx.lineWidth=.6;
+  for(const home of world.homes||[]){const q=mapPoint(transform,home);const w=Math.max(2,home.width*scale),d=Math.max(2,home.depth*scale);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(-home.rotation);ctx.fillRect(-w/2,-d/2,w,d);ctx.strokeRect(-w/2,-d/2,w,d);ctx.restore();}
+ }
+ ctx.restore();
+ // PER-CLUB DISPERSION, under the ball so the ball is never hidden by it. Each
+ // group is the shots that club actually hit: a dot per finish, and a circle at
+ // one standard distance from their centre -- about two thirds of the group, not
+ // the outlier that would let one thinned wedge define the club.
+ for(const g of canvas.mapDispersion||[]){
+  const centre=to(g.centre.x,g.centre.z);
+  // The world-to-canvas map negates BOTH axes and scales them equally, which is a
+  // 180 degree rotation -- and an ellipse is symmetric under that -- so the world
+  // angle is the canvas angle with no correction.
+  const long=Math.max(3,g.long*scale),wide=Math.max(3,g.wide*scale);
+  // A DARK UNDER-STROKE FIRST. These land on the green and the fairway, which are
+  // mid-tone greens themselves, and a single coloured hairline on top of them
+  // disappeared -- visible in a screenshot, invisible at a glance.
+  ctx.beginPath();ctx.ellipse(centre[0],centre[1],long,wide,g.angle,0,TAU);
+  ctx.fillStyle=clubColour(g.club,.13);ctx.fill();
+  ctx.strokeStyle='rgba(12,24,16,.55)';ctx.lineWidth=3.4;ctx.setLineDash([5,4]);ctx.stroke();
+  ctx.strokeStyle=clubColour(g.club,1);ctx.lineWidth=2;ctx.stroke();
+  ctx.setLineDash([]);
+  for(const p of g.points){
+   const q=to(p.x,p.z);
+   ctx.beginPath();ctx.arc(...q,2.4,0,TAU);
+   ctx.fillStyle=clubColour(g.club,1);ctx.fill();
+   ctx.strokeStyle='rgba(12,24,16,.6)';ctx.lineWidth=1;ctx.stroke();
+  }
+  // The centre is a cross rather than a dot: a dot in the middle of a ring of
+  // dots reads as another shot, and this is the one mark that is not one.
+  ctx.beginPath();ctx.moveTo(centre[0]-5,centre[1]);ctx.lineTo(centre[0]+5,centre[1]);
+  ctx.moveTo(centre[0],centre[1]-5);ctx.lineTo(centre[0],centre[1]+5);
+  ctx.strokeStyle='rgba(12,24,16,.6)';ctx.lineWidth=3.4;ctx.stroke();
+  ctx.strokeStyle=clubColour(g.club,1);ctx.lineWidth=1.6;ctx.stroke();
+ }
+ const[bx,by]=to(position.x,position.z);ctx.fillStyle='#fff';ctx.strokeStyle='#31503c';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(bx,by,full?3:4,0,TAU);ctx.fill();ctx.stroke();
+ for(const c of candidates){const q=to(c.position.x,c.position.z);ctx.fillStyle='#cd8c46';ctx.beginPath();ctx.arc(...q,3,0,TAU);ctx.fill();}
+ if(full&&camera){ctx.fillStyle='#c35e3e';ctx.beginPath();ctx.arc(...mapPoint(transform,camera),4,0,TAU);ctx.fill();}
+}

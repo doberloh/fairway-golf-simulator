@@ -1,0 +1,9 @@
+# The project is LF throughout and the tooling writes LF. Without this, Git on
+# Windows rewrites every file on checkout and every diff is noise.
+* text=auto eol=lf
+
+# Binary provenance: model packs and saved reference pages.
+*.glb binary
+*.png binary
+*.jpg binary
+*.zip binary
