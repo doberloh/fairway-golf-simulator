@@ -128,7 +128,6 @@ export function relaxCurvature(points,minRadius,passes=60){
  }
  return points;
 }
-const lowPass=(values,passes)=>{const n=values.length,tmp=new Float64Array(n);for(let k=0;k<passes;k++){tmp[0]=values[0];tmp[n-1]=values[n-1];for(let i=1;i<n-1;i++)tmp[i]=(values[i-1]+2*values[i]+values[i+1])*.25;values.set(tmp);}return values;};
 // A CHANNEL RUNS TO THE SEA, NOT ACROSS IT.
 //
 // Channels are drawn across a span that reaches well past the course, which on
@@ -147,6 +146,92 @@ const lowPass=(values,passes)=>{const n=values.length,tmp=new Float64Array(n);fo
 // halfX of 334. A channel nobody can see is worth less than a shorter one
 // crossing the holes, so runs are scored by how much of them lands ON the
 // course and only then by length.
+// WHICH WAY IS DOWNHILL, AVERAGED OVER A RADIUS.
+//
+// Sampled at a point, a generated landscape is noisy enough that steepest
+// descent jitters and traps itself in every dimple. Averaged over tens of
+// metres it answers the question actually being asked -- which way does this
+// hillside fall -- and a channel routed on it behaves like water rather than
+// like a needle threading local minima.
+function grade(height,x,z,r){
+ let gx=0,gz=0;
+ for(let i=0;i<4;i++){
+  const a=i*Math.PI/4,cx=Math.cos(a),cz=Math.sin(a);
+  const d=height(x+cx*r,z+cz*r)-height(x-cx*r,z-cz*r);
+  gx-=cx*d;gz-=cz*d;
+ }
+ const len=Math.hypot(gx,gz);
+ return len>1e-9?{x:gx/len,z:gz/len,fall:len}:{x:0,z:0,fall:0};
+}
+
+// A WATERCOURSE IS ROUTED BY DESCENDING THE LAND.
+//
+// It used to be a bearing and three harmonics -- a sine wave drawn across the
+// map with no reference to the ground -- and the terrain entered only
+// afterwards, as a budget: keep the longest run whose bed stays within MAX_CUT
+// of the surface. So a channel imposed its own gradient and excavated whatever
+// stood in the way. Measured before this: a median cut of 2 to 9.5 m below the
+// land along the whole length, reaching 21.1 m on a mountain course, with the
+// water falling 5.4 m over ground that fell 0.7. That is a trench gouged across
+// a hillside, which is what "worms across the surface" describes.
+//
+// The harmonics are kept, but as MEANDER -- they bend the heading rather than
+// being the path. Inertia stops the walk snapping to every change of slope; the
+// obstacle term steers around greens, tees and bunkers instead of the old
+// lateral push, which only made sense in a straight channel's frame.
+function descend(start,o){
+ const {height,isSea,halfX,halfZ,width,rng,avoid,step,maxSteps}=o;
+ const harmonics=[{length:120+rng()*180,amp:.20+o.bend*.55},{length:300+rng()*380,amp:.12+o.bend*.30}].map(h=>({...h,phase:rng()*6.28}));
+ const widthPhase=rng()*6.28,widthLength=55+rng()*70;
+ const points=[];
+ let x=start.x,z=start.z,travelled=0,stalled=0;
+ const first=grade(height,x,z,45);
+ let dir=first.fall>0?{x:first.x,z:first.z}:{x:Math.cos(rng()*6.28),z:Math.sin(rng()*6.28)};
+ let last=height(x,z);
+ for(let i=0;i<maxSteps;i++){
+  points.push({x,z,width:width*(.82+.18*Math.sin(travelled/widthLength+widthPhase))});
+  const g=grade(height,x,z,45);
+  // Downhill, blended with where we were already going.
+  let hx=dir.x*.58+g.x*.42,hz=dir.z*.58+g.z*.42;
+  // Meander, as a rotation of the heading.
+  let bendBy=0;
+  for(const h of harmonics)bendBy+=Math.sin(travelled/h.length+h.phase)*h.amp;
+  const ca=Math.cos(bendBy),sa=Math.sin(bendBy);
+  [hx,hz]=[hx*ca-hz*sa,hx*sa+hz*ca];
+  // Steer clear of anything protected, by turning rather than by translating.
+  for(const q of avoid){
+   const dx=x-q.x,dz=z-q.z,d=Math.hypot(dx,dz),clear=q.r+width*.65+12;
+   if(d>clear*2||d<1e-6)continue;
+   const push=(1-d/(clear*2))*1.6;
+   hx+=dx/d*push;hz+=dz/d*push;
+  }
+  // THE TURN IS CAPPED, NOT RELAXED AFTERWARDS.
+  //
+  // `relaxCurvature` smooths a path; it cannot rescue one that doubles back
+  // inside its own banks, and the walk can do exactly that when the gradient
+  // swings or an obstacle pushes hard -- measured at a bend of 0.20 times the
+  // half width, where the floor is 1. Limiting the turn per step to
+  // step/radius bounds the curvature by construction, whatever the land does.
+  const len=Math.hypot(hx,hz)||1;
+  hx/=len;hz/=len;
+  const maxTurn=step/Math.max(width*1.8,14);
+  const turn=Math.atan2(dir.x*hz-dir.z*hx,dir.x*hx+dir.z*hz);
+  const use=Math.max(-maxTurn,Math.min(maxTurn,turn));
+  const cw=Math.cos(use),sw=Math.sin(use);
+  dir={x:dir.x*cw-dir.z*sw,z:dir.x*sw+dir.z*cw};
+  x+=dir.x*step;z+=dir.z*step;travelled+=step;
+  if(Math.abs(x)>halfX+140||Math.abs(z)>halfZ+140)return {points,end:'edge'};
+  if(isSea(x,z))return {points,end:'sea'};
+  // A sink is ground the walk cannot get out of. Judged over a window, because
+  // a single step uphill is a hummock and not a basin.
+  const now=height(x,z);
+  stalled=now>last-.02?stalled+1:0;
+  last=now;
+  if(stalled>=12)return {points,end:'sink'};
+ }
+ return {points,end:'spent'};
+}
+
 function runOnLand(points,isSea,inBounds){
  let best=null,from=-1;
  const consider=(a,b)=>{
@@ -181,32 +266,30 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
    for(let attempt=0;attempt<14;attempt++){
     // Every channel draws its own bearing, harmonic wavelengths and phases, so a
     // river and a creek never trace offset copies of one shared master curve.
-    const angle=rng()*Math.PI,dir={x:Math.sin(angle),z:Math.cos(angle)},normal={x:dir.z,z:-dir.x};
-    const offset=(rng()-.5)*span*1.7,widthPhase=rng()*6.28,widthLength=55+rng()*70;
-    const harmonics=[{length:140+rng()*200,amp:(12+bend*span*.24)*(.65+rng()*.7),phase:rng()*6.28},{length:340+rng()*420,amp:(9+bend*span*.18)*(.55+rng()*.9),phase:rng()*6.28},{length:60+rng()*80,amp:(2.5+bend*span*.045)*(.3+rng()*1.1),phase:rng()*6.28}];
-    const N=Math.ceil(reach*2/10),station=i=>(i/N*2-1)*reach,lateral=new Float64Array(N+1);
-    for(let i=0;i<=N;i++){const u=station(i);let v=offset;for(const h of harmonics)v+=Math.sin(u/h.length+h.phase)*h.amp;lateral[i]=v;}
-    const near=avoid.map(o=>({side:o.x*normal.x+o.z*normal.z,along:o.x*dir.x+o.z*dir.z,clear:o.r+width*.65+10})).filter(q=>Math.abs(q.along)<reach+q.clear*3);
-    // Choose which side of each obstacle the channel passes exactly once, from
-    // the undisturbed line. Re-deciding per station is what produced hard V
-    // bends where the corridor reversed inside a single influence zone.
-    for(const q of near){q.sign=lateral[Math.max(0,Math.min(N,Math.round((q.along/reach+1)/2*N)))]>=q.side?1:-1;q.reach=q.clear*1.45;}
-    const push=new Float64Array(N+1),up=new Float64Array(N+1),down=new Float64Array(N+1);
-    for(let pass=0;pass<4;pass++){
-     up.fill(0);down.fill(0);
-     for(const q of near){
-      const lo=Math.max(0,Math.ceil(((q.along-q.reach*2.2)/reach+1)/2*N)),hi=Math.min(N,Math.floor(((q.along+q.reach*2.2)/reach+1)/2*N));
-      for(let i=lo;i<=hi;i++){const d=(station(i)-q.along)/q.reach,need=q.sign*(q.side+q.sign*q.reach*Math.exp(-1.2*d*d)-lateral[i]);if(need<=0)continue;if(q.sign>0)up[i]=Math.max(up[i],need);else down[i]=Math.max(down[i],need);}
-     }
-     // A low pass over the correction turns each detour into one long smooth
-     // curve rather than a trapezoid with a corner at the influence boundary.
-     for(let i=0;i<=N;i++)push[i]=up[i]-down[i];
-     lowPass(push,4);let moved=0;
-     for(let i=0;i<=N;i++){lateral[i]+=push[i];moved=Math.max(moved,Math.abs(push[i]));}
-     if(moved<.05)break;
+    // Seed high. A watercourse starts where the water does, so candidates are
+    // sampled and the highest that is clear of the holes wins -- picking at
+    // random put half of them in the bottom of a valley with nowhere to go.
+    let seed=null;
+    for(let t=0;t<40;t++){
+     const sx=(rng()-.5)*halfX*1.9,sz=(rng()-.5)*halfZ*1.9;
+     if(isSea(sx,sz))continue;
+     if(avoid.some(q=>Math.hypot(sx-q.x,sz-q.z)<q.r+30))continue;
+     const y=height(sx,sz);
+     if(!seed||y>seed.y)seed={x:sx,z:sz,y};
     }
-    let points=[];
-    for(let i=0;i<=N;i++){const u=station(i);points.push({x:dir.x*u+normal.x*lateral[i],z:dir.z*u+normal.z*lateral[i],width:width*(.82+.18*Math.sin(u/widthLength+widthPhase))});}
+    if(!seed)continue;
+    const walk=descend(seed,{height,isSea,halfX,halfZ,width,bend,rng,avoid,step:10,
+     maxSteps:Math.ceil(reach*2/10)});
+    let points=walk.points;
+    if(points.length<16)continue;
+    // A WATERCOURSE MUST ACTUALLY GET DOWNHILL.
+    //
+    // The heading is averaged over 45 m so the walk ignores hummocks, and the
+    // price of that is it can also crest a low ridge and come out the far side
+    // higher than it went in -- measured at two channels of ten ending ABOVE
+    // their source. There are attempts left to spend, so spend them.
+    const fell=height(points[0].x,points[0].z)-height(points.at(-1).x,points.at(-1).z);
+    if(fell<12)continue;
     points=relaxCurvature(chaikin(chaikin(points)),Math.max(width*1.8,14));
     points=runOnLand(points,isSea,p=>Math.abs(p.x)<=halfX&&Math.abs(p.z)<=halfZ);
     // Too short to be a watercourse once the sea is taken out of it. Better no

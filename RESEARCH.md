@@ -494,6 +494,30 @@ The band has to be narrow, and the first attempt was not. `|land| < 2.5` looks l
 
 ±0.4 m reaches the same 0.50 m smoothness as the widest band. Non-coastal biomes pay nothing — the clause is a closure that returns false for them, and pnw generation was unchanged.
 
+## Watercourses that follow the land
+
+A channel was a bearing and three harmonics — a sine wave drawn across the map with no reference to the ground — and the terrain entered only afterwards, as a budget: keep the longest run whose bed stays within `MAX_CUT` of the surface. So a channel imposed its own gradient and excavated whatever stood in the way. Measured before:
+
+| | median cut below the land | max |
+|---|---|---|
+| pnw rivers | 4.2 – 4.4 m | 11.0 m |
+| pnw creeks | 2.1 – 7.6 m | 15.8 m |
+| mountain rivers | 4.7 – 9.5 m | **21.1 m** |
+
+And the descent was not the land's: one pnw creek fell **5.2 m over ground that fell 0.5**, a mountain river 5.4 m over 0.7. A trench gouged across a hillside, which is what "worms across the surface" describes.
+
+`descend` walks the slope instead. Three things make it behave like water rather than like a needle:
+
+**The gradient is averaged over 45 m.** Sampled at a point, generated terrain is noisy enough that steepest descent jitters and traps itself in every dimple. Averaged, it answers the question actually being asked — which way does this hillside fall.
+
+**The harmonics are kept, as meander.** They bend the heading rather than being the path, so a channel still wanders instead of running the fall line.
+
+**The turn per step is capped at `step/radius`.** This was found by a failing test, not by design: `relaxCurvature` smooths a path but cannot rescue one that doubles back inside its own banks, and the walk produced a bend of **0.20 times the half width** where the floor is 1. Capping bounds curvature by construction whatever the land does — and it also fixed a second failure, channel water geometry facing below the terrain, which was those degenerate bends producing inverted quads.
+
+Two smaller findings. Seeds are sampled and the highest clear of the holes wins, because picking at random put half the channels in the bottom of a valley with nowhere to go. And a walk must actually descend: averaging the heading over 45 m lets it crest a low ridge and finish above its own source, measured at two channels in ten, so a walk that has not fallen far enough is discarded and another attempt spent.
+
+After: median cut **0.4 to 2.9 m**, and channels run two to three times longer — 1000 to 2100 m against 200 to 730 — because a path that follows the land does not run out of excavation budget.
+
 ## A lake could be dropped on top of a pond
 
 The separation test in `addLargeLakes` consulted `accepted` — the lakes this pass has already placed — and nothing else, so a lake was free to land on a pond that had existed since the hole was generated. Measured across twelve courses: **pond-pond overlaps 0, lake-lake 0, lake-pond 10.** The two working checks hid the missing one.

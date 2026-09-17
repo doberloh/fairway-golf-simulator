@@ -55,7 +55,17 @@ export const SCHEMA_VERSION=4;
 //     And `nearest` stopped switching its greenside allowance on an exact float
 //     equality, which had been tearing the landform past every green in every
 //     biome -- so ground moves on EVERY course, not only those with water.
-export const GENERATOR_VERSION=11;
+// 12: watercourses are routed by descending the land instead of being drawn
+//     across it. A channel was a bearing plus three harmonics -- a sine wave
+//     with no reference to the ground -- and terrain entered only afterwards as
+//     an excavation budget, so every channel was a trench: a median cut of 2 to
+//     9.5 m below the surface along its whole length, reaching 21 m, with water
+//     falling 5.4 m over ground that fell 0.7. Now the walk follows the slope,
+//     the harmonics bend the heading rather than being the path, and the turn
+//     per step is capped so curvature cannot beat the channel's own banks.
+//     Median cut is 0.4 to 2.9 m and channels run two to three times longer.
+//     Every course with a river or a creek is reshaped.
+export const GENERATOR_VERSION=12;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
