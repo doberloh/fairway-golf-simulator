@@ -8,8 +8,8 @@
  ],
  "set": {},
  "courses": 30,
- "wallSeconds": 29.2,
- "buildSeconds": 732.7,
+ "wallSeconds": 19.4,
+ "buildSeconds": 509.9,
  "invariants": {
   "tees.teeBelowTheOneInFront": 0,
   "channels.stationInsideAFairway": 0,

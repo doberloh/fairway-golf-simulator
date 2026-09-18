@@ -454,7 +454,66 @@ export function generateWorld(settings={}){
  //
  // Note this reshapes EVERY seed beyond its greens. There was no version of
  // fixing it that did not.
- function nearest(x,z){let best=holes[0],distance=Infinity,local=null;const groups=new Array(Math.ceil(holes.length/3)).fill(Infinity);for(const h of holes){const p=h.toLocal({x,z}),zz=clamp(p.z,0,h.length),corridor=h.width(zz)+s.semiRough,greenEnd=25+s.fringe+s.semiRough,d=Math.hypot(p.x-h.center(zz),p.z-zz)-(corridor+Math.max(0,greenEnd-corridor)*smooth((p.z-h.length)/GREEN_RAMP));groups[Math.floor(h.hole/3)]=Math.min(groups[Math.floor(h.hole/3)],d);if(d<distance){best=h;distance=d;local=p;}}return{h:best,p:local,d:distance,other:Math.min(...groups.filter((_,i)=>i!==Math.floor(best.hole/3)))};}
+ // A ROUGH BOX AROUND EACH HOLE, so the search below can rule one out cheaply.
+ //
+ // `nearest` answers "which hole is this patch of ground nearest, and how far
+ // outside its corridor does it sit". Every grid the generator builds asks it
+ // for every cell, which made it 15% of the time taken to build a course, and
+ // the hole-centre-line work it drives about 40%. It used to measure against
+ // all nine holes every time, including ones on the far side of the property.
+ //
+ // The box holds the hole's whole centre line. The distance from a point to
+ // that box, less the widest its corridor ever gets, can never be more than
+ // the real answer -- so once that lower figure is already worse than the best
+ // hole found so far, this hole cannot win and the real work is skipped.
+ const holeBoxes = holes.map(h => {
+  const greenEnd = 25 + s.fringe + s.semiRough;
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, reach = greenEnd;
+  for (let i = 0; i <= 32; i++) {
+   const zz = h.length * i / 32, w = h.toWorld({x: h.center(zz), z: zz});
+   minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x);
+   minZ = Math.min(minZ, w.z); maxZ = Math.max(maxZ, w.z);
+   reach = Math.max(reach, h.width(zz) + s.semiRough);
+  }
+  // Slack, because the box comes from samples of a curve rather than the curve.
+  // Too generous only costs a few skips it could have taken; too tight is wrong.
+  return {minX: minX - 12, maxX: maxX + 12, minZ: minZ - 12, maxZ: maxZ + 12,
+   reach, group: Math.floor(h.hole / 3)};
+ });
+ // Ground is asked about in scans, so whichever hole won last time usually wins
+ // again. Measuring it first makes the rejection above bite straight away.
+ let lastBest = 0;
+ function nearest(x, z) {
+  let best = -1, distance = Infinity, local = null;
+  // ONLY AN ISLAND READS `other`. Keeping a minimum per group of three holes
+  // means measuring at least one hole in every group no matter where the point
+  // is, which is most of the work the box would otherwise save. Everywhere
+  // else it is simply not computed.
+  const groups = coastal ? new Array(Math.ceil(holes.length / 3)).fill(Infinity) : null;
+  const measure = i => {
+   const h = holes[i], p = h.toLocal({x, z}), zz = clamp(p.z, 0, h.length);
+   const corridor = h.width(zz) + s.semiRough, greenEnd = 25 + s.fringe + s.semiRough;
+   const d = Math.hypot(p.x - h.center(zz), p.z - zz) -
+    (corridor + Math.max(0, greenEnd - corridor) * smooth((p.z - h.length) / GREEN_RAMP));
+   if (groups) {const g = holeBoxes[i].group; if (d < groups[g]) groups[g] = d;}
+   if (d < distance) {best = i; distance = d; local = p;}
+  };
+  measure(lastBest);
+  for (let i = 0; i < holes.length; i++) {
+   if (i === lastBest) continue;
+   const b = holeBoxes[i];
+   const dx = Math.max(b.minX - x, 0, x - b.maxX), dz = Math.max(b.minZ - z, 0, z - b.maxZ);
+   const floor = Math.hypot(dx, dz) - b.reach;
+   // Skipping is only safe when this hole can beat neither the best so far nor
+   // its own group's minimum. A group still holding Infinity has had no hole
+   // measured yet, so the first of every group is always measured.
+   if (floor >= distance && (!groups || floor >= groups[b.group])) continue;
+   measure(i);
+  }
+  lastBest = best;
+  return {h: holes[best], p: local, d: distance,
+   other: groups ? Math.min(...groups.filter((_, i) => i !== holeBoxes[best].group)) : Infinity};
+ }
  const nearby=(x,z)=>nearest(x,z).h;
  const base=(x,z)=>Math.max(coastal?1.8:-100,(coastal?3.5:12)+severity*((coastal?15:22)+(coastal?12:22)*Math.sin(x/145+phase)*Math.cos(z/190)+(coastal?6:12)*Math.sin(z/94+x/180)));
  // Hazards follow their local ground elevation instead of draining every lake

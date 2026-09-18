@@ -103,3 +103,21 @@ number, because it gets acted on.
 
 **An `invariant` is a rule, not a reading.** It must be zero, the harness
 prints the offending courses by name, and a non-zero one exits non-zero.
+
+## Write to the owner in plain language
+
+The owner reads every summary and does not want to decode it. Say what changed,
+what it means for the game, and what it cost — in ordinary words.
+
+- No formulas, no notation, no jargon unless it is genuinely the subject. If a
+  piece of maths is the actual finding, explain what it means before showing it,
+  and only show it if seeing it helps.
+- Numbers are welcome; they are how work is judged here. What is not welcome is
+  the derivation behind them.
+- Prefer "the wait when a player starts an 18-hole course" over "generation
+  wall time". Name the thing the owner would notice.
+- Say plainly when something did not work. A change that made no difference is a
+  result and should be reported as one, not buried.
+
+Detail belongs in RESEARCH.md, which is written for whoever picks the code up
+next. The summary in chat is for deciding what to do.

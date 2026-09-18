@@ -571,6 +571,25 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Finding the nearest hole was 15% of building a course
+
+`nearest` answers "which hole is this patch of ground nearest, and how far outside its corridor does it sit". Every grid the generator builds asks it for every cell, and it measured against all nine holes every time, including ones on the far side of the property. The profile put it at **15.3% of a whole course**, and the centre-line work it drives -- `sideWidth`, `unitCenter`, `toLocal` -- at about **40% together**.
+
+Each hole now carries a rough box around its centre line. The distance from a point to that box, less the widest the corridor ever gets, can never exceed the real answer, so once that lower figure is worse than the best hole found so far the hole is skipped without doing any of the real work. Two details make it bite: the hole that won the previous call is measured first, because ground is asked about in scans and the previous winner usually wins again; and the per-group minimum behind `other` is only kept on islands, which are the only courses that read it. Keeping it everywhere would have forced at least one measurement per group of three holes no matter where the point was, which is most of what the box saves.
+
+| | before | after |
+|---|---|---|
+| 18-hole course, water on | 15.8 s | **8.4 s** |
+| 9-hole course, water on | 5.2 s | **3.4 s** |
+| 9-hole course, no water | 3.0 s | **1.7 s** |
+| island (keeps the group minimums) | 3.6 s | 3.1 s |
+| whole test suite | 217 s | **140 s** |
+| full 30-course measurement sweep | 30 s | **20 s** |
+
+The island gains least, and for the reason above: it is the one biome that still pays for the group bookkeeping.
+
+**And it changes nothing about the courses.** That is the claim a speed change has to make, so it was checked twice: the measurement baseline reported nothing moved, and a fingerprint over eight courses -- roughly fifteen hundred height and surface samples each, plus every tee position and water level -- came back byte-identical before and after. This is the first change in the project where proving that took one command rather than an afternoon, which is the harness earning its place.
+
 ## A measurement harness, because measuring was the bottleneck
 
 The generator is judged by measurement -- there is no other way to know whether a change to terrain made it better -- and for a long time every question was answered by a throwaway script that rebuilt the courses it needed for itself, single-threaded. One session spent most of an hour on a single function, and the arithmetic of why is unflattering:
