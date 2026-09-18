@@ -593,7 +593,14 @@ export function generateWorld(settings={}){
   // playing corridors" -- set that to zero and the start of a hole has to be
   // as flat as the rest of it. Left on the landform setting alone, a course
   // asked for dead level came back with 0.70 m of rise under its tees.
-  const unmown=(1-smooth((n.p.z-(mown-35))/35))*TEE_AREA_RELIEF*severity;
+  // ELEVATION ZERO IS A BASELINE, NOT A PROMISE OF DEAD LEVEL -- the owner's
+  // call. The tee area keeps its relief whatever the elevation setting says,
+  // and elevation raises the corridor from there.
+  //
+  // The DRIVING RANGE is the one exception and keeps its own flag for it.
+  // Flatness there is not a preference, it is the whole instrument: any tilt
+  // is a variable the player did not set, quietly added to every carry.
+  const unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
   const open=reach=>Math.max(smooth(n.d/reach),unmown);
   let hills=0;
   if(s.biome==='mountain')hills=relief*(70+severity*180)*rolling*open(90);
@@ -956,6 +963,9 @@ export function generateWorld(settings={}){
   }
   if(blend<=0)return y;
   // A GREEN ALWAYS WINS.
+  // Whether this sample is on a pad or its collar rather than out on a
+  // shoulder. The guard below must not unlevel the tee itself.
+  const onPad=blend>=1-1e-9;
   //
   // Greens are shaped first and tees last, so a tee's ramp simply overwrote
   // whatever the green had decided -- measured, 78 tees had earthworks reaching
@@ -967,8 +977,14 @@ export function generateWorld(settings={}){
    const d=Math.hypot(x-g.x,z-g.z);
    if(d>=g.fade)continue;
    blend*=smooth((d-g.keep)/(g.fade-g.keep));
-   if(blend<=0)return y;
+   if(blend<=0&&!onPad)return y;
   }
+  // A TEE BESIDE A GREEN IS STILL A TEE. The guard exists to stop a tee's
+  // SHOULDER spilling across maintained ground, and applied to the whole
+  // blend it also stopped levelling the pad -- so the tee came out following
+  // the natural slope, which on one hole left a marker sitting below the one
+  // in front of it. The shoulder still fades; the pad does not.
+  if(onPad)blend=1;
   return y*(1-blend)+targetSum/weightSum*blend;
  }
  if(!NO_INLAND_WATER.has(s.biome))addLargeLakes(s,holes,halfX,halfZ,nearest,shapedLand,random);

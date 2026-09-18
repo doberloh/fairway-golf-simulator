@@ -80,7 +80,11 @@ test('incoming rolling balls bounce off trunks and can be struck away afterward'
  // no validation data at all, so 1.46 is defensible rather than confirmed.
  assert(next.total>1.2,`stuck at the trunk: ${next.total.toFixed(2)} m`);});
 test('editable carry calibrates launch speed; flight profiles change height and curve',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);const normal=simulateShot({...shot,...manualLaunch(clubs.driver,1,1)},c),high=simulateShot({...shot,...manualLaunch(clubs.driver,1,1,{launch:6,axis:20})},c);assert(high.apex>normal.apex);assert(high.end.x>0);assert.throws(()=>customizeClubs({driver:-2}));});
-test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0});const rises=w=>w.holes.map(h=>{const ys=Array.from({length:30},(_,i)=>h.height(h.center(h.length*i/29),h.length*i/29));return Math.max(...ys)-Math.min(...ys);});assert(Math.max(...rises(high))>25);assert(Math.max(...rises(low))<.1);const h=generateCourse({seed:'SHELF',width:40,doglegs:0});assert.notDeepEqual(h.leftEdge,h.rightEdge);const widths=Array.from({length:20},(_,i)=>h.width(35+i*14));assert(Math.max(...widths)/Math.min(...widths)>1.2);});
+test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0});// MEASURED OVER THE MOWN CORRIDOR, which is what 'playing surfaces' means.
+ // The ground behind the tee is deliberately not flat any more -- it carries
+ // its own relief so a tee has somewhere to be cut into -- and sampling from
+ // the hole's origin swept that in and called it an elevation change.
+ const rises=w=>w.holes.map(h=>{const from=h.mowStart??h.fairwayStart,ys=Array.from({length:30},(_,i)=>{const z=from+(h.length-from)*i/29;return h.height(h.center(z),z);});return Math.max(...ys)-Math.min(...ys);});assert(Math.max(...rises(high))>25);assert(Math.max(...rises(low))<.1);const h=generateCourse({seed:'SHELF',width:40,doglegs:0});assert.notDeepEqual(h.leftEdge,h.rightEdge);const widths=Array.from({length:20},(_,i)=>h.width(35+i*14));assert(Math.max(...widths)/Math.min(...widths)>1.2);});
 
 test('tees are sited on ground that suits them, and never on ground they may not use',()=>{
  // Tees used to go down the middle at a fixed fraction of the hole's length
@@ -142,12 +146,18 @@ test('the back tee is never below the one in front, and a flat course keeps flat
  // And the rule must not hold by flattening every complex to one level.
  assert(lifted>=tees/6,`only ${lifted} complexes have any stagger left`);
 
- // THE STEP CORRECTS AN INVERSION, IT DOES NOT MANUFACTURE A STAIRCASE. At
- // elevation 0 the land is flat and the tees must be too -- a fixed step built
- // a 0.7 m mound on dead ground, and the sightline lift, sampling a straight
- // line in world space, cut a dogleg corner, found a neighbouring green 2.3 m
- // proud of the plain and raised a tee by the full 3.5 m cap to see over it.
- const flat=generateWorld({seed:'HEIGHT',elevation:0,greenDifficulty:0,trees:0,water:0,bunkerCount:0});
+ // THE STEP CORRECTS AN INVERSION, IT DOES NOT MANUFACTURE A STAIRCASE.
+ //
+ // Elevation alone no longer means dead level -- the ground behind a tee keeps
+ // its own relief whatever the elevation setting says, which is the owner's
+ // call and the point of siting a tee on real ground. Turning BOTH terrain
+ // controls off is what leaves nothing for a tee to follow, and then the tees
+ // must come out level: anything else was invented here rather than found.
+ // A fixed step once built 0.7 m of rise on such a course, and the sightline
+ // lift, sampling a straight line in world space, cut a dogleg corner, found a
+ // neighbouring green 2.3 m proud of the plain and raised a tee the full 3.5 m
+ // to see over it.
+ const flat=generateWorld({seed:'HEIGHT',elevation:0,landform:0,greenDifficulty:0,trees:0,water:0,bunkerCount:0});
  for(const h of flat.holes){
   const ys=Object.values(h.tees).map(t=>{const q=h.toWorld(t);return flat.height(q.x,q.z);});
   assert(Math.max(...ys)-Math.min(...ys)<.01,`tees vary by ${(Math.max(...ys)-Math.min(...ys)).toFixed(2)} m on a flat course`);
