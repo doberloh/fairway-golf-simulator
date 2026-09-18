@@ -533,6 +533,58 @@ Against 12.2–18.9 circles and 2716 overlaps from the walk. Roughly one and a h
 
 **Where they end.** A channel terminates at the sea, at a surviving lake, at another channel it has joined, or at a sink — a depression too large to have been flooded away. `SINK_FILL_AREA` is the dividing line, and it is deliberately generous at 40 000 m²: a terminal pond should read as a destination, not as a puddle every creek trips into. At 2500 the fill swallowed the valley floors themselves and a mountain course came back with one channel 289 m long. Across twenty courses the endings are **40 sink, 14 lake, 3 sea, 2 confluence**.
 
+## Where water is not allowed to go
+
+Four rules, all owner decisions, all of them arriving after the drainage rewrite made the underlying routing trustworthy enough to constrain. Each was measured before it was asked for, and each was happening.
+
+**A channel may not run over a green.** The drainage model raises greens 60 m in its working height field, so the *route* goes round them — and everything applied afterwards ignored that. Meander is up to 17 m of lateral offset, and corner cutting pulls a path across the inside of its own bends. Measured: water on **3 greens in 216**, as much as **16.2 m inside** one. Tapering the meander near a green fixes half of it at best, because corner cutting is the other half. So the *finished* polyline — the curve the player sees — is pushed clear and re-smoothed. Minimum clearance past a green edge is now **11.1 m**, and the median across all holes is unmoved at 270 m, which is the check that only the offending paths moved.
+
+**A channel may not cross a playing corridor.** Rivers crossing fairways had been a feature, with its own blended-turf exception in the ground shader. Corridors are now raised in the drainage model the way greens are — a 22 m ridge over 45 m, lower than a green's dome because a corridor is a long wall and a course is mostly corridors; too high and the gaps between holes stop being a route and become a maze with no way through. **Zero stations inside a fairway**, 70 of 72 requested channels still placed, and the median length went *up*, 603 m against 461 before the constraint, because a channel following the gaps runs further than one cutting across.
+
+**A channel may not run into standing water it did not create.** Two water surfaces meeting at different fitted levels is the same fault the lake-on-pond check was added for. Ponds and lakes already carried a routing radius; they now carry a keep-out as well. Measured across 151 bodies: nothing inside a pond, nothing inside a *shore band*, minimum gap **26 m** from the water edge.
+
+*A false alarm worth recording.* The first measurement of this said 3 m and eight bodies breached. It was the metric: it converted the normalised oval distance to metres by scaling with the **minor** axis, which understates the true distance badly along the major one. Measured against the actual boundary polygon, nothing had ever been in breach. That is the fourth bad metric in this area of the code, and the same lesson each time — check what the number is measuring before believing what it says.
+
+**A pond may bite into a fairway but may not cross one.** A pond that reaches the far side does not pinch a hole into two landing areas; it severs it, and the player walks round water the routing never planned a way past. The crossing branch is gone. What remains is bounded rather than rejected: `reach` never exceeds 0.70 of the half width and the shore is measured inward from the semi-rough edge, so the near bank cannot arrive at the centreline for any value the random stream can produce.
+
+The first setting of that was too timid to be worth having — at 0.12 to 0.37 it reached past the fairway edge on 5% of ponds and never by more than 4.1 m, which is a shore beside a fairway rather than water in play. At 0.25 to 0.70 it is **one pond in six**, median 5.7 m and up to 13 m in, with **zero** crossings.
+
+### The push has to be smooth along the path
+
+Moving each station by what it needs and no more is what the first version of the keep-out did, and it put a corner wherever the requirement changed from one station to the next — at the edge of a pond's keep-out, or where a corridor ends. The tightest bend went to **0.00 of the half width**, which folds the inner bank through itself and flips the water quads face down; two existing tests caught it, one for curvature and one for normals.
+
+The displacement is computed per station, smoothed along the path, and only then applied. Neighbouring stations move together, so the curve is *translated* rather than creased. Smoothing undershoots, so the requirement is recomputed and reapplied until it stops changing.
+
+## A channel that ends in a hollow ends in a pond
+
+The owner's choice over filling the sink or fading the channel out, and the requirement was that it be a **real pond object** — inheriting the cut bank, the shore band, the mown collar, the map outline, the reflection probe and the overlap rules, rather than becoming a second kind of water with its own copy of all of them. So the pond fit was extracted to `fitPondBasin` and the terminal pond goes through exactly it.
+
+Getting there took three wrong answers, each of which the measurement caught.
+
+**Every "sink" was the edge of the map.** The priority flood seeds the grid border and leaves it with no lower neighbour, so `down` is minus one there for precisely the same reason it is in a real depression. Reading that as a sink classified **all 44** of them as one, every single one sitting hard against the boundary — which is why every one failed the in-bounds test and not one pond was built. With the border told apart, the count went to **zero**: the fill's whole job is to give every cell a way out, so the only genuinely undrained cells are the sea, the border, and the depressions deliberately left unfilled. Those are the sinks, and the mask that marked them was called `lake` — a name that hid what it was. It is `sink` now.
+
+**A channel stopped at the rim of the hollow, not the bottom.** Every cell of a surviving depression is undrained, so the descent broke the instant it arrived. Measured, channels were ending **3.5 to 21.0 m above** the floor of the bowl they had just reached. A channel now crosses to the bottom, stepping one cell at a time and taking, of the three neighbours that make progress toward the low point, whichever sits lowest — so it follows the shape of the bowl rather than cutting a chord across it.
+
+**The pond was sized to the depression.** A surviving depression is a valley floor: 40 000 to 430 000 square metres, spanning 800 m. Its centroid sat **267 to 773 m** from where the channel actually arrived. The hollow says *where* the water collects; the channel says *how much*. The span survives only as a cap, so a pond never climbs out of the ground that holds it.
+
+**And the channel ran straight through its own pond.** `carve` is the last thing `analyticHeight` applies, so it overrode the basin with the channel's own bed: the channel's water plane sat up to **3.1 m above** the pond it was draining into, over ground **2.5 m higher** than the pond's surface. Both halves of the join need the path while it is still editable and before the segment index is built from it, so the pond is created from a callback *during* routing rather than in a pass afterwards. The stations inside the water are dropped and the last 60 m is ramped down to the pond's level. The ramp only ever lowers a station, and both the existing levels and the ramp fraction fall toward the mouth, so the profile stays monotone — the one property the whole routing rewrite rests on.
+
+Measured after: the mouth meets the shore within **0.1 to 3.0 m**, the two water levels agree **exactly** in five cases of six, and the sixth has the channel 0.90 m below the pond, which is a submerged mouth and correct. Worst uphill step anywhere along a channel: **0.0000 m**.
+
+One bug in that ramp is worth keeping, because it failed loudly in exactly the right way. The distance-from-the-mouth array was seeded `[0]`, which puts the zero at index 0 — the wrong end. The last station's ramp fraction came back undefined, every level went `NaN`, and the measurement printed `NaN` in the one column that mattered rather than a plausible wrong number.
+
+### The fill threshold, swept
+
+`SINK_FILL_AREA` decides which depressions survive as terminal water. Over 24 courses, once corridors were being routed around:
+
+| threshold | channels | median length | ended in a pond | faded out |
+|---|---|---|---|---|
+| 40 000 m² | 70 | 603 m | 1 | 17 |
+| **15 000 m²** | **70** | **470 m** | **8** | **9** |
+| 6 000 m² | 65 | 389 m | 14 | 1 |
+
+15 000 is the one that is not a trade. It keeps every channel the larger figure did and shortens them only slightly, while turning ugly endings into real ones — a channel that fades out partway down a hillside has run out of cut budget, whereas a channel that ends in a pond has arrived somewhere. At 6 000 the fill stops doing its job: five channels are lost outright and the survivors are a third shorter, which is the model tripping into puddles again.
+
 ## A lake could be dropped on top of a pond
 
 The separation test in `addLargeLakes` consulted `accepted` — the lakes this pass has already placed — and nothing else, so a lake was free to land on a pond that had existed since the hole was generated. Measured across twelve courses: **pond-pond overlaps 0, lake-lake 0, lake-pond 10.** The two working checks hid the missing one.

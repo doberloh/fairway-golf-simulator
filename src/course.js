@@ -154,6 +154,23 @@ export function fairwayWidth(h,z,margin=0,side=0){
 export function hazardProfile(o,z){if(!o.banks)return {x:o.x,rx:o.rx};const f=clamp((z-o.z)/o.rz*.5+.5,0,1)*(o.banks.length-1),i=Math.min(o.banks.length-2,Math.floor(f)),t=f-i;return {x:o.banks[i].x+(o.banks[i+1].x-o.banks[i].x)*t,rx:o.banks[i].rx+(o.banks[i+1].rx-o.banks[i].rx)*t};}
 export function hazardMetric(x,z,o,margin=0){const profile=hazardProfile(o,z),nx=(x-profile.x)/(profile.rx+margin),nz=(z-o.z)/(o.rz+margin),a=Math.atan2(nz,nx);return Math.hypot(nx,nz)/(o.banks?1:1+(o.wave2??0)*Math.sin(a*2+o.phase)+(o.wave3??.07)*Math.sin(a*3+o.phase));}
 export function ovalRadius(o,a,margin=0){if(o.banks){const z=o.z+Math.sin(a)*(o.rz+margin),p=hazardProfile(o,z);return {x:p.x-o.x+Math.cos(a)*(p.rx+margin),z:z-o.z};}return {x:Math.cos(a)*(o.rx+margin)*(1+(o.wave2??0)*Math.sin(a*2+o.phase)+(o.wave3??.07)*Math.sin(a*3+o.phase)),z:Math.sin(a)*(o.rz+margin)*(1+(o.wave2??0)*Math.sin(a*2+o.phase)+(o.wave3??.07)*Math.sin(a*3+o.phase))};}
+
+// FITTING A POND TO THE GROUND IT SITS IN.
+//
+// Extracted so that a pond a channel creates at a sink goes through exactly
+// this, rather than through a parallel copy that has to be kept in step with
+// the cut bank, the shore band, the mown collar and the rim tolerances. It
+// shrinks the body up to six times to find a site it can sit level on, and
+// returns null for one that cannot -- which is the caller's cue to drop it.
+export function fitPondBasin(h,p,shapedLand){
+ let low,high;for(let attempt=0;attempt<6;attempt++){const elevations=Array.from({length:128},(_,i)=>{const e=ovalRadius(p,i*Math.PI/64),q=h.toWorld({x:p.x+e.x,z:p.z+e.z});return shapedLand(q.x,q.z);});low=Math.min(...elevations);high=Math.max(...elevations);if(high-low<=(p.large?24:6))break;const old={...p},factor=.76;p.rz*=factor;p.banks=Array.from({length:257},(_,j)=>{const b=hazardProfile(old,p.z+(j/256*2-1)*p.rz);return{x:b.x,rx:b.rx*factor};});p.x=p.banks[128].x;p.rx*=factor;}
+ if(high-low>(p.large?26:9))return null;p.shoreWidth=(p.large?24:14)+(high-low)*2;
+ // Fit the flat lake below both the shoreline and its outer transition. A
+ // center-only elevation can perch a lake above the downhill bank.
+ for(let i=0;i<128;i++){const e=ovalRadius(p,i*Math.PI/64),r=Math.hypot(e.x,e.z);for(const f of [.5,1]){const scale=1+p.shoreWidth*f/r,q=h.toWorld({x:p.x+e.x*scale,z:p.z+e.z*scale});low=Math.min(low,shapedLand(q.x,q.z));}}
+ p.level=low-WATER_FREEBOARD;p.reachX=Math.max(...p.banks.map(b=>Math.abs(b.x-p.x)+b.rx));return {h,b:p,pond:true,reach:Math.max(p.reachX,p.rz)+p.shoreWidth+4};
+}
+
 export function insideOval(x,z,o,margin=0){return hazardMetric(x,z,o,margin)<1;}
 export function generateCourse(settings={},hole=0){
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=BIOMES[s.biome]||BIOMES.pnw;
@@ -197,14 +214,27 @@ export function generateCourse(settings={},hole=0){
   //
   // The bank is anchored outside the semi-rough, and `gap` could only ever push
   // it further out -- so a pond could never touch the corridor, let alone cross
-  // it. That ruled out a shape golf actually uses: water carried off the tee,
-  // or a pond that pinches a fairway into two landing areas.
+  // it. That ruled out a shape golf actually uses: water carried off the tee.
   //
-  // Most ponds still sit clear of play. About one in six bites into the corridor
-  // without crossing it, and the fairway is then mown around the bite. About one
-  // in twelve reaches the far side and splits the hole in two.
+  // A POND MAY BITE INTO A FAIRWAY, BUT IT MAY NOT CROSS ONE. The first version
+  // of this allowed both, and a pond that reaches the far side does not pinch a
+  // hole into two landing areas -- it severs it, and the player is left walking
+  // round water the routing never planned a way past. The bite is the part that
+  // was actually wanted: the corridor narrows, the fairway is mown around the
+  // water, and the line off the tee becomes worth thinking about.
+  //
+  // So the crossing branch is gone, and what is left is bounded rather than
+  // capped: `reach` never exceeds 0.70 of the half width, and the shore is
+  // measured inward from the SEMI-ROUGH edge, so the near bank cannot arrive at
+  // the centreline for any value the random stream can produce -- whatever the
+  // corridor happens to be doing at that station.
+  //
+  // The first setting of this was too timid to be worth having: at 0.12-0.37 it
+  // reached past the fairway edge on 5% of ponds and never by more than 4.1 m,
+  // which is a shore beside a fairway rather than water in play. The bite has
+  // to be seen from the tee to change a decision.
   const bite=rng(),halfWay=fairwayWidth(fairwayGuide,z,0,side);
-  const reach=bite<.08?halfWay*2+s.semiRough*1.6:bite<.25?halfWay*(.35+rng()*.55):0;
+  const reach=bite<.40?halfWay*(.25+rng()*.45):0;
   const gap=-s.semiRough*.8-reach+rng()*(s.semiRough*.8+10),phase=rng()*6.28,variation=[rng(),rng(),rng(),rng()],banks=[];const minZ=fairwayStart+rz+8,maxZ=length-greenSize*1.5-rz;if(minZ>maxZ)continue;z=clamp(z,minZ,maxZ);
   for(let j=0;j<=256;j++){const u=j/256,zz=z+(u*2-1)*rz,k=Math.min(2,Math.floor(u*3)),t=smooth(u*3-k),size=rx*(.65+.65*(variation[k]*(1-t)+variation[k+1]*t)),edge=center(zz)+side*fairwayWidth(fairwayGuide,zz,s.semiRough,side);banks.push({x:edge+side*(gap+.75+size),rx:size});}
   const p={x:banks[128].x,z,rx,rz,phase,banks,side,gap,depth:s.waterMin+rng()*(s.waterMax-s.waterMin)};
@@ -520,17 +550,69 @@ export function generateWorld(settings={}){
  }
  if(!NO_INLAND_WATER.has(s.biome))addLargeLakes(s,holes,halfX,halfZ,nearest,shapedLand,random);
  let basins=[];
- for(const h of holes){h.ponds=h.ponds.filter(p=>{let low,high;for(let attempt=0;attempt<6;attempt++){const elevations=Array.from({length:128},(_,i)=>{const e=ovalRadius(p,i*Math.PI/64),q=h.toWorld({x:p.x+e.x,z:p.z+e.z});return shapedLand(q.x,q.z);});low=Math.min(...elevations);high=Math.max(...elevations);if(high-low<=(p.large?24:6))break;const old={...p},factor=.76;p.rz*=factor;p.banks=Array.from({length:257},(_,j)=>{const b=hazardProfile(old,p.z+(j/256*2-1)*p.rz);return{x:b.x,rx:b.rx*factor};});p.x=p.banks[128].x;p.rx*=factor;}
- if(high-low>(p.large?26:9))return false;p.shoreWidth=(p.large?24:14)+(high-low)*2;
- // Fit the flat lake below both the shoreline and its outer transition. A
- // center-only elevation can perch a lake above the downhill bank.
- for(let i=0;i<128;i++){const e=ovalRadius(p,i*Math.PI/64),r=Math.hypot(e.x,e.z);for(const f of [.5,1]){const scale=1+p.shoreWidth*f/r,q=h.toWorld({x:p.x+e.x*scale,z:p.z+e.z*scale});low=Math.min(low,shapedLand(q.x,q.z));}}
- p.level=low-WATER_FREEBOARD;p.reachX=Math.max(...p.banks.map(b=>Math.abs(b.x-p.x)+b.rx));basins.push({h,b:p,pond:true,reach:Math.max(p.reachX,p.rz)+p.shoreWidth+4});return true;});
+ for(const h of holes){h.ponds=h.ponds.filter(p=>{const basin=fitPondBasin(h,p,shapedLand);if(basin)basins.push(basin);return !!basin;});
  for(const b of h.bunkers){const q=h.toWorld(b);let low=Infinity;for(let i=0;i<24;i++){const e=ovalRadius(b,i*Math.PI/12),v=h.toWorld({x:b.x+e.x,z:b.z+e.z});low=Math.min(low,shapedLand(v.x,v.z));}b.floor=low-1.05;b.depth=1.05;basins.push({h,b,pond:false,reach:Math.max(b.rx,b.rz)*1.3});}}
  // An island's water is the ocean: it is handed no channels rather than
  // streams.js being taught about biomes, which would make the two files
  // import each other.
- const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea);
+ // A CHANNEL THAT ENDS IN A HOLLOW ENDS IN A POND.
+ //
+ // The drainage model leaves a channel at one of four places: off the edge of
+ // the map, at the sea, at another channel it has joined, or at a SINK -- a
+ // depression too large for the fill to have flattened away, which is to say a
+ // real low point in the landscape. Until now the channel simply stopped in
+ // one, which reads as water running into a hillside.
+ //
+ // It gets a real pond, built and fitted by the SAME `fitPondBasin` every other
+ // body goes through, so it inherits the cut bank, the shore band, the mown
+ // collar, the map outline, the reflection probe and the rim tolerances rather
+ // than becoming a second kind of water with its own rules to keep in step.
+ //
+ // This is a callback rather than a pass afterwards because the join needs the
+ // channel's path while it is still editable: streams.js trims the stations
+ // that fall in the water and ramps the last stretch down to the level returned
+ // here. It is also before the ground grid, which matters for a different
+ // reason -- `analyticHeight` closes over `basins` and the mesh is sampled
+ // from it.
+ const sinkRng=random(s.seed+':sink-ponds');
+ function sinkPond({sink,points}){
+  // AT THE BOTTOM OF THE HOLLOW, SIZED BY THE CHANNEL THAT FILLS IT.
+  //
+  // A first version sized the pond to the depression and centred it on the
+  // centroid, which was wrong twice over: a surviving depression is a valley
+  // floor of 40 000 to 430 000 square metres, and its centroid sat 267 to 773 m
+  // from where the channel actually arrived. The hollow says WHERE the water
+  // collects; the channel says HOW MUCH. The span survives only as a cap, so a
+  // pond never climbs out of the ground that holds it.
+  const t=points[points.length-1];
+  const want=(15+t.width*2.4)*(.85+sinkRng()*.5);
+  const rx=Math.max(11,Math.min(want,sink.spanX*.85)),rz=Math.max(11,Math.min(want*(.7+sinkRng()*.55),sink.spanZ*.85));
+  const reach=Math.max(rx,rz)*1.12,cx=sink.x,cz=sink.z;
+  if(isSea(cx,cz)||Math.abs(cx)+reach>halfX-8||Math.abs(cz)+reach>halfZ-8)return null;
+  const q=nearest(cx,cz);
+  // Four bodies per hole is the GPU atlas limit, not a design choice.
+  if(q.h.ponds.length>=4)return null;
+  // The same separation a lake obeys. Where a terminal pond would land on water
+  // that is already there, the channel has found its way to it, and draining
+  // into an existing body is a better answer than stacking a second surface
+  // over the first -- which is the exact fault the lake check was added for, at
+  // 14.19 m of daylight between the two planes.
+  if(holes.some(hh=>hh.ponds.some(p=>{const c=hh.toWorld(p);return Math.hypot(cx-c.x,cz-c.z)<reach+Math.max(p.reachX||p.rx,p.rz)+35;})))return null;
+  const h=q.h,c=h.toLocal({x:cx,z:cz}),phase=sinkRng()*6.28;
+  const p={x:c.x,z:c.z,rx,rz,phase,sink:true,depth:s.waterMin+sinkRng()*(s.waterMax-s.waterMin),
+   banks:Array.from({length:257},(_,i)=>{const u=i/256*Math.PI*2;
+    return {x:c.x+rx*.1*Math.sin(u+phase),rx:rx*(.8+.14*Math.sin(u+phase)+.08*Math.sin(u*3+phase*1.7))};})};
+  const basin=fitPondBasin(h,p,shapedLand);
+  if(!basin)return null;
+  h.ponds.push(p);basins.push(basin);
+  const world=h.toWorld(p);
+  return {level:p.level,
+   inside:(x,z)=>{const l=h.toLocal({x,z});return hazardMetric(l.x,l.z,p)<1;},
+   // Handed back so a LATER channel on the same course avoids this pond; the
+   // protect list was built before it existed.
+   protect:{...world,pond:true,r:Math.max(p.reachX,p.rz)+p.shoreWidth+12,keep:Math.max(p.reachX,p.rz)+p.shoreWidth+12}};
+ }
+ const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea,(x,z)=>nearest(x,z).d,sinkPond);
  // Channel routing avoids bunkers, but a tightly packed course can force a
  // crossing. Water standing in sand is neither a playable bunker nor a readable
  // hazard, so the channel washes that bunker out. Bunker count is already an
@@ -539,6 +621,23 @@ export function generateWorld(settings={}){
  for(const h of holes)for(const b of h.bunkers){const ring=[{x:b.x,z:b.z},...Array.from({length:16},(_,i)=>{const e=ovalRadius(b,i*Math.PI/8);return{x:b.x+e.x,z:b.z+e.z};})];
   if(ring.some(p=>{const q=h.toWorld(p);return (streams.at(q.x,q.z)?.edge??Infinity)<=1;}))drowned.add(b);}
  if(drowned.size){for(const h of holes)h.bunkers=h.bunkers.filter(b=>!drowned.has(b));basins=basins.filter(x=>x.pond||!drowned.has(x.b));}
+ // A CHANNEL THAT ENDS IN A SINK ENDS IN A POND.
+ //
+ // The drainage model leaves a channel at one of four places: the sea, a
+ // surviving lake, another channel it has joined, or a sink -- a depression too
+ // large to have been flooded away. A sink is much the commonest, 40 of 59
+ // endings across twenty courses, and until now the channel simply stopped in
+ // one, which reads as water running into a hillside.
+ //
+ // It gets a real pond, built and fitted by the SAME `fitPondBasin` every other
+ // body goes through, so it inherits the cut bank, the shore band, the mown
+ // collar, the map outline, the reflection probe and the rim tolerances rather
+ // than becoming a second kind of water with its own rules to keep in step.
+ //
+ // The position in the pipeline is forced from both sides: after
+ // `generateStreams`, because that is what says where the sinks are, and before
+ // the ground grid, because `analyticHeight` closes over `basins` and the mesh
+ // is sampled from it.
  function analyticHeight(x,z){let y=shapedLand(x,z);for(const {h,b,pond,reach} of basins){const q=h.toLocal({x,z});if(Math.abs(q.x-b.x)>reach||Math.abs(q.z-b.z)>reach)continue;const d=hazardMetric(q.x,q.z,b);
  // A cut bank rather than a ramp: natural ground is held right out to the rim
  // and then drops over WATER_LIP, which is what a bunker does and what makes one
