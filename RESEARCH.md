@@ -571,6 +571,64 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Raised tees everywhere, merged collars, and a landform theory that was wrong
+
+Four faults reported off two screenshots. Three had straightforward causes. The fourth was the interesting one, and the theory behind it — mine as much as the owner's — turned out to be half wrong.
+
+**Mown collars were overlapping on 12% of tee pairs.** Siting can move a tee across the hole and nothing told it to keep out of its neighbour's way. Worth noting the pads themselves clashed only 3 times in 648, so a check on pads alone would have reported this as fine; it is the collars that merge into one blob of green on screen.
+
+**Three tees near each other built three separate humps** with saddles between, because each pad settled to its own level.
+
+**A brown scar across a green's surround.** The tee-shaping guard stopped at the green's fringe plus four metres, which leaves the mown *surround* outside it — so a tee's shoulder could still fall across maintained turf. On the old gentle ramp nobody noticed. On the new short shoulder it is steep, and mown grass is tinted dry past about six degrees, so it reads as rough painted over semi-rough. It is neither: it is semi-rough tinted as though it were burnt.
+
+### The landform theory, and why it was wrong
+
+The fourth report was that the base landscape puts a basin in the ground wherever a tee goes, leaving raised tees everywhere. The mechanism looked obvious and I agreed with it on sight: hills only grow *away* from a playing corridor, so every corridor sits at base level with the land rising around it, and `nearest` counts the ground behind the tee as full corridor even though nothing is mown there. The start of every hole is a flat bowl.
+
+That is all true. It is also not what was causing the problem, and three attempts at it each made things worse:
+
+| | sites needing real earthwork | blind shots | ground under a tee, p95 |
+|---|---|---|---|
+| unchanged | 67 | 53 | 1.79 m |
+| full countryside relief at the tee | 402 | 150 | 8.50 m |
+| relief at 25 / 40 / 60% | 172 / 234 / 317 | 64 / 74 / 97 | 2.66 / 3.53 / 5.58 |
+| raised to meet its surroundings, not roughened | 253 | 117 | 7.02 m |
+
+**A flat bowl is easy to site a tee on.** Handing siting the full countryside gave it rougher ground, not better ground — the opposite of the intent. And the last variant, which raised the tee area to the average height around it without adding the noise, failed for a different reason: the raise has to come back down to the fairway somewhere, and there are only thirty-odd metres to do it in, so the tee area became a ramp instead of a plateau.
+
+Reverted, and then measured the claim itself instead of its supposed cause:
+
+- tee height against the country 60 m around it: median **0**, p10 −3.5, p90 +3.5
+- tee height against its own fairway 120 m out: median +1.6
+- **pads raised to clear a blind shot: 198 of 702, or 28%, by a median of 2.7 m**
+
+Tees are not sitting in bowls. The mounds are the *sightline lift*, and there were a lot of them because siting weighted flat ground at 3 and a clear shot at 1.6 — so it would happily take a blind flat spot and then build a mound to see over. Reweighting a clear shot to 10 is where that stops buying anything:
+
+| clear-shot weight | pads raised | blind shots |
+|---|---|---|
+| 1.6 | 198 | 53 |
+| 6 | 134 | 42 |
+| **10** | **122** | **36** |
+| 14 | 122 | 36 |
+
+Not a trade: both got better, because choosing a site you can see from is simply cheaper than building one.
+
+### After all four
+
+| | before | after |
+|---|---|---|
+| pads raised for sightline | 198 (28%) | **122 (18%)** |
+| tee shots blocked over 1 m | 53 | **33** |
+| blocked over 3 m | 7 | **5** |
+| mown collars overlapping | 77 (12%) | **8 (1%)** |
+| height step between adjacent tees, p95 | 3.46 m | 2.70 m |
+
+Collar overlap is scored rather than forbidden. Forbidding it outright left 14 clashes instead of 8, because a tee on a tight hole would find nowhere legal to go and fall back to where it started — which is often the overlapping spot it was trying to escape. The worst site still beats no site.
+
+Where two collars would still run into each other, the pads share a level so the shaping blends them into one platform instead of three humps. The highest wins, since dropping a tee to meet a lower neighbour would undo the sightline it was raised for.
+
+**The corridor trough is still there and is left alone deliberately.** It does real work — it is what makes a hole read as a corridor from the tee — and every attempt to weaken it at the tee end measured worse. What remains true is that the ground behind a tee is flatter than the country around it. That is now a known property rather than a suspected fault.
+
 ## Tees sited on ground that suits them
 
 Every tee used to go straight down the middle of the hole at a fixed fraction of its length, and the land was then forced to become a tee there. Every complaint about how they looked came from that one decision: the wide excavated footprint, the ramps reaching into greens, the sense of a pad dropped onto a hillside rather than built into it.

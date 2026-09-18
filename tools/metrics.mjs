@@ -48,7 +48,7 @@ export const METRICS = {
   run(w) {
    const series = {step: [], padSpread: [], collarRelief: [], normalJump: [], groundSlope: [],
     siteSpread: [], slid: [], lift: [], lateral: []};
-   const counts = {holes: 0, tees: 0, sited: 0, needsWork: 0};
+   const counts = {holes: 0, tees: 0, sited: 0, needsWork: 0, raised: 0};
    // What the generator decided, read back rather than inferred: how uneven
    // each chosen site was before anything was built, how far it had to move to
    // be found, and how much it was then raised.
@@ -56,6 +56,7 @@ export const METRICS = {
     series.siteSpread.push(t.spread); series.slid.push(t.slid); series.lift.push(t.lift);
     if (t.slid > 1) counts.sited++;
     if (t.spread > 1.5) counts.needsWork++;
+    if (t.lift > .05) counts.raised++;
    }
    const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0};
    for (const h of w.holes) {

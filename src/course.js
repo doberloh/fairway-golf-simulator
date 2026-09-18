@@ -301,6 +301,12 @@ export function generateCourse(settings={},hole=0){
 export const TEE_PAD={x:6,z:8},TEE_APRON={x:10.2,z:13.6};
 // The mown collar is the pad scaled by this, in both directions.
 export const TEE_APRON_SCALE=TEE_APRON.z/TEE_PAD.z;
+// How much a clear shot is worth against flat ground when picking a tee site.
+// How much a clear shot is worth against flat ground when picking a tee site.
+// Swept: at 1.6 a fifth more pads had to be RAISED to see over what was in
+// front of them, and there were half again as many blind shots. Past 10 it
+// stops buying anything and only picks rougher ground.
+const TEE_SEE=10;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
 //
 // They used to be the same thing -- one fixed oval centred on every marker --
@@ -688,8 +694,14 @@ export function generateWorld(settings={}){
  // way down and the cut is a crease. At the old 78 a full-lift pad wanted 98
  // and got 64, which is where the one 13.5 degree outlier came from.
  const PAD_REACH=115;
+ // THE SURROUND COUNTS, NOT JUST THE GREEN. The guard used to stop at the
+ // fringe plus four metres, which leaves the mown surround outside it -- so a
+ // tee's shoulder could still fall across maintained turf beside a green. On a
+ // gentle ramp that went unnoticed; on the short steep shoulder it reads as a
+ // brown scar, because mown grass is tinted dry past about six degrees and a
+ // tee bank is far steeper than that.
  const greenGuards=holes.map(h=>{
-  const c=h.worldGreen??h.worldPin,keep=h.greenSize*h.greenAspect+s.fringe+4;
+  const c=h.worldGreen??h.worldPin,keep=h.greenSize*h.greenAspect+s.fringe+s.semiRough+4;
   return {x:c.x,z:c.z,keep,fade:keep+16};
  });
  // A TEE COMPLEX IS LEVELLED AS ONE THING, NOT AS THREE INDEPENDENT PADS.
@@ -738,6 +750,7 @@ export function generateWorld(settings={}){
   // Forward-most first, so a tee behind it knows what height it has to beat.
   const order=[...pads].sort((a,b)=>b.localZ-a.localZ);
   let aheadZ=Infinity,aheadLevel=-Infinity;
+  const placed=[];
   for(const pad of order){
    const rx=TEE_PAD.x*TEE_APRON_SCALE,rz=pad.rz*TEE_APRON_SCALE;
    // How the ground reads over the whole collar, not just at a point: a site
@@ -775,10 +788,30 @@ export function generateWorld(settings={}){
      const a=i*Math.PI/4,lx=cx+Math.cos(a)*rx,lz=cz+Math.sin(a)*rz;
      const surf=localSurface(h,lx,lz);
      if(surf==='green'||surf==='fringe'||surf==='water'||surf==='sand')blocked=true;
+     // And clear of the green's mown surround, not merely of the green.
+     if(!blocked&&greenDistance(h,lx,lz)<s.fringe+s.semiRough+4)blocked=true;
      const q=h.toWorld({x:lx,z:lz});
      if(!blocked&&(isSea(q.x,q.z)||nearby(q.x,q.z)!==h))blocked=true;
     }
     if(blocked)continue;
+    // NO TWO COLLARS SHOULD TOUCH. Siting can move a tee sideways, and nothing
+    // said it had to keep out of its neighbour's way -- measured, the mown
+    // collars overlapped on 12% of tee pairs, which is the merged blob of
+    // green the owner reported. The pads themselves almost never clashed, so
+    // checking those alone would have missed it.
+    //
+    // A PENALTY RATHER THAN A BAN, because a ban leaves nowhere to go on a
+    // tight hole and the tee falls back to where it started -- which is often
+    // the overlapping spot it was trying to escape. Scored, the worst site
+    // still beats no site.
+    let clash=0;
+    for(let i=0;i<12;i++){
+     const a=i*Math.PI/6,lx=cx+Math.cos(a)*rx,lz=cz+Math.sin(a)*rz;
+     for(const p of placed){
+      const d=Math.hypot((lx-p.x)/(TEE_PAD.x*TEE_APRON_SCALE),(lz-p.z)/(p.rz*TEE_APRON_SCALE));
+      if(d<1)clash=Math.max(clash,1-d);
+     }
+    }
     const g=survey(cx,cz);
     // Sat at the middle of what the ground is doing, so the cut and the fill
     // are the same size and neither is large.
@@ -790,7 +823,8 @@ export function generateWorld(settings={}){
     // site needs and how much it already looks like a tee.
     const score=g.spread*3
      +Math.max(0,aheadLevel+TEE_STEP-level)*2.5
-     +blind*1.6
+     +blind*TEE_SEE
+     +clash*40
      +Math.abs(cx-h.center(cz))*.02;
     if(!best||score<best.score)best={score,cx,cz,level,g};
    }
@@ -826,7 +860,26 @@ export function generateWorld(settings={}){
    // What the site was like before anything was done to it, and how far it
    // had to move to be found. Reported by the measurement harness.
    pad.spread=best.g.spread;pad.slid=Math.hypot(dx,dz);pad.lift=lift;
+   placed.push({x:pad.t.x,z:pad.localZ,rz:pad.rz});
    aheadZ=pad.localZ;aheadLevel=pad.y;
+  }
+  // ONE PIECE OF EARTHWORK, NOT ONE PER TEE.
+  //
+  // Three pads near each other, each settled to its own level, build three
+  // separate humps with saddles between them -- which is what a tee complex
+  // must not look like. Where their shoulders would run into each other they
+  // share a level instead, so the shaping blends them into a single platform.
+  // The highest wins, because dropping a tee to meet a lower neighbour would
+  // undo the sightline it was raised for.
+  const near=(a,b)=>{
+   const dx=(a.t.x-b.t.x)/(TEE_PAD.x*TEE_APRON_SCALE*1.7);
+   const dz=(a.localZ-b.localZ)/((a.rz+b.rz)*TEE_APRON_SCALE*.85);
+   return dx*dx+dz*dz<1;
+  };
+  for(let again=true;again;){
+   again=false;
+   for(const a of pads)for(const b of pads)
+    if(a!==b&&near(a,b)&&b.y>a.y+1e-6){a.y=b.y;again=true;}
   }
   // Yardage follows the tee, or the card lies about the hole.
   for(const t of Object.values(h.tees)){
