@@ -64,3 +64,42 @@ Inside a turn, run whatever the work needs. Start a preview, drive the game in i
 So: shut down anything you started before you finish. If a process was spawned through a wrapper, check the port is actually free rather than trusting that stopping the wrapper stopped the child — `npx vite preview` leaves its server running when the `npx` that launched it is killed, and the next attempt silently attaches to the stale one and loads nothing.
 
 Never end a turn by telling the owner a URL is up and offering to kill it later. Either it was needed for verification and is now closed, or it was not needed.
+
+## Measure with `tools/bench.mjs`, not with a throwaway script
+
+Generating a 9-hole course takes three to five seconds, so any question asked
+of the generator is answered by building dozens of them. Answering each
+question with its own script means rebuilding the same terrain for every
+question, single-threaded — one session spent most of an hour doing exactly
+that, regenerating the same two dozen courses about twenty-five times over.
+
+```bash
+node tools/bench.mjs                          # every metric, standard tier
+node tools/bench.mjs tees blind --tier quick  # iterate: ~7 s
+node tools/bench.mjs --tier full              # confirm: ~30 s for 30 courses
+node tools/bench.mjs --set blindTees=50       # sweep one control
+node tools/bench.mjs --tier full --save       # store as the baseline
+node tools/bench.mjs --tier full --since      # what moved since the baseline
+```
+
+Every metric shares one generation pass and the courses are built across all
+cores, which is a measured **25x** against the serial cost.
+
+**Iterate on `quick`, confirm on `full`.** The point of the tiers is that the
+cheap one is cheap enough to run after every edit.
+
+**Run `--since` before and after any change to terrain generation.** A tee-ramp
+change once silently broke channel routing and only turned up in the test suite
+with no numbers attached.
+
+**A new metric imports its geometry from `src`. It never reimplements it.**
+Four measurements in this project's history have lied, and every one of them
+lied because it recomputed what it was checking: a pond distance scaled by the
+wrong axis, a sightline ray drawn straight through world space while the
+generator drew it along the centreline, three disagreeing beach metrics, and a
+lake check that consulted only half the bodies. `sightline` is exported from
+`course.js` for exactly this reason. A number that is wrong is worse than no
+number, because it gets acted on.
+
+**An `invariant` is a rule, not a reading.** It must be zero, the harness
+prints the offending courses by name, and a non-zero one exits non-zero.

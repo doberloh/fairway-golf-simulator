@@ -1,0 +1,145 @@
+{
+ "tier": "full",
+ "metrics": [
+  "tees",
+  "blind",
+  "channels",
+  "ponds"
+ ],
+ "set": {},
+ "courses": 30,
+ "wallSeconds": 29.2,
+ "buildSeconds": 732.7,
+ "invariants": {
+  "tees.teeBelowTheOneInFront": 0,
+  "channels.stationInsideAFairway": 0,
+  "channels.stationOnAGreen": 0,
+  "channels.waterInsideAnotherBody": 0,
+  "ponds.pondCrossesAFairway": 0,
+  "ponds.overlappingBodies": 0
+ },
+ "counts": {
+  "tees.holes": 270,
+  "tees.tees": 810,
+  "blind.blockedOver1m": 80,
+  "blind.blockedOver3m": 17,
+  "blind.shots": 810,
+  "channels.requested": 90,
+  "channels.placed": 87,
+  "channels.endEdge": 69,
+  "channels.endSink": 7,
+  "channels.endSea": 0,
+  "channels.endTrimmed": 9,
+  "channels.endConfluence": 2,
+  "channels.endStall": 0,
+  "ponds.bodies": 199,
+  "ponds.bitingIn": 27,
+  "ponds.terminal": 6
+ },
+ "summary": {
+  "tees.step": {
+   "n": 540,
+   "min": 0.001430834809806214,
+   "p05": 0.03277813528179152,
+   "median": 0.3498587849460364,
+   "p95": 0.8991127014160156,
+   "max": 1.1315326690673828
+  },
+  "tees.padSpread": {
+   "n": 810,
+   "min": 0,
+   "p05": 0,
+   "median": 0.001236301566496678,
+   "p95": 0.34710635247526866,
+   "max": 0.5817361951573474
+  },
+  "tees.collarRelief": {
+   "n": 810,
+   "min": 0,
+   "p05": 0.000008278697791297418,
+   "median": 0.00980997301875064,
+   "p95": 0.34960746354412464,
+   "max": 0.5831081323128693
+  },
+  "tees.normalJump": {
+   "n": 810,
+   "min": 0.21592193009206542,
+   "p05": 0.33557157486477646,
+   "median": 1.2034605551096615,
+   "p95": 2.7556960054912736,
+   "max": 4.97562931434594
+  },
+  "tees.groundSlope": {
+   "n": 810,
+   "min": 1.695097868674106,
+   "p05": 2.707257285446282,
+   "median": 5.189735330964434,
+   "p95": 11.830572777563955,
+   "max": 18.44555636609912
+  },
+  "blind.blue": {
+   "n": 270,
+   "min": 0,
+   "p05": 0,
+   "median": 0,
+   "p95": 1.4677109981744891,
+   "max": 2.6536548925612387
+  },
+  "blind.white": {
+   "n": 270,
+   "min": 0,
+   "p05": 0,
+   "median": 0,
+   "p95": 1.649779791095149,
+   "max": 4.136657572377459
+  },
+  "blind.red": {
+   "n": 270,
+   "min": 0,
+   "p05": 0,
+   "median": 0,
+   "p95": 3.133347291672262,
+   "max": 8.647289840402603
+  },
+  "channels.length": {
+   "n": 87,
+   "min": 190.35436544917474,
+   "p05": 236.19666803648911,
+   "median": 429.85776498403317,
+   "p95": 720.9227397847235,
+   "max": 1234.0222438932512
+  },
+  "channels.turning": {
+   "n": 87,
+   "min": 0.268977118743047,
+   "p05": 0.4126452976261826,
+   "median": 1.490457087002544,
+   "p95": 3.2818027843725615,
+   "max": 4.3809053362145765
+  },
+  "channels.greenClearance": {
+   "n": 270,
+   "min": 10.954592626552742,
+   "p05": 30.905879186961354,
+   "median": 268.5806881960689,
+   "p95": 798.3529200184953,
+   "max": 1172.6678132534305
+  },
+  "channels.pondGap": {
+   "n": 193,
+   "min": 23.626193302511503,
+   "p05": 30.468526615351536,
+   "median": 298.9929768226939,
+   "p95": 668.5017158820625,
+   "max": 1016.0599577490834
+  },
+  "ponds.bite": {
+   "n": 27,
+   "min": 0.25613173695503555,
+   "p05": 0.25613173695503555,
+   "median": 5.651033348294494,
+   "p95": 13.033145714687883,
+   "max": 13.033145714687883
+  }
+ }
+}

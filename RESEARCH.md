@@ -571,6 +571,53 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A measurement harness, because measuring was the bottleneck
+
+The generator is judged by measurement -- there is no other way to know whether a change to terrain made it better -- and for a long time every question was answered by a throwaway script that rebuilt the courses it needed for itself, single-threaded. One session spent most of an hour on a single function, and the arithmetic of why is unflattering:
+
+| | |
+|---|---|
+| one 9-hole world, water on | 5.3 s |
+| machine cores | 32 |
+| cores in use | **1** |
+| measurement scripts run in that session | ~25, each rebuilding 20-30 courses |
+| redundant regeneration | roughly 50 of the 60 minutes |
+
+Two multipliers were going unused, and they compose. Share one generation pass between every metric instead of each script building its own; and build the courses across the cores that are sitting there. `tools/bench.mjs` does both: **768 seconds of generation in 29.7 seconds of wall time, 25.8x.**
+
+A generated world is full of closures -- `height`, `surface`, `toWorld` -- so it cannot be posted across a thread boundary. That is not an obstacle to work around, it is what settles the design: the worker runs the *metrics* too and returns plain numbers.
+
+Three tiers, because the cost of asking is what decides how often you ask. `quick` is four courses in about seven seconds, cheap enough to run after every edit; `full` is thirty in thirty. The discipline of iterating small and confirming wide only works if the small one is genuinely cheap.
+
+### It found a bug in its first full run
+
+The suite was green. The harness, on a wider fixture, reported 58 channel stations inside a fairway on two courses -- both seed `S5`, which the test fixture does not include. That was a real consequence of the corridor ridge fix from the previous session, and a nicely circular one: **raising a corridor into a hill is what stops water crossing it, and a hill is also where water starts.** The upstream trace that finds a channel's head climbs the steepest parent, so it climbed the new hill and put a headwater 26.8 m inside hole 3, which then ran 29 stations down the fairway.
+
+The keep-out pass downstream cannot repair that, because a source is not a detour -- there is no direction to push it that makes it belong. The head is excluded where it is chosen instead, and required to start 20 m clear, because stopping it at the first cell off the corridor left it on the fairway *edge* where meander walked it straight back on (29 to 18 to 20 across those attempts).
+
+What finally closed it was a defect the trace proved rather than another guess. The clearance loop's step was capped at a flat 5 m and damped to 0.55, so it moved 2.75 m per round -- and the worst case was a head **87.5 m** inside a corridor, needing 32 rounds when it had 30. The trace showed it converging 87.5 to 15.6 by round 24 and then turning round and climbing again. Damping alone already lands short of the target every round, which is geometric and settles; it was the flat cap that made the approach linear and made it run out.
+
+Zero violations, 87 of 90 channels still placed.
+
+### Why the metrics import their geometry
+
+`sightline` moved out of `course.js` as an export so the generator and the measurement call the same function. This is the one rule the harness has, and it is there because four measurements in this project have lied:
+
+- pond clearance scaled a normalised oval distance by the **minor** axis, and reported eight breaches that had never happened
+- the sightline ray was drawn straight through world space in one place and along the centreline in the other; on a dogleg those are different lines over different ground
+- three beach measurements in a row disagreed before a mown-centreline metric settled it
+- a lake-on-pond check consulted only the lakes that pass had placed
+
+Every one recomputed what it was checking. A number that is wrong is worse than no number, because it gets acted on.
+
+### The test suite: structure fixed, wall unchanged
+
+The runner puts each file in its own process and runs them in parallel, so the suite's wall time is its slowest single *file*, not its total work. `water-terrain.test.mjs` was 326 s alone, more than the whole suite's 212 s wall.
+
+Worlds are now memoized per file, and that file is split in two. Both are right, and **neither moved the wall**, which is still 217 s. Memoization only helps where a file builds the *same* course twice and that file mostly builds distinct ones; splitting helped that file and merely promoted the next one. Six files are still over 100 s, and the remaining fix is mechanical -- keep splitting, or cut fixture sizes and lose coverage.
+
+Profiling one generation says where the real ceiling is: **`nearest` is 15.3% of a course**, and with `sideWidth`, `unitCenter` and `toLocal` the hole-centreline math is about 40%. `nearest` walks all nine holes on every call and has no spatial rejection. A world-space bounding box per hole, skipped when it cannot beat the running best, would cut most of that -- and unlike splitting test files it would speed up the tests, the harness and the game's own loading together. Sampling the corridor once per drainage cell rather than twice, tried here, was inside the noise; the calls that matter are elsewhere.
+
 ## A tee plateau shaped like a box, under paint shaped like an oval
 
 Reported as odd shading artifacts around the raised tees. The tee surface and its mown collar are both ellipses — `localSurface` tests `(dx/6)² + (dz/8)² < 1` — but the ground was flattened over a *box*, `max(|dx| − 6, |dz| − 8)`. At each of the four corners the flat ground therefore jutted about 3 m past the painted tee, so the shading broke along a rectangle that nothing on screen agreed with.

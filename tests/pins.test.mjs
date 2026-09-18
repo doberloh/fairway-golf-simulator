@@ -1,7 +1,8 @@
 // Hole locations, and the greens they are cut into.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateWorld, greenDistance, pinBandFor, pinDayOf, PIN_BANDS} from '../src/course.js';
+import {greenDistance, pinBandFor, pinDayOf, PIN_BANDS} from '../src/course.js';
+import {world as buildWorld} from './worlds.mjs';
 import {greenContour} from '../src/course-plan.js';
 
 const FLAT = {elevation: 0, trees: 0, water: 0, rivers: 0, creeks: 0, lakes: 0, homes: false, bunkerCount: 0};
@@ -14,7 +15,7 @@ const slopeAt = (h, x, z) => {
   (greenContour(h, x, z + e) - greenContour(h, x, z - e)) / (2 * e)) * 100;
 };
 const holesFor = (pinDay, greenDifficulty = 70) =>
- SEEDS.flatMap(seed => generateWorld({...FLAT, seed, holes: 9, greenDifficulty, pinDay}).holes);
+ SEEDS.flatMap(seed => buildWorld({...FLAT, seed, holes: 9, greenDifficulty, pinDay}).holes);
 
 test('a cup is always cut on the green, with room around it', () => {
  // Three paces is the tightest a championship setup cuts. Nothing, on any day or
@@ -91,7 +92,7 @@ test('recutting the hole locations does not rebuild the course', () => {
  // green, and that disc was centred on the CUP -- so moving a pin moved the
  // collision volume, which moved the next hole, which rerouted everything and
  // changed the terrain under all of it. A pin is a pin. It moves nothing.
- const layout = pinDay => generateWorld({...FLAT, seed: 'SHOULDERS', holes: 9, greenDifficulty: 70, pinDay})
+ const layout = pinDay => buildWorld({...FLAT, seed: 'SHOULDERS', holes: 9, greenDifficulty: 70, pinDay})
   .holes.map(h => `${JSON.stringify(h.origin)}@${h.rotation.toFixed(6)}|${h.green.x.toFixed(4)},${h.green.z.toFixed(4)}`).join('|');
  const thursday = layout('Thursday');
  for (const day of ['Friday', 'Saturday', 'Sunday'])
@@ -105,7 +106,7 @@ test('the green slider reaches from level to genuinely severe', () => {
  // faces well past ten per cent, and still somewhere flat enough to cut a hole.
  const survey = greenDifficulty => {
   const slopes = [], heights = [];
-  for (const h of generateWorld({...FLAT, seed: 'EVERGREEN', holes: 9, greenDifficulty}).holes) {
+  for (const h of buildWorld({...FLAT, seed: 'EVERGREEN', holes: 9, greenDifficulty}).holes) {
    for (let dx = -20; dx <= 20; dx += 1.5) for (let dz = -20; dz <= 20; dz += 1.5) {
     const x = h.green.x + dx, z = h.green.z + dz;
     if (greenDistance(h, x, z) > -.5) continue;
@@ -153,7 +154,7 @@ test('the pin day is reported as itself, and anything unrecognised reads as Thur
 test('the cup and the green centre are far enough apart to tell apart', () => {
  const CUP_RADIUS = 0.053975;
  for (const day of ['thursday', 'friday', 'saturday', 'sunday']) {
-  const world = generateWorld({seed: 'CUPCUT', holes: 9, pinDay: day});
+  const world = buildWorld({seed: 'CUPCUT', holes: 9, pinDay: day});
   let moved = 0;
   for (const h of world.holes) {
    const gap = Math.hypot(h.pin.x - h.green.x, h.pin.z - h.green.z);

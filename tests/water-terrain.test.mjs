@@ -1,6 +1,11 @@
 // What water is allowed to do to the ground it sits in.
 //
 // Three rules: water bodies belong on land, a pond is allowed to reach into
+// SPLIT FROM water-terrain.test.mjs BECAUSE THE RUNNER PARALLELISES BY FILE.
+// Tests inside one file run on one thread, so a file that builds forty courses
+// is a forty-course serial queue however many cores are idle. This file and
+// its sibling were one 326-second file -- the single longest in the suite, and
+// therefore the suite's entire wall time.
 // play, and a fairway that meets water stops behind a band of semi-rough.
 //
 // The third is HALF testable here. This file checks the lie; the matching paint
@@ -9,7 +14,8 @@
 // and look at the other.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateWorld, ovalRadius, insideOval, fairwayWidth, NO_INLAND_WATER, BEACH_RISE} from '../src/course.js';
+import {ovalRadius, insideOval, fairwayWidth, NO_INLAND_WATER, BEACH_RISE} from '../src/course.js';
+import {world as buildWorld} from './worlds.mjs';
 import {shoreBands} from '../src/streams.js';
 
 test('an island has no inland water at all, whatever the settings say', () => {
@@ -19,7 +25,7 @@ test('an island has no inland water at all, whatever the settings say', () => {
  // the water it had -- so this is asserted at the MAXIMUM of every one of them.
  assert.ok(NO_INLAND_WATER.has('island'));
  for (const seed of ['A', 'B', 'C']) {
-  const w = generateWorld({seed, biome: 'island', holes: 9,
+  const w = buildWorld({seed, biome: 'island', holes: 9,
    water: 100, lakes: 3, rivers: 2, creeks: 3});
   assert.equal(w.holes.reduce((n, h) => n + h.ponds.length, 0), 0, 'ponds on an island');
   assert.equal((w.largeLakes || []).length, 0, 'lakes on an island');
@@ -39,7 +45,7 @@ test('no watercourse is drawn on the seabed', () => {
  // the course while the profile only ever trimmed them for the CUT budget. On a
  // coast that put stations out at sea -- 87 to 95% of them on island seeds
  // before islands stopped carrying channels at all.
- const w = generateWorld({seed: 'SEA', biome: 'links', holes: 9, rivers: 2, creeks: 3});
+ const w = buildWorld({seed: 'SEA', biome: 'links', holes: 9, rivers: 2, creeks: 3});
  let total = 0, drowned = 0;
  for (const stream of w.streams.streams || []) for (const p of stream.points || []) {
   total++;
@@ -52,7 +58,7 @@ test('a channel is chosen for crossing the course, not for being long', () => {
  // Once runs are trimmed at the shoreline, an attempt lying entirely off the map
  // is untrimmed and therefore longest, so length alone selected it: both channels
  // on a measured links seed came back about a kilometre outside the course.
- const w = generateWorld({seed: 'TFLCsss', biome: 'links', holes: 9,
+ const w = buildWorld({seed: 'TFLCsss', biome: 'links', holes: 9,
   rivers: 1, creeks: 1, elevation: 75});
  let best = 0;
  for (const stream of w.streams.streams || []) {
@@ -64,7 +70,7 @@ test('a channel is chosen for crossing the course, not for being long', () => {
 
 test('no pond sits in the sea on a coastal course', () => {
  for (const seed of ['A', 'B', 'C', 'D']) {
-  const w = generateWorld({seed, biome: 'links', holes: 9, water: 100});
+  const w = buildWorld({seed, biome: 'links', holes: 9, water: 100});
   for (const h of w.holes) for (const p of h.ponds) {
    const c = h.toWorld(p);
    assert.ok(w.land(c.x, c.z) >= 0, 'a pond centre in open water');
@@ -83,7 +89,7 @@ test('a pond may reach into play, and the carry stays a golf shot', () => {
  // carry is a broken hole, not a design.
  let splits = 0, holes = 0, longest = 0;
  for (const seed of ['A', 'B', 'C', 'D', 'E', 'F']) {
-  const w = generateWorld({seed, biome: 'pnw', holes: 9, water: 100, rivers: 1, creeks: 2});
+  const w = buildWorld({seed, biome: 'pnw', holes: 9, water: 100, rivers: 1, creeks: 2});
   for (const h of w.holes) {
    holes++;
    let run = null, best = 0;
@@ -108,7 +114,7 @@ test('a fairway stops behind semi-rough where it meets water', () => {
  // runs to the dunes -- so this is asserted inland.
  let fairwayTouching = 0, semiTouching = 0;
  for (const seed of ['A', 'B']) {
-  const w = generateWorld({seed, biome: 'pnw', holes: 9, water: 100, rivers: 1, creeks: 2});
+  const w = buildWorld({seed, biome: 'pnw', holes: 9, water: 100, rivers: 1, creeks: 2});
   for (const h of w.holes) for (let z = 10; z < h.length - 10; z += 3) {
    const half = h.width(z);
    for (let x = -half; x <= half; x += 2) {
@@ -132,7 +138,7 @@ test('the band is switched off by a zero semi-rough setting, not floored', () =>
  // Only the band is asserted: a green's fringe collar and a tee apron are both
  // reported as semi whatever this setting says, so a blanket "no semi anywhere"
  // check fails on ground that has nothing to do with water.
- const w = generateWorld({seed: 'A', biome: 'pnw', holes: 9, water: 100, semiRough: 0});
+ const w = buildWorld({seed: 'A', biome: 'pnw', holes: 9, water: 100, semiRough: 0});
  let besideWater = 0;
  for (const h of w.holes) for (let z = 10; z < h.length - 10; z += 3) {
   const half = h.width(z);
@@ -152,7 +158,7 @@ test('the band sits outside the painted shore, and scales with the setting', () 
  // running to the shore. It is measured from the shore's outer stop now, and the
  // visible width is the hole's own semi-rough at every setting.
  for (const semiRough of [2, 6, 10, 15]) {
-  const w = generateWorld({seed: 'A', biome: 'pnw', holes: 9, water: 100, semiRough});
+  const w = buildWorld({seed: 'A', biome: 'pnw', holes: 9, water: 100, semiRough});
   const reach = shoreBands(10, true, 16).outer + semiRough;
   let widest = 0;
   for (const h of w.holes) for (const p of h.ponds) for (const dir of [-1, 1]) {
@@ -200,7 +206,7 @@ test('the beach claims rough only, never mown turf', () => {
  for (const biome of ['island', 'links']) {
   let cells = 0;
   for (const seed of ['A', 'B', 'C']) {
-   const w = generateWorld({seed, biome, holes: 9, trees: 0});
+   const w = buildWorld({seed, biome, holes: 9, trees: 0});
    for (const h of w.holes) for (let z = h.mowStart + 2; z < h.length - 2; z += 2) {
     const x = h.center(z);
     if (h.bunkers.some(b => insideOval(x, z, b, 0))) continue;
@@ -215,7 +221,7 @@ test('the beach claims rough only, never mown turf', () => {
 
 test('and there is still a beach to walk on', () => {
  // The obvious way to fix sand fairways is to stop making sand.
- const w = generateWorld({seed: 'A', biome: 'island', holes: 9, trees: 0});
+ const w = buildWorld({seed: 'A', biome: 'island', holes: 9, trees: 0});
  let widths = [];
  for (let z = -w.halfZ + 40; z < w.halfZ; z += 160) {
   for (let x = -w.halfX; x < w.halfX; x += 4) {
@@ -242,7 +248,7 @@ test('a lake never lands on top of a pond', () => {
  // body's plane hanging over the other's basin.
  let pairs = 0, lakes = 0;
  for (const biome of ['pnw', 'mountain']) for (const seed of ['A', 'B', 'C']) {
-  const w = generateWorld({seed, biome, holes: 9, water: 100, lakes: 3});
+  const w = buildWorld({seed, biome, holes: 9, water: 100, lakes: 3});
   lakes += (w.largeLakes || []).length;
   const bodies = [];
   for (const h of w.holes) for (const p of h.ponds) bodies.push({h, p});
@@ -261,130 +267,4 @@ test('a lake never lands on top of a pond', () => {
  assert.equal(pairs, 0, `${pairs} overlapping water bodies`);
  // And the fix must not work by refusing to place lakes at all.
  assert.ok(lakes >= 15, `only ${lakes} lakes placed`);
-});
-
-// ---------------------------------------------------------------------------
-// WHAT WATER IS NOT ALLOWED TO TOUCH.
-//
-// Four separate rules, all of them owner decisions and all of them measured
-// before they were asked for, because every one of them was happening. They
-// share a fixture: generating twenty-four courses is the expensive part, and
-// asserting four things about each is nearly free.
-const KEEP_OUT = (() => {
- const worlds = [];
- for (const biome of ['pnw', 'desert', 'mountain', 'links', 'midwest', 'autumn'])
-  for (const seed of ['S1', 'S2', 'S3', 'S4'])
-   worlds.push(generateWorld({seed, biome, holes: 9, rivers: 1, creeks: 2, water: 60, lakes: 1}));
- return worlds;
-})();
-
-test('no channel runs over a green', () => {
- // The drainage model raises greens 60 m so the ROUTE goes round them, and
- // everything applied afterwards ignored that: meander is up to 17 m of lateral
- // offset and corner cutting pulls a path across the inside of its own bends.
- // Measured before the finished polyline was pushed clear: water on 3 greens in
- // 216, as much as 16.2 m inside one.
- let worst = Infinity, holes = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) {
-  holes++;
-  const g = h.worldGreen ?? h.worldPin, radius = h.greenSize * h.greenAspect;
-  for (const st of w.streams.streams) for (const p of st.points)
-   worst = Math.min(worst, Math.hypot(p.x - g.x, p.z - g.z) - p.width * .5 - radius);
- }
- assert.ok(holes > 200, `only ${holes} holes in the fixture`);
- assert.ok(worst > 0, `channel water reaches ${worst.toFixed(1)} m past a green edge`);
-});
-
-test('no channel crosses a playing corridor', () => {
- // Rivers crossing fairways was a feature, with its own blended-turf exception
- // in the ground shader, until the owner asked for it gone. Corridors are
- // raised in the drainage model the way greens are, so the route goes between
- // the holes rather than being steered across them -- and the point of doing it
- // that way is that the path stays a pure descent.
- let inside = 0, channels = 0;
- for (const w of KEEP_OUT) for (const st of w.streams.streams) {
-  channels++;
-  for (const p of st.points) for (const h of w.holes) {
-   const q = h.toLocal(p);
-   if (q.z < 0 || q.z > h.length) continue;
-   const off = q.x - h.center(q.z), half = fairwayWidth(h, q.z, 0, Math.sign(off) || 1);
-   if (half && Math.abs(off) < half + p.width * .5) inside++;
-  }
- }
- assert.equal(inside, 0, `${inside} channel stations inside a fairway`);
- // And the rule must not be kept by refusing to place channels.
- assert.ok(channels >= 60, `only ${channels} channels placed across 24 courses`);
-});
-
-test('no channel runs into standing water it did not create', () => {
- // Two water surfaces meeting at different fitted levels is the same fault the
- // lake-on-pond check was added for. A channel is kept a clear margin outside
- // any pond or lake -- its own terminal pond excepted, which is the one body it
- // is supposed to arrive at.
- let worst = Infinity, bodies = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) for (const p of h.ponds) {
-  if (p.sink) continue;
-  bodies++;
-  const edge = Array.from({length: 48}, (_, i) => {
-   const e = ovalRadius(p, i * Math.PI / 24);
-   return h.toWorld({x: p.x + e.x, z: p.z + e.z});
-  });
-  for (const st of w.streams.streams) for (const q of st.points) for (const v of edge)
-   worst = Math.min(worst, Math.hypot(q.x - v.x, q.z - v.z) - q.width * .5);
- }
- assert.ok(bodies > 100, `only ${bodies} water bodies in the fixture`);
- // Comfortably outside the shore band, which is 14 to 24 m wide, so the two
- // bodies do not share painted ground either.
- assert.ok(worst > 14, `channel water comes within ${worst.toFixed(1)} m of a pond`);
-});
-
-test('a pond bites into a fairway but never crosses one', () => {
- // A pond that reaches the far side does not pinch a hole into two landing
- // areas, it severs it -- the routing never planned a way past. The bite is the
- // part that was wanted. `reach` is bounded at 0.70 of the half width and the
- // shore is measured inward from the SEMI-ROUGH edge, so the crossing is
- // impossible by construction rather than by a rejection test.
- let crossed = 0, bit = 0, total = 0, deepest = 0;
- for (const w of KEEP_OUT) for (const h of w.holes) for (const p of h.ponds) {
-  if (p.sink) continue;
-  total++;
-  let reach = -Infinity, far = false;
-  for (let i = 0; i < 96; i++) {
-   const e = ovalRadius(p, i * Math.PI / 48), x = p.x + e.x, z = p.z + e.z;
-   if (z < 0 || z > h.length) continue;
-   const off = x - h.center(z), side = Math.sign(off) || 1, half = fairwayWidth(h, z, 0, side);
-   if (!half) continue;
-   reach = Math.max(reach, half - Math.abs(off));
-   if (Math.sign(off) !== Math.sign(p.x - h.center(z)) && Math.abs(off) > half * .5) far = true;
-  }
-  if (reach > 0) { bit++; deepest = Math.max(deepest, reach); }
-  if (far) crossed++;
- }
- assert.equal(crossed, 0, `${crossed} ponds cross a fairway`);
- // A bite nobody can see from the tee is not the feature that was asked for.
- assert.ok(bit / total > .08, `only ${bit} of ${total} ponds reach into a fairway`);
- assert.ok(deepest > 6, `the deepest bite is only ${deepest.toFixed(1)} m`);
-});
-
-test('a channel that ends in a hollow ends in a real pond', () => {
- // The owner's choice over filling the sink or fading out. It has to be a real
- // pond object, because that is what makes it inherit the cut bank, the shore
- // band, the mown collar, the map outline and the overlap rules instead of
- // being a second kind of water with its own copy of all of them.
- let sinks = 0, ponds = 0;
- for (const w of KEEP_OUT) {
-  const made = w.holes.flatMap(h => h.ponds.filter(p => p.sink).map(p => ({h, p})));
-  ponds += made.length;
-  sinks += w.streams.streams.filter(st => st.end === 'sink').length;
-  for (const {h, p} of made) {
-   // Everything an ordinary pond carries, because it went through the same fit.
-   assert.ok(p.level !== undefined && p.shoreWidth > 0 && p.reachX > 0 && p.banks.length === 257);
-   const c = h.toWorld(p);
-   assert.equal(w.surface(c.x, c.z), 'water', 'a terminal pond must play as water');
-   assert.ok(w.height(c.x, c.z) < p.level - .2, 'a terminal pond must have a basin under it');
-   assert.ok(h.ponds.length <= 4, 'the per-hole atlas limit still holds');
-  }
- }
- assert.ok(sinks > 0, 'no channel reached a hollow in the fixture');
- assert.ok(ponds > 0, `${sinks} channels ended in a hollow and none of them got a pond`);
 });

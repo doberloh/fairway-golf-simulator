@@ -275,6 +275,45 @@ export function generateCourse(settings={},hole=0){
 // ground somebody mows. The ground shader in ground.js paints both from these
 // same numbers, so the painted surface and the classified lie cannot drift.
 export const TEE_PAD={x:6,z:8},TEE_APRON={x:10.2,z:13.6};
+export const TEE_EYE=1.6;
+// IS THE SHOT BLIND, AND WHAT WOULD IT COST TO SEE OVER IT?
+//
+// Exported, and this is the point of exporting it: the generator asks this to
+// decide how far to raise a tee, and a measurement asks it to report how many
+// shots are blind. Written twice, the two drifted -- one sampled a straight
+// line in world space and the other the centreline, which are the same line
+// only on a straight hole, and the straight one cut dogleg corners and read
+// terrain off the hole entirely. A metric that calls what it measures cannot
+// disagree with it.
+//
+// `sample` is the height field to ask: the generator passes its pre-tee shaping
+// field, a measurement passes the finished terrain.
+//
+// Returns how far the ground rises above the sightline, and what raising the
+// tee would cost to clear that. Raising the eye by L lifts the sightline at
+// fraction u of the way out by L*(1-u), so an obstruction h at u costs h/(1-u).
+export function sightline(h,teeZ,eyeY,sample){
+ // A par three is played to the green; anything else to a good drive.
+ const reach=h.par===3?h.length-teeZ:Math.min(h.length-teeZ-30,250*.9144);
+ if(reach<60)return {over:0,lift:0,reach:0};
+ const aimZ=teeZ+reach,aim=h.toWorld({x:h.center(aimZ),z:aimZ});
+ const target=sample(aim.x,aim.z);
+ let over=0,lift=0;
+ // SAMPLED ALONG THE CENTRELINE, NOT ALONG A STRAIGHT LINE IN WORLD SPACE, and
+ // only the first three quarters of the shot. Near the target 1-u goes to zero
+ // and the required lift goes to infinity with it: a 0.35 m ripple at u = 0.9
+ // asked for the full cap, which is how a DEAD FLAT course came back with a
+ // 3.5 m mound on it. Ground that close to the landing area is the landing
+ // area's own contour, and no amount of tee clears it anyway.
+ for(let d=20;d<reach*.75;d+=6){
+  const u=d/reach,zz=teeZ+d,at=h.toWorld({x:h.center(zz),z:zz});
+  const o=sample(at.x,at.z)-(eyeY+(target-eyeY)*u);
+  if(o>over)over=o;
+  // A threshold, so the height field's own ripple cannot raise a tee.
+  if(o>.15)lift=Math.max(lift,o/Math.max(.25,1-u));
+ }
+ return {over,lift,reach};
+}
 export function localSurface(h,x,z){
  const d=greenDistance(h,x,z),s=h.settings;
  if(d<=0)return 'green';if(d<=s.fringe)return 'fringe';
@@ -546,7 +585,7 @@ export function generateWorld(settings={}){
  //
  // Two things happen here, and they are the same lever: deciding the complex's
  // level deliberately instead of reading it off the ground.
- const TEE_COMPRESS=.45,TEE_STEP=.35,TEE_LIFT_CAP=3.5,TEE_EYE=1.6;
+ const TEE_COMPRESS=.45,TEE_STEP=.35,TEE_LIFT_CAP=3.5;
  // A BLIND TEE SHOT IS A CHOICE, NOT AN ACCIDENT. Real courses keep a few, and
  // the raising above would otherwise remove every one the land offers. This is
  // the share of holes allowed to keep theirs, drawn per hole from its own
@@ -585,33 +624,8 @@ export function generateWorld(settings={}){
   // target by L*(1-u), so clearing an obstruction of `over` at u costs
   // over/(1-u) -- a crest halfway out needs twice its own height in tee.
   let lift=0;
-  for(let i=0;i<pads.length;i++){
-   const t=h.tees[names[i]],from=pads[i];
-   // A par three is played to the green; anything else to a good drive.
-   const reach=h.par===3?h.length-t.z:Math.min(h.length-t.z-30,250*.9144);
-   if(reach<60)continue;
-   const aimZ=t.z+reach,aim=h.toWorld({x:h.center(aimZ),z:aimZ});
-   const target=shapedNoTees(aim.x,aim.z),eye=level[i]+TEE_EYE;
-   //
-   // Only the first three quarters of the shot, and the divisor is floored
-   // there too. Near the target 1-u goes to zero and the required lift goes to
-   // infinity with it: a 0.35 m ripple at u = 0.9 asked for the full 3.5 m cap,
-   // which is how a DEAD FLAT course came back with a 3.5 m mound on it. Ground
-   // that close to the landing area is the landing area's own contour, and no
-   // amount of tee clears it anyway.
-   // SAMPLED ALONG THE CENTRELINE, NOT ALONG A STRAIGHT LINE IN WORLD SPACE.
-   // The two are the same only on a straight hole. On a dogleg the straight
-   // line cuts the corner and leaves the corridor, and what it then reads is
-   // whatever happens to be out there -- on a DEAD FLAT course it found the
-   // neighbouring hole's green standing 2.3 m proud of the plain and raised
-   // this tee 3.5 m to see over it.
-   for(let d=20;d<reach*.75;d+=6){
-    const u=d/reach,zz=t.z+d,at=h.toWorld({x:h.center(zz),z:zz});
-    const over=shapedNoTees(at.x,at.z)-(eye+(target-eye)*u);
-    // A threshold, so the height field's own ripple cannot raise a tee.
-    if(over>.15)lift=Math.max(lift,over/Math.max(.25,1-u));
-   }
-  }
+  for(let i=0;i<pads.length;i++)
+   lift=Math.max(lift,sightline(h,h.tees[names[i]].z,level[i]+TEE_EYE,shapedNoTees).lift);
   // Capped, because past a few metres this stops being a raised tee and starts
   // being a plinth. What it cannot clear stays a blind shot.
   lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);

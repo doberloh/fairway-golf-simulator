@@ -141,7 +141,7 @@ function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0
  const minRadius=Math.max(width*1.8,14);
  let run=0;for(let i=1;i<n;i++)run+=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);
  const span=run/Math.max(1,n-1);
- for(let round=0;round<30;round++){
+ for(let round=0;round<60;round++){
   rx.fill(0);rz.fill(0);
   let worst=0;
   for(let i=0;i<n;i++){
@@ -208,6 +208,14 @@ function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0
   // had its outward normal flip, and came straight back. Measured, the worst
   // requirement went 40 -> 20 -> 34 -> 39 -> 10 -> 18 -> 27 -> 38 and never
   // settled. A channel walks out of a corridor over several rounds instead.
+  //
+  // But the limit has to be generous enough that the walk ARRIVES. At 5 m a
+  // round the damped step was 2.75 m, so the worst case measured -- a head 87.5
+  // m inside a corridor -- needed 32 rounds and had 30: the trace showed it
+  // converging 87.5 -> 15.6 by round 24 and then turning round and climbing
+  // again. Damping alone already lands short of the target every round, which
+  // is geometric and settles; it was the flat cap that made it linear and made
+  // it run out.
   for(let i=0;i<n;i++){
    const m=Math.hypot(dx[i],dz[i]);
    if(m<1e-9)continue;
@@ -317,13 +325,24 @@ const SINK_RAMP = 60;
 // in a round. Both exist to stop the correction overshooting into the hole on
 // the other side; neither changes where the curve ends up, only how it gets
 // there.
-const CLEAR_DAMP = .55, CLEAR_STEP = 5;
+const CLEAR_DAMP = .55, CLEAR_STEP = 20;
 
 function drainage(height, halfX, halfZ, protect, isSea, corridor) {
  const cell = FLOW_CELL;
  const nx = Math.ceil(halfX * 2 / cell) + 1, nz = Math.ceil(halfZ * 2 / cell) + 1;
  const n = nx * nz;
  const H = new Float32Array(n), sea = new Uint8Array(n);
+ // WHICH CELLS ARE ON A PLAYING CORRIDOR.
+ //
+ // Raising a corridor into a hill is what stops water crossing it -- and a hill
+ // is also where water STARTS. The upstream trace that finds a channel's head
+ // climbs the steepest parent, so it climbs the new hill and puts a headwater
+ // in the middle of a fairway. Measured right after the ridge fix: two courses
+ // in thirty had a creek whose first 29 stations ran down hole 3, 26.8 m inside
+ // it. The keep-out pass downstream cannot repair that, because a source is not
+ // a detour -- there is no direction to push it that makes it belong. So the
+ // head is excluded here, where it is chosen.
+ const clear = new Float32Array(n);
  const X = i => -halfX + (i % nx) * cell, Z = i => -halfZ + Math.floor(i / nx) * cell;
  for (let k = 0; k < n; k++) {
   const x = X(k), z = Z(k);
@@ -351,8 +370,12 @@ function drainage(height, halfX, halfZ, protect, isSea, corridor) {
   //
   // Letting the term grow past 1 makes the corridor an actual hill. Capped,
   // because the fill has to stay numerically sane.
-  const t = (CORRIDOR_REACH - corridor(x, z).d) / CORRIDOR_REACH;
+  // Asked ONCE. `corridor` walks every hole to find the nearest centreline and
+  // is 15% of a course's whole generation time; calling it twice per cell for
+  // the ridge and again for the clearance simply doubled that.
+  const gap = corridor(x, z).d, t = (CORRIDOR_REACH - gap) / CORRIDOR_REACH;
   if (t > 0) y += CORRIDOR_RIDGE * Math.min(9, t * t);
+  clear[k] = gap;
   H[k] = y;
   sea[k] = isSea(x, z) ? 1 : 0;
  }
@@ -440,13 +463,20 @@ function drainage(height, halfX, halfZ, protect, isSea, corridor) {
  const acc = new Float32Array(n).fill(1);
  for (const k of order) if (down[k] >= 0) acc[down[k]] += acc[k];
 
- return {nx, nz, cell, n, H, F, down, acc, sink, label, sea, pools, bottom, X, Z, neighbours: around};
+ return {nx, nz, cell, n, H, F, down, acc, sink, label, sea, clear, pools, bottom, X, Z, neighbours: around};
 }
 
 // The channels themselves, strongest first. A river is not labelled a river --
 // it is the path that drains the most land, which is what makes one.
 function channels(model, count, used) {
- const {n, nx, nz, down, acc, sink, label, sea, bottom, X, Z} = model;
+ const {n, nx, nz, down, acc, sink, label, sea, clear, bottom, X, Z} = model;
+ // HOW FAR CLEAR A HEADWATER HAS TO START.
+ //
+ // Excluding only cells actually on a corridor moved the count from 29 to 18,
+ // not to zero: the trace then stopped at the first cell off the fairway, which
+ // is the fairway EDGE, and meander walked the source straight back on. A
+ // source has to begin somewhere a few metres of wander cannot undo.
+ const HEAD_CLEAR = 20;
  // A CHANNEL DOES NOT STOP AT THE RIM OF A HOLLOW.
  //
  // Every cell of a surviving depression has down = -1, by construction -- that
@@ -483,14 +513,14 @@ function channels(model, count, used) {
  const out = [];
  for (const seed of order) {
   if (out.length >= count) break;
-  if (used[seed] || sink[seed] || sea[seed]) continue;
+  if (used[seed] || sink[seed] || sea[seed] || clear[seed] < HEAD_CLEAR) continue;
   // Far enough from water already claimed to be a catchment of its own.
   if (out.some(c => c.points.some(p => Math.hypot(p.x - X(seed), p.z - Z(seed)) < 60))) continue;
   // Upstream along the strongest parent, to find where this water starts.
   let head = seed;
   for (let guard = 0; guard < 4000; guard++) {
    let bestParent = -1, bestAcc = 0;
-   for (const m of model.neighbours(head)) if (down[m] === head && acc[m] > bestAcc && !used[m]) { bestAcc = acc[m]; bestParent = m; }
+   for (const m of model.neighbours(head)) if (down[m] === head && acc[m] > bestAcc && !used[m] && clear[m] >= HEAD_CLEAR) { bestAcc = acc[m]; bestParent = m; }
    if (bestParent < 0) break;
    head = bestParent;
   }
