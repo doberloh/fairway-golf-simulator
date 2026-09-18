@@ -571,6 +571,40 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A quarter of the country's relief behind the tee
+
+The previous section records four attempts at relaxing the corridor trough behind the tee, all of them measured as failures, and a conclusion to leave it alone. That conclusion was wrong, and it was wrong because of the number it was judged on.
+
+Every sweep treated **"sites needing real earthwork" as a cost**. It is not. A tee cut into a hillside is the thing being asked for — the owner's words were that excavating into a hill to make things better is fine. Scored that way, the same settings read completely differently. The only true cost is a blind shot, and by the time the sweep was repeated, siting valued a clear view at 10 rather than 1.6, which absorbs most of it.
+
+Swept again, with every rule clear at every setting:
+
+| relief | tees cut into real ground | raised for sightline | blind shots | step between tees, p95 / worst | off the centre line |
+|---|---|---|---|---|---|
+| 0 | 115 | 124 | 33 | 2.7 / 5.6 m | 13 m |
+| **0.25** | **201** | **113** | **27** | 5.9 / 20 m | 19 m |
+| 0.5 | 327 | 124 | 47 | 10 / 36 m | 23 m |
+| 0.75 | 394 | 147 | 54 | 14 / 55 m | 25 m |
+| 1.0 | 446 | 155 | 73 | 16 / 74 m | 27 m |
+
+A quarter is better than none on every axis at once — nearly twice as many tees genuinely cut into ground, *fewer* propped up to see over things, and *fewer* blind shots. Past it everything degrades together, and the height between two tees on the same hole stops being credible.
+
+The lesson is not about terrain. It is that a sweep is only as good as the thing it optimises, and "needs earthwork" had been quietly standing in for "is bad" through four rounds of measurement that all looked rigorous.
+
+### Elevation zero is a baseline, not a promise
+
+The tee area keeps its relief whatever the elevation setting says; elevation raises the corridor from there. That is a deliberate change of meaning, made by the owner.
+
+The **driving range** keeps its own exemption and stays dead level. Flatness there is not a preference, it is the instrument: any tilt is a variable the player did not set, quietly added to every carry.
+
+The two tests that asserted "elevation 0 means flat" now say what still holds. One turns *both* terrain controls off — with nothing for a tee to follow, any height it has was invented here rather than found. The other measures the **mown corridor** rather than the whole hole, which is what "playing surfaces" meant all along.
+
+### Two faults this uncovered
+
+**A neighbouring hole's tee area was bleeding into a fairway.** The landform function only knows the *nearest* hole, not the hole whose ground you are standing on, so where two corridors run close the tee relief of one reached 1.45 m into the other's fairway. The relief now ends 20 m before mown turf begins, which leaves the margin that mistake needs.
+
+**The green guard was unlevelling tee pads.** It exists to stop a tee's shoulder spilling across a green's maintained surround, and applied to the whole blend it also stopped levelling the pad itself — so a tee near a green followed the natural slope, and on one hole that left a marker sitting below the one in front of it. The shoulder still fades out; the pad does not.
+
 ## Raised tees everywhere, merged collars, and a landform theory that was wrong
 
 Four faults reported off two screenshots. Three had straightforward causes. The fourth was the interesting one, and the theory behind it — mine as much as the owner's — turned out to be half wrong.
