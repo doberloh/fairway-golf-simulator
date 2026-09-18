@@ -532,12 +532,86 @@ export function generateWorld(settings={}){
  const teePads=[];
  for(const h of holes)for(const t of Object.values(h.tees)){const q=h.toWorld(t);teePads.push({h,t,x:q.x,z:q.z});}
  const PAD_REACH=78;
+ // A TEE COMPLEX IS LEVELLED AS ONE THING, NOT AS THREE INDEPENDENT PADS.
+ //
+ // Each pad used to read its own height straight off the shaped landform, and
+ // the three sit at 0%, 9% and 18% down the hole -- so on any hole that climbs
+ // off the tee the order simply inverted, with the back tee lowest. That is not
+ // a bug in the shaping; there was never a rule saying the back tee should be
+ // the high one. Measured over 270 holes, 34% had at least one tee stacked
+ // backwards, worst single step 2.9 m.
+ //
+ // Two things happen here, and they are the same lever: deciding the complex's
+ // level deliberately instead of reading it off the ground.
+ const TEE_COMPRESS=.45,TEE_STEP=.35,TEE_LIFT_CAP=3.5,TEE_EYE=1.6;
+ for(const h of holes){
+  const names=Object.keys(h.tees);                       // back to front
+  const pads=names.map(n=>teePads.find(p=>p.h===h&&p.t===h.tees[n]));
+  // ONE: compress the natural spread, then enforce the order. Clamping alone
+  // would guarantee the order too, but it does it by raising the back tee to
+  // wherever the front one ended up -- a pimple with a 55 m ramp around it on
+  // steep ground. Pulling all three toward their mean first means the order
+  // costs a fraction of the natural difference rather than all of it, and each
+  // pad stays close to the ground it sits on.
+  const natural=pads.map(p=>shapedNoTees(p.x,p.z));
+  const mean=natural.reduce((a,b)=>a+b,0)/natural.length;
+  const level=natural.map(y=>mean+(y-mean)*TEE_COMPRESS);
+  // THE STEP CORRECTS AN INVERSION; IT DOES NOT MANUFACTURE A STAIRCASE. Scaled
+  // by the spread the ground already has, so on flat land it is zero and the
+  // three pads come out level -- which is both what a flat course should look
+  // like and what the elevation slider promises at 0. A fixed step built a 0.7 m
+  // mound on dead-flat ground, and tilted the driving range, whose three mats
+  // sit side by side at the same distance and must stay identical.
+  const step=Math.min(TEE_STEP,(Math.max(...natural)-Math.min(...natural))*.5);
+  for(let i=level.length-2;i>=0;i--)level[i]=Math.max(level[i],level[i+1]+step);
+  // TWO: lift the whole complex until the shot clears the ground in front of
+  // it. This is what an architect does, and it is the cheap half of the blind
+  // shot problem -- the tee moves rather than the hillside, so the terrain the
+  // hole was generated around is untouched. Measured, 24% of tee shots had the
+  // sightline blocked by more than a metre.
+  //
+  // Raising the eye by L lifts the sightline at fraction u of the way to the
+  // target by L*(1-u), so clearing an obstruction of `over` at u costs
+  // over/(1-u) -- a crest halfway out needs twice its own height in tee.
+  let lift=0;
+  for(let i=0;i<pads.length;i++){
+   const t=h.tees[names[i]],from=pads[i];
+   // A par three is played to the green; anything else to a good drive.
+   const reach=h.par===3?h.length-t.z:Math.min(h.length-t.z-30,250*.9144);
+   if(reach<60)continue;
+   const aimZ=t.z+reach,aim=h.toWorld({x:h.center(aimZ),z:aimZ});
+   const target=shapedNoTees(aim.x,aim.z),eye=level[i]+TEE_EYE;
+   //
+   // Only the first three quarters of the shot, and the divisor is floored
+   // there too. Near the target 1-u goes to zero and the required lift goes to
+   // infinity with it: a 0.35 m ripple at u = 0.9 asked for the full 3.5 m cap,
+   // which is how a DEAD FLAT course came back with a 3.5 m mound on it. Ground
+   // that close to the landing area is the landing area's own contour, and no
+   // amount of tee clears it anyway.
+   // SAMPLED ALONG THE CENTRELINE, NOT ALONG A STRAIGHT LINE IN WORLD SPACE.
+   // The two are the same only on a straight hole. On a dogleg the straight
+   // line cuts the corner and leaves the corridor, and what it then reads is
+   // whatever happens to be out there -- on a DEAD FLAT course it found the
+   // neighbouring hole's green standing 2.3 m proud of the plain and raised
+   // this tee 3.5 m to see over it.
+   for(let d=20;d<reach*.75;d+=6){
+    const u=d/reach,zz=t.z+d,at=h.toWorld({x:h.center(zz),z:zz});
+    const over=shapedNoTees(at.x,at.z)-(eye+(target-eye)*u);
+    // A threshold, so the height field's own ripple cannot raise a tee.
+    if(over>.15)lift=Math.max(lift,over/Math.max(.25,1-u));
+   }
+  }
+  // Capped, because past a few metres this stops being a raised tee and starts
+  // being a plinth. What it cannot clear stays a blind shot.
+  lift=Math.min(lift,TEE_LIFT_CAP);
+  pads.forEach((p,i)=>{p.y=level[i]+lift;});
+ }
  function shapedLand(x,z){
   let y=shapedNoTees(x,z),blend=0,weightSum=0,targetSum=0;
   for(const pad of teePads){
    if(Math.abs(x-pad.x)>PAD_REACH||Math.abs(z-pad.z)>PAD_REACH)continue;
    const q=pad.h.toLocal({x,z}),out=Math.max(Math.abs(q.x-pad.t.x)-6,Math.abs(q.z-pad.t.z)-8);
-   const level=pad.y??=shapedNoTees(pad.x,pad.z),ramp=10+Math.min(55,Math.abs(y-level)*4.5);
+   const level=pad.y,ramp=10+Math.min(55,Math.abs(y-level)*4.5);
    const b=1-smooth(out/ramp);
    if(b<=0)continue;
    // Same weighting the pond shelves use: the pad you are standing on decides

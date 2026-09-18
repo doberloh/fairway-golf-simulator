@@ -82,6 +82,39 @@ test('incoming rolling balls bounce off trunks and can be struck away afterward'
 test('editable carry calibrates launch speed; flight profiles change height and curve',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);const normal=simulateShot({...shot,...manualLaunch(clubs.driver,1,1)},c),high=simulateShot({...shot,...manualLaunch(clubs.driver,1,1,{launch:6,axis:20})},c);assert(high.apex>normal.apex);assert(high.end.x>0);assert.throws(()=>customizeClubs({driver:-2}));});
 test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0});const rises=w=>w.holes.map(h=>{const ys=Array.from({length:30},(_,i)=>h.height(h.center(h.length*i/29),h.length*i/29));return Math.max(...ys)-Math.min(...ys);});assert(Math.max(...rises(high))>25);assert(Math.max(...rises(low))<.1);const h=generateCourse({seed:'SHELF',width:40,doglegs:0});assert.notDeepEqual(h.leftEdge,h.rightEdge);const widths=Array.from({length:20},(_,i)=>h.width(35+i*14));assert(Math.max(...widths)/Math.min(...widths)>1.2);});
 
+test('the back tee is never below the one in front, and a flat course keeps flat tees',()=>{
+ // Each pad used to level itself independently to the landform at its own spot,
+ // and the three sit at 0%, 9% and 18% down the hole -- so any hole that climbs
+ // off the tee inverted them. Measured over 270 holes: 34% had at least one tee
+ // stacked backwards, worst single step 2.9 m.
+ let backwards=0,tees=0,lifted=0;
+ for(const biome of ['pnw','mountain','links']) for(const seed of ['T1','T2','T3']){
+  const w=generateWorld({seed,biome,holes:9,trees:0});
+  for(const h of w.holes){
+   // Object key order is back tee first.
+   const ys=Object.values(h.tees).map(t=>{const q=h.toWorld(t);return w.height(q.x,q.z);});
+   tees+=ys.length;
+   for(let i=0;i<ys.length-1;i++)if(ys[i]<ys[i+1]-1e-6)backwards++;
+   if(ys[0]>ys[ys.length-1]+.01)lifted++;
+  }
+ }
+ assert(tees>=81,`only ${tees} tees in the fixture`);
+ assert.equal(backwards,0,`${backwards} tees sit below the one in front of them`);
+ // And the rule must not hold by flattening every complex to one level.
+ assert(lifted>=tees/6,`only ${lifted} complexes have any stagger left`);
+
+ // THE STEP CORRECTS AN INVERSION, IT DOES NOT MANUFACTURE A STAIRCASE. At
+ // elevation 0 the land is flat and the tees must be too -- a fixed step built
+ // a 0.7 m mound on dead ground, and the sightline lift, sampling a straight
+ // line in world space, cut a dogleg corner, found a neighbouring green 2.3 m
+ // proud of the plain and raised a tee by the full 3.5 m cap to see over it.
+ const flat=generateWorld({seed:'HEIGHT',elevation:0,greenDifficulty:0,trees:0,water:0,bunkerCount:0});
+ for(const h of flat.holes){
+  const ys=Object.values(h.tees).map(t=>{const q=h.toWorld(t);return flat.height(q.x,q.z);});
+  assert(Math.max(...ys)-Math.min(...ys)<.01,`tees vary by ${(Math.max(...ys)-Math.min(...ys)).toFixed(2)} m on a flat course`);
+ }
+});
+
 test('decimal score totals remain exact for ties and exports',()=>{assert.equal(sumScores([2.11,2.22,3.1]),7.43);assert.equal(sumScores([1.11,1.11,1.11]),3.33);});
 
 test('spin has a per-shot adjustment, in rpm, and it is a delta', () => {

@@ -65,7 +65,7 @@ export const SCHEMA_VERSION=4;
 //     per step is capped so curvature cannot beat the channel's own banks.
 //     Median cut is 0.4 to 2.9 m and channels run two to three times longer.
 //     Every course with a river or a creek is reshaped.
-export const GENERATOR_VERSION=13;
+export const GENERATOR_VERSION=14;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

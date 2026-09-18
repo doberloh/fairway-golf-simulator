@@ -533,6 +533,44 @@ Against 12.2–18.9 circles and 2716 overlaps from the walk. Roughly one and a h
 
 **Where they end.** A channel terminates at the sea, at a surviving lake, at another channel it has joined, or at a sink — a depression too large to have been flooded away. `SINK_FILL_AREA` is the dividing line, and it is deliberately generous at 40 000 m²: a terminal pond should read as a destination, not as a puddle every creek trips into. At 2500 the fill swallowed the valley floors themselves and a mountain course came back with one channel 289 m long. Across twenty courses the endings are **40 sink, 14 lake, 3 sea, 2 confluence**.
 
+## The back tee was the low one, and a quarter of tee shots were blind
+
+Reported together, and they turned out to be the same lever.
+
+Each tee pad read its own height straight off the shaped landform at its own spot, and the three pads sit at 0%, 9% and 18% down the hole. So on any hole that climbs off the tee the order simply inverted — the back tee lowest, hitting up at the forward tees. That is not a bug in the shaping; there was never a rule saying the back tee should be the high one. Measured over 270 holes:
+
+| | before | after |
+|---|---|---|
+| holes with at least one tee stacked backwards | **34%** | **0%** |
+| blue below white by more than 0.5 m | 27% | 0% |
+| white below red by more than 0.5 m | 33% | 0% |
+| worst backwards step | −2.9 m | none; smallest forward step +0.1 m |
+| blue tee shot with the sightline blocked over 1 m | **23%** | **3%** |
+| white | 21% | 9% |
+| red | 19% | 12% |
+
+The tee complex is now levelled as one thing rather than as three independent pads, and two things happen there.
+
+**The natural spread is compressed, then the order is enforced.** Clamping alone would guarantee the order too, but it does it by raising the back tee all the way to wherever the front one landed — a pimple with a 55 m ramp around it on steep ground. Pulling all three toward their mean first means the ordering costs a fraction of the natural difference rather than all of it, and every pad stays close to the ground it sits on. Pad flatness came out *better* than before, worst spread across a pad **0.35 m** against the 0.46 that had been signed off, and the slope leaving a pad never exceeds 0.14.
+
+**The complex is lifted until the shot clears the ground in front of it.** This is what an architect does, and it is the cheap half of the blind-shot problem: the tee moves rather than the hillside, so the terrain the hole was generated around is untouched. Raising the eye by *L* lifts the sightline at fraction *u* of the way to the target by *L*(1−u), so clearing an obstruction of *h* at *u* costs *h*/(1−u) — a crest halfway out needs twice its own height in tee. Capped at 3.5 m, past which it stops being a raised tee and starts being a plinth; what the cap cannot clear stays a blind shot.
+
+Three ideas were considered and rejected. **Always run the hole uphill** would have cost the good holes — the tee-to-green spread is −6.8 to +9.8 m and the downhill ones are the best views in the game — and it does not even address the cause, because blindness comes from an intermediate crest, which an uphill hole has just as readily. **One flat terrace** for all three pads works, but on a 400-yard hole the complex spans about 60 m and a dead-flat rectangle that long reads as a driving range. **Shaving the crest** guarantees the sightline, but reshapes exactly the terrain that makes a hole interesting.
+
+### Two ways this broke a flat course, both caught by one test
+
+`elevation: 0` promises flat ground, and it is the clearest possible statement of what these two rules must not do.
+
+**A fixed step manufactures a staircase.** On dead-flat land all three pads are naturally level, and adding 0.35 m per tee built a 0.7 m mound where there was nothing. It also tilted the **driving range**, whose three mats sit side by side at the same distance from the green and must stay identical — flatness there is not a preference, it is the whole instrument. The step is scaled by the spread the ground already has, so it corrects an inversion and never invents one. Both cases fall out of that single change rather than needing a range flag.
+
+**And the sightline ray cut the dogleg corner.** It was drawn as a straight line in world space from the tee to a point on the centreline 250 yards out. Those are the same line only on a straight hole. On a dogleg the straight line leaves the corridor and reads whatever is out there — on the flat course it found the neighbouring hole's green standing 2.3 m proud of the plain and raised the tee by the full 3.5 m cap to see over it. Sampled along the centreline instead, which is what the test was actually asking about all along.
+
+A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as the sample approaches the target, so a 0.35 m ripple at *u* = 0.9 asked for ten times its own height. The scan stops at three quarters of the way out and the divisor is floored — ground that close to the landing area is the landing area's own contour, and no amount of tee clears it anyway.
+
+### What it did not fix
+
+The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
+
 ## Where water is not allowed to go
 
 Four rules, all owner decisions, all of them arriving after the drainage rewrite made the underlying routing trustworthy enough to constrain. Each was measured before it was asked for, and each was happening.
