@@ -191,7 +191,31 @@ export function generateCourse(settings={},hole=0){
  const sample=(edge,u)=>{let i=0;while(i<edge.knots.length-2&&u>edge.knots[i+1])i++;return edge.values[i]+(edge.values[i+1]-edge.values[i])*smooth((u-edge.knots[i])/(edge.knots[i+1]-edge.knots[i]));};
  const sideWidth=(edge,z)=>s.width/2*sample(edge,clamp(z/length,0,1))*Math.sqrt(1+(center(z+.5)-center(z-.5))**2);
  const leftWidth=z=>sideWidth(leftEdge,z),rightWidth=z=>sideWidth(rightEdge,z),width=z=>Math.max(leftWidth(z),rightWidth(z));
- const teeNames=enabledTees(s),tees=Object.fromEntries(teeNames.map((name,i)=>{const z=i===0?0:length*(i*.09+(rng()-.5)*.032);return[name,{x:center(z)+(i===0?0:(rng()-.5)*6),z,yards:0}];}));
+ // ONE LONG TEE ON A SHORT HOLE. The markers are spread down it rather than
+ // sitting on three pads of their own, which on a par three is both what a
+ // real course does and the only way they fit.
+ const teeNames=enabledTees(s),shortHole=par===3;
+ const tees=Object.fromEntries(teeNames.map((name,i)=>{
+  // THE SAME DRAWS IN THE SAME ORDER WHATEVER THE PAR.
+  //
+  // The short-hole branch first took one random number per tee where the long
+  // one took two for all but the back tee, and that one missing draw shifted
+  // the rest of the hole's seeded stream -- so every pond, bunker and contour
+  // downstream of it moved too. It showed up as a green surround going from
+  // gentle to 39 degrees on a mountain course, nowhere near a tee, which is a
+  // long way to look for a cause that is really just "the dice moved along
+  // by one".
+  const a=i===0?0:rng(),b=i===0?0:rng();
+  const z=shortHole?i*(9+a*5):(i===0?0:length*(i*.09+(a-.5)*.032));
+  return[name,{x:center(z)+(shortHole||i===0?0:(b-.5)*6),z,yards:0}];
+ }));
+ if(shortHole){
+  const all=Object.values(tees),zs=all.map(t=>t.z),lo=Math.min(...zs),hi=Math.max(...zs);
+  // The back marker carries the pad, sized to cover every marker with a little
+  // room to stand behind the furthest back one.
+  all[0].pad={z:(lo+hi)/2,rz:(hi-lo)/2+TEE_PAD.z};
+  for(let i=1;i<all.length;i++)all[i].pad=null;
+ }
  const fairwayStart=Math.min(length*.54,Math.max(...Object.values(tees).map(t=>t.z))+14+rng()*45);
  // Where mown turf begins, which is not where the hole's hazard zone begins. A
  // par three is played through the air to the green, so a full corridor down it
@@ -275,6 +299,25 @@ export function generateCourse(settings={},hole=0){
 // ground somebody mows. The ground shader in ground.js paints both from these
 // same numbers, so the painted surface and the classified lie cannot drift.
 export const TEE_PAD={x:6,z:8},TEE_APRON={x:10.2,z:13.6};
+// The mown collar is the pad scaled by this, in both directions.
+export const TEE_APRON_SCALE=TEE_APRON.z/TEE_PAD.z;
+// THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
+//
+// They used to be the same thing -- one fixed oval centred on every marker --
+// which is why every par three had overlapping tees. Spacing between markers
+// is a fraction of the hole's length, so on a short hole they land 9 to 12 m
+// apart while each pad is 16 m long. Measured over thirty courses: all 66 par
+// threes overlapped, and 21% of all tee pairs overlapped somewhere.
+//
+// A real short hole answers this with ONE long tee and the markers set at
+// different points down it, which is what `pad` allows: a marker can carry a
+// pad of its own size and position, or carry none at all and simply stand on
+// a neighbour's. A tee that says nothing gets exactly the old behaviour, so
+// the driving range and everything else is untouched.
+export function teePad(t){
+ if(t.pad===null)return null;
+ return t.pad??{z:t.z,rz:TEE_PAD.z};
+}
 export const TEE_EYE=1.6;
 // IS THE SHOT BLIND, AND WHAT WOULD IT COST TO SEE OVER IT?
 //
@@ -317,7 +360,7 @@ export function sightline(h,teeZ,eyeY,sample){
 export function localSurface(h,x,z){
  const d=greenDistance(h,x,z),s=h.settings;
  if(d<=0)return 'green';if(d<=s.fringe)return 'fringe';
- if(Object.values(h.tees).some(t=>((x-t.x)/TEE_PAD.x)**2+((z-t.z)/TEE_PAD.z)**2<1))return 'tee';
+ if(Object.values(h.tees).some(t=>{const p=teePad(t);return p&&((x-t.x)/TEE_PAD.x)**2+((z-p.z)/p.rz)**2<1;}))return 'tee';
  if(h.ponds.some(p=>insideOval(x,z,p)))return 'water';
  if(h.bunkers.some(p=>insideOval(x,z,p)))return 'sand';
  // The fairway is tested BEFORE the green's semi collar, and the order is the
@@ -331,7 +374,7 @@ export function localSurface(h,x,z){
  if(d<=s.fringe+s.semiRough||Math.abs(x-h.center(z))<fairwayWidth(h,z,s.semiRough,x-h.center(z)))return 'semi';
  // Last, so anything already maintained keeps the better surface and a bunker
  // or pond beside a tee still plays as itself.
- if(Object.values(h.tees).some(t=>((x-t.x)/TEE_APRON.x)**2+((z-t.z)/TEE_APRON.z)**2<1))return 'semi';
+ if(Object.values(h.tees).some(t=>{const p=teePad(t);return p&&((x-t.x)/TEE_APRON.x)**2+((z-p.z)/(p.rz*TEE_APRON_SCALE))**2<1;}))return 'semi';
  return 'rough';
 }
 // AN ISLAND'S WATER IS THE OCEAN.
@@ -628,11 +671,20 @@ export function generateWorld(settings={}){
  // it has to absorb, the way a green shoulder does. A fixed five-metre ramp
  // left a wall around every pad once the ground got steep.
  const teePads=[];
- for(const h of holes)for(const t of Object.values(h.tees)){const q=h.toWorld(t);teePads.push({h,t,x:q.x,z:q.z});}
+ for(const h of holes)for(const t of Object.values(h.tees)){
+  const p=teePad(t);
+  if(!p)continue;
+  const q=h.toWorld({x:t.x,z:p.z});
+  teePads.push({h,t,rz:p.rz,localZ:p.z,x:q.x,z:q.z});
+ }
  // Must cover the apron plus the WIDEST ramp, or the falloff is cut off part
  // way down and the cut is a crease. At the old 78 a full-lift pad wanted 98
  // and got 64, which is where the one 13.5 degree outlier came from.
  const PAD_REACH=115;
+ const greenGuards=holes.map(h=>{
+  const c=h.worldGreen??h.worldPin,keep=h.greenSize*h.greenAspect+s.fringe+4;
+  return {x:c.x,z:c.z,keep,fade:keep+16};
+ });
  // A TEE COMPLEX IS LEVELLED AS ONE THING, NOT AS THREE INDEPENDENT PADS.
  //
  // Each pad used to read its own height straight off the shaped landform, and
@@ -655,7 +707,8 @@ export function generateWorld(settings={}){
  for(const h of holes){
   const keepBlind=blindRng()<blindShare;
   const names=Object.keys(h.tees);                       // back to front
-  const pads=names.map(n=>teePads.find(p=>p.h===h&&p.t===h.tees[n]));
+  const pads=names.map(n=>teePads.find(p=>p.h===h&&p.t===h.tees[n])).filter(Boolean);
+  if(!pads.length)continue;
   // ONE: compress the natural spread, then enforce the order. Clamping alone
   // would guarantee the order too, but it does it by raising the back tee to
   // wherever the front one ended up -- a pimple with a 55 m ramp around it on
@@ -683,8 +736,8 @@ export function generateWorld(settings={}){
   // target by L*(1-u), so clearing an obstruction of `over` at u costs
   // over/(1-u) -- a crest halfway out needs twice its own height in tee.
   let lift=0;
-  for(let i=0;i<pads.length;i++)
-   lift=Math.max(lift,sightline(h,h.tees[names[i]].z,level[i]+TEE_EYE,shapedNoTees).lift);
+  // Every marker's own sightline, including ones sharing a pad.
+  for(const n of names)lift=Math.max(lift,sightline(h,h.tees[n].z,level[0]+TEE_EYE,shapedNoTees).lift);
   // Capped, because past a few metres this stops being a raised tee and starts
   // being a plinth. What it cannot clear stays a blind shot.
   lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
@@ -708,12 +761,16 @@ export function generateWorld(settings={}){
    // Same idiom the pond shelves use: normalise into the ellipse, then convert
    // back to metres along the ray so the ramp width means the same thing in
    // every direction.
-   const q=pad.h.toLocal({x,z}),ex=(q.x-pad.t.x)/TEE_APRON.x,ez=(q.z-pad.t.z)/TEE_APRON.z,e=Math.hypot(ex,ez);
-   const out=e<=1?0:(e-1)*Math.hypot(q.x-pad.t.x,q.z-pad.t.z)/e;
-   // Wider and gentler than the first version, which reached full slope in 26 m
-   // for a 3.5 m lift and read as a mound sitting on the ground rather than
-   // ground that rises to a tee.
-   const level=pad.y,ramp=14+Math.min(70,Math.abs(y-level)*7);
+   const q=pad.h.toLocal({x,z}),ex=(q.x-pad.t.x)/TEE_APRON.x,ez=(q.z-pad.localZ)/(pad.rz*TEE_APRON_SCALE),e=Math.hypot(ex,ez);
+   const out=e<=1?0:(e-1)*Math.hypot(q.x-pad.t.x,q.z-pad.localZ)/e;
+   // HOW FAR THE EARTHWORKS REACH.
+   //
+   // This was 14 + 7x the drop, capped at 70, which for a 3.5 m lift disturbed
+   // ground nearly 40 m past the collar -- three tees each reworking a 50 m
+   // circle is most of the ground around the start of a hole, and it reads as
+   // excavation rather than landscape. Halved. A 3.5 m lift now settles in 24 m
+   // instead of 38, which is a little steeper but still under nine degrees.
+   const level=pad.y,ramp=10+Math.min(34,Math.abs(y-level)*4);
    const b=1-smooth(out/ramp);
    if(b<=0)continue;
    // Same weighting the pond shelves use: the pad you are standing on decides
@@ -722,7 +779,22 @@ export function generateWorld(settings={}){
    const weight=b/(1.001-b);
    blend=Math.max(blend,b);weightSum+=weight;targetSum+=weight*level;
   }
-  return blend>0?y*(1-blend)+targetSum/weightSum*blend:y;
+  if(blend<=0)return y;
+  // A GREEN ALWAYS WINS.
+  //
+  // Greens are shaped first and tees last, so a tee's ramp simply overwrote
+  // whatever the green had decided -- measured, 78 tees had earthworks reaching
+  // into a green's ground and the worst pushed 15 m inside one, which is the
+  // terrain seen clipping through a green and its fringe. Tee shaping now fades
+  // out before it arrives. Only ground already near a tee pays for this test,
+  // which is why it sits behind the blend check.
+  for(const g of greenGuards){
+   const d=Math.hypot(x-g.x,z-g.z);
+   if(d>=g.fade)continue;
+   blend*=smooth((d-g.keep)/(g.fade-g.keep));
+   if(blend<=0)return y;
+  }
+  return y*(1-blend)+targetSum/weightSum*blend;
  }
  if(!NO_INLAND_WATER.has(s.biome))addLargeLakes(s,holes,halfX,halfZ,nearest,shapedLand,random);
  let basins=[];
@@ -881,7 +953,7 @@ export function generateWorld(settings={}){
  const nearShore=(coastal||s.biome==='links')
   ?((x,z,a,b,c,d)=>a===undefined?false:Math.min(a,b,c,d)<waterLevel&&Math.max(a,b,c,d)>=waterLevel)
   :(()=>false);
- const groundGrid=makeGroundGrid(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-t.z)<TEE_PAD.z+6)||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);}));
+ const groundGrid=makeGroundGrid(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);}));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
  const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
  const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;

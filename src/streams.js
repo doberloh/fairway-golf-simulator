@@ -141,6 +141,19 @@ function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0
  const minRadius=Math.max(width*1.8,14);
  let run=0;for(let i=1;i<n;i++)run+=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);
  const span=run/Math.max(1,n-1);
+ // A ROUTE THAT WILL NOT COME CLEAR IS THE WRONG ROUTE.
+ //
+ // The push and `relaxCurvature` can settle into a standoff rather than a
+ // solution: measured on one mountain seed, the worst requirement cycled
+ // 29.4 -> 24.2 -> 29.4 -> 24.2 and did that forever, because moving the curve
+ // clear of the fairway made a bend the relax then took straight back out.
+ // Damping does not help a two-state cycle; nothing about it is converging.
+ //
+ // When the two genuinely conflict, the honest answer is that water does not
+ // belong on that line. Returning null rejects the route so the caller takes
+ // the next-best catchment instead -- the same mechanism a bed that will not
+ // fit its cut budget already uses.
+ let settled=false;
  for(let round=0;round<60;round++){
   rx.fill(0);rz.fill(0);
   let worst=0;
@@ -163,7 +176,7 @@ function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0
    rx[i]=ax;rz[i]=az;
    worst=Math.max(worst,Math.hypot(ax,az));
   }
-  if(worst<.05)break;
+  if(worst<.05){settled=true;break;}
   // THE DISPLACEMENT IS SMOOTHED ALONG THE PATH BEFORE IT IS APPLIED.
   //
   // Moving each station by what it needs and no more is what a first version
@@ -231,7 +244,7 @@ function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0
   // curve and exits, or corrects what the relax undid.
   relaxCurvature(points,minRadius);
  }
- return points;
+ return settled?points:null;
 }
 
 function chaikin(points){
@@ -559,13 +572,19 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
  // independent squiggle that happens to be narrower.
  const model = specs.length ? drainage(height, halfX, halfZ, protect, isSea, corridor) : null;
  const claimed = model ? new Uint8Array(model.n) : null;
- const routes = model ? channels(model, specs.length, claimed) : [];
+ // More candidates than channels asked for, because a route can be found and
+ // then turn out to be unusable -- the bed will not fit within MAX_CUT, or the
+ // smoothed line is too short. That used to lose the channel outright: one
+ // links seed had both of its routes fail the profile and came back with no
+ // water at all. Falling through to the next-best catchment is strictly better
+ // than giving up, and costs nothing when the first one works.
+ const routes = model ? channels(model, specs.length * 4, claimed) : [];
  // Strongest first, so rivers take the largest catchments and creeks the rest.
  specs.sort((a, b) => (a === 'river' ? 0 : 1) - (b === 'river' ? 0 : 1));
 
- for(let n=0;n<specs.length;n++){
+ for(let n=0,r=0;n<specs.length&&r<routes.length;r++){
   const kind=specs[n],width=kind==='river'?s.riverWidth:s.creekWidth,bend=(s.streamBends||0)/100;
-  const route=routes[n];
+  const route=routes[r];
   if(!route)continue;
   // MEANDER IS A LATERAL OFFSET, NEVER A ROTATION.
   //
@@ -589,7 +608,7 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
     width:width*(.82+.18*Math.sin(run/widthLength+widthPhase))};
   });
   points=clearProtected(relaxCurvature(chaikin(chaikin(points)),Math.max(width*1.8,14)),protect,width,corridor);
-  if(points.length<16)continue;
+  if(!points||points.length<16)continue;
   for(let i=0;i<points.length;i++){const p=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],len=Math.hypot(b.x-a.x,b.z-a.z)||1;p.nx=(b.z-a.z)/len;p.nz=-(b.x-a.x)/len;p.depth=s.streamDepth*(kind==='creek'?.6:1);}
   const fitted=downhillProfile(points,height);
   if(!fitted)continue;
@@ -650,6 +669,7 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
   // surrounding terrain. AFTER the pond ramp, because the bank is sized from
   // the drop to the water and the ramp is what sets that near a mouth.
   for(const p of path)p.bank=(14+width*.6+Math.min(26,Math.max(0,height(p.x,p.z)-p.level)*2.4))*Math.max(.25,p.taper??1);
+  n++;
   streams.push({kind,points:path,end,sink});for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],bank=Math.max(a.bank,b.bank),id=segments.length;segments.push({a,b,bank,id,kind,stream:n});for(let x=Math.floor((Math.min(a.x,b.x)-bank-width)/cellSize);x<=Math.floor((Math.max(a.x,b.x)+bank+width)/cellSize);x++)for(let z=Math.floor((Math.min(a.z,b.z)-bank-width)/cellSize);z<=Math.floor((Math.max(a.z,b.z)+bank+width)/cellSize);z++){const key=x+','+z;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}}
  }
  function at(x,z){let best=null;for(const id of cells.get(Math.floor(x/cellSize)+','+Math.floor(z/cellSize))||[]){const seg=segments[id],{a,b}=seg,dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz))),distance=Math.hypot(x-a.x-dx*t,z-a.z-dz*t),width=a.width+(b.width-a.width)*t,edge=distance-width*.5;if(edge>seg.bank)continue;if(!best||edge<best.edge)best={...seg,edge,distance,width,level:a.level+(b.level-a.level)*t,depth:a.depth+(b.depth-a.depth)*t};}return best;}

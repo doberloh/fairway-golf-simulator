@@ -1,7 +1,7 @@
 import {BANK_COLORS} from './streams.js';
 import {toonRamp} from './textures.js';
 import * as T from 'three';
-import {fairwayWidth,TEE_PAD,TEE_APRON,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
+import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
 import {CUP_RADIUS} from './physics.js';
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
@@ -99,7 +99,7 @@ export function groundMaterial(view,palette){
  const texture=(data,x,y,linear=false)=>{const t=new T.DataTexture(data,x,y,T.RGBAFormat,T.FloatType);t.minFilter=t.magFilter=linear?T.LinearFilter:T.NearestFilter;t.needsUpdate=true;view.resources.push(t);return t;};
  const owners=new Float32Array(Sx*Sz*4),route=new Float32Array(N*12),tees=new Float32Array(N*12),curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
  for(let j=0;j<Sz;j++)for(let i=0;i<Sx;i++){const x=((i+.5)/Sx*2-1)*extent.x,z=((j+.5)/Sz*2-1)*extent.y,k=(j*Sx+i)*4;const lake=w.lakeOwner(x,z,7);owners[k]=(lake||w.nearest(x,z).h).hole;owners[k+1]=w.groundCover(x,z)==='straw'?1:0;owners[k+2]=(w.streams.at(x,z)?.id??-1)+1;owners[k+3]=lake?1:0;}
- for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);Object.values(h.tees).forEach((t,i)=>tees.set([t.x,t.z,1,0],h.hole*12+i*4));for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
+ for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);Object.values(h.tees).forEach((t,i)=>{const p=teePad(t);tees.set(p?[t.x,p.z,1,p.rz]:[0,0,0,0],h.hole*12+i*4);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
  const streamCount=Math.max(1,w.streams.segments.length),streamData=new Float32Array(streamCount*8);for(const q of w.streams.segments)streamData.set([q.a.x,q.a.z,q.b.x,q.b.z,q.a.width,q.b.width,q.stream+1,q.bank],q.id*8);const streamTexture=texture(streamData,2,streamCount);
  const steps=toonRamp(view);const m=new T.MeshToonMaterial({color:'#ffffff',gradientMap:steps}),colors=Object.fromEntries(Object.entries(palette).map(([k,v])=>['tint_'+k,{value:new T.Color(v)}]));
  // THE CUE SWITCHES, AS UNIFORMS. Held outside onBeforeCompile and handed to
@@ -232,8 +232,8 @@ export function groundMaterial(view,palette){
  // ground that is still rough, so a fairway or green beside a tee keeps it.
  float teeGround=0.;
  for(int ti=0;ti<3;ti++){vec4 tee=texture2D(tees,vec2((float(ti)+.5)/3.,row));
-  vec2 ta=(p-tee.xy)/vec2(${TEE_APRON.x.toFixed(2)},${TEE_APRON.z.toFixed(2)});if(tee.z>.5&&kind<.5&&dot(ta,ta)<1.){turf=tint_semi;kind=1.;teeGround=1.;}
-  vec2 tp=(p-tee.xy)/vec2(${TEE_PAD.x.toFixed(2)},${TEE_PAD.z.toFixed(2)});if(tee.z>.5&&dot(tp,tp)<1.){turf=tint_semi;kind=1.;teeGround=1.;}}
+  vec2 ta=(p-tee.xy)/vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)});if(tee.z>.5&&kind<.5&&dot(ta,ta)<1.){turf=tint_semi;kind=1.;teeGround=1.;}
+  vec2 tp=(p-tee.xy)/vec2(${TEE_PAD.x.toFixed(2)},tee.w);if(tee.z>.5&&dot(tp,tp)<1.){turf=tint_semi;kind=1.;teeGround=1.;}}
  // THE BEACH, AND IT CLAIMS ROUGH ONLY -- AFTER THE TEES, NOT BEFORE.
  //
  // Ordering is the whole of it. Run before the tee block, the beach turned low

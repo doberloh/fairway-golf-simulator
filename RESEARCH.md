@@ -571,6 +571,50 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## One tee on a short hole, and earthworks that stay off greens
+
+Two reported faults, measured over thirty courses before touching anything.
+
+**Every par three had overlapping tees. All 66 of them**, and 21% of all tee pairs overlapped somewhere. The cause is arithmetic rather than bad luck: spacing between tees is a fraction of the hole's length, so on a short hole the three markers land 9 to 12 m apart while each pad is 16 m long. They cannot not overlap.
+
+A real short hole answers this with one long tee and the markers set at different points down it, which is now what happens. The change that made it possible was separating two things that had always been one: the **pad** is the piece of ground, the **tee** is where you stand on it. A marker can carry a pad of its own size and position, or carry none and simply stand on a neighbour's. A tee that says nothing gets exactly the old behaviour, so the driving range and everything reading `TEE_PAD` are untouched.
+
+The ground shader needed the pad's length per tee, and the data it already receives had an unused fourth slot per tee sitting there — so this cost nothing on the GPU side.
+
+Result: **0 overlapping pads**, every marker still standing on one, par-three pads running 30 to 44 m long against 16 for an ordinary hole.
+
+**Tee earthworks were reaching into greens.** 78 tees had raised ground reaching a green's area and the worst pushed 15 m inside one — the terrain seen clipping through a green and its fringe. Two causes. The reach itself was 14 m plus seven times the drop, so a 3.5 m lift disturbed ground nearly 40 m past the mown collar; three tees each reworking a 50 m circle is most of the ground at the start of a hole, and it reads as excavation rather than landscape. And greens are shaped first while tees are shaped last, so a tee's ramp simply overwrote whatever the green had decided.
+
+The reach is halved, and tee shaping now fades out before it arrives at a green.
+
+| | before | after |
+|---|---|---|
+| steepest patch on a green | 9.9° | **2.2°** |
+| 95th percentile | 9.3° | **2.2°** |
+| relief across a tee pad, worst | 0.58 m | **0.07 m** |
+| relief across the mown collar, worst | 0.58 m | **0.18 m** |
+| slope of the bank leaving a tee, median | 5.2° | 8.6° |
+
+The last row is the trade and it is the right way round: a smaller footprint means a steeper bank, and 8.6° is still gentle.
+
+### One missing dice roll moved a whole course
+
+The first version of the short-hole branch drew one random number per tee where the long-hole branch drew two for all but the back tee. One missing draw shifts everything that reads the hole's seeded stream afterwards — ponds, bunkers, contours — so a green surround on a mountain course went from gentle to 39 degrees, nowhere near a tee, for a change that was supposed to be about tee layout.
+
+It cost three separate investigations to find, because each one ruled out something that looked much more likely: disabling the green guard left it identical, and restoring the old ramp left it identical **to the last decimal place**, which is the tell. A number that does not move when you change the thing you suspect is not being produced by that thing.
+
+Both branches now take the same draws in the same order.
+
+### A route that cannot be used should not lose the channel
+
+Two further failures came out of the terrain moving, and both were real weaknesses rather than bad luck.
+
+A links seed came back with **no water at all**. Both of its routes had been found and then failed the profile fit — the bed would not stay within `MAX_CUT` — and a spec whose route failed simply produced nothing. It asks for four times as many candidate catchments as it needs now and takes the first that works.
+
+And on a mountain seed two stations sat 19 m inside a fairway with a hundred metres of open ground beside them. Tracing the clearance loop showed why: the worst requirement cycled **29.4 → 24.2 → 29.4 → 24.2** and did that forever. Pushing the curve clear of the fairway made a bend that `relaxCurvature` then took straight back out. Damping does not help a two-state cycle, because nothing in it is converging.
+
+When those two genuinely conflict, water does not belong on that line. The clearance pass reports failure and the route is rejected, which the fall-through above then handles. Channels placed went **up**, 87 of 90 to **90 of 90**, because a rejected route now costs a candidate rather than a channel.
+
 ## Finding the nearest hole was 15% of building a course
 
 `nearest` answers "which hole is this patch of ground nearest, and how far outside its corridor does it sit". Every grid the generator builds asks it for every cell, and it measured against all nine holes every time, including ones on the far side of the property. The profile put it at **15.3% of a whole course**, and the centre-line work it drives -- `sideWidth`, `unitCenter`, `toLocal` -- at about **40% together**.
