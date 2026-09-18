@@ -307,6 +307,9 @@ export const TEE_APRON_SCALE=TEE_APRON.z/TEE_PAD.z;
 // front of them, and there were half again as many blind shots. Past 10 it
 // stops buying anything and only picks rougher ground.
 const TEE_SEE=10;
+// The biggest height difference two neighbouring pads may have and still be
+// levelled into one platform.
+const TEE_MERGE=1.2;
 // How much of the countryside's relief the ground behind a tee keeps.
 const TEE_AREA_RELIEF=.25;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
@@ -343,24 +346,40 @@ export const TEE_EYE=1.6;
 // Returns how far the ground rises above the sightline, and what raising the
 // tee would cost to clear that. Raising the eye by L lifts the sightline at
 // fraction u of the way out by L*(1-u), so an obstruction h at u costs h/(1-u).
-export function sightline(h,teeZ,eyeY,sample){
+export function sightline(h,tee,eyeY,sample){
  // A par three is played to the green; anything else to a good drive.
- const reach=h.par===3?h.length-teeZ:Math.min(h.length-teeZ-30,250*.9144);
+ const reach=h.par===3?h.length-tee.z:Math.min(h.length-tee.z-30,250*.9144);
  if(reach<60)return {over:0,lift:0,reach:0};
- const aimZ=teeZ+reach,aim=h.toWorld({x:h.center(aimZ),z:aimZ});
- const target=sample(aim.x,aim.z);
+ const aimZ=tee.z+reach,aim={x:h.center(aimZ),z:aimZ};
+ const aw=h.toWorld(aim);
+ const target=sample(aw.x,aw.z);
+ const span=Math.hypot(aim.x-tee.x,aim.z-tee.z)||1;
+ const wide=(h.settings?.semiRough??6)+45;
  let over=0,lift=0;
- // SAMPLED ALONG THE CENTRELINE, NOT ALONG A STRAIGHT LINE IN WORLD SPACE, and
- // only the first three quarters of the shot. Near the target 1-u goes to zero
- // and the required lift goes to infinity with it: a 0.35 m ripple at u = 0.9
- // asked for the full cap, which is how a DEAD FLAT course came back with a
- // 3.5 m mound on it. Ground that close to the landing area is the landing
- // area's own contour, and no amount of tee clears it anyway.
- for(let d=20;d<reach*.75;d+=6){
-  const u=d/reach,zz=teeZ+d,at=h.toWorld({x:h.center(zz),z:zz});
-  const o=sample(at.x,at.z)-(eyeY+(target-eyeY)*u);
+ // FROM WHERE THE PLAYER ACTUALLY STANDS, ALONG THE LINE THEY ACTUALLY HIT.
+ //
+ // This used to start at the centre line at the tee's distance down the hole,
+ // which was true when every tee sat on the centre line and stopped being true
+ // the moment tees were sited on ground that suits them -- they now sit a
+ // median 19 m off it. It was measuring a shot nobody plays.
+ //
+ // The centre line was used for a reason: a straight line to a point 250 yards
+ // along a curving hole leaves the corridor on a dogleg and reads whatever
+ // happens to be out there. That is still handled, but by ignoring ground well
+ // outside the corridor rather than by pretending the tee is somewhere else.
+ for(let d=12;d<span*.8;d+=5){
+  const u=d/span,lx=tee.x+(aim.x-tee.x)*u,lz=tee.z+(aim.z-tee.z)*u;
+  const centre=h.center(lz),half=fairwayWidth(h,lz,0,Math.sign(lx-centre)||1);
+  if(half&&Math.abs(lx-centre)>half+wide)continue;
+  const q=h.toWorld({x:lx,z:lz});
+  const o=sample(q.x,q.z)-(eyeY+(target-eyeY)*u);
   if(o>over)over=o;
-  // A threshold, so the height field's own ripple cannot raise a tee.
+  // Raising the eye by L lifts the sightline at fraction u by L*(1-u), so an
+  // obstruction of o at u costs o/(1-u) to see over. Only the first three
+  // quarters, and the divisor is floored: near the target 1-u goes to zero and
+  // the required lift goes to infinity with it, which once had a 0.35 m ripple
+  // demanding a 3.5 m tee on dead flat ground. A threshold, too, so the height
+  // field's own noise cannot raise anything.
   if(o>.15)lift=Math.max(lift,o/Math.max(.25,1-u));
  }
  return {over,lift,reach};
@@ -803,6 +822,24 @@ export function generateWorld(settings={}){
    const home={x:pad.t.x,z:pad.localZ};
    const backLimit=home.z-TEE_SLIDE;
    const frontLimit=Math.min(home.z+TEE_SLIDE,(h.mowStart??h.fairwayStart)-pad.rz-10,aheadZ-pad.rz-14);
+ // GROUND AS IT WILL BE ONCE THE TEES ALREADY BUILT ON THIS HOLE ARE THERE.
+   //
+   // The blindness check read the shaped land WITHOUT any tee pads in it, so
+   // it could not see the one thing the owner reported being unable to see
+   // over -- the tee box in front of you. Measured from the real tee over the
+   // real ground, 13% of shots were blocked by more than a metre where this
+   // check believed 3%, and a fifth of those were blocked by another tee.
+   //
+   // Pads are sited forward-most first, so by the time a back tee is judged
+   // the tees in front of it are already placed and their levels are known.
+   const built=(x,z)=>{
+    const q=pad.h.toLocal({x,z});
+    for(const p of placed){
+     const ex=(q.x-p.x)/(TEE_PAD.x*TEE_APRON_SCALE),ez=(q.z-p.z)/(p.rz*TEE_APRON_SCALE);
+     if(ex*ex+ez*ez<1)return p.y;
+    }
+    return shapedNoTees(x,z);
+   };
    let best=null;
    for(let attempt=0;attempt<TEE_TRIES;attempt++){
     // The first attempt is where the hole put it, so a good original site is
@@ -849,7 +886,7 @@ export function generateWorld(settings={}){
     const level=g.mid;
     const c=h.toWorld({x:cx,z:cz});
     const blind=Math.max(...pad.markers.map(m=>
-     sightline(h,m.z+(cz-home.z),level+TEE_EYE,shapedNoTees).over));
+     sightline(h,{x:m.x+(cx-home.x),z:m.z+(cz-home.z)},level+TEE_EYE,built).over));
     // Lower is better. Flatness dominates: it is both how little digging the
     // site needs and how much it already looks like a tee.
     const score=g.spread*3
@@ -885,13 +922,13 @@ export function generateWorld(settings={}){
    // And only now, if the best site available is still blind, is the tee
    // raised to see over what is in front of it.
    let lift=0;
-   for(const m of pad.markers)lift=Math.max(lift,sightline(h,m.z,level+TEE_EYE,shapedNoTees).lift);
+   for(const m of pad.markers)lift=Math.max(lift,sightline(h,m,level+TEE_EYE,built).lift);
    lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
    pad.y=level+lift;
    // What the site was like before anything was done to it, and how far it
    // had to move to be found. Reported by the measurement harness.
    pad.spread=best.g.spread;pad.slid=Math.hypot(dx,dz);pad.lift=lift;
-   placed.push({x:pad.t.x,z:pad.localZ,rz:pad.rz});
+   placed.push({x:pad.t.x,z:pad.localZ,rz:pad.rz,y:pad.y});
    aheadZ=pad.localZ;aheadLevel=pad.y;
   }
   // ONE PIECE OF EARTHWORK, NOT ONE PER TEE.
@@ -907,10 +944,15 @@ export function generateWorld(settings={}){
    const dz=(a.localZ-b.localZ)/((a.rz+b.rz)*TEE_APRON_SCALE*.85);
    return dx*dx+dz*dz<1;
   };
+  //
+  // ONLY WHERE THE STEP BETWEEN THEM WAS NOT DELIBERATE. A back tee raised to
+  // see over the tee in front of it must not then drag that tee up to meet it
+  // -- that is precisely the view it was raised for. Merging is for pads that
+  // already sit at much the same height and would otherwise read as two humps.
   for(let again=true;again;){
    again=false;
    for(const a of pads)for(const b of pads)
-    if(a!==b&&near(a,b)&&b.y>a.y+1e-6){a.y=b.y;again=true;}
+    if(a!==b&&near(a,b)&&b.y>a.y+1e-6&&b.y-a.y<TEE_MERGE){a.y=b.y;again=true;}
   }
   // Yardage follows the tee, or the card lies about the hole.
   for(const t of Object.values(h.tees)){

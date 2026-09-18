@@ -125,7 +125,7 @@ export const METRICS = {
    for (const h of w.holes) for (const [name, t] of Object.entries(h.tees)) {
     const q = h.toWorld(t);
     // The same call the generator makes, against the finished terrain.
-    const {over} = sightline(h, t.z, w.height(q.x, q.z) + TEE_EYE, (x, z) => w.height(x, z));
+    const {over} = sightline(h, t, w.height(q.x, q.z) + TEE_EYE, (x, z) => w.height(x, z));
     if (series[name]) series[name].push(over);
     counts.shots++;
     if (over > 1) counts.blockedOver1m++;

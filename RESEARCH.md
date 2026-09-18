@@ -571,6 +571,35 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The blindness check could not see tee boxes
+
+Reported as: on a downhill hole the tee box in front of you hides the fairway. The check that decides whether a tee needs raising was reading `shapedNoTees` — the shaped land **with no tee pads in it**. It was structurally incapable of seeing the one thing being complained about.
+
+It had a second fault of the same kind. It sampled down the hole's centre line, which was true when every tee sat on the centre line and stopped being true the moment tees were sited on ground that suits them: they now sit a median 19 m off it. It was measuring a shot nobody plays.
+
+The centre line was there for a reason — a straight line to a point 250 yards along a curving hole leaves the corridor on a dogleg and reads whatever happens to be out there. That is still handled, but by ignoring ground well outside the corridor rather than by pretending the tee is somewhere else.
+
+Measured from the real tee position, along the real shot line, over the finished ground:
+
+| | before | after |
+|---|---|---|
+| shots blocked by more than 1 m | 103 of 810 (13%) | **74 (9%)** |
+| downhill shots blocked | 89 of 500 (18%) | **68 (14%)** |
+| obstruction, 90th percentile | 1.24 m | **0.88 m** |
+| of the blocked shots, blocked by another tee | 19 | 23 |
+
+**Beware the bench number here.** `blind.blockedOver1m` reports 27 before and 79 after, which reads as a threefold regression and is nothing of the sort: the metric was fixed in the same pass and now asks the honest question. The pair above is the only fair comparison, because it uses the same method on both sides. A measurement changing at the same time as the thing it measures is worth saying out loud, every time.
+
+Pads are sited forward-most first, so by the time a back tee is judged the tees in front of it are placed and their levels are known. The check samples those directly.
+
+**One fix that mattered less than expected.** Merging neighbouring pads to one level was undoing deliberate steps: a back tee raised to see over the tee in front would drag that tee up to meet it, which is exactly the view it was raised for. Merging is now limited to pads already within 1.2 m of each other — which is the right rule, and moved the tee-on-tee count by two. The remaining cases are mostly the lift cap.
+
+### What is left
+
+Tee-on-tee blocking is a third of the remaining blocked shots and barely moved. The tees are simply large: the mown collar is 20 by 27 metres, and a quarter of consecutive tee pairs sit within 1.5 m of each other sideways, which is in line. A par three's shared pad carries 8 m of dead ground in front of its forward marker for the same reason — one oval has to span every marker.
+
+Those are shape problems, not sightline problems, and the owner's call is rounded rectangles at a uniformly smaller size. Smaller pads may also dissolve the par-three special case entirely: if three of them fit down a short hole without touching, par threes go back to three separate pads and the existing level rule gives the stair step for free.
+
 ## A quarter of the country's relief behind the tee
 
 The previous section records four attempts at relaxing the corridor trough behind the tee, all of them measured as failures, and a conclusion to leave it alone. That conclusion was wrong, and it was wrong because of the number it was judged on.
