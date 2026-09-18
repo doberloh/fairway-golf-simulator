@@ -307,6 +307,8 @@ export const TEE_APRON_SCALE=TEE_APRON.z/TEE_PAD.z;
 // front of them, and there were half again as many blind shots. Past 10 it
 // stops buying anything and only picks rougher ground.
 const TEE_SEE=10;
+// How much of the countryside's relief the ground behind a tee keeps.
+const TEE_AREA_RELIEF=.25;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
 //
 // They used to be the same thing -- one fixed oval centred on every marker --
@@ -571,11 +573,33 @@ export function generateWorld(settings={}){
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}
+  // SOME OF THE COUNTRY COMES BACK BEHIND THE TEE.
+  //
+  // Hills grow only away from a playing corridor, which is what makes a hole
+  // read as a corridor -- and `nearest` counts the ground behind the tee as
+  // full corridor even though nothing is mown there, so the start of every
+  // hole was a flat scooped bowl. A quarter of the surrounding relief comes
+  // back there, which gives a tee real ground to be cut into rather than a
+  // saucer to be perched in.
+  //
+  // Judged wrongly the first time round. The sweep counted "sites needing real
+  // earthwork" as a cost and rejected every setting on that basis -- but
+  // earthwork is not the fault. A tee cut into a hillside is the thing being
+  // asked for. The only true cost is a blind shot, and siting now values a
+  // clear view highly enough to absorb most of that.
+  const mown=(n.h.mowStart??n.h.fairwayStart??22);
+  // SCALED BY THE ELEVATION SETTING, NOT JUST THE LANDFORM ONE. A tee is
+  // ground the player stands on, so it answers to "height change along the
+  // playing corridors" -- set that to zero and the start of a hole has to be
+  // as flat as the rest of it. Left on the landform setting alone, a course
+  // asked for dead level came back with 0.70 m of rise under its tees.
+  const unmown=(1-smooth((n.p.z-(mown-35))/35))*TEE_AREA_RELIEF*severity;
+  const open=reach=>Math.max(smooth(n.d/reach),unmown);
   let hills=0;
-  if(s.biome==='mountain')hills=relief*(70+severity*180)*rolling*smooth(n.d/90);
-  else if(s.biome==='links')hills=relief*(14+severity*35)*rolling*smooth(n.d/42);
-  else if(s.biome==='desert')hills=relief*(25+severity*75)*rolling*smooth(n.d/90);
-  else hills=relief*(s.biome==='pnw'?45:18)*rolling*smooth(n.d/70);
+  if(s.biome==='mountain')hills=relief*(70+severity*180)*rolling*open(90);
+  else if(s.biome==='links')hills=relief*(14+severity*35)*rolling*open(42);
+  else if(s.biome==='desert')hills=relief*(25+severity*75)*rolling*open(90);
+  else hills=relief*(s.biome==='pnw'?45:18)*rolling*open(70);
   let y=base(x,z)+hills;
   if(s.biome==='links'){const coast=smooth((x-(halfX-90+Math.sin(z/150)*30))/90);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
   return y;
