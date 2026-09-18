@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=4;
+export const SCHEMA_VERSION=5;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -65,7 +65,7 @@ export const SCHEMA_VERSION=4;
 //     per step is capped so curvature cannot beat the channel's own banks.
 //     Median cut is 0.4 to 2.9 m and channels run two to three times longer.
 //     Every course with a river or a creek is reshaped.
-export const GENERATOR_VERSION=14;
+export const GENERATOR_VERSION=15;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -94,6 +94,7 @@ export const SETTINGS=[
  {key:'biome',category:'landscape',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Surroundings',tip:'Regional planting, ground colours, light, temperature and altitude.'},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
  {key:'elevation',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Elevation severity',tip:'Height change along the playing corridors. At the top end a hole climbs or falls tens of metres, while tees and greens keep gentle surfaces.'},
+ {key:'blindTees',category:'landscape',kind:'range',min:0,max:100,step:5,unit:'%',def:0,label:'Blind tee shots',tip:'How often a tee shot is left blind. A tee complex is normally raised until the shot clears the ground in front of it; this is the share of holes allowed to keep the hidden landing area instead. Only holes the land makes blind are affected, so the true rate tops out around one in five.'},
 
  {key:'footprint',category:'routing',kind:'choice',options:FOOTPRINT_KEYS,def:'organic',label:'Course footprint',tip:'A guiding shape for the whole routing. It steers land use; individual holes stay procedural, so the silhouette is an intention rather than a guarantee.'},
  {key:'spacing',category:'routing',kind:'range',min:8,max:65,step:1,unit:' m',def:18,label:'Space between hole corridors',tip:'Clearance kept between neighbouring corridors when packing the routing.'},
@@ -202,6 +203,13 @@ const MIGRATIONS={
  // Thursday -- the gentlest setup, nearest the middle -- is the honest default
  // for it rather than whatever a later day would cut.
  3:s=>({...s,pinDay:'Thursday'}),
+ // 4 -> 5: tee complexes are now raised until the shot clears the ground in
+ // front of them, and `blindTees` is the share of holes allowed to keep the
+ // blind shot instead. A save from before this predates the raising entirely,
+ // so there is no value that reproduces it -- and it does not need one, since
+ // the generator version already puts that change to the player rather than
+ // applying it silently. It takes the default.
+ 4:s=>({...s,blindTees:0}),
 };
 
 // Play-scope keys (turf, flight profile, club yardages, art style) ride along in

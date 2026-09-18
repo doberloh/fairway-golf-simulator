@@ -135,11 +135,14 @@ export const onShoreBank=(world,x,z,mown=false)=>{const q=world.streams?.at(x,z)
 // the thing that holds. A radial push is a translation: it cannot make a
 // monotonically descending path climb, and `downhillProfile` re-surveys the
 // ground underneath afterwards in any case.
-function clearProtected(points,protect,width,corridor=()=>Infinity){
+function clearProtected(points,protect,width,corridor=()=>({d:Infinity,ux:0,uz:0})){
  const keepers=protect.filter(o=>o.keep),half=width*.5,lane=half+CORRIDOR_CLEAR;
- const n=points.length,dx=new Float64Array(n),dz=new Float64Array(n);
- for(let round=0;round<10;round++){
-  dx.fill(0);dz.fill(0);
+ const n=points.length,rx=new Float64Array(n),rz=new Float64Array(n),dx=new Float64Array(n),dz=new Float64Array(n);
+ const minRadius=Math.max(width*1.8,14);
+ let run=0;for(let i=1;i<n;i++)run+=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);
+ const span=run/Math.max(1,n-1);
+ for(let round=0;round<30;round++){
+  rx.fill(0);rz.fill(0);
   let worst=0;
   for(let i=0;i<n;i++){
    const p=points[i];let ax=0,az=0;
@@ -152,12 +155,12 @@ function clearProtected(points,protect,width,corridor=()=>Infinity){
    }
    // Out of a corridor, which is a strip and not a disc, so the push follows
    // the gradient of the corridor distance rather than a radius.
-   const c=corridor(p.x,p.z);
+   const {d:c,ux,uz}=corridor(p.x,p.z);
    if(c<lane){
-    const gx=corridor(p.x+2,p.z)-corridor(p.x-2,p.z),gz=corridor(p.x,p.z+2)-corridor(p.x,p.z-2),g=Math.hypot(gx,gz);
-    if(g>1e-6){ax+=gx/g*(lane-c);az+=gz/g*(lane-c);}
+    const g=Math.hypot(ux,uz);
+    if(g>1e-6){ax+=ux/g*(lane-c);az+=uz/g*(lane-c);}
    }
-   dx[i]=ax;dz[i]=az;
+   rx[i]=ax;rz[i]=az;
    worst=Math.max(worst,Math.hypot(ax,az));
   }
   if(worst<.05)break;
@@ -171,13 +174,55 @@ function clearProtected(points,protect,width,corridor=()=>Infinity){
   // displacement cannot do that: neighbouring stations move together, so the
   // curve is translated rather than creased. It also undershoots, which is why
   // the requirement is recomputed and reapplied until it stops changing.
-  for(let pass=0;pass<4;pass++){
-   const px=Float64Array.from(dx),pz=Float64Array.from(dz);
-   for(let i=1;i<n-1;i++){dx[i]=(px[i-1]+2*px[i]+px[i+1])*.25;dz[i]=(pz[i-1]+2*pz[i]+pz[i+1])*.25;}
+  // THE BUMP NEEDS THE HEIGHT OF THE REQUIREMENT AND THE WIDTH OF THE
+  // CURVATURE LIMIT, WHICH IS A DILATION AND NOT A BLUR.
+  //
+  // Two wrong versions of this, in opposite directions. Applying each station's
+  // own requirement and nothing more put a corner wherever the requirement
+  // changed, drove the tightest bend to 0.00x the half width and flipped the
+  // water quads face down. Blurring the requirement instead fixed the corner
+  // and broke the clearance: a blur conserves the total and crushes the PEAK,
+  // so a station needing 8 m moved 1, and the violation got worse rather than
+  // better -- 24 m inside a fairway where it had been 1.6.
+  //
+  // What is actually wanted is the same displacement spread over more stations
+  // WITHOUT losing its height: each station takes the largest requirement in
+  // its neighbourhood, tapered by distance. The peak survives, the detour is
+  // wide, and `relaxCurvature` below leaves it alone because it is already the
+  // shape relax would have made -- which is the point, since push and relax
+  // undoing each other is what left three stations sitting in a fairway
+  // forever with 70 m of open ground beside them.
+  const w=Math.max(1,Math.min(40,Math.round(minRadius/Math.max(span,.5))));
+  for(let i=0;i<n;i++){
+   let bx=0,bz=0,best=0;
+   for(let j=Math.max(0,i-w);j<=Math.min(n-1,i+w);j++){
+    const t=1-Math.abs(i-j)/(w+1),f=t*t*(3-2*t),m=Math.hypot(rx[j],rz[j])*f;
+    if(m>best){best=m;bx=rx[j]*f;bz=rz[j]*f;}
+   }
+   dx[i]=bx;dz[i]=bz;
   }
-  for(let i=0;i<n;i++){points[i].x+=dx[i]*1.35;points[i].z+=dz[i]*1.35;}
+  // DAMPED, AND WITH A LIMIT ON HOW FAR A STATION MOVES IN ONE ROUND.
+  //
+  // Applied whole, a correction is a teleport: a station 25 m inside a corridor
+  // asked for 32 m, jumped clean across the centreline of the hole next door,
+  // had its outward normal flip, and came straight back. Measured, the worst
+  // requirement went 40 -> 20 -> 34 -> 39 -> 10 -> 18 -> 27 -> 38 and never
+  // settled. A channel walks out of a corridor over several rounds instead.
+  for(let i=0;i<n;i++){
+   const m=Math.hypot(dx[i],dz[i]);
+   if(m<1e-9)continue;
+   const k=CLEAR_DAMP*Math.min(1,CLEAR_STEP/m);
+   points[i].x+=dx[i]*k;points[i].z+=dz[i]*k;
+  }
+  // RELAXED INSIDE THE LOOP, SO THE NEXT ROUND CHECKS ITS WORK. Run once after
+  // the loop instead, this is the last thing to touch the curve and nothing
+  // verifies it -- it pulls a station back across a boundary the loop had just
+  // cleared, and the only reason that was invisible is that the displacements
+  // happened to be small. A change to the tee ramps moved the terrain enough to
+  // put 6 stations back inside a fairway. Here the loop either measures a clean
+  // curve and exits, or corrects what the relax undid.
+  relaxCurvature(points,minRadius);
  }
- relaxCurvature(points,Math.max(width*1.8,14));
  return points;
 }
 
@@ -268,6 +313,11 @@ const CORRIDOR_CLEAR = 4;
 const CORRIDOR_RIDGE = 22, CORRIDOR_REACH = 45;
 // Over what distance a channel comes down to the level of the pond it ends in.
 const SINK_RAMP = 60;
+// How hard the keep-out pushes per round, and the furthest one station travels
+// in a round. Both exist to stop the correction overshooting into the hole on
+// the other side; neither changes where the curve ends up, only how it gets
+// there.
+const CLEAR_DAMP = .55, CLEAR_STEP = 5;
 
 function drainage(height, halfX, halfZ, protect, isSea, corridor) {
  const cell = FLOW_CELL;
@@ -289,8 +339,20 @@ function drainage(height, halfX, halfZ, protect, isSea, corridor) {
   // owner asked for it gone, and the way to remove it is the way greens are
   // handled: raise the ground rather than steer the path, so the route is a
   // pure descent that happens to run between the holes.
-  const c = corridor(x, z);
-  if (c < CORRIDOR_REACH) y += CORRIDOR_RIDGE * (1 - Math.max(0, c) / CORRIDOR_REACH) ** 2;
+  // A RIDGE THAT KEEPS RISING INWARD, NOT A PLATEAU.
+  //
+  // This clamped the corridor distance at zero, so everywhere INSIDE a corridor
+  // got the same 22 m. A constant offset preserves the gradient underneath it
+  // exactly: the corridor became a raised plateau that water ran through the
+  // way it always had, and the ridge only ever steered at the edges. Routes
+  // came out 40 m inside a fairway, and the keep-out pass downstream was left
+  // trying to repair that station by station -- which is a repair pass being
+  // asked to do a router's job, and it oscillated rather than converging.
+  //
+  // Letting the term grow past 1 makes the corridor an actual hill. Capped,
+  // because the fill has to stay numerically sane.
+  const t = (CORRIDOR_REACH - corridor(x, z).d) / CORRIDOR_REACH;
+  if (t > 0) y += CORRIDOR_RIDGE * Math.min(9, t * t);
   H[k] = y;
   sea[k] = isSea(x, z) ? 1 : 0;
  }
@@ -453,7 +515,7 @@ function channels(model, count, used) {
  return out;
 }
 
-export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>false,corridor=()=>Infinity,onSink=null){
+export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>false,corridor=()=>({d:Infinity,ux:0,uz:0}),onSink=null){
  const rng=random(s.seed+':streams'),specs=[...Array(s.rivers||0).fill('river'),...Array(s.creeks||0).fill('creek')],streams=[],segments=[],cells=new Map(),cellSize=40,reach=Math.hypot(halfX,halfZ)+210;
  const protect=holes.flatMap(h=>[{...(h.worldGreen??h.worldPin),r:h.greenSize*h.greenAspect+s.fringe+30,keep:h.greenSize*h.greenAspect+s.fringe+8},...Object.values(h.tees).map(t=>({...h.toWorld(t),r:18,flat:14,keep:16})),...h.ponds.map(p=>({...h.toWorld(p),pond:true,r:Math.max(p.reachX||p.rx,p.rz)+(p.shoreWidth||14)+12,keep:Math.max(p.reachX||p.rx,p.rz)+(p.shoreWidth||14)+12}))]);
  // Bunkers are excavated dry hazards: a channel crossing one would leave water

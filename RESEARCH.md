@@ -571,6 +571,55 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A tee plateau shaped like a box, under paint shaped like an oval
+
+Reported as odd shading artifacts around the raised tees. The tee surface and its mown collar are both ellipses — `localSurface` tests `(dx/6)² + (dz/8)² < 1` — but the ground was flattened over a *box*, `max(|dx| − 6, |dz| − 8)`. At each of the four corners the flat ground therefore jutted about 3 m past the painted tee, so the shading broke along a rectangle that nothing on screen agreed with.
+
+The plateau also stopped at the pad rather than the apron, which left the mown collar sitting on the ramp: **0.33 m of relief at the median and 0.82 m at worst**, a maintained surface visibly tilting away from the dead-flat pad inside it.
+
+Both are one change — normalise into the apron ellipse and convert back to metres along the ray, the same idiom the pond shelves use — plus a wider, gentler ramp.
+
+| | before | after |
+|---|---|---|
+| worst angle between neighbouring surface normals around a pad | 2.6° median, 3.8° p99 | **0.8° median, 2.3° p99** |
+| steepest ground around a pad | 10.1° median, 11.6° p90 | **5.0° median, 7.5° p90** |
+| relief across the mown collar | 0.33 m median, 0.82 m max | **0.01 m median, 0.35 m max** |
+
+`PAD_REACH`, the box within which a pad is considered at all, had to grow with the ramp: at 78 m a full-lift pad wanted 98 and got 64, so the falloff was cut off part way down. Median normal jump across that 68–92 m band, 11.7° to 8.5°.
+
+## Blind tee shots became a dial
+
+`blindTees` is the share of holes allowed to keep a blind tee shot instead of having the complex raised until the shot clears. Drawn per hole from its own seeded stream, so moving the dial does not reshuffle anything else. Only holes the land actually makes blind can be chosen, so the true rate tops out at whatever the terrain supplies.
+
+| setting | holes chosen to stay blind | holes actually raised |
+|---|---|---|
+| 0 | 0 | 107 |
+| 25 | 72 (27%) | 74 |
+| 50 | 132 (49%) | 53 |
+| 100 | 270 (100%) | 0 |
+
+The default is 0, which is exactly the behaviour signed off in the previous pass. Worth knowing that the *observable* rate moves much less than the dial does — blue tee shots blocked by more than a metre run 5%, 6%, 6%, 11% across those four settings — because most of the 107 lifts are clearing sub-metre obstructions that were never blind enough to notice.
+
+## The corridor ridge was a plateau, and it cost an hour
+
+The keep-out that stops a channel crossing a fairway is a two-part mechanism: the drainage model raises corridors so routes go *between* holes, and a repair pass pushes the finished polyline clear of what meander and corner cutting put back. Changing the tee ramps moved the terrain, and the repair pass started failing. Five attempts at fixing the repair pass, in order:
+
+1. Move `relaxCurvature` inside the convergence loop, since running it last meant nothing verified its work. **6 stations inside a fairway → 1.** A real bug, worth keeping.
+2. Replace the finite-differenced push direction with an exact outward normal from `nearest`, which knows the hole and the centreline point. The difference is degenerate on the ridge halfway between two holes. **Kept — correct, though it moved the count to 4.**
+3. Spread the displacement further so the detour is wider than the curvature limit. **Made it far worse, 1.6 m inside became 24 m:** a blur conserves the total displacement and crushes the peak, so a station needing 8 m moved 1.
+4. Replace the blur with a tapered dilation, which keeps the peak and gains the width. **Correct in itself, still 4 stations.**
+5. Damp the push and cap how far a station moves in a round, because a 32 m correction jumped clean across the next hole's centreline, flipped the outward normal and came back — measured oscillating 40 → 20 → 34 → 39 → 10 → 18 → 27 → 38 over ten rounds without settling. **Correct in itself, and still not zero.**
+
+Every one of those was a better hammer. The nail was somewhere else. The ridge is
+
+    CORRIDOR_RIDGE * (1 - max(0, c) / CORRIDOR_REACH) ** 2
+
+and `max(0, c)` means that *inside* a corridor every point gets the same 22 m. **A constant offset preserves the gradient underneath it exactly.** The corridor was a raised plateau that water ran through precisely as it always had; the ridge only ever steered at the edges. That is why routes came out 40 m inside a fairway, and why a repair pass was being asked to do a router's job.
+
+Letting the term grow past 1 makes a corridor an actual hill. **Zero violations, first try**, with 70 of 72 channels still placed and the median length unchanged at 446 m.
+
+The lesson is about when to stop tuning. Attempts 1, 2, 4 and 5 all fixed genuine defects and are all still in the code — which is exactly what made the spiral convincing. The signal was not that any one of them was wrong; it was that each one moved the count (6, 4, 4, 4) without reaching zero. A repair pass that needs a third attempt is not under-tuned, it is repairing something that should not need repair.
+
 ## Where water is not allowed to go
 
 Four rules, all owner decisions, all of them arriving after the drainage rewrite made the underlying routing trustworthy enough to constrain. Each was measured before it was asked for, and each was happening.

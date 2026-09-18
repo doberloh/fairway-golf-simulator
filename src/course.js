@@ -531,7 +531,10 @@ export function generateWorld(settings={}){
  // left a wall around every pad once the ground got steep.
  const teePads=[];
  for(const h of holes)for(const t of Object.values(h.tees)){const q=h.toWorld(t);teePads.push({h,t,x:q.x,z:q.z});}
- const PAD_REACH=78;
+ // Must cover the apron plus the WIDEST ramp, or the falloff is cut off part
+ // way down and the cut is a crease. At the old 78 a full-lift pad wanted 98
+ // and got 64, which is where the one 13.5 degree outlier came from.
+ const PAD_REACH=115;
  // A TEE COMPLEX IS LEVELLED AS ONE THING, NOT AS THREE INDEPENDENT PADS.
  //
  // Each pad used to read its own height straight off the shaped landform, and
@@ -544,7 +547,15 @@ export function generateWorld(settings={}){
  // Two things happen here, and they are the same lever: deciding the complex's
  // level deliberately instead of reading it off the ground.
  const TEE_COMPRESS=.45,TEE_STEP=.35,TEE_LIFT_CAP=3.5,TEE_EYE=1.6;
+ // A BLIND TEE SHOT IS A CHOICE, NOT AN ACCIDENT. Real courses keep a few, and
+ // the raising above would otherwise remove every one the land offers. This is
+ // the share of holes allowed to keep theirs, drawn per hole from its own
+ // stream so changing the dial does not reshuffle anything else. Only holes the
+ // land actually makes blind can be chosen, so the true rate tops out at
+ // whatever the terrain supplies -- measured, about one hole in five.
+ const blindRng=random(s.seed+':blind-tees'),blindShare=(s.blindTees??0)/100;
  for(const h of holes){
+  const keepBlind=blindRng()<blindShare;
   const names=Object.keys(h.tees);                       // back to front
   const pads=names.map(n=>teePads.find(p=>p.h===h&&p.t===h.tees[n]));
   // ONE: compress the natural spread, then enforce the order. Clamping alone
@@ -603,15 +614,33 @@ export function generateWorld(settings={}){
   }
   // Capped, because past a few metres this stops being a raised tee and starts
   // being a plinth. What it cannot clear stays a blind shot.
-  lift=Math.min(lift,TEE_LIFT_CAP);
+  lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
   pads.forEach((p,i)=>{p.y=level[i]+lift;});
  }
  function shapedLand(x,z){
   let y=shapedNoTees(x,z),blend=0,weightSum=0,targetSum=0;
   for(const pad of teePads){
    if(Math.abs(x-pad.x)>PAD_REACH||Math.abs(z-pad.z)>PAD_REACH)continue;
-   const q=pad.h.toLocal({x,z}),out=Math.max(Math.abs(q.x-pad.t.x)-6,Math.abs(q.z-pad.t.z)-8);
-   const level=pad.y,ramp=10+Math.min(55,Math.abs(y-level)*4.5);
+   // AN OVAL, BECAUSE THE PAINT IS AN OVAL.
+   //
+   // This was a BOX -- the larger of the two axis overhangs -- while the tee
+   // surface and its mown collar are both ellipses. At each of the four corners
+   // the flat ground therefore jutted about 3 m past the painted tee, so the
+   // shading broke along a rectangle that nothing on screen agreed with. The
+   // plateau reaches the APRON rather than the pad as well, so the whole mown
+   // collar is flat ground: it was sitting on the ramp, carrying 0.33 m of
+   // relief at the median and 0.82 m at worst, which is a mown surface visibly
+   // tilting away from the dead-flat pad inside it.
+   //
+   // Same idiom the pond shelves use: normalise into the ellipse, then convert
+   // back to metres along the ray so the ramp width means the same thing in
+   // every direction.
+   const q=pad.h.toLocal({x,z}),ex=(q.x-pad.t.x)/TEE_APRON.x,ez=(q.z-pad.t.z)/TEE_APRON.z,e=Math.hypot(ex,ez);
+   const out=e<=1?0:(e-1)*Math.hypot(q.x-pad.t.x,q.z-pad.t.z)/e;
+   // Wider and gentler than the first version, which reached full slope in 26 m
+   // for a 3.5 m lift and read as a mound sitting on the ground rather than
+   // ground that rises to a tee.
+   const level=pad.y,ramp=14+Math.min(70,Math.abs(y-level)*7);
    const b=1-smooth(out/ramp);
    if(b<=0)continue;
    // Same weighting the pond shelves use: the pad you are standing on decides
@@ -648,6 +677,24 @@ export function generateWorld(settings={}){
  // here. It is also before the ground grid, which matters for a different
  // reason -- `analyticHeight` closes over `basins` and the mesh is sampled
  // from it.
+ // HOW FAR THE NEAREST PLAYING CORRIDOR IS, AND WHICH WAY IS OUT.
+ //
+ // The direction matters as much as the distance. streams.js first estimated it
+ // by finite-differencing the distance, which is exact in open ground and
+ // degenerate on the ridge halfway between two holes -- precisely where a
+ // channel squeezing through a gap needs it, and where one station stayed stuck
+ // inside a fairway however many rounds it was given. `nearest` already knows
+ // which hole won and where on its centreline, so the outward normal is a
+ // subtraction rather than a guess.
+ function corridorClearance(x,z){
+  const q=nearest(x,z),h=q.h,zz=clamp(q.p.z,0,h.length),cx=h.center(zz);
+  let ux=q.p.x-cx,uz=q.p.z-zz,len=Math.hypot(ux,uz);
+  // Dead on the centreline there is no outward direction; straight across is
+  // the shortest way off it, and which side is arbitrary from there anyway.
+  if(len<1e-6){ux=1;uz=0;len=1;}
+  const a=h.toWorld({x:q.p.x,z:q.p.z}),b=h.toWorld({x:q.p.x+ux/len,z:q.p.z+uz/len});
+  return {d:q.d,ux:b.x-a.x,uz:b.z-a.z};
+ }
  const sinkRng=random(s.seed+':sink-ponds');
  function sinkPond({sink,points}){
   // AT THE BOTTOM OF THE HOLLOW, SIZED BY THE CHANNEL THAT FILLS IT.
@@ -686,7 +733,7 @@ export function generateWorld(settings={}){
    // protect list was built before it existed.
    protect:{...world,pond:true,r:Math.max(p.reachX,p.rz)+p.shoreWidth+12,keep:Math.max(p.reachX,p.rz)+p.shoreWidth+12}};
  }
- const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea,(x,z)=>nearest(x,z).d,sinkPond);
+ const streams=generateStreams(NO_INLAND_WATER.has(s.biome)?{...s,rivers:0,creeks:0}:s,holes,halfX,halfZ,shapedLand,random,isSea,corridorClearance,sinkPond);
  // Channel routing avoids bunkers, but a tightly packed course can force a
  // crossing. Water standing in sand is neither a playable bunker nor a readable
  // hazard, so the channel washes that bunker out. Bunker count is already an
