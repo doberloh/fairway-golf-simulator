@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {generateWorld,fairwayWidth} from '../src/course.js';
-import {downhillProfile,addStreams} from '../src/streams.js';
+import {downhillProfile,addStreams,STREAM_GRADE} from '../src/streams.js';
 import {fairwayAim,fairwayMiddle,teeAim,cameraInsideTree,makeHoleTour,MENU_ORBIT_RATE,FLYOVER_RATE} from '../src/camera-tours.js';
 let world;const getWorld=()=>world??=generateWorld({seed:'LAKE-QA',biome:'midwest',holes:9,lakes:2,lakeSize:140,water:0,trees:0,rivers:1,creeks:1,elevation:20});
 test('channels descend without raised water or abrupt longitudinal grades in either direction',()=>{
  for(const sign of [-1,1]){const height=(x,z)=>30+sign*z*.02+Math.sin(z/35)*4,points=Array.from({length:101},(_,i)=>({x:0,z:i*10,nx:1,nz:0,width:8}));const {path}=downhillProfile(points,height);
- for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],distance=Math.hypot(b.x-a.x,b.z-a.z),slope=(a.level-b.level)/distance;assert(slope>=.00015-1e-9&&slope<=.025+1e-9);assert(b.level<=height(b.x,b.z)-.199);assert(Math.abs(b.nx-(b.z-a.z)/distance)<1e-8);}
+ for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],distance=Math.hypot(b.x-a.x,b.z-a.z),slope=(a.level-b.level)/distance;assert(slope>=.00015-1e-9&&slope<=STREAM_GRADE+1e-9);assert(b.level<=height(b.x,b.z)-.199);assert(Math.abs(b.nx-(b.z-a.z)/distance)<1e-8);}
  }
 });
 test('channels clear every bunker and never bend tighter than their own bank strip',()=>{

@@ -4,6 +4,16 @@ export const BANK_COLORS={pnw:'#526343',midwest:'#697348',autumn:'#81724e',links
 // depth for a stream valley, not a budget for crossing the map: a route that
 // would need more than this is trimmed back rather than trenched through.
 export const MAX_CUT=9;
+// STEEPEST GRADE A WATERCOURSE MAY DESCEND, as a fraction.
+//
+// This was 0.025, and it constrains the fitted water SURFACE, not the ground:
+// where a valley falls faster than the surface is allowed to, the surface must
+// sit below it and the difference is excavation. With channels drawn across the
+// map it rarely bit, because they crossed contours anyway. Routed down real
+// valleys it bites constantly -- a median cut of 6.91 m on ground the path
+// descends by construction, which is absurd. A river runs at one or two per
+// cent and a mountain creek at ten or more; 2.5 was never a physical figure.
+export const STREAM_GRADE=.09;
 // A CUT BANK, THE WAY A BUNKER HAS ONE.
 //
 // Water used to rise to meet its surroundings over 14 to 24 metres, which reads
@@ -41,7 +51,7 @@ export const cutFor = width => {
 export const FADE=46;
 export function downhillProfile(points,height,maxCut=MAX_CUT){
  const survey=path=>path.map(p=>Math.min(...[-.7,0,.7].map(f=>height(p.x+p.nx*p.width*f,p.z+p.nz*p.width*f)))-cutFor(p.width).freeboard);
- const grade=(path,values)=>{const levels=[...values];for(let i=1;i<levels.length;i++)levels[i]=Math.min(levels[i],levels[i-1]-.00015*Math.hypot(path[i].x-path[i-1].x,path[i].z-path[i-1].z));for(let i=levels.length-2;i>=0;i--)levels[i]=Math.min(levels[i],levels[i+1]+.025*Math.hypot(path[i].x-path[i+1].x,path[i].z-path[i+1].z));return {path,values,levels,cost:levels.reduce((n,y,i)=>n+(values[i]-y)**2,0)/levels.length};};
+ const grade=(path,values)=>{const levels=[...values];for(let i=1;i<levels.length;i++)levels[i]=Math.min(levels[i],levels[i-1]-.00015*Math.hypot(path[i].x-path[i-1].x,path[i].z-path[i-1].z));for(let i=levels.length-2;i>=0;i--)levels[i]=Math.min(levels[i],levels[i+1]+STREAM_GRADE*Math.hypot(path[i].x-path[i+1].x,path[i].z-path[i+1].z));return {path,values,levels,cost:levels.reduce((n,y,i)=>n+(values[i]-y)**2,0)/levels.length};};
  const fit=path=>{const raw=survey(path),a=grade(path,raw),b=grade([...path].reverse(),[...raw].reverse());return a.cost<=b.cost?a:b;};
  // Levels only ever descend, so a hollow near the head pins every station after
  // it and each later ridge would have to be trenched through to hold that
@@ -137,115 +147,173 @@ export function relaxCurvature(points,minRadius,passes=60){
 // cuts the channel back to the shoreline, and because the profile then closes a
 // trimmed end down to nothing, what is left ends by fading out where it meets
 // the water -- which is what a mouth looks like.
-// LONGEST IS THE WRONG WORD FOR IT: ON THE COURSE COMES FIRST.
-//
-// A channel is drawn across a span reaching well past the map in both
-// directions, so "the longest run that is on land" can easily be a stretch of
-// open country a kilometre off the edge -- measured on a links seed, both
-// channels came back entirely outside the course, at x -747..-314 against a
-// halfX of 334. A channel nobody can see is worth less than a shorter one
-// crossing the holes, so runs are scored by how much of them lands ON the
-// course and only then by length.
-// WHICH WAY IS DOWNHILL, AVERAGED OVER A RADIUS.
-//
-// Sampled at a point, a generated landscape is noisy enough that steepest
-// descent jitters and traps itself in every dimple. Averaged over tens of
-// metres it answers the question actually being asked -- which way does this
-// hillside fall -- and a channel routed on it behaves like water rather than
-// like a needle threading local minima.
-function grade(height,x,z,r){
- let gx=0,gz=0;
- for(let i=0;i<4;i++){
-  const a=i*Math.PI/4,cx=Math.cos(a),cz=Math.sin(a);
-  const d=height(x+cx*r,z+cz*r)-height(x-cx*r,z-cz*r);
-  gx-=cx*d;gz-=cz*d;
- }
- const len=Math.hypot(gx,gz);
- return len>1e-9?{x:gx/len,z:gz/len,fall:len}:{x:0,z:0,fall:0};
-}
 
-// A WATERCOURSE IS ROUTED BY DESCENDING THE LAND.
+// DRAINAGE, COMPUTED OVER THE WHOLE MAP AT ONCE.
 //
-// It used to be a bearing and three harmonics -- a sine wave drawn across the
-// map with no reference to the ground -- and the terrain entered only
-// afterwards, as a budget: keep the longest run whose bed stays within MAX_CUT
-// of the surface. So a channel imposed its own gradient and excavated whatever
-// stood in the way. Measured before this: a median cut of 2 to 9.5 m below the
-// land along the whole length, reaching 21.1 m on a mountain course, with the
-// water falling 5.4 m over ground that fell 0.7. That is a trench gouged across
-// a hillside, which is what "worms across the surface" describes.
+// Two earlier attempts routed a channel as a PATH: a bearing plus harmonics
+// drawn across the map, then a downhill walk. Both failed in the same way, for
+// the same reason -- a path is a local, greedy thing with no memory of where it
+// has been, so nothing in it forbids returning to ground it has already
+// crossed. The walk was the worse of the two: meander applied as a heading
+// ROTATION integrates, and a constant bend is a circle. Measured, channels
+// turned through 12 to 19 full circles each, with 2716 self-overlapping station
+// pairs on one river. The turn cap added to bound curvature did not prevent
+// that; it set the radius of it.
 //
-// The harmonics are kept, but as MEANDER -- they bend the heading rather than
-// being the path. Inertia stops the walk snapping to every change of slope; the
-// obstacle term steers around greens, tees and bunkers instead of the old
-// lateral push, which only made sense in a straight channel's frame.
-function descend(start,o){
- const {height,isSea,halfX,halfZ,width,rng,avoid,step,maxSteps}=o;
- const harmonics=[{length:120+rng()*180,amp:.20+o.bend*.55},{length:300+rng()*380,amp:.12+o.bend*.30}].map(h=>({...h,phase:rng()*6.28}));
- const widthPhase=rng()*6.28,widthLength=55+rng()*70;
- const points=[];
- let x=start.x,z=start.z,travelled=0,stalled=0;
- const first=grade(height,x,z,45);
- let dir=first.fall>0?{x:first.x,z:first.z}:{x:Math.cos(rng()*6.28),z:Math.sin(rng()*6.28)};
- let last=height(x,z);
- for(let i=0;i<maxSteps;i++){
-  points.push({x,z,width:width*(.82+.18*Math.sin(travelled/widthLength+widthPhase))});
-  const g=grade(height,x,z,45);
-  // Downhill, blended with where we were already going.
-  let hx=dir.x*.58+g.x*.42,hz=dir.z*.58+g.z*.42;
-  // Meander, as a rotation of the heading.
-  let bendBy=0;
-  for(const h of harmonics)bendBy+=Math.sin(travelled/h.length+h.phase)*h.amp;
-  const ca=Math.cos(bendBy),sa=Math.sin(bendBy);
-  [hx,hz]=[hx*ca-hz*sa,hx*sa+hz*ca];
-  // Steer clear of anything protected, by turning rather than by translating.
-  for(const q of avoid){
-   const dx=x-q.x,dz=z-q.z,d=Math.hypot(dx,dz),clear=q.r+width*.65+12;
-   if(d>clear*2||d<1e-6)continue;
-   const push=(1-d/(clear*2))*1.6;
-   hx+=dx/d*push;hz+=dz/d*push;
+// Water does not choose a path. It occupies the one the land already has. So
+// the land is solved first, over a coarse grid, and a watercourse is read off
+// the answer:
+//
+//   fill  - depressions are flooded to a spill height, so every cell has a way
+//           out, EXCEPT the large ones, which are left as the lakes they are
+//   flow  - each cell points at its steepest lower neighbour
+//   drain - how much land arrives through each cell
+//
+// A channel is then a walk DOWN the flow directions, and it cannot spiral or
+// cross itself however the meander is tuned, because every step is strictly
+// lower than the last. That is a property of the construction rather than a
+// number to tune, which is the whole reason for the rewrite.
+const FLOW_CELL = 10;
+// Depressions smaller than this are noise and get flooded. Larger ones survive
+// as terminal water. Generous on purpose: a terminal pond should read as a
+// destination, not as a puddle every creek trips into.
+const SINK_FILL_AREA = 40000;
+
+function drainage(height, halfX, halfZ, protect, isSea) {
+ const cell = FLOW_CELL;
+ const nx = Math.ceil(halfX * 2 / cell) + 1, nz = Math.ceil(halfZ * 2 / cell) + 1;
+ const n = nx * nz;
+ const H = new Float32Array(n), sea = new Uint8Array(n);
+ const X = i => -halfX + (i % nx) * cell, Z = i => -halfZ + Math.floor(i / nx) * cell;
+ for (let k = 0; k < n; k++) {
+  const x = X(k), z = Z(k);
+  let y = height(x, z);
+  // Greens, tees and bunkers are RAISED rather than steered around. Water then
+  // flows past them for the same reason it flows past a hill, and the path stays
+  // a pure descent -- steering a path is what reintroduces the ability to loop.
+  for (const o of protect) {
+   const d = Math.hypot(x - o.x, z - o.z), reach = o.r + 25;
+   if (d < reach) y += 8 * (1 - d / reach) ** 2;
   }
-  // THE TURN IS CAPPED, NOT RELAXED AFTERWARDS.
-  //
-  // `relaxCurvature` smooths a path; it cannot rescue one that doubles back
-  // inside its own banks, and the walk can do exactly that when the gradient
-  // swings or an obstacle pushes hard -- measured at a bend of 0.20 times the
-  // half width, where the floor is 1. Limiting the turn per step to
-  // step/radius bounds the curvature by construction, whatever the land does.
-  const len=Math.hypot(hx,hz)||1;
-  hx/=len;hz/=len;
-  const maxTurn=step/Math.max(width*1.8,14);
-  const turn=Math.atan2(dir.x*hz-dir.z*hx,dir.x*hx+dir.z*hz);
-  const use=Math.max(-maxTurn,Math.min(maxTurn,turn));
-  const cw=Math.cos(use),sw=Math.sin(use);
-  dir={x:dir.x*cw-dir.z*sw,z:dir.x*sw+dir.z*cw};
-  x+=dir.x*step;z+=dir.z*step;travelled+=step;
-  if(Math.abs(x)>halfX+140||Math.abs(z)>halfZ+140)return {points,end:'edge'};
-  if(isSea(x,z))return {points,end:'sea'};
-  // A sink is ground the walk cannot get out of. Judged over a window, because
-  // a single step uphill is a hummock and not a basin.
-  const now=height(x,z);
-  stalled=now>last-.02?stalled+1:0;
-  last=now;
-  if(stalled>=12)return {points,end:'sink'};
+  H[k] = y;
+  sea[k] = isSea(x, z) ? 1 : 0;
  }
- return {points,end:'spent'};
+
+ // PRIORITY FLOOD. Growing inward from the edges and from the sea, always
+ // taking the lowest frontier cell, floods every depression to exactly the
+ // height of its spill point. The epsilon leaves a faint gradient across a
+ // filled flat so it still has a direction to drain.
+ const F = new Float32Array(n).fill(Infinity);
+ const seen = new Uint8Array(n);
+ const heap = [];
+ const push = k => { heap.push(k); let i = heap.length - 1;
+  while (i > 0) { const p = (i - 1) >> 1; if (F[heap[p]] <= F[heap[i]]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+ const pop = () => { const top = heap[0], last = heap.pop();
+  if (heap.length) { heap[0] = last; let i = 0;
+   for (;;) { const l = i * 2 + 1, r = l + 1; let m = i;
+    if (l < heap.length && F[heap[l]] < F[heap[m]]) m = l;
+    if (r < heap.length && F[heap[r]] < F[heap[m]]) m = r;
+    if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } }
+  return top; };
+ for (let k = 0; k < n; k++) {
+  const i = k % nx, j = (k / nx) | 0;
+  if (i && j && i < nx - 1 && j < nz - 1 && !sea[k]) continue;
+  F[k] = H[k]; seen[k] = 1; push(k);
+ }
+ const EPS = 1e-3;
+ const around = k => { const i = k % nx, j = (k / nx) | 0, out = [];
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+   if (!di && !dj) continue;
+   const a = i + di, b = j + dj;
+   if (a < 0 || b < 0 || a >= nx || b >= nz) continue;
+   out.push(b * nx + a);
+  } return out; };
+ while (heap.length) {
+  const k = pop();
+  for (const m of around(k)) {
+   if (seen[m]) continue;
+   F[m] = Math.max(H[m], F[k] + EPS); seen[m] = 1; push(m);
+  }
+ }
+
+ // Which filled cells were actually under water, and how big was each pool.
+ // Large ones are kept as lakes: their cells drain nowhere, so a channel
+ // arriving at one ends there.
+ const pooled = new Uint8Array(n);
+ for (let k = 0; k < n; k++) if (F[k] > H[k] + EPS * 2) pooled[k] = 1;
+ const lake = new Uint8Array(n);
+ const label = new Int32Array(n).fill(-1);
+ const pools = [];
+ for (let k = 0; k < n; k++) {
+  if (!pooled[k] || label[k] >= 0) continue;
+  const id = pools.length, stack = [k], members = [];
+  label[k] = id;
+  while (stack.length) { const c = stack.pop(); members.push(c);
+   for (const m of around(c)) if (pooled[m] && label[m] < 0) { label[m] = id; stack.push(m); } }
+  pools.push(members);
+  if (members.length * cell * cell > SINK_FILL_AREA) for (const c of members) lake[c] = 1;
+ }
+
+ // FLOW DIRECTION on the filled surface. A lake cell drains nowhere.
+ const down = new Int32Array(n).fill(-1);
+ for (let k = 0; k < n; k++) {
+  if (lake[k] || sea[k]) continue;
+  let best = -1, bestSlope = 0;
+  for (const m of around(k)) {
+   const dist = (m % nx !== k % nx && ((m / nx) | 0) !== ((k / nx) | 0)) ? Math.SQRT2 : 1;
+   const slope = (F[k] - F[m]) / dist;
+   if (slope > bestSlope) { bestSlope = slope; best = m; }
+  }
+  down[k] = best;
+ }
+
+ // ACCUMULATION: how much land arrives through each cell. Processing from the
+ // top down means a cell's own total is complete before it is passed on.
+ const order = Array.from({length: n}, (_, k) => k).sort((a, b) => F[b] - F[a]);
+ const acc = new Float32Array(n).fill(1);
+ for (const k of order) if (down[k] >= 0) acc[down[k]] += acc[k];
+
+ return {nx, nz, cell, n, H, F, down, acc, lake, sea, pools, X, Z, neighbours: around};
 }
 
-function runOnLand(points,isSea,inBounds){
- let best=null,from=-1;
- const consider=(a,b)=>{
-  let inside=0;
-  for(let i=a;i<=b;i++)if(inBounds(points[i]))inside++;
-  if(!best||inside>best.inside||(inside===best.inside&&b-a>best.to-best.from))
-   best={from:a,to:b,inside};
- };
- for(let i=0;i<points.length;i++){
-  if(isSea(points[i].x,points[i].z)){if(from>=0)consider(from,i-1);from=-1;continue;}
-  if(from<0)from=i;
+// The channels themselves, strongest first. A river is not labelled a river --
+// it is the path that drains the most land, which is what makes one.
+function channels(model, count, used) {
+ const {n, down, acc, lake, sea, X, Z} = model;
+ const order = Array.from({length: n}, (_, k) => k).sort((a, b) => acc[b] - acc[a]);
+ const out = [];
+ for (const seed of order) {
+  if (out.length >= count) break;
+  if (used[seed] || lake[seed] || sea[seed]) continue;
+  // Far enough from water already claimed to be a catchment of its own.
+  if (out.some(c => c.points.some(p => Math.hypot(p.x - X(seed), p.z - Z(seed)) < 60))) continue;
+  // Upstream along the strongest parent, to find where this water starts.
+  let head = seed;
+  for (let guard = 0; guard < 4000; guard++) {
+   let bestParent = -1, bestAcc = 0;
+   for (const m of model.neighbours(head)) if (down[m] === head && acc[m] > bestAcc && !used[m]) { bestAcc = acc[m]; bestParent = m; }
+   if (bestParent < 0) break;
+   head = bestParent;
+  }
+  // Downstream to the outlet: the sea, a lake, or off the map.
+  const path = [];
+  let k = head, end = 'edge';
+  for (let guard = 0; guard < 8000; guard++) {
+   path.push(k); used[k] = 1;
+   const d = down[k];
+   if (d < 0) { end = lake[k] ? 'lake' : 'sink'; break; }
+   if (sea[d]) { end = 'sea'; break; }
+   if (lake[d]) { path.push(d); used[d] = 1; end = 'lake'; break; }
+   // A tributary stops where it meets water already claimed. That is a
+   // confluence, and it is also what stops a second channel retracing the
+   // first one's whole length down to the same outlet.
+   if (used[d]) { path.push(d); end = 'confluence'; break; }
+   k = d;
+  }
+  if (path.length < 12) continue;
+  out.push({points: path.map(c => ({x: X(c), z: Z(c)})), end, drained: acc[seed]});
  }
- if(from>=0)consider(from,points.length-1);
- return best?points.slice(best.from,best.to+1):[];
+ return out;
 }
 
 export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>false){
@@ -254,75 +322,50 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
  // Bunkers are excavated dry hazards: a channel crossing one would leave water
  // standing in sand. They are avoided too, and are dropped only when a course is
  // so tight that no route exists around them.
- const sand=margin=>holes.flatMap(h=>h.bunkers.map(b=>({...h.toWorld(b),sand:true,r:Math.max(b.rx,b.rz)+margin})));
  // Prefer a generous berth, then a tight squeeze, and only then give up on sand.
  // A course that forces the last tier has its crossed bunkers washed out in
  // generateWorld, so water never actually stands in a playable bunker.
- const tiers=holes.some(h=>h.bunkers.length)?[[...protect,...sand(10)],[...protect,...sand(2)],protect]:[protect];
+ // The land is solved once, and every channel is read off that one answer --
+ // which is also what makes a creek a tributary of a river rather than an
+ // independent squiggle that happens to be narrower.
+ const model = specs.length ? drainage(height, halfX, halfZ, protect, isSea) : null;
+ const claimed = model ? new Uint8Array(model.n) : null;
+ const routes = model ? channels(model, specs.length, claimed) : [];
+ // Strongest first, so rivers take the largest catchments and creeks the rest.
+ specs.sort((a, b) => (a === 'river' ? 0 : 1) - (b === 'river' ? 0 : 1));
+
  for(let n=0;n<specs.length;n++){
-  const kind=specs[n],width=kind==='river'?s.riverWidth:s.creekWidth,bend=(s.streamBends||0)/100,span=Math.min(halfX,halfZ);
-  let path=null,bestCost=Infinity,bestLen=0,bestInside=-1;
-  for(const avoid of tiers){
-   for(let attempt=0;attempt<14;attempt++){
-    // Every channel draws its own bearing, harmonic wavelengths and phases, so a
-    // river and a creek never trace offset copies of one shared master curve.
-    // Seed high. A watercourse starts where the water does, so candidates are
-    // sampled and the highest that is clear of the holes wins -- picking at
-    // random put half of them in the bottom of a valley with nowhere to go.
-    let seed=null;
-    for(let t=0;t<40;t++){
-     const sx=(rng()-.5)*halfX*1.9,sz=(rng()-.5)*halfZ*1.9;
-     if(isSea(sx,sz))continue;
-     if(avoid.some(q=>Math.hypot(sx-q.x,sz-q.z)<q.r+30))continue;
-     const y=height(sx,sz);
-     if(!seed||y>seed.y)seed={x:sx,z:sz,y};
-    }
-    if(!seed)continue;
-    const walk=descend(seed,{height,isSea,halfX,halfZ,width,bend,rng,avoid,step:10,
-     maxSteps:Math.ceil(reach*2/10)});
-    let points=walk.points;
-    if(points.length<16)continue;
-    // A WATERCOURSE MUST ACTUALLY GET DOWNHILL.
-    //
-    // The heading is averaged over 45 m so the walk ignores hummocks, and the
-    // price of that is it can also crest a low ridge and come out the far side
-    // higher than it went in -- measured at two channels of ten ending ABOVE
-    // their source. There are attempts left to spend, so spend them.
-    const fell=height(points[0].x,points[0].z)-height(points.at(-1).x,points.at(-1).z);
-    if(fell<12)continue;
-    points=relaxCurvature(chaikin(chaikin(points)),Math.max(width*1.8,14));
-    points=runOnLand(points,isSea,p=>Math.abs(p.x)<=halfX&&Math.abs(p.z)<=halfZ);
-    // Too short to be a watercourse once the sea is taken out of it. Better no
-    // channel than a puddle-long one fading in and out within its own banks.
-    if(points.length<16)continue;
-    if(points.some(p=>avoid.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r+p.width*.5)||streams.some(stream=>{for(let i=0;i<stream.points.length;i+=2){const q=stream.points[i];if(Math.hypot(p.x-q.x,p.z-q.z)<(p.width+q.width)*.5+8)return true;}return false;})))continue;
-    for(let i=0;i<points.length;i++){const p=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],len=Math.hypot(b.x-a.x,b.z-a.z)||1;p.nx=(b.z-a.z)/len;p.nz=-(b.x-a.x)/len;p.depth=s.streamDepth*(kind==='creek'?.6:1);}
-    const fitted=downhillProfile(points,height);if(!fitted)continue;
-    // ON THE COURSE FIRST, then length, then depth of cut.
-    //
-    // Length alone picked channels nobody could ever see. Once runs are trimmed
-    // at the shoreline, an attempt lying entirely off the map is untrimmed and
-    // therefore longest, so it won -- both channels on a measured links seed came
-    // back a kilometre outside the course. How much of a channel crosses the
-    // holes is the thing actually worth maximising; a trimmed run that survives
-    // the cut budget then beats a shorter one that merely sits a little shallower.
-    const len=fitted.path.length;
-    let inside=0,run=0;
-    for(const p of fitted.path)if(Math.abs(p.x)<=halfX&&Math.abs(p.z)<=halfZ){inside++;run+=10;}
-    // A CHANNEL THAT STOPS IN THE MIDDLE OF THE VIEW IS NOT A CHANNEL.
-    //
-    // Preferring on-course coverage tripled how much of a river the player can
-    // actually see -- 447 m of it to 1666 on a measured links course, where
-    // ninety per cent used to be drawn off the map. What it also allowed was
-    // stubs: one channel came back 191 m long, which reads as a fragment rather
-    // than as water crossing a landscape. A run has to be worth drawing.
-    if(run<Math.min(halfX,halfZ)*.8)continue;
-    if(inside>bestInside||(inside===bestInside&&(len>bestLen||(len===bestLen&&fitted.cost<bestCost))))
-     {path=fitted.path;bestCost=fitted.cost;bestLen=len;bestInside=inside;}
-   }
-   if(path)break;
-  }
-  if(!path)continue;
+  const kind=specs[n],width=kind==='river'?s.riverWidth:s.creekWidth,bend=(s.streamBends||0)/100;
+  const route=routes[n];
+  if(!route)continue;
+  // MEANDER IS A LATERAL OFFSET, NEVER A ROTATION.
+  //
+  // This is the whole lesson of the previous attempt. An offset is bounded by
+  // its own amplitude however large it grows; a rotation integrates, and a
+  // constant bend is a circle. The flow path underneath is monotonically
+  // downhill, so displacing it sideways by a few metres cannot make it climb,
+  // and cannot make it close a loop.
+  const amp=(3+bend*14)*(.6+rng()*.8),wave=70+rng()*110,phase=rng()*6.28;
+  const widthPhase=rng()*6.28,widthLength=55+rng()*70;
+  let run=0;
+  let points=route.points.map((p,i,all)=>{
+   if(i)run+=Math.hypot(p.x-all[i-1].x,p.z-all[i-1].z);
+   const a=all[Math.max(0,i-1)],b=all[Math.min(all.length-1,i+1)];
+   const len=Math.hypot(b.x-a.x,b.z-a.z)||1;
+   // Perpendicular to the flow direction, tapered to nothing at both ends so
+   // the mouth still meets the sea and the head still starts where the water does.
+   const t=Math.min(1,Math.min(i,all.length-1-i)/8);
+   const off=Math.sin(run/wave+phase)*amp*t;
+   return {x:p.x-(b.z-a.z)/len*off, z:p.z+(b.x-a.x)/len*off,
+    width:width*(.82+.18*Math.sin(run/widthLength+widthPhase))};
+  });
+  points=relaxCurvature(chaikin(chaikin(points)),Math.max(width*1.8,14));
+  if(points.length<16)continue;
+  for(let i=0;i<points.length;i++){const p=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],len=Math.hypot(b.x-a.x,b.z-a.z)||1;p.nx=(b.z-a.z)/len;p.nz=-(b.x-a.x)/len;p.depth=s.streamDepth*(kind==='creek'?.6:1);}
+  const fitted=downhillProfile(points,height);
+  if(!fitted)continue;
+  const path=fitted.path;
+  path.end=route.end;
   // Stations are ordered upstream to downstream. Widen the excavated valley
   // where necessary, with zero-slope joins to the surrounding terrain.
   for(const p of path)p.bank=(14+width*.6+Math.min(26,Math.max(0,height(p.x,p.z)-p.level)*2.4))*Math.max(.25,p.taper??1);

@@ -496,27 +496,42 @@ The band has to be narrow, and the first attempt was not. `|land| < 2.5` looks l
 
 ## Watercourses that follow the land
 
-A channel was a bearing and three harmonics — a sine wave drawn across the map with no reference to the ground — and the terrain entered only afterwards, as a budget: keep the longest run whose bed stays within `MAX_CUT` of the surface. So a channel imposed its own gradient and excavated whatever stood in the way. Measured before:
+Three attempts, and the first two failed the same way for the same reason.
 
-| | median cut below the land | max |
-|---|---|---|
-| pnw rivers | 4.2 – 4.4 m | 11.0 m |
-| pnw creeks | 2.1 – 7.6 m | 15.8 m |
-| mountain rivers | 4.7 – 9.5 m | **21.1 m** |
+**A path is a local thing with no memory.** The original channel was a bearing and three harmonics — a sine wave drawn across the map with no reference to the ground — and the terrain entered only afterwards, as a budget: keep the longest run whose bed stays within `MAX_CUT` of the surface. So a channel imposed its own gradient and excavated whatever stood in the way: a median cut of 4.2 to 9.5 m below the land, reaching **21.1 m** on a mountain course, with one creek falling 5.2 m over ground that fell 0.5.
 
-And the descent was not the land's: one pnw creek fell **5.2 m over ground that fell 0.5**, a mountain river 5.4 m over 0.7. A trench gouged across a hillside, which is what "worms across the surface" describes.
+The second attempt replaced it with a downhill walk, which fixed the excavation and broke something worse. Meander was applied as a rotation of the heading — and a rotation *integrates*, so a constant bend is a circle. Measured, channels turned through **12.2 to 18.9 full circles** each, with **2716 self-overlapping station pairs** on one river. The curvature cap added to bound the bends did not prevent that; it set the radius of it.
 
-`descend` walks the slope instead. Three things make it behave like water rather than like a needle:
+Nothing in a path forbids returning to ground it has already crossed. That is the whole diagnosis, and no amount of tuning reaches it.
 
-**The gradient is averaged over 45 m.** Sampled at a point, generated terrain is noisy enough that steepest descent jitters and traps itself in every dimple. Averaged, it answers the question actually being asked — which way does this hillside fall.
+**Water does not choose a path. It occupies the one the land already has.** So the land is solved once, over a 10 m grid, and every channel is read off that single answer:
 
-**The harmonics are kept, as meander.** They bend the heading rather than being the path, so a channel still wanders instead of running the fall line.
+- **fill** — a priority flood grows inward from the map edge and the sea, always taking the lowest frontier cell, which floods every depression to exactly its spill height. A 1 mm epsilon leaves a faint gradient across each filled flat so it still has a direction to drain.
+- **flow** — each cell points at its steepest lower neighbour on the *filled* surface.
+- **drain** — accumulation, summed from the top of the ordering downward, so a cell's own total is complete before it is passed on.
 
-**The turn per step is capped at `step/radius`.** This was found by a failing test, not by design: `relaxCurvature` smooths a path but cannot rescue one that doubles back inside its own banks, and the walk produced a bend of **0.20 times the half width** where the floor is 1. Capping bounds curvature by construction whatever the land does — and it also fixed a second failure, channel water geometry facing below the terrain, which was those degenerate bends producing inverted quads.
+A channel is then a walk **down** the flow directions, and it cannot spiral or cross itself however the meander is tuned, because every step is strictly lower than the last. That is a property of the construction rather than a number to tune, which is the entire reason for the rewrite.
 
-Two smaller findings. Seeds are sampled and the highest clear of the holes wins, because picking at random put half the channels in the bottom of a valley with nowhere to go. And a walk must actually descend: averaging the heading over 45 m lets it crest a low ridge and finish above its own source, measured at two channels in ten, so a walk that has not fallen far enough is discarded and another attempt spent.
+Meander survives, but **as a lateral offset, never as a rotation** — an offset is bounded by its own amplitude however far the channel runs, and displacing a monotonically descending path sideways by a few metres cannot make it climb or close a loop. It is tapered to nothing at both ends so the mouth still meets the sea and the head still starts where the water does.
 
-After: median cut **0.4 to 2.9 m**, and channels run two to three times longer — 1000 to 2100 m against 200 to 730 — because a path that follows the land does not run out of excavation budget.
+Three things fell out of the construction rather than being designed:
+
+**Greens, tees and bunkers are raised, not steered around.** A 60 m bump is added to the working height field over each. Water then flows past them for the same reason it flows past a hill, and the route stays a pure descent — *steering* a path is exactly what reintroduces the ability to loop.
+
+**A creek is a tributary, not an independent squiggle.** Seeds are taken in order of accumulation and specs are sorted rivers-first, so the river takes the largest catchment and the creeks take what drains into it. A river is not labelled a river; it is the path that drains the most land, which is what makes one.
+
+**The grade had to be raised, and the old figure was never physical.** `STREAM_GRADE` bounds the fitted water surface, and at 0.025 a route down a real valley forced a **6.91 m** median excavation wherever the valley fell faster than the water was allowed to. A river runs at one or two per cent and a mountain creek at ten or more; 2.5 was a number, not a measurement. At 0.09 the cut drops to well under two metres.
+
+After, measured on pnw and links:
+
+| | channels | length | turning | self-overlaps | median cut |
+|---|---|---|---|---|---|
+| pnw | 3 | 566 / 354 / 362 m | 1.46 / 1.19 / 1.53 circles | **0** | 0.83 / 0.43 / 1.84 m |
+| links | 3 | 514 / 509 / 363 m | 1.57 / 1.86 / 1.31 circles | **0** | 0.78 / 0.25 / 0.32 m |
+
+Against 12.2–18.9 circles and 2716 overlaps from the walk. Roughly one and a half turns over half a kilometre is a river wandering across a landscape.
+
+**Where they end.** A channel terminates at the sea, at a surviving lake, at another channel it has joined, or at a sink — a depression too large to have been flooded away. `SINK_FILL_AREA` is the dividing line, and it is deliberately generous at 40 000 m²: a terminal pond should read as a destination, not as a puddle every creek trips into. At 2500 the fill swallowed the valley floors themselves and a mountain course came back with one channel 289 m long. Across twenty courses the endings are **40 sink, 14 lake, 3 sea, 2 confluence**.
 
 ## A lake could be dropped on top of a pond
 
