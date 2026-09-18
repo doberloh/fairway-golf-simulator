@@ -23,7 +23,7 @@ test('a one-hole world builds for the menu backdrop without disturbing 9 and 18'
  assert.equal(w.holes.length,1);
  const h=w.holes[0];
  assert.equal(h.surface(h.pin.x,h.pin.z),'green');
- assert.equal(h.surface(0,0),'tee');
+ {const b=Object.values(h.tees)[0];assert.equal(h.surface(b.x,b.z),'tee');}
  for(let z=0;z<h.length;z+=25)assert(Number.isFinite(h.height(h.center(z),z)));
  // The nine- and eighteen-hole plans must be untouched by the one-hole path.
  for(const holes of [9,18]){const p=planCourse({holes,courseYards:holes*360,seed:'BACKDROP'});assert.equal(p.holes.length,holes);assert(p.counts[3]>=1,'real courses still get par 3s');}

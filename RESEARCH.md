@@ -571,6 +571,56 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Tees sited on ground that suits them
+
+Every tee used to go straight down the middle of the hole at a fixed fraction of its length, and the land was then forced to become a tee there. Every complaint about how they looked came from that one decision: the wide excavated footprint, the ramps reaching into greens, the sense of a pad dropped onto a hillside rather than built into it.
+
+Turned round, each pad now tries forty-odd nearby sites and takes the one the ground already suits. Flat ground scores highest, which is the actual cure — the footprint only ever existed to absorb a drop we were creating ourselves.
+
+Nothing in the scoring says "put the back tee on a rise" or "tuck the forward tee in beside the fairway". Those simply win where they are the flattest, clearest option, which is why the variety looks placed rather than sprinkled.
+
+| | |
+|---|---|
+| pads that moved from where the hole first put them | 653 of 678 |
+| how far a pad moved, median | 19.9 m |
+| how far off the centre line a tee sits, median / p95 | 10.1 m / 36.4 m |
+| unevenness of the chosen ground, median | 0.85 m |
+| sites still needing real earthwork (over 1.5 m) | 67 of 678 |
+| tee shots blocked over 1 m | 80 of 810 to **53** |
+
+### Why the sites are bounded
+
+Tees are chosen long before any terrain exists, and the rest of the hole is built from them — where the fairway starts, where ponds and bunkers go. Re-siting freely would pull the hole out from under its own features.
+
+So the hole still commits to a rough tee area, and the pads are re-sited once the land exists: freely across the hole as far as the corridor allows, and up to 20 m along it. That is enough for every shape the owner described and little enough that nothing downstream moves. Yardage is recomputed from where the tee actually ends up, so the card cannot lie about the hole.
+
+### A rounded shoulder, not a long ramp
+
+The old reach grew with the drop — 14 m plus seven times it — so a tee needing a lift disturbed ground 40 m past its collar. That width existed only to keep the slope gentle, and the owner's call is that the slope does not matter provided the edge is round: a tee above its surroundings on a short curved bank reads as built, where the same tee at the centre of a 50 m saucer reads as excavated.
+
+The shoulder is now short and the steepness is whatever the drop makes it. It flattens at both ends, so it meets the collar and the natural ground without a crease at either.
+
+The obvious worry is that this just trades a saucer for a cliff, and the first attempt at it did look that way: the slope around a tee rose from 8.6° to 14.8° at the median with a 55° worst case. But the comparison that settles it is not against the old behaviour, it is **against the countryside the tee sits in**:
+
+| | around a tee | ordinary rough |
+|---|---|---|
+| smoothness (angle between neighbouring surface normals), median | 2.4° | 0.8° |
+| same, 95th percentile | **4.4°** | 13.7° |
+| same, worst | **14.5°** | 37.1° |
+| slope, median | 12.2° | 14.4° |
+| slope, 95th percentile | **20.7°** | 43° |
+| slope, worst | 51.4° | 57.6° |
+
+Ground around a tee is now gentler and smoother than the landscape around it at every point except the median smoothness, where there is a deliberate shoulder and the countryside has nothing. The 55° figure was the mountain, not the tee. That is the whole answer to "is the edge acceptable", and it could not be reached by looking at the tee alone.
+
+### Three things this broke
+
+**The flat-course staircase, again.** Rewriting the block dropped the rule that the height step between tees scales with how uneven the ground actually is, so a dead-flat course got 0.70 m of rise and the driving range tilted. It is scaled by the chosen site's own unevenness now, which is zero on flat land. This is the second time the same fault has been introduced by the same kind of edit; the `elevation: 0` contract caught it both times.
+
+**Four tests assumed the back tee was at the hole's origin.** `h.surface(0, 0) === 'tee'` was true only because a tee had always been placed there. It is an incidental fact, not a rule. They ask about the back tee's actual position now, and the real rule — every marker stands on some pad — is asserted directly.
+
+**Nothing else.** The eight measured invariants held throughout: no pad on a green, in water, in sand or off its hole; no marker adrift; no tee below the one in front of it.
+
 ## One tee on a short hole, and earthworks that stay off greens
 
 Two reported faults, measured over thirty courses before touching anything.

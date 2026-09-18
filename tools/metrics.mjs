@@ -19,7 +19,8 @@
 // A number that is wrong is worse than no number, because it is acted on. So
 // `fairwayWidth`, `ovalRadius`, `sightline` and the rest come from the module
 // under test, and a metric's job is only to sample and count.
-import {ovalRadius, fairwayWidth, sightline, TEE_PAD, TEE_APRON, TEE_EYE} from '../src/course.js';
+import {ovalRadius, fairwayWidth, sightline, localSurface, teePad,
+ TEE_PAD, TEE_APRON, TEE_APRON_SCALE, TEE_EYE} from '../src/course.js';
 
 const DEG = 180 / Math.PI;
 
@@ -45,9 +46,18 @@ export const METRICS = {
  tees: {
   describe: 'tee complex levelling, pad flatness and the ground around a pad',
   run(w) {
-   const series = {step: [], padSpread: [], collarRelief: [], normalJump: [], groundSlope: []};
-   const counts = {holes: 0, tees: 0};
-   const invariants = {teeBelowTheOneInFront: 0};
+   const series = {step: [], padSpread: [], collarRelief: [], normalJump: [], groundSlope: [],
+    siteSpread: [], slid: [], lift: [], lateral: []};
+   const counts = {holes: 0, tees: 0, sited: 0, needsWork: 0};
+   // What the generator decided, read back rather than inferred: how uneven
+   // each chosen site was before anything was built, how far it had to move to
+   // be found, and how much it was then raised.
+   for (const t of w.teeSites || []) {
+    series.siteSpread.push(t.spread); series.slid.push(t.slid); series.lift.push(t.lift);
+    if (t.slid > 1) counts.sited++;
+    if (t.spread > 1.5) counts.needsWork++;
+   }
+   const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0};
    for (const h of w.holes) {
     counts.holes++;
     // Object key order is back tee first.
@@ -56,8 +66,26 @@ export const METRICS = {
      series.step.push(ys[i] - ys[i + 1]);
      if (ys[i] < ys[i + 1] - 1e-6) invariants.teeBelowTheOneInFront++;
     }
+    // Free to move, but not on to a green, into water, into sand, or on to
+    // another hole. Checked round the collar, because half a pad on a green is
+    // as wrong as all of it.
+    const pads = Object.values(h.tees).map(t => ({t, p: teePad(t)})).filter(e => e.p);
+    for (const {t, p} of pads) {
+     for (let i = 0; i < 12; i++) {
+      const a = i * Math.PI / 6;
+      const lx = t.x + Math.cos(a) * TEE_PAD.x * TEE_APRON_SCALE;
+      const lz = p.z + Math.sin(a) * p.rz * TEE_APRON_SCALE;
+      const surf = localSurface(h, lx, lz);
+      if (surf === 'green' || surf === 'fringe' || surf === 'water' || surf === 'sand')
+       invariants.padOnGroundItMayNotUse++;
+     }
+    }
     for (const t of Object.values(h.tees)) {
      counts.tees++;
+     series.lateral.push(Math.abs(t.x - h.center(t.z)));
+     // Every marker must stand on some pad, its own or a neighbour's.
+     if (!pads.some(({t: o, p}) => ((t.x - o.x) / TEE_PAD.x) ** 2 + ((t.z - p.z) / p.rz) ** 2 < 1))
+      invariants.markerOffItsPad++;
      const pad = [], collar = [];
      for (let i = 0; i < 16; i++) {
       const a = i * Math.PI / 8;

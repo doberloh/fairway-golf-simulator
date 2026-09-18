@@ -671,11 +671,18 @@ export function generateWorld(settings={}){
  // it has to absorb, the way a green shoulder does. A fixed five-metre ramp
  // left a wall around every pad once the ground got steep.
  const teePads=[];
- for(const h of holes)for(const t of Object.values(h.tees)){
-  const p=teePad(t);
-  if(!p)continue;
-  const q=h.toWorld({x:t.x,z:p.z});
-  teePads.push({h,t,rz:p.rz,localZ:p.z,x:q.x,z:q.z});
+ for(const h of holes){
+  const all=Object.values(h.tees);
+  for(const t of all){
+   const p=teePad(t);
+   if(!p)continue;
+   const q=h.toWorld({x:t.x,z:p.z});
+   // A pad carries every marker standing on it -- itself, plus any marker that
+   // has no pad of its own, which on a par three is the other two. They move
+   // together or the markers end up off the ground they tee from.
+   teePads.push({h,t,rz:p.rz,localZ:p.z,x:q.x,z:q.z,
+    markers:[t,...all.filter(m=>m!==t&&teePad(m)===null)]});
+  }
  }
  // Must cover the apron plus the WIDEST ramp, or the falloff is cut off part
  // way down and the cut is a crease. At the old 78 a full-lift pad wanted 98
@@ -696,52 +703,137 @@ export function generateWorld(settings={}){
  //
  // Two things happen here, and they are the same lever: deciding the complex's
  // level deliberately instead of reading it off the ground.
- const TEE_COMPRESS=.45,TEE_STEP=.35,TEE_LIFT_CAP=3.5;
- // A BLIND TEE SHOT IS A CHOICE, NOT AN ACCIDENT. Real courses keep a few, and
- // the raising above would otherwise remove every one the land offers. This is
- // the share of holes allowed to keep theirs, drawn per hole from its own
- // stream so changing the dial does not reshuffle anything else. Only holes the
- // land actually makes blind can be chosen, so the true rate tops out at
- // whatever the terrain supplies -- measured, about one hole in five.
+ const TEE_STEP=.35,TEE_LIFT_CAP=3.5,TEE_TRIES=44,TEE_SLIDE=20;
+ // A TEE IS SITED ON GROUND THAT SUITS IT, RATHER THAN CUT INTO GROUND THAT
+ // DOES NOT.
+ //
+ // Every tee used to go straight down the middle at a fixed fraction of the
+ // hole's length, and the land was then forced to become a tee there. Every
+ // complaint about how they looked came from that one decision: the wide
+ // excavated footprint, the ramps reaching into greens, the sense of a pad
+ // dropped onto a hillside rather than built into it.
+ //
+ // Turned round, each pad now tries a few dozen nearby sites and takes the one
+ // the ground already suits. Flat ground scores best, so most tees barely need
+ // moving earth at all -- which is the actual cure, since the footprint only
+ // ever existed to absorb a drop we were creating ourselves.
+ //
+ // It also gives the variety for free. Nothing says "put the back tee on a
+ // rise" or "tuck the forward tee beside the fairway"; those simply win on
+ // ground where they are the flattest, clearest option.
+ //
+ // WHY THE SITES ARE BOUNDED. Tees are chosen long before any terrain exists,
+ // and the rest of the hole is built from them -- where the fairway starts,
+ // where ponds and bunkers sit. Re-siting freely here would pull the hole out
+ // from under its own features. So a pad may slide across the hole as far as
+ // the corridor allows and up to TEE_SLIDE along it, which is enough for every
+ // shape the owner asked for and little enough that nothing downstream moves.
+ // Yardage is recomputed from where the tee actually ends up.
  const blindRng=random(s.seed+':blind-tees'),blindShare=(s.blindTees??0)/100;
+ const siteRng=random(s.seed+':tee-sites');
  for(const h of holes){
   const keepBlind=blindRng()<blindShare;
-  const names=Object.keys(h.tees);                       // back to front
-  const pads=names.map(n=>teePads.find(p=>p.h===h&&p.t===h.tees[n])).filter(Boolean);
+  const pads=teePads.filter(p=>p.h===h);
   if(!pads.length)continue;
-  // ONE: compress the natural spread, then enforce the order. Clamping alone
-  // would guarantee the order too, but it does it by raising the back tee to
-  // wherever the front one ended up -- a pimple with a 55 m ramp around it on
-  // steep ground. Pulling all three toward their mean first means the order
-  // costs a fraction of the natural difference rather than all of it, and each
-  // pad stays close to the ground it sits on.
-  const natural=pads.map(p=>shapedNoTees(p.x,p.z));
-  const mean=natural.reduce((a,b)=>a+b,0)/natural.length;
-  const level=natural.map(y=>mean+(y-mean)*TEE_COMPRESS);
-  // THE STEP CORRECTS AN INVERSION; IT DOES NOT MANUFACTURE A STAIRCASE. Scaled
-  // by the spread the ground already has, so on flat land it is zero and the
-  // three pads come out level -- which is both what a flat course should look
-  // like and what the elevation slider promises at 0. A fixed step built a 0.7 m
-  // mound on dead-flat ground, and tilted the driving range, whose three mats
-  // sit side by side at the same distance and must stay identical.
-  const step=Math.min(TEE_STEP,(Math.max(...natural)-Math.min(...natural))*.5);
-  for(let i=level.length-2;i>=0;i--)level[i]=Math.max(level[i],level[i+1]+step);
-  // TWO: lift the whole complex until the shot clears the ground in front of
-  // it. This is what an architect does, and it is the cheap half of the blind
-  // shot problem -- the tee moves rather than the hillside, so the terrain the
-  // hole was generated around is untouched. Measured, 24% of tee shots had the
-  // sightline blocked by more than a metre.
-  //
-  // Raising the eye by L lifts the sightline at fraction u of the way to the
-  // target by L*(1-u), so clearing an obstruction of `over` at u costs
-  // over/(1-u) -- a crest halfway out needs twice its own height in tee.
-  let lift=0;
-  // Every marker's own sightline, including ones sharing a pad.
-  for(const n of names)lift=Math.max(lift,sightline(h,h.tees[n].z,level[0]+TEE_EYE,shapedNoTees).lift);
-  // Capped, because past a few metres this stops being a raised tee and starts
-  // being a plinth. What it cannot clear stays a blind shot.
-  lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
-  pads.forEach((p,i)=>{p.y=level[i]+lift;});
+  // Forward-most first, so a tee behind it knows what height it has to beat.
+  const order=[...pads].sort((a,b)=>b.localZ-a.localZ);
+  let aheadZ=Infinity,aheadLevel=-Infinity;
+  for(const pad of order){
+   const rx=TEE_PAD.x*TEE_APRON_SCALE,rz=pad.rz*TEE_APRON_SCALE;
+   // How the ground reads over the whole collar, not just at a point: a site
+   // is only as good as its worst corner.
+   const survey=(cx,cz)=>{
+    const ys=[];
+    for(let i=0;i<12;i++){
+     const a=i*Math.PI/6;
+     const q=pad.h.toWorld({x:cx+Math.cos(a)*rx*.9,z:cz+Math.sin(a)*rz*.9});
+     ys.push(shapedNoTees(q.x,q.z));
+    }
+    const c=pad.h.toWorld({x:cx,z:cz});
+    ys.push(shapedNoTees(c.x,c.z));
+    ys.sort((m,n)=>m-n);
+    return {lo:ys[0],hi:ys[ys.length-1],mid:ys[ys.length>>1],spread:ys[ys.length-1]-ys[0]};
+   };
+   // The room this pad has. Never past the start of mown turf, never past the
+   // pad ahead of it, and never so far across that it leaves the hole.
+   const home={x:pad.t.x,z:pad.localZ};
+   const backLimit=home.z-TEE_SLIDE;
+   const frontLimit=Math.min(home.z+TEE_SLIDE,(h.mowStart??h.fairwayStart)-pad.rz-10,aheadZ-pad.rz-14);
+   let best=null;
+   for(let attempt=0;attempt<TEE_TRIES;attempt++){
+    // The first attempt is where the hole put it, so a good original site is
+    // never thrown away for a worse one.
+    const cz=attempt===0?home.z:backLimit+siteRng()*(frontLimit-backLimit);
+    if(cz>frontLimit)continue;
+    const side=siteRng()<.5?-1:1,corridor=fairwayWidth(h,cz,0,side);
+    const reach=corridor+s.semiRough+34;
+    const cx=attempt===0?home.x:h.center(cz)+side*(corridor*.15+siteRng()*(reach-corridor*.15));
+    // Nothing a tee may not stand on. Sampled round the collar, because a pad
+    // half on a green is as wrong as a pad wholly on one.
+    let blocked=false;
+    for(let i=0;i<8&&!blocked;i++){
+     const a=i*Math.PI/4,lx=cx+Math.cos(a)*rx,lz=cz+Math.sin(a)*rz;
+     const surf=localSurface(h,lx,lz);
+     if(surf==='green'||surf==='fringe'||surf==='water'||surf==='sand')blocked=true;
+     const q=h.toWorld({x:lx,z:lz});
+     if(!blocked&&(isSea(q.x,q.z)||nearby(q.x,q.z)!==h))blocked=true;
+    }
+    if(blocked)continue;
+    const g=survey(cx,cz);
+    // Sat at the middle of what the ground is doing, so the cut and the fill
+    // are the same size and neither is large.
+    const level=g.mid;
+    const c=h.toWorld({x:cx,z:cz});
+    const blind=Math.max(...pad.markers.map(m=>
+     sightline(h,m.z+(cz-home.z),level+TEE_EYE,shapedNoTees).over));
+    // Lower is better. Flatness dominates: it is both how little digging the
+    // site needs and how much it already looks like a tee.
+    const score=g.spread*3
+     +Math.max(0,aheadLevel+TEE_STEP-level)*2.5
+     +blind*1.6
+     +Math.abs(cx-h.center(cz))*.02;
+    if(!best||score<best.score)best={score,cx,cz,level,g};
+   }
+   if(!best){
+    // No candidate cleared the hard rules, so leave the tee where the hole put
+    // it and settle it to the ground there.
+    const g=survey(home.x,home.z);
+    best={cx:home.x,cz:home.z,level:g.mid,g};
+   }
+   // Move the pad and everything standing on it.
+   const dx=best.cx-home.x,dz=best.cz-home.z;
+   for(const m of pad.markers){m.x+=dx;m.z+=dz;}
+   if(pad.t.pad)pad.t.pad.z+=dz;
+   pad.localZ+=dz;
+   const w=h.toWorld({x:pad.t.x,z:pad.localZ});
+   pad.x=w.x;pad.z=w.z;
+   // The order still has to hold, but now it costs centimetres rather than
+   // metres, because a site that breaks it was penalised before it was picked.
+   //
+   // AND THE STEP IS SCALED BY WHAT THE GROUND IS DOING, as it was before this
+   // was rewritten. A fixed step manufactures a staircase on flat land -- it
+   // put 0.70 m of rise on a dead-flat course and tilted the driving range,
+   // whose three mats sit side by side and must stay identical. Where the site
+   // is level there is no inversion to correct, so there is nothing to add.
+   const step=Math.min(TEE_STEP,best.g.spread*.5);
+   let level=Math.max(best.level,aheadLevel>-Infinity?aheadLevel+step:-Infinity);
+   // And only now, if the best site available is still blind, is the tee
+   // raised to see over what is in front of it.
+   let lift=0;
+   for(const m of pad.markers)lift=Math.max(lift,sightline(h,m.z,level+TEE_EYE,shapedNoTees).lift);
+   lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
+   pad.y=level+lift;
+   // What the site was like before anything was done to it, and how far it
+   // had to move to be found. Reported by the measurement harness.
+   pad.spread=best.g.spread;pad.slid=Math.hypot(dx,dz);pad.lift=lift;
+   aheadZ=pad.localZ;aheadLevel=pad.y;
+  }
+  // Yardage follows the tee, or the card lies about the hole.
+  for(const t of Object.values(h.tees)){
+   let d=0;
+   for(let z=t.z;z<h.length;z+=1){const next=Math.min(h.length,z+1);d+=Math.hypot(h.center(next)-h.center(z),next-z);}
+   t.yards=d/.9144;
+  }
  }
  function shapedLand(x,z){
   let y=shapedNoTees(x,z),blend=0,weightSum=0,targetSum=0;
@@ -763,14 +855,20 @@ export function generateWorld(settings={}){
    // every direction.
    const q=pad.h.toLocal({x,z}),ex=(q.x-pad.t.x)/TEE_APRON.x,ez=(q.z-pad.localZ)/(pad.rz*TEE_APRON_SCALE),e=Math.hypot(ex,ez);
    const out=e<=1?0:(e-1)*Math.hypot(q.x-pad.t.x,q.z-pad.localZ)/e;
-   // HOW FAR THE EARTHWORKS REACH.
+   // A ROUNDED SHOULDER, THE WAY A BUNKER HAS ONE -- NOT A LONG RAMP.
    //
-   // This was 14 + 7x the drop, capped at 70, which for a 3.5 m lift disturbed
-   // ground nearly 40 m past the collar -- three tees each reworking a 50 m
-   // circle is most of the ground around the start of a hole, and it reads as
-   // excavation rather than landscape. Halved. A 3.5 m lift now settles in 24 m
-   // instead of 38, which is a little steeper but still under nine degrees.
-   const level=pad.y,ramp=10+Math.min(34,Math.abs(y-level)*4);
+   // The reach used to grow with the drop, 14 m plus seven times it, so a tee
+   // needing a lift disturbed ground 40 m past its collar. That was only ever
+   // there to keep the slope gentle, and the owner's call is that the slope
+   // does not matter as long as the edge is round: a tee sitting above its
+   // surroundings on a short curved bank reads as built, where the same tee at
+   // the centre of a 50 m saucer reads as excavated.
+   //
+   // So the shoulder is close to a fixed width and the steepness is whatever
+   // the drop makes it. `smooth` flattens at both ends, so it meets the collar
+   // and the natural ground without a crease at either. It barely matters in
+   // practice any more, because siting picks ground that hardly needs a drop.
+   const level=pad.y,ramp=9+Math.min(24,Math.abs(y-level)*4);
    const b=1-smooth(out/ramp);
    if(b<=0)continue;
    // Same weighting the pond shelves use: the pad you are standing on decides
@@ -955,6 +1053,10 @@ export function generateWorld(settings={}){
   :(()=>false);
  const groundGrid=makeGroundGrid(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);}));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
+ // The sited pads, so a measurement can report what the generator decided
+ // rather than trying to infer it back out of the terrain.
+ const teeSites=teePads.map(p=>({hole:p.h.hole,x:p.x,z:p.z,rz:p.rz,level:p.y,
+  spread:p.spread??0,slid:p.slid??0,lift:p.lift??0}));
  const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
  const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;
  // THE LIE HALF OF THE MOWN BAND AROUND WATER. The painted half is in
@@ -1040,7 +1142,7 @@ export function generateWorld(settings={}){
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
  const groundCover=(x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p))?'straw':s.biome==='links'?'prairie':'grass';
- const world={lakeOwner,largeLakes,homes,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:Object.keys(Object.fromEntries(ecology[s.biome]))};
+ const world={teeSites,lakeOwner,largeLakes,homes,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:Object.keys(Object.fromEntries(ecology[s.biome]))};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

@@ -29,7 +29,7 @@ test('greenside bunkers respect the requested fringe gap, including tight settin
  assert(buildWorld({bunkerCount:0,trees:0}).holes.every(h=>h.bunkers.length===0));
 });
 test('islands have substantial surrounding and interior water without flooding fairways',()=>{
- const w=buildWorld({biome:'island',seed:'HORIZON-5714',holes:18,elevation:100,landform:100,trees:0});let wet=0,total=0;for(let x=-w.halfX;x<w.halfX;x+=25)for(let z=-w.halfZ;z<w.halfZ;z+=25){total++;if(w.surface(x,z)==='water')wet++;assert(w.land(x,z)>=-w.settings.waterMax-1e-8);}assert(wet/total>.35);for(const h of w.holes){assert.equal(h.surface(0,0),'tee');assert.equal(h.surface(h.pin.x,h.pin.z),'green');for(let z=25;z<h.length-25;z+=15)assert.notEqual(h.surface(h.center(z),z),'water');}
+ const w=buildWorld({biome:'island',seed:'HORIZON-5714',holes:18,elevation:100,landform:100,trees:0});let wet=0,total=0;for(let x=-w.halfX;x<w.halfX;x+=25)for(let z=-w.halfZ;z<w.halfZ;z+=25){total++;if(w.surface(x,z)==='water')wet++;assert(w.land(x,z)>=-w.settings.waterMax-1e-8);}assert(wet/total>.35);for(const h of w.holes){assert.equal(h.surface(Object.values(h.tees)[0].x,Object.values(h.tees)[0].z),'tee');assert.equal(h.surface(h.pin.x,h.pin.z),'green');for(let z=25;z<h.length-25;z+=15)assert.notEqual(h.surface(h.center(z),z),'water');}
 });
 test('mountains and dunes grow between holes, and every biome has mixed vegetation',()=>{
  for(const biome of Object.keys(BIOMES)){const w=buildWorld({biome,trees:45,elevation:70,landform:100});assert(new Set(w.trees.map(t=>t.kind)).size>=3);assert(w.trees.every(t=>w.surface(t.x,t.z)==='rough'));

@@ -4,7 +4,7 @@ import {Round} from '../src/game.js';
 import {awardedPutts,puttingConfig,sumScores} from '../src/putting.js';
 import {simulateShot,MPH,YARD,R,CUP_RADIUS,trunkRadius} from '../src/physics.js';
 import {customizeClubs,manualLaunch} from '../src/clubs.js';
-import {generateWorld,generateCourse} from '../src/course.js';
+import {teePad, localSurface, TEE_PAD, TEE_APRON_SCALE, generateWorld,generateCourse} from '../src/course.js';
 const flat={height:()=>0,surface:()=> 'green',bounds:{x:2000,minZ:-2000,maxZ:2000},trees:[]};
 const shot={origin:{x:0,z:0},aim:0,hla:0,spinAxis:0,vla:0,spin:0,speed:2};
 const pin={x:0,z:100},finish=(yards,onGreen=true)=>({end:{x:yards*YARD,z:100},holed:false,onGreen});
@@ -81,6 +81,45 @@ test('incoming rolling balls bounce off trunks and can be struck away afterward'
  assert(next.total>1.2,`stuck at the trunk: ${next.total.toFixed(2)} m`);});
 test('editable carry calibrates launch speed; flight profiles change height and curve',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);const normal=simulateShot({...shot,...manualLaunch(clubs.driver,1,1)},c),high=simulateShot({...shot,...manualLaunch(clubs.driver,1,1,{launch:6,axis:20})},c);assert(high.apex>normal.apex);assert(high.end.x>0);assert.throws(()=>customizeClubs({driver:-2}));});
 test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0});const rises=w=>w.holes.map(h=>{const ys=Array.from({length:30},(_,i)=>h.height(h.center(h.length*i/29),h.length*i/29));return Math.max(...ys)-Math.min(...ys);});assert(Math.max(...rises(high))>25);assert(Math.max(...rises(low))<.1);const h=generateCourse({seed:'SHELF',width:40,doglegs:0});assert.notDeepEqual(h.leftEdge,h.rightEdge);const widths=Array.from({length:20},(_,i)=>h.width(35+i*14));assert(Math.max(...widths)/Math.min(...widths)>1.2);});
+
+test('tees are sited on ground that suits them, and never on ground they may not use',()=>{
+ // Tees used to go down the middle at a fixed fraction of the hole's length
+ // and the land was forced to become a tee there. Now each pad tries a few
+ // dozen nearby sites and takes the one the ground already suits, which is
+ // where the variety comes from as well as the smaller earthworks.
+ let tees=0,offCentre=0,staggered=0,onWrongGround=0,markerAdrift=0;
+ for(const biome of ['pnw','mountain','links']) for(const seed of ['V1','V2','V3']){
+  const w=generateWorld({seed,biome,holes:9,trees:0});
+  for(const h of w.holes){
+   const pads=Object.values(h.tees).map(t=>({t,p:teePad(t)})).filter(e=>e.p);
+   assert(pads.length>0,'a hole with no tee pad at all');
+   // Free to move, but not on to a green, into water, into sand, or off the
+   // hole. Checked round the collar: half a pad on a green is as wrong as all
+   // of it.
+   for(const {t,p} of pads) for(let i=0;i<12;i++){
+    const a=i*Math.PI/6;
+    const surf=localSurface(h,t.x+Math.cos(a)*TEE_PAD.x*TEE_APRON_SCALE,p.z+Math.sin(a)*p.rz*TEE_APRON_SCALE);
+    if(surf==='green'||surf==='fringe'||surf==='water'||surf==='sand')onWrongGround++;
+   }
+   const ys=[];
+   for(const t of Object.values(h.tees)){
+    tees++;
+    const q=h.toWorld(t);ys.push(w.height(q.x,q.z));
+    if(Math.abs(t.x-h.center(t.z))>6)offCentre++;
+    // Wherever it ended up, a marker still has to stand on a pad.
+    if(!pads.some(({t:o,p})=>((t.x-o.x)/TEE_PAD.x)**2+((t.z-p.z)/p.rz)**2<1))markerAdrift++;
+   }
+   if(Math.max(...ys)-Math.min(...ys)>1)staggered++;
+  }
+ }
+ assert(tees>=81,`only ${tees} tees in the fixture`);
+ assert.equal(onWrongGround,0,`${onWrongGround} pad samples on ground a tee may not use`);
+ assert.equal(markerAdrift,0,`${markerAdrift} markers standing off any pad`);
+ // And the siting must actually be doing something. A generator that always
+ // picked the original spot would pass everything above.
+ assert(offCentre>tees/4,`only ${offCentre} of ${tees} tees moved off the centre line`);
+ assert(staggered>0,'no hole has its tees at meaningfully different heights');
+});
 
 test('the back tee is never below the one in front, and a flat course keeps flat tees',()=>{
  // Each pad used to level itself independently to the landform at its own spot,
