@@ -24,7 +24,17 @@ Elevation now has a much larger effect on playable corridors, with tens of metre
 
 **Hole flyover** on the camera toolbar circles the whole hole from above — the same camera that orbits the showcase hole behind the main menu, at one and a half times its speed, one lap of about 56 seconds. It keeps well clear of ridges and treetops on any terrain. It returns to your ball and restores your green-reading overlays; the button, Escape, another camera or any panel stops it early.
 
+**Typical fairway width** runs from 20 to 92 m — the top of that range is a hundred yards, which is links territory rather than a normal fairway. It is a guideline rather than a constant: each side of the corridor is generated independently, so a hole widens into its landing areas and pinches at the approach.
+
+**Blind tee shots** sets how often a hole is allowed to keep one. A tee is normally raised until the shot clears whatever stands in front of it; this is the share of holes left alone instead. Only holes the land actually makes blind can be chosen, so the real rate tops out near one in five however high it goes. The default is none.
+
+**Elevation severity** at zero is a baseline rather than a promise of dead level: the ground behind a tee keeps its own relief so a tee has real ground to be cut into, and elevation raises the playing corridor from there. The driving range is the exception and stays perfectly flat, because any tilt there is a variable you did not set, quietly added to every carry.
+
 **Typical pond size** scales both pond dimensions from 40–300 m. Because pond banks are anchored outside the fairway edge, a larger pond grows away from play rather than into it. **Large lakes** requests 0–3 larger water bodies, with a **Typical lake diameter** of 60–460 m. Ordinary ponds are substantial too, typically spanning around 90 m; lakes are for genuinely large water. At the top of the lake range, open ground runs out and fewer lakes are placed than requested. Placement favors open, gentler ground and may produce fewer lakes where there is insufficient room. They use the existing minimum/maximum water depth. River and creek banks blend biome-specific damp earth, grass and stone colors into the surrounding turf. Channels descend through smooth terrain cutouts and share the ponds’ reflective water. Water is translucent and thins out at a channel’s edge instead of stopping against the bank; pond, lake and ocean edges do not thin. Every pond, lake and channel is the same surface, and reflects its own surroundings from a small cubemap taken where that body sits when the course is built. There is no single mirror handed between bodies any more, so water never changes character as you walk past it.
+
+Tees are sited rather than placed. Each pad tries a few dozen nearby positions once the land exists and takes the one the ground already suits — flat, with a clear view, sitting above the tee in front of it, and never on a green, in water, in sand or on another hole. That is where the variety comes from: a back tee on a rise, a forward tee tucked in beside the fairway, tees at genuinely different heights. A pad is a 6 by 9 m rectangle with rounded corners, squared to as far down the hole as a straight line from that tee stays inside the corridor — the dogleg corner where there is one, the landing area where there is not. Short holes get three ordinary tees stepping down, not one long shared box.
+
+Rivers and creeks are read off the land's own drainage rather than drawn across it. The whole course is solved once — depressions flooded to their spill height, every cell pointed at its steepest lower neighbour, and the drainage accumulated — so a creek is a tributary of the river rather than an independent squiggle. Water never crosses a fairway, a green or another body of water, and a channel that reaches a hollow ends in a pond built like any other.
 
 Every biome now mixes several plant forms: conifers/alder/ferns; desert trees/cacti/rosettes; conifers/aspen; grasses/heath/gorse; parkland broadleaf trees; palms/hala/coastal shrubs; or mixed fall woodland. See [landscape research and aerial references](LANDSCAPE_RESEARCH.md) for the sources and design decisions.
 
@@ -197,7 +207,10 @@ For a context-free architecture and maintenance guide, read [PROJECT_HANDOFF.md]
 - `src/green-map.js` — the same contour field as a top-down tile for the course map
 - `src/course-map.js` — shared map projection, bounds and click coordinates
 - `src/footprints.js` — 14 course footprint guides and preview icons
-- `src/streams.js` — downhill river/creek paths, biome banks, water lies, terrain carving and channel geometry
+- `src/streams.js` — the drainage model, river/creek routing, biome banks, water lies, terrain carving and channel geometry
+- `tools/bench.mjs` — measures the generator across many courses in parallel; `npm run bench`
+- `tools/metrics.mjs` — what a generated course is measured on, and the rules that must stay at zero
+- `tools/fixtures.mjs` — the three fixture sizes a measurement runs over
 - `src/water-bodies.js` — what the renderer needs about a body of water beyond its geometry: the probe hide/restore pair, and surface flow
 - `src/lakes.js` — open-space large-lake generation
 - `src/camera-tours.js` — hole flyover orbit with terrain/canopy clearance, fairway initial aim and camera/tree clearance

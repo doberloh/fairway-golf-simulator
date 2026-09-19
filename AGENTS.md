@@ -33,6 +33,9 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 - **PROCEDURAL_GENERATION.md** — what the generator produces and in what order.
 - **README.md** — anything a player can see, set or press.
 - **INSTALLATION.md** — anything that changes how the thing is built, served or opened.
+**Check every one of them, every time, including the ones your change does not obviously touch.** README.md and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed; the two files that describe what a PLAYER sees and what the ARCHITECTURE guarantees simply felt less urgent than the one recording what was measured. They are the two a newcomer reads first.
+
+A quick way to catch it: `git log -1 --format=%h --  <file>` on each doc. If one is many commits behind the others, that is the gap.
 - **LANDSCAPE_RESEARCH.md** — sources and figures behind terrain, vegetation and architecture, same standard as RESEARCH.md.
 - **ATTRIBUTION.md** and **THIRD_PARTY_NOTICES.txt** — any dependency added, removed or upgraded, and any asset or data source taken in.
 - **DISTRIBUTION_REVIEW.md** — anything affecting the offline build, file-URL behaviour, bundle size or release claims.
