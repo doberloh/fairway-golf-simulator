@@ -589,6 +589,28 @@ Four faults came off one screenshot: tee boxes hiding the fairway on downhill ho
 | sideways gap between consecutive tees, lowest quarter | 1.5 m | **11.7 m** |
 | sites needing real earthwork | 188 | **19** |
 
+### Where a tee points
+
+Two faults, and the second only became visible once the first was fixed.
+
+**The facing was computed before the tees had moved.** Tees are sited on ground that suits them, which happens well after the hole is laid out — and the facing was set from where the hole first put each tee. A tee sited 37 m off the centre line came out squared 8 degrees when the geometry called for 62. That is why they still pointed the wrong way after the shapes landed: the rule was right and the input was stale. The facing is recomputed the moment a pad lands on its real site.
+
+**And then the aim point itself.** The owner asked for the centre line about twenty yards ahead. Measured, that gives a **median turn of 44 degrees**, with two thirds of tees past 30 — because tees sit a median 18 m off the centre line, and aiming 18 m ahead is a 45 degree turn by arithmetic rather than by taste.
+
+Four candidates, over 810 tees on ordinary courses and 324 on deliberately dogleg-heavy ones:
+
+| aim point | turn, median / p95 / max | over 30° | dogleg: lines straying over 25 m off the hole |
+|---|---|---|---|
+| 20 yards ahead | 44 / 65 / 68 | 525 of 810 | — |
+| the green | 4 / 14 / 27 | 0 | **40 of 324** |
+| fairway midpoint | 11 / 31 / **78** | 43 | 3 |
+| landing area | 6 / 19 / 27 | 0 | 11 |
+| **as far as you can see straight** | **7 / 22 / 35** | **6** | **0** |
+
+The two ends pull against each other. Aiming at the green gives the tidiest angles and points you into the trees on a dogleg — which is what the test forbidding markers squared to the pin has been saying all along. Aiming near the tee keeps you on the hole and turns you sideways. The midpoint is decent on doglegs and has a bad tail elsewhere: on a short hole it can be nearly beside the tee, which is where the 78 degrees comes from.
+
+What resolves it is not a distance at all. Walk out along the middle of the fairway and stop where the straight line from **this** tee would begin leaving the corridor. That is the dogleg corner where there is one and the landing area where there is not — which is where a player aims in both cases, and it is the only candidate not trading one end against the other.
+
 ### The par three special case dissolved
 
 Par threes had one long shared pad with the markers set down it, because three ovals 9 to 12 m apart could not help overlapping when each was 16 m long. That pad carried 8 m of dead ground in front of the forward marker — space that existed only so one shape could span every marker.
