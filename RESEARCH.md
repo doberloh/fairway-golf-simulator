@@ -571,6 +571,50 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Nothing kept trees apart, and at 380 feet it showed
+
+A screenshot of a mangled grove, and three separate faults behind it. All three were invisible at 13 to 29 metres and none of them was the tree the eye lands on.
+
+### There was no spacing rule at all
+
+Trees were placed at random points, rejected for surface and for distance from a corridor, and never once checked against each other. Measured on a 380-foot grove before the fix, with `tools/tree-spacing.mjs`:
+
+| | before | after |
+|---|---|---|
+| distance to nearest tree, median | 8.6 m | 12.9 m |
+| closest pair | **0.2 m** | 4.6 m |
+| crown overlap, median | 41.6% | 10.0% |
+| gap between trunk surfaces, worst | **−5.4 m** | +2.4 m |
+| tall conifers per hectare | 13.8 | 9.0 |
+
+A negative trunk gap is two six-metre trunks occupying the same space. That is not a tuning problem, it is a missing rule, and the reason it had never mattered is that a 20 m pine with a 3 m crown can stand 8 m from another one quite happily.
+
+The rule is not "no overlap" — crowns in a closed canopy interlock, and a redwood grove is a closed canopy. It is that two crowns may not be mostly the same crown (55% of their combined radii), and that trunks may never intersect.
+
+**It is off for the other seven biomes**, behind a `crownShare` of zero. Not because they would not benefit, but because switching it on relayouts every one of them to fix a problem none of them has. The first version was not gated, and the fingerprint reported seven biomes moved — which is the fingerprint doing its job.
+
+### The cedar was also 380 feet tall
+
+Tree height came from the biome, so raising the canopy raised *every* species in it. The redwood grove's cedars are Kenney conifers, conical to the ground, and they were being drawn at redwood height — a hundred-metre christmas tree standing inside a redwood. That is the shape in the screenshot.
+
+A plant entry can carry a third number now, a height scale, so a biome can have a **mid-storey**: the cedar is 30% of canopy height, which puts it between the ferns and the giants where a forest actually keeps its younger trees.
+
+### The canopy floated because a shared angle is not a shared line
+
+The trunk leans about its middle; the crown leaned about its base, positioned on the vertical through the tree's centre. Same angle, different pivot — so the trunk's top moved sideways and the crown did not, by up to four metres on a 116 m tree. The crown is seated by taking the point out of the trunk's own matrix now, and the lean is a third of what it was, because a giant redwood is dead straight.
+
+The other half was overlap. These crowns taper to a point at the bottom — `PineTree_2` is a third of its widest in its lowest band — so meeting the trunk top exactly left the solid foliage starting ten metres above the wood. The crown is sleeved 20% down the trunk instead of 8%.
+
+## A contact sheet for 729 models
+
+Two crown models have now been chosen by reading file names and both were wrong. `tools/asset-preview.mjs` plus `preview/` builds **dist/assets.html**, one self-contained page listing every model in `vendor/`, drawn at a height you type, beside a 1.8 m figure, painted in the same role colours the game uses, with the exact `pack:Name` string a PICK entry wants.
+
+It also shows the **silhouette profile** and counts its reversals, which is the number that would have caught the wedding-cake pines before they shipped: one mass turns over once, a tiered conifer turns over at every plate. Models with four or more are flagged `tiered` in the list without being opened.
+
+`npm run assets` regenerates it. It is a local tool and never ships.
+
+Two things learned building it. Inlining three.js by hand does not work any more: since r17x `three.module.js` imports from `./three.core.js`, so an inline module tries to fetch that from the page and fails with a `SyntaxError` and no line number; concatenating the two bundles then collides on their internal names (`_m1$1`). The page is built by vite with the single-file plugin, exactly like the game. And a 12 MB inline module that throws looks identical to one that is still loading, so the page now prints its own error rather than staying dark.
+
 ## Giant means the trunk, and a crown must be one mass
 
 Three things wrong at once, from a screenshot of a single tree.

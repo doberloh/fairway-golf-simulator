@@ -5,9 +5,9 @@ import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {trunkRadius} from './physics.js';
+import {GROUND_PLANTS,crownFraction} from './species.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
-import {GROUND_PLANTS} from './species.js';
 const UP=new T.Vector3(0,1,0);
 function barkTexture(kind){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d'),rng=random('bark-'+kind);ctx.fillStyle='#b7b3a5';ctx.fillRect(0,0,128,256);for(let i=0;i<220;i++){const v=80+rng()*95;ctx.fillStyle=`rgb(${v},${v},${v})`;const x=rng()*128,y=rng()*256;ctx.fillRect(x,y,kind==='palm'||kind==='hala'?16+rng()*60:1+rng()*3,kind==='palm'||kind==='hala'?1+rng()*2:5+rng()*40);}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,5);return t;}
 function texture(kind){
@@ -112,7 +112,14 @@ function addTallConifers(view, kind, trees) {
  // redwood is a 12 m crown on a 70 m tree, so the crown is about two and a half
  // times as tall as it is wide; a douglas fir is broader and starts lower.
  const TRUNK = kind === 'redwood' ? .64 : .56;  // bare trunk
- const WIDE = kind === 'redwood' ? .085 : .115; // crown HALF-width
+ // The crown width lives in species.js because the generator needs the same
+ // number to decide how far apart these may stand.
+ const WIDE = crownFraction(kind);
+ // How far down the trunk the crown is sleeved. These crowns taper to a point
+ // at the bottom -- `PineTree_2` is a third of its widest in its lowest band --
+ // so meeting the trunk top exactly leaves the solid foliage starting ten
+ // metres higher than the wood, which reads as a canopy floating off its tree.
+ const SLEEVE = .80;
  // The crown takes whatever height is left rather than a fraction of its own,
  // so a tree is exactly as tall as t.h says. Two independent fractions each
  // with their own jitter overshot by up to 12%, which made a "380 foot"
@@ -121,6 +128,7 @@ function addTallConifers(view, kind, trees) {
  // is what happens when one grows with more light down its flank.
 
  const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
+ const trunkMatrix = new T.Matrix4(), seat = new T.Vector3();
  const bark = new T.Color(kind === 'redwood' ? '#6d3f2e' : '#54453a');
  const leafBase = new T.Color(kind === 'redwood' ? '#2d4a33' : '#33543c');
  const stone = new T.Color(world.bio.rock || '#8a8577'), dirt = new T.Color(world.bio.rough || '#7e8a5a');
@@ -136,7 +144,9 @@ function addTallConifers(view, kind, trees) {
  const entries = [];
  for (let i = 0; i < trees.length; i++) {
   const t = trees[i];
-  const lean = (rng() - .5) * .035, leanZ = (rng() - .5) * .035;
+  // A 380-foot redwood is dead straight. The old lean was harmless on a 30 m
+  // pine and threw the top of a 116 m one four metres sideways.
+  const lean = (rng() - .5) * .010, leanZ = (rng() - .5) * .010;
   const trunkHeight = t.h * TRUNK * (.9 + rng() * .2);
   // THE DRAWN TRUNK IS THE COLLIDED TRUNK. It used to be a thinner rule of its
   // own -- a fiftieth of the height against physics' 0.027 -- so the trunk you
@@ -150,15 +160,21 @@ function addTallConifers(view, kind, trees) {
   dummy.updateMatrix();
   trunks.setMatrixAt(i, dummy.matrix);
   trunks.setColorAt(i, bark.clone().offsetHSL(0, (rng() - .5) * .08, (rng() - .5) * .12));
+  trunkMatrix.copy(dummy.matrix);
   trunkMatrices.push(dummy.matrix.clone()); owners.push(t);
 
   // The crown, lifted so its base sits inside the top of the trunk.
   const model = models[Math.floor(rng() * models.length)];
-  const crownHeight = t.h - trunkHeight * .92;
+  const crownHeight = t.h - trunkHeight * SLEEVE;
   // Half-width in metres, then divided by the model's own radius so every
   // crown is the width asked for whichever model it came from.
   const half = t.h * WIDE * (.85 + rng() * .3), sxz = half / modelRadius(model);
-  dummy.position.set(t.x, t.y + trunkHeight * .92, t.z);
+  // Sit the crown ON THE TRUNK'S OWN AXIS, by taking the point out of the
+  // trunk's matrix rather than assuming the trunk is vertical. The trunk leans
+  // about its middle and the crown about its base, so a shared angle is not a
+  // shared line -- which put the crown beside the trunk rather than on it.
+  seat.set(0, SLEEVE - .5, 0).applyMatrix4(trunkMatrix);
+  dummy.position.copy(seat);
   dummy.rotation.set(lean, rng() * 6.28, leanZ);
   dummy.scale.set(sxz, crownHeight, sxz);
   dummy.updateMatrix();

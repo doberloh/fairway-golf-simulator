@@ -43,6 +43,18 @@ const DEFAULTS = {
  // Fallen logs, stumps and mossy boulders on the forest floor, mostly
  // clustered around trunks. A count, and zero means a clean floor.
  deadfall: 0,
+ // How much of their combined crown radius two trees may share before one of
+ // them is moved elsewhere. Zero is off, which is where every biome but
+ // redwood stands -- not because they would not benefit, but because their
+ // layouts are signed off and this rewrites every one of them. Turning it on
+ // for another biome is this one number, and the fingerprint will tell you
+ // exactly what moved.
+ //
+ // Trunk clearance rides along with it. Two trunks in the same place is a
+ // fault rather than a style, but it never happened at 13 to 29 metres, and
+ // switching it on everywhere would relayout seven signed-off biomes to fix
+ // a problem none of them has.
+ crownShare: 0,
  leafFall: false,   // autumn's per-species leaf tinting
  leafLitter: false, // drifts of fallen leaves in the rough texture
  sandLand: false,   // rough reads as sand rather than soil
@@ -108,21 +120,27 @@ const TRAITS = {
  // The landform is PNW's, deliberately: the owner asked for the same country,
  // and the difference should be what grows on it.
  redwood: {bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
-  // Forty-six to eighty metres. A coast redwood is the tallest living thing
+  // Forty-six metres to 380 FEET. A coast redwood is the tallest living thing
   // there is, and at the usual 13-to-29 it is just a pine with a dark tint --
-  // the height is most of what makes the grove.
-  treeDensity: 5.5, canopy: {min: 46, range: 34}, farCanopy: {min: 42, range: 32},
+  // the height is most of what makes the grove. The floor stays low so a grove
+  // is a spread of ages rather than a field of identical giants.
+  canopy: {min: 46, range: 69.8}, farCanopy: {min: 42, range: 73.8},
+  crownShare: .55,
+  // 3.8, down from the 5.5 this started at. Measured at 5.5: 12.3 tall
+  // conifers per hectare, and the median tree's crown overlapped its
+  // neighbour's by 42%. A cathedral grove is open at the floor and closed
+  // overhead, which means fewer and bigger rather than more.
+  treeDensity: 3.8,
   waterTint: '#2c5450', waterMurk: .3,
   // Fewer blades, more of everything low and wet.
   scatter: {rocks: 300, grass: 90000, tufts: 2000, tallGrass: false,
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
-  // 380 feet. Coast redwoods really do run to this, and the point of the
-  // biome is standing under one -- the floor of the range is unchanged, so a
-  // grove is a wide spread of heights rather than a field of identical giants.
-  canopy: {min: 46, range: 69.8}, farCanopy: {min: 42, range: 73.8},
   deadfall: 520,
-  plants: [['redwood', .40], ['fir', .24], ['swordfern', .26], ['cedar', .10]]},
+  // The cedar is the mid-storey: a third of canopy height, so it fills the
+  // gap between the ferns and the giants instead of being a 380-foot
+  // christmas tree standing inside a redwood.
+  plants: [['redwood', .40], ['fir', .24], ['swordfern', .26], ['cedar', .10, .30]]},
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},

@@ -13,6 +13,19 @@ export const GROUND_PLANTS = new Set([
  'fern', 'swordfern', 'gorse', 'heather', 'agave', 'naupaka', 'shrub',
 ]);
 
+// How wide a species' crown is, as a fraction of its own height. Only the
+// tall conifers state it: everything else is drawn from a whole model and
+// carries its spread in `t.r`.
+//
+// It lives here because TWO things need the same answer -- vegetation draws the
+// crown this wide, and the generator has to leave room for it when it decides
+// where a tree may stand. The version where only the drawing knew put 380-foot
+// redwoods a median 8.6 m apart with 20 m crowns, so the median tree's canopy
+// overlapped its neighbour's by 42% and the worst trunks intersected by 5 m.
+const CROWN_FRACTION = {redwood: .085, fir: .115};
+export const crownFraction = kind => CROWN_FRACTION[kind] || 0;
+export const crownRadius = tree => CROWN_FRACTION[tree.kind] ? CROWN_FRACTION[tree.kind] * tree.h : tree.r;
+
 // Has no trunk worth colliding with. The ground plants, plus the ocotillo:
 // tall, but a handful of canes with gaps a ball goes straight through.
 export const NO_TRUNK = new Set([...GROUND_PLANTS, 'ocotillo']);

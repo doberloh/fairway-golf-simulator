@@ -53,6 +53,8 @@ For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO
 
 A tall conifer -- redwood and douglas fir -- is drawn as a barely tapered trunk carrying borrowed conifer FOLIAGE, lifted to the top, because every imported conifer is conical to the ground and reads as a Christmas tree at that scale. The crown's width is stated as a fraction of the tree's own height and the model's native width divided out, so every crown in a grove is the width asked for whichever model it came from. The crown takes whatever height the trunk leaves, so a tree is exactly as tall as its stated height. The trunk is drawn at the radius physics collides with, so a trunk you can see is a trunk you hit. Tree height is a biome field: 13 to 29 metres ordinarily, 42 to 116 -- 380 feet -- in a redwood grove.
 
+Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
+
 A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
 
 

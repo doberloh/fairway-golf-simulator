@@ -7,7 +7,7 @@ import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
-import {GROUND_PLANTS} from './species.js';
+import {GROUND_PLANTS,crownFraction,crownRadius} from './species.js';
 // The biome table lives in its own module now: it had grown into the answer to
 // every "what does this biome do" question, and half those answers were
 // conditionals in other files. Re-exported because everything imports it from
@@ -1403,10 +1403,41 @@ export function generateWorld(settings={}){
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
  const rng=random(s.seed+':ecology'),pick=()=>{let r=rng();for(const[k,f]of bio.plants){r-=f;if(r<=0)return k;}return bio.plants[0][0];};
+ // A species may be understorey: a third number scales its height, so a biome
+ // can have a mid-storey under its giants instead of everything reaching the
+ // same canopy. Without it the redwood grove's cedars were also 380 feet tall,
+ // which is the christmas-tree-through-a-redwood look.
+ const heightScale=Object.fromEntries(bio.plants.map(([k,,scale])=>[k,scale??1]));
  const count=Math.round(s.trees*s.holes*(bio.treeDensity));
+ // TREES MUST LEAVE ROOM FOR EACH OTHER. There was no spacing rule at all --
+ // invisible while a tree was 20 m with a 3 m crown, and mangled at 116 m with
+ // a 10 m one. Crowns in a closed canopy do interlock, so the rule is not "no
+ // overlap": it is that two crowns may not be mostly the same crown, and two
+ // trunks may never intersect. A grid keeps it from being quadratic.
+ const CROWN_SHARE=bio.crownShare,TRUNK_CLEAR=1.5,SPACE_CELL=32;
+ const placed=new Map();
+ const cellKey=(x,z)=>Math.floor(x/SPACE_CELL)+','+Math.floor(z/SPACE_CELL);
+ const roomFor=t=>{
+  const x=Math.floor(t.x/SPACE_CELL),z=Math.floor(t.z/SPACE_CELL);
+  for(let i=x-2;i<=x+2;i++)for(let j=z-2;j<=z+2;j++){
+   for(const o of placed.get(i+','+j)||[]){
+    const d=Math.hypot(o.x-t.x,o.z-t.z);
+    if(d<CROWN_SHARE*(crownRadius(t)+crownRadius(o)))return false;
+    if(d<trunkGirth(t)+trunkGirth(o)+TRUNK_CLEAR)return false;
+   }
+  }
+  return true;
+ };
+ // The drawn trunk radius, which physics also uses. Kept local rather than
+ // imported so the generator does not depend on the flight model.
+ const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d<10||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
-  const small=GROUND_PLANTS.has(kind),h=small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range,r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
-  trees.push({x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole});
+  const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
+  const tree={x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole};
+  // Ground cover threads between the trunks and needs no room of its own.
+  if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
+  if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
+  trees.push(tree);
  }
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
