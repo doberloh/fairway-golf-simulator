@@ -47,7 +47,15 @@ function addModelSpecies(view,kind,trees){
   // Nothing downstream depends on the visual width, because trunkRadius() in
   // physics derives collision from height, not from t.r.
   const lift=.88+rng()*.26,girth=.86+rng()*.28;
-  const sy=t.h*lift,sxz=sy*girth;
+  // GROUND COVER IS SIZED BY ITS SPREAD, NOT ITS HEIGHT. A sword fern is a low
+  // clump about a metre and a half across, and `Fern_1`'s fronds reach nearly
+  // twice its height sideways -- so scaling it to t.h the way a tree is scaled
+  // gave a ten-metre bush. t.r is the spread these were given; use it, and let
+  // the height follow the model's own proportions.
+  // The bush family still sizes by height. It probably should not either, but
+  // six biomes draw from it and that is a change to look at on its own.
+  const spread=FAMILY_OF[kind]==='fern'?t.r/modelRadius(model)*lift:0;
+  const sy=spread||t.h*lift,sxz=spread||sy*girth;
   dummy.position.set(t.x,t.y,t.z);
   dummy.rotation.set((rng()-.5)*.10,rng()*6.28,(rng()-.5)*.10);
   dummy.scale.set(sxz,sy,sxz);
@@ -77,9 +85,21 @@ function addModelSpecies(view,kind,trees){
 // feeling of a redwood grove -- bare trunks running up out of the shade, the
 // canopy only starting well above your head.
 //
-// So the trunk is drawn and the crown is borrowed: a tapered column carrying an
-// existing conifer, squeezed narrow and lifted to the top. One cheap cylinder
-// per tree, and the packs supply the only part they are any good at here.
+// So the trunk is drawn and the crown is borrowed: a column carrying the
+// FOLIAGE of a stylized conifer, lifted to the top. One cheap cylinder per
+// tree, and the packs supply the only part they are any good at here. The
+// crown models ship as leaf geometry alone -- their own trunks are dropped at
+// ingest, because a second trunk inside the drawn one is what made these look
+// doubled up.
+//
+// THE CROWN'S WIDTH IS STATED, NOT INHERITED, and that was the whole bug in the
+// first version. It multiplied each model's native width by a "narrow" factor,
+// and the borrowed conifers ranged from 1-part-wide-in-10 to 1-in-4 -- so one
+// tree's crown came out two and a half times another's in the same grove, and
+// the narrow ones ended up three metres of foliage on a thirty-six metre crown.
+// Razor thin, and no two alike. Now the wanted half-width is a fraction of the
+// TREE's height and the model's own radius is divided out, exactly as
+// addModelSpecies does with height.
 const TALL_CONIFERS = new Set(['redwood', 'fir']);
 
 function addTallConifers(view, kind, trees) {
@@ -87,11 +107,12 @@ function addTallConifers(view, kind, trees) {
  const models = familyModels(FAMILY_OF[kind]);
  if (!models.length) return false;
 
- // How the tree divides. The crown overlaps the top of the trunk so there is
- // no seam where one ends and the other starts.
- const TRUNK = kind === 'redwood' ? .60 : .52;   // fraction of height that is bare
- const CROWN = kind === 'redwood' ? .52 : .60;   // fraction the crown occupies
- const NARROW = kind === 'redwood' ? .40 : .52;  // crown width against its height
+ // How the tree divides, all as fractions of the tree's own height. A mature
+ // redwood is a 12 m crown on a 70 m tree, so the crown is about two and a half
+ // times as tall as it is wide; a douglas fir is broader and starts lower.
+ const TRUNK = kind === 'redwood' ? .64 : .56;  // bare trunk
+ const CROWN = kind === 'redwood' ? .42 : .50;  // crown height
+ const WIDE = kind === 'redwood' ? .085 : .115; // crown HALF-width
 
  const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
  const bark = new T.Color(kind === 'redwood' ? '#6d3f2e' : '#54453a');
@@ -99,8 +120,9 @@ function addTallConifers(view, kind, trees) {
  const stone = new T.Color(world.bio.rock || '#8a8577'), dirt = new T.Color(world.bio.rough || '#7e8a5a');
 
  // Seven sides is enough for a trunk seen against the sky, and these are the
- // most numerous things on the course.
- const column = new T.CylinderGeometry(.34, 1, 1, 7, 1, false);
+ // most numerous things on the course. Barely tapered: a redwood is a column,
+ // and the old .34 top gave it the profile of a spike.
+ const column = new T.CylinderGeometry(.62, 1, 1, 7, 1, false);
  const trunkMaterial = new T.MeshToonMaterial({color: '#ffffff'});
  const trunks = new T.InstancedMesh(column, trunkMaterial, trees.length);
  trunks.castShadow = true; trunks.receiveShadow = true;
@@ -124,13 +146,17 @@ function addTallConifers(view, kind, trees) {
   trunkMatrices.push(dummy.matrix.clone()); owners.push(t);
 
   // The crown, lifted so its base sits inside the top of the trunk.
+  const model = models[Math.floor(rng() * models.length)];
   const crownHeight = t.h * CROWN * (.88 + rng() * .24);
+  // Half-width in metres, then divided by the model's own radius so every
+  // crown is the width asked for whichever model it came from.
+  const half = t.h * WIDE * (.85 + rng() * .3), sxz = half / modelRadius(model);
   dummy.position.set(t.x, t.y + trunkHeight * .92, t.z);
   dummy.rotation.set(lean, rng() * 6.28, leanZ);
-  dummy.scale.set(crownHeight * NARROW, crownHeight, crownHeight * NARROW);
+  dummy.scale.set(sxz, crownHeight, sxz);
   dummy.updateMatrix();
   const leaf = leafBase.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .09);
-  entries.push({model: models[Math.floor(rng() * models.length)], owner: t,
+  entries.push({model, owner: t,
    matrix: dummy.matrix.clone(), color: {leaf, bark, stone, dirt, accent: leaf}});
  }
  trunks.instanceMatrix.needsUpdate = true;

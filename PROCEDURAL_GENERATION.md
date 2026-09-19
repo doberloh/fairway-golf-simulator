@@ -51,7 +51,7 @@ For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO
 
 ## What a biome decides
 
-A tall conifer -- redwood and douglas fir -- is drawn as a tapered trunk carrying a borrowed conifer crown, narrowed and lifted to the top, because every imported conifer is conical to the ground and reads as a Christmas tree at that scale. Tree height is a biome field: 13 to 29 metres ordinarily, 46 to 80 in a redwood grove.
+A tall conifer -- redwood and douglas fir -- is drawn as a barely tapered trunk carrying borrowed conifer FOLIAGE, lifted to the top, because every imported conifer is conical to the ground and reads as a Christmas tree at that scale. The crown's width is stated as a fraction of the tree's own height and the model's native width divided out, so every crown in a grove is the width asked for whichever model it came from. Tree height is a biome field: 13 to 29 metres ordinarily, 46 to 80 in a redwood grove.
 
 A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
 

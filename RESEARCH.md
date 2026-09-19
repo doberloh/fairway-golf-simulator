@@ -571,6 +571,32 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Razor-thin redwoods: a width that was inherited instead of stated
+
+The first redwoods came out as needles, and no two the same. The cause is worth writing down because it is a shape of bug rather than a number that was wrong.
+
+The crown is borrowed from a conifer model and the trunk is drawn. To make a broad pack conifer read as a redwood the first version multiplied the model by a **narrow factor** of 0.40. But the borrowed models were not one width: Kenney's conifers range from 1-part-wide-in-10 to 1-in-4 in their own proportions. So the narrow factor did not set a width, it scaled **whatever width the model happened to have** — one tree's crown came out two and a half times another's in the same grove, and the narrow end of the range finished at roughly three metres of foliage on a thirty-six metre crown.
+
+That is both complaints at once: the thin ones are thin, and the inconsistency is most of the mess.
+
+The fix is to **state the width and divide the model's own out**, which is exactly what `addModelSpecies` already does with height and says so in a comment. A crown is now a stated fraction of the tree's own height — half-width 0.085 for a redwood, 0.115 for a douglas fir — so a 70 m tree carries a 12 m crown about two and a half times as tall as it is wide, whichever model was drawn. Measured in the running scene: crowns 8–12 m wide over 21–29 m tall, against 3–7 m over 36 m before.
+
+Two smaller things came off the same thread. The drawn trunk tapered to 34% of its base, which is a spike rather than a column; it is 62% now. And the crown models ship as **leaf geometry only** — their own trunks are dropped at ingest, because a second trunk inside the drawn one is what made these look doubled up. Dropping them also paid for the new models: 218 KB back, so two packs' worth of additions cost 77 KB net.
+
+### Ground cover is sized by its spread, not its height
+
+A sword fern is a low clump about a metre and a half across. The imported `Fern_1`'s fronds reach nearly twice its height sideways, so scaling it to tree height the way every other species is scaled produced a **ten-metre bush**. Ferns are sized from `t.r` — the spread they were already given — and the height follows the model's proportions: 2–3 m across and under a metre tall, which is a fern.
+
+The bush family still sizes by height and probably should not either, but six biomes draw from it and that is a change to look at on its own.
+
+### Three Quaternius nature packs, 31 shared names
+
+Adding the Ultimate Stylized Nature and Stylized Nature MegaKit packs put **31 model names in more than one pack**. `Plant_1` is in all three and means something different in each — and the fern family was using one of them. The ingest resolved a name by walking `vendor/` and taking the first hit, so vendoring a pack could silently swap the model under a shipped biome with nothing to notice.
+
+An ambiguous name is an error now, and it names the packs and tells you how to disambiguate (`megakit:Pine_1`, where the part before the colon just has to appear in the directory name).
+
+The same change fixed a bug that had not fired yet: lookup used `existsSync`, and **Windows matches file names case-insensitively where Linux does not**. Kenney ships `grass.obj` and Quaternius ships `Grass.obj`, so `grass` found two packs on Windows and one on Linux — a build that differs by operating system. Directory listings are compared exactly now.
+
 ## The forest floor was already in the repo
 
 The redwood grove's floor was mown rough with columns standing in it. The obvious fix was to go and find CC0 logs, stumps, mossy rock and a real fern. **The search changed the answer: most of it was already vendored and simply not being shipped.**
@@ -601,7 +627,7 @@ Sizing falls out of the ingest. Every model is normalised to unit height, so one
 
 **Nothing collides with any of it.** A ball rolls through a fallen log. That is worth knowing before anyone makes them bigger — at this size it reads as ground clutter, and at twice it would start to look like it should stop a ball.
 
-The ferns are real fern models now (`swordfern`, its own species so that Pacific Northwest's generic bushes are untouched), but they are leafy ground plants rather than fronds. Whether that is close enough is the thing to look at.
+The ferns are real fern models now (`swordfern`, its own species so that Pacific Northwest's generic bushes are untouched), but they are leafy ground plants rather than fronds. **Since resolved** — the MegaKit's `Fern_1` is an actual fern; see the section above.
 
 ## Giant Redwood, and what the eighth biome cost
 

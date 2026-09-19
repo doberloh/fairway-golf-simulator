@@ -12,6 +12,8 @@ file gives it.
 | City Kit Suburban (2.0) — 40 models | [Kenney](https://kenney.nl) | CC0 1.0 | https://kenney.nl/assets/city-kit-suburban |
 | Building Kit (1.0) — 79 models | [Kenney](https://kenney.nl) | CC0 1.0 | https://kenney.nl/assets/building-kit |
 | Ultimate Nature Pack (Jun 2019) — 150 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/ultimatenature.html |
+| Ultimate Stylized Nature (May 2022) — 63 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/ultimatestylizednature.html |
+| Stylized Nature MegaKit (Standard) — 68 models | [Quaternius](https://quaternius.com) | CC0 1.0 | https://quaternius.com/packs/stylizednaturemegakit.html |
 
 Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -33,7 +35,9 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 95 of the 598 available models are used. The rest are not shipped.
+- 99 of the 729 available models are used. The rest are not shipped. A family may
+  keep only part of a model: the redwood and fir crowns ship as leaf geometry with
+  their trunks dropped, because the trunk under them is drawn rather than imported.
 - The **house models are the one exception to materials being discarded**: unlike
   the nature kits they carry a shared texture atlas rather than a colour per
   material, so their UVs survive and `colormap.png` (11 KB) ships with them.
@@ -49,6 +53,10 @@ redwood forest floor seven mossy boulders, five leafy ground plants and four log
 and stumps with moss on them. Its models carry several times the vertices, so
 taking coverage we already had cost about a megabyte of packed geometry for no
 visible gain, and was reverted.
+
+Three of the four Quaternius/Kenney nature packs share model names — `Plant_1`
+exists in three of them and means something different in each — so a name the
+ingest cannot resolve to one pack is an error rather than first-match-wins.
 
 The complete packs live in `vendor/` as the provenance record and the input to
 the ingestion step. **`vendor/` is not part of the build and not part of the

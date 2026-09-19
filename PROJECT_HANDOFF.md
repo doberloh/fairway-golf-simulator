@@ -323,7 +323,7 @@ Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds all 45 fie
 
 To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
 
-If the biome wants props no other biome uses, add the family to `PICK` in `tools/build-meshes.mjs` and rerun it -- the packs in `vendor/` hold far more than ships, so check there before going looking for assets. What a species IS, as opposed to which biome grows it, lives in `src/species.js`.
+If the biome wants props no other biome uses, add the family to `PICK` in `tools/build-meshes.mjs` and rerun it -- the packs in `vendor/` hold far more than ships, so check there before going looking for assets. A PICK entry is a file name; three of the packs are Quaternius nature packs sharing 31 names, so an ambiguous one is an error and you disambiguate with `megakit:Pine_1`. `KEEP_ROLES` drops the parts of a model a family does not draw -- the conifer crowns keep their leaves and throw their trunks away. What a species IS, as opposed to which biome grows it, lives in `src/species.js`.
 
 **Then run `node tools/biome-fingerprint.mjs --check`.** It hashes what every biome generates and fails if an existing one moved. A new biome shows up as `new` and the others must be unchanged; re-save with `--save` once you are satisfied.
 

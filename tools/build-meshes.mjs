@@ -3,6 +3,14 @@
 //
 // Run: node tools/build-meshes.mjs
 // Reads:  vendor/<pack>/*.glb
+//
+// A PICK entry is a model's file name. Three of the vendored packs are
+// Quaternius nature packs and 31 names appear in more than one of them --
+// `Plant_1` is in all three and means something different in each. A bare name
+// that is ambiguous is an ERROR rather than first-pack-wins, because the
+// silent version of that bug swaps the model under an existing biome and
+// nothing tells you. Write `megakit:Pine_1` to say which pack you meant; the
+// part before the colon just has to appear in the directory name.
 // Writes: src/asset-meshes.js
 //
 // Nothing from the packs ships as-is. Textures are irrelevant (Kenney's models
@@ -25,7 +33,8 @@ const VENDOR = join(ROOT, 'vendor');
 // Material name -> the palette role the game paints it with.
 const ROLE_OF = name => {
  const n = name.toLowerCase();
- if (n.includes('leafs') || n.startsWith('grass') || n.includes('corn') || n.includes('green')) return 'leaf';
+ if (n.includes('leafs') || n.includes('leaves') || n.includes('foliage') || n.startsWith('grass')
+  || n.includes('corn') || n.includes('green')) return 'leaf';
  if (n.includes('wood') || n.includes('bark') || n.includes('birch')) return 'bark';
  if (n.includes('stone') || n.includes('rock')) return 'stone';
  if (n.includes('dirt') || n.includes('sand')) return 'dirt';
@@ -66,13 +75,29 @@ const PICK = {
   'stump_round', 'stump_roundDetailed', 'stump_squareDetailed'],
  mossrock: ['Rock_Moss_1', 'Rock_Moss_2', 'Rock_Moss_3', 'Rock_Moss_4',
   'Rock_Moss_5', 'Rock_Moss_6', 'Rock_Moss_7'],
- // The closest thing to a fern either pack contains. Nothing is named one, so
- // these stand in until one is sourced.
- fern: ['Plant_1', 'Plant_2', 'Plant_3', 'Plant_4', 'Plant_5'],
+ // Real fern fronds. Nothing in the older packs is named one, so `Plant_1` to
+ // `Plant_5` stood in and read as generic shrubbery from two paces. The MegaKit
+ // has an actual fern; the other two keep the understory from being one shape
+ // repeated six hundred times.
+ fern: ['megakit:Fern_1', 'megakit:Plant_1_Big', 'megakit:Plant_7',
+  'quaternius-ultimate-nature:Plant_3'],
+ // A CROWN, AND NOTHING ELSE. Only the leaf parts of these are drawn -- the
+ // trunk underneath is ours, because no pack contains a forty-metre bare
+ // column, and letting a model's own trunk show through the drawn one is what
+ // the doubled-up look was. The MegaKit rather than Kenney because these
+ // crowns are a dense mass: Kenney's pines are a sparse cone, and a sparse cone
+ // squeezed to redwood proportions is a needle.
+ conifercrown: ['megakit:Pine_1', 'megakit:Pine_2', 'megakit:Pine_3',
+  'megakit:Pine_4', 'megakit:Pine_5'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],
 };
+
+// Families that use only part of a model. A crown is foliage only, so the
+// trunk geometry inside those models is dropped here rather than shipped and
+// skipped at draw time.
+const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
 
 const COMPONENT = {5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array};
 const COUNT = {SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4};
@@ -187,21 +212,39 @@ const push = typed => {
  return at;
 };
 
+// One listing per pack, compared EXACTLY. existsSync would do, but Windows
+// matches file names case-insensitively and Linux does not, so `grass` would
+// find Quaternius's `Grass.obj` on one machine and not the other -- a build
+// that differs by operating system, which is the worst kind.
+const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
+
+// Every pack holding this model, so an ambiguous name can say so rather than
+// quietly taking whichever the filesystem listed first.
+function locate(entry) {
+ const colon = entry.indexOf(':');
+ const hint = colon < 0 ? null : entry.slice(0, colon), name = colon < 0 ? entry : entry.slice(colon + 1);
+ const found = [];
+ for (const {pack, files} of PACKS) {
+  if (hint && !pack.includes(hint)) continue;
+  for (const ext of ['.glb', '.obj'])
+   if (files.has(name + ext)) { found.push({pack, file: join(VENDOR, pack, name + ext), glb: ext === '.glb'}); break; }
+ }
+ if (found.length > 1)
+  throw Error(`"${entry}" matches ${found.length} packs (${found.map(f => f.pack).join(', ')}). `
+   + `Say which one, e.g. "${found[0].pack}:${name}".`);
+ return {name, hit: found[0] || null};
+}
+
 let taken = 0, missing = [];
-for (const [family, names] of Object.entries(PICK)) {
- for (const name of names) {
-  let file = null;
-  for (const pack of readdirSync(VENDOR)) {
-   const candidate = join(VENDOR, pack, `${name}.glb`);
-   if (existsSync(candidate)) { file = candidate; break; }
-  }
-  let objFile = null;
-  if (!file) for (const pack of readdirSync(VENDOR)) {
-   const candidate = join(VENDOR, pack, `${name}.obj`);
-   if (existsSync(candidate)) { objFile = candidate; break; }
-  }
-  if (!file && !objFile) { missing.push(name); continue; }
-  const byRole = file ? extract(file) : extractObj(objFile);
+for (const [family, entries] of Object.entries(PICK)) {
+ for (const entry of entries) {
+  const {name, hit} = locate(entry);
+  if (!hit) { missing.push(entry); continue; }
+  if (models[name]) throw Error(`two PICK entries both end up called "${name}".`);
+  const byRole = hit.glb ? extract(hit.file) : extractObj(hit.file);
+  const keep = KEEP_ROLES[family];
+  if (keep) for (const role of [...byRole.keys()]) if (!keep.has(role)) byRole.delete(role);
+  if (!byRole.size) throw Error(`"${entry}" has no ${[...(keep || [])].join('/')} part to keep.`);
   // Normalise: centred on x/z, sitting on y=0, one unit tall. The game then
   // scales every instance itself, exactly as it does its procedural shapes.
   let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
