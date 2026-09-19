@@ -99,6 +99,10 @@ export function familyModels(family) {
 // one.
 export const FAMILY_OF = {
  pine: 'conifer', spruce: 'conifer', cedar: 'conifer',
+ // A redwood and a douglas fir borrow a conifer for their CROWN only; the
+ // trunk beneath is drawn, because no pack has this silhouette. See
+ // TALL_CONIFERS in vegetation.js.
+ redwood: 'conifer', fir: 'conifer',
  oak: 'broadleaf', maple: 'broadleaf', aspen: 'broadleaf', alder: 'broadleaf',
  palm: 'palm',
  cactus: 'cactus',

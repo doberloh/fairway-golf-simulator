@@ -69,10 +69,94 @@ function addModelSpecies(view,kind,trees){
  });
  return true;
 }
+// A REDWOOD IS A COLUMN WITH A CROWN ON TOP, AND NO PACK HAS ONE.
+//
+// Every conifer in the CC0 packs is conical all the way to the ground. Scaled
+// to seventy metres that is a giant Christmas tree, and the silhouette IS the
+// feeling of a redwood grove -- bare trunks running up out of the shade, the
+// canopy only starting well above your head.
+//
+// So the trunk is drawn and the crown is borrowed: a tapered column carrying an
+// existing conifer, squeezed narrow and lifted to the top. One cheap cylinder
+// per tree, and the packs supply the only part they are any good at here.
+const TALL_CONIFERS = new Set(['redwood', 'fir']);
+
+function addTallConifers(view, kind, trees) {
+ const {world, group} = view, rng = random(world.seed + ':tall:' + kind);
+ const models = familyModels(FAMILY_OF[kind]);
+ if (!models.length) return false;
+
+ // How the tree divides. The crown overlaps the top of the trunk so there is
+ // no seam where one ends and the other starts.
+ const TRUNK = kind === 'redwood' ? .60 : .52;   // fraction of height that is bare
+ const CROWN = kind === 'redwood' ? .52 : .60;   // fraction the crown occupies
+ const NARROW = kind === 'redwood' ? .40 : .52;  // crown width against its height
+
+ const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
+ const bark = new T.Color(kind === 'redwood' ? '#6d3f2e' : '#54453a');
+ const leafBase = new T.Color(kind === 'redwood' ? '#2d4a33' : '#33543c');
+ const stone = new T.Color(world.bio.rock || '#8a8577'), dirt = new T.Color(world.bio.rough || '#7e8a5a');
+
+ // Seven sides is enough for a trunk seen against the sky, and these are the
+ // most numerous things on the course.
+ const column = new T.CylinderGeometry(.34, 1, 1, 7, 1, false);
+ const trunkMaterial = new T.MeshToonMaterial({color: '#ffffff'});
+ const trunks = new T.InstancedMesh(column, trunkMaterial, trees.length);
+ trunks.castShadow = true; trunks.receiveShadow = true;
+ const trunkMatrices = [], owners = [];
+
+ const entries = [];
+ for (let i = 0; i < trees.length; i++) {
+  const t = trees[i];
+  const lean = (rng() - .5) * .035, leanZ = (rng() - .5) * .035;
+  const trunkHeight = t.h * TRUNK * (.9 + rng() * .2);
+  // A redwood is roughly a fiftieth as thick as it is tall at the base, which
+  // is far narrower than `t.r` -- that is a foliage radius and would give a
+  // trunk you could not see past.
+  const base = t.h * (kind === 'redwood' ? .021 : .016) * (.85 + rng() * .3);
+  dummy.position.set(t.x, t.y + trunkHeight / 2, t.z);
+  dummy.rotation.set(lean, rng() * 6.28, leanZ);
+  dummy.scale.set(base, trunkHeight, base);
+  dummy.updateMatrix();
+  trunks.setMatrixAt(i, dummy.matrix);
+  trunks.setColorAt(i, bark.clone().offsetHSL(0, (rng() - .5) * .08, (rng() - .5) * .12));
+  trunkMatrices.push(dummy.matrix.clone()); owners.push(t);
+
+  // The crown, lifted so its base sits inside the top of the trunk.
+  const crownHeight = t.h * CROWN * (.88 + rng() * .24);
+  dummy.position.set(t.x, t.y + trunkHeight * .92, t.z);
+  dummy.rotation.set(lean, rng() * 6.28, leanZ);
+  dummy.scale.set(crownHeight * NARROW, crownHeight, crownHeight * NARROW);
+  dummy.updateMatrix();
+  const leaf = leafBase.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .09);
+  entries.push({model: models[Math.floor(rng() * models.length)], owner: t,
+   matrix: dummy.matrix.clone(), color: {leaf, bark, stone, dirt, accent: leaf}});
+ }
+ trunks.instanceMatrix.needsUpdate = true;
+ if (trunks.instanceColor) trunks.instanceColor.needsUpdate = true;
+ group.add(trunks);
+ // Registered like any other tree instances, so a camera inside one hides it.
+ view.treeInstances.push({mesh: trunks, matrices: trunkMatrices, owners,
+  hidden: new Uint8Array(trunkMatrices.length)});
+
+ const materials = new Map();
+ const materialFor = role => {
+  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
+  return materials.get(role);
+ };
+ instanceModels(group, entries, materialFor, ({mesh, matrices, owners: own}) => {
+  view.treeInstances.push({mesh, matrices, owners: own, hidden: new Uint8Array(matrices.length)});
+ });
+ return true;
+}
+
 function addSpecies(view,kind,trees){
  // Imported geometry where the packs have a counterpart, procedural everywhere
  // else -- the desert species have none, and a wrong silhouette is worse than a
  // simple one.
+ // Before the ordinary model path: these borrow a crown from it but must not
+ // BE one, or they come out as conical trees scaled to seventy metres.
+ if(TALL_CONIFERS.has(kind)&&addTallConifers(view,kind,trees))return;
  if(FAMILY_OF[kind]&&addModelSpecies(view,kind,trees))return;
 
  const {world,style,group}=view,rng=random(world.seed+':details:'+kind),real=style==='realistic',toon=style==='cartoon',blue=style==='blueprint',flat=style==='lowpoly';

@@ -47,6 +47,11 @@ const DEFAULTS = {
  spray: '#c6ce8d',  // the colour of what a shot throws up
  sunColor: '#fff0d6', // the key light
  treeDensity: 2.8,  // multiplier on the tree-count setting
+ canopy: {min: 13, range: 16},    // a tree on a hole, in metres
+ // Scenery away from the holes runs a shade shorter. Two ranges rather than
+ // one derived from the other, because they were two hand-written ranges and
+ // deriving one lost a few centimetres -- enough to move five biomes.
+ farCanopy: {min: 12, range: 15},
  edgeCoast: false,  // a sea along one edge, rather than all round
  shoreSand: false,  // pale sand at the waterline on the course map
  cover: 'grass',    // what the near-field ground cover reads as
@@ -70,7 +75,7 @@ const TRAITS = {
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
   sandLand: true, dust: true, spray: '#ead9a7', warm: true, arid: true, speckleRock: true, litter: false,
-  treeDensity: 1.25, waterMurk: .15,
+  treeDensity: 1.25, waterMurk: .15, canopy: {min: 4, range: 5},
   plants: [['cactus', .3], ['palo', .22], ['mesquite', .18], ['ocotillo', .16], ['agave', .14]]},
  mountain: {bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950,
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
@@ -90,6 +95,26 @@ const TRAITS = {
  island: {bank: '#aaad7a', ringLift: 0, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
   coastal: true, sea: true, inlandWater: false, litter: false,
   plants: [['palm', .45], ['hala', .25], ['naupaka', .3]]},
+ // MOODY IS A SET OF NUMBERS, NOT A MATERIAL.
+ //
+ // The sun sits at 18 degrees rather than the usual 28, which rakes light
+ // through the trunks all day and gives the god rays something to cut through.
+ // Fog takes its colour from the sky, so a desaturated grey-green sky is also
+ // the haze between the trees -- that one field does most of the work.
+ //
+ // The landform is PNW's, deliberately: the owner asked for the same country,
+ // and the difference should be what grows on it.
+ redwood: {bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
+  // Forty-six to eighty metres. A coast redwood is the tallest living thing
+  // there is, and at the usual 13-to-29 it is just a pine with a dark tint --
+  // the height is most of what makes the grove.
+  treeDensity: 5.5, canopy: {min: 46, range: 34}, farCanopy: {min: 42, range: 32},
+  waterTint: '#2c5450', waterMurk: .3,
+  // Fewer blades, more of everything low and wet.
+  scatter: {rocks: 300, grass: 90000, tufts: 2000, tallGrass: false,
+   rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
+   flowers: ['#d8d2a6', '#9fb07c']},
+  plants: [['redwood', .40], ['fir', .24], ['fern', .26], ['cedar', .10]]},
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},
@@ -102,6 +127,7 @@ const PALETTES = {
  links:{name:'Links',title:'North Sea Links',tag:'Golden fescue, dunes, and Atlantic light.',rough:'#a89d65',semi:'#7e9050',fairway:'#6d9149',fringe:'#91a75b',green:'#acbd73',tree:'#89945e',sky:'#c8d7df',sand:'#e9dcb7',water:'#436e80',rock:'#8b8977',altitude:15,temperature:14,treeKind:'shrub',sun:23},
  midwest:{name:'Midwest',title:'Prairie Run',tag:'Parkland oaks beneath an endless sky.',rough:'#69783b',semi:'#50803d',fairway:'#599743',fringe:'#83a451',green:'#a0be6a',tree:'#46732f',sky:'#b8d7e9',sand:'#e8ddc3',water:'#41766a',rock:'#83846c',altitude:230,temperature:22,treeKind:'oak',sun:39},
  island:{name:'Island',title:'Turtle Bay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
+ redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
  autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19}
 };
 

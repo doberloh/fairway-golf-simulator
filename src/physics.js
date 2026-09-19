@@ -302,7 +302,7 @@ export function cupApproach(old,p,velocity,pin){
   // the right and the rim turns it further right.
   side:cross>0?-1:1,near,distance};
 }
-export function trunkRadius(tree){return ['fern','gorse','heather','agave','ocotillo','naupaka','shrub'].includes(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,.8);}
+export function trunkRadius(tree){return ['fern','gorse','heather','agave','ocotillo','naupaka','shrub'].includes(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,2.4);}
 const hypot=Math.hypot;
 export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325*Math.exp(-G*0.0289644*altitude/(8.31446*t))/(287.058*t);}
 // Lift and drag against the spin parameter S = |w|R/v, held in one place so the

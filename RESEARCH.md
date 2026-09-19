@@ -571,6 +571,44 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Giant Redwood, and what the eighth biome cost
+
+The first biome added since biomes became one record. It is **one entry in `src/biomes.js`**, one line in `BIOME_KEYS`, two species in `FAMILY_OF`, and a tree builder — and the tree builder is there because of a shape the asset packs do not contain, not because the pipeline made it necessary.
+
+### Moody is a set of numbers
+
+Almost none of the atmosphere is new code. It is fields the engine already reads:
+
+- **The sun sits at 18°** rather than the usual 28. Every biome carries its own sun elevation, and a low one rakes light through the trunks all day and gives the god rays something to cut across.
+- **Fog takes its colour from the biome's sky**, so a desaturated grey-green sky *is* the haze between the trees. That one field does most of the work.
+- A dark saturated palette with little contrast between fairway and semi, so the mown lines read as a suggestion rather than a stripe. Dark peaty water, wet grey rock, moss in the rough.
+
+The landform is PNW's, deliberately — the owner asked for the same country, and the difference should be what grows on it.
+
+### A redwood is a column with a crown on top
+
+Every conifer in the CC0 packs is conical all the way to the ground. Scaled to seventy metres that is a giant Christmas tree, and the silhouette **is** the feeling of a grove: bare trunks running up out of the shade, the canopy only starting well above your head.
+
+So the trunk is drawn and the crown is borrowed. A tapered seven-sided column carries an existing conifer squeezed to 40% of its natural width and lifted to the top, overlapping so there is no seam. One cheap cylinder per tree, and the packs supply the only part they are good at here.
+
+**Height turned out to matter more than shape.** Tree heights were hardcoded at 13–29 m, so the first redwood grove was a pine wood with a dark tint. They are a biome field now, and a redwood runs **46–80 m**.
+
+That exposed a second thing: `trunkRadius` in physics clamps collision at 0.8 m, which is right for a 29 m pine and wrong for a 70 m tree you cannot see past. The cap is 2.4 m now. It only binds above 29.6 m, which no existing biome reaches, so nothing else moved — and the fingerprint says so rather than the reasoning.
+
+### The refactor earned itself on the first use
+
+Two mistakes, both caught by `tools/biome-fingerprint.mjs` within seconds rather than by looking at a course and wondering.
+
+Deriving the scenery tree height from the on-hole height changed the range from 12–27 to 11.96–27.96 — **a few centimetres, and it moved five biomes**. They were two hand-written ranges and they are two fields now.
+
+The other was a missing comma in the new record, which is the kind of thing the suite catches anyway. The interesting one is the first: a difference that small is invisible to any amount of looking, and it would have shipped.
+
+Final state: all seven existing biomes byte-identical, redwood new, 441 tests pass, every generator rule clear on the new biome.
+
+### What is not done
+
+The ferns are generic bushes — `fern` maps to the bush family, which is fine at distance and poor close up. Fallen logs, stumps and moss-covered rock would all be more redwood than anything currently scattered there. Those are the CC0 assets worth sourcing, now that there is something to judge them against.
+
 ## A biome becomes one record
 
 Adding an eighth biome meant first finding out what a biome *is*, and the answer was: not one thing. Seven tables and **48 conditionals across eight files**.
