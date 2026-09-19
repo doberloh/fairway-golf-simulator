@@ -571,9 +571,45 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Twenty-two trees out of the packs we already own
+
+No generator, no new dependency: every triangle comes from a CC0 pack already in `vendor/`. What is new is the **arrangement**, and that is where the redwood research lives -- a bare bole to roughly two thirds of the height, a crown about a sixth as wide as the tree is tall, a trunk a thirty-eighth as thick as it is tall, a swollen foot. No pack model has any of that.
+
+`tools/bake-assets.mjs`, into `vendor/baked_assets`. Three operations do all of it:
+
+**Stretch the bole.** A pack conifer branches a third of the way up, and scaling the whole model taller just gives a taller version of the same tree. So only the part *below* the first branch is stretched and everything above rides up unchanged -- a normal tree becomes a redwood bole with its own branch structure still on top. Where it first branches is measured, not assumed: the lowest band whose radius passes 6% of the model's height.
+
+**Flare the foot**, as before: every published redwood diameter is quoted above the swollen base.
+
+**Dress it.** Crowns are borrowed leaf geometry, either one mass capping the bole or sprays placed on a golden-angle spiral through a crown envelope that is widest just above its base and closes at the top.
+
+### What the survey turned up
+
+Two facts made the whole thing cheap. `DeadTree_1`–`DeadTree_10` in Ultimate Stylized Nature are **the same geometry as `NormalTree_1`–`NormalTree_10` with the foliage removed** -- identical vertex counts -- so the pack already ships ten bare boles with real branch structure, bare to between 30% and 50% of their height at trunk radii of 0.027 to 0.051. And the cheapest single-mass crowns are tiny: `Bush_Small` at 380 vertices, `Bush_Large` at 552, `PineTree_4` at 874.
+
+That range matters more than it sounds. **`Redwood_Old_A` is 1,321 vertices** -- a 447-vertex bole and one 874-vertex crown -- against 17,000 for the cheapest generated redwood. Where the budget is vertices per frame rather than megabytes, a thirteen-times difference is the whole argument.
+
+| | verts | |
+|---|---|---|
+| `Redwood_A`, `_B` | 3.4k, 3.8k | mature, capped |
+| `Redwood_C`–`_F` | 23k–56k | mature, sprayed |
+| `Redwood_Old_A`, `_B` | 1.3k, 20k | bole to three quarters, narrower crown |
+| `RedwoodYoung_A`–`_C` | 1.3k–32k | half the girth, branched most of the way down |
+| `DouglasFir_A`–`_C` | 5.7k–37k | narrower, branched lower |
+| `RedCedar_A`, `_B` | 40k, 70k | mid-storey, foliage nearly to the ground |
+| `BigleafMaple_A`, `_Autumn_A` | 26k | the understorey broadleaf |
+| `Tanoak_A`, `Vine_Maple_A` | 21k, 13k | what you actually walk past |
+| `RedwoodSnag_A`, `_B` | 2.7k, 2.8k | standing dead, no foliage at all |
+
+### And the colour test misled me a fourth time
+
+`BigleafMaple_A` first reported almost no foliage and a vast trunk. Nothing was wrong: `MapleTree_Leaves.png` is an **autumn** sheet, its foliage averaging `#452c28`, and the check that separates leaf from wood asks whether green exceeds red. Warm foliage counts as wood.
+
+Measuring the sheet rather than trusting the classifier settled it in one step. The maple now wears the green `NormalTree` sheet and the autumn one keeps a variant of its own, which is a better outcome than the bug was a problem -- but the classifier has now been wrong about brown bark, grey bark, and orange leaves. **Any check that sorts pixels by colour is a guess about the art.**
+
 ## ez-tree's structure wearing Quaternius's foliage
 
-Six more models in `vendor/eztree-grove`, and the point of them is that the two sources have opposite strengths.
+Six more models in `vendor/baked_assets`, and the point of them is that the two sources have opposite strengths.
 
 ez-tree gives a **trunk and a branch skeleton no pack contains**: a bare column with a buttressed foot and short limbs only near the top. Quaternius gives **foliage that already looks like this game** -- chunky, stylized, a solid mass rather than alpha-cut billboards -- and `PineTree_2` and `PineTree_4` are the two crowns across all six packs whose silhouette rises to a single peak instead of stacking into tiers.
 

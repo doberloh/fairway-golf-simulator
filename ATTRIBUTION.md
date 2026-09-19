@@ -19,11 +19,11 @@ Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
 ## Generated geometry, which is not CC0
 
-`vendor/eztree-grove/` is **generated, not vendored**. `node tools/bake-trees.mjs`
+`vendor/baked_assets/` is **generated, not vendored**. `node tools/bake-trees.mjs`
 produces it from [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel
 Greenheck, which is **MIT**, a devDependency, and never ships -- what ships is
 the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
-kept, so the notice is vendored at `vendor/eztree-grove/LICENSE-ez-tree.txt`
+kept, so the notice is vendored at `vendor/baked_assets/LICENSE-ez-tree.txt`
 and reproduced with any distribution.
 
 Two textures come with it, and they are the only imported images in the project
@@ -33,7 +33,7 @@ besides the house atlases:
   pine and ash), copied unchanged and covered by its MIT licence. They are here
   because a leaf billboard is a cut-out: without an alpha mask it is a solid
   rectangle.
-`vendor/eztree-grove/stylized_needles.png` is a copy of Ultimate Stylized
+`vendor/baked_assets/stylized_needles.png` is a copy of Ultimate Stylized
 Nature's `PineTree_Leaves.png`, sitting beside the generated models that use
 it. Same pack, same CC0 licence, copied so the folder is self-contained.
 

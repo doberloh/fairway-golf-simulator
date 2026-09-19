@@ -24,7 +24,7 @@ import * as T from 'three';
 import {extractObj} from './mesh-read.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'vendor', 'eztree-grove');
+const OUT = join(ROOT, 'vendor', 'baked_assets');
 const args = process.argv.slice(2);
 const report = args.includes('--report');
 const only = args.filter(a => !a.startsWith('--')).map(a => a.toLowerCase());
@@ -835,7 +835,7 @@ if (!existsSync(stylizedSheet)) { console.error('stylized leaf sheet is not vend
 copyFileSync(stylizedSheet, join(OUT, STYLIZED_SHEET));
 
 writeFileSync(join(OUT, 'README.md'),
-`# eztree-grove
+`# baked_assets
 
 Generated, not vendored. \`node tools/bake-trees.mjs\` produces these from
 [ez-tree](https://github.com/dgreenheck/ez-tree) (MIT) by
