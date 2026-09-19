@@ -48,11 +48,17 @@ const PALETTE = {
  Bark_Broadleaf: '#5a554a',// tanoak and madrone, usually mossy
  Deadwood: '#8d887e',      // a standing snag bleaches almost silver
  Deadwood_Rot: '#5c5142',  // a fallen log that is going back to soil
- Leaves: '#3b4b2a',        // canopy foliage: measured #323b23 to #5f6d44
- Leaves_Fir: '#3a5138',    // fir reads bluer than redwood
- Leaves_Under: '#54703a',  // understory: measured #4a6940 to #739753
- Leaves_Sapling: '#688a42',// new growth, brighter still
- Leaves_Broad: '#4c6636',
+ // THE FIRST PASS PICKED THE SHADOW CLUSTER AND THE FOREST LOOKED DEAD. The
+ // measured greens for a grove run #323b23, #5f6d44, #798962, #9baf87,
+ // #bdce97 -- the darkest is the largest cluster because most of a
+ // photographed grove is in shade, and taking the largest cluster as "the
+ // colour" paints every leaf the colour of a shadow. The sim does its own
+ // shading; what it wants is the LIT leaf.
+ Leaves: '#62784a',        // canopy foliage, lit
+ Leaves_Fir: '#52704a',    // fir reads bluer than redwood
+ Leaves_Under: '#6b9046',  // understory: brighter and yellower than the canopy
+ Leaves_Sapling: '#83ad55',// new growth, brighter still
+ Leaves_Broad: '#5d7c42',
  Moss: '#7fa843',          // the brightest thing on the floor
  Moss_Dark: '#5f8236',
  Rock: '#67695f',
@@ -144,7 +150,9 @@ function redwood(seed, o = {}) {
  // shed and clusters where they have not. Laying them out on an even ladder
  // made the first pass read as a fir with a long trunk, so both the height and
  // the reach of every limb are jittered hard, and one in six is dropped.
- const whorls = o.whorls ?? 16;
+ // Denser than the first pass by half again. The vertex budget was measured
+ // to be no constraint at all, and a sparse plume is what "dead" looks like.
+ const whorls = o.whorls ?? 24;
  for (let w = 0; w < whorls; w++) {
   const t = from + (1 - from) * ((w + .5) / whorls) + (r() - .5) * (1 - from) / whorls * 1.4;
   const u = Math.max(0, Math.min(1, (t - from) / (1 - from)));
@@ -163,7 +171,7 @@ function redwood(seed, o = {}) {
    const tip = add(root, mul(dir, limbReach));
    tube(b, bark, [{p: root, r: node.r * .18}, {p: tip, r: node.r * .06}], {sides: 4, closeBottom: false});
    // Two or three sprays per limb, hanging off the outer half.
-   const sprays = o.sprays ?? 3;
+   const sprays = o.sprays ?? 4;
    for (let s = 0; s < sprays; s++) {
     const f = .12 + .88 * (s / Math.max(1, sprays - 1));
     const at2 = add(root, mul(dir, limbReach * f));
@@ -249,12 +257,12 @@ function conifer(seed, o = {}) {
 // the ground. Hemlock: the same habit with a finer, nodding leader.
 const cedar = (seed, o = {}) => conifer(seed, {
  from: .12, baseR: .022, bark: 'Bark_Cedar', leaf: 'Leaves', flare: 1.35, flutes: 9,
- whorls: 18, limbs: 6, reach: .105, conePower: .6, droopRise: -.45, droop: .62,
+ whorls: 26, limbs: 7, reach: .110, conePower: .6, droopRise: -.45, droop: .62,
  sprayWidth: .22, sprays: 3, ...o,
 });
 const hemlock = (seed, o = {}) => conifer(seed, {
  from: .18, baseR: .015, bark: 'Bark_Fir', leaf: 'Leaves_Fir', flare: 1.15, flutes: 4,
- whorls: 17, limbs: 5, reach: .095, conePower: .7, droopRise: -.5, droop: .7,
+ whorls: 25, limbs: 6, reach: .100, conePower: .7, droopRise: -.5, droop: .7,
  sprayWidth: .17, ...o,
 });
 
@@ -574,17 +582,17 @@ for (let i = 0; i < 8; i++) add2(`Redwood_Giant_${i + 1}`, () => redwood(1100 + 
  // half times further, so a nominal .072 measured out at 36% as wide as tall.
  // The references put a 115 m redwood's crown at 15 to 20 m across -- 16% --
  // so the limb is shorter than instinct says.
- from: .52 + i * .035, baseR: .028 - i * .0008, whorls: 16 + (i % 4), limbs: 4,
+ from: .52 + i * .035, baseR: .028 - i * .0008, whorls: 24 + (i % 5), limbs: 5,
  reach: .036 - i * .0009, flutes: 7 + (i % 3), sprouts: 4 + (i % 4), burl: i % 3 !== 1,
 }), true);
 // Mature: shorter boles, fuller plumes.
 for (let i = 0; i < 8; i++) add2(`Redwood_Mature_${i + 1}`, () => redwood(2200 + i * 53, {
- from: .42 + i * .02, baseR: .024, whorls: 14, limbs: 4 + (i % 2), reach: .048,
+ from: .42 + i * .02, baseR: .024, whorls: 22, limbs: 5 + (i % 2), reach: .052,
  flutes: 6 + (i % 4), sprouts: 3, burl: i % 2 === 0,
 }), true);
 // Young: conical, branched low, slim.
 for (let i = 0; i < 6; i++) add2(`Redwood_Young_${i + 1}`, () => redwood(3300 + i * 71, {
- from: .2 + i * .03, baseR: .013, topTaper: .3, whorls: 15, limbs: 5, reach: .07,
+ from: .2 + i * .03, baseR: .013, topTaper: .3, whorls: 22, limbs: 6, reach: .075,
  limbRise: -.05, flutes: 5, sprouts: 1, burl: false, flare: 1.15,
 }), true);
 for (let i = 0; i < 4; i++) add2(`Redwood_Sapling_${i + 1}`, () => redwood(4400 + i * 91, {
@@ -604,12 +612,12 @@ for (let i = 0; i < 2; i++) add2(`Redwood_Burled_${i + 1}`, () => redwood(5600 +
 const FIR_SHAPES = [
  // Same correction as the redwoods: the sprays reach far past the limb, so a
  // nominal reach of .19 measured 63% as wide as tall against a real fir's 30%.
- {from: .16, reach: .095, conePower: .62, whorls: 18, limbs: 6},  // young, broad, to the ground
- {from: .20, reach: .085, conePower: .72, whorls: 17, limbs: 5},
- {from: .26, reach: .080, conePower: .80, whorls: 16, limbs: 5},
- {from: .34, reach: .075, conePower: .88, whorls: 15, limbs: 5},  // self-pruned
- {from: .42, reach: .065, conePower: .95, whorls: 14, limbs: 4},  // old, high crown
- {from: .30, reach: .105, conePower: .60, whorls: 19, limbs: 6},  // open grown, heavy
+ {from: .16, reach: .100, conePower: .62, whorls: 26, limbs: 7},  // young, broad, to the ground
+ {from: .20, reach: .090, conePower: .72, whorls: 25, limbs: 6},
+ {from: .26, reach: .085, conePower: .80, whorls: 24, limbs: 6},
+ {from: .34, reach: .080, conePower: .88, whorls: 22, limbs: 6},  // self-pruned
+ {from: .42, reach: .070, conePower: .95, whorls: 20, limbs: 5},  // old, high crown
+ {from: .30, reach: .110, conePower: .60, whorls: 27, limbs: 7},  // open grown, heavy
 ];
 for (let i = 0; i < 12; i++) add2(`DouglasFir_${i + 1}`, () => conifer(6600 + i * 41, {
  ...FIR_SHAPES[i % FIR_SHAPES.length],
@@ -661,7 +669,7 @@ for (let i = 0; i < 2; i++) add2(`RootWad_${i + 1}`, () => rootwad(15500 + i * 6
 // leaves the frond at fifty degrees before the arch pulls it down further.
 // The photographs show them leaving the crown near-vertical.
 for (let i = 0; i < 12; i++) add2(`SwordFern_${i + 1}`, () => swordFern(16600 + i * 23, {
- fronds: 10 + (i % 8), length: .78 + (i % 5) * .05, arch: .34 + (i % 4) * .06,
+ fronds: 14 + (i % 9), length: .80 + (i % 5) * .05, arch: .34 + (i % 4) * .06,
  pairs: 15 + (i % 5), dead: i % 3, rise: 2.1 + (i % 4) * .4, width: .105,
 }));
 for (let i = 0; i < 4; i++) add2(`SwordFern_Young_${i + 1}`, () => swordFern(17200 + i * 19, {
@@ -671,7 +679,7 @@ for (let i = 0; i < 4; i++) add2(`SwordFern_Young_${i + 1}`, () => swordFern(172
 // mass of overlapping leathery leaves with the stems barely visible. Six
 // leaves on five stems read as a houseplant.
 for (let i = 0; i < 6; i++) add2(`Salal_${i + 1}`, () => shrub(17700 + i * 29, {
- stems: 9 + (i % 5), height: .7 + (i % 3) * .1, leaves: 14 + (i % 5), leafWidth: .42,
+ stems: 13 + (i % 6), height: .7 + (i % 3) * .1, leaves: 18 + (i % 6), leafWidth: .42,
  leafLen: .34, lean: .3 + (i % 3) * .07,
 }));
 for (let i = 0; i < 4; i++) add2(`Huckleberry_${i + 1}`, () => shrub(18300 + i * 31, {
@@ -679,7 +687,7 @@ for (let i = 0; i < 4; i++) add2(`Huckleberry_${i + 1}`, () => shrub(18300 + i *
  leaf: 'Leaves_Broad', lean: .5,
 }));
 for (let i = 0; i < 6; i++) add2(`Sorrel_${i + 1}`, () => sorrel(18900 + i * 37, {
- plants: 16 + i * 4, spread: .42 + (i % 3) * .06, height: .2 + (i % 4) * .03,
+ plants: 26 + i * 5, spread: .42 + (i % 3) * .06, height: .2 + (i % 4) * .03,
 }));
 for (let i = 0; i < 6; i++) add2(`Seedling_${i + 1}`, () => seedling(19500 + i * 41, {
  whorls: 6 + (i % 4), reach: .3 + (i % 4) * .04,

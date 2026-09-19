@@ -76,19 +76,15 @@ const PICK = {
  // tools/grow.mjs: whole trees with their own fluted, buttressed trunks, so
  // there is no borrowed crown to balance on a drawn cylinder any more.
  //
- // Each of the big species carries a `_Far` twin -- the same tree with its
- // whorls and sprays thinned about twenty to one, and its limbs lengthened to
- // hold the same silhouette. vegetation.js swaps between them by distance;
- // drawn at full detail throughout, this set costs 25 M vertices against the
- // 3.7 M the whole course costs today.
+ // The `_Far` twins tools/grow.mjs also bakes are NOT taken. Swapping by
+ // distance was measured to save half a millisecond a frame and to cost the
+ // look entirely -- see the note at the top of src/vegetation.js.
  redwood: ['grown:Redwood_Giant_1', 'grown:Redwood_Giant_2', 'grown:Redwood_Giant_3', 'grown:Redwood_Giant_4',
   'grown:Redwood_Mature_1', 'grown:Redwood_Mature_2', 'grown:Redwood_Mature_3', 'grown:Redwood_Mature_4'],
- redwoodfar: ['grown:Redwood_Giant_1_Far', 'grown:Redwood_Giant_2_Far', 'grown:Redwood_Giant_3_Far', 'grown:Redwood_Giant_4_Far',
-  'grown:Redwood_Mature_1_Far', 'grown:Redwood_Mature_2_Far', 'grown:Redwood_Mature_3_Far', 'grown:Redwood_Mature_4_Far'],
- dougfir: ['grown:DouglasFir_1', 'grown:DouglasFir_2', 'grown:DouglasFir_3', 'grown:DouglasFir_4'], dougfirfar: ['grown:DouglasFir_1_Far', 'grown:DouglasFir_2_Far', 'grown:DouglasFir_3_Far', 'grown:DouglasFir_4_Far'],
- hemlock: ['grown:Hemlock_1', 'grown:Hemlock_2', 'grown:Hemlock_3'], hemlockfar: ['grown:Hemlock_1_Far', 'grown:Hemlock_2_Far', 'grown:Hemlock_3_Far'],
- redcedar: ['grown:RedCedar_1', 'grown:RedCedar_2', 'grown:RedCedar_3'], redcedarfar: ['grown:RedCedar_1_Far', 'grown:RedCedar_2_Far', 'grown:RedCedar_3_Far'],
- tanoak: ['grown:Tanoak_1', 'grown:Tanoak_2', 'grown:Tanoak_3'], tanoakfar: ['grown:Tanoak_1_Far', 'grown:Tanoak_2_Far', 'grown:Tanoak_3_Far'],
+ dougfir: ['grown:DouglasFir_1', 'grown:DouglasFir_2', 'grown:DouglasFir_3', 'grown:DouglasFir_4'],
+ hemlock: ['grown:Hemlock_1', 'grown:Hemlock_2', 'grown:Hemlock_3'],
+ redcedar: ['grown:RedCedar_1', 'grown:RedCedar_2', 'grown:RedCedar_3'],
+ tanoak: ['grown:Tanoak_1', 'grown:Tanoak_2', 'grown:Tanoak_3'],
  swordfern: ['grown:SwordFern_1', 'grown:SwordFern_2', 'grown:SwordFern_3', 'grown:SwordFern_4', 'grown:SwordFern_5', 'grown:SwordFern_6'],
  salal: ['grown:Salal_1', 'grown:Salal_2', 'grown:Salal_3', 'grown:Salal_4'],
  sorrel: ['grown:Sorrel_1', 'grown:Sorrel_2', 'grown:Sorrel_3', 'grown:Sorrel_4'],

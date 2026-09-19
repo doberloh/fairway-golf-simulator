@@ -329,7 +329,7 @@ If the biome wants props no other biome uses, add the family to `PICK` in `tools
 
 **Textured models carry a `uvSpan`.** Texture coordinates are packed into 16 bits against the part's own range rather than against 0..1, because bark tiles far outside the unit square and the old packing silently clamped it. An atlas has no span and is unaffected. If you add anything textured, check that `uvSpan` survives into what is drawn.
 
-**The redwood biome draws entirely from `vendor/grown-redwood-forest`,** and every expensive species is ingested twice: `Redwood_Giant_1` and `Redwood_Giant_1_Far`. `addModelSpecies` instances both over the same trees and `view.clearCameraTrees` decides which is visible, by distance, on every camera move. If you add a species, add its `_Far` twin to `PICK` as well or it will draw at full detail from a kilometre away.
+**The redwood biome draws entirely from `vendor/grown-redwood-forest`,** at full detail, all of it, all the time -- 33.6 M vertices a frame and still at the display's refresh cap. There was a two-level LOD here and it was removed: the arithmetic that justified it was never benchmarked, and the benchmark that appeared to confirm it was reading the 120 Hz vsync interval. The generator still bakes `_Far` twins; nothing ingests them. **If you add a species, it draws whole.** Before adding an LOD back, measure with something capable of reporting zero -- see RESEARCH.md.
 
 **`vendor/grown-redwood-forest/` is grown from nothing.** `node tools/grow.mjs` writes 153 models built out of
 triangles by `tools/grow-lib.mjs` -- no imported geometry, no texture, no generator library. Proportions and

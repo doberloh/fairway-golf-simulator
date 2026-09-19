@@ -2,7 +2,7 @@ import {cameraInsideTree} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,instanceModels,farFamily} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS} from './species.js';
 import {windMaterial,toonRamp} from './textures.js';
@@ -33,21 +33,32 @@ function texture(kind){
 // ten-metre bush.
 const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
 
-// TWO LEVELS OF DETAIL, SWAPPED BY DISTANCE.
+// NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
 //
-// The grown redwoods are eleven to twenty thousand vertices each and a grove
-// is fourteen hundred trees: drawn at full detail throughout that is 25
-// million vertices against the 3.7 million the whole course costs. Only the
-// few dozen trees you are standing among are worth the geometry.
+// This drew each species twice and swapped by camera distance, on the
+// reasoning that 25 million vertices could not be affordable against the 3.7
+// million the course used to cost. That reasoning was arithmetic, not a
+// benchmark.
 //
-// Each species with a `_Far` family is instanced TWICE over the same trees,
-// with the same matrix, and every tree is visible in exactly one of the two.
-// The swap radius grows with the tree, because a redwood is legible from much
-// further away than a seedling, and there is hysteresis on it so a camera
-// sitting exactly on the boundary does not flicker between them.
-const LOD_BASE=70,LOD_PER_HEIGHT=1.1,LOD_HYSTERESIS=1.12;
-const lodRadius=t=>LOD_BASE+(t.h||10)*LOD_PER_HEIGHT;
-
+// The first benchmark was not one either. It timed the render call and read
+// 8.6 ms with the swap on, 9.1 ms with every tree at full detail -- which
+// looked like a real if small cost, and was in fact the 120 Hz vsync interval
+// (8.33 ms) in both cases. The renderer was waiting for the display, not for
+// the geometry, so the measurement could only ever return the refresh rate.
+// THAT IS THE SIXTH METRIC IN THIS PROJECT TO ANSWER A DIFFERENT QUESTION
+// THAN THE ONE ASKED; before trusting a number here, check that it can move.
+//
+// Measured properly -- frame pacing over 240 frames against the scene's own
+// vertex count -- a grown redwood course draws 33.6 M vertices and 98 M
+// triangles per frame and still holds the 120 Hz cap. Instanced vertices are
+// close to free on this path. The swap bought nothing measurable and cost the
+// one thing that showed: at any moment nearly every visible tree was the
+// thinned twin, so the forest looked dead, and the boundary popped.
+//
+// The generator still bakes `_Far` twins (tools/grow.mjs, LOD.far) and they
+// are simply not ingested. If this ever needs to come back for weaker
+// hardware, the models are one PICK entry away -- but measure on that
+// hardware, with a metric that is allowed to say "free".
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -94,17 +105,9 @@ function addModelSpecies(view,kind,trees){
   if(!materials.has(role))materials.set(role,new T.MeshToonMaterial({color:'#ffffff'}));
   return materials.get(role);
  };
- const far=farFamily(FAMILY_OF[kind]),farList=far?familyModels(far):[];
- // The far twin of a tree is its own model's `_Far`, so a grove keeps the same
- // spread of shapes at both levels rather than collapsing to one.
- const push=lod=>({mesh,matrices,owners})=>
-  view.treeInstances.push({mesh,matrices,owners,lod,hidden:new Uint8Array(matrices.length)});
- instanceModels(group,entries,materialFor,push(farList.length?'near':null));
- if(farList.length){
-  const swap=new Map(models.map((m,i)=>[m,farList[Math.min(i,farList.length-1)]]));
-  instanceModels(group,entries.map(e=>({...e,model:swap.get(e.model)||farList[0]})),
-   materialFor,push('far'));
- }
+ instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
+  view.treeInstances.push({mesh,matrices,owners,hidden:new Uint8Array(matrices.length)});
+ });
  return true;
 }
 // The drawn cylinder with a borrowed crown balanced on top is GONE. It
@@ -201,29 +204,18 @@ function addSpecies(view,kind,trees){
  }
 export function addVegetation(view){
  view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
- // An instance is drawn unless the camera is inside that tree, or the batch is
- // the wrong level of detail for how far away it is. `near` is remembered per
- // tree so the hysteresis has something to be hysteretic about.
- const nearNow=new Map();
+ // An instance is drawn unless the camera is standing inside that tree.
  view.clearCameraTrees=()=>{
   // The vegetation tests build a view with no camera -- they only ever look
   // at the geometry -- so this has to be safe to call without one.
   if(!view.camera)return;
   if(last.distanceToSquared(view.camera.position)<.04)return;
   last.copy(view.camera.position);
-  const eye=view.camera.position;
-  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(eye,t)));
+  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));
   for(const batch of view.treeInstances){
    let changed=false;
    batch.owners.forEach((t,i)=>{
-    let hide=hidden.has(t)?1:0;
-    if(!hide&&batch.lod){
-     let near=nearNow.get(t);
-     if(near===undefined){near=false;nearNow.set(t,false);}
-     const r=lodRadius(t),d=Math.hypot(eye.x-t.x,eye.z-t.z);
-     if(near?d>r*LOD_HYSTERESIS:d<r)nearNow.set(t,near=!near);
-     hide=(batch.lod==='near')===near?0:1;
-    }
+    const hide=hidden.has(t)?1:0;
     if(hide!==batch.hidden[i]){
      batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
      batch.hidden[i]=hide;changed=true;
@@ -233,17 +225,7 @@ export function addVegetation(view){
   }
  };
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
- // Until the camera first moves, show the far level and hide the near one:
- // both are in the scene and drawing both would double every tree.
- for(const batch of view.treeInstances){
-  if(batch.lod!=='near')continue;
-  batch.hidden.fill(1);
-  for(let i=0;i<batch.matrices.length;i++)batch.mesh.setMatrixAt(i,zero);
-  batch.mesh.instanceMatrix.needsUpdate=true;
- }
- // Settles the near/far split straight away when there is a camera to
- // measure from; without one the far level simply stays up.
- view.clearCameraTrees?.();
+
  addDeadfall(view);
  addGroundCover(view);
  addNearbyGrass(view);

@@ -52,12 +52,6 @@ export function modelParts(name) {
 
 export const modelRadius = name => MESH_MODELS[name]?.radius || .35;
 
-// The thinned twin of a model, if one was ingested. Same tree, same
-// silhouette, a twentieth of the vertices; vegetation.js draws whichever the
-// camera distance calls for.
-export const farModel = name => MESH_MODELS[name + '_Far'] ? name + '_Far' : null;
-export const farFamily = family => (families.has(family + 'far')
- || Object.values(MESH_MODELS).some(m => m.family === family + 'far')) ? family + 'far' : null;
 export const modelTextured = name => !!MESH_MODELS[name]?.textured;
 export const modelExtents = name => {
  const m = MESH_MODELS[name];

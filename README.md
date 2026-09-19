@@ -1,6 +1,6 @@
 # Fairway — a world of golf
 
-A portable 3D browser golf simulator. Open **dist/index.html** directly in a modern browser. The approximately 1.2 MB file contains the renderer, controls, assets, and physics; ordinary play needs no installation, account, or internet connection. WebGL 2 and hardware acceleration are required.
+A portable 3D browser golf simulator. Open **dist/index.html** directly in a modern browser. The single file is about 15.8 MB (6.4 MB gzipped) and contains the renderer, controls, assets and physics; most of that is the generated redwood forest, which is shipped whole rather than at reduced detail because measurement showed the geometry costs nothing on this path. ordinary play needs no installation, account, or internet connection. WebGL 2 and hardware acceleration are required.
 
 For device-specific setup, source builds, mobile access and troubleshooting, read [INSTALLATION.md](INSTALLATION.md). It distinguishes intended platforms from device combinations that have not been tested.
 

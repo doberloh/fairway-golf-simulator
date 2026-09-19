@@ -571,7 +571,7 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
-## The grove is grown now, and it needed a level of detail to be affordable
+## The grove is grown now, and the level of detail it "needed" was imaginary
 
 Every plant in the redwood biome comes from `tools/grow.mjs`. No borrowed crown, no drawn cylinder, no pack model. The mix went from three species and a christmas tree to nine:
 
@@ -579,33 +579,54 @@ Every plant in the redwood biome comes from `tools/grow.mjs`. No borrowed crown,
     tanoak .05 (18%)   seedling .05 (4.5%)
     swordfern .19   salal .11   sorrel .08
 
-On a nine-hole course that is 538 redwoods, 227 firs, 134 hemlocks, 157 cedars, 103 tanoaks, 115 seedlings and 949 plants on the floor — **5.0 tall conifers per hectare**, which is where the literature puts old growth.
+On a nine-hole course that is 538 redwoods, 227 firs, 134 hemlocks, 157 cedars, 103 tanoaks, 115 seedlings and 949 plants on the floor -- **5.0 tall conifers per hectare**, which is where the literature puts old growth.
 
-### The arithmetic that forced the work
+### The arithmetic that forced work nobody needed
 
-Drawn at full detail this set costs **25 million vertices** against the 3.7 million the whole course cost before. Redwoods alone are 10 M. There was no version of "just use the new foliage" that ran.
+Drawn at full detail the set came to 25 million vertices against the 3.7 million the whole course cost before. That number was frightening enough to act on, so every expensive species got baked twice, `Redwood_Giant_1` beside `Redwood_Giant_1_Far` at a twentieth of the vertices, and `view.clearCameraTrees` swapped them by distance.
 
-So every expensive species is baked twice. The far twin is the **same tree** — same seed, same proportions — with its whorls and sprays thinned about twenty to one and its trunk sides dropped. `Redwood_Giant_1` is 11,460 vertices and `Redwood_Giant_1_Far` is 536.
+It worked, and it was the wrong thing to build, and the owner is the one who noticed: *"the pop in is crazy. And the trees dont look lush at all. It looks like the forest is dead. Have we really benchmarked the full LoD on everything and proven its not achievable?"*
 
-**Thinning also narrows the crown**, because width comes from the sprays and there are fewer of them: a giant measured 19% as wide as tall at full detail and 9% thinned. A level of detail that changes shape pops when it swaps, so the far model reaches its limbs further and draws its sprays fatter to hold the silhouette. After that: 19% against 16%, and 34% against 38% for a fir.
+No. There had been arithmetic, not a benchmark.
 
-### How the swap works
+### The benchmark that was also not a benchmark
 
-Each species with a `_Far` family is instanced **twice over the same trees with the same matrix**, and every tree is visible in exactly one of the two. The switch radius grows with the tree — `70 + 1.1 × height`, so a 116 m redwood stays detailed to 198 m and a seedling to 74 — with 12% hysteresis so a camera sitting on the boundary does not flicker.
+So it got measured: time the render call, once with the swap on and once with every tree at full detail.
 
-It rides on machinery that already existed: `view.treeInstances` was already walked on every camera move to hide a tree the camera is standing inside. That loop now decides level of detail at the same time.
+    level of detail on    1.0 M verts drawn     8.6 ms
+    everything full      11.1 M verts drawn     9.1 ms
 
-Measured in a grown course: **75 near trees at 545 k vertices, 1,619 far at 547 k**, understory 1.0 M, total 2.10 M drawn against 15.2 M if every tree drew full. Checked that no tree is ever visible at both levels — 41 near, 764 far, one invisible, and that one is the tree the camera is inside.
+Half a millisecond for eleven times the geometry -- which reads as a real if trivial cost, and is nothing of the kind. **8.33 ms is the vsync interval on a 120 Hz display.** Both numbers were the monitor. The renderer was sitting in the driver waiting for the next refresh, and a timer wrapped around that wait can only ever return the refresh rate no matter what it is asked to draw. The measurement was incapable of reporting "free", which is the answer.
+
+This is the sixth metric in this project to answer a different question than the one asked, after a UV-basis check that skipped exactly the degenerate triangles that were the bug, a pixel check that filtered for brown on grey bark, and an anisotropy score that called a stretched row "vertical". They fail the same way every time: a filter or a clamp that is reasonable in general quietly excludes the case under test. **Before trusting a number here, check that it is able to move.**
+
+### What the honest measurement says
+
+Frame pacing across 240 frames, against the scene's own vertex count rather than a wrapped timer:
+
+    33.6 M vertices, 98 M triangles submitted per frame, 117.6 fps
+
+Still pinned to the 120 Hz cap, with the whole forest at full detail and the foliage half again denser than the version that shipped the LOD. Instanced vertex throughput is close to free on this path; the frame is bound by something else entirely. The swap bought nothing measurable and cost the only thing that showed -- at any moment nearly every visible tree was the thinned twin, so the forest looked dead, and the boundary popped.
+
+All of it came out. The generator still bakes the `_Far` twins and they are simply not ingested, one `PICK` entry away if weak hardware ever wants them.
+
+### The forest looked dead for a second reason
+
+The palette was measured off 315 photographs by clustering their greens and taking the dominant cluster. The dominant cluster in a photograph of a grove is `#323b23`, because **most of a photographed grove is in shade**. Taking the largest cluster as "the colour" paints every leaf the colour of a shadow, and then the sim shades it again.
+
+The measured range runs `#323b23` to `#5f6d44` to `#798962` to `#9baf87` to `#bdce97`. Canopy foliage moved from the first of those to `#62784a`, understory to `#6b9046`, saplings to `#83ad55`. The renderer does its own shading; what it wants handed to it is the **lit** leaf, not the average one.
+
+Density went up with it, since the vertex budget turned out not to exist: whorls 16 to 24, sprays 3 to 4, fern fronds 10 to 14, sorrel 16 to 26 plants a clump. A giant redwood is 27,304 vertices now against 11,460.
 
 ### What came out
 
-`addTallConifers` is gone: 121 lines that drew a tapered cylinder and balanced a borrowed conifer crown on top. It existed only because no pack contained a bare-boled giant. So are the pack's logs, stumps, mossy rocks and the MegaKit fern — the grown nurse log has moss only along its upper flank, the grown stump has root buttresses, and the grown fern is a shuttlecock of once-pinnate fronds rather than a generic leafy plant.
+`addTallConifers` is gone: 121 lines that drew a tapered cylinder and balanced a borrowed conifer crown on top. It existed only because no pack contained a bare-boled giant. So are the pack's logs, stumps, mossy rocks and the MegaKit fern -- the grown nurse log has moss only along its upper flank, the grown stump has root buttresses, and the grown fern is a shuttlecock of once-pinnate fronds rather than a generic leafy plant.
 
-The build goes from 2.78 MB to **10.37 MB**, which is the part that does not matter.
+The build goes from 2.78 MB to **15.79 MB**, which is the part that does not matter.
 
 ### One thing the tests caught
 
-`addVegetation` now settles the near/far split as soon as it builds, which meant calling the camera-move handler directly — and the vegetation tests build a view with **no camera**, because they only ever look at geometry. Three tests went red on `view.camera.position`. The handler returns early without a camera now, and the far level simply stays up until something moves.
+The LOD work made `addVegetation` settle the near/far split as it built, which meant calling the camera-move handler directly -- and the vegetation tests build a view with **no camera**, because they only ever look at geometry. Three tests went red on `view.camera.position`. The handler returns early without a camera, and that guard stayed after the LOD left, because hiding the tree the camera stands inside still needs one.
 
 ## A grove grown from nothing, against 315 photographs
 
