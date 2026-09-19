@@ -571,6 +571,34 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The budget is frames, not megabytes
+
+I had been quoting packed geometry as though it were the constraint on how many assets the grove can have. It is not, and the owner was right to push back. Both numbers, measured rather than estimated:
+
+**File size.** Putting all twelve baked trees into `PICK` and building takes the single file from **2.78 MB to 10.84 MB** (gzip 4.23 MB), plus about 1.5 MB more once the four sprite sheets ship as base64. Twelve or thirty, it is still a file you can email, and the base64 decode at startup is a fraction of a second. There is enormous headroom here and variety is close to free.
+
+**Frames.** This is the one that binds, and it has nothing to do with file size.
+
+A grown redwood course holds **117,000 instances and 3.73 million vertices** if every one were visible. Of that, the 1,378 tall conifers are about 1.4 million — roughly a thousand vertices each, because a tree today is a nine-sided cylinder plus one borrowed crown of about 950.
+
+The baked trees are 17k to 52k vertices each. Drawing the same 1,378 trees from them:
+
+| | vertices, whole course |
+|---|---|
+| today | 3.7 M |
+| redwoods and firs swapped for baked ones | ~35 M |
+| plus cedars for the mid-storey | ~49 M |
+
+Thirteen times the entire course as it stands, from the trees alone. That is a frame-rate problem on any hardware, and no amount of disk space touches it.
+
+### So the lever is detail, not count
+
+Ship as many species as we like — that cost is megabytes, and megabytes are available. What cannot happen is drawing a 23,000-vertex tree fourteen hundred times.
+
+Two levels per species is the answer: the full model near the camera, a cheap one beyond it. We control both, because we generate them — the far version is the same parameters with fewer sections, fewer segments and a fraction of the leaves, and ez-tree also has `generateLODs` if we want it to do the reduction. Rough arithmetic: the forty-odd trees within about 120 m at full detail plus everything else at 1.5k comes to roughly 3 M vertices, which is what the course costs today.
+
+The machinery half-exists. `view.treeInstances` already walks every instance each time the camera moves, to hide a tree the camera is standing inside, and the near-field grass already builds and drops tiles by camera distance.
+
 ## The bark ran sideways, and a forest rather than a tree
 
 ### `v` was never a ramp
