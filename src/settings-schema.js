@@ -102,7 +102,7 @@ export const SETTINGS=[
  {key:'doglegAngle',category:'routing',kind:'range',min:0,max:70,step:1,unit:'°',def:45,label:'Maximum dogleg turn',tip:'The largest turn a dogleg may take.'},
  {key:'doglegPosition',category:'routing',kind:'range',min:30,max:75,step:1,unit:'% along hole',def:55,label:'Dogleg turning point',tip:'Where the bend sits along the hole. Each hole varies up to 22 points either side of this.'},
 
- {key:'width',category:'turf',kind:'range',min:20,max:70,step:1,unit:' m',def:38,label:'Typical fairway width',tip:'A guideline, not a constant. Each side is generated independently, so the fairway widens into landing areas and pinches at approaches.'},
+ {key:'width',category:'turf',kind:'range',min:20,max:92,step:1,unit:' m',def:38,label:'Typical fairway width',tip:'A guideline, not a constant. Each side is generated independently, so the fairway widens into landing areas and pinches at approaches. The top of the range is a hundred yards, which is links territory rather than a normal fairway.'},
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
  {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add broad tilts, crossing ridges and hollows.'},
