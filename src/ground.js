@@ -1,7 +1,7 @@
 import {BANK_COLORS} from './streams.js';
 import {toonRamp} from './textures.js';
 import * as T from 'three';
-import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
+import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
 import {CUP_RADIUS} from './physics.js';
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
@@ -97,9 +97,13 @@ export function groundMaterial(view,palette){
  let Sx=Math.max(256,Math.ceil(extent.x*2/OWNER_TEXEL)),Sz=Math.max(256,Math.ceil(extent.y*2/OWNER_TEXEL));
  if(Sx*Sz>OWNER_MAX){const k=Math.sqrt(OWNER_MAX/(Sx*Sz));Sx=Math.max(256,Math.round(Sx*k));Sz=Math.max(256,Math.round(Sz*k));}
  const texture=(data,x,y,linear=false)=>{const t=new T.DataTexture(data,x,y,T.RGBAFormat,T.FloatType);t.minFilter=t.magFilter=linear?T.LinearFilter:T.NearestFilter;t.needsUpdate=true;view.resources.push(t);return t;};
- const owners=new Float32Array(Sx*Sz*4),route=new Float32Array(N*12),tees=new Float32Array(N*12),curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
+ const owners=new Float32Array(Sx*Sz*4),route=new Float32Array(N*12),tees=new Float32Array(N*24),curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
  for(let j=0;j<Sz;j++)for(let i=0;i<Sx;i++){const x=((i+.5)/Sx*2-1)*extent.x,z=((j+.5)/Sz*2-1)*extent.y,k=(j*Sx+i)*4;const lake=w.lakeOwner(x,z,7);owners[k]=(lake||w.nearest(x,z).h).hole;owners[k+1]=w.groundCover(x,z)==='straw'?1:0;owners[k+2]=(w.streams.at(x,z)?.id??-1)+1;owners[k+3]=lake?1:0;}
- for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);Object.values(h.tees).forEach((t,i)=>{const p=teePad(t);tees.set(p?[t.x,p.z,1,p.rz]:[0,0,0,0],h.hole*12+i*4);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
+ for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);// Two texels a tee: where and how big, then which way it faces. The fourth
+  // slot of the first was already the pad's half-length; the direction needed
+  // somewhere of its own.
+  Object.values(h.tees).forEach((t,i)=>{const p=teePad(t);
+   tees.set(p?[t.x,p.z,1,p.rz,p.ux,p.uz,0,0]:[0,0,0,0,0,0,0,0],h.hole*24+i*8);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
  const streamCount=Math.max(1,w.streams.segments.length),streamData=new Float32Array(streamCount*8);for(const q of w.streams.segments)streamData.set([q.a.x,q.a.z,q.b.x,q.b.z,q.a.width,q.b.width,q.stream+1,q.bank],q.id*8);const streamTexture=texture(streamData,2,streamCount);
  const steps=toonRamp(view);const m=new T.MeshToonMaterial({color:'#ffffff',gradientMap:steps}),colors=Object.fromEntries(Object.entries(palette).map(([k,v])=>['tint_'+k,{value:new T.Color(v)}]));
  // THE CUE SWITCHES, AS UNIFORMS. Held outside onBeforeCompile and handed to
@@ -109,11 +113,14 @@ export function groundMaterial(view,palette){
  const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
- Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(BANK_COLORS[w.settings.biome])},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:texture(owners,Sx,Sz,true)},route:{value:texture(route,3,N)},tees:{value:texture(tees,3,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},biome:{value:['desert','mountain','links','island'].indexOf(w.settings.biome)}});
+ Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(BANK_COLORS[w.settings.biome])},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:texture(owners,Sx,Sz,true)},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},biome:{value:['desert','mountain','links','island'].indexOf(w.settings.biome)}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes;
- varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,route,curves,outer,hazards,cups,tees,banks;uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform int biome;
+ // The same rounded box course.js uses, so paint and lie cannot disagree
+// about where a tee is.
+float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,route,curves,outer,hazards,cups,tees,banks;uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform int biome;
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  float hashGround(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -231,9 +238,12 @@ export function groundMaterial(view,palette){
  // this paints exactly what localSurface classifies. The collar only claims
  // ground that is still rough, so a fairway or green beside a tee keeps it.
  float teeGround=0.;
- for(int ti=0;ti<3;ti++){vec4 tee=texture2D(tees,vec2((float(ti)+.5)/3.,row));
-  vec2 ta=(p-tee.xy)/vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)});if(tee.z>.5&&kind<.5&&dot(ta,ta)<1.){turf=tint_semi;kind=1.;teeGround=1.;}
-  vec2 tp=(p-tee.xy)/vec2(${TEE_PAD.x.toFixed(2)},tee.w);if(tee.z>.5&&dot(tp,tp)<1.){turf=tint_semi;kind=1.;teeGround=1.;}}
+ for(int ti=0;ti<3;ti++){vec4 tee=texture2D(tees,vec2((float(ti)*2.+.5)/6.,row));
+  vec4 teeDir=texture2D(tees,vec2((float(ti)*2.+1.5)/6.,row));
+  // Into the pad's own frame: across the line of play, then along it.
+  vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
+  if(tee.z>.5&&kind<.5&&teeBox(tf,vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)}),${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)})<0.){turf=tint_semi;kind=1.;teeGround=1.;}
+  if(tee.z>.5&&teeBox(tf,vec2(${TEE_PAD.x.toFixed(2)},tee.w),${TEE_ROUND.toFixed(2)})<0.){turf=tint_semi;kind=1.;teeGround=1.;}}
  // THE BEACH, AND IT CLAIMS ROUGH ONLY -- AFTER THE TEES, NOT BEFORE.
  //
  // Ordering is the whole of it. Run before the tee block, the beach turned low

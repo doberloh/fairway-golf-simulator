@@ -19,8 +19,8 @@
 // A number that is wrong is worse than no number, because it is acted on. So
 // `fairwayWidth`, `ovalRadius`, `sightline` and the rest come from the module
 // under test, and a metric's job is only to sample and count.
-import {ovalRadius, fairwayWidth, sightline, localSurface, teePad,
- TEE_PAD, TEE_APRON, TEE_APRON_SCALE, TEE_EYE} from '../src/course.js';
+import {ovalRadius, fairwayWidth, sightline, localSurface, teePad, teeBox,
+ TEE_PAD, TEE_APRON, TEE_APRON_SCALE, TEE_ROUND, TEE_EYE} from '../src/course.js';
 
 const DEG = 180 / Math.PI;
 
@@ -72,10 +72,12 @@ export const METRICS = {
     // as wrong as all of it.
     const pads = Object.values(h.tees).map(t => ({t, p: teePad(t)})).filter(e => e.p);
     for (const {t, p} of pads) {
+     // Round the collar's outline, corners included.
      for (let i = 0; i < 12; i++) {
-      const a = i * Math.PI / 6;
-      const lx = t.x + Math.cos(a) * TEE_PAD.x * TEE_APRON_SCALE;
-      const lz = p.z + Math.sin(a) * p.rz * TEE_APRON_SCALE;
+      const a = i * Math.PI / 6, c = Math.cos(a), n = Math.sin(a);
+      const hx = TEE_APRON.x, hz = p.rz * TEE_APRON_SCALE;
+      const k = Math.min(Math.abs(c) > 1e-6 ? hx / Math.abs(c) : 1e9, Math.abs(n) > 1e-6 ? hz / Math.abs(n) : 1e9);
+      const lx = t.x + c * k, lz = p.z + n * k;
       const surf = localSurface(h, lx, lz);
       if (surf === 'green' || surf === 'fringe' || surf === 'water' || surf === 'sand')
        invariants.padOnGroundItMayNotUse++;
@@ -85,7 +87,7 @@ export const METRICS = {
      counts.tees++;
      series.lateral.push(Math.abs(t.x - h.center(t.z)));
      // Every marker must stand on some pad, its own or a neighbour's.
-     if (!pads.some(({t: o, p}) => ((t.x - o.x) / TEE_PAD.x) ** 2 + ((t.z - p.z) / p.rz) ** 2 < 1))
+     if (!pads.some(({t: o, p}) => teeBox(t.x - o.x, t.z - p.z, TEE_PAD.x, p.rz, TEE_ROUND) < 0))
       invariants.markerOffItsPad++;
      const pad = [], collar = [];
      for (let i = 0; i < 16; i++) {

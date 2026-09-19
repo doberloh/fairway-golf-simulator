@@ -571,6 +571,38 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A tee is a rectangle, and it points where you do
+
+Four faults came off one screenshot: tee boxes hiding the fairway on downhill holes, tees too big, tees sitting in line with each other, and a par three's shared pad carrying dead ground in front of its forward marker. The previous section covers the sightline half. This is the shape half, and between them the reported problem is gone.
+
+**An oval was never a tee.** It was what the code happened to have — ponds and bunkers are ovals — and a tee is mown in straight lines by a machine that turns at the corners. Owner's call, and it made the code simpler rather than harder: a rounded box is a proper signed distance in **metres**, so the shoulder that falls away from a pad reads it directly. The oval had to normalise into the ellipse and convert back along the ray to recover a distance at all.
+
+**And it points where the player does.** The pad was axis-aligned in the hole's own frame while the markers on it were squared to `teeAim`. That was invisible while a pad was an oval and every tee sat on the centre line; it is glaring once a pad is a rectangle and tees sit a median 15 m off to one side. `fairwayMiddle` and `teeAim` moved into `course.js` for this — they were in `camera-tours.js`, which imports `course.js`, so the alternative was a second copy of "where does a tee point" and eventually two answers.
+
+**Sizes uniformly down**, 12 × 16 m to **6 × 9**, with the mown collar following from 20 × 27 to 8.7 × 13. And the site score now prefers a lateral stagger, because a tee directly in front is a tee you look over.
+
+| | before | after |
+|---|---|---|
+| shots blocked over 1 m, from the real tee | 74 (9%) | **19 (2%)** |
+| of those, blocked by another tee | 23 | **2** |
+| downhill shots blocked | 68 (14%) | **13 (3%)** |
+| sideways gap between consecutive tees, lowest quarter | 1.5 m | **11.7 m** |
+| sites needing real earthwork | 188 | **19** |
+
+### The par three special case dissolved
+
+Par threes had one long shared pad with the markers set down it, because three ovals 9 to 12 m apart could not help overlapping when each was 16 m long. That pad carried 8 m of dead ground in front of the forward marker — space that existed only so one shape could span every marker.
+
+At 6 by 9 metres three ordinary pads fit down a short hole at honest spacing. So par threes have three separate tees again, the special case is deleted rather than improved, and the levelling rule that was already there gives the stepped form a real short hole has, for nothing.
+
+This is the second time in this work that making something smaller removed a special case rather than shrinking it. Worth remembering when the next one appears.
+
+### Two exceptions, both the driving range
+
+The range came up twice, for the same underlying reason: its three mats sit side by side at the same distance and must be interchangeable.
+
+Squaring each tee to the middle of the fairway turns the outer two by a few degrees, which stops them being the same mat — so range mats face straight down the field. This surfaced as a paint-versus-lie disagreement on 0.08% of the range, which is the sort of thing only a pixel-by-pixel check catches.
+
 ## The blindness check could not see tee boxes
 
 Reported as: on a downhill hole the tee box in front of you hides the fairway. The check that decides whether a tee needs raising was reading `shapedNoTees` — the shaped land **with no tee pads in it**. It was structurally incapable of seeing the one thing being complained about.
