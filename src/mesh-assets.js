@@ -51,6 +51,13 @@ export function modelParts(name) {
 }
 
 export const modelRadius = name => MESH_MODELS[name]?.radius || .35;
+
+// The thinned twin of a model, if one was ingested. Same tree, same
+// silhouette, a twentieth of the vertices; vegetation.js draws whichever the
+// camera distance calls for.
+export const farModel = name => MESH_MODELS[name + '_Far'] ? name + '_Far' : null;
+export const farFamily = family => (families.has(family + 'far')
+ || Object.values(MESH_MODELS).some(m => m.family === family + 'far')) ? family + 'far' : null;
 export const modelTextured = name => !!MESH_MODELS[name]?.textured;
 export const modelExtents = name => {
  const m = MESH_MODELS[name];
@@ -101,14 +108,13 @@ export function familyModels(family) {
 // one.
 export const FAMILY_OF = {
  pine: 'conifer', spruce: 'conifer', cedar: 'conifer',
- // A redwood and a douglas fir borrow FOLIAGE only -- the `conifercrown`
- // models ship as leaf geometry with their trunks dropped at ingest. The trunk
- // beneath is drawn, because no pack has this silhouette. See TALL_CONIFERS in
- // vegetation.js.
- redwood: 'conifercrown', fir: 'conifercrown',
- // `swordfern` rather than reusing `fern`: changing what `fern` maps to would
- // silently restyle Pacific Northwest, which is signed off as it is.
- swordfern: 'fern',
+ // The redwood grove's species are whole grown trees -- trunk, limbs and
+ // foliage in one model -- so nothing is borrowed and nothing is drawn.
+ // `redcedar` rather than `cedar` because Pacific Northwest plants `cedar` and
+ // must keep its Kenney conifer.
+ redwood: 'redwood', fir: 'dougfir', hemlock: 'hemlock',
+ redcedar: 'redcedar', tanoak: 'tanoak', seedling: 'seedling',
+ swordfern: 'swordfern', salal: 'salal', sorrel: 'sorrel',
  oak: 'broadleaf', maple: 'broadleaf', aspen: 'broadleaf', alder: 'broadleaf',
  palm: 'palm',
  cactus: 'cactus',

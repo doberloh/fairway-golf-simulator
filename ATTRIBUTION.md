@@ -19,6 +19,11 @@ Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
 ## Grown geometry, which is nobody else's at all
 
+The redwood biome now draws **only** from that folder -- no pack model, no
+imported texture, nothing borrowed. The other seven biomes are unchanged and
+still use the CC0 packs above.
+
+
 `vendor/grown-redwood-forest/` contains no imported vertex and no texture. Every
 triangle is produced by `tools/grow.mjs` and `tools/grow-lib.mjs`, which are
 this project's own code, so nothing in that folder carries a third-party
@@ -76,7 +81,7 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 96 of the 733 available models are used. The rest are not shipped. A family may
+- 152 of the 733 available models are used. The rest are not shipped. A family may
   keep only part of a model: the redwood and fir crowns ship as leaf geometry with
   their trunks dropped, because the trunk under them is drawn rather than imported.
 - The **house models are the one exception to materials being discarded**: unlike

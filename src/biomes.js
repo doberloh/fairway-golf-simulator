@@ -137,10 +137,14 @@ const TRAITS = {
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
   deadfall: 520,
-  // The cedar is the mid-storey: a third of canopy height, so it fills the
-  // gap between the ferns and the giants instead of being a 380-foot
-  // christmas tree standing inside a redwood.
-  plants: [['redwood', .40], ['fir', .24], ['swordfern', .26], ['cedar', .10, .30]]},
+  // EVERY PLANT HERE IS GROWN, not imported -- see tools/grow.mjs. That let
+  // the mix become a real forest rather than three species: giants, the firs
+  // and hemlocks between them, a cedar and tanoak mid-storey, seedlings, and
+  // a floor of sword fern, salal and sorrel. The third number is a height
+  // scale, which is how the understorey stays under the canopy.
+  plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
+   ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
+   ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},

@@ -571,6 +571,42 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The grove is grown now, and it needed a level of detail to be affordable
+
+Every plant in the redwood biome comes from `tools/grow.mjs`. No borrowed crown, no drawn cylinder, no pack model. The mix went from three species and a christmas tree to nine:
+
+    redwood .25   fir .13   hemlock .07   redcedar .07 (45% height)
+    tanoak .05 (18%)   seedling .05 (4.5%)
+    swordfern .19   salal .11   sorrel .08
+
+On a nine-hole course that is 538 redwoods, 227 firs, 134 hemlocks, 157 cedars, 103 tanoaks, 115 seedlings and 949 plants on the floor — **5.0 tall conifers per hectare**, which is where the literature puts old growth.
+
+### The arithmetic that forced the work
+
+Drawn at full detail this set costs **25 million vertices** against the 3.7 million the whole course cost before. Redwoods alone are 10 M. There was no version of "just use the new foliage" that ran.
+
+So every expensive species is baked twice. The far twin is the **same tree** — same seed, same proportions — with its whorls and sprays thinned about twenty to one and its trunk sides dropped. `Redwood_Giant_1` is 11,460 vertices and `Redwood_Giant_1_Far` is 536.
+
+**Thinning also narrows the crown**, because width comes from the sprays and there are fewer of them: a giant measured 19% as wide as tall at full detail and 9% thinned. A level of detail that changes shape pops when it swaps, so the far model reaches its limbs further and draws its sprays fatter to hold the silhouette. After that: 19% against 16%, and 34% against 38% for a fir.
+
+### How the swap works
+
+Each species with a `_Far` family is instanced **twice over the same trees with the same matrix**, and every tree is visible in exactly one of the two. The switch radius grows with the tree — `70 + 1.1 × height`, so a 116 m redwood stays detailed to 198 m and a seedling to 74 — with 12% hysteresis so a camera sitting on the boundary does not flicker.
+
+It rides on machinery that already existed: `view.treeInstances` was already walked on every camera move to hide a tree the camera is standing inside. That loop now decides level of detail at the same time.
+
+Measured in a grown course: **75 near trees at 545 k vertices, 1,619 far at 547 k**, understory 1.0 M, total 2.10 M drawn against 15.2 M if every tree drew full. Checked that no tree is ever visible at both levels — 41 near, 764 far, one invisible, and that one is the tree the camera is inside.
+
+### What came out
+
+`addTallConifers` is gone: 121 lines that drew a tapered cylinder and balanced a borrowed conifer crown on top. It existed only because no pack contained a bare-boled giant. So are the pack's logs, stumps, mossy rocks and the MegaKit fern — the grown nurse log has moss only along its upper flank, the grown stump has root buttresses, and the grown fern is a shuttlecock of once-pinnate fronds rather than a generic leafy plant.
+
+The build goes from 2.78 MB to **10.37 MB**, which is the part that does not matter.
+
+### One thing the tests caught
+
+`addVegetation` now settles the near/far split as soon as it builds, which meant calling the camera-move handler directly — and the vegetation tests build a view with **no camera**, because they only ever look at geometry. Three tests went red on `view.camera.position`. The handler returns early without a camera now, and the far level simply stays up until something moves.
+
 ## A grove grown from nothing, against 315 photographs
 
 `vendor/grown-redwood-forest` holds 153 models -- trees, shrubs, ground cover, dead wood -- with **no imported vertex, no texture, and no generator library**. `tools/grow-lib.mjs` is about four hundred lines of triangles and `tools/grow.mjs` is the catalogue. The photographs decided the proportions; nothing was copied from them.

@@ -2,10 +2,9 @@ import {cameraInsideTree} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,instanceModels,farFamily} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
-import {trunkRadius} from './physics.js';
-import {GROUND_PLANTS,crownFraction} from './species.js';
+import {GROUND_PLANTS} from './species.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
 const UP=new T.Vector3(0,1,0);
@@ -28,6 +27,27 @@ function texture(kind){
 // comes from a real model, but everything that makes a stand look like a place
 // rather than a stamp -- which model, its height and girth, its lean, its tint --
 // is still drawn per tree, the same way the procedural shapes do it.
+// Ground cover sized by its SPREAD rather than its height. A sword fern is a
+// low clump about a metre and a half across and its fronds reach further
+// sideways than up, so scaling it to t.h the way a tree is scaled gives a
+// ten-metre bush.
+const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
+
+// TWO LEVELS OF DETAIL, SWAPPED BY DISTANCE.
+//
+// The grown redwoods are eleven to twenty thousand vertices each and a grove
+// is fourteen hundred trees: drawn at full detail throughout that is 25
+// million vertices against the 3.7 million the whole course costs. Only the
+// few dozen trees you are standing among are worth the geometry.
+//
+// Each species with a `_Far` family is instanced TWICE over the same trees,
+// with the same matrix, and every tree is visible in exactly one of the two.
+// The swap radius grows with the tree, because a redwood is legible from much
+// further away than a seedling, and there is hysteresis on it so a camera
+// sitting exactly on the boundary does not flicker between them.
+const LOD_BASE=70,LOD_PER_HEIGHT=1.1,LOD_HYSTERESIS=1.12;
+const lodRadius=t=>LOD_BASE+(t.h||10)*LOD_PER_HEIGHT;
+
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -55,7 +75,7 @@ function addModelSpecies(view,kind,trees){
   // the height follow the model's own proportions.
   // The bush family still sizes by height. It probably should not either, but
   // six biomes draw from it and that is a change to look at on its own.
-  const spread=FAMILY_OF[kind]==='fern'?t.r/modelRadius(model)*lift:0;
+  const spread=SPREAD_SIZED.has(FAMILY_OF[kind])?t.r/modelRadius(model)*lift:0;
   const sy=spread||t.h*lift,sxz=spread||sy*girth;
   dummy.position.set(t.x,t.y,t.z);
   dummy.rotation.set((rng()-.5)*.10,rng()*6.28,(rng()-.5)*.10);
@@ -74,139 +94,28 @@ function addModelSpecies(view,kind,trees){
   if(!materials.has(role))materials.set(role,new T.MeshToonMaterial({color:'#ffffff'}));
   return materials.get(role);
  };
- instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
-  view.treeInstances.push({mesh,matrices,owners,hidden:new Uint8Array(matrices.length)});
- });
- return true;
-}
-// A REDWOOD IS A COLUMN WITH A CROWN ON TOP, AND NO PACK HAS ONE.
-//
-// Every conifer in the CC0 packs is conical all the way to the ground. Scaled
-// to seventy metres that is a giant Christmas tree, and the silhouette IS the
-// feeling of a redwood grove -- bare trunks running up out of the shade, the
-// canopy only starting well above your head.
-//
-// So the trunk is drawn and the crown is borrowed: a column carrying the
-// FOLIAGE of a stylized conifer, lifted to the top. One cheap cylinder per
-// tree, and the packs supply the only part they are any good at here. The
-// crown models ship as leaf geometry alone -- their own trunks are dropped at
-// ingest, because a second trunk inside the drawn one is what made these look
-// doubled up.
-//
-// THE CROWN'S WIDTH IS STATED, NOT INHERITED, and that was the whole bug in the
-// first version. It multiplied each model's native width by a "narrow" factor,
-// and the borrowed conifers ranged from 1-part-wide-in-10 to 1-in-4 -- so one
-// tree's crown came out two and a half times another's in the same grove, and
-// the narrow ones ended up three metres of foliage on a thirty-six metre crown.
-// Razor thin, and no two alike. Now the wanted half-width is a fraction of the
-// TREE's height and the model's own radius is divided out, exactly as
-// addModelSpecies does with height.
-const TALL_CONIFERS = new Set(['redwood', 'fir']);
-
-function addTallConifers(view, kind, trees) {
- const {world, group} = view, rng = random(world.seed + ':tall:' + kind);
- const models = familyModels(FAMILY_OF[kind]);
- if (!models.length) return false;
-
- // How the tree divides, all as fractions of the tree's own height. A mature
- // redwood is a 12 m crown on a 70 m tree, so the crown is about two and a half
- // times as tall as it is wide; a douglas fir is broader and starts lower.
- const TRUNK = kind === 'redwood' ? .64 : .56;  // bare trunk
- // The crown width lives in species.js because the generator needs the same
- // number to decide how far apart these may stand.
- const WIDE = crownFraction(kind);
- // How far down the trunk the crown is sleeved. These crowns taper to a point
- // at the bottom -- `PineTree_2` is a third of its widest in its lowest band --
- // so meeting the trunk top exactly leaves the solid foliage starting ten
- // metres higher than the wood, which reads as a canopy floating off its tree.
- const SLEEVE = .80;
- // The crown takes whatever height is left rather than a fraction of its own,
- // so a tree is exactly as tall as t.h says. Two independent fractions each
- // with their own jitter overshot by up to 12%, which made a "380 foot"
- // redwood 415 feet and left physics colliding with the height it was told.
- // It reads better too: a tree with less bare trunk has a deeper crown, which
- // is what happens when one grows with more light down its flank.
-
- const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
- const trunkMatrix = new T.Matrix4(), seat = new T.Vector3();
- const bark = new T.Color(kind === 'redwood' ? '#6d3f2e' : '#54453a');
- const leafBase = new T.Color(kind === 'redwood' ? '#2d4a33' : '#33543c');
- const stone = new T.Color(world.bio.rock || '#8a8577'), dirt = new T.Color(world.bio.rough || '#7e8a5a');
-
- // Nine sides now they are three metres thick and you stand next to them, and
- // barely tapered: a redwood is a column, and the old .34 top was a spike.
- const column = new T.CylinderGeometry(.62, 1, 1, 9, 1, false);
- const trunkMaterial = new T.MeshToonMaterial({color: '#ffffff'});
- const trunks = new T.InstancedMesh(column, trunkMaterial, trees.length);
- trunks.castShadow = true; trunks.receiveShadow = true;
- const trunkMatrices = [], owners = [];
-
- const entries = [];
- for (let i = 0; i < trees.length; i++) {
-  const t = trees[i];
-  // A 380-foot redwood is dead straight. The old lean was harmless on a 30 m
-  // pine and threw the top of a 116 m one four metres sideways.
-  const lean = (rng() - .5) * .010, leanZ = (rng() - .5) * .010;
-  const trunkHeight = t.h * TRUNK * (.9 + rng() * .2);
-  // THE DRAWN TRUNK IS THE COLLIDED TRUNK. It used to be a thinner rule of its
-  // own -- a fiftieth of the height against physics' 0.027 -- so the trunk you
-  // saw and the cylinder the ball hit were different objects, and the drawn one
-  // was the thinner. At 380 feet that gap is over a metre. Girth varies through
-  // the taper above instead, where nothing depends on it.
-  const base = trunkRadius(t);
-  dummy.position.set(t.x, t.y + trunkHeight / 2, t.z);
-  dummy.rotation.set(lean, rng() * 6.28, leanZ);
-  dummy.scale.set(base, trunkHeight, base);
-  dummy.updateMatrix();
-  trunks.setMatrixAt(i, dummy.matrix);
-  trunks.setColorAt(i, bark.clone().offsetHSL(0, (rng() - .5) * .08, (rng() - .5) * .12));
-  trunkMatrix.copy(dummy.matrix);
-  trunkMatrices.push(dummy.matrix.clone()); owners.push(t);
-
-  // The crown, lifted so its base sits inside the top of the trunk.
-  const model = models[Math.floor(rng() * models.length)];
-  const crownHeight = t.h - trunkHeight * SLEEVE;
-  // Half-width in metres, then divided by the model's own radius so every
-  // crown is the width asked for whichever model it came from.
-  const half = t.h * WIDE * (.85 + rng() * .3), sxz = half / modelRadius(model);
-  // Sit the crown ON THE TRUNK'S OWN AXIS, by taking the point out of the
-  // trunk's matrix rather than assuming the trunk is vertical. The trunk leans
-  // about its middle and the crown about its base, so a shared angle is not a
-  // shared line -- which put the crown beside the trunk rather than on it.
-  seat.set(0, SLEEVE - .5, 0).applyMatrix4(trunkMatrix);
-  dummy.position.copy(seat);
-  dummy.rotation.set(lean, rng() * 6.28, leanZ);
-  dummy.scale.set(sxz, crownHeight, sxz);
-  dummy.updateMatrix();
-  const leaf = leafBase.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .09);
-  entries.push({model, owner: t,
-   matrix: dummy.matrix.clone(), color: {leaf, bark, stone, dirt, accent: leaf}});
+ const far=farFamily(FAMILY_OF[kind]),farList=far?familyModels(far):[];
+ // The far twin of a tree is its own model's `_Far`, so a grove keeps the same
+ // spread of shapes at both levels rather than collapsing to one.
+ const push=lod=>({mesh,matrices,owners})=>
+  view.treeInstances.push({mesh,matrices,owners,lod,hidden:new Uint8Array(matrices.length)});
+ instanceModels(group,entries,materialFor,push(farList.length?'near':null));
+ if(farList.length){
+  const swap=new Map(models.map((m,i)=>[m,farList[Math.min(i,farList.length-1)]]));
+  instanceModels(group,entries.map(e=>({...e,model:swap.get(e.model)||farList[0]})),
+   materialFor,push('far'));
  }
- trunks.instanceMatrix.needsUpdate = true;
- if (trunks.instanceColor) trunks.instanceColor.needsUpdate = true;
- group.add(trunks);
- // Registered like any other tree instances, so a camera inside one hides it.
- view.treeInstances.push({mesh: trunks, matrices: trunkMatrices, owners,
-  hidden: new Uint8Array(trunkMatrices.length)});
-
- const materials = new Map();
- const materialFor = role => {
-  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
-  return materials.get(role);
- };
- instanceModels(group, entries, materialFor, ({mesh, matrices, owners: own}) => {
-  view.treeInstances.push({mesh, matrices, owners: own, hidden: new Uint8Array(matrices.length)});
- });
  return true;
 }
+// The drawn cylinder with a borrowed crown balanced on top is GONE. It
+// existed because no pack contained a bare-boled giant; tools/grow.mjs now
+// produces whole redwoods -- fluted trunk, buttressed foot, branch structure
+// and plume in one model -- so there is nothing left to fake.
 
 function addSpecies(view,kind,trees){
  // Imported geometry where the packs have a counterpart, procedural everywhere
  // else -- the desert species have none, and a wrong silhouette is worse than a
  // simple one.
- // Before the ordinary model path: these borrow a crown from it but must not
- // BE one, or they come out as conical trees scaled to seventy metres.
- if(TALL_CONIFERS.has(kind)&&addTallConifers(view,kind,trees))return;
  if(FAMILY_OF[kind]&&addModelSpecies(view,kind,trees))return;
 
  const {world,style,group}=view,rng=random(world.seed+':details:'+kind),real=style==='realistic',toon=style==='cartoon',blue=style==='blueprint',flat=style==='lowpoly';
@@ -292,8 +201,49 @@ function addSpecies(view,kind,trees){
  }
 export function addVegetation(view){
  view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
- view.clearCameraTrees=()=>{if(last.distanceToSquared(view.camera.position)<.04)return;last.copy(view.camera.position);const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));for(const batch of view.treeInstances){let changed=false;batch.owners.forEach((t,i)=>{const hide=hidden.has(t)?1:0;if(hide!==batch.hidden[i]){batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);batch.hidden[i]=hide;changed=true;}});if(changed)batch.mesh.instanceMatrix.needsUpdate=true;}};
+ // An instance is drawn unless the camera is inside that tree, or the batch is
+ // the wrong level of detail for how far away it is. `near` is remembered per
+ // tree so the hysteresis has something to be hysteretic about.
+ const nearNow=new Map();
+ view.clearCameraTrees=()=>{
+  // The vegetation tests build a view with no camera -- they only ever look
+  // at the geometry -- so this has to be safe to call without one.
+  if(!view.camera)return;
+  if(last.distanceToSquared(view.camera.position)<.04)return;
+  last.copy(view.camera.position);
+  const eye=view.camera.position;
+  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(eye,t)));
+  for(const batch of view.treeInstances){
+   let changed=false;
+   batch.owners.forEach((t,i)=>{
+    let hide=hidden.has(t)?1:0;
+    if(!hide&&batch.lod){
+     let near=nearNow.get(t);
+     if(near===undefined){near=false;nearNow.set(t,false);}
+     const r=lodRadius(t),d=Math.hypot(eye.x-t.x,eye.z-t.z);
+     if(near?d>r*LOD_HYSTERESIS:d<r)nearNow.set(t,near=!near);
+     hide=(batch.lod==='near')===near?0:1;
+    }
+    if(hide!==batch.hidden[i]){
+     batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
+     batch.hidden[i]=hide;changed=true;
+    }
+   });
+   if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
+  }
+ };
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
+ // Until the camera first moves, show the far level and hide the near one:
+ // both are in the scene and drawing both would double every tree.
+ for(const batch of view.treeInstances){
+  if(batch.lod!=='near')continue;
+  batch.hidden.fill(1);
+  for(let i=0;i<batch.matrices.length;i++)batch.mesh.setMatrixAt(i,zero);
+  batch.mesh.instanceMatrix.needsUpdate=true;
+ }
+ // Settles the near/far split straight away when there is a camera to
+ // measure from; without one the far level simply stays up.
+ view.clearCameraTrees?.();
  addDeadfall(view);
  addGroundCover(view);
  addNearbyGrass(view);

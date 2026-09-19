@@ -62,29 +62,37 @@ const PICK = {
  // boulders -- and none of it was being shipped because PICK only ever took
  // what the biomes of the day asked for. No new pack, no new licence: Kenney's
  // Nature Kit and Quaternius's Ultimate Nature Pack are both already credited.
- log: ['WoodLog', 'WoodLog_Moss', 'log', 'log_large', 'log_stack'],
- stump: ['TreeStump', 'TreeStump_Moss', 'stump_old', 'stump_oldTall',
-  'stump_round', 'stump_roundDetailed', 'stump_squareDetailed'],
- mossrock: ['Rock_Moss_1', 'Rock_Moss_2', 'Rock_Moss_3', 'Rock_Moss_4',
-  'Rock_Moss_5', 'Rock_Moss_6', 'Rock_Moss_7'],
- // Real fern fronds. Nothing in the older packs is named one, so `Plant_1` to
- // `Plant_5` stood in and read as generic shrubbery from two paces. The MegaKit
- // has an actual fern; the other two keep the understory from being one shape
- // repeated six hundred times.
- fern: ['megakit:Fern_1', 'megakit:Plant_1_Big', 'megakit:Plant_7',
-  'quaternius-ultimate-nature:Plant_3'],
- // A CROWN, AND NOTHING ELSE. Only the leaf parts of these are drawn -- the
- // trunk underneath is ours, because no pack contains a seventy-metre bare
- // column, and letting a model's own trunk show through the drawn one is what
- // the doubled-up look was.
+ // The forest floor is grown too, and the pack logs and mossy rocks that used
+ // to fill it are no longer taken -- a nurse log with moss only along its
+ // upper flank, a stump with root buttresses and a springboard notch, and a
+ // boulder that is a boulder rather than a sphere, all beat what was there.
+ log: ['grown:NurseLog_1', 'grown:NurseLog_2', 'grown:NurseLog_3', 'grown:NurseLog_4', 'grown:FallenLog_1', 'grown:FallenLog_2'],
+ stump: ['grown:Stump_1', 'grown:Stump_2', 'grown:Stump_3', 'grown:Stump_Bare_1', 'grown:Stump_Bare_2', 'grown:RootWad_1'],
+ mossrock: ['grown:Boulder_1', 'grown:Boulder_2', 'grown:Boulder_3', 'grown:MossMound_1', 'grown:MossMound_2', 'grown:MossMound_3'],
+ litter: ['grown:Litter_1', 'grown:Litter_2', 'grown:Litter_3'],
+ // The MegaKit fern is no longer taken: `swordfern` above is a grown
+ // shuttlecock of once-pinnate fronds, which is what the plant actually is.
+ // THE REDWOOD GROVE IS GROWN, NOT IMPORTED. Everything below comes out of
+ // tools/grow.mjs: whole trees with their own fluted, buttressed trunks, so
+ // there is no borrowed crown to balance on a drawn cylinder any more.
  //
- // THE CROWN MUST BE ONE MASS, not tiers. The MegaKit pines were tried first
- // and they are wedding cakes: their radius alternates wide-narrow-wide every
- // band from bottom to top, which at redwood scale is five separate green
- // plates with daylight and trunk between them. These two are the only crowns
- // across all six packs whose radius rises to a single peak and falls -- a
- // plume rather than a stack. Check that profile before adding a third.
- conifercrown: ['ultimate-stylized:PineTree_2', 'ultimate-stylized:PineTree_4'],
+ // Each of the big species carries a `_Far` twin -- the same tree with its
+ // whorls and sprays thinned about twenty to one, and its limbs lengthened to
+ // hold the same silhouette. vegetation.js swaps between them by distance;
+ // drawn at full detail throughout, this set costs 25 M vertices against the
+ // 3.7 M the whole course costs today.
+ redwood: ['grown:Redwood_Giant_1', 'grown:Redwood_Giant_2', 'grown:Redwood_Giant_3', 'grown:Redwood_Giant_4',
+  'grown:Redwood_Mature_1', 'grown:Redwood_Mature_2', 'grown:Redwood_Mature_3', 'grown:Redwood_Mature_4'],
+ redwoodfar: ['grown:Redwood_Giant_1_Far', 'grown:Redwood_Giant_2_Far', 'grown:Redwood_Giant_3_Far', 'grown:Redwood_Giant_4_Far',
+  'grown:Redwood_Mature_1_Far', 'grown:Redwood_Mature_2_Far', 'grown:Redwood_Mature_3_Far', 'grown:Redwood_Mature_4_Far'],
+ dougfir: ['grown:DouglasFir_1', 'grown:DouglasFir_2', 'grown:DouglasFir_3', 'grown:DouglasFir_4'], dougfirfar: ['grown:DouglasFir_1_Far', 'grown:DouglasFir_2_Far', 'grown:DouglasFir_3_Far', 'grown:DouglasFir_4_Far'],
+ hemlock: ['grown:Hemlock_1', 'grown:Hemlock_2', 'grown:Hemlock_3'], hemlockfar: ['grown:Hemlock_1_Far', 'grown:Hemlock_2_Far', 'grown:Hemlock_3_Far'],
+ redcedar: ['grown:RedCedar_1', 'grown:RedCedar_2', 'grown:RedCedar_3'], redcedarfar: ['grown:RedCedar_1_Far', 'grown:RedCedar_2_Far', 'grown:RedCedar_3_Far'],
+ tanoak: ['grown:Tanoak_1', 'grown:Tanoak_2', 'grown:Tanoak_3'], tanoakfar: ['grown:Tanoak_1_Far', 'grown:Tanoak_2_Far', 'grown:Tanoak_3_Far'],
+ swordfern: ['grown:SwordFern_1', 'grown:SwordFern_2', 'grown:SwordFern_3', 'grown:SwordFern_4', 'grown:SwordFern_5', 'grown:SwordFern_6'],
+ salal: ['grown:Salal_1', 'grown:Salal_2', 'grown:Salal_3', 'grown:Salal_4'],
+ sorrel: ['grown:Sorrel_1', 'grown:Sorrel_2', 'grown:Sorrel_3', 'grown:Sorrel_4'],
+ seedling: ['grown:Seedling_1', 'grown:Seedling_2', 'grown:Seedling_3', 'grown:Seedling_4'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],
@@ -121,6 +129,11 @@ const push = typed => {
 // find Quaternius's `Grass.obj` on one machine and not the other -- a build
 // that differs by operating system, which is the worst kind.
 const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
+// vendor/grown-redwood-forest is gitignored -- 94 MB this repo's own code
+// reproduces in seconds -- so on a fresh clone it is simply absent, and the
+// error for that should say what to run rather than 'no pack matching'.
+if (!PACKS.some(p => p.pack.includes('grown')))
+ throw Error('vendor/grown-redwood-forest is missing. Run: node tools/grow.mjs');
 
 // Every pack holding this model, so an ambiguous name can say so rather than
 // quietly taking whichever the filesystem listed first.

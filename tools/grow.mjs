@@ -59,11 +59,63 @@ const PALETTE = {
  Duff_dirt: '#443628',
 };
 
+// ----------------------------------------------------------------- detail
+//
+// One catalogue, two levels. A grove is fourteen hundred trees and only the
+// three dozen nearest the camera are worth eleven thousand vertices each --
+// drawn at full detail throughout, this set costs 25 M vertices against the
+// 3.7 M the whole course costs today.
+//
+// The far model is the SAME TREE: same seed, same proportions, same silhouette
+// envelope, with the counts thinned and the tube sides dropped. That matters
+// more than it sounds, because a level of detail that changes shape pops when
+// it swaps, and one that only changes density does not.
+const LOD = {near: 1, far: .34};
+// Set by the baker just before it calls a species function. A parameter
+// would be tidier and would mean rewriting twenty-six call sites; this is a
+// single-threaded build script and the assignment is three lines above the
+// call that reads it.
+let DETAIL = 1;
+const detailed = (o, d) => {
+ if (d >= 1) return o;
+ const few = (v, min) => Math.max(min, Math.round((v || 0) * d));
+ // KEEP THE SILHOUETTE. Thinning the whorls and the fan arms also takes
+ // width off the crown -- a giant measured 19% as wide as tall at full
+ // detail and 9% thinned, and a level of detail that changes shape POPS
+ // when it swaps. So the limb reaches further and the sprays are drawn
+ // fatter, which is the oldest trick there is for making fewer of
+ // something cover the same ground.
+ const spread = 1 + (1 - d) * 1.35;
+ return {...o,
+  reach: o.reach ? o.reach * spread : undefined,
+  sprayWidth: (o.sprayWidth ?? .12) * spread,
+  whorls: few(o.whorls ?? 16, 5),
+  sprays: few(o.sprays ?? 3, 1),
+  arms: Math.max(1, Math.round((o.arms ?? 3) * d)),
+  leaflets: Math.max(2, Math.round((o.leaflets ?? 4) * d)),
+  sides: few(o.sides ?? 0, 5) || undefined,
+  flutes: Math.max(3, Math.round((o.flutes ?? 6) * d)),
+  segments: few(o.segments ?? 22, 6),
+  sprouts: 0, burl: false,
+  fronds: few(o.fronds ?? 0, 3) || undefined,
+  pairs: few(o.pairs ?? 0, 4) || undefined,
+  stems: few(o.stems ?? 0, 3) || undefined,
+  leaves: few(o.leaves ?? 0, 3) || undefined,
+  plants: few(o.plants ?? 0, 6) || undefined,
+  caps: few(o.caps ?? 0, 3) || undefined,
+  mossCaps: few(o.mossCaps ?? 0, 2) || undefined,
+  stubs: few(o.stubs ?? 0, 2) || undefined,
+  roots: few(o.roots ?? 0, 3) || undefined,
+  detail: d,
+ };
+};
+
 // ------------------------------------------------------------- coast redwood
 //
 // A fluted column with a buttressed foot, bare for most of its height, wearing
 // a narrow plume of flat sprays near the top.
 function redwood(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const H = 1;
  const from = o.from ?? .58;           // where the plume starts
@@ -118,7 +170,8 @@ function redwood(seed, o = {}) {
     const twist = a + (r() - .5) * 1.1;
     const sd = norm([Math.cos(twist), -.16 - r() * .22, Math.sin(twist)]);
     sprayFan(b, 'Leaves', at2, sd, [0, 1, 0], limbReach * (.5 + r() * .4), limbReach * .065,
-     {leaflets: 4, droop: .35 + r() * .25, arms: o.arms ?? 3, subLeaflets: 3});
+     {leaflets: o.leaflets ?? 4, droop: .35 + r() * .25, arms: o.arms ?? 3,
+      subLeaflets: Math.max(2, Math.round(3 * (o.detail ?? 1)))});
    }
   }
  }
@@ -149,6 +202,7 @@ function redwood(seed, o = {}) {
 //
 // Whorled tiers, dense, conical, and branched far lower than a redwood.
 function conifer(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const from = o.from ?? .22, baseR = o.baseR ?? .018;
  const bark = o.bark || 'Bark_Fir', leaf = o.leaf || 'Leaves_Fir';
@@ -156,7 +210,7 @@ function conifer(seed, o = {}) {
   flare: o.flare ?? 1.2, taperPower: .55, lean: (r() - .5) * .02, sway: .005, phase: r() * 6, rng: r,
  });
  const flutes = o.flutes ?? 5;
- tube(b, bark, path, {sides: flutes * 3, flutes, fluteDepth: .16, closeTop: true});
+ tube(b, bark, path, {sides: o.sides ?? flutes * 3, flutes, fluteDepth: .16, closeTop: true});
  const at = t => path[Math.min(path.length - 1, Math.max(0, Math.round(t * (path.length - 1))))];
 
  // `shedTop` stops the crown short of the leader, which is what a fir with a
@@ -181,7 +235,8 @@ function conifer(seed, o = {}) {
     const twist = a + (r() - .5) * .9;
     sprayFan(b, leaf, add(root, mul(dir, reach * f)), norm([Math.cos(twist), -.3 - r() * .3, Math.sin(twist)]),
      [0, 1, 0], reach * (.5 + r() * .45), reach * (o.sprayWidth ?? .12),
-     {leaflets: 4, droop: o.droop ?? .5, arms: o.arms ?? 3, subLeaflets: 3});
+     {leaflets: o.leaflets ?? 4, droop: o.droop ?? .5, arms: o.arms ?? 3,
+      subLeaflets: Math.max(2, Math.round(3 * (o.detail ?? 1)))});
    }
   }
  }
@@ -194,12 +249,12 @@ function conifer(seed, o = {}) {
 // the ground. Hemlock: the same habit with a finer, nodding leader.
 const cedar = (seed, o = {}) => conifer(seed, {
  from: .12, baseR: .022, bark: 'Bark_Cedar', leaf: 'Leaves', flare: 1.35, flutes: 9,
- whorls: 18, limbs: 6, reach: .21, conePower: .6, droopRise: -.45, droop: .62,
+ whorls: 18, limbs: 6, reach: .105, conePower: .6, droopRise: -.45, droop: .62,
  sprayWidth: .22, sprays: 3, ...o,
 });
 const hemlock = (seed, o = {}) => conifer(seed, {
  from: .18, baseR: .015, bark: 'Bark_Fir', leaf: 'Leaves_Fir', flare: 1.15, flutes: 4,
- whorls: 17, limbs: 5, reach: .19, conePower: .7, droopRise: -.5, droop: .7,
+ whorls: 17, limbs: 5, reach: .095, conePower: .7, droopRise: -.5, droop: .7,
  sprayWidth: .17, ...o,
 });
 
@@ -208,6 +263,7 @@ const hemlock = (seed, o = {}) => conifer(seed, {
 // Tanoak, madrone, vine maple: the understorey trees you actually walk past.
 // Forking trunk, round leaf masses, and usually mossy in this climate.
 function broadleaf(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const from = o.from ?? .3, baseR = o.baseR ?? .03;
  const bark = o.bark || 'Bark_Broadleaf', leaf = o.leaf || 'Leaves_Broad';
@@ -248,6 +304,7 @@ function broadleaf(seed, o = {}) {
 //
 // A standing snag: bleached almost silver, broken off, stub branches only.
 function snag(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const baseR = o.baseR ?? .028;
  const path = bolePath(1, baseR, baseR * (o.topTaper ?? .5), 14,
@@ -277,6 +334,7 @@ function snag(seed, o = {}) {
 
 // A cut or broken stump, wide and mossy, often with a springboard notch.
 function stump(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const H = o.H ?? 1, baseR = o.baseR ?? .42;
  const path = bolePath(H, baseR, baseR * (o.topTaper ?? .78), 7,
@@ -310,6 +368,7 @@ function stump(seed, o = {}) {
 
 // A fallen log: horizontal, tapered, mossed along the top, broken at both ends.
 function log(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const L = 1, R0 = o.R ?? .07;
  const bend = o.bend ?? .05, segs = 9;
@@ -371,6 +430,7 @@ function rootwad(seed) {
 // A sword fern is a shuttlecock: eight to twenty once-pinnate fronds radiating
 // from one crown and arching over. This is the plant you see most of.
 function swordFern(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const n = o.fronds ?? 13;
  for (let i = 0; i < n; i++) {
@@ -391,6 +451,7 @@ function swordFern(seed, o = {}) {
 
 // Salal and evergreen huckleberry: low, woody, round leathery leaves.
 function shrub(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const stems = o.stems ?? 6;
  for (let i = 0; i < stems; i++) {
@@ -412,6 +473,7 @@ function shrub(seed, o = {}) {
 // Redwood sorrel: a low mat of clover-like trefoils, the brightest green on
 // the floor and the thing that covers it between the ferns.
 function sorrel(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const n = o.plants ?? 22;
  for (let i = 0; i < n; i++) {
@@ -430,6 +492,7 @@ function sorrel(seed, o = {}) {
 
 // A conifer seedling: the bright, bushy, knee-high things scattered everywhere.
 function seedling(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  const path = bolePath(1, .02, .004, 7, {flare: 1.1, taperPower: .5, rng: r});
  tube(b, 'Bark_Fir', path, {sides: 5, closeTop: true});
@@ -448,6 +511,7 @@ function seedling(seed, o = {}) {
 
 // A moss mound over a buried root or rock: the floor is never flat.
 function mossMound(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  blob(b, o.core || 'Rock', [0, 0, 0], .5, {bands: 4, sides: 9, squash: o.squash ?? .45, rough: .28, rng: r, half: true});
  for (let i = 0; i < (o.caps ?? 12); i++) {
@@ -460,6 +524,7 @@ function mossMound(seed, o = {}) {
 
 // A mossy boulder. Rock is rare on a redwood floor but not absent.
 function boulder(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  blob(b, 'Rock', [0, 0, 0], .5, {bands: 5, sides: 9, squash: o.squash ?? .62, rough: .3, rng: r, half: true});
  for (let i = 0; i < (o.moss ?? 8); i++) {
@@ -473,6 +538,7 @@ function boulder(seed, o = {}) {
 // Litter: fallen sprays, twigs and a cone or two. Cheap, and it is what makes
 // the ground read as a forest floor rather than a lawn with things on it.
 function litter(seed, o = {}) {
+ o = detailed(o, DETAIL);
  const b = new Build(), r = rng(seed);
  for (let i = 0; i < (o.twigs ?? 9); i++) {
   const a = r() * 6.283, rr = r() * .45, len = .12 + r() * .3;
@@ -497,44 +563,53 @@ function litter(seed, o = {}) {
 
 // --------------------------------------------------------------- the catalogue
 const CATALOGUE = [];
-const add2 = (name, fn) => CATALOGUE.push({name, fn});
+// `far` marks the expensive models that also get a thinned twin. The cheap
+// ground clutter does not need one: a 400-vertex sorrel patch is already
+// cheaper than the far version of a tree.
+const add2 = (name, fn, far) => CATALOGUE.push({name, fn, far});
 
 // Giants: the trees the biome is named for. Bole 55-85%, plume, burls.
 for (let i = 0; i < 8; i++) add2(`Redwood_Giant_${i + 1}`, () => redwood(1100 + i * 37, {
+ // `reach` is the LIMB length; the sprays hanging off it reach about two and a
+ // half times further, so a nominal .072 measured out at 36% as wide as tall.
+ // The references put a 115 m redwood's crown at 15 to 20 m across -- 16% --
+ // so the limb is shorter than instinct says.
  from: .52 + i * .035, baseR: .028 - i * .0008, whorls: 16 + (i % 4), limbs: 4,
- reach: .072 - i * .0018, flutes: 7 + (i % 3), sprouts: 4 + (i % 4), burl: i % 3 !== 1,
-}));
+ reach: .036 - i * .0009, flutes: 7 + (i % 3), sprouts: 4 + (i % 4), burl: i % 3 !== 1,
+}), true);
 // Mature: shorter boles, fuller plumes.
 for (let i = 0; i < 8; i++) add2(`Redwood_Mature_${i + 1}`, () => redwood(2200 + i * 53, {
- from: .42 + i * .02, baseR: .024, whorls: 14, limbs: 4 + (i % 2), reach: .095,
+ from: .42 + i * .02, baseR: .024, whorls: 14, limbs: 4 + (i % 2), reach: .048,
  flutes: 6 + (i % 4), sprouts: 3, burl: i % 2 === 0,
-}));
+}), true);
 // Young: conical, branched low, slim.
 for (let i = 0; i < 6; i++) add2(`Redwood_Young_${i + 1}`, () => redwood(3300 + i * 71, {
- from: .2 + i * .03, baseR: .013, topTaper: .3, whorls: 15, limbs: 5, reach: .13,
+ from: .2 + i * .03, baseR: .013, topTaper: .3, whorls: 15, limbs: 5, reach: .07,
  limbRise: -.05, flutes: 5, sprouts: 1, burl: false, flare: 1.15,
-}));
+}), true);
 for (let i = 0; i < 4; i++) add2(`Redwood_Sapling_${i + 1}`, () => redwood(4400 + i * 91, {
- from: .1, baseR: .012, topTaper: .25, whorls: 12, limbs: 5, reach: .2, limbRise: 0,
+ from: .1, baseR: .012, topTaper: .25, whorls: 12, limbs: 5, reach: .105, limbRise: 0,
  flutes: 4, sprouts: 0, burl: false, flare: 1.05, sprays: 2,
 }));
 for (let i = 0; i < 2; i++) add2(`Redwood_Leaner_${i + 1}`, () => redwood(5500 + i * 17, {
- from: .5, baseR: .026, lean: (i ? -1 : 1) * .1, sway: .02, whorls: 12, reach: .1, burl: true,
+ from: .5, baseR: .026, lean: (i ? -1 : 1) * .1, sway: .02, whorls: 12, reach: .05, burl: true,
 }));
 for (let i = 0; i < 2; i++) add2(`Redwood_Burled_${i + 1}`, () => redwood(5600 + i * 23, {
- from: .62, baseR: .032, whorls: 11, reach: .08, sprouts: 8, burl: true, flare: 1.7,
+ from: .62, baseR: .032, whorls: 11, reach: .042, sprouts: 8, burl: true, flare: 1.7,
 }));
 
 // Twelve identical cones is not twelve trees. Old firs self-prune their lower
 // limbs, young ones do not; some are broad and some are spires; and the ones
 // on an edge lean. The spread here is deliberate.
 const FIR_SHAPES = [
- {from: .16, reach: .19, conePower: .62, whorls: 18, limbs: 6},  // young, broad, to the ground
- {from: .20, reach: .17, conePower: .72, whorls: 17, limbs: 5},
- {from: .26, reach: .16, conePower: .80, whorls: 16, limbs: 5},
- {from: .34, reach: .15, conePower: .88, whorls: 15, limbs: 5},  // self-pruned
- {from: .42, reach: .13, conePower: .95, whorls: 14, limbs: 4},  // old, high crown
- {from: .30, reach: .21, conePower: .60, whorls: 19, limbs: 6},  // open grown, heavy
+ // Same correction as the redwoods: the sprays reach far past the limb, so a
+ // nominal reach of .19 measured 63% as wide as tall against a real fir's 30%.
+ {from: .16, reach: .095, conePower: .62, whorls: 18, limbs: 6},  // young, broad, to the ground
+ {from: .20, reach: .085, conePower: .72, whorls: 17, limbs: 5},
+ {from: .26, reach: .080, conePower: .80, whorls: 16, limbs: 5},
+ {from: .34, reach: .075, conePower: .88, whorls: 15, limbs: 5},  // self-pruned
+ {from: .42, reach: .065, conePower: .95, whorls: 14, limbs: 4},  // old, high crown
+ {from: .30, reach: .105, conePower: .60, whorls: 19, limbs: 6},  // open grown, heavy
 ];
 for (let i = 0; i < 12; i++) add2(`DouglasFir_${i + 1}`, () => conifer(6600 + i * 41, {
  ...FIR_SHAPES[i % FIR_SHAPES.length],
@@ -542,17 +617,17 @@ for (let i = 0; i < 12; i++) add2(`DouglasFir_${i + 1}`, () => conifer(6600 + i 
  droopRise: -.22 - (i % 5) * .05,
  sprays: 3 + (i % 2),
  shedTop: i % 4 === 3,
-}));
+}), true);
 for (let i = 0; i < 8; i++) add2(`Hemlock_${i + 1}`, () => hemlock(7700 + i * 59, {
- from: .14 + (i % 4) * .04, reach: .18 + (i % 3) * .015, whorls: 16 + (i % 3),
-}));
+ from: .14 + (i % 4) * .04, reach: .09 + (i % 3) * .008, whorls: 16 + (i % 3),
+}), true);
 for (let i = 0; i < 8; i++) add2(`RedCedar_${i + 1}`, () => cedar(8800 + i * 67, {
- from: .1 + (i % 4) * .03, baseR: .021 + (i % 3) * .002, reach: .2 + (i % 4) * .015,
-}));
+ from: .1 + (i % 4) * .03, baseR: .021 + (i % 3) * .002, reach: .10 + (i % 4) * .008,
+}), true);
 
 for (let i = 0; i < 6; i++) add2(`Tanoak_${i + 1}`, () => broadleaf(9900 + i * 31, {
  trunkTo: .45 + (i % 3) * .06, spread: .3 + (i % 4) * .04, limbs: 4 + (i % 3), leaves: 13 + i,
-}));
+}), true);
 for (let i = 0; i < 4; i++) add2(`VineMaple_${i + 1}`, () => broadleaf(10500 + i * 43, {
  trunkTo: .3, baseR: .02, spread: .42, limbs: 5, leaves: 16, leafWidth: .3,
  leaf: 'Leaves_Under', lean: .12,
@@ -622,16 +697,19 @@ for (let i = 0; i < 6; i++) add2(`Litter_${i + 1}`, () => litter(21300 + i * 53,
 // -------------------------------------------------------------------- baking
 mkdirSync(OUT, {recursive: true});
 let total = 0, made = 0;
-for (const {name, fn} of CATALOGUE) {
+for (const {name, fn, far} of CATALOGUE) {
  if (only.length && !only.some(f => name.toLowerCase().includes(f))) continue;
- const build = fn();
- const obj = toObj(name, build, PALETTE);
- writeFileSync(join(OUT, name + '.obj'), obj);
- writeFileSync(join(OUT, name + '.mtl'), toMtl(build, PALETTE));
- const {r} = build.bounds();
- total += build.verts(); made++;
- console.log(`${name.padEnd(20)} ${String(build.verts()).padStart(6)} verts  ${String(Math.round(r * 200)).padStart(3)}% as wide as tall`
-  + `  ${[...build.parts.keys()].filter(k => build.parts.get(k).index.length).join(' ')}`);
+ for (const [suffix, d] of far ? [['', LOD.near], ['_Far', LOD.far]] : [['', LOD.near]]) {
+  DETAIL = d;
+  const build = fn();
+  const full = name + suffix;
+  writeFileSync(join(OUT, full + '.obj'), toObj(full, build, PALETTE));
+  writeFileSync(join(OUT, full + '.mtl'), toMtl(build, PALETTE));
+  const {r} = build.bounds();
+  total += build.verts(); made++;
+  console.log(`${full.padEnd(22)} ${String(build.verts()).padStart(6)} verts  ${String(Math.round(r * 200)).padStart(3)}% as wide as tall`
+   + `  ${[...build.parts.keys()].filter(k => build.parts.get(k).index.length).join(' ')}`);
+ }
 }
 console.log(`\n${total.toLocaleString()} vertices over ${made} models  (mean ${Math.round(total / made)})`);
 console.log(OUT);
