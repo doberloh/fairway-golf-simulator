@@ -26,13 +26,22 @@ the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
 kept, so the notice is vendored at `vendor/eztree-redwood/LICENSE-ez-tree.txt`
 and reproduced with any distribution.
 
-`vendor/eztree-redwood/redwood_leaves.png` is ez-tree's own leaf sprite sheet,
-copied unchanged and covered by the same MIT licence. **It is the one texture
-in the project that is not ours**, and it is here because a leaf billboard is a
-cut-out: without an alpha mask it is a solid rectangle. ez-tree's bark textures
-are deliberately NOT taken -- bark is painted from the biome palette like every
-other imported surface, and those images have upstream sources
-(texturecan.com, Poly Haven) whose terms would each need checking.
+Two textures come with it, and they are the only imported images in the project
+besides the house atlases:
+
+- `redwood_leaves.png` is ez-tree's own leaf sprite sheet, copied unchanged and
+  covered by its MIT licence. It is here because a leaf billboard is a cut-out:
+  without an alpha mask it is a solid rectangle.
+- `redwood_bark.jpg` is ez-tree's copy of **[bark_willow_02](https://polyhaven.com/a/bark_willow_02)
+  from Poly Haven, which is CC0**. Redwood bark is deeply furrowed and 35 cm
+  thick, and a flat-shaded cylinder cannot stand in for it. Of the four bark
+  sets ez-tree ships, willow and oak are Poly Haven and CC0 while birch and
+  pine are from texturecan.com -- the pine one looks right too and is NOT taken,
+  because its terms have not been checked. Colour map only: the game is toon
+  shaded and reads no normal, roughness or ambient-occlusion map.
+
+Everything else imported is still stripped of its materials and repainted from
+the biome palette.
 
 Kenney's licence files state: *"You can use this content for personal,
 educational, and commercial purposes. Support by crediting 'Kenney' or

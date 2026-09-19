@@ -40,11 +40,19 @@ const {Tree} = await import('@dgreenheck/ez-tree');
 
 // WHAT MAKES A REDWOOD, in this library's terms.
 //
-// A coast redwood is a column: barely tapered, bare for most of its height,
-// with short branches only in the top third and a crown far narrower than a
-// pine's. Those are four numbers -- `taper`, `start[1]`, `length[1]` and
-// `children[0]` -- and they are the whole reason for generating rather than
-// importing, because no pack contains this shape at any size.
+// Matched against descriptions of mature Sequoia sempervirens rather than
+// against a memory of one (see RESEARCH.md for the sources):
+//
+//  - the trunk is "remarkably straight" with minimal taper, 3-6 m across
+//    ABOVE a swollen base -- so: near-zero gnarliness, taper .90, and a flare
+//    added at the foot afterwards, since the library tapers uniformly
+//  - "a conical crown, with horizontal to slightly drooping branches" -- so
+//    branch angle just past horizontal, and a crown widest at its base
+//  - old-growth trees carry FEW, THICK branches, not a brush of thin ones
+//  - foliage sits out towards the branch ends, leaving the inner branch bare,
+//    which is most of why a redwood canopy looks airy rather than solid
+//  - bark is bright red-brown, soft and fibrous, up to 35 cm thick, in long
+//    vertical furrows
 //
 // Lengths are in the library's own units. The ingest normalises every model to
 // unit height, so only the RATIOS here matter: trunk radius against trunk
@@ -61,39 +69,46 @@ function redwood(seed, tweak = {}) {
 
  o.branch.levels = 2;
  o.branch.length[0] = 100;
- o.branch.radius[0] = 100 * .028;  // a redwood is about a thirty-fifth as thick as it is tall
- o.branch.taper[0] = .82;          // a column, not a spike
- o.branch.sections[0] = 10;
- o.branch.segments[0] = 9;
- o.branch.gnarliness[0] = .012;    // very straight
+ o.branch.radius[0] = 100 * .026;  // 3-6 m across on a 115 m tree, above the flare
+ o.branch.taper[0] = .90;          // "remarkably straight ... minimal taper"
+ // Enough rings that the buttress at the foot has two or three inside it --
+ // at eleven the flare jumped from the ground ring to the next one and read
+ // as a cone stuck on the bottom.
+ o.branch.sections[0] = 26;
+ o.branch.segments[0] = 10;
+ o.branch.gnarliness[0] = .005;    // dead straight
 
- // Branches only in the top third, short, and swept slightly up.
- o.branch.start[1] = .64;
- o.branch.children[0] = 42;
- o.branch.length[1] = 11;
- o.branch.radius[1] = .28;
- o.branch.angle[1] = 102;
- o.branch.taper[1] = .5;
- o.branch.sections[1] = 5;
- o.branch.segments[1] = 4;
- o.branch.gnarliness[1] = .12;
+ // Few, thick, roughly horizontal, and only in the top third.
+ o.branch.start[1] = .63;
+ o.branch.children[0] = 26;
+ o.branch.length[1] = 13;
+ o.branch.radius[1] = .44;
+ o.branch.angle[1] = 96;           // horizontal, tipping to slightly drooping
+ o.branch.taper[1] = .42;
+ o.branch.sections[1] = 6;
+ o.branch.segments[1] = 5;
+ o.branch.gnarliness[1] = .16;     // the branches are the irregular part
 
- o.branch.start[2] = .2;
- o.branch.children[1] = 4;
- o.branch.length[2] = 4.5;
- o.branch.radius[2] = .5;
- o.branch.angle[2] = 58;
+ o.branch.start[2] = .3;
+ o.branch.children[1] = 6;
+ o.branch.length[2] = 5.5;
+ o.branch.radius[2] = .45;
+ o.branch.angle[2] = 64;
  o.branch.sections[2] = 3;
  o.branch.segments[2] = 3;
+ o.branch.gnarliness[2] = .2;
 
  o.leaves.type = 'pine';
  o.leaves.billboard = 'double';
- o.leaves.start = .1;
- o.leaves.count = 14;
- o.leaves.size = 3.4;
- o.leaves.sizeVariance = .25;
- o.leaves.angle = 22;
+ // Out towards the ends, not along the whole branch. This is the single
+ // setting that most changes whether the canopy reads as airy or as a hedge.
+ o.leaves.start = .42;
+ o.leaves.count = 12;
+ o.leaves.size = 3.1;
+ o.leaves.sizeVariance = .3;
+ o.leaves.angle = 14;
  o.leaves.alphaTest = .35;
+ o.bark.textured = true;
 
  for (const [path, value] of Object.entries(tweak)) {
   const keys = path.split('.');
@@ -102,7 +117,38 @@ function redwood(seed, tweak = {}) {
   at[keys[0]] = value;
  }
  tree.generate();
+ flareTheBase(tree);
  return tree;
+}
+
+// A redwood stands on a swollen, buttressed foot, and every published diameter
+// is quoted "above the swollen base" for exactly that reason. The library
+// tapers a branch uniformly and has no way to express it, so the bottom of the
+// trunk is pushed outward here: a 40% flare at ground level easing to nothing
+// by a twentieth of the tree's height.
+const FLARE = 1.42, FLARE_TO = .07;
+function flareTheBase(tree) {
+ let lo = Infinity, hi = -Infinity;
+ tree.traverse(o => {
+  if (!o.isMesh) return;
+  const p = o.geometry.attributes.position;
+  for (let i = 0; i < p.count; i++) { lo = Math.min(lo, p.getY(i)); hi = Math.max(hi, p.getY(i)); }
+ });
+ const span = (hi - lo) * FLARE_TO || 1;
+ tree.traverse(mesh => {
+  if (!mesh.isMesh || isLeaf(mesh)) return;   // wood only; a leaf down there is not on the trunk
+  const p = mesh.geometry.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+   const up = (p.getY(i) - lo) / span;
+   if (up >= 1) continue;
+   // Smooth, so the flare meets the trunk without a crease.
+   const k = 1 + (FLARE - 1) * (1 - up) * (1 - up);
+   p.setX(i, p.getX(i) * k);
+   p.setZ(i, p.getZ(i) * k);
+  }
+  p.needsUpdate = true;
+  mesh.geometry.computeVertexNormals();
+ });
 }
 
 // The silhouette check the asset previewer applies, run here so a bad shape is
@@ -139,6 +185,32 @@ function profile(tree) {
  return {bands: scaled, turns, crownStart: scaled.findIndex(b => b > 2) / 20, peak};
 }
 
+// Trunk radius at each vertex ring, as a percentage of the radius just above
+// the buttress. A coast redwood is described as having minimal taper, so these
+// should fall slowly; anything that halves by mid-height is a pine.
+function trunkProfile(tree) {
+ let lo = Infinity, hi = -Infinity;
+ const pts = [];
+ tree.traverse(mesh => {
+  if (!mesh.isMesh || isLeaf(mesh)) return;
+  const p = mesh.geometry.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+   lo = Math.min(lo, p.getY(i)); hi = Math.max(hi, p.getY(i));
+   pts.push([p.getY(i), Math.hypot(p.getX(i), p.getZ(i))]);
+  }
+ });
+ const h = hi - lo || 1, rings = new Map();
+ for (const [y, r] of pts) {
+  const k = Math.round((y - lo) / h * 200) / 200;
+  rings.set(k, Math.max(rings.get(k) || 0, r));
+ }
+ // Below the crown only: above it these rings are branches, not the bole.
+ const rows = [...rings].sort((a, b) => a[0] - b[0]).filter(([k]) => k <= .5);
+ const base = rows.find(([k]) => k > .08)?.[1] || rows[0][1];
+ return rows.filter((_, i) => i % 2 === 0).slice(0, 9)
+  .map(([k, r]) => `${(k * 100) | 0}%:${Math.round(r / base * 100)}`).join(' ');
+}
+
 // ez-tree names its two meshes nothing at all, so tell them apart by material:
 // the leaves are the alpha-tested one.
 const isLeaf = mesh => !!(mesh.material && (mesh.material.alphaTest > 0 || mesh.material.transparent));
@@ -156,13 +228,20 @@ function toObj(tree, name) {
  const body = [];
  for (const mesh of groups) {
   const g = mesh.geometry, pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
+  const leaf = isLeaf(mesh);
+  // The leaf sheet's coordinates are sprite positions and must not be touched.
+  // Bark tiles, and the repeat is baked into the coordinates rather than left
+  // as a material setting, so it travels with the file: roughly one tile every
+  // five metres up a 115 m trunk, and eight around it.
+  const su = leaf ? 1 : BARK_REPEAT.u, sv = leaf ? 1 : BARK_REPEAT.v;
   for (let i = 0; i < pos.count; i++)
    lines.push(`v ${pos.getX(i).toFixed(4)} ${pos.getY(i).toFixed(4)} ${pos.getZ(i).toFixed(4)}`);
-  if (uv) for (let i = 0; i < uv.count; i++) lines.push(`vt ${uv.getX(i).toFixed(4)} ${uv.getY(i).toFixed(4)}`);
+  if (uv) for (let i = 0; i < uv.count; i++)
+   lines.push(`vt ${(uv.getX(i) * su).toFixed(4)} ${(uv.getY(i) * sv).toFixed(4)}`);
   if (nor) for (let i = 0; i < nor.count; i++)
    lines.push(`vn ${nor.getX(i).toFixed(4)} ${nor.getY(i).toFixed(4)} ${nor.getZ(i).toFixed(4)}`);
 
-  body.push(`usemtl ${isLeaf(mesh) ? 'Redwood_Leaves' : 'Redwood_Bark'}`);
+  body.push(`usemtl ${leaf ? 'Redwood_Leaves' : 'Redwood_Bark'}`);
   const index = g.index ? g.index.array : null;
   const count = index ? index.length : pos.count;
   for (let i = 0; i < count; i += 3) {
@@ -180,10 +259,13 @@ function toObj(tree, name) {
  return lines.concat(body).join('\n') + '\n';
 }
 
+const BARK_REPEAT = {u: 8, v: 22};
+
 const MTL = `# Generated by tools/bake-trees.mjs. The colours are placeholders: the game
 # paints every surface from the biome palette by the material's NAME.
 newmtl Redwood_Bark
 Kd 0.42 0.25 0.18
+map_Kd redwood_bark.jpg
 
 newmtl Redwood_Leaves
 Kd 0.20 0.33 0.22
@@ -192,13 +274,22 @@ map_Kd redwood_leaves.png
 
 mkdirSync(OUT, {recursive: true});
 
-// One leaf texture, and only one. Bark stays untextured because the game
-// already paints it, and a bark image is the part of this library whose
-// upstream licensing needs checking; the leaf sprites are the repo's own.
-const leafSource = join(ROOT, 'node_modules', '@dgreenheck', 'ez-tree',
- 'src', 'lib', 'assets', 'leaves', 'pine_color.png');
-if (!existsSync(leafSource)) { console.error('ez-tree not installed: npm install'); process.exit(1); }
+// Two textures, colour only -- no normal, roughness or ambient-occlusion maps,
+// because the game is toon shaded and reads none of them.
+//
+// The bark is ez-tree's WILLOW, not its pine: willow is the deeply, vertically
+// furrowed one of the four, which is what redwood bark looks like, and it
+// comes from Poly Haven (bark_willow_02) which is CC0. The pine bark is from
+// texturecan, whose terms would need checking first. See ATTRIBUTION.md.
+const ASSETS = join(ROOT, 'node_modules', '@dgreenheck', 'ez-tree', 'src', 'lib', 'assets');
+const leafSource = join(ASSETS, 'leaves', 'pine_color.png');
+const barkSource = join(ASSETS, 'bark', 'willow_color_1k.jpg');
+if (!existsSync(leafSource) || !existsSync(barkSource)) {
+ console.error('ez-tree not installed: npm install');
+ process.exit(1);
+}
 copyFileSync(leafSource, join(OUT, 'redwood_leaves.png'));
+copyFileSync(barkSource, join(OUT, 'redwood_bark.jpg'));
 
 writeFileSync(join(OUT, 'README.md'),
 `# eztree-redwood
@@ -217,9 +308,13 @@ should be edited by hand.
 // seeds, plus a deliberate spread of trunk thickness and crown depth.
 const VARIANTS = [
  ['Redwood_1', 1207, {}],
- ['Redwood_2', 5533, {'branch.start.1': .70, 'branch.children.0': 34, 'branch.length.1': 9.5}],
- ['Redwood_3', 8891, {'branch.taper.0': .88, 'branch.radius.0': 3.1, 'branch.length.1': 12.5}],
- ['Redwood_4', 3120, {'branch.start.1': .58, 'branch.gnarliness.0': .03, 'branch.children.0': 50}],
+ // Older: branches start higher, fewer of them, shorter. Self-pruning lifts
+ // the crown as a redwood ages, and the oldest are nearly bare to 50 m.
+ ['Redwood_2', 5533, {'branch.start.1': .72, 'branch.children.0': 19, 'branch.length.1': 11}],
+ // Thicker in the bole, deeper crown.
+ ['Redwood_3', 8891, {'branch.radius.0': 3.0, 'branch.length.1': 15, 'branch.start.1': .58}],
+ // Younger, so a longer crown and more of it.
+ ['Redwood_4', 3120, {'branch.start.1': .52, 'branch.children.0': 34, 'branch.taper.0': .86}],
 ];
 
 let mtlWritten = false;
@@ -234,7 +329,8 @@ for (const [name, seed, tweak] of VARIANTS) {
  const p = profile(tree);
  console.log(`${name.padEnd(11)} ${String(verts).padStart(6)} verts  ${(obj.length / 1024).toFixed(0).padStart(4)} KB`
   + (p ? `  crown starts ${(p.crownStart * 100).toFixed(0)}%  reversals ${p.turns}` : '  no leaves'));
- if (report && p) console.log('            ' + p.bands.map(b => b.toString(16).toUpperCase()).join(' '));
+ if (report && p) console.log('            crown ' + p.bands.map(b => b.toString(16).toUpperCase()).join(' '));
+ if (report) console.log('            trunk ' + trunkProfile(tree));
 }
 if (mtlWritten) console.log(`\n${OUT}`);
 console.log('now: node tools/build-meshes.mjs   (and npm run assets to look at them)');

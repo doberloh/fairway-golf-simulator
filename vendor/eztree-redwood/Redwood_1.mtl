@@ -2,6 +2,7 @@
 # paints every surface from the biome palette by the material's NAME.
 newmtl Redwood_Bark
 Kd 0.42 0.25 0.18
+map_Kd redwood_bark.jpg
 
 newmtl Redwood_Leaves
 Kd 0.20 0.33 0.22

@@ -571,6 +571,38 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## What a redwood actually looks like
+
+The first bake was a redwood from memory. These are the published descriptions it was then matched against, and what each one changed.
+
+Sources: [Britannica on coast redwood](https://www.britannica.com/plant/coast-redwood) · [Sequoia sempervirens](https://en.wikipedia.org/wiki/Sequoia_sempervirens) · [USFS, Coast Redwood Live Crown and Sapwood Dynamics](https://fs.usda.gov/treesearch/pubs/41818) · [Hyperion](https://en.wikipedia.org/wiki/Hyperion_(tree))
+
+| what the sources say | what it changed |
+|---|---|
+| the trunk is "remarkably straight" with minimal taper | gnarliness .012 → .005, taper .82 → .90 |
+| 3–6 m across, **"measured above the swollen bases"** | a buttress flare, below |
+| "a conical crown, with horizontal to slightly drooping branches" | branch angle 102 → 96, and the crown is widest at its base |
+| old-growth boles are long and branch-free; self-pruning lifts the crown with age | 26 branches rather than 42, and the older variant starts its crown at 72% |
+| bark bright red-brown, soft and **fibrous**, up to 35 cm thick | a bark texture at last, below |
+
+### The buttress is not something the library can express
+
+Every published redwood diameter is quoted *above the swollen base*, which tells you how pronounced that base is. ez-tree tapers a branch uniformly and has no parameter for it, so the foot of the trunk is pushed outward after generating: 42% wider at ground level, easing to nothing by a fourteenth of the tree's height.
+
+The first attempt looked like a cone stuck on the bottom, because the trunk had eleven vertex rings over its whole height and only the ground one fell inside the flare. At 26 rings there are two or three inside it and it reads as a swelling. Measured, as a percentage of the trunk just above the flare: **160 at the foot, 104 at 7%, 96 at 15%, 87 at 22%**, falling to 61 by mid-height.
+
+### Bark, and which bark
+
+The trunks were untextured because the game repaints every imported surface from the biome palette. That is right for a flat-shaded pack model and wrong for something with 35 cm of deeply furrowed bark: without a texture a redwood trunk is a smooth brown cylinder, which is the one thing it is not.
+
+ez-tree ships four bark sets. The **willow** one is taken — deeply and vertically furrowed, the closest of the four to redwood — and specifically *not* the pine one, which looks right too but comes from texturecan, whose terms would need checking. Willow and oak are Poly Haven (`bark_willow_02`), which is CC0. Colour map only: the game is toon-shaded and reads no normal, roughness or ambient-occlusion map.
+
+The tiling is **baked into the vertex coordinates** rather than left as a material setting, so it travels with the file: eight repeats around the trunk and twenty-two up it, which is about one tile every five metres on a 115 m tree.
+
+### Measuring instead of squinting
+
+`node tools/bake-trees.mjs --report` now prints, for each variant, the crown's silhouette band by band and the trunk's radius ring by ring. Both of the mistakes above — the cone-shaped buttress and a taper that was really a pine's — were found in those two rows rather than by looking at anything.
+
 ## Baking trees instead of shopping for them
 
 Three crown models have now been chosen by looking at packs, and none of them was a redwood, because **nobody has made one**. Every conifer in every pack is conical to the ground; the shape we want — a bare column for two thirds of its height with a narrow crown on top — does not exist as an asset at any scale.
