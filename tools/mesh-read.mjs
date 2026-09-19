@@ -103,7 +103,10 @@ export function extract(file) {
 function objMaterials(file, wantTextures) {
  const mtl = file.replace(/\.obj$/i, '.mtl');
  const textures = new Map(), colours = new Map();
- if (!existsSync(mtl)) return {textures, colours};
+ if (!existsSync(mtl)) return {textures, colours, twoFaced: false};
+ // A generator that already emits both faces says so here, so a reader does
+ // not double-side it a second time.
+ const twoFaced = /^#[ \t]*two-faced/m.test(readFileSync(mtl, 'utf8'));
  const dir = dirname(file);
  const beside = name => {
   for (const ext of ['.png', '.jpg', '.jpeg']) {
@@ -129,7 +132,7 @@ function objMaterials(file, wantTextures) {
    colours.set(ROLE_OF(name), [+part[1], +part[2], +part[3]]);
   }
  }
- return {textures, colours};
+ return {textures, colours, twoFaced};
 }
 
 // `wantTextures` decides whether this reads images at all -- both an explicit
@@ -144,7 +147,7 @@ function objMaterials(file, wantTextures) {
 // whole point of it.
 export function extractObj(file, wantTextures = false) {
  const text = readFileSync(file, 'utf8');
- const {textures, colours} = objMaterials(file, wantTextures);
+ const {textures, colours, twoFaced} = objMaterials(file, wantTextures);
  const v = [], vt = [], vn = [], byRole = new Map();
  let role = 'accent';
  for (const line of text.split(String.fromCharCode(10))) {
@@ -156,7 +159,7 @@ export function extractObj(file, wantTextures = false) {
   else if (part[0] === 'f') {
    const group = byRole.get(role)
     || {position: [], normal: [], uv: [], index: [], seen: new Map(),
-        texture: textures.get(role) || null, colour: colours.get(role) || null};
+        texture: textures.get(role) || null, colour: colours.get(role) || null, twoFaced};
    const corner = part.slice(1).map(token => {
     const [vi, ti, ni] = token.split('/');
     // OBJ indices are 1-based and may be negative (relative to the end).

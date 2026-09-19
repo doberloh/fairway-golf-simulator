@@ -17,6 +17,19 @@ file gives it.
 
 Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
+## Grown geometry, which is nobody else's at all
+
+`vendor/baked_assets2/` contains no imported vertex and no texture. Every
+triangle is produced by `tools/grow.mjs` and `tools/grow-lib.mjs`, which are
+this project's own code, so nothing in that folder carries a third-party
+licence of any kind.
+
+Its shapes and colours were measured from 315 photographs on Wikimedia
+Commons, all CC0, public domain, or CC BY / CC BY-SA. **None of those images
+is in this repository and none was copied into a model** -- they were read
+and measured, and the numbers that came out are facts about redwoods rather
+than anybody's expression. REFERENCES.md lists every one of them anyway.
+
 ## Generated geometry, which is not CC0
 
 `vendor/baked_assets/` is **generated, not vendored**. `node tools/bake-trees.mjs`

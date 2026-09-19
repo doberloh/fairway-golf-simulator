@@ -329,6 +329,13 @@ If the biome wants props no other biome uses, add the family to `PICK` in `tools
 
 **Textured models carry a `uvSpan`.** Texture coordinates are packed into 16 bits against the part's own range rather than against 0..1, because bark tiles far outside the unit square and the old packing silently clamped it. An atlas has no span and is unaffected. If you add anything textured, check that `uvSpan` survives into what is drawn.
 
+**`vendor/baked_assets2/` is grown from nothing.** `node tools/grow.mjs` writes 153 models built out of
+triangles by `tools/grow-lib.mjs` -- no imported geometry, no texture, no generator library. Proportions and
+colours come from 315 reference photographs recorded in REFERENCES.md; `python tools/fetch-references.py`
+gets them again. Review it with the contact sheet, not the single-model viewer:
+`node tools/asset-preview.mjs baked_assets2 && npx vite build --config vite.sheet.config.js`, then open
+`dist/sheet.html`.
+
 **`vendor/baked_assets/` is a dumping ground for composed models**, not a vendored pack. `node tools/bake-assets.mjs` builds trees out of the CC0 packs -- a bare bole stretched out of a `DeadTree`, a crown borrowed from elsewhere, redwood proportions applied -- and `node tools/bake-trees.mjs` builds the ez-tree generated ones. Both write there, both are re-runnable, and nothing in the folder should be edited by hand.
 
 **Choosing a model: `npm run assets`** builds `dist/assets.html`, a self-contained page showing every model in `vendor/` at a height you type, beside a 1.8 m figure, with its silhouette profile and the `pack:Name` string a PICK entry wants. Two crowns were picked by reading file names and both were wrong; this exists so that stops happening. `node tools/tree-spacing.mjs [biome] [seed]` answers "is this too dense" in numbers.

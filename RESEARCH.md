@@ -571,6 +571,76 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A grove grown from nothing, against 315 photographs
+
+`vendor/baked_assets2` holds 153 models -- trees, shrubs, ground cover, dead wood -- with **no imported vertex, no texture, and no generator library**. `tools/grow-lib.mjs` is about four hundred lines of triangles and `tools/grow.mjs` is the catalogue. The photographs decided the proportions; nothing was copied from them.
+
+### Measuring 315 pictures
+
+Search on Commons kept returning the same grove shots and gave *nothing* for the understory, the deadwood or the floor -- which is most of what a grove looks like at eye level. Categories fixed that. 315 images: 99 understory, 70 grove, 37 deadwood, 34 trunk, 24 canopy, 19 hemlock, 17 fir, 15 cedar. Provenance in REFERENCES.md, fetcher in `tools/fetch-references.py`.
+
+Then two kinds of analysis, because they answer different questions.
+
+**Statistics, on all 315.** Decoded in a browser canvas and clustered, per subject: dominant colours, mean saturation and value, and how much green sits in each sixteenth of the frame from top to bottom. That last one turned out to be the species test:
+
+    grove       green by height, top to bottom   3 3 3 3 3 3 3 3 3 3 3 2 2 2 2 2
+    trunk                                        2 2 2 2 2 2 1 2 1 1 1 1 1 1 1 1
+    fir                                          3 3 3 3 4 4 4 4 5 5 5 6 6 6 5 4
+    hemlock                                      3 4 4 4 4 4 5 5 5 5 5 5 5 4 4 4
+    understory                                   5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 4
+
+**Green decreases toward the ground in a redwood picture and increases in a fir one.** That single difference is most of what makes two conifers read as two species, and it is not something you would get from looking.
+
+Colours, measured rather than chosen: bark clusters at `#2d251c` in shade and `#7c624c` in sun; canopy foliage `#323b23`–`#5f6d44`; understory foliage much brighter at `#4a6940`–`#739753`; moss on a nurse log brighter still. A grove averages 0.40 value with a fifth of it in deep shadow.
+
+**Looking, on a chosen handful.** Statistics cannot tell you the shape of a frond. Reading the pictures gave the things that actually changed the geometry:
+
+- **A redwood's foliage is a narrow vertical plume hugging the upper trunk**, not a cone on a pole -- with epicormic sprouts and burls breaking out of the bare bole far below it. Every previous attempt in this project, imported or generated, built the cone.
+- The bark is **deeply fluted**, long parallel ridges the whole height.
+- A **sword fern is a shuttlecock** of ten to twenty once-pinnate fronds leaving the crown near-vertical and arching over.
+- **Moss sits on the top and upper flanks** of a log and nowhere else, and it is the brightest thing on the floor.
+- A **snag is a dead giant**: short for its girth, bleached almost silver, with heavy broken stubs.
+
+### What had to be built to draw it
+
+Three primitives carry everything. A **tube** swept along a path, with a corrugated cross-section for bark fluting. A **spray** -- a tapered ribbon with a zig-zag edge -- gathered into fans for conifer foliage. A **frond** with paired leaflets for ferns. Plus a lumpy half-dome for moss, burls and boulders.
+
+Five things were wrong on the first render and each is worth keeping:
+
+**The flutes were invisible.** They existed in the silhouette and nowhere else, because the normal was taken from the axis rather than from the cross-section curve. Now `dr/da` by central difference gives the true 2D normal -- and the flutes still did not appear, because **the previewer was recomputing normals and throwing away the file's**. Both had to be fixed before a single ridge showed.
+
+**Three sides per flute, minimum.** At ten sides and seven flutes the corrugation has nowhere to happen and aliases into a smooth cylinder.
+
+**Foliage normals point up, not out.** A spray is one sheet, so half of it faces away from every light and renders black. Tilting the normals hard toward the sky makes it a soft mass lit from above. Then the black came back, because the geometry was drawn double-sided *and* duplicated: every triangle had a coincident twin with a flipped normal to z-fight with. The models now carry both faces and say so -- `# two-faced` in the MTL -- and anything reading them draws front side only.
+
+**A plume is ragged.** Limbs on an even ladder read as a fir with a long trunk. Height, reach and angle are jittered hard and one in twelve is dropped.
+
+**Two vertices per spray step, not three.** The third, down the centre line, folded the spray very slightly and was worth nothing at the distance any of this is seen from -- and it was a third of the vertex count of the most numerous thing in the catalogue. That one change took the set from 2.4 M vertices to 922 k.
+
+### What is there
+
+153 models, 922,164 vertices, mean 6,027, heaviest 27,647:
+
+| | | |
+|---|---|---|
+| `Redwood_Giant_1-8` | 95 m | bole bare to 52-77%, plume, burls, sprouts |
+| `Redwood_Mature_1-8`, `_Young_1-6`, `_Sapling_1-4` | 62/26/3.5 m | the age spread a grove needs |
+| `Redwood_Leaner_1-2`, `_Burled_1-2` | 70 m | the odd ones |
+| `DouglasFir_1-12` | 55 m | six crown shapes, some with broken tops |
+| `Hemlock_1-8`, `RedCedar_1-8` | 40/45 m | lower, drooping, mid-heavy |
+| `Tanoak_1-6`, `VineMaple_1-4` | 16/9 m | the broadleaf understorey |
+| `Snag_1-7`, `Stump_1-6`, `Stump_Bare_1-3`, `RootWad_1-2` | | the dead, which old growth is full of |
+| `NurseLog_1-8`, `FallenLog_1-4` | | mossed along the top only |
+| `SwordFern_1-12`, `_Young_1-4` | 1.15/0.8 m | the plant you see most of |
+| `Salal_1-6`, `Huckleberry_1-4`, `Sorrel_1-6` | | thicket, thicket, and the mat between |
+| `Seedling_1-6`, `MossMound_1-6`, `Boulder_1-5`, `Litter_1-6` | | the floor |
+
+### And a contact sheet, because a hundred and fifty is not one
+
+`preview/sheet.html` draws every model in its own cell of one canvas -- scissor and viewport per cell, one renderer -- at its real height beside a 1.8 m figure. The single-model viewer is right for judging one thing and useless for judging a catalogue; the sheet is how the flat ferns, the twelve identical firs and the mast-thin snags were all caught in one look.
+
+Its own bug is worth recording: `renderer.clear()` honours the scissor test, so clearing without first opening the scissor to the whole canvas leaves the previous layout's thumbnails sitting in every cell the new one does not reach.
+
 ## Twenty-two trees out of the packs we already own
 
 No generator, no new dependency: every triangle comes from a CC0 pack already in `vendor/`. What is new is the **arrangement**, and that is where the redwood research lives -- a bare bole to roughly two thirds of the height, a crown about a sixth as wide as the tree is tall, a trunk a thirty-eighth as thick as it is tall, a swollen foot. No pack model has any of that.

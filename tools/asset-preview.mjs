@@ -99,11 +99,21 @@ for (const pack of readdirSync(VENDOR)) {
     position[i * 3 + 1] = Math.round(((g.position[i * 3 + 1] - minY) / height) * 16384);
     position[i * 3 + 2] = Math.round(((g.position[i * 3 + 2] - cz) / height) * 16384);
    }
+   // NORMALS ARE CARRIED, not recomputed. The page used to call
+   // computeVertexNormals and throw away whatever the file said, which is fine
+   // for a model whose shading is its geometry and wrong for one whose shading
+   // IS the point -- the fluting on a generated redwood trunk was invisible
+   // until this was fixed, and it was invisible in the tool only.
+   const normal = new Int8Array(count * 3);
+   for (let i = 0; i < normal.length; i++)
+    normal[i] = Math.max(-127, Math.min(127, Math.round((g.normal[i] || 0) * 127)));
    const part = {role, p: Buffer.from(position.buffer).toString('base64'),
+    n: Buffer.from(normal.buffer).toString('base64'),
     i: Buffer.from(new Uint16Array(g.index).buffer).toString('base64')};
    // A colour the model states for itself. The game paints by role instead,
    // but a tool for looking at models should show what the model says.
    if (g.colour) part.kd = g.colour.map(v => +v.toFixed(3));
+   if (g.twoFaced) part.two = 1;
    // A textured part -- in practice a leaf sprite, which is an alpha mask
    // rather than somebody's art direction. Without it the quads it cuts out of
    // are solid rectangles, and the tree looks like it is made of cardboard.

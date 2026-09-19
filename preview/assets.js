@@ -48,10 +48,19 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
 const scene = new T.Scene();
 scene.background = new T.Color('#15171a');
-scene.add(new T.HemisphereLight('#cfe3ff', '#3a3326', 1.7));
-const key = new T.DirectionalLight('#fff3dd', 2.0);
+// Toned down to something like the game's own light. At 1.7/2.0 everything
+// read two stops brighter than the material, which is a poor way to judge a
+// colour picked off a photograph.
+scene.add(new T.HemisphereLight('#bcd2e8', '#33301f', 1.25));
+const key = new T.DirectionalLight('#ffeccd', 1.9);
 key.position.set(40, 70, 30);
 scene.add(key);
+// A weak fill from behind the camera's start, so a surface turned away from
+// the key is dark rather than black. Judging a bark colour against a
+// photograph needs both faces readable.
+const fill = new T.DirectionalLight('#9fb4c8', .55);
+fill.position.set(-35, 18, -45);
+scene.add(fill);
 const camera = new T.PerspectiveCamera(42, 1, .1, 6000);
 
 // A 1.8 m figure and a one-metre grid. "Is this the right model" is almost
@@ -99,10 +108,17 @@ function show(model) {
   const geometry = new T.BufferGeometry();
   geometry.setAttribute('position', new T.BufferAttribute(position, 3));
   geometry.setIndex(new T.BufferAttribute(decode(part.i, Uint16Array), 1));
-  geometry.computeVertexNormals();
+  if (part.n) {
+   const packed = decode(part.n, Int8Array), normal = new Float32Array(packed.length);
+   for (let i = 0; i < packed.length; i++) normal[i] = packed[i] / 127;
+   geometry.setAttribute('normal', new T.BufferAttribute(normal, 3));
+  } else geometry.computeVertexNormals();
   // What the model says, if it says anything; the role's colour otherwise.
   const stated = part.kd && new T.Color(part.kd[0], part.kd[1], part.kd[2]);
-  const settings = {color: stated || ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide};
+  // Front side only when the model already carries both faces; double-siding
+  // those gives every triangle a flipped-normal twin to z-fight with.
+  const settings = {color: stated || ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1,
+   side: part.two ? T.FrontSide : T.DoubleSide};
   if (part.uv !== undefined) {
    const uv = decode(part.uv, Uint16Array), f = new Float32Array(uv.length);
    // uvSpan is the largest coordinate this part uses. Bark tiles well past 1,
