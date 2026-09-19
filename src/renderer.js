@@ -44,7 +44,7 @@ import {tierOf} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
 import {makeGodRays} from './godrays.js';
 import {applyCloudShadows,cloudShadowUniforms} from './cloud-shadows.js';
-import {makeClouds} from './clouds.js';
+import {makeClouds,applyCloudFade} from './clouds.js';
 import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWaterField} from './mist.js';
 
 import {makeBloom} from './bloom.js';
@@ -302,6 +302,9 @@ export class GolfView{
    // Clouds after cascades: CSM assigns onBeforeCompile rather than wrapping
    // it, so anything installed before it is lost.
    if(this.cloudUniforms)applyCloudShadows(m,this.cloudUniforms);
+   // And the clouds' own opacity, which has to come after CSM for the same
+   // reason: it assigns onBeforeCompile rather than wrapping it.
+   applyCloudFade(m);
   };
   this.group.traverse(o=>{for(const m of mats(o))register(m);});
   for(const m of this.lazyMaterials||[])register(m);
@@ -543,6 +546,7 @@ export class GolfView{
    // Share the vectors rather than copying them each frame: moving a cloud then
    // updates the shadow it casts, with nothing to keep in step.
    this.cloudUniforms.cloudDiscs.value=this.clouds.discs;
+   this.cloudUniforms.cloudFade.value=this.clouds.fades;
    this.group.add(this.clouds.group);
   }else{this.cloudUniforms=null;this.clouds=null;}
   this.registerCascadeMaterials();

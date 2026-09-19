@@ -291,7 +291,7 @@ vec3 applyMist(vec3 color){
 `;
 
 export function applyMistTo(material, uniforms) {
- if (!material || material.userData.mist || material.userData.clouds) return;
+ if (!material || material.userData.mist || material.userData.cloudMesh) return;
  const previous = material.onBeforeCompile;
  material.onBeforeCompile = function (shader, renderer) {
   // Same discipline as the cloud shadows: CSM and windMaterial both ASSIGN

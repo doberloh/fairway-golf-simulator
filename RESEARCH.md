@@ -571,6 +571,37 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Clouds fade in, and one flag with two meanings blanked the course
+
+A cloud that reaches the edge of its box wraps to the far side, which keeps the sky full without spawning anything near the camera. The wrap is still a four-kilometre jump, though, and at that size it reads as a pop — on the cloud and on the hard-edged shadow it drags across the course.
+
+The first version watched for the wrap and faded in over a fixed time. That gives an arrival and no departure: a cloud still reached the far edge at full strength and blinked out. **Opacity is a function of where a cloud is, not of what just happened to it** — it fades with distance to the edge of the box, which does both ends from one rule. A cloud thins out as it approaches the boundary, wraps while it is invisible, and thickens again as it moves back in. Because the distance to the near edge is zero on *both* sides of the jump, there is no step at the moment it wraps.
+
+The margin is a distance but it is set from the drift speed, so the fade takes the same few seconds on a still day and a blowing one. The shadow shares the same opacity, so a cloud and the shade it throws cannot come apart. Measured over three minutes of drift: opacity reaches 0.00 and 1.00, and the largest change in any single frame is **0.0067** — a pop would be 1.0.
+
+### The flag
+
+Adding that made the entire course invisible — at the Ultra tier only, with nothing in the console.
+
+`applyCloudShadows` used `material.userData.clouds` as its own *already patched* marker, setting it on every material it touched. `clouds.js` used the same name to mean *this material is a cloud*, so `applyCloudShadows` would skip it. One name, two meanings, and nothing in either file said so.
+
+The new per-cloud opacity keyed on it. Instead of the one cloud material it patched **thirty-four** — every lit material in the scene — and each of them then read a per-instance `aFade` attribute that only the cloud geometry actually has. A missing attribute reads as zero. Zero alpha. The whole course, invisible.
+
+The flags are now `cloudMesh` (this *is* a cloud) and `cloudShadowed` (already patched), which are two different questions and now have two different names.
+
+### What the hunt cost, and why
+
+Four wrong turns, all avoidable:
+
+- **Tested at the wrong graphics tier.** Clouds are quality-gated, so at Medium the code never ran and everything looked fine. The owner had to say "you need to set gfx to ultra". A change behind a quality gate has to be tested behind that gate.
+- **Chased a console error that was not mine.** A `Cannot set properties of undefined` appeared on load, I assumed it was the new uniform, and only later checked HEAD — where the same error appears while the scene renders perfectly. Check whether an error predates the change before explaining it.
+- **Guessed at causes four times** — a missing import, transparency sorting, shader chunk collisions, CSM wrapping order — when the bisect took two builds and named it exactly.
+- **Believed a stale console.** The instrumentation logs persisted across reloads after the code was removed. The count not rising is the tell, and the honest check is whether the string is still in the bundle.
+
+The bisect that actually worked: build with the patch, blank; build with the patch disabled and the shadow uniform kept, renders; build at HEAD, renders. Two builds, and it isolates the half. Then one log line inside the patch reported thirty-four materials where one was expected, which is the whole answer.
+
+**The general trap is worth keeping.** A boolean on `userData` used as "I have processed this" is indistinguishable from one meaning "this is that kind of thing", and the second reader has no way to tell. If a flag is a processing marker, name it for the processing.
+
 ## A tee is a rectangle, and it points where you do
 
 Four faults came off one screenshot: tee boxes hiding the fairway on downhill holes, tees too big, tees sitting in line with each other, and a par three's shared pad carrying dead ground in front of its forward marker. The previous section covers the sightline half. This is the shape half, and between them the reported problem is gone.

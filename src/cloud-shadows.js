@@ -20,6 +20,10 @@ import {MAX_CLOUDS} from './clouds.js';
 export const cloudShadowUniforms = () => ({
  // xyz is the cloud's centre, w its radius.
  cloudDiscs: {value: Array.from({length: MAX_CLOUDS}, () => new T.Vector4(0, 1e6, 0, 1))},
+ // One opacity per cloud, shared with the mesh so a cloud and the shadow it
+ // throws fade together. Without it a wrapping cloud still drags a hard-edged
+ // shadow across the course even though the cloud itself has gone soft.
+ cloudFade: {value: new Float32Array(MAX_CLOUDS).fill(1)},
  cloudSun: {value: new T.Vector3(0, 1, 0)},
  // How much of the direct sun a cloud takes directly beneath it.
  cloudDepth: {value: .45},
@@ -30,6 +34,7 @@ export const cloudShadowUniforms = () => ({
 
 const SHADOW_GLSL = `
 uniform vec4 cloudDiscs[${MAX_CLOUDS}];
+uniform float cloudFade[${MAX_CLOUDS}];
 uniform vec3 cloudSun;
 uniform float cloudDepth,cloudEdge;
 float cloudShadowAt(vec3 world){
@@ -43,14 +48,24 @@ float cloudShadowAt(vec3 world){
   if(t<=0.)continue;
   vec2 hit=world.xz+cloudSun.xz*t;
   float d=length(hit-disc.xz)/max(disc.w,1.);
-  shade=max(shade,1.-smoothstep(1.-cloudEdge,1.,d));
+  shade=max(shade,(1.-smoothstep(1.-cloudEdge,1.,d))*cloudFade[i]);
  }
  return 1.-shade*cloudDepth;
 }
 `;
 
 export function applyCloudShadows(material, uniforms) {
- if (!material || material.userData.clouds) return;
+ // TWO FLAGS, BECAUSE THERE ARE TWO QUESTIONS.
+ //
+ // `cloudMesh` means the material IS a cloud, and must not be shaded by one.
+ // `cloudShadowed` means this material has already been patched. Both used to
+ // be `userData.clouds`, set here on EVERY material it patched and in clouds.js
+ // on the one cloud material -- so any later code asking "is this a cloud?" got
+ // yes from thirty-four materials. That is exactly what happened: a per-cloud
+ // opacity patch keyed on it, every lit material in the scene took a fade
+ // attribute its geometry does not have, read zero, and the whole course went
+ // invisible at the one graphics tier that turns clouds on.
+ if (!material || material.userData.cloudShadowed || material.userData.cloudMesh) return;
  const previous = material.onBeforeCompile;
  material.onBeforeCompile = function (shader, renderer) {
   // CSM assigns onBeforeCompile rather than wrapping it, so whatever was here
@@ -75,6 +90,6 @@ export function applyCloudShadows(material, uniforms) {
    .replace('#include <lights_fragment_end>',
     'reflectedLight.directDiffuse*=cloudShadowAt(vCloudWorld);\n#include <lights_fragment_end>');
  };
- material.userData.clouds = true;
+ material.userData.cloudShadowed = true;
  material.needsUpdate = true;
 }

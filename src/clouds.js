@@ -18,6 +18,44 @@ import {random} from './course.js';
 // The ground shader reads this many discs. Costs a handful of distance tests per
 // fragment, all against the same projected point, so the loop is cheap.
 export const MAX_CLOUDS = 16;
+// How long a cloud spends fading, at either end. Long enough that neither the
+// arrival nor the departure is an event; short enough that the sky is not
+// visibly thin behind it.
+export const CLOUD_FADE_SECONDS = 5;
+
+// A CLOUD ARRIVES AND LEAVES; IT DOES NOT APPEAR AND VANISH.
+//
+// Clouds wrap inside a box rather than being recycled, which keeps the sky
+// full without spawning anything near the camera -- but a wrap is still a
+// teleport, and at this size and distance the jump is plainly visible on both
+// the cloud and the shadow it drags across the course.
+//
+// Per-instance opacity, so the puffs of one cloud fade together while the rest
+// of the sky is untouched. Installed from the renderer AFTER the cascade
+// shadow setup, because CSM assigns `onBeforeCompile` rather than wrapping it
+// and anything put there first is silently lost -- the same trap cloud
+// shadows document.
+export function applyCloudFade(material) {
+ // `cloudMesh`, not `cloudShadowed`: this must reach the cloud material and
+ // nothing else. Only its geometry carries the per-instance fade attribute,
+ // and a material reading an attribute that is not there reads ZERO, which is
+ // fully transparent.
+ if (!material || !material.userData.cloudMesh || material.userData.cloudFaded) return;
+ material.userData.cloudFaded = true;
+ const previous = material.onBeforeCompile;
+ material.onBeforeCompile = function (shader, renderer) {
+  previous?.call(this, shader, renderer);
+  // `begin_vertex` and `dithering_fragment` are the two chunks nothing else
+  // claims on this material: mist holds common/fog in both stages, and cloud
+  // shadows skip a cloud entirely.
+  shader.vertexShader = 'attribute float aFade;\nvarying float vFade;\n' + shader.vertexShader
+   .replace('#include <begin_vertex>', '#include <begin_vertex>\n vFade=aFade;');
+  shader.fragmentShader = 'varying float vFade;\n' + shader.fragmentShader
+   .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n gl_FragColor.a*=vFade;');
+ };
+ material.transparent = true;
+ material.needsUpdate = true;
+}
 
 export function makeClouds(view, seed) {
  const {world} = view;
@@ -64,19 +102,25 @@ export function makeClouds(view, seed) {
    dummy.scale.set(size, size * (.62 + rng() * .22), size * (.86 + rng() * .28));
    dummy.rotation.set(0, rng() * 6.28, 0);
    dummy.updateMatrix();
-   puffs.push({cloud, offset: dummy.matrix.clone()});
+   puffs.push({cloud: i, offset: dummy.matrix.clone()});
   }
   clouds.push(cloud);
  }
 
+ // One opacity per cloud, shared with the shadow uniform so a fading cloud and
+ // its fading shadow cannot drift apart.
+ const fades = new Float32Array(MAX_CLOUDS).fill(1);
+ const puffFade = new Float32Array(puffs.length).fill(1);
+
  const mesh = new T.InstancedMesh(blob, material, puffs.length);
+ mesh.geometry.setAttribute('aFade', new T.InstancedBufferAttribute(puffFade, 1));
  mesh.frustumCulled = false;
  // Their own shadow discs do the shading; casting into the shadow map as well
  // would double it, and at this altitude the cascade would only smear it.
  mesh.castShadow = false;
  mesh.receiveShadow = false;
  // Skip the cloud-shadow patch: a cloud is above the weather, not under it.
- material.userData.clouds = true;
+ material.userData.cloudMesh = true;
  group.add(mesh);
 
  const discs = Array.from({length: MAX_CLOUDS}, () => new T.Vector4());
@@ -84,11 +128,14 @@ export function makeClouds(view, seed) {
 
  function sync() {
   puffs.forEach((puff, i) => {
-   shift.makeTranslation(puff.cloud.driftX || 0, 0, puff.cloud.driftZ || 0);
+   const cloud = clouds[puff.cloud];
+   shift.makeTranslation(cloud.driftX || 0, 0, cloud.driftZ || 0);
    matrix.multiplyMatrices(shift, puff.offset);
    mesh.setMatrixAt(i, matrix);
+   puffFade[i] = fades[puff.cloud];
   });
   mesh.instanceMatrix.needsUpdate = true;
+  mesh.geometry.getAttribute('aFade').needsUpdate = true;
   clouds.forEach((cloud, i) => discs[i].set(
    cloud.x + (cloud.driftX || 0), cloud.y, cloud.z + (cloud.driftZ || 0), cloud.radius));
  }
@@ -100,8 +147,30 @@ export function makeClouds(view, seed) {
  const speed = 9 + (world.settings.wind || 0) * 1.6;
  const dx = Math.sin(windRadians) * speed, dz = Math.cos(windRadians) * speed;
 
+ // OPACITY IS A FUNCTION OF WHERE A CLOUD IS, NOT OF WHAT JUST HAPPENED TO IT.
+ //
+ // The first version watched for the wrap and then faded in over a fixed time.
+ // That gives an arrival and no departure: a cloud still reached the far edge
+ // at full strength and blinked out of existence.
+ //
+ // Fading with distance to the edge of the box does both from one rule, and
+ // does them continuously. A cloud approaching the boundary thins out, wraps
+ // while it is invisible, and thickens again as it moves back inside -- and
+ // because the distance to the NEAR edge is zero on both sides of the jump,
+ // there is no step in opacity at the moment it wraps.
+ //
+ // The margin is a distance, but it is set from the drift speed, so the fade
+ // takes the same few seconds whether the day is still or blowing.
+ const marginX = Math.max(40, Math.abs(dx) * CLOUD_FADE_SECONDS);
+ const marginZ = Math.max(40, Math.abs(dz) * CLOUD_FADE_SECONDS);
+ const edgeFade = cloud => {
+  const x = cloud.x + (cloud.driftX || 0), z = cloud.z + (cloud.driftZ || 0);
+  const near = Math.min((spanX - Math.abs(x)) / marginX, (spanZ - Math.abs(z)) / marginZ);
+  return Math.max(0, Math.min(1, near));
+ };
+
  function update(dt) {
-  for (const cloud of clouds) {
+  clouds.forEach((cloud, i) => {
    cloud.driftX = (cloud.driftX || 0) + dx * dt;
    cloud.driftZ = (cloud.driftZ || 0) + dz * dt;
    // Wrap inside the box so the sky never empties out.
@@ -109,13 +178,15 @@ export function makeClouds(view, seed) {
    while (cloud.x + cloud.driftX < -spanX) cloud.driftX += spanX * 2;
    while (cloud.z + cloud.driftZ > spanZ) cloud.driftZ -= spanZ * 2;
    while (cloud.z + cloud.driftZ < -spanZ) cloud.driftZ += spanZ * 2;
-  }
+   fades[i] = edgeFade(cloud);
+  });
   sync();
  }
 
+ clouds.forEach((cloud, i) => { fades[i] = edgeFade(cloud); });
  sync();
 
  function dispose() { blob.dispose(); material.dispose(); }
 
- return {group, update, dispose, discs, clouds, altitude, count: MAX_CLOUDS};
+ return {group, update, dispose, discs, fades, clouds, altitude, count: MAX_CLOUDS};
 }

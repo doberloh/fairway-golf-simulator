@@ -56,6 +56,39 @@ test('clouds wrap instead of drifting away for ever',()=>{
  }
 });
 
+test('a cloud fades out and in as it crosses the edge, never popping',()=>{
+ // A wrap is a four-kilometre jump across the sky. It keeps the sky full
+ // without spawning anything near the camera, but the jump itself was visible
+ // at both ends -- a cloud reached the boundary at full strength, blinked out
+ // and reappeared on the far side.
+ //
+ // Opacity is a function of distance to the edge of the box rather than of
+ // what just happened, so fading out and fading in are the same rule and the
+ // wrap falls in the middle of it, where the cloud is invisible anyway.
+ const {clouds}=build();
+ assert.equal(clouds.fades.length,MAX_CLOUDS);
+
+ let min=1,max=0,step=0;
+ const last=[...clouds.fades];
+ for(let frame=0;frame<6000;frame++){
+  clouds.update(1/30);
+  for(let i=0;i<MAX_CLOUDS;i++){
+   const f=clouds.fades[i];
+   assert.ok(f>=0&&f<=1,`opacity out of range: ${f}`);
+   step=Math.max(step,Math.abs(f-last[i]));
+   last[i]=f;min=Math.min(min,f);max=Math.max(max,f);
+  }
+ }
+ // It goes all the way out and all the way back.
+ // Sampled per frame, so a continuous fade is only ever caught PASSING
+ // through zero, never exactly on it.
+ assert.ok(min<.01,`no cloud faded out (minimum opacity ${min.toFixed(4)})`);
+ assert.equal(max,1,`no cloud was ever fully visible (maximum ${max})`);
+ // THE POINT: no step. A pop would be a jump of 1 in a single frame, and the
+ // wrap itself must not show up as one either.
+ assert.ok(step<.05,`opacity jumped by ${step.toFixed(3)} in one frame`);
+});
+
 test('a shadow lands where the sun throws it, not under the cloud',()=>{
  // Mirrors cloudShadowAt in cloud-shadows.js: the ground point whose sun ray
  // reaches the cloud's altitude is the one in shade.
