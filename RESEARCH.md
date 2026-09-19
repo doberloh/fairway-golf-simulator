@@ -571,6 +571,31 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The bark, third time, and how it was finally settled
+
+Two wrong diagnoses in a row, both from reasoning about UVs instead of sampling what came out. The third attempt started by measuring, and the measurements are now part of the tools.
+
+**What was actually wrong, in order.** First `v` was multiplied by 22, which does not stretch a tile but crams 22 into every section. Fixing that left `v` alone -- and left the mirroring, because ez-tree's `v` is 0,1,0,1, so **every vertex ring is a reflection axis**: forty horizontal mirror lines up a trunk, which read as banding however correctly the furrows point. And `u` was a fixed 8 tiles around, which squares the tile on one thickness of trunk and squeezes it on every other: 1.72 x 1.71 on a redwood, 0.44 x 1.70 on a cedar.
+
+**The fix is to rebuild both coordinates from the geometry.** `v` is arc length along the branch, ring by ring, divided by a stated tile size -- a plain un-mirrored repeat of about two metres, following a branch rather than assuming everything is vertical. `u` comes from each ring's own circumference, so a tile is square on a six-metre bole and on a twig, and the slight shear between rings of different girth is what tapering wood does anyway.
+
+| | trunk tile | aspect | texture-up vs world-up |
+|---|---|---|---|
+| before | 3.4 x 2.5, mirrored every ring | 1.37 | 0.996 |
+| after | 1.7 x 1.8, plain repeat | 0.94 | 0.996 |
+
+Across all six species the trunk aspect is now 0.89 to 0.98, where 1.00 is square.
+
+### Three ways to measure a texture, none of which is looking at it
+
+Worth keeping, because each caught something the others could not:
+
+- **The source image.** Draw it to a canvas and compare how fast brightness changes left-to-right against top-to-bottom. Both barks change faster across x, so their furrows run vertically in the image. That ruled out "the texture is rotated", which was my second guess.
+- **The mapping.** From each triangle's positions and UVs, compute where the texture's own up-axis points in world space. On the trunk it is 0.996 aligned with world up -- so the mapping was never rotated either, and the fault had to be somewhere else.
+- **The render.** `preserveDrawingBuffer` on the previewer's renderer, then read the pixels back and measure the same anisotropy on brown pixels only. This is the one that says what a person actually sees, and it is the check I should have run first.
+
+The previewer keeps `preserveDrawingBuffer` on for exactly that reason. It costs a little performance in a tool where performance does not matter.
+
 ## The budget is frames, not megabytes
 
 I had been quoting packed geometry as though it were the constraint on how many assets the grove can have. It is not, and the owner was right to push back. Both numbers, measured rather than estimated:

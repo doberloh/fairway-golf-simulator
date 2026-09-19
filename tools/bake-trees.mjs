@@ -58,17 +58,92 @@ const TEXTURES = {
 
 // -------------------------------------------------------------------- UVs
 //
-// EZ-TREE'S `v` IS NOT A RAMP UP THE TRUNK. It runs 0,1,0,1 -- one tile per
-// vertex ring, mirrored each time, which is how it hides the horizontal seam.
-// Multiplying it, the way you would scale an ordinary cylindrical unwrap,
-// crushes that many tiles into every single section: the first bake asked for
-// 22 and the bark came out as fine horizontal banding, with one stripe at the
-// u-seam that happened to look right.
+// THE BARK UVs ARE REBUILT FROM THE GEOMETRY, because ez-tree's are not what
+// they look like and cannot be scaled.
 //
-// So `v` is left exactly as generated, and the tile height is set by the
-// number of SECTIONS instead -- more rings, more tiles. `u` does run 0..1 once
-// around the trunk and can be scaled, which is how the tile is squared up.
-const BARK_AROUND = 4;
+// What it generates for a trunk is:
+//
+//     u = 0  0.167  0.333  0.5  0.667  0.833  1      once around the ring
+//     v = 0  0      0      0    0      0      0      the ring at the foot
+//     v = 1  1      1      1    1      1      1      the next ring up
+//     v = 0  0      0      0    0      0      0      the one after
+//
+// `v` is 0,1,0,1 -- one tile per ring, MIRRORED each time. That is a sensible
+// way to hide the seam between rings, and it is useless to us for two reasons.
+// Multiplying it does not stretch the tile, it crams that many tiles into
+// every section (the first bake asked for 22 and got fine horizontal banding).
+// And the mirroring puts a reflection axis at every single ring: forty of them
+// up a trunk, which the eye reads as horizontal banding however correctly the
+// furrows are oriented.
+//
+// So `v` is rebuilt as ARC LENGTH ALONG THE BRANCH, measured ring by ring from
+// the geometry, divided by the tile size. That gives a plain, un-mirrored
+// repeat of a stated real-world size, and it follows a branch rather than
+// assuming everything is vertical. Poly Haven's barks tile seamlessly, so a
+// plain repeat has no seam to hide.
+//
+// `u` is rebuilt the same way and for the same reason. A FIXED number of tiles
+// around only squares up one thickness of trunk: eight around a redwood gave a
+// tile 1.72 x 1.71, and the same eight around a cedar's thinner bole gave
+// 0.44 x 1.70 -- the texture squeezed four-to-one, which is its own kind of
+// wrong stripe. So the count comes from each ring's own circumference, and
+// every tile on every branch of every species comes out square.
+//
+// TILE is in the library's units, where the trunk is 100 long and stands about
+// 115 m tall in game -- so 1.7 here is a bark tile about two metres across.
+const BARK_TILE = 1.7;
+
+// Vertices come out ring by ring, and `u` runs 0..1 within each ring, so a drop
+// in `u` is the start of the next ring. A jump much bigger than the usual ring
+// spacing means a new branch rather than the next section of this one.
+function rebuildBarkUVs(mesh) {
+ const pos = mesh.geometry.attributes.position, uv = mesh.geometry.attributes.uv;
+ if (!uv) return;
+ const ringOf = new Int32Array(uv.count);
+ const centre = [];
+ let ring = -1, prev = Infinity;
+ for (let i = 0; i < uv.count; i++) {
+  const u = uv.getX(i);
+  if (u < prev - 1e-6) { ring++; centre.push([0, 0, 0, 0]); }
+  prev = u;
+  ringOf[i] = ring;
+  const c = centre[ring];
+  c[0] += pos.getX(i); c[1] += pos.getY(i); c[2] += pos.getZ(i); c[3]++;
+ }
+ for (const c of centre) { c[0] /= c[3]; c[1] /= c[3]; c[2] /= c[3]; }
+
+ // How many tiles fit around each ring, from its own circumference. Between
+ // two rings of different girth the texture shears very slightly, which is
+ // what tapering wood does and is invisible; a fixed count instead squeezes
+ // the tile on anything thinner than whatever it was tuned for.
+ const around = centre.map(() => 1);
+ {
+  const sum = new Float64Array(centre.length);
+  for (let i = 0; i < uv.count; i++) {
+   const r = ringOf[i], c = centre[r];
+   sum[r] += Math.hypot(pos.getX(i) - c[0], pos.getY(i) - c[1], pos.getZ(i) - c[2]);
+  }
+  for (let r = 0; r < centre.length; r++)
+   // The floor only guards against a ring of zero radius at a branch tip.
+   // At .35 it was squeezing every twig to a third of square.
+   around[r] = Math.max(.04, 2 * Math.PI * (sum[r] / centre[r][3]) / BARK_TILE);
+ }
+
+ // Typical spacing, so "much bigger" has something to be bigger than.
+ const steps = [];
+ for (let r = 1; r < centre.length; r++)
+  steps.push(Math.hypot(centre[r][0] - centre[r - 1][0], centre[r][1] - centre[r - 1][1], centre[r][2] - centre[r - 1][2]));
+ const sorted = steps.slice().sort((a, b) => a - b);
+ const typical = sorted[Math.floor(sorted.length / 2)] || 1;
+
+ const along = new Float64Array(centre.length);
+ for (let r = 1; r < centre.length; r++)
+  along[r] = steps[r - 1] > typical * 4 ? 0 : along[r - 1] + steps[r - 1];
+
+ for (let i = 0; i < uv.count; i++)
+  uv.setXY(i, uv.getX(i) * around[ringOf[i]], along[ringOf[i]] / BARK_TILE);
+ uv.needsUpdate = true;
+}
 
 // ------------------------------------------------------------- the species
 //
@@ -328,6 +403,7 @@ function build(builder, seed, tweak) {
  }
  tree.generate();
  flareTheBase(tree, spec.flare);
+ tree.traverse(mesh => { if (mesh.isMesh && !isLeaf(mesh)) rebuildBarkUVs(mesh); });
  return {tree, spec};
 }
 
@@ -443,13 +519,12 @@ function toObj(tree, name) {
   const g = mesh.geometry, pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
   if (!pos.count) continue;
   const leaf = isLeaf(mesh);
-  // The leaf sheet's coordinates are sprite positions and must not be touched.
-  // For bark only `u` is scaled -- see BARK_AROUND above for why `v` is not.
-  const su = leaf ? 1 : BARK_AROUND;
+  // Bark coordinates were rebuilt above; leaf ones are sprite positions in a
+  // sheet and must not be touched. Either way they are written as they stand.
   for (let i = 0; i < pos.count; i++)
    lines.push(`v ${pos.getX(i).toFixed(4)} ${pos.getY(i).toFixed(4)} ${pos.getZ(i).toFixed(4)}`);
   if (uv) for (let i = 0; i < uv.count; i++)
-   lines.push(`vt ${(uv.getX(i) * su).toFixed(4)} ${uv.getY(i).toFixed(4)}`);
+   lines.push(`vt ${uv.getX(i).toFixed(4)} ${uv.getY(i).toFixed(4)}`);
   if (nor) for (let i = 0; i < nor.count; i++)
    lines.push(`vn ${nor.getX(i).toFixed(4)} ${nor.getY(i).toFixed(4)} ${nor.getZ(i).toFixed(4)}`);
 

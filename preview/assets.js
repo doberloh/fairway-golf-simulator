@@ -40,7 +40,10 @@ for (const pack of PACKS) {
 
 const $ = id => document.getElementById(id);
 const canvas = $('view');
-const renderer = new T.WebGLRenderer({canvas, antialias: true});
+// preserveDrawingBuffer so the rendered result can be READ BACK and measured.
+// Bark orientation has now been diagnosed wrong twice from reasoning about
+// UVs; sampling the pixels that actually come out is the check that settles it.
+const renderer = new T.WebGLRenderer({canvas, antialias: true, preserveDrawingBuffer: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
 const scene = new T.Scene();
