@@ -17,6 +17,23 @@ file gives it.
 
 Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
+## Generated geometry, which is not CC0
+
+`vendor/eztree-redwood/` is **generated, not vendored**. `node tools/bake-trees.mjs`
+produces it from [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel
+Greenheck, which is **MIT**, a devDependency, and never ships -- what ships is
+the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
+kept, so the notice is vendored at `vendor/eztree-redwood/LICENSE-ez-tree.txt`
+and reproduced with any distribution.
+
+`vendor/eztree-redwood/redwood_leaves.png` is ez-tree's own leaf sprite sheet,
+copied unchanged and covered by the same MIT licence. **It is the one texture
+in the project that is not ours**, and it is here because a leaf billboard is a
+cut-out: without an alpha mask it is a solid rectangle. ez-tree's bark textures
+are deliberately NOT taken -- bark is painted from the biome palette like every
+other imported surface, and those images have upstream sources
+(texturecan.com, Poly Haven) whose terms would each need checking.
+
 Kenney's licence files state: *"You can use this content for personal,
 educational, and commercial purposes. Support by crediting 'Kenney' or
 'www.kenney.nl' (this is not a requirement)."* Quaternius ships the CC0 1.0
@@ -35,7 +52,7 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 96 of the 729 available models are used. The rest are not shipped. A family may
+- 96 of the 733 available models are used. The rest are not shipped. A family may
   keep only part of a model: the redwood and fir crowns ship as leaf geometry with
   their trunks dropped, because the trunk under them is drawn rather than imported.
 - The **house models are the one exception to materials being discarded**: unlike

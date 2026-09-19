@@ -571,6 +571,39 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Baking trees instead of shopping for them
+
+Three crown models have now been chosen by looking at packs, and none of them was a redwood, because **nobody has made one**. Every conifer in every pack is conical to the ground; the shape we want — a bare column for two thirds of its height with a narrow crown on top — does not exist as an asset at any scale.
+
+[ez-tree](https://github.com/dgreenheck/ez-tree) (MIT, Daniel Greenheck) generates a tree from parameters, which turns the problem from *finding* a redwood into *specifying* one.
+
+### It runs at bake time, and never ships
+
+The library is a devDependency. `node tools/bake-trees.mjs` runs it in Node, writes four variants as OBJ into `vendor/eztree-redwood/`, and from there they go through exactly the same ingest as a Kenney pine. **No library code and no runtime cost** — what ships is geometry.
+
+Two things made that possible. `Tree` builds its meshes without a renderer, and it loads its bark and leaf textures at import time through three's `TextureLoader`, which wants a DOM — six lines of stub is enough, since an image that never loads does not matter to geometry.
+
+### A redwood is four numbers
+
+Starting from the `Pine Large` preset, what makes it a redwood rather than a pine:
+
+- `branch.start[1] = .64` — branches begin two thirds of the way up, and nowhere below
+- `branch.length[1] = 11` against a trunk of 100 — short branches, so the crown is narrow
+- `branch.taper[0] = .82` — a column, not a cone
+- `branch.radius[0] = .028 × length` — a coast redwood is about a thirty-fifth as thick as it is tall
+
+Measured by the same silhouette profile the asset previewer uses: crown starts between 45% and 60% of height, **zero reversals** on all four. One mass on a bare column, which is what we have been trying to fake since the first attempt.
+
+Cost: 18.5k to 27k vertices each, against about 900 for a pack conifer.
+
+### Breaking the no-texture rule, once
+
+Until now every imported surface was stripped of its material and repainted from the biome palette — the thing that lets one pine serve eight biomes instead of importing somebody else's art direction. ez-tree's leaves are billboard quads that rely on an alpha mask, and without it a leaf is a solid rectangle.
+
+So the rule bends for exactly one thing: **a cut-out is not art direction**. One 1024×1024 indexed PNG with a `tRNS` chunk, 297 KB, shipped alongside the models; the bark stays untextured and takes the biome's colour like everything else. The ingest carries UVs through for a part whose material names an image, and the asset previewer renders it with `alphaTest`.
+
+Not shipped into the game yet. The trees are baked and visible in the previewer, which is where the decision about them belongs.
+
 ## Nothing kept trees apart, and at 380 feet it showed
 
 A screenshot of a mangled grove, and three separate faults behind it. All three were invisible at 13 to 29 metres and none of them was the tree the eye lands on.

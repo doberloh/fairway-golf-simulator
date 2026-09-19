@@ -6,7 +6,8 @@
 // so a human can choose. A second, subtly different copy of an OBJ parser is
 // exactly the kind of thing that makes two tools disagree about what a model
 // looks like.
-import {readFileSync} from 'node:fs';
+import {readFileSync, existsSync} from 'node:fs';
+import {dirname, join} from 'node:path';
 
 // Material name -> the palette role the game paints it with.
 export const ROLE_OF = name => {
@@ -86,31 +87,60 @@ export function extract(file) {
 // Quaternius ships OBJ rather than GLB. Same treatment: group faces by the
 // material they use, keep geometry, discard everything else. Faces may be
 // quads or larger, so fan-triangulate them.
+// Material name -> the image it paints with, from the sibling .mtl. Almost
+// nothing here is textured -- the game repaints every surface from the biome
+// palette -- but a leaf sprite is an alpha mask rather than art direction, and
+// without it a leaf quad is a solid rectangle.
+function objTextures(file) {
+ const mtl = file.replace(/\.obj$/i, '.mtl');
+ const map = new Map();
+ if (!existsSync(mtl)) return map;
+ let name = null;
+ for (const line of readFileSync(mtl, 'utf8').split(String.fromCharCode(10))) {
+  const part = line.trim().split(/\s+/);
+  if (part[0] === 'newmtl') name = part[1];
+  else if (part[0] === 'map_Kd' && name) {
+   const image = join(dirname(file), part[part.length - 1]);
+   if (existsSync(image)) map.set(ROLE_OF(name), image);
+  }
+ }
+ return map;
+}
+
 export function extractObj(file) {
  const text = readFileSync(file, 'utf8');
- const v = [], vn = [], byRole = new Map();
+ const textures = objTextures(file);
+ const v = [], vt = [], vn = [], byRole = new Map();
  let role = 'accent';
  for (const line of text.split(String.fromCharCode(10))) {
   const part = line.trim().split(/\s+/);
   if (part[0] === 'v') v.push([+part[1], +part[2], +part[3]]);
+  else if (part[0] === 'vt') vt.push([+part[1], +part[2]]);
   else if (part[0] === 'vn') vn.push([+part[1], +part[2], +part[3]]);
   else if (part[0] === 'usemtl') role = ROLE_OF(part[1] || '');
   else if (part[0] === 'f') {
-   const group = byRole.get(role) || {position: [], normal: [], index: [], seen: new Map()};
+   const group = byRole.get(role)
+    || {position: [], normal: [], uv: [], index: [], seen: new Map(), texture: textures.get(role) || null};
    const corner = part.slice(1).map(token => {
-    const [vi, , ni] = token.split('/');
+    const [vi, ti, ni] = token.split('/');
     // OBJ indices are 1-based and may be negative (relative to the end).
     const pi = +vi < 0 ? v.length + +vi : +vi - 1;
+    const pt = ti ? (+ti < 0 ? vt.length + +ti : +ti - 1) : -1;
     const pn = ni ? (+ni < 0 ? vn.length + +ni : +ni - 1) : -1;
     // Share a vertex between the faces that reference it. Emitting one per face
     // corner instead multiplies the vertex count roughly sixfold, which showed
     // up immediately as a megabyte of packed geometry.
-    const key = pi + '/' + pn;
+    //
+    // A texture coordinate only splits a vertex when the part is actually
+    // textured. Nearly every OBJ here carries `vt` lines that nothing reads,
+    // and counting them regardless split vertices at seams for no benefit.
+    const key = group.texture ? pi + '/' + pt + '/' + pn : pi + '/' + pn;
     const hit = group.seen.get(key);
     if (hit !== undefined) return hit;
     const at = group.position.length / 3;
     group.position.push(...(v[pi] || [0, 0, 0]));
     group.normal.push(...(pn >= 0 && vn[pn] ? vn[pn] : [0, 1, 0]));
+    group.uv.push(...(pt >= 0 && vt[pt] ? vt[pt] : [0, 0]));
     group.seen.set(key, at);
     return at;
    });
@@ -118,5 +148,7 @@ export function extractObj(file) {
    byRole.set(role, group);
   }
  }
+ // An untextured group's uv array is all zeros and nothing should carry it.
+ for (const group of byRole.values()) if (!group.texture) group.uv = [];
  return byRole;
 }

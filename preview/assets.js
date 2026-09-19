@@ -5,11 +5,21 @@
 // these 729 models do we actually want", which has already been answered wrong
 // twice by reading file names.
 import * as T from 'three';
-import {MODELS} from './assets-data.js';
+import {MODELS, TEXTURES} from './assets-data.js';
 
 // The role colours the game paints these with, so a model reads here roughly as
 // it will on a course rather than in whatever colours its author chose.
 const ROLE_COLOUR = {bark: '#6d4f3a', leaf: '#3f6b40', stone: '#79807a', dirt: '#6f7a4e', accent: '#a89a73'};
+
+// Loaded once and shared. A sprite sheet is an alpha mask here, not colour:
+// the tint still comes from the role, so a textured leaf reads the same as an
+// untextured one but with its shape cut out.
+const loader = new T.TextureLoader();
+const TEX = TEXTURES.map(src => {
+ const map = loader.load(src);
+ map.colorSpace = T.SRGBColorSpace;
+ return map;
+});
 
 // The shortest tail of a pack's directory name that no other pack contains.
 // `stylized-nature` looks like a fine hint for the Ultimate Stylized pack right
@@ -87,8 +97,20 @@ function show(model) {
   geometry.setAttribute('position', new T.BufferAttribute(position, 3));
   geometry.setIndex(new T.BufferAttribute(decode(part.i, Uint16Array), 1));
   geometry.computeVertexNormals();
-  current.add(new T.Mesh(geometry, new T.MeshStandardMaterial({
-   color: ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide})));
+  const settings = {color: ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide};
+  if (part.uv !== undefined) {
+   const uv = decode(part.uv, Uint16Array), f = new Float32Array(uv.length);
+   for (let i = 0; i < uv.length; i++) f[i] = uv[i] / 65535;
+   geometry.setAttribute('uv', new T.BufferAttribute(f, 2));
+   settings.map = TEX[part.tex];
+   settings.alphaTest = .4;
+   // WHITE, not the role colour. three multiplies map by colour, and a green
+   // sheet through a green tint comes out near-black -- and the point of
+   // looking at a sprite sheet is to see the sheet. How the game tints these
+   // is a separate decision from how they are judged here.
+   settings.color = '#ffffff';
+  }
+  current.add(new T.Mesh(geometry, new T.MeshStandardMaterial(settings)));
  }
  scene.add(current);
 
@@ -99,7 +121,8 @@ function show(model) {
 
  $('title').textContent = model.name;
  $('sub').textContent = `${model.pack}  ·  ${model.verts.toLocaleString()} verts  ·  `
-  + `${model.parts.map(p => p.role).join(' + ')}  ·  ${(model.radius * h * 2).toFixed(1)} m wide at ${h} m tall`;
+  + `${model.parts.map(p => p.role + (p.uv !== undefined ? ' (textured)' : '')).join(' + ')}`
+  + `  ·  ${(model.radius * h * 2).toFixed(1)} m wide at ${h} m tall`;
  $('pickline').textContent = HINT[model.pack] + ':' + model.name;
 
  const bars = $('bars');
