@@ -571,6 +571,639 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The grove is grown now, and the level of detail it "needed" was imaginary
+
+Every plant in the redwood biome comes from `tools/grow.mjs`. No borrowed crown, no drawn cylinder, no pack model. The mix went from three species and a christmas tree to nine:
+
+    redwood .25   fir .13   hemlock .07   redcedar .07 (45% height)
+    tanoak .05 (18%)   seedling .05 (4.5%)
+    swordfern .19   salal .11   sorrel .08
+
+On a nine-hole course that is 538 redwoods, 227 firs, 134 hemlocks, 157 cedars, 103 tanoaks, 115 seedlings and 949 plants on the floor -- **5.0 tall conifers per hectare**, which is where the literature puts old growth.
+
+### The arithmetic that forced work nobody needed
+
+Drawn at full detail the set came to 25 million vertices against the 3.7 million the whole course cost before. That number was frightening enough to act on, so every expensive species got baked twice, `Redwood_Giant_1` beside `Redwood_Giant_1_Far` at a twentieth of the vertices, and `view.clearCameraTrees` swapped them by distance.
+
+It worked, and it was the wrong thing to build, and the owner is the one who noticed: *"the pop in is crazy. And the trees dont look lush at all. It looks like the forest is dead. Have we really benchmarked the full LoD on everything and proven its not achievable?"*
+
+No. There had been arithmetic, not a benchmark.
+
+### The benchmark that was also not a benchmark
+
+So it got measured: time the render call, once with the swap on and once with every tree at full detail.
+
+    level of detail on    1.0 M verts drawn     8.6 ms
+    everything full      11.1 M verts drawn     9.1 ms
+
+Half a millisecond for eleven times the geometry -- which reads as a real if trivial cost, and is nothing of the kind. **8.33 ms is the vsync interval on a 120 Hz display.** Both numbers were the monitor. The renderer was sitting in the driver waiting for the next refresh, and a timer wrapped around that wait can only ever return the refresh rate no matter what it is asked to draw. The measurement was incapable of reporting "free", which is the answer.
+
+This is the sixth metric in this project to answer a different question than the one asked, after a UV-basis check that skipped exactly the degenerate triangles that were the bug, a pixel check that filtered for brown on grey bark, and an anisotropy score that called a stretched row "vertical". They fail the same way every time: a filter or a clamp that is reasonable in general quietly excludes the case under test. **Before trusting a number here, check that it is able to move.**
+
+### What the honest measurement says
+
+Frame pacing across 240 frames, against the scene's own vertex count rather than a wrapped timer:
+
+    33.6 M vertices, 98 M triangles submitted per frame, 117.6 fps
+
+Still pinned to the 120 Hz cap, with the whole forest at full detail and the foliage half again denser than the version that shipped the LOD. Instanced vertex throughput is close to free on this path; the frame is bound by something else entirely. The swap bought nothing measurable and cost the only thing that showed -- at any moment nearly every visible tree was the thinned twin, so the forest looked dead, and the boundary popped.
+
+All of it came out. The generator still bakes the `_Far` twins and they are simply not ingested, one `PICK` entry away if weak hardware ever wants them.
+
+### The forest looked dead for a second reason
+
+The palette was measured off 315 photographs by clustering their greens and taking the dominant cluster. The dominant cluster in a photograph of a grove is `#323b23`, because **most of a photographed grove is in shade**. Taking the largest cluster as "the colour" paints every leaf the colour of a shadow, and then the sim shades it again.
+
+The measured range runs `#323b23` to `#5f6d44` to `#798962` to `#9baf87` to `#bdce97`. Canopy foliage moved from the first of those to `#62784a`, understory to `#6b9046`, saplings to `#83ad55`. The renderer does its own shading; what it wants handed to it is the **lit** leaf, not the average one.
+
+Density went up with it, since the vertex budget turned out not to exist: whorls 16 to 24, sprays 3 to 4, fern fronds 10 to 14, sorrel 16 to 26 plants a clump. A giant redwood is 27,304 vertices now against 11,460.
+
+### What came out
+
+`addTallConifers` is gone: 121 lines that drew a tapered cylinder and balanced a borrowed conifer crown on top. It existed only because no pack contained a bare-boled giant. So are the pack's logs, stumps, mossy rocks and the MegaKit fern -- the grown nurse log has moss only along its upper flank, the grown stump has root buttresses, and the grown fern is a shuttlecock of once-pinnate fronds rather than a generic leafy plant.
+
+The build goes from 2.78 MB to **15.79 MB**, which is the part that does not matter.
+
+### One thing the tests caught
+
+The LOD work made `addVegetation` settle the near/far split as it built, which meant calling the camera-move handler directly -- and the vegetation tests build a view with **no camera**, because they only ever look at geometry. Three tests went red on `view.camera.position`. The handler returns early without a camera, and that guard stayed after the LOD left, because hiding the tree the camera stands inside still needs one.
+
+## A grove grown from nothing, against 315 photographs
+
+`vendor/grown-redwood-forest` holds 153 models -- trees, shrubs, ground cover, dead wood -- with **no imported vertex, no texture, and no generator library**. `tools/grow-lib.mjs` is about four hundred lines of triangles and `tools/grow.mjs` is the catalogue. The photographs decided the proportions; nothing was copied from them.
+
+### Measuring 315 pictures
+
+Search on Commons kept returning the same grove shots and gave *nothing* for the understory, the deadwood or the floor -- which is most of what a grove looks like at eye level. Categories fixed that. 315 images: 99 understory, 70 grove, 37 deadwood, 34 trunk, 24 canopy, 19 hemlock, 17 fir, 15 cedar. Provenance in REFERENCES.md, fetcher in `tools/fetch-references.py`.
+
+Then two kinds of analysis, because they answer different questions.
+
+**Statistics, on all 315.** Decoded in a browser canvas and clustered, per subject: dominant colours, mean saturation and value, and how much green sits in each sixteenth of the frame from top to bottom. That last one turned out to be the species test:
+
+    grove       green by height, top to bottom   3 3 3 3 3 3 3 3 3 3 3 2 2 2 2 2
+    trunk                                        2 2 2 2 2 2 1 2 1 1 1 1 1 1 1 1
+    fir                                          3 3 3 3 4 4 4 4 5 5 5 6 6 6 5 4
+    hemlock                                      3 4 4 4 4 4 5 5 5 5 5 5 5 4 4 4
+    understory                                   5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 4
+
+**Green decreases toward the ground in a redwood picture and increases in a fir one.** That single difference is most of what makes two conifers read as two species, and it is not something you would get from looking.
+
+Colours, measured rather than chosen: bark clusters at `#2d251c` in shade and `#7c624c` in sun; canopy foliage `#323b23`–`#5f6d44`; understory foliage much brighter at `#4a6940`–`#739753`; moss on a nurse log brighter still. A grove averages 0.40 value with a fifth of it in deep shadow.
+
+**Looking, on a chosen handful.** Statistics cannot tell you the shape of a frond. Reading the pictures gave the things that actually changed the geometry:
+
+- **A redwood's foliage is a narrow vertical plume hugging the upper trunk**, not a cone on a pole -- with epicormic sprouts and burls breaking out of the bare bole far below it. Every previous attempt in this project, imported or generated, built the cone.
+- The bark is **deeply fluted**, long parallel ridges the whole height.
+- A **sword fern is a shuttlecock** of ten to twenty once-pinnate fronds leaving the crown near-vertical and arching over.
+- **Moss sits on the top and upper flanks** of a log and nowhere else, and it is the brightest thing on the floor.
+- A **snag is a dead giant**: short for its girth, bleached almost silver, with heavy broken stubs.
+
+### What had to be built to draw it
+
+Three primitives carry everything. A **tube** swept along a path, with a corrugated cross-section for bark fluting. A **spray** -- a tapered ribbon with a zig-zag edge -- gathered into fans for conifer foliage. A **frond** with paired leaflets for ferns. Plus a lumpy half-dome for moss, burls and boulders.
+
+Five things were wrong on the first render and each is worth keeping:
+
+**The flutes were invisible.** They existed in the silhouette and nowhere else, because the normal was taken from the axis rather than from the cross-section curve. Now `dr/da` by central difference gives the true 2D normal -- and the flutes still did not appear, because **the previewer was recomputing normals and throwing away the file's**. Both had to be fixed before a single ridge showed.
+
+**Three sides per flute, minimum.** At ten sides and seven flutes the corrugation has nowhere to happen and aliases into a smooth cylinder.
+
+**Foliage normals point up, not out.** A spray is one sheet, so half of it faces away from every light and renders black. Tilting the normals hard toward the sky makes it a soft mass lit from above. Then the black came back, because the geometry was drawn double-sided *and* duplicated: every triangle had a coincident twin with a flipped normal to z-fight with. The models now carry both faces and say so -- `# two-faced` in the MTL -- and anything reading them draws front side only.
+
+**A plume is ragged.** Limbs on an even ladder read as a fir with a long trunk. Height, reach and angle are jittered hard and one in twelve is dropped.
+
+**Two vertices per spray step, not three.** The third, down the centre line, folded the spray very slightly and was worth nothing at the distance any of this is seen from -- and it was a third of the vertex count of the most numerous thing in the catalogue. That one change took the set from 2.4 M vertices to 922 k.
+
+### What is there
+
+153 models, 922,164 vertices, mean 6,027, heaviest 27,647:
+
+| | | |
+|---|---|---|
+| `Redwood_Giant_1-8` | 95 m | bole bare to 52-77%, plume, burls, sprouts |
+| `Redwood_Mature_1-8`, `_Young_1-6`, `_Sapling_1-4` | 62/26/3.5 m | the age spread a grove needs |
+| `Redwood_Leaner_1-2`, `_Burled_1-2` | 70 m | the odd ones |
+| `DouglasFir_1-12` | 55 m | six crown shapes, some with broken tops |
+| `Hemlock_1-8`, `RedCedar_1-8` | 40/45 m | lower, drooping, mid-heavy |
+| `Tanoak_1-6`, `VineMaple_1-4` | 16/9 m | the broadleaf understorey |
+| `Snag_1-7`, `Stump_1-6`, `Stump_Bare_1-3`, `RootWad_1-2` | | the dead, which old growth is full of |
+| `NurseLog_1-8`, `FallenLog_1-4` | | mossed along the top only |
+| `SwordFern_1-12`, `_Young_1-4` | 1.15/0.8 m | the plant you see most of |
+| `Salal_1-6`, `Huckleberry_1-4`, `Sorrel_1-6` | | thicket, thicket, and the mat between |
+| `Seedling_1-6`, `MossMound_1-6`, `Boulder_1-5`, `Litter_1-6` | | the floor |
+
+### And a contact sheet, because a hundred and fifty is not one
+
+`preview/sheet.html` draws every model in its own cell of one canvas -- scissor and viewport per cell, one renderer -- at its real height beside a 1.8 m figure. The single-model viewer is right for judging one thing and useless for judging a catalogue; the sheet is how the flat ferns, the twelve identical firs and the mast-thin snags were all caught in one look.
+
+Its own bug is worth recording: `renderer.clear()` honours the scissor test, so clearing without first opening the scissor to the whole canvas leaves the previous layout's thumbnails sitting in every cell the new one does not reach.
+
+## Twenty-two trees out of the packs we already own
+
+No generator, no new dependency: every triangle comes from a CC0 pack already in `vendor/`. What is new is the **arrangement**, and that is where the redwood research lives -- a bare bole to roughly two thirds of the height, a crown about a sixth as wide as the tree is tall, a trunk a thirty-eighth as thick as it is tall, a swollen foot. No pack model has any of that.
+
+`tools/bake-assets.mjs`, into `vendor/baked_assets`. Three operations do all of it:
+
+**Stretch the bole.** A pack conifer branches a third of the way up, and scaling the whole model taller just gives a taller version of the same tree. So only the part *below* the first branch is stretched and everything above rides up unchanged -- a normal tree becomes a redwood bole with its own branch structure still on top. Where it first branches is measured, not assumed: the lowest band whose radius passes 6% of the model's height.
+
+**Flare the foot**, as before: every published redwood diameter is quoted above the swollen base.
+
+**Dress it.** Crowns are borrowed leaf geometry, either one mass capping the bole or sprays placed on a golden-angle spiral through a crown envelope that is widest just above its base and closes at the top.
+
+### What the survey turned up
+
+Two facts made the whole thing cheap. `DeadTree_1`–`DeadTree_10` in Ultimate Stylized Nature are **the same geometry as `NormalTree_1`–`NormalTree_10` with the foliage removed** -- identical vertex counts -- so the pack already ships ten bare boles with real branch structure, bare to between 30% and 50% of their height at trunk radii of 0.027 to 0.051. And the cheapest single-mass crowns are tiny: `Bush_Small` at 380 vertices, `Bush_Large` at 552, `PineTree_4` at 874.
+
+That range matters more than it sounds. **`Redwood_Old_A` is 1,321 vertices** -- a 447-vertex bole and one 874-vertex crown -- against 17,000 for the cheapest generated redwood. Where the budget is vertices per frame rather than megabytes, a thirteen-times difference is the whole argument.
+
+| | verts | |
+|---|---|---|
+| `Redwood_A`, `_B` | 3.4k, 3.8k | mature, capped |
+| `Redwood_C`–`_F` | 23k–56k | mature, sprayed |
+| `Redwood_Old_A`, `_B` | 1.3k, 20k | bole to three quarters, narrower crown |
+| `RedwoodYoung_A`–`_C` | 1.3k–32k | half the girth, branched most of the way down |
+| `DouglasFir_A`–`_C` | 5.7k–37k | narrower, branched lower |
+| `RedCedar_A`, `_B` | 40k, 70k | mid-storey, foliage nearly to the ground |
+| `BigleafMaple_A`, `_Autumn_A` | 26k | the understorey broadleaf |
+| `Tanoak_A`, `Vine_Maple_A` | 21k, 13k | what you actually walk past |
+| `RedwoodSnag_A`, `_B` | 2.7k, 2.8k | standing dead, no foliage at all |
+
+### And the colour test misled me a fourth time
+
+`BigleafMaple_A` first reported almost no foliage and a vast trunk. Nothing was wrong: `MapleTree_Leaves.png` is an **autumn** sheet, its foliage averaging `#452c28`, and the check that separates leaf from wood asks whether green exceeds red. Warm foliage counts as wood.
+
+Measuring the sheet rather than trusting the classifier settled it in one step. The maple now wears the green `NormalTree` sheet and the autumn one keeps a variant of its own, which is a better outcome than the bug was a problem -- but the classifier has now been wrong about brown bark, grey bark, and orange leaves. **Any check that sorts pixels by colour is a guess about the art.**
+
+## ez-tree's structure wearing Quaternius's foliage
+
+Six more models in `vendor/baked_assets`, and the point of them is that the two sources have opposite strengths.
+
+ez-tree gives a **trunk and a branch skeleton no pack contains**: a bare column with a buttressed foot and short limbs only near the top. Quaternius gives **foliage that already looks like this game** -- chunky, stylized, a solid mass rather than alpha-cut billboards -- and `PineTree_2` and `PineTree_4` are the two crowns across all six packs whose silhouette rises to a single peak instead of stacking into tiers.
+
+The proportions come from neither: bare trunk to 64% of height, crown half-width 0.085 of the tree's height, trunk a thirty-eighth as thick as it is tall, 42% buttress. The same numbers the redwood research produced.
+
+**Two ways of wearing it**, because it is not obvious which reads better and the previewer is for deciding that:
+
+| | | verts |
+|---|---|---|
+| `StylizedRedwood_Cap_1` | one crown on the bare trunk -- the original silhouette, on a trunk that now has branches inside it | 5.6k |
+| `StylizedRedwood_Cap_2` | wider and starting lower | 5.5k |
+| `StylizedRedwood_Tufts_1` | a spray at the end of every main limb, branch bare behind it, which is what conifer foliage actually is | 34k |
+| `StylizedRedwood_Tufts_2` | fewer, larger sprays | 23k |
+| `StylizedFir_Tufts_1` | the fir skeleton: more limbs, starting lower, drooping | 51k |
+| `StylizedFir_Cap_1` | the same skeleton capped instead | 7.1k |
+
+**The caps are an order of magnitude cheaper** -- 5.5k against 34k -- because one crown is about a thousand vertices and a tuft variant wears thirty of them. Worth holding onto given that the whole set has to fit a frame budget rather than a disk.
+
+Tufts are placed at branch tips, taking the longest runs first so the main limbs are dressed before their twigs, and then capped. Uncapped, a fir has a hundred and fifty tips and dressing all of them cost 155,000 vertices and a 20 MB file for foliage nobody could pick out.
+
+The mechanism is small: the crown is read through the same `extractObj` the ingest uses, normalised the same way, copied once per placement into one merged mesh, and handed to the tree as an alpha-tested mesh -- so the OBJ writer, the silhouette profile and the buttress all treat it as foliage without knowing it came from somewhere else.
+
+## Trunks painted, canopies textured
+
+Three changes that all turn on the same distinction: **a leaf is a cut-out, a trunk is a surface.**
+
+### No bark images at all
+
+The trunks are untextured now and state a colour instead. That is the right side of the line: a surface is exactly what this project repaints from the biome palette, and carrying a bark image meant tiling it, crediting it, and -- as five attempts established -- getting its coordinates through a pipeline that was never built for tiling.
+
+Each species names its own bark, written as the colour you would pick in an editor and converted on the way out, because **MTL `Kd` is linear**. Blender's exporter writes it that way and Quaternius's own files confirm it; putting sRGB numbers straight in produced a set of pale washed tans, which is what the first attempt at this looked like.
+
+| | | |
+|---|---|---|
+| coast redwood | `#7a4a33` | cinnamon red-brown, darkening with weather |
+| young redwood | `#8a5439` | brighter, the colour freshest on young bark |
+| douglas fir | `#55483c` | dark grey-brown |
+| western red cedar | `#7d5440` | reddish and fibrous |
+| bigleaf maple | `#6b6653` | grey, and mossy in this climate |
+| dead snag | `#8e8478` | weathered silver, all colour gone |
+
+### The pack canopies were meant to be textured, and never were
+
+`PineTree_2` and `PineTree_4` -- the crowns the game's redwoods and firs are wearing -- are fully mapped, and Ultimate Stylized Nature ships their sheet. Their **OBJ export simply never references it**, and the MegaKit's exports reference theirs as `C:/Leaves.png`, an absolute path from whichever machine exported the file.
+
+Two rules fix both. Take only the file name from a `map_Kd`, and, failing that, look for an image named after the material -- Quaternius calls the sheet for `PineTree_Leaves` exactly `PineTree_Leaves.png`, which is a convention to follow rather than a guess. 92 of the 741 models in the previewer are textured now, against 12 before.
+
+### The switch that keeps it out of the game
+
+Reading textures has to be a choice, not a default, and it took two attempts to see why. Turning the lookup on grew the shipped geometry twice: first by attaching texture coordinates to parts whose sheet the game does not carry, and then -- more quietly -- because a UV seam splits a shared vertex, so parts that merely *had* a texture found for them gained vertices even after the coordinates were dropped.
+
+So it is one switch, `wantTextures`, governing the lookup and the vertex splitting together. The ingest asks for it only for families whose image it ships, which today is houses and their atlas. The previewer always asks, because looking at models is what it is for. `src/asset-meshes.js` is byte-identical.
+
+When the generated trees do ship, their family joins `TEXTURED_FAMILIES` **and** their leaf sheets have to be carried with them. One without the other is either wasted bytes or an untextured quad.
+
+## The bark, third time, and how it was finally settled
+
+Two wrong diagnoses in a row, both from reasoning about UVs instead of sampling what came out. The third attempt started by measuring, and the measurements are now part of the tools.
+
+**What was actually wrong, in order.** First `v` was multiplied by 22, which does not stretch a tile but crams 22 into every section. Fixing that left `v` alone -- and left the mirroring, because ez-tree's `v` is 0,1,0,1, so **every vertex ring is a reflection axis**: forty horizontal mirror lines up a trunk, which read as banding however correctly the furrows point. And `u` was a fixed 8 tiles around, which squares the tile on one thickness of trunk and squeezes it on every other: 1.72 x 1.71 on a redwood, 0.44 x 1.70 on a cedar.
+
+**The fix is to rebuild both coordinates from the geometry.** `v` is arc length along the branch, ring by ring, divided by a stated tile size -- a plain un-mirrored repeat of about two metres, following a branch rather than assuming everything is vertical. `u` comes from each ring's own circumference, so a tile is square on a six-metre bole and on a twig, and the slight shear between rings of different girth is what tapering wood does anyway.
+
+| | trunk tile | aspect | texture-up vs world-up |
+|---|---|---|---|
+| before | 3.4 x 2.5, mirrored every ring | 1.37 | 0.996 |
+| after | 1.7 x 1.8, plain repeat | 0.94 | 0.996 |
+
+Across all six species the trunk aspect is now 0.89 to 0.98, where 1.00 is square.
+
+### It was never the bake
+
+Five attempts at "the bark is wrong", four of them spent inside `tools/bake-trees.mjs`, and the fault was two files downstream.
+
+Both the ingest and the asset previewer packed texture coordinates like this:
+
+    uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] * 65535)));
+
+Sixteen bits across the range 0..1. That is correct for the only textured thing the project had ever carried -- a house, whose coordinates are positions in an atlas and never leave the unit square. Bark tiles: nine times around a trunk and fifty-eight times up it. **Every coordinate above 1.0 clamped to 1.0**, so the whole trunk arrived at the renderer holding a single row of the bark image, stretched its entire length. A smooth grey column with a chevron of moire wherever the clamp bit.
+
+The bake had been correct since the third attempt. Each time I re-measured the OBJ and found it healthy, which it was, and then looked at a render of something else entirely.
+
+The fix is to record the range and quantise against it: `uvSpan` per part, restored on load. Houses have no span and are untouched -- `src/asset-meshes.js` is byte-identical after the change.
+
+**What would have caught it:** a check that runs on the thing being displayed. The pixel readback was the right instrument and I pointed it at the wrong question -- it measured *which way* the grain ran, and the grain ran vertically the whole time, because a single stretched row of pixels is vertical. The question that separates the two is *how much detail is there*, and on the same trunks that number went from a flat column to 7-21 units of gradient per pixel once the coordinates survived.
+
+Anisotropy said "vertical" through the entire bug. It was answering honestly; it was the wrong question.
+
+### And the metric was wrong twice over
+
+The fix above was found only after the checks stopped lying. Both failures are worth keeping.
+
+**It skipped the broken triangles.** Measuring the tile size and orientation means inverting the UV basis per triangle, and a basis that collapses divides by zero -- so there was a `if (Math.abs(det) < 1e-9) continue;` guard. Those skipped triangles *were the bug*: a third of the young redwood's trunk had two corners sharing a `v`, smearing the texture the full length of the tree, and the average of the surviving two thirds came back at 0.94 aspect and 0.996 aligned. Healthy numbers, computed from the parts that worked.
+
+`tools/bake-trees.mjs` counts collapsed bases now and fails the bake, rather than any tool quietly averaging around them.
+
+**It sampled the wrong pixels.** The readback filtered to "brown" pixels as a way of ignoring foliage -- `red > green + 8`. Willow bark is grey, so that condition excluded almost the entire trunk: the verdict "vertical, ratio 4.64" was computed from 54 pixels of branch. Widening it to "not green" put the sample at 5,000-16,000 pixels and the answer stayed vertical, but only by luck of what the 54 happened to be.
+
+Four metrics in this project have now measured the wrong thing. The pattern each time is a filter that made the measurement convenient.
+
+### The cause, finally
+
+`v` is arc length along the branch, which needs to know where one branch ends and the next begins. The first version called a step a new branch if it was more than four times **the median step over the whole mesh**. On a tree with many short branches the median *is* the branch spacing -- so a young redwood's own longer trunk sections each looked like a new branch, reset to zero one after another, and the trunk carried the same `v` from root to crown.
+
+The comparison is local now: a step is a new branch if it is more than four times **the step before it**. Plus a floor, so two rings landing on top of each other still advance `v` and cannot collapse a basis.
+
+Measured on the real trunk run of every model -- the vertices before the first big positional jump, which is where ez-tree starts branch one:
+
+    Redwood_1       rises 100 units, v 0 -> 64.0    1.56 units per tile
+    RedwoodYoung_1  rises 100 units, v 0 -> 58.8    1.70
+    RedwoodYoung_2  rises 100 units, v 0 -> 58.8    1.70
+    DouglasFir_1    rises 100 units, v 0 -> 58.8    1.70
+    RedCedar_1      rises 100 units, v 0 -> 58.8    1.70
+    BigleafMaple_1  rises 130 units, v 0 -> 91.3    1.42
+
+against a target of 1.7. The two that come in under it are the trees whose trunks curve, where arc length exceeds the vertical rise, which is the point of measuring along the branch rather than up the world.
+
+Rendered grain, on thousands of pixels rather than dozens: vertical everywhere, anisotropy 1.6 to 6.7.
+
+### Three ways to measure a texture, none of which is looking at it
+
+Worth keeping, because each caught something the others could not:
+
+- **The source image.** Draw it to a canvas and compare how fast brightness changes left-to-right against top-to-bottom. Both barks change faster across x, so their furrows run vertically in the image. That ruled out "the texture is rotated", which was my second guess.
+- **The mapping.** From each triangle's positions and UVs, compute where the texture's own up-axis points in world space. On the trunk it is 0.996 aligned with world up -- so the mapping was never rotated either, and the fault had to be somewhere else.
+- **The render.** `preserveDrawingBuffer` on the previewer's renderer, then read the pixels back and measure the same anisotropy on brown pixels only. This is the one that says what a person actually sees, and it is the check I should have run first.
+
+The previewer keeps `preserveDrawingBuffer` on for exactly that reason. It costs a little performance in a tool where performance does not matter.
+
+## The budget is frames, not megabytes
+
+I had been quoting packed geometry as though it were the constraint on how many assets the grove can have. It is not, and the owner was right to push back. Both numbers, measured rather than estimated:
+
+**File size.** Putting all twelve baked trees into `PICK` and building takes the single file from **2.78 MB to 10.84 MB** (gzip 4.23 MB), plus about 1.5 MB more once the four sprite sheets ship as base64. Twelve or thirty, it is still a file you can email, and the base64 decode at startup is a fraction of a second. There is enormous headroom here and variety is close to free.
+
+**Frames.** This is the one that binds, and it has nothing to do with file size.
+
+A grown redwood course holds **117,000 instances and 3.73 million vertices** if every one were visible. Of that, the 1,378 tall conifers are about 1.4 million — roughly a thousand vertices each, because a tree today is a nine-sided cylinder plus one borrowed crown of about 950.
+
+The baked trees are 17k to 52k vertices each. Drawing the same 1,378 trees from them:
+
+| | vertices, whole course |
+|---|---|
+| today | 3.7 M |
+| redwoods and firs swapped for baked ones | ~35 M |
+| plus cedars for the mid-storey | ~49 M |
+
+Thirteen times the entire course as it stands, from the trees alone. That is a frame-rate problem on any hardware, and no amount of disk space touches it.
+
+### So the lever is detail, not count
+
+Ship as many species as we like — that cost is megabytes, and megabytes are available. What cannot happen is drawing a 23,000-vertex tree fourteen hundred times.
+
+Two levels per species is the answer: the full model near the camera, a cheap one beyond it. We control both, because we generate them — the far version is the same parameters with fewer sections, fewer segments and a fraction of the leaves, and ez-tree also has `generateLODs` if we want it to do the reduction. Rough arithmetic: the forty-odd trees within about 120 m at full detail plus everything else at 1.5k comes to roughly 3 M vertices, which is what the course costs today.
+
+The machinery half-exists. `view.treeInstances` already walks every instance each time the camera moves, to hide a tree the camera is standing inside, and the near-field grass already builds and drops tiles by camera distance.
+
+## The bark ran sideways, and a forest rather than a tree
+
+### `v` was never a ramp
+
+The bark came out banded horizontally, with one vertical-looking stripe down a single slice of the trunk. The instinct is to blame the texture or the seam. The cause was an assumption about what ez-tree's UVs mean.
+
+Its trunk coordinates are:
+
+    u = 0.000  0.167  0.333  0.500  0.667  0.833  1.000    once around the ring
+    v = 0      0      0      0      0      0      0        ring at the foot
+    v = 1      1      1      1      1      1      1        next ring up
+    v = 0      0      0      0      0      0      0        the one after
+
+**`v` runs 0,1,0,1 — one tile per vertex ring, mirrored each time**, which is how it hides the horizontal seam between rings. It is not a ramp up the trunk. Scaling it by 22, the way you would scale an ordinary cylindrical unwrap, asked for twenty-two tiles inside *every single section*: the bark became fine horizontal banding, and the one stripe that looked right was the u-seam column where the whole texture is squashed into one step.
+
+So `v` is left exactly as generated, and tile height is set by the number of **sections** instead — forty rings up the trunk is forty tiles, about one every three metres. Only `u` is scaled, by 4, to square the tile up. Worth remembering as a general point: a generated UV layout is a fact to look up, not a convention to assume.
+
+### Twelve trees, not four
+
+A grove needs more than one species, and the whole argument for generating is that a second species costs a function rather than a shopping trip.
+
+| model | what it is | verts |
+|---|---|---|
+| `Redwood_1`–`_4` | mature, crowns starting 30–60% up | 17k–29k |
+| `RedwoodYoung_1`, `_2` | half the girth for its height, branched nearly to the ground — nothing has self-pruned yet | 40k |
+| `DouglasFir_1`, `_2` | narrower, spikier, distinctly drooping | 36k |
+| `RedCedar_1`, `_2` | the mid-storey: branches to the ground, heavily drooping, dense | 52k |
+| `BigleafMaple_1` | the only broadleaf, wide open crown | 8k |
+| `RedwoodSnag_1` | a standing dead spar. No foliage, 1.2k verts, unmistakably old-growth | 1k |
+
+Two of the four mature redwoods now carry their branches much lower (35% and 30%). An unbroken line of bare trunks all ending at the same height reads as a colonnade rather than a wood — a grove is a spread of ages, and that has to be visible in the silhouettes.
+
+**Cost, stated plainly: 360k vertices over twelve models is roughly 3 MB of packed geometry, against a 2.78 MB game.** Not all twelve ship. That is what choosing in the previewer is for, and the cedars at 52k each are the first place to look.
+
+## What a redwood actually looks like
+
+The first bake was a redwood from memory. These are the published descriptions it was then matched against, and what each one changed.
+
+Sources: [Britannica on coast redwood](https://www.britannica.com/plant/coast-redwood) · [Sequoia sempervirens](https://en.wikipedia.org/wiki/Sequoia_sempervirens) · [USFS, Coast Redwood Live Crown and Sapwood Dynamics](https://fs.usda.gov/treesearch/pubs/41818) · [Hyperion](https://en.wikipedia.org/wiki/Hyperion_(tree))
+
+| what the sources say | what it changed |
+|---|---|
+| the trunk is "remarkably straight" with minimal taper | gnarliness .012 → .005, taper .82 → .90 |
+| 3–6 m across, **"measured above the swollen bases"** | a buttress flare, below |
+| "a conical crown, with horizontal to slightly drooping branches" | branch angle 102 → 96, and the crown is widest at its base |
+| old-growth boles are long and branch-free; self-pruning lifts the crown with age | 26 branches rather than 42, and the older variant starts its crown at 72% |
+| bark bright red-brown, soft and **fibrous**, up to 35 cm thick | a bark texture at last, below |
+
+### The buttress is not something the library can express
+
+Every published redwood diameter is quoted *above the swollen base*, which tells you how pronounced that base is. ez-tree tapers a branch uniformly and has no parameter for it, so the foot of the trunk is pushed outward after generating: 42% wider at ground level, easing to nothing by a fourteenth of the tree's height.
+
+The first attempt looked like a cone stuck on the bottom, because the trunk had eleven vertex rings over its whole height and only the ground one fell inside the flare. At 26 rings there are two or three inside it and it reads as a swelling. Measured, as a percentage of the trunk just above the flare: **160 at the foot, 104 at 7%, 96 at 15%, 87 at 22%**, falling to 61 by mid-height.
+
+### Bark, and which bark
+
+The trunks were untextured because the game repaints every imported surface from the biome palette. That is right for a flat-shaded pack model and wrong for something with 35 cm of deeply furrowed bark: without a texture a redwood trunk is a smooth brown cylinder, which is the one thing it is not.
+
+ez-tree ships four bark sets. The **willow** one is taken — deeply and vertically furrowed, the closest of the four to redwood — and specifically *not* the pine one, which looks right too but comes from texturecan, whose terms would need checking. Willow and oak are Poly Haven (`bark_willow_02`), which is CC0. Colour map only: the game is toon-shaded and reads no normal, roughness or ambient-occlusion map.
+
+The tiling is **baked into the vertex coordinates** rather than left as a material setting, so it travels with the file: eight repeats around the trunk and twenty-two up it, which is about one tile every five metres on a 115 m tree.
+
+### Measuring instead of squinting
+
+`node tools/bake-trees.mjs --report` now prints, for each variant, the crown's silhouette band by band and the trunk's radius ring by ring. Both of the mistakes above — the cone-shaped buttress and a taper that was really a pine's — were found in those two rows rather than by looking at anything.
+
+## Baking trees instead of shopping for them
+
+Three crown models have now been chosen by looking at packs, and none of them was a redwood, because **nobody has made one**. Every conifer in every pack is conical to the ground; the shape we want — a bare column for two thirds of its height with a narrow crown on top — does not exist as an asset at any scale.
+
+[ez-tree](https://github.com/dgreenheck/ez-tree) (MIT, Daniel Greenheck) generates a tree from parameters, which turns the problem from *finding* a redwood into *specifying* one.
+
+### It runs at bake time, and never ships
+
+The library is a devDependency. `node tools/bake-trees.mjs` runs it in Node, writes four variants as OBJ into `vendor/eztree-redwood/`, and from there they go through exactly the same ingest as a Kenney pine. **No library code and no runtime cost** — what ships is geometry.
+
+Two things made that possible. `Tree` builds its meshes without a renderer, and it loads its bark and leaf textures at import time through three's `TextureLoader`, which wants a DOM — six lines of stub is enough, since an image that never loads does not matter to geometry.
+
+### A redwood is four numbers
+
+Starting from the `Pine Large` preset, what makes it a redwood rather than a pine:
+
+- `branch.start[1] = .64` — branches begin two thirds of the way up, and nowhere below
+- `branch.length[1] = 11` against a trunk of 100 — short branches, so the crown is narrow
+- `branch.taper[0] = .82` — a column, not a cone
+- `branch.radius[0] = .028 × length` — a coast redwood is about a thirty-fifth as thick as it is tall
+
+Measured by the same silhouette profile the asset previewer uses: crown starts between 45% and 60% of height, **zero reversals** on all four. One mass on a bare column, which is what we have been trying to fake since the first attempt.
+
+Cost: 18.5k to 27k vertices each, against about 900 for a pack conifer.
+
+### Breaking the no-texture rule, once
+
+Until now every imported surface was stripped of its material and repainted from the biome palette — the thing that lets one pine serve eight biomes instead of importing somebody else's art direction. ez-tree's leaves are billboard quads that rely on an alpha mask, and without it a leaf is a solid rectangle.
+
+So the rule bends for exactly one thing: **a cut-out is not art direction**. One 1024×1024 indexed PNG with a `tRNS` chunk, 297 KB, shipped alongside the models; the bark stays untextured and takes the biome's colour like everything else. The ingest carries UVs through for a part whose material names an image, and the asset previewer renders it with `alphaTest`.
+
+Not shipped into the game yet. The trees are baked and visible in the previewer, which is where the decision about them belongs.
+
+## Nothing kept trees apart, and at 380 feet it showed
+
+A screenshot of a mangled grove, and three separate faults behind it. All three were invisible at 13 to 29 metres and none of them was the tree the eye lands on.
+
+### There was no spacing rule at all
+
+Trees were placed at random points, rejected for surface and for distance from a corridor, and never once checked against each other. Measured on a 380-foot grove before the fix, with `tools/tree-spacing.mjs`:
+
+| | before | after |
+|---|---|---|
+| distance to nearest tree, median | 8.6 m | 12.9 m |
+| closest pair | **0.2 m** | 4.6 m |
+| crown overlap, median | 41.6% | 10.0% |
+| gap between trunk surfaces, worst | **−5.4 m** | +2.4 m |
+| tall conifers per hectare | 13.8 | 9.0 |
+
+A negative trunk gap is two six-metre trunks occupying the same space. That is not a tuning problem, it is a missing rule, and the reason it had never mattered is that a 20 m pine with a 3 m crown can stand 8 m from another one quite happily.
+
+The rule is not "no overlap" — crowns in a closed canopy interlock, and a redwood grove is a closed canopy. It is that two crowns may not be mostly the same crown (55% of their combined radii), and that trunks may never intersect.
+
+**It is off for the other seven biomes**, behind a `crownShare` of zero. Not because they would not benefit, but because switching it on relayouts every one of them to fix a problem none of them has. The first version was not gated, and the fingerprint reported seven biomes moved — which is the fingerprint doing its job.
+
+### The cedar was also 380 feet tall
+
+Tree height came from the biome, so raising the canopy raised *every* species in it. The redwood grove's cedars are Kenney conifers, conical to the ground, and they were being drawn at redwood height — a hundred-metre christmas tree standing inside a redwood. That is the shape in the screenshot.
+
+A plant entry can carry a third number now, a height scale, so a biome can have a **mid-storey**: the cedar is 30% of canopy height, which puts it between the ferns and the giants where a forest actually keeps its younger trees.
+
+### The canopy floated because a shared angle is not a shared line
+
+The trunk leans about its middle; the crown leaned about its base, positioned on the vertical through the tree's centre. Same angle, different pivot — so the trunk's top moved sideways and the crown did not, by up to four metres on a 116 m tree. The crown is seated by taking the point out of the trunk's own matrix now, and the lean is a third of what it was, because a giant redwood is dead straight.
+
+The other half was overlap. These crowns taper to a point at the bottom — `PineTree_2` is a third of its widest in its lowest band — so meeting the trunk top exactly left the solid foliage starting ten metres above the wood. The crown is sleeved 20% down the trunk instead of 8%.
+
+## A contact sheet for 729 models
+
+Two crown models have now been chosen by reading file names and both were wrong. `tools/asset-preview.mjs` plus `preview/` builds **dist/assets.html**, one self-contained page listing every model in `vendor/`, drawn at a height you type, beside a 1.8 m figure, painted in the same role colours the game uses, with the exact `pack:Name` string a PICK entry wants.
+
+It also shows the **silhouette profile** and counts its reversals, which is the number that would have caught the wedding-cake pines before they shipped: one mass turns over once, a tiered conifer turns over at every plate. Models with four or more are flagged `tiered` in the list without being opened.
+
+`npm run assets` regenerates it. It is a local tool and never ships.
+
+Two things learned building it. Inlining three.js by hand does not work any more: since r17x `three.module.js` imports from `./three.core.js`, so an inline module tries to fetch that from the page and fails with a `SyntaxError` and no line number; concatenating the two bundles then collides on their internal names (`_m1$1`). The page is built by vite with the single-file plugin, exactly like the game. And a 12 MB inline module that throws looks identical to one that is still loading, so the page now prints its own error rather than staying dark.
+
+## Giant means the trunk, and a crown must be one mass
+
+Three things wrong at once, from a screenshot of a single tree.
+
+### The crown was a wedding cake
+
+The MegaKit's pines are tiered. Their radius alternates wide-narrow-wide **every band from the ground up**, which at redwood scale draws five separate green plates with daylight and bare trunk between them. Measured as a profile rather than judged by eye, the pattern is unmistakable, and it is worth measuring before picking a crown model:
+
+    MegaKit Pine_1   F D B E C A B C B 8 B A 9 7 7 9 6 4 4 3   <- a stack
+    PineTree_2       5 3 7 5 8 A B B D D F B A 8 8 8 9 6 4 2   <- a plume
+
+Across all six vendored packs exactly two crowns rise to a single peak and fall: `PineTree_2` and `PineTree_4` from Ultimate Stylized Nature. Those are the two in use. Two shapes is thin variety, but the crown of a 380-foot tree sits seventy metres over your head and the trunk is what you actually look at.
+
+### The drawn trunk and the collided trunk were different objects
+
+The trunk was drawn at a fiftieth of the tree's height while `trunkRadius` in physics collided at 0.027 of it — **the drawn one was the thinner**, so a ball could pass through wood you could see. Nobody would notice at 29 m. At 380 feet the gap is over a metre.
+
+The drawing now calls `trunkRadius` directly, so what you see is what you hit, and girth variety moved into the taper where nothing depends on it. The clamp that function carries went 2.4 m to 3.6 m: it exists to catch a nonsense height, not to be a real limit, and at 2.4 it was shaving a metre off the widest redwoods. At 3.6 it no longer binds on anything the generator makes.
+
+Result: a 6.2 m trunk under an 80 m bare column, from a rule that was already in the codebase.
+
+### 380 feet, and a tree that is actually that tall
+
+The owner asked for a 380-foot maximum with the floor unchanged. Coast redwoods really do run to this.
+
+Setting it exposed a quiet error: the trunk was a fraction of height with its own jitter and the crown was **another** fraction with its own, so the two stacked to as much as 112% of the stated height — a "380 foot" redwood drawn at 415. Physics collides with `t.h`, so the top 35 feet of those trees were scenery a ball flew through.
+
+The crown takes whatever height the trunk leaves now. Every one of 906 redwoods measured in a grown course comes out at exactly its nominal height, and it reads better: a tree with less bare trunk has a deeper crown, which is what a tree with light down its flank actually does.
+
+### Ground cover, again
+
+The `fern` family is sized by spread rather than height, as before. Worth restating because the same fix now has two customers and the bush family still has the bug.
+
+## Razor-thin redwoods: a width that was inherited instead of stated
+
+The first redwoods came out as needles, and no two the same. The cause is worth writing down because it is a shape of bug rather than a number that was wrong.
+
+The crown is borrowed from a conifer model and the trunk is drawn. To make a broad pack conifer read as a redwood the first version multiplied the model by a **narrow factor** of 0.40. But the borrowed models were not one width: Kenney's conifers range from 1-part-wide-in-10 to 1-in-4 in their own proportions. So the narrow factor did not set a width, it scaled **whatever width the model happened to have** — one tree's crown came out two and a half times another's in the same grove, and the narrow end of the range finished at roughly three metres of foliage on a thirty-six metre crown.
+
+That is both complaints at once: the thin ones are thin, and the inconsistency is most of the mess.
+
+The fix is to **state the width and divide the model's own out**, which is exactly what `addModelSpecies` already does with height and says so in a comment. A crown is now a stated fraction of the tree's own height — half-width 0.085 for a redwood, 0.115 for a douglas fir — so a 70 m tree carries a 12 m crown about two and a half times as tall as it is wide, whichever model was drawn. Measured in the running scene: crowns 8–12 m wide over 21–29 m tall, against 3–7 m over 36 m before.
+
+Two smaller things came off the same thread. The drawn trunk tapered to 34% of its base, which is a spike rather than a column; it is 62% now. And the crown models ship as **leaf geometry only** — their own trunks are dropped at ingest, because a second trunk inside the drawn one is what made these look doubled up. Dropping them also paid for the new models: 218 KB back, so two packs' worth of additions cost 77 KB net.
+
+### Ground cover is sized by its spread, not its height
+
+A sword fern is a low clump about a metre and a half across. The imported `Fern_1`'s fronds reach nearly twice its height sideways, so scaling it to tree height the way every other species is scaled produced a **ten-metre bush**. Ferns are sized from `t.r` — the spread they were already given — and the height follows the model's proportions: 2–3 m across and under a metre tall, which is a fern.
+
+The bush family still sizes by height and probably should not either, but six biomes draw from it and that is a change to look at on its own.
+
+### Three Quaternius nature packs, 31 shared names
+
+Adding the Ultimate Stylized Nature and Stylized Nature MegaKit packs put **31 model names in more than one pack**. `Plant_1` is in all three and means something different in each — and the fern family was using one of them. The ingest resolved a name by walking `vendor/` and taking the first hit, so vendoring a pack could silently swap the model under a shipped biome with nothing to notice.
+
+An ambiguous name is an error now, and it names the packs and tells you how to disambiguate (`megakit:Pine_1`, where the part before the colon just has to appear in the directory name).
+
+The same change fixed a bug that had not fired yet: lookup used `existsSync`, and **Windows matches file names case-insensitively where Linux does not**. Kenney ships `grass.obj` and Quaternius ships `Grass.obj`, so `grass` found two packs on Windows and one on Linux — a build that differs by operating system. Directory listings are compared exactly now.
+
+## The forest floor was already in the repo
+
+The redwood grove's floor was mown rough with columns standing in it. The obvious fix was to go and find CC0 logs, stumps, mossy rock and a real fern. **The search changed the answer: most of it was already vendored and simply not being shipped.**
+
+`tools/build-meshes.mjs` ingests a hand-picked subset of each pack. Sitting unused in packs already credited as CC0 were seven mossy boulders, four fallen logs, seven stumps, more logs, hanging moss, and five leafy ground plants. Twenty-four of them are shipped now, and no licence question came with them.
+
+Sources checked, recorded because the search is otherwise repeatable:
+
+- [Quaternius Stylized Nature MegaKit](https://quaternius.com/packs/stylizednaturemegakit.html) — CC0, glTF, 116 models including one actually called *Fern*, same creator as a pack we already ship. **The candidate if a real fern is wanted**, and the lowest-friction addition possible. ([Ultimate Stylized Nature](https://quaternius.com/packs/ultimatestylizednature.html), [MegaKit on Poly Pizza](https://poly.pizza/bundle/Stylized-Nature-MegaKit-T34GZFA0fm))
+- [Stylized Nature & Forest Props Pack](https://verdealis.itch.io/stylized-nature-forest-props-pack-low-poly) — matches the brief almost exactly, 30–320 triangles, GLB. **Not CC0**: it forbids redistributing the source files, and this project ships its assets inside a single HTML file. Ruled out, and recorded so nobody buys it for this.
+- [Meshy's CC0 tag](https://www.meshy.ai/tags/log) — generated-model licensing is not the same thing as a curated pack with a licence file inside it, which is what AGENTS.md requires.
+
+### One species list written twice, differently
+
+Two files each carried a hand-written list of "plants that are not really trees", and **they were not the same list** — physics included `ocotillo` and course.js did not. Neither was wrong: an ocotillo is tall enough to size like a tree and too spindly to stop a ball. But nothing said so, and adding a species meant finding both literals.
+
+They are `GROUND_PLANTS` and `NO_TRUNK` in `src/species.js` now, one built from the other, with the reason for the difference written down. The file imports nothing, so physics can read it without pulling in three.
+
+### Deadfall is anchored to trees, not scattered evenly
+
+520 props per course, and **72% of them placed around an existing trunk** rather than at a uniform random point. Timber falls where timber grows; the same count spread evenly over the map reads as litter dropped on a lawn, while clustered around trunks it reads as a wood that has been standing a while. The rest are scattered so clearings are not conspicuously empty.
+
+Sizing falls out of the ingest. Every model is normalised to unit height, so one number sizes it — but for a log lying down that "height" is its **thickness**, and the length follows from the model's own proportions. A log is therefore scaled far smaller than a stump and still ends up the longer object.
+
+### What it cost, and what it does not do
+
+24 new models: 71 shipped of 598 available, now 95. Packed geometry 1056 KB to 1238 KB, and the whole single-file build 2.59 MB to 2.78 MB. On a redwood course the floor is 877 instances across 31 draw calls, in its own `Deadfall` group so it can be counted from the console rather than guessed at.
+
+**Nothing collides with any of it.** A ball rolls through a fallen log. That is worth knowing before anyone makes them bigger — at this size it reads as ground clutter, and at twice it would start to look like it should stop a ball.
+
+The ferns are real fern models now (`swordfern`, its own species so that Pacific Northwest's generic bushes are untouched), but they are leafy ground plants rather than fronds. **Since resolved** — the MegaKit's `Fern_1` is an actual fern; see the section above.
+
+## Giant Redwood, and what the eighth biome cost
+
+The first biome added since biomes became one record. It is **one entry in `src/biomes.js`**, one line in `BIOME_KEYS`, two species in `FAMILY_OF`, and a tree builder — and the tree builder is there because of a shape the asset packs do not contain, not because the pipeline made it necessary.
+
+### Moody is a set of numbers
+
+Almost none of the atmosphere is new code. It is fields the engine already reads:
+
+- **The sun sits at 18°** rather than the usual 28. Every biome carries its own sun elevation, and a low one rakes light through the trunks all day and gives the god rays something to cut across.
+- **Fog takes its colour from the biome's sky**, so a desaturated grey-green sky *is* the haze between the trees. That one field does most of the work.
+- A dark saturated palette with little contrast between fairway and semi, so the mown lines read as a suggestion rather than a stripe. Dark peaty water, wet grey rock, moss in the rough.
+
+The landform is PNW's, deliberately — the owner asked for the same country, and the difference should be what grows on it.
+
+### A redwood is a column with a crown on top
+
+Every conifer in the CC0 packs is conical all the way to the ground. Scaled to seventy metres that is a giant Christmas tree, and the silhouette **is** the feeling of a grove: bare trunks running up out of the shade, the canopy only starting well above your head.
+
+So the trunk is drawn and the crown is borrowed. A tapered seven-sided column carries an existing conifer squeezed to 40% of its natural width and lifted to the top, overlapping so there is no seam. One cheap cylinder per tree, and the packs supply the only part they are good at here.
+
+**Height turned out to matter more than shape.** Tree heights were hardcoded at 13–29 m, so the first redwood grove was a pine wood with a dark tint. They are a biome field now, and a redwood runs **46–80 m**.
+
+That exposed a second thing: `trunkRadius` in physics clamps collision at 0.8 m, which is right for a 29 m pine and wrong for a 70 m tree you cannot see past. The cap is 2.4 m now. It only binds above 29.6 m, which no existing biome reaches, so nothing else moved — and the fingerprint says so rather than the reasoning.
+
+### The refactor earned itself on the first use
+
+Two mistakes, both caught by `tools/biome-fingerprint.mjs` within seconds rather than by looking at a course and wondering.
+
+Deriving the scenery tree height from the on-hole height changed the range from 12–27 to 11.96–27.96 — **a few centimetres, and it moved five biomes**. They were two hand-written ranges and they are two fields now.
+
+The other was a missing comma in the new record, which is the kind of thing the suite catches anyway. The interesting one is the first: a difference that small is invisible to any amount of looking, and it would have shipped.
+
+Final state: all seven existing biomes byte-identical, redwood new, 441 tests pass, every generator rule clear on the new biome.
+
+### What is not done
+
+The ferns are generic bushes — `fern` maps to the bush family, which is fine at distance and poor close up. Fallen logs, stumps and moss-covered rock would all be more redwood than anything currently scattered there. Those are the CC0 assets worth sourcing, now that there is something to judge them against. **Since resolved** — see *The forest floor was already in the repo* above: they were in `vendor/` the whole time.
+
+## A biome becomes one record
+
+Adding an eighth biome meant first finding out what a biome *is*, and the answer was: not one thing. Seven tables and **48 conditionals across eight files**.
+
+| where it lived | what it held |
+|---|---|
+| `BIOME_KEYS`, settings-schema | the list the dropdown reads |
+| `BIOMES`, course.js | palette, sun angle, altitude, temperature |
+| `ecology`, course.js | the plant mix and its weights |
+| `BANK_COLORS`, streams.js | the earth colour where a stream cuts through |
+| `land()`, course.js | four hand-written branches for the hill shape |
+| vegetation.js | rock and grass counts, blade size, tints, flower colours |
+| homes / textures / routing / shot-visuals / landscape-edge | one-off tests apiece |
+
+None of that was wrong for seven biomes grown one at a time. It is wrong for the eighth, because **there is no list of what a biome has to answer** — you find the places you missed by looking at the result.
+
+The worst of them was in the ground shader:
+
+    biome: ['desert','mountain','links','island'].indexOf(w.settings.biome)
+
+A biome not in that array becomes **−1** and takes whichever branch that turns out to be. Nothing throws. It is now four named flags — `speckleRock`, `altitudeRock`, `litterAmount`, `seaBeach` — which a new biome sets or does not.
+
+Everything now lives in `src/biomes.js`: defaults for all 45 fields, and per-biome traits listing only the differences. A biome that says nothing behaves exactly like the old generic case. Adding one is a single record plus whatever assets it needs.
+
+The module imports nothing, which incidentally removes a cycle `range.js` documents a workaround for.
+
+### Proving a refactor invisible
+
+The whole point is that nothing changes, and "it looks the same" is not a check when a difference would be a metre of terrain here and one missing shrub there.
+
+`tools/biome-fingerprint.mjs` hashes what each biome *generates* — ground height and surface across a grid, every hole's geometry, every tee, pond, bunker and tree, every house, every channel station, over two seeds each. Generation is deterministic, so the hash is exact.
+
+All seven biomes came out **byte-identical**, and the full suite passes.
+
+One detail worth recording: the first version of the fingerprint hashed the biome record by iterating its keys, which would have changed the moment the refactor added a field — proving nothing about the fields that were already there. It hashes an explicit list of the player-visible fields instead. **A fingerprint that moves when you add to it is not a fingerprint.**
+
+What it does not cover is renderer-side work: vegetation scatter, textures, shot dust, the horizon ring and the shader itself all need a GPU. Those were converted by direct substitution — each conditional replaced by a field holding the value that conditional produced — and rest on the test suite and on reading. That is the weaker half and worth knowing.
+
 ## Clouds fade in, and one flag with two meanings blanked the course
 
 A cloud that reaches the edge of its box wraps to the far side, which keeps the sky full without spawning anything near the camera. The wrap is still a four-kilometre jump, though, and at that size it reads as a pop — on the cloud and on the hard-edged shadow it drags across the course.

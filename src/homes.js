@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {familyModels,modelExtents,meshAtlas,atlasCount,instanceModels} from './mesh-assets.js';
 import {toonRamp} from './textures.js';
+import {biomeOf} from './biomes.js';
 // Fairway homes. Sites must be dry, gently sloping rough, clear of tee and green
 // complexes and spaced from one another. Each house draws its own form, roof,
 // porch, garage, fence and garden from the same seeded stream, so a street reads
@@ -23,7 +24,7 @@ export function generateHomes(s,holes,height,surface,random){if(!s.homes)return[
  }return homes;
 }
 export function addHomes(view){
- const biome=view.world.settings.biome,warm=biome==='desert',arid=warm||biome==='links';
+ const bio=biomeOf(view.world.settings.biome),warm=bio.warm,arid=bio.arid;
  // Houses shade the way the rest of the scene does. They were the last thing in
  // a cartoon frame still lit as PBR, which meant they answered a falling sun on
  // a different curve from the ground they stand on -- the same mismatch that

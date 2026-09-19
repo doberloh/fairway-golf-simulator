@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fairway assets</title>
+<style>
+ :root { color-scheme: dark; --ink: #e8e6df; --dim: #8e8b82; --line: #2c2f2b; --bg: #15171a; --panel: #1b1e21; }
+ * { box-sizing: border-box; }
+ body { margin: 0; height: 100vh; display: grid; grid-template-columns: 320px 1fr;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); color: var(--ink); }
+ aside { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
+ header { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+ h1 { font-size: 12px; margin: 0 0 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+ input, button, select { font: inherit; background: #23262a; color: var(--ink); border: 1px solid var(--line);
+  border-radius: 4px; padding: 5px 8px; }
+ button { cursor: pointer; }
+ button:hover { background: #2c3035; }
+ #q { width: 100%; }
+ #count { color: var(--dim); font-size: 11px; margin-top: 6px; }
+ #list { overflow: auto; flex: 1; min-height: 0; }
+ .row { padding: 5px 12px; cursor: pointer; border-bottom: 1px solid #202326; display: flex; gap: 8px; justify-content: space-between; }
+ .row:hover { background: #22262a; }
+ .row.on { background: #2f3a33; }
+ .row span { color: var(--dim); font-size: 11px; white-space: nowrap; }
+ .row em { font-style: normal; color: #d7a45f; }
+ .packname { padding: 10px 12px 4px; color: #6f9a74; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+ main { position: relative; min-width: 0; }
+ canvas { display: block; width: 100%; height: 100%; }
+ #hud { position: absolute; left: 16px; top: 14px; pointer-events: none; }
+ #hud h2 { margin: 0; font-size: 19px; font-weight: 500; }
+ #hud p { margin: 3px 0 0; color: var(--dim); }
+ #tools { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+ #pickline { background: #23262a; border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; color: #9ecf9a; }
+ #profile { position: absolute; right: 16px; top: 14px; text-align: right; color: var(--dim); }
+ #bars { display: flex; gap: 2px; align-items: flex-end; height: 70px; margin-top: 5px; justify-content: flex-end; }
+ #bars i { width: 8px; background: #4e7d55; display: block; }
+ #verdict { margin-top: 4px; }
+ .warn { color: #d7a45f; }
+ #fail { padding: 24px; color: #e08a5a; white-space: pre-wrap; grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<aside>
+ <header>
+  <h1>Fairway assets</h1>
+  <input id="q" placeholder="filter by name or pack" autocomplete="off">
+  <div id="count"></div>
+ </header>
+ <div id="list"></div>
+</aside>
+<main>
+ <canvas id="view"></canvas>
+ <div id="hud"><h2 id="title"></h2><p id="sub"></p></div>
+ <div id="profile">
+  <div>silhouette, ground to top</div>
+  <div id="bars"></div>
+  <div id="verdict"></div>
+ </div>
+ <div id="tools">
+  <label>drawn at <input id="h" type="number" value="30" min="1" max="140" step="1" style="width:74px"> m</label>
+  <button id="spin">spin: on</button>
+  <button id="copy">copy PICK name</button>
+  <code id="pickline"></code>
+ </div>
+</main>
+<script type="module" src="./assets.js"></script>
+</body>
+</html>

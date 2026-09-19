@@ -33,11 +33,13 @@ export function modelParts(name) {
   const geometry = new T.BufferGeometry();
   geometry.setAttribute('position', new T.BufferAttribute(position, 3));
   geometry.setAttribute('normal', new T.BufferAttribute(normal, 3));
-  // Houses carry a texture atlas rather than a colour per material, so their
-  // UVs survive ingestion where the nature models' do not.
+  // Textured parts: house atlases, and bark and leaf sheets on the generated
+  // trees. `uvSpan` is the largest coordinate the part uses -- an atlas stays
+  // inside the unit square and has none, while bark tiles far past it.
   if (p.uvAt !== undefined) {
    const packed = new Uint16Array(buffer, p.uvAt, p.count * 2), uv = new Float32Array(p.count * 2);
-   for (let i = 0; i < uv.length; i++) uv[i] = packed[i] / 65535;
+   const span = p.uvSpan || 1;
+   for (let i = 0; i < uv.length; i++) uv[i] = packed[i] / 65535 * span;
    geometry.setAttribute('uv', new T.BufferAttribute(uv, 2));
   }
   geometry.setIndex(new T.BufferAttribute(new Uint16Array(buffer, p.indexAt, p.index).slice(), 1));
@@ -49,6 +51,7 @@ export function modelParts(name) {
 }
 
 export const modelRadius = name => MESH_MODELS[name]?.radius || .35;
+
 export const modelTextured = name => !!MESH_MODELS[name]?.textured;
 export const modelExtents = name => {
  const m = MESH_MODELS[name];
@@ -99,6 +102,13 @@ export function familyModels(family) {
 // one.
 export const FAMILY_OF = {
  pine: 'conifer', spruce: 'conifer', cedar: 'conifer',
+ // The redwood grove's species are whole grown trees -- trunk, limbs and
+ // foliage in one model -- so nothing is borrowed and nothing is drawn.
+ // `redcedar` rather than `cedar` because Pacific Northwest plants `cedar` and
+ // must keep its Kenney conifer.
+ redwood: 'redwood', fir: 'dougfir', hemlock: 'hemlock',
+ redcedar: 'redcedar', tanoak: 'tanoak', seedling: 'seedling',
+ swordfern: 'swordfern', salal: 'salal', sorrel: 'sorrel',
  oak: 'broadleaf', maple: 'broadleaf', aspen: 'broadleaf', alder: 'broadleaf',
  palm: 'palm',
  cactus: 'cactus',

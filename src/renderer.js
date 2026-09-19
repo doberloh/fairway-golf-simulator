@@ -436,7 +436,7 @@ export class GolfView{
   if(this.daylight.hour===null)this.daylight.hour=this.daylight.syncToLocal?localHour():defaultHour(bio.sun);
   const solar=solarState(this.daylight.hour,bio.sun);this.solar=solar;
   const sunDir=this.timed?solar.direction.clone():new T.Vector3(-.6,Math.sin(bio.sun*Math.PI/180),-.5).normalize();
-  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':world.settings.biome==='autumn'?'#ffcc8e':'#fff0d6',blue?1.5:2.8));
+  this.sun=add(new T.DirectionalLight(blue?'#c4e5ff':bio.sunColor,blue?1.5:2.8));
   this.sunBase=this.sun.color.clone();this.sunBaseIntensity=blue?1.5:2.8;this.sun.castShadow=!blue;this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
   // Cascaded shadows: one frustum that follows the camera can only cover the
   // ground around it, so anything further away is lit as though nothing stands
@@ -461,7 +461,7 @@ export class GolfView{
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
   for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));}this.addHoleDetails(h);}
-  if(world.settings.biome==='island'||world.settings.biome==='links')this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
+  if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
   //
@@ -702,7 +702,7 @@ export class GolfView{
  }
 
  addSky(sunDir){
-  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':this.world.settings.biome==='autumn'?'#819eae':'#478fbf')},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:this.world.settings.biome==='desert'?.15:this.world.settings.biome==='links'?.8:.48},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
@@ -1478,14 +1478,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
 }
 export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
- const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;ctx.fillStyle=world.settings.biome==='island'?'#6eb8c0':'#e0e5d5';ctx.fillRect(0,0,w,h);
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;ctx.fillStyle=world.bio.mapWater;ctx.fillRect(0,0,w,h);
  // The nav rides on the CANVAS beside its transform. Five call sites draw this
  // map from four different places, and threading a pan/zoom argument through
  // all of them is how one of them ends up not having it -- which would read as
  // the map resetting itself in that one mode.
  const transform=mapLayout(course,w,h,full,position,canvas.mapNav,canvas.mapFocus),scale=transform.scale,to=(x,z,hole=course)=>mapPoint(transform,full?hole.toWorld({x,z}):{x,z});canvas.mapTransform=transform;canvas.dataset.courseSeed=world.seed;canvas.dataset.holeNumber=String(course.hole+1);canvas.setAttribute('aria-label',full?`${world.holes.length}-hole course map · ${world.seed}`:`Hole ${course.hole+1} map · ${world.seed} · playing direction up`);
 
- if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.settings.biome==='island'&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
+ if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
   // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
   //
   // This used to be drawn at `w/2 - halfX*scale`, which silently assumes the

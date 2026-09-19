@@ -3,6 +3,14 @@
 //
 // Run: node tools/build-meshes.mjs
 // Reads:  vendor/<pack>/*.glb
+//
+// A PICK entry is a model's file name. Three of the vendored packs are
+// Quaternius nature packs and 31 names appear in more than one of them --
+// `Plant_1` is in all three and means something different in each. A bare name
+// that is ambiguous is an ERROR rather than first-pack-wins, because the
+// silent version of that bug swaps the model under an existing biome and
+// nothing tells you. Write `megakit:Pine_1` to say which pack you meant; the
+// part before the colon just has to appear in the directory name.
 // Writes: src/asset-meshes.js
 //
 // Nothing from the packs ships as-is. Textures are irrelevant (Kenney's models
@@ -19,19 +27,12 @@ import {readFileSync, writeFileSync, readdirSync, existsSync} from 'node:fs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const VENDOR = join(ROOT, 'vendor');
+export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+export const VENDOR = join(ROOT, 'vendor');
 
-// Material name -> the palette role the game paints it with.
-const ROLE_OF = name => {
- const n = name.toLowerCase();
- if (n.includes('leafs') || n.startsWith('grass') || n.includes('corn') || n.includes('green')) return 'leaf';
- if (n.includes('wood') || n.includes('bark') || n.includes('birch')) return 'bark';
- if (n.includes('stone') || n.includes('rock')) return 'stone';
- if (n.includes('dirt') || n.includes('sand')) return 'dirt';
- return 'accent';
-};
-export const ROLES = ['bark', 'leaf', 'stone', 'dirt', 'accent'];
+import {ROLE_OF, ROLES, extract, extractObj} from './mesh-read.mjs';
+export {ROLE_OF, ROLES} from './mesh-read.mjs';
+
 
 // Which models we actually take, and what each stands in for in the game.
 const PICK = {
@@ -56,111 +57,56 @@ const PICK = {
  // Houses. Unlike the nature kits these carry a texture atlas rather than a
  // colour per material, so they keep their UVs and ship the atlas with them --
  // role tinting alone would flatten a whole house to one colour.
+ // THE FOREST FLOOR, and all of it was already vendored. Old-growth reads from
+ // what has fallen as much as from what is standing -- mossy logs, stumps and
+ // boulders -- and none of it was being shipped because PICK only ever took
+ // what the biomes of the day asked for. No new pack, no new licence: Kenney's
+ // Nature Kit and Quaternius's Ultimate Nature Pack are both already credited.
+ // The forest floor is grown too, and the pack logs and mossy rocks that used
+ // to fill it are no longer taken -- a nurse log with moss only along its
+ // upper flank, a stump with root buttresses and a springboard notch, and a
+ // boulder that is a boulder rather than a sphere, all beat what was there.
+ log: ['grown:NurseLog_1', 'grown:NurseLog_2', 'grown:NurseLog_3', 'grown:NurseLog_4', 'grown:FallenLog_1', 'grown:FallenLog_2'],
+ stump: ['grown:Stump_1', 'grown:Stump_2', 'grown:Stump_3', 'grown:Stump_Bare_1', 'grown:Stump_Bare_2', 'grown:RootWad_1'],
+ mossrock: ['grown:Boulder_1', 'grown:Boulder_2', 'grown:Boulder_3', 'grown:MossMound_1', 'grown:MossMound_2', 'grown:MossMound_3'],
+ litter: ['grown:Litter_1', 'grown:Litter_2', 'grown:Litter_3'],
+ // The MegaKit fern is no longer taken: `swordfern` above is a grown
+ // shuttlecock of once-pinnate fronds, which is what the plant actually is.
+ // THE REDWOOD GROVE IS GROWN, NOT IMPORTED. Everything below comes out of
+ // tools/grow.mjs: whole trees with their own fluted, buttressed trunks, so
+ // there is no borrowed crown to balance on a drawn cylinder any more.
+ //
+ // The `_Far` twins tools/grow.mjs also bakes are NOT taken. Swapping by
+ // distance was measured to save half a millisecond a frame and to cost the
+ // look entirely -- see the note at the top of src/vegetation.js.
+ redwood: ['grown:Redwood_Giant_1', 'grown:Redwood_Giant_2', 'grown:Redwood_Giant_3', 'grown:Redwood_Giant_4',
+  'grown:Redwood_Mature_1', 'grown:Redwood_Mature_2', 'grown:Redwood_Mature_3', 'grown:Redwood_Mature_4'],
+ dougfir: ['grown:DouglasFir_1', 'grown:DouglasFir_2', 'grown:DouglasFir_3', 'grown:DouglasFir_4'],
+ hemlock: ['grown:Hemlock_1', 'grown:Hemlock_2', 'grown:Hemlock_3'],
+ redcedar: ['grown:RedCedar_1', 'grown:RedCedar_2', 'grown:RedCedar_3'],
+ tanoak: ['grown:Tanoak_1', 'grown:Tanoak_2', 'grown:Tanoak_3'],
+ swordfern: ['grown:SwordFern_1', 'grown:SwordFern_2', 'grown:SwordFern_3', 'grown:SwordFern_4', 'grown:SwordFern_5', 'grown:SwordFern_6'],
+ salal: ['grown:Salal_1', 'grown:Salal_2', 'grown:Salal_3', 'grown:Salal_4'],
+ sorrel: ['grown:Sorrel_1', 'grown:Sorrel_2', 'grown:Sorrel_3', 'grown:Sorrel_4'],
+ seedling: ['grown:Seedling_1', 'grown:Seedling_2', 'grown:Seedling_3', 'grown:Seedling_4'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],
 };
 
-const COMPONENT = {5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array};
-const COUNT = {SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4};
+// Families that use only part of a model. A crown is foliage only, so the
+// trunk geometry inside those models is dropped here rather than shipped and
+// skipped at draw time.
+const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
 
-function readGlb(file) {
- const buf = readFileSync(file);
- if (buf.readUInt32LE(0) !== 0x46546c67) throw Error(`${file} is not a GLB`);
- const jsonLength = buf.readUInt32LE(12);
- const json = JSON.parse(buf.subarray(20, 20 + jsonLength).toString('utf8'));
- // The binary chunk follows the JSON chunk, both 4-byte aligned.
- let offset = 20 + jsonLength;
- let bin = null;
- while (offset < buf.length) {
-  const length = buf.readUInt32LE(offset), type = buf.readUInt32LE(offset + 4);
-  if (type === 0x004e4942) { bin = buf.subarray(offset + 8, offset + 8 + length); break; }
-  offset += 8 + length;
- }
- return {json, bin};
-}
-
-function accessor(json, bin, index) {
- const a = json.accessors[index], view = json.bufferViews[a.bufferView];
- const Type = COMPONENT[a.componentType], per = COUNT[a.type];
- const start = (view.byteOffset || 0) + (a.byteOffset || 0);
- // Copy rather than view: the GLB buffer is not guaranteed to be aligned for
- // the typed array, and a misaligned view throws.
- const bytes = bin.subarray(start, start + a.count * per * Type.BYTES_PER_ELEMENT);
- return new Type(new Uint8Array(bytes).buffer, 0, a.count * per);
-}
-
-// Pull every primitive out of a model, grouped by the role its material maps to.
-function extract(file) {
- const {json, bin} = readGlb(file);
- const byRole = new Map();
- // Models are authored with a node transform, so bake it in rather than
- // shipping a transform the runtime has to remember to apply.
- const nodeOf = new Map();
- (json.nodes || []).forEach(n => { if (n.mesh !== undefined) nodeOf.set(n.mesh, n); });
- for (const [meshIndex, mesh] of (json.meshes || []).entries()) {
-  const node = nodeOf.get(meshIndex);
-  const s = node?.scale || [1, 1, 1], t = node?.translation || [0, 0, 0];
-  for (const prim of mesh.primitives) {
-   const material = json.materials?.[prim.material]?.name || 'accent';
-   const role = ROLE_OF(material);
-   const position = accessor(json, bin, prim.attributes.POSITION);
-   const normal = prim.attributes.NORMAL !== undefined ? accessor(json, bin, prim.attributes.NORMAL) : null;
-   const index = prim.indices !== undefined ? accessor(json, bin, prim.indices) : null;
-   const uv = prim.attributes.TEXCOORD_0 !== undefined && json.materials?.[prim.material]?.pbrMetallicRoughness?.baseColorTexture
-    ? accessor(json, bin, prim.attributes.TEXCOORD_0) : null;
-   const group = byRole.get(role) || {position: [], normal: [], index: [], uv: []};
-   const base = group.position.length / 3;
-   for (let i = 0; i < position.length; i += 3) {
-    group.position.push(position[i] * s[0] + t[0], position[i + 1] * s[1] + t[1], position[i + 2] * s[2] + t[2]);
-    group.normal.push(normal ? normal[i] : 0, normal ? normal[i + 1] : 1, normal ? normal[i + 2] : 0);
-    if (uv) group.uv.push(uv[(i / 3) * 2], uv[(i / 3) * 2 + 1]);
-   }
-   if (index) for (const v of index) group.index.push(base + v);
-   else for (let i = 0; i < position.length / 3; i++) group.index.push(base + i);
-   byRole.set(role, group);
-  }
- }
- return byRole;
-}
-
-// Quaternius ships OBJ rather than GLB. Same treatment: group faces by the
-// material they use, keep geometry, discard everything else. Faces may be
-// quads or larger, so fan-triangulate them.
-function extractObj(file) {
- const text = readFileSync(file, 'utf8');
- const v = [], vn = [], byRole = new Map();
- let role = 'accent';
- for (const line of text.split(String.fromCharCode(10))) {
-  const part = line.trim().split(/\s+/);
-  if (part[0] === 'v') v.push([+part[1], +part[2], +part[3]]);
-  else if (part[0] === 'vn') vn.push([+part[1], +part[2], +part[3]]);
-  else if (part[0] === 'usemtl') role = ROLE_OF(part[1] || '');
-  else if (part[0] === 'f') {
-   const group = byRole.get(role) || {position: [], normal: [], index: [], seen: new Map()};
-   const corner = part.slice(1).map(token => {
-    const [vi, , ni] = token.split('/');
-    // OBJ indices are 1-based and may be negative (relative to the end).
-    const pi = +vi < 0 ? v.length + +vi : +vi - 1;
-    const pn = ni ? (+ni < 0 ? vn.length + +ni : +ni - 1) : -1;
-    // Share a vertex between the faces that reference it. Emitting one per face
-    // corner instead multiplies the vertex count roughly sixfold, which showed
-    // up immediately as a megabyte of packed geometry.
-    const key = pi + '/' + pn;
-    const hit = group.seen.get(key);
-    if (hit !== undefined) return hit;
-    const at = group.position.length / 3;
-    group.position.push(...(v[pi] || [0, 0, 0]));
-    group.normal.push(...(pn >= 0 && vn[pn] ? vn[pn] : [0, 1, 0]));
-    group.seen.set(key, at);
-    return at;
-   });
-   for (let i = 1; i + 1 < corner.length; i++) group.index.push(corner[0], corner[i], corner[i + 1]);
-   byRole.set(role, group);
-  }
- }
- return byRole;
-}
+// Families whose texture the game actually ships, and therefore the only ones
+// whose texture coordinates are worth carrying. Houses have their atlas;
+// nothing else does. Several packs ship leaf sheets their OBJ exports never
+// reference, and finding one only attaches UVs to geometry that will never
+// sample them. When the generated trees go in, their family joins this set
+// and their sheets have to be carried alongside -- one or the other alone is
+// either wasted bytes or an untextured quad.
+const TEXTURED_FAMILIES = new Set(['house']);
 
 const models = {}, chunks = [];
 let cursor = 0;
@@ -174,21 +120,44 @@ const push = typed => {
  return at;
 };
 
+// One listing per pack, compared EXACTLY. existsSync would do, but Windows
+// matches file names case-insensitively and Linux does not, so `grass` would
+// find Quaternius's `Grass.obj` on one machine and not the other -- a build
+// that differs by operating system, which is the worst kind.
+const PACKS = readdirSync(VENDOR).map(pack => ({pack, files: new Set(readdirSync(join(VENDOR, pack)))}));
+// vendor/grown-redwood-forest is gitignored -- 94 MB this repo's own code
+// reproduces in seconds -- so on a fresh clone it is simply absent, and the
+// error for that should say what to run rather than 'no pack matching'.
+if (!PACKS.some(p => p.pack.includes('grown')))
+ throw Error('vendor/grown-redwood-forest is missing. Run: node tools/grow.mjs');
+
+// Every pack holding this model, so an ambiguous name can say so rather than
+// quietly taking whichever the filesystem listed first.
+function locate(entry) {
+ const colon = entry.indexOf(':');
+ const hint = colon < 0 ? null : entry.slice(0, colon), name = colon < 0 ? entry : entry.slice(colon + 1);
+ const found = [];
+ for (const {pack, files} of PACKS) {
+  if (hint && !pack.includes(hint)) continue;
+  for (const ext of ['.glb', '.obj'])
+   if (files.has(name + ext)) { found.push({pack, file: join(VENDOR, pack, name + ext), glb: ext === '.glb'}); break; }
+ }
+ if (found.length > 1)
+  throw Error(`"${entry}" matches ${found.length} packs (${found.map(f => f.pack).join(', ')}). `
+   + `Say which one, e.g. "${found[0].pack}:${name}".`);
+ return {name, hit: found[0] || null};
+}
+
 let taken = 0, missing = [];
-for (const [family, names] of Object.entries(PICK)) {
- for (const name of names) {
-  let file = null;
-  for (const pack of readdirSync(VENDOR)) {
-   const candidate = join(VENDOR, pack, `${name}.glb`);
-   if (existsSync(candidate)) { file = candidate; break; }
-  }
-  let objFile = null;
-  if (!file) for (const pack of readdirSync(VENDOR)) {
-   const candidate = join(VENDOR, pack, `${name}.obj`);
-   if (existsSync(candidate)) { objFile = candidate; break; }
-  }
-  if (!file && !objFile) { missing.push(name); continue; }
-  const byRole = file ? extract(file) : extractObj(objFile);
+for (const [family, entries] of Object.entries(PICK)) {
+ for (const entry of entries) {
+  const {name, hit} = locate(entry);
+  if (!hit) { missing.push(entry); continue; }
+  if (models[name]) throw Error(`two PICK entries both end up called "${name}".`);
+  const byRole = hit.glb ? extract(hit.file) : extractObj(hit.file, TEXTURED_FAMILIES.has(family));
+  const keep = KEEP_ROLES[family];
+  if (keep) for (const role of [...byRole.keys()]) if (!keep.has(role)) byRole.delete(role);
+  if (!byRole.size) throw Error(`"${entry}" has no ${[...(keep || [])].join('/')} part to keep.`);
   // Normalise: centred on x/z, sitting on y=0, one unit tall. The game then
   // scales every instance itself, exactly as it does its procedural shapes.
   let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -218,10 +187,22 @@ for (const [family, names] of Object.entries(PICK)) {
    }
    const index = new Uint16Array(g.index);
    const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
-   if (g.uv && g.uv.length === count * 2) {
+   if (TEXTURED_FAMILIES.has(family) && g.uv && g.uv.length === count * 2) {
+   // A TILING UV DOES NOT FIT IN 0..1, which is what this used to assume.
+   // House UVs are atlas coordinates and never leave the unit square, so
+   // `uv * 65535` was fine for them and quietly clamped everything else: bark
+   // that tiles nine times around and fifty-eight times up arrived with every
+   // coordinate pinned at 1.0, which draws one row of pixels smeared the whole
+   // length of a trunk. That is what five attempts at "the bark is wrong" were
+   // actually chasing, and none of them was in the bake.
+   // So the range is recorded per part and the quantisation is against that.
+    let span = 1;
+    for (let i = 0; i < g.uv.length; i++) span = Math.max(span, g.uv[i]);
     const uv = new Uint16Array(count * 2);
-    for (let i = 0; i < uv.length; i++) uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] * 65535)));
+    for (let i = 0; i < uv.length; i++)
+     uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] / span * 65535)));
     part.uvAt = push(uv);
+    if (span !== 1) part.uvSpan = +span.toFixed(4);
    }
    parts.push(part);
   }

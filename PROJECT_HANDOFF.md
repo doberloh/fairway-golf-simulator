@@ -317,6 +317,35 @@ Two things to keep in mind if you touch this:
 - **Parked tiles are outside `view.group`**, so the scene walk in `disposeCourse` cannot find them. They are disposed through a `view.resources` entry; remove that and each course leaks a ring of buffers.
 - **`w.surface()` is 85% of what remains** — 5.8 ms of a 6.8 ms tile, because it re-runs a nearest-hole search over every hole for all 1,600 candidates. Hoisting that per tile is the obvious next win and is not done: a 24 m tile is small against hole spacing, but it can still straddle two corridors, and `surface` is the same query physics uses for lie classification, so it wants its own change and its own verification rather than being folded in here.
 
+### Adding a biome
+
+Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds all 45 fields, `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
+
+To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+
+If the biome wants props no other biome uses, add the family to `PICK` in `tools/build-meshes.mjs` and rerun it -- the packs in `vendor/` hold far more than ships, so check there before going looking for assets. A PICK entry is a file name; three of the packs are Quaternius nature packs sharing 31 names, so an ambiguous one is an error and you disambiguate with `megakit:Pine_1`. `KEEP_ROLES` drops the parts of a model a family does not draw -- the conifer crowns keep their leaves and throw their trunks away. What a species IS, as opposed to which biome grows it, lives in `src/species.js`.
+
+**Generating a model rather than finding one:** `node tools/bake-trees.mjs` runs ez-tree (MIT, a devDependency, never shipped) in Node and writes redwood variants into `vendor/eztree-redwood/`, from where they go through the normal ingest. Reach for this when the shape you want does not exist in any pack -- a bare-columned giant does not. Re-run `node tools/build-meshes.mjs` afterwards.
+
+**Textured models carry a `uvSpan`.** Texture coordinates are packed into 16 bits against the part's own range rather than against 0..1, because bark tiles far outside the unit square and the old packing silently clamped it. An atlas has no span and is unaffected. If you add anything textured, check that `uvSpan` survives into what is drawn.
+
+**The redwood biome draws entirely from `vendor/grown-redwood-forest`,** at full detail, all of it, all the time -- 33.6 M vertices a frame and still at the display's refresh cap. There was a two-level LOD here and it was removed: the arithmetic that justified it was never benchmarked, and the benchmark that appeared to confirm it was reading the 120 Hz vsync interval. The generator still bakes `_Far` twins; nothing ingests them. **If you add a species, it draws whole.** Before adding an LOD back, measure with something capable of reporting zero -- see RESEARCH.md.
+
+**`vendor/grown-redwood-forest/` is grown from nothing.** `node tools/grow.mjs` writes 153 models built out of
+triangles by `tools/grow-lib.mjs` -- no imported geometry, no texture, no generator library. Proportions and
+colours come from 315 reference photographs recorded in REFERENCES.md; `python tools/fetch-references.py`
+gets them again. Review it with the contact sheet, not the single-model viewer:
+`node tools/asset-preview.mjs grown-redwood-forest && npx vite build --config vite.sheet.config.js`, then open
+`dist/sheet.html`.
+
+**`vendor/baked_assets/` is a dumping ground for composed models**, not a vendored pack. `node tools/bake-assets.mjs` builds trees out of the CC0 packs -- a bare bole stretched out of a `DeadTree`, a crown borrowed from elsewhere, redwood proportions applied -- and `node tools/bake-trees.mjs` builds the ez-tree generated ones. Both write there, both are re-runnable, and nothing in the folder should be edited by hand.
+
+**Choosing a model: `npm run assets`** builds `dist/assets.html`, a self-contained page showing every model in `vendor/` at a height you type, beside a 1.8 m figure, with its silhouette profile and the `pack:Name` string a PICK entry wants. Two crowns were picked by reading file names and both were wrong; this exists so that stops happening. `node tools/tree-spacing.mjs [biome] [seed]` answers "is this too dense" in numbers.
+
+**Then run `node tools/biome-fingerprint.mjs --check`.** It hashes what every biome generates and fails if an existing one moved. A new biome shows up as `new` and the others must be unchanged; re-save with `--save` once you are satisfied.
+
+This replaced seven tables and 48 conditionals across eight files. The one that mattered most took a biome as an INDEX into `['desert','mountain','links','island']`, so an unknown name silently became −1 in the ground shader.
+
 ### Material flags say one thing each
 
 `userData.cloudMesh` means the material IS a cloud and must not be shaded by one. `userData.cloudShadowed` means cloud shadows have already been patched into it. `userData.mist` and `userData.cloudFaded` are the equivalent markers for their own patches.

@@ -4,7 +4,9 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
+import {GROUND_PLANTS} from './species.js';
 import {windMaterial,toonRamp} from './textures.js';
+import {biomeOf} from './biomes.js';
 const UP=new T.Vector3(0,1,0);
 function barkTexture(kind){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d'),rng=random('bark-'+kind);ctx.fillStyle='#b7b3a5';ctx.fillRect(0,0,128,256);for(let i=0;i<220;i++){const v=80+rng()*95;ctx.fillStyle=`rgb(${v},${v},${v})`;const x=rng()*128,y=rng()*256;ctx.fillRect(x,y,kind==='palm'||kind==='hala'?16+rng()*60:1+rng()*3,kind==='palm'||kind==='hala'?1+rng()*2:5+rng()*40);}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,5);return t;}
 function texture(kind){
@@ -25,6 +27,38 @@ function texture(kind){
 // comes from a real model, but everything that makes a stand look like a place
 // rather than a stamp -- which model, its height and girth, its lean, its tint --
 // is still drawn per tree, the same way the procedural shapes do it.
+// Ground cover sized by its SPREAD rather than its height. A sword fern is a
+// low clump about a metre and a half across and its fronds reach further
+// sideways than up, so scaling it to t.h the way a tree is scaled gives a
+// ten-metre bush.
+const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
+
+// NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
+//
+// This drew each species twice and swapped by camera distance, on the
+// reasoning that 25 million vertices could not be affordable against the 3.7
+// million the course used to cost. That reasoning was arithmetic, not a
+// benchmark.
+//
+// The first benchmark was not one either. It timed the render call and read
+// 8.6 ms with the swap on, 9.1 ms with every tree at full detail -- which
+// looked like a real if small cost, and was in fact the 120 Hz vsync interval
+// (8.33 ms) in both cases. The renderer was waiting for the display, not for
+// the geometry, so the measurement could only ever return the refresh rate.
+// THAT IS THE SIXTH METRIC IN THIS PROJECT TO ANSWER A DIFFERENT QUESTION
+// THAN THE ONE ASKED; before trusting a number here, check that it can move.
+//
+// Measured properly -- frame pacing over 240 frames against the scene's own
+// vertex count -- a grown redwood course draws 33.6 M vertices and 98 M
+// triangles per frame and still holds the 120 Hz cap. Instanced vertices are
+// close to free on this path. The swap bought nothing measurable and cost the
+// one thing that showed: at any moment nearly every visible tree was the
+// thinned twin, so the forest looked dead, and the boundary popped.
+//
+// The generator still bakes `_Far` twins (tools/grow.mjs, LOD.far) and they
+// are simply not ingested. If this ever needs to come back for weaker
+// hardware, the models are one PICK entry away -- but measure on that
+// hardware, with a metric that is allowed to say "free".
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -45,13 +79,21 @@ function addModelSpecies(view,kind,trees){
   // Nothing downstream depends on the visual width, because trunkRadius() in
   // physics derives collision from height, not from t.r.
   const lift=.88+rng()*.26,girth=.86+rng()*.28;
-  const sy=t.h*lift,sxz=sy*girth;
+  // GROUND COVER IS SIZED BY ITS SPREAD, NOT ITS HEIGHT. A sword fern is a low
+  // clump about a metre and a half across, and `Fern_1`'s fronds reach nearly
+  // twice its height sideways -- so scaling it to t.h the way a tree is scaled
+  // gave a ten-metre bush. t.r is the spread these were given; use it, and let
+  // the height follow the model's own proportions.
+  // The bush family still sizes by height. It probably should not either, but
+  // six biomes draw from it and that is a change to look at on its own.
+  const spread=SPREAD_SIZED.has(FAMILY_OF[kind])?t.r/modelRadius(model)*lift:0;
+  const sy=spread||t.h*lift,sxz=spread||sy*girth;
   dummy.position.set(t.x,t.y,t.z);
   dummy.rotation.set((rng()-.5)*.10,rng()*6.28,(rng()-.5)*.10);
   dummy.scale.set(sxz,sy,sxz);
   dummy.updateMatrix();
   const leaf=leafBase.clone();
-  if(world.settings.biome==='autumn'&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
   entries.push({model,owner:t,matrix:dummy.matrix.clone(),
    color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:leaf}});
@@ -68,6 +110,11 @@ function addModelSpecies(view,kind,trees){
  });
  return true;
 }
+// The drawn cylinder with a borrowed crown balanced on top is GONE. It
+// existed because no pack contained a bare-boled giant; tools/grow.mjs now
+// produces whole redwoods -- fluted trunk, buttressed foot, branch structure
+// and plume in one model -- so there is nothing left to fake.
+
 function addSpecies(view,kind,trees){
  // Imported geometry where the packs have a counterpart, procedural everywhere
  // else -- the desert species have none, and a wrong silhouette is worse than a
@@ -85,7 +132,7 @@ function addSpecies(view,kind,trees){
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
  for(const t of trees){currentTree=t;
   const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palo:'#8d9a47',mesquite:'#6c804b',ocotillo:'#7c8050',agave:'#7caa9b',naupaka:'#428546',hala:'#678f3d',gorse:'#718347',heather:'#79627c'};const tint=new T.Color(blue?'#a3d6cf':shades[kind]||world.bio.tree).multiplyScalar(.8+t.shade*.4);
-  if(world.settings.biome==='autumn'&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   // Every tree used to stand perfectly upright on a trunk of identical
   // proportion, which is half of why a stand reads as one asset repeated.
   const leanX=(rng()-.5)*.085,leanZ=(rng()-.5)*.085,girth=.021+rng()*.013;
@@ -157,11 +204,110 @@ function addSpecies(view,kind,trees){
  }
 export function addVegetation(view){
  view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
- view.clearCameraTrees=()=>{if(last.distanceToSquared(view.camera.position)<.04)return;last.copy(view.camera.position);const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));for(const batch of view.treeInstances){let changed=false;batch.owners.forEach((t,i)=>{const hide=hidden.has(t)?1:0;if(hide!==batch.hidden[i]){batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);batch.hidden[i]=hide;changed=true;}});if(changed)batch.mesh.instanceMatrix.needsUpdate=true;}};
+ // An instance is drawn unless the camera is standing inside that tree.
+ view.clearCameraTrees=()=>{
+  // The vegetation tests build a view with no camera -- they only ever look
+  // at the geometry -- so this has to be safe to call without one.
+  if(!view.camera)return;
+  if(last.distanceToSquared(view.camera.position)<.04)return;
+  last.copy(view.camera.position);
+  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));
+  for(const batch of view.treeInstances){
+   let changed=false;
+   batch.owners.forEach((t,i)=>{
+    const hide=hidden.has(t)?1:0;
+    if(hide!==batch.hidden[i]){
+     batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
+     batch.hidden[i]=hide;changed=true;
+    }
+   });
+   if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
+  }
+ };
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
+
+ addDeadfall(view);
  addGroundCover(view);
  addNearbyGrass(view);
 }
+// THE FOREST FLOOR IS WHAT A GROVE LEAVES BEHIND.
+//
+// Under a redwood the interesting thing at eye level is not the trees -- their
+// trunks are bare for twenty metres -- it is the deadfall: a toppled trunk
+// going soft, the stump of something that came down a century ago, boulders
+// furred over with moss. Without it the floor is mown rough with columns
+// standing in it.
+//
+// Placement is mostly ANCHORED TO TREES rather than uniform, because timber
+// falls where timber grows. A scatter spread evenly over the whole map reads as
+// litter dropped on a lawn; the same count clustered around trunks reads as a
+// wood that has been there a while.
+//
+// These are decoration and nothing collides with them -- a ball rolls through a
+// fallen log. Worth knowing before anyone makes them bigger.
+const DEADFALL = [['log', .40], ['stump', .24], ['mossrock', .36]];
+function addDeadfall(view) {
+ const {world} = view, count = biomeOf(world.settings.biome).deadfall;
+ if (!count) return;
+ // Its own group, the way the living rough has one: a named handle in the
+ // scene is the difference between checking this from the console and
+ // guessing at it.
+ const group = new T.Group(); group.name = 'Deadfall'; view.group.add(group);
+ const rng = random(world.seed + ':deadfall'), dummy = new T.Object3D();
+ dummy.rotation.order = 'YXZ';
+ // Real trees only. A fern is not something a log falls out of.
+ const anchors = world.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+
+ const damp = new T.Color('#5a4433'), cut = new T.Color('#9a8156');
+ const moss = new T.Color('#4f6b3c'), stone = new T.Color(world.bio.rock || '#8a8577');
+ const dirt = new T.Color(world.bio.rough || '#7e8a5a');
+ const entries = [];
+ for (let i = 0; i < count * 4 && entries.length < count; i++) {
+  let x, z;
+  if (anchors.length && rng() < .72) {
+   const t = anchors[Math.floor(rng() * anchors.length)], a = rng() * 6.28;
+   const r = t.r * 1.1 + rng() * 7;
+   x = t.x + Math.cos(a) * r; z = t.z + Math.sin(a) * r;
+  } else {
+   x = (rng() - .5) * world.halfX * 2; z = (rng() - .5) * world.halfZ * 2;
+  }
+  if (world.surface(x, z) !== 'rough' || world.nearest(x, z).d < 8) continue;
+  if (onShoreBank(world, x, z)) continue;
+
+  let r = rng(), family = DEADFALL[DEADFALL.length - 1][0];
+  for (const [k, f] of DEADFALL) { r -= f; if (r <= 0) { family = k; break; } }
+  const models = familyModels(family);
+  if (!models.length) continue;
+  const model = models[Math.floor(rng() * models.length)];
+
+  // Every model is normalised to unit height, so one number sizes it. For a
+  // log lying down that height is its THICKNESS and the length follows from
+  // the model's own proportions -- which is why a log is scaled so much
+  // smaller than a stump and still ends up the longer object.
+  const size = family === 'log' ? .5 + rng() * .55
+             : family === 'stump' ? .7 + rng() * 1.0
+             : .5 + rng() * 1.25;
+  // Settled into the ground rather than resting on top of it.
+  dummy.position.set(x, world.height(x, z) - size * .1, z);
+  dummy.rotation.set((rng() - .5) * .16, rng() * 6.28, (rng() - .5) * .16);
+  dummy.scale.set(size * (.9 + rng() * .3), size, size * (.9 + rng() * .3));
+  dummy.updateMatrix();
+  const green = moss.clone().offsetHSL((rng() - .5) * .04, (rng() - .5) * .12, (rng() - .5) * .12);
+  const wood = damp.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .14);
+  entries.push({model, owner: null, matrix: dummy.matrix.clone(),
+   // `accent` is the cut face on a log and the whole plant on some models, so
+   // it follows the family rather than being one colour for everything.
+   color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35),
+    dirt, accent: family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12)}});
+ }
+ const materials = new Map();
+ const materialFor = role => {
+  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
+  return materials.get(role);
+ };
+ instanceModels(group, entries, materialFor);
+}
+
 function finishBlade(){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([-.5,-.5,0,.5,-.5,0,0,.5,.24,0,-.4,.12],3));g.setIndex([0,1,3,1,2,3,2,0,3]);g.computeVertexNormals();return g;}
 function addGroundCover(view){
  const {world,style,group}=view,real=style==='realistic',toon=style==='cartoon',blue=style==='blueprint',rng=random(world.seed+':understory'),dummy=new T.Object3D(),color=new T.Color();
@@ -179,8 +325,8 @@ function addGroundCover(view){
  const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
  const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
- const rockCount=world.settings.biome==='mountain'?550:world.settings.biome==='desert'?500:160;
- for(let i=0;i<rockCount;i++){const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2;if(world.surface(x,z)!=='rough'||world.nearest(x,z).d<5)continue;const scale=(world.settings.biome==='desert'||world.settings.biome==='mountain'?2:1)*(.6+rng()*3),shape=Math.floor(rng()*STONES);dummy.position.set(x,world.height(x,z)+scale*.25,z);dummy.rotation.set(rng(),rng()*6.28,rng());dummy.scale.set(scale*(1.15+rng()*.5),scale*(.48+rng()*.42),scale*(.82+rng()*.42));dummy.updateMatrix();rocks[shape].push(dummy.matrix.clone());rockColors[shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
+ const rockCount=biomeOf(world.settings.biome).scatter.rocks;
+ for(let i=0;i<rockCount;i++){const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2;if(world.surface(x,z)!=='rough'||world.nearest(x,z).d<5)continue;const scale=(biomeOf(world.settings.biome).scatter.rockScale)*(.6+rng()*3),shape=Math.floor(rng()*STONES);dummy.position.set(x,world.height(x,z)+scale*.25,z);dummy.rotation.set(rng(),rng()*6.28,rng());dummy.scale.set(scale*(1.15+rng()*.5),scale*(.48+rng()*.42),scale*(.82+rng()*.42));dummy.updateMatrix();rocks[shape].push(dummy.matrix.clone());rockColors[shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
  // A single icosahedron for every boulder is the other half of why scree reads
  // as one chunk repeated. Build a few distinct stones and deal rocks between
  // them; each gets its own material because instance() disposes the material it
@@ -193,8 +339,8 @@ function addGroundCover(view){
   stone.computeVertexNormals();
   instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]);
  }
- const grassCount=Math.round((world.settings.biome==='desert'?12000:world.settings.biome==='links'?400000:110000)*(view.quality?.grass??1));
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(world.settings.biome==='links'?1.25:.65)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(world.settings.biome==='links'?1.4:.8,h,world.settings.biome==='links'?1.4:.8);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(world.settings.biome==='links'?'#c2a05c':world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':world.settings.biome==='links'?(rng()>.5?'#ddc252':'#ae79a6'):rng()>.5?'#f0cf63':'#bc80b4'));}}
+ const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
  for(const t of world.trees.filter(t=>['gorse','heather','palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));blade.computeVertexNormals();instance(blade,windMaterial(mat('#fff',{side:T.DoubleSide}),view,.38,true),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
 }
@@ -235,7 +381,7 @@ function addNearbyGrass(view){
   // afterwards: that was two throwaway objects per surviving blade, about 2500 a
   // tile. The mesh is allocated for every candidate and its count pulled back to
   // what survived, which is the only way round needing the total up front.
-  const rng=random(w.seed+':grass:'+key),count=w.settings.biome==='desert'?150:1600;
+  const rng=random(w.seed+':grass:'+key),count=biomeOf(w.settings.biome).scatter.tufts;
   const mesh=new T.InstancedMesh(geometry,material,count);
   let kept=0;
   // ROUGH ONLY. The semi-rough used to carry blades too, at 3.5 cm -- stubble
@@ -243,7 +389,7 @@ function addNearbyGrass(view){
   // to be visibly BETWEEN fairway and rough. The mown-height difference is the
   // information; geometry on top of it was not adding any.
   for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(surface!=='rough'||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
-   const tall=w.settings.biome==='links',height=tall?.6+rng()*.65:.07+rng()*.16;
+   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.07+rng()*.16;
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.55,height,tall?1:.55);dummy.updateMatrix();
    mesh.setMatrixAt(kept,dummy.matrix);
    color.set(tall?'#bd9e5f':w.bio.rough).lerp(new T.Color(tall?'#e8d797':'#aebd69'),rng()*.35);

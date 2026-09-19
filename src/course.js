@@ -7,15 +7,13 @@ import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
-export const BIOMES={
- pnw:{name:'Pacific Northwest',title:'Bandon Ridge',tag:'Old-growth forest. Cool coastal air.',rough:'#526238',semi:'#477335',fairway:'#538637',fringe:'#638e40',green:'#80a74c',tree:'#254c32',sky:'#a7c6d5',sand:'#e5d9b7',water:'#245959',rock:'#6f7976',altitude:120,temperature:16,treeKind:'pine',sun:28},
- desert:{name:'Desert',title:'Saguaro Dunes',tag:'Emerald turf in a sandstone wilderness.',rough:'#b99967',semi:'#688440',fairway:'#39804b',fringe:'#76a055',green:'#90b66b',tree:'#617b46',sky:'#dbd4b9',sand:'#e9c996',water:'#348d8a',rock:'#b57c4e',altitude:450,temperature:31,treeKind:'cactus',sun:24},
- mountain:{name:'Mountain',title:'Alpine Reserve',tag:'Glacial peaks. Clear alpine lakes.',rough:'#65714c',semi:'#557843',fairway:'#639847',fringe:'#86a65d',green:'#a3ba78',tree:'#24473b',sky:'#adcfeb',sand:'#dfddd1',water:'#24647b',rock:'#8a9495',altitude:1800,temperature:11,treeKind:'spruce',sun:36},
- links:{name:'Links',title:'North Sea Links',tag:'Golden fescue, dunes, and Atlantic light.',rough:'#a89d65',semi:'#7e9050',fairway:'#6d9149',fringe:'#91a75b',green:'#acbd73',tree:'#89945e',sky:'#c8d7df',sand:'#e9dcb7',water:'#436e80',rock:'#8b8977',altitude:15,temperature:14,treeKind:'shrub',sun:23},
- midwest:{name:'Midwest',title:'Prairie Run',tag:'Parkland oaks beneath an endless sky.',rough:'#69783b',semi:'#50803d',fairway:'#599743',fringe:'#83a451',green:'#a0be6a',tree:'#46732f',sky:'#b8d7e9',sand:'#e8ddc3',water:'#41766a',rock:'#83846c',altitude:230,temperature:22,treeKind:'oak',sun:39},
- island:{name:'Island',title:'Turtle Bay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
- autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19}
-};
+import {GROUND_PLANTS,crownFraction,crownRadius} from './species.js';
+// The biome table lives in its own module now: it had grown into the answer to
+// every "what does this biome do" question, and half those answers were
+// conditionals in other files. Re-exported because everything imports it from
+// here, and because range.js documents a cycle that this quietly removes.
+export {BIOMES, biomeOf} from './biomes.js';
+import {BIOMES, biomeOf} from './biomes.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
 // JavaScript variant published by bryc (MIT fallback). See THIRD_PARTY_NOTICES.txt.
 export function random(seed){let a=2166136261;for(const c of String(seed)){a^=c.charCodeAt(0);a=Math.imul(a,16777619);}return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
@@ -293,7 +291,7 @@ export function generateCourse(settings={},hole=0){
  h.surface=(x,z)=>localSurface(h,x,z);
  h.height=(x,z)=>s.elevation/100*(22*Math.sin(z/130)+12*Math.sin(x/100+z/170));
  h.trees=[];const count=Math.round(s.trees*(bio.treeKind==='shrub'?.25:bio.treeKind==='cactus'?.5:2.2));
- for(let i=0;i<count*3&&h.trees.length<count;i++){const z=-25+rng()*(length+70),x=(rng()-.5)*215;if(h.surface(x,z)!=='rough'||Math.abs(x-center(z))<width(z)+s.semiRough+13||Math.hypot(x-green.x,z-green.z)<31+s.fringe+s.semiRough||Math.hypot(x,z)<22)continue;const small=bio.treeKind==='shrub';h.trees.push({x,z,y:h.height(x,z),h:small?1+rng()*2:bio.treeKind==='cactus'?4+rng()*5:13+rng()*16,r:small?1+rng():3+rng()*4,shade:rng()});}
+ for(let i=0;i<count*3&&h.trees.length<count;i++){const z=-25+rng()*(length+70),x=(rng()-.5)*215;if(h.surface(x,z)!=='rough'||Math.abs(x-center(z))<width(z)+s.semiRough+13||Math.hypot(x-green.x,z-green.z)<31+s.fringe+s.semiRough||Math.hypot(x,z)<22)continue;const small=bio.treeKind==='shrub';h.trees.push({x,z,y:h.height(x,z),h:small?1+rng()*2:bio.canopy.min+rng()*bio.canopy.range,r:small?1+rng():3+rng()*4,shade:rng()});}
  return h;
 }
 // Tee pad half-extents and the maintained collar around them. A pad on its own
@@ -511,7 +509,9 @@ export function localSurface(h,x,z){
 // This is the biome deciding what it is, not a settings validation: the pond and
 // channel controls keep their values, so switching a course to island and back
 // returns the water it had.
-export const NO_INLAND_WATER = new Set(['island']);
+// Kept as a name because tests and other modules ask the question this way,
+// but the answer lives on the biome now rather than in a list here.
+export const NO_INLAND_WATER = {has: key => !biomeOf(key).inlandWater};
 
 // WHERE THE SEA MEETS THE LAND.
 //
@@ -595,7 +595,7 @@ export function generateWorld(settings={}){
  // is still a hole, so everything past this line -- routing, terrain, ground
  // textures, vegetation -- treats it exactly like any other and needs no branch.
  const bio=BIOMES[s.biome],holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
- const phase=random(s.seed+':land')()*100,coastal=s.biome==='island';
+ const phase=random(s.seed+':land')()*100,coastal=bio.coastal;
  // THE GREEN-END ALLOWANCE IS RAMPED, NOT SWITCHED.
  //
  // This read `zz===h.length ? 25+fringe+semiRough : 0` -- an exact float
@@ -717,13 +717,10 @@ export function generateWorld(settings={}){
   // is a variable the player did not set, quietly added to every carry.
   const unmown=n.h.range?0:(1-smooth((n.p.z-(mown-60))/40))*TEE_AREA_RELIEF;
   const open=reach=>Math.max(smooth(n.d/reach),unmown);
-  let hills=0;
-  if(s.biome==='mountain')hills=relief*(70+severity*180)*rolling*open(90);
-  else if(s.biome==='links')hills=relief*(14+severity*35)*rolling*open(42);
-  else if(s.biome==='desert')hills=relief*(25+severity*75)*rolling*open(90);
-  else hills=relief*(s.biome==='pnw'?45:18)*rolling*open(70);
+  // Four hand-written branches, now three numbers the biome states outright.
+  const hills=relief*(bio.hills.base+severity*bio.hills.severity)*rolling*open(bio.hills.reach);
   let y=base(x,z)+hills;
-  if(s.biome==='links'){const coast=smooth((x-(halfX-90+Math.sin(z/150)*30))/90);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
+  if(bio.edgeCoast){const coast=smooth((x-(halfX-90+Math.sin(z/150)*30))/90);y=foreshore(y*(1-coast)-s.waterMax*coast,coast);}
   return y;
  }
  // OPEN WATER, AS OPPOSED TO GROUND THAT MERELY SITS LOW.
@@ -735,7 +732,7 @@ export function generateWorld(settings={}){
  // This is the raw landform, deliberately -- not `shapedLand`. Shaping is what
  // ponds and channels do TO the land, and no water body may decide it is on dry
  // ground because another one already dug a hole there.
- const isSea=(coastal||s.biome==='links')?((x,z)=>land(x,z)<0):(()=>false);
+ const isSea=bio.sea?((x,z)=>land(x,z)<0):(()=>false);
  // Every local modifier has compact, continuous support. Never switch height
  // functions at the nearest-hole boundary (that used to cut cracks into ridges).
  const modifiers=holes.map(h=>({h,minX:Math.min(h.worldTee.x,h.worldGreen.x)-180,maxX:Math.max(h.worldTee.x,h.worldGreen.x)+180,minZ:Math.min(h.worldTee.z,h.worldGreen.z)-180,maxZ:Math.max(h.worldTee.z,h.worldGreen.z)+180}));
@@ -1320,7 +1317,7 @@ export function generateWorld(settings={}){
  // The corner heights come from the grid, which sampled them anyway, so this is
  // exact and free. It refines the cells the waterline actually crosses and
  // nothing else.
- const nearShore=(coastal||s.biome==='links')
+ const nearShore=bio.sea
   ?((x,z,a,b,c,d)=>a===undefined?false:Math.min(a,b,c,d)<waterLevel&&Math.max(a,b,c,d)>=waterLevel)
   :(()=>false);
  const groundGrid=makeGroundGrid(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);}));
@@ -1389,7 +1386,7 @@ export function generateWorld(settings={}){
   // Generation still uses `land` for this, in `isSea`, and has to -- ponds and
   // channels are placed before there is a ground mesh to ask.
   const y=height(x,z);
-  if((coastal||s.biome==='links')&&y<waterLevel)return 'water';
+  if(bio.sea&&y<waterLevel)return 'water';
   const found=localSurface(n.h,n.p.x,n.p.z);
   // The beach, on the two biomes that have a coast. `height` rather than `land`
   // because that is the field the ground mesh is actually built from, and the
@@ -1399,22 +1396,53 @@ export function generateWorld(settings={}){
   // surface whatever its elevation -- letting the beach take the corridor turned
   // a fifth of every island hole into sand, and a green shaped down near the sea
   // would have become a bunker.
-  if((coastal||s.biome==='links')&&found==='rough'&&y<waterLevel+BEACH_RISE)return 'sand';
+  if(bio.sea&&found==='rough'&&y<waterLevel+BEACH_RISE)return 'sand';
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  const homes=generateHomes(s,holes,height,surface,random);
  const trees=[];
- const ecology={pnw:[['pine',.38],['cedar',.3],['alder',.17],['fern',.15]],mountain:[['spruce',.4],['pine',.28],['aspen',.22],['shrub',.1]],desert:[['cactus',.3],['palo',.22],['mesquite',.18],['ocotillo',.16],['agave',.14]],links:[['gorse',.5],['heather',.42],['shrub',.08]],midwest:[['oak',.5],['aspen',.18],['maple',.22],['shrub',.1]],island:[['palm',.45],['hala',.25],['naupaka',.3]],autumn:[['maple',.36],['oak',.25],['aspen',.24],['spruce',.15]]};
- const rng=random(s.seed+':ecology'),pick=()=>{let r=rng();for(const[k,f]of ecology[s.biome]){r-=f;if(r<=0)return k;}return ecology[s.biome][0][0];};
- const count=Math.round(s.trees*s.holes*(s.biome==='links'?1.1:s.biome==='desert'?1.25:s.biome==='pnw'?4:s.biome==='mountain'?3.8:s.biome==='autumn'?3.6:2.8));
+ // The plant mix is the biome's own; `pick` only turns weights into a draw.
+ const rng=random(s.seed+':ecology'),pick=()=>{let r=rng();for(const[k,f]of bio.plants){r-=f;if(r<=0)return k;}return bio.plants[0][0];};
+ // A species may be understorey: a third number scales its height, so a biome
+ // can have a mid-storey under its giants instead of everything reaching the
+ // same canopy. Without it the redwood grove's cedars were also 380 feet tall,
+ // which is the christmas-tree-through-a-redwood look.
+ const heightScale=Object.fromEntries(bio.plants.map(([k,,scale])=>[k,scale??1]));
+ const count=Math.round(s.trees*s.holes*(bio.treeDensity));
+ // TREES MUST LEAVE ROOM FOR EACH OTHER. There was no spacing rule at all --
+ // invisible while a tree was 20 m with a 3 m crown, and mangled at 116 m with
+ // a 10 m one. Crowns in a closed canopy do interlock, so the rule is not "no
+ // overlap": it is that two crowns may not be mostly the same crown, and two
+ // trunks may never intersect. A grid keeps it from being quadratic.
+ const CROWN_SHARE=bio.crownShare,TRUNK_CLEAR=1.5,SPACE_CELL=32;
+ const placed=new Map();
+ const cellKey=(x,z)=>Math.floor(x/SPACE_CELL)+','+Math.floor(z/SPACE_CELL);
+ const roomFor=t=>{
+  const x=Math.floor(t.x/SPACE_CELL),z=Math.floor(t.z/SPACE_CELL);
+  for(let i=x-2;i<=x+2;i++)for(let j=z-2;j<=z+2;j++){
+   for(const o of placed.get(i+','+j)||[]){
+    const d=Math.hypot(o.x-t.x,o.z-t.z);
+    if(d<CROWN_SHARE*(crownRadius(t)+crownRadius(o)))return false;
+    if(d<trunkGirth(t)+trunkGirth(o)+TRUNK_CLEAR)return false;
+   }
+  }
+  return true;
+ };
+ // The drawn trunk radius, which physics also uses. Kept local rather than
+ // imported so the generator does not depend on the flight model.
+ const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d<10||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
-  const small=['fern','gorse','heather','agave','naupaka','shrub'].includes(kind),h=small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:12+rng()*15,r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
-  trees.push({x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole});
+  const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
+  const tree={x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole};
+  // Ground cover threads between the trunks and needs no room of its own.
+  if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
+  if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
+  trees.push(tree);
  }
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
- const groundCover=(x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p))?'straw':s.biome==='links'?'prairie':'grass';
- const world={teeSites,lakeOwner,largeLakes,homes,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:Object.keys(Object.fromEntries(ecology[s.biome]))};
+ const groundCover=(x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p))?'straw':bio.cover;
+ const world={teeSites,lakeOwner,largeLakes,homes,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

@@ -69,7 +69,7 @@ export const GENERATOR_VERSION=22;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
-export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','autumn'];
+export const BIOME_KEYS=['pnw','desert','mountain','links','midwest','island','redwood','autumn'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
 
 // Third entry is a note for the group, used where the context belongs to the

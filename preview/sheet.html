@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fairway contact sheet</title>
+<style>
+ :root { color-scheme: dark; }
+ * { box-sizing: border-box; }
+ body { margin: 0; background: #12140f; color: #d9d6cc;
+  font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+ #bar { position: fixed; inset: 0 0 auto 0; z-index: 2; display: flex; gap: 8px; align-items: center;
+  padding: 7px 10px; background: #171a14; border-bottom: 1px solid #2b2f26; }
+ input, button { font: inherit; background: #23261f; color: inherit; border: 1px solid #2f342a;
+  border-radius: 4px; padding: 4px 8px; }
+ #grid { padding: 44px 0 0; }
+ canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="bar">
+ <input id="q" placeholder="filter" size="18" autocomplete="off">
+ <label>columns <input id="cols" type="number" value="6" min="2" max="10" style="width:56px"></label>
+ <label>cell <input id="cell" type="number" value="230" min="90" max="500" style="width:66px"></label>
+ <span id="count"></span>
+</div>
+<div style="position:relative"><canvas id="grid"></canvas><div id="tags" style="position:absolute;inset:0"></div></div>
+<script type="module" src="./sheet.js"></script>
+</body>
+</html>

@@ -49,6 +49,21 @@ Optional homes are sampled along both sides of the fairways with occurrence and 
 
 For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO.md covers hydrology, routing quality, building collisions, performance and other future improvements.
 
+## What a biome decides
+
+The redwood grove's plants are GROWN rather than imported. `tools/grow.mjs` composes every one of them -- redwood, douglas fir, hemlock, red cedar, tanoak, seedlings, sword fern, salal, sorrel, plus nurse logs, stumps and boulders -- from a small geometry library, with shapes and colours measured from 315 photographs of real redwood forest. Each is a whole tree carrying its own fluted, buttressed trunk, so nothing is borrowed and nothing is drawn underneath. This replaced an earlier approach that drew a tapered cylinder and balanced a borrowed conifer crown on top, which existed only because no imported conifer is anything but conical to the ground and reads as a Christmas tree at redwood scale.
+
+Every tree draws at full detail. A two-level swap by camera distance was built here and removed: it was justified by arithmetic and then by a benchmark that was reading the display's vsync interval rather than the cost of the geometry. Measured honestly, a grove draws 33.6 M vertices a frame and still holds the refresh cap, while the swap made nearly every visible tree the thinned twin -- a forest that looked dead, and a boundary that popped.
+
+Elsewhere a tall conifer is still an imported model. The crown's width is stated as a fraction of the tree's own height with the model's native width divided out, so every crown in a grove is the width asked for whichever model it came from, and the crown takes whatever height the trunk leaves, so a tree is exactly as tall as its stated height. A trunk is drawn at the radius physics collides with, so a trunk you can see is a trunk you hit. Tree height is a biome field: 13 to 29 metres ordinarily, 42 to 116 -- 380 feet -- in a redwood grove.
+
+Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
+
+A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
+
+
+A biome is one record in `src/biomes.js` holding 45 fields: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
+
 ## Large lakes and downhill streams
 
 Large lakes are additional continuous procedural bank profiles, requested with count and typical-diameter sliders. Candidate search favors low, gentler open ground outside the playing corridors. They share the pond basin/reflection/map pipeline. A lake that extends across nearest-hole tiles retains its own surface and GPU ownership; the per-hole atlas limit remains four ponds/lakes. Available space may reduce the requested count.
