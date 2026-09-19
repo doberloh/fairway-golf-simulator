@@ -4,6 +4,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
+import {trunkRadius} from './physics.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
 import {GROUND_PLANTS} from './species.js';
@@ -111,18 +112,22 @@ function addTallConifers(view, kind, trees) {
  // redwood is a 12 m crown on a 70 m tree, so the crown is about two and a half
  // times as tall as it is wide; a douglas fir is broader and starts lower.
  const TRUNK = kind === 'redwood' ? .64 : .56;  // bare trunk
- const CROWN = kind === 'redwood' ? .42 : .50;  // crown height
  const WIDE = kind === 'redwood' ? .085 : .115; // crown HALF-width
+ // The crown takes whatever height is left rather than a fraction of its own,
+ // so a tree is exactly as tall as t.h says. Two independent fractions each
+ // with their own jitter overshot by up to 12%, which made a "380 foot"
+ // redwood 415 feet and left physics colliding with the height it was told.
+ // It reads better too: a tree with less bare trunk has a deeper crown, which
+ // is what happens when one grows with more light down its flank.
 
  const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
  const bark = new T.Color(kind === 'redwood' ? '#6d3f2e' : '#54453a');
  const leafBase = new T.Color(kind === 'redwood' ? '#2d4a33' : '#33543c');
  const stone = new T.Color(world.bio.rock || '#8a8577'), dirt = new T.Color(world.bio.rough || '#7e8a5a');
 
- // Seven sides is enough for a trunk seen against the sky, and these are the
- // most numerous things on the course. Barely tapered: a redwood is a column,
- // and the old .34 top gave it the profile of a spike.
- const column = new T.CylinderGeometry(.62, 1, 1, 7, 1, false);
+ // Nine sides now they are three metres thick and you stand next to them, and
+ // barely tapered: a redwood is a column, and the old .34 top was a spike.
+ const column = new T.CylinderGeometry(.62, 1, 1, 9, 1, false);
  const trunkMaterial = new T.MeshToonMaterial({color: '#ffffff'});
  const trunks = new T.InstancedMesh(column, trunkMaterial, trees.length);
  trunks.castShadow = true; trunks.receiveShadow = true;
@@ -133,10 +138,12 @@ function addTallConifers(view, kind, trees) {
   const t = trees[i];
   const lean = (rng() - .5) * .035, leanZ = (rng() - .5) * .035;
   const trunkHeight = t.h * TRUNK * (.9 + rng() * .2);
-  // A redwood is roughly a fiftieth as thick as it is tall at the base, which
-  // is far narrower than `t.r` -- that is a foliage radius and would give a
-  // trunk you could not see past.
-  const base = t.h * (kind === 'redwood' ? .021 : .016) * (.85 + rng() * .3);
+  // THE DRAWN TRUNK IS THE COLLIDED TRUNK. It used to be a thinner rule of its
+  // own -- a fiftieth of the height against physics' 0.027 -- so the trunk you
+  // saw and the cylinder the ball hit were different objects, and the drawn one
+  // was the thinner. At 380 feet that gap is over a metre. Girth varies through
+  // the taper above instead, where nothing depends on it.
+  const base = trunkRadius(t);
   dummy.position.set(t.x, t.y + trunkHeight / 2, t.z);
   dummy.rotation.set(lean, rng() * 6.28, leanZ);
   dummy.scale.set(base, trunkHeight, base);
@@ -147,7 +154,7 @@ function addTallConifers(view, kind, trees) {
 
   // The crown, lifted so its base sits inside the top of the trunk.
   const model = models[Math.floor(rng() * models.length)];
-  const crownHeight = t.h * CROWN * (.88 + rng() * .24);
+  const crownHeight = t.h - trunkHeight * .92;
   // Half-width in metres, then divided by the model's own radius so every
   // crown is the width asked for whichever model it came from.
   const half = t.h * WIDE * (.85 + rng() * .3), sxz = half / modelRadius(model);

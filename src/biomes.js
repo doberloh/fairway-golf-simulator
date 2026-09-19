@@ -117,6 +117,10 @@ const TRAITS = {
   scatter: {rocks: 300, grass: 90000, tufts: 2000, tallGrass: false,
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
+  // 380 feet. Coast redwoods really do run to this, and the point of the
+  // biome is standing under one -- the floor of the range is unchanged, so a
+  // grove is a wide spread of heights rather than a field of identical giants.
+  canopy: {min: 46, range: 69.8}, farCanopy: {min: 42, range: 73.8},
   deadfall: 520,
   plants: [['redwood', .40], ['fir', .24], ['swordfern', .26], ['cedar', .10]]},
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',

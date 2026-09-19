@@ -571,6 +571,39 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Giant means the trunk, and a crown must be one mass
+
+Three things wrong at once, from a screenshot of a single tree.
+
+### The crown was a wedding cake
+
+The MegaKit's pines are tiered. Their radius alternates wide-narrow-wide **every band from the ground up**, which at redwood scale draws five separate green plates with daylight and bare trunk between them. Measured as a profile rather than judged by eye, the pattern is unmistakable, and it is worth measuring before picking a crown model:
+
+    MegaKit Pine_1   F D B E C A B C B 8 B A 9 7 7 9 6 4 4 3   <- a stack
+    PineTree_2       5 3 7 5 8 A B B D D F B A 8 8 8 9 6 4 2   <- a plume
+
+Across all six vendored packs exactly two crowns rise to a single peak and fall: `PineTree_2` and `PineTree_4` from Ultimate Stylized Nature. Those are the two in use. Two shapes is thin variety, but the crown of a 380-foot tree sits seventy metres over your head and the trunk is what you actually look at.
+
+### The drawn trunk and the collided trunk were different objects
+
+The trunk was drawn at a fiftieth of the tree's height while `trunkRadius` in physics collided at 0.027 of it — **the drawn one was the thinner**, so a ball could pass through wood you could see. Nobody would notice at 29 m. At 380 feet the gap is over a metre.
+
+The drawing now calls `trunkRadius` directly, so what you see is what you hit, and girth variety moved into the taper where nothing depends on it. The clamp that function carries went 2.4 m to 3.6 m: it exists to catch a nonsense height, not to be a real limit, and at 2.4 it was shaving a metre off the widest redwoods. At 3.6 it no longer binds on anything the generator makes.
+
+Result: a 6.2 m trunk under an 80 m bare column, from a rule that was already in the codebase.
+
+### 380 feet, and a tree that is actually that tall
+
+The owner asked for a 380-foot maximum with the floor unchanged. Coast redwoods really do run to this.
+
+Setting it exposed a quiet error: the trunk was a fraction of height with its own jitter and the crown was **another** fraction with its own, so the two stacked to as much as 112% of the stated height — a "380 foot" redwood drawn at 415. Physics collides with `t.h`, so the top 35 feet of those trees were scenery a ball flew through.
+
+The crown takes whatever height the trunk leaves now. Every one of 906 redwoods measured in a grown course comes out at exactly its nominal height, and it reads better: a tree with less bare trunk has a deeper crown, which is what a tree with light down its flank actually does.
+
+### Ground cover, again
+
+The `fern` family is sized by spread rather than height, as before. Worth restating because the same fix now has two customers and the bush family still has the bug.
+
 ## Razor-thin redwoods: a width that was inherited instead of stated
 
 The first redwoods came out as needles, and no two the same. The cause is worth writing down because it is a shape of bug rather than a number that was wrong.

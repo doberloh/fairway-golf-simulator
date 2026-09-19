@@ -82,13 +82,17 @@ const PICK = {
  fern: ['megakit:Fern_1', 'megakit:Plant_1_Big', 'megakit:Plant_7',
   'quaternius-ultimate-nature:Plant_3'],
  // A CROWN, AND NOTHING ELSE. Only the leaf parts of these are drawn -- the
- // trunk underneath is ours, because no pack contains a forty-metre bare
+ // trunk underneath is ours, because no pack contains a seventy-metre bare
  // column, and letting a model's own trunk show through the drawn one is what
- // the doubled-up look was. The MegaKit rather than Kenney because these
- // crowns are a dense mass: Kenney's pines are a sparse cone, and a sparse cone
- // squeezed to redwood proportions is a needle.
- conifercrown: ['megakit:Pine_1', 'megakit:Pine_2', 'megakit:Pine_3',
-  'megakit:Pine_4', 'megakit:Pine_5'],
+ // the doubled-up look was.
+ //
+ // THE CROWN MUST BE ONE MASS, not tiers. The MegaKit pines were tried first
+ // and they are wedding cakes: their radius alternates wide-narrow-wide every
+ // band from bottom to top, which at redwood scale is five separate green
+ // plates with daylight and trunk between them. These two are the only crowns
+ // across all six packs whose radius rises to a single peak and falls -- a
+ // plume rather than a stack. Check that profile before adding a third.
+ conifercrown: ['ultimate-stylized:PineTree_2', 'ultimate-stylized:PineTree_4'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],
