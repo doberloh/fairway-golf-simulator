@@ -1,4 +1,4 @@
-# eztree-redwood
+# eztree-grove
 
 Generated, not vendored. `node tools/bake-trees.mjs` produces these from
 [ez-tree](https://github.com/dgreenheck/ez-tree) (MIT) by

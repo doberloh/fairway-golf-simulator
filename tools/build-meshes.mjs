@@ -95,6 +95,15 @@ const PICK = {
 // skipped at draw time.
 const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
 
+// Families whose texture the game actually ships, and therefore the only ones
+// whose texture coordinates are worth carrying. Houses have their atlas;
+// nothing else does. Several packs ship leaf sheets their OBJ exports never
+// reference, and finding one only attaches UVs to geometry that will never
+// sample them. When the generated trees go in, their family joins this set
+// and their sheets have to be carried alongside -- one or the other alone is
+// either wasted bytes or an untextured quad.
+const TEXTURED_FAMILIES = new Set(['house']);
+
 const models = {}, chunks = [];
 let cursor = 0;
 const push = typed => {
@@ -136,7 +145,7 @@ for (const [family, entries] of Object.entries(PICK)) {
   const {name, hit} = locate(entry);
   if (!hit) { missing.push(entry); continue; }
   if (models[name]) throw Error(`two PICK entries both end up called "${name}".`);
-  const byRole = hit.glb ? extract(hit.file) : extractObj(hit.file);
+  const byRole = hit.glb ? extract(hit.file) : extractObj(hit.file, TEXTURED_FAMILIES.has(family));
   const keep = KEEP_ROLES[family];
   if (keep) for (const role of [...byRole.keys()]) if (!keep.has(role)) byRole.delete(role);
   if (!byRole.size) throw Error(`"${entry}" has no ${[...(keep || [])].join('/')} part to keep.`);
@@ -169,7 +178,7 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    const index = new Uint16Array(g.index);
    const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
-   if (g.uv && g.uv.length === count * 2) {
+   if (TEXTURED_FAMILIES.has(family) && g.uv && g.uv.length === count * 2) {
    // A TILING UV DOES NOT FIT IN 0..1, which is what this used to assume.
    // House UVs are atlas coordinates and never leave the unit square, so
    // `uv * 65535` was fine for them and quietly clamped everything else: bark

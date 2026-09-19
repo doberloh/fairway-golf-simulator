@@ -571,6 +571,39 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Trunks painted, canopies textured
+
+Three changes that all turn on the same distinction: **a leaf is a cut-out, a trunk is a surface.**
+
+### No bark images at all
+
+The trunks are untextured now and state a colour instead. That is the right side of the line: a surface is exactly what this project repaints from the biome palette, and carrying a bark image meant tiling it, crediting it, and -- as five attempts established -- getting its coordinates through a pipeline that was never built for tiling.
+
+Each species names its own bark, written as the colour you would pick in an editor and converted on the way out, because **MTL `Kd` is linear**. Blender's exporter writes it that way and Quaternius's own files confirm it; putting sRGB numbers straight in produced a set of pale washed tans, which is what the first attempt at this looked like.
+
+| | | |
+|---|---|---|
+| coast redwood | `#7a4a33` | cinnamon red-brown, darkening with weather |
+| young redwood | `#8a5439` | brighter, the colour freshest on young bark |
+| douglas fir | `#55483c` | dark grey-brown |
+| western red cedar | `#7d5440` | reddish and fibrous |
+| bigleaf maple | `#6b6653` | grey, and mossy in this climate |
+| dead snag | `#8e8478` | weathered silver, all colour gone |
+
+### The pack canopies were meant to be textured, and never were
+
+`PineTree_2` and `PineTree_4` -- the crowns the game's redwoods and firs are wearing -- are fully mapped, and Ultimate Stylized Nature ships their sheet. Their **OBJ export simply never references it**, and the MegaKit's exports reference theirs as `C:/Leaves.png`, an absolute path from whichever machine exported the file.
+
+Two rules fix both. Take only the file name from a `map_Kd`, and, failing that, look for an image named after the material -- Quaternius calls the sheet for `PineTree_Leaves` exactly `PineTree_Leaves.png`, which is a convention to follow rather than a guess. 92 of the 741 models in the previewer are textured now, against 12 before.
+
+### The switch that keeps it out of the game
+
+Reading textures has to be a choice, not a default, and it took two attempts to see why. Turning the lookup on grew the shipped geometry twice: first by attaching texture coordinates to parts whose sheet the game does not carry, and then -- more quietly -- because a UV seam splits a shared vertex, so parts that merely *had* a texture found for them gained vertices even after the coordinates were dropped.
+
+So it is one switch, `wantTextures`, governing the lookup and the vertex splitting together. The ingest asks for it only for families whose image it ships, which today is houses and their atlas. The previewer always asks, because looking at models is what it is for. `src/asset-meshes.js` is byte-identical.
+
+When the generated trees do ship, their family joins `TEXTURED_FAMILIES` **and** their leaf sheets have to be carried with them. One without the other is either wasted bytes or an untextured quad.
+
 ## The bark, third time, and how it was finally settled
 
 Two wrong diagnoses in a row, both from reasoning about UVs instead of sampling what came out. The third attempt started by measuring, and the measurements are now part of the tools.

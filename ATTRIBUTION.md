@@ -19,11 +19,11 @@ Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
 ## Generated geometry, which is not CC0
 
-`vendor/eztree-redwood/` is **generated, not vendored**. `node tools/bake-trees.mjs`
+`vendor/eztree-grove/` is **generated, not vendored**. `node tools/bake-trees.mjs`
 produces it from [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel
 Greenheck, which is **MIT**, a devDependency, and never ships -- what ships is
 the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
-kept, so the notice is vendored at `vendor/eztree-redwood/LICENSE-ez-tree.txt`
+kept, so the notice is vendored at `vendor/eztree-grove/LICENSE-ez-tree.txt`
 and reproduced with any distribution.
 
 Two textures come with it, and they are the only imported images in the project
@@ -33,15 +33,10 @@ besides the house atlases:
   pine and ash), copied unchanged and covered by its MIT licence. They are here
   because a leaf billboard is a cut-out: without an alpha mask it is a solid
   rectangle.
-- `bark_furrowed.jpg` and `bark_plated.jpg` are ez-tree's copies of
-  **[bark_willow_02](https://polyhaven.com/a/bark_willow_02) and
-  [bark_brown_02](https://polyhaven.com/a/bark_brown_02) from Poly Haven, which
-  are CC0**. Redwood bark is deeply furrowed and 35 cm thick, and a flat-shaded
-  cylinder cannot stand in for it. Of the four bark sets ez-tree ships, willow
-  and oak are Poly Haven and CC0 while birch and pine are from texturecan.com --
-  the pine one looks right too and is NOT taken, because its terms have not been
-  checked. Colour maps only: the game is toon shaded and reads no normal,
-  roughness or ambient-occlusion map.
+**No bark images are taken.** Trunks are painted: the generated models state a
+bark colour and the game paints every surface from the biome palette anyway, so
+ez-tree's bark maps -- two of them Poly Haven CC0, two from texturecan whose
+terms were never checked -- are all left where they are.
 
 Everything else imported is still stripped of its materials and repainted from
 the biome palette.

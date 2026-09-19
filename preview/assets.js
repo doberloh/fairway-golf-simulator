@@ -100,7 +100,9 @@ function show(model) {
   geometry.setAttribute('position', new T.BufferAttribute(position, 3));
   geometry.setIndex(new T.BufferAttribute(decode(part.i, Uint16Array), 1));
   geometry.computeVertexNormals();
-  const settings = {color: ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide};
+  // What the model says, if it says anything; the role's colour otherwise.
+  const stated = part.kd && new T.Color(part.kd[0], part.kd[1], part.kd[2]);
+  const settings = {color: stated || ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide};
   if (part.uv !== undefined) {
    const uv = decode(part.uv, Uint16Array), f = new Float32Array(uv.length);
    // uvSpan is the largest coordinate this part uses. Bark tiles well past 1,
@@ -110,11 +112,11 @@ function show(model) {
    geometry.setAttribute('uv', new T.BufferAttribute(f, 2));
    settings.map = TEX[part.tex];
    settings.alphaTest = .4;
-   // WHITE, not the role colour. three multiplies map by colour, and a green
-   // sheet through a green tint comes out near-black -- and the point of
-   // looking at a sprite sheet is to see the sheet. How the game tints these
-   // is a separate decision from how they are judged here.
-   settings.color = '#ffffff';
+   // WHITE unless the model says otherwise. three multiplies map by colour,
+   // and a full-colour sheet through a green tint comes out near-black -- the
+   // point of looking at a sprite sheet is to see the sheet. How the game
+   // tints these is a separate decision from how they are judged here.
+   settings.color = stated || '#ffffff';
   }
   current.add(new T.Mesh(geometry, new T.MeshStandardMaterial(settings)));
  }

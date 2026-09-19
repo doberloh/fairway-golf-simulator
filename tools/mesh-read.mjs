@@ -87,29 +87,64 @@ export function extract(file) {
 // Quaternius ships OBJ rather than GLB. Same treatment: group faces by the
 // material they use, keep geometry, discard everything else. Faces may be
 // quads or larger, so fan-triangulate them.
-// Material name -> the image it paints with, from the sibling .mtl. Almost
-// nothing here is textured -- the game repaints every surface from the biome
-// palette -- but a leaf sprite is an alpha mask rather than art direction, and
-// without it a leaf quad is a solid rectangle.
-function objTextures(file) {
+// Material name -> the image it paints with, and the colour it states, from
+// the sibling .mtl. Almost nothing here is textured -- the game repaints every
+// surface from the biome palette -- but a leaf sprite is an alpha mask rather
+// than art direction, and without it a leaf quad is a solid rectangle.
+//
+// Two things make finding the image harder than reading `map_Kd`:
+//
+//  - The MegaKit's OBJ exports name it `C:/Leaves.png`, an absolute path from
+//    the machine it was exported on. Only the file name is usable.
+//  - Ultimate Stylized Nature's OBJ exports name no image at all, though the
+//    models are fully mapped and the pack ships the sheets. Quaternius names
+//    each one after its material, so `PineTree_Leaves` is `PineTree_Leaves.png`
+//    -- which is a convention worth following rather than a guess.
+function objMaterials(file, wantTextures) {
  const mtl = file.replace(/\.obj$/i, '.mtl');
- const map = new Map();
- if (!existsSync(mtl)) return map;
+ const textures = new Map(), colours = new Map();
+ if (!existsSync(mtl)) return {textures, colours};
+ const dir = dirname(file);
+ const beside = name => {
+  for (const ext of ['.png', '.jpg', '.jpeg']) {
+   const candidate = join(dir, name + ext);
+   if (existsSync(candidate)) return candidate;
+  }
+  return null;
+ };
  let name = null;
  for (const line of readFileSync(mtl, 'utf8').split(String.fromCharCode(10))) {
   const part = line.trim().split(/\s+/);
-  if (part[0] === 'newmtl') name = part[1];
-  else if (part[0] === 'map_Kd' && name) {
-   const image = join(dirname(file), part[part.length - 1]);
-   if (existsSync(image)) map.set(ROLE_OF(name), image);
+  if (part[0] === 'newmtl') {
+   name = part[1];
+   // The named-after-the-material fallback, applied first so an explicit
+   // map_Kd below can still override it.
+   const guess = wantTextures && name && beside(name);
+   if (guess && !textures.has(ROLE_OF(name))) textures.set(ROLE_OF(name), guess);
+  } else if (part[0] === 'map_Kd' && name && wantTextures) {
+   const leaf = part[part.length - 1].split(/[\\/]/).pop();
+   const image = beside(leaf.replace(/\.[^.]+$/, ''));
+   if (image) textures.set(ROLE_OF(name), image);
+  } else if (part[0] === 'Kd' && name && part.length >= 4) {
+   colours.set(ROLE_OF(name), [+part[1], +part[2], +part[3]]);
   }
  }
- return map;
+ return {textures, colours};
 }
 
-export function extractObj(file) {
+// `wantTextures` decides whether this reads images at all -- both an explicit
+// `map_Kd` and the named-after-the-material rule -- and, with it, whether a
+// texture coordinate is allowed to split a shared vertex.
+//
+// It has to be one switch rather than two. Finding a texture for geometry
+// whose sheet will never ship attaches coordinates nothing samples, and
+// splitting vertices at UV seams for those same parts silently grows the
+// packed geometry. The game asks for textures only where it carries the
+// image; the asset previewer asks always, because looking at models is the
+// whole point of it.
+export function extractObj(file, wantTextures = false) {
  const text = readFileSync(file, 'utf8');
- const textures = objTextures(file);
+ const {textures, colours} = objMaterials(file, wantTextures);
  const v = [], vt = [], vn = [], byRole = new Map();
  let role = 'accent';
  for (const line of text.split(String.fromCharCode(10))) {
@@ -120,7 +155,8 @@ export function extractObj(file) {
   else if (part[0] === 'usemtl') role = ROLE_OF(part[1] || '');
   else if (part[0] === 'f') {
    const group = byRole.get(role)
-    || {position: [], normal: [], uv: [], index: [], seen: new Map(), texture: textures.get(role) || null};
+    || {position: [], normal: [], uv: [], index: [], seen: new Map(),
+        texture: textures.get(role) || null, colour: colours.get(role) || null};
    const corner = part.slice(1).map(token => {
     const [vi, ti, ni] = token.split('/');
     // OBJ indices are 1-based and may be negative (relative to the end).

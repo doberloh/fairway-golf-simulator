@@ -57,7 +57,9 @@ for (const pack of readdirSync(VENDOR)) {
  for (const [name, ext] of [...found].sort((a, b) => a[0].localeCompare(b[0]))) {
   if (!wanted(pack, name)) continue;
   let byRole;
-  try { byRole = ext === 'glb' ? extract(join(dir, name + '.glb')) : extractObj(join(dir, name + '.obj')); }
+  // Texture guessing on: this is the tool for LOOKING at models, and several
+  // packs ship sheets their OBJ exports never reference.
+  try { byRole = ext === 'glb' ? extract(join(dir, name + '.glb')) : extractObj(join(dir, name + '.obj'), true); }
   catch { skipped++; continue; }
   if (!byRole || !byRole.size) { skipped++; continue; }
 
@@ -99,6 +101,9 @@ for (const pack of readdirSync(VENDOR)) {
    }
    const part = {role, p: Buffer.from(position.buffer).toString('base64'),
     i: Buffer.from(new Uint16Array(g.index).buffer).toString('base64')};
+   // A colour the model states for itself. The game paints by role instead,
+   // but a tool for looking at models should show what the model says.
+   if (g.colour) part.kd = g.colour.map(v => +v.toFixed(3));
    // A textured part -- in practice a leaf sprite, which is an alpha mask
    // rather than somebody's art direction. Without it the quads it cuts out of
    // are solid rectangles, and the tree looks like it is made of cardboard.
