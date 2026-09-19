@@ -1,9 +1,10 @@
 import * as T from 'three';
+import {biomeOf} from './biomes.js';
 export function aimTarget(origin,degrees,distance){const a=degrees*Math.PI/180;return{x:origin.x+Math.sin(a)*distance,z:origin.z+Math.cos(a)*distance};}
 export function windDrift(settings){const speed=Math.max(0,Math.min(25,settings.wind||0)),a=(settings.windDirection||0)*Math.PI/180;return {x:Math.sin(a)*speed*.44704,z:Math.cos(a)*speed*.44704,count:speed===0?0:Math.min(76,Math.round(8+speed*2.7))};}
 export function localWind(settings,rotation){const w=windDrift(settings),c=Math.cos(rotation),s=Math.sin(rotation);return [w.x*c-w.z*s,0,w.x*s+w.z*c];}
 export function createShotEffects(view){
- const rng=()=>Math.random(),group=new T.Group(),wind=windDrift(view.world.settings),dust=['desert','links'].includes(view.world.settings.biome),color=view.world.settings.biome==='autumn'?'#db9851':dust?'#ead9a7':'#c6ce8d';
+ const rng=()=>Math.random(),group=new T.Group(),wind=windDrift(view.world.settings),bio=biomeOf(view.world.settings.biome),dust=bio.dust,color=bio.spray;
  const positions=new Float32Array(76*3),g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(positions,3));g.setDrawRange(0,wind.count);const mat=new T.PointsMaterial({color,size:dust?.045:.07,transparent:true,opacity:.6,depthWrite:false});mat.onBeforeCompile=s=>s.fragmentShader=s.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nvec2 leaf=gl_PointCoord-vec2(.5);if(abs(leaf.x)*.65+abs(leaf.y)>.42)discard;');const debris=new T.Points(g,mat);debris.frustumCulled=false;group.add(debris);
  const seeds=Array.from({length:76},()=>({x:(rng()-.5)*42,y:(rng()-.5)*22,z:(rng()-.5)*42,phase:rng()*6.28}));let initialized=false;
  const burstGeo=new T.BufferGeometry();burstGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(48*3),3));const burstMat=new T.PointsMaterial({color:'#b2c26d',size:.09,transparent:true,depthWrite:false}),burst=new T.Points(burstGeo,burstMat);burst.visible=false;burst.frustumCulled=false;group.add(burst);

@@ -1,4 +1,5 @@
 import {FOOTPRINTS,footprintCurve} from './footprints.js';
+import {biomeOf} from './biomes.js';
 // Seeded corridor packing: successive tees follow greens, with a compact,
 // collision-checked routing instead of rows of parallel holes.
 export function placeHole(h,origin,rotation){
@@ -24,7 +25,7 @@ export function routeHoles(holes,s,random){
    local.push({...(h.green??h.pin),r:(h.greenSize*h.greenAspect*1.2)+s.fringe+s.semiRough});
    let chosen=null;
    for(let k=0;k<(i?150:1);k++){
-    const previous=placed.at(-1),a=i?rng()*Math.PI*2:0,walk=i?(s.biome==='island'&&i%3===0?155:58)+rng()*55+Math.max(0,k-115)*5:0;
+    const previous=placed.at(-1),a=i?rng()*Math.PI*2:0,walk=i?(i%3===0?biomeOf(s.biome).hop:58)+rng()*55+Math.max(0,k-115)*5:0;
     // Walked from the CENTRE of the last green, not from its cup. A hole location
     // moves through the week; where the next tee goes does not, and routing off
     // the cup would have rebuilt the whole course every time a pin was recut.

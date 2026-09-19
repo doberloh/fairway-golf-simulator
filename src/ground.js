@@ -3,6 +3,7 @@ import {toonRamp} from './textures.js';
 import * as T from 'three';
 import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
 import {CUP_RADIUS} from './physics.js';
+import {biomeOf} from './biomes.js';
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
 //
@@ -113,14 +114,18 @@ export function groundMaterial(view,palette){
  const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
- Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(BANK_COLORS[w.settings.biome])},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:texture(owners,Sx,Sz,true)},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},biome:{value:['desert','mountain','links','island'].indexOf(w.settings.biome)}});
+ const bio=biomeOf(w.settings.biome);
+  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:texture(owners,Sx,Sz,true)},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+   // biome not in the list landed on -1 and took whichever branch that turned
+   // out to be -- silently, and only visible by looking at the ground.
+   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,route,curves,outer,hazards,cups,tees,banks;uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform int biome;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,route,curves,outer,hazards,cups,tees,banks;uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach;
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  float hashGround(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -224,9 +229,9 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  float mowStart=texture2D(route,vec2(5./6.,row)).x;float start=mowStart-margin,end=info.x+8.+margin;
  vec2 outerCurve=texture2D(outer,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row)).xy;float outerWidth=p.x<curve.x?outerCurve.x:outerCurve.y;
  float kind=0.;vec3 turf=tint_rough;float stripeFade=1.;
- if(biome==1){turf=mix(turf,rock,smoothstep(50.,160.,groundPoint.y)*.65);turf=mix(turf,vec3(.84,.9,.94),smoothstep(550.,750.,groundPoint.y));}
- if(biome==0)turf=mix(turf,rock,.18+.1*sin(wp.x*.015)*sin(wp.y*.02));
- float litter=texture2D(cover,(wp/extent+1.)*.5).g;float litterEdge=smoothstep(.2,.65,litter+.10*sin(wp.x*1.7)*sin(wp.y*1.3));if(litterEdge>.01&&biome!=0&&biome!=3){turf=mix(turf,vec3(.36,.22,.105),.83*litterEdge);float needle=step(.94,fract(p.x*17.+p.y*11.+sin(p.y*4.)));turf*=1.+needle*.14;}
+ if(altitudeRock>.5){turf=mix(turf,rock,smoothstep(50.,160.,groundPoint.y)*.65);turf=mix(turf,vec3(.84,.9,.94),smoothstep(550.,750.,groundPoint.y));}
+ if(speckleRock>.5)turf=mix(turf,rock,.18+.1*sin(wp.x*.015)*sin(wp.y*.02));
+ float litter=texture2D(cover,(wp/extent+1.)*.5).g;float litterEdge=smoothstep(.2,.65,litter+.10*sin(wp.x*1.7)*sin(wp.y*1.3));if(litterEdge>.01&&litterAmount>.5){turf=mix(turf,vec3(.36,.22,.105),.83*litterEdge);float needle=step(.94,fract(p.x*17.+p.y*11.+sin(p.y*4.)));turf*=1.+needle*.14;}
  // The rough colour, after biome and litter shading, before any playing surface
  // overwrites it. Channels rebuild a softened classification starting here.
  vec3 roughTint=turf;
@@ -264,7 +269,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  // The kind flips at BEACH_RISE while the colour keeps fading for BEACH_FADE
  // above it. Flipping on the colour's midpoint instead would put the lie and
  // the paint half a fade apart, which is the split this file keeps falling into.
- if((biome==2||biome==3)&&kind<.5){
+ if(seaBeach>.5&&kind<.5){
   turf=mix(turf,tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y));
   if(groundPoint.y<${BEACH_RISE.toFixed(2)})kind=5.;
  }

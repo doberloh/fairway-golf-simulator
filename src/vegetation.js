@@ -5,6 +5,7 @@ import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {windMaterial,toonRamp} from './textures.js';
+import {biomeOf} from './biomes.js';
 const UP=new T.Vector3(0,1,0);
 function barkTexture(kind){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d'),rng=random('bark-'+kind);ctx.fillStyle='#b7b3a5';ctx.fillRect(0,0,128,256);for(let i=0;i<220;i++){const v=80+rng()*95;ctx.fillStyle=`rgb(${v},${v},${v})`;const x=rng()*128,y=rng()*256;ctx.fillRect(x,y,kind==='palm'||kind==='hala'?16+rng()*60:1+rng()*3,kind==='palm'||kind==='hala'?1+rng()*2:5+rng()*40);}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,5);return t;}
 function texture(kind){
@@ -51,7 +52,7 @@ function addModelSpecies(view,kind,trees){
   dummy.scale.set(sxz,sy,sxz);
   dummy.updateMatrix();
   const leaf=leafBase.clone();
-  if(world.settings.biome==='autumn'&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
   entries.push({model,owner:t,matrix:dummy.matrix.clone(),
    color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:leaf}});
@@ -85,7 +86,7 @@ function addSpecies(view,kind,trees){
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
  for(const t of trees){currentTree=t;
   const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palo:'#8d9a47',mesquite:'#6c804b',ocotillo:'#7c8050',agave:'#7caa9b',naupaka:'#428546',hala:'#678f3d',gorse:'#718347',heather:'#79627c'};const tint=new T.Color(blue?'#a3d6cf':shades[kind]||world.bio.tree).multiplyScalar(.8+t.shade*.4);
-  if(world.settings.biome==='autumn'&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
+  if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')tint.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   // Every tree used to stand perfectly upright on a trunk of identical
   // proportion, which is half of why a stand reads as one asset repeated.
   const leanX=(rng()-.5)*.085,leanZ=(rng()-.5)*.085,girth=.021+rng()*.013;
@@ -179,8 +180,8 @@ function addGroundCover(view){
  const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
  const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
- const rockCount=world.settings.biome==='mountain'?550:world.settings.biome==='desert'?500:160;
- for(let i=0;i<rockCount;i++){const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2;if(world.surface(x,z)!=='rough'||world.nearest(x,z).d<5)continue;const scale=(world.settings.biome==='desert'||world.settings.biome==='mountain'?2:1)*(.6+rng()*3),shape=Math.floor(rng()*STONES);dummy.position.set(x,world.height(x,z)+scale*.25,z);dummy.rotation.set(rng(),rng()*6.28,rng());dummy.scale.set(scale*(1.15+rng()*.5),scale*(.48+rng()*.42),scale*(.82+rng()*.42));dummy.updateMatrix();rocks[shape].push(dummy.matrix.clone());rockColors[shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
+ const rockCount=biomeOf(world.settings.biome).scatter.rocks;
+ for(let i=0;i<rockCount;i++){const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2;if(world.surface(x,z)!=='rough'||world.nearest(x,z).d<5)continue;const scale=(biomeOf(world.settings.biome).scatter.rockScale)*(.6+rng()*3),shape=Math.floor(rng()*STONES);dummy.position.set(x,world.height(x,z)+scale*.25,z);dummy.rotation.set(rng(),rng()*6.28,rng());dummy.scale.set(scale*(1.15+rng()*.5),scale*(.48+rng()*.42),scale*(.82+rng()*.42));dummy.updateMatrix();rocks[shape].push(dummy.matrix.clone());rockColors[shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
  // A single icosahedron for every boulder is the other half of why scree reads
  // as one chunk repeated. Build a few distinct stones and deal rocks between
  // them; each gets its own material because instance() disposes the material it
@@ -193,8 +194,8 @@ function addGroundCover(view){
   stone.computeVertexNormals();
   instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]);
  }
- const grassCount=Math.round((world.settings.biome==='desert'?12000:world.settings.biome==='links'?400000:110000)*(view.quality?.grass??1));
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(world.settings.biome==='links'?1.25:.65)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(world.settings.biome==='links'?1.4:.8,h,world.settings.biome==='links'?1.4:.8);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(world.settings.biome==='links'?'#c2a05c':world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':world.settings.biome==='links'?(rng()>.5?'#ddc252':'#ae79a6'):rng()>.5?'#f0cf63':'#bc80b4'));}}
+ const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
  for(const t of world.trees.filter(t=>['gorse','heather','palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));blade.computeVertexNormals();instance(blade,windMaterial(mat('#fff',{side:T.DoubleSide}),view,.38,true),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
 }
@@ -235,7 +236,7 @@ function addNearbyGrass(view){
   // afterwards: that was two throwaway objects per surviving blade, about 2500 a
   // tile. The mesh is allocated for every candidate and its count pulled back to
   // what survived, which is the only way round needing the total up front.
-  const rng=random(w.seed+':grass:'+key),count=w.settings.biome==='desert'?150:1600;
+  const rng=random(w.seed+':grass:'+key),count=biomeOf(w.settings.biome).scatter.tufts;
   const mesh=new T.InstancedMesh(geometry,material,count);
   let kept=0;
   // ROUGH ONLY. The semi-rough used to carry blades too, at 3.5 cm -- stubble
@@ -243,7 +244,7 @@ function addNearbyGrass(view){
   // to be visibly BETWEEN fairway and rough. The mown-height difference is the
   // information; geometry on top of it was not adding any.
   for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(surface!=='rough'||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
-   const tall=w.settings.biome==='links',height=tall?.6+rng()*.65:.07+rng()*.16;
+   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.07+rng()*.16;
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.55,height,tall?1:.55);dummy.updateMatrix();
    mesh.setMatrixAt(kept,dummy.matrix);
    color.set(tall?'#bd9e5f':w.bio.rough).lerp(new T.Color(tall?'#e8d797':'#aebd69'),rng()*.35);

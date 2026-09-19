@@ -1,5 +1,8 @@
 import * as T from 'three';
-export const BANK_COLORS={pnw:'#526343',midwest:'#697348',autumn:'#81724e',links:'#9c905e',desert:'#b49a73',mountain:'#7b8982',island:'#aaad7a'};
+// The bank colour is the biome's, like everything else about a biome. Still
+// exported from here because the ground shader has always asked this module
+// for it.
+export {BANK_COLORS} from './biomes.js';
 // How far a channel bed may be cut below the ground beside it. This is a design
 // depth for a stream valley, not a budget for crossing the map: a route that
 // would need more than this is trimmed back rather than trenched through.

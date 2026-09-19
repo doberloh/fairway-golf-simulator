@@ -571,6 +571,44 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A biome becomes one record
+
+Adding an eighth biome meant first finding out what a biome *is*, and the answer was: not one thing. Seven tables and **48 conditionals across eight files**.
+
+| where it lived | what it held |
+|---|---|
+| `BIOME_KEYS`, settings-schema | the list the dropdown reads |
+| `BIOMES`, course.js | palette, sun angle, altitude, temperature |
+| `ecology`, course.js | the plant mix and its weights |
+| `BANK_COLORS`, streams.js | the earth colour where a stream cuts through |
+| `land()`, course.js | four hand-written branches for the hill shape |
+| vegetation.js | rock and grass counts, blade size, tints, flower colours |
+| homes / textures / routing / shot-visuals / landscape-edge | one-off tests apiece |
+
+None of that was wrong for seven biomes grown one at a time. It is wrong for the eighth, because **there is no list of what a biome has to answer** — you find the places you missed by looking at the result.
+
+The worst of them was in the ground shader:
+
+    biome: ['desert','mountain','links','island'].indexOf(w.settings.biome)
+
+A biome not in that array becomes **−1** and takes whichever branch that turns out to be. Nothing throws. It is now four named flags — `speckleRock`, `altitudeRock`, `litterAmount`, `seaBeach` — which a new biome sets or does not.
+
+Everything now lives in `src/biomes.js`: defaults for all 45 fields, and per-biome traits listing only the differences. A biome that says nothing behaves exactly like the old generic case. Adding one is a single record plus whatever assets it needs.
+
+The module imports nothing, which incidentally removes a cycle `range.js` documents a workaround for.
+
+### Proving a refactor invisible
+
+The whole point is that nothing changes, and "it looks the same" is not a check when a difference would be a metre of terrain here and one missing shrub there.
+
+`tools/biome-fingerprint.mjs` hashes what each biome *generates* — ground height and surface across a grid, every hole's geometry, every tee, pond, bunker and tree, every house, every channel station, over two seeds each. Generation is deterministic, so the hash is exact.
+
+All seven biomes came out **byte-identical**, and the full suite passes.
+
+One detail worth recording: the first version of the fingerprint hashed the biome record by iterating its keys, which would have changed the moment the refactor added a field — proving nothing about the fields that were already there. It hashes an explicit list of the player-visible fields instead. **A fingerprint that moves when you add to it is not a fingerprint.**
+
+What it does not cover is renderer-side work: vegetation scatter, textures, shot dust, the horizon ring and the shader itself all need a GPU. Those were converted by direct substitution — each conditional replaced by a field holding the value that conditional produced — and rest on the test suite and on reading. That is the weaker half and worth knowing.
+
 ## Clouds fade in, and one flag with two meanings blanked the course
 
 A cloud that reaches the edge of its box wraps to the far side, which keeps the sky full without spawning anything near the camera. The wrap is still a four-kilometre jump, though, and at that size it reads as a pop — on the cloud and on the hard-edged shadow it drags across the course.

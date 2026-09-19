@@ -49,6 +49,10 @@ Optional homes are sampled along both sides of the fairways with occurrence and 
 
 For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO.md covers hydrology, routing quality, building collisions, performance and other future improvements.
 
+## What a biome decides
+
+A biome is one record in `src/biomes.js` holding 45 fields: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
+
 ## Large lakes and downhill streams
 
 Large lakes are additional continuous procedural bank profiles, requested with count and typical-diameter sliders. Candidate search favors low, gentler open ground outside the playing corridors. They share the pond basin/reflection/map pipeline. A lake that extends across nearest-hole tiles retains its own surface and GPU ownership; the per-hole atlas limit remains four ponds/lakes. Available space may reduce the requested count.

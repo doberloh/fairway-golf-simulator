@@ -317,6 +317,16 @@ Two things to keep in mind if you touch this:
 - **Parked tiles are outside `view.group`**, so the scene walk in `disposeCourse` cannot find them. They are disposed through a `view.resources` entry; remove that and each course leaks a ring of buffers.
 - **`w.surface()` is 85% of what remains** — 5.8 ms of a 6.8 ms tile, because it re-runs a nearest-hole search over every hole for all 1,600 candidates. Hoisting that per tile is the obvious next win and is not done: a 24 m tile is small against hole spacing, but it can still straddle two corridors, and `surface` is the same query physics uses for lie classification, so it wants its own change and its own verification rather than being folded in here.
 
+### Adding a biome
+
+Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds all 45 fields, `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
+
+To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+
+**Then run `node tools/biome-fingerprint.mjs --check`.** It hashes what every biome generates and fails if an existing one moved. A new biome shows up as `new` and the others must be unchanged; re-save with `--save` once you are satisfied.
+
+This replaced seven tables and 48 conditionals across eight files. The one that mattered most took a biome as an INDEX into `['desert','mountain','links','island']`, so an unknown name silently became −1 in the ground shader.
+
 ### Material flags say one thing each
 
 `userData.cloudMesh` means the material IS a cloud and must not be shaded by one. `userData.cloudShadowed` means cloud shadows have already been patched into it. `userData.mist` and `userData.cloudFaded` are the equivalent markers for their own patches.
