@@ -94,8 +94,16 @@ const TEXTURES = {
 const BARK_TILE = 1.7;
 
 // Vertices come out ring by ring, and `u` runs 0..1 within each ring, so a drop
-// in `u` is the start of the next ring. A jump much bigger than the usual ring
-// spacing means a new branch rather than the next section of this one.
+// in `u` is the start of the next ring. A jump much bigger than the PREVIOUS
+// step means a new branch rather than the next section of this one.
+//
+// That comparison has to be local. The first version compared each step
+// against the median spacing of every ring in the mesh, and on a tree with
+// many short branches the median IS the branch spacing -- so the trunk's own
+// longer sections all looked like new branches, reset to zero one after
+// another, and the trunk ended up with the same `v` from top to bottom. That
+// is a texture smeared the entire length of the tree, which is what the young
+// redwoods were showing.
 function rebuildBarkUVs(mesh) {
  const pos = mesh.geometry.attributes.position, uv = mesh.geometry.attributes.uv;
  if (!uv) return;
@@ -129,16 +137,20 @@ function rebuildBarkUVs(mesh) {
    around[r] = Math.max(.04, 2 * Math.PI * (sum[r] / centre[r][3]) / BARK_TILE);
  }
 
- // Typical spacing, so "much bigger" has something to be bigger than.
  const steps = [];
  for (let r = 1; r < centre.length; r++)
   steps.push(Math.hypot(centre[r][0] - centre[r - 1][0], centre[r][1] - centre[r - 1][1], centre[r][2] - centre[r - 1][2]));
- const sorted = steps.slice().sort((a, b) => a - b);
- const typical = sorted[Math.floor(sorted.length / 2)] || 1;
 
  const along = new Float64Array(centre.length);
- for (let r = 1; r < centre.length; r++)
-  along[r] = steps[r - 1] > typical * 4 ? 0 : along[r - 1] + steps[r - 1];
+ let last = 0;
+ for (let r = 1; r < centre.length; r++) {
+  const step = steps[r - 1], jumped = last > 0 && step > last * 4;
+  // Never advance by nothing: two rings can land on top of each other, and a
+  // pair of rings sharing a `v` gives triangles with no texture direction at
+  // all. Six of Douglas fir's 7,560 came out that way before this floor.
+  along[r] = jumped ? 0 : along[r - 1] + Math.max(step, BARK_TILE * .02);
+  last = jumped ? 0 : step;
+ }
 
  for (let i = 0; i < uv.count; i++)
   uv.setXY(i, uv.getX(i) * around[ringOf[i]], along[ringOf[i]] / BARK_TILE);
@@ -404,7 +416,13 @@ function build(builder, seed, tweak) {
  tree.generate();
  flareTheBase(tree, spec.flare);
  tree.traverse(mesh => { if (mesh.isMesh && !isLeaf(mesh)) rebuildBarkUVs(mesh); });
- return {tree, spec};
+ let bad = 0, all = 0;
+ tree.traverse(mesh => {
+  if (!mesh.isMesh || isLeaf(mesh)) return;
+  bad += degenerateUVs(mesh);
+  all += mesh.geometry.index ? mesh.geometry.index.count / 3 : 0;
+ });
+ return {tree, spec, bad, all};
 }
 
 // A redwood stands on a swollen, buttressed foot, and every published diameter
@@ -436,6 +454,28 @@ function flareTheBase(tree, flare) {
   p.needsUpdate = true;
   mesh.geometry.computeVertexNormals();
  });
+}
+
+// How many triangles have a UV basis that collapses -- two of their three
+// corners sharing a texture coordinate, so the image is smeared across them
+// rather than mapped.
+//
+// This exists because the measurement I was using to check the bark SKIPPED
+// exactly these triangles, as a divide-by-zero guard, and then reported the
+// average of the ones that survived. A third of the young redwood's trunk was
+// degenerate and the number still came back healthy. A check that quietly
+// drops its failures is worse than no check.
+function degenerateUVs(mesh) {
+ const uv = mesh.geometry.attributes.uv, index = mesh.geometry.index;
+ if (!uv || !index) return 0;
+ let bad = 0;
+ for (let i = 0; i < index.count; i += 3) {
+  const a = index.getX(i), b = index.getX(i + 1), c = index.getX(i + 2);
+  const du1 = uv.getX(b) - uv.getX(a), dv1 = uv.getY(b) - uv.getY(a);
+  const du2 = uv.getX(c) - uv.getX(a), dv2 = uv.getY(c) - uv.getY(a);
+  if (Math.abs(du1 * dv2 - du2 * dv1) < 1e-9) bad++;
+ }
+ return bad;
 }
 
 // ez-tree names its meshes nothing at all, so tell them apart by material:
@@ -580,7 +620,12 @@ should be edited by hand.
 let total = 0, made = 0;
 for (const [name, builder, seed, tweak] of VARIANTS) {
  if (only.length && !only.some(f => name.toLowerCase().includes(f))) continue;
- const {tree, spec} = build(builder, seed, tweak);
+ const {tree, spec, bad, all} = build(builder, seed, tweak);
+ if (bad) {
+  console.error(`${name}: ${bad} of ${all} bark triangles have a collapsed UV basis -- `
+   + 'the texture would smear across them. Check the ring/branch split in rebuildBarkUVs.');
+  process.exitCode = 1;
+ }
  let verts = 0;
  tree.traverse(o => { if (o.isMesh) verts += o.geometry.attributes.position.count; });
  total += verts; made++;

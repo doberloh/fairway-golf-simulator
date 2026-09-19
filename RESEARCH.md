@@ -586,6 +586,37 @@ Two wrong diagnoses in a row, both from reasoning about UVs instead of sampling 
 
 Across all six species the trunk aspect is now 0.89 to 0.98, where 1.00 is square.
 
+### And the metric was wrong twice over
+
+The fix above was found only after the checks stopped lying. Both failures are worth keeping.
+
+**It skipped the broken triangles.** Measuring the tile size and orientation means inverting the UV basis per triangle, and a basis that collapses divides by zero -- so there was a `if (Math.abs(det) < 1e-9) continue;` guard. Those skipped triangles *were the bug*: a third of the young redwood's trunk had two corners sharing a `v`, smearing the texture the full length of the tree, and the average of the surviving two thirds came back at 0.94 aspect and 0.996 aligned. Healthy numbers, computed from the parts that worked.
+
+`tools/bake-trees.mjs` counts collapsed bases now and fails the bake, rather than any tool quietly averaging around them.
+
+**It sampled the wrong pixels.** The readback filtered to "brown" pixels as a way of ignoring foliage -- `red > green + 8`. Willow bark is grey, so that condition excluded almost the entire trunk: the verdict "vertical, ratio 4.64" was computed from 54 pixels of branch. Widening it to "not green" put the sample at 5,000-16,000 pixels and the answer stayed vertical, but only by luck of what the 54 happened to be.
+
+Four metrics in this project have now measured the wrong thing. The pattern each time is a filter that made the measurement convenient.
+
+### The cause, finally
+
+`v` is arc length along the branch, which needs to know where one branch ends and the next begins. The first version called a step a new branch if it was more than four times **the median step over the whole mesh**. On a tree with many short branches the median *is* the branch spacing -- so a young redwood's own longer trunk sections each looked like a new branch, reset to zero one after another, and the trunk carried the same `v` from root to crown.
+
+The comparison is local now: a step is a new branch if it is more than four times **the step before it**. Plus a floor, so two rings landing on top of each other still advance `v` and cannot collapse a basis.
+
+Measured on the real trunk run of every model -- the vertices before the first big positional jump, which is where ez-tree starts branch one:
+
+    Redwood_1       rises 100 units, v 0 -> 64.0    1.56 units per tile
+    RedwoodYoung_1  rises 100 units, v 0 -> 58.8    1.70
+    RedwoodYoung_2  rises 100 units, v 0 -> 58.8    1.70
+    DouglasFir_1    rises 100 units, v 0 -> 58.8    1.70
+    RedCedar_1      rises 100 units, v 0 -> 58.8    1.70
+    BigleafMaple_1  rises 130 units, v 0 -> 91.3    1.42
+
+against a target of 1.7. The two that come in under it are the trees whose trunks curve, where arc length exceeds the vertical rise, which is the point of measuring along the branch rather than up the world.
+
+Rendered grain, on thousands of pixels rather than dozens: vertical everywhere, anisotropy 1.6 to 6.7.
+
 ### Three ways to measure a texture, none of which is looking at it
 
 Worth keeping, because each caught something the others could not:
