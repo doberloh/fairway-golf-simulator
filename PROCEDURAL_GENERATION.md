@@ -53,6 +53,8 @@ For the implementation map and extension checklist, see PROJECT_HANDOFF.md. TODO
 
 A tall conifer -- redwood and douglas fir -- is drawn as a tapered trunk carrying a borrowed conifer crown, narrowed and lifted to the top, because every imported conifer is conical to the ground and reads as a Christmas tree at that scale. Tree height is a biome field: 13 to 29 metres ordinarily, 46 to 80 in a redwood grove.
 
+A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
+
 
 A biome is one record in `src/biomes.js` holding 45 fields: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
 

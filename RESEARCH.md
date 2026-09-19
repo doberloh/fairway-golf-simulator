@@ -571,6 +571,38 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The forest floor was already in the repo
+
+The redwood grove's floor was mown rough with columns standing in it. The obvious fix was to go and find CC0 logs, stumps, mossy rock and a real fern. **The search changed the answer: most of it was already vendored and simply not being shipped.**
+
+`tools/build-meshes.mjs` ingests a hand-picked subset of each pack. Sitting unused in packs already credited as CC0 were seven mossy boulders, four fallen logs, seven stumps, more logs, hanging moss, and five leafy ground plants. Twenty-four of them are shipped now, and no licence question came with them.
+
+Sources checked, recorded because the search is otherwise repeatable:
+
+- [Quaternius Stylized Nature MegaKit](https://quaternius.com/packs/stylizednaturemegakit.html) — CC0, glTF, 116 models including one actually called *Fern*, same creator as a pack we already ship. **The candidate if a real fern is wanted**, and the lowest-friction addition possible. ([Ultimate Stylized Nature](https://quaternius.com/packs/ultimatestylizednature.html), [MegaKit on Poly Pizza](https://poly.pizza/bundle/Stylized-Nature-MegaKit-T34GZFA0fm))
+- [Stylized Nature & Forest Props Pack](https://verdealis.itch.io/stylized-nature-forest-props-pack-low-poly) — matches the brief almost exactly, 30–320 triangles, GLB. **Not CC0**: it forbids redistributing the source files, and this project ships its assets inside a single HTML file. Ruled out, and recorded so nobody buys it for this.
+- [Meshy's CC0 tag](https://www.meshy.ai/tags/log) — generated-model licensing is not the same thing as a curated pack with a licence file inside it, which is what AGENTS.md requires.
+
+### One species list written twice, differently
+
+Two files each carried a hand-written list of "plants that are not really trees", and **they were not the same list** — physics included `ocotillo` and course.js did not. Neither was wrong: an ocotillo is tall enough to size like a tree and too spindly to stop a ball. But nothing said so, and adding a species meant finding both literals.
+
+They are `GROUND_PLANTS` and `NO_TRUNK` in `src/species.js` now, one built from the other, with the reason for the difference written down. The file imports nothing, so physics can read it without pulling in three.
+
+### Deadfall is anchored to trees, not scattered evenly
+
+520 props per course, and **72% of them placed around an existing trunk** rather than at a uniform random point. Timber falls where timber grows; the same count spread evenly over the map reads as litter dropped on a lawn, while clustered around trunks it reads as a wood that has been standing a while. The rest are scattered so clearings are not conspicuously empty.
+
+Sizing falls out of the ingest. Every model is normalised to unit height, so one number sizes it — but for a log lying down that "height" is its **thickness**, and the length follows from the model's own proportions. A log is therefore scaled far smaller than a stump and still ends up the longer object.
+
+### What it cost, and what it does not do
+
+24 new models: 71 shipped of 598 available, now 95. Packed geometry 1056 KB to 1238 KB, and the whole single-file build 2.59 MB to 2.78 MB. On a redwood course the floor is 877 instances across 31 draw calls, in its own `Deadfall` group so it can be counted from the console rather than guessed at.
+
+**Nothing collides with any of it.** A ball rolls through a fallen log. That is worth knowing before anyone makes them bigger — at this size it reads as ground clutter, and at twice it would start to look like it should stop a ball.
+
+The ferns are real fern models now (`swordfern`, its own species so that Pacific Northwest's generic bushes are untouched), but they are leafy ground plants rather than fronds. Whether that is close enough is the thing to look at.
+
 ## Giant Redwood, and what the eighth biome cost
 
 The first biome added since biomes became one record. It is **one entry in `src/biomes.js`**, one line in `BIOME_KEYS`, two species in `FAMILY_OF`, and a tree builder — and the tree builder is there because of a shape the asset packs do not contain, not because the pipeline made it necessary.
@@ -607,7 +639,7 @@ Final state: all seven existing biomes byte-identical, redwood new, 441 tests pa
 
 ### What is not done
 
-The ferns are generic bushes — `fern` maps to the bush family, which is fine at distance and poor close up. Fallen logs, stumps and moss-covered rock would all be more redwood than anything currently scattered there. Those are the CC0 assets worth sourcing, now that there is something to judge them against.
+The ferns are generic bushes — `fern` maps to the bush family, which is fine at distance and poor close up. Fallen logs, stumps and moss-covered rock would all be more redwood than anything currently scattered there. Those are the CC0 assets worth sourcing, now that there is something to judge them against. **Since resolved** — see *The forest floor was already in the repo* above: they were in `vendor/` the whole time.
 
 ## A biome becomes one record
 

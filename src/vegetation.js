@@ -6,6 +6,7 @@ import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.j
 import {onShoreBank} from './streams.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
+import {GROUND_PLANTS} from './species.js';
 const UP=new T.Vector3(0,1,0);
 function barkTexture(kind){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d'),rng=random('bark-'+kind);ctx.fillStyle='#b7b3a5';ctx.fillRect(0,0,128,256);for(let i=0;i<220;i++){const v=80+rng()*95;ctx.fillStyle=`rgb(${v},${v},${v})`;const x=rng()*128,y=rng()*256;ctx.fillRect(x,y,kind==='palm'||kind==='hala'?16+rng()*60:1+rng()*3,kind==='palm'||kind==='hala'?1+rng()*2:5+rng()*40);}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,5);return t;}
 function texture(kind){
@@ -244,9 +245,88 @@ export function addVegetation(view){
  view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
  view.clearCameraTrees=()=>{if(last.distanceToSquared(view.camera.position)<.04)return;last.copy(view.camera.position);const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));for(const batch of view.treeInstances){let changed=false;batch.owners.forEach((t,i)=>{const hide=hidden.has(t)?1:0;if(hide!==batch.hidden[i]){batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);batch.hidden[i]=hide;changed=true;}});if(changed)batch.mesh.instanceMatrix.needsUpdate=true;}};
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
+ addDeadfall(view);
  addGroundCover(view);
  addNearbyGrass(view);
 }
+// THE FOREST FLOOR IS WHAT A GROVE LEAVES BEHIND.
+//
+// Under a redwood the interesting thing at eye level is not the trees -- their
+// trunks are bare for twenty metres -- it is the deadfall: a toppled trunk
+// going soft, the stump of something that came down a century ago, boulders
+// furred over with moss. Without it the floor is mown rough with columns
+// standing in it.
+//
+// Placement is mostly ANCHORED TO TREES rather than uniform, because timber
+// falls where timber grows. A scatter spread evenly over the whole map reads as
+// litter dropped on a lawn; the same count clustered around trunks reads as a
+// wood that has been there a while.
+//
+// These are decoration and nothing collides with them -- a ball rolls through a
+// fallen log. Worth knowing before anyone makes them bigger.
+const DEADFALL = [['log', .40], ['stump', .24], ['mossrock', .36]];
+function addDeadfall(view) {
+ const {world} = view, count = biomeOf(world.settings.biome).deadfall;
+ if (!count) return;
+ // Its own group, the way the living rough has one: a named handle in the
+ // scene is the difference between checking this from the console and
+ // guessing at it.
+ const group = new T.Group(); group.name = 'Deadfall'; view.group.add(group);
+ const rng = random(world.seed + ':deadfall'), dummy = new T.Object3D();
+ dummy.rotation.order = 'YXZ';
+ // Real trees only. A fern is not something a log falls out of.
+ const anchors = world.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+
+ const damp = new T.Color('#5a4433'), cut = new T.Color('#9a8156');
+ const moss = new T.Color('#4f6b3c'), stone = new T.Color(world.bio.rock || '#8a8577');
+ const dirt = new T.Color(world.bio.rough || '#7e8a5a');
+ const entries = [];
+ for (let i = 0; i < count * 4 && entries.length < count; i++) {
+  let x, z;
+  if (anchors.length && rng() < .72) {
+   const t = anchors[Math.floor(rng() * anchors.length)], a = rng() * 6.28;
+   const r = t.r * 1.1 + rng() * 7;
+   x = t.x + Math.cos(a) * r; z = t.z + Math.sin(a) * r;
+  } else {
+   x = (rng() - .5) * world.halfX * 2; z = (rng() - .5) * world.halfZ * 2;
+  }
+  if (world.surface(x, z) !== 'rough' || world.nearest(x, z).d < 8) continue;
+  if (onShoreBank(world, x, z)) continue;
+
+  let r = rng(), family = DEADFALL[DEADFALL.length - 1][0];
+  for (const [k, f] of DEADFALL) { r -= f; if (r <= 0) { family = k; break; } }
+  const models = familyModels(family);
+  if (!models.length) continue;
+  const model = models[Math.floor(rng() * models.length)];
+
+  // Every model is normalised to unit height, so one number sizes it. For a
+  // log lying down that height is its THICKNESS and the length follows from
+  // the model's own proportions -- which is why a log is scaled so much
+  // smaller than a stump and still ends up the longer object.
+  const size = family === 'log' ? .5 + rng() * .55
+             : family === 'stump' ? .7 + rng() * 1.0
+             : .5 + rng() * 1.25;
+  // Settled into the ground rather than resting on top of it.
+  dummy.position.set(x, world.height(x, z) - size * .1, z);
+  dummy.rotation.set((rng() - .5) * .16, rng() * 6.28, (rng() - .5) * .16);
+  dummy.scale.set(size * (.9 + rng() * .3), size, size * (.9 + rng() * .3));
+  dummy.updateMatrix();
+  const green = moss.clone().offsetHSL((rng() - .5) * .04, (rng() - .5) * .12, (rng() - .5) * .12);
+  const wood = damp.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .14);
+  entries.push({model, owner: null, matrix: dummy.matrix.clone(),
+   // `accent` is the cut face on a log and the whole plant on some models, so
+   // it follows the family rather than being one colour for everything.
+   color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35),
+    dirt, accent: family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12)}});
+ }
+ const materials = new Map();
+ const materialFor = role => {
+  if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
+  return materials.get(role);
+ };
+ instanceModels(group, entries, materialFor);
+}
+
 function finishBlade(){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([-.5,-.5,0,.5,-.5,0,0,.5,.24,0,-.4,.12],3));g.setIndex([0,1,3,1,2,3,2,0,3]);g.computeVertexNormals();return g;}
 function addGroundCover(view){
  const {world,style,group}=view,real=style==='realistic',toon=style==='cartoon',blue=style==='blueprint',rng=random(world.seed+':understory'),dummy=new T.Object3D(),color=new T.Color();

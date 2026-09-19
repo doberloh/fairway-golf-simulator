@@ -40,6 +40,9 @@ const DEFAULTS = {
   rockScale: 1, bladeLength: .65, bladeWidth: .8, bladeTint: null,
   flowers: ['#f0cf63', '#bc80b4']},
  // Presentation one-offs that used to be a biome test at the call site.
+ // Fallen logs, stumps and mossy boulders on the forest floor, mostly
+ // clustered around trunks. A count, and zero means a clean floor.
+ deadfall: 0,
  leafFall: false,   // autumn's per-species leaf tinting
  leafLitter: false, // drifts of fallen leaves in the rough texture
  sandLand: false,   // rough reads as sand rather than soil
@@ -114,7 +117,8 @@ const TRAITS = {
   scatter: {rocks: 300, grass: 90000, tufts: 2000, tallGrass: false,
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
-  plants: [['redwood', .40], ['fir', .24], ['fern', .26], ['cedar', .10]]},
+  deadfall: 520,
+  plants: [['redwood', .40], ['fir', .24], ['swordfern', .26], ['cedar', .10]]},
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},

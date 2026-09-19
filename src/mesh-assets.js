@@ -103,6 +103,9 @@ export const FAMILY_OF = {
  // trunk beneath is drawn, because no pack has this silhouette. See
  // TALL_CONIFERS in vegetation.js.
  redwood: 'conifer', fir: 'conifer',
+ // `swordfern` rather than reusing `fern`: changing what `fern` maps to would
+ // silently restyle Pacific Northwest, which is signed off as it is.
+ swordfern: 'fern',
  oak: 'broadleaf', maple: 'broadleaf', aspen: 'broadleaf', alder: 'broadleaf',
  palm: 'palm',
  cactus: 'cactus',

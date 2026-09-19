@@ -33,7 +33,7 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 71 of the 598 available models are used. The rest are not shipped.
+- 95 of the 598 available models are used. The rest are not shipped.
 - The **house models are the one exception to materials being discarded**: unlike
   the nature kits they carry a shared texture atlas rather than a colour per
   material, so their UVs survive and `colormap.png` (11 KB) ships with them.
@@ -44,9 +44,11 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   and wall colour down a street.
 
 Kenney supplies the bulk. Quaternius is drawn on **only where Kenney has no
-counterpart** — five cacti and three dead trees for the desert biome. Its models
-carry several times the vertices, so taking coverage we already had cost about a
-megabyte of packed geometry for no visible gain, and was reverted.
+counterpart** — five cacti and three dead trees for the desert biome, and for the
+redwood forest floor seven mossy boulders, five leafy ground plants and four logs
+and stumps with moss on them. Its models carry several times the vertices, so
+taking coverage we already had cost about a megabyte of packed geometry for no
+visible gain, and was reverted.
 
 The complete packs live in `vendor/` as the provenance record and the input to
 the ingestion step. **`vendor/` is not part of the build and not part of the

@@ -56,6 +56,19 @@ const PICK = {
  // Houses. Unlike the nature kits these carry a texture atlas rather than a
  // colour per material, so they keep their UVs and ship the atlas with them --
  // role tinting alone would flatten a whole house to one colour.
+ // THE FOREST FLOOR, and all of it was already vendored. Old-growth reads from
+ // what has fallen as much as from what is standing -- mossy logs, stumps and
+ // boulders -- and none of it was being shipped because PICK only ever took
+ // what the biomes of the day asked for. No new pack, no new licence: Kenney's
+ // Nature Kit and Quaternius's Ultimate Nature Pack are both already credited.
+ log: ['WoodLog', 'WoodLog_Moss', 'log', 'log_large', 'log_stack'],
+ stump: ['TreeStump', 'TreeStump_Moss', 'stump_old', 'stump_oldTall',
+  'stump_round', 'stump_roundDetailed', 'stump_squareDetailed'],
+ mossrock: ['Rock_Moss_1', 'Rock_Moss_2', 'Rock_Moss_3', 'Rock_Moss_4',
+  'Rock_Moss_5', 'Rock_Moss_6', 'Rock_Moss_7'],
+ // The closest thing to a fern either pack contains. Nothing is named one, so
+ // these stand in until one is sourced.
+ fern: ['Plant_1', 'Plant_2', 'Plant_3', 'Plant_4', 'Plant_5'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],

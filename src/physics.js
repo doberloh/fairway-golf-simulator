@@ -2,6 +2,7 @@ import {rollDeceleration,rollDecelerationAt,slideFriction} from './turf.js';
 import {bounceScale,tiltScale,gripScale,spinScale,firmnessApplies,firmnessValue,NORMAL_FIRMNESS} from './firmness.js';
 import {CUP_RADIUS as CUP_R,CUP_DEPTH} from './cup.js';
 import {bounce as compliantBounce,dampingFor} from './contact.js';
+import {NO_TRUNK} from './species.js';
 // Restitution -> damping, remembered. The solve is sixty runs of a full contact,
 // and the same handful of (restitution, friction) pairs recur all shot long.
 const DAMPING=new Map();
@@ -302,7 +303,7 @@ export function cupApproach(old,p,velocity,pin){
   // the right and the rim turns it further right.
   side:cross>0?-1:1,near,distance};
 }
-export function trunkRadius(tree){return ['fern','gorse','heather','agave','ocotillo','naupaka','shrub'].includes(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,2.4);}
+export function trunkRadius(tree){return NO_TRUNK.has(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,2.4);}
 const hypot=Math.hypot;
 export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325*Math.exp(-G*0.0289644*altitude/(8.31446*t))/(287.058*t);}
 // Lift and drag against the spin parameter S = |w|R/v, held in one place so the
