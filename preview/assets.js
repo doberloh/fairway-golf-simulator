@@ -103,7 +103,10 @@ function show(model) {
   const settings = {color: ROLE_COLOUR[part.role] || '#9a9a9a', roughness: 1, side: T.DoubleSide};
   if (part.uv !== undefined) {
    const uv = decode(part.uv, Uint16Array), f = new Float32Array(uv.length);
-   for (let i = 0; i < uv.length; i++) f[i] = uv[i] / 65535;
+   // uvSpan is the largest coordinate this part uses. Bark tiles well past 1,
+   // so the quantisation is against that range rather than the unit square.
+   const span = part.uvSpan || 1;
+   for (let i = 0; i < uv.length; i++) f[i] = uv[i] / 65535 * span;
    geometry.setAttribute('uv', new T.BufferAttribute(f, 2));
    settings.map = TEX[part.tex];
    settings.alphaTest = .4;

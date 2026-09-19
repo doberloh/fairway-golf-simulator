@@ -586,6 +586,24 @@ Two wrong diagnoses in a row, both from reasoning about UVs instead of sampling 
 
 Across all six species the trunk aspect is now 0.89 to 0.98, where 1.00 is square.
 
+### It was never the bake
+
+Five attempts at "the bark is wrong", four of them spent inside `tools/bake-trees.mjs`, and the fault was two files downstream.
+
+Both the ingest and the asset previewer packed texture coordinates like this:
+
+    uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] * 65535)));
+
+Sixteen bits across the range 0..1. That is correct for the only textured thing the project had ever carried -- a house, whose coordinates are positions in an atlas and never leave the unit square. Bark tiles: nine times around a trunk and fifty-eight times up it. **Every coordinate above 1.0 clamped to 1.0**, so the whole trunk arrived at the renderer holding a single row of the bark image, stretched its entire length. A smooth grey column with a chevron of moire wherever the clamp bit.
+
+The bake had been correct since the third attempt. Each time I re-measured the OBJ and found it healthy, which it was, and then looked at a render of something else entirely.
+
+The fix is to record the range and quantise against it: `uvSpan` per part, restored on load. Houses have no span and are untouched -- `src/asset-meshes.js` is byte-identical after the change.
+
+**What would have caught it:** a check that runs on the thing being displayed. The pixel readback was the right instrument and I pointed it at the wrong question -- it measured *which way* the grain ran, and the grain ran vertically the whole time, because a single stretched row of pixels is vertical. The question that separates the two is *how much detail is there*, and on the same trunks that number went from a flat column to 7-21 units of gradient per pixel once the coordinates survived.
+
+Anisotropy said "vertical" through the entire bug. It was answering honestly; it was the wrong question.
+
 ### And the metric was wrong twice over
 
 The fix above was found only after the checks stopped lying. Both failures are worth keeping.

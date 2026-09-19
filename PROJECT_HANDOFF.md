@@ -327,6 +327,8 @@ If the biome wants props no other biome uses, add the family to `PICK` in `tools
 
 **Generating a model rather than finding one:** `node tools/bake-trees.mjs` runs ez-tree (MIT, a devDependency, never shipped) in Node and writes redwood variants into `vendor/eztree-redwood/`, from where they go through the normal ingest. Reach for this when the shape you want does not exist in any pack -- a bare-columned giant does not. Re-run `node tools/build-meshes.mjs` afterwards.
 
+**Textured models carry a `uvSpan`.** Texture coordinates are packed into 16 bits against the part's own range rather than against 0..1, because bark tiles far outside the unit square and the old packing silently clamped it. An atlas has no span and is unaffected. If you add anything textured, check that `uvSpan` survives into what is drawn.
+
 **Choosing a model: `npm run assets`** builds `dist/assets.html`, a self-contained page showing every model in `vendor/` at a height you type, beside a 1.8 m figure, with its silhouette profile and the `pack:Name` string a PICK entry wants. Two crowns were picked by reading file names and both were wrong; this exists so that stops happening. `node tools/tree-spacing.mjs [biome] [seed]` answers "is this too dense" in numbers.
 
 **Then run `node tools/biome-fingerprint.mjs --check`.** It hashes what every biome generates and fails if an existing one moved. A new biome shows up as `new` and the others must be unchanged; re-save with `--save` once you are satisfied.

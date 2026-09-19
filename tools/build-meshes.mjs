@@ -170,9 +170,21 @@ for (const [family, entries] of Object.entries(PICK)) {
    const index = new Uint16Array(g.index);
    const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
    if (g.uv && g.uv.length === count * 2) {
+   // A TILING UV DOES NOT FIT IN 0..1, which is what this used to assume.
+   // House UVs are atlas coordinates and never leave the unit square, so
+   // `uv * 65535` was fine for them and quietly clamped everything else: bark
+   // that tiles nine times around and fifty-eight times up arrived with every
+   // coordinate pinned at 1.0, which draws one row of pixels smeared the whole
+   // length of a trunk. That is what five attempts at "the bark is wrong" were
+   // actually chasing, and none of them was in the bake.
+   // So the range is recorded per part and the quantisation is against that.
+    let span = 1;
+    for (let i = 0; i < g.uv.length; i++) span = Math.max(span, g.uv[i]);
     const uv = new Uint16Array(count * 2);
-    for (let i = 0; i < uv.length; i++) uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] * 65535)));
+    for (let i = 0; i < uv.length; i++)
+     uv[i] = Math.max(0, Math.min(65535, Math.round(g.uv[i] / span * 65535)));
     part.uvAt = push(uv);
+    if (span !== 1) part.uvSpan = +span.toFixed(4);
    }
    parts.push(part);
   }

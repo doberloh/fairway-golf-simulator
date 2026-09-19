@@ -33,11 +33,13 @@ export function modelParts(name) {
   const geometry = new T.BufferGeometry();
   geometry.setAttribute('position', new T.BufferAttribute(position, 3));
   geometry.setAttribute('normal', new T.BufferAttribute(normal, 3));
-  // Houses carry a texture atlas rather than a colour per material, so their
-  // UVs survive ingestion where the nature models' do not.
+  // Textured parts: house atlases, and bark and leaf sheets on the generated
+  // trees. `uvSpan` is the largest coordinate the part uses -- an atlas stays
+  // inside the unit square and has none, while bark tiles far past it.
   if (p.uvAt !== undefined) {
    const packed = new Uint16Array(buffer, p.uvAt, p.count * 2), uv = new Float32Array(p.count * 2);
-   for (let i = 0; i < uv.length; i++) uv[i] = packed[i] / 65535;
+   const span = p.uvSpan || 1;
+   for (let i = 0; i < uv.length; i++) uv[i] = packed[i] / 65535 * span;
    geometry.setAttribute('uv', new T.BufferAttribute(uv, 2));
   }
   geometry.setIndex(new T.BufferAttribute(new Uint16Array(buffer, p.indexAt, p.index).slice(), 1));
