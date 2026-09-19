@@ -266,7 +266,7 @@ Measured on a thirteen-body course: **8 distinct probes across 13 bodies, all 13
 
 What it gives up is parallax: the reflection comes from one point in the world rather than from each body's own position, so it does not line up the way a mirror does. That matters on still glass and does not on a rippled surface at fifty yards.
 
-`scene.environment` is deliberately left as the sky-only map — it feeds every prop on the course, and a clubhouse window should not start mirroring terrain. The probe is assigned to the water materials alone.
+`scene.environment` is deliberately left as the sky-only map — it feeds every prop on the course, and a house window should not start mirroring terrain. The probe is assigned to the water materials alone.
 
 **The probe has to be taken after the water exists.** `addSky` runs before the bodies are added, so the refresh it triggers finds nothing to probe for and returns; the next refresh is an elevation threshold away, which on a still afternoon never arrives. It is taken where the water is built.
 

@@ -320,7 +320,7 @@ export class GolfView{
   if(missed)console.warn(`Fairway: ${missed} lit material(s) escaped cascade registration (${[...kinds].join(', ')}). They will be lit by every cascade at once and wash out.`);
  }
  // Props shade the way the rest of the scene does. Flagsticks, cups, tee
- // markers, signs, the clubhouse and the ball were the last PBR left in a
+ // markers, signs and the ball were the last PBR left in a
  // cartoon frame, answering a falling sun on a different curve from the ground
  // they stand on. One ramp per course, shared.
  //
@@ -481,7 +481,6 @@ export class GolfView{
    this.refreshWaterEnvironment();
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
-  this.addClubhouse();
   this.addFloodlights();
   if(world.holes[0]?.range)this.addRangeTargets();
   // The saved preference applies to every course built after it, not only to
@@ -1066,12 +1065,6 @@ export class GolfView{
    lamp.target.updateMatrixWorld();
   });
  }
- addClubhouse(){
-  // Compact routes can put another green behind the first tee. Find an open,
-  // dry site for the building instead of assuming that space is unused.
-  const w=this.world,h=w.holes[0];let site=null;
-  for(let r=65;r<=230;r+=20)for(let a=0;a<Math.PI*2;a+=Math.PI/16){const p=h.toWorld({x:Math.sin(a)*r,z:Math.cos(a)*r}),corners=[[-18,-12],[-18,12],[18,-12],[18,12],[0,0]].map(([x,z])=>({x:p.x+x,z:p.z+z}));if(corners.some(q=>w.surface(q.x,q.z)!=='rough'||w.nearest(q.x,q.z).d<8||w.land(q.x,q.z)<1))continue;const heights=corners.map(q=>w.height(q.x,q.z)),spread=Math.max(...heights)-Math.min(...heights);if(spread>3||w.trees.some(t=>Math.abs(t.x-p.x)<20+t.r&&Math.abs(t.z-p.z)<14+t.r))continue;const score=r+spread*20;if(!site||score<site.score)site={p,y:Math.max(...heights),score};}
-  if(!site)return;const {p,y}=site;const mat=this.surfaceMaterial(this.world.settings.biome==='desert'?'#d0b189':'#ebe3cd',{roughness:.9});const building=new T.Mesh(new T.BoxGeometry(24,7,13),mat);building.position.set(p.x,y+3.5,p.z);building.castShadow=true;building.receiveShadow=true;this.group.add(building);const roof=new T.Mesh(new T.ConeGeometry(18,5,4),this.surfaceMaterial('#39493f',{roughness:.6}));roof.rotation.y=Math.PI/4;roof.scale.z=.65;roof.position.set(p.x,y+9,p.z);roof.castShadow=true;this.group.add(roof);for(let i=-4;i<=4;i++){const window=new T.Mesh(new T.PlaneGeometry(1.4,3.3),this.surfaceMaterial('#8ab5bf',{metalness:.8,roughness:.12}));window.position.set(p.x+i*2.5,y+3.3,p.z+6.52);this.group.add(window);}}
  setHole(index,instant=false){this.registerCascadeMaterials();
   // Warmed again per hole, not only per course: the flag, the cup, the rings
   // and the ball's own materials are per-hole objects, and a first compile of
