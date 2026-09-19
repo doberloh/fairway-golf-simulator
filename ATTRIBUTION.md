@@ -19,7 +19,7 @@ Licence text: https://creativecommons.org/publicdomain/zero/1.0/
 
 ## Grown geometry, which is nobody else's at all
 
-`vendor/baked_assets2/` contains no imported vertex and no texture. Every
+`vendor/grown-redwood-forest/` contains no imported vertex and no texture. Every
 triangle is produced by `tools/grow.mjs` and `tools/grow-lib.mjs`, which are
 this project's own code, so nothing in that folder carries a third-party
 licence of any kind.

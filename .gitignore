@@ -26,4 +26,4 @@ preview/assets-data.js
 # nothing outside it. vendor/baked_assets IS committed, because rebuilding
 # that one needs the model packs and a 24 MB devDependency; this one needs
 # neither.
-vendor/baked_assets2/
+vendor/grown-redwood-forest/

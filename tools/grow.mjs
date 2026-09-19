@@ -1,7 +1,7 @@
 // GROWING A REDWOOD GROVE FROM NOTHING.
 //
 // Run:    node tools/grow.mjs [--report] [name...]
-// Writes: vendor/baked_assets2/*.obj + .mtl
+// Writes: vendor/grown-redwood-forest/*.obj + .mtl
 //
 // Not one imported vertex and not one texture. Every shape here is triangles
 // assembled by tools/grow-lib.mjs, and every proportion and colour comes from
@@ -29,7 +29,7 @@ import {fileURLToPath} from 'node:url';
 import {Build, rng, tube, bolePath, spray, sprayFan, frond, blade, blob, toObj, toMtl, norm, cross, add, mul} from './grow-lib.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'vendor', 'baked_assets2');
+const OUT = join(ROOT, 'vendor', 'grown-redwood-forest');
 const args = process.argv.slice(2);
 const report = args.includes('--report');
 const only = args.filter(a => !a.startsWith('--')).map(a => a.toLowerCase());

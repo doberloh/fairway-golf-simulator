@@ -573,7 +573,7 @@ The forward tee improves least: red is still blocked over 1 m on 12% of holes ag
 
 ## A grove grown from nothing, against 315 photographs
 
-`vendor/baked_assets2` holds 153 models -- trees, shrubs, ground cover, dead wood -- with **no imported vertex, no texture, and no generator library**. `tools/grow-lib.mjs` is about four hundred lines of triangles and `tools/grow.mjs` is the catalogue. The photographs decided the proportions; nothing was copied from them.
+`vendor/grown-redwood-forest` holds 153 models -- trees, shrubs, ground cover, dead wood -- with **no imported vertex, no texture, and no generator library**. `tools/grow-lib.mjs` is about four hundred lines of triangles and `tools/grow.mjs` is the catalogue. The photographs decided the proportions; nothing was copied from them.
 
 ### Measuring 315 pictures
 

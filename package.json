@@ -12,7 +12,7 @@
     "bench": "node tools/bench.mjs",
     "assets": "node tools/asset-preview.mjs && vite build --config vite.assets.config.js",
     "sheet": "vite build --config vite.sheet.config.js",
-    "grove": "node tools/grow.mjs && node tools/asset-preview.mjs baked_assets2 && vite build --config vite.assets.config.js && vite build --config vite.sheet.config.js",
+    "grove": "node tools/grow.mjs && node tools/asset-preview.mjs grown-redwood-forest && vite build --config vite.assets.config.js && vite build --config vite.sheet.config.js",
     "bridge:debug": "node bridge/server.mjs --debug"
   },
   "dependencies": {
