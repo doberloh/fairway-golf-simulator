@@ -571,6 +571,31 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## ez-tree's structure wearing Quaternius's foliage
+
+Six more models in `vendor/eztree-grove`, and the point of them is that the two sources have opposite strengths.
+
+ez-tree gives a **trunk and a branch skeleton no pack contains**: a bare column with a buttressed foot and short limbs only near the top. Quaternius gives **foliage that already looks like this game** -- chunky, stylized, a solid mass rather than alpha-cut billboards -- and `PineTree_2` and `PineTree_4` are the two crowns across all six packs whose silhouette rises to a single peak instead of stacking into tiers.
+
+The proportions come from neither: bare trunk to 64% of height, crown half-width 0.085 of the tree's height, trunk a thirty-eighth as thick as it is tall, 42% buttress. The same numbers the redwood research produced.
+
+**Two ways of wearing it**, because it is not obvious which reads better and the previewer is for deciding that:
+
+| | | verts |
+|---|---|---|
+| `StylizedRedwood_Cap_1` | one crown on the bare trunk -- the original silhouette, on a trunk that now has branches inside it | 5.6k |
+| `StylizedRedwood_Cap_2` | wider and starting lower | 5.5k |
+| `StylizedRedwood_Tufts_1` | a spray at the end of every main limb, branch bare behind it, which is what conifer foliage actually is | 34k |
+| `StylizedRedwood_Tufts_2` | fewer, larger sprays | 23k |
+| `StylizedFir_Tufts_1` | the fir skeleton: more limbs, starting lower, drooping | 51k |
+| `StylizedFir_Cap_1` | the same skeleton capped instead | 7.1k |
+
+**The caps are an order of magnitude cheaper** -- 5.5k against 34k -- because one crown is about a thousand vertices and a tuft variant wears thirty of them. Worth holding onto given that the whole set has to fit a frame budget rather than a disk.
+
+Tufts are placed at branch tips, taking the longest runs first so the main limbs are dressed before their twigs, and then capped. Uncapped, a fir has a hundred and fifty tips and dressing all of them cost 155,000 vertices and a 20 MB file for foliage nobody could pick out.
+
+The mechanism is small: the crown is read through the same `extractObj` the ingest uses, normalised the same way, copied once per placement into one merged mesh, and handed to the tree as an alpha-tested mesh -- so the OBJ writer, the silhouette profile and the buttress all treat it as foliage without knowing it came from somewhere else.
+
 ## Trunks painted, canopies textured
 
 Three changes that all turn on the same distinction: **a leaf is a cut-out, a trunk is a surface.**

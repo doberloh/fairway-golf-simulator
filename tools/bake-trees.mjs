@@ -20,6 +20,8 @@
 import {writeFileSync, mkdirSync, copyFileSync, existsSync} from 'node:fs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import * as T from 'three';
+import {extractObj} from './mesh-read.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'vendor', 'eztree-grove');
@@ -57,6 +59,11 @@ const TEXTURES = {
  'needles.png': ['leaves', 'pine_color.png'],
  'broadleaf.png': ['leaves', 'ash_color.png'],
 };
+
+// The stylized pack's own conifer sheet, for the hybrids below. Copied from
+// where it is already vendored rather than from ez-tree.
+const STYLIZED = join(ROOT, 'vendor', 'quaternius-ultimate-stylized-nature');
+const STYLIZED_SHEET = 'stylized_needles.png';
 
 // -------------------------------------------------------------------- UVs
 //
@@ -384,6 +391,21 @@ function bigleafMaple(o) {
  return {bark: BARK.maple, leaf: 'broadleaf.png', flare: 1.3};
 }
 
+// The redwood skeleton with no foliage of its own, for a hybrid to dress. Same
+// proportions; ez-tree's billboards simply switched off.
+function redwoodBare(o) {
+ const spec = redwood(o);
+ o.leaves.count = 0;
+ return spec;
+}
+
+// The fir skeleton, likewise: more limbs, starting lower, drooping.
+function firBare(o) {
+ const spec = douglasFir(o);
+ o.leaves.count = 0;
+ return spec;
+}
+
 // A standing dead redwood. Old-growth groves are full of them, and this is the
 // cheapest model here -- no foliage at all -- while being unmistakably ancient.
 function snag(o) {
@@ -399,6 +421,149 @@ function snag(o) {
  o.branch.length[2] = 4;
  o.leaves.count = 0;
  return {...spec, bark: BARK.snag, leaf: null, flare: 1.5};
+}
+
+
+// ------------------------------------------------------ the stylized hybrids
+//
+// ez-tree's structure wearing Quaternius's foliage.
+//
+// The two have opposite strengths. ez-tree gives a trunk and a branch skeleton
+// that no pack contains -- a bare column with a buttress and short limbs only
+// near the top. Quaternius gives foliage that already looks like this game:
+// chunky, stylized, a solid mass rather than ez-tree's alpha-cut billboards,
+// and `PineTree_2` and `PineTree_4` are the two crowns whose silhouette rises
+// to a single peak rather than stacking into tiers.
+//
+// Proportions come from the redwood research, not from either source: a bare
+// trunk to 64% of height, a crown half as wide as 0.085 of the tree's height,
+// a trunk a thirty-eighth as thick as it is tall, and a 42% buttress.
+const CROWN_SOURCES = new Map();
+function stylizedCrown(name) {
+ if (!CROWN_SOURCES.has(name)) {
+  const file = join(STYLIZED, name + '.obj');
+  if (!existsSync(file)) throw Error(`no stylized crown called ${name}`);
+  const leaf = extractObj(file, true).get('leaf');
+  if (!leaf) throw Error(`${name} has no leaf geometry`);
+  // Normalised the way the ingest normalises everything: centred on x/z,
+  // sitting on y=0, one unit tall. Placement below is then in tree units.
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (let i = 0; i < leaf.position.length; i += 3) {
+   minX = Math.min(minX, leaf.position[i]); maxX = Math.max(maxX, leaf.position[i]);
+   minY = Math.min(minY, leaf.position[i + 1]); maxY = Math.max(maxY, leaf.position[i + 1]);
+   minZ = Math.min(minZ, leaf.position[i + 2]); maxZ = Math.max(maxZ, leaf.position[i + 2]);
+  }
+  const height = Math.max(maxY - minY, 1e-6);
+  const position = new Float32Array(leaf.position.length);
+  for (let i = 0; i < leaf.position.length; i += 3) {
+   position[i] = (leaf.position[i] - (minX + maxX) / 2) / height;
+   position[i + 1] = (leaf.position[i + 1] - minY) / height;
+   position[i + 2] = (leaf.position[i + 2] - (minZ + maxZ) / 2) / height;
+  }
+  CROWN_SOURCES.set(name, {
+   position, normal: new Float32Array(leaf.normal), uv: new Float32Array(leaf.uv),
+   index: leaf.index, radius: Math.max(maxX - minX, maxZ - minZ) / 2 / height,
+  });
+ }
+ return CROWN_SOURCES.get(name);
+}
+
+// Ring centres grouped into runs -- the trunk first, then one run per branch.
+// Same boundary rule the bark coordinates use: a step much longer than the one
+// before it is a new branch.
+function branchRuns(mesh) {
+ const pos = mesh.geometry.attributes.position, uv = mesh.geometry.attributes.uv;
+ const centre = [];
+ let prev = Infinity;
+ for (let i = 0; i < uv.count; i++) {
+  const u = uv.getX(i);
+  if (u < prev - 1e-6) centre.push([0, 0, 0, 0]);
+  prev = u;
+  const c = centre[centre.length - 1];
+  c[0] += pos.getX(i); c[1] += pos.getY(i); c[2] += pos.getZ(i); c[3]++;
+ }
+ for (const c of centre) { c[0] /= c[3]; c[1] /= c[3]; c[2] /= c[3]; }
+ const runs = [];
+ let run = [centre[0]], last = 0;
+ for (let r = 1; r < centre.length; r++) {
+  const step = Math.hypot(centre[r][0] - centre[r - 1][0], centre[r][1] - centre[r - 1][1], centre[r][2] - centre[r - 1][2]);
+  if (last > 0 && step > last * 4) { runs.push(run); run = []; last = 0; } else last = step;
+  run.push(centre[r]);
+ }
+ runs.push(run);
+ return runs;
+}
+
+// Copy the crown geometry once per placement into one merged mesh, and hand it
+// to the tree as an alpha-tested mesh so everything downstream -- the OBJ
+// writer, the profile, the flare -- already treats it as foliage.
+function attachCrowns(tree, placements, sheet, rng) {
+ const src = stylizedCrown(sheet);
+ const verts = src.position.length / 3;
+ const position = new Float32Array(verts * 3 * placements.length);
+ const normal = new Float32Array(verts * 3 * placements.length);
+ const uv = new Float32Array(verts * 2 * placements.length);
+ const index = new Uint32Array(src.index.length * placements.length);
+ const m = new T.Matrix4(), nm = new T.Matrix3(), v = new T.Vector3(), n = new T.Vector3();
+ const dummy = new T.Object3D();
+ dummy.rotation.order = 'YXZ';
+ placements.forEach((p, k) => {
+  dummy.position.set(p.x, p.y, p.z);
+  dummy.rotation.set(p.tilt || 0, rng() * 6.283, p.roll || 0);
+  dummy.scale.set(p.width, p.height, p.width);
+  dummy.updateMatrix();
+  m.copy(dummy.matrix);
+  nm.getNormalMatrix(m);
+  for (let i = 0; i < verts; i++) {
+   v.set(src.position[i * 3], src.position[i * 3 + 1], src.position[i * 3 + 2]).applyMatrix4(m);
+   n.set(src.normal[i * 3], src.normal[i * 3 + 1], src.normal[i * 3 + 2]).applyMatrix3(nm).normalize();
+   const at = (k * verts + i) * 3;
+   position[at] = v.x; position[at + 1] = v.y; position[at + 2] = v.z;
+   normal[at] = n.x; normal[at + 1] = n.y; normal[at + 2] = n.z;
+   uv[(k * verts + i) * 2] = src.uv[i * 2];
+   uv[(k * verts + i) * 2 + 1] = src.uv[i * 2 + 1];
+  }
+  for (let i = 0; i < src.index.length; i++)
+   index[k * src.index.length + i] = src.index[i] + k * verts;
+ });
+ const g = new T.BufferGeometry();
+ g.setAttribute('position', new T.BufferAttribute(position, 3));
+ g.setAttribute('normal', new T.BufferAttribute(normal, 3));
+ g.setAttribute('uv', new T.BufferAttribute(uv, 2));
+ g.setIndex(new T.BufferAttribute(index, 1));
+ tree.add(new T.Mesh(g, new T.MeshStandardMaterial({alphaTest: .35})));
+}
+
+// A cap: one crown sitting on the bare trunk, the shape the first redwoods
+// had, but on a trunk with actual branches inside it.
+function capPlacements(tree, height, opts) {
+ const base = height * opts.trunk;
+ return [{x: 0, y: base, z: 0, width: height * opts.wide * 2, height: height - base}];
+}
+
+// Tufts: a crown at the end of every limb, which is what a conifer's foliage
+// actually is -- sprays at the branch ends with the branch bare behind them.
+function tuftPlacements(tree, height, opts, rng) {
+ let wood = null;
+ tree.traverse(mesh => { if (mesh.isMesh && !isLeaf(mesh) && !wood) wood = mesh; });
+ // Longest runs first, which puts the main limbs ahead of their twigs -- a
+ // level-1 branch has six rings and its children three. Then a hard cap,
+ // because one crown is about a thousand vertices and a fir has a hundred and
+ // fifty tips: dressing every one of them cost 155k vertices and a 20 MB file
+ // for foliage nobody would pick out.
+ const runs = branchRuns(wood).slice(1)   // drop the trunk
+  .filter(run => run[run.length - 1][1] >= height * opts.from)
+  .sort((a, b) => b.length - a.length)
+  .slice(0, opts.tufts || 40);
+ const out = [];
+ for (const run of runs) {
+  const tip = run[run.length - 1];
+  const size = height * opts.tuft * (.75 + rng() * .5);
+  out.push({x: tip[0], y: tip[1] - size * .35, z: tip[2],
+   width: size * 1.25, height: size,
+   tilt: (rng() - .5) * .5, roll: (rng() - .5) * .5});
+ }
+ return out;
 }
 
 // name, builder, seed, and whatever that variant does differently.
@@ -419,9 +584,27 @@ const VARIANTS = [
  ['RedCedar_2', redCedar, 1855, {'branch.length.1': 22, 'branch.angle.1': 124}],
  ['BigleafMaple_1', bigleafMaple, 5127, {}],
  ['RedwoodSnag_1', snag, 3344, {}],
+
+ // THE STYLIZED HYBRIDS. ez-tree's trunk and limbs, Quaternius's foliage,
+ // redwood proportions throughout. `crown` names a model in
+ // vendor/quaternius-ultimate-stylized-nature and `dress` how it is worn:
+ // one mass capping the bare trunk, or a spray at the end of every limb.
+ ['StylizedRedwood_Cap_1', redwoodBare, 1207, {},
+  {crown: 'PineTree_2', dress: 'cap', trunk: .64, wide: .085}],
+ ['StylizedRedwood_Cap_2', redwoodBare, 8891, {'branch.start.1': .52},
+  {crown: 'PineTree_4', dress: 'cap', trunk: .56, wide: .10}],
+ ['StylizedRedwood_Tufts_1', redwoodBare, 1207, {},
+  {crown: 'PineTree_2', dress: 'tufts', from: .55, tuft: .085, tufts: 30}],
+ ['StylizedRedwood_Tufts_2', redwoodBare, 5533, {'branch.children.0': 22, 'branch.length.1': 20},
+  {crown: 'PineTree_4', dress: 'tufts', from: .58, tuft: .105, tufts: 22}],
+ // Lower, denser, wider: the fir skeleton wearing the same foliage.
+ ['StylizedFir_Tufts_1', firBare, 2299, {},
+  {crown: 'PineTree_2', dress: 'tufts', from: .28, tuft: .075, tufts: 46}],
+ ['StylizedFir_Cap_1', firBare, 6640, {'branch.start.1': .44},
+  {crown: 'PineTree_4', dress: 'cap', trunk: .46, wide: .13}],
 ];
 
-function build(builder, seed, tweak) {
+function build(builder, seed, tweak, dress) {
  const tree = new Tree();
  tree.loadPreset('Pine Large');
  const o = BASE(tree);
@@ -436,6 +619,23 @@ function build(builder, seed, tweak) {
  tree.generate();
  flareTheBase(tree, spec.flare);
  tree.traverse(mesh => { if (mesh.isMesh && !isLeaf(mesh)) rebuildBarkUVs(mesh); });
+ if (dress) {
+  // After the flare and the bark coordinates, so the crowns are placed on the
+  // wood as it finally stands.
+  let lo = Infinity, hi = -Infinity;
+  tree.traverse(mesh => {
+   if (!mesh.isMesh) return;
+   const p = mesh.geometry.attributes.position;
+   for (let i = 0; i < p.count; i++) { lo = Math.min(lo, p.getY(i)); hi = Math.max(hi, p.getY(i)); }
+  });
+  const height = hi - lo, rng = seeded(seed);
+  const places = dress.dress === 'cap'
+   ? capPlacements(tree, height, dress)
+   : tuftPlacements(tree, height, dress, rng);
+  attachCrowns(tree, places, dress.crown, rng);
+  spec.leaf = STYLIZED_SHEET;
+  spec.crowns = places.length;
+ }
  let bad = 0, all = 0;
  tree.traverse(mesh => {
   if (!mesh.isMesh || isLeaf(mesh)) return;
@@ -443,6 +643,13 @@ function build(builder, seed, tweak) {
   all += mesh.geometry.index ? mesh.geometry.index.count / 3 : 0;
  });
  return {tree, spec, bad, all};
+}
+
+// Placement jitter needs its own stream: ez-tree's rng is inside the library
+// and has already been consumed by the time the crowns go on.
+function seeded(seed) {
+ let x = (seed * 1103515245 + 12345) >>> 0;
+ return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; };
 }
 
 // A redwood stands on a swollen, buttressed foot, and every published diameter
@@ -623,6 +830,9 @@ for (const [out, [folder, file]] of Object.entries(TEXTURES)) {
  if (!existsSync(from)) { console.error('ez-tree not installed: npm install'); process.exit(1); }
  copyFileSync(from, join(OUT, out));
 }
+const stylizedSheet = join(STYLIZED, 'PineTree_Leaves.png');
+if (!existsSync(stylizedSheet)) { console.error('stylized leaf sheet is not vendored'); process.exit(1); }
+copyFileSync(stylizedSheet, join(OUT, STYLIZED_SHEET));
 
 writeFileSync(join(OUT, 'README.md'),
 `# eztree-grove
@@ -639,9 +849,9 @@ should be edited by hand.
 `);
 
 let total = 0, made = 0;
-for (const [name, builder, seed, tweak] of VARIANTS) {
+for (const [name, builder, seed, tweak, dress] of VARIANTS) {
  if (only.length && !only.some(f => name.toLowerCase().includes(f))) continue;
- const {tree, spec, bad, all} = build(builder, seed, tweak);
+ const {tree, spec, bad, all} = build(builder, seed, tweak, dress);
  if (bad) {
   console.error(`${name}: ${bad} of ${all} bark triangles have a collapsed UV basis -- `
    + 'the texture would smear across them. Check the ring/branch split in rebuildBarkUVs.');
@@ -656,7 +866,8 @@ for (const [name, builder, seed, tweak] of VARIANTS) {
  const p = profile(tree);
  console.log(`${name.padEnd(15)} ${String(verts).padStart(6)} verts  ${(obj.length / 1024).toFixed(0).padStart(4)} KB`
   + (p ? `  crown from ${String((p.crownStart * 100) | 0).padStart(2)}%  ${String(Math.round(p.width * 200)).padStart(3)}% as wide as tall  reversals ${p.turns}`
-       : '  no foliage'));
+       : '  no foliage')
+  + (spec.crowns ? `  ${spec.crowns} stylized crown${spec.crowns > 1 ? 's' : ''}` : ''));
  if (report) {
   if (p) console.log('                crown ' + p.bands.map(b => b.toString(16).toUpperCase()).join(' '));
   console.log('                trunk ' + trunkProfile(tree, p?.crownStart));

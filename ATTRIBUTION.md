@@ -33,6 +33,10 @@ besides the house atlases:
   pine and ash), copied unchanged and covered by its MIT licence. They are here
   because a leaf billboard is a cut-out: without an alpha mask it is a solid
   rectangle.
+`vendor/eztree-grove/stylized_needles.png` is a copy of Ultimate Stylized
+Nature's `PineTree_Leaves.png`, sitting beside the generated models that use
+it. Same pack, same CC0 licence, copied so the folder is self-contained.
+
 **No bark images are taken.** Trunks are painted: the generated models state a
 bark colour and the game paints every surface from the biome palette anyway, so
 ez-tree's bark maps -- two of them Poly Haven CC0, two from texturecan whose
