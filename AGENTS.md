@@ -33,14 +33,24 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 - **PROCEDURAL_GENERATION.md** — what the generator produces and in what order.
 - **README.md** — anything a player can see, set or press.
 - **INSTALLATION.md** — anything that changes how the thing is built, served or opened.
-**Check every one of them, every time, including the ones your change does not obviously touch.** README.md and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed; the two files that describe what a PLAYER sees and what the ARCHITECTURE guarantees simply felt less urgent than the one recording what was measured. They are the two a newcomer reads first.
-
-A quick way to catch it: `git log -1 --format=%h --  <file>` on each doc. If one is many commits behind the others, that is the gap.
 - **LANDSCAPE_RESEARCH.md** — sources and figures behind terrain, vegetation and architecture, same standard as RESEARCH.md.
 - **ATTRIBUTION.md** and **THIRD_PARTY_NOTICES.txt** — any dependency added, removed or upgraded, and any asset or data source taken in.
 - **DISTRIBUTION_REVIEW.md** — anything affecting the offline build, file-URL behaviour, bundle size or release claims.
 
+**Check every one of them, every time, including the ones the change does not obviously touch.** README.md and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
+
+A quick way to catch it, before committing:
+
+```bash
+for f in *.md; do printf "%-28s %s
+" "$f" "$(git log -1 --format='%ad %h' --date=short -- $f)"; done
+```
+
+A file many commits behind the others is the gap.
+
 **If a change touches nothing in a file, that is a finding, not a skip.** The question is asked every pass; the answer is often no.
+
+**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and README read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
 
 Write down the decisions and the **rejected alternatives**, especially ones that look obviously right. "The ladder of relaxations reads tidier and falls off a cliff", "reaching for the rim circle below lip height parks the ball inside the wall" — those sentences are worth more than a description of the code, which anyone can read. The same is true of a bug that was subtle: record what it looked like, because it is the recognisable symptom that saves the next hour, not the fix.
 
