@@ -3,7 +3,3 @@
 newmtl Tree_Bark
 Kd 0.42 0.25 0.18
 map_Kd bark_furrowed.jpg
-
-newmtl Tree_Leaves
-Kd 0.20 0.33 0.22
-map_Kd needles.png

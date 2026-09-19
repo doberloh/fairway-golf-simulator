@@ -571,6 +571,40 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The bark ran sideways, and a forest rather than a tree
+
+### `v` was never a ramp
+
+The bark came out banded horizontally, with one vertical-looking stripe down a single slice of the trunk. The instinct is to blame the texture or the seam. The cause was an assumption about what ez-tree's UVs mean.
+
+Its trunk coordinates are:
+
+    u = 0.000  0.167  0.333  0.500  0.667  0.833  1.000    once around the ring
+    v = 0      0      0      0      0      0      0        ring at the foot
+    v = 1      1      1      1      1      1      1        next ring up
+    v = 0      0      0      0      0      0      0        the one after
+
+**`v` runs 0,1,0,1 — one tile per vertex ring, mirrored each time**, which is how it hides the horizontal seam between rings. It is not a ramp up the trunk. Scaling it by 22, the way you would scale an ordinary cylindrical unwrap, asked for twenty-two tiles inside *every single section*: the bark became fine horizontal banding, and the one stripe that looked right was the u-seam column where the whole texture is squashed into one step.
+
+So `v` is left exactly as generated, and tile height is set by the number of **sections** instead — forty rings up the trunk is forty tiles, about one every three metres. Only `u` is scaled, by 4, to square the tile up. Worth remembering as a general point: a generated UV layout is a fact to look up, not a convention to assume.
+
+### Twelve trees, not four
+
+A grove needs more than one species, and the whole argument for generating is that a second species costs a function rather than a shopping trip.
+
+| model | what it is | verts |
+|---|---|---|
+| `Redwood_1`–`_4` | mature, crowns starting 30–60% up | 17k–29k |
+| `RedwoodYoung_1`, `_2` | half the girth for its height, branched nearly to the ground — nothing has self-pruned yet | 40k |
+| `DouglasFir_1`, `_2` | narrower, spikier, distinctly drooping | 36k |
+| `RedCedar_1`, `_2` | the mid-storey: branches to the ground, heavily drooping, dense | 52k |
+| `BigleafMaple_1` | the only broadleaf, wide open crown | 8k |
+| `RedwoodSnag_1` | a standing dead spar. No foliage, 1.2k verts, unmistakably old-growth | 1k |
+
+Two of the four mature redwoods now carry their branches much lower (35% and 30%). An unbroken line of bare trunks all ending at the same height reads as a colonnade rather than a wood — a grove is a spread of ages, and that has to be visible in the silhouettes.
+
+**Cost, stated plainly: 360k vertices over twelve models is roughly 3 MB of packed geometry, against a 2.78 MB game.** Not all twelve ship. That is what choosing in the previewer is for, and the cedars at 52k each are the first place to look.
+
 ## What a redwood actually looks like
 
 The first bake was a redwood from memory. These are the published descriptions it was then matched against, and what each one changed.
