@@ -823,8 +823,8 @@ export class GolfView{
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
-  const target=teeAim(h);
   for(const [name,t] of Object.entries(h.tees)){
+   const target=teeAim(h,t);
    const dx=target.x-t.x,dz=target.z-t.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
    for(const side of [-4,4]){
     // Perpendicular to the line of play, set a metre back from the tee centre.

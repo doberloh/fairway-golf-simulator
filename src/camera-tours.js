@@ -1,25 +1,10 @@
 import * as T from 'three';
-import {fairwayWidth} from './course.js';
-// The middle of the fairway, which is not the centre line it is drawn around:
-// the two edges vary independently, so where one side runs wider the playable
-// middle sits several metres off that line. Stub holes in tests carry a centre
-// line and no edges, and fall back to it.
-export function fairwayMiddle(h,z){
- const c=h.center(z);
- if(!h.leftWidth||!h.rightWidth)return c;
- const left=fairwayWidth(h,z,0,-1),right=fairwayWidth(h,z,0,1);
- return left+right>0?c+(right-left)/2:c;
-}
-// Where a tee is squared up: the middle of the fairway where the fairway starts.
-// Fixed ground rather than a landing spot, so every tee on a hole points at the
-// same place and the markers never depend on who is standing between them.
-export function teeAim(h){
- const start=h.mowStart??h.fairwayStart??22;
- // A corridor is capped to nothing at its very start, so read the middle a
- // little inside it, where the fairway has actually opened out.
- const z=Math.min(h.length,start+14);
- return {x:fairwayMiddle(h,z),z};
-}
+// `fairwayMiddle` and `teeAim` live in course.js now: the tee PADS are squared
+// to the same aim the markers are, and course.js cannot import this file --
+// this file imports course.js. Re-exported so every existing caller is
+// unaffected and there is still one definition of where a tee points.
+import {fairwayWidth, fairwayMiddle, teeAim} from './course.js';
+export {fairwayMiddle, teeAim};
 export function fairwayAim(h,p,range){
  if(h.surface(p.x,p.z)==='green')return {...h.pin};
  let z=Math.max(0,p.z),remaining=Math.max(20,range),last={x:fairwayMiddle(h,z),z};

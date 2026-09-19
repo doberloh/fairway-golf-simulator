@@ -571,6 +571,89 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A tee is a rectangle, and it points where you do
+
+Four faults came off one screenshot: tee boxes hiding the fairway on downhill holes, tees too big, tees sitting in line with each other, and a par three's shared pad carrying dead ground in front of its forward marker. The previous section covers the sightline half. This is the shape half, and between them the reported problem is gone.
+
+**An oval was never a tee.** It was what the code happened to have — ponds and bunkers are ovals — and a tee is mown in straight lines by a machine that turns at the corners. Owner's call, and it made the code simpler rather than harder: a rounded box is a proper signed distance in **metres**, so the shoulder that falls away from a pad reads it directly. The oval had to normalise into the ellipse and convert back along the ray to recover a distance at all.
+
+**And it points where the player does.** The pad was axis-aligned in the hole's own frame while the markers on it were squared to `teeAim`. That was invisible while a pad was an oval and every tee sat on the centre line; it is glaring once a pad is a rectangle and tees sit a median 15 m off to one side. `fairwayMiddle` and `teeAim` moved into `course.js` for this — they were in `camera-tours.js`, which imports `course.js`, so the alternative was a second copy of "where does a tee point" and eventually two answers.
+
+**Sizes uniformly down**, 12 × 16 m to **6 × 9**, with the mown collar following from 20 × 27 to 8.7 × 13. And the site score now prefers a lateral stagger, because a tee directly in front is a tee you look over.
+
+| | before | after |
+|---|---|---|
+| shots blocked over 1 m, from the real tee | 74 (9%) | **19 (2%)** |
+| of those, blocked by another tee | 23 | **2** |
+| downhill shots blocked | 68 (14%) | **13 (3%)** |
+| sideways gap between consecutive tees, lowest quarter | 1.5 m | **11.7 m** |
+| sites needing real earthwork | 188 | **19** |
+
+### Where a tee points
+
+Two faults, and the second only became visible once the first was fixed.
+
+**The facing was computed before the tees had moved.** Tees are sited on ground that suits them, which happens well after the hole is laid out — and the facing was set from where the hole first put each tee. A tee sited 37 m off the centre line came out squared 8 degrees when the geometry called for 62. That is why they still pointed the wrong way after the shapes landed: the rule was right and the input was stale. The facing is recomputed the moment a pad lands on its real site.
+
+**And then the aim point itself.** The owner asked for the centre line about twenty yards ahead. Measured, that gives a **median turn of 44 degrees**, with two thirds of tees past 30 — because tees sit a median 18 m off the centre line, and aiming 18 m ahead is a 45 degree turn by arithmetic rather than by taste.
+
+Four candidates, over 810 tees on ordinary courses and 324 on deliberately dogleg-heavy ones:
+
+| aim point | turn, median / p95 / max | over 30° | dogleg: lines straying over 25 m off the hole |
+|---|---|---|---|
+| 20 yards ahead | 44 / 65 / 68 | 525 of 810 | — |
+| the green | 4 / 14 / 27 | 0 | **40 of 324** |
+| fairway midpoint | 11 / 31 / **78** | 43 | 3 |
+| landing area | 6 / 19 / 27 | 0 | 11 |
+| **as far as you can see straight** | **7 / 22 / 35** | **6** | **0** |
+
+The two ends pull against each other. Aiming at the green gives the tidiest angles and points you into the trees on a dogleg — which is what the test forbidding markers squared to the pin has been saying all along. Aiming near the tee keeps you on the hole and turns you sideways. The midpoint is decent on doglegs and has a bad tail elsewhere: on a short hole it can be nearly beside the tee, which is where the 78 degrees comes from.
+
+What resolves it is not a distance at all. Walk out along the middle of the fairway and stop where the straight line from **this** tee would begin leaving the corridor. That is the dogleg corner where there is one and the landing area where there is not — which is where a player aims in both cases, and it is the only candidate not trading one end against the other.
+
+### The par three special case dissolved
+
+Par threes had one long shared pad with the markers set down it, because three ovals 9 to 12 m apart could not help overlapping when each was 16 m long. That pad carried 8 m of dead ground in front of the forward marker — space that existed only so one shape could span every marker.
+
+At 6 by 9 metres three ordinary pads fit down a short hole at honest spacing. So par threes have three separate tees again, the special case is deleted rather than improved, and the levelling rule that was already there gives the stepped form a real short hole has, for nothing.
+
+This is the second time in this work that making something smaller removed a special case rather than shrinking it. Worth remembering when the next one appears.
+
+### Two exceptions, both the driving range
+
+The range came up twice, for the same underlying reason: its three mats sit side by side at the same distance and must be interchangeable.
+
+Squaring each tee to the middle of the fairway turns the outer two by a few degrees, which stops them being the same mat — so range mats face straight down the field. This surfaced as a paint-versus-lie disagreement on 0.08% of the range, which is the sort of thing only a pixel-by-pixel check catches.
+
+## The blindness check could not see tee boxes
+
+Reported as: on a downhill hole the tee box in front of you hides the fairway. The check that decides whether a tee needs raising was reading `shapedNoTees` — the shaped land **with no tee pads in it**. It was structurally incapable of seeing the one thing being complained about.
+
+It had a second fault of the same kind. It sampled down the hole's centre line, which was true when every tee sat on the centre line and stopped being true the moment tees were sited on ground that suits them: they now sit a median 19 m off it. It was measuring a shot nobody plays.
+
+The centre line was there for a reason — a straight line to a point 250 yards along a curving hole leaves the corridor on a dogleg and reads whatever happens to be out there. That is still handled, but by ignoring ground well outside the corridor rather than by pretending the tee is somewhere else.
+
+Measured from the real tee position, along the real shot line, over the finished ground:
+
+| | before | after |
+|---|---|---|
+| shots blocked by more than 1 m | 103 of 810 (13%) | **74 (9%)** |
+| downhill shots blocked | 89 of 500 (18%) | **68 (14%)** |
+| obstruction, 90th percentile | 1.24 m | **0.88 m** |
+| of the blocked shots, blocked by another tee | 19 | 23 |
+
+**Beware the bench number here.** `blind.blockedOver1m` reports 27 before and 79 after, which reads as a threefold regression and is nothing of the sort: the metric was fixed in the same pass and now asks the honest question. The pair above is the only fair comparison, because it uses the same method on both sides. A measurement changing at the same time as the thing it measures is worth saying out loud, every time.
+
+Pads are sited forward-most first, so by the time a back tee is judged the tees in front of it are placed and their levels are known. The check samples those directly.
+
+**One fix that mattered less than expected.** Merging neighbouring pads to one level was undoing deliberate steps: a back tee raised to see over the tee in front would drag that tee up to meet it, which is exactly the view it was raised for. Merging is now limited to pads already within 1.2 m of each other — which is the right rule, and moved the tee-on-tee count by two. The remaining cases are mostly the lift cap.
+
+### What is left
+
+Tee-on-tee blocking is a third of the remaining blocked shots and barely moved. The tees are simply large: the mown collar is 20 by 27 metres, and a quarter of consecutive tee pairs sit within 1.5 m of each other sideways, which is in line. A par three's shared pad carries 8 m of dead ground in front of its forward marker for the same reason — one oval has to span every marker.
+
+Those are shape problems, not sightline problems, and the owner's call is rounded rectangles at a uniformly smaller size. Smaller pads may also dissolve the par-three special case entirely: if three of them fit down a short hole without touching, par threes go back to three separate pads and the existing level rule gives the stair step for free.
+
 ## A quarter of the country's relief behind the tee
 
 The previous section records four attempts at relaxing the corridor trough behind the tee, all of them measured as failures, and a conclusion to leave it alone. That conclusion was wrong, and it was wrong because of the number it was judged on.

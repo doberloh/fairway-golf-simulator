@@ -194,6 +194,14 @@ export function generateCourse(settings={},hole=0){
  // ONE LONG TEE ON A SHORT HOLE. The markers are spread down it rather than
  // sitting on three pads of their own, which on a par three is both what a
  // real course does and the only way they fit.
+ // A SHORT HOLE NO LONGER NEEDS A TEE OF ITS OWN KIND. Three pads used to
+ // overlap on every par three, because spacing is a fraction of the hole's
+ // length -- so they were replaced by one long shared pad with the markers set
+ // down it. Now that a pad is 9 by 12 m rather than 12 by 16, three of them fit
+ // on a short hole at honest spacing, and three separate pads give the stepped
+ // form a real short hole has for nothing. It also removes the 8 m of dead pad
+ // that used to sit in front of the forward marker, which existed only because
+ // one oval had to span every marker.
  const teeNames=enabledTees(s),shortHole=par===3;
  const tees=Object.fromEntries(teeNames.map((name,i)=>{
   // THE SAME DRAWS IN THE SAME ORDER WHATEVER THE PAR.
@@ -206,16 +214,10 @@ export function generateCourse(settings={},hole=0){
   // long way to look for a cause that is really just "the dice moved along
   // by one".
   const a=i===0?0:rng(),b=i===0?0:rng();
-  const z=shortHole?i*(9+a*5):(i===0?0:length*(i*.09+(a-.5)*.032));
+  const z=shortHole?i*(19+a*6):(i===0?0:length*(i*.09+(a-.5)*.032));
   return[name,{x:center(z)+(shortHole||i===0?0:(b-.5)*6),z,yards:0}];
  }));
- if(shortHole){
-  const all=Object.values(tees),zs=all.map(t=>t.z),lo=Math.min(...zs),hi=Math.max(...zs);
-  // The back marker carries the pad, sized to cover every marker with a little
-  // room to stand behind the furthest back one.
-  all[0].pad={z:(lo+hi)/2,rz:(hi-lo)/2+TEE_PAD.z};
-  for(let i=1;i<all.length;i++)all[i].pad=null;
- }
+
  const fairwayStart=Math.min(length*.54,Math.max(...Object.values(tees).map(t=>t.z))+14+rng()*45);
  // Where mown turf begins, which is not where the hole's hazard zone begins. A
  // par three is played through the air to the green, so a full corridor down it
@@ -298,15 +300,99 @@ export function generateCourse(settings={},hole=0){
 // reads as an oval dropped into scrub: the collar is what makes it look like
 // ground somebody mows. The ground shader in ground.js paints both from these
 // same numbers, so the painted surface and the classified lie cannot drift.
-export const TEE_PAD={x:6,z:8},TEE_APRON={x:10.2,z:13.6};
-// The mown collar is the pad scaled by this, in both directions.
-export const TEE_APRON_SCALE=TEE_APRON.z/TEE_PAD.z;
+// A TEE IS A RECTANGLE WITH ROUNDED CORNERS, NOT AN OVAL.
+//
+// An oval is what the code happened to have -- ponds and bunkers are ovals --
+// and it never looked like a tee, which is mown in straight lines by a machine
+// that turns at the corners. Owner's call, and it costs nothing: the rounded
+// box below is a proper signed distance in METRES, so the shoulder that falls
+// away from a pad gets simpler rather than harder. The oval version had to
+// normalise into the ellipse and convert back along the ray to recover a
+// distance at all.
+//
+// Sizes uniformly smaller with it. The mown collar was 20 by 27 metres, which
+// is most of why three tees on one hole read as a single green blob and why a
+// quarter of consecutive pairs sat within 1.5 m of each other sideways.
+export const TEE_PAD={x:3,z:4.5},TEE_ROUND=1.1,TEE_APRON_SCALE=1.45;
+export const TEE_APRON={x:TEE_PAD.x*TEE_APRON_SCALE,z:TEE_PAD.z*TEE_APRON_SCALE};
+// The middle of the fairway, which is not the centre line it is drawn around:
+// the two edges vary independently, so where one side runs wider the playable
+// middle sits several metres off that line. Stub holes in tests carry a centre
+// line and no edges, and fall back to it.
+export function fairwayMiddle(h,z){
+ const c=h.center(z);
+ if(!h.leftWidth||!h.rightWidth)return c;
+ const left=fairwayWidth(h,z,0,-1),right=fairwayWidth(h,z,0,1);
+ return left+right>0?c+(right-left)/2:c;
+}
+// WHERE A TEE IS SQUARED UP: as far down the hole as you can see in a
+// straight line.
+//
+// Walk out along the middle of the fairway and stop where the straight line
+// from this tee would start leaving the mown corridor. That is the dogleg
+// corner where there is one and the landing area where there is not, which is
+// where a player aims in both cases.
+//
+// Four simpler rules were measured first, over 810 tees on ordinary courses
+// and 324 on deliberately dogleg-heavy ones. Each fails at one end or the
+// other, and the two ends pull against each other:
+//
+//   20 yards ahead   median turn 44 degrees, two thirds of tees over 30. With
+//                    tees sited a median 18 m off the centre line, aiming 18 m
+//                    ahead is a 45 degree turn by arithmetic, not by taste.
+//   the green        tidiest angles of all, and 40 of 324 tees on a dogleg
+//                    course squared to a line leaving the fairway by over 25 m.
+//                    Pointing at the pin points you into the trees.
+//   fairway midpoint good lines on doglegs, but a bad tail elsewhere -- one tee
+//                    turned 78 degrees, because on a short hole the midpoint
+//                    can be nearly beside the tee.
+//   landing area     good angles, 11 of 324 still straying past the corner.
+//
+// This one: median turn 7 degrees, 6 tees of 810 past 30, and ZERO lines
+// straying badly on a dogleg course. It is the only candidate that is not
+// trading one against the other.
+export const TEE_AIM_MIN=55,TEE_AIM_FAR=250*.9144,TEE_AIM_SLACK=18;
+export function teeAim(h,tee){
+ if(!tee){
+  // No tee given: the hole's own answer, a little inside where mown turf
+  // starts, since a corridor is capped to nothing at its very edge.
+  const start=h.mowStart??h.fairwayStart??22,z=Math.min(h.length,start+14);
+  return {x:fairwayMiddle(h,z),z};
+ }
+ const far=h.par===3?h.length:Math.min(h.length-30,tee.z+TEE_AIM_FAR);
+ const near=Math.min(far,tee.z+TEE_AIM_MIN);
+ let best={x:fairwayMiddle(h,near),z:near};
+ for(let z=near+8;z<=far;z+=8){
+  const a={x:fairwayMiddle(h,z),z},dx=a.x-tee.x,dz=a.z-tee.z,len=Math.hypot(dx,dz)||1;
+  let clear=true;
+  for(let d=20;d<len&&clear;d+=6){
+   const u=d/len,x=tee.x+dx*u,zz=tee.z+dz*u,c=h.center(zz);
+   const half=fairwayWidth(h,zz,0,Math.sign(x-c)||1);
+   if(half&&Math.abs(x-c)-half>TEE_AIM_SLACK)clear=false;
+  }
+  if(!clear)break;
+  best=a;
+ }
+ return best;
+}
+// Distance from the centre of a rounded box, negative inside. One definition,
+// used by the lie, the paint, the shaping, the siting and the measurements --
+// five places that have to agree about where a tee is.
+export function teeBox(dx,dz,hx,hz,r){
+ const qx=Math.abs(dx)-(hx-r),qz=Math.abs(dz)-(hz-r);
+ return Math.hypot(Math.max(qx,0),Math.max(qz,0))+Math.min(Math.max(qx,qz),0)-r;
+}
 // How much a clear shot is worth against flat ground when picking a tee site.
 // How much a clear shot is worth against flat ground when picking a tee site.
 // Swept: at 1.6 a fifth more pads had to be RAISED to see over what was in
 // front of them, and there were half again as many blind shots. Past 10 it
 // stops buying anything and only picks rougher ground.
 const TEE_SEE=10;
+// The biggest height difference two neighbouring pads may have and still be
+// levelled into one platform.
+const TEE_MERGE=1.2;
+// How far apart across the hole two consecutive tees would like to sit.
+const TEE_STAGGER=10;
 // How much of the countryside's relief the ground behind a tee keeps.
 const TEE_AREA_RELIEF=.25;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
@@ -324,7 +410,20 @@ const TEE_AREA_RELIEF=.25;
 // the driving range and everything else is untouched.
 export function teePad(t){
  if(t.pad===null)return null;
- return t.pad??{z:t.z,rz:TEE_PAD.z};
+ return t.pad??{z:t.z,rz:TEE_PAD.z,ux:t.ux??0,uz:t.uz??1};
+}
+// A TEE IS SQUARED TO THE SHOT, AND SO IS THE GROUND UNDER IT.
+//
+// The pad was axis-aligned in the hole's own frame while the markers were
+// squared to `teeAim`. That was invisible while a pad was an oval and every
+// tee sat on the centre line; it is obvious once a pad is a rectangle and tees
+// sit a median 15 m off to one side, because the box and the markers on it
+// point different ways.
+//
+// Rotates an offset into the pad's own frame: along the line of play, and
+// across it.
+export function teeFrame(dx,dz,ux,uz){
+ return {across:dx*uz-dz*ux,along:dx*ux+dz*uz};
 }
 export const TEE_EYE=1.6;
 // IS THE SHOT BLIND, AND WHAT WOULD IT COST TO SEE OVER IT?
@@ -343,24 +442,40 @@ export const TEE_EYE=1.6;
 // Returns how far the ground rises above the sightline, and what raising the
 // tee would cost to clear that. Raising the eye by L lifts the sightline at
 // fraction u of the way out by L*(1-u), so an obstruction h at u costs h/(1-u).
-export function sightline(h,teeZ,eyeY,sample){
+export function sightline(h,tee,eyeY,sample){
  // A par three is played to the green; anything else to a good drive.
- const reach=h.par===3?h.length-teeZ:Math.min(h.length-teeZ-30,250*.9144);
+ const reach=h.par===3?h.length-tee.z:Math.min(h.length-tee.z-30,250*.9144);
  if(reach<60)return {over:0,lift:0,reach:0};
- const aimZ=teeZ+reach,aim=h.toWorld({x:h.center(aimZ),z:aimZ});
- const target=sample(aim.x,aim.z);
+ const aimZ=tee.z+reach,aim={x:h.center(aimZ),z:aimZ};
+ const aw=h.toWorld(aim);
+ const target=sample(aw.x,aw.z);
+ const span=Math.hypot(aim.x-tee.x,aim.z-tee.z)||1;
+ const wide=(h.settings?.semiRough??6)+45;
  let over=0,lift=0;
- // SAMPLED ALONG THE CENTRELINE, NOT ALONG A STRAIGHT LINE IN WORLD SPACE, and
- // only the first three quarters of the shot. Near the target 1-u goes to zero
- // and the required lift goes to infinity with it: a 0.35 m ripple at u = 0.9
- // asked for the full cap, which is how a DEAD FLAT course came back with a
- // 3.5 m mound on it. Ground that close to the landing area is the landing
- // area's own contour, and no amount of tee clears it anyway.
- for(let d=20;d<reach*.75;d+=6){
-  const u=d/reach,zz=teeZ+d,at=h.toWorld({x:h.center(zz),z:zz});
-  const o=sample(at.x,at.z)-(eyeY+(target-eyeY)*u);
+ // FROM WHERE THE PLAYER ACTUALLY STANDS, ALONG THE LINE THEY ACTUALLY HIT.
+ //
+ // This used to start at the centre line at the tee's distance down the hole,
+ // which was true when every tee sat on the centre line and stopped being true
+ // the moment tees were sited on ground that suits them -- they now sit a
+ // median 19 m off it. It was measuring a shot nobody plays.
+ //
+ // The centre line was used for a reason: a straight line to a point 250 yards
+ // along a curving hole leaves the corridor on a dogleg and reads whatever
+ // happens to be out there. That is still handled, but by ignoring ground well
+ // outside the corridor rather than by pretending the tee is somewhere else.
+ for(let d=12;d<span*.8;d+=5){
+  const u=d/span,lx=tee.x+(aim.x-tee.x)*u,lz=tee.z+(aim.z-tee.z)*u;
+  const centre=h.center(lz),half=fairwayWidth(h,lz,0,Math.sign(lx-centre)||1);
+  if(half&&Math.abs(lx-centre)>half+wide)continue;
+  const q=h.toWorld({x:lx,z:lz});
+  const o=sample(q.x,q.z)-(eyeY+(target-eyeY)*u);
   if(o>over)over=o;
-  // A threshold, so the height field's own ripple cannot raise a tee.
+  // Raising the eye by L lifts the sightline at fraction u by L*(1-u), so an
+  // obstruction of o at u costs o/(1-u) to see over. Only the first three
+  // quarters, and the divisor is floored: near the target 1-u goes to zero and
+  // the required lift goes to infinity with it, which once had a 0.35 m ripple
+  // demanding a 3.5 m tee on dead flat ground. A threshold, too, so the height
+  // field's own noise cannot raise anything.
   if(o>.15)lift=Math.max(lift,o/Math.max(.25,1-u));
  }
  return {over,lift,reach};
@@ -368,7 +483,7 @@ export function sightline(h,teeZ,eyeY,sample){
 export function localSurface(h,x,z){
  const d=greenDistance(h,x,z),s=h.settings;
  if(d<=0)return 'green';if(d<=s.fringe)return 'fringe';
- if(Object.values(h.tees).some(t=>{const p=teePad(t);return p&&((x-t.x)/TEE_PAD.x)**2+((z-p.z)/p.rz)**2<1;}))return 'tee';
+ if(Object.values(h.tees).some(t=>{const p=teePad(t);if(!p)return false;const f=teeFrame(x-t.x,z-p.z,p.ux,p.uz);return teeBox(f.across,f.along,TEE_PAD.x,p.rz,TEE_ROUND)<0;}))return 'tee';
  if(h.ponds.some(p=>insideOval(x,z,p)))return 'water';
  if(h.bunkers.some(p=>insideOval(x,z,p)))return 'sand';
  // The fairway is tested BEFORE the green's semi collar, and the order is the
@@ -382,7 +497,7 @@ export function localSurface(h,x,z){
  if(d<=s.fringe+s.semiRough||Math.abs(x-h.center(z))<fairwayWidth(h,z,s.semiRough,x-h.center(z)))return 'semi';
  // Last, so anything already maintained keeps the better surface and a bunker
  // or pond beside a tee still plays as itself.
- if(Object.values(h.tees).some(t=>{const p=teePad(t);return p&&((x-t.x)/TEE_APRON.x)**2+((z-p.z)/(p.rz*TEE_APRON_SCALE))**2<1;}))return 'semi';
+ if(Object.values(h.tees).some(t=>{const p=teePad(t);if(!p)return false;const f=teeFrame(x-t.x,z-p.z,p.ux,p.uz);return teeBox(f.across,f.along,TEE_APRON.x,p.rz*TEE_APRON_SCALE,TEE_ROUND*TEE_APRON_SCALE)<0;}))return 'semi';
  return 'rough';
 }
 // AN ISLAND'S WATER IS THE OCEAN.
@@ -707,6 +822,25 @@ export function generateWorld(settings={}){
  // green shoulder or a pond shelf. The ramp off the pad widens with the drop
  // it has to absorb, the way a green shoulder does. A fixed five-metre ramp
  // left a wall around every pad once the ground got steep.
+ // Squared to the same aim the markers use, so the box and the markers on it
+ // point the same way.
+ for(const h of holes){
+  // A PROVISIONAL FACING: siting has not run yet, so every tee is still where
+  // the hole first put it. It is recomputed the moment a pad lands on its real
+  // site -- squaring a tee to the shot from somewhere it no longer is was why
+  // they still pointed the wrong way after the shape work.
+  //
+  // EVERY MAT ON A RANGE FACES STRAIGHT DOWN THE FIELD. They sit side by side
+  // at the same distance, so squaring each to the middle of the fairway turns
+  // the outer two by a few degrees and they stop being the same mat -- which
+  // is the one thing a range may not do.
+  for(const t of Object.values(h.tees)){
+   if(h.range){t.ux=0;t.uz=1;continue;}
+   const target=teeAim(h,t);
+   const dx=target.x-t.x,dz=target.z-t.z,len=Math.hypot(dx,dz)||1;
+   t.ux=dx/len;t.uz=dz/len;
+  }
+ }
  const teePads=[];
  for(const h of holes){
   const all=Object.values(h.tees);
@@ -717,7 +851,7 @@ export function generateWorld(settings={}){
    // A pad carries every marker standing on it -- itself, plus any marker that
    // has no pad of its own, which on a par three is the other two. They move
    // together or the markers end up off the ground they tee from.
-   teePads.push({h,t,rz:p.rz,localZ:p.z,x:q.x,z:q.z,
+   teePads.push({h,t,rz:p.rz,localZ:p.z,x:q.x,z:q.z,ux:p.ux,uz:p.uz,
     markers:[t,...all.filter(m=>m!==t&&teePad(m)===null)]});
   }
  }
@@ -803,6 +937,24 @@ export function generateWorld(settings={}){
    const home={x:pad.t.x,z:pad.localZ};
    const backLimit=home.z-TEE_SLIDE;
    const frontLimit=Math.min(home.z+TEE_SLIDE,(h.mowStart??h.fairwayStart)-pad.rz-10,aheadZ-pad.rz-14);
+ // GROUND AS IT WILL BE ONCE THE TEES ALREADY BUILT ON THIS HOLE ARE THERE.
+   //
+   // The blindness check read the shaped land WITHOUT any tee pads in it, so
+   // it could not see the one thing the owner reported being unable to see
+   // over -- the tee box in front of you. Measured from the real tee over the
+   // real ground, 13% of shots were blocked by more than a metre where this
+   // check believed 3%, and a fifth of those were blocked by another tee.
+   //
+   // Pads are sited forward-most first, so by the time a back tee is judged
+   // the tees in front of it are already placed and their levels are known.
+   const built=(x,z)=>{
+    const q=pad.h.toLocal({x,z});
+    for(const p of placed){
+     const f=teeFrame(q.x-p.x,q.z-p.z,p.ux,p.uz);
+     if(teeBox(f.across,f.along,TEE_APRON.x,p.rz*TEE_APRON_SCALE,TEE_ROUND*TEE_APRON_SCALE)<0)return p.y;
+    }
+    return shapedNoTees(x,z);
+   };
    let best=null;
    for(let attempt=0;attempt<TEE_TRIES;attempt++){
     // The first attempt is where the hole put it, so a good original site is
@@ -814,9 +966,16 @@ export function generateWorld(settings={}){
     const cx=attempt===0?home.x:h.center(cz)+side*(corridor*.15+siteRng()*(reach-corridor*.15));
     // Nothing a tee may not stand on. Sampled round the collar, because a pad
     // half on a green is as wrong as a pad wholly on one.
+    // Round the collar's outline. A box has corners, and a corner on a green
+    // is as wrong as a whole pad on one.
+    const rim=i=>{const a=i*Math.PI/6,c=Math.cos(a),n=Math.sin(a);
+     const k=Math.min(Math.abs(c)>1e-6?rx/Math.abs(c):1e9,Math.abs(n)>1e-6?rz/Math.abs(n):1e9);
+     // c is across the line of play and n is along it, so the outline turns
+     // with the pad instead of with the hole.
+     return {x:cx+c*k*pad.uz+n*k*pad.ux,z:cz-c*k*pad.ux+n*k*pad.uz};};
     let blocked=false;
-    for(let i=0;i<8&&!blocked;i++){
-     const a=i*Math.PI/4,lx=cx+Math.cos(a)*rx,lz=cz+Math.sin(a)*rz;
+    for(let i=0;i<12&&!blocked;i++){
+     const {x:lx,z:lz}=rim(i);
      const surf=localSurface(h,lx,lz);
      if(surf==='green'||surf==='fringe'||surf==='water'||surf==='sand')blocked=true;
      // And clear of the green's mown surround, not merely of the green.
@@ -837,10 +996,11 @@ export function generateWorld(settings={}){
     // still beats no site.
     let clash=0;
     for(let i=0;i<12;i++){
-     const a=i*Math.PI/6,lx=cx+Math.cos(a)*rx,lz=cz+Math.sin(a)*rz;
+     const {x:lx,z:lz}=rim(i);
      for(const p of placed){
-      const d=Math.hypot((lx-p.x)/(TEE_PAD.x*TEE_APRON_SCALE),(lz-p.z)/(p.rz*TEE_APRON_SCALE));
-      if(d<1)clash=Math.max(clash,1-d);
+      const f=teeFrame(lx-p.x,lz-p.z,p.ux,p.uz);
+      const d=teeBox(f.across,f.along,TEE_APRON.x,p.rz*TEE_APRON_SCALE,TEE_ROUND*TEE_APRON_SCALE);
+      if(d<0)clash=Math.max(clash,-d);
      }
     }
     const g=survey(cx,cz);
@@ -849,14 +1009,19 @@ export function generateWorld(settings={}){
     const level=g.mid;
     const c=h.toWorld({x:cx,z:cz});
     const blind=Math.max(...pad.markers.map(m=>
-     sightline(h,m.z+(cz-home.z),level+TEE_EYE,shapedNoTees).over));
+     sightline(h,{x:m.x+(cx-home.x),z:m.z+(cz-home.z)},level+TEE_EYE,built).over));
     // Lower is better. Flatness dominates: it is both how little digging the
     // site needs and how much it already looks like a tee.
     const score=g.spread*3
      +Math.max(0,aheadLevel+TEE_STEP-level)*2.5
      +blind*TEE_SEE
-     +clash*40
-     +Math.abs(cx-h.center(cz))*.02;
+     +clash*4
+     +Math.abs(cx-h.center(cz))*.02
+     // STAGGERED, BECAUSE A TEE DIRECTLY IN FRONT IS A TEE YOU LOOK OVER.
+     // A quarter of consecutive pairs used to sit within 1.5 m of each other
+     // sideways, which is in line. A preference and not a rule: on a tight
+     // hole there may be nowhere to go, and a tee in line beats no tee.
+     +(placed.length?Math.max(0,TEE_STAGGER-Math.abs(cx-placed[placed.length-1].x))*.6:0);
     if(!best||score<best.score)best={score,cx,cz,level,g};
    }
    if(!best){
@@ -872,6 +1037,14 @@ export function generateWorld(settings={}){
    pad.localZ+=dz;
    const w=h.toWorld({x:pad.t.x,z:pad.localZ});
    pad.x=w.x;pad.z=w.z;
+   // Squared to the shot from where it ACTUALLY ended up. A tee sited 37 m off
+   // the centre line has to turn most of a right angle to face the fairway,
+   // and computing that before it moved gave it eight degrees.
+   if(!h.range)for(const m of pad.markers){
+    const target=teeAim(h,m),ax=target.x-m.x,az=target.z-m.z,alen=Math.hypot(ax,az)||1;
+    m.ux=ax/alen;m.uz=az/alen;
+   }
+   pad.ux=pad.t.ux;pad.uz=pad.t.uz;
    // The order still has to hold, but now it costs centimetres rather than
    // metres, because a site that breaks it was penalised before it was picked.
    //
@@ -885,13 +1058,13 @@ export function generateWorld(settings={}){
    // And only now, if the best site available is still blind, is the tee
    // raised to see over what is in front of it.
    let lift=0;
-   for(const m of pad.markers)lift=Math.max(lift,sightline(h,m.z,level+TEE_EYE,shapedNoTees).lift);
+   for(const m of pad.markers)lift=Math.max(lift,sightline(h,m,level+TEE_EYE,built).lift);
    lift=keepBlind?0:Math.min(lift,TEE_LIFT_CAP);
    pad.y=level+lift;
    // What the site was like before anything was done to it, and how far it
    // had to move to be found. Reported by the measurement harness.
    pad.spread=best.g.spread;pad.slid=Math.hypot(dx,dz);pad.lift=lift;
-   placed.push({x:pad.t.x,z:pad.localZ,rz:pad.rz});
+   placed.push({x:pad.t.x,z:pad.localZ,rz:pad.rz,y:pad.y,ux:pad.ux,uz:pad.uz});
    aheadZ=pad.localZ;aheadLevel=pad.y;
   }
   // ONE PIECE OF EARTHWORK, NOT ONE PER TEE.
@@ -907,10 +1080,15 @@ export function generateWorld(settings={}){
    const dz=(a.localZ-b.localZ)/((a.rz+b.rz)*TEE_APRON_SCALE*.85);
    return dx*dx+dz*dz<1;
   };
+  //
+  // ONLY WHERE THE STEP BETWEEN THEM WAS NOT DELIBERATE. A back tee raised to
+  // see over the tee in front of it must not then drag that tee up to meet it
+  // -- that is precisely the view it was raised for. Merging is for pads that
+  // already sit at much the same height and would otherwise read as two humps.
   for(let again=true;again;){
    again=false;
    for(const a of pads)for(const b of pads)
-    if(a!==b&&near(a,b)&&b.y>a.y+1e-6){a.y=b.y;again=true;}
+    if(a!==b&&near(a,b)&&b.y>a.y+1e-6&&b.y-a.y<TEE_MERGE){a.y=b.y;again=true;}
   }
   // Yardage follows the tee, or the card lies about the hole.
   for(const t of Object.values(h.tees)){
@@ -937,8 +1115,9 @@ export function generateWorld(settings={}){
    // Same idiom the pond shelves use: normalise into the ellipse, then convert
    // back to metres along the ray so the ramp width means the same thing in
    // every direction.
-   const q=pad.h.toLocal({x,z}),ex=(q.x-pad.t.x)/TEE_APRON.x,ez=(q.z-pad.localZ)/(pad.rz*TEE_APRON_SCALE),e=Math.hypot(ex,ez);
-   const out=e<=1?0:(e-1)*Math.hypot(q.x-pad.t.x,q.z-pad.localZ)/e;
+   const q=pad.h.toLocal({x,z});
+   const f=teeFrame(q.x-pad.t.x,q.z-pad.localZ,pad.ux,pad.uz);
+   const out=Math.max(0,teeBox(f.across,f.along,TEE_APRON.x,pad.rz*TEE_APRON_SCALE,TEE_ROUND*TEE_APRON_SCALE));
    // A ROUNDED SHOULDER, THE WAY A BUNKER HAS ONE -- NOT A LONG RAMP.
    //
    // The reach used to grow with the drop, 14 m plus seven times it, so a tee

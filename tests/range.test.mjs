@@ -3,7 +3,7 @@
 // rather than anything about how it looks. RESEARCH.md carries the reasoning.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateWorld, fairwayWidth, localSurface, greenDistance, TEE_PAD, TEE_APRON} from '../src/course.js';
+import {generateWorld, fairwayWidth, localSurface, greenDistance, teeBox, TEE_PAD, TEE_APRON, TEE_ROUND, TEE_APRON_SCALE} from '../src/course.js';
 import {buildRange, moveRangeGreen, rangeGreenYards, RANGE_SETTINGS, RANGE_DEPTH, RANGE_WIDTH,
  GREEN_RANGE, DEFAULT_GREEN_YARDS, rangeTargets, TARGET_YARDS, TARGET_COLORS, TARGET_RADIUS,
  offlineOf, SHOT_LINE_MAX, SHOT_LINE_DEFAULT, cleanShotLines} from '../src/range.js';
@@ -148,8 +148,8 @@ test('the painted ground and the lie the ball gets are the same surface', () => 
   if (gd < s.fringe) kind = 'fringe';
   if (gd <= 0) kind = 'green';
   for (const t of Object.values(h.tees)) {
-   if (kind === 'rough' && ((x - t.x) / TEE_APRON.x) ** 2 + ((z - t.z) / TEE_APRON.z) ** 2 < 1) kind = 'semi';
-   if (((x - t.x) / TEE_PAD.x) ** 2 + ((z - t.z) / TEE_PAD.z) ** 2 < 1) kind = 'tee';
+   if (kind === 'rough' && teeBox(x - t.x, z - t.z, TEE_APRON.x, TEE_APRON.z, TEE_ROUND * TEE_APRON_SCALE) < 0) kind = 'semi';
+   if (teeBox(x - t.x, z - t.z, TEE_PAD.x, TEE_PAD.z, TEE_ROUND) < 0) kind = 'tee';
   }
   return kind;
  };

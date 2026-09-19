@@ -4,7 +4,7 @@ import {Round} from '../src/game.js';
 import {awardedPutts,puttingConfig,sumScores} from '../src/putting.js';
 import {simulateShot,MPH,YARD,R,CUP_RADIUS,trunkRadius} from '../src/physics.js';
 import {customizeClubs,manualLaunch} from '../src/clubs.js';
-import {teePad, localSurface, TEE_PAD, TEE_APRON_SCALE, generateWorld,generateCourse} from '../src/course.js';
+import {teePad, localSurface, teeBox, TEE_PAD, TEE_APRON, TEE_ROUND, TEE_APRON_SCALE, generateWorld,generateCourse} from '../src/course.js';
 const flat={height:()=>0,surface:()=> 'green',bounds:{x:2000,minZ:-2000,maxZ:2000},trees:[]};
 const shot={origin:{x:0,z:0},aim:0,hla:0,spinAxis:0,vla:0,spin:0,speed:2};
 const pin={x:0,z:100},finish=(yards,onGreen=true)=>({end:{x:yards*YARD,z:100},holed:false,onGreen});
@@ -102,7 +102,9 @@ test('tees are sited on ground that suits them, and never on ground they may not
    // of it.
    for(const {t,p} of pads) for(let i=0;i<12;i++){
     const a=i*Math.PI/6;
-    const surf=localSurface(h,t.x+Math.cos(a)*TEE_PAD.x*TEE_APRON_SCALE,p.z+Math.sin(a)*p.rz*TEE_APRON_SCALE);
+    const c=Math.cos(a),n=Math.sin(a),hx=TEE_APRON.x,hz=p.rz*TEE_APRON_SCALE;
+    const k=Math.min(Math.abs(c)>1e-6?hx/Math.abs(c):1e9,Math.abs(n)>1e-6?hz/Math.abs(n):1e9);
+    const surf=localSurface(h,t.x+c*k,p.z+n*k);
     if(surf==='green'||surf==='fringe'||surf==='water'||surf==='sand')onWrongGround++;
    }
    const ys=[];
@@ -111,7 +113,7 @@ test('tees are sited on ground that suits them, and never on ground they may not
     const q=h.toWorld(t);ys.push(w.height(q.x,q.z));
     if(Math.abs(t.x-h.center(t.z))>6)offCentre++;
     // Wherever it ended up, a marker still has to stand on a pad.
-    if(!pads.some(({t:o,p})=>((t.x-o.x)/TEE_PAD.x)**2+((t.z-p.z)/p.rz)**2<1))markerAdrift++;
+    if(!pads.some(({t:o,p})=>teeBox(t.x-o.x,t.z-p.z,TEE_PAD.x,p.rz,TEE_ROUND)<0))markerAdrift++;
    }
    if(Math.max(...ys)-Math.min(...ys)>1)staggered++;
   }
