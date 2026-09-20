@@ -224,7 +224,11 @@ export function planScorecard(s={}){
  });
  const sum=(from,to,tee)=>holes.slice(from,to).reduce((v,h)=>v+h.tees[tee],0);
  const half=Math.min(9,holes.length);
- return {...plan,holes,
+ // `yards` is the BACK TEE TOTAL OFF THIS CARD, not the plan's own sum. The
+ // plan adds unrounded hole lengths and the card adds rounded ones, and a
+ // headline that says 6,894 over a card totalling 6,893 is the kind of
+ // one-yard disagreement that makes a reader distrust both numbers.
+ return {...plan,holes,yards:sum(0,holes.length,plan.tees[0]),
   teeTotals:Object.fromEntries(plan.tees.map(t=>[t,{
    front:sum(0,half,t),back:holes.length>9?sum(9,holes.length,t):0,total:sum(0,holes.length,t)}]))};
 }

@@ -571,6 +571,86 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## A par 5 is not 723 yards
+
+Reported from a generated course: a 723-yard par 5, on a card whose par 4s averaged under 400. Both halves of that sentence are the same bug seen from two ends.
+
+### What the numbers were
+
+Each hole took a base length by par -- 165, 385 or 545 -- jittered by a quarter either way with nothing bounding it, and then every hole on the course was multiplied by one factor to hit the requested total.
+
+Nothing clamped a hole, so a par 4 ranged 289 to 481 before the rescale touched it. And because the rescale was **uniform**, a hole that jittered long raised the total, which lowered the factor, which shortened every other hole. The monster par 5 paid for itself out of the par 4s.
+
+Measured over 400 seeds a length, against the USGA's own guideline for what may be called that par:
+
+| requested | outside the guideline | worst par 5 | worst par 4 |
+|---|---|---|---|
+| 6,200 | 2.0% | 714 | 504 |
+| 6,800 | 2.7% | 738 | 523 |
+| 7,400 | 11.9% | 803 | 569 |
+| 8,000 | 27.0% | 868 | 615 |
+| 8,460 | 38.3% | 918 | 650 |
+
+At 7,400 yards -- an ordinary championship length -- one hole in eight was already illegal.
+
+### What the guideline actually says
+
+The current USGA guidance (2020) is deliberately **overlapping**, because par is assigned on *effective* playing length rather than measured yardage: for men, par 3 under 260, par 4 240 to 490, par 5 450 to 710, par 6 over 670. An older non-overlapping table (250 / 251-470 / 471-690 / 691+) is still widely quoted and is what most secondary sources reproduce; both agree that 723 is not a par 5.
+
+Those are the limits of what may legally be *called* a par, not a description of golf. A 700-yard par 5 is a par 6 waiting to be reclassified and a 240-yard par 4 is a par 3 with ambitions, so the bands used here are tighter than the guideline where the guideline is absurd:
+
+| par | min | typical | max | guideline |
+|---|---|---|---|---|
+| 3 | 120 | 175 | 250 | under 260 |
+| 4 | 300 | 410 | 490 | 240-490 |
+| 5 | 470 | 540 | 640 | 450-710 |
+
+At par 72 those maxima total 8,460, which is exactly the top of the course-length slider, so the full range stays reachable.
+
+### Water-filling, not rescaling
+
+Every hole starts at a typical length for its par, jittered within the band, and then the shortfall against the target is handed out **in proportion to the room each hole has left**. A hole near its ceiling absorbs almost none of an increase; one in the middle takes its share. Repeat to mop up what clamping refuses, and stop when every hole is against a stop -- at which point the target is not reachable with this par mix.
+
+The jitter is asymmetric because the bands are: a par 4's typical sits 110 above its floor and 80 below its ceiling, and scaling one span by the other's width pushes it out on the narrow side every time.
+
+Measured after: **0.0% outside the guideline at every length**, and the requested total hit exactly wherever the bands can reach it. At the very top the course comes up 44 yards short and says so -- `yards` is what the course measures and `requested` is what was asked for, because a slider bottoming out should be visible rather than met by inventing distance.
+
+### The mix was drawn flat
+
+Every combination in the list adds up to the right par, and they are not equally like golf. At par 72 the list runs from eighteen par 4s to six of each, and a flat draw picked the eighteen-par-4 course as often as the ordinary one. Weighted toward a fifth of the holes at each par, 4/10/4 now comes up 49% of the time and 9-hole courses land on 2/5/2 at 57%.
+
+### The nines
+
+Seeding always drove par order -- it was a seeded shuffle -- but a shuffle stacks both par 5s on the front often enough to notice. Each count is split as evenly as it divides, the odd hole going to a side the seed picks so it is not always the front, and then each nine is hill-climbed against a badness score that costs back-to-back 3s and 5s double what it costs opening or closing on a par 3. Bounded iterations from the same seeded stream, so it stays deterministic. Adjacent short-or-long pairs: 0.09 per course.
+
+## One hole skeleton, shared by the card and the course
+
+A scorecard before the course exists needs the real yardage off each tee, and the wrong way to get it is a second copy of the arithmetic that agrees until someone edits one of them.
+
+`holeLine` is the hole's skeleton -- green size, the playing line, the length after the dogleg, where the tees sit and what each measures -- moved into `course-plan.js` and called by `generateCourse` and `planScorecard` alike. It consumes a **contiguous prefix** of the hole's own seeded stream; the builder calls it first and carries on with the same generator. The tee draws moved up into that prefix, because they used to sit after the fairway edges and a card cannot reach them without replaying edge generation it has no use for.
+
+Checked against the thing it has to agree with: 324 tee yardages across eight courses, worst difference 0.499 yards, which is the card rounding to whole yards.
+
+**There were two seeded generators.** `course.js` and `course-plan.js` each had one, written differently and producing identical streams -- proven over 20,000 draws before collapsing them into one. A card computed from one and a course grown from the other is a bug waiting for whoever edits either, and "two implementations that must never diverge" is not a promise anyone can keep.
+
+## A pond whose middle stood above its own surface
+
+Turned up when the new hole lengths made channels terminate in hollows far more often: 8 sink ponds across 48 worlds became 18, and one of the new ones reported as water while its centre sat four metres **above** the water plane.
+
+Diagnosed rather than assumed. The basin is carved, correctly, eight metres off centre. `fitPondBasin` pulls the water level down to the lowest ground around the pond's outer transition -- deliberately, so a lake is never perched over its own downhill bank -- and on sloping ground that sets a plane deeper than the pond digs. A 24 m pond on 5.5 m of fall, digging 1.6 m, cannot reach it. The spread guard inside the fit cannot catch this, because it weighs the fall against a fixed 9 m without knowing how deep the pond is.
+
+The guard asks the question that matters -- can this pond's deepest cut get its middle under its own surface -- and drops it if not. A channel that would have filled it fades out instead, which is already one of the two endings a sink is allowed.
+
+**It lives in `sinkPond`, not in the shared fit.** Tried there first: it took lakes and ordinary ponds with it, which reach their water by other means and were not asking, and three more tests went red. Sink ponds land back at 6 across 48 worlds, against 8 before this branch.
+
+## A test that was only ever testing its seed
+
+`green surroundings have a broad transition instead of a narrow ridge` asserted that one seed's worst green surround measured under 0.6, and it passed because SHOULDERS came out at 0.582.
+
+Across eight seeds on the same settings, the **old** code gave 0.582, 0.706, 0.597, 0.872, 0.676, 0.620, 0.588 and 0.647. Most were already over the line. The 0.6 was never a property of the generator; it was a property of the seed that happened to be written down, and the test was giving assurance it had not earned.
+
+It samples eight seeds now and is labelled a characterisation test, pinned to what the generator measurably does so it catches a regression rather than a reshuffle. The intent -- a broad shoulder rather than a ridge, on the steepest settings the game offers -- is real, is not met, and is filed rather than quietly relaxed.
+
 ## Two bearings that agreed with each other and disagreed with the screen
 
 The wind dial was turned by the wind bearing alone, so it pointed the same way whichever direction you faced. That is a weather report, not an aid: the number a golfer wants is how the wind lies against the shot in front of them. Subtracting the camera heading makes it screen-relative — straight up is wind going away from you, right is a crosswind running left to right.

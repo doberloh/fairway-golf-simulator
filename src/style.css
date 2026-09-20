@@ -354,3 +354,21 @@ button.danger:hover{background:rgba(141,63,44,.1)}
    the tilt, so the arrow turns in its own ground plane instead of
    spinning flat and then being leaned over. */
 .weather .wind-compass{perspective:90px}.wind-compass svg{transform:rotateX(58deg) rotate(var(--wind,0deg));filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+
+/* The course-length group: the slider, the exact figure and the card it makes,
+   as one block rather than three controls for one decision. The card scrolls
+   sideways on its own so the panel never does. */
+.course-plan .plan-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.course-plan .plan-summary em{font-style:normal;font-size:10px;letter-spacing:.4px;color:#e0b46a}
+.course-plan .plan-slider,.course-plan .plan-exact{margin:12px 0 0;width:100%}
+.course-plan .plan-exact{margin-top:8px}
+.plan-card-wrap{width:100%;overflow-x:auto;margin-top:12px}
+.plan-card{border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:100%}
+.plan-card th,.plan-card td{padding:4px 6px;text-align:center;border-bottom:1px solid var(--glass-line)}
+.plan-card th{text-align:left;color:var(--ink-dim);font-weight:500;text-transform:capitalize;position:sticky;left:0;background:#16281d}
+.plan-card tr:last-child td,.plan-card tr:last-child th{border-bottom:0}
+.plan-card tr.plan-head td{color:var(--ink-faint);font-size:9px;letter-spacing:.6px}
+.plan-card td.sum{font-weight:600;color:var(--ink);background:rgba(236,243,230,.06)}
+.plan-card td.yd{color:var(--ink-dim)}
+.plan-card .tee-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.plan-card .tee-dot.blue{background:#4385d5}.plan-card .tee-dot.white{background:#f4f2e7}.plan-card .tee-dot.red{background:#d75c52}

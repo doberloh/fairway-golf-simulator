@@ -120,6 +120,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 ## Data flow and units
 
+**A HOLE'S SKELETON BELONGS TO `course-plan.js`, NOT THE BUILDER.** `holeLine` computes the playing line, the length and the tees from the seed alone, and both `generateCourse` and `planScorecard` call it -- so the card shown before a course is built and the course that gets built cannot disagree. It consumes a contiguous prefix of the hole's seeded stream and the order of the draws inside it is load-bearing: one added, removed or reordered moves every pond, bunker and contour on that hole. There is one seeded generator, exported from `course-plan.js` and re-exported by `course.js` as `random`; do not add a second.
+
+**HOLE LENGTHS ARE BOUNDED BY PAR** (`PAR_YARDS`), and the course length is distributed by water-filling inside those bands rather than by scaling every hole. A requested total the bands cannot reach is clamped, and `plan.yards` is what the course measures while `plan.requested` is what was asked for.
+
 **SCREEN BEARINGS ARE COUNTER-CLOCKWISE, CSS ROTATION IS CLOCKWISE.** Everything angular in this codebase is `atan2(x, z)` -- wind direction, camera heading, aim -- and looking along +z puts local +x on the LEFT, which `mapPoint` depends on. Any of those bearings driving a CSS `rotate` has to be negated. A test written against the easy case cannot catch this: wind downrange with the camera looking downrange is zero either way round, so the mirror only shows when the camera leaves the axis.
 
 **`project` is not safe for a marker.** It reports whether a point is in the depth range and nothing about the sides, and behind the camera the perspective divide is by a negative w, so both axes flip and a label lands on the opposite side from its subject. Use `projectMarker`, which reads front-or-behind from camera space and clamps to a rectangle the caller measures.
