@@ -372,3 +372,22 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .plan-card td.yd{color:var(--ink-dim)}
 .plan-card .tee-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .plan-card .tee-dot.blue{background:#4385d5}.plan-card .tee-dot.white{background:#f4f2e7}.plan-card .tee-dot.red{background:#d75c52}
+
+/* THE COURSE-LENGTH GROUP GETS THE FULL WIDTH OF THE PANEL. The card it holds
+   is up to twenty-two columns wide -- eighteen holes plus out, in and total,
+   over four rows -- and in a 296px settings column that is a scrollbar with
+   numbers behind it. `column-span: all` rather than the `panel-wide` class the
+   walker adds, because that class also flips the whole section to a single
+   column and takes every other field on the panel with it.
+
+   And it is a box again. It stopped being one when it was a two-line readout
+   under a slider; at full width holding a scorecard it is the thing on the
+   panel that most needs its own edges. */
+.panel-section>.course-plan,.panel-columns .course-plan{column-span:all}
+.course-plan{background:var(--field);border:1px solid var(--glass-line);border-radius:10px;
+ padding:13px 15px;margin:14px 0 12px}
+.course-plan .plan-summary{gap:6px 14px}
+.plan-card{width:100%}
+/* At phone width the table keeps its own scroller rather than squeezing the
+   columns into an unreadable stack. */
+@media(max-width:560px){.plan-card{min-width:520px}}
