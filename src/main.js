@@ -844,7 +844,7 @@ function beginDrop(){
  closePanel();dropState={origin:{...round.position},candidate:{...round.position},mode:view.config.mode};$('dropBar').hidden=false;keys.clear();
  view.config.mode='free';view.wasFree=true;const p=course.toWorld(round.position);view.targetPos.set(p.x,world.height(p.x,p.z)+50,p.z-30);view.freeYaw=0;view.freePitch=-1.03;view.updateFreeLook();updateExplorer();$('world').classList.add('dropping');previewDrop(round.position);updateHUD();
 }
-function previewDrop(p,fields=true){if(!dropState)return;dropState.candidate={x:p.x,z:p.z};view.setBall(p);if(fields){$('dropX').value=((p.x-dropState.origin.x)/YARD).toFixed(2);$('dropZ').value=((p.z-dropState.origin.z)/YARD).toFixed(2);}const w=course.toWorld(p),valid=Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(w.x)<=world.halfX&&Math.abs(w.z)<=world.halfZ;$('confirmDrop').disabled=!valid;$('dropSummary').textContent=valid?`${course.surface(p.x,p.z)} · ${(Math.hypot(p.x-course.pin.x,p.z-course.pin.z)/YARD).toFixed(1)} yd to pin · no penalty`:'Choose a point within the generated course.';drawMap($('map'),course,p,[],true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}
+function previewDrop(p,fields=true){if(!dropState)return;dropState.candidate={x:p.x,z:p.z};view.setBall(p);if(fields){$('dropX').value=((p.x-dropState.origin.x)/YARD).toFixed(2);$('dropZ').value=((p.z-dropState.origin.z)/YARD).toFixed(2);}const w=course.toWorld(p),valid=Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(w.x)<=world.halfX&&Math.abs(w.z)<=world.halfZ;$('confirmDrop').disabled=!valid;$('dropSummary').textContent=valid?`${course.surface(p.x,p.z)} · ${(Math.hypot(p.x-course.pin.x,p.z-course.pin.z)/YARD).toFixed(1)} yd to hole · no penalty`:'Choose a point within the generated course.';drawMap($('map'),course,p,[],true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}
 function endDrop(){const mode=dropState.mode;dropState=null;$('dropBar').hidden=true;$('world').classList.remove('dropping');view.config.mode=mode;setUpTurn();updateExplorer();save();}
 function cancelDrop(){if(!dropState)return;endDrop();toast('Drop cancelled. Your original lie is unchanged.');}
 function confirmDrop(){if(!dropState||$('confirmDrop').disabled)return;try{round.simDrop(dropState.candidate);endDrop();toast('Sim drop placed. No penalty added.');}catch(e){toast(e.message);}}
@@ -1523,6 +1523,28 @@ function redrawMap(){
 // Check it against a case with a known answer: wind straight downrange and the
 // camera looking downrange must give zero, and both orders do -- which is why
 // this looked right until the camera moved.
+// WHAT IS ACTUALLY CLEAR ON SCREEN, for clamping the hole marker. Measured
+// rather than assumed, because the panels are draggable and resizable -- a
+// table of constants would be wrong the moment anyone moved one. Re-measured
+// twice a second rather than per frame: `getBoundingClientRect` forces layout,
+// and a panel that has just been dragged can wait 500 ms to be noticed.
+let hudInsetsAt=-1e9,hudInsetsCache={top:70,right:30,bottom:30,left:30};
+function hudInsets(now){
+ if(now-hudInsetsAt<500)return hudInsetsCache;
+ hudInsetsAt=now;
+ const scene=$('scene');if(!scene)return hudInsetsCache;
+ const sr=scene.getBoundingClientRect(),ins={top:70,right:30,bottom:30,left:30},gap=14;
+ const showing=el=>el&&!el.hidden&&el.offsetParent&&el.getBoundingClientRect().width>0;
+ const bottom=document.querySelector('.bottom-area'),map=document.querySelector('.minimap');
+ if(showing(bottom))ins.bottom=Math.max(ins.bottom,sr.bottom-bottom.getBoundingClientRect().top+gap);
+ if(showing(map))ins.right=Math.max(ins.right,sr.right-map.getBoundingClientRect().left+gap);
+ // A marker squeezed into nothing is worse than one overlapping a panel, so
+ // never give up more than a third of the screen to either.
+ ins.bottom=Math.min(ins.bottom,sr.height/3);
+ ins.right=Math.min(ins.right,sr.width/3);
+ hudInsetsCache=ins;
+ return ins;
+}
 function setWindArrow(){
  const el=$('windArrow');if(!el)return;
  const wind=settings.windDirection||0;
@@ -3030,8 +3052,12 @@ function tick(now){
  // hidden when the flag is not in view.
  const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
  const flagEl=$('flagLabel');
+ // The narrow-screen rule hides this marker, which is right everywhere except
+ // on the green, where it is the only distance there is. The class is what
+ // lets the stylesheet tell those two apart.
+ flagEl.classList.toggle('putting',!!ballOnGreen);
  if(ballOnGreen&&worldLabels){
-  const m=view.projectMarker(pinTop);
+  const m=view.projectMarker(pinTop,hudInsets(now));
   flagEl.style.left=m.x+'px';flagEl.style.top=m.y+'px';
   flagEl.style.visibility='visible';
   flagEl.classList.toggle('edge',m.clamped);

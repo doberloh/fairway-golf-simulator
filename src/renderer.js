@@ -1504,7 +1504,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // subtracted. Read from the camera's own world matrix rather than from
  // `look`, which lags it by a frame of damping.
  cameraHeading(){const f=new T.Vector3();this.camera.getWorldDirection(f);return Math.atan2(f.x,f.z)*180/Math.PI;}
- projectMarker(p,margin=30){
+ // CLAMPED TO A RECTANGLE, NOT AN EVEN MARGIN. A single inset assumes the
+ // edges are equally free and they are not: the bottom of the screen is the
+ // shot controls and the right is the hole map, so a marker pushed to either
+ // lands behind a panel. The caller passes what is actually clear -- it can
+ // measure the panels, which move -- and the default is a plain inset for a
+ // caller that has nothing to say.
+ projectMarker(p,insets=30){
+  const i=typeof insets==='number'?{top:insets,right:insets,bottom:insets,left:insets}:insets;
   const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z);
   // Camera space rather than the projected z: three looks down its own -z, so
   // a positive z here is behind the lens, which is the case the flip comes from.
@@ -1512,11 +1519,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const ndc=v.project(this.camera),W=this.canvas.clientWidth,H=this.canvas.clientHeight;
   let x=(ndc.x*.5+.5)*W,y=(-.5*ndc.y+.5)*H;
   if(behind){x=W-x;y=H-y;}              // undo the flip, so the direction is true
-  const cx=W/2,cy=H/2;
+  // The free rectangle, and its own centre -- pushing out from the SCREEN
+  // centre through an off-centre rectangle lands short on one side and over
+  // the edge on the other.
+  const L=i.left,R=Math.max(L+1,W-i.right),T=i.top,B=Math.max(T+1,H-i.bottom);
+  const cx=(L+R)/2,cy=(T+B)/2;
   let dx=x-cx,dy=y-cy;
   if(!dx&&!dy)dy=1;                     // dead centre and behind: send it downward
-  const inset=(v,limit)=>v?limit/Math.abs(v):Infinity;
-  const s=Math.min(inset(dx,W/2-margin),inset(dy,H/2-margin));
+  const reach=(d,half)=>d?half/Math.abs(d):Infinity;
+  const s=Math.min(reach(dx,(R-L)/2),reach(dy,(B-T)/2));
   const outside=behind||s<1;
   if(outside){x=cx+dx*s;y=cy+dy*s;}
   // Screen bearing, 0 pointing up, for rotating the marker toward its subject.
