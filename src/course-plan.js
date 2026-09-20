@@ -1,6 +1,11 @@
 // Yardages are measured along the playing line; the blue tee is the reference.
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-function rng(seed){let a=2166136261;for(const c of String(seed)){a^=c.charCodeAt(0);a=Math.imul(a,16777619);}return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,a|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+// THE ONE SEEDED GENERATOR. course.js re-exports this as `random` rather than
+// keeping its own copy: there were two, written differently but producing
+// identical streams, and a scorecard computed here has to agree exactly with
+// the course grown there. Two implementations that must never diverge is a
+// promise nobody can keep.
+export function rng(seed){let a=2166136261;for(const c of String(seed)){a^=c.charCodeAt(0);a=Math.imul(a,16777619);}return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,a|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 export const TEE_COLORS={blue:'#4385d5',white:'#f4f2e7',red:'#d75c52'};
 export function enabledTees(){return Object.keys(TEE_COLORS);}
 // WHAT A HOLE OF EACH PAR IS ALLOWED TO BE, in yards along the playing line off
@@ -155,6 +160,75 @@ export function planCourse(s={}){
   front:pars.slice(0,Math.min(9,n)).reduce((a,b)=>a+b,0),
   back:n>9?pars.slice(9).reduce((a,b)=>a+b,0):0};
 }
+// THE HOLE'S SKELETON: everything about it that needs no terrain.
+//
+// Green size, the playing line, the hole's length and where the tees sit --
+// worked out from nothing but the seed, the hole number and the plan. That is
+// the whole reason it lives here rather than in `generateCourse`: a scorecard
+// wants exact tee yardages before a course exists, and the only honest way to
+// get them is to run the same code the builder runs, not a second copy of it
+// that agrees until someone edits one of them.
+//
+// IT CONSUMES A CONTIGUOUS PREFIX OF THE HOLE'S OWN STREAM, and the order of
+// the draws inside it is load-bearing. `generateCourse` calls this first and
+// carries on with the same generator, so a draw added, removed or reordered
+// here moves every pond, bunker and contour on the hole. There is a comment
+// further down this file about a green surround that went from gentle to 39
+// degrees because one draw went missing; this is that same hazard, collected
+// into one place where it can be seen.
+//
+// The tee draws were moved up into this prefix. They used to sit after the
+// fairway edges, which meant a scorecard could not reach them without
+// replaying the edge generation it has no use for.
+export function holeLine(s,planned,rng){
+ const par=planned.par;
+ const greenSize=14+rng()*7,greenAspect=.95+rng()*.38,
+  greenWave2=(rng()-.5)*.13,greenWave3=.025+rng()*.075,greenWave5=.015+rng()*.035;
+ const phase=rng()*6.28;
+ const isDogleg=par!==3&&!!planned.turnSign;
+ const angle=isDogleg?planned.turnSign*(s.doglegAngle??45)*(.72+rng()*.28):0;
+ const turnFraction=clamp((s.doglegPosition??55)/100+(rng()-.5)*.44,.20,.86),soft=.025+rng()*.045;
+ const corner=t=>(t+Math.sqrt(t*t+soft*soft))/2,raw=u=>u-corner(u-turnFraction)/(1-turnFraction),r0=raw(0),r1=raw(1);
+ let lo=0,hi=Math.abs(angle)*Math.PI/180;
+ for(let i=0;i<35;i++){const a=(lo+hi)/2,b=Math.abs(angle)*Math.PI/180-a;if(turnFraction*Math.tan(a)>(1-turnFraction)*Math.tan(b))hi=a;else lo=a;}
+ const slope=Math.sign(angle)*Math.tan((lo+hi)/2);
+ const wiggles=Array.from({length:3},(_,i)=>({frequency:i+2,amplitude:(rng()-.5)*.018/(i+1)}));
+ const unitCenter=u=>slope*(raw(u)-r0-(r1-r0)*u)+(isDogleg?wiggles.reduce((v,w)=>v+Math.sin(u*Math.PI*w.frequency)*w.amplitude,0):0);
+ let arc=0;for(let i=0;i<1000;i++)arc+=Math.hypot(unitCenter((i+1)/1000)-unitCenter(i/1000),.001);
+ const length=planned.yards*.9144/arc,pivot=length*turnFraction,center=z=>length*unitCenter(clamp(z/length,0,1));
+ const shortHole=par===3;
+ const tees=Object.fromEntries(enabledTees(s).map((name,i)=>{
+  // THE SAME DRAWS IN THE SAME ORDER WHATEVER THE PAR. The short-hole branch
+  // once took one number per tee where the long one took two, and that single
+  // missing draw shifted everything downstream of it on the hole.
+  const a=i===0?0:rng(),b=i===0?0:rng();
+  const z=shortHole?i*(19+a*6):(i===0?0:length*(i*.09+(a-.5)*.032));
+  const x=center(z)+(shortHole||i===0?0:(b-.5)*6);
+  // Measured ALONG THE PLAYING LINE, so a dogleg is longer than the straight
+  // gap to the green -- which is how a course measures itself.
+  let d=0;for(let t=z;t<length;t+=1){const next=Math.min(length,t+1);d+=Math.hypot(center(next)-center(t),next-t);}
+  return[name,{x,z,yards:d/.9144}];
+ }));
+ return {greenSize,greenAspect,greenWave2,greenWave3,greenWave5,
+  phase,angle,isDogleg,turnFraction,soft,slope,unitCenter,arc,length,pivot,center,tees};
+}
+
+// The full card, before anything is built. Same seed, same numbers as the
+// course that will be grown from it.
+export function planScorecard(s={}){
+ const plan=planCourse(s),seed=s.seed||'EVERGREEN';
+ const holes=plan.holes.map((h,i)=>{
+  const line=holeLine(s,h,rng(seed+':'+i));
+  return {par:h.par,yards:Math.round(h.yards),
+   tees:Object.fromEntries(Object.entries(line.tees).map(([k,t])=>[k,Math.round(t.yards)]))};
+ });
+ const sum=(from,to,tee)=>holes.slice(from,to).reduce((v,h)=>v+h.tees[tee],0);
+ const half=Math.min(9,holes.length);
+ return {...plan,holes,
+  teeTotals:Object.fromEntries(plan.tees.map(t=>[t,{
+   front:sum(0,half,t),back:holes.length>9?sum(9,holes.length,t):0,total:sum(0,holes.length,t)}]))};
+}
+
 // The shape of a putting surface.
 //
 // Anchored at the CENTRE of the green rather than at the cup, because the cup

@@ -1,7 +1,7 @@
 import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
-import {planCourse,enabledTees,greenContour} from './course-plan.js';
+import {planCourse,holeLine,enabledTees,greenContour,rng} from './course-plan.js';
 import {makeGroundGrid,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
@@ -16,7 +16,10 @@ export {BIOMES, biomeOf} from './biomes.js';
 import {BIOMES, biomeOf} from './biomes.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
 // JavaScript variant published by bryc (MIT fallback). See THIRD_PARTY_NOTICES.txt.
-export function random(seed){let a=2166136261;for(const c of String(seed)){a^=c.charCodeAt(0);a=Math.imul(a,16777619);}return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+// Seeded generation lives in course-plan.js so the scorecard and the course
+// cannot use different dice. Re-exported here because this is where callers
+// have always found it.
+export const random=rng;
 const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 // Defaults, bounds and validation all live in the settings schema; re-exported
 // here because course.js has long been the import site for them.
@@ -166,21 +169,19 @@ export function fitPondBasin(h,p,shapedLand){
  // Fit the flat lake below both the shoreline and its outer transition. A
  // center-only elevation can perch a lake above the downhill bank.
  for(let i=0;i<128;i++){const e=ovalRadius(p,i*Math.PI/64),r=Math.hypot(e.x,e.z);for(const f of [.5,1]){const scale=1+p.shoreWidth*f/r,q=h.toWorld({x:p.x+e.x*scale,z:p.z+e.z*scale});low=Math.min(low,shapedLand(q.x,q.z));}}
- p.level=low-WATER_FREEBOARD;p.reachX=Math.max(...p.banks.map(b=>Math.abs(b.x-p.x)+b.rx));return {h,b:p,pond:true,reach:Math.max(p.reachX,p.rz)+p.shoreWidth+4};
+ p.level=low-WATER_FREEBOARD; p.reachX=Math.max(...p.banks.map(b=>Math.abs(b.x-p.x)+b.rx));return {h,b:p,pond:true,reach:Math.max(p.reachX,p.rz)+p.shoreWidth+4};
 }
 
 export function insideOval(x,z,o,margin=0){return hazardMetric(x,z,o,margin)<1;}
 export function generateCourse(settings={},hole=0){
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)},rng=random(s.seed+':'+hole),bio=BIOMES[s.biome]||BIOMES.pnw;
- const greenSize=14+rng()*7,greenAspect=.95+rng()*.38,greenWave2=(rng()-.5)*.13,greenWave3=.025+rng()*.075,greenWave5=.015+rng()*.035;
- const planned=planCourse(s).holes[hole%s.holes],par=planned.par,phase=rng()*6.28,isDogleg=par!==3&&!!planned.turnSign,angle=isDogleg?planned.turnSign*s.doglegAngle*(.72+rng()*.28):0;
- const turnFraction=clamp(s.doglegPosition/100+(rng()-.5)*.44,.20,.86),soft=.025+rng()*.045;
- const corner=t=>(t+Math.sqrt(t*t+soft*soft))/2,raw=u=>u-corner(u-turnFraction)/(1-turnFraction),r0=raw(0),r1=raw(1);
- let lo=0,hi=Math.abs(angle)*Math.PI/180;for(let i=0;i<35;i++){const a=(lo+hi)/2,b=Math.abs(angle)*Math.PI/180-a;if(turnFraction*Math.tan(a)>(1-turnFraction)*Math.tan(b))hi=a;else lo=a;}const slope=Math.sign(angle)*Math.tan((lo+hi)/2);
- const wiggles=Array.from({length:3},(_,i)=>({frequency:i+2,amplitude:(rng()-.5)*.018/(i+1)}));
- const unitCenter=u=>slope*(raw(u)-r0-(r1-r0)*u)+(isDogleg?wiggles.reduce((v,w)=>v+Math.sin(u*Math.PI*w.frequency)*w.amplitude,0):0);
- let arc=0;for(let i=0;i<1000;i++)arc+=Math.hypot(unitCenter((i+1)/1000)-unitCenter(i/1000),.001);
- const length=planned.yards*.9144/arc,pivot=length*turnFraction,center=z=>length*unitCenter(clamp(z/length,0,1));
+ const planned=planCourse(s).holes[hole%s.holes],par=planned.par;
+ // THE SKELETON COMES FROM course-plan.js, so the scorecard shown before a
+ // course is built and the course that gets built cannot disagree: they run
+ // the same function over the same seeded stream. It consumes a contiguous
+ // prefix of `rng`, and everything below carries on from where it left off.
+ const {greenSize,greenAspect,greenWave2,greenWave3,greenWave5,phase,angle,isDogleg,
+  turnFraction,soft,slope,unitCenter,arc,length,pivot,center,tees}=holeLine(s,planned,rng);
  // Each edge is an independent, smooth random field. No outline/profile catalogue.
  const widthTrend=(rng()-.5)*1.8;
  const makeEdge=()=>{const count=4+Math.floor(rng()*5),knots=[0,...Array.from({length:count-2},(_,i)=>(i+1+(rng()-.5)*.65)/(count-1)),1],trend=widthTrend+(rng()-.5)*.65,base=.85+rng()*.35,values=knots.map(u=>clamp(base+trend*(u-.5)+(rng()-.5)*1.05,.42,1.85));return{knots,values};};
@@ -200,21 +201,6 @@ export function generateCourse(settings={},hole=0){
  // form a real short hole has for nothing. It also removes the 8 m of dead pad
  // that used to sit in front of the forward marker, which existed only because
  // one oval had to span every marker.
- const teeNames=enabledTees(s),shortHole=par===3;
- const tees=Object.fromEntries(teeNames.map((name,i)=>{
-  // THE SAME DRAWS IN THE SAME ORDER WHATEVER THE PAR.
-  //
-  // The short-hole branch first took one random number per tee where the long
-  // one took two for all but the back tee, and that one missing draw shifted
-  // the rest of the hole's seeded stream -- so every pond, bunker and contour
-  // downstream of it moved too. It showed up as a green surround going from
-  // gentle to 39 degrees on a mountain course, nowhere near a tee, which is a
-  // long way to look for a cause that is really just "the dice moved along
-  // by one".
-  const a=i===0?0:rng(),b=i===0?0:rng();
-  const z=shortHole?i*(19+a*6):(i===0?0:length*(i*.09+(a-.5)*.032));
-  return[name,{x:center(z)+(shortHole||i===0?0:(b-.5)*6),z,yards:0}];
- }));
 
  const fairwayStart=Math.min(length*.54,Math.max(...Object.values(tees).map(t=>t.z))+14+rng()*45);
  // Where mown turf begins, which is not where the hole's hazard zone begins. A
@@ -279,7 +265,7 @@ export function generateCourse(settings={},hole=0){
   const b={x,z,rx,rz,phase:rng()*6.28,wave2:(rng()-.5)*.1,wave3:.025+rng()*.08,greenSide};if(greenSide){const a=Math.atan2(z-green.z,(x-green.x)/greenAspect),target=s.fringe+s.bunkerGap+.04;let lo=0,hi=90;for(let j=0;j<16;j++){const radius=(lo+hi)/2;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;let gap=Infinity;for(let k=0;k<64;k++){const q=ovalRadius(b,k*Math.PI/32);gap=Math.min(gap,greenDistance({green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5},b.x+q.x,b.z+q.z));}if(gap<target)lo=radius;else hi=radius;}const radius=hi;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;x=b.x;z=b.z;}if(!Object.values(tees).some(t=>Math.hypot(t.x-x,t.z-z)<Math.max(rx,rz)+11)&&!ponds.some(p=>insideOval(x,z,p,Math.max(rx,rz)+3))&&!bunkers.some(p=>insideOval(x,z,p,Math.max(rx,rz)+2)))bunkers.push(b);
  }
  let routeLength=0;for(let z=0;z<length;z+=1){const next=Math.min(length,z+1);routeLength+=Math.hypot(center(next)-center(z),next-z);}
- for(const t of Object.values(tees)){let d=0;for(let z=t.z;z<length;z+=1){const next=Math.min(length,z+1);d+=Math.hypot(center(next)-center(z),next-z);}t.yards=d/.9144;}
+
  const h={greenSize,greenAspect,greenWave2,greenWave3,greenWave5,leftEdge,rightEdge,fairwayStart,mowStart,tees,turnFraction,routeLength,settings:s,bio,par,length,tee,green,bounds,center,width:z=>Math.max(leftWidth(z),rightWidth(z)),leftWidth,rightWidth,ponds,bunkers,seed:s.seed,hole,phase,doglegAngle:angle};
  h.toWorld=p=>({...p});h.toLocal=p=>({...p});h.rotation=0;
  // The cup, cut from the green's own contours. It needs the shape and the phase,
@@ -1237,6 +1223,23 @@ export function generateWorld(settings={}){
     return {x:c.x+rx*.1*Math.sin(u+phase),rx:rx*(.8+.14*Math.sin(u+phase)+.08*Math.sin(u*3+phase*1.7))};})};
   const basin=fitPondBasin(h,p,shapedLand);
   if(!basin)return null;
+  // AND THE BASIN HAS TO REACH THE WATER IT WAS GIVEN.
+  //
+  // `fitPondBasin` pulls the level down to the lowest ground around the pond's
+  // outer transition, deliberately, so a lake is never perched over its own
+  // downhill bank. On sloping ground that can set a water plane deeper than
+  // this pond digs, and then its middle stands proud of its own surface --
+  // measured on desert S4, a 24 m pond on 5.5 m of fall digging 1.6 m left
+  // four metres of dry hump that still reported as water.
+  //
+  // The spread guard inside the fit cannot catch it: it weighs the fall
+  // against a fixed 9 m without knowing how deep this pond is. Asked here
+  // rather than in the fit because the fit is shared with lakes and ordinary
+  // ponds, which reach their water by other means and were not asking.
+  //
+  // A channel that would have filled this one fades out instead, which is
+  // already one of the two endings a sink is allowed.
+  if(shapedLand(cx,cz)-p.depth>=p.level-.2)return null;
   h.ponds.push(p);basins.push(basin);
   const world=h.toWorld(p);
   return {level:p.level,
