@@ -4,6 +4,37 @@ Read PROJECT_HANDOFF.md first. It explains the product, architecture, units, gen
 
 Preserve the portable offline single-file build, Cartoon-only graphics, complete 9/18-hole landscapes, seeded procedural individual holes, real ball/cup dimensions, and current scoring formats. Keep terrain rendering, collision heights, surface queries and map geometry consistent. Generation changes require attention to older saved rounds and GPU data textures.
 
+## Every change goes on a branch, and the branch is not yours to merge
+
+Start with a branch off `main`. Never commit to `main` directly, however small
+the change.
+
+**The branch is how the owner reviews.** The desktop app's Changes pane defaults
+to showing all changes on the current branch, so an unmerged branch presents the
+whole piece of work in one readable place. A merged branch has nothing left to
+compare against, and on `main` with everything merged the pane is simply blank.
+
+Commit freely ON the branch -- slice by slice, with real messages. Commits do not
+empty the pane. **The merge does.**
+
+So when the work is done: verify it, say what is on the branch, and **stop
+there**. Do not merge. The owner merges, or asks you to. This is the one rule in
+this file that exists because of a specific failure: four separate pieces of
+work in this project were branched, finished, and merged the moment the tests
+went green, and the owner could not see any of them in the pane that exists for
+exactly that purpose. Being finished is not permission to land it.
+
+If the owner does ask for the merge, use `--no-ff` so the branch stays legible
+as a unit in the history, and leave the merged branch in place -- deleting
+branches is the owner's call, not a tidy-up to do on the way past.
+
+Name the branch for the change in a few kebab-case words (`hud-polish`,
+`par-yardage`). One branch per coherent piece of work: if you find yourself
+explaining the branch with the word "and", it is probably two.
+
+Rebuild `dist/` on the branch before handing it over, so what the owner opens is
+what the branch actually does.
+
 ## Two version numbers, and when to bump them
 
 Both live in `src/settings-schema.js`. Getting these wrong is the one class of mistake no test can catch for you, because the code stays correct — only old saves suffer.
