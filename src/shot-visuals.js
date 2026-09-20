@@ -24,7 +24,16 @@ export function createShotEffects(view){
  // Semicircular head ahead of centre, tapering to a point behind it.
  float halfW=along>0.?sqrt(max(0.,.0361-along*along)):.19*pow(1.+along/.45,1.2);
  if(abs(across)>halfW)discard;`);};const debris=new T.Points(g,mat);debris.frustumCulled=false;group.add(debris);
- const seeds=Array.from({length:76},()=>({x:(rng()-.5)*42,y:(rng()-.5)*22,z:(rng()-.5)*42,phase:rng()*6.28}));let initialized=false;
+ // Each mote gets its own wobble, or the whole cloud breathes in unison and
+ // reads as one object being shaken rather than a lot of light things in
+ // moving air. The rates are deliberately unrelated so the pattern does not
+ // visibly repeat.
+ const seeds=Array.from({length:76},()=>({x:(rng()-.5)*42,y:(rng()-.5)*22,z:(rng()-.5)*42,phase:rng()*6.28,
+  sway:.35+rng()*.95,swayRate:.55+rng()*1.5,swayPhase:rng()*6.28,
+  bob:.18+rng()*.5,bobRate:.9+rng()*2.1,
+  // A little spread in how fast each one is carried: identical speeds look
+  // like one texture being scrolled past the camera.
+  drag:.72+rng()*.42}));let initialized=false;
  const burstGeo=new T.BufferGeometry();burstGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(48*3),3));const burstMat=new T.PointsMaterial({color:'#b2c26d',size:.09,transparent:true,depthWrite:false}),burst=new T.Points(burstGeo,burstMat);burst.visible=false;burst.frustumCulled=false;group.add(burst);
  const ring=new T.Mesh(new T.RingGeometry(.8,1,48),new T.MeshBasicMaterial({color:'#fff2b7',transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.visible=false;group.add(ring);let particles=[],age=2,origin=null,putt=false;
  function hit(local,aim,lie,speed){const h=view.course,w=h.toWorld(local),a=(aim*Math.PI/180)+h.rotation;origin={x:w.x,y:h.height(local.x,local.z)+.04,z:w.z};putt=lie==='green';age=0;const count=putt?6:lie==='sand'?48:28;burstGeo.setDrawRange(0,count);burstMat.color.set(putt?'#fff4c5':lie==='sand'?view.world.bio.sand:lie==='rough'? '#839752':'#b1bc67');burstMat.size=putt?.025:lie==='sand'?.07:.09;particles=Array.from({length:count},()=>{const heading=a+(rng()-.5)*1.5,velocity=(putt?.15:1.4)+rng()*Math.min(4,speed*.08);return{vx:Math.sin(heading)*velocity,vz:Math.cos(heading)*velocity,vy:putt?.15:rng()*2.5+.8};});ring.position.set(origin.x,origin.y+.02,origin.z);ring.visible=burst.visible=true;}
@@ -38,10 +47,18 @@ export function createShotEffects(view){
   // every fragment.
   view.camera.matrixWorld.extractBasis(camRight,camUp,camBack);
   windDir.set(wind.x,0,wind.z);
+  // Square to the wind, in world space, for the sway each mote adds below.
+  const wlen=Math.hypot(wind.x,wind.z)||1,perpX=-wind.z/wlen,perpZ=wind.x/wlen;
   if(windDir.lengthSq()>1e-9){
    const sx=windDir.dot(camRight),sy=windDir.dot(camUp),len=Math.hypot(sx,sy);
    if(len>1e-6)tail.value.set(sx/len,sy/len);
-  }for(let i=0;i<wind.count;i++){const seed=seeds[i];let x=initialized?a.getX(i):camera.x+seed.x,y=initialized?a.getY(i):camera.y+seed.y,z=initialized?a.getZ(i):camera.z+seed.z;x+=wind.x*dt*.8;z+=wind.z*dt*.8;y+=Math.sin(time*1.4+seed.phase)*dt*.1;for(const axis of ['x','y','z']){const half=axis==='y'?11:21;let v=axis==='x'?x:axis==='y'?y:z;v=camera[axis]+(((v-camera[axis]+half)%(half*2)+half*2)%(half*2))-half;if(axis==='x')x=v;else if(axis==='y')y=v;else z=v;}a.setXYZ(i,x,y,z);}initialized=true;a.needsUpdate=true;
+  }for(let i=0;i<wind.count;i++){const seed=seeds[i];let x=initialized?a.getX(i):camera.x+seed.x,y=initialized?a.getY(i):camera.y+seed.y,z=initialized?a.getZ(i):camera.z+seed.z;const swing=Math.sin(time*seed.swayRate+seed.swayPhase)*seed.sway;
+   // CARRIED, NOT FIRED. The sway is a sideways VELOCITY that swings through
+   // zero, so integrating it gives a bounded weave across the wind rather than
+   // a mote that wanders off downwind of itself.
+   x+=(wind.x*seed.drag+perpX*swing)*dt;
+   z+=(wind.z*seed.drag+perpZ*swing)*dt;
+   y+=(Math.sin(time*1.4+seed.phase)*.1+Math.sin(time*seed.bobRate+seed.phase*1.7)*seed.bob)*dt;for(const axis of ['x','y','z']){const half=axis==='y'?11:21;let v=axis==='x'?x:axis==='y'?y:z;v=camera[axis]+(((v-camera[axis]+half)%(half*2)+half*2)%(half*2))-half;if(axis==='x')x=v;else if(axis==='y')y=v;else z=v;}a.setXYZ(i,x,y,z);}initialized=true;a.needsUpdate=true;
   if(age<1){age+=dt;const p=burstGeo.attributes.position;particles.forEach((v,i)=>p.setXYZ(i,origin.x+v.vx*age,origin.y+Math.max(0,v.vy*age-4.9*age*age),origin.z+v.vz*age));p.needsUpdate=true;burstMat.opacity=Math.max(0,1-age/(putt?.3:.8));ring.scale.setScalar((putt?.12:.3)+age*(putt?.6:3));ring.material.opacity=Math.max(0,.5-age*1.6);if(age>.85)burst.visible=ring.visible=false;}
  }
  return {group,update,hit};

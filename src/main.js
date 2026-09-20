@@ -1507,14 +1507,27 @@ function redrawMap(){
 // click at half the distance from the centre that it should be.
 // THE WIND ARROW READS AGAINST WHAT YOU ARE LOOKING AT. It used to be turned
 // by the wind bearing alone, so it pointed the same way whichever direction
-// you faced -- which is a weather report, not an aid. Subtracting the camera
-// heading makes it screen-relative: straight up means the wind is going away
-// from you, right means it crosses left to right. The tilt that makes it read
-// as lying on the ground is CSS; this only supplies the bearing.
+// you faced -- which is a weather report, not an aid. Straight up means the
+// wind is going away from you, right means it crosses left to right. The tilt
+// that makes it read as lying on the ground is CSS; this only supplies the
+// bearing.
+//
+// CAMERA MINUS WIND, NOT WIND MINUS CAMERA, and the order is the whole bug.
+// Both bearings are `atan2(x, z)`, so they agree with each other -- but that
+// convention runs COUNTER-CLOCKWISE on screen, because looking along +z puts
+// local +x on the left (the same fact `mapPoint` is built on). CSS `rotate` is
+// clockwise. Subtracting the other way round mirrored the arrow, so turning
+// the camera swung it the wrong way and it read as following the camera
+// rather than holding still against the world.
+//
+// Check it against a case with a known answer: wind straight downrange and the
+// camera looking downrange must give zero, and both orders do -- which is why
+// this looked right until the camera moved.
 function setWindArrow(){
  const el=$('windArrow');if(!el)return;
- let bearing=settings.windDirection||0;
- try{bearing-=view.cameraHeading();}catch{}
+ const wind=settings.windDirection||0;
+ let bearing=-wind;
+ try{bearing=view.cameraHeading()-wind;}catch{}
  el.style.transform='';
  el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
 }
