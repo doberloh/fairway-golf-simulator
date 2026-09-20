@@ -59,6 +59,100 @@ problem: a control that belongs inside a box is sitting beside it.
   the studio-state sync (`updateStudioState`) before moving any of them --
   whether a button is showing is currently derived in more than one place.
 
+## Benchmarking and profiling worth deciding from
+
+Asked for on 2026-09-20, off the back of the "should this be ported" question in
+RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
+it is measurably NOT vertex throughput -- and that no performance decision
+should be taken until somebody does. This section is how that gets known.
+
+**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
+twelve workers, eight invariant rules that must stay clear, counts, and
+distributions with min/p05/median/p95/max. It has a saved baseline
+(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
+proves the generator did not move. Both are good and neither one renders
+anything.
+
+**What does not exist.** Any measurement of a frame. The only frame numbers this
+project has ever had were taken by hand, with a probe temporarily pasted into
+`renderer.js` and deleted afterwards, on one machine, on one course.
+
+- [ ] **A frame benchmark, and it must not be able to return the refresh rate.**
+  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
+  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
+  is asked to draw, because the call is waiting for the display, not for the
+  GPU. That number was taken as real, a level of detail was built on it, and
+  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
+  the same lie in a different hat, and `gl.finish()` does not save you --
+  Chrome's command buffer makes it close to a no-op.
+
+  So the first requirement is not a feature, it is a property: **the harness
+  must be capable of reporting a number lower than the refresh interval.**
+  Prove it on day one by drawing an empty scene and checking the figure
+  collapses. If it does not, the harness is measuring the monitor.
+
+  Ways that actually work, roughly in order of how much they are worth:
+  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
+    thing that tells you where the time goes rather than how much there is.
+  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
+    `--disable-frame-rate-limit`, then render as fast as the machine allows.
+  - render to a framebuffer in a loop, with no presentation at all.
+
+- [ ] **Decide what "headless" is for, because the two options measure
+  different things.** A software rasteriser (`--use-angle=swiftshader`) gives
+  figures that are comparable between machines and over time, and are not the
+  truth about any real GPU. A real GPU in headless Chrome gives the truth about
+  THAT machine and nothing comparable to a run on another one. Both are useful
+  and they answer different questions -- regression tracking wants the first,
+  "will this run on the owner's laptop" wants the second. Say which the harness
+  is for, in the harness, or the numbers get read as the wrong kind.
+
+  Cost to be honest about: either route is a Playwright or Puppeteer
+  devDependency, and this project has treated a 24 MB devDependency as a real
+  cost before (it is why `vendor/baked_assets` is committed). Weigh that
+  deliberately rather than installing it on the way past.
+
+- [ ] **Sweep the presets, but do not sweep the product of them.** Eight biomes,
+  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
+  plus elevation, landform, water, trees and homes is a combinatorial explosion
+  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
+  says why each is in it: every biome at defaults (the common path), every
+  graphics tier on one heavy biome (the tier is the lever players actually
+  pull), the extremes that are known to be hard -- redwood for geometry,
+  elevation 100 / landform 100 for terrain, maximum water and homes for draw
+  calls -- and the driving range, which is the flattest and should be the
+  floor. A sweep that takes four minutes gets run; one that takes an hour gets
+  run once and quoted for a year.
+
+- [ ] **Report what a decision needs, not what is easy to collect.** Frame time
+  as a distribution and never as a mean -- median, p95, p99 and the worst
+  frame, because stutter is what is felt and a mean hides it. Beside it, per
+  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
+  timer split by pass if the extension is there. Then generation time and peak
+  memory per case. The existing bench's table format is the right shape
+  already: columns of min/p05/median/p95/max with the case names down the side,
+  a `rules: all clear` line for anything that must not regress, and a `--since`
+  diff against a saved baseline so a change shows as movement rather than as
+  numbers somebody has to remember.
+
+- [ ] **Have it name the bottleneck, not just the cost.** The question is not
+  "how many milliseconds" but "of what". A run should end with a sentence a
+  human can act on: whether the frame is bound by draw calls, by fill, by
+  shadow passes, or by the CPU walking the scene graph -- and the simplest
+  version of that is an ablation rather than a profiler. Render the same frame
+  with shadows off, with the grass off, at quarter resolution, with the
+  vegetation removed, and print what each one gives back. Whatever returns the
+  most time is the answer, and it needs no tooling beyond the harness that is
+  already being built.
+
+- [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
+  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
+  generation if seven seconds a course becomes intolerable, a desktop shell if
+  this becomes a sim bay, and an engine port only if all of that has been done
+  and something still does not fit. The value of this section is that it makes
+  step one possible; skipping to step five has already been tried in miniature
+  and it produced the dead forest.
+
 
 Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
 
