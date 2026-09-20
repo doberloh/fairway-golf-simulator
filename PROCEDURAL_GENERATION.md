@@ -23,7 +23,7 @@ The current approach creates much more variety than selecting a few named shapes
 
 ## Maps and green reading
 
-Hole maps now fit the complete generated fairway, hazards, green, tees and current ball, including wide doglegs. Drawing and click-to-aim share an invertible projection with the same left/right orientation as the playing view. Replay maps follow the recorded shot’s hole.
+Hole maps now fit the complete generated fairway, hazards, green, tees and current ball, including wide doglegs. Drawing and click-to-aim share an invertible projection with the same left/right orientation as the playing view. Replay maps follow the recorded shot’s hole. The surround beyond the hole is the biome's own rough; `mapWater` is the colour beyond the generated LAND and belongs to the full-course map, where a terrain tile covers it. The canvas is sized to the display's pixel ratio, and the green's contour tile is baked at a higher resolution when the map frames the green, because that is the only view that magnifies it.
 
 The three green-reading layers are switched from three icon buttons in the map header, separately or together:
 
