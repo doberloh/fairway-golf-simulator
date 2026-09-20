@@ -372,7 +372,7 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;$('windArrow').style.transform=`rotate(${settings.windDirection}deg)`;$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
  $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The indicator is driven by the DEVICE; the stripped-down controls are driven
@@ -1505,6 +1505,19 @@ function redrawMap(){
 // Pointer position in the canvas's own pixels. The canvas is drawn at twice its
 // CSS size, so the two frames are NOT interchangeable and mixing them puts a
 // click at half the distance from the centre that it should be.
+// THE WIND ARROW READS AGAINST WHAT YOU ARE LOOKING AT. It used to be turned
+// by the wind bearing alone, so it pointed the same way whichever direction
+// you faced -- which is a weather report, not an aid. Subtracting the camera
+// heading makes it screen-relative: straight up means the wind is going away
+// from you, right means it crosses left to right. The tilt that makes it read
+// as lying on the ground is CSS; this only supplies the bearing.
+function setWindArrow(){
+ const el=$('windArrow');if(!el)return;
+ let bearing=settings.windDirection||0;
+ try{bearing-=view.cameraHeading();}catch{}
+ el.style.transform='';
+ el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+}
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
@@ -2994,6 +3007,7 @@ function tick(now){
  // when this lived in updateExplorer, which does not run per shot.
  view.setReadingHidden(!!flight);
  view.render(dt);
+ setWindArrow();
  const worldLabels=!flight&&view.config.mode!=='free';
  // ON THE GREEN THE MARKER IS THE ONLY DISTANCE THERE IS, because the
  // flagstick has been pulled and there is nothing left out there to judge
@@ -3035,6 +3049,15 @@ function tick(now){
    $('aimLabel').style.visibility=q.visible?'visible':'hidden';
    const d=Math.hypot(a.x-round.position.x,a.z-round.position.z);
    $('aimLabelDistance').textContent=d<10?`${(d/.3048).toFixed(1)} ft`:String(Math.round(d/YARD));
+   // RISE TO THE AIM POINT, in feet, the same convention the map footer uses
+   // for the pin. Shown even at zero rather than appearing past a threshold:
+   // the aim point moves continuously, and a readout that blinks in and out
+   // as it crosses a boundary is worse than one that sometimes says nothing
+   // is happening. `course.height` is hole-local, which is what `a` already is.
+   if($('aimLabelRise')){
+    const rise=(course.height(a.x,a.z)-course.height(round.position.x,round.position.z))*3.28084;
+    $('aimLabelRise').textContent=`${rise<-.5?'↘':rise>.5?'↗':'→'} ${Math.abs(rise).toFixed(0)} FT`;
+   }
   }
  }
 }

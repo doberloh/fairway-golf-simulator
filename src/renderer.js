@@ -1487,6 +1487,11 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // side to the thing it marks. This clamps to the viewport with a margin and
  // reports the screen direction, so a caller can point the marker at whatever
  // it has been pushed away from.
+ // WHICH WAY THE CAMERA IS FACING, as a compass bearing in degrees with 0
+ // along +z -- the same convention `windDirection` uses, so the two can be
+ // subtracted. Read from the camera's own world matrix rather than from
+ // `look`, which lags it by a frame of damping.
+ cameraHeading(){const f=new T.Vector3();this.camera.getWorldDirection(f);return Math.atan2(f.x,f.z)*180/Math.PI;}
  projectMarker(p,margin=30){
   const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z);
   // Camera space rather than the projected z: three looks down its own -z, so

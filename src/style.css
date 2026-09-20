@@ -343,3 +343,14 @@ button.danger:hover{background:rgba(141,63,44,.1)}
    its clamped point rather than hanging above it, and the badge turned to
    point at the cup it has been pushed away from. */
 .flag-label.edge{transform:translate(-50%,-50%)}.flag-label.edge>span{transform:rotate(var(--point,0deg));background:#37554fcc}.flag-label.edge>strong{text-shadow:0 1px 9px #264129}
+
+/* Rise to the aim point, under its distance. Dimmer than the unit label above
+   it so the distance stays the thing you read first. */
+.aim-label small.aim-rise{font-size:8px;letter-spacing:.9px;margin-top:2px;opacity:.95;font-variant-numeric:tabular-nums}
+
+/* The wind arrow lying on the ground rather than printed on the glass. The
+   perspective is on the dial so the arrow tilts inside it; `--wind` is the
+   camera-relative bearing and is set per frame from main.js. Rotate AFTER
+   the tilt, so the arrow turns in its own ground plane instead of
+   spinning flat and then being leaned over. */
+.weather .wind-compass{perspective:90px}.wind-compass svg{width:20px;transform:rotateX(58deg) rotate(var(--wind,0deg));filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
