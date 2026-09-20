@@ -1221,6 +1221,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  // Draws a path the ball will actually take rather than a straight bearing, so a
  // breaking putt shows its curve. Points arrive in hole-local coordinates.
+ //
+ // FIFTEEN MILLIMETRES, NOT A HUNDRED. A full shot's aim line is lifted 100 mm
+ // so it clears the ground it crosses -- it describes a ball that is about to
+ // be in the air, and the ground between here and there is not the subject. A
+ // putt is the opposite: the line IS the green, and at 100 mm it floated two
+ // ball-heights up and appeared to leave from the top of the ball rather than
+ // from under it.
+ //
+ // 15 mm sits below the ball's equator (the ball's centre is one radius up, so
+ // 21 mm), which is what puts the ball ON the line instead of hanging off it,
+ // and still stands clear of the surface. For reference the putting rings sit
+ // at 25 mm and the lie scatter at 35 mm, so nothing here z-fights.
  setAimPath(points,distance){
   if(points.length<2)return;
   // Same line, so it writes the same way: two writers replacing and rewriting the
@@ -1228,7 +1240,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const flat=this.aimScratch(points.length);
   points.forEach((q,i)=>{
    const v=this.course.toWorld(q),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.10;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.015;flat[at+2]=v.z;
   });
   this.writeLine(this.aimLine,flat,points.length);
   const last=(points.length-1)*3;
