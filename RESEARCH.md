@@ -571,6 +571,54 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Is JavaScript the right thing to build this in?
+
+Asked on 2026-09-20: keep going in JS, or port to a more efficient and robust engine later. Written down because the answer turns on measurements this project already has, and because "port it to a real engine" is the kind of decision that gets made on a feeling and is then very expensive to unmake.
+
+**Short answer: stay. The efficiency premise does not survive the project's own numbers, and the thing a port would cost is the thing the product is.** But the honest version has conditions attached, and one of them is close enough to be worth watching.
+
+### The efficiency case is already disproved, by this project, this week
+
+The whole reason a level of detail was removed from the redwood biome is the measurement above: a grown grove draws **33.6 million vertices and 98 million triangles a frame and still holds the 120 Hz cap**. Instanced vertex throughput on this path is close to free. A renderer with that much headroom is not the thing holding the frame back, and moving it to another language cannot speed up a wait for the display.
+
+That matters more than it sounds, because it is the exact argument a port usually rests on. "It would be faster in a real engine" is an assertion about a bottleneck nobody has located. This codebase has already been burned by that once, at the cost of a forest that looked dead.
+
+**What IS slow is generation, not drawing.** The bench builds twelve courses in 8.4 s of wall time across twelve workers, from about 83 s of single-threaded work -- roughly seven seconds a course. That is real, it is felt when a course is grown, and it is pure arithmetic in one thread. It is also the one part a port would genuinely help, and the one part that does not need a port to fix: it is already parallelised across workers in the bench, and the hot paths are numeric loops that WebAssembly takes without disturbing anything else.
+
+### What a port would cost, which is more than it first appears
+
+**The deliverable is the product.** `dist/index.html` is one file, 15.8 MB, that opens by double-clicking with no install, no account and no internet. That is not a packaging detail, it is the thing that makes it possible to hand the sim to somebody. No general-purpose engine produces that artefact. Web exports from the big engines ship a runtime alongside the content, want a server, and are markedly larger; native builds are a download and an installer. Whatever is gained in frames is paid for in "can you just try this".
+
+**446 tests run headless in about three minutes.** They cover physics, routing, water, greens, scoring and generation determinism, in a plain `node --test` with no display and no engine harness. Two of the most valuable tools in the repository -- the biome fingerprint and the bench -- exist because hashing what a generator produces and diffing it is trivial when the generator is a function you can import. Inside an engine, the same discipline is possible and is an order of magnitude more work to arrange. **A port does not carry the tests across; it carries the code across and leaves the tests to be rebuilt.**
+
+**Determinism is load-bearing here and is a hazard in engines.** Seeds reproduce byte-identically -- proven by delete-and-regenerate hashing, and by a fingerprint that has caught unintended cross-biome movement several times in this repository's short recorded history. Engines encourage using their physics, and engine physics is the usual place determinism goes to die. The ball flight model is a custom integrator validated against a launch monitor at under 2% carry error with zero mean descent bias; handing that to a middleware solver would throw away the one number this project has that is checked against the outside world.
+
+### Where "robust" is a fair criticism, and what it actually points at
+
+The efficiency argument does not hold. The robustness one partly does, and it points somewhere cheaper than an engine.
+
+`main.js` is over three thousand lines of very long lines, and nothing in the project is statically typed. The bugs this session produced are the signature of that: a wind bearing subtracted the wrong way round, a `project` used where it was unsafe, a scorecard preview that would have silently used default dogleg settings, two seeded generators that had to be proven identical by running twenty thousand draws through both. **None of those are problems an engine solves. Most of them are problems a type system either catches or makes obvious.**
+
+If the goal is robustness, TypeScript is the move, and it is a fraction of the cost of a port -- incremental, file by file, with the tests as the safety net and nothing about the deliverable changing. That is the honest answer to the half of the question that has a real complaint behind it.
+
+### The condition under which a port becomes right
+
+There is a trajectory here that changes the answer, and it is already partly built: `parseLaunchMessage`, the GSPro Open Connect handling and `bridge/server.mjs` point at a simulator-bay product rather than a browser toy. If that becomes the main use -- a dedicated machine, a projector, a launch monitor, multiple displays, hardware latency budgets, photoreal ambitions -- then the browser stops being an advantage and starts being a constraint, and native becomes a reasonable conversation.
+
+Even then the first step is not an engine. It is a desktop shell around what exists -- Tauri or similar -- which keeps every line of code and the whole test suite and buys the file system, real windows and no browser chrome. That is a weekend, not a rewrite.
+
+### The order to do things in, if performance ever does bite
+
+1. **Find out what actually binds the frame.** It is not vertices; that has been measured. Draw calls, shadow passes and fill are the candidates nobody has ruled out. This is the step that was skipped last time and it cost a fortnight of the wrong work.
+2. **WebGPU before rewriting anything.** If the renderer turns out to be the limit, the API is a bigger lever than the language.
+3. **WebAssembly for generation** if seven seconds a course becomes intolerable. Targeted at the numeric loops, leaving everything else alone.
+4. **A desktop shell** if the product becomes a sim bay.
+5. **An engine port** only if 1 through 4 have been done and something still does not fit -- which, on current evidence, is not the situation.
+
+### The thing to be most careful about
+
+The pull toward a port is strongest when a codebase feels unwieldy, and this one does in places. But "this file is three thousand lines" and "this language is too slow" are different complaints that feel identical from the inside, and only one of them is true here. A rewrite would answer the false one at enormous cost and leave the true one exactly where it is -- because the new codebase would be written by the same hands, under the same time pressure, without the 446 tests that currently stop it going wrong.
+
 ## A par 5 is not 723 yards
 
 Reported from a generated course: a 723-yard par 5, on a card whose par 4s averaged under 400. Both halves of that sentence are the same bug seen from two ends.
