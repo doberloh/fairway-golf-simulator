@@ -65,7 +65,23 @@ export const SCHEMA_VERSION=5;
 //     per step is capped so curvature cannot beat the channel's own banks.
 //     Median cut is 0.4 to 2.9 m and channels run two to three times longer.
 //     Every course with a river or a creek is reshaped.
-export const GENERATOR_VERSION=22;
+// 13-21: not written down. The repository's history begins at one squashed
+//     commit, so what these were cannot be recovered. The list is the record;
+//     bumping the number without adding a line here is how it stopped being one.
+// 23: hole length is bounded by par instead of scaled to fit. Lengths were a
+//     base per par jittered a quarter either way with no clamp, then every hole
+//     multiplied by one factor to hit the course total -- so a hole that
+//     jittered long raised the total, lowered the factor and shortened every
+//     other hole. At a 7,400-yard target one hole in eight fell outside the
+//     USGA's guideline for what may be called that par, and par 5s reached 803
+//     yards. Each par has a researched band now and the course length is
+//     water-filled inside them. The par MIX is weighted toward a real one
+//     rather than drawn flat off the list of combinations that add up, and par
+//     order is split across the nines. A hole's line, length and tees moved
+//     into `holeLine` in course-plan.js, which also moved the tee draws earlier
+//     in the hole's stream so a scorecard can reach them. Every hole on every
+//     course changes length, par or both: all eight biome fingerprints moved.
+export const GENERATOR_VERSION=23;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
