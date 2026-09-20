@@ -2421,7 +2421,13 @@ function startTour(){if(flight||dropState)return;cancelAdvance();closePanel();to
 function stopTour(){if(!tour)return;const camera=tour.camera;if(view.puttingRings)view.puttingRings.visible=tour.puttingRings;tour=null;Object.assign(view.config,camera);view.config.mode=playCameraMode('player',course,round.position);view.setGreenReading();view.setBall(round.position);view.setCamera(round.position,aim,true);updateAim();updateExplorer();}
 function cameraMode(mode){if(flight)return;stopTour();view.config.mode=playCameraMode(mode,course,round.position);view.setCamera(round.position,aim,true);updateExplorer();save();}
 function bind(){
- new ResizeObserver(()=>{const c=$('map'),w=Math.round(c.clientWidth*2),h=Math.round(c.clientHeight*2);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
+ // BACKING STORE AT THE DISPLAY'S OWN RATIO, not a hardcoded 2. On anything
+ // sharper than 2x -- which is most laptops at a scaled resolution -- the map
+ // was being drawn at less than native and then upscaled by the compositor,
+ // so it was already soft before the green tile was magnified on top of it.
+ // Capped at 3 because the gain above that is invisible and the fill cost is
+ // not. `mapPixels` divides by the ratio it finds, so pointer input follows.
+ new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1),3),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
  // The course card's menu button is gone from every mode -- the card reports the
  // hole, and a second way into the menu sitting on top of it was clutter beside
  // the nav that already does the job.

@@ -1478,7 +1478,19 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
 }
 export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
- const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;ctx.fillStyle=world.bio.mapWater;ctx.fillRect(0,0,w,h);
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;
+ // THE BASE COAT IS WHAT YOU SEE AROUND THE HOLE, so it has to be ground.
+ // `mapWater` is the colour BEYOND the generated land -- sea on the island,
+ // a pale #e0e5d5 everywhere else -- and on the full-course map the terrain
+ // tile paints over all of it, so the pale default only ever showed outside
+ // the world rectangle. Hole view draws no such tile, so the same base coat
+ // was the entire surround: a hole sitting on paper, ringed in near-white.
+ //
+ // In hole view the surround is the biome's own rough, which is what is
+ // actually out there. `mapGround` lets a biome override it without
+ // disturbing what its sea looks like.
+ ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
+ ctx.fillRect(0,0,w,h);
  // The nav rides on the CANVAS beside its transform. Five call sites draw this
  // map from four different places, and threading a pan/zoom argument through
  // all of them is how one of them ends up not having it -- which would read as
@@ -1518,7 +1530,13 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // as a flat disc.
  if(transform.focus==='green'&&canvas.mapHeat!==false){
   try{
-   const tile=greenHeatTile(course);
+   // 256 RATHER THAN THE DEFAULT 96, because this is the one view that
+   // magnifies the tile. At hole scale the green is a smudge and 96 is more
+   // than enough; framed on the green the same 96 texels are stretched over
+   // the whole canvas, which is about four screen pixels each and reads as
+   // pixellation however good the smoothing is. The field is built once per
+   // green and cached, so the cost is one-off.
+   const tile=greenHeatTile(course,256);
    if(!tile.flat){
     // THE TILE IS PROJECTED, NOT FITTED INTO A BOX. `mapPoint` is
     // `w/2 - (p - c) * scale` on BOTH axes, so the map is the world turned
