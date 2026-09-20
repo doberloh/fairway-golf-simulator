@@ -14,6 +14,12 @@ Both live in `src/settings-schema.js`. Getting these wrong is the one class of m
 
 Adding a generation setting means **one schema entry** — default, bounds, step, unit, category and help text. Defaults, validation, migration, the world rebuild key and the studio panel all derive from it; do not add a parallel default, slider or bounds list anywhere else. A new setting almost always means bumping both numbers: the schema changed shape, and the generator now reads a value it did not before.
 
+**How to know you owe a bump, rather than remembering to ask.** `node tools/biome-fingerprint.mjs --check` is the trigger, not a formality: if it reports any biome moved, generated output changed for an unchanged seed and `GENERATOR_VERSION` has to go up. The stored fingerprints carry the generator version they were taken at, so `--check` now fails with that message instead of leaving it to you to notice. Run it on any change that touches `src/course.js`, `src/course-plan.js`, `src/streams.js`, `src/lakes.js`, `src/homes.js` or `src/vegetation.js` -- and run it on changes that look unrelated too, because the ones that catch you are the changes nobody expected to move ground.
+
+**The bump is two edits, not one.** The number, and a line in the list above it saying what moved and why. That list stops at 12 while the constant reads 23: nine bumps went unrecorded and cannot be recovered, because this repository's history begins at one squashed commit. A version number with no entry tells a future reader that something changed and nothing about what, which is barely better than not bumping at all.
+
+**What does NOT need a bump.** Rendering, HUD, cameras, materials, audio, the map, the scorecard, tests and tooling. If the ground, the routing, the hazards and the planting are all byte-identical for a given seed, nothing about the player's save is at risk. The fingerprint is the arbiter; if it is silent, leave both numbers alone.
+
 Use focused regression tests for the behavior being changed, inspect visual changes in the browser, and build before updating distributable archives. Physical launch-monitor testing is deferred until requested. Do not treat TODO entries as authorization to expand an unrelated task.
 
 ## Documentation is part of the change, not a follow-up

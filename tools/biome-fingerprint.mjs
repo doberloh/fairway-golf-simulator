@@ -17,6 +17,7 @@
 // on a grid, every hole's geometry, every tree, house, water body and channel,
 // and the biome's own palette and light.
 import crypto from 'node:crypto';
+import {GENERATOR_VERSION} from '../src/settings-schema.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -75,17 +76,38 @@ for (const b of biomes) {
 const argv = process.argv.slice(2);
 if (argv.includes('--save')) {
  fs.mkdirSync(path.dirname(STORE), {recursive: true});
- fs.writeFileSync(STORE, JSON.stringify(now, null, 1) + '\n');
- console.log(`\nstored ${biomes.length} fingerprints`);
+ // The generator version rides WITH the hashes, so `--check` can tell the two
+ // reasons output moves apart: a refactor that should have changed nothing,
+ // and a deliberate change that owes a version bump.
+ fs.writeFileSync(STORE, JSON.stringify({generator: GENERATOR_VERSION, biomes: now}, null, 1) + '\n');
+ console.log(`\nstored ${biomes.length} fingerprints at generator ${GENERATOR_VERSION}`);
 } else if (argv.includes('--check')) {
  if (!fs.existsSync(STORE)) {console.error('\nnothing stored yet -- run with --save first'); process.exit(1);}
- const was = JSON.parse(fs.readFileSync(STORE, 'utf8'));
+ const stored = JSON.parse(fs.readFileSync(STORE, 'utf8'));
+ // Older stores are a flat {biome: hash} with no version in them.
+ const was = stored.biomes || stored, wasGen = stored.generator ?? null;
  const moved = biomes.filter(b => was[b] && was[b] !== now[b]);
  const added = biomes.filter(b => !was[b]);
  const gone = Object.keys(was).filter(b => !now[b]);
  for (const b of moved) console.error(`CHANGED  ${b}: ${was[b]} -> ${now[b]}`);
  for (const b of added) console.log(`new      ${b}`);
  for (const b of gone) console.error(`REMOVED  ${b}`);
- if (moved.length || gone.length) {console.error(`\n${moved.length + gone.length} biome(s) moved`); process.exit(1);}
+ if (moved.length || gone.length) {
+  console.error(`\n${moved.length + gone.length} biome(s) moved`);
+  // THE CHECK THAT WAS MISSING. GENERATOR_VERSION exists so a player's saved
+  // round is never silently rebuilt on different ground, and the only way to
+  // know it was needed is exactly this: output moved for an unchanged seed.
+  // It was documented in AGENTS.md and missed anyway, so it is enforced here
+  // rather than remembered.
+  if (wasGen !== null && wasGen === GENERATOR_VERSION) {
+   console.error(`\nGENERATOR_VERSION is still ${GENERATOR_VERSION}.`);
+   console.error('Output moved for an unchanged seed, so it has to go up, with a');
+   console.error('line describing the change in the list above the constant in');
+   console.error('src/settings-schema.js. Then re-run with --save.');
+  }
+  process.exit(1);
+ }
+ if (wasGen !== null && wasGen !== GENERATOR_VERSION)
+  console.log(`\nnote: GENERATOR_VERSION went ${wasGen} -> ${GENERATOR_VERSION} and nothing moved. If that bump was for terrain, it did not land.`);
  console.log(`\nevery existing biome is unchanged${added.length ? `, ${added.length} new` : ''}`);
 }
