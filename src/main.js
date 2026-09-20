@@ -5,7 +5,7 @@ import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {aimTarget,localWind} from './shot-visuals.js';
 import {mapPosition,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
-import {planCourse,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
+import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,launchForDistance} from './turf.js';
 import './style.css';
@@ -1864,7 +1864,17 @@ function renderPanel(name,content){
   const holes=settings.holes===18?18:9;
   const custom={
    holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
-   courseYards:()=>`<label class="field">${FIELD.courseYards.label}${hint('courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label><label class="field">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label><div class="course-plan" id="coursePlan" aria-live="polite"></div>`,
+   // ONE BOX. The slider set a number, a second field set the same number
+   // again, and a third element reported what that number produced -- three
+   // controls for one decision, with the answer furthest from the hand that
+   // was moving. Length, exact yardage and the card it makes are one group
+   // now, and the card is the whole card rather than a par count.
+   courseYards:()=>`<div class="course-plan" id="coursePlan" aria-live="polite">
+    <div class="plan-summary" id="planSummary"></div>
+    <label class="field plan-slider">${FIELD.courseYards.label}${hint('courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
+    <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>
+    <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
+   </div>`,
    seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
    biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
@@ -1881,7 +1891,47 @@ function renderPanel(name,content){
   // regenerates on its own, because a rebuild is seconds of frozen tab.
   content.addEventListener('input',markStudioDirty);content.addEventListener('change',markStudioDirty);
   document.querySelectorAll('[data-biome]').forEach(b=>b.onclick=()=>{studioBiome=b.dataset.biome;markStudioDirty();document.querySelectorAll('[data-biome]').forEach(x=>x.classList.toggle('active',x===b));});
-  const previewPlan=(syncNumber=true)=>{if(syncNumber)$('courseYardsNumber').value=$('courseYards').value;const p=planCourse({holes:Number($('courseHoles').value),courseYards:Number($('courseYards').value),seed:$('seed').value});$('coursePlan').innerHTML=`<strong>Par ${p.par}</strong><span>${p.counts[3]} par 3s · ${p.counts[4]} par 4s · ${p.counts[5]} par 5s</span>`;};
+  // THE CARD BEFORE THE COURSE. `planScorecard` runs the same hole skeleton
+  // the builder runs, over the same seeded stream, so every yardage here is
+  // the yardage that gets built -- checked to within the rounding.
+  const previewPlan=(syncNumber=true)=>{
+   if(syncNumber)$('courseYardsNumber').value=$('courseYards').value;
+   const asked=Number($('courseYards').value);
+   // THE WHOLE SETTINGS OBJECT, not just the three fields on screen. The hole
+   // skeleton reads doglegs, dogleg angle and turning point, and a card built
+   // with the defaults while the studio is set to something else would be
+   // quietly wrong about every yardage on a bending hole.
+   const p=planScorecard({...settings,holes:Number($('courseHoles').value),
+    courseYards:asked,seed:$('seed').value});
+   const n=p.holes.length,half=Math.min(9,n),yd=v=>v.toLocaleString('en-US');
+   // Said out loud when the bands cannot reach what was asked for, rather than
+   // stretching holes out of shape to make the number come out.
+   const short=Math.abs(p.yards-asked)>5
+    ? `<em>${asked>p.yards?'longest':'shortest'} this par can play</em>` : '';
+   $('planSummary').innerHTML=`<strong>Par ${p.par}</strong><span>${yd(p.yards)} yd</span>`
+    +`<span>${p.counts[3]} par 3s · ${p.counts[4]} par 4s · ${p.counts[5]} par 5s</span>`
+    +(n>9?`<span>Out ${p.front} · In ${p.back}</span>`:'')+short;
+   // Columns as segments, so a nine-hole card shows one total rather than
+   // printing Out and Tot with the same number in both.
+   const segs=n>9?[[0,9,'Out'],[9,n,'In'],[0,n,'Tot']]:[[0,n,'Tot']];
+   const cell=(v,cls='')=>`<td class="${cls}">${v}</td>`;
+   const line=(label,each,tot,cls='')=>{
+    let out=`<th>${label}</th>`,shown=0;
+    for(const [from,to,name] of segs){
+     if(name!=='Tot'||segs.length===1)
+      for(let i=shown;i<to;i++)out+=cell(each(p.holes[i],i),cls),shown=i+1;
+     out+=cell(tot(from,to),'sum');
+    }
+    return `<tr>${out}</tr>`;
+   };
+   let html=line('Hole',(_,i)=>i+1,(f,t,)=>segs.find(x=>x[0]===f&&x[1]===t)[2]);
+   html=html.replace('<tr>','<tr class="plan-head">');
+   html+=line('Par',h=>h.par,(f,t)=>p.holes.slice(f,t).reduce((v,h)=>v+h.par,0));
+   for(const tee of p.tees)
+    html+=line(`<span class="tee-dot ${tee}"></span>${tee}`,h=>h.tees[tee],
+     (f,t)=>yd(p.holes.slice(f,t).reduce((v,h)=>v+h.tees[tee],0)),'yd');
+   $('planCard').innerHTML=html;
+  };
   $('courseYardsNumber').oninput=()=>{$('courseYards').value=$('courseYardsNumber').value;$('courseYardsValue').textContent=$('courseYards').value+' yd';previewPlan(false);};
   $('courseYards').addEventListener('input',()=>previewPlan());
   $('courseHoles').onchange=()=>{const n=Number($('courseHoles').value),input=$('courseYards'),old=Number(input.min)/110,previous=Number(input.value);input.min=n*110;input.max=n*470;$('courseYardsNumber').min=input.min;$('courseYardsNumber').max=input.max;input.value=Math.round(previous*n/old/10)*10;$('courseYardsValue').textContent=input.value+' yd';previewPlan();};

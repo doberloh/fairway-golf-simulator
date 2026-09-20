@@ -23,6 +23,8 @@ The current approach creates much more variety than selecting a few named shapes
 
 ## Maps and green reading
 
+Hole length is bounded by par rather than scaled to fit: each par has a researched minimum, typical and maximum, and the course's requested length is distributed across the holes in proportion to the room each has left inside its own band. A total the bands cannot reach is clamped and reported rather than met by stretching holes past what may be called that par. The par mix is weighted toward a fifth of holes at par 3 and a fifth at par 5, and par order is split evenly across the nines before being settled against a score that penalises back-to-back short or long holes. A hole's line, length and tees are computed from the seed alone, so the full scorecard -- par and all three tee yardages -- is available before any terrain exists.
+
 Hole maps now fit the complete generated fairway, hazards, green, tees and current ball, including wide doglegs. Drawing and click-to-aim share an invertible projection with the same left/right orientation as the playing view. Replay maps follow the recorded shot’s hole. The surround beyond the hole is the biome's own rough; `mapWater` is the colour beyond the generated LAND and belongs to the full-course map, where a terrain tile covers it. The canvas is sized to the display's pixel ratio, and the green's contour tile is baked at a higher resolution when the map frames the green, because that is the only view that magnifies it.
 
 The three green-reading layers are switched from three icon buttons in the map header, separately or together:

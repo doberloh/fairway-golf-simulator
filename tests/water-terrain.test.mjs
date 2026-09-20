@@ -113,7 +113,9 @@ test('a fairway stops behind semi-rough where it meets water', () => {
  // Ponds, lakes and channels only. A coastline is not mown around -- the rough
  // runs to the dunes -- so this is asserted inland.
  let fairwayTouching = 0, semiTouching = 0;
- for (const seed of ['A', 'B']) {
+ // Enough seeds that the band being measured actually turns up. The invariant
+ // under test is `fairwayTouching === 0`, which more courses only strengthen.
+ for (const seed of ['A', 'B', 'C', 'D', 'E', 'F']) {
   const w = buildWorld({seed, biome: 'pnw', holes: 9, water: 100, rivers: 1, creeks: 2});
   for (const h of w.holes) for (let z = 10; z < h.length - 10; z += 3) {
    const half = h.width(z);
