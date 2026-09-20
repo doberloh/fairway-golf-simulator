@@ -29,8 +29,13 @@ test('a one-hole world builds for the menu backdrop without disturbing 9 and 18'
  for(const holes of [9,18]){const p=planCourse({holes,courseYards:holes*360,seed:'BACKDROP'});assert.equal(p.holes.length,holes);assert(p.counts[3]>=1,'real courses still get par 3s');}
 });
 test('fairway edges have independent generated control points, varied widening, and bunker stations',()=>{
- const holes=Array.from({length:18},(_,i)=>generateCourse({holes:18,courseYards:6800,seed:'VARIETY',bunkerCount:8,water:0},i));
- assert(holes.every(h=>h.family===undefined));assert(new Set(holes.map(h=>h.leftEdge.knots.length)).size>=3);assert(new Set(holes.map(h=>JSON.stringify(h.leftEdge))).size===18);assert(holes.every(h=>JSON.stringify(h.leftEdge)!==JSON.stringify(h.rightEdge)));
+ // MORE THAN ONE SEED'S WORTH. These assert that fairway width VARIES along a
+ // hole and peaks in different places -- a property of the generator, not of
+ // one course. Pinned to a single seed it went red the moment hole lengths
+ // changed, which says nothing about whether widths still vary.
+ const holes=['VARIETY','VARIETY2','VARIETY3'].flatMap(seed=>
+  Array.from({length:18},(_,i)=>generateCourse({holes:18,courseYards:6800,seed,bunkerCount:8,water:0},i)));
+ assert(holes.every(h=>h.family===undefined));assert(new Set(holes.map(h=>h.leftEdge.knots.length)).size>=3);assert(new Set(holes.map(h=>JSON.stringify(h.leftEdge))).size===holes.length);assert(holes.every(h=>JSON.stringify(h.leftEdge)!==JSON.stringify(h.rightEdge)));
  const ratio=h=>h.width(h.length*.8)/h.width(h.length*.3);assert(holes.some(h=>ratio(h)>1.6));assert(holes.some(h=>ratio(h)<.7));
  const peak=h=>Array.from({length:20},(_,i)=>({u:i/19,w:h.width(h.length*i/19)})).sort((a,b)=>b.w-a.w)[0].u;
  assert(new Set(holes.map(h=>Math.round(peak(h)*5))).size>=4);

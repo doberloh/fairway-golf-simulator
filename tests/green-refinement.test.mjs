@@ -4,7 +4,7 @@ import {cupCapture,simulateShot,R,CUP_RADIUS,YARD} from '../src/physics.js';
 import {makeGroundGrid,groundHeight} from '../src/terrain-grid.js';
 import {groundGeometry} from '../src/ground.js';
 import {generateCourse,generateWorld,fairwayWidth,greenDistance} from '../src/course.js';
-import {planCourse} from '../src/course-plan.js';
+import {planCourse, PAR_YARDS} from '../src/course-plan.js';
 import {greenFlowPaths,slopeColor,createGreenReading} from '../src/green-reading.js';
 import {mapLayout,mapPoint,mapPosition} from '../src/course-map.js';
 const flat={height:()=>0,surface:()=> 'green',bounds:{x:100,minZ:-100,maxZ:100},trees:[],pin:{x:0,z:0}};
@@ -27,7 +27,69 @@ test('adaptive bunker mesh has shared seam vertices, no cracks, and matching con
  geometry.dispose();
 });
 test('par totals stay bounded while length and seeded par order remain variable',()=>{
- for(const n of [9,18]){let short,long;const sequences=new Set();for(let i=0;i<15;i++){for(const average of [110,300,360,470]){const p=planCourse({holes:n,courseYards:n*average,seed:'PAR'+i});assert(p.par>=n*34/9&&p.par<=n*4);assert(Math.abs(p.holes.reduce((a,h)=>a+h.yards,0)-n*average)<.001);if(average===110)short=p;if(average===470)long=p;if(average===360)sequences.add(p.holes.map(h=>h.par).join(','));}}assert.equal(short.par,n*34/9);assert.equal(long.par,n*4);assert(sequences.size>8);}
+ for(const n of [9,18]){let short,long;const sequences=new Set();for(let i=0;i<15;i++){for(const average of [110,300,360,470]){const p=planCourse({holes:n,courseYards:n*average,seed:'PAR'+i});assert(p.par>=n*34/9&&p.par<=n*4);if(average===110)short=p;if(average===470)long=p;if(average===360)sequences.add(p.holes.map(h=>h.par).join(','));}}assert.equal(short.par,n*34/9);assert.equal(long.par,n*4);assert(sequences.size>8);}
+});
+// NO HOLE MAY LEAVE ITS PAR'S RANGE. This is the guarantee the old model did
+// not make: it jittered a base length by a quarter either way and then scaled
+// every hole by one factor to hit the course total, so a par 5 could reach 803
+// yards at an ordinary 7,400-yard target -- past the USGA's own ceiling for
+// calling a hole a par 5 at all -- and the par 4s shrank to pay for it.
+test('every hole lands inside its par band, at every length',()=>{
+ for(const n of [9,18])for(let i=0;i<25;i++)for(const average of [110,290,360,410,470]){
+  const p=planCourse({holes:n,courseYards:n*average,seed:'BAND'+i});
+  for(const h of p.holes){
+   const b=PAR_YARDS[h.par];
+   assert(h.yards>=b.min-.001&&h.yards<=b.max+.001,
+    `par ${h.par} at ${h.yards.toFixed(0)} yd is outside ${b.min}-${b.max}`);
+  }
+ }
+});
+// The requested length is honoured exactly wherever the bands can reach it, and
+// clamped to the nearest reachable total where they cannot -- rather than every
+// hole being stretched or squeezed out of shape to make the number come out.
+test('the course is the length it was asked for, or says what it could reach',()=>{
+ for(const n of [9,18])for(let i=0;i<12;i++)for(const average of [110,300,360,410,470]){
+  const asked=n*average,p=planCourse({holes:n,courseYards:asked,seed:'REACH'+i});
+  const lo=p.holes.reduce((v,h)=>v+PAR_YARDS[h.par].min,0);
+  const hi=p.holes.reduce((v,h)=>v+PAR_YARDS[h.par].max,0);
+  const want=Math.min(hi,Math.max(lo,asked));
+  assert(Math.abs(p.yards-want)<2,`asked ${asked}, reachable ${want.toFixed(0)}, built ${p.yards}`);
+  assert.equal(p.requested,asked);
+ }
+});
+// An eighteen splits its par evenly and does not stack its short holes on one
+// nine. Both nines are 34 to 38 on a par-68-to-72 course, which is what an
+// even split allows once an odd count has to go somewhere.
+test('an eighteen spreads its par across both nines',()=>{
+ for(let i=0;i<40;i++){
+  const p=planCourse({holes:18,courseYards:6800,seed:'NINE'+i});
+  assert.equal(p.front+p.back,p.par,'the nines have to add up to the card');
+  assert(Math.abs(p.front-p.back)<=2,`front ${p.front} back ${p.back}`);
+  for(const par of [3,5]){
+   const f=p.holes.slice(0,9).filter(h=>h.par===par).length;
+   const b=p.holes.slice(9).filter(h=>h.par===par).length;
+   assert(Math.abs(f-b)<=1,`${(p.counts[par]||0)} par ${par}s split ${f}/${b}`);
+  }
+ }
+});
+// Back-to-back par 3s or par 5s are what a seeded shuffle produces and a real
+// routing avoids. Not forbidden outright -- a hill-climb on a fixed budget
+// cannot promise that -- but they should be rare rather than ordinary.
+test('short and long holes are spaced out rather than stacked',()=>{
+ let adjacent=0,courses=200;
+ for(let i=0;i<courses;i++){
+  const p=planCourse({holes:18,courseYards:6800,seed:'SPACE'+i}).holes.map(h=>h.par);
+  for(let k=1;k<p.length;k++)if(p[k]===p[k-1]&&p[k]!==4)adjacent++;
+ }
+ assert(adjacent/courses<.35,`${(adjacent/courses).toFixed(2)} adjacent pairs per course`);
+});
+// The plan is the seed's, and nothing else's.
+test('a plan is reproducible from its seed',()=>{
+ for(const seed of ['EVERGREEN','x','1234']){
+  const a=planCourse({holes:18,courseYards:6800,seed}),b=planCourse({holes:18,courseYards:6800,seed});
+  assert.deepEqual(a.holes,b.holes);
+  assert.notDeepEqual(a.holes,planCourse({holes:18,courseYards:6800,seed:seed+'!'}).holes);
+ }
 });
 test('par threes get a green approach, not a fairway, and keep their hazards',()=>{
  const holes=Array.from({length:90},(_,i)=>generateCourse({seed:'APPROACH'+i},i%9));
