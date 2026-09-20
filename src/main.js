@@ -299,13 +299,18 @@ function setUpTurn(){
  endPick();
  aimRange=null;const p=round.position;shape=0;launchAdjust=0;spinAdjust=0;
  const d=distance()/YARD;
- $('club').value=course.surface(p.x,p.z)==='green'||d<18?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
+ // PUTTER ONLY ON THE PUTTING SURFACE. `localSurface` returns 'green'
+ // exactly when `greenDistance <= 0`, so this IS the strict "touching the
+ // green" test. The `d<18` that used to sit beside it handed you a putter
+ // from eighteen yards out in the fringe, off a bank, out of a greenside
+ // bunker -- anywhere at all, so long as it was close.
+ $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
  $('power').value=$('club').value==='putter'?clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100):100;
  const target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
  view.setBall(p);updateAim();view.setCamera(p,aim);updateHUD();sendPlayer();
 }
 function updateHUD(){
- const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to pin';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
+ const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
   // Reading is off on a practice ground: the bench green is dead flat, so the
   // grid paints one colour and the heat map one shade. Switches that can only
@@ -356,6 +361,7 @@ function updateHUD(){
   :`Shot ${scoreText(round.stroke)}${round.mode!=='stroke'?' · Team '+p.team:''}`;
  drawLiveScore();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
+ view.setPinOut?.(ballOnGreen);
  // THE MAP FOLLOWS THE BALL ONTO THE GREEN. Framed on the green it also paints
  // the contour field, which is the view the 3D overlay cannot give you: from
  // the ball the far half of the green is a few pixels tall.
@@ -366,7 +372,7 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO PIN':'YARDS TO PIN';$('windSpeed').textContent=settings.wind;$('windArrow').style.transform=`rotate(${settings.windDirection}deg)`;$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;$('windArrow').style.transform=`rotate(${settings.windDirection}deg)`;$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
  $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The indicator is driven by the DEVICE; the stripped-down controls are driven
@@ -2989,9 +2995,26 @@ function tick(now){
  view.setReadingHidden(!!flight);
  view.render(dt);
  const worldLabels=!flight&&view.config.mode!=='free';
- const pin=course.pin,label=view.project({x:pin.x,y:course.height(pin.x,pin.z)+6,z:pin.z});
- $('flagLabel').style.left=label.x+'px';$('flagLabel').style.top=label.y+'px';
- $('flagLabel').style.visibility=label.visible&&worldLabels?'visible':'hidden';
+ // ON THE GREEN THE MARKER IS THE ONLY DISTANCE THERE IS, because the
+ // flagstick has been pulled and there is nothing left out there to judge
+ // against. So it stops being a thing floating over the pin that can drift off
+ // the edge, and becomes a marker that clamps to the nearest edge and turns to
+ // point at the cup. Everywhere else it behaves as it did -- over the flag,
+ // hidden when the flag is not in view.
+ const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
+ const flagEl=$('flagLabel');
+ if(ballOnGreen&&worldLabels){
+  const m=view.projectMarker(pinTop);
+  flagEl.style.left=m.x+'px';flagEl.style.top=m.y+'px';
+  flagEl.style.visibility='visible';
+  flagEl.classList.toggle('edge',m.clamped);
+  flagEl.style.setProperty('--point',m.angle.toFixed(1)+'deg');
+ }else{
+  const label=view.project(pinTop);
+  flagEl.style.left=label.x+'px';flagEl.style.top=label.y+'px';
+  flagEl.style.visibility=label.visible&&worldLabels?'visible':'hidden';
+  flagEl.classList.remove('edge');
+ }
  // THE AIM POINT, read where you are looking rather than in a bar at the bottom.
  // Lower than the pin's marker (3 m against 6) because it marks a spot on the
  // ground, not a flag, and a label floating at flag height over bare fairway

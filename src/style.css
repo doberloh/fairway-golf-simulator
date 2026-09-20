@@ -338,3 +338,8 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* The golfer's own colour, so the row, the ball on the course and the name here
    are the same thing. */
 .pick-who{display:inline-flex;align-items:center;gap:7px}
+
+/* The hole marker pinned to the edge of the screen while putting: centred on
+   its clamped point rather than hanging above it, and the badge turned to
+   point at the cup it has been pushed away from. */
+.flag-label.edge{transform:translate(-50%,-50%)}.flag-label.edge>span{transform:rotate(var(--point,0deg));background:#37554fcc}.flag-label.edge>strong{text-shadow:0 1px 9px #264129}

@@ -1075,7 +1075,7 @@ export class GolfView{
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
   if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp());}
-for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
+for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
   if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.greenGrid=null;this.reading=null;
@@ -1103,6 +1103,11 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.scatter=new T.Points(geometry,material);this.scatter.renderOrder=4;this.group.add(this.scatter);
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
+ // THE PIN IS PULLED ONCE YOU ARE PUTTING, which is what happens on a real
+ // green and takes the one object standing between the ball and the cup out
+ // of the read. The cup, its liner and the floor are separate objects and
+ // stay: it is the flagstick that goes, not the hole.
+ setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
  updateGreenGrid(){this.reading?.update(this.elapsed-this.readingEpoch);}
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
  // WHAT PUTS THE BALL ON THE GROUND.
@@ -1475,6 +1480,31 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
  project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);return{x:(v.x*.5+.5)*this.canvas.clientWidth,y:(-.5*v.y+.5)*this.canvas.clientHeight,visible:v.z<1&&v.z>-1};}
+ // A MARKER THAT CANNOT LEAVE THE SCREEN. `project` answers where a point
+ // lands and whether it is in the depth range; it says nothing about the sides,
+ // and behind the camera it is worse than useless -- the perspective divide is
+ // by a negative w, so both axes flip and the marker appears on the OPPOSITE
+ // side to the thing it marks. This clamps to the viewport with a margin and
+ // reports the screen direction, so a caller can point the marker at whatever
+ // it has been pushed away from.
+ projectMarker(p,margin=30){
+  const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z);
+  // Camera space rather than the projected z: three looks down its own -z, so
+  // a positive z here is behind the lens, which is the case the flip comes from.
+  const behind=v.clone().applyMatrix4(this.camera.matrixWorldInverse).z>0;
+  const ndc=v.project(this.camera),W=this.canvas.clientWidth,H=this.canvas.clientHeight;
+  let x=(ndc.x*.5+.5)*W,y=(-.5*ndc.y+.5)*H;
+  if(behind){x=W-x;y=H-y;}              // undo the flip, so the direction is true
+  const cx=W/2,cy=H/2;
+  let dx=x-cx,dy=y-cy;
+  if(!dx&&!dy)dy=1;                     // dead centre and behind: send it downward
+  const inset=(v,limit)=>v?limit/Math.abs(v):Infinity;
+  const s=Math.min(inset(dx,W/2-margin),inset(dy,H/2-margin));
+  const outside=behind||s<1;
+  if(outside){x=cx+dx*s;y=cy+dy*s;}
+  // Screen bearing, 0 pointing up, for rotating the marker toward its subject.
+  return {x,y,clamped:outside,angle:Math.atan2(dx,-dy)*180/Math.PI};
+ }
  pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
 }
 export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
