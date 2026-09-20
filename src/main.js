@@ -1757,8 +1757,10 @@ function renderPanel(name,content){
    :`<label class="field">Name this course<input id="courseName" maxlength="${MAX_NAME}" value="${escape(suggestion)}"></label>
   <button class="primary" id="saveCourse"><i data-lucide="bookmark"></i> ${savable.label}</button>`}
   <h3>Import &amp; export</h3>
-  <label class="field">Course code<textarea id="courseCode" rows="3" placeholder="FW1.…"></textarea></label>
-  <button class="secondary" id="importCourseCode">Import this code</button>
+  <div class="code-import">
+   <label class="field">Course code<textarea id="courseCode" rows="3" placeholder="FW1.…"></textarea></label>
+   <button class="secondary" id="importCourseCode">Import this code</button>
+  </div>
   <p class="note">A code is one course as text — short enough to paste into a message. A file is your whole library at once, which is what you want for a backup or a move to another machine.</p>
   <button class="secondary" id="exportCourses"><i data-lucide="download"></i> Export every course to a file</button>
   <button class="secondary" id="importCourses"><i data-lucide="upload"></i> Import courses from a file</button>

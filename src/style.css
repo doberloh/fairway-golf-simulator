@@ -391,3 +391,9 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* At phone width the table keeps its own scroller rather than squeezing the
    columns into an unreadable stack. */
 @media(max-width:560px){.plan-card{min-width:520px}}
+
+/* The code box and the button that acts on it are one control, not two
+   stacked ones. The container owns the border and the corners; the textarea
+   gives up its own so the seam between them is the divider rather than two
+   outlines a few pixels apart. */
+.code-import{border:1px solid var(--glass-line);border-radius:8px;background:var(--field);overflow:hidden;margin:15px 0}.code-import>.field{margin:0;padding:10px 12px 0}.code-import textarea{border:0;border-radius:0;background:none;padding:6px 0 10px;margin-top:4px;min-height:96px}.code-import textarea:focus{outline:none}.code-import>button{width:100%;margin:0;border:0;border-top:1px solid var(--glass-line);border-radius:0;background:none;padding:11px 12px;text-align:center}.code-import>button:hover{background:var(--glass-raised);filter:none}.code-import:focus-within{border-color:rgba(236,243,230,.42)}
