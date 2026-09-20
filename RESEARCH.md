@@ -571,6 +571,75 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Two bearings that agreed with each other and disagreed with the screen
+
+The wind dial was turned by the wind bearing alone, so it pointed the same way whichever direction you faced. That is a weather report, not an aid: the number a golfer wants is how the wind lies against the shot in front of them. Subtracting the camera heading makes it screen-relative — straight up is wind going away from you, right is a crosswind running left to right.
+
+It was subtracted the wrong way round, and the reason is worth keeping.
+
+Both bearings are `atan2(x, z)`. They agree with each other perfectly, which is what made the mistake invisible. But that convention runs **counter-clockwise on screen**, because looking along +z puts local +x on the *left* — the same fact `mapPoint` is built on and documents in its own comment. CSS `rotate` is clockwise. So the arrow was mirrored, and turning the camera swung it the wrong way, which reads exactly as an arrow following the camera rather than holding still against the world.
+
+**The obvious check cannot fail.** Wind straight downrange with the camera looking downrange is zero either way round. Any test written against the easy case passes on both the right answer and its mirror; the error only appears once the camera leaves that axis. A sign convention needs a case where the two candidates differ, and picking one is the entire test.
+
+## The hole map was sitting on paper
+
+Two complaints, three causes.
+
+**The white surround.** `mapWater` is the colour *beyond* the generated land — sea on the island biome, a pale `#e0e5d5` on the other seven — and it is laid down as the base coat for the whole canvas. On the full-course map the terrain tile paints over all of it, so that pale default only ever showed outside the world rectangle and nobody looked twice. Hole view draws no such tile, so the base coat *was* the surround: a hole on paper, ringed in near-white. In hole view it is the biome's own rough now, with a `mapGround` override for a biome that ever wants something else.
+
+**The green went soft at high resolution**, and that was two things stacking. The contour tile is baked at 96x96, which is generous at hole scale where the green is a smudge and about four screen pixels per texel once the map frames the green; it is 256 there, built once per green and cached. Underneath that, the canvas backing store was hardcoded at `clientWidth x 2` rather than the display's own ratio, so anything sharper than 2x was already being upscaled by the compositor before the tile was magnified on top of it. Device ratio now, capped at 3. `mapPixels` divides by whatever ratio it finds, so pointer input followed without a change.
+
+## The green, as a state the whole HUD reads
+
+Three things key off one question — is the ball on the putting surface — and `localSurface` answers it exactly: it returns `'green'` when `greenDistance <= 0` and not otherwise, so `surface === 'green'` already *is* the strict test. A second `greenDistance` check elsewhere in the file was testing the same thing twice.
+
+**The putter** was chosen by `surface === 'green' || d < 18`. That second clause handed you a putter from eighteen yards out — in the fringe, off a bank, out of a greenside bunker, anywhere at all so long as it was close. Gone. Short shots off the green now auto-pick the shortest club at full power, which is what the game has always done between 18 and 65 yards; the behaviour is not new, it just reaches further down. **Still open**: power should scale to the distance rather than defaulting to 100%.
+
+**The pin comes out**, which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
+
+**The marker therefore names the hole**, and stops being a thing that floats over a flag and drifts off the edge. It clamps to the screen and turns to point at the cup.
+
+That needed a marker projection of its own. `project` reports whether a point is within the depth range and says nothing about the sides — and behind the camera it is worse than useless, because the perspective divide is by a negative w, so both axes flip and the marker lands on the *opposite* side from the thing it marks. `projectMarker` reads front-or-behind from camera space, mirrors the flip back, clamps, and reports the screen bearing.
+
+**It clamps to a measured rectangle, not an even inset.** An even margin assumes the four edges are equally free and they are not: the bottom of the screen is the shot controls and the right is the hole map. The panels are draggable and resizable, so the rectangle is measured rather than tabulated, twice a second rather than per frame — `getBoundingClientRect` forces layout, and a panel that was just dragged can wait half a second to be noticed. It never gives up more than a third of the screen to either side, because a marker squeezed into nothing is worse than one overlapping a panel. And it pushes out from the rectangle's *own* centre: through an off-centre rectangle, the screen centre lands short on one side and past the edge on the other.
+
+## Debris that is carried rather than fired
+
+The wind motes travelled in exact parallel lines at one speed, which reads as a texture being scrolled past the camera. Each one now has its own sway rate, bob rate and a little spread in how hard the wind pushes it.
+
+The sway is a sideways **velocity** that swings through zero, not a position offset. Integrating a bounded oscillation gives a bounded weave across the airflow; adding an offset directly would let a mote settle permanently downwind of its own path. The perpendicular is taken from the wind vector itself, so the weave stays square to the airflow however hard it is blowing.
+
+They have tails now as well. `gl_PointCoord` is screen space and axis-aligned, so a sprite cannot work out which way it is travelling — but the wind is one vector for the whole scene, so resolving it onto the camera's right and up axes once a frame gives every particle its screen direction from a single uniform. The shape is a semicircular head with a taper behind it, and it is deliberately **shape rather than an alpha gradient**: these sprites are a few pixels across, a gradient over that is invisible, and it would need a second injection point into three's fragment chain for nothing.
+
+One known inconsistency: the tails point along the mean wind while each mote now wobbles slightly off it. Fixing that needs a per-particle direction attribute, and at this sprite size it has not been worth one.
+
+## An aim line that belongs to the surface it is drawn on
+
+A full shot's aim line is lifted 100 mm so it clears the ground it crosses: it describes a ball about to be in the air, and the ground in between is not the subject. `setAimPath` — the breaking-putt preview — inherited that number, and a putt is the opposite case. The line *is* the green. At 100 mm it floated two ball-heights up and appeared to leave from the top of the ball.
+
+15 mm now, and the exact number is the point: the ball's centre sits one radius up at 21 mm, so 15 mm passes below its equator and the ball sits **on** the line rather than hanging off it. Flat on the surface would have looked painted on and left the ball floating above its own line. There is nothing to z-fight with either — the putting rings are already at 25 mm and the lie scatter at 35 mm.
+
+## The flight model against a launch monitor
+
+Thirty-six shots from a SkyTrak skills assessment (`reference/Export_SA_09182026_180829.pdf`, pages 7 to 11, with the ball data extracted to `reference/skytrak-36-shots.txt`) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
+
+One note on the extraction, because it nearly poisoned the whole comparison: `pdftotext -layout` scrambles several of these tables, shuffling carry and offline between rows. `-table` reads them correctly. The parsed values were checked against the sheet's own per-target AVG rows -- nine targets by fourteen fields, zero mismatches -- which is the only reason to trust any of the numbers below.
+
+| field | mean error | typical miss |
+|---|---|---|
+| Carry | −0.5 yd (−0.4%) | 2.9 yd (1.9%) |
+| Descent angle | 0.00 deg | 1.40 deg |
+| Apex height | +0.9 yd | 1.33 yd |
+| Offline | +0.7 yd | 1.36 yd |
+
+Carry is unbiased at under 2%, and descent angle — the one quantity that was never fitted to anything — averages exactly zero error. Offline holding to a yard and a third across shots straying up to 50 yards off line is the spin-axis handling being right.
+
+**Four things limit what this proves.** SkyTrak measures ball speed, launch and spin optically and then *simulates* the flight itself, so this is model against model over shared measured inputs, not against ground truth. The export names no altitude or temperature, and across a plausible range the mean carry error moves from −1.2 to +1.0 yd, which contains the −0.5 yd bias. The sheet reports flight time in whole seconds only, so a 0.38 s typical miss is smaller than its own step size and that column cannot grade anything. And it is irons and wedges at 78 to 139 mph ball speed — no driver, so the high-speed end is untested.
+
+**Roll and total are not a verdict**: the model's balls landed on a driving range, 23 of 36 in rough, and SkyTrak applies one assumed surface. Validating roll needs data with a stated landing surface.
+
+Where the two disagree it is not random. Above a 13-yard apex the mean carry error is 0.00 yd; below it the model is 2.1 yd short, and the three worst shots are all low-launch long irons where SkyTrak reports carries that look long for the trajectory — 192 yards off an 11-yard apex, against our 183.
+
 ## The grove is grown now, and the level of detail it "needed" was imaginary
 
 Every plant in the redwood biome comes from `tools/grow.mjs`. No borrowed crown, no drawn cylinder, no pack model. The mix went from three species and a christmas tree to nine:

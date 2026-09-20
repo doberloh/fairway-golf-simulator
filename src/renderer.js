@@ -1075,7 +1075,7 @@ export class GolfView{
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
   if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp());}
-for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
+for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
   if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.greenGrid=null;this.reading=null;
@@ -1103,6 +1103,11 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.scatter=new T.Points(geometry,material);this.scatter.renderOrder=4;this.group.add(this.scatter);
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
+ // THE PIN IS PULLED ONCE YOU ARE PUTTING, which is what happens on a real
+ // green and takes the one object standing between the ball and the cup out
+ // of the read. The cup, its liner and the floor are separate objects and
+ // stay: it is the flagstick that goes, not the hole.
+ setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
  updateGreenGrid(){this.reading?.update(this.elapsed-this.readingEpoch);}
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
  // WHAT PUTS THE BALL ON THE GROUND.
@@ -1216,6 +1221,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  // Draws a path the ball will actually take rather than a straight bearing, so a
  // breaking putt shows its curve. Points arrive in hole-local coordinates.
+ //
+ // FIFTEEN MILLIMETRES, NOT A HUNDRED. A full shot's aim line is lifted 100 mm
+ // so it clears the ground it crosses -- it describes a ball that is about to
+ // be in the air, and the ground between here and there is not the subject. A
+ // putt is the opposite: the line IS the green, and at 100 mm it floated two
+ // ball-heights up and appeared to leave from the top of the ball rather than
+ // from under it.
+ //
+ // 15 mm sits below the ball's equator (the ball's centre is one radius up, so
+ // 21 mm), which is what puts the ball ON the line instead of hanging off it,
+ // and still stands clear of the surface. For reference the putting rings sit
+ // at 25 mm and the lie scatter at 35 mm, so nothing here z-fights.
  setAimPath(points,distance){
   if(points.length<2)return;
   // Same line, so it writes the same way: two writers replacing and rewriting the
@@ -1223,7 +1240,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const flat=this.aimScratch(points.length);
   points.forEach((q,i)=>{
    const v=this.course.toWorld(q),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.10;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.015;flat[at+2]=v.z;
   });
   this.writeLine(this.aimLine,flat,points.length);
   const last=(points.length-1)*3;
@@ -1475,10 +1492,63 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
  project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);return{x:(v.x*.5+.5)*this.canvas.clientWidth,y:(-.5*v.y+.5)*this.canvas.clientHeight,visible:v.z<1&&v.z>-1};}
+ // A MARKER THAT CANNOT LEAVE THE SCREEN. `project` answers where a point
+ // lands and whether it is in the depth range; it says nothing about the sides,
+ // and behind the camera it is worse than useless -- the perspective divide is
+ // by a negative w, so both axes flip and the marker appears on the OPPOSITE
+ // side to the thing it marks. This clamps to the viewport with a margin and
+ // reports the screen direction, so a caller can point the marker at whatever
+ // it has been pushed away from.
+ // WHICH WAY THE CAMERA IS FACING, as a compass bearing in degrees with 0
+ // along +z -- the same convention `windDirection` uses, so the two can be
+ // subtracted. Read from the camera's own world matrix rather than from
+ // `look`, which lags it by a frame of damping.
+ cameraHeading(){const f=new T.Vector3();this.camera.getWorldDirection(f);return Math.atan2(f.x,f.z)*180/Math.PI;}
+ // CLAMPED TO A RECTANGLE, NOT AN EVEN MARGIN. A single inset assumes the
+ // edges are equally free and they are not: the bottom of the screen is the
+ // shot controls and the right is the hole map, so a marker pushed to either
+ // lands behind a panel. The caller passes what is actually clear -- it can
+ // measure the panels, which move -- and the default is a plain inset for a
+ // caller that has nothing to say.
+ projectMarker(p,insets=30){
+  const i=typeof insets==='number'?{top:insets,right:insets,bottom:insets,left:insets}:insets;
+  const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z);
+  // Camera space rather than the projected z: three looks down its own -z, so
+  // a positive z here is behind the lens, which is the case the flip comes from.
+  const behind=v.clone().applyMatrix4(this.camera.matrixWorldInverse).z>0;
+  const ndc=v.project(this.camera),W=this.canvas.clientWidth,H=this.canvas.clientHeight;
+  let x=(ndc.x*.5+.5)*W,y=(-.5*ndc.y+.5)*H;
+  if(behind){x=W-x;y=H-y;}              // undo the flip, so the direction is true
+  // The free rectangle, and its own centre -- pushing out from the SCREEN
+  // centre through an off-centre rectangle lands short on one side and over
+  // the edge on the other.
+  const L=i.left,R=Math.max(L+1,W-i.right),T=i.top,B=Math.max(T+1,H-i.bottom);
+  const cx=(L+R)/2,cy=(T+B)/2;
+  let dx=x-cx,dy=y-cy;
+  if(!dx&&!dy)dy=1;                     // dead centre and behind: send it downward
+  const reach=(d,half)=>d?half/Math.abs(d):Infinity;
+  const s=Math.min(reach(dx,(R-L)/2),reach(dy,(B-T)/2));
+  const outside=behind||s<1;
+  if(outside){x=cx+dx*s;y=cy+dy*s;}
+  // Screen bearing, 0 pointing up, for rotating the marker toward its subject.
+  return {x,y,clamped:outside,angle:Math.atan2(dx,-dy)*180/Math.PI};
+ }
  pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
 }
 export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
- const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;ctx.fillStyle=world.bio.mapWater;ctx.fillRect(0,0,w,h);
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;
+ // THE BASE COAT IS WHAT YOU SEE AROUND THE HOLE, so it has to be ground.
+ // `mapWater` is the colour BEYOND the generated land -- sea on the island,
+ // a pale #e0e5d5 everywhere else -- and on the full-course map the terrain
+ // tile paints over all of it, so the pale default only ever showed outside
+ // the world rectangle. Hole view draws no such tile, so the same base coat
+ // was the entire surround: a hole sitting on paper, ringed in near-white.
+ //
+ // In hole view the surround is the biome's own rough, which is what is
+ // actually out there. `mapGround` lets a biome override it without
+ // disturbing what its sea looks like.
+ ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
+ ctx.fillRect(0,0,w,h);
  // The nav rides on the CANVAS beside its transform. Five call sites draw this
  // map from four different places, and threading a pan/zoom argument through
  // all of them is how one of them ends up not having it -- which would read as
@@ -1518,7 +1588,13 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // as a flat disc.
  if(transform.focus==='green'&&canvas.mapHeat!==false){
   try{
-   const tile=greenHeatTile(course);
+   // 256 RATHER THAN THE DEFAULT 96, because this is the one view that
+   // magnifies the tile. At hole scale the green is a smudge and 96 is more
+   // than enough; framed on the green the same 96 texels are stretched over
+   // the whole canvas, which is about four screen pixels each and reads as
+   // pixellation however good the smoothing is. The field is built once per
+   // green and cached, so the cost is one-off.
+   const tile=greenHeatTile(course,256);
    if(!tile.flat){
     // THE TILE IS PROJECTED, NOT FITTED INTO A BOX. `mapPoint` is
     // `w/2 - (p - c) * scale` on BOTH axes, so the map is the world turned

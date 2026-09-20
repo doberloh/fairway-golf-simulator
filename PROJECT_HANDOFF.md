@@ -70,7 +70,7 @@ Pinned dependencies: Three.js 0.186.0, ws 8.21.3, Lucide 1.44.0, Vite 8.3.0, vit
 | bench/baseline.json | The last saved measurement, for `--since` |
 | src/lakes.js | Large-lake open-space candidate selection and procedural bank profiles |
 | src/homes.js | Dry/gentle housing sites, tree exclusion footprints, terrain-fitted foundations and varied cartoon house meshes |
-| src/renderer.js | Three scene lifecycle, ball/cup/flag, camera modes, pond geometry and minimap drawing |
+| src/renderer.js | Three scene lifecycle, ball/cup/flag, camera modes, pond geometry and minimap drawing. `projectMarker` clamps a world point to a screen rectangle; `cameraHeading` is the camera bearing in the same `atan2(x, z)` convention the wind uses; `setPinOut` hides the flagstick |
 | src/water.js | MIT-licensed Three planar water implementation with render-target disposal and adjustable reflection-plane height |
 | src/vegetation.js | Instanced biome trees, shrubs, grass and rock geometry |
 | src/textures.js | Procedural textures and foliage animation shader hooks |
@@ -119,6 +119,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 `setMode('play')` restores the camera when it finds free flight. `setUpTurn` no longer swaps the camera mode at all (see the putting-camera note below), so without that a round entered from the studio starts in free flight and silently refuses every shot.
 
 ## Data flow and units
+
+**SCREEN BEARINGS ARE COUNTER-CLOCKWISE, CSS ROTATION IS CLOCKWISE.** Everything angular in this codebase is `atan2(x, z)` -- wind direction, camera heading, aim -- and looking along +z puts local +x on the LEFT, which `mapPoint` depends on. Any of those bearings driving a CSS `rotate` has to be negated. A test written against the easy case cannot catch this: wind downrange with the camera looking downrange is zero either way round, so the mirror only shows when the camera leaves the axis.
+
+**`project` is not safe for a marker.** It reports whether a point is in the depth range and nothing about the sides, and behind the camera the perspective divide is by a negative w, so both axes flip and a label lands on the opposite side from its subject. Use `projectMarker`, which reads front-or-behind from camera space and clamps to a rectangle the caller measures.
 
 `main.js` loads/validates settings and a Round, builds `generateWorld(settings)`, selects `world.holes[round.hole]`, and passes the world to the renderer. A hole contains playing-local geometry/functions and `toWorld`/`toLocal`. The Round stores current golfer/team lies in the current hole's local coordinates. Three meshes and the full-course map use world coordinates; the hole map and physics use local coordinates. Never mix these implicitly.
 

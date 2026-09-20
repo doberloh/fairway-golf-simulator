@@ -299,13 +299,18 @@ function setUpTurn(){
  endPick();
  aimRange=null;const p=round.position;shape=0;launchAdjust=0;spinAdjust=0;
  const d=distance()/YARD;
- $('club').value=course.surface(p.x,p.z)==='green'||d<18?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
+ // PUTTER ONLY ON THE PUTTING SURFACE. `localSurface` returns 'green'
+ // exactly when `greenDistance <= 0`, so this IS the strict "touching the
+ // green" test. The `d<18` that used to sit beside it handed you a putter
+ // from eighteen yards out in the fringe, off a bank, out of a greenside
+ // bunker -- anywhere at all, so long as it was close.
+ $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
  $('power').value=$('club').value==='putter'?clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100):100;
  const target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
  view.setBall(p);updateAim();view.setCamera(p,aim);updateHUD();sendPlayer();
 }
 function updateHUD(){
- const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to pin';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
+ const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
   // Reading is off on a practice ground: the bench green is dead flat, so the
   // grid paints one colour and the heat map one shade. Switches that can only
@@ -356,6 +361,7 @@ function updateHUD(){
   :`Shot ${scoreText(round.stroke)}${round.mode!=='stroke'?' · Team '+p.team:''}`;
  drawLiveScore();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
+ view.setPinOut?.(ballOnGreen);
  // THE MAP FOLLOWS THE BALL ONTO THE GREEN. Framed on the green it also paints
  // the contour field, which is the view the 3D overlay cannot give you: from
  // the ball the far half of the green is a few pixels tall.
@@ -366,7 +372,7 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO PIN':'YARDS TO PIN';$('windSpeed').textContent=settings.wind;$('windArrow').style.transform=`rotate(${settings.windDirection}deg)`;$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
  $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The indicator is driven by the DEVICE; the stripped-down controls are driven
@@ -838,7 +844,7 @@ function beginDrop(){
  closePanel();dropState={origin:{...round.position},candidate:{...round.position},mode:view.config.mode};$('dropBar').hidden=false;keys.clear();
  view.config.mode='free';view.wasFree=true;const p=course.toWorld(round.position);view.targetPos.set(p.x,world.height(p.x,p.z)+50,p.z-30);view.freeYaw=0;view.freePitch=-1.03;view.updateFreeLook();updateExplorer();$('world').classList.add('dropping');previewDrop(round.position);updateHUD();
 }
-function previewDrop(p,fields=true){if(!dropState)return;dropState.candidate={x:p.x,z:p.z};view.setBall(p);if(fields){$('dropX').value=((p.x-dropState.origin.x)/YARD).toFixed(2);$('dropZ').value=((p.z-dropState.origin.z)/YARD).toFixed(2);}const w=course.toWorld(p),valid=Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(w.x)<=world.halfX&&Math.abs(w.z)<=world.halfZ;$('confirmDrop').disabled=!valid;$('dropSummary').textContent=valid?`${course.surface(p.x,p.z)} · ${(Math.hypot(p.x-course.pin.x,p.z-course.pin.z)/YARD).toFixed(1)} yd to pin · no penalty`:'Choose a point within the generated course.';drawMap($('map'),course,p,[],true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}
+function previewDrop(p,fields=true){if(!dropState)return;dropState.candidate={x:p.x,z:p.z};view.setBall(p);if(fields){$('dropX').value=((p.x-dropState.origin.x)/YARD).toFixed(2);$('dropZ').value=((p.z-dropState.origin.z)/YARD).toFixed(2);}const w=course.toWorld(p),valid=Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(w.x)<=world.halfX&&Math.abs(w.z)<=world.halfZ;$('confirmDrop').disabled=!valid;$('dropSummary').textContent=valid?`${course.surface(p.x,p.z)} · ${(Math.hypot(p.x-course.pin.x,p.z-course.pin.z)/YARD).toFixed(1)} yd to hole · no penalty`:'Choose a point within the generated course.';drawMap($('map'),course,p,[],true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}
 function endDrop(){const mode=dropState.mode;dropState=null;$('dropBar').hidden=true;$('world').classList.remove('dropping');view.config.mode=mode;setUpTurn();updateExplorer();save();}
 function cancelDrop(){if(!dropState)return;endDrop();toast('Drop cancelled. Your original lie is unchanged.');}
 function confirmDrop(){if(!dropState||$('confirmDrop').disabled)return;try{round.simDrop(dropState.candidate);endDrop();toast('Sim drop placed. No penalty added.');}catch(e){toast(e.message);}}
@@ -1499,6 +1505,54 @@ function redrawMap(){
 // Pointer position in the canvas's own pixels. The canvas is drawn at twice its
 // CSS size, so the two frames are NOT interchangeable and mixing them puts a
 // click at half the distance from the centre that it should be.
+// THE WIND ARROW READS AGAINST WHAT YOU ARE LOOKING AT. It used to be turned
+// by the wind bearing alone, so it pointed the same way whichever direction
+// you faced -- which is a weather report, not an aid. Straight up means the
+// wind is going away from you, right means it crosses left to right. The tilt
+// that makes it read as lying on the ground is CSS; this only supplies the
+// bearing.
+//
+// CAMERA MINUS WIND, NOT WIND MINUS CAMERA, and the order is the whole bug.
+// Both bearings are `atan2(x, z)`, so they agree with each other -- but that
+// convention runs COUNTER-CLOCKWISE on screen, because looking along +z puts
+// local +x on the left (the same fact `mapPoint` is built on). CSS `rotate` is
+// clockwise. Subtracting the other way round mirrored the arrow, so turning
+// the camera swung it the wrong way and it read as following the camera
+// rather than holding still against the world.
+//
+// Check it against a case with a known answer: wind straight downrange and the
+// camera looking downrange must give zero, and both orders do -- which is why
+// this looked right until the camera moved.
+// WHAT IS ACTUALLY CLEAR ON SCREEN, for clamping the hole marker. Measured
+// rather than assumed, because the panels are draggable and resizable -- a
+// table of constants would be wrong the moment anyone moved one. Re-measured
+// twice a second rather than per frame: `getBoundingClientRect` forces layout,
+// and a panel that has just been dragged can wait 500 ms to be noticed.
+let hudInsetsAt=-1e9,hudInsetsCache={top:70,right:30,bottom:30,left:30};
+function hudInsets(now){
+ if(now-hudInsetsAt<500)return hudInsetsCache;
+ hudInsetsAt=now;
+ const scene=$('scene');if(!scene)return hudInsetsCache;
+ const sr=scene.getBoundingClientRect(),ins={top:70,right:30,bottom:30,left:30},gap=14;
+ const showing=el=>el&&!el.hidden&&el.offsetParent&&el.getBoundingClientRect().width>0;
+ const bottom=document.querySelector('.bottom-area'),map=document.querySelector('.minimap');
+ if(showing(bottom))ins.bottom=Math.max(ins.bottom,sr.bottom-bottom.getBoundingClientRect().top+gap);
+ if(showing(map))ins.right=Math.max(ins.right,sr.right-map.getBoundingClientRect().left+gap);
+ // A marker squeezed into nothing is worse than one overlapping a panel, so
+ // never give up more than a third of the screen to either.
+ ins.bottom=Math.min(ins.bottom,sr.height/3);
+ ins.right=Math.min(ins.right,sr.width/3);
+ hudInsetsCache=ins;
+ return ins;
+}
+function setWindArrow(){
+ const el=$('windArrow');if(!el)return;
+ const wind=settings.windDirection||0;
+ let bearing=-wind;
+ try{bearing=view.cameraHeading()-wind;}catch{}
+ el.style.transform='';
+ el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+}
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
@@ -2421,7 +2475,13 @@ function startTour(){if(flight||dropState)return;cancelAdvance();closePanel();to
 function stopTour(){if(!tour)return;const camera=tour.camera;if(view.puttingRings)view.puttingRings.visible=tour.puttingRings;tour=null;Object.assign(view.config,camera);view.config.mode=playCameraMode('player',course,round.position);view.setGreenReading();view.setBall(round.position);view.setCamera(round.position,aim,true);updateAim();updateExplorer();}
 function cameraMode(mode){if(flight)return;stopTour();view.config.mode=playCameraMode(mode,course,round.position);view.setCamera(round.position,aim,true);updateExplorer();save();}
 function bind(){
- new ResizeObserver(()=>{const c=$('map'),w=Math.round(c.clientWidth*2),h=Math.round(c.clientHeight*2);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
+ // BACKING STORE AT THE DISPLAY'S OWN RATIO, not a hardcoded 2. On anything
+ // sharper than 2x -- which is most laptops at a scaled resolution -- the map
+ // was being drawn at less than native and then upscaled by the compositor,
+ // so it was already soft before the green tile was magnified on top of it.
+ // Capped at 3 because the gain above that is invisible and the fill cost is
+ // not. `mapPixels` divides by the ratio it finds, so pointer input follows.
+ new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1),3),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
  // The course card's menu button is gone from every mode -- the card reports the
  // hole, and a second way into the menu sitting on top of it was clutter beside
  // the nav that already does the job.
@@ -2982,10 +3042,32 @@ function tick(now){
  // when this lived in updateExplorer, which does not run per shot.
  view.setReadingHidden(!!flight);
  view.render(dt);
+ setWindArrow();
  const worldLabels=!flight&&view.config.mode!=='free';
- const pin=course.pin,label=view.project({x:pin.x,y:course.height(pin.x,pin.z)+6,z:pin.z});
- $('flagLabel').style.left=label.x+'px';$('flagLabel').style.top=label.y+'px';
- $('flagLabel').style.visibility=label.visible&&worldLabels?'visible':'hidden';
+ // ON THE GREEN THE MARKER IS THE ONLY DISTANCE THERE IS, because the
+ // flagstick has been pulled and there is nothing left out there to judge
+ // against. So it stops being a thing floating over the pin that can drift off
+ // the edge, and becomes a marker that clamps to the nearest edge and turns to
+ // point at the cup. Everywhere else it behaves as it did -- over the flag,
+ // hidden when the flag is not in view.
+ const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
+ const flagEl=$('flagLabel');
+ // The narrow-screen rule hides this marker, which is right everywhere except
+ // on the green, where it is the only distance there is. The class is what
+ // lets the stylesheet tell those two apart.
+ flagEl.classList.toggle('putting',!!ballOnGreen);
+ if(ballOnGreen&&worldLabels){
+  const m=view.projectMarker(pinTop,hudInsets(now));
+  flagEl.style.left=m.x+'px';flagEl.style.top=m.y+'px';
+  flagEl.style.visibility='visible';
+  flagEl.classList.toggle('edge',m.clamped);
+  flagEl.style.setProperty('--point',m.angle.toFixed(1)+'deg');
+ }else{
+  const label=view.project(pinTop);
+  flagEl.style.left=label.x+'px';flagEl.style.top=label.y+'px';
+  flagEl.style.visibility=label.visible&&worldLabels?'visible':'hidden';
+  flagEl.classList.remove('edge');
+ }
  // THE AIM POINT, read where you are looking rather than in a bar at the bottom.
  // Lower than the pin's marker (3 m against 6) because it marks a spot on the
  // ground, not a flag, and a label floating at flag height over bare fairway
@@ -3006,6 +3088,15 @@ function tick(now){
    $('aimLabel').style.visibility=q.visible?'visible':'hidden';
    const d=Math.hypot(a.x-round.position.x,a.z-round.position.z);
    $('aimLabelDistance').textContent=d<10?`${(d/.3048).toFixed(1)} ft`:String(Math.round(d/YARD));
+   // RISE TO THE AIM POINT, in feet, the same convention the map footer uses
+   // for the pin. Shown even at zero rather than appearing past a threshold:
+   // the aim point moves continuously, and a readout that blinks in and out
+   // as it crosses a boundary is worse than one that sometimes says nothing
+   // is happening. `course.height` is hole-local, which is what `a` already is.
+   if($('aimLabelRise')){
+    const rise=(course.height(a.x,a.z)-course.height(round.position.x,round.position.z))*3.28084;
+    $('aimLabelRise').textContent=`${rise<-.5?'↘':rise>.5?'↗':'→'} ${Math.abs(rise).toFixed(0)} FT`;
+   }
   }
  }
 }
