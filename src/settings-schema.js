@@ -97,7 +97,7 @@ export const CATEGORIES=[
  ['turf','Fairways & greens'],
  ['bunkers','Bunkers'],
  ['ponds','Ponds & lakes','Depths set the deepest point; every shore still slopes to nothing at the bank.'],
- ['streams','Rivers & creeks','Channels may cross fairways, but route around tees, greens, ponds and bunkers. A course with no room simply gets fewer of them.'],
+ ['streams','Rivers & creeks','(EXPERIMENTAL) Channels may cross fairways, but route around tees, greens, ponds and bunkers. A course with no room simply gets fewer of them.'],
  ['scenery','Trees & scenery'],
  ['weather','Weather'],
 ];
