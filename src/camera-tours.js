@@ -84,3 +84,93 @@ export function makeHoleTour(h) {
  }
  return {pose, duration, travel: 0, radius, centre, ground};
 }
+
+// A FLIGHT BETWEEN TWO CAMERA POSES.
+//
+// `setCamera` has always eased toward its target, but it snapped whenever the
+// move was longer than sixty metres -- and every move worth watching is longer
+// than sixty metres. Tee to green view, the menu's orbit to the tee, a flyover
+// back to the ball: all of them cut. This builds the path those moves should
+// take instead, and the renderer flies it.
+//
+// It is the flyover's arithmetic, shortened: sample the ground under the route,
+// lift over what is there, smooth the result so the rise has no corner in it.
+// How far above whatever it passes over the camera holds. The flyover uses 34
+// because it never descends; a transition flight ends ON a player camera a metre
+// and a half off the turf, so it clears what is actually in the way -- the
+// ground, and the canopy standing on it -- rather than holding an altitude.
+const GROUND_MARGIN = 4.5;
+// The arc, as a fraction of how far the flight travels. This is the part that
+// reads as flying rather than sliding: nothing demands it, and without it a move
+// across open ground is a straight line at walking height.
+const ARC_SHARE = .07, ARC_CAP = 42;
+// Cruise. Long moves are capped by FLIGHT_MAX rather than run at this speed, so
+// crossing a whole course takes a beat longer per metre than crossing a green.
+const FLIGHT_SPEED = 135;
+export const FLIGHT_MIN = .55, FLIGHT_MAX = 2.6;
+// Below this a flight is not worth taking: it is an aim nudge or a step behind
+// the ball, and the renderer's own damping already reads as movement.
+export const FLIGHT_FLOOR = 22;
+const SAMPLES = 40;
+
+export function makeCameraFlight(from, to, world) {
+ const dx = to.eye.x - from.eye.x, dy = to.eye.y - from.eye.y, dz = to.eye.z - from.eye.z;
+ const span = Math.hypot(dx, dy, dz);
+ const duration = Math.min(FLIGHT_MAX, Math.max(FLIGHT_MIN, span / FLIGHT_SPEED));
+ const terrain = world?.height ? (x, z) => world.height(x, z) : () => 0;
+ const at = t => ({x: from.eye.x + dx * t, z: from.eye.z + dz * t});
+ // THE CANOPY IS THE OBSTACLE, NOT THE DIRT. Trees on this generator reach 29 m,
+ // so a flight that clears only the ground flies through them. The whole tree
+ // list is scanned once, down to the ones standing near this route -- one pass
+ // over the array per flight, against forty samples that would each otherwise
+ // have to ask the same question.
+ const lo = {x: Math.min(from.eye.x, to.eye.x), z: Math.min(from.eye.z, to.eye.z)};
+ const hi = {x: Math.max(from.eye.x, to.eye.x), z: Math.max(from.eye.z, to.eye.z)};
+ const PAD = 26;
+ const near = (world?.trees || []).filter(t =>
+  t.x > lo.x - PAD && t.x < hi.x + PAD && t.z > lo.z - PAD && t.z < hi.z + PAD);
+ // Same reach `cameraInsideTree` uses, so "the camera is in a tree" and "the
+ // flight cleared the trees" cannot disagree about where a tree ends.
+ const canopy = (x, z) => {
+  let top = -Infinity;
+  for (const t of near)
+   if (Math.hypot(x - t.x, z - t.z) < t.r * 1.9 + 4) top = Math.max(top, t.y + t.h * 1.18);
+  return top;
+ };
+ // The obstacle floor tapers to nothing at both ends. Without that, a flight
+ // leaving a player camera -- which sits just off the turf by design -- would be
+ // told it is metres too low and start by rocketing upward.
+ let prof = Array.from({length: SAMPLES + 1}, (_, i) => {
+  const t = i / SAMPLES, p = at(t), straight = from.eye.y + dy * t;
+  const w = Math.min(1, Math.min(t, 1 - t) / .18);
+  let high = -Infinity;
+  for (const o of [-8, 0, 8]) high = Math.max(high, terrain(p.x + o, p.z), terrain(p.x, p.z + o));
+  high = Math.max(high, canopy(p.x, p.z));
+  // sin gives an arc that is already zero at both ends and steepest in the
+  // middle, so it needs no taper of its own.
+  const arc = Math.min(ARC_CAP, span * ARC_SHARE) * Math.sin(Math.PI * t);
+  return Math.max(straight + arc, (high + GROUND_MARGIN) * w + straight * (1 - w));
+ });
+ // Clamping per sample clears the ground and still looks wrong: the path kinks
+ // wherever the terrain crosses it. Smoothed, the camera rises to meet a ridge
+ // before it arrives and settles after it, which is what a helicopter does.
+ for (let pass = 0; pass < 4; pass++)
+  prof = prof.map((v, i) => i === 0 || i === SAMPLES ? v : Math.max(v, (prof[i - 1] + v * 2 + prof[i + 1]) / 4));
+ const heightAt = t => {
+  const f = Math.max(0, Math.min(1, t)) * SAMPLES, i = Math.floor(f), g = f - i;
+  return i >= SAMPLES ? prof[SAMPLES] : prof[i] * (1 - g) + prof[i + 1] * g;
+ };
+ // Smoothstep: the move starts and stops at rest, which is what makes it read as
+ // a camera being flown rather than a cut with a slide on the end.
+ const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+ const mix = (a, b, t) => a + (b - a) * t;
+ function pose(seconds) {
+  const t = ease(seconds / duration), p = at(t);
+  return {
+   eye: new T.Vector3(p.x, heightAt(t), p.z),
+   look: new T.Vector3(mix(from.look.x, to.look.x, t), mix(from.look.y, to.look.y, t), mix(from.look.z, to.look.z, t)),
+   done: seconds >= duration,
+  };
+ }
+ return {pose, duration, span};
+}

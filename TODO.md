@@ -18,6 +18,67 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+## Boot, generation and camera flights
+
+- [x] **A splash screen, because boot showed the play HUD over an empty canvas.**
+  Building the renderer, restoring a saved round and growing the menu's showcase
+  hole all happen before `openMenu()` stamps a mode on the shell, and until that
+  stamp lands the shot controls, minimap and weather panel sit over nothing. The
+  splash is in `index.html` itself rather than built by script -- anything script
+  builds arrives after the span it is meant to cover. Blacked out with the
+  brandmark and wordmark over it, dismissed once the menu is up and then removed
+  from the DOM, so an invisible full-screen element cannot eat a click. The fatal
+  path dismisses it too: a black screen hiding the message that explains the
+  black screen is the worst version of this.
+
+- [x] **Camera transitions fly instead of cutting.** `setCamera` has always eased
+  toward its target, but it snapped whenever the move was over sixty metres --
+  and every move worth watching is over sixty metres. `makeCameraFlight` builds
+  the path instead: sample the ground AND the canopy under the route, lift over
+  what is there, smooth the profile so the rise has no corner, and ease in and
+  out with a smoothstep so the move starts and stops at rest. One call in
+  `setMode('play')` covers endless, a new round, Continue, the range, an imported
+  round and the way back from the studio; `cameraMode` and the flyover's return
+  use it too. Measured in the browser, a transition ramps 3.6 to 9.1 and back to
+  4.7 in frame-to-frame change, with no single-frame spike -- the ease curve,
+  not a cut.
+
+- [x] **Clearing the ground was not enough, and the first version proved it.**
+  A blanket `terrain + 34` cleared the dirt but imposed a cruise altitude: a
+  forty-metre hop across a green climbed 8.8 m, which reads as a launch. The
+  test caught it. The floor is the real obstacle now -- terrain or the canopy
+  standing on it, whichever is higher, from `world.trees` filtered to a box
+  around the route -- plus a distance-scaled arc that is what actually reads as
+  flying. Nine tests, including the ridge, the kink, the canopy and the trees on
+  the far side of the property that must not lift anything.
+
+- [ ] **Generation still blocks the main thread, and the fix is chunking, not a
+  worker.** Measured with `--cpu-prof` on an 18-hole feature-heavy course:
+  **8.4 s total, and `makeGroundGrid` is 81% of it** (9-hole default 2.4 s,
+  one endless hole 250 ms, the range 94 ms). That settles the open question in
+  the priority list: yielding between phases buys almost nothing when one phase
+  is four fifths of the work. `makeGroundGrid` has three row-major loops and
+  chunks cleanly by row band -- make it a `function*`, drain it synchronously for
+  the tests and the fingerprint tool, and yield to the browser on a time budget
+  for the app. A Web Worker is still the wrong tool: `generateWorld` hands back
+  closures that cannot cross the boundary. Acceptance: the eight biome
+  fingerprints stay identical, controls stay live while generating, and a stale
+  result cannot replace a newer round.
+
+- [ ] **The generating overlay's spinner has never spun.** `.generating-spin` is
+  a ring with a lit top edge and no `animation` property at all -- which nobody
+  noticed because the thread is locked solid the whole time it is on screen.
+  Once generation yields it needs a real animation and a real progress reading,
+  which is the point of the chunking above. The splash's dots animate today
+  because nothing is blocking when they are up.
+
+- [ ] **Endless entry from a cold start still stops for several seconds.**
+  Straight off the main menu an endless run adopts the showcase hole and needs no
+  generation, which is why there is no overlay -- but reached through the Endless
+  panel it generated for over three seconds with the thread locked. Worth
+  checking whether the adopt path is being missed there, separately from the
+  chunking work.
+
 ## Ball flight, after the GC3 session
 
 - [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits

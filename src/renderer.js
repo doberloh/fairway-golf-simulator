@@ -6,6 +6,7 @@ import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
 import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
 import {aimTarget,createShotEffects} from './shot-visuals.js';
+import {makeCameraFlight,FLIGHT_FLOOR} from './camera-tours.js';
 import {mapLayout,mapPoint,tilePlacement} from './course-map.js';
 import {clubColour} from './dispersion.js';
 import {greenHeatTile} from './green-map.js';
@@ -1350,7 +1351,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  hitEffects(p,aim,lie,speed){this.effects.hit(p,aim,lie,speed);}
  setCamera(p,aim,instant=false){
-  this.trackingBall=false;const c=this.config,h=this.course;
+  this.camFlight=null;this.trackingBall=false;const c=this.config,h=this.course;
   if(c.mode==='free'){if(!this.wasFree){this.targetPos.copy(this.camera.position);this.freeYaw=Math.atan2(this.look.x-this.camera.position.x,this.look.z-this.camera.position.z);this.freePitch=Math.asin(T.MathUtils.clamp((this.look.y-this.camera.position.y)/Math.max(.001,this.look.distanceTo(this.camera.position)),-1,1));this.wasFree=true;}this.updateFreeLook();return;}
   this.wasFree=false;
   if(c.mode==='overview'){this.targetPos.set(-this.world.halfX*.4,Math.max(this.world.halfX/Math.min(1,this.camera.aspect),this.world.halfZ)*2.8,-this.world.halfZ*1.1);this.targetLook.set(0,0,40);}
@@ -1367,6 +1368,25 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // where anybody is standing, so a bay's measurements say nothing about them.
   if(c.mode!=='player')this.camera.fov=c.fov;this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
  }
+ // FLY to where setCamera would have put us, instead of cutting there.
+ //
+ // The destination is resolved by setCamera itself rather than worked out again
+ // here: there is one definition of where the play camera stands, and a second
+ // copy of it would drift from the first. So it is asked for the pose instantly,
+ // the pose is taken, and the camera is put back where it was to fly there.
+ //
+ // Short moves are not flown. Under FLIGHT_FLOOR the move is an aim nudge or a
+ // step behind the ball, and the ordinary damping already reads as movement.
+ flyCamera(p,aim){
+  const eye=this.camera.position.clone(),look=this.look.clone();
+  this.setCamera(p,aim,true);
+  if(this.config.mode==='free')return;
+  const to={eye:this.targetPos.clone(),look:this.targetLook.clone()};
+  if(eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
+  this.camera.position.copy(eye);this.look.copy(look);
+  this.camFlight={path:makeCameraFlight({eye,look},to,this.world),elapsed:0};
+ }
+ cancelFlight(){this.camFlight=null;}
  updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}
  rotateFree(dx,dy){this.freeYaw-=dx*.004;this.freePitch=T.MathUtils.clamp(this.freePitch-dy*.003,-1.48,1.48);this.updateFreeLook();}
  moveFree(dt,forward,right,up,fast=false){const speed=this.config.freeSpeed*(fast?3:1)*dt,dir=new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch));this.targetPos.addScaledVector(dir,forward*speed);this.targetPos.x-=Math.cos(this.freeYaw)*right*speed;this.targetPos.z+=Math.sin(this.freeYaw)*right*speed;this.targetPos.y+=up*speed;this.targetPos.x=T.MathUtils.clamp(this.targetPos.x,-this.world.halfX-400,this.world.halfX+400);this.targetPos.z=T.MathUtils.clamp(this.targetPos.z,-this.world.halfZ-400,this.world.halfZ+400);this.targetPos.y=T.MathUtils.clamp(this.targetPos.y,Math.max(this.world.waterLevel+1,this.world.height(this.targetPos.x,this.targetPos.z)+(this.config.freeFloor??1.2)),1800);this.updateFreeLook();}
@@ -1470,7 +1490,11 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // `putting` does not change the RIG -- one camera means one pose for every
  // shot, a putt included -- it only pins the look on the cup while the ball is
  // rolling, so the hole stays still on screen instead of drifting around it.
+ // A ball in the air outranks a camera move. Without this, taking a shot during
+ // an arrival flight leaves the flight still driving the camera and the ball
+ // tracking silently ignored for the rest of the path.
  follow(p,aim,putting=false){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
+  this.camFlight=null;
   const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
 
  render(dt){
@@ -1480,7 +1504,16 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
-  const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}const t=1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.csm){
+  const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
+  // A flight drives the camera outright. The damping below is a spring toward
+  // a target; running both would fight the path and round off its ends.
+  this.camFlight.elapsed+=dt;
+  const q=this.camFlight.path.pose(this.camFlight.elapsed);
+  this.targetPos.copy(q.eye);this.targetLook.copy(q.look);
+  this.camera.position.copy(q.eye);this.look.copy(q.look);
+  if(q.done)this.camFlight=null;
+ }
+ const t=this.camFlight?0:1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.csm){
    // Zoomed all the way out, stretch the cascades over the whole course so every
    // tree keeps its shadow. Ultra only: the cost is resolution up close, and in
    // overview there is nothing up close to spend it on.

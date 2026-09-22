@@ -1126,12 +1126,25 @@ const syncMenuOverlay=()=>{
 // painted before the work begins: show it, let a frame land, then build. A
 // progress bar is not possible without splitting generation up, and the world
 // hands back closures that cannot cross a worker boundary.
-async function whileGenerating(label,work){
- const box=$('generating');$('generatingLabel').textContent=label;box.hidden=false;
+async function whileGenerating(label,work,quiet=false){
+ // `quiet` is for boot, where the splash is already covering the screen and
+ // saying the same words. The frame wait below still matters -- it is what
+ // lets the splash paint before the thread locks up.
+ const box=$('generating');if(!quiet){$('generatingLabel').textContent=label;box.hidden=false;}
  // A frame, or a timeout if frames are not coming: a background tab never fires
  // requestAnimationFrame, and waiting on it alone leaves the app hung on boot.
  await new Promise(r=>{let settled=false;const go=()=>{if(!settled){settled=true;r();}};requestAnimationFrame(()=>setTimeout(go,0));setTimeout(go,150);});
- try{work();}finally{box.hidden=true;}
+ try{work();}finally{if(!quiet)box.hidden=true;}
+}
+// The splash goes when there is something worth looking at, and it is taken out
+// of the DOM afterwards rather than left transparent over the whole app -- an
+// invisible full-screen element that still takes clicks is a bug waiting.
+// Called from the fatal path too: a black screen hiding the one message that
+// explains the black screen is the worst version of this.
+function dismissSplash(){
+ const el=$('splash');if(!el||el.classList.contains('ready'))return;
+ el.classList.add('ready');
+ setTimeout(()=>el.remove(),600);
 }
 // Counts are upper targets, and steep ground can leave no room at all. Say so
 // rather than handing back a course quietly missing what was asked for.
@@ -1150,7 +1163,16 @@ function setMode(mode){
  // The studio leaves the camera flying. setUpTurn only ever swaps player and
  // putt, so without this a round entered from the studio starts in free flight
  // and every shot is refused with no visible reason.
- if(mode==='play'&&view.config.mode==='free'){view.config.mode=playCameraMode('player',course,round.position);view.setCamera(round.position,aim,true);}
+ if(mode==='play'){
+  if(view.config.mode==='free')view.config.mode=playCameraMode('player',course,round.position);
+  // FLY IN RATHER THAN CUT. Every way into play leaves the camera somewhere
+  // else -- orbiting the menu's showcase hole, up in the studio's free flight,
+  // out at a finished green -- and all of them used to arrive as a hard cut.
+  // One call here covers the lot: endless, a new round, Continue, the range,
+  // an imported round and the way back from the studio. Short hops are not
+  // flown; flyCamera measures the move and leaves those to the damping.
+  view.flyCamera(round.position,aim);
+ }
  if(mode!=='play')cancelAdvance();
  syncNav();updateStudioState();updateHUD();updateExplorer();
 }
@@ -2620,8 +2642,8 @@ function connectBridge(url){
 }
 function cycleClub(delta){const list=Object.keys(clubs);$('club').value=list[(list.indexOf($('club').value)+delta+list.length)%list.length];updateAim();updateHUD();sendPlayer();}
 function startTour(){if(flight||dropState)return;cancelAdvance();closePanel();tour={path:makeHoleTour(course),elapsed:0,camera:{...view.config},orbit:false,puttingRings:view.puttingRings?.visible};if(view.puttingRings)view.puttingRings.visible=false;Object.assign(view.config,{mode:'free',greenGrid:false,greenFlow:false,greenHeat:false});view.setGreenReading();view.aimLine.visible=view.aimRing.visible=false;view.wasFree=true;updateExplorer();toast('Hole flyover · Escape or the flyover button returns to your ball.');}
-function stopTour(){if(!tour)return;const camera=tour.camera;if(view.puttingRings)view.puttingRings.visible=tour.puttingRings;tour=null;Object.assign(view.config,camera);view.config.mode=playCameraMode('player',course,round.position);view.setGreenReading();view.setBall(round.position);view.setCamera(round.position,aim,true);updateAim();updateExplorer();}
-function cameraMode(mode){if(flight)return;stopTour();view.config.mode=playCameraMode(mode,course,round.position);view.setCamera(round.position,aim,true);updateExplorer();save();}
+function stopTour(){if(!tour)return;const camera=tour.camera;if(view.puttingRings)view.puttingRings.visible=tour.puttingRings;tour=null;Object.assign(view.config,camera);view.config.mode=playCameraMode('player',course,round.position);view.setGreenReading();view.setBall(round.position);view.flyCamera(round.position,aim);updateAim();updateExplorer();}
+function cameraMode(mode){if(flight)return;stopTour();view.config.mode=playCameraMode(mode,course,round.position);view.flyCamera(round.position,aim);updateExplorer();save();}
 function bind(){
  // BACKING STORE AT THE DISPLAY'S OWN RATIO, not a hardcoded 2. On anything
  // sharper than 2x -- which is most laptops at a scaled resolution -- the map
@@ -3271,7 +3293,8 @@ try{
  // half-finished hole.
  try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
  clubs=customizeClubs(settings.clubYardages);settings.flightProfile=validateFlight(settings.flightProfile);
- await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop());
+ await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
  openMenu();
-}catch(e){console.error(e);$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}
+ dismissSplash();
+}catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}

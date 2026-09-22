@@ -571,6 +571,43 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## Where generation actually spends its time
+
+Measured with `node --cpu-prof` over five `generateWorld` calls, warm, on this machine:
+
+| course | wall time |
+|---|---|
+| 18 holes, feature-heavy (260 trees/hole, homes, 2 rivers, 2 creeks) | 8.4 s |
+| 9 holes, same features | 2.9 s |
+| 9 holes, defaults | 2.4 s |
+| 1 hole (an endless hole) | 250 ms |
+| the driving range | 94 ms |
+
+Inclusive time, as a share of everything sampled:
+
+| phase | share |
+|---|---|
+| **`makeGroundGrid`** | **81%** |
+| `routeHoles` | 2.7% |
+| `generateStreams` | 2.3% |
+| `generateCourse` (all holes) | 1.0% |
+| `generateHomes` | ~0% |
+
+Self time is spread thin -- no single function is over 12% -- because the cost is
+`makeGroundGrid` calling `analyticHeight` (53% inclusive) for every cell, which
+calls `shapedLand`, `nearest`, `greenContour` and the rest in turn. Vegetation
+does not appear: placing 18,720 trees is cheap next to sampling the ground.
+
+**This settles how to make generation yield.** The standing plan was to make
+`generateWorld` a `function*` yielding phase labels, with the caveat that it
+would be worth little if one phase dominated. One phase is four fifths of the
+work, so yielding between phases would hand the browser a frame roughly twice in
+eight seconds. The grid itself has to chunk -- it is three row-major loops over
+the same `(nx+1) x (nz+1)` field, so a row band is a natural unit and the
+arithmetic per cell is unchanged, which is what keeps the biome fingerprints
+identical. A Web Worker remains the wrong tool: `generateWorld` returns closures
+(`toWorld`, `height`, `surface`) that cannot cross the boundary.
+
 ## The lift cap, and the carry that hid it
 
 A hundred shots from a GC3 -- a photometric unit with a good reputation for accuracy -- replayed through the flight model. Carry came out within 1.4%. Apex came out low on **every single one of the hundred**, by 8% on average and 11 to 14% above 9,000 rpm.
