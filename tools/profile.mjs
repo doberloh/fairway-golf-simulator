@@ -210,6 +210,7 @@ function table(title, rows, budget) {
 }
 
 // ---------------------------------------------------------------------- main
+const started = Date.now();
 const {server, port} = await serve();
 const cases = matrix();
 const results = [];
@@ -290,6 +291,13 @@ if (argv.includes('--since') && fs.existsSync(STORE)) {
   if (Math.abs(d) > 0.15) console.log(`  ${(r.group + '/' + r.name).padEnd(34)} ${d > 0 ? '+' : ''}${d.toFixed(2)}`);
  }
 }
+
+// Printed so the AGENTS.md rule about when to ask for a profile can quote a
+// real number rather than a guess, and so it stays true when the sweep grows.
+const mins = (Date.now() - started) / 60000;
+console.log(`
+${results.length} cases in ${mins.toFixed(1)} minutes ` +
+ `(${(mins * 60 / Math.max(1, results.length)).toFixed(0)} s a case)`);
 
 if (argv.includes('--save')) {
  fs.mkdirSync(path.dirname(STORE), {recursive: true});

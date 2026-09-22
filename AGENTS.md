@@ -115,6 +115,48 @@ So: shut down anything you started before you finish. If a process was spawned t
 
 Never end a turn by telling the owner a URL is up and offering to kill it later. Either it was needed for verification and is now closed, or it was not needed.
 
+## Offer a graphics profile when you touch the frame. Never just run one
+
+`npm run profile` measures what a frame costs. **Ask before running it, say what
+it will cost in time, and let the owner decide.** It is minutes of a machine at
+full tilt, and it is worthless while anything else is competing for the GPU --
+so it is the owner's call whether now is the moment, not yours.
+
+**Quote the real cost when you ask.** A full sweep is about **10 minutes**: 27
+cases on the real GPU at roughly 15 seconds each, plus two on the software
+rasteriser at about two minutes each, because a software frame takes seconds
+rather than milliseconds. One group with `--only tiers` (or `views`, `biomes`,
+`ablation`, `pixels`, `water`, `weak`) is about **a minute**. The tool prints
+its own elapsed time, so these numbers stay honest as the sweep grows.
+
+**Ask whenever a change could plausibly move a frame**, which is a wider net
+than it sounds:
+
+- anything in `renderer.js`, `graphics.js`, `vegetation.js`, `textures.js`, the
+  shaders, or a material
+- a new render pass, post effect, shadow setting or reflection
+- a change to how much geometry exists or how it is batched -- mesh ingest,
+  instancing, LOD, culling, draw order
+- tier definitions, obviously, and anything that reads one
+
+**Do not ask for a profile** over settings-panel layout, menu text, docs, tests,
+tooling, scoring, or course generation. Generation has its own harness in
+`bench.mjs` and the profiler says nothing about it.
+
+**When a run happens, read it properly.** Compare with `--since` against
+`bench/profile-baseline.json` rather than against a number in someone's memory.
+Re-save the baseline only when the new figures are the ones that should be
+defended from now on -- a baseline quietly moved to match a regression is worse
+than no baseline. And say which arm a number came from: the real GPU answers
+"how much headroom is there", the software rasteriser answers "what happens on a
+machine with no graphics card", and they differ by two orders of magnitude.
+
+**One rule the harness enforces and you should not argue with.** It refuses to
+report if an idle page costs a whole frame, because that means it is measuring
+the display rather than the renderer. If it refuses, the harness is broken, not
+the check. This project has lost a fortnight to a frame number that was really a
+vsync interval; the check exists to make that impossible to repeat.
+
 ## Measure with `tools/bench.mjs`, not with a throwaway script
 
 Generating a 9-hole course takes three to five seconds, so any question asked
