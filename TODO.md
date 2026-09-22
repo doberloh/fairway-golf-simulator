@@ -10,6 +10,363 @@ makes an entry untrue, close it in the same pass and say what replaced it. One
 entry here once asserted the exact opposite of what the physics did, which is how
 a correct behaviour nearly got "fixed" back into a bug.
 
+**Open work is above; everything finished is in `# Done` at the foot of the
+file.** Nothing was deleted and no entry lost a word -- a section that held both
+kinds keeps its heading in both halves, so a finished entry still says which
+piece of work it belonged to. Where an open item had been left as a note under a
+finished one, it was promoted to an item of its own and carries a breadcrumb
+back; live work nested inside the archive is the thing this split exists to
+prevent.
+
+## Ball flight, after the GC3 session
+
+- [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
+  between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
+  tuned from here. Matching apex while overshooting hang means the ball takes
+  too long to fall from the same height -- the SHAPE of the descent rather than
+  its scale -- and descent angle running 1.5 degrees steep says the same. Needs
+  a look at how drag varies through the descent, with its own evidence.
+
+- [ ] **The two launch monitors disagree about apex and something has to give.**
+  GC3 says the model flies low, SkyTrak said it flew high, on an overlapping
+  spin range. The curve now trusts the GC3 because it is the better instrument,
+  reports spin axis directly and gives hang time to hundredths. That is a
+  judgement about the references and not a measurement. A third device would
+  settle it.
+
+- [ ] **No driver data in either session.** Both are irons and wedges, 78 to
+  142 mph. The high-speed low-spin corner is still unmeasured, and it is the
+  corner the original six-row tour fit was most confident about.
+
+## Graphics work the profiling turned up
+
+Found while building `tools/profile.mjs` and reading the tier table against it.
+None of these are tuning -- they are missing capability or wrong plumbing, so
+they were written down rather than done. Asked for on 2026-09-22 as the place
+to put "potential gfx improvements" instead of inventing features overnight.
+
+- [ ] **`high` and `ultra` are very nearly the same tier.** The whole difference
+  is bloom at .14, a 2048 reflection buffer instead of 1536, and shadows that
+  reach the far edge in overview. Everything else -- pixel ratio, shadow map,
+  cascades, fog, grass, foliage, god rays, clouds, mist -- is identical. Ultra
+  is meant to be "everything, for a card with room to spare" and is currently
+  high with a glow on it. Either it grows real extras or the ladder should
+  admit it has three rungs.
+
+- [ ] **Floodlight shadows are off on every tier, and not for frame time.**
+  The existing comment is right and now confirmed from the outside: the real
+  GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
+  reports 32, and the scene has one unit spare. Six casters at 512 measured 8.3
+  ms against 8.4 in daylight, so the cost was never the problem -- a program
+  that fails to link is. Freeing a unit is the work: one cascade fewer on high,
+  or packing the ground's data atlases. Until then a night course has lights
+  that cast nothing, on every tier including ultra.
+
+- [ ] **Fog distance is not a performance setting, and the tiers treat it like
+  one.** `camera.far` is fixed at 20000 and fog only fades what is already
+  drawn; three culls against the frustum, not against fog. So low's near fog
+  buys atmosphere and exactly nothing in frame time, while still hiding the
+  course from a player who might have wanted to see it. Either tie the far
+  plane to the fog end so it genuinely culls, or stop implying fog is a
+  performance lever.
+
+- [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
+  frame on a heavy biome is dominated by tree geometry, and no tier knob
+  touches it. `grass` scales scatter grass, which is under 1% of the triangles
+  on redwood. `foliage` sets the segment count of DRAWN trunks and canopies, so
+  it does nothing at all on a biome whose plants are instanced mesh models --
+  which redwood now entirely is.
+
+  And a tier may not simply plant fewer trees: `src/graphics.js` says outright
+  that nothing in it may affect a played surface, and trunks are collidable, so
+  two players on different tiers must hit the same trees. The only legal lever
+  is drawing fewer while colliding with all -- a distance cull or a level of
+  detail that touches rendering only.
+
+  Which is what was removed. The LOD that came out was removed for good reason,
+  on a measurement that said geometry was free on a 4090 -- and it is, there.
+  It is not free on a laptop with no card. What that work should become is a
+  TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
+  the always-on swap that made every visible tree the thinned twin.
+
+- [ ] **Turning water reflections off may not stop the reflection pass.**
+  `setReflections(false)` nulls the `envMap` on each water material, which
+  stops the sampling. Whether the planar reflector still renders the scene a
+  second time every frame is a separate question and the answer decides whether
+  the setting is worth anything to a weak machine. Check the ablation row.
+
+- [ ] **`applyQuality` clamps pixel ratio to the display's own.**
+  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
+  it means the tier ladder collapses on a 1x display: low, medium and ultra all
+  render the same pixels and differ only in shadows and reflections. That is
+  worth knowing before anyone concludes from a 1x machine that the tiers do
+  nothing. It also caught this harness out -- see the note in profile.mjs.
+
+## Benchmarking and profiling worth deciding from
+
+Asked for on 2026-09-20, off the back of the "should this be ported" question in
+RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
+it is measurably NOT vertex throughput -- and that no performance decision
+should be taken until somebody does. This section is how that gets known.
+
+**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
+twelve workers, eight invariant rules that must stay clear, counts, and
+distributions with min/p05/median/p95/max. It has a saved baseline
+(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
+proves the generator did not move. Both are good and neither one renders
+anything.
+
+**What does not exist.** Any measurement of a frame. The only frame numbers this
+project has ever had were taken by hand, with a probe temporarily pasted into
+`renderer.js` and deleted afterwards, on one machine, on one course.
+
+- [ ] ~~A frame benchmark~~ (original note kept below for the reasoning)
+  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
+  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
+  is asked to draw, because the call is waiting for the display, not for the
+  GPU. That number was taken as real, a level of detail was built on it, and
+  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
+  the same lie in a different hat, and `gl.finish()` does not save you --
+  Chrome's command buffer makes it close to a no-op.
+
+  So the first requirement is not a feature, it is a property: **the harness
+  must be capable of reporting a number lower than the refresh interval.**
+  Prove it on day one by drawing an empty scene and checking the figure
+  collapses. If it does not, the harness is measuring the monitor.
+
+  Ways that actually work, roughly in order of how much they are worth:
+  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
+    thing that tells you where the time goes rather than how much there is.
+  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
+    `--disable-frame-rate-limit`, then render as fast as the machine allows.
+  - render to a framebuffer in a loop, with no presentation at all.
+
+- [ ] ~~Decide what headless is for~~ (original note below) A software rasteriser (`--use-angle=swiftshader`) gives
+  figures that are comparable between machines and over time, and are not the
+  truth about any real GPU. A real GPU in headless Chrome gives the truth about
+  THAT machine and nothing comparable to a run on another one. Both are useful
+  and they answer different questions -- regression tracking wants the first,
+  "will this run on the owner's laptop" wants the second. Say which the harness
+  is for, in the harness, or the numbers get read as the wrong kind.
+
+  Cost to be honest about: either route is a Playwright or Puppeteer
+  devDependency, and this project has treated a 24 MB devDependency as a real
+  cost before (it is why `vendor/baked_assets` is committed). Weigh that
+  deliberately rather than installing it on the way past.
+
+- [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
+  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
+  plus elevation, landform, water, trees and homes is a combinatorial explosion
+  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
+  says why each is in it: every biome at defaults (the common path), every
+  graphics tier on one heavy biome (the tier is the lever players actually
+  pull), the extremes that are known to be hard -- redwood for geometry,
+  elevation 100 / landform 100 for terrain, maximum water and homes for draw
+  calls -- and the driving range, which is the flattest and should be the
+  floor. A sweep that takes four minutes gets run; one that takes an hour gets
+  run once and quoted for a year.
+
+- [ ] ~~Report what a decision needs~~ (original note below) Frame time
+  as a distribution and never as a mean -- median, p95, p99 and the worst
+  frame, because stutter is what is felt and a mean hides it. Beside it, per
+  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
+  timer split by pass if the extension is there. Then generation time and peak
+  memory per case. The existing bench's table format is the right shape
+  already: columns of min/p05/median/p95/max with the case names down the side,
+  a `rules: all clear` line for anything that must not regress, and a `--since`
+  diff against a saved baseline so a change shows as movement rather than as
+  numbers somebody has to remember.
+
+- [ ] ~~Have it name the bottleneck~~ (original note below) The question is not
+  "how many milliseconds" but "of what". A run should end with a sentence a
+  human can act on: whether the frame is bound by draw calls, by fill, by
+  shadow passes, or by the CPU walking the scene graph -- and the simplest
+  version of that is an ablation rather than a profiler. Render the same frame
+  with shadows off, with the grass off, at quarter resolution, with the
+  vegetation removed, and print what each one gives back. Whatever returns the
+  most time is the answer, and it needs no tooling beyond the harness that is
+  already being built.
+
+- [ ] **The low tier cannot reach 30 fps on weak hardware, and tuning cannot
+  fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
+  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
+  typical weak device -- real integrated graphics is perhaps one to two orders
+  faster, which is the difference between playable and not, and that range is
+  an extrapolation this machine cannot narrow. What is certain is that a
+  hundredfold gap does not close by tuning. It needs the vegetation draw
+  distance in the graphics section above.
+
+- [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
+  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
+  generation if seven seconds a course becomes intolerable, a desktop shell if
+  this becomes a sim bay, and an engine port only if all of that has been done
+  and something still does not fit. The value of this section is that it makes
+  step one possible; skipping to step five has already been tried in miniature
+  and it produced the dead forest.
+
+
+Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
+
+## Priority 1: correctness and continuity
+
+- [ ] **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
+
+- [ ] **A TypeError on every course load, pre-existing.** 'Cannot set properties of undefined (setting value)' is thrown during load and swallowed; it is present at HEAD and the scene renders anyway, so nothing visibly depends on it. Found while chasing an unrelated blank screen and wrongly assumed to be the cause. Worth finding: an exception on the load path is a trap for the next person debugging something else.
+
+- [ ] **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
+
+- [ ] **Six metrics in this project have now measured the wrong thing.** Each had a filter or a clamp that excluded exactly the case under test. Worth a short checklist in the tooling: before trusting a number, confirm it can move.
+
+- [ ] **Leaf tinting for the baked trees.** The sprite sheet is green; multiplying it by a green role colour comes out near-black. Either tint white and accept the sheet's own colour, or use the sheet as alpha only and take RGB from the role.
+
+- [ ] **Only two crown shapes.** Acceptable while the crown is seventy metres up, but a third would want either a pack with a single-mass conifer or a procedural plume built from overlapping foliage.
+
+- [ ] **The bush family is still sized by height.** Same bug the ferns had -- ground cover should be sized by its spread. `fern`, `gorse`, `heather`, `naupaka` and `shrub` all draw from it across six biomes, so it wants doing on its own with a look at each.
+
+- [ ] **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
+
+- [ ] **Trees near tees.** The remaining piece of the owner's request. Replace the blanket 22 m circle round the back tee with two rules: a small clearance to swing in, and nothing inside the shot line from any tee. Trees are placed before tees are sited, so the pass has to run afterwards and remove any tree that ended up in a line. `sightline` in course.js already answers the shot-line question.
+
+- [ ] **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
+
+- [ ] **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
+
+- [ ] **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
+
+- [ ] **Browser timing and state-transition regression.** Add repeatable UI checks for the three-second cup reveal and replay hold, manual skip, replay across holes, mulligan, multi-player completion, scramble selection and cancellation during pending timers. Current unit tests cover timing predicates, with browser checks performed manually.
+
+## Priority 2: landscape and performance
+
+- [ ] **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
+
+- [ ] **Bridges and crossings.** Channels currently cross walking routes with no deck. A first attempt shipped `src/bridges.js`, which overrode contact height over each deck footprint while the ground mesh kept its carved channel; it was removed because a height override is not a solid — a ball flying *under* a deck registered as landing on it, and the override fought every other height consumer. A real crossing needs an actual collision volume with an underside, sitting above ground that is left alone, rather than a second height function layered over the terrain.
+
+- [ ] **Home interiors and regional architecture.** Interiors, varied window patterns and per-region architecture beyond the warm/arid palette split are still unbuilt.
+
+- [ ] **Generation worker and progress.** Generation still runs on the main thread and still blocks it; an 18-hole feature-heavy course pauses the tab for several seconds. A **"Growing your landscape…" overlay** now covers that: `whileGenerating` paints the message, waits for a frame (or a timeout, since a background tab fires no frames), then does the work. That is a status message, not progress — it cannot advance, because the thread is locked for the duration.
+  Real progress needs generation split into steps that yield between them. The cheapest route is to make `generateWorld` a `function*` yielding phase labels: a sync wrapper drains it for the tests, an async wrapper yields to the browser between phases. Measure first — if one phase such as `makeGroundGrid` dominates, yielding between phases buys little and that phase needs chunking too. **A Web Worker is the wrong tool here:** `generateWorld` returns closures (`toWorld`, `height`, `surface`) that cannot cross a worker boundary, so it would mean refactoring the world into pure data with closures rebuilt on the main thread. Acceptance: controls remain responsive while generating; stale results cannot replace a newer round.
+
+- [ ] **Terrain/vegetation/house LOD.** Reduce distant draw calls and mesh density, batch houses, stream visible cells, and profile shadow/reflection costs. Preserve close-up green/cup/contact precision. Benchmark several screen sizes/GPUs rather than choosing limits from one computer. **Start by establishing what actually binds the frame** -- the redwood LOD was built against an assumption that instanced vertices were expensive, and they are not; the grove went from 1 M to 33.6 M vertices a frame with no measurable change. Draw calls, shadow passes and fill are the candidates that have not been ruled out.
+
+- [ ] **Routing quality metrics.** Evaluate forced carries, recovery space, green-to-tee walks, finishing-hole return and strategic choices. Improve footprint resemblance without forcing fixed hole templates or sacrificing separation. Previews are guidance rather than guaranteed exact silhouettes today.
+
+- [ ] **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
+
+- [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
+
+- [ ] **A CC0 grass model for the near-field tuft only.** Searched and priced (RESEARCH.md): CC0 grass exists and is properly licensed, but this project's blade is THREE triangles drawn up to 800,000 times, so a 50-triangle model is a 17x multiplier on the largest instanced draw in the scene and the 2M-triangle Poly Haven tuft is 800 billion on a links course. The one place it is affordable is `addNearbyGrass` -- 40,000 instances inside 24 m, where a 20-40 triangle tuft costs 0.8-1.6 M triangles. Owner is undecided; do not start without a decision.
+
+- [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is now handled for channels by a per-vertex bank weight, but ponds, lakes and the ocean plane have no shore weight and so still end on a uniform alpha at their edge — giving them one needs shore distance in their geometry. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
+
+## Priority 3: play and maintainability
+
+- [ ] **Separate main.js concerns.** Extract studio, round settings, scorecard, input/monitor and presentation controllers. Preserve accessible names/IDs and public behavior; avoid a framework migration solely for file size.
+
+- [ ] **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
+
+- [ ] **Tournament penalty options.** Add lateral water drops, relief zones and optional full rules. Current water/out-of-bounds behavior is simplified stroke-and-distance; sim drops are separately penalty-free by design.
+
+- [ ] **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
+
+- [ ] **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
+
+- [ ] **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels.
+
+- [ ] **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
+
+- [ ] **Offline release matrix and packaging script.** Automate release archives and run actual file-URL/manual tests on Safari, Chrome, Edge and Firefox. Verify local saves and export/import behavior. Current browser automation disallows file URLs; the bundle is inspected statically and exercised through the local server.
+
+## Still open from the putting and cup update
+
+- [ ] **Green surrounds are steeper than intended on extreme settings.** The test that claimed otherwise was pinned to one lucky seed at 0.582 while most seeds were already over its 0.6 line. Now a multi-seed characterisation test; the underlying shoulder blending on elevation 100 / landform 100 mountain still wants doing. **Not a release blocker, measured**: at the default elevation 35 / landform 70 the worst surround across 8 biomes x 3 seeds is 0.59 with a median of 0.54, and nothing exceeds the intended 0.6. It only bites at slider extremes, where the result is a perched green rather than a broken one.
+
+- [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
+
+- [ ] **Short shots off the green pick the shortest club at 100% power.** Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+
+- [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
+
+- [ ] **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
+
+- [ ] **The green marker still shows a flag glyph** after the flagstick has been pulled. A cup or target mark would be honest.
+
+## Distribution follow-up (September 11 review)
+
+- [ ] Run a live dependency advisory audit on a machine with working registry certificate trust. Current attempts failed TLS verification; no clean-security claim.
+
+- [ ] Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
+
+- [ ] Choose public publisher/support details and check the working product name before a broad release.
+
+- [ ] Configure an optional donation page when requested; no payment account or public posting has been created.
+
+- [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
+  **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
+
+- [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
+  - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron.
+  - [x] **The measured data DOES cover amateur speeds.** Campaign B spans 1.93-38.7 m/s, so the anchor is valid down to a chip. What is narrow is our tour validation set: it spans 3.49x in arrival spin but only 1.26x in landing speed, while the stock bag lands as slow as 14.7 m/s.
+  - [x] **Partial shots show the release-spread defect from the other side:** a half 7-iron releases 17.5 yd against a full one's 3.5.
+  **SUPERSEDED** by the fairway and green refits.
+
+- [ ] **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
+  - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
+  - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above says the driver's apex is 9% LOW against a sourced 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
+  - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
+
+- [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
+
+- [ ] **Reading undulation needs more than a cast shadow.** Terrain self-shadowing landed and helps at a low sun, but at midday the ground is still close to flat-looking. Candidates, cheapest first: slope-tinted turf in the ground shader; mowing stripes that bend over rolls; curvature darkening baked into the ground data texture; ambient occlusion on more than just ultra. None built -- needs a decision on which.
+
+- [ ] **Floodlight shadows: blocked on a texture unit, not on frame time.** The plan worked and the numbers were fine -- six casters at 512 square measured 8.3 ms floodlit against 8.4 in daylight, with the casters fixed at build time and `orderPoles` handing those lamps to the hole being played. Then it did not render: every shadow-casting spot light costs a texture sampler in every lit fragment shader, WebGL guarantees 16, and the cascades, the toon gradient, the environment map and the ground atlases already spend them. The program failed to link and the GROUND DISAPPEARED. **I shipped that and the user caught it, not me** -- the frame-time measurements said nothing, and the only signal was a shader link error in a console I had not re-read after the change. Walking the count up: one caster links, two does not. `floodShadows` is 0 on every tier. To do this properly a sampler has to be freed first -- a cascade fewer on high, or packed ground atlases. `orderPoles` is kept: it still decides which poles are lit when a course has more poles than lamps.
+
+- [ ] **Save/import/export, what is left.** Neither loses work.
+  - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
+  - `save()` swallows quota errors, so a full store means *Continue* silently stops updating with nothing said.
+
+- [ ] **Remaining drift behind the green.** Up to 0.36% of a course still classifies `semi` where the shader paints `rough`: the shader mows to `length + 8`, `fairwayWidth` stops at `length`. Forgiving direction, separate defect.
+  *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
+
+- [ ] **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
+  *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
+
+- [ ] **Deep rough no longer tracks firmness in bounce height** (1.48–1.61 ft across the range, against a green's 2.81–4.52). Defensible — the canopy does the stopping — but it is a behaviour change worth a second look.
+
+  *(was a note under "The bounce takes time now (Option C). A spun ball st..." -- see `# Done`.)*
+
+- [ ] **Range dispersion is always zero** — see above; needs a strike-quality model.
+  *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
+
+- [ ] Targets are scenery, not greens — needs a GLSL loop over an extended cup atlas.
+
+  *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
+
+- [ ] `CONTACT_GAIN` in contact.js has been declared and unused since it was written.
+
+  *(was a note under "The bounce turns backspin into topspin, which is why..." -- see `# Done`.)*
+
+- [ ] **The gain magnitude is unanchored.** Nobody has measured how turf resistance grows with speed; the shape is pinned at the Stimpmeter end but `k = 1` is a choice.
+
+  *(was a note under "Speed-dependent rolling resistance is ON (ROLL_SPEED..." -- see `# Done`.)*
+
+- [ ] **Same root cause as the inverted firmness order:** `PLOUGH_BY_FIRMNESS` is too high at the soft end (Soft 1.797, Normal 1.0 against Firm 0.634), so soft ground both skips the forward hop and produces MORE rollback than firm — backwards from real golf, where firm fast greens give the dramatic zip-back and soft ones plug and sit. Pulling the soft end down should fix both.
+
+  *(was a note under "The first bounce goes BACKWARD on Normal and Soft gr..." -- see `# Done`.)*
+
+- [ ] **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
+  *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
+
+- [ ] **7 iron on a Burnt green runs 11.8 yd.** Defensible for a surface meant to reject shots, but worth an eye.
+
+
+  *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
+
+
+# Done
+
+Kept, not thrown away: the reasoning in a finished entry is often the only
+record of what was ruled out and why, which is worth more than a short file.
+
 ## Menus and settings layout
 
 Asked for on 2026-09-20 from browsing the menus. Each one is a containment
@@ -148,105 +505,7 @@ problem: a control that belongs inside a box is sitting beside it.
   toward the published slope. Apex -8.05 ft to -0.22 ft, carry and offline both
   improved as well.
 
-- [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
-  between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
-  tuned from here. Matching apex while overshooting hang means the ball takes
-  too long to fall from the same height -- the SHAPE of the descent rather than
-  its scale -- and descent angle running 1.5 degrees steep says the same. Needs
-  a look at how drag varies through the descent, with its own evidence.
-
-- [ ] **The two launch monitors disagree about apex and something has to give.**
-  GC3 says the model flies low, SkyTrak said it flew high, on an overlapping
-  spin range. The curve now trusts the GC3 because it is the better instrument,
-  reports spin axis directly and gives hang time to hundredths. That is a
-  judgement about the references and not a measurement. A third device would
-  settle it.
-
-- [ ] **No driver data in either session.** Both are irons and wedges, 78 to
-  142 mph. The high-speed low-spin corner is still unmeasured, and it is the
-  corner the original six-row tour fit was most confident about.
-
-## Graphics work the profiling turned up
-
-Found while building `tools/profile.mjs` and reading the tier table against it.
-None of these are tuning -- they are missing capability or wrong plumbing, so
-they were written down rather than done. Asked for on 2026-09-22 as the place
-to put "potential gfx improvements" instead of inventing features overnight.
-
-- [ ] **`high` and `ultra` are very nearly the same tier.** The whole difference
-  is bloom at .14, a 2048 reflection buffer instead of 1536, and shadows that
-  reach the far edge in overview. Everything else -- pixel ratio, shadow map,
-  cascades, fog, grass, foliage, god rays, clouds, mist -- is identical. Ultra
-  is meant to be "everything, for a card with room to spare" and is currently
-  high with a glow on it. Either it grows real extras or the ladder should
-  admit it has three rungs.
-
-- [ ] **Floodlight shadows are off on every tier, and not for frame time.**
-  The existing comment is right and now confirmed from the outside: the real
-  GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
-  reports 32, and the scene has one unit spare. Six casters at 512 measured 8.3
-  ms against 8.4 in daylight, so the cost was never the problem -- a program
-  that fails to link is. Freeing a unit is the work: one cascade fewer on high,
-  or packing the ground's data atlases. Until then a night course has lights
-  that cast nothing, on every tier including ultra.
-
-- [ ] **Fog distance is not a performance setting, and the tiers treat it like
-  one.** `camera.far` is fixed at 20000 and fog only fades what is already
-  drawn; three culls against the frustum, not against fog. So low's near fog
-  buys atmosphere and exactly nothing in frame time, while still hiding the
-  course from a player who might have wanted to see it. Either tie the far
-  plane to the fog end so it genuinely culls, or stop implying fog is a
-  performance lever.
-
-- [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
-  frame on a heavy biome is dominated by tree geometry, and no tier knob
-  touches it. `grass` scales scatter grass, which is under 1% of the triangles
-  on redwood. `foliage` sets the segment count of DRAWN trunks and canopies, so
-  it does nothing at all on a biome whose plants are instanced mesh models --
-  which redwood now entirely is.
-
-  And a tier may not simply plant fewer trees: `src/graphics.js` says outright
-  that nothing in it may affect a played surface, and trunks are collidable, so
-  two players on different tiers must hit the same trees. The only legal lever
-  is drawing fewer while colliding with all -- a distance cull or a level of
-  detail that touches rendering only.
-
-  Which is what was removed. The LOD that came out was removed for good reason,
-  on a measurement that said geometry was free on a 4090 -- and it is, there.
-  It is not free on a laptop with no card. What that work should become is a
-  TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
-  the always-on swap that made every visible tree the thinned twin.
-
-- [ ] **Turning water reflections off may not stop the reflection pass.**
-  `setReflections(false)` nulls the `envMap` on each water material, which
-  stops the sampling. Whether the planar reflector still renders the scene a
-  second time every frame is a separate question and the answer decides whether
-  the setting is worth anything to a weak machine. Check the ablation row.
-
-- [ ] **`applyQuality` clamps pixel ratio to the display's own.**
-  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
-  it means the tier ladder collapses on a 1x display: low, medium and ultra all
-  render the same pixels and differ only in shadows and reflections. That is
-  worth knowing before anyone concludes from a 1x machine that the tiers do
-  nothing. It also caught this harness out -- see the note in profile.mjs.
-
 ## Benchmarking and profiling worth deciding from
-
-Asked for on 2026-09-20, off the back of the "should this be ported" question in
-RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
-it is measurably NOT vertex throughput -- and that no performance decision
-should be taken until somebody does. This section is how that gets known.
-
-**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
-twelve workers, eight invariant rules that must stay clear, counts, and
-distributions with min/p05/median/p95/max. It has a saved baseline
-(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
-proves the generator did not move. Both are good and neither one renders
-anything.
-
-**What does not exist.** Any measurement of a frame. The only frame numbers this
-project has ever had were taken by hand, with a probe temporarily pasted into
-`renderer.js` and deleted afterwards, on one machine, on one course.
 
 - [x] **A frame benchmark, and it must not be able to return the refresh rate.**
   `tools/profile.mjs`, `npm run profile`. THE CHECK CAUGHT IT: a blank page read
@@ -255,27 +514,6 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   time inside the frame callback, plus a `TIME_ELAPSED` query spanning it -- and
   asserts both collapse to 0.000 ms on an idle page before reporting anything.
 
-- [ ] ~~A frame benchmark~~ (original note kept below for the reasoning)
-  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
-  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
-  is asked to draw, because the call is waiting for the display, not for the
-  GPU. That number was taken as real, a level of detail was built on it, and
-  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
-  the same lie in a different hat, and `gl.finish()` does not save you --
-  Chrome's command buffer makes it close to a no-op.
-
-  So the first requirement is not a feature, it is a property: **the harness
-  must be capable of reporting a number lower than the refresh interval.**
-  Prove it on day one by drawing an empty scene and checking the figure
-  collapses. If it does not, the harness is measuring the monitor.
-
-  Ways that actually work, roughly in order of how much they are worth:
-  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
-    thing that tells you where the time goes rather than how much there is.
-  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
-    `--disable-frame-rate-limit`, then render as fast as the machine allows.
-  - render to a framebuffer in a loop, with no presentation at all.
-
 - [x] **Decide what "headless" is for.** Both arms, labelled. The real GPU
   answers "how much headroom is there"; a software rasteriser answers "what
   happens with no graphics card". `npm run gpu` prints the renderer per launch
@@ -283,50 +521,14 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   the real card reporting 16 texture units against SwiftShader's 32, which
   independently confirms the ceiling the floodlight comment describes.
 
-- [ ] ~~Decide what headless is for~~ (original note below) A software rasteriser (`--use-angle=swiftshader`) gives
-  figures that are comparable between machines and over time, and are not the
-  truth about any real GPU. A real GPU in headless Chrome gives the truth about
-  THAT machine and nothing comparable to a run on another one. Both are useful
-  and they answer different questions -- regression tracking wants the first,
-  "will this run on the owner's laptop" wants the second. Say which the harness
-  is for, in the harness, or the numbers get read as the wrong kind.
-
-  Cost to be honest about: either route is a Playwright or Puppeteer
-  devDependency, and this project has treated a 24 MB devDependency as a real
-  cost before (it is why `vendor/baked_assets` is committed). Weigh that
-  deliberately rather than installing it on the way past.
-
 - [x] **Sweep the presets, but do not sweep the product of them.** 29 cases in
   six groups: the tier ladder, the same ladder in overview, every biome at one
   tier, an ablation, a pixel-ratio group and the software arm. Each is in the
   file with a stated reason. About eight minutes for the lot.
 
-- [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
-  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
-  plus elevation, landform, water, trees and homes is a combinatorial explosion
-  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
-  says why each is in it: every biome at defaults (the common path), every
-  graphics tier on one heavy biome (the tier is the lever players actually
-  pull), the extremes that are known to be hard -- redwood for geometry,
-  elevation 100 / landform 100 for terrain, maximum water and homes for draw
-  calls -- and the driving range, which is the flattest and should be the
-  floor. A sweep that takes four minutes gets run; one that takes an hour gets
-  run once and quoted for a year.
-
 - [x] **Report what a decision needs.** Distributions not means, CPU beside
   GPU, draws and triangles per frame, `--save` and `--since` against
   `bench/profile-baseline.json` in the shape `bench.mjs` already uses.
-
-- [ ] ~~Report what a decision needs~~ (original note below) Frame time
-  as a distribution and never as a mean -- median, p95, p99 and the worst
-  frame, because stutter is what is felt and a mean hides it. Beside it, per
-  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
-  timer split by pass if the extension is there. Then generation time and peak
-  memory per case. The existing bench's table format is the right shape
-  already: columns of min/p05/median/p95/max with the case names down the side,
-  a `rules: all clear` line for anything that must not regress, and a `--since`
-  diff against a saved baseline so a change shows as movement rather than as
-  numbers somebody has to remember.
 
 - [x] **Have it name the bottleneck.** It is geometry, and it is one biome.
   Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
@@ -334,134 +536,121 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   92.9 M). Pixel ratio is worth 26%. Every ground-cue toggle is free, inside
   the noise. The reflections toggle does nothing at all: 208 draws either way.
 
-- [ ] ~~Have it name the bottleneck~~ (original note below) The question is not
-  "how many milliseconds" but "of what". A run should end with a sentence a
-  human can act on: whether the frame is bound by draw calls, by fill, by
-  shadow passes, or by the CPU walking the scene graph -- and the simplest
-  version of that is an ablation rather than a profiler. Render the same frame
-  with shadows off, with the grass off, at quarter resolution, with the
-  vegetation removed, and print what each one gives back. Whatever returns the
-  most time is the answer, and it needs no tooling beyond the harness that is
-  already being built.
-
-- [ ] **The low tier cannot reach 30 fps on weak hardware, and tuning cannot
-  fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
-  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
-  typical weak device -- real integrated graphics is perhaps one to two orders
-  faster, which is the difference between playable and not, and that range is
-  an extrapolation this machine cannot narrow. What is certain is that a
-  hundredfold gap does not close by tuning. It needs the vegetation draw
-  distance in the graphics section above.
-
-- [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
-  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
-  generation if seven seconds a course becomes intolerable, a desktop shell if
-  this becomes a sim bay, and an engine port only if all of that has been done
-  and something still does not fit. The value of this section is that it makes
-  step one possible; skipping to step five has already been tried in miniature
-  and it produced the dead forest.
-
-
-Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
-
 ## Priority 1: correctness and continuity
 
 - [x] **Drainage-aware rivers and creeks.** Generator 13. The course is solved once as a drainage model -- priority-flood depression filling, D8 flow directions, flow accumulation -- and each channel is a walk down the flow directions, so it cannot spiral or cross itself by construction (0 self-overlaps against 2716). A channel that reaches a surviving depression crosses it to the bottom and ends in a real pond, built through the same `fitPondBasin` every other body uses; the mouth meets the shore within 3 m and the two water levels agree exactly. `SINK_FILL_AREA` swept to 15 000 m2: same channel count as 40 000, but 8 terminal ponds against 1 and 9 faded-out endings against 17.
+
 - [x] **Water keeps out of play.** No channel over a green (was 3 in 216, one 16.2 m inside), none across a playing corridor, none within 26 m of a pond or lake it did not create, and no pond crossing a fairway -- while a pond still bites into one about one time in six, median 5.7 m. The keep-out displacement is smoothed along the path before it is applied; moving each station by just what it needs creased the curve to a 0.00x-half-width bend and flipped the water quads face down.
+
 - [x] **The back tee was the low one, and a quarter of tee shots were blind.** Generator 14. A tee complex is levelled as one piece: the three natural heights are compressed toward their mean, then ordered so the back tee is never below the one in front (34% of holes were backwards, worst step 2.9 m; now 0%), and the whole complex is lifted until the shot clears the ground in front of it, capped at 3.5 m (blue tee shots blocked over 1 m: 23% to 3%). Pad flatness improved as a side effect, worst spread 0.35 m against 0.46. Rejected: forcing holes uphill, which costs the good downhill holes and does not address intermediate crests; one flat terrace, which reads as a driving range on a long hole; shaving the crest, which reshapes the interesting terrain.
+
 - [x] **Tee plateaus are ovals, and blind tee shots are a dial.** The flattened ground was a box while the tee and its collar are ellipses, so flat corners jutted ~3 m past the paint; the plateau now matches the paint and reaches the apron. Normal jump around a pad 2.6 to 0.8 deg median, collar relief 0.33 m to 0.01. `blindTees` (default 0) is the share of holes allowed to keep a blind shot.
+
 - [x] **The corridor ridge was a plateau.** It clamped the corridor distance at zero, so every point inside a corridor got the same raise -- and a constant offset preserves the gradient underneath it exactly, so water ran through corridors as it always had and the keep-out repair pass was left doing a router's job, oscillating instead of converging. The ridge rises inward now: zero violations, 70 of 72 channels still placed, median length unchanged.
+
 - [x] **A measurement harness.** `tools/bench.mjs` shares one generation pass between every metric and builds the courses across all cores: 768 s of generation in 29.7 s wall, 25.8x. Three fixture tiers, named invariants that must stay at zero, and a saved baseline with `--since`. Found a real bug on its first full run -- channel headwaters climbing onto the corridor hills the ridge fix created, on a seed the test fixture did not include.
+
 - [x] **Finding the nearest hole was 15% of building a course.** Each hole carries a rough box now, so `nearest` rules one out without measuring it; the previous winner is tried first, and the per-group minimum behind `other` is only kept on islands, the one biome that reads it. An 18-hole course builds in 8.4 s against 15.8, the test suite runs in 140 s against 217, and the measurement sweep in 20 s against 30. Proven to change nothing: the baseline reported no movement and a terrain fingerprint over eight courses is identical before and after.
-- [ ] **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
+
 - [x] **One tee on a short hole, and earthworks off greens.** The pad is separate from the marker now, so a par three gets one long tee with the markers down it: 0 overlapping pads against every one of 66 par threes overlapping before. Tee earthworks reach half as far and fade before a green -- steepest patch on a green 9.9 degrees to 2.2, worst pad relief 0.58 m to 0.07. Channels also gained: a route that fails its profile or cannot be cleared of play now falls through to the next candidate instead of losing the channel, 87 of 90 placed to 90 of 90.
+
 - [x] **Tee siting from the terrain.** Each pad tries forty-odd nearby sites and takes the one the ground already suits: 653 of 678 moved, median 19.9 m, tees now sit a median 10.1 m off the centre line with real height differences between them, and the chosen ground is only 0.85 m uneven at the median. Blind shots 80 of 810 to 53. Earthworks fall away over a short rounded shoulder instead of a long ramp -- and the ground round a tee is now smoother and gentler than the countryside it sits in (95th percentile smoothness 4.4 degrees against 13.7, slope 20.7 against 43).
+
 - [x] **Raised tees, merged collars, and the landform theory.** A clear shot is now worth 10 against flat ground when siting rather than 1.6, which cut pads raised for sightline from 198 to 122 and blind shots from 53 to 33 at the same time. Collar overlap is scored, not banned: 12% of pairs to 1%. Pads whose shoulders would meet share a level so a complex is one platform, not three humps. The green guard reaches the mown surround, not just the fringe, which is what was painting a brown scar beside greens.
+
 - [x] **The corridor trough behind the tee.** A quarter of the surrounding relief comes back there, and it is better than none on every axis at once: tees cut into real ground 115 to 201, tees propped up for sightline 124 to 113, blind shots 33 to 27. The four earlier attempts failed because every sweep counted 'sites needing real earthwork' as a cost when it is the thing being asked for. Elevation 0 is now a baseline rather than dead level, the driving range excepted. The trough along the fairway itself is untouched and should stay that way -- it is what makes a hole read as a corridor.
+
 - [x] **The blindness check could not see tee boxes.** It read the shaped land with no tee pads in it, and sampled the centre line while tees now sit a median 19 m off it -- so it was measuring a shot nobody plays over ground that omitted the thing in the way. From the real tee along the real line: shots blocked over 1 m 103 to 74, downhill 89 to 68. The bench figure appears to treble because the metric was fixed in the same pass; only the same-method pair is a fair comparison.
+
 - [x] **Tee shapes.** Rounded rectangles instead of ovals, squared to the same aim the markers use, 6 by 9 m with the collar at 1.45x, and the site score prefers a lateral stagger. Shots blocked over 1 m from the real tee 74 to 19, of those blocked by another tee 23 to 2, downhill 68 to 13, and the lowest quarter of sideways gaps 1.5 m to 11.7. The par three special case is deleted rather than improved: at this size three ordinary pads fit down a short hole, so they get three tees and the existing levelling rule gives the stepped form. `fairwayMiddle` and `teeAim` moved into course.js so there is one answer to where a tee points.
+
 - [x] **Clouds fade out and in instead of popping.** A wrap is a four-kilometre jump. Opacity is now a function of distance to the edge of the box rather than of the wrap, so a cloud thins out as it leaves, wraps while invisible, and thickens as it returns -- one rule for both ends, and no step at the jump (largest single-frame change 0.0067). The shadow shares the same opacity. Uncovered a real trap: 'userData.clouds' meant BOTH "already patched" (set by applyCloudShadows on every material it touched) and "is a cloud" (set by clouds.js on one). The fade keyed on it, patched 34 materials instead of 1, and every geometry without the fade attribute read zero alpha -- the whole course invisible at Ultra, with nothing in the console. Split into 'cloudShadowed' and 'cloudMesh'.
-- [ ] **A TypeError on every course load, pre-existing.** 'Cannot set properties of undefined (setting value)' is thrown during load and swallowed; it is present at HEAD and the scene renders anyway, so nothing visibly depends on it. Found while chasing an unrelated blank screen and wrongly assumed to be the cause. Worth finding: an exception on the load path is a trap for the next person debugging something else.
+
 - [x] **A biome is one record.** Seven tables and 48 conditionals across eight files consolidated into `src/biomes.js` -- defaults for 45 fields, traits listing only the differences. The ground shader took a biome as an index into a four-element array, so a new name became -1 and took whichever branch that was; it reads four named flags now. Proven invisible: `tools/biome-fingerprint.mjs` hashes what each biome generates and all seven are byte-identical.
+
 - [x] **Giant Redwood biome.** One record, one dropdown entry, two species and a tree builder. Sun at 18 degrees for raking light, a desaturated sky which the fog colour follows, dark lush palette, PNW landform. Redwoods are a drawn tapered trunk carrying a borrowed conifer crown narrowed to 40% and lifted to the top, because every pack conifer is conical to the ground. Tree height became a biome field on the way -- hardcoded 13-29 m made the first grove a tinted pine wood -- and redwoods run 46-80 m, which needed the physics trunk collision cap raised from 0.8 m to 2.4 (it only binds above 29.6 m, so nothing else moved).
+
 - [x] **Redwood assets.** Searched, and most of it was already in `vendor/` and simply not ingested. 24 models added to `PICK` (fallen logs, stumps, mossy boulders, leafy ground plants): 71 shipped of 598 available becomes 95, packed geometry 1056 KB to 1238 KB, build 2.59 MB to 2.78 MB. The floor scatter is a `deadfall` count on the biome, 72% of it anchored to existing trunks, 877 instances in 31 draw calls on a redwood course. Ferns are a real `swordfern` species so PNW's generic bushes are untouched. Along the way, the two hand-written "not really a tree" lists in course.js and physics.js -- which were NOT the same list -- became `GROUND_PLANTS` and `NO_TRUNK` in `src/species.js`.
+
 - [x] **A fern that is actually a fern.** Stylized Nature MegaKit vendored; `swordfern` draws `Fern_1` and two of its ground plants.
+
 - [x] **Redwood crowns were needles.** The crown width was inherited from whichever model was borrowed rather than stated, so it varied 2.5x within one grove and the narrow end was 3 m of foliage on a 36 m crown. Width is now a stated fraction of tree height with the model's own divided out: 8-12 m over 21-29 m, measured in the scene. Crowns ship as leaf geometry only, trunk taper relaxed from .34 to .62.
+
 - [x] **Giant redwoods, and a tree as tall as it says.** Max height to 380 feet with the floor unchanged. The drawn trunk now calls `trunkRadius` so the trunk you see is the trunk you hit -- it was drawn thinner than it collided, by over a metre at this height -- and that function's clamp went 2.4 m to 3.6 m so it stops binding on anything the generator makes. 6.2 m trunks under 80 m bare columns. The crown takes whatever height the trunk leaves rather than being a second jittered fraction, which had been stacking to 112% of the stated height and leaving the top 35 feet as scenery a ball flew through.
+
 - [x] **Crowns that were wedding cakes.** The MegaKit pines are tiered -- radius alternating wide-narrow every band -- which at this scale is five green plates with daylight between them. Swapped for the only two crowns across six packs whose profile rises to one peak and falls, `PineTree_2` and `PineTree_4`. Measure the profile before adding a third.
+
 - [x] **Trees had no spacing rule.** None at all -- placement checked surface and corridor distance and never checked other trees. At 380 feet the closest pair stood 0.2 m apart and the worst trunks intersected by 5.4 m. `crownShare` on the biome: two crowns may not share more than 55% of their combined radii, trunks never intersect. On for redwood, zero for the other seven, because switching it on relayouts them all -- the ungated first version moved seven biomes and the fingerprint caught it.
+
 - [x] **A mid-storey.** A plant entry's third number scales that species' height, so the redwood grove's cedars are 30% of canopy rather than 380-foot christmas trees standing inside the redwoods.
+
 - [x] **The canopy floated off the trunk.** Trunk leans about its middle, crown leaned about its base on the vertical through the tree centre -- same angle, different pivot, up to 4 m apart at this height. The crown is seated from the trunk's own matrix, the lean is a third of what it was, and the sleeve is 20% of the trunk rather than 8%.
+
 - [x] **An asset contact sheet.** `npm run assets`.
-- [ ] **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
+
 - [x] **Redwoods generated rather than found.** ez-tree (MIT) at bake time: four variants in `vendor/eztree-redwood/`, crowns starting 45-60% up the trunk with zero silhouette reversals, 18.5k-27k verts each. The library is a devDependency and never ships.
+
 - [x] **Match the bake to real redwoods.** Against published descriptions rather than memory: straighter trunk and gentler taper, 26 thick branches rather than 42 thin ones, branches horizontal to slightly drooping, foliage out at the branch ends, and a buttress flare at the foot (42% wider at ground level) because every quoted redwood diameter is measured above the swollen base and the library tapers uniformly. Bark is textured now -- Poly Haven's CC0 willow bark, tiling baked into the UVs.
+
 - [x] **The bark ran sideways.** Three attempts. ez-tree's `v` is 0,1,0,1 per vertex ring, so multiplying it crams tiles into every section AND every ring is a mirror axis; `u` at a fixed count squares the tile on one girth of trunk and squeezes it on all the others. Both coordinates are rebuilt from the geometry now -- `v` as arc length along the branch over a stated ~2 m tile, `u` from each ring's own circumference. Four attempts in the end: the branch split used a median over the whole mesh, so on a tree with many short branches the trunk's own sections each looked like a new branch and the whole trunk carried one `v`. It is a local comparison now, with a floor so coincident rings still advance. Every trunk measures 1.42-1.70 units per tile against a 1.7 target. Two of the checks had been lying -- one skipped the collapsed triangles as a divide-by-zero guard, the other sampled only brown pixels on grey bark. Both are fixed and the bake now fails on a collapsed UV basis. AND THEN IT TURNED OUT NOT TO BE THE BAKE: the ingest and the previewer packed UVs into 16 bits across 0..1, which is right for a house atlas and clamps tiling bark to a single stretched row. `uvSpan` per part now records the real range. The check that would have caught it measures how much DETAIL is on the trunk, not which way it runs -- a smeared row is vertical too.
+
 - [x] **A forest, not a tree.** Twelve models: four mature redwoods (two of them branching much lower), two young skinny ones, two douglas firs, two red cedars for the mid-storey, a bigleaf maple and a dead standing snag.
+
 - [x] **Trunks painted, not textured.** No bark image is carried at all; each species states a bark colour, converted from sRGB because MTL `Kd` is linear.
+
 - [x] **The pack canopies are textured at last.** `PineTree_2`/`_4` and the MegaKit ferns are fully mapped and their packs ship the sheets -- the OBJ exports just never reference them, or reference an absolute `C:/` path. 92 of 741 models textured in the previewer, against 12.
+
 - [x] **Renamed to `vendor/baked_assets`.** It stopped being only redwoods several species ago.
+
 - [x] **Stylized hybrids.** Six models pairing ez-tree's trunk and limbs with Quaternius's `PineTree_2` and `_4` foliage at redwood proportions, in two dressings: one crown capping the bare trunk (5.5-7k verts) or a spray at the end of every main limb (23-51k). The caps are an order of magnitude cheaper, which matters more than file size.
+
 - [x] **Twenty-two trees composed from the packs, no generator.** `tools/bake-assets.mjs` into `vendor/baked_assets`: stretch the bole of a `DeadTree` to redwood proportions, flare the foot, dress it with a borrowed crown as one cap or as sprays. `Redwood_Old_A` is 1,321 verts against 17,000 for the cheapest generated one.
+
 - [x] **`vendor/eztree-grove` renamed `vendor/baked_assets`** and is now the dumping ground for anything composed or generated.
+
 - [x] **A grove grown from nothing.** 153 models in `vendor/grown-redwood-forest` -- redwoods, firs, hemlock, cedar, broadleaves, snags, stumps, nurse logs, sword ferns, salal, sorrel, seedlings, moss, boulders, litter -- with no imported vertex and no texture, shaped against 315 measured reference photographs. 922k vertices, mean 6k.
+
 - [x] **A contact sheet.** `preview/sheet.html`: every model in one canvas at its real height beside a 1.8 m figure. How the flat ferns and the twelve identical firs were caught.
+
 - [x] **The redwood biome is entirely grown.** Nine species, none imported: redwood, douglas fir, hemlock, red cedar, tanoak, seedlings, sword fern, salal, sorrel, plus grown nurse logs, stumps and boulders as deadfall. `addTallConifers` and its 121 lines of drawn cylinder are gone.
+
 - [x] **The two-level LOD was built, then removed as unnecessary.** It was justified by arithmetic and confirmed by a benchmark that turned out to be reading the 120 Hz vsync interval in both arms. Measured honestly, the grove draws 33.6 M vertices a frame at 117.6 fps. The swap's only visible effect was that nearly every tree on screen was the thinned twin -- the "dead forest" and the pop-in. Gone.
+
 - [x] **The foliage palette was the colour of a shadow.** Clustering 315 photographs and taking the dominant green returns the shade, because most of a photographed grove is shaded. Canopy `#3b4b2a` to `#62784a`, understory to `#6b9046`, saplings to `#83ad55`, and density up by half again now that the budget is known not to bind.
-- [ ] **Six metrics in this project have now measured the wrong thing.** Each had a filter or a clamp that excluded exactly the case under test. Worth a short checklist in the tooling: before trusting a number, confirm it can move.
+
 - [x] **Wire the baked trees into the game.** ~~Superseded.~~ The ez-tree bake was abandoned for `tools/grow.mjs`, which grows whole trees with their own trunks and needs no sprite sheet. The size estimate here was right and irrelevant -- the bundle is 15.79 MB and nobody minds. The frame estimate was wrong: 33.6 M vertices a frame draws at the refresh cap.
+
 - [x] **Two detail levels per baked tree.** ~~Not the blocker. Not a blocker at all.~~ Built, measured against a benchmark that was reading vsync, and removed. See RESEARCH.md; the honest number is that eleven times the geometry costs nothing measurable on this path.
-- [ ] **Leaf tinting for the baked trees.** The sprite sheet is green; multiplying it by a green role colour comes out near-black. Either tint white and accept the sheet's own colour, or use the sheet as alpha only and take RGB from the role.
-- [ ] **Only two crown shapes.** Acceptable while the crown is seventy metres up, but a third would want either a pack with a single-mass conifer or a procedural plume built from overlapping foliage.
-- [ ] **The bush family is still sized by height.** Same bug the ferns had -- ground cover should be sized by its spread. `fern`, `gorse`, `heather`, `naupaka` and `shrub` all draw from it across six biomes, so it wants doing on its own with a look at each.
-- [ ] **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
-- [ ] **Trees near tees.** The remaining piece of the owner's request. Replace the blanket 22 m circle round the back tee with two rules: a small clearance to swing in, and nothing inside the shot line from any tee. Trees are placed before tees are sited, so the pass has to run afterwards and remove any tree that ended up in a line. `sightline` in course.js already answers the shot-line question.
-- [ ] **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
-- [ ] **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
-- [ ] **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
-- [ ] **Browser timing and state-transition regression.** Add repeatable UI checks for the three-second cup reveal and replay hold, manual skip, replay across holes, mulligan, multi-player completion, scramble selection and cancellation during pending timers. Current unit tests cover timing predicates, with browser checks performed manually.
 
 ## Priority 2: landscape and performance
 
-- [ ] **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
-- [ ] **Bridges and crossings.** Channels currently cross walking routes with no deck. A first attempt shipped `src/bridges.js`, which overrode contact height over each deck footprint while the ground mesh kept its carved channel; it was removed because a height override is not a solid — a ball flying *under* a deck registered as landing on it, and the override fought every other height consumer. A real crossing needs an actual collision volume with an underside, sitting above ground that is left alone, rather than a second height function layered over the terrain.
-- [ ] **Home interiors and regional architecture.** Interiors, varied window patterns and per-region architecture beyond the warm/arid palette split are still unbuilt.
-- [ ] **Generation worker and progress.** Generation still runs on the main thread and still blocks it; an 18-hole feature-heavy course pauses the tab for several seconds. A **"Growing your landscape…" overlay** now covers that: `whileGenerating` paints the message, waits for a frame (or a timeout, since a background tab fires no frames), then does the work. That is a status message, not progress — it cannot advance, because the thread is locked for the duration.
-  Real progress needs generation split into steps that yield between them. The cheapest route is to make `generateWorld` a `function*` yielding phase labels: a sync wrapper drains it for the tests, an async wrapper yields to the browser between phases. Measure first — if one phase such as `makeGroundGrid` dominates, yielding between phases buys little and that phase needs chunking too. **A Web Worker is the wrong tool here:** `generateWorld` returns closures (`toWorld`, `height`, `surface`) that cannot cross a worker boundary, so it would mean refactoring the world into pure data with closures rebuilt on the main thread. Acceptance: controls remain responsive while generating; stale results cannot replace a newer round.
-- [ ] **Terrain/vegetation/house LOD.** Reduce distant draw calls and mesh density, batch houses, stream visible cells, and profile shadow/reflection costs. Preserve close-up green/cup/contact precision. Benchmark several screen sizes/GPUs rather than choosing limits from one computer. **Start by establishing what actually binds the frame** -- the redwood LOD was built against an assumption that instanced vertices were expensive, and they are not; the grove went from 1 M to 33.6 M vertices a frame with no measurable change. Draw calls, shadow passes and fill are the candidates that have not been ruled out.
-- [ ] **Routing quality metrics.** Evaluate forced carries, recovery space, green-to-tee walks, finishing-hole return and strategic choices. Improve footprint resemblance without forcing fixed hole templates or sacrificing separation. Previews are guidance rather than guaranteed exact silhouettes today.
-- [ ] **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
-- [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
 - [x] **Water sits on land, and a pond may split a hole.** Channels were being drawn on the seabed (2302 of 2452 stations at sea on a measured island seed) and were chosen for length, which after trimming selected runs entirely off the map. Island courses now carry no inland water at all -- the ocean is the hazard -- and Links keeps its coast handling. A mown semi-rough band now comes round every pond, lake and channel that meets a fairway, in the ground shader AND in the lie -- the first attempt changed only the lie and was invisible, see RESEARCH.md. Ponds may bite into a corridor or cross it, with the carry measured rather than assumed: 6% of holes split at default settings, median carry 33 yd, longest 101 yd at maximum water.
+
 - [x] **A lake could be dropped on top of a pond.** `addLargeLakes` checked separation only against lakes it had already placed, never against the ponds generated with the holes -- 10 overlapping lake-pond pairs across 12 courses, worst pair with water surfaces 14.19 m apart. Fixed at no cost: 0 overlaps, all 36 requested lakes still placed.
+
 - [x] **Tees beside a creek, and a river that read as a trench.** The channel soften block repainted tees (corridor geometry only, no idea a tee is there) -- suppressed over tee ground; island tees looked fine throughout because islands have no channels. Tee tilt was three things: `carve` protection threshold coming out negative for tees, tee pads missing from the mesh refinement list, and one attempted fix (returning the pad's level inside the pad) that put a step at the boundary and was reverted. Median tee spread now 0.000 m. River banks halved: 1.00 m of rise to 0.58 on the reported seed.
+
 - [x] **Four regressions from the water work, one cause behind two.** `foreshore` keyed on elevation instead of coastal proximity, reshaping whole courses (a links tee 510 m inland dropped 2.3 m) and amplifying every slope it touched by up to 1.67 -- both the steep edges and the unflat tee pads, now back to 0.46 m worst pad spread against 0.46 originally. `cutFor` stops a 3 m creek getting a lake's cut bank (steep probes near channels 1.6% back to 0.8%). Channels were not actually shorter where it counts -- on-course length went 447 m to 1862 m -- but stubs are now rejected. And the beach block ran before the tee block, silently removing the mown collar from every low-lying coastal tee in the paint only.
+
 - [x] **Cut banks for inland water, and a beach for the sea.** Ponds, lakes, rivers and creeks are excavated like bunkers -- 1.1 m of freeboard, a 2.4 m lip, measured at a 1.10-1.11 m bank across the interquartile range -- and the painted shore went from 7.14 m of soil to 1.36 m. The ocean instead got a shaped foreshore and a real beach that plays as sand: the coast measured 45 degrees before, and is now 10 m of sand at the default BEACH_TOP of 16 m. The beach claims rough only: allowing it onto mown turf made 19.4% of the island corridor sand.
+
 - [x] **A tear at the end of every hole.** `nearest` switched its greenside allowance on an exact float equality, stepping the distance 17 m instantly and tearing the landform past every green in every biome (worst 10.87 m on mountain, 7.18 m on island). Ramped over `GREEN_RAMP`, one-sided so green surrounds are untouched: worst step now 0.49 m on island. The shoreline is also refined now -- it was the one feature the 3 m mesh never subdivided, giving a waterline staircase whose p90 was exactly the grid spacing.
+
 - [x] **Hole-boundary staircase and a water lie on dry ground.** The owner atlas was a flat 512 square over a non-square course (2.88 x 4.26 m texels, 0.35% of samples on the wrong hole); it is sized from the course now at 1.75 m square, 0.13% error, 4 to 16 MB and 0.5 to 2.1 s of build. Separately, `surface()` decided ocean from `land` while the mesh is `height`, scoring 1512 island cells as water where the ground stood up to 6.13 m above the sea -- now 0.
+
 - [x] **Resolve hole ownership at boundaries.** Done in the shader: `fwidth` gates the work to quads a boundary crosses, the four neighbouring texels give the candidates, and `holeDistance` picks the true owner. Needed `h.width` uploaded in the spare `curves` channel (`nearest` does not measure against `fairwayWidth`) and a lake-ownership flag in the atlas alpha so the resolve declines where a lake owns the ground. 0.032% wrong against the atlas's 0.13%.
+
 - [x] **The crisp turf boundary stays crisp at water.** Asked whether the mowing boundary near a pond should be SOFTENED the way a channel crossing is -- which would have widened the one documented exception to the crisp-turf rule from "channel crossings" to "turf meeting water". Declined 2026-09-17 in favour of a sharp line in a rounded shape, which is what a mower actually leaves. The channel exception stays channel-only.
+
 - [x] **The mown outline is rounded where two edges meet** (`BAND_ROUND`, 2 m, in the paint and the lie). The band's width needed no change -- the visible band was already exactly the hole's semi-rough, and the original plan to "fix" it would have made it vary. Rebuilding semi-rough as a single uniform offset was priced on a real hole (worst swath 25.2 m against 32.2 m, 1.04% of ground) and declined: it is a distance transform and `surface()` is a point query, so the lie would need a fourth baked representation. See scratchpad/band-options.html.
-- [ ] **A CC0 grass model for the near-field tuft only.** Searched and priced (RESEARCH.md): CC0 grass exists and is properly licensed, but this project's blade is THREE triangles drawn up to 800,000 times, so a 50-triangle model is a 17x multiplier on the largest instanced draw in the scene and the 2M-triangle Poly Haven tuft is 800 billion on a links course. The one place it is affordable is `addNearbyGrass` -- 40,000 instances inside 24 m, where a 20-40 triangle tuft costs 0.8-1.6 M triangles. Owner is undecided; do not start without a decision.
+
 - [x] **Wind the whole scene agrees on, and a ball that sits on the ground.** Plants displaced along a hard-coded diagonal while the ball's drift, the clouds and the HUD arrow all used the course's real `windDirection`; they share one `windVec` now, and gusts are phased along it so they travel downwind rather than shimmering in place. Separately, `ball.castShadow` had been true since the beginning and could never have drawn anything -- the ball is 0.16 to 0.47 of one shadow-map texel -- so it is off, replaced by contact darkening that spreads and fades as the ball rises, and leans and stretches away from the sun so it doubles as the cast shadow -- at a resting ball's scale the two marks are 2.5 cm apart. The semi-rough also stopped carrying 3.5 cm blades, which were 13.5% of near-field grass instances.
-- [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is now handled for channels by a per-vertex bank weight, but ponds, lakes and the ocean plane have no shore weight and so still end on a uniform alpha at their edge — giving them one needs shore distance in their geometry. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
-
-## Priority 3: play and maintainability
-
-- [ ] **Separate main.js concerns.** Extract studio, round settings, scorecard, input/monitor and presentation controllers. Preserve accessible names/IDs and public behavior; avoid a framework migration solely for file size.
-- [ ] **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
-- [ ] **Tournament penalty options.** Add lateral water drops, relief zones and optional full rules. Current water/out-of-bounds behavior is simplified stroke-and-distance; sim drops are separately penalty-free by design.
-- [ ] **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
-- [ ] **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
-- [ ] **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels.
-- [ ] **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
-- [ ] **Offline release matrix and packaging script.** Automate release archives and run actual file-URL/manual tests on Safari, Chrome, Edge and Firefox. Verify local saves and export/import behavior. Current browser automation disallows file URLs; the bundle is inspected statically and exercised through the local server.
 
 ## Completed in the putting and cup update
 
 - [x] **Turf firmness, in the instrument's own unit.** Firmness is TruFirm/GS3 penetration in inches — lower is firmer — riding in the turf config beside stimp so it reaches every physics call site. It drives restitution, Penner's contact tilt and the Coulomb grip limit. Normal reproduces the previous model exactly, so no existing course changed. A 7-iron into a green: Soft bounces 7.6 ft and runs 4.5 yd, Burnt bounces 11.4 ft and runs 25.6 yd, with carry untouched. Sand, the cup rim and rolling deceleration are deliberately excluded — the rim and the skid already contain the green's firmness through its measured Stimp, and counting it twice would be wrong. Eight tests across every turf surface, spin rate and spin axis; sources and the anchored-versus-chosen split in RESEARCH.md.
   - [x] **Re-anchored to the USGA's published bands.** The preset depths were originally placed inside the instrument's range by judgement, because the USGA page carrying the reference ranges 403s to automated fetch. The user saved the page from a browser, so the four presets are now the published bands directly — Burnt 0.30 (*Extremely Firm*), Firm 0.37 (*Firm*), Normal 0.45 (*suitable for most facilities*), Soft 0.60 (*Receptive*). Burnt had been at 0.20, entirely below the typical range, and the anchoring cost real range: the extreme 7-iron rollout fell from 36.7 yd to 25.6. The article is committed under `reference/` and a test asserts each preset still sits on its band.
+
 - [x] **The lab can watch it.** A firmness slider and four preset buttons, lab-only, driving the raw number rather than the four names. Twelve approach presets into green and fairway — clubs, spin rates, a draw and a fade — with power solved for the carry each asks for, landing ten yards short of the pin so the whole putting surface is in front of the roll-out. The readout reports carry and run — and says "spun back" when the run is negative, which a high-spin wedge genuinely produces. Launch angle, spin and spin axis are live override sliders alongside firmness: a preset fills them in, nudging one re-fires on release, and "use preset" hands them back.
 
 - [x] **The main menu shows a different hole, at a different hour.** The backdrop inherited the player's clock, so once floodlights existed a player who had been putting at 1 a.m. saw nothing but dark floodlit holes. Generation was never the problem — all seven biomes, all fourteen footprints and 136–610 yd still come up. The backdrop now draws its own hour from the same seed as the hole, weighted to daylight with three of ten slots dark, and lights the poles by that hour rather than by the player's setting. The loan is given back on leaving, the periodic clock save is suppressed while it is held, and touching any clock control ends the loan so a time the player just set is never undone.
@@ -471,22 +660,27 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [x] **Night golf under floodlights.** Poles down alternating sides of every hole plus a pair flanking the back of each green at 45 degrees off the line of play, placed from published sports-lighting practice rather than by eye: 23 m masts (the bottom of the ball-field band), spacing derived as three times the mounting height, 62 m of reach scaled with the mast, and clearance of 18 yd past the semi rough down the fairway and 10 yd around the greens, because a pole is an obstacle. Every pole is instanced geometry — two draw calls for a course — and every one of them is a live `SpotLight`: the assumption that sixty lights would not render was measured and proved wrong, because none of them casts a shadow and shadow maps are the expensive part. A cap of 192 keeps a nearest-first fallback for any future course that outgrows it. Off by default and saved with the other time settings. Measured at 1 a.m., switching them on lifts mean frame luminance from 43 to 92 of 255 at no cost to frame time (8.4 ms median either way). Seven tests in `tests/floodlights.test.mjs`; figures and sources in RESEARCH.md.
 
 - [x] **A par 5 is not 723 yards.** Base length by par, jittered a quarter either way with no clamp, then every hole scaled by one factor to hit the total -- so a long hole raised the total, lowered the factor and shortened everything else. At a 7,400-yard target one hole in eight was outside the USGA guideline and par 5s reached 803. Researched bands (120/175/250, 300/410/490, 470/540/640) filled by proportional water-filling: 0.0% outside the guideline at every length.
+
 - [x] **The par mix was drawn flat off the list.** Every combination adds up; eighteen par 4s is not golf. Weighted toward a fifth of holes at each par, so 4/10/4 comes up 49% of the time.
+
 - [x] **Par order spreads across the nines.** Counts split evenly with the odd hole going to a seeded side, then each nine hill-climbed against a badness score for back-to-back 3s and 5s. 0.09 adjacent pairs a course.
+
 - [x] **One hole skeleton, shared.** `holeLine` in course-plan.js computes the line, the length and the tees for both the builder and the pre-build scorecard, over one contiguous prefix of the hole's stream. The two seeded generators -- identical streams, separate code -- are now one.
+
 - [x] **The full card before the course is built.** Par, out/in/total and all three tee yardages, exact to the rounding. The length slider, the exact-yardage box and the card are one group instead of three controls for one decision.
-- [ ] **Green surrounds are steeper than intended on extreme settings.** The test that claimed otherwise was pinned to one lucky seed at 0.582 while most seeds were already over its 0.6 line. Now a multi-seed characterisation test; the underlying shoulder blending on elevation 100 / landform 100 mountain still wants doing. **Not a release blocker, measured**: at the default elevation 35 / landform 70 the worst surround across 8 biomes x 3 seeds is 0.59 with a median of 0.54, and nothing exceeds the intended 0.6. It only bites at slider extremes, where the result is a perched green rather than a broken one.
-- [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
+
 - [x] **The hole map sat on paper, and the green tile was 96 texels.** `mapWater` is the colour beyond the generated land and was the base coat for the whole canvas; the full-course map hides it under a terrain tile and hole view does not, so it WAS the surround. Biome rough there now. The contour tile is 256 when the map frames the green rather than 96, and the canvas backing store follows the display ratio instead of a hardcoded 2x.
+
 - [x] **The green is one state the HUD reads.** Pin pulled while putting (cup and liner stay), marker renamed to the hole and clamped to a measured free rectangle that clears the shot controls and the map, putter auto-selected only on the putting surface. `projectMarker` handles behind-the-camera properly, where `project` flips both axes and puts a marker on the wrong side.
-- [ ] **Short shots off the green pick the shortest club at 100% power.** Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+
 - [x] **The wind arrow was mirrored.** Camera minus wind, not wind minus camera: both bearings are `atan2(x, z)` and agree with each other, but that runs counter-clockwise on screen while CSS `rotate` is clockwise. The easy test case -- wind downrange, camera downrange -- is zero either way round and cannot catch it.
+
 - [x] **Wind debris is carried rather than fired.** Per-mote sway and bob rates plus a spread in drag, with the sway as a velocity through zero so the weave stays bounded. Tails from a single screen-space wind uniform, as shape rather than an alpha gradient.
-- [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
+
 - [x] **The putt aim line rides on the green.** It inherited the full shot's 100 mm lift and appeared to leave the top of the ball; 15 mm passes below the ball's equator so the ball sits on its own line.
+
 - [x] **The flight model checked against a launch monitor.** 36 SkyTrak shots, irons and wedges: carry unbiased at under 2%, descent angle exactly zero mean error, offline within 1.4 yd. Caveats and the unvalidated roll model in RESEARCH.md.
-- [ ] **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
-- [ ] **The green marker still shows a flag glyph** after the flagstick has been pulled. A cup or target mark would be honest.
+
 - [x] **The aim line stopped making garbage.** It was rebuilt from scratch every frame an arrow key was held — a Vector3 per point, a flattened array and a fresh LineGeometry, about 44 KB and several hundred throwaway objects a frame at 2.6 MB/s. Not CPU time (0.06 ms) but GC pressure, showing up as an occasional 90 ms frame with nothing else to blame. The buffer is now allocated once and written in place with `instanceCount` deciding what draws: `bufferData` calls per frame during a sweep went from 4 to 0. Over 4,500 sampled frames of continuous aiming: median 8.4 ms, p99 11 ms, one frame over 16 ms.
 
 - [x] **Shaders compile before play instead of during it.** Nothing precompiled, so each material variant was built the first time something using it came into view — mid-flight, mid-turn. A first pass over fresh ground burst six frames between 21 and 71 ms; a second pass over the same ground compiled nothing at all. `warmUp()` now compiles the scene at course build and on each hole change, after draining the grass queue against a 70 ms budget so the lazily-built grass material is in the scene to be compiled. 116 shaders now land at load, 10 during play, and a played course holds p99 at 11 ms.
@@ -494,22 +688,33 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [x] **The camera stopped hitching on grass.** Near-field grass tiles were all built in the frame the camera crossed a tile boundary: five tiles, 8,000 candidate blades, three world queries each — 37 ms measured, and 127 ms for the first ring of 25. Tiles are now built one per frame from a nearest-first queue, out-of-range tiles are parked in a 32-entry LRU instead of discarded, and blades are written straight into the instanced mesh instead of cloned into arrays first. Worst-case single-frame work: 25 tiles to 1. What is left in a tile is 85% `world.surface()`, which is its own optimisation and is not done.
 
 - [x] **Endless mode, and the menu hole you are looking at.** One hole after another, forever, from a single run seed: hole seven's landscape comes from that seed and the number seven, so a run resumes from `{seed, hole}` with nothing else stored. The main menu's showcase hole is now hole one of a real run built under the cache key `loadCourse` will ask for, so choosing Endless adopts that seed and that world and tees off immediately — no regeneration, and no progress overlay over work that is not happening. That makes `endlessSettings` load-bearing: `loadCourse` normalises through it on the way in, so it has to be a fixed point or the key moves, the cache misses and a different hole appears than the one that was picked. It lives in `endless.js` so both sides call the same function, proved a fixed point over 200 seeds.
+
 - [x] **Schema and generator versions for the pin work.** `GENERATOR_VERSION` 9 → 10, because greens and cups changed for unchanged seeds; `SCHEMA_VERSION` 3 → 4 with a migration that gives pre-`pinDay` saves Thursday — the gentlest setup and the nearest thing to the middle-of-the-green cup they were played with. A new test walks every version from 1 to current and fails if any step leaves a setting undefined, which is the failure mode when only half of "bump and migrate" gets done.
 
 - [x] **The hole flyover is the main menu's camera.** It ran up the fairway and then orbited the green, which showed a hole a piece at a time and never its shape in the landscape. It now circles the whole hole with the menu backdrop's framing at one and a half times its speed, a 55.9 s lap. Terrain clearance is solved once per hole rather than clamped per frame: the ring is measured along the arc and to each side of it, then smoothed, so the camera rises to meet a ridge before it arrives instead of putting a corner in the path. Measured on full mountain and full forest it holds 34 m of ground clearance and passes 10 m over the tallest canopies.
+
 - [x] **The Tools button did nothing.** `openToolsBox` existed and nothing ever called it, in any mode. Bound, and opened up to the studio as well — Arrange windows and Reset windows are what you want while laying a course out — with the play-only controls disabled outside a round so nothing in the tray can fire without one.
 
 - [x] **Greens that are actually shaped, and hole locations that move.** The green contour was a tilt and two sine ridges, which at the top of the slider gave 3.8 ft of relief and nowhere flat. It is now a tilt, rounded-square-wave ridges, a dish that is a punchbowl or a turtleback by seed, and a tier — and the slider curve is superlinear, so the default green is unchanged at 1.2% mean slope while 100% reaches 5.6 ft of relief, 18.5% tier faces, and still keeps 14% of the surface under 2.5% so there is somewhere to cut a hole.
+
 - [x] **The cup stopped being the centre of the green.** It had been both, so hole locations could not move at all. Green centre and pin are now separate everywhere: routing, bunkering, tree exclusion, the corridor collision disc, the flyover orbit, stream protection, the map outline and the green-reading shader key off the green; physics, the flagstick and the cup mesh key off the pin. The corridor disc was the one that mattered — centred on the cup, recutting a pin moved the collision volume, moved the next hole and rerouted the whole course under it. Held by a test that asserts all four pin days produce an identical layout.
+
 - [x] **Thursday to Sunday hole locations.** A `pinDay` setting cuts the cup for the day of a tournament. Difficulty is slope — Thursday 1.59%, Friday 2.03%, Saturday 2.54%, Sunday 3.11%, nothing past 4% on any green — while room to the edge is a safety floor of three metres rather than a second dial. Scoring that room as a target instead put every cup on the course the same five paces inside the edge; one-sided, they now spread from three metres to eighteen. Front, middle and back rotate hole by hole from the front. Shown on the hole card beside par.
+
 - [x] **Tracers stop stacking up.** The previous shot's tracer used to hang over the next one. It now clears when the shot is over, and every tracer of the hole comes back at once on a slow high orbit while the scorecard is up.
 
 - [x] **The cup spits balls back out.** Two bugs, one line apart. First, the rim was tested as two separate events — "has the centre reached Rcup" for the far lip, "is it below the green and past Rcup - r" for the wall — leaving a wedge between them that the ball flew straight through; a putt 50 mm out with its centre 2 mm above the lip sits 4.6 mm from the rim circle, buried in it, and nothing engaged until 54 mm. It is now one contact test against the actual surface: a torus above lip height, the cylinder below, agreeing exactly where they meet. Second, the wall was handed the ball's drilling spin with the wrong sign. A ball rolling forward carries -v/R about the outward radial axis, and in `u' = -5g/7r - (2/7) theta' w` that sign decides everything: right, and the spin term pushes the ball UP the wall the way topspin climbs a wall; wrong, and it merely adds to gravity, which is why every ball that reached the wall drilled to the bottom and none ever came out. Rides reach a full lap and come back out, true horseshoes send the ball straight back at the player at 179 degrees, and a ride can stay shallow enough to watch because the wall motion is harmonic rather than a descent. Third, a sign that decided which WAY round the cup the ball went: the edge and wall handoffs disagreed about it, so a ball rode the lip one way and reversed the instant it took the wall. Flipping rate and spin together leaves their product alone, so capture, the effective hole, ride length and energy were all unchanged — it was wrong in a way no measurement could see and only a person watching could. Fourth, the rim was made of nothing: it had two invented drag constants and was otherwise lossless in the direction the ball was travelling. The liner sits 25.4 mm down and a lipping ball has fallen less than a ball radius, so the surface it runs on is always cut turf — and turf's rolling resistance is measured, not chosen. A Stimpmeter gives `mu = a/g` = 0.056 at Stimp 10, and resistance is mu times the load, which inside the cup is the press of going round rather than the ball's weight, so drag grows as the square of how fast it circles. That took the longest surviving ride from 926 degrees to 396, made a faster green hold a longer ride on its own (Stimp 8: 370, Stimp 13: 701), removed the patchy effective-hole boundary, and left every visible ride running on top of the lip instead of sinking out of sight. Eleven regression tests in `tests/rim.test.mjs`.
+
 - [x] **The cup has a bottom, and nothing teleports.** A ball straight down the middle touched no wall, so no regime owned it: it fell 143 mm, 62 mm below the floor, still accelerating, and the capture animation then hauled it 50 mm back up. Separately, a ball thrown clear of the rim kept the "over the cup" flag that suppresses the landing test and sank through the green 86 mm out before the wall grabbed it back to 32.6 mm, a 53 mm jump with the camera at its closest. Audited across 969 entry conditions and every lab preset for position jumps, upward jumps, balls inside the turf, holed-but-finishing-away and touched-but-not-flagged: clean.
+
 - [x] **A lab to watch green behaviour deliberately.** One hole whose green is measurably flat (elevation and green difficulty at zero give 0.000% gradient across 1089 samples on any seed) plus a console API that places the ball and strikes it to order: `lab.putt({feet, past, offset})` asks for a shot the way a golfer describes one — how far from the hole, how far past it the ball would finish, how far off the centre the line runs — and solves the launch with the same roll preview the aim line is drawn from. Named presets sit either side of the model's own thresholds, so the table doubles as a readable statement of the capture envelope: dead centre holes anything finishing up to 9.3 ft past, an inch off line 5.5 ft, an inch and a half 2.7 ft, two inches only 0.4 ft — monotone in offset, which it was not before the rim was resolved as a single surface. `src/lab.js`.
+
 - [x] **More complete cup dynamics.** Rewritten around one rule: the ball is caught if it falls its own radius while its centre crosses the opening. That is `chord x sqrt(g / 2r)` = 1.6365 m/s dead centre against Penner's published 1.63, from geometry with nothing fitted, and it fixed the shape of the envelope off centre — the old `1.63(1 - (d/R)^2)` turned away balls that had already fallen two and a half ball radii below the rim. Balls that fall less than a radius now climb back out over a rim that turns them, so holing out, lipping out and racing across the top are three readings of one number with no seam between them. Before this the hole did nothing at all to a ball it did not swallow: crossings at 0.6, 0.8, 0.95 and 1.05 of the cup radius all finished 1.310 m past it, identically. `src/cup.js`, with the measured before/after in RESEARCH.md.
+
 - [x] **Struck putts skid before they roll.** A Stimpmeter ramp releases a ball that is already rolling, and a putt does not; both reached the simulator as `{vla:0, spin:0}` and every putt was treated as a ramp release, matching the pure-rolling closed form at a ratio of 1.000 at every speed. Shots now carry `roll`. Sliding friction is set so the skid is 15% of a putt on a Stimp 10 green, the share launch monitors report, and both phases go as v^2 so the power control did not change shape. Balls settling from a bounce take their contact velocity from the spin the bounce computed, so backspin checks and topspin runs — that spin was previously discarded at the moment it mattered most.
+
 - [x] **The aim preview runs the shot instead of describing it.** A putt's line and ring come from the same ground integration the ball will use, so the two cannot drift. The closed form it replaced assumed a flat green of unlimited extent: on a 4% cross-slope the preview now lands within 0.05 m of the ball, shows break as a curve rather than a straight bearing, and reports the surface it stops on. Clicking a spot while putting solves for the power that stops there through the same preview. 0.17 ms per preview.
+
 - [x] **Slope-aware cup capture — resolved as not needed.** The lowered far rim on a downhill putt is exactly cancelled by the ball already descending at `v x theta` as it leaves the near rim, so the criterion has no slope term in it. Measured from 6% uphill to 6% downhill, the launch speed that holes swings 24% while the arrival speed at the cup stays between 1.721 and 1.770 m/s. The rim follows the green rather than sitting level at the pin, because a level rim throws the lowered far side away and makes downhill and flat identical. Adding the visible half without the invisible one would have introduced a ~20% slope error. Held by a regression test so the cancellation cannot be broken by restoring one half.
 
 ## Completed earlier, moved from the priority lists
@@ -519,75 +724,99 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   *Phase 3 is done too.* The app now has three modes. **Menu** is the entry point and offers Continue, Play, Course studio and Help. **Play** selects a saved course, the group, format and tee — the hole count comes from the course, so the two can no longer disagree, and no generation control appears. **Course studio** is its own mode: free flight, the settings panel, an explicit **Regenerate**, and a "settings changed" indicator, since nothing auto-regenerates when a rebuild is seconds of frozen tab. **Surprise me & play** builds a randomised nine from the schema's per-field `vary` bands and tees straight off. Opening Fairway grows only a one-hole showcase for the camera to circle behind the menu — about a quarter of a second against roughly two for a nine — and a saved round waits in `pendingRound` until Continue is pressed. Courses are deleted from Play, next to the course picker, behind a named two-tap confirm.
   *Phase 4 closes it.* The studio panel is rendered entirely from the schema — groups, order, labels, bounds, units and help text — with only the six controls that are not plain sliders written by hand. Every setting carries an on-demand description behind a hint button, plus **Show all descriptions**, and the nine categories replace the old muddle that mixed wind, fairway width and green difficulty under one heading. A test asserts every setting falls in exactly one rendered category, so a new entry cannot be added and silently never shown.
   **What this does not do, by design:** retired geometry is not reproducible. A generator bump means old seeds grow different ground, and the player is told rather than kept in the dark. Reviving exact old terrain would need every retired generator kept alive; that was weighed and rejected.
+
 - [x] **House collisions and residential rules.** Houses are solid. `simulateShot` indexes them like tree trunks and resolves the deepest overlap of an oriented box (walls plus the roof folded in as height), pushing the ball out along the face it entered and reflecting only incoming motion, so a ball resting against a wall can still be played away from it. **Bouncing is the default and costs nothing.** The optional **Houses play as out of bounds** setting makes reaching one a penalty stroke and replay from the previous lie; it is off by default, carries its own explanation in the studio, and the 2 to 3 schema migration sets it off for every existing course, so nobody's saved course silently starts costing strokes.
+
 - [x] **Richer residential scenery.** Four roof forms (gable, hip, saltbox, L-wing), optional porches, garages with a drive, picket fences and planted borders, all drawn from the same seeded stream so a street reads as built over time. Wall and roof palettes follow the biome. Foundations are sized to reach each house's lowest corner, so nothing floats on a slope. Setback, density, tee/green protection and tree exclusion are unchanged. House outlines are drawn on the full-course map.
   Still open: interiors, varied window patterns, and per-region architecture beyond the warm/arid palette split.
+
 - [x] **Pond banks on sloping ground.** Overlapping pond shelves settle to one shared level, which took the median pond bank from 35% to 13% against a background terrain median of 3%. The remaining quarter of ponds with locally steep banks turned out to share a cause with the biomes that lost ponds entirely: the shelf margin was pinned at a fixed 34 m, so shrinking a pond to fit steep ground barely reduced the footprint the fit was judged over. Scaling that margin with the pond fixed both. Measured on the reported max-elevation course: bank slope median 0.38, worst 0.62, none above 1.0, and mountain went from 3 of 8 seeds with no ponds at all to 1-6 ponds on every seed. Two approaches were tried and rejected with measurements: applying every overlapping shelf in turn (a pond in a valley drags a hilltop pond's shelf down to its level), and taking only the nearest shelf (a 1197% cliff wherever the winner changes — the boundary-switching trap the handoff warns about).
+
 - [x] **Central settings schema.** Derive defaults, validation, migration and sliders from one schema; prevent save/import controls from drifting. Include units and generated-vs-live setting semantics. *Delivered by the schema work above:* `src/settings-schema.js` is the single source of defaults, bounds, categories, units, help text, validation and migration, `generationKeys()` carries the generated-vs-live split, and the studio panel is rendered from it.
 
 ## Completed in the September 11 update
 
 - [x] Optional fairway homes with density/setback and dry gentle site selection.
+
 - [x] Broader green-surround transitions and expanded modifier bounds.
+
 - [x] Flat pond levels fitted below rim/outer-bank samples, smaller/rejected unsuitable ponds, refined shoreline geometry.
+
 - [x] Optional rivers/creeks with count, width, depth and meandering controls; beds, lies, water animation and maps.
+
 - [x] Ten additional footprint choices including Original square (14 total), selectable SVG previews.
+
 - [x] Persistent shot results, live horizontal distance and height.
+
 - [x] Three-second replay final hold and three-second delay before the completion scorecard.
+
 - [x] Animated flag lifting for putts.
+
 - [x] Context-free project handoff, agent entry point and separate future-work list.
 
 - [x] Camera-enclosing trees hide their complete trunk/branch/canopy instances and restore on exit.
+
 - [x] Biome-aware river/creek banks, downhill graded channels and shared reflective water.
+
 - [x] Large-lake count/diameter controls with open-ground siting and map/contact ownership.
+
 - [x] Fairway-following hole flyover and heatmap-only green orbit with preference restoration.
+
 - [x] Initial aim follows the fairway centerline instead of pointing across doglegs at the pin.
 
 ## Completed in the waterway update
 
 - [x] Smooth channel passage through fairways. Obstacle avoidance is a low-passed displacement with the side chosen once per obstacle, replacing the hard clamp whose influence boundary produced trapezoid corners. Two Chaikin passes and a curvature relaxation follow.
+
 - [x] Bunkers are avoided by rivers and creeks. Three routing tiers try a generous berth, then a tight squeeze, then sand-blind routing; any bunker a sand-blind channel crosses is washed out in `generateWorld` so water never stands in a playable bunker.
+
 - [x] Independent channel bearings, wavelengths, amplitudes and phases. Every channel previously shared one course-wide bearing and wavelength pair, so rivers and creeks were offset copies of one curve.
+
 - [x] Staged shoreline. Three bands — saturated margin, damp earth, then a fade to the surrounding cut — sized from channel width and capped inside the valley shoulder, replacing a 2.8 m collar. The bank tint is warmed and darkened so it reads as earth beside a green fairway rather than duller grass. An intermediate damp-turf stage was tried and removed: it held a near-constant tint of the surrounding turf and traced each channel as a coloured ribbon. Instanced grass is kept off the painted earth band for the same reason. Mown turf gets about a third of the margin unmaintained ground gets, so a channel crossing a fairway no longer carries a wide earth band through it.
+
 - [x] Channel water feathers out at the waterline via a per-vertex bank weight, and all water bodies are translucent in Cartoon style instead of only the single reflective one.
+
 - [x] The bank tapers to its crossing width gradually. One scale factor now shrinks the whole profile so it keeps its shape, the taper runs over a distance proportional to the body (about 70 m ahead of a fairway for a river, against 13 m before), and the corridor distance is smooth-min/maxed so a corridor corner no longer creases the bank into a wedge. Previously the band's outer contour swung inward faster than 45 degrees and drew a hard line along the fairway edge.
+
 - [x] Creeks and rivers relax the crisp turf boundary rule where they cross a playing surface: the classification blends and mowing stripes fade, both falling off with distance from the water. Colour only — surface queries and contact still switch at the true boundary. Ponds, bunkers and ordinary turf edges are untouched.
+
 - [x] Ponds share the channel shoreline. `shoreTint` in the ground shader now serves ponds, lakes and channels alike, replacing the pond sand bed and 5 m sand collar.
+
 - [x] Terrain is levelled under each pond during generation instead of searching for a flat site. Rim spread on finished terrain measures a few centimetres.
+
 - [x] Ponds sit against the fairway. Their gap to the corridor may be negative, so water can reach the playing edge without ever entering it.
+
 - [x] Larger water. Ponds now span roughly 90 m rather than a fraction of that, and **Typical lake diameter** reaches 460 m. Pond banks are anchored a fixed gap outside the fairway edge, so a larger pond grows away from play rather than into it. At the top of the lake range open ground runs out and fewer lakes are placed than requested.
+
 - [x] Patterned ripple strokes on the water surface were tried and removed at the owner's request; the water keeps its translucency, normal-map distortion and reflections. Do not reintroduce a surface pattern without asking.
+
 - [x] Station joins no longer step: the ground shader tests the two neighbouring segments of the same channel and keeps the nearest.
 
 ## Distribution follow-up (September 11 review)
 
 - [x] Owner-selected MIT license, package metadata, offline Help licenses and source/portable notices.
+
 - [x] Credit Mulberry32 and embedded Earcut, AgX and bundler helper code; update modified Water attribution.
+
 - [x] Dated provenance review, 50-entry dependency inventory, verified archive packager and release checksums.
-- [ ] Run a live dependency advisory audit on a machine with working registry certificate trust. Current attempts failed TLS verification; no clean-security claim.
-- [ ] Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
-- [ ] Choose public publisher/support details and check the working product name before a broad release.
-- [ ] Configure an optional donation page when requested; no payment account or public posting has been created.
 
 - [x] **The driving range.** 500 yd × 100 yd, dead flat, mown from behind the mats to the back of the field, identical every visit because nothing in it is drawn from a seed. Built as a standard hole object (`range.js`) with a one-line branch in `generateWorld`, so the ground shader, physics, map and floodlights need no special case. `noNeck` on the hole stops `fairwayWidth` pinching the back of the field into an approach. The real green is movable without shortening the field, because the shader reads green position from the cup atlas rather than from hole length. Eight tests covering depth, width, flatness, determinism, green travel, that a generated course still necks, and that the painted ground and the ball's lie classify identically.
   - [x] **Fixed: the painted ground disagreed with the lie.** `localSurface` tested the green's semi collar before the fairway while the shader paints the corridor over it, so the apron short of every green was drawn as fairway and played as semi-rough. Pre-existing on every hole (0.87% of hole 1), invisible until a green sat inside a full-width corridor. Range agreement is now exactly 0.00%; course holes fell to 0.02–0.36%. Existing courses play differently on the apron — the lie now matches what was already being drawn.
-  - [ ] **Remaining drift behind the green.** Up to 0.36% of a course still classifies `semi` where the shader paints `rough`: the shader mows to `length + 8`, `fairwayWidth` stops at `length`. Forgiving direction, separate defect.
   - [x] **Entry fixes after first look.** `bio: null` threw inside `loadCourse` before `setMode('play')`, so the range built and drew with the main menu still over it — a hole needs a real biome because the HUD and the flight model both read it. The menu entry is a full tile in the mode row rather than a small link. The ball sets up on the centre mat (`round.tee = 'white'`; the default blue tee is the left-hand station). Tee `yards` now carries the green distance so the card stops reading "0 yd". The green-reading overlay is forced off on entry — on a dead-flat green the slope grid and heat map both paint the whole surface blue, which looks like a bug and was reported as one.
   - [x] **The player card too.** Both practice modes invented a golfer called "Lab" or "Range" and threw away the real group; they now carry `round.players` through, so configured players arrive with their own names. The score chip shows the SHOT YOU ARE ON instead of strokes to par, since a practice ground has no par -- a session opens on SHOT 1 and ticks over as each ball settles.
   - [x] **FIXED — and the LAB was worse than the range.** The range already blanked its hole number, par and pin; the lab never did, so it announced "HOLE 01 / 09 · PAR 4 · PIN THU front" over a flat bench green. Both now read as what they are: the card titles itself "Lab" or "Driving range", par and pin show an em dash, and DISTANCE — the one field that stays real on a practice ground — follows the green wherever it has been put.
   - [x] **(original)** **Range HUD still shows round furniture.** The hole card carries "PAR 4" and a "THU" pin-day chip, neither of which means anything on a practice ground. Belongs with the range shot loop, where the card should carry shot data instead.
   - [x] **Coloured targets and distance signs.** Six targets at 50–300 yd, alternating sides, each a coloured disc with a white rim, an oversized flag and a board behind it carrying the number. Offset from the centre line is derived from the green's own reach so the distance slider can never drive the green through one — tested by walking every target's rim at every green position. The colour ramp avoids the cyan band that water and the slope overlay occupy, tested by hue rather than by channel dominance. Signs scale with distance to hold roughly even angular size from the mats. Three new tests, eleven on the range in total.
-  - [ ] **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
   - [x] **Green-distance slider.** In the tools tray, range-only, 30–300 yd. Moves the painted surface through the cup atlas, carries the flagstick and cup meshes across by hand, and refreshes the cached `worldPin`/`worldGreen` that most of the scene actually reads — without that the flag stands in an empty fairway where the green used to be. The distance is remembered for the next visit in the session. A test drives it through `generateWorld` so the routed transform is non-identity, because a bare builder hole has an identity transform and would pass either way. Twelve range tests.
   - [x] **Range shot loop and shot data.** `finishShot` branches before `round.takeShot`, so no stroke is recorded and nothing advances; the ball returns to the mat keeping the chosen club, and tracers accumulate on the field. Eight per-shot stats in the Shot information panel plus a running average carry and offline spread. The hole card reads Range / N/A / Range with the live green distance. `offlineOf` was extracted from the readout purely so its rotation could be pinned by test — a shot-direction sign error has shipped four times in this project. Thirteen range tests.
   - [x] **Range dispersion being zero is CORRECT, not a gap.** Logged earlier as needing a strike-quality model; that was the wrong conclusion. Ball data is an input from the launch monitor, and the simulator must never invent variation the monitor already measures — see PROJECT_HANDOFF. Dispersion appears when real shots differ, which is exactly when it should.
   - [x] **The lab works on the range.** `LAB_SETTINGS` is now `RANGE_SETTINGS`; `labApproach` moves the green to `carry + short` and fires from the mat instead of walking the ball back from a fixed pin. Every one of the twelve presets now lands on the turf its name claims — previously the wedge fired from rough, the 5 iron from semi, and the driver from rough 46 m behind the tee, none of which the readout showed. Raised `short` on the driver (60→90) and wood (60→80): at 60 both ran onto the green mid-roll and reported the mixture as fairway run, overstating it by 46% and 25% at Burnt. The firmness ladder reproduces exactly at Soft, Firm and Burnt; Normal reads 10.0 against the published 12.8 because the ball holes out.
+
 - [x] **Check rollout against reality — the blocker for spin-back.** Ploughing takes speed away without unwinding spin, so it is what lets a ball come home; friction takes both. Reversal needs plough ~0.40 and our fitted value is 0.142. Plough is pinned by our rollout figures, which were inherited from the instantaneous model and scaled from a measurement taken on a TEEING AREA — never checked against a real green. A 7-iron releasing 11.3 yd on a receptive green looks generous. If the true number is 5–8 yd, plough rises and spin-back may fall out on its own. Measurement question, not a modelling one.
   **RESOLVED.** Rollout is now checked against reality on both surfaces: fairway against the published tour totals for clubs that actually land there, greens against tour backspin of 15-20 feet. Spin-back works.
   - [x] **Crater wall built and found to be a dead end.** `wall`/`craterRelief` exist in contact.js and default to neutral. Every shot digs the same 1.08 mm, so the depth-scaled wall is a constant multiplier that refitting absorbs exactly — the refit held at wall 40 and 80 and spin-back never moved. Kept and documented so it is not rebuilt.
 
 - [x] **The bounce takes time now (Option C).** A spun ball stood straight up on its first bounce, and arXiv:2208.11685 proves an instantaneous bounce *cannot* do otherwise — slip reversal during contact needs tangential stiffness and damping. `contact.js` is a Kelvin-Voigt contact integrated over the 0.497 ms the ball is squashed. Ploughing was split out from Penner's tilt, because the tilt lifts as it retards and soft turf must retard without lifting — that split is what let all four firmness settings hit bounce height and rollout simultaneously. Tilt now falls with canopy instead of rising. The anchor became behavioural rather than a shared constant: the paper's fitted pair described a two-term model, so its 0.147 is no longer the same quantity, but everything that pair produced is reproduced to better than 0.5%. Wedge at 18k rpm now hops forward, forward, then back, finishing 12.1 yd behind its mark. 1.2x cost. 299 tests.
-  - [ ] **Deep rough no longer tracks firmness in bounce height** (1.48–1.61 ft across the range, against a green's 2.81–4.52). Defensible — the canopy does the stopping — but it is a behaviour change worth a second look.
 
 - [x] **Restitution is velocity-dependent.** Balls looked magnetised to the ground — a 7-iron bounced twice, the second at 6% of the first. The anchored 0.147 is the FAST-impact value; arXiv:2302.02758's own conclusions say a constant fit is deficient and turf shows "elastic behaviour for low normal velocity and elasto-plastic behaviour for higher speed bounces". Restitution now rises as impact slows, gain 3.5 at rest decaying to 1x by full-shot arrival speed. The gain is set by the shoulder-height drop test (ball returns to about knee height, COR ~0.58; green's 0.168 x 3.5 = 0.588) and PLASTIC_SPEED holds the measured anchor to within 2%. Driver 3 -> 6 visible bounces, 5-iron 2 -> 4, 7-iron 2 -> 3. Firmness now changes the bounce count too.
 
@@ -607,16 +836,11 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [x] **Flight camera pass.** Tightens across the whole shot rather than only the last 15 m (a second, height-ungated `trackCloseness` from 150 m in, 24 m → 13 m, handing over to the existing turf-level close-in). Every shot is now followed from off the shoulder — 25° for a full shot against a putt's 45°, kept smaller because the hole sits down the flight line and has to stay in frame. The follow bearing trails the line to the **hole**, not the struck line, falling back to aim within 1.5 m of the cup where the bearing is undefined. The view leads toward the hole so both it and the ball are framed; a test requires both inside 30° of the view axis at three ball heights across the whole approach. Camera hold 0.75 → 1.5 s, putts still immediate. Three existing assertions in `approach-camera.test.mjs` described the old behaviour and were rewritten rather than appended to.
 
-  - [ ] **Range dispersion is always zero** — see above; needs a strike-quality model.
-  - [ ] Targets are scenery, not greens — needs a GLSL loop over an extended cup atlas.
-
 - [x] **The aerodynamic curve is fitted rather than asserted.** It had never been fitted to anything, and was wrong in a spin-ordered way — irons ~10% long and ~15% high, driver 7% short and 23% low, with the lift cap binding for the 9-iron and wedge. Five constants (`AERO`) fitted against six measured tour rows: carry 7.9% -> 3.2%, apex 14.6% -> 3.7%. Descent angle was NOT in the fit and improved 7.0% -> 1.8%, within a degree on every club. `simulateShot` now reports `descentAngle`, taken at the touchdown velocity.
   - [x] **The descent-angle and apex targets are unsourced.** Ball speed, carry and total are from the published Trackman tour averages; the descent and apex columns are from memory, so the 1.8% out-of-sample result is only as good as they are. Confirm both against a primary table. (An earlier landing-speed column was discarded for exactly this reason.)
   **VERIFIED — sourced, and both check out.** Descent angle: the PGA Tour average for a 7 iron is **50 degrees** and pros target 48-50 ([Golf Digest](https://www.golfdigest.com/story/the-most-important-data-point-when-it-comes-to-your-next-irons-a), [golf.com](https://golf.com/instruction/approach-shots/what-is-descent-angle-equipment-metric-play-smart/)); **ours is 49**. The rest of the irons sit inside the quoted mid-40s-to-50 band — 5 iron 46, 9 iron 51, PW 51. No exact tour figure was found for a driver; ours is 39 against 'shallower than irons'.
   Apex: Trackman's distinctive claim is the FLATNESS, not a height — *"the difference in Apex Height between Driver and Pitch Wedge is only 3 meters/yards"* ([Trackman](https://www.trackman.com/blog/golf/apex-height)). **Ours is 3.7 yd** (driver 32.0, PW 28.3). That is the better test, because it is a specific falsifiable shape a model could easily get wrong.
   This mattered because the aerodynamic fit's strongest claim — that descent angle came out within a degree WITHOUT being fitted — rested on targets typed from memory. It holds.
-- [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
-  **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
 
 - [x] **Release is too short for every club below a 3 wood, and the bounce is now the suspect.** With the flight corrected, measured inputs give: driver 28.8 yd against 21, 3 wood 19.4 against 19, 5 iron 9.2 against 15, 7 iron 3.0 against 13, 9 iron 0.3 against 11, PW -0.3 against 10. The error runs with spin, so the bounce over-responds to it. This **corrects** the guess in RESEARCH.md that our rollouts were too generous — they are too short, which means ploughing cannot be raised to buy spin-back without making release worse.
   **SUPERSEDED.** This was measured against published totals for clubs that land on GREENS, not fairways -- a 9,304 rpm wedge releasing ten yards on a fairway is not a shot. Fairway now fits driver 22.7 / 3 wood 19.0 / 5 iron 13.1 against 21 / 19 / 15.
@@ -629,14 +853,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   **FIXED.** Spin transfer (`SPIN_GAIN` 5/2 to 3/2, per-surface) stopped the bounce driving every shot to rolling. Balls keep backspin and come home.
   - [x] **The real defect is the SPREAD, not the level.** Measured release runs 21 yd (driver) to 10 (wedge), about 2:1; ours runs 28.8 to -0.3, a collapse. Every tangential lever slides the whole ladder together without changing its shape, so the tangential loss is too spin-sensitive in its FORM, not in its coefficients. Next step is the functional form, not another fit.
   **FIXED.** The spread was a spin-gradient problem; spin transfer closed it on both surfaces.
-  - [ ] `CONTACT_GAIN` in contact.js has been declared and unused since it was written.
-
-- [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
-  - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron.
-  - [x] **The measured data DOES cover amateur speeds.** Campaign B spans 1.93-38.7 m/s, so the anchor is valid down to a chip. What is narrow is our tour validation set: it spans 3.49x in arrival spin but only 1.26x in landing speed, while the stock bag lands as slow as 14.7 m/s.
-  - [x] **Partial shots show the release-spread defect from the other side:** a half 7-iron releases 17.5 yd against a full one's 3.5.
-  **SUPERSEDED** by the fairway and green refits.
-
 
 - [x] **A ball can come back.** `SPIN_GAIN` 5/2 to 3/2 in contact.js, per-surface in the `CONTACT` table (green 1.5 rising with the canopy to 2.5 in rough, because you cannot spin a ball out of the rough). The bounce was driving every full shot to ROLLING inside the contact, and rolling is topspin — a wedge arriving at 7,000 rpm left at −1,416, so nothing could ever return. The roll phase already handled backspin correctly and needed no change; the bounce was destroying its fuel. A 7-iron on a firm green now crosses zero at ~9,600 rpm and reaches −12.5 yd by 13,000, while a stock 7,000 rpm shot still releases 2.7.
   - [x] **The published total-minus-carry ladder was abandoned as a fit target.** It demands a 9,304 rpm wedge landing at 51 degrees release ten yards, which is not a real shot; four fits against it stalled at 37–40% with parameters railing, and the ones that moved release did it by cutting friction, flattening the spin response entirely. Fitted to tour behaviour instead: RMS miss 11.7 to ~3.5 yd.
@@ -646,7 +862,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   **RESOLVED — it has some now.** Chipping is taught as a carry-to-roll ratio (PW 1:3, 52 deg 1:2, 56 and 60 deg 1:1), which is the first external anchor the sub-20 m/s regime has ever had. Measured against it the 56 degree is right at 1:0.9 and the lower lofts run short, and `elasticGain` was ruled out as the cause by sweep — it moves chips the wrong way and moves the fairway two yards. Chip behaviour is accepted as it stands and is not tracked as a task; the numbers and the ruled-out suspect are in RESEARCH.md if it is ever picked up.
 
 - [x] **Speed-dependent rolling resistance is ON** (`ROLL_SPEED_GAIN = 1`). Flat below the Stimpmeter's 1.83 m/s and rising only above it, so putts up to 3 m/s are bit-identical and a green set to Stimp 11 still runs 11 feet, with no renormalisation. Fliers come down (a 2,000 rpm 7-iron on a Normal green 40.9 -> 26.3 yd) while realistic spins are untouched exactly. Needed a midpoint evaluation in the rolling step: a first-order step left an O(dt) bias that made the Stimp run drift with the integration timestep. Distance is no longer exactly quadratic in launch speed above 1.83 m/s -- below it, where ordinary putts live, it still is.
-  - [ ] **The gain magnitude is unanchored.** Nobody has measured how turf resistance grows with speed; the shape is pinned at the Stimpmeter end but `k = 1` is a choice.
 
 - [x] **(superseded) Speed-dependent rolling resistance was switched OFF** (`ROLL_SPEED_GAIN = 0` in turf.js, provably inert). Written because a 2,000 rpm 7-iron entered its roll at 4.3x the Stimpmeter's calibration speed. Not enabled: turning it on breaks 19 tests including the quadratic launch-speed-to-distance law the putting power control depends on, and the shots it corrects are not shots anyone hits. The Stimpmeter run is preserved exactly at any gain, on every surface, by construction.
 
@@ -654,7 +869,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [x] **The first bounce goes BACKWARD on Normal and Soft greens, which is wrong.** Measured on `green · high spin` (10,767 rpm): the ball lands at 22.79 m/s, leaves the contact at 4.63, and moves backward through a 3.36 ft hop without ever going forward. Real behaviour is a forward hop first, then the near-vertical one, then back — and that is what Firm already does, which is why Firm looks right on screen. The budget says friction (8.35) plus ploughing (2.96) cannot reverse 13.94 m/s of forward speed on their own; the Penner tilt's 2.76 is what tips it over.
   **FIXED.** The bounce can no longer reverse a ball on first contact, and the green ladder was refitted against a 56 degree wedge. Every first hop is forward.
-  - [ ] **Same root cause as the inverted firmness order:** `PLOUGH_BY_FIRMNESS` is too high at the soft end (Soft 1.797, Normal 1.0 against Firm 0.634), so soft ground both skips the forward hop and produces MORE rollback than firm — backwards from real golf, where firm fast greens give the dramatic zip-back and soft ones plug and sit. Pulling the soft end down should fix both.
 
 - [x] **Green distance moved into the lab bar.** It lived only in the range's own controls, so setting up a manual shot meant leaving the lab. Slider plus 100/150/200/250 yd buttons, and `lab.greenAt()` on the console. Follows the drag on a flat lab green and waits for release on a shaped one, which rebuilds the world. Fixed a latent bug while wiring it: `labGreenAt` recorded `settings.rangeGreen` only on the expensive path, so the cheap one moved the green without saying so — invisible until something read the distance back, which a slider does.
 
@@ -685,9 +899,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - [x] **The published total-minus-carry figures were fine all along** -- they were being pointed at the wrong surface. Driver/3 wood/5 iron land on fairways and their totals are real; wedge totals are not fairway roll-outs because those shots land on greens. Four earlier fits were spent trying to make a 9,304 rpm wedge release ten yards on a fairway.
   - [x] Fairway fitted to driver 22.7 / 3 wood 19.0 / 5 iron 13.1 against 21 / 19 / 15, RMS 1.47 yd. Spin transfer at the rigid ceiling 2.5 is what closed the gradient; ploughing moved all three together.
   - [x] Greens fitted across 56 wedge, PW, 9 iron and 7 iron. Firmness now scrubs spin rather than digging -- the fit flattened ploughing across firmness on its own, which is what a tight shallow-marking putting surface should do.
-  - [ ] **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
-  - [ ] **7 iron on a Burnt green runs 11.8 yd.** Defensible for a surface meant to reject shots, but worth an eye.
-
 
 - [x] **Lab box moves and resizes.** Dragged by its title line, resized from the corner. The listener is wired once and guarded, because `showLabBar` replaces innerHTML on every redraw and re-wiring would stack listeners; inline position and size survive a redraw because the bar element itself is not replaced.
 
@@ -703,10 +914,10 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [x] **The range has a setup dialogue and the group can be edited from inside it.** Choosing the range from the menu now asks for the group and the green distance first, the way play, endless and studio do. The same panel, opened from the avatar while practising, reads "Apply to this session" and changes the group in place. This closed a gap created by carrying `round.players` into the range: the group could be brought in but never edited there, because the only control that committed player edits was "Start fresh round", which leaves the range.
 
 - [x] **The group can be changed without restarting, in every mode.** `Round.setPlayers` resizes every per-player array in step: a golfer who stays keeps their card, their strokes and their ball; one who joins starts from the tee with earlier holes blank (`cards` is sparse by hole and the scorecard already guards each cell); one who leaves takes their card, so the button confirms first. "Apply to this session" now appears in play and endless as well as on the range and in the lab.
+
 - [x] **Players are added with a + and removed with a trash icon**, replacing the 1-4 count dropdown. One shared `groupEditor` serves the round panel and the practice panel, and it holds a draft rather than scraping the DOM at commit time -- a count dropdown and a row list can disagree with each other, and a single draft cannot.
 
 - [x] **A golfer can be removed on their own turn.** If everyone still in the round has holed out once they are gone, the hole completes through `showHoleCompletion` -- the same routine a holed putt runs -- so the summary, scorecard and countdown to the next tee behave exactly as they always do. Removal is confirmed by name first, and a rejected change now raises a toast as well as the inline error, which on its own read as the button doing nothing.
-
 
 - [x] **Putting settings live in Format & tees, inline.** The mode select and the 1/2/3-putt distances render in the round panel's format section instead of a `Putting: … · change` button in *Your group* that opened a second window for one setting. Both surfaces -- the round panel and the tools-tray *Putting options* -- build from the same `PUTTING_MODES` / `PUTTING_NOTES` / `puttingFields` / `readPutting` / `applyPutting` pieces, so the option list and the notes have one definition. The round-panel fields apply on change; the tray popup keeps its Apply button because it is a popup.
 
@@ -760,11 +971,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - Identical shots still return a zero-size mark. Inflating a point into a shape would be drawing a miss nobody hit.
   - A second test pins the opposite risk: the tightest ball must reach 0.95 of the ellipse, since containment alone is satisfied by an ellipse twice the size of the group.
 
-- [ ] **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
-  - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
-  - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above says the driver's apex is 9% LOW against a sourced 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
-  - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
-
 - [x] **Every HUD panel moves and resizes at all times.** Arranging was a mode; the tool windows beside it dragged whenever you liked, which was two answers to the same question. `createLayout` now gives each of the seven panels a live grip and resize corner, persisted as fractions of the playing area. Arrange UI survives as a way to make the handles obvious and reach Reset, but nothing is gated behind it -- which is why play, free flight, the studio, the range and the menu backdrop all got it with no per-mode code.
   - A grip rather than the whole panel: the map is click-to-aim and drag-to-pan and the shot controls are sliders, and a draggable panel would take those gestures from the controls that own them. Verified the map still pans and still aims.
   - **The handles live inside each panel and a MutationObserver puts them back.** `showLiveResult` rebuilds `#shotResult` with `innerHTML` on every shot, which swept them away -- so the first build left the two most-rebuilt panels unmovable while the rest worked, reading as intermittent rather than total.
@@ -784,8 +990,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - This is the first time physical hardware has been pointed at the bridge. RESEARCH.md's "device testing remains deferred" is now partly out of date -- protocol interop has been exercised against one real connector, but no shot has yet reached the simulator.
 
 - [x] **Every bridge response carries the Player block.** A real connector parses a Player out of each reply and was printing empty defaults on every heartbeat, because only the 201 included one. GSPro sends it on all responses; connectors that track club changes from the response stream would otherwise never see one.
-
-- [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
 
 - [x] **Launch-monitor UI: a state light and a stripped control bar.** `readDeviceStatus` pulls `LaunchMonitorIsReady`/`LaunchMonitorBallDetected` out of either option shape and the bridge relays them on the `status` message, only when they change. The club card shows red (no device), amber (device, hunting -- breathing animation) or green (ball detected -- one pulse, then still), each with a word beside it since colour alone is not a message. Nothing shows when no bridge is connected.
   - The reader never throws: it shares a loop with the framing check, where a throw closes the connection.
@@ -845,11 +1049,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps are created visible at zero intensity now and only their intensity is switched, so the count never changes: **18.7 ms in the studio, zero programs compiled**. Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
 
-- [ ] **Reading undulation needs more than a cast shadow.** Terrain self-shadowing landed and helps at a low sun, but at midday the ground is still close to flat-looking. Candidates, cheapest first: slope-tinted turf in the ground shader; mowing stripes that bend over rolls; curvature darkening baked into the ground data texture; ambient occlusion on more than just ultra. None built -- needs a decision on which.
-
 - [x] **Terrain casts its own shadow.** It only ever received one, so trees shaded the turf and the turf shaded nothing -- a ridge did not darken the hollow behind it, which is a large part of why undulation is hard to read. One draw call per cascade over existing geometry: 8.6 ms against 8.5 ms.
-
-- [ ] **Floodlight shadows: blocked on a texture unit, not on frame time.** The plan worked and the numbers were fine -- six casters at 512 square measured 8.3 ms floodlit against 8.4 in daylight, with the casters fixed at build time and `orderPoles` handing those lamps to the hole being played. Then it did not render: every shadow-casting spot light costs a texture sampler in every lit fragment shader, WebGL guarantees 16, and the cascades, the toon gradient, the environment map and the ground atlases already spend them. The program failed to link and the GROUND DISAPPEARED. **I shipped that and the user caught it, not me** -- the frame-time measurements said nothing, and the only signal was a shader link error in a console I had not re-read after the change. Walking the count up: one caster links, two does not. `floodShadows` is 0 on every tier. To do this properly a sampler has to be freed first -- a cascade fewer on high, or packed ground atlases. `orderPoles` is kept: it still decides which poles are lit when a course has more poles than lamps.
 
 - [x] **Water: the gap between reflecting and not is much smaller, and the pass costs half as much.** Three changes. (1) Still bodies get the reflector's own animated normal map, more roughness and a stronger environment map, so a pond that is not reflecting is water rather than varnish -- this attacks the DIFFERENCE between the states, which is the only cheap fix for a one-reflector scene. (2) A stream is scored at 1% of its fill, so a creek only takes the reflector when there is no still water at all; it was threading the whole course and pulling the reflection off the pond beside you as you walked. (3) The reflection renders on every other frame. Measured on ultra: the pass is 1.9 ms of a 10.4 ms frame and the throttle gives back 1.0 of it. Screen-space reflection was rejected -- it can only reflect what is on screen, and looking across a pond at the trees behind it is exactly the shot where those trees are off screen. Two old assertions reversed by the stream rule were rewritten, not weakened.
 
@@ -912,9 +1112,5 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - **`panelTab` remembers the tab.** Every list action re-renders the panel and `show(0)` threw you back to the first tab, which made renaming two courses in a row a chore. Remembered by title rather than index, because the round panel's sections differ between play, endless and the range.
   - **Focus has to wait for layout.** `groupPanelContent` runs after `renderPanel` returns and rebuilds the panel by emptying its root, which blurs whatever was focused -- so the rename input came up unfocused until it was focused in a `requestAnimationFrame`. Anything else wanting focus on open has the same problem.
   - Four tests on the identity the dedupe rests on: stable across a code round trip and a file, blind to play-scope keys that never travel with a course, and independent of object key order.
-
-- [ ] **Save/import/export, what is left.** Neither loses work.
-  - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
-  - `save()` swallows quota errors, so a full store means *Continue* silently stops updating with nothing said.
 
 - [x] **The tools tray is a panel now.** `.view-tools` had no container -- six individually-glassed buttons floating in a column, which is why it looked unfinished next to every other HUD element and why its handles had to hang outside it. It takes the shared panel chrome, the buttons drop their own glass, and the handles sit inside: grip as a grab strip along the top, resize in the corner, matching the tool windows. The two pinned widths in the 560px breakpoint were exact content fits and grew by the padding.
