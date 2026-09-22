@@ -120,6 +120,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 ## Data flow and units
 
+**FRAME COST IS MEASURED BY `npm run profile`, AND PACING IS NOT COST.** `tools/profile.mjs` drives a headless Chromium and instruments WebGL from outside the game. It measures the time spent INSIDE the frame callback plus a GPU timer query spanning it -- never the interval between frames, which in headless Chromium is a virtual 60 Hz display whatever the vsync flags say. It proves that property on a blank page and refuses to report if it fails. Two arms: the real GPU for headroom, a software rasteriser for 'no graphics card'. Run `npm run gpu` if you doubt which you got -- default flags give SwiftShader silently. The one exception to the rule: on the software arm the interval IS the measure, because its work happens off the main thread after the callback returns.
+
+**GRAPHICS TIERS MAY NOT TOUCH A PLAYED SURFACE,** which is why none of them thins the planting even though vegetation is what the frame is spent on. Trunks are collidable; two players on different tiers must hit the same trees.
+
 **A HOLE'S SKELETON BELONGS TO `course-plan.js`, NOT THE BUILDER.** `holeLine` computes the playing line, the length and the tees from the seed alone, and both `generateCourse` and `planScorecard` call it -- so the card shown before a course is built and the course that gets built cannot disagree. It consumes a contiguous prefix of the hole's seeded stream and the order of the draws inside it is load-bearing: one added, removed or reordered moves every pond, bunker and contour on that hole. There is one seeded generator, exported from `course-plan.js` and re-exported by `course.js` as `random`; do not add a second.
 
 **HOLE LENGTHS ARE BOUNDED BY PAR** (`PAR_YARDS`), and the course length is distributed by water-filling inside those bands rather than by scaling every hole. A requested total the bands cannot reach is clamped, and `plan.yards` is what the course measures while `plan.requested` is what was asked for.

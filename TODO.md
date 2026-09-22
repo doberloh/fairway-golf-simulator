@@ -138,6 +138,70 @@ problem: a control that belongs inside a box is sitting beside it.
   regenerating it belongs to the bar. The panel's own prose now names the bar
   rather than saying "regenerate" with no button in sight.
 
+## Graphics work the profiling turned up
+
+Found while building `tools/profile.mjs` and reading the tier table against it.
+None of these are tuning -- they are missing capability or wrong plumbing, so
+they were written down rather than done. Asked for on 2026-09-22 as the place
+to put "potential gfx improvements" instead of inventing features overnight.
+
+- [ ] **`high` and `ultra` are very nearly the same tier.** The whole difference
+  is bloom at .14, a 2048 reflection buffer instead of 1536, and shadows that
+  reach the far edge in overview. Everything else -- pixel ratio, shadow map,
+  cascades, fog, grass, foliage, god rays, clouds, mist -- is identical. Ultra
+  is meant to be "everything, for a card with room to spare" and is currently
+  high with a glow on it. Either it grows real extras or the ladder should
+  admit it has three rungs.
+
+- [ ] **Floodlight shadows are off on every tier, and not for frame time.**
+  The existing comment is right and now confirmed from the outside: the real
+  GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
+  reports 32, and the scene has one unit spare. Six casters at 512 measured 8.3
+  ms against 8.4 in daylight, so the cost was never the problem -- a program
+  that fails to link is. Freeing a unit is the work: one cascade fewer on high,
+  or packing the ground's data atlases. Until then a night course has lights
+  that cast nothing, on every tier including ultra.
+
+- [ ] **Fog distance is not a performance setting, and the tiers treat it like
+  one.** `camera.far` is fixed at 20000 and fog only fades what is already
+  drawn; three culls against the frustum, not against fog. So low's near fog
+  buys atmosphere and exactly nothing in frame time, while still hiding the
+  course from a player who might have wanted to see it. Either tie the far
+  plane to the fog end so it genuinely culls, or stop implying fog is a
+  performance lever.
+
+- [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
+  frame on a heavy biome is dominated by tree geometry, and no tier knob
+  touches it. `grass` scales scatter grass, which is under 1% of the triangles
+  on redwood. `foliage` sets the segment count of DRAWN trunks and canopies, so
+  it does nothing at all on a biome whose plants are instanced mesh models --
+  which redwood now entirely is.
+
+  And a tier may not simply plant fewer trees: `src/graphics.js` says outright
+  that nothing in it may affect a played surface, and trunks are collidable, so
+  two players on different tiers must hit the same trees. The only legal lever
+  is drawing fewer while colliding with all -- a distance cull or a level of
+  detail that touches rendering only.
+
+  Which is what was removed. The LOD that came out was removed for good reason,
+  on a measurement that said geometry was free on a 4090 -- and it is, there.
+  It is not free on a laptop with no card. What that work should become is a
+  TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
+  the always-on swap that made every visible tree the thinned twin.
+
+- [ ] **Turning water reflections off may not stop the reflection pass.**
+  `setReflections(false)` nulls the `envMap` on each water material, which
+  stops the sampling. Whether the planar reflector still renders the scene a
+  second time every frame is a separate question and the answer decides whether
+  the setting is worth anything to a weak machine. Check the ablation row.
+
+- [ ] **`applyQuality` clamps pixel ratio to the display's own.**
+  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
+  it means the tier ladder collapses on a 1x display: low, medium and ultra all
+  render the same pixels and differ only in shadows and reflections. That is
+  worth knowing before anyone concludes from a 1x machine that the tiers do
+  nothing. It also caught this harness out -- see the note in profile.mjs.
+
 ## Benchmarking and profiling worth deciding from
 
 Asked for on 2026-09-20, off the back of the "should this be ported" question in
@@ -156,7 +220,14 @@ anything.
 project has ever had were taken by hand, with a probe temporarily pasted into
 `renderer.js` and deleted afterwards, on one machine, on one course.
 
-- [ ] **A frame benchmark, and it must not be able to return the refresh rate.**
+- [x] **A frame benchmark, and it must not be able to return the refresh rate.**
+  `tools/profile.mjs`, `npm run profile`. THE CHECK CAUGHT IT: a blank page read
+  17.3 ms because headless Chromium paces animation frames to a virtual 60 Hz
+  display whatever `--disable-gpu-vsync` is told. So it measures WORK instead --
+  time inside the frame callback, plus a `TIME_ELAPSED` query spanning it -- and
+  asserts both collapse to 0.000 ms on an idle page before reporting anything.
+
+- [ ] ~~A frame benchmark~~ (original note kept below for the reasoning)
   THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
   around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
   is asked to draw, because the call is waiting for the display, not for the
@@ -177,8 +248,14 @@ project has ever had were taken by hand, with a probe temporarily pasted into
     `--disable-frame-rate-limit`, then render as fast as the machine allows.
   - render to a framebuffer in a loop, with no presentation at all.
 
-- [ ] **Decide what "headless" is for, because the two options measure
-  different things.** A software rasteriser (`--use-angle=swiftshader`) gives
+- [x] **Decide what "headless" is for.** Both arms, labelled. The real GPU
+  answers "how much headroom is there"; a software rasteriser answers "what
+  happens with no graphics card". `npm run gpu` prints the renderer per launch
+  config, because default flags give SwiftShader silently -- and it also showed
+  the real card reporting 16 texture units against SwiftShader's 32, which
+  independently confirms the ceiling the floodlight comment describes.
+
+- [ ] ~~Decide what headless is for~~ (original note below) A software rasteriser (`--use-angle=swiftshader`) gives
   figures that are comparable between machines and over time, and are not the
   truth about any real GPU. A real GPU in headless Chrome gives the truth about
   THAT machine and nothing comparable to a run on another one. Both are useful
@@ -191,7 +268,12 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   cost before (it is why `vendor/baked_assets` is committed). Weigh that
   deliberately rather than installing it on the way past.
 
-- [ ] **Sweep the presets, but do not sweep the product of them.** Eight biomes,
+- [x] **Sweep the presets, but do not sweep the product of them.** 29 cases in
+  six groups: the tier ladder, the same ladder in overview, every biome at one
+  tier, an ablation, a pixel-ratio group and the software arm. Each is in the
+  file with a stated reason. About eight minutes for the lot.
+
+- [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
   fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
   plus elevation, landform, water, trees and homes is a combinatorial explosion
   that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
@@ -203,7 +285,11 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   floor. A sweep that takes four minutes gets run; one that takes an hour gets
   run once and quoted for a year.
 
-- [ ] **Report what a decision needs, not what is easy to collect.** Frame time
+- [x] **Report what a decision needs.** Distributions not means, CPU beside
+  GPU, draws and triangles per frame, `--save` and `--since` against
+  `bench/profile-baseline.json` in the shape `bench.mjs` already uses.
+
+- [ ] ~~Report what a decision needs~~ (original note below) Frame time
   as a distribution and never as a mean -- median, p95, p99 and the worst
   frame, because stutter is what is felt and a mean hides it. Beside it, per
   frame: draw calls, triangles submitted, programs, texture binds, and the GPU
@@ -214,7 +300,13 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   diff against a saved baseline so a change shows as movement rather than as
   numbers somebody has to remember.
 
-- [ ] **Have it name the bottleneck, not just the cost.** The question is not
+- [x] **Have it name the bottleneck.** It is geometry, and it is one biome.
+  Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
+  twenty times, for 12.66 ms against about 4. Cascades double it (46.5 M to
+  92.9 M). Pixel ratio is worth 26%. Every ground-cue toggle is free, inside
+  the noise. The reflections toggle does nothing at all: 208 draws either way.
+
+- [ ] ~~Have it name the bottleneck~~ (original note below) The question is not
   "how many milliseconds" but "of what". A run should end with a sentence a
   human can act on: whether the frame is bound by draw calls, by fill, by
   shadow passes, or by the CPU walking the scene graph -- and the simplest
@@ -223,6 +315,15 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   vegetation removed, and print what each one gives back. Whatever returns the
   most time is the answer, and it needs no tooling beyond the harness that is
   already being built.
+
+- [ ] **The low tier cannot reach 30 fps on weak hardware, and tuning cannot
+  fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
+  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
+  typical weak device -- real integrated graphics is perhaps one to two orders
+  faster, which is the difference between playable and not, and that range is
+  an extrapolation this machine cannot narrow. What is certain is that a
+  hundredfold gap does not close by tuning. It needs the vegetation draw
+  distance in the graphics section above.
 
 - [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
   bottleneck, consider WebGPU before rewriting anything, WebAssembly for

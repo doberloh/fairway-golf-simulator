@@ -24,13 +24,25 @@ export const QUALITY_LABELS = {
 // it is the literal that used to be hardcoded, so an existing player sees no
 // change at all until they opt into another tier. Do not "improve" medium.
 export const TIERS = {
+ // LOW IS FOR A MACHINE WITH NO GRAPHICS CARD, so it spends where a weak
+ // device actually loses time: pixels and shadow-map fill. Measured on this
+ // renderer, dropping the pixel ratio from 2 to 1 gave back 26% of the frame.
+ // Below 1 the renderer draws smaller than the display and upscales, which is
+ // what phone games have always done and the only fill lever left once the
+ // ratio is already 1.
+ //
+ // What it deliberately does NOT do is thin the planting. A tier may not
+ // change a played surface and trunks are collidable, so two players on
+ // different tiers must hit the same trees. See TODO: the honest fix is a
+ // tier-driven draw distance, and it does not exist yet.
  low: {
-  pixelRatio: 1,
-  shadow: {size: 1024, radius: 1},
+  pixelRatio: .75,
+  shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},
   grass: .35,
   foliage: .55,
-  anisotropy: 4,
+  // Sixteen is free on a real card and is not free without one.
+  anisotropy: 2,
   // Shadow frustum around the camera, in metres. Smaller is crisper but covers
   // less ground; a fragment outside it is simply lit.
   shadowSpan: {half: 140, top: 190, bottom: -120, far: 700},
@@ -56,7 +68,10 @@ export const TIERS = {
   // fewer on high, or packing the ground atlases -- not a smaller cap.
   floodShadows: 0,
   bloom: 0,
-  reflection: 512,
+  // Smaller, not off. Measured: switching reflections off does not stop the
+  // reflection pass -- the same 210 draws happen either way -- so the buffer
+  // size is the only part of it a tier can currently reach. See TODO.
+  reflection: 256,
  },
  medium: {
   pixelRatio: 1.75,
@@ -118,7 +133,18 @@ export const TIERS = {
   // PCF. Softness now comes from shadow.radius, which the PCF chunk spreads
   // over a Vogel disk. Medium keeps radius 1, which is three's default and
   // exactly the edge it has always had.
-  shadow: {size: 4096, radius: 3.5},
+  // ULTRA'S SHADOWS ARE ITS POINT. It used to be high with a glow on it --
+  // bloom, a bigger reflection buffer and overview shadows were the whole
+  // difference, and measured they came to nothing: 12.64 ms against high's
+  // 12.69. The extra goes into shadow resolution and reach instead.
+  //
+  // NOT A FOURTH CASCADE, however tempting. Three already spend 15 of the 16
+  // texture units the real GPU reports, alongside the toon gradient, the
+  // environment map and the ground's own atlases -- which is why floodlight
+  // shadows are off on every tier. A fourth would take the last unit or
+  // overflow it, and a program that fails to link draws nothing at all.
+  // Resolution and distance cost fill and geometry, not samplers.
+  shadow: {size: 6144, radius: 4},
   // Fog must reach full density before the landscape's outer ring, which sits
   // 13000 m past the course perimeter -- otherwise the terrain runs out while
   // the air is still clear and the edge of the world shows. 9000 leaves a wide
@@ -133,7 +159,9 @@ export const TIERS = {
   shadowBias: {normal: .055, constant: -.00008},
   // Three cascades out to 2.5 km, so a tree casts a shadow wherever it stands
   // rather than only inside a 370 m box around the camera.
-  cascades: 3, shadowFar: 2500,
+  // Three cascades reaching 3.5 km rather than high's 2.5, at half again the
+  // texels: the far hills keep their shadows and the near ones sharpen.
+  cascades: 3, shadowFar: 3500,
   // Zoomed all the way out the whole course should keep its shadows. The
   // cascades stop at shadowFar to hold resolution up close, but in overview
   // there is no close, so they stretch to cover everything instead.
