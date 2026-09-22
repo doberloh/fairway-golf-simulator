@@ -65,6 +65,29 @@ problem: a control that belongs inside a box is sitting beside it.
   a margin on its `i` button, which is why they read as the loose controls in
   the panel.
 
+- [x] **Still water and moving water are one section.** "Ponds & lakes" and
+  "Rivers & creeks" were two tabs, so setting up a pond and a creek on the same
+  course meant two of them. One `water` category now, with a box per feature:
+  Ponds, Lakes, Rivers, Creeks.
+
+  Six boxes rather than four, and the two extra ones are the point. The depth
+  range is read identically by ponds and by lakes -- `lakes.js` uses the same
+  `waterMin + rng()*(waterMax - waterMin)` that ponds do -- and channel depth
+  and meander are read by rivers and creeks alike. Folding either pair into a
+  feature's own box would claim it belonged to that feature. They sit in their
+  own boxes saying who they serve.
+
+  That also caught two wrong tips: `waterMin` and `waterMax` both said "a
+  pond's deepest point" while lakes have always used them too. Corrected --
+  leaving them inside a box labelled "Depth of ponds and lakes" would have been
+  incoherent.
+
+  The depth pair moved down the array so the box lands after both the things it
+  governs. Array order is the panel's order and nothing else's: 446 tests pass
+  and every biome fingerprint is unchanged, so no generated output moved and no
+  version bump is owed. SCHEMA_VERSION stays too -- no control was added,
+  renamed, removed or re-ranged; only which tab it appears on.
+
 - [x] **The studio's two entry points are backwards.** The panel ended with a
   Regenerate button emitted after every category, so it fell into whichever
   section came last and turned up at the foot of the Weather tab looking like a

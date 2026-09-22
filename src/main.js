@@ -1911,6 +1911,18 @@ function renderPanel(name,content){
    // the word four times and adds nothing the fields do not.
    {category:'scenery',label:'Houses',keys:['homes','homeDensity','homeSetback','residentialOB']},
    {category:'weather',keys:['wind','windDirection']},
+   // One box per water feature. Two of these boxes hold settings that serve
+   // TWO features rather than one, and they are separate for that reason: the
+   // depth range is read identically by ponds and by lakes, and the channel
+   // depth and meander are read by rivers and creeks alike. Folding either into
+   // a feature's own box would say it belonged to that feature, which is the
+   // thing this layout is supposed to stop.
+   {category:'water',label:'Ponds',keys:['water','pondSize']},
+   {category:'water',label:'Lakes',keys:['lakes','lakeSize']},
+   {category:'water',label:'Depth of ponds and lakes',keys:['waterMin','waterMax']},
+   {category:'water',label:'Rivers',keys:['rivers','riverWidth']},
+   {category:'water',label:'Creeks',keys:['creeks','creekWidth']},
+   {category:'water',label:'Rivers and creeks together',keys:['streamDepth','streamBends']},
   ];
   const one=k=>(custom[k]?custom[k]():control(k))+tip(k);
   const group=([key,label,note])=>{
