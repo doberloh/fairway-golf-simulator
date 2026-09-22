@@ -1881,7 +1881,37 @@ function renderPanel(name,content){
    biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
-  const group=([key,label,note])=>`<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${SETTINGS.filter(f=>f.category===key).map(f=>(custom[f.key]?custom[f.key]():control(f.key))+tip(f.key)).join('')}`;
+  // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
+  // schema entry, which is right for most of them and wrong wherever a control
+  // means nothing without its neighbours: a house setback is not something you
+  // reason about with the houses toggle three cards away, and a wind speed
+  // without its direction is half a sentence.
+  //
+  // Declared here rather than as a `group` key on the schema. Grouping is a
+  // fact about THIS PANEL's layout; the schema is also read by validation,
+  // migration, the world rebuild key and the save format, and none of those
+  // care how the controls are boxed.
+  const FIELD_GROUPS=[
+   // A label only where the box needs naming. "Houses" earns one: it holds a
+   // toggle, two sliders and a second toggle whose labels do not otherwise say
+   // they belong together. Wind does not -- a box headed WIND, under a heading
+   // already saying Weather, containing "Wind speed" and "Wind direction", says
+   // the word four times and adds nothing the fields do not.
+   {category:'scenery',label:'Houses',keys:['homes','homeDensity','homeSetback','residentialOB']},
+   {category:'weather',keys:['wind','windDirection']},
+  ];
+  const one=k=>(custom[k]?custom[k]():control(k))+tip(k);
+  const group=([key,label,note])=>{
+   const boxes=FIELD_GROUPS.filter(g=>g.category===key),taken=new Set(boxes.flatMap(g=>g.keys));
+   const body=SETTINGS.filter(f=>f.category===key).map(f=>{
+    if(!taken.has(f.key))return one(f.key);
+    // A group is drawn at the position of its FIRST member, so the order the
+    // schema states is still the order on screen and nothing jumps about.
+    const box=boxes.find(g=>g.keys[0]===f.key);
+    return box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(one).join('')}</div>`:'';
+   }).join('');
+   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
+  };
   content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then regenerate to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}<button class="primary" id="generate"><i data-lucide="refresh-cw"></i> Regenerate</button>`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   let tipsOpen=false;
@@ -2373,7 +2403,11 @@ function renderPanel(name,content){
 // So the big panels get tabs. One category at a time, each short enough to read
 // without scrolling, which is what the research recommends for exactly this --
 // a moderate-to-large number of setting groups.
-const CONTROL='label.check,label.field';
+// `.control-group` is a control as far as the walker is concerned: it gets a
+// card of its own, and because the walker only ever looks at ROOT'S OWN
+// CHILDREN the fields inside it are left alone rather than each being boxed
+// again.
+const CONTROL='label.check,label.field,.control-group';
 const ATTACHED='P.note,.research-label,.field-error,.course-plan';
 const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,textarea';
 // What stays pinned above the sections: the sentence explaining the panel and

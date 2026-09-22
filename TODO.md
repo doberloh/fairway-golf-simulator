@@ -32,20 +32,29 @@ problem: a control that belongs inside a box is sitting beside it.
   apart. Wrapped rather than putting the button inside the `<label>`, which
   would make clicking the label fire the import.
 
-- [ ] **The four house controls are one group.** `homes` (toggle),
-  `homeSetback` (range) and `residentialOB` (toggle) are all category `scenery`
-  in settings-schema.js, plus the house percentage slider. They render as four
-  separate cards. They are one decision with three qualifiers and want one box.
+- [x] **The four house controls are one group.** `homes`, `homeDensity`,
+  `homeSetback` and `residentialOB` render as one `.control-group` card headed
+  "Houses" instead of four separate ones.
 
-- [ ] **Wind speed and direction are one group.** `wind` and `windDirection`,
-  both category `weather`. Same shape of problem as the houses.
+- [x] **Wind speed and direction are one group.** One card, deliberately
+  unlabelled: a box headed WIND under a heading already saying Weather, holding
+  "Wind speed" and "Wind direction", says the word four times.
 
-  These two share a mechanism: the panel builds one card per SETTINGS entry,
-  with no concept of "these fields are one box". Whatever is added -- a `group`
-  key on the schema entry, or an explicit grouping table in the panel builder --
-  should serve both, and should be done once rather than special-cased twice.
-  Do this pair together; doing either alone builds the mechanism for the cost of
-  one and gets half the value.
+  Done together, as one mechanism: `FIELD_GROUPS` in the panel builder rather
+  than a `group` key on the schema, because grouping is a fact about the panel
+  and the schema is also read by validation, migration, the world rebuild key
+  and the save format. `.control-group` joins `CONTROL`, so the existing walker
+  boxes it exactly like a single control -- and because that walker only looks
+  at its root's own children, the fields inside are left alone instead of each
+  being boxed again. A group draws at the position of its first member, so
+  schema order still decides what appears where.
+
+  Two things fell out of it. The grouped fields' tooltips now sit INSIDE the
+  box, because they are emitted within the wrapper -- a free partial win on the
+  tooltip item above, which is still open for every ungrouped field. And
+  toggles finally have a size: `label.toggle` carried no styling at all beyond
+  a margin on its `i` button, which is why they read as the loose controls in
+  the panel.
 
 - [ ] **The studio's two entry points are backwards.** Remove the Regenerate
   button from the Weather tab (src/main.js:1883 carries both that and
