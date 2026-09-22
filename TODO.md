@@ -65,6 +65,18 @@ problem: a control that belongs inside a box is sitting beside it.
   a margin on its `i` button, which is why they read as the loose controls in
   the panel.
 
+- [x] **The seed sits with the hole count.** It was last in the Course tab,
+  below the full-width scorecard box -- which spans every column and breaks the
+  flow, so anything after it drops underneath. `holes seed courseYards` now,
+  the two one-line choices together above the card they produce.
+
+- [x] **The Water tab's note explains the tab, not its history.** The merged
+  note opened by saying still and moving water used to be two panels. That is a
+  changelog entry, and it had been written into the help text a player reads.
+  Removed; what remains is the two original notes, which state what the
+  controls do. Every other tab note was checked for the same mistake and none
+  had it.
+
 - [x] **A control's own parts sit inside its box.** The layout picker's grid of
   shapes and the "Surprise me" button beside the seed field were siblings of
   their control rather than part of it, so both sat outside the card. Neither

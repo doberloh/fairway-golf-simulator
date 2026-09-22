@@ -96,7 +96,7 @@ export const CATEGORIES=[
  ['routing','Routing','Left and right turns are balanced across the course, and each turning point varies up to 22 points either side of your setting.'],
  ['turf','Fairways & greens'],
  ['bunkers','Bunkers'],
- ['water','Water','Still water and moving water were two panels, which meant setting up a pond and a creek on the same course took two tabs. Depths set the deepest point; every shore still slopes to nothing at the bank. (EXPERIMENTAL) Channels may cross fairways, but route around tees, greens, ponds and bunkers. A course with no room simply gets fewer of them.'],
+ ['water','Water','Depths set the deepest point; every shore still slopes to nothing at the bank. (EXPERIMENTAL) Channels may cross fairways, but route around tees, greens, ponds and bunkers. A course with no room simply gets fewer of them.'],
  ['scenery','Trees & scenery'],
  ['weather','Weather'],
 ];
@@ -109,8 +109,8 @@ export const CATEGORIES=[
 // else it is ignored.
 export const SETTINGS=[
  {key:'holes',category:'course',kind:'choice',options:[9,18],def:9,label:'Holes',tip:'How many holes the course contains. A saved course is fixed at this length.'},
- {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
  {key:'seed',category:'course',kind:'text',max:50,def:'EVERGREEN',label:'Course seed',tip:'The same seed and settings rebuild the same course, within one generator version.'},
+ {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
 
  {key:'biome',category:'landscape',kind:'choice',options:BIOME_KEYS,def:'pnw',label:'Surroundings',tip:'Regional planting, ground colours, light, temperature and altitude.'},
  {key:'landform',category:'landscape',kind:'range',min:0,max:100,step:1,unit:'%',def:70,label:'Landscape character',tip:'How strongly the land rises between playing corridors: inter-hole mountains, dunes or island channels.'},
