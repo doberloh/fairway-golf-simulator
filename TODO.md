@@ -138,6 +138,34 @@ problem: a control that belongs inside a box is sitting beside it.
   regenerating it belongs to the bar. The panel's own prose now names the bar
   rather than saying "regenerate" with no button in sight.
 
+## Ball flight, after the GC3 session
+
+- [x] **The lift cap was holding the ball down.** `liftCap` 0.2913 binds at a
+  spin parameter of 0.342 and half a GC3 session launched already clamped, so
+  apex came out low on 100 shots out of 100. Carry hid it, because a flatter
+  ball also carries less induced drag and the two errors cancel. Cap is a guard
+  rail at 0.60 now (unreached below S 1.55), `spinDrag` moved 0.2025 to 0.23
+  toward the published slope. Apex -8.05 ft to -0.22 ft, carry and offline both
+  improved as well.
+
+- [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
+  between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
+  tuned from here. Matching apex while overshooting hang means the ball takes
+  too long to fall from the same height -- the SHAPE of the descent rather than
+  its scale -- and descent angle running 1.5 degrees steep says the same. Needs
+  a look at how drag varies through the descent, with its own evidence.
+
+- [ ] **The two launch monitors disagree about apex and something has to give.**
+  GC3 says the model flies low, SkyTrak said it flew high, on an overlapping
+  spin range. The curve now trusts the GC3 because it is the better instrument,
+  reports spin axis directly and gives hang time to hundredths. That is a
+  judgement about the references and not a measurement. A third device would
+  settle it.
+
+- [ ] **No driver data in either session.** Both are irons and wedges, 78 to
+  142 mph. The high-speed low-spin corner is still unmeasured, and it is the
+  corner the original six-row tour fit was most confident about.
+
 ## Graphics work the profiling turned up
 
 Found while building `tools/profile.mjs` and reading the tier table against it.

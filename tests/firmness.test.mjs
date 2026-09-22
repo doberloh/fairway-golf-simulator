@@ -343,7 +343,16 @@ test('the bounce ladder is ordered by mowing height, and a green is not a fairwa
 // agrees to the rpm. Reading spin from the touchdown sample itself gives the
 // POST-bounce value (2277 rpm, less than half), because the simulator applies
 // the impulse and records the point in the same step.
-const ARRIVAL = {speed: 23.22, vla: -48.79, spin: 5114, height: .02};
+// RE-PINNED when the lift cap came off and spin drag moved toward the
+// literature (see AERO in physics.js). The previous values were that same
+// 7-iron under the old curve; the test below is what noticed, which is exactly
+// the job it was given. Re-derived by the method described above: 22.57 m/s and
+// 49.06 degrees are what simulateShot reports at touchdown, and 5068 rpm is the
+// LAST AIRBORNE sample -- index 359, where v is still 22.54. The next sample is
+// already post-bounce, v collapsed to 5.16 and spin to 796, and reading that one
+// is the mistake this comment exists to prevent. Cross-checked against the
+// analytic decay: 6500 * exp(-5.971 / 24) = 5068, to the rpm.
+const ARRIVAL = {speed: 22.57, vla: -49.06, spin: 5068, height: .02};
 
 function drop(firmness, surface) {
  const shot = {...ARRIVAL, hla: 0, origin: {x: 0, z: 0}, aim: 0, spinAxis: 0};
@@ -402,8 +411,14 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // Re-derived after the greens were refitted against the clubs that actually
 // land on them. Run-outs rose across the board because a putting surface barely
  // ploughs -- firmness now acts by scrubbing spin off, not by digging.
+ // Re-pinned again when the lift cap came off: the ball now ARRIVES slower
+ // (22.57 m/s against 23.22) and a quarter of a degree steeper, so it hops a
+ // little lower and runs a little less. Not one bounce parameter moved, and the
+ // thing that actually matters survived unchanged -- hop height and run-out
+ // both still rise monotonically from Soft to Burnt, which is the ladder this
+ // anchor exists to defend.
  const WANT = {
-  Soft: [2.66, 4.1], Normal: [3.55, 7.2], Firm: [3.98, 9.9], Burnt: [4.37, 12.7],
+  Soft: [2.52, 3.4], Normal: [3.37, 6.2], Firm: [3.77, 8.7], Burnt: [4.14, 11.4],
  };
  for (const [firmness, [hop, roll]] of Object.entries(WANT)) {
   const got = drop(firmness, 'green');
@@ -423,8 +438,13 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // A fairway runs longest (firm ground, almost no grass), rough is held down by
  // 50 mm of canopy, and a green stops a ball by keeping its backspin rather than
  // by digging.
- const LADDER = {green: [3.55, 7.2], fringe: [3.10, 6.5], fairway: [2.77, 8.7],
-  semi: [2.10, 2.5], rough: [1.42, 1.4], sand: [0.45, 0.4]};
+ // Re-pinned with WANT above, and for the same reason: the arrival moved, not
+ // the bounce. Every ordering these comments describe survived it -- hop still
+ // falls straight down the mowing height from green to sand, fairway still runs
+ // longest, and a green still stops a ball soonest of the mown surfaces by
+ // keeping backspin rather than by digging.
+ const LADDER = {green: [3.37, 6.2], fringe: [2.94, 5.7], fairway: [2.61, 8.0],
+  semi: [1.98, 2.1], rough: [1.34, 1.2], sand: [0.43, 0.3]};
  for (const [surface, [hop, roll]] of Object.entries(LADDER)) {
   const got = drop('Normal', surface);
   assert.ok(Math.abs(got.firstHop / .3048 - hop) < .08, `${surface}: bounced ${(got.firstHop / .3048).toFixed(2)} ft, want ${hop}`);
