@@ -1856,13 +1856,22 @@ function renderPanel(name,content){
   const tip=k=>`<p class="tip" id="tip-${k}" hidden>${escape(FIELD[k].tip)}</p>`;
   // Every kind the schema can hold renders here. Naming one toggle as a special
   // case is how `residentialOB` shipped as a 0-100 slider that nothing read.
-  const control=k=>{const f=FIELD[k];
-   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${f.label}</label>${hint(k)}`;
+  // `short` is the label to SHOW when the control sits in a box that already
+  // names the thing -- "Frequency" under a box headed Ponds rather than "Pond
+  // frequency". It is display only: `f.label` stays the accessible name on both
+  // the range input and the `i` button, because "What Frequency changes" and a
+  // slider announced as "Minimum" are no use to anyone reading by ear.
+  //
+  // Passed in rather than read off the field, so a short label can only ever
+  // appear underneath a heading that supplies its missing noun. Move a field
+  // out of its box and it goes back to saying what it is.
+  const control=(k,short)=>{const f=FIELD[k],text=short&&f.short?f.short:f.label;
+   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${text}</label>${hint(k)}`;
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   if(f.kind==='choice')return `<label class="field">${f.label}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
-   return `<label class="field">${f.label}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}"></label>`;};
+   if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
+   return `<label class="field">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}"></label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
    holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
@@ -1877,12 +1886,66 @@ function renderPanel(name,content){
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
-   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
+   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
    biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
-  const group=([key,label,note])=>`<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${SETTINGS.filter(f=>f.category===key).map(f=>(custom[f.key]?custom[f.key]():control(f.key))+tip(f.key)).join('')}`;
-  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then regenerate to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}<button class="primary" id="generate"><i data-lucide="refresh-cw"></i> Regenerate</button>`;
+  // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
+  // schema entry, which is right for most of them and wrong wherever a control
+  // means nothing without its neighbours: a house setback is not something you
+  // reason about with the houses toggle three cards away, and a wind speed
+  // without its direction is half a sentence.
+  //
+  // Declared here rather than as a `group` key on the schema. Grouping is a
+  // fact about THIS PANEL's layout; the schema is also read by validation,
+  // migration, the world rebuild key and the save format, and none of those
+  // care how the controls are boxed.
+  // THIS PANEL HAS NO REGENERATE OF ITS OWN. It used to end with one, emitted
+  // after every category -- which put it in whichever section came last, so it
+  // turned up at the bottom of the Weather tab looking like a weather control.
+  // It called `regenerateStudio()`, which is exactly what the studio bar's own
+  // Regenerate already calls, and the bar is on screen whenever this panel can
+  // be opened: both ways in here are studio-only, `enterStudio` and the bar's
+  // own Settings button. So it was a duplicate in the wrong place.
+  //
+  // What is left is one verb each way round. "Grow this landscape" STARTS a
+  // studio and only appears during setup, pinned to the panel's lead by
+  // `data-panel-action` so it cannot fall into a tab. Once there is a
+  // landscape, regenerating it is the bar's job.
+  const FIELD_GROUPS=[
+   // A label only where the box needs naming. "Houses" earns one: it holds a
+   // toggle, two sliders and a second toggle whose labels do not otherwise say
+   // they belong together. Wind does not -- a box headed WIND, under a heading
+   // already saying Weather, containing "Wind speed" and "Wind direction", says
+   // the word four times and adds nothing the fields do not.
+   {category:'scenery',label:'Houses',keys:['homes','homeDensity','homeSetback','residentialOB']},
+   {category:'weather',keys:['wind','windDirection']},
+   // One box per water feature. Two of these boxes hold settings that serve
+   // TWO features rather than one, and they are separate for that reason: the
+   // depth range is read identically by ponds and by lakes, and the channel
+   // depth and meander are read by rivers and creeks alike. Folding either into
+   // a feature's own box would say it belonged to that feature, which is the
+   // thing this layout is supposed to stop.
+   {category:'water',label:'Ponds',keys:['water','pondSize']},
+   {category:'water',label:'Lakes',keys:['lakes','lakeSize']},
+   {category:'water',label:'Depth of ponds and lakes',keys:['waterMin','waterMax']},
+   {category:'water',label:'Rivers',keys:['rivers','riverWidth']},
+   {category:'water',label:'Creeks',keys:['creeks','creekWidth']},
+   {category:'water',label:'Rivers and creeks shape',keys:['streamDepth','streamBends']},
+  ];
+  const one=(k,short)=>(custom[k]?custom[k]():control(k,short))+tip(k);
+  const group=([key,label,note])=>{
+   const boxes=FIELD_GROUPS.filter(g=>g.category===key),taken=new Set(boxes.flatMap(g=>g.keys));
+   const body=SETTINGS.filter(f=>f.category===key).map(f=>{
+    if(!taken.has(f.key))return one(f.key);
+    // A group is drawn at the position of its FIRST member, so the order the
+    // schema states is still the order on screen and nothing jumps about.
+    const box=boxes.find(g=>g.keys[0]===f.key);
+    return box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(k=>one(k,!!box.label)).join('')}</div>`:'';
+   }).join('');
+   return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
+  };
+  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
@@ -1942,7 +2005,6 @@ function renderPanel(name,content){
   $('randomSeed').onclick=()=>{$('seed').value=['WANDER','HORIZON','WILDFLOWER','SOLSTICE'][Math.floor(Math.random()*4)]+'-'+Math.floor(Math.random()*9999);markStudioDirty();previewPlan();};
   document.querySelectorAll('[data-footprint]').forEach(b=>b.onclick=()=>{$('footprint').value=b.dataset.footprint;$('footprint').dispatchEvent(new Event('change'));markStudioDirty();});
   $('footprint').onchange=()=>document.querySelectorAll('[data-footprint]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.footprint===$('footprint').value)));
-  $('generate').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}regenerateStudio();};
 }else if(name==='round'&&endlessSetup){
   // NO COURSE PICKER. Endless grows each hole as you finish the last one, so a
   // course to play would be a course it immediately throws away. What is left is
@@ -2373,8 +2435,22 @@ function renderPanel(name,content){
 // So the big panels get tabs. One category at a time, each short enough to read
 // without scrolling, which is what the research recommends for exactly this --
 // a moderate-to-large number of setting groups.
-const CONTROL='label.check,label.field';
-const ATTACHED='P.note,.research-label,.field-error,.course-plan';
+// `.control-group` is a control as far as the walker is concerned: it gets a
+// card of its own, and because the walker only ever looks at ROOT'S OWN
+// CHILDREN the fields inside it are left alone rather than each being boxed
+// again.
+//
+// `p.control-label` is the biome picker, the one control that is not a label
+// at all -- a heading and a grid of buttons -- and so was the only setting
+// on the panel with no box of any kind around it. Both selectors appear
+// exactly once in this file and only there.
+const CONTROL='label.check,label.field,.control-group,p.control-label';
+// `.footprint-icons` and `.field-action` are parts of a control that are not
+// inside its label: the layout picker's grid of shapes, and the button beside
+// the seed box. Both sat outside the card their control had been given, which
+// showed most once descriptions moved INSIDE that card -- the card then looked
+// complete with a piece of its own control stranded underneath it.
+const ATTACHED='P.note,.research-label,.field-error,.course-plan,.option-grid,.footprint-icons,.field-action';
 const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,textarea';
 // What stays pinned above the sections: the sentence explaining the panel and
 // the actions that apply to all of it.
@@ -2400,6 +2476,26 @@ function groupPanelContent(root,tabAlways=false,panelName=null){
   node.replaceWith(card);card.append(node);
   let next=card.nextElementSibling;
   while(next&&next.matches(ATTACHED)){const take=next;next=next.nextElementSibling;card.append(take);}
+ }
+ // 1b. A TIP GOES INSIDE THE BOX HOLDING THE CONTROL IT EXPLAINS. Every one
+ // of them opened outside its own card, under it, which is what made the
+ // panel jump about when a description was shown.
+ //
+ // NOT done by adding `.tip` to ATTACHED above, which looks like the obvious
+ // one-word fix and is a trap. Every control is emitted followed by its own
+ // tip, so an absorbed tip would no longer END the absorption run -- and that
+ // run ending is the only reason the course-length box stays a direct child of
+ // the section, which is what its `column-span: all` depends on. Adding the
+ // word would have swallowed the scorecard into the card above it.
+ //
+ // Paired by id instead: a tip is `tip-<key>` and its button carries
+ // `data-tip="<key>"`, so this is exact and does not care about order. The
+ // `contains` guard leaves alone the tips that are already inside a group,
+ // where they sit under their own field rather than at the foot of the box.
+ for(const t of [...root.querySelectorAll('p.tip')]){
+  const owner=root.querySelector(`.hint[data-tip="${t.id.slice(4)}"]`);
+  const box=owner?.closest('.control-card,.control-group,.course-plan');
+  if(box&&!box.contains(t))box.append(t);
  }
  const first=root.firstElementChild;
  if(first&&first.tagName==='P'&&!first.classList.contains('note'))first.classList.add('panel-intro');

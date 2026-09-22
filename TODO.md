@@ -15,14 +15,23 @@ a correct behaviour nearly got "fixed" back into a bug.
 Asked for on 2026-09-20 from browsing the menus. Each one is a containment
 problem: a control that belongs inside a box is sitting beside it.
 
-- [ ] **Tooltips belong inside the box they explain.** `hint(k)` (src/main.js:1853)
-  puts the `i` button in the label, but `tip(k)` (:1854) emits a separate
-  `<p class="tip">` that `group()` concatenates AFTER the control --
-  `(custom[f.key]?custom[f.key]():control(f.key))+tip(f.key)` -- so the text
-  opens outside the `.control-card` it describes. Moving it inside means
-  `control()` taking its own tip, and the eight or so `custom[...]` renderers
-  each placing it too, since they build their own markup and bypass `control()`.
-  That fan-out is the whole cost of this one; the mechanism itself is two lines.
+- [x] **Tooltips belong inside the box they explain.** Done in the walker by id
+  pairing rather than in the templates, so the feared fan-out across the custom
+  renderers never happened: a tip is `tip-<key>` and its button carries
+  `data-tip="<key>"`, so `groupPanelContent` finds each one's owner and moves
+  the tip into the nearest `.control-card`, `.control-group` or `.course-plan`.
+
+  NOT by adding `.tip` to `ATTACHED`, which is the obvious one-word fix and a
+  trap: every control is emitted followed by its own tip, so an absorbed tip
+  would stop ending the absorption run -- and that run ending is the only
+  reason the course-length box stays a direct child of the section, which is
+  what its `column-span: all` depends on. The one-word version would have
+  swallowed the scorecard into the card above it.
+
+  The biome picker needed a box first: a `p.control-label` and a grid of
+  buttons, the one setting on the panel with no container at all. Both its
+  selectors appear exactly once in the file, so `p.control-label` joined
+  `CONTROL` and `.option-grid` joined `ATTACHED` with nothing else affected.
 
 - [x] **The import button belongs to the code box.** The `courseCode` textarea
   and the `importCourseCode` button were siblings. Wrapped in a `.code-import`
@@ -32,32 +41,102 @@ problem: a control that belongs inside a box is sitting beside it.
   apart. Wrapped rather than putting the button inside the `<label>`, which
   would make clicking the label fire the import.
 
-- [ ] **The four house controls are one group.** `homes` (toggle),
-  `homeSetback` (range) and `residentialOB` (toggle) are all category `scenery`
-  in settings-schema.js, plus the house percentage slider. They render as four
-  separate cards. They are one decision with three qualifiers and want one box.
+- [x] **The four house controls are one group.** `homes`, `homeDensity`,
+  `homeSetback` and `residentialOB` render as one `.control-group` card headed
+  "Houses" instead of four separate ones.
 
-- [ ] **Wind speed and direction are one group.** `wind` and `windDirection`,
-  both category `weather`. Same shape of problem as the houses.
+- [x] **Wind speed and direction are one group.** One card, deliberately
+  unlabelled: a box headed WIND under a heading already saying Weather, holding
+  "Wind speed" and "Wind direction", says the word four times.
 
-  These two share a mechanism: the panel builds one card per SETTINGS entry,
-  with no concept of "these fields are one box". Whatever is added -- a `group`
-  key on the schema entry, or an explicit grouping table in the panel builder --
-  should serve both, and should be done once rather than special-cased twice.
-  Do this pair together; doing either alone builds the mechanism for the cost of
-  one and gets half the value.
+  Done together, as one mechanism: `FIELD_GROUPS` in the panel builder rather
+  than a `group` key on the schema, because grouping is a fact about the panel
+  and the schema is also read by validation, migration, the world rebuild key
+  and the save format. `.control-group` joins `CONTROL`, so the existing walker
+  boxes it exactly like a single control -- and because that walker only looks
+  at its root's own children, the fields inside are left alone instead of each
+  being boxed again. A group draws at the position of its first member, so
+  schema order still decides what appears where.
 
-- [ ] **The studio's two entry points are backwards.** Remove the Regenerate
-  button from the Weather tab (src/main.js:1883 carries both that and
-  "Grow this landscape" on the same line). "Grow this landscape" becomes the
-  single way a user STARTS the course studio. Once inside the studio that
-  button is gone, and regenerating is the tray's own Regenerate (index.html:18,
-  src/main.js:2577). One verb to begin, a different one to iterate, and neither
-  offered where it does not apply.
+  Two things fell out of it. The grouped fields' tooltips now sit INSIDE the
+  box, because they are emitted within the wrapper -- a free partial win on the
+  tooltip item above, which is still open for every ungrouped field. And
+  toggles finally have a size: `label.toggle` carried no styling at all beyond
+  a margin on its `i` button, which is why they read as the loose controls in
+  the panel.
 
-  Check `src/main.js:2477`, which is the other "Grow this landscape" site, and
-  the studio-state sync (`updateStudioState`) before moving any of them --
-  whether a button is showing is currently derived in more than one place.
+- [x] **The seed sits with the hole count.** It was last in the Course tab,
+  below the full-width scorecard box -- which spans every column and breaks the
+  flow, so anything after it drops underneath. `holes seed courseYards` now,
+  the two one-line choices together above the card they produce.
+
+- [x] **The Water tab's note explains the tab, not its history.** The merged
+  note opened by saying still and moving water used to be two panels. That is a
+  changelog entry, and it had been written into the help text a player reads.
+  Removed; what remains is the two original notes, which state what the
+  controls do. Every other tab note was checked for the same mistake and none
+  had it.
+
+- [x] **A control's own parts sit inside its box.** The layout picker's grid of
+  shapes and the "Surprise me" button beside the seed field were siblings of
+  their control rather than part of it, so both sat outside the card. Neither
+  was new, but it showed once descriptions moved inside that card: the card
+  looked finished with a piece of its own control stranded underneath.
+  `.footprint-icons` and a `.field-action` class join `ATTACHED`. Bare `button`
+  could not, because it would swallow every panel action on the way past.
+
+- [x] **A box that names the feature lets its fields stop repeating it.** The
+  Ponds box said "Pond frequency" and "Typical pond size"; the Houses box said
+  house four more times. A `short` label on the schema entry now carries the
+  trimmed text -- "Frequency", "Typical size", "Occurrence".
+
+  Display only, and that distinction is the whole care in it: `label` is the
+  ACCESSIBLE NAME on both the range input and the `i` button, so shortening it
+  outright would have announced a slider as "Minimum" and its help button as
+  "What Frequency changes". `label` is untouched and still what assistive
+  technology receives.
+
+  The flag is passed into `control()` rather than read off the field, so a
+  short label can only appear beneath a heading that supplies the missing
+  noun. Move a field out of its box and it goes back to saying what it is.
+  Sixteen fields carry one; the unlabelled wind box deliberately has none.
+
+- [x] **Still water and moving water are one section.** "Ponds & lakes" and
+  "Rivers & creeks" were two tabs, so setting up a pond and a creek on the same
+  course meant two of them. One `water` category now, with a box per feature:
+  Ponds, Lakes, Rivers, Creeks.
+
+  Six boxes rather than four, and the two extra ones are the point. The depth
+  range is read identically by ponds and by lakes -- `lakes.js` uses the same
+  `waterMin + rng()*(waterMax - waterMin)` that ponds do -- and channel depth
+  and meander are read by rivers and creeks alike. Folding either pair into a
+  feature's own box would claim it belonged to that feature. They sit in their
+  own boxes saying who they serve.
+
+  That also caught two wrong tips: `waterMin` and `waterMax` both said "a
+  pond's deepest point" while lakes have always used them too. Corrected --
+  leaving them inside a box labelled "Depth of ponds and lakes" would have been
+  incoherent.
+
+  The depth pair moved down the array so the box lands after both the things it
+  governs. Array order is the panel's order and nothing else's: 446 tests pass
+  and every biome fingerprint is unchanged, so no generated output moved and no
+  version bump is owed. SCHEMA_VERSION stays too -- no control was added,
+  renamed, removed or re-ranged; only which tab it appears on.
+
+- [x] **The studio's two entry points are backwards.** The panel ended with a
+  Regenerate button emitted after every category, so it fell into whichever
+  section came last and turned up at the foot of the Weather tab looking like a
+  weather control. It called `regenerateStudio()` -- exactly what the studio
+  bar's own Regenerate calls -- and the bar is on screen whenever this panel can
+  be opened, since both ways in are studio-only (`enterStudio`, and the bar's
+  Settings button). A duplicate, in the wrong place. Gone.
+
+  What is left is one verb each way round: "Grow this landscape" starts a
+  studio and shows only during setup, pinned to the panel's lead by
+  `data-panel-action` so it cannot fall into a tab; once a landscape exists,
+  regenerating it belongs to the bar. The panel's own prose now names the bar
+  rather than saying "regenerate" with no button in sight.
 
 ## Benchmarking and profiling worth deciding from
 
