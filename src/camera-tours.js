@@ -113,10 +113,29 @@ export const FLIGHT_MIN = .55, FLIGHT_MAX = 2.6;
 export const FLIGHT_FLOOR = 22;
 const SAMPLES = 40;
 
-export function makeCameraFlight(from, to, world) {
+// How high the trees stand at a point, or -Infinity where there are none.
+//
+// Same reach `cameraInsideTree` uses, so "the camera is in a tree" and "the
+// camera cleared the trees" cannot disagree about where a tree ends.
+//
+// DO NOT ASSUME A CANOPY HEIGHT. A comment in this file said trees reach 29 m
+// and the arrival pose was built on it; redwoods top out at 111 m, and the test
+// that walks real holes put the camera 40 m inside one. Ask the trees.
+export function canopyTop(trees, x, z) {
+ let top = -Infinity;
+ for (const t of trees)
+  if (Math.hypot(x - t.x, z - t.z) < t.r * 1.9 + 4) top = Math.max(top, t.y + t.h * 1.18);
+ return top;
+}
+
+export function makeCameraFlight(from, to, world, {hold = 0} = {}) {
  const dx = to.eye.x - from.eye.x, dy = to.eye.y - from.eye.y, dz = to.eye.z - from.eye.z;
  const span = Math.hypot(dx, dy, dz);
- const duration = Math.min(FLIGHT_MAX, Math.max(FLIGHT_MIN, span / FLIGHT_SPEED));
+ // `hold` sits on the opening pose before the move starts, for an arrival that
+ // shows you the hole first. It is part of the duration, so a caller that waits
+ // for `done` waits for the whole thing rather than only the travel.
+ const travel = Math.min(FLIGHT_MAX, Math.max(FLIGHT_MIN, span / FLIGHT_SPEED));
+ const duration = hold + travel;
  const terrain = world?.height ? (x, z) => world.height(x, z) : () => 0;
  const at = t => ({x: from.eye.x + dx * t, z: from.eye.z + dz * t});
  // THE CANOPY IS THE OBSTACLE, NOT THE DIRT. Trees on this generator reach 29 m,
@@ -129,14 +148,7 @@ export function makeCameraFlight(from, to, world) {
  const PAD = 26;
  const near = (world?.trees || []).filter(t =>
   t.x > lo.x - PAD && t.x < hi.x + PAD && t.z > lo.z - PAD && t.z < hi.z + PAD);
- // Same reach `cameraInsideTree` uses, so "the camera is in a tree" and "the
- // flight cleared the trees" cannot disagree about where a tree ends.
- const canopy = (x, z) => {
-  let top = -Infinity;
-  for (const t of near)
-   if (Math.hypot(x - t.x, z - t.z) < t.r * 1.9 + 4) top = Math.max(top, t.y + t.h * 1.18);
-  return top;
- };
+ const canopy = (x, z) => canopyTop(near, x, z);
  // The obstacle floor tapers to nothing at both ends. Without that, a flight
  // leaving a player camera -- which sits just off the turf by design -- would be
  // told it is metres too low and start by rocketing upward.
@@ -165,12 +177,47 @@ export function makeCameraFlight(from, to, world) {
  const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
  const mix = (a, b, t) => a + (b - a) * t;
  function pose(seconds) {
-  const t = ease(seconds / duration), p = at(t);
+  const t = ease(Math.max(0, seconds - hold) / travel), p = at(t);
   return {
    eye: new T.Vector3(p.x, heightAt(t), p.z),
    look: new T.Vector3(mix(from.look.x, to.look.x, t), mix(from.look.y, to.look.y, t), mix(from.look.z, to.look.z, t)),
    done: seconds >= duration,
   };
  }
- return {pose, duration, span};
+ return {pose, duration, travel, hold, span};
+}
+
+// THE ARRIVAL AT A NEW HOLE.
+//
+// Where the camera stands to show you the hole you are about to play: behind and
+// above the tee, looking down the length of it. Height comes off the hole's own
+// length for the same reason the flyover's does -- a 130 yard par three framed
+// from where a 600 yard par five is shows a lot of countryside and no hole.
+//
+// The lift is a floor, not the answer: what is GROWING behind the tee decides
+// the rest, because a redwood is taller than any fixed number here would be.
+const ARRIVE_BACK = 62, ARRIVE_LIFT = .26, ARRIVE_MIN_LIFT = 46;
+// Held above whatever is standing at the pose, on top of the lift above ground.
+const ARRIVE_CANOPY_CLEAR = 14;
+// How long the camera holds up here before it comes down. Long enough to read
+// the shape of the hole and where the trouble is, short enough that it is not
+// in the way on the fiftieth hole of an endless run.
+export const ARRIVE_HOLD = 2.6;
+
+export function holeEstablishingPose(h) {
+ const lift = Math.max(ARRIVE_MIN_LIFT, h.length * ARRIVE_LIFT);
+ // Local coordinates: z runs from the tee at 0 to the green at h.length, and
+ // `center` is the middle of the corridor at that distance. Standing at a
+ // negative z puts the camera behind the tee, looking up the hole.
+ const back = {x: h.center(0), z: -ARRIVE_BACK};
+ const aim = {x: h.center(h.length * .5), z: h.length * .5};
+ const eye = h.toWorld(back), look = h.toWorld(aim);
+ // A redwood behind the tee is taller than the whole lift, so the pose is the
+ // higher of "well above the ground" and "clear of what is growing here".
+ const over = canopyTop(h.world?.trees || [], eye.x, eye.z);
+ const y = Math.max(h.height(back.x, back.z) + lift, over + ARRIVE_CANOPY_CLEAR);
+ return {
+  eye: new T.Vector3(eye.x, y, eye.z),
+  look: new T.Vector3(look.x, h.height(aim.x, aim.z) + 8, look.z),
+ };
 }

@@ -6,7 +6,7 @@ import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
 import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
 import {aimTarget,createShotEffects} from './shot-visuals.js';
-import {makeCameraFlight,FLIGHT_FLOOR} from './camera-tours.js';
+import {makeCameraFlight,holeEstablishingPose,FLIGHT_FLOOR,ARRIVE_HOLD} from './camera-tours.js';
 import {mapLayout,mapPoint,tilePlacement} from './course-map.js';
 import {clubColour} from './dispersion.js';
 import {greenHeatTile} from './green-map.js';
@@ -1377,14 +1377,29 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  //
  // Short moves are not flown. Under FLIGHT_FLOOR the move is an aim nudge or a
  // step behind the ball, and the ordinary damping already reads as movement.
- flyCamera(p,aim){
-  const eye=this.camera.position.clone(),look=this.look.clone();
+ flyCamera(p,aim,opts={}){
+  const eye=opts.from?opts.from.eye.clone():this.camera.position.clone();
+  const look=opts.from?opts.from.look.clone():this.look.clone();
   this.setCamera(p,aim,true);
   if(this.config.mode==='free')return;
   const to={eye:this.targetPos.clone(),look:this.targetLook.clone()};
-  if(eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
-  this.camera.position.copy(eye);this.look.copy(look);
-  this.camFlight={path:makeCameraFlight({eye,look},to,this.world),elapsed:0};
+  // An arrival is worth taking however short the move, because the point of it
+  // is the hold rather than the distance; a plain transition under the floor is
+  // left to the damping.
+  if(!opts.hold&&eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
+  this.camera.position.copy(eye);this.look.copy(look);this.camera.lookAt(look);
+  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0}),elapsed:0};
+ }
+ // THE ARRIVAL. Cut to a pose above and behind the tee, hold there long enough
+ // to read the hole, then fly down onto the ball.
+ //
+ // The cut is deliberate and is the one place one is right: it lands on a hole
+ // that did not exist a moment ago, straight out of the generating overlay, so
+ // there is no continuous space to fly through. Flying from the old hole's green
+ // would be crossing a landscape that has already been replaced.
+ arriveAtHole(p,aim,hold=ARRIVE_HOLD){
+  if(!this.course||this.config.mode==='free')return this.flyCamera(p,aim);
+  this.flyCamera(p,aim,{from:holeEstablishingPose(this.course),hold});
  }
  cancelFlight(){this.camFlight=null;}
  updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}

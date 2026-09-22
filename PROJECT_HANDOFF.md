@@ -126,6 +126,8 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **A FLIGHT CLEARS THE CANOPY, NOT THE DIRT.** Trees reach 29 m on this generator and are not in the height field, so a path that clears `world.height` alone flies through them. The floor is terrain or canopy, whichever is higher, from `world.trees` filtered to a box around the route. The clearance TAPERS TO NOTHING at both ends on purpose -- a flight ends on a player camera a metre and a half off the turf, and an untapered floor would tell it that pose is metres too low and start by rocketing upward.
 
+**NEVER ASSUME A CANOPY HEIGHT; ASK `canopyTop`.** A comment in camera-tours.js said trees reach 29 m. Redwoods top out at 186 m on this generator, and that stale number put the arrival camera 40 m inside a tree. `makeHoleTour` still carries the same assumption and orbits 91 m inside a redwood canopy -- filed, not fixed, because lifting the ring changes the shot. Any new camera work asks the trees.
+
 **GENERATION IS 81% `makeGroundGrid`,** measured, so yielding between phases would buy almost nothing. See RESEARCH.md. A Web Worker cannot take it: `generateWorld` returns closures.
 
 **CHECK APEX, NOT ONLY CARRY, WHENEVER THE AERODYNAMICS MOVE.** A ball with too little lift flies flatter and a flatter ball carries less induced drag, so the two errors cancel in carry and leave it looking correct. That is exactly how `liftCap` held every shot of a GC3 session 8% low while carry agreed to within 1.4%. Apex, descent angle and hang time are the quantities that catch a shape error; carry alone cannot.

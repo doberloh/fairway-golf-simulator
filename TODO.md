@@ -52,6 +52,33 @@ prevent.
   flying. Nine tests, including the ridge, the kink, the canopy and the trees on
   the far side of the property that must not lift anything.
 
+- [x] **A new hole arrives instead of appearing.** Cut to a pose above and behind
+  the tee, hold 2.6 s, then fly down onto the ball. Wired into entering a round,
+  the next hole in normal play and the next hole in an endless run. The cut TO
+  the establishing pose is deliberate and is the one place a cut is right: the
+  hole did not exist a moment ago, so there is no continuous space to fly
+  through. `freshHole()` gates it -- resuming mid-hole gets the plain flight,
+  because an establishing shot of a hole you are halfway down is a recap nobody
+  asked for. The range is excluded: one flat rectangle with no shape to
+  establish, and a hold every visit would be in the way by the second one.
+
+- [x] **"Trees reach 29 m" was wrong and the arrival pose was built on it.**
+  A comment in camera-tours.js carried that number from before the redwood work.
+  The test that walks real holes put the camera at 71 m inside a redwood whose
+  canopy tops out at 111 m. There is one `canopyTop` now and both the flight and
+  the arrival ask it rather than assuming. Four biomes x nine holes in the test.
+
+- [ ] **THE HOLE FLYOVER FLIES THROUGH THE TREES, and has since redwoods landed.**
+  Same stale assumption, not yet fixed because fixing it is a framing decision
+  rather than a one-line clamp. `makeHoleTour` clears TERRAIN by 34 m and never
+  looks at the canopy. Measured against real canopy, worst gap per biome over
+  nine holes each: **redwood -91.1 m** (tallest canopy 186 m), **mountain -0.0 m**
+  (128 m), pnw +5.5 m (82 m). So on a redwood course the flyover orbits inside
+  the forest. The file's own comment says a flyover that skims treetops reads as
+  a bug -- this one is ninety metres past skimming. The fix is not simply lifting
+  the ring: a 200 m orbit is a different shot. Growing the radius instead, or
+  both, needs a look on screen.
+
 - [ ] **Generation still blocks the main thread, and the fix is chunking, not a
   worker.** Measured with `--cpu-prof` on an 18-hole feature-heavy course:
   **8.4 s total, and `makeGroundGrid` is 81% of it** (9-hole default 2.4 s,

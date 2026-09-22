@@ -610,6 +610,23 @@ function endHoleSummary(){
  view.ball.visible=true;view.ballRing.visible=true;
 }
 function cancelAdvance(){clearTimeout(completionTimer);completionTimer=null;clearTimeout(advanceTimer);clearInterval(advanceCountdown);advanceTimer=advanceCountdown=null;}
+// A HOLE NOBODY HAS PLAYED YET gets the arrival: the establishing pose, the
+// hold, then the descent onto the ball. Anything else -- resuming a round in
+// the middle of a hole, stepping back from the overview -- gets the plain
+// flight, because an establishing shot of a hole you are halfway down is a
+// recap nobody asked for.
+//
+// The range is excluded on purpose. It is one flat rectangle with no shape to
+// establish, and you go there to hit balls: a hold every visit would be in the
+// way by the second one.
+function freshHole(){
+ return !settings.range&&!round.finished&&!round.holeComplete&&
+  !round.scrambleSelection&&round.strokes?.every(n=>n===0);
+}
+function arriveAtHole(){
+ if(freshHole())view.arriveAtHole(round.position,aim);
+ else view.flyCamera(round.position,aim);
+}
 function advanceHole(){
  cancelAdvance();endHoleSummary();
  // Growing the next hole is real work that can fail, and this is reached from a
@@ -619,7 +636,7 @@ function advanceHole(){
   toast(e?.message||'That hole could not be grown. Try again.');
   openPanel('score');
  });
- if(round.nextHole()){closePanel();loadCourse();}
+ if(round.nextHole()){closePanel();loadCourse();arriveAtHole();}
 }
 // Each hole is grown from the run's seed and its own number, so the same run
 // always plays the same holes in the same order however many times it is put
@@ -634,6 +651,9 @@ async function growNextEndless(){
   settings=endlessFor(round.seed,round.hole,settings);
   loadCourse();
  });
+ // After the overlay, not inside it: the hold is meant to be looked at, and
+ // starting it behind a full-screen scrim spends it on nothing.
+ arriveAtHole();
 }
 function showHoleCompletion(){
  // The lab is a bench, not a round. Holing out there is the result being
@@ -1169,9 +1189,9 @@ function setMode(mode){
   // else -- orbiting the menu's showcase hole, up in the studio's free flight,
   // out at a finished green -- and all of them used to arrive as a hard cut.
   // One call here covers the lot: endless, a new round, Continue, the range,
-  // an imported round and the way back from the studio. Short hops are not
-  // flown; flyCamera measures the move and leaves those to the damping.
-  view.flyCamera(round.position,aim);
+  // an imported round and the way back from the studio. A hole nobody has
+  // played yet arrives instead -- see freshHole.
+  arriveAtHole();
  }
  if(mode!=='play')cancelAdvance();
  syncNav();updateStudioState();updateHUD();updateExplorer();

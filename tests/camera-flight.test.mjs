@@ -120,3 +120,84 @@ test('trees nowhere near the route do not lift the flight', () => {
  assert.ok(Math.abs(top(near) - top(bare)) < 1e-9,
   `distant trees changed the path: ${top(near).toFixed(2)} against ${top(bare).toFixed(2)}`);
 });
+
+test('a hold sits on the opening pose, then flies the whole way', () => {
+ const from = pose(0, 90, -120, 0, 0, 200), to = pose(0, 1.7, 0, 0, .7, 130);
+ const hold = 2.6;
+ const f = makeCameraFlight(from, to, flat, {hold});
+ assert.equal(+f.hold.toFixed(3), hold);
+ assert.ok(f.duration > hold, 'the hold is part of the duration, not instead of it');
+ // Anywhere inside the hold the camera is exactly where it started.
+ for (const t of [0, hold * .4, hold * .99]) {
+  const q = f.pose(t);
+  assert.ok(Math.abs(q.eye.y - from.eye.y) < 1e-9, `moved to ${q.eye.y} at t=${t}`);
+  assert.ok(!q.done, 'not done during the hold');
+ }
+ // And it still lands exactly on the destination at the end.
+ const end = f.pose(f.duration);
+ assert.ok(Math.abs(end.eye.y - to.eye.y) < 1e-6, `ended at ${end.eye.y}`);
+ assert.ok(end.done);
+});
+
+test('the descent after a hold still starts from rest', () => {
+ // The ease is applied to the travel, not to the whole duration. Getting that
+ // wrong makes the camera lurch the instant the hold ends.
+ const hold = 2.6;
+ const f = makeCameraFlight(pose(0, 90, -120, 0, 0, 0), pose(0, 2, 120, 0, 0, 0), flat, {hold});
+ const step = f.travel / 100;
+ const speed = t => Math.abs(f.pose(t + step).eye.z - f.pose(t).eye.z) / step;
+ const mid = speed(hold + f.travel / 2);
+ assert.ok(speed(hold) < mid * .15, `left the hold at ${speed(hold).toFixed(1)} against ${mid.toFixed(1)} m/s`);
+});
+
+test('a flight with no hold is unchanged', () => {
+ const a = makeCameraFlight(pose(0, 40, -200), pose(0, 2, 200), flat);
+ const b = makeCameraFlight(pose(0, 40, -200), pose(0, 2, 200), flat, {hold: 0});
+ assert.equal(a.duration, b.duration);
+ assert.equal(a.duration, a.travel);
+});
+
+// --- the arrival pose, against real holes rather than a fixture ---
+const {world} = await import('./worlds.mjs');
+const {holeEstablishingPose} = await import('../src/camera-tours.js');
+
+test('the arrival pose stands clear of the ground and the canopy on every hole', () => {
+ // Behind the tee is exactly where terrain tends to rise -- a hole cut into a
+ // hillside puts its own back slope there -- so this is the case that would put
+ // the camera inside a hill or inside a tree if the lift were a flat number.
+ for (const biome of ['pnw', 'mountain', 'redwood', 'links']) {
+  const w = world({holes: 9, biome, seed: 'arrival-' + biome});
+  for (const h of w.holes) {
+   const q = holeEstablishingPose(h);
+   const ground = w.height(q.eye.x, q.eye.z);
+   assert.ok(q.eye.y - ground > 30,
+    `${biome} hole ${h.hole + 1}: camera only ${(q.eye.y - ground).toFixed(1)} m above ground`);
+   const canopy = w.trees
+    .filter(t => Math.hypot(q.eye.x - t.x, q.eye.z - t.z) < t.r * 1.9 + 4)
+    .reduce((top, t) => Math.max(top, t.y + t.h * 1.18), 0);
+   assert.ok(q.eye.y > canopy,
+    `${biome} hole ${h.hole + 1}: camera at ${q.eye.y.toFixed(1)} m inside canopy at ${canopy.toFixed(1)} m`);
+  }
+ }
+});
+
+test('the arrival pose looks down the hole, not away from it', () => {
+ // A sign error here would show the player the countryside behind the tee, and
+ // it would look deliberate enough that nobody would call it a bug.
+ for (const biome of ['pnw', 'links']) {
+  const w = world({holes: 9, biome, seed: 'arrival-look-' + biome});
+  for (const h of w.holes) {
+   const q = holeEstablishingPose(h);
+   const green = h.worldGreen;
+   // The look point has to be nearer the green than the camera is: the camera
+   // is behind the tee, the target is halfway up the hole.
+   const toLook = Math.hypot(green.x - q.look.x, green.z - q.look.z);
+   const toEye = Math.hypot(green.x - q.eye.x, green.z - q.eye.z);
+   assert.ok(toLook < toEye,
+    `${biome} hole ${h.hole + 1}: looking ${toLook.toFixed(0)} m from the green, standing ${toEye.toFixed(0)} m`);
+   // And the camera sits behind the tee rather than past it.
+   assert.ok(toEye > Math.hypot(green.x - h.worldTee.x, green.z - h.worldTee.z),
+    `${biome} hole ${h.hole + 1}: camera is not behind the tee`);
+  }
+ }
+});
