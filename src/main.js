@@ -1931,7 +1931,7 @@ function renderPanel(name,content){
    {category:'water',label:'Depth of ponds and lakes',keys:['waterMin','waterMax']},
    {category:'water',label:'Rivers',keys:['rivers','riverWidth']},
    {category:'water',label:'Creeks',keys:['creeks','creekWidth']},
-   {category:'water',label:'Rivers and creeks together',keys:['streamDepth','streamBends']},
+   {category:'water',label:'Rivers and creeks shape',keys:['streamDepth','streamBends']},
   ];
   const one=(k,short)=>(custom[k]?custom[k]():control(k,short))+tip(k);
   const group=([key,label,note])=>{
