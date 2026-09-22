@@ -571,6 +571,67 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## The lift cap, and the carry that hid it
+
+A hundred shots from a GC3 -- a photometric unit with a good reputation for accuracy -- replayed through the flight model. Carry came out within 1.4%. Apex came out low on **every single one of the hundred**, by 8% on average and 11 to 14% above 9,000 rpm.
+
+That is not scatter. One hundred out of one hundred in the same direction is a mechanism, and the mechanism was a single constant.
+
+### What was wrong
+
+`AERO.liftCap` was 0.2913. Lift rises with the spin parameter S until it is clamped there, and the clamp binds from **S = 0.342** upwards. Half of that session launched already clamped: past that point the ball received no more lift however hard it was spinning.
+
+**Carry concealed it, and that is the part worth remembering.** On the clamped half, carry was out by two thirds of a yard -- better agreement than the unclamped half managed. A ball with too little lift flies flatter, and a flatter ball also carries less induced drag, so the two errors very nearly cancel in the one number anyone checks. The first session against SkyTrak reported carry within 2% and called the model good. It was good, in carry. Nobody had asked it about height.
+
+| | n | carry error | apex error |
+|---|---|---|---|
+| launching at the cap | 50 | +0.68 yd | **-12.0 ft (-11.9%)** |
+| launching below it | 50 | +4.39 yd (+2.2%) | -4.1 ft (-4.3%) |
+
+### The plateau was never physical
+
+Bearman and Harvey measured CL rising monotonically to S = 0.3. Smits and Smith took the range to **S = 1.4** -- described as the conditions experienced when using the full set of clubs -- and found CL slightly higher again, with no plateau anywhere in it. The square root already in this formula supplies the diminishing returns a cap was standing in for.
+
+So the cap is a guard rail now rather than a shaping term: 0.60, which S does not reach until about 1.55, past anything Smits and Smith measured and far past any golf shot. It exists so an absurd input cannot produce an absurd force.
+
+Lifting it alone left the ball carrying 3.6% too far, so `spinDrag` moved 0.2025 to 0.23 -- **toward** the published figures rather than away from them. Bearman and Harvey's own numbers imply a slope near 0.25 (CD rising 0.27 to 0.32 as S goes 0.1 to 0.3) and Smits and Smith report a stronger dependence still. The old value sat below both.
+
+### Fitted on one device, tested on the other
+
+The GC3 session was fitted; the 36-shot SkyTrak session was held out and never entered the cost. Descent angle was kept out of the cost as well, as it always has been here, so it stays an independent check rather than a fitted output.
+
+| over 100 GC3 shots | before | after |
+|---|---|---|
+| Carry | +1.42% | **+1.25%** |
+| Peak height | **-8.05 ft** | **-0.22 ft** |
+| Offline (MAE) | 0.56 yd | **0.21 yd** |
+| Descent angle (MAE) | 1.33 deg | 1.49 deg |
+| Hang time | +0.24 s | +0.71 s |
+
+Carry, apex and offline all improve. Descent and hang do not, and both are recorded rather than buried.
+
+### The two devices disagree, and this change picks one
+
+GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlapping spin range, and this change widens that to 7.4%. They cannot both be right and no amount of fitting reconciles them. The GC3 is the better instrument and it is the one trusted here -- **that is a judgement about the references, not a measurement**, and it is the first thing to revisit if a third device ever lands on the other side of it.
+
+Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
+
+### A second fault, uncovered rather than caused
+
+Hang time went from +0.24 s to +0.71 s, and it sits between 0.5 and 0.7 s for **every** value of `spinDrag` tried. It cannot be tuned out from here, which means it is not the price of this change; it is a separate problem this change made visible.
+
+Matching the GC3 on apex while overshooting its hang says our ball takes longer to fall from the same height than theirs does. That is the shape of the descent rather than its scale, and the descent angle running steep says the same thing from another direction. Reworking how drag varies through the descent is its own investigation and is filed as one.
+
+### What it cost downstream, and what it did not
+
+Two pinned test anchors moved, both for the same reason and neither because the bounce changed. `ARRIVAL` in the firmness tests is a 7-iron's own landing conditions, pinned precisely so that a flight refit does not read as a bounce regression -- and the test that compares flying the ball there against delivering it there is what caught the pin going stale, which is the job it was written for. Re-derived: 22.57 m/s and 49.06 degrees at touchdown, 5068 rpm from the last airborne sample, cross-checked against `6500 * exp(-5.971/24)` to the rpm.
+
+Deriving it is a trap worth naming. The simulator applies the bounce impulse and records the result in the same step, so the first sample at ground level is already post-bounce -- velocity collapsed from 22.54 to 5.16 m/s and spin from 5068 to 796. Reading it gives a plausible-looking number that is wrong by a factor of six.
+
+The bounce tables were then re-pinned at the new arrival, and what matters survived: hop height and run-out still rise monotonically from Soft to Burnt, hop still falls straight down the mowing height from green to sand, and fairway still runs longest. Not one bounce parameter moved.
+
+Nothing in generation moved either -- all eight biome fingerprints are unchanged, because ball flight is not terrain.
+
 ## What a frame actually costs
 
 `tools/bench.mjs` has always measured generation and said nothing about drawing. The only frame numbers this project ever had were taken by hand, with a probe pasted into `renderer.js` and deleted afterwards, on one machine, on one course -- and the first of them was wrong in the way that matters most. `tools/profile.mjs` is the standing answer: a headless Chromium driven from the command line, instrumented from outside the game.

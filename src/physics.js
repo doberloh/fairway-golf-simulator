@@ -321,11 +321,56 @@ export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325
 // low, sorted by spin. Flattening it (less gain, a higher floor, a lower cap)
 // fixed both ends at once. Carry 7.9% -> 3.2%, apex 14.6% -> 3.7%.
 //
-// THE CHECK THAT MATTERS is the one that was NOT fitted. Descent angle went from
-// 7.0% off to 1.8% -- within a degree on every club from driver to wedge -- as a
-// by-product. A curve bent to hit two numbers does not also land the third by
-// luck, so the shape is believable and not just the residual of an optimiser.
-export const AERO={liftOffset:0.0214,liftFloor:0.0025,liftGain:0.2055,liftCap:0.2913,spinDrag:0.2025};
+// THEN 100 SHOTS FROM A GC3 SHOWED WHAT THE FLATTENING HAD COST. Every single
+// one of them flew LOW -- 8% on average, and 11 to 14% above 9,000 rpm. The
+// cause was the cap. `liftCap: 0.2913` binds at a spin parameter of 0.342, and
+// half of that session launched already clamped: past that point the ball got
+// no more lift however hard it was spinning.
+//
+// Carry hid it. On the clamped half carry was out by two thirds of a yard,
+// because a flatter ball also carries less induced drag -- two errors
+// cancelling, which is the kind of agreement that conceals a fault rather than
+// confirming its absence. Checking apex as well as carry is what found it.
+//
+// The plateau was never physical. Bearman and Harvey measured CL rising
+// monotonically to S = 0.3, and Smits and Smith took it to S = 1.4 -- "the
+// range of conditions experienced when using the full set of clubs" -- and
+// found no plateau, with CL slightly HIGHER than Bearman and Harvey again. The
+// square root in this formula already supplies the diminishing returns that a
+// cap was standing in for.
+//
+// So the cap becomes a guard rail rather than a shaping term: 0.60 is not
+// reached until S is about 1.55, past anything Smits and Smith measured and far
+// past any golf shot. It exists so an absurd input cannot produce an absurd
+// force, not to bend the curve.
+//
+// `spinDrag` moved 0.2025 -> 0.23, TOWARD the literature rather than away from
+// it. Bearman and Harvey's own figures imply a slope near 0.25 (CD rising 0.27
+// to 0.32 as S goes 0.1 to 0.3) and Smits and Smith report a stronger
+// dependence still, so the old value sat below both. Lifting the cap alone left
+// the ball carrying 3.6% too far; this is what pulls it back.
+//
+// Measured against the GC3's 100 shots: carry +1.42% -> +1.28%, apex -8.09% ->
+// -0.46%. The 36-shot SkyTrak session, held out and never fitted to, keeps its
+// carry (-0.43% -> -0.47%) and improves its descent (1.41 -> 1.25 degrees).
+//
+// WHAT THIS COST, SAID PLAINLY. Descent angle on the GC3 set goes from 1.33 to
+// 1.49 degrees of mean absolute error, hang time from +0.24 s to +0.71 s, and
+// SkyTrak's apex disagreement widens from +5.5% to +7.4%.
+//
+// The hang time is the interesting one and it is NOT a bad trade, it is a
+// second fault this one uncovered. It sits at 0.5 to 0.7 s for every value of
+// spinDrag tried, so it cannot be tuned out from here. Matching GC3 on apex
+// while overshooting its hang means our ball takes longer to come down from
+// the same height than theirs does -- a difference in the SHAPE of the
+// descent, not its scale, and the steeper descent angle says the same thing.
+// Chasing it means reworking how drag varies through the descent, which is its
+// own investigation with its own evidence. Filed rather than bodged. The two devices genuinely disagree about apex on
+// overlapping shots -- one says we fly low, the other says high -- and this
+// change trusts the GC3, which is the better instrument. That is a judgement
+// about the references, not a measurement, and it is the part of this to
+// revisit first if a third device ever disagrees with it.
+export const AERO={liftOffset:0.0214,liftFloor:0.0025,liftGain:0.2055,liftCap:0.60,spinDrag:0.23};
 export function coefficients(speed,spin,rho=1.225){
  const re=rho*speed*R*2/0.0000181, s=Math.abs(spin)*R/Math.max(speed,0.1);
  // Smooth dimple drag-crisis transition; bounded spin lift fit (not ball-specific calibration).

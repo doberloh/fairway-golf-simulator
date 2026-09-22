@@ -120,6 +120,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 ## Data flow and units
 
+**CHECK APEX, NOT ONLY CARRY, WHENEVER THE AERODYNAMICS MOVE.** A ball with too little lift flies flatter and a flatter ball carries less induced drag, so the two errors cancel in carry and leave it looking correct. That is exactly how `liftCap` held every shot of a GC3 session 8% low while carry agreed to within 1.4%. Apex, descent angle and hang time are the quantities that catch a shape error; carry alone cannot.
+
+**THE FIRMNESS TESTS PIN A 7-IRON'S ARRIVAL ON PURPOSE,** so a flight refit does not read as a bounce regression. Change the aerodynamics and `ARRIVAL`, `WANT` and `LADDER` in `tests/firmness.test.mjs` all need re-deriving -- the test that compares flying the ball there against delivering it there exists to tell you so. When re-deriving, take spin from the LAST AIRBORNE sample: the simulator applies the bounce and records it in the same step, so the first sample at ground level is already post-bounce and reads about a sixth of the real value.
+
 **FRAME COST IS MEASURED BY `npm run profile`, AND PACING IS NOT COST.** `tools/profile.mjs` drives a headless Chromium and instruments WebGL from outside the game. It measures the time spent INSIDE the frame callback plus a GPU timer query spanning it -- never the interval between frames, which in headless Chromium is a virtual 60 Hz display whatever the vsync flags say. It proves that property on a blank page and refuses to report if it fails. Two arms: the real GPU for headroom, a software rasteriser for 'no graphics card'. Run `npm run gpu` if you doubt which you got -- default flags give SwiftShader silently. The one exception to the rule: on the software arm the interval IS the measure, because its work happens off the main thread after the callback returns.
 
 **GRAPHICS TIERS MAY NOT TOUCH A PLAYED SURFACE,** which is why none of them thins the planting even though vegetation is what the frame is spent on. Trunks are collidable; two players on different tiers must hit the same trees.
