@@ -2725,6 +2725,19 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // So everything here runs against the loaded course, which on the range is
   // the bench. `open` is simply "go to the range".
   open:(options={})=>enterRange(options),
+  // A COURSE BUILT TO ORDER, FOR MEASUREMENT.
+  //
+  // `tools/profile.mjs` drives this instead of clicking through the menus, so
+  // the profiler keeps working when the menus are rearranged -- which they are,
+  // often. It goes through `startRoundOn`, the same path Play and Saved
+  // courses take, so what gets measured is what gets played. Resolves when the
+  // world is built and the first frame can be drawn.
+  course:(overrides={})=>startRoundOn({...DEFAULT_COURSE,...overrides},
+   {players:[{name:'Bench',team:'A'}],mode:'stroke',tee:'blue'}),
+  // Which view the camera is in, so a run can state what it measured rather
+  // than assuming. 'player' is down at the ball; 'overview' is the whole hole
+  // and is much the heavier of the two.
+  view:(mode)=>{if(mode)cameraMode(mode);return view?.config?.mode;},
   // null on any field hands it back to the previous value.
   launch:(over={})=>{labLaunch={...labLaunch,...over};syncLabTool();return {...labLaunch};},
   strike:(over={})=>labStrike(over),

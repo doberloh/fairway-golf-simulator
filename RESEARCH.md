@@ -571,6 +571,68 @@ A third numerical trap in the same three lines: `h/(1−u)` goes to infinity as 
 
 The forward tee improves least: red is still blocked over 1 m on 12% of holes against blue's 3%, because the lift is computed for the whole complex and red sits lowest within it after the ordering. Lifting each pad independently would close that, at the cost of the complex no longer reading as one piece of ground. The 4% of red tees still blocked by more than 3 m are holes where the required lift exceeded the cap.
 
+## What a frame actually costs
+
+`tools/bench.mjs` has always measured generation and said nothing about drawing. The only frame numbers this project ever had were taken by hand, with a probe pasted into `renderer.js` and deleted afterwards, on one machine, on one course -- and the first of them was wrong in the way that matters most. `tools/profile.mjs` is the standing answer: a headless Chromium driven from the command line, instrumented from outside the game.
+
+### The harness had to prove itself before it was believed, and twice it failed
+
+**A blank page read 17.3 ms.** `--disable-gpu-vsync` and `--disable-frame-rate-limit` do not unthrottle animation frames in headless Chromium; it paces them to a virtual 60 Hz display regardless. So the interval between frames is the display's, not the renderer's -- the identical trap that produced the dead forest, caught this time by a check that runs before any number is trusted and refuses to continue.
+
+The fix is to stop measuring pacing and measure **work**: the time spent inside the frame callback, and a `TIME_ELAPSED` GPU query spanning the same callback. Neither can be padded by a wait for the display, and both collapse to 0.000 ms on an idle page, which is what the check now asserts.
+
+**Then low and medium measured identically.** Same triangles, same time, to three figures. That was the harness again: `applyQuality` does `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))`, and headless Chromium reports a device pixel ratio of 1, so low (1), medium (1.75) and ultra (2) all clamped to 1 and drew exactly the same pixels. The tiers' single biggest fill lever was absent from the measurement. Playwright's `deviceScaleFactor` fixes it.
+
+**And the GPU is not the GPU unless you ask.** With default flags, headless Chromium silently uses SwiftShader. `tools/gpu-probe.mjs` exists to print the renderer string for each launch configuration, because a frame time from a software rasteriser answers a completely different question and looks exactly the same on the page. The real card also reports `MAX_TEXTURE_IMAGE_UNITS` of **16** where SwiftShader reports 32 -- which independently confirms the ceiling the floodlight-shadow comment describes.
+
+Three measurement errors, all of the same species: a number that looked plausible and described something other than what was asked. That is now six in this project, and the pattern has never varied -- a filter, a clamp or a default that is reasonable in general and excludes exactly the case under test.
+
+### What the frame is actually spent on
+
+Measured on an RTX 4090, redwood, player view, 300 frames a case.
+
+| tier | GPU ms | draws | triangles |
+|---|---|---|---|
+| low | 4.52 | 168 | 46.5 M |
+| medium | 6.46 | 168 | 46.5 M |
+| high | 12.66 | 289 | 92.9 M |
+| ultra | 11.42 | 235 | 69.7 M |
+
+**It is geometry, and it is almost entirely one biome.** Redwood draws 92.9 M triangles where every other biome draws 3.1 to 4.6 M -- twenty times the load, for 12.66 ms against about 4. The grown grove is the whole story, exactly as the LOD removal predicted it would be on hardware that could not absorb it.
+
+**Shadow cascades double it.** Medium has none and draws 46.5 M; high has three and draws 92.9 M for the same scene. Each cascade re-renders the casters.
+
+**Pixel ratio is real but secondary.** Halving it on high gives back 26% (12.72 to 9.36 ms), which matters and is nothing like the 20x that content does.
+
+**Every ground-cue toggle is free.** Terrain shadows, relief shading, slope tint and mowing stripes each change the frame by under 0.05 ms -- inside the noise. They are arithmetic on values the shader already has, exactly as their comment claims, and they can stay on at every tier.
+
+**And the reflections toggle does nothing at all.** On a course covered in water: 208 draws with reflections on, 208 with them off, 4.72 ms against 4.69. `setReflections(false)` nulls the `envMap` on each water material, which stops the sampling and does not stop the pass. The user-facing switch buys a change in appearance and no time whatever.
+
+### A machine with no graphics card cannot run this at any setting
+
+The software arm is the only one on this hardware that can fail. It does, by two orders of magnitude.
+
+| case | frame interval | budget |
+|---|---|---|
+| low, software rasteriser | **3,034 ms** | 33.3 ms |
+| medium, software rasteriser | 3,357 ms | 33.3 ms |
+
+Three seconds a frame. A third of a frame per second, against a target of thirty. Retuning moved it 6%.
+
+Two honest qualifications. SwiftShader is a pure-CPU rasteriser and is the floor, not a typical weak device -- real integrated graphics is perhaps one to two orders faster, which would put low somewhere between thirty and three hundred milliseconds and is the difference between playable and not. That range is an extrapolation and not a measurement, and the harness cannot narrow it without the hardware in the room. What it can say without hedging is that **tuning cannot close a hundredfold gap**, and that the in-callback CPU measure reads a flattering 2.6 ms for these same frames, because a software rasteriser does its work off the main thread after the callback returns. Only the interval sees it, and the interval is only meaningful when the renderer is slower than the display -- which is precisely this arm and nothing else.
+
+### What was retuned, and what could not be
+
+Low spends where a weak device loses time: pixel ratio to 0.75, so it draws smaller than the display and upscales, which is what phone games have always done and the only fill lever left once the ratio is already 1; shadow map to 512; anisotropy to 2; reflection buffer to 256, since the pass cannot currently be stopped. Medium was not touched -- `graphics.js` states outright that it is the frozen historical baseline.
+
+Ultra was high with a glow on it: bloom, a bigger reflection buffer and overview shadows were the entire difference and measured 12.64 ms against high's 12.69. It now has half again the shadow texels (6144) reaching a kilometre further (3500 m).
+
+**It also came out faster than high, which was not the intention.** 11.42 ms against 12.66, on 69.7 M triangles against 92.9 M. Spreading three cascades over a longer distance moves the split planes apart, and fewer casters straddle two cascades and get drawn into both -- draws fell from 289 to 235. Better looking and cheaper, discovered rather than designed, and the only reason it is known is that the run was measured afterwards rather than assumed.
+
+**A fourth cascade was considered and rejected on the file's own evidence.** Three already spend fifteen of the sixteen texture units the real GPU reports, alongside the toon gradient, the environment map and the ground atlases. A fourth would take the last unit or overflow it, and a program that fails to link draws nothing -- which is exactly how floodlight shadows came to be off on every tier.
+
+**What could not be retuned is the thing that matters.** No tier knob touches vegetation. `grass` scales scatter grass, under 1% of the triangles on redwood. `foliage` sets the segment count of *drawn* trunks and canopies, so it does nothing at all on a biome whose plants are instanced mesh models -- which redwood now entirely is. And a tier may not simply plant fewer trees: `graphics.js` forbids affecting a played surface and trunks are collidable, so two players on different tiers must hit the same trees. The only legal lever is drawing fewer while colliding with all, which is a draw distance the renderer does not have. Filed, with the rest, in TODO.
+
 ## Is JavaScript the right thing to build this in?
 
 Asked on 2026-09-20: keep going in JS, or port to a more efficient and robust engine later. Written down because the answer turns on measurements this project already has, and because "port it to a real engine" is the kind of decision that gets made on a feeling and is then very expensive to unmake.
