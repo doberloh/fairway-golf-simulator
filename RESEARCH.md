@@ -608,6 +608,40 @@ arithmetic per cell is unchanged, which is what keeps the biome fingerprints
 identical. A Web Worker remains the wrong tool: `generateWorld` returns closures
 (`toWorld`, `height`, `surface`) that cannot cross the boundary.
 
+## What it costs to let go of the thread
+
+Generation yields by row band now, and the driver hands the browser a frame
+whenever a budget's worth of work has gone by. Pacing is not free. Measured on
+the 18-hole feature-heavy course, where the blocking work itself is ~7.0 s
+however it is sliced:
+
+| budget | wall @60Hz | overhead | wall @120Hz | pauses | longest block |
+|---|---|---|---|---|---|
+| 8 ms | 10.83 s | +55% | 10.34 s | 570 | 8 ms |
+| 12 ms | 9.32 s | +33% | 8.79 s | 414 | 12 ms |
+| **24 ms** | **8.65 s** | **+24%** | 7.16 s | 221 | 24 ms |
+| 50 ms | 8.63 s | +24% | 7.73 s | 113 | 50 ms |
+
+A pause costs most of a frame regardless of what it cost to earn, so halving the
+budget nearly doubles the overhead. 24 ms is the knee: past it the total stops
+improving and below it the price climbs fast. The usual reason to want a small
+budget is input latency, and it does not apply — a full-screen overlay is up, so
+there is nothing behind it to click. What the budget buys here is the animation,
+and 24 ms still returns a frame about every 33 ms.
+
+**A hidden tab is not paced at all.** Pausing exists to let the browser paint and
+to keep controls alive; a background tab does neither, and it fires no
+`requestAnimationFrame`, so every pause would fall through to its timeout and an
+eight-second course would take minutes. Background timers are clamped too, so
+there is no short sleep to fall back on. The driver checks `document.hidden` and
+runs straight through, resuming pacing if the tab comes back.
+
+**Nothing about the output changed.** All eight biome fingerprints are identical
+across the conversion — the yields sit between rows, and every loop runs in the
+same order over the same cells producing the same floats. The synchronous
+`generateWorld` still exists and is what the tests, the bench and the fingerprint
+tool call; it drains the same generator with nothing between the steps.
+
 ## The lift cap, and the carry that hid it
 
 A hundred shots from a GC3 -- a photometric unit with a good reputation for accuracy -- replayed through the flight model. Carry came out within 1.4%. Apex came out low on **every single one of the hundred**, by 8% on average and 11 to 14% above 9,000 rpm.

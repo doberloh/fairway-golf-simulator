@@ -128,6 +128,12 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **NEVER ASSUME A CANOPY HEIGHT; ASK `canopyTop`.** A comment in camera-tours.js said trees reach 29 m. Redwoods top out at 186 m on this generator, and that stale number put the arrival camera 40 m inside a tree. `makeHoleTour` still carries the same assumption and orbits 91 m inside a redwood canopy -- filed, not fixed, because lifting the ring changes the shot. Any new camera work asks the trees.
 
+**GENERATION YIELDS; `generateWorld` STILL DOES NOT.** `generateWorldSteps` is the generator and `generateWorld` is a synchronous drain over it, so the tests, the bench and the fingerprint tool are unaffected and MUST STAY THAT WAY -- a test that awaited generation would be testing the driver. The app goes through `generateProgressively` in main.js, which paces against the frame clock. Adding a yield anywhere new: it must sit BETWEEN rows, never inside one, or the fingerprints move.
+
+**`prepareWorld` AND `loadCourse` MUST KEY ON THE SAME THING.** Both call `settleSettings`, which is why it was extracted -- `prepareWorld` builds the world into the cache and `loadCourse` reads it, and if the two ever compute a different key the cache misses silently and a different course appears than the one chosen. `settleSettings` is safe to run twice on purpose; the yardage rescale inside it stops applying once `settings.holes` equals `round.holes`.
+
+**PACING IS NOT FREE AND A HIDDEN TAB IS NOT PACED.** See RESEARCH.md for the budget table. The driver checks `document.hidden`: a background tab fires no frames and clamps timers, so pacing it would turn an eight-second course into minutes.
+
 **GENERATION IS 81% `makeGroundGrid`,** measured, so yielding between phases would buy almost nothing. See RESEARCH.md. A Web Worker cannot take it: `generateWorld` returns closures.
 
 **CHECK APEX, NOT ONLY CARRY, WHENEVER THE AERODYNAMICS MOVE.** A ball with too little lift flies flatter and a flatter ball carries less induced drag, so the two errors cancel in carry and leave it looking correct. That is exactly how `liftCap` held every shot of a GC3 session 8% low while carry agreed to within 1.4%. Apex, descent angle and hang time are the quantities that catch a shape error; carry alone cannot.

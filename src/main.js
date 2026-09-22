@@ -12,7 +12,7 @@ import './style.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour} from './daylight.js';
-import {generateCourse,generateWorld,DEFAULT_COURSE,BIOMES} from './course.js';
+import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
 import {Round} from './game.js';
 import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
@@ -254,8 +254,16 @@ function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:GENERATO
  // range is a different world from a course, but moving its green is four floats
  // in the cup atlas and must not throw the landscape away.
 const worldKeyFor=s=>JSON.stringify([GENERATOR_VERSION,s.range?'range':'',...generationKeys().map(k=>s[k])]);
-function loadCourse(){
- stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced)lastShot=null;settings.style='cartoon';settings.turf=turfConfig(settings.turf);
+// Settling `settings` into the exact shape the world is keyed on.
+//
+// Pulled out of loadCourse so `prepareWorld` can key on the same thing without a
+// second copy of these rules -- the world cache misses silently if the two ever
+// disagree, and a different course appears than the one that was chosen.
+// SAFE TO RUN TWICE: after the first pass `settings.holes` equals `round.holes`,
+// so the yardage rescale on the line below stops applying. prepareWorld calls
+// this and then loadCourse calls it again on the way through.
+function settleSettings(){
+ settings.style='cartoon';settings.turf=turfConfig(settings.turf);
  if(!settings.range&&!round.endless&&settings.holes&&settings.holes!==round.holes&&settings.courseYards)settings.courseYards*=round.holes/settings.holes;
  // No tee toggles: all three sets are always built and the playing tee is a round
  // setting. Re-adding them here would reinstate the keys migration just removed.
@@ -264,7 +272,23 @@ function loadCourse(){
  settings=settings.range?{...RANGE_SETTINGS,...settings,range:true,holes:1}
   :round.endless?{...DEFAULT_COURSE,...settings,holes:1}
   :{...DEFAULT_COURSE,...settings,courseYards:settings.courseYards||round.holes*360,holes:round.holes===18?18:9};
- const key=worldKeyFor(settings);
+ return worldKeyFor(settings);
+}
+// Build the world for wherever the round is about to be, yielding to the browser
+// as it goes, and leave it in the cache `loadCourse` reads. loadCourse stays
+// synchronous: by the time it runs the world it wants is already there, so its
+// own generate branch is a no-op. Skipping this entirely -- the studio's
+// regenerate, say -- just means loadCourse builds it the old blocking way.
+async function prepareWorld(onProgress){
+ const key=settleSettings();
+ if(world&&key===worldKey)return;
+ lastShot=null;
+ world=await generateProgressively(settings,onProgress);
+ worldKey=key;
+}
+function loadCourse(){
+ stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced)lastShot=null;
+ const key=settleSettings();
  if(!world||key!==worldKey){lastShot=null;world=generateWorld(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style)view.build(world,settings.style,round.endless?0:round.hole);else view.setHole(round.endless?0:round.hole);
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
@@ -644,11 +668,12 @@ function advanceHole(){
 async function growNextEndless(){
  if(!round.nextHole())return;
  closePanel();
- await whileGenerating('Growing the next hole…',()=>{
+ await whileGenerating('Growing the next hole…',async report=>{
   // The golfer's own settings ride across each new hole. Rebuilt from the seed
   // alone, every hole quietly reset the bag in `settings`, and the next autosave
   // wrote that reset to disk.
   settings=endlessFor(round.seed,round.hole,settings);
+  await prepareWorld(report);
   loadCourse();
  });
  // After the overlay, not inside it: the hold is meant to be looked at, and
@@ -888,7 +913,7 @@ function startRoundOn(courseSettings,group){
 async function enterRange(options={}){
  rememberPutting();
  const fresh=new Round({players:round.players,mode:'stroke',putting:{mode:'holeout'}});
- await whileGenerating('Opening the range…',()=>{
+ await whileGenerating('Opening the range…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;rangeMode=true;
   // The centre mat. placeTee honours round.tee and the default is blue, which
   // here is the left-hand station -- the ball would set up off the middle of a
@@ -916,6 +941,7 @@ async function enterRange(options={}){
   // rather than as a target. The lab wants them on; the range never does.
   Object.assign(view.config,{greenGrid:false,greenFlow:false,greenHeat:false});
   view.setGreenReading();
+  await prepareWorld(report);
   setMode('play');
  });
  // The cached world keeps whatever green position it was left with, so the
@@ -1059,17 +1085,25 @@ async function buildEndless(group){
   if(adopt){menuBackdrop=false;restoreClock();}else leaveBackdrop();
   pendingRound=null;staleGenerator=false;
   round=fresh;settings=adopt?{...backdropRun.settings,...playScope(settings)}:endlessFor(seed,0,settings);
-  closePanel();loadCourse();setMode('play');
+  closePanel();
  };
- if(adopt)begin();else await whileGenerating('Growing your first hole…',begin);
+ // Adopting the showcase hole there is nothing to grow, so it stays synchronous
+ // and enters play immediately -- an overlay over work that is not happening is
+ // a lie, and a progress bar over it would be a more elaborate one.
+ if(adopt){begin();loadCourse();setMode('play');}
+ else await whileGenerating('Growing your first hole…',async report=>{
+  begin();await prepareWorld(report);loadCourse();setMode('play');
+ });
 }
 async function buildRoundOn(courseSettings,group){
  const next={...settings,...courseSettings};
  // Build the Round first: an invalid group must fail before the overlay appears.
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
- await whileGenerating('Building your course…',()=>{
+ await whileGenerating('Building your course…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;
-  round=fresh;settings=next;closePanel();loadCourse();setMode('play');
+  round=fresh;settings=next;closePanel();
+  await prepareWorld(report);
+  loadCourse();setMode('play');
  });
 }
 // A single showcase hole, grown fresh each time the menu opens. It is never the
@@ -1088,7 +1122,7 @@ function restoreClock(){
 // but the moment the player sets one themselves the loan is off -- otherwise
 // leaving the menu would silently undo the time they just chose.
 function claimClock(){playerClock=null;view.borrowedClock=false;}
-function loadMenuBackdrop(){
+async function loadMenuBackdrop(report){
  stopTour();cancelAdvance();
  // The hole on the menu is hole one of a real endless run rather than a private
  // showpiece, so choosing Endless can play the hole you are already looking at
@@ -1105,7 +1139,7 @@ function loadMenuBackdrop(){
  playerClock={hour:view.daylight.hour,floodlights:view.daylight.floodlights};
  const [hour,dark]=showcaseHour(random(seed+':hour')());
  view.daylight.hour=hour;view.daylight.floodlights=dark;view.borrowedClock=true;
- menuBackdrop=true;world=generateWorld(backdrop);worldKey=worldKeyFor(backdrop);
+ menuBackdrop=true;world=await generateProgressively(backdrop,report);worldKey=worldKeyFor(backdrop);
  round=new Round();course=world.holes[0];round.placeTee(course.tees);
  view.build(world,'cartoon',0);view.setPutting(round.putting);
  view.config.mode='free';view.wasFree=true;
@@ -1142,19 +1176,78 @@ const syncMenuOverlay=()=>{
  menu.setAttribute('aria-hidden',String(behind));
  if(behind)menu.removeAttribute('aria-modal');else menu.setAttribute('aria-modal','true');
 };
-// Generation runs on the main thread and blocks it, so the message has to be
-// painted before the work begins: show it, let a frame land, then build. A
-// progress bar is not possible without splitting generation up, and the world
-// hands back closures that cannot cross a worker boundary.
+// PACING THE WORK AGAINST THE FRAME CLOCK.
+//
+// Generation still runs on the main thread -- it hands back closures, so it
+// cannot go to a worker -- but it no longer runs in one unbroken block. The
+// stepped generator yields by row band; this drains it, and whenever a budget's
+// worth of work has gone by it reports progress and waits for a frame. So the
+// browser paints, the spinner turns and the bar moves.
+//
+// BUDGET is how much work runs between frames, and pacing is NOT FREE. Measured
+// on an 18-hole feature-heavy course, where the blocking work itself is ~7.0 s
+// however it is sliced:
+//
+//   budget    wall @60Hz    overhead    longest block
+//     8 ms      10.83 s       +55%          8 ms
+//    12 ms       9.32 s       +33%         12 ms
+//    24 ms       8.65 s       +24%         24 ms
+//    50 ms       8.63 s       +24%         50 ms
+//
+// Each pause costs most of a frame whatever it cost to earn, so halving the
+// budget nearly doubles the overhead. 24 ms is the knee: past it the total stops
+// improving, and below it the price climbs fast.
+//
+// The usual argument for a small budget is input latency, and it does not apply
+// here -- a full-screen overlay is up, so there is nothing behind it to click.
+// What the budget actually buys is the animation, and 24 ms still hands back a
+// frame about every 33 ms, which is plenty for a spinner and a bar.
+const BUDGET=24;
+// A frame, or a timeout if frames are not coming: a background tab never fires
+// requestAnimationFrame, and waiting on one alone leaves the app hung on boot.
+const nextFrame=()=>new Promise(r=>{let settled=false;const go=()=>{if(!settled){settled=true;r();}};requestAnimationFrame(()=>setTimeout(go,0));setTimeout(go,150);});
+async function generateProgressively(next,onProgress){
+ const it=generateWorldSteps(next);
+ let step=it.next(),mark=performance.now();
+ while(!step.done){
+  // A HIDDEN TAB IS NOT PACED AT ALL, and that is not an optimisation.
+  //
+  // Pausing exists to let the browser paint and to keep the controls alive.
+  // A background tab paints nothing and nobody is touching it, so both reasons
+  // are gone -- and the cost of pausing anyway is severe: no frames come, so
+  // every pause falls through to its timeout, and a course that takes eight
+  // seconds would take minutes. Timers are clamped in background tabs too, so
+  // there is no short sleep to fall back on either. Run it straight through and
+  // resume pacing if the tab comes back.
+  if(!document.hidden&&performance.now()-mark>=BUDGET){
+   onProgress?.(step.value);
+   await nextFrame();
+   mark=performance.now();
+  }
+  step=it.next();
+ }
+ return step.value;
+}
+// The overlay. `work` may be async and is handed a reporter; whatever it reports
+// goes on screen. A caller that does no stepped generation never reports any and
+// gets the message on its own, exactly as before.
 async function whileGenerating(label,work,quiet=false){
- // `quiet` is for boot, where the splash is already covering the screen and
- // saying the same words. The frame wait below still matters -- it is what
- // lets the splash paint before the thread locks up.
- const box=$('generating');if(!quiet){$('generatingLabel').textContent=label;box.hidden=false;}
- // A frame, or a timeout if frames are not coming: a background tab never fires
- // requestAnimationFrame, and waiting on it alone leaves the app hung on boot.
- await new Promise(r=>{let settled=false;const go=()=>{if(!settled){settled=true;r();}};requestAnimationFrame(()=>setTimeout(go,0));setTimeout(go,150);});
- try{work();}finally{if(!quiet)box.hidden=true;}
+ const box=$('generating');
+ if(!quiet){$('generatingLabel').textContent=label;setProgress(null);box.hidden=false;}
+ // The frame wait still matters even when quiet: it is what lets whatever IS on
+ // screen paint before the first block of work.
+ await nextFrame();
+ try{return await work(report=>{if(!quiet)setProgress(report);});}
+ finally{if(!quiet){box.hidden=true;setProgress(null);}}
+}
+// The bar and the phase name. Null puts it back to indeterminate, for the
+// stretch before the first step lands and for work that never reports.
+function setProgress(report){
+ const bar=$('generatingBar');
+ if(!bar)return;
+ bar.parentElement.hidden=!report;
+ $('generatingPhase').textContent=report?report.label:'';
+ if(report)bar.style.width=(report.done*100).toFixed(1)+'%';
 }
 // The splash goes when there is something worth looking at, and it is taken out
 // of the DOM afterwards rather than left transparent over the whole app -- an
@@ -1206,10 +1299,11 @@ function openMenu(){
  setMode('menu');icon();$('menuContinue').hidden?$('menuPlay').focus():$('menuContinue').focus();
 }
 async function continueRound(){
- if(menuBackdrop)await whileGenerating('Rebuilding your course…',()=>{
+ if(menuBackdrop)await whileGenerating('Rebuilding your course…',async report=>{
   leaveBackdrop();
   if(pendingRound){round=pendingRound;pendingRound=null;if(round.endless)settings=endlessFor(round.seed,round.hole,settings);}
   else round=new Round({players:round.players,mode:round.mode,holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
+  await prepareWorld(report);
   loadCourse();
  });
  setMode('play');closePanel();
@@ -1331,7 +1425,7 @@ async function returnToMenu(){
 }
 
 // Generation blocks the main thread, so it needs the overlay.
-const growBackdrop=()=>whileGenerating('Growing a hole…',()=>{leaveBackdrop();loadMenuBackdrop();});
+const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);});
 function markStudioDirty(){if(appMode==='studio'&&!studioDirty){studioDirty=true;updateStudioState();}}
 // Studio keeps a throwaway round alive so the renderer, camera and map keep
 // working; the play HUD is simply hidden.
@@ -1370,9 +1464,10 @@ async function enterStudio(){
  // showcase hole. Skipping the rebuild when entering from play meant the studio
  // opened on the exact course you had been playing -- the shared-world problem
  // the mode split exists to remove, just in the other direction.
- await whileGenerating('Growing your landscape…',()=>{
+ await whileGenerating('Growing your landscape…',async report=>{
   leaveBackdrop();
   round=new Round({holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
+  await prepareWorld(report);
   loadCourse();
  });
  setMode('studio');studioDirty=false;
@@ -1384,8 +1479,9 @@ async function enterStudio(){
 }
 async function regenerateStudio(){
  if(!applyStudioSettings())return;
- await whileGenerating('Growing your landscape…',()=>{
+ await whileGenerating('Growing your landscape…',async report=>{
   round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
+  await prepareWorld(report);
   loadCourse();studioDirty=false;setMode('studio');
   cameraMode('free');view.flyToHole(0);updateExplorer();
  });
@@ -1420,10 +1516,11 @@ function resumeRound(id){
  const go=async()=>{
   try{
    const next=Round.restore(rec.round);
-   await whileGenerating('Rebuilding your course…',()=>{
+   await whileGenerating('Rebuilding your course…',async report=>{
     leaveBackdrop();pendingRound=null;staleGenerator=false;
     round=next;settings=next.endless?endlessFor(next.seed,next.hole,rec.settings):{...settings,...rec.settings};
     applyPlaySettings();
+    await prepareWorld(report);
     loadCourse();
     if(rec.camera&&typeof rec.camera==='object'){
      applyRoundCamera(rec.camera);

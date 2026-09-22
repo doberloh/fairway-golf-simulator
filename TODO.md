@@ -79,8 +79,20 @@ prevent.
   the ring: a 200 m orbit is a different shot. Growing the radius instead, or
   both, needs a look on screen.
 
-- [ ] **Generation still blocks the main thread, and the fix is chunking, not a
-  worker.** Measured with `--cpu-prof` on an 18-hole feature-heavy course:
+- [ ] **Generation is still ~24% slower in wall time than it was.** The blocking
+  work is unchanged at ~7.0 s for an 18-hole feature-heavy course; the extra is
+  the frame handed back at each pause, and it is the price of the overlay moving
+  at all. Worth revisiting only if the grid itself gets cheaper -- at 81% of the
+  work it is where any real win is, not in the pacing.
+
+- [ ] **Progress is weighted by measured cost, not by real-time feedback.** The
+  PHASE table in course.js and LOOP_WEIGHT in terrain-grid.js were fitted to one
+  profile on one machine. A very different course shape could make the bar
+  advance unevenly. It cannot stall or go backward -- there is a test for both --
+  but it is an estimate wearing a percentage.
+
+- [x] **DONE. Generation yields by row band, and the overlay shows real progress.**
+  Was: Measured with `--cpu-prof` on an 18-hole feature-heavy course:
   **8.4 s total, and `makeGroundGrid` is 81% of it** (9-hole default 2.4 s,
   one endless hole 250 ms, the range 94 ms). That settles the open question in
   the priority list: yielding between phases buys almost nothing when one phase
@@ -92,14 +104,17 @@ prevent.
   fingerprints stay identical, controls stay live while generating, and a stale
   result cannot replace a newer round.
 
-- [ ] **The generating overlay's spinner has never spun.** `.generating-spin` is
+- [x] **DONE. The generating overlay's spinner has never spun.** `.generating-spin` is
   a ring with a lit top edge and no `animation` property at all -- which nobody
   noticed because the thread is locked solid the whole time it is on screen.
   Once generation yields it needs a real animation and a real progress reading,
   which is the point of the chunking above. The splash's dots animate today
   because nothing is blocking when they are up.
 
-- [ ] **Endless entry from a cold start still stops for several seconds.**
+- [x] **Explained, not a bug.** Reached through the Endless panel a run is NOT
+  adopting the showcase hole, because the panel's own settings make a different
+  world key; only the straight-off-the-menu path adopts. It now generates with
+  progress showing rather than locking up. Original note:
   Straight off the main menu an endless run adopts the showcase hole and needs no
   generation, which is why there is no overlay -- but reached through the Endless
   panel it generated for over three seconds with the thread locked. Worth

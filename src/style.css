@@ -133,7 +133,18 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 
 .generating>div{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:330px;text-align:center;padding:24px 30px;border-radius:14px;color:var(--ink);background:var(--glass);border:1px solid var(--glass-line);box-shadow:0 20px 56px rgba(4,10,7,.5),inset 0 1px 0 var(--glass-top);backdrop-filter:blur(18px) saturate(1.15)}.generating strong{font-size:1rem}
 .generating small{font-size:.78rem;line-height:1.45;color:var(--ink-dim)}
-.generating-spin{width:24px;height:24px;border-radius:50%;border:3px solid rgba(238,243,230,.2);border-top-color:#8fc79c}
+/* THIS SPINNER HAS NEVER SPUN. It was a ring with a lit top edge and no
+   animation property at all, and nobody noticed because the main thread was
+   locked solid the entire time it was on screen -- an animation would have
+   frozen on its first frame anyway. Generation yields now, so it can turn. */
+.generating-spin{width:24px;height:24px;border-radius:50%;border:3px solid rgba(238,243,230,.2);border-top-color:#8fc79c;animation:generating-spin .9s linear infinite}
+@keyframes generating-spin{to{transform:rotate(1turn)}}
+/* Indeterminate until the first step lands, then a real reading: the phase
+   weights in course.js are what keep it from sitting at 3% and jumping. */
+.generating-track{width:100%;height:4px;border-radius:2px;overflow:hidden;background:rgba(238,243,230,.16);margin-top:4px}
+.generating-track>i{display:block;height:100%;border-radius:2px;background:#8fc79c;width:0;transition:width .2s ease-out}
+.generating-phase{font-size:.72rem!important;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-faint)!important;min-height:1em}
+@media(prefers-reduced-motion:reduce){.generating-spin{animation:none}.generating-track>i{transition:none}}
 
 
 
