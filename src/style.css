@@ -413,3 +413,13 @@ button.danger:hover{background:rgba(141,63,44,.1)}
  font-size:12.5px;color:var(--ink);cursor:pointer}
 .control-group>label.toggle input{width:15px;height:15px;flex-shrink:0;cursor:pointer;accent-color:var(--accent)}
 .control-group>.tip{margin:7px 0 0}
+
+/* A description now opens inside the card it belongs to, so it needs to read
+   as part of that card rather than as another paragraph on the panel: a rule
+   above it, and the dimmer of the two text colours. */
+.control-card>.tip,.course-plan>.tip{margin:10px 0 0;padding-top:9px;
+ border-top:1px solid var(--glass-line);font-size:11px;line-height:1.6;color:var(--ink-faint)}
+.control-group>.tip{font-size:11px;line-height:1.6;color:var(--ink-faint)}
+/* The biome picker is a card now, so its grid should not also carry the gap
+   the loose version needed. */
+.control-card>.option-grid{margin-top:10px}

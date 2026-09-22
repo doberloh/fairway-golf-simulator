@@ -15,14 +15,23 @@ a correct behaviour nearly got "fixed" back into a bug.
 Asked for on 2026-09-20 from browsing the menus. Each one is a containment
 problem: a control that belongs inside a box is sitting beside it.
 
-- [ ] **Tooltips belong inside the box they explain.** `hint(k)` (src/main.js:1853)
-  puts the `i` button in the label, but `tip(k)` (:1854) emits a separate
-  `<p class="tip">` that `group()` concatenates AFTER the control --
-  `(custom[f.key]?custom[f.key]():control(f.key))+tip(f.key)` -- so the text
-  opens outside the `.control-card` it describes. Moving it inside means
-  `control()` taking its own tip, and the eight or so `custom[...]` renderers
-  each placing it too, since they build their own markup and bypass `control()`.
-  That fan-out is the whole cost of this one; the mechanism itself is two lines.
+- [x] **Tooltips belong inside the box they explain.** Done in the walker by id
+  pairing rather than in the templates, so the feared fan-out across the custom
+  renderers never happened: a tip is `tip-<key>` and its button carries
+  `data-tip="<key>"`, so `groupPanelContent` finds each one's owner and moves
+  the tip into the nearest `.control-card`, `.control-group` or `.course-plan`.
+
+  NOT by adding `.tip` to `ATTACHED`, which is the obvious one-word fix and a
+  trap: every control is emitted followed by its own tip, so an absorbed tip
+  would stop ending the absorption run -- and that run ending is the only
+  reason the course-length box stays a direct child of the section, which is
+  what its `column-span: all` depends on. The one-word version would have
+  swallowed the scorecard into the card above it.
+
+  The biome picker needed a box first: a `p.control-label` and a grid of
+  buttons, the one setting on the panel with no container at all. Both its
+  selectors appear exactly once in the file, so `p.control-label` joined
+  `CONTROL` and `.option-grid` joined `ATTACHED` with nothing else affected.
 
 - [x] **The import button belongs to the code box.** The `courseCode` textarea
   and the `importCourseCode` button were siblings. Wrapped in a `.code-import`
@@ -56,17 +65,19 @@ problem: a control that belongs inside a box is sitting beside it.
   a margin on its `i` button, which is why they read as the loose controls in
   the panel.
 
-- [ ] **The studio's two entry points are backwards.** Remove the Regenerate
-  button from the Weather tab (src/main.js:1883 carries both that and
-  "Grow this landscape" on the same line). "Grow this landscape" becomes the
-  single way a user STARTS the course studio. Once inside the studio that
-  button is gone, and regenerating is the tray's own Regenerate (index.html:18,
-  src/main.js:2577). One verb to begin, a different one to iterate, and neither
-  offered where it does not apply.
+- [x] **The studio's two entry points are backwards.** The panel ended with a
+  Regenerate button emitted after every category, so it fell into whichever
+  section came last and turned up at the foot of the Weather tab looking like a
+  weather control. It called `regenerateStudio()` -- exactly what the studio
+  bar's own Regenerate calls -- and the bar is on screen whenever this panel can
+  be opened, since both ways in are studio-only (`enterStudio`, and the bar's
+  Settings button). A duplicate, in the wrong place. Gone.
 
-  Check `src/main.js:2477`, which is the other "Grow this landscape" site, and
-  the studio-state sync (`updateStudioState`) before moving any of them --
-  whether a button is showing is currently derived in more than one place.
+  What is left is one verb each way round: "Grow this landscape" starts a
+  studio and shows only during setup, pinned to the panel's lead by
+  `data-panel-action` so it cannot fall into a tab; once a landscape exists,
+  regenerating it belongs to the bar. The panel's own prose now names the bar
+  rather than saying "regenerate" with no button in sight.
 
 ## Benchmarking and profiling worth deciding from
 

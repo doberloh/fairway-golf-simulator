@@ -1891,6 +1891,18 @@ function renderPanel(name,content){
   // fact about THIS PANEL's layout; the schema is also read by validation,
   // migration, the world rebuild key and the save format, and none of those
   // care how the controls are boxed.
+  // THIS PANEL HAS NO REGENERATE OF ITS OWN. It used to end with one, emitted
+  // after every category -- which put it in whichever section came last, so it
+  // turned up at the bottom of the Weather tab looking like a weather control.
+  // It called `regenerateStudio()`, which is exactly what the studio bar's own
+  // Regenerate already calls, and the bar is on screen whenever this panel can
+  // be opened: both ways in here are studio-only, `enterStudio` and the bar's
+  // own Settings button. So it was a duplicate in the wrong place.
+  //
+  // What is left is one verb each way round. "Grow this landscape" STARTS a
+  // studio and only appears during setup, pinned to the panel's lead by
+  // `data-panel-action` so it cannot fall into a tab. Once there is a
+  // landscape, regenerating it is the bar's job.
   const FIELD_GROUPS=[
    // A label only where the box needs naming. "Houses" earns one: it holds a
    // toggle, two sliders and a second toggle whose labels do not otherwise say
@@ -1912,7 +1924,7 @@ function renderPanel(name,content){
    }).join('');
    return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
   };
-  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then regenerate to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}<button class="primary" id="generate"><i data-lucide="refresh-cw"></i> Regenerate</button>`;
+  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
@@ -1972,7 +1984,6 @@ function renderPanel(name,content){
   $('randomSeed').onclick=()=>{$('seed').value=['WANDER','HORIZON','WILDFLOWER','SOLSTICE'][Math.floor(Math.random()*4)]+'-'+Math.floor(Math.random()*9999);markStudioDirty();previewPlan();};
   document.querySelectorAll('[data-footprint]').forEach(b=>b.onclick=()=>{$('footprint').value=b.dataset.footprint;$('footprint').dispatchEvent(new Event('change'));markStudioDirty();});
   $('footprint').onchange=()=>document.querySelectorAll('[data-footprint]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.footprint===$('footprint').value)));
-  $('generate').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}regenerateStudio();};
 }else if(name==='round'&&endlessSetup){
   // NO COURSE PICKER. Endless grows each hole as you finish the last one, so a
   // course to play would be a course it immediately throws away. What is left is
@@ -2407,8 +2418,13 @@ function renderPanel(name,content){
 // card of its own, and because the walker only ever looks at ROOT'S OWN
 // CHILDREN the fields inside it are left alone rather than each being boxed
 // again.
-const CONTROL='label.check,label.field,.control-group';
-const ATTACHED='P.note,.research-label,.field-error,.course-plan';
+//
+// `p.control-label` is the biome picker, the one control that is not a label
+// at all -- a heading and a grid of buttons -- and so was the only setting
+// on the panel with no box of any kind around it. Both selectors appear
+// exactly once in this file and only there.
+const CONTROL='label.check,label.field,.control-group,p.control-label';
+const ATTACHED='P.note,.research-label,.field-error,.course-plan,.option-grid';
 const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,textarea';
 // What stays pinned above the sections: the sentence explaining the panel and
 // the actions that apply to all of it.
@@ -2434,6 +2450,26 @@ function groupPanelContent(root,tabAlways=false,panelName=null){
   node.replaceWith(card);card.append(node);
   let next=card.nextElementSibling;
   while(next&&next.matches(ATTACHED)){const take=next;next=next.nextElementSibling;card.append(take);}
+ }
+ // 1b. A TIP GOES INSIDE THE BOX HOLDING THE CONTROL IT EXPLAINS. Every one
+ // of them opened outside its own card, under it, which is what made the
+ // panel jump about when a description was shown.
+ //
+ // NOT done by adding `.tip` to ATTACHED above, which looks like the obvious
+ // one-word fix and is a trap. Every control is emitted followed by its own
+ // tip, so an absorbed tip would no longer END the absorption run -- and that
+ // run ending is the only reason the course-length box stays a direct child of
+ // the section, which is what its `column-span: all` depends on. Adding the
+ // word would have swallowed the scorecard into the card above it.
+ //
+ // Paired by id instead: a tip is `tip-<key>` and its button carries
+ // `data-tip="<key>"`, so this is exact and does not care about order. The
+ // `contains` guard leaves alone the tips that are already inside a group,
+ // where they sit under their own field rather than at the foot of the box.
+ for(const t of [...root.querySelectorAll('p.tip')]){
+  const owner=root.querySelector(`.hint[data-tip="${t.id.slice(4)}"]`);
+  const box=owner?.closest('.control-card,.control-group,.course-plan');
+  if(box&&!box.contains(t))box.append(t);
  }
  const first=root.firstElementChild;
  if(first&&first.tagName==='P'&&!first.classList.contains('note'))first.classList.add('panel-intro');
