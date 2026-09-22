@@ -1856,13 +1856,22 @@ function renderPanel(name,content){
   const tip=k=>`<p class="tip" id="tip-${k}" hidden>${escape(FIELD[k].tip)}</p>`;
   // Every kind the schema can hold renders here. Naming one toggle as a special
   // case is how `residentialOB` shipped as a 0-100 slider that nothing read.
-  const control=k=>{const f=FIELD[k];
-   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${f.label}</label>${hint(k)}`;
+  // `short` is the label to SHOW when the control sits in a box that already
+  // names the thing -- "Frequency" under a box headed Ponds rather than "Pond
+  // frequency". It is display only: `f.label` stays the accessible name on both
+  // the range input and the `i` button, because "What Frequency changes" and a
+  // slider announced as "Minimum" are no use to anyone reading by ear.
+  //
+  // Passed in rather than read off the field, so a short label can only ever
+  // appear underneath a heading that supplies its missing noun. Move a field
+  // out of its box and it goes back to saying what it is.
+  const control=(k,short)=>{const f=FIELD[k],text=short&&f.short?f.short:f.label;
+   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${text}</label>${hint(k)}`;
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   if(f.kind==='choice')return `<label class="field">${f.label}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
-   return `<label class="field">${f.label}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}"></label>`;};
+   if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
+   return `<label class="field">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}"></label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
    holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
@@ -1877,7 +1886,7 @@ function renderPanel(name,content){
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
-   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
+   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
    biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
    footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
@@ -1924,7 +1933,7 @@ function renderPanel(name,content){
    {category:'water',label:'Creeks',keys:['creeks','creekWidth']},
    {category:'water',label:'Rivers and creeks together',keys:['streamDepth','streamBends']},
   ];
-  const one=k=>(custom[k]?custom[k]():control(k))+tip(k);
+  const one=(k,short)=>(custom[k]?custom[k]():control(k,short))+tip(k);
   const group=([key,label,note])=>{
    const boxes=FIELD_GROUPS.filter(g=>g.category===key),taken=new Set(boxes.flatMap(g=>g.keys));
    const body=SETTINGS.filter(f=>f.category===key).map(f=>{
@@ -1932,7 +1941,7 @@ function renderPanel(name,content){
     // A group is drawn at the position of its FIRST member, so the order the
     // schema states is still the order on screen and nothing jumps about.
     const box=boxes.find(g=>g.keys[0]===f.key);
-    return box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(one).join('')}</div>`:'';
+    return box?`<div class="control-group">${box.label?`<p class="group-label">${box.label}</p>`:''}${box.keys.map(k=>one(k,!!box.label)).join('')}</div>`:'';
    }).join('');
    return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
   };
@@ -2436,7 +2445,12 @@ function renderPanel(name,content){
 // on the panel with no box of any kind around it. Both selectors appear
 // exactly once in this file and only there.
 const CONTROL='label.check,label.field,.control-group,p.control-label';
-const ATTACHED='P.note,.research-label,.field-error,.course-plan,.option-grid';
+// `.footprint-icons` and `.field-action` are parts of a control that are not
+// inside its label: the layout picker's grid of shapes, and the button beside
+// the seed box. Both sat outside the card their control had been given, which
+// showed most once descriptions moved INSIDE that card -- the card then looked
+// complete with a piece of its own control stranded underneath it.
+const ATTACHED='P.note,.research-label,.field-error,.course-plan,.option-grid,.footprint-icons,.field-action';
 const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,textarea';
 // What stays pinned above the sections: the sentence explaining the panel and
 // the actions that apply to all of it.

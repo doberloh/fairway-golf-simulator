@@ -101,6 +101,12 @@ export const CATEGORIES=[
  ['weather','Weather'],
 ];
 
+// `short` is the label shown when a control sits inside a settings box that
+// already names the feature -- "Frequency" under a box headed Ponds. `label`
+// remains the full name and is what assistive technology is given, so adding
+// one here never costs a screen reader the noun. Only worth setting for a
+// field that lives in a LABELLED group in main.js's FIELD_GROUPS; anywhere
+// else it is ignored.
 export const SETTINGS=[
  {key:'holes',category:'course',kind:'choice',options:[9,18],def:9,label:'Holes',tip:'How many holes the course contains. A saved course is fixed at this length.'},
  {key:'courseYards',category:'course',kind:'range',min:s=>s.holes*110,max:s=>s.holes*470,step:10,unit:' yd',def:3240,label:'Course length',tip:'Target total yardage from the blue tees. Par stays within 68–72 for eighteen holes or 34–36 for nine; past those limits the holes keep changing length while par holds.'},
@@ -128,25 +134,25 @@ export const SETTINGS=[
  {key:'fairwayBunkers',category:'bunkers',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Fairway bunker occurrence',tip:'Chance that each non-greenside bunker sits inside the fairway rather than beside it, creating a choice of landing lines.'},
  {key:'bunkerGap',category:'bunkers',kind:'range',min:0,max:15,step:.5,unit:' m',def:2,label:'Greenside bunker gap from fringe',tip:'Turf left between a greenside bunker and the fringe. Zero lets them touch.'},
 
- {key:'water',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Pond frequency',tip:'How often a pond is attempted on each hole. Large ponds crowd each other and the corridors, so high settings place fewer than requested. Island courses have no inland water: the ocean is the hazard.'},
- {key:'pondSize',category:'water',kind:'range',min:40,max:300,step:10,unit:' m',def:120,label:'Typical pond size',tip:'Scales both pond dimensions. Banks are anchored outside the fairway edge, so a larger pond grows away from play rather than into it.'},
- {key:'lakes',category:'water',kind:'int',min:0,max:3,step:1,def:0,label:'Large lakes',tip:'Open water placed away from the playing corridors, using the pond depth range above. Not placed on island courses, where the ocean is the hazard.'},
- {key:'lakeSize',category:'water',kind:'range',min:60,max:460,step:10,unit:' m',def:160,label:'Typical lake diameter',tip:'At the top of the range open ground runs out and fewer lakes are placed than requested.'},
- {key:'waterMin',category:'water',kind:'range',min:.2,max:8,step:.1,unit:' m',def:.5,label:'Minimum water hazard depth',tip:'The shallowest a pond or lake’s deepest point may be. Shores still slope to nothing at the bank.'},
- {key:'waterMax',category:'water',kind:'range',min:.2,max:12,step:.1,unit:' m',def:2.5,label:'Maximum water hazard depth',tip:'The deepest a pond or lake’s deepest point may be. Coastal channel floors respect this too.'},
+ {key:'water',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Pond frequency',short:'Frequency',tip:'How often a pond is attempted on each hole. Large ponds crowd each other and the corridors, so high settings place fewer than requested. Island courses have no inland water: the ocean is the hazard.'},
+ {key:'pondSize',category:'water',kind:'range',min:40,max:300,step:10,unit:' m',def:120,label:'Typical pond size',short:'Typical size',tip:'Scales both pond dimensions. Banks are anchored outside the fairway edge, so a larger pond grows away from play rather than into it.'},
+ {key:'lakes',category:'water',kind:'int',min:0,max:3,step:1,def:0,label:'Large lakes',short:'How many',tip:'Open water placed away from the playing corridors, using the pond depth range above. Not placed on island courses, where the ocean is the hazard.'},
+ {key:'lakeSize',category:'water',kind:'range',min:60,max:460,step:10,unit:' m',def:160,label:'Typical lake diameter',short:'Typical diameter',tip:'At the top of the range open ground runs out and fewer lakes are placed than requested.'},
+ {key:'waterMin',category:'water',kind:'range',min:.2,max:8,step:.1,unit:' m',def:.5,label:'Minimum water hazard depth',short:'Minimum',tip:'The shallowest a pond or lake’s deepest point may be. Shores still slope to nothing at the bank.'},
+ {key:'waterMax',category:'water',kind:'range',min:.2,max:12,step:.1,unit:' m',def:2.5,label:'Maximum water hazard depth',short:'Maximum',tip:'The deepest a pond or lake’s deepest point may be. Coastal channel floors respect this too.'},
 
- {key:'rivers',category:'water',kind:'int',min:0,max:2,step:1,def:0,label:'Rivers',tip:'Wide meandering channels that may cross fairways or run between holes. Tees, greens, ponds and bunkers are routed around. Not placed on island courses, where the ocean is the hazard.'},
- {key:'creeks',category:'water',kind:'int',min:0,max:3,step:1,def:0,label:'Creeks',tip:'Narrow meandering channels. Each channel draws its own bearing, so creeks and rivers never run parallel. Not placed on island courses, where the ocean is the hazard.'},
- {key:'riverWidth',category:'water',kind:'range',min:6,max:30,step:1,unit:' m',def:14,label:'River width',tip:'Width of the open water in a river channel.'},
- {key:'creekWidth',category:'water',kind:'range',min:1.5,max:6,step:.5,unit:' m',def:3,label:'Creek width',tip:'Width of the open water in a creek channel.'},
- {key:'streamDepth',category:'water',kind:'range',min:.3,max:3,step:.1,unit:' m',def:1.2,label:'Channel depth',tip:'How far a river bed sits below its water surface. Creeks use 60% of this.'},
- {key:'streamBends',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:55,label:'Channel meandering',tip:'How much the channels wander. Bends are limited so a bank never folds through itself.'},
+ {key:'rivers',category:'water',kind:'int',min:0,max:2,step:1,def:0,label:'Rivers',short:'How many',tip:'Wide meandering channels that may cross fairways or run between holes. Tees, greens, ponds and bunkers are routed around. Not placed on island courses, where the ocean is the hazard.'},
+ {key:'creeks',category:'water',kind:'int',min:0,max:3,step:1,def:0,label:'Creeks',short:'How many',tip:'Narrow meandering channels. Each channel draws its own bearing, so creeks and rivers never run parallel. Not placed on island courses, where the ocean is the hazard.'},
+ {key:'riverWidth',category:'water',kind:'range',min:6,max:30,step:1,unit:' m',def:14,label:'River width',short:'Width',tip:'Width of the open water in a river channel.'},
+ {key:'creekWidth',category:'water',kind:'range',min:1.5,max:6,step:.5,unit:' m',def:3,label:'Creek width',short:'Width',tip:'Width of the open water in a creek channel.'},
+ {key:'streamDepth',category:'water',kind:'range',min:.3,max:3,step:.1,unit:' m',def:1.2,label:'Channel depth',short:'Depth',tip:'How far a river bed sits below its water surface. Creeks use 60% of this.'},
+ {key:'streamBends',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:55,label:'Channel meandering',short:'Meandering',tip:'How much the channels wander. Bends are limited so a bank never folds through itself.'},
 
  {key:'trees',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:65,label:'Tree density',tip:'Planting density outside the playing corridors. Trunks collide with the ball; foliage does not.'},
- {key:'homes',category:'scenery',kind:'toggle',def:false,label:'Line fairways with houses',tip:'Houses on dry, gently sloping rough away from greens and tees. They are scenery: balls pass through them.'},
- {key:'homeDensity',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:45,label:'House occurrence',tip:'How often a suitable site is built on.'},
- {key:'homeSetback',category:'scenery',kind:'range',min:20,max:70,step:1,unit:' m',def:35,label:'House setback from semi-rough',tip:'How far back from the playing corridor the houses sit.'},
- {key:'residentialOB',category:'scenery',kind:'toggle',def:false,label:'Houses play as out of bounds',tip:'Off, a ball simply rebounds off walls and roofs and stays in play. On, reaching a house costs a penalty stroke and you replay from your previous lie, as a residential boundary would. Houses are solid either way.'},
+ {key:'homes',category:'scenery',kind:'toggle',def:false,label:'Line fairways with houses',short:'Line the fairways',tip:'Houses on dry, gently sloping rough away from greens and tees. They are scenery: balls pass through them.'},
+ {key:'homeDensity',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:45,label:'House occurrence',short:'Occurrence',tip:'How often a suitable site is built on.'},
+ {key:'homeSetback',category:'scenery',kind:'range',min:20,max:70,step:1,unit:' m',def:35,label:'House setback from semi-rough',short:'Setback from semi-rough',tip:'How far back from the playing corridor the houses sit.'},
+ {key:'residentialOB',category:'scenery',kind:'toggle',def:false,label:'Houses play as out of bounds',short:'Play as out of bounds',tip:'Off, a ball simply rebounds off walls and roofs and stays in play. On, reaching a house costs a penalty stroke and you replay from your previous lie, as a residential boundary would. Houses are solid either way.'},
 
  {key:'wind',category:'weather',kind:'range',min:0,max:25,step:1,unit:' mph',def:4,label:'Wind speed',tip:'Course-wide wind. It is rotated into each hole’s own frame, so it stays a real direction rather than turning with the hole.'},
  {key:'windDirection',category:'weather',kind:'range',min:0,max:359,step:1,unit:'°',def:65,label:'Wind direction',tip:'The compass bearing the wind blows toward.'},

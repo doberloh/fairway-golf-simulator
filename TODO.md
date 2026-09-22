@@ -65,6 +65,30 @@ problem: a control that belongs inside a box is sitting beside it.
   a margin on its `i` button, which is why they read as the loose controls in
   the panel.
 
+- [x] **A control's own parts sit inside its box.** The layout picker's grid of
+  shapes and the "Surprise me" button beside the seed field were siblings of
+  their control rather than part of it, so both sat outside the card. Neither
+  was new, but it showed once descriptions moved inside that card: the card
+  looked finished with a piece of its own control stranded underneath.
+  `.footprint-icons` and a `.field-action` class join `ATTACHED`. Bare `button`
+  could not, because it would swallow every panel action on the way past.
+
+- [x] **A box that names the feature lets its fields stop repeating it.** The
+  Ponds box said "Pond frequency" and "Typical pond size"; the Houses box said
+  house four more times. A `short` label on the schema entry now carries the
+  trimmed text -- "Frequency", "Typical size", "Occurrence".
+
+  Display only, and that distinction is the whole care in it: `label` is the
+  ACCESSIBLE NAME on both the range input and the `i` button, so shortening it
+  outright would have announced a slider as "Minimum" and its help button as
+  "What Frequency changes". `label` is untouched and still what assistive
+  technology receives.
+
+  The flag is passed into `control()` rather than read off the field, so a
+  short label can only appear beneath a heading that supplies the missing
+  noun. Move a field out of its box and it goes back to saying what it is.
+  Sixteen fields carry one; the unlabelled wind box deliberately has none.
+
 - [x] **Still water and moving water are one section.** "Ponds & lakes" and
   "Rivers & creeks" were two tabs, so setting up a pond and a creek on the same
   course meant two of them. One `water` category now, with a box per feature:
