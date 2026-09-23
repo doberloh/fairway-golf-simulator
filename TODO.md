@@ -166,7 +166,9 @@ dead anyway (see below), so the bubble never protected anything.
   after the first fix were that. A par three is played to the green. The shot
   model is shared with the guard now rather than written twice.
 
-- [ ] **Slice 2: make the other solid things solid.** Audited -- only tree
+- [x] **DONE. Slice 2: make the other solid things solid.** Rocks are world
+  data and collide; lit poles collide; deadfall stays decorative on the owner's
+  call. Was: Audited -- only tree
   trunks and homes collide today. Also needs it:
   - **Rocks/boulders.** Not in world data AT ALL: placed in vegetation.js at
     render time from a seeded rng, so physics cannot see them. Has to move into
@@ -180,6 +182,35 @@ dead anyway (see below), so the bubble never protected anything.
     is a real obstacle in real golf but it is also 1 m tall in deep rough.
   - **The flagstick** is deliberately ignored and is a separate question from
     this one. Real golf hits the pin.
+
+- [x] **Boulders are generation output now, not decoration.** They were placed
+  in vegetation.js at draw time from an rng the generator never saw, so the world
+  did not know where they were and a ball flew through a six-metre stone. Moved
+  into `generateWorld` as `world.rocks`, carrying `reach` and `top`; the renderer
+  reads that list instead of inventing its own. Everything solid -- trunks,
+  boulders, masts -- now goes through the SAME swept-circle test, so there is no
+  second collision routine to keep honest.
+
+- [x] **The fingerprint tool was blind to rocks, and would have stayed blind.**
+  It hashes an explicit list of what a player can see, and rocks were not on it
+  because they were not generation output when it was written. Adding them is
+  what stops a future change to where boulders sit going unnoticed now that a
+  ball can stop against one.
+
+- [x] **Floodlight masts collide only when they are lit.** The whole floodlight
+  group is hidden when the lights are down, and a ball stopping dead against a
+  mast nobody can see is worse than one passing through a visible one. So they
+  are handed IN through options by main.js rather than read off the course,
+  which keeps "what you see is what you hit" true in both directions.
+
+- [x] **Deadfall stays decorative.** Owner's call. 520 pieces, redwood only --
+  every other biome has none -- knee height in deep rough where the ball is
+  already being punished. Making them solid would add a lot of small
+  unpredictable stops in the one biome that has them.
+
+- [ ] **The flagstick still does not collide.** Left out of this slice
+  deliberately: it is a different question from obstructions, and real golf
+  hits the pin. Wants its own decision, including whether the pin is in or out.
 
 - [ ] **Slice 3: specimen obstacles, on purpose.** A feature tree or rock cluster
   sited in the short grass near the landing zone -- the Pebble Beach cypress, the

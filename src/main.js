@@ -475,7 +475,11 @@ function takeShot(data=null){
  const penalty=lie==='rough'?.9:lie==='semi'?.96:lie==='sand'?.72:1;
  const shot={origin:{...round.position},aim,...(data||manualLaunch(c,power,penalty,settings.flightProfile,shape,launchAdjust,spinAdjust))};
  const wind=localWind(settings,course.rotation);
- const result=simulateShot(shot,course,{wind,altitude:course.bio.altitude,temperature:course.bio.temperature,turf:settings.turf});result.puttStroke=lie==='green';
+ const result=simulateShot(shot,course,{wind,altitude:course.bio.altitude,temperature:course.bio.temperature,turf:settings.turf,
+  // Only when they are actually standing lit on the course. The whole
+  // floodlight group is hidden when the lights are down, and a ball stopping
+  // dead against a mast nobody can see is worse than one flying through it.
+  poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
  latest={shot,result,player:round.player.name,typed:!!data};lastShot={...latest,hole:round.hole,putting:lie==='green',aim};flight={result,elapsed:0,index:0,origin:shot.origin};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult(false);view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;$('flightBadge').hidden=false;updateHUD();return true;
 }
 function finishShot(){

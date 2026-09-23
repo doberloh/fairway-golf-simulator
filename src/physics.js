@@ -307,6 +307,8 @@ export function cupApproach(old,p,velocity,pin){
 // The ceiling exists for a bad height rather than as a real limit, and at 3.6
 // it no longer binds on anything the generator makes: a 380-foot redwood comes
 // out at 3.1 m, and the old 2.4 clipped a metre off the widest of them.
+// The floodlight mast, at its base where it is widest.
+export const POLE_RADIUS=.34;
 export function trunkRadius(tree){return NO_TRUNK.has(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,3.6);}
 const hypot=Math.hypot;
 export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325*Math.exp(-G*0.0289644*altitude/(8.31446*t))/(287.058*t);}
@@ -498,7 +500,24 @@ export function simulateShot(shot,course,options={}){
  // A small spatial index includes neighboring holes without testing every trunk
  // at every integration step (sim drops may start anywhere on the course).
  const treeCells=new Map(),cellSize=24;
- for(const source of course.world?.trees||course.trees||[]){if(!trunkRadius(source))continue;const tree=course.world?{...source,...course.toLocal(source)}:source,key=Math.floor(tree.x/cellSize)+','+Math.floor(tree.z/cellSize);if(!treeCells.has(key))treeCells.set(key,[]);treeCells.get(key).push(tree);}
+ // TRUNKS ARE NOT THE ONLY SOLID THING. Boulders reach six metres across on
+ // mountain and desert and a ball flew straight through one, because rocks were
+ // invented by the renderer and the world never knew where they were. They are
+ // generated in course.js now and carry their own reach and crown height.
+ //
+ // Floodlight poles are handed IN rather than read off the course, because they
+ // are only on the course when they are lit -- the whole group is hidden
+ // otherwise, and colliding with an invisible mast is worse than not colliding
+ // with a visible one. main.js passes them when the lights are up.
+ //
+ // Everything joins the same swept-circle test a trunk gets: they are all
+ // vertical cylinders, so there is no second collision routine to keep honest.
+ const solids=[...(course.world?.trees||course.trees||[])];
+ for(const r of course.world?.rocks||[])
+  solids.push({x:r.x,z:r.z,y:r.y,h:Math.max(.2,r.top-r.y),radius:r.reach});
+ for(const q of options.poles||[])
+  solids.push({x:q.x,z:q.z,y:q.y,h:q.height,radius:POLE_RADIUS});
+ for(const source of solids){if(!(source.radius??trunkRadius(source)))continue;const tree=course.world?{...source,...course.toLocal(source)}:source,key=Math.floor(tree.x/cellSize)+','+Math.floor(tree.z/cellSize);if(!treeCells.has(key))treeCells.set(key,[]);treeCells.get(key).push(tree);}
  const treesAt=(p)=>{const result=[],x=Math.floor(p[0]/cellSize),z=Math.floor(p[2]/cellSize);for(let i=x-1;i<=x+1;i++)for(let j=z-1;j<=z+1;j++)result.push(...(treeCells.get(i+','+j)||[]));return result;};
  // Houses are solid: an oriented box for the walls with the roof folded in as
  // extra height. Indexed like trunks so a long shot does not test every home on
@@ -673,7 +692,7 @@ export function simulateShot(shot,course,options={}){
   // Resolve penetration as well as swept contact. Reflect only incoming velocity;
   // an escaping ball must never be flipped back into the same trunk each tick.
   if(treeCells.size)for(const tree of treesAt(p)){
-   const radius=trunkRadius(tree)+R;if(radius<=R||Math.min(old[1],p[1])>tree.y+tree.h||Math.max(old[1],p[1])<tree.y)continue;
+   const radius=(tree.radius??trunkRadius(tree))+R;if(radius<=R||Math.min(old[1],p[1])>tree.y+tree.h||Math.max(old[1],p[1])<tree.y)continue;
    const dx=p[0]-old[0],dz=p[2]-old[2],ox=old[0]-tree.x,oz=old[2]-tree.z,A=dx*dx+dz*dz,B=2*(ox*dx+oz*dz),C=ox*ox+oz*oz-radius*radius,disc=B*B-4*A*C;
    let u=C<0?0:A>1e-12&&disc>=0?(-B-Math.sqrt(disc))/(2*A):-1;if(u<0||u>1)continue;
    let nx=old[0]+u*dx-tree.x,nz=old[2]+u*dz-tree.z,n=hypot(nx,nz);if(n<1e-8){nx=-v[0];nz=-v[2];n=hypot(nx,nz)||1;if(n===1&&nx===0&&nz===0)nx=1;}nx/=n;nz/=n;

@@ -1564,10 +1564,40 @@ export function* generateWorldSteps(settings={}){
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
  }
+ // BOULDERS ARE WORLD DATA NOW, NOT DECORATION.
+ //
+ // They were placed in vegetation.js at draw time, from an rng the generator
+ // never saw, which meant the world did not know where they were and physics
+ // could not possibly collide with one -- a ball flew through a six-metre
+ // boulder. Moving them here is what lets them be solid; the renderer reads
+ // this list instead of inventing its own.
+ //
+ // The draw order is preserved exactly as the renderer had it, so a rock is the
+ // same shape and sits the same way it used to; only the stream it draws from
+ // is new, which is why the fingerprints move.
+ const rocks=[];
+ {
+  const rockRng=random(s.seed+':rocks'),scatter=bio.scatter||{};
+  const n=scatter.rocks||0,base=scatter.rockScale||1,STONES=4;
+  for(let i=0;i<n;i++){
+   const x=(rockRng()-.5)*halfX*2,z=(rockRng()-.5)*halfZ*2;
+   if(surface(x,z)!=='rough'||nearest(x,z).d<5)continue;
+   const scale=base*(.6+rockRng()*3),shape=Math.floor(rockRng()*STONES);
+   const y=height(x,z);
+   if(blocksLaunch(launch,x,z,y,y+scale))continue;
+   const rot=[rockRng(),rockRng()*6.28,rockRng()];
+   const sx=scale*(1.15+rockRng()*.5),sy=scale*(.48+rockRng()*.42),sz=scale*(.82+rockRng()*.42);
+   // `top` and `reach` are what physics reads: the stone is drawn as a squashed
+   // icosahedron sunk a quarter of its scale into the ground, so its crown sits
+   // at centre + sy and the widest it gets across is the larger half-extent.
+   rocks.push({x,z,y,scale,shape,rot,sx,sy,sz,
+    top:y+scale*.25+sy,reach:Math.max(sx,sz)});
+  }
+ }
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
  const groundCover=(x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p))?'straw':bio.cover;
- const world={teeSites,lakeOwner,largeLakes,homes,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,rocks,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }

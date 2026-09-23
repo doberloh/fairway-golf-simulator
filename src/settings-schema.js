@@ -81,7 +81,7 @@ export const SCHEMA_VERSION=5;
 //     into `holeLine` in course-plan.js, which also moved the tee draws earlier
 //     in the hole's stream so a scorecard can reach them. Every hole on every
 //     course changes length, par or both: all eight biome fingerprints moved.
-export const GENERATOR_VERSION=24;
+export const GENERATOR_VERSION=25;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

@@ -57,6 +57,11 @@ function fingerprint(biome) {
   // Scenery and water are where a biome's own rules live.
   for (const t of w.trees || []) h.update(`w${n(t.x)},${n(t.z)},${t.kind},${n(t.h)};`);
   for (const home of w.homes || []) h.update(`m${n(home.x)},${n(home.z)},${n(home.width)};`);
+ // Boulders joined the world in the slice that made them solid. They were
+ // placed by the renderer before that, so the generator had nothing to hash
+ // and a change to where they sit went unnoticed -- which matters now that a
+ // ball can stop against one.
+ for (const r of w.rocks || []) h.update(`r${n(r.x)},${n(r.z)},${n(r.reach)};`);
   for (const st of w.streams.streams) {
    h.update(`s${st.kind},${st.end},${st.points.length};`);
    for (const p of st.points) h.update(`${n(p.x)},${n(p.z)},${n(p.level)},${n(p.width)};`);
