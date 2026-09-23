@@ -120,6 +120,22 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 ## Data flow and units
 
+**THE SPLASH LIVES IN `index.html`, NOT IN SCRIPT.** Boot builds the renderer, restores a saved round and grows the menu backdrop before `openMenu()` stamps a mode on the shell, and until that stamp lands the play HUD is what is on screen over an empty canvas. Anything script builds arrives after the span it is supposed to cover. `dismissSplash()` runs after `openMenu()` AND in the fatal handler -- drop the second call and a WebGL failure shows a black screen with the explanation hidden behind it.
+
+**CAMERA MOVES FLY; THEY DO NOT CUT.** `setCamera` snapped whenever the move exceeded sixty metres, which is every move worth watching. `view.flyCamera(p, aim)` resolves the destination by calling `setCamera` itself -- there is one definition of where the play camera stands and a second copy would drift -- then flies there along a path from `makeCameraFlight`. While `camFlight` is set the renderer drives the camera outright and the damping is switched off, because a spring and a path fight each other and round off the path's ends. `setCamera` and `follow` both clear it: an explicit reposition wins, and a ball in the air outranks a camera move.
+
+**A FLIGHT CLEARS THE CANOPY, NOT THE DIRT.** Trees reach 29 m on this generator and are not in the height field, so a path that clears `world.height` alone flies through them. The floor is terrain or canopy, whichever is higher, from `world.trees` filtered to a box around the route. The clearance TAPERS TO NOTHING at both ends on purpose -- a flight ends on a player camera a metre and a half off the turf, and an untapered floor would tell it that pose is metres too low and start by rocketing upward.
+
+**NEVER ASSUME A CANOPY HEIGHT; ASK `canopyTop`.** A comment in camera-tours.js said trees reach 29 m. Redwoods top out at 186 m on this generator, and that stale number put the arrival camera 40 m inside a tree. `makeHoleTour` still carries the same assumption and orbits 91 m inside a redwood canopy -- filed, not fixed, because lifting the ring changes the shot. Any new camera work asks the trees.
+
+**GENERATION YIELDS; `generateWorld` STILL DOES NOT.** `generateWorldSteps` is the generator and `generateWorld` is a synchronous drain over it, so the tests, the bench and the fingerprint tool are unaffected and MUST STAY THAT WAY -- a test that awaited generation would be testing the driver. The app goes through `generateProgressively` in main.js, which paces against the frame clock. Adding a yield anywhere new: it must sit BETWEEN rows, never inside one, or the fingerprints move.
+
+**`prepareWorld` AND `loadCourse` MUST KEY ON THE SAME THING.** Both call `settleSettings`, which is why it was extracted -- `prepareWorld` builds the world into the cache and `loadCourse` reads it, and if the two ever compute a different key the cache misses silently and a different course appears than the one chosen. `settleSettings` is safe to run twice on purpose; the yardage rescale inside it stops applying once `settings.holes` equals `round.holes`.
+
+**PACING IS NOT FREE AND A HIDDEN TAB IS NOT PACED.** See RESEARCH.md for the budget table. The driver checks `document.hidden`: a background tab fires no frames and clamps timers, so pacing it would turn an eight-second course into minutes.
+
+**GENERATION IS 81% `makeGroundGrid`,** measured, so yielding between phases would buy almost nothing. See RESEARCH.md. A Web Worker cannot take it: `generateWorld` returns closures.
+
 **CHECK APEX, NOT ONLY CARRY, WHENEVER THE AERODYNAMICS MOVE.** A ball with too little lift flies flatter and a flatter ball carries less induced drag, so the two errors cancel in carry and leave it looking correct. That is exactly how `liftCap` held every shot of a GC3 session 8% low while carry agreed to within 1.4%. Apex, descent angle and hang time are the quantities that catch a shape error; carry alone cannot.
 
 **THE FIRMNESS TESTS PIN A 7-IRON'S ARRIVAL ON PURPOSE,** so a flight refit does not read as a bounce regression. Change the aerodynamics and `ARRIVAL`, `WANT` and `LADDER` in `tests/firmness.test.mjs` all need re-deriving -- the test that compares flying the ball there against delivering it there exists to tell you so. When re-deriving, take spin from the LAST AIRBORNE sample: the simulator applies the bounce and records it in the same step, so the first sample at ground level is already post-bounce and reads about a sixth of the real value.

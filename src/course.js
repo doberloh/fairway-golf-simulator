@@ -2,7 +2,7 @@ import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
 import {planCourse,holeLine,enabledTees,greenContour,rng} from './course-plan.js';
-import {makeGroundGrid,groundHeight} from './terrain-grid.js';
+import {makeGroundGrid,makeGroundGridSteps,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
 import {clamp} from './physics.js';
@@ -575,12 +575,53 @@ export const foreshore = (y, near = 1) => {
  return y + (y * smooth(y / BEACH_TOP) - y) * w;
 };
 
+// GENERATION IN STEPS, with a synchronous drain in front of it.
+//
+// The tests, the bench and the fingerprint tool all call `generateWorld` and get
+// exactly what they always got: the generator runs to completion with nothing
+// between the steps. The app calls `generateWorldSteps` through a driver that
+// pauses on a time budget, so the browser gets frames and the overlay can show
+// real progress instead of a message that cannot move.
+//
+// Every step yields {label, done} where `done` is 0..1 across the whole build,
+// weighted by PHASE so the reading advances at something like an even rate --
+// the ground grid alone is 81% of the work and would otherwise sit at 3% for
+// seven seconds and then finish.
+//
+// A WEB WORKER CANNOT DO THIS. The world handed back holds closures --
+// `toWorld`, `height`, `surface`, `nearest` -- and a closure cannot cross a
+// worker boundary. Moving generation off-thread means making the world pure
+// data and rebuilding every closure on the main thread afterwards.
+// The grid reports its own 0..1; this lifts it onto the whole-build scale and
+// hands back the finished grid, so the call site reads like a function call.
+function* stepGrid(it){
+ let r=it.next();
+ while(!r.done){yield phaseAt(3,r.value);r=it.next();}
+ return r.value;
+}
+const PHASE=[
+ ['Routing the holes',.03],
+ ['Shaping the land',.09],
+ ['Cutting the water',.04],
+ ['Building the ground',.81],
+ ['Planting',.03],
+];
+const phaseAt=(i,local=0)=>{
+ let base=0;for(let k=0;k<i;k++)base+=PHASE[k][1];
+ return {label:PHASE[i][0],done:base+PHASE[i][1]*Math.min(1,Math.max(0,local))};
+};
 export function generateWorld(settings={}){
+ const it=generateWorldSteps(settings);
+ let r=it.next();while(!r.done)r=it.next();
+ return r.value;
+}
+export function* generateWorldSteps(settings={}){
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)};s.holes=s.holes===18?18:s.holes===1?1:9;s.waterMin=clamp(s.waterMin,.2,8);s.waterMax=clamp(s.waterMax,s.waterMin,12);
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
  // textures, vegetation -- treats it exactly like any other and needs no branch.
  const bio=BIOMES[s.biome],holes=s.range?[buildRange(s,0)]:Array.from({length:s.holes},(_,i)=>generateCourse(s,i)),{halfX,halfZ,footprint}=routeHoles(holes,s,random),waterLevel=0,severity=s.elevation/100;
+ yield phaseAt(1);
  const phase=random(s.seed+':land')()*100,coastal=bio.coastal;
  // THE GREEN-END ALLOWANCE IS RAMPED, NOT SWITCHED.
  //
@@ -1149,6 +1190,7 @@ export function generateWorld(settings={}){
   if(onPad)blend=1;
   return y*(1-blend)+targetSum/weightSum*blend;
  }
+ yield phaseAt(2);
  if(!NO_INLAND_WATER.has(s.biome))addLargeLakes(s,holes,halfX,halfZ,nearest,shapedLand,random);
  let basins=[];
  for(const h of holes){h.ponds=h.ponds.filter(p=>{const basin=fitPondBasin(h,p,shapedLand);if(basin)basins.push(basin);return !!basin;});
@@ -1323,7 +1365,8 @@ export function generateWorld(settings={}){
  const nearShore=bio.sea
   ?((x,z,a,b,c,d)=>a===undefined?false:Math.min(a,b,c,d)<waterLevel&&Math.max(a,b,c,d)>=waterLevel)
   :(()=>false);
- const groundGrid=makeGroundGrid(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);}));
+ yield phaseAt(3);
+ const groundGrid=yield* stepGrid(makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);})));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
  // The sited pads, so a measurement can report what the generator decided
  // rather than trying to infer it back out of the terrain.
@@ -1402,6 +1445,7 @@ export function generateWorld(settings={}){
   if(bio.sea&&found==='rough'&&y<waterLevel+BEACH_RISE)return 'sand';
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
+ yield phaseAt(4);
  const homes=generateHomes(s,holes,height,surface,random);
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.

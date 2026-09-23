@@ -18,6 +18,109 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+## Boot, generation and camera flights
+
+- [x] **A splash screen, because boot showed the play HUD over an empty canvas.**
+  Building the renderer, restoring a saved round and growing the menu's showcase
+  hole all happen before `openMenu()` stamps a mode on the shell, and until that
+  stamp lands the shot controls, minimap and weather panel sit over nothing. The
+  splash is in `index.html` itself rather than built by script -- anything script
+  builds arrives after the span it is meant to cover. Blacked out with the
+  brandmark and wordmark over it, dismissed once the menu is up and then removed
+  from the DOM, so an invisible full-screen element cannot eat a click. The fatal
+  path dismisses it too: a black screen hiding the message that explains the
+  black screen is the worst version of this.
+
+- [x] **Camera transitions fly instead of cutting.** `setCamera` has always eased
+  toward its target, but it snapped whenever the move was over sixty metres --
+  and every move worth watching is over sixty metres. `makeCameraFlight` builds
+  the path instead: sample the ground AND the canopy under the route, lift over
+  what is there, smooth the profile so the rise has no corner, and ease in and
+  out with a smoothstep so the move starts and stops at rest. One call in
+  `setMode('play')` covers endless, a new round, Continue, the range, an imported
+  round and the way back from the studio; `cameraMode` and the flyover's return
+  use it too. Measured in the browser, a transition ramps 3.6 to 9.1 and back to
+  4.7 in frame-to-frame change, with no single-frame spike -- the ease curve,
+  not a cut.
+
+- [x] **Clearing the ground was not enough, and the first version proved it.**
+  A blanket `terrain + 34` cleared the dirt but imposed a cruise altitude: a
+  forty-metre hop across a green climbed 8.8 m, which reads as a launch. The
+  test caught it. The floor is the real obstacle now -- terrain or the canopy
+  standing on it, whichever is higher, from `world.trees` filtered to a box
+  around the route -- plus a distance-scaled arc that is what actually reads as
+  flying. Nine tests, including the ridge, the kink, the canopy and the trees on
+  the far side of the property that must not lift anything.
+
+- [x] **A new hole arrives instead of appearing.** Cut to a pose above and behind
+  the tee, hold 2.6 s, then fly down onto the ball. Wired into entering a round,
+  the next hole in normal play and the next hole in an endless run. The cut TO
+  the establishing pose is deliberate and is the one place a cut is right: the
+  hole did not exist a moment ago, so there is no continuous space to fly
+  through. `freshHole()` gates it -- resuming mid-hole gets the plain flight,
+  because an establishing shot of a hole you are halfway down is a recap nobody
+  asked for. The range is excluded: one flat rectangle with no shape to
+  establish, and a hold every visit would be in the way by the second one.
+
+- [x] **"Trees reach 29 m" was wrong and the arrival pose was built on it.**
+  A comment in camera-tours.js carried that number from before the redwood work.
+  The test that walks real holes put the camera at 71 m inside a redwood whose
+  canopy tops out at 111 m. There is one `canopyTop` now and both the flight and
+  the arrival ask it rather than assuming. Four biomes x nine holes in the test.
+
+- [ ] **THE HOLE FLYOVER FLIES THROUGH THE TREES, and has since redwoods landed.**
+  Same stale assumption, not yet fixed because fixing it is a framing decision
+  rather than a one-line clamp. `makeHoleTour` clears TERRAIN by 34 m and never
+  looks at the canopy. Measured against real canopy, worst gap per biome over
+  nine holes each: **redwood -91.1 m** (tallest canopy 186 m), **mountain -0.0 m**
+  (128 m), pnw +5.5 m (82 m). So on a redwood course the flyover orbits inside
+  the forest. The file's own comment says a flyover that skims treetops reads as
+  a bug -- this one is ninety metres past skimming. The fix is not simply lifting
+  the ring: a 200 m orbit is a different shot. Growing the radius instead, or
+  both, needs a look on screen.
+
+- [ ] **Generation is still ~24% slower in wall time than it was.** The blocking
+  work is unchanged at ~7.0 s for an 18-hole feature-heavy course; the extra is
+  the frame handed back at each pause, and it is the price of the overlay moving
+  at all. Worth revisiting only if the grid itself gets cheaper -- at 81% of the
+  work it is where any real win is, not in the pacing.
+
+- [ ] **Progress is weighted by measured cost, not by real-time feedback.** The
+  PHASE table in course.js and LOOP_WEIGHT in terrain-grid.js were fitted to one
+  profile on one machine. A very different course shape could make the bar
+  advance unevenly. It cannot stall or go backward -- there is a test for both --
+  but it is an estimate wearing a percentage.
+
+- [x] **DONE. Generation yields by row band, and the overlay shows real progress.**
+  Was: Measured with `--cpu-prof` on an 18-hole feature-heavy course:
+  **8.4 s total, and `makeGroundGrid` is 81% of it** (9-hole default 2.4 s,
+  one endless hole 250 ms, the range 94 ms). That settles the open question in
+  the priority list: yielding between phases buys almost nothing when one phase
+  is four fifths of the work. `makeGroundGrid` has three row-major loops and
+  chunks cleanly by row band -- make it a `function*`, drain it synchronously for
+  the tests and the fingerprint tool, and yield to the browser on a time budget
+  for the app. A Web Worker is still the wrong tool: `generateWorld` hands back
+  closures that cannot cross the boundary. Acceptance: the eight biome
+  fingerprints stay identical, controls stay live while generating, and a stale
+  result cannot replace a newer round.
+
+- [x] **DONE. The generating overlay's spinner has never spun.** `.generating-spin` is
+  a ring with a lit top edge and no `animation` property at all -- which nobody
+  noticed because the thread is locked solid the whole time it is on screen.
+  Once generation yields it needs a real animation and a real progress reading,
+  which is the point of the chunking above. The splash's dots animate today
+  because nothing is blocking when they are up.
+
+- [x] **Explained, not a bug.** Reached through the Endless panel a run is NOT
+  adopting the showcase hole, because the panel's own settings make a different
+  world key; only the straight-off-the-menu path adopts. It now generates with
+  progress showing rather than locking up. Original note:
+  Straight off the main menu an endless run adopts the showcase hole and needs no
+  generation, which is why there is no overlay -- but reached through the Endless
+  panel it generated for over three seconds with the thread locked. Worth
+  checking whether the adopt path is being missed there, separately from the
+  chunking work.
+
 ## Ball flight, after the GC3 session
 
 - [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits

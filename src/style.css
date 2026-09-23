@@ -96,11 +96,55 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 
 /* Generation locks the main thread, so this is painted before the work starts
    and removed after. It reports that something is happening; it cannot animate. */
+/* THE SPLASH, AND WHY IT IS IN THE MARKUP.
+   Boot builds the renderer, restores a saved round and grows the menu's showcase
+   hole before openMenu() ever stamps a mode on the shell -- and until that stamp
+   lands the play HUD is what is on screen: shot controls, minimap, weather, all
+   of it over an empty canvas. The splash covers that span, so it has to exist
+   before the module does. Blacked out rather than dimmed, because the thing
+   behind it is not worth a glimpse of.
+   It hides on .ready (set once the menu is up) and is removed from the DOM after
+   the fade, so nothing of it can ever take a click. */
+.splash{position:fixed;inset:0;z-index:200;display:grid;place-items:center;gap:0;
+ background:#050b07;backdrop-filter:blur(26px) saturate(.7);
+ transition:opacity .45s ease,visibility .45s}
+.splash.ready{opacity:0;visibility:hidden;pointer-events:none}
+.splash-mark{display:flex;align-items:center;font-size:44px;font-weight:650;letter-spacing:-2.2px;color:var(--ink);
+ animation:splash-rise .7s cubic-bezier(.2,.7,.3,1) both}
+.splash-mark .brandmark svg{width:46px;height:46px}
+.splash-label{position:absolute;bottom:14vh;margin:0;display:flex;align-items:center;
+ font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:var(--ink-faint);
+ animation:splash-rise .7s .18s cubic-bezier(.2,.7,.3,1) both}
+/* Three dots rather than a ring: this one CAN animate, because nothing is
+   blocking the thread yet when it is on screen. The generating overlay's
+   spinner is a different problem and is fixed with the generator. */
+.splash-dots{display:inline-flex;gap:4px;margin-left:9px}
+.splash-dots i{width:3px;height:3px;border-radius:50%;background:#a8c98a;opacity:.25;
+ animation:splash-dot 1.25s infinite ease-in-out}
+.splash-dots i:nth-child(2){animation-delay:.16s}
+.splash-dots i:nth-child(3){animation-delay:.32s}
+@keyframes splash-rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes splash-dot{0%,72%,100%{opacity:.25}32%{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+ .splash-mark,.splash-label{animation:none}
+ .splash-dots i{animation:none;opacity:.7}
+}
 .generating{position:fixed;inset:0;z-index:95;display:grid;place-items:center;color:var(--ink);background:rgba(6,14,10,.62);backdrop-filter:blur(6px)}
 
 .generating>div{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:330px;text-align:center;padding:24px 30px;border-radius:14px;color:var(--ink);background:var(--glass);border:1px solid var(--glass-line);box-shadow:0 20px 56px rgba(4,10,7,.5),inset 0 1px 0 var(--glass-top);backdrop-filter:blur(18px) saturate(1.15)}.generating strong{font-size:1rem}
 .generating small{font-size:.78rem;line-height:1.45;color:var(--ink-dim)}
-.generating-spin{width:24px;height:24px;border-radius:50%;border:3px solid rgba(238,243,230,.2);border-top-color:#8fc79c}
+/* THIS SPINNER HAS NEVER SPUN. It was a ring with a lit top edge and no
+   animation property at all, and nobody noticed because the main thread was
+   locked solid the entire time it was on screen -- an animation would have
+   frozen on its first frame anyway. Generation yields now, so it can turn. */
+.generating-spin{width:24px;height:24px;border-radius:50%;border:3px solid rgba(238,243,230,.2);border-top-color:#8fc79c;animation:generating-spin .9s linear infinite}
+@keyframes generating-spin{to{transform:rotate(1turn)}}
+/* Indeterminate until the first step lands, then a real reading: the phase
+   weights in course.js are what keep it from sitting at 3% and jumping. */
+.generating-track{width:100%;height:4px;border-radius:2px;overflow:hidden;background:rgba(238,243,230,.16);margin-top:4px}
+.generating-track>i{display:block;height:100%;border-radius:2px;background:#8fc79c;width:0;transition:width .2s ease-out}
+.generating-phase{font-size:.72rem!important;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-faint)!important;min-height:1em}
+@media(prefers-reduced-motion:reduce){.generating-spin{animation:none}.generating-track>i{transition:none}}
 
 
 
