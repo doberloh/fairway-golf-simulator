@@ -336,6 +336,80 @@ export function fairwayMiddle(h,z){
 // straying badly on a dogleg course. It is the only candidate that is not
 // trading one against the other.
 export const TEE_AIM_MIN=55,TEE_AIM_FAR=250*.9144,TEE_AIM_SLACK=18;
+// Where a shot from here is headed: the middle of the corridor, walked `range`
+// metres along it so the answer follows a dogleg instead of cutting the corner.
+// Runs past the end of the hole, or already on the green, and it is the pin.
+export function fairwayAim(h,p,range){
+ if(h.surface(p.x,p.z)==='green')return {...h.pin};
+ let z=Math.max(0,p.z),remaining=Math.max(20,range),last={x:fairwayMiddle(h,z),z};
+ while(z<h.length&&remaining>0){const nextZ=Math.min(h.length,z+2),next={x:fairwayMiddle(h,nextZ),z:nextZ};remaining-=Math.hypot(next.x-last.x,next.z-last.z);last=next;z=nextZ;}
+ return z>=h.length?{...h.pin}:last;
+}
+// THE LAUNCH CORRIDOR: the one piece of ground a tee shot is entitled to.
+//
+// Measured before this existed: 29 of 648 tee shots (4.5%) had a trunk on the
+// straight line to the fairway, the close ones 8 to 20 m off the tee. The only
+// rule world trees obeyed was "at least 10 m outside a corridor", and beside a
+// tee that is a tree in your face. (There was a 22 m no-tree bubble, but it sat
+// in the per-hole tree list -- which nothing reads -- centred on hole-local
+// origin while the tees stand 11 to 85 m away from it.)
+//
+// IT IS A WEDGE, NOT A BUBBLE, AND IT ONLY LOOKS FORWARD. Trees beside and
+// behind a tee are wanted: they give the tee box something to sit in and they
+// break up the basin the terracing leaves around a pad. So the keep-out starts
+// at the tee, points where the tee points, and everything off to the side or
+// behind it is left alone.
+//
+// It widens with distance the way a miss does, off a floor that keeps the first
+// few metres clear regardless. LENGTH stops where the ball is well up and a
+// trunk stops mattering; past that the corridor rules already apply.
+// `apex` is the nominal shot's peak as a share of its carry, so a 210 m drive
+// tops out near 30 m and a 150 m par-three shot proportionally lower.
+export const LAUNCH={near:8,angle:9*Math.PI/180,reach:210,apexShare:30/210};
+// Every tee of every hole, as a world-space ray. Built once and reused: the
+// alternative is asking each of ~18,000 candidate trees to work out which hole
+// it might be in front of.
+export function launchCorridors(holes,groundAt){
+ const out=[];
+ for(const h of holes||[]){
+  for(const tee of Object.values(h.tees||{})){
+   // NOT teeAim. That is the bearing the tee PAD is squared to and it looks
+   // only ~60 m ahead; measured on one hole it pointed 35 degrees away from
+   // where the ball goes, and the wedge missed an oak 20 m off the tee sitting
+   // 0.7 m off the played line. The corridor follows the shot.
+   const aim=fairwayAim(h,tee,LAUNCH.reach);
+   const from=h.toWorld(tee),to=h.toWorld(aim);
+   const dx=to.x-from.x,dz=to.z-from.z,len=Math.hypot(dx,dz)||1;
+   // The carry is the distance to that target, not a constant: a par three is
+   // played to the green, and a shot that stops at the green must not be
+   // credited with clearing ground beyond it.
+   out.push({x:from.x,z:from.z,dx:dx/len,dz:dz/len,carry:len,
+    groundY:groundAt?groundAt(from.x,from.z):0});
+  }
+ }
+ return out;
+}
+// Would a tee shot pass THROUGH something standing here, between baseY and topY?
+//
+// A fixed-length wedge was the first attempt and it is the wrong shape. At 90 m
+// it let a fir through at 118 m on a redwood hole, where the ball is still only
+// thirty metres up and the tree is eighty; lengthening it instead would have
+// thrown away short trees far down the hole that nothing could ever hit. Asking
+// about the actual height handles both ends, and it is the same question the
+// acceptance test asks, which is the point.
+export function blocksLaunch(corridors,x,z,baseY,topY,pad=0){
+ for(const c of corridors){
+  const lx=x-c.x,lz=z-c.z;
+  const along=lx*c.dx+lz*c.dz;
+  if(along<0||along>c.carry)continue;
+  const off=Math.abs(lx*c.dz-lz*c.dx);
+  if(off>Math.max(LAUNCH.near,along*Math.tan(LAUNCH.angle))+pad)continue;
+  const s=along/c.carry;
+  const y=c.groundY+4*(c.carry*LAUNCH.apexShare)*s*(1-s);
+  if(y>=baseY&&y<=topY)return true;
+ }
+ return false;
+}
 export function teeAim(h,tee){
  if(!tee){
   // No tee given: the hole's own answer, a little inside where mown turf
@@ -1449,6 +1523,7 @@ export function* generateWorldSteps(settings={}){
  const homes=generateHomes(s,holes,height,surface,random);
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
+ const launch=launchCorridors(holes,height);
  const rng=random(s.seed+':ecology'),pick=()=>{let r=rng();for(const[k,f]of bio.plants){r-=f;if(r<=0)return k;}return bio.plants[0][0];};
  // A species may be understorey: a third number scales its height, so a biome
  // can have a mid-storey under its giants instead of everything reaching the
@@ -1482,6 +1557,9 @@ export function* generateWorldSteps(settings={}){
   const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
   const tree={x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole};
   // Ground cover threads between the trunks and needs no room of its own.
+  // A ground plant is ankle height with no trunk, so nothing can hit it and it
+  // is exactly what should still grow in front of a tee.
+  if(!small&&blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);

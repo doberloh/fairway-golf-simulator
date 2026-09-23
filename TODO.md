@@ -121,6 +121,81 @@ prevent.
   checking whether the adopt path is being missed there, separately from the
   chunking work.
 
+## Obstructions in the shot path
+
+Measured across 216 holes, 648 tee shots (8 biomes x 3 seeds x 3 tees): **29 tee
+shots (4.5%) have a trunk sitting on the straight line to the fairway**, the
+close ones 8-20 m from the tee. None were unplayable -- every one had a clear aim
+somewhere within 18 degrees -- but being forced off the fairway line on a tee
+shot is the complaint, not being stuck.
+
+Cause: **world trees have no tee guard at all.** The only rule is "at least 10 m
+outside a corridor", which near the tee is right beside the tee box. There IS a
+22 m no-tree bubble, but it lives in the per-hole tree list and is centred on
+hole-local origin while the tees sit 11 to 85 m away from it -- and that list is
+dead anyway (see below), so the bubble never protected anything.
+
+- [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
+  **0 of 648 blocked, from 4.5%.** Tree counts unchanged. Two wrong turns on the
+  way, both recorded below. Was: A wedge from
+  each tee along its own aim, not a bubble: keep-out ahead only, so trees BESIDE
+  and BEHIND a tee are untouched. Those are wanted -- they make a tee box
+  interesting and they hide the basin-around-the-tee artefacts. Applies to world
+  trees, rocks and the uniform half of deadfall. Acceptance: re-run the harness
+  over the same 648 tee shots and get 0% blocked, with tree count per course
+  essentially unchanged.
+
+- [x] **The wedge pointed at the wrong target first.** It aimed along `teeAim`,
+  which is the bearing the tee PAD is squared to and looks only ~60 m ahead. On
+  one hole that was **35 degrees** away from where the ball goes, and the wedge
+  sailed past an oak 20 m off the tee sitting 0.7 m off the played line. It
+  follows `fairwayAim` now -- the same line the acceptance harness plays -- and
+  `fairwayAim` moved into course.js so both sides share one definition.
+
+- [x] **A fixed-length wedge was the wrong shape.** At 90 m it let a fir through
+  at 118 m on a redwood hole, where the ball is still only thirty metres up and
+  the tree is eighty. Lengthening it would have thrown away short trees far down
+  the hole that nothing could ever hit. `blocksLaunch` asks about HEIGHT instead:
+  would the nominal shot pass between this object's base and its top. That covers
+  a redwood at 118 m and lets a boulder stand at 150 m, and it is the same
+  question the test asks.
+
+- [x] **The harness lied first, and it was the seventh metric in this project to
+  do it.** It fired a 210 m drive from every tee, so on par threes it measured
+  trees BEHIND THE GREEN and called them blockers: 14 of 16 apparent failures
+  after the first fix were that. A par three is played to the green. The shot
+  model is shared with the guard now rather than written twice.
+
+- [ ] **Slice 2: make the other solid things solid.** Audited -- only tree
+  trunks and homes collide today. Also needs it:
+  - **Rocks/boulders.** Not in world data AT ALL: placed in vegetation.js at
+    render time from a seeded rng, so physics cannot see them. Has to move into
+    `generateWorld` output, which is the architectural half of this slice.
+  - **Floodlight poles.** 23 m of steel standing just outside the corridor,
+    built for every hole at world-build time. Derived from hole geometry by
+    `polesFor`, so no world-data change is needed -- cheap to add. Decide what
+    happens when floodlights are off but the poles are still drawn.
+  - **Deadfall** (logs, stumps, mossrocks). Non-colliding by explicit design --
+    "a ball rolls through a fallen log". Owner's call whether that changes; a log
+    is a real obstacle in real golf but it is also 1 m tall in deep rough.
+  - **The flagstick** is deliberately ignored and is a separate question from
+    this one. Real golf hits the pin.
+
+- [ ] **Slice 3: specimen obstacles, on purpose.** A feature tree or rock cluster
+  sited in the short grass near the landing zone -- the Pebble Beach cypress, the
+  lone oak in a fairway. Fair rather than cheap: visible from the tee, never on
+  the tee-shot line, and always a playable route past it. **With a slider for how
+  often it happens**, so a course can be clean or quirky. New settings field, so
+  it carries a schema and GENERATOR_VERSION bump with it.
+
+- [ ] **The per-hole tree list is dead code.** `h.trees` is built in
+  `generateCourse` for every hole and nothing reads it once a world exists:
+  physics takes `course.world?.trees` first, and the renderer, vegetation and
+  camera all read `world.trees` only. `course.trees` survives as a fallback for
+  a bare hole with no world, which is test fixtures. Costs a placement loop per
+  hole and carries a stale keep-out rule that reads like it is protecting tee
+  shots. Delete it or make it the fallback it actually is.
+
 ## Ball flight, after the GC3 session
 
 - [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
