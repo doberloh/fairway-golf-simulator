@@ -687,6 +687,22 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
+### What "agreeing with a launch monitor" is actually worth
+
+A launch monitor does not hand back a measured apex; it derives one, from what it
+can see, through its own model. A photometric unit and a radar-assisted one start
+from different observations and reach different numbers for the same shot, which
+is exactly what these two sessions show -- one says the flight is low, the other
+says it is high, over an overlapping spin range.
+
+So there is no single correct figure to converge on, and a model that matched one
+device exactly would be reproducing that device's algorithm rather than the ball.
+**The standard here is reasonable agreement across devices, not exact agreement
+with any one of them**, and the residual against each is reported rather than
+tuned away. A third source (a Garmin R50 session) is expected; three makes the
+spread readable, because with two that disagree there is no way to tell which one
+is off. That will be the last fit, and it is not expected to be perfect.
+
 ### A second fault, uncovered rather than caused
 
 Hang time went from +0.24 s to +0.71 s, and it sits between 0.5 and 0.7 s for **every** value of `spinDrag` tried. It cannot be tuned out from here, which means it is not the price of this change; it is a separate problem this change made visible.
