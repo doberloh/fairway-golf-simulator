@@ -130,12 +130,23 @@ prevent.
   its scale -- and descent angle running 1.5 degrees steep says the same. Needs
   a look at how drag varies through the descent, with its own evidence.
 
-- [ ] **The two launch monitors disagree about apex and something has to give.**
-  GC3 says the model flies low, SkyTrak said it flew high, on an overlapping
-  spin range. The curve now trusts the GC3 because it is the better instrument,
-  reports spin axis directly and gives hang time to hundredths. That is a
-  judgement about the references and not a measurement. A third device would
-  settle it.
+- [x] **The two monitors disagreeing about apex is expected, not a fault to fix.**
+  Owner's call, 23 September 2026, and it closes the question rather than
+  deferring it. GC3 says the model flies low, SkyTrak said it flew high, on an
+  overlapping spin range. Each device runs its own algorithm -- they do not
+  measure apex so much as derive it, from different inputs -- so there was never
+  one true number to land on, and "something has to give" was the wrong framing.
+  **The target is reasonable agreement across devices, not exact agreement with
+  any one of them.** The curve trusts the GC3 because it is the better
+  instrument; that stays a judgement about the references, openly.
+
+- [ ] **One last fit when the Garmin R50 data lands.** A third device makes the
+  spread readable instead of a two-way argument: with two sources that disagree
+  there is no way to tell which is off, and with three the odd one out shows.
+  Fit against all three together, report the residual against each, and accept
+  it. **Perfection is explicitly not the bar** -- a fit that matches one device
+  exactly would be overfitting to that device's algorithm. Worth asking whether
+  the session can include driver, since the item below is still open.
 
 - [ ] **No driver data in either session.** Both are irons and wedges, 78 to
   142 mph. The high-speed low-spin corner is still unmeasured, and it is the
