@@ -148,9 +148,28 @@ prevent.
   exactly would be overfitting to that device's algorithm. Worth asking whether
   the session can include driver, since the item below is still open.
 
-- [ ] **No driver data in either session.** Both are irons and wedges, 78 to
-  142 mph. The high-speed low-spin corner is still unmeasured, and it is the
-  corner the original six-row tour fit was most confident about.
+- [ ] **No driver data in either session, and the R50 session will have it.**
+  Confirmed 23 September 2026. Both existing sets are irons and wedges, 78 to
+  142 mph, so the high-speed low-spin corner is entirely unmeasured -- and it is
+  the corner the original six-row tour fit was most confident about, which is
+  the combination that hides an error rather than showing one.
+
+- [ ] **What the R50 session has to carry for the fit to be worth doing.**
+  Written down before the data arrives, because every one of these has already
+  cost something once:
+  - **Total spin AND spin axis, reported not derived.** The GC3 gave both
+    directly. Deriving spin axis is where a sign error lives, and a shot
+    direction sign error has shipped four times in this project.
+  - **Peak height.** The whole lift-cap defect was invisible in carry and
+    obvious in apex. Carry alone cannot catch a shape error.
+  - **Hang time to hundredths.** SkyTrak reported whole seconds, which cannot
+    grade anything -- and hang time is the open defect, running 0.7 s long.
+  - **Descent angle**, kept OUT of the cost as it always has been, so it stays
+    an independent check rather than a fitted output.
+  - **The landing surface, stated.** Nothing else validates roll, and that is
+    why roll still has no reference data at all. A range mat or a stated turf
+    type would be the first roll evidence this project has ever had.
+  - **Ball speed, launch angle, azimuth, carry, offline** as usual.
 
 ## Graphics work the profiling turned up
 
