@@ -5,6 +5,7 @@ import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS} from './species.js';
+import {launchCorridors,blocksLaunch} from './course.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
 const UP=new T.Vector3(0,1,0);
@@ -257,6 +258,7 @@ function addDeadfall(view) {
  dummy.rotation.order = 'YXZ';
  // Real trees only. A fern is not something a log falls out of.
  const anchors = world.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+ const launch = launchCorridors(world.holes, world.height);
 
  const damp = new T.Color('#5a4433'), cut = new T.Color('#9a8156');
  const moss = new T.Color('#4f6b3c'), stone = new T.Color(world.bio.rock || '#8a8577');
@@ -272,6 +274,9 @@ function addDeadfall(view) {
    x = (rng() - .5) * world.halfX * 2; z = (rng() - .5) * world.halfZ * 2;
   }
   if (world.surface(x, z) !== 'rough' || world.nearest(x, z).d < 8) continue;
+  // Deadfall is knee height, so this only ever bites close to a tee -- which
+  // is the one place a log in the shot path is worth removing.
+  if (blocksLaunch(launch, x, z, world.height(x, z), world.height(x, z) + 1.6)) continue;
   if (onShoreBank(world, x, z)) continue;
 
   let r = rng(), family = DEADFALL[DEADFALL.length - 1][0];
@@ -325,8 +330,15 @@ function addGroundCover(view){
  const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
  const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
- const rockCount=biomeOf(world.settings.biome).scatter.rocks;
- for(let i=0;i<rockCount;i++){const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2;if(world.surface(x,z)!=='rough'||world.nearest(x,z).d<5)continue;const scale=(biomeOf(world.settings.biome).scatter.rockScale)*(.6+rng()*3),shape=Math.floor(rng()*STONES);dummy.position.set(x,world.height(x,z)+scale*.25,z);dummy.rotation.set(rng(),rng()*6.28,rng());dummy.scale.set(scale*(1.15+rng()*.5),scale*(.48+rng()*.42),scale*(.82+rng()*.42));dummy.updateMatrix();rocks[shape].push(dummy.matrix.clone());rockColors[shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
+ // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
+ // world, because a rock the generator does not know about is a rock physics
+ // cannot collide with -- which is what they were until they moved. Placing
+ // them here again would put a second set of stones in different places.
+ for(const r of world.rocks||[]){
+  dummy.position.set(r.x,r.y+r.scale*.25,r.z);
+  dummy.rotation.set(r.rot[0],r.rot[1],r.rot[2]);
+  dummy.scale.set(r.sx,r.sy,r.sz);
+  dummy.updateMatrix();rocks[r.shape].push(dummy.matrix.clone());rockColors[r.shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
  // A single icosahedron for every boulder is the other half of why scree reads
  // as one chunk repeated. Build a few distinct stones and deal rocks between
  // them; each gets its own material because instance() disposes the material it

@@ -3,14 +3,11 @@ import * as T from 'three';
 // to the same aim the markers are, and course.js cannot import this file --
 // this file imports course.js. Re-exported so every existing caller is
 // unaffected and there is still one definition of where a tee points.
-import {fairwayWidth, fairwayMiddle, teeAim} from './course.js';
-export {fairwayMiddle, teeAim};
-export function fairwayAim(h,p,range){
- if(h.surface(p.x,p.z)==='green')return {...h.pin};
- let z=Math.max(0,p.z),remaining=Math.max(20,range),last={x:fairwayMiddle(h,z),z};
- while(z<h.length&&remaining>0){const nextZ=Math.min(h.length,z+2),next={x:fairwayMiddle(h,nextZ),z:nextZ};remaining-=Math.hypot(next.x-last.x,next.z-last.z);last=next;z=nextZ;}
- return z>=h.length?{...h.pin}:last;
-}
+import {fairwayWidth, fairwayMiddle, teeAim, fairwayAim} from './course.js';
+// `fairwayAim` moved to course.js as well, for the same reason the two above
+// did: the LAUNCH CORRIDOR has to point where the shot actually goes, and
+// course.js cannot import this file -- this file imports course.js.
+export {fairwayMiddle, teeAim, fairwayAim};
 export function cameraInsideTree(camera,t){const radius=t.r*1.9+1.5;return Math.hypot(camera.x-t.x,camera.z-t.z)<radius&&camera.y>t.y-.5&&camera.y<t.y+t.h*1.18+2;}
 // The hole flyover.
 //

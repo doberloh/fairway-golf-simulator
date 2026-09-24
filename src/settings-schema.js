@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=5;
+export const SCHEMA_VERSION=6;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -19,6 +19,8 @@ export const SCHEMA_VERSION=5;
 //    circle, so they no longer bulldoze the ground around an elongated pond.
 // 4: footbridges removed. Walking routes cross channels on the ground again, so
 //    contact height and surface are read straight off the terrain everywhere.
+// 6: `fairwayFeature` added -- how often a hole gets a specimen tree or a
+//    cluster of stones standing in its own short grass.
 // 5: channels are trimmed to the run they can hold within MAX_CUT and faded at
 //    a trimmed end instead of being trenched across the map; tee pads terrace
 //    against the shaped field on a relief-adaptive ramp; the fairway always
@@ -81,7 +83,7 @@ export const SCHEMA_VERSION=5;
 //     into `holeLine` in course-plan.js, which also moved the tee draws earlier
 //     in the hole's stream so a scorecard can reach them. Every hole on every
 //     course changes length, par or both: all eight biome fingerprints moved.
-export const GENERATOR_VERSION=23;
+export const GENERATOR_VERSION=26;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -149,6 +151,7 @@ export const SETTINGS=[
  {key:'streamBends',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:55,label:'Channel meandering',short:'Meandering',tip:'How much the channels wander. Bends are limited so a bank never folds through itself.'},
 
  {key:'trees',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:65,label:'Tree density',tip:'Planting density outside the playing corridors. Trunks collide with the ball; foliage does not.'},
+ {key:'fairwayFeature',category:'scenery',kind:'range',min:0,max:100,step:5,unit:'%',def:20,label:'Feature tree or rocks in a fairway',short:'Occurrence',tip:'How often a hole gets a specimen tree or a cluster of stones standing in its own short grass, the way a famous hole often does. Placed so it is never on your tee shot and never seals the hole off: there is always a playable route past it, on at least one side.'},
  {key:'homes',category:'scenery',kind:'toggle',def:false,label:'Line fairways with houses',short:'Line the fairways',tip:'Houses on dry, gently sloping rough away from greens and tees. They are scenery: balls pass through them.'},
  {key:'homeDensity',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:45,label:'House occurrence',short:'Occurrence',tip:'How often a suitable site is built on.'},
  {key:'homeSetback',category:'scenery',kind:'range',min:20,max:70,step:1,unit:' m',def:35,label:'House setback from semi-rough',short:'Setback from semi-rough',tip:'How far back from the playing corridor the houses sit.'},
