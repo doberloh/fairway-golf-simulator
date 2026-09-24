@@ -125,6 +125,54 @@ prevent.
   checking whether the adopt path is being missed there, separately from the
   chunking work.
 
+## Reading a green without the overlays
+
+- [x] **Measured why greens look flat.** Every shading cue is proportional to
+  slope, and a green is the flattest thing on the course by design. At the
+  default contour setting a green's shading spans .129 of brightness against the
+  .240 ordinary terrain gets. Raising the contour setting would fix the look and
+  change how the hole plays, so it is not the answer.
+
+- [x] **The terrain cues ARE applied to greens -- the owner's first guess was
+  worth checking and the answer is not the obvious one.** Greens get a weaker
+  landform relief (.07 against .15) and a weaker slope-drying colour (.25 against
+  1.0), but a STRONGER directional relief than anything else (gain 4 against
+  2.6). The problem is the input, not the treatment.
+
+- [x] **Four candidates built behind `lab.greenRead(...)`,** so they can be
+  compared live rather than argued about: exaggerate the shading normal, add
+  slope-magnitude shading, make the mow bands follow the contour, make the bands
+  view-dependent. Presets: off, lift, bands, grain, recommended, strong.
+
+- [x] **Exaggerating the NORMAL beats raising the gain, and that distinction is
+  the whole trick.** Gain multiplies the response and clips against the clamp, so
+  steep ground saturates while gentle ground stays invisible; tilting the normal
+  rescales the whole range so a two-centimetre roll and a tier both move within
+  it. Shape contrast .084 to .262, a 3.1x gain, with the geometry untouched --
+  the ball still rolls on the real surface.
+
+- [x] **Slope-magnitude shading was rejected by its own measurement.** The
+  directional cue should in theory be blind to ground tilted across its bearing;
+  measured on real greens that case is 0%. It solves a problem that does not
+  occur.
+
+- [x] **Softening the mow bands RAISES how well the shape reads** -- .262 to .309
+  -- because a strong regular pattern is the first thing the eye locks onto.
+  Bands that follow the contour score nothing on that metric by construction, the
+  blur stripping exactly the signal they live in, but they are plainly visible in
+  a render and they have a real mechanism behind them.
+
+- [ ] **Not yet a player setting.** It lives on the lab switch while the owner
+  picks a look. Whichever is chosen wants a graphics cue or a slider, defaults
+  decided, and the numbers in RESEARCH.md updated to match what ships.
+
+- [ ] **Bands that follow the contour may alias at distance, and this has not
+  been tested on screen.** The anti-alias fade is measured on the PLAN coordinate
+  deliberately -- measuring it on the bent one once made bands vanish on exactly
+  the slopes they describe -- so raising the bend raises the frequency without
+  the fade knowing. At 2.5x the extra is modest; at 3.5x it is worth a look at a
+  far green before it ships.
+
 ## Green and bunker shapes
 
 Both outlines were a smooth oval. Measured over 108 greens and 284 bunkers:

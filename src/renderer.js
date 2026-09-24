@@ -352,13 +352,21 @@ export class GolfView{
  // Re-applied on every course build as well as on every change, because the
  // material is rebuilt with the world and comes back at its own defaults.
  setGroundCues(cues){
-  this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true}),...(cues||{})};
+  this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true,
+   greenLift:0,greenSlope:0,greenGrain:0,greenBend:1,greenBandSoft:1}),...(cues||{})};
   const u=this.terrain?.material?.userData?.cues;
   if(!u)return this.groundCues;
   u.cueRelief.value=this.groundCues.relief?1:0;
   u.cueSlope.value=this.groundCues.slopeTint?1:0;
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
+  // The three green-readability candidates, each 0 to 1 rather than on/off,
+  // so they can be compared and blended rather than only switched.
+  u.greenLift.value=this.groundCues.greenLift||0;
+  u.greenSlope.value=this.groundCues.greenSlope||0;
+  u.greenGrain.value=this.groundCues.greenGrain||0;
+  u.greenBend.value=this.groundCues.greenBend??1;
+  u.greenBandSoft.value=this.groundCues.greenBandSoft??1;
   return this.groundCues;
  }
  // THE GROUND'S OWN SHADOW. A mesh flag, not a material one, so it changes the

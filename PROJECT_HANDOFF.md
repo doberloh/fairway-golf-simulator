@@ -132,6 +132,12 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **THE FINGERPRINT HASHES AN EXPLICIT LIST.** Anything new that a player can see and that generation decides has to be added to it, or a change to it goes unnoticed forever. Rocks were missed for exactly as long as they were a render-time invention.
 
+**NO BACKTICKS INSIDE ground.js SHADER COMMENTS.** The fragment shader is a JS template literal, so a backtick in a GLSL comment ends the string and breaks the module -- the failure reads as a syntax error hundreds of lines away, at whatever the parser hits next. This has now happened three times in this project.
+
+**`groundPoint` IS OBJECT SPACE AND `cameraPosition` IS WORLD SPACE.** They coincide only because the course group and the terrain mesh both carry an identity transform. Any view-dependent shader term relies on that; put a transform on either and those terms silently start lying.
+
+**A GREEN HAS THE LEAST SLOPE AND NEEDS THE MOST READING.** Every shading cue is proportional to slope, so the flattest surface on the course gets the weakest cue -- measured at half the brightness range ordinary terrain gets. When strengthening it, EXAGGERATE THE NORMAL rather than raising the gain: gain clips against the clamp so steep ground saturates and gentle ground stays invisible.
+
 **OUTLINE HARMONICS ARE SCALED AT GENERATION, NEVER AT READ TIME.** A green's radius and a bunker's are `size * (1 + harmonics)`, and the GLSL in ground.js carries the SAME formula -- three waves for a green from the route texture, two for a hazard from `meta.z`/`meta.w`. Both textures pack whatever the hole and the bunker carry, so scaling the stored values keeps paint and lie as one set of numbers. Scaling in the shader would put the arithmetic in two places, which is how the apron was painted as fairway and played as semi-rough. `meta` is a FULL vec4 -- adding a third bunker harmonic means changing the hazard texture layout.
 
 **ONE HARMONIC MUST NEVER OWN THE OUTLINE.** `spreadHarmonics` pulls the waves toward equal as a shape slider rises, and it is not cosmetic: the three-lobed wave is drawn always-positive and largest, so it leads on 69 of 81 greens, and amplifying the drawn mix turns that into a clean three-lobed flower -- two lobes and a shaft once the aspect stretches it. Do not "simplify" this back to a plain scale.

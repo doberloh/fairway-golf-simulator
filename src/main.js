@@ -3157,6 +3157,27 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    if(speed!==undefined)view.waterSpeed=Math.max(0,speed);
    return {chop:view.waterChop.value,swell:view.waterSwell.value,speed:view.waterSpeed};
   },
+  // GREEN READABILITY CANDIDATES, for comparing without the reading overlays.
+  //   lab.greenRead()            what is on now
+  //   lab.greenRead('off')       the shipped look
+  //   lab.greenRead('lift')          exaggerate the shading normal
+  //   lab.greenRead('bands')         mow bands follow the contour
+  //   lab.greenRead('grain')         view-dependent bands
+  //   lab.greenRead('recommended')   lift + bands
+  //   lab.greenRead('strong')        more of both, bands softened
+  //   lab.greenRead({greenLift:2,greenBend:3,greenBandSoft:.7})
+  greenRead:(preset)=>{
+   const base={greenLift:0,greenSlope:0,greenGrain:0,greenBend:1,greenBandSoft:1};
+   const P={off:base,
+    lift:{...base,greenLift:2.4},
+    bands:{...base,greenBend:2.5},
+    grain:{...base,greenGrain:1},
+    recommended:{...base,greenLift:2.4,greenBend:2.5},
+    strong:{...base,greenLift:3.2,greenBend:3.5,greenBandSoft:.6}};
+   if(preset!==undefined)view.setGroundCues(typeof preset==='string'?(P[preset]||P.off):preset);
+   const c=view.setGroundCues();
+   return {greenLift:c.greenLift,greenBend:c.greenBend,greenBandSoft:c.greenBandSoft,greenGrain:c.greenGrain};
+  },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
  $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('power').oninput=powerChanged;$('club').onchange=()=>{updateAim();updateHUD();sendPlayer();};

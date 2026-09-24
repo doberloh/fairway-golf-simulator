@@ -687,7 +687,86 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
-### How un-round a green and a bunker are
+### Why greens look flat, and what reads as shape
+
+A green is the flattest thing on the course by design — that is what makes it
+puttable — and every shading cue in the ground shader is proportional to slope.
+So the one surface a player most needs to read has the least to read from.
+
+Measured, as the brightness multiplier the shader applies across a surface:
+
+| green contour setting | green surface | ordinary terrain |
+|---|---|---|
+| 0% | 0.000 | 0.240 |
+| **35% (the default)** | **0.129** | 0.240 |
+| 70% | 0.313 | 0.240 |
+| 100% | 0.400 | 0.240 |
+
+At the default a green gets roughly half the shading range the ground around it
+gets. Raising the contour setting fixes the look and changes how the hole plays,
+so it is not the answer.
+
+### The cue the flat measurement hides
+
+Total brightness variation is a poor measure here, because most of it is the mow
+bands rather than the shape. Blurring the bands away first — a box blur wider
+than the 3.2 m band period — leaves the part a player reads as three-dimensional:
+
+| option | shape contrast | band strength | blind slopes |
+|---|---|---|---|
+| shipped today | 0.084 | 0.119 | 0% |
+| **A** exaggerate the shading normal | **0.262** | 0.110 | 3% |
+| B add slope-magnitude shading | 0.088 | 0.117 | 0% |
+| D mow bands follow the contour | 0.082 | 0.119 | 0% |
+| A + D | 0.261 | 0.110 | 3% |
+| **A + D + softer bands** | **0.309** | 0.064 | 2% |
+
+**A is the win: 3.1× the shape contrast.** It exaggerates the shading NORMAL
+rather than raising the gain, which matters — gain multiplies the response and
+clips against the clamp, so steep parts saturate while gentle parts stay
+invisible; tilting the normal rescales the whole range instead.
+
+**B was rejected by its own measurement.** The existing relief is
+`dot(normal, a fixed bearing)`, so ground tilted across that bearing should in
+principle produce no cue however steep. On real greens that case is 0% — the
+concern is theoretical and does not occur, so the term buys nothing.
+
+**D scores nothing on this metric by construction** — the blur strips exactly the
+band signal D lives in — but it is plainly visible in a render, and it is the
+cue with a real-world mechanism behind it. Softening the bands raises shape
+contrast from 0.262 to 0.309, because a strong regular pattern is what the eye
+locks onto first.
+
+### Sources
+
+- **Relief shading and vertical exaggeration.** Cartography amplifies the
+  vertical scale by 2–5× to make subtle terrain visible in low-relief areas, and
+  combines slope shading (steeper is darker) with oblique hill shading. The
+  315° north-west light is the industry standard. This is the direct precedent
+  for option A: exaggerate the shading input, not the ground.
+  [OS guide to relief representation](https://docs.os.uk/more-than-maps/geographic-data-visualisation/guide-to-cartography/relief-representation),
+  [Relief shading, Geography Realm](https://www.geographyrealm.com/relief-shading/),
+  [Comparing relief shading techniques](https://www.maplibrary.org/1599/comparing-relief-shading-techniques/)
+- **Swiss-style shading** combines shaded relief with contour lines and colour
+  modulated by orientation — the precedent for making the mow bands trace the
+  surface rather than run straight. [Terrain cartography](https://grokipedia.com/page/Terrain_cartography)
+- **Why mow stripes are light or dark.** "Light stripes occur when turf is mowed
+  away from the viewer and dark stripes occur when turf is mowed toward the
+  viewer" — the banding is a VIEW-DEPENDENT reflectance effect, not a fixed
+  pattern. Our bands are fixed, which is why option C was tried.
+  [Sterling Golf, mowing patterns](https://www.sterlinggolf.com/course-conditioning/mowing-patterns/),
+  [GOLF.com on mowing patterns](https://golf.com/lifestyle/golf-courses-choose-mowing-patterns/)
+- **How golfers actually read greens** — shadows, grass sheen, grain direction,
+  and watching a ball roll. Read and not used directly: the transferable part is
+  that real reading leans on shine and shadow, which is shading, not geometry.
+  [USGA, Defining Definition](https://www.usga.org/content/usga/home-page/course-care/green-section-record/57/22/defining-definition.html),
+  [Green reading guide](https://greenbooks.com/blogs/blog/the-complete-guide-to-reading-greens-in-golf-tips-techniques-tools)
+
+Nothing here was taken from a game: no open, reusable implementation of golf
+green shading was found, and the techniques that transfer come from cartography
+and from how turf actually reflects light.
+
+## How un-round a green and a bunker are
 
 Both outlines are a radius that varies with angle: the nominal size times one
 plus a few harmonics. A green carries three (two-, three- and five-lobed waves),
