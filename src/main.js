@@ -33,7 +33,7 @@ import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRange
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R} from './physics.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -2368,6 +2368,10 @@ function renderPanel(name,content){
   <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
   <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible of the three by a distance, because it turns a slope into a spacing you can count.</p>
   <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
+  <label class="field">Green definition<output id="gfxGreenDefOut">${graphics.greenDefinition}%</output><input id="gfxGreenDef" type="range" min="0" max="100" step="5" value="${graphics.greenDefinition}"></label>
+  <p class="note">A green is the flattest ground on the course, and every cue above is proportional to slope &mdash; so the one surface you actually have to read gets about half the shading the ground around it gets. This tilts the shading further from flat and bends the mowing bands to follow the surface, the way a contour line does. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did. At 0 a green looks the way it did before this existed.</p>
+  <label class="field">Mowing band strength<output id="gfxGreenBandsOut">${graphics.greenBands}%</output><input id="gfxGreenBands" type="range" min="0" max="100" step="5" value="${graphics.greenBands}"></label>
+  <p class="note">Bands on greens only. Softening them makes the shape of a green easier to read, because a strong regular pattern is the first thing the eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
   <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
@@ -2396,6 +2400,15 @@ function renderPanel(name,content){
   // no recompile, so these take effect on the frame after the click.
   for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxContours','contours'],['gfxStripes','stripes']])
    $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
+  // Live uniform writes, same as the toggles above: no rebuild, no recompile.
+  for(const [id,outId,key] of [['gfxGreenDef','gfxGreenDefOut','greenDefinition'],
+   ['gfxGreenBands','gfxGreenBandsOut','greenBands']])
+   $(id).oninput=()=>{
+    const v=Number($(id).value);
+    $(outId).textContent=v+'%';
+    graphics=saveGraphics({...graphics,[key]:v});
+    view.setGroundCues(graphics);
+   };
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
@@ -3157,26 +3170,27 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    if(speed!==undefined)view.waterSpeed=Math.max(0,speed);
    return {chop:view.waterChop.value,swell:view.waterSwell.value,speed:view.waterSpeed};
   },
-  // GREEN READABILITY CANDIDATES, for comparing without the reading overlays.
-  //   lab.greenRead()            what is on now
-  //   lab.greenRead('off')       the shipped look
-  //   lab.greenRead('lift')          exaggerate the shading normal
-  //   lab.greenRead('bands')         mow bands follow the contour
-  //   lab.greenRead('grain')         view-dependent bands
-  //   lab.greenRead('recommended')   lift + bands
-  //   lab.greenRead('strong')        more of both, bands softened
-  //   lab.greenRead({greenLift:2,greenBend:3,greenBandSoft:.7})
-  greenRead:(preset)=>{
-   const base={greenLift:0,greenSlope:0,greenGrain:0,greenBend:1,greenBandSoft:1};
-   const P={off:base,
-    lift:{...base,greenLift:2.4},
-    bands:{...base,greenBend:2.5},
-    grain:{...base,greenGrain:1},
-    recommended:{...base,greenLift:2.4,greenBend:2.5},
-    strong:{...base,greenLift:3.2,greenBend:3.5,greenBandSoft:.6}};
-   if(preset!==undefined)view.setGroundCues(typeof preset==='string'?(P[preset]||P.off):preset);
-   const c=view.setGroundCues();
-   return {greenLift:c.greenLift,greenBend:c.greenBend,greenBandSoft:c.greenBandSoft,greenGrain:c.greenGrain};
+  // Green definition, from the console, driving the same two graphics settings
+  // the panel does -- so what is tried here is what gets saved.
+  //   lab.greenRead()            what is set now
+  //   lab.greenRead('off')       how greens looked before this existed
+  //   lab.greenRead('recommended') / lab.greenRead('strong')   the two compared
+  //   lab.greenRead(85)          a definition percentage
+  //   lab.greenRead({greenDefinition:85,greenBands:40})
+  greenRead:(v)=>{
+   const P={off:{greenDefinition:0,greenBands:100},
+    recommended:{greenDefinition:52,greenBands:100},
+    strong:{greenDefinition:70,greenBands:60}};
+   if(v!==undefined){
+    const next=typeof v==='number'?{greenDefinition:v}
+     :typeof v==='string'?(P[v]||P.strong):v;
+    graphics=saveGraphics({...graphics,...next});
+    view.setGroundCues(graphics);
+    if($('gfxGreenDef')){$('gfxGreenDef').value=graphics.greenDefinition;$('gfxGreenDefOut').textContent=graphics.greenDefinition+'%';}
+    if($('gfxGreenBands')){$('gfxGreenBands').value=graphics.greenBands;$('gfxGreenBandsOut').textContent=graphics.greenBands+'%';}
+   }
+   return {greenDefinition:graphics.greenDefinition,greenBands:graphics.greenBands,
+    uniforms:greenCues(graphics)};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};

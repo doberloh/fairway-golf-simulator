@@ -123,15 +123,21 @@ export function groundMaterial(view,palette){
  //                ball still rolls on the real surface. This is the cartographic
  //                answer to low-relief ground, where 2x to 5x vertical
  //                exaggeration is standard practice.
- //   greenSlope   adds magnitude shading to the directional cue. The existing
- //                relief is dot(normal, a fixed bearing), so ground tilted
- //                ACROSS that bearing produces no cue at all however steep.
- //   greenGrain   makes the mow stripes view-dependent, which is what they are
- //                in life: turf mown away from you is light, toward you dark.
- //                An undulation then changes a band's tone as it turns.
+ //   greenBend    how far the mow bands bend to follow the surface, so they
+ //                trace its shape the way contour lines do.
+ //   greenBandSoft band contrast. Softening them RAISES how well the shape
+ //                reads, because a strong regular pattern is the first thing
+ //                the eye locks onto -- measured, .262 to .309.
+ //
+ // TWO OTHER CUES WERE BUILT HERE AND REMOVED; do not rebuild them without
+ // reading why. Slope-magnitude shading, to catch ground tilted across the
+ // light bearing where the dot product is blind, was rejected by its own
+ // measurement: that case occurs on 0% of real greens. View-dependent bands,
+ // which is what a mow stripe genuinely is in life, measured no better than
+ // bending the bands and cost a per-fragment view vector. Both are written up
+ // with their numbers in RESEARCH.md.
  const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},
-  greenLift:{value:0},greenSlope:{value:0},greenGrain:{value:0},
-  greenBend:{value:1},greenBandSoft:{value:1}};
+  greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
@@ -141,7 +147,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenSlope,greenGrain,greenBend,greenBandSoft;
+ varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenBend,greenBandSoft;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -452,27 +458,6 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // disappear on exactly the ground they are meant to describe. Scaling instead
   // of adding keeps the bands present and still lets the slope modulate them.
   float spread=clamp(.115*(1.+along*2.),.06,.20);
-  // VIEW-DEPENDENT GRAIN. In life a band is light because the blades are laid
-  // away from you and dark because they are laid toward you -- so a band's tone
-  // changes as the ground under it turns relative to where you stand, which is
-  // the cue that makes a photographed green read as shaped. Fixed bands cannot
-  // do that: they carry the same tone whatever the surface beneath them does.
-  if(kind==4.&&greenGrain>.001){
-   // groundPoint is object space and cameraPosition is world space. They are
-   // the same thing HERE because the course group and the terrain mesh both
-   // carry an identity transform -- checked, not assumed. Put a transform on
-   // either and this line silently starts lying.
-   // (No backticks in this comment: it lives inside a GLSL template literal,
-   // and a backtick here ends the string and breaks the whole module.)
-   vec3 toEye=normalize(cameraPosition-groundPoint);
-   vec2 lay=vec2(mow.x*tr.z-mow.y*tr.w,mow.x*tr.w+mow.y*tr.z);
-   float facing=dot(normalize(toEye.xz),lay)*(stripe*2.-1.);
-   spread=clamp(spread*(1.+greenGrain*1.6*facing),.04,.30);
-  }
-  // Softening the bands RAISES how well the shape reads, because a strong
-  // regular pattern is what the eye locks onto first. Measured: halving the
-  // band contrast lifted shape contrast from .262 to .309.
-  if(kind==4.)spread*=greenBandSoft;
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
@@ -501,12 +486,6 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
    vec3 gl4=normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift)));
    float rel4=dot(gl4.xz,normalize(vec2(-.6,-.5)));
    turf*=mix(1.,clamp(1.+rel4*4.,.78,1.18),cueRelief);
-   // MAGNITUDE, NOT ONLY DIRECTION. A fall running across the light bearing is
-   // invisible to the dot product above no matter how steep it is; this darkens
-   // by how much the ground tilts, whichever way it faces, so no slope on a
-   // green can hide by pointing the wrong way.
-   float tilt=length(gl4.xz);
-   turf*=mix(1.,clamp(1.-tilt*1.9,.80,1.),greenSlope);
   }else{
    // Everything else: the same idea at a third of the gain. A green is being
    // read for a putt; a fairway only has to look like ground.

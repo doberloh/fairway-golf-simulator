@@ -203,6 +203,33 @@ export function tierOf(name) {
 // deliberate, and deliberately artificial, choice.
 export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stripes: true};
 
+// GREEN DEFINITION. A green is the flattest thing on the course by design, and
+// every shading cue is proportional to slope, so the one surface a player has to
+// read has the least to read from -- measured, a green's shading spans .129 of
+// brightness against the .240 ordinary terrain gets.
+//
+// The slider raises two things together because they are one perceptual thing:
+// how far the shading NORMAL is tilted from vertical, and how much the mow bands
+// bend to follow the surface. 70 is the setting chosen from the comparison, and
+// the mapping puts it exactly on the numbers that were judged there.
+//
+// `bands` is separate because it is taste rather than legibility: softening the
+// mowing bands measurably helps the shape read -- a strong regular pattern is
+// the first thing the eye locks onto -- but fainter bands are a different look.
+export const GREEN_READ = {definition: 70, bands: 60};
+// ONE mapping from slider to uniform, so the panel, the renderer and any dev
+// switch cannot drift apart. At definition 70 this is lift 3.2 and bend 3.5.
+export function greenCues(g) {
+ const d = clampPct(g?.greenDefinition, GREEN_READ.definition) / 100;
+ return {
+  greenLift: d * 4.571,
+  greenBend: 1 + d * 3.571,
+  greenBandSoft: clampPct(g?.greenBands, GREEN_READ.bands) / 100,
+ };
+}
+const clampPct = (v, fallback) =>
+ typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(100, v)) : fallback;
+
 const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
 const clean = g => ({
  quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
@@ -213,6 +240,8 @@ const clean = g => ({
  stripes: bool(g?.stripes, GROUND_CUES.stripes),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
+ greenDefinition: clampPct(g?.greenDefinition, GREEN_READ.definition),
+ greenBands: clampPct(g?.greenBands, GREEN_READ.bands),
 });
 
 

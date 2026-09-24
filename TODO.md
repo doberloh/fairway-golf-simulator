@@ -162,9 +162,26 @@ prevent.
   blur stripping exactly the signal they live in, but they are plainly visible in
   a render and they have a real mechanism behind them.
 
-- [ ] **Not yet a player setting.** It lives on the lab switch while the owner
-  picks a look. Whichever is chosen wants a graphics cue or a slider, defaults
-  decided, and the numbers in RESEARCH.md updated to match what ships.
+- [x] **DONE: shipped as two graphics settings.** The owner picked "strong" from
+  the comparison. **Green definition** (default 70) moves the shading tilt and
+  the band bending together, because they are one perceptual thing; it maps to
+  exactly the numbers that were judged, lift 3.2 and bend 3.5. **Mowing band
+  strength** (default 60) is separate because it is taste rather than
+  legibility. Graphics settings rather than course settings -- this is a look,
+  not a property of the ground -- so no generator bump, and the fingerprints
+  confirm it.
+
+- [x] **The two rejected candidates were removed from the shader, not zeroed.**
+  Leaving them behind a dead uniform would repeat the `CONTACT_GAIN` mistake.
+  Their numbers are in RESEARCH.md, which is where a rejected alternative
+  belongs.
+
+- [x] **A broken import reached the browser and the tests could not see it.**
+  `greenCues` was used in renderer.js without being imported: node --check
+  passes, the bundler passes, the whole suite passes, and the app dies on boot
+  with a fatal card -- because no test loads the renderer. Caught only by
+  opening it. The stale console buffer then reported the same error AFTER the
+  fix, which is its own trap.
 
 - [ ] **Bands that follow the contour may alias at distance, and this has not
   been tested on screen.** The anti-alias fade is measured on the PLAN coordinate

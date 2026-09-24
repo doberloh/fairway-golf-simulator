@@ -737,6 +737,22 @@ cue with a real-world mechanism behind it. Softening the bands raises shape
 contrast from 0.262 to 0.309, because a strong regular pattern is what the eye
 locks onto first.
 
+### What shipped
+
+A + D + softer bands, on the owner's choice from the rendered comparison, as two
+graphics settings rather than a course setting — this is a look, not a property
+of the ground. **Green definition** defaults to 70, which maps to exactly the
+numbers that were judged: shading normal tilted by 3.2 and bands bending 3.5×.
+**Mowing band strength** defaults to 60. Definition at 0 returns the old look
+exactly, and there is a test pinning both ends.
+
+The two rejected candidates were REMOVED from the shader rather than left behind
+a zeroed uniform. B solved a case that occurs 0% of the time, and C — making the
+bands view-dependent, which is what a mow stripe genuinely is in life — measured
+no better than bending them and cost a per-fragment view vector. Keeping either
+as dead shader code would repeat the `CONTACT_GAIN` mistake; the numbers above
+are the record.
+
 ### Sources
 
 - **Relief shading and vertical exaggeration.** Cartography amplifies the
