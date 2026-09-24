@@ -703,15 +703,34 @@ enough that nothing was really a shape — widest radius over narrowest, and a
 A circle is 1.00 and 0.00; an ellipse is its aspect and 0.00. So every one of the
 392 shapes measured was a smooth oval.
 
-`greenShape` and `bunkerShape` scale the harmonics the seed already drew, which
-keeps each green's own character — which wave leads, and which way round it sits
-— while raising the irregularity as a whole:
+### Scaling the drawn mix was tried first, and it looked wrong
 
-| slider | greens (median) | bunkers (median) |
-|---|---|---|
-| 0% | 1.24 | 1.48 |
-| 30% (default) | 1.55 | 1.76 |
-| 100% | 2.45 | 2.51 |
+The first version scaled all three harmonics together, on the reasoning that it
+would keep each green's own character. What it actually kept was **which harmonic
+dominated** — and the three-lobed wave is drawn from `.025 + rng*.075`, always
+positive and the largest of the three on average. Measured: it leads on **69 of
+81 greens**, with the biggest harmonic owning half the wobble. Amplifying that
+gives a clean three-lobed flower, and a three-lobed flower stretched by a green's
+aspect ratio is two round lobes at one end and a tapering shaft. It was rejected
+on sight.
+
+A first attempt to diagnose it also failed, and the reason is worth keeping: the
+descriptor measured how far an outline differs from its own 180° rotation, which
+**cannot see harmonic 2 at all**, since that harmonic is symmetric under exactly
+that rotation. It returned identical figures for four very different mixes.
+
+So the sliders do two things: raise the amplitude, and pull the harmonics toward
+equal so none of them runs away with the shape. Equal thirds of a modest total is
+an irregular outline; one harmonic holding all of it is a flower.
+
+| slider | greens (median) | bunkers (median) | biggest harmonic's share |
+|---|---|---|---|
+| 0% | 1.24 | 1.48 | 50% |
+| 30% (default) | 1.42 | 1.63 | 45% |
+| 100% | 1.74 | 1.83 | 33% |
+
+**Evening the mix costs range, deliberately.** The rejected version reached a
+median of 2.45 at full against 1.74 here — but that extra range was the flower.
 
 **Scaling happens at generation, not at read time, and that is the important
 part.** The route texture packs whatever the hole carries and the hazard texture
@@ -720,9 +739,9 @@ gets come from one set of numbers. Scaling in the shader instead would have mean
 the same arithmetic in two places, which is how the apron was once painted as
 fairway and played as semi-rough.
 
-A cap on the total wave amplitude — 0.52 for greens, 0.45 for bunkers — is what
+A cap on the total wave amplitude — 0.34 for greens, 0.30 for bunkers — is what
 keeps a radius safely positive: at the cap the narrowest point of a green is
-still just under half its nominal radius, so an outline can pinch hard without
+still comfortably over half its nominal radius, so an outline can pinch without
 folding through itself.
 
 ### What it costs: green surrounds get steeper

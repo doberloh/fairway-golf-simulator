@@ -38,7 +38,12 @@ test('turning the slider up actually changes the shape', () => {
    }).sort((x, y) => x - y);
    return all[all.length >> 1];
   });
-  assert.ok(ratios[2] > ratios[0] * 1.5,
+  // 1.3x, not 1.5x. The first version of the slider reached a median ratio of
+  // 2.45 at full by amplifying whatever harmonic already dominated -- which is
+  // exactly what made greens come out as a flower with one lobe stretched into
+  // a shaft. Spreading the energy instead costs range: 1.74 at full. That is a
+  // deliberate trade and the threshold records it rather than hiding it.
+  assert.ok(ratios[2] > ratios[0] * 1.3,
    `${biome}: green shape barely moved across the slider (${ratios.map(r => r.toFixed(2)).join(' -> ')})`);
   assert.ok(ratios[1] > ratios[0] && ratios[2] > ratios[1], `${biome}: not monotonic (${ratios.join(', ')})`);
  }

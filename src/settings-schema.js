@@ -108,11 +108,14 @@ export const SCHEMA_VERSION=8;
 // 28: a combined tee fan replaced three separate wedges, so nothing plants in
 //     the view from the back tee, and `greenTrees` opened green surrounds on
 //     the back and flanks while keeping the approach clear.
-// 30: green and bunker outlines scale with two new sliders. Both were a
-//     circle with a wobble of a few per cent -- measured, greens ran 1.15 to
-//     1.40 widest-over-narrowest and bunkers 1.11 to 2.40, with no outline
-//     anywhere turning back on itself. The harmonics the seed already drew
-//     are scaled, so each green keeps its own character.
+// 30: green and bunker outlines move with two new sliders. Both were a circle
+//     with a wobble of a few per cent -- measured, greens ran 1.15 to 1.40
+//     widest-over-narrowest and bunkers 1.11 to 2.40, with no outline anywhere
+//     turning back on itself. The sliders raise the amplitude AND even out the
+//     harmonics. Simply scaling the drawn mix was tried first and looked
+//     wrong: it preserved which harmonic dominated, the three-lobed wave leads
+//     on 69 of 81 greens, and a three-lobed flower stretched by a green's
+//     aspect is two lobes and a shaft.
 // 29: the tee ramp scales with the hole's own width instead of being a fixed
 //     -20 m. `n.d` grows with the corridor, so a flat floor collapsed at wide
 //     settings -- the tee surround fell to 0.03 of course average at a 92 m
@@ -163,7 +166,7 @@ export const SETTINGS=[
  {key:'width',category:'turf',kind:'range',min:20,max:92,step:1,unit:' m',def:38,label:'Typical fairway width',tip:'A guideline, not a constant. Each side is generated independently, so the fairway widens into landing areas and pinches at approaches. The top of the range is a hundred yards, which is links territory rather than a normal fairway.'},
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
- {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and kidney outlines. Each green keeps its own character as this rises — the slider scales what the seed already drew rather than replacing it.'},
+ {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and an irregular edge. Raising it also EVENS OUT the waves that make the outline, so no single one takes over — letting one dominate is what turns a green into a clean three-lobed flower rather than a golf green.'},
  {key:'bunkerShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Bunker shape',short:'Irregularity',tip:'How ragged the outline of a bunker is. Low is a smooth oval; high gives waisted and lobed sand. Green-side bunkers are re-fitted to the green after shaping, so they keep the gap they are told to leave whatever this is set to.'},
  {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add broad tilts, crossing ridges and hollows.'},
 

@@ -183,9 +183,32 @@ export function planCourse(s={}){
 // How much to multiply a drawn outline by. At 0 the slider leaves the seed's own
 // wobble exactly as it was, so a course generated with the slider down looks the
 // way this generator always looked.
-export const GREEN_SHAPE={gain:3.4,cap:.52};
-export const BUNKER_SHAPE={gain:3.4,cap:.45};
+// AMPLIFYING THE MIX WAS THE WRONG IDEA, AND IT LOOKED IT.
+//
+// The first version scaled all the harmonics together to "keep each green's own
+// character". What that actually preserved was WHICH HARMONIC DOMINATED, and the
+// three-lobed wave is drawn from `.025 + rng*.075` -- always positive, and the
+// largest of the three on average. Measured: it led on 69 of 81 greens, with the
+// biggest harmonic owning half the wobble. Scaling that up gives a clean
+// three-lobed flower, and a three-lobed flower stretched by the green's aspect
+// is two round lobes at one end and a tapering shaft. It read exactly as badly
+// as that sounds.
+//
+// So the slider does two things now. It raises the amplitude, and it SPREADS the
+// energy across the three harmonics -- pulling the mix toward equal as it rises,
+// so no single wave can run away with the shape. Equal thirds of a modest total
+// is an irregular outline; one harmonic with all of it is a flower.
+export const GREEN_SHAPE={gain:2.4,cap:.34};
+export const BUNKER_SHAPE={gain:2.4,cap:.30};
 export const shapeGain=(slider,limits)=>1+(clamp(slider??0,0,100)/100)*limits.gain;
+// Pull a set of harmonic amplitudes toward equal, keeping each one's sign.
+export function spreadHarmonics(waves,slider){
+ const t=clamp(slider??0,0,100)/100;
+ const sum=waves.reduce((a,w)=>a+Math.abs(w),0);
+ if(sum<=1e-6)return waves.slice();
+ const even=sum/waves.length;
+ return waves.map(w=>{const sign=w<0?-1:1;return sign*(Math.abs(w)+(even-Math.abs(w))*t);});
+}
 export function holeLine(s,planned,rng){
  const par=planned.par;
  const greenSize=14+rng()*7,greenAspect=.95+rng()*.38;
@@ -205,13 +228,13 @@ export function holeLine(s,planned,rng){
  // played as semi-rough once already.
  let greenWave2=(rng()-.5)*.13,greenWave3=.025+rng()*.075,greenWave5=.015+rng()*.035;
  {
-  const k=shapeGain(s.greenShape,GREEN_SHAPE),
-   sum=Math.abs(greenWave2)+Math.abs(greenWave3)+Math.abs(greenWave5);
-  // The cap is what keeps the radius safely positive: at a total of .52 the
-  // narrowest point of a green is still just under half its nominal radius, so
-  // the outline can pinch hard without ever folding through itself.
+  const even=spreadHarmonics([greenWave2,greenWave3,greenWave5],s.greenShape);
+  const k=shapeGain(s.greenShape,GREEN_SHAPE),sum=even.reduce((a,w)=>a+Math.abs(w),0);
+  // The cap keeps the radius safely positive: at this total the narrowest point
+  // of a green is still comfortably over half its nominal radius, so an outline
+  // can pinch without folding through itself.
   const use=sum>1e-6?Math.min(k,GREEN_SHAPE.cap/sum):1;
-  greenWave2*=use;greenWave3*=use;greenWave5*=use;
+  greenWave2=even[0]*use;greenWave3=even[1]*use;greenWave5=even[2]*use;
  }
  const phase=rng()*6.28;
  const isDogleg=par!==3&&!!planned.turnSign;

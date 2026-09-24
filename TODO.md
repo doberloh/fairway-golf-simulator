@@ -132,12 +132,24 @@ widest radius over narrowest ran 1.15-1.40 for greens and 1.11-2.40 for bunkers,
 and a bend figure that is non-zero only where an outline turns back on itself was
 **0.00 for all 392 shapes**. Nothing had a lobe or a waist anywhere.
 
-- [x] **`greenShape` and `bunkerShape`, 0-100%, default 30.** They scale the
-  harmonics the seed already drew rather than replacing them, so each green keeps
-  its own character -- which wave leads, which way round it sits -- while getting
-  more irregular as a whole. Medians go 1.24 to 1.55 to 2.45 for greens and 1.48
-  to 1.76 to 2.51 for bunkers across the slider. At 0 the outline is exactly what
-  the generator always produced, which is what makes it safe to ship.
+- [x] **`greenShape` and `bunkerShape`, 0-100%, default 30.** They raise the
+  amplitude of the harmonics AND pull them toward equal as they rise, so no
+  single wave takes over. Medians go 1.24 to 1.42 to 1.74 for greens and 1.48 to
+  1.63 to 1.83 for bunkers. At 0 the outline is exactly what the generator always
+  produced, which is what makes it safe to ship.
+
+- [x] **Scaling the drawn mix was tried first and looked wrong -- owner rejected
+  it on sight.** It preserved WHICH HARMONIC DOMINATED, and the three-lobed wave
+  is drawn always-positive and largest, so it leads on 69 of 81 greens. Amplified,
+  that is a clean three-lobed flower, and stretched by a green's aspect it is two
+  round lobes and a tapering shaft. Evening the mix costs range -- 1.74 at full
+  against the rejected 2.45 -- and that range was the flower.
+
+- [x] **The first descriptor used to diagnose it was blind by construction.** It
+  measured how far an outline differs from its own 180-degree rotation, which
+  cannot see harmonic 2 at all, that harmonic being symmetric under exactly that
+  rotation. Four very different mixes returned identical numbers. Eighth
+  measurement in this project to measure the wrong thing.
 
 - [x] **No shader change was needed, and that was the point.** Scaling happens at
   GENERATION, so the route texture and the hazard texture pack the already-scaled
@@ -145,10 +157,10 @@ and a bend figure that is non-zero only where an outline turns back on itself wa
   Scaling at read time would have put the same arithmetic in GLSL and JS, which
   is how the apron was once painted as fairway and played as semi-rough.
 
-- [x] **A cap keeps the radius positive.** .52 for greens and .45 for bunkers, on
+- [x] **A cap keeps the radius positive.** .34 for greens and .30 for bunkers, on
   the SUM of the harmonics: at the cap the narrowest point of a green is still
-  just under half nominal, so an outline can pinch to a waist but never fold
-  through itself. Tested at 360 angles on every green at every setting.
+  comfortably over half nominal, so an outline can pinch but never fold through
+  itself. Tested at 360 angles on every green at every setting.
 
 - [x] **The terrain patch was checked and needed nothing.** The high-resolution
   grid is cut 38 m from a green's centre; the furthest a shaped green reaches is
