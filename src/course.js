@@ -1,7 +1,7 @@
 import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
-import {planCourse,holeLine,enabledTees,greenContour,rng} from './course-plan.js';
+import {planCourse,holeLine,enabledTees,greenContour,rng,shapeGain,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
 import {makeGroundGrid,makeGroundGridSteps,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
@@ -262,7 +262,14 @@ export function generateCourse(settings={},hole=0){
   const roll=rng()<greenShare,greenSide=par===3||roll,rx=4.5+rng()*5.5,rz=5+rng()*9;let x,z;
   if(greenSide){const a=cluster+(greenShare>.65?(rng()-.5)*2:rng()*Math.PI*2),gr=17*(1+.075*Math.sin(a*3+phase)+.045*Math.cos(a*5)),radius=gr+s.fringe+s.bunkerGap+Math.max(rx,rz)*1.08;x=green.x+Math.cos(a)*radius*1.17;z=length+Math.sin(a)*radius;}
   else{if(length-fairwayStart<65)continue;z=fairwayStart+18+rng()*Math.max(1,length-fairwayStart-55);const side=rng()<.5?1:-1,inFairway=rng()*100<s.fairwayBunkers;x=center(z)+(inFairway?(rng()-.5)*Math.max(0,width(z)-rx)*.9:side*((side<0?leftWidth(z):rightWidth(z))+rx+1+s.bunkerGap));}
-  const b={x,z,rx,rz,phase:rng()*6.28,wave2:(rng()-.5)*.1,wave3:.025+rng()*.08,greenSide};if(greenSide){const a=Math.atan2(z-green.z,(x-green.x)/greenAspect),target=s.fringe+s.bunkerGap+.04;let lo=0,hi=90;for(let j=0;j<16;j++){const radius=(lo+hi)/2;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;let gap=Infinity;for(let k=0;k<64;k++){const q=ovalRadius(b,k*Math.PI/32);gap=Math.min(gap,greenDistance({green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5},b.x+q.x,b.z+q.z));}if(gap<target)lo=radius;else hi=radius;}const radius=hi;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;x=b.x;z=b.z;}if(!Object.values(tees).some(t=>Math.hypot(t.x-x,t.z-z)<Math.max(rx,rz)+11)&&!ponds.some(p=>insideOval(x,z,p,Math.max(rx,rz)+3))&&!bunkers.some(p=>insideOval(x,z,p,Math.max(rx,rz)+2)))bunkers.push(b);
+  const b={x,z,rx,rz,phase:rng()*6.28,wave2:(rng()-.5)*.1,wave3:.025+rng()*.08,greenSide};
+  // Same treatment as a green's outline, and for the same reason: the hazard
+  // texture packs whatever the bunker carries, so scaling here keeps the sand a
+  // player sees and the sand the ball lands in as one shape. The binary search
+  // BELOW re-fits a green-side bunker after this, so a lumpier outline still
+  // ends up the intended distance off the fringe rather than eating into it.
+  {const k=shapeGain(s.bunkerShape,BUNKER_SHAPE),sum=Math.abs(b.wave2)+Math.abs(b.wave3);
+   const use=sum>1e-6?Math.min(k,BUNKER_SHAPE.cap/sum):1;b.wave2*=use;b.wave3*=use;}if(greenSide){const a=Math.atan2(z-green.z,(x-green.x)/greenAspect),target=s.fringe+s.bunkerGap+.04;let lo=0,hi=90;for(let j=0;j<16;j++){const radius=(lo+hi)/2;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;let gap=Infinity;for(let k=0;k<64;k++){const q=ovalRadius(b,k*Math.PI/32);gap=Math.min(gap,greenDistance({green,phase,greenSize,greenAspect,greenWave2,greenWave3,greenWave5},b.x+q.x,b.z+q.z));}if(gap<target)lo=radius;else hi=radius;}const radius=hi;b.x=green.x+Math.cos(a)*radius*greenAspect;b.z=green.z+Math.sin(a)*radius;x=b.x;z=b.z;}if(!Object.values(tees).some(t=>Math.hypot(t.x-x,t.z-z)<Math.max(rx,rz)+11)&&!ponds.some(p=>insideOval(x,z,p,Math.max(rx,rz)+3))&&!bunkers.some(p=>insideOval(x,z,p,Math.max(rx,rz)+2)))bunkers.push(b);
  }
  let routeLength=0;for(let z=0;z<length;z+=1){const next=Math.min(length,z+1);routeLength+=Math.hypot(center(next)-center(z),next-z);}
 

@@ -180,10 +180,39 @@ export function planCourse(s={}){
 // The tee draws were moved up into this prefix. They used to sit after the
 // fairway edges, which meant a scorecard could not reach them without
 // replaying the edge generation it has no use for.
+// How much to multiply a drawn outline by. At 0 the slider leaves the seed's own
+// wobble exactly as it was, so a course generated with the slider down looks the
+// way this generator always looked.
+export const GREEN_SHAPE={gain:3.4,cap:.52};
+export const BUNKER_SHAPE={gain:3.4,cap:.45};
+export const shapeGain=(slider,limits)=>1+(clamp(slider??0,0,100)/100)*limits.gain;
 export function holeLine(s,planned,rng){
  const par=planned.par;
- const greenSize=14+rng()*7,greenAspect=.95+rng()*.38,
-  greenWave2=(rng()-.5)*.13,greenWave3=.025+rng()*.075,greenWave5=.015+rng()*.035;
+ const greenSize=14+rng()*7,greenAspect=.95+rng()*.38;
+ // THE OUTLINE IS SCALED, NOT REPLACED.
+ //
+ // A green's radius is its size times one plus three harmonics -- a two-lobed
+ // wave, a three-lobed one and a five. The draws below are what they always
+ // were, so every green keeps the character its seed gave it: which harmonic
+ // leads, and which way round it sits. `greenShape` multiplies all three
+ // together, which turns a rounded oval into lobes and a pinched waist without
+ // making every green the same shape as every other.
+ //
+ // SCALING AT GENERATION IS WHY THE SHADER NEEDS NO CHANGE. The route texture
+ // packs whatever the hole carries, so the painted green and the lie the ball
+ // gets come from one set of numbers. Scaling at read time would have meant two
+ // copies of this arithmetic, which is how the apron was painted as fairway and
+ // played as semi-rough once already.
+ let greenWave2=(rng()-.5)*.13,greenWave3=.025+rng()*.075,greenWave5=.015+rng()*.035;
+ {
+  const k=shapeGain(s.greenShape,GREEN_SHAPE),
+   sum=Math.abs(greenWave2)+Math.abs(greenWave3)+Math.abs(greenWave5);
+  // The cap is what keeps the radius safely positive: at a total of .52 the
+  // narrowest point of a green is still just under half its nominal radius, so
+  // the outline can pinch hard without ever folding through itself.
+  const use=sum>1e-6?Math.min(k,GREEN_SHAPE.cap/sum):1;
+  greenWave2*=use;greenWave3*=use;greenWave5*=use;
+ }
  const phase=rng()*6.28;
  const isDogleg=par!==3&&!!planned.turnSign;
  const angle=isDogleg?planned.turnSign*(s.doglegAngle??45)*(.72+rng()*.28):0;

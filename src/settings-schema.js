@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=7;
+export const SCHEMA_VERSION=8;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -19,6 +19,8 @@ export const SCHEMA_VERSION=7;
 //    circle, so they no longer bulldoze the ground around an elongated pond.
 // 4: footbridges removed. Walking routes cross channels on the ground again, so
 //    contact height and surface are read straight off the terrain everywhere.
+// 8: `greenShape` and `bunkerShape` added -- how far a green or a bunker
+//    departs from an oval.
 // 7: `greenTrees` added -- how close planting comes around a green, with
 //    the approach side kept open at every setting.
 // 6: `fairwayFeature` added -- how often a hole gets a specimen tree or a
@@ -106,12 +108,17 @@ export const SCHEMA_VERSION=7;
 // 28: a combined tee fan replaced three separate wedges, so nothing plants in
 //     the view from the back tee, and `greenTrees` opened green surrounds on
 //     the back and flanks while keeping the approach clear.
+// 30: green and bunker outlines scale with two new sliders. Both were a
+//     circle with a wobble of a few per cent -- measured, greens ran 1.15 to
+//     1.40 widest-over-narrowest and bunkers 1.11 to 2.40, with no outline
+//     anywhere turning back on itself. The harmonics the seed already drew
+//     are scaled, so each green keeps its own character.
 // 29: the tee ramp scales with the hole's own width instead of being a fixed
 //     -20 m. `n.d` grows with the corridor, so a flat floor collapsed at wide
 //     settings -- the tee surround fell to 0.03 of course average at a 92 m
 //     fairway, worse than before any of this work. Now 0.34 to 0.90 across
 //     every biome and the whole width slider.
-export const GENERATOR_VERSION=29;
+export const GENERATOR_VERSION=30;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -156,6 +163,8 @@ export const SETTINGS=[
  {key:'width',category:'turf',kind:'range',min:20,max:92,step:1,unit:' m',def:38,label:'Typical fairway width',tip:'A guideline, not a constant. Each side is generated independently, so the fairway widens into landing areas and pinches at approaches. The top of the range is a hundred yards, which is links territory rather than a normal fairway.'},
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
+ {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and kidney outlines. Each green keeps its own character as this rises — the slider scales what the seed already drew rather than replacing it.'},
+ {key:'bunkerShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Bunker shape',short:'Irregularity',tip:'How ragged the outline of a bunker is. Low is a smooth oval; high gives waisted and lobed sand. Green-side bunkers are re-fitted to the green after shaping, so they keep the gap they are told to leave whatever this is set to.'},
  {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add broad tilts, crossing ridges and hollows.'},
 
  {key:'pinDay',category:'turf',kind:'choice',options:['Thursday','Friday','Saturday','Sunday'],def:'Thursday',label:'Pin difficulty',tip:'Which day of a tournament the cups are cut for. Thursday takes the flattest ground with the most green around it; Friday, Saturday and Sunday move to progressively more slope and tighter edges. No day will cut a cup somewhere a ball cannot come to rest. Hole locations work front, middle, back and around again as the round goes on.'},

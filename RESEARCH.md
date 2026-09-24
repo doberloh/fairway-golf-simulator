@@ -687,7 +687,61 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
-### Planting density around tees, across the fairway width slider
+### How un-round a green and a bunker are
+
+Both outlines are a radius that varies with angle: the nominal size times one
+plus a few harmonics. A green carries three (two-, three- and five-lobed waves),
+a bunker two. Measured over 108 greens and 284 bunkers, the amplitudes were small
+enough that nothing was really a shape — widest radius over narrowest, and a
+"bend" figure that is non-zero only where an outline turns back on itself:
+
+| | widest/narrowest | bend |
+|---|---|---|
+| greens | 1.15 – **1.24** – 1.40 | 0.00 everywhere |
+| bunkers | 1.11 – **1.48** – 2.40 | 0.00 everywhere |
+
+A circle is 1.00 and 0.00; an ellipse is its aspect and 0.00. So every one of the
+392 shapes measured was a smooth oval.
+
+`greenShape` and `bunkerShape` scale the harmonics the seed already drew, which
+keeps each green's own character — which wave leads, and which way round it sits
+— while raising the irregularity as a whole:
+
+| slider | greens (median) | bunkers (median) |
+|---|---|---|
+| 0% | 1.24 | 1.48 |
+| 30% (default) | 1.55 | 1.76 |
+| 100% | 2.45 | 2.51 |
+
+**Scaling happens at generation, not at read time, and that is the important
+part.** The route texture packs whatever the hole carries and the hazard texture
+packs whatever the bunker carries, so the painted surface and the lie the ball
+gets come from one set of numbers. Scaling in the shader instead would have meant
+the same arithmetic in two places, which is how the apron was once painted as
+fairway and played as semi-rough.
+
+A cap on the total wave amplitude — 0.52 for greens, 0.45 for bunkers — is what
+keeps a radius safely positive: at the cap the narrowest point of a green is
+still just under half its nominal radius, so an outline can pinch hard without
+folding through itself.
+
+### What it costs: green surrounds get steeper
+
+Shaping a green steepens the ground falling away from it, because the shoulder is
+blended on the green's NOMINAL size and does not follow the outline — so wherever
+a shaped green bulges outward, its shoulder has less room.
+
+| | slider 0 | 30 (default) | 60 | 100 |
+|---|---|---|---|---|
+| default terrain, steepest | 0.570 | 0.709 | 0.800 | 0.806 |
+| harshest terrain, steepest | 0.685 | 0.795 | 0.945 | 1.032 |
+
+On the eight seeds the surround characterisation test uses, at the harshest
+settings the game offers, the steepest goes 1.056 at slider 0 to 1.372 at the
+default and 1.933 at full. That test was re-pinned, and the shoulder blending is
+filed as the real fix.
+
+## Planting density around tees, across the fairway width slider
 
 Measured with `node tools/bench.mjs surrounds --set trees=65`, which reports the
 trees standing within 20 m of a tee as a multiple of that course's own average,
