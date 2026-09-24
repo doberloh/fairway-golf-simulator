@@ -365,6 +365,14 @@ export function fairwayAim(h,p,range){
 // trunk stops mattering; past that the corridor rules already apply.
 // `apex` is the nominal shot's peak as a share of its carry, so a 210 m drive
 // tops out near 30 m and a 150 m par-three shot proportionally lower.
+// The siting rules for a specimen, exported so the tests assert against the
+// numbers the generator actually uses.
+//   gap       open short grass left on one side, so there is always a route
+//   greenKeep how far back from the putting surface it stays
+//   minHalf   the narrowest corridor that gets one at all
+//   standoff  how far from a tee it must stand: inside this there is nothing a
+//             player can do about it, which is the original complaint
+export const FEATURE={gap:13,greenKeep:75,minHalf:15,standoff:130};
 export const LAUNCH={near:8,angle:9*Math.PI/180,reach:210,apexShare:30/210};
 // Every tee of every hole, as a world-space ray. Built once and reused: the
 // alternative is asking each of ~18,000 candidate trees to work out which hole
@@ -397,11 +405,16 @@ export function launchCorridors(holes,groundAt){
 // thrown away short trees far down the hole that nothing could ever hit. Asking
 // about the actual height handles both ends, and it is the same question the
 // acceptance test asks, which is the point.
-export function blocksLaunch(corridors,x,z,baseY,topY,pad=0){
+// `within` limits how far down the shot the question is asked. Scatter planting
+// gets the whole carry: a trunk anywhere on the line is an accident. A SPECIMEN
+// gets only the near stretch, because a feature tree standing in the middle of
+// the fairway at 180 m is not an accident -- it is the hole, and you play to the
+// side of it. What makes that fair is the gap beside it, not an empty centre.
+export function blocksLaunch(corridors,x,z,baseY,topY,pad=0,within=Infinity){
  for(const c of corridors){
   const lx=x-c.x,lz=z-c.z;
   const along=lx*c.dx+lz*c.dz;
-  if(along<0||along>c.carry)continue;
+  if(along<0||along>Math.min(c.carry,within))continue;
   const off=Math.abs(lx*c.dz-lz*c.dx);
   if(off>Math.max(LAUNCH.near,along*Math.tan(LAUNCH.angle))+pad)continue;
   const s=along/c.carry;
@@ -1592,6 +1605,97 @@ export function* generateWorldSteps(settings={}){
    // at centre + sy and the widest it gets across is the larger half-extent.
    rocks.push({x,z,y,scale,shape,rot,sx,sy,sz,
     top:y+scale*.25+sy,reach:Math.max(sx,sz)});
+  }
+ }
+ // SPECIMEN OBSTACLES: the lone cypress, the oak in the middle of the fairway.
+ //
+ // The difference between a feature and a nuisance is entirely in the siting, so
+ // the rules are explicit and each one is tested:
+ //
+ //   Never on a tee shot        -- blocksLaunch, the same rule everything else
+ //                                 obeys. A feature you cannot get past off the
+ //                                 tee is not a feature.
+ //   Never seals the hole       -- at least FEATURE_GAP of open short grass is
+ //                                 left on one side, so there is always a route.
+ //   Never in the green's lap   -- kept back from the putting surface, where a
+ //                                 blind pitch is a different and meaner thing.
+ //   Only where there is room   -- a narrow corridor gets nothing rather than a
+ //                                 tree that makes it unplayable.
+ //
+ // They go straight into `trees` and `rocks`, which means they draw and collide
+ // through the paths everything else already uses; there is no separate kind of
+ // object to keep working.
+ const {gap:FEATURE_GAP,greenKeep:FEATURE_GREEN_KEEP,minHalf:FEATURE_MIN_HALF,standoff:FEATURE_STANDOFF}=FEATURE;
+ {
+  const fRng=random(s.seed+':features'),share=(s.fairwayFeature??0)/100;
+  for(const h of holes){
+   if(h.range||fRng()>=share)continue;
+   const from=Math.max((h.mowStart??h.fairwayStart??22)+70,95);
+   const to=h.length-FEATURE_GREEN_KEEP;
+   if(to-from<40)continue;
+   // A few attempts, because most of what it tries will be refused.
+   for(let a=0;a<14;a++){
+    const z=from+fRng()*(to-from);
+    const half=fairwayWidth(h,z);
+    if(half<FEATURE_MIN_HALF)continue;
+    const centre=h.center(z);
+    // A cheap early-out on the widest a feature ever gets. The real check is
+    // below, against the geometry that actually gets built.
+    const room=half-6-FEATURE_GAP;
+    if(room<0)continue;
+    const x=centre+(fRng()*2-1)*room;
+    const w0=h.toWorld({x,z});
+    const lie=surface(w0.x,w0.z);
+    if(lie==='green'||lie==='sand')continue;
+    if(lakeOwner(w0.x,w0.z,6))continue;
+    const ground=height(w0.x,w0.z);
+    const rock=fRng()<.3;
+    const spread=rock?2.2+fRng()*1.6:3.4+fRng()*2.2;
+    const tall=rock?spread*1.1:bio.canopy.min+bio.canopy.range*(.75+fRng()*.35);
+    // BUILD IT, THEN JUDGE WHAT WAS BUILT. The first version validated the
+    // cluster's CENTRE and then scattered stones up to a full radius away --
+    // including sideways, straight into the gap it had just guaranteed. The
+    // test caught it 0.1 m under. Everything is laid out first now and every
+    // piece of it has to pass, because the piece that sticks out is the one a
+    // ball hits.
+    const pieces=[];
+    if(rock){
+     const n=2+Math.floor(fRng()*3);
+     for(let k=0;k<n;k++){
+      const ang=fRng()*6.283,rad=fRng()*spread*.6;
+      const rx=w0.x+Math.cos(ang)*rad,rz=w0.z+Math.sin(ang)*rad;
+      const scale=(bio.scatter?.rockScale||1)*(1.1+fRng()*1.5);
+      const ry=height(rx,rz);
+      const sx=scale*(1.15+fRng()*.5),sy=scale*(.48+fRng()*.42),sz=scale*(.82+fRng()*.42);
+      pieces.push({rock:true,x:rx,z:rz,y:ry,scale,shape:Math.floor(fRng()*4),
+       rot:[fRng(),fRng()*6.28,fRng()],sx,sy,sz,
+       top:ry+scale*.25+sy,reach:Math.max(sx,sz)});
+     }
+    }else{
+     const kind=bio.plants.find(([k])=>!GROUND_PLANTS.has(k))?.[0]||bio.plants[0][0];
+     pieces.push({rock:false,x:w0.x,z:w0.z,y:ground,h:tall,r:spread,reach:spread,
+      shade:fRng(),kind,hole:h.hole});
+    }
+    // Every piece: clear of the near stretch of every tee shot, and leaving a
+    // route past it in the corridor it actually stands in.
+    let fair=true;
+    for(const q of pieces){
+     const qTop=q.rock?q.top:q.y+q.h;
+     if(blocksLaunch(launch,q.x,q.z,q.y,qTop,q.reach,FEATURE_STANDOFF)){fair=false;break;}
+     const local=h.toLocal(q),qHalf=fairwayWidth(h,local.z);
+     if(qHalf<=0){fair=false;break;}
+     const mid=h.center(local.z);
+     const leftRoom=(mid+qHalf)-(local.x+q.reach);
+     const rightRoom=(local.x-q.reach)-(mid-qHalf);
+     if(Math.max(leftRoom,rightRoom)<FEATURE_GAP){fair=false;break;}
+    }
+    if(!fair)continue;
+    for(const q of pieces){
+     if(q.rock){const{rock:_,...r}=q;rocks.push({...r,feature:true});}
+     else{const{rock:_,reach:__,...t}=q;trees.push({...t,feature:true});}
+    }
+    break;
+   }
   }
  }
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));

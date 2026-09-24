@@ -212,12 +212,41 @@ dead anyway (see below), so the bubble never protected anything.
   deliberately: it is a different question from obstructions, and real golf
   hits the pin. Wants its own decision, including whether the pin is in or out.
 
-- [ ] **Slice 3: specimen obstacles, on purpose.** A feature tree or rock cluster
+- [x] **DONE. Slice 3: specimen obstacles, on purpose.** `fairwayFeature`,
+  0-100%, default 20. Was: A feature tree or rock cluster
   sited in the short grass near the landing zone -- the Pebble Beach cypress, the
   lone oak in a fairway. Fair rather than cheap: visible from the tee, never on
   the tee-shot line, and always a playable route past it. **With a slider for how
   often it happens**, so a course can be clean or quirky. New settings field, so
   it carries a schema and GENERATOR_VERSION bump with it.
+
+- [x] **A specimen is allowed on the line of play, and that was the hard part.**
+  The launch corridor forbids any trunk in the flight path, which is right for
+  scatter planting and wrong for a feature -- an oak in the middle of a fairway
+  IS on the line, and playing to the side of it is the hole. `blocksLaunch`
+  takes a `within` now: scatter gets the whole carry, a specimen gets only the
+  near stretch (130 m), where a tree low in the flight is the original
+  complaint. What makes the rest fair is the gap beside it, not an empty centre.
+
+- [x] **The siting rules are the feature.** At least 13 m of open short grass on
+  one side so there is always a route; 75 m back off the green; only where the
+  corridor is at least 15 m half-wide; never inside the near stretch of a tee
+  shot. All four asserted, in `fairway-features.test.mjs`.
+
+- [x] **It validated the centre and then built something else.** The first
+  version checked the cluster's centre point and then scattered stones up to a
+  full radius away, sideways, into the gap it had just guaranteed -- the test
+  caught it 0.1 m short of the rule. Everything is laid out first now and every
+  piece has to pass, because the piece that sticks out is the one a ball hits.
+
+- [x] **The fairness test was stricter than the rule, and the rule was right.**
+  It failed a feature 121 m out and 17 m off the line -- where the ball is 29 m
+  up and flies clean over a 25 m tree. Being to the side is irrelevant when you
+  are above it. The test asks about height now, as the generator does.
+
+- [x] **An old invariant said every tree stands on rough,** which a specimen
+  deliberately breaks. Narrowed to scatter planting rather than deleted, with a
+  second assertion that scatter trees exist at all so it cannot pass vacuously.
 
 - [ ] **The per-hole tree list is dead code.** `h.trees` is built in
   `generateCourse` for every hole and nothing reads it once a world exists:

@@ -35,9 +35,15 @@ const CASES = ['pnw', 'redwood', 'midwest', 'mountain', 'links', 'autumn', 'dese
 test('no tee shot has a trunk on the line the hole asks for', () => {
  // Measured at 4.5% of 648 before the launch corridor existed, the close ones
  // 8 to 20 m off the tee.
+ //
+ // FEATURES ARE OFF HERE ON PURPOSE. A specimen tree standing in the middle of
+ // a fairway IS on this line -- that is what it is for, and you play to the
+ // side of it. What makes it fair is the gap beside it, which
+ // fairway-features.test.mjs asserts. Leaving them on would have this test
+ // quietly forbid the thing slice 3 exists to build.
  const bad = [];
  for (const biome of CASES) {
-  const w = world({holes: 9, biome, seed: 'corridor-' + biome});
+  const w = world({holes: 9, biome, seed: 'corridor-' + biome, fairwayFeature: 0});
   for (const h of w.holes) for (const tee of Object.values(h.tees))
    for (const b of blockers(w, h, tee)) bad.push(`${biome} hole ${b.hole} ${b.kind} at ${b.along.toFixed(0)} m`);
  }
@@ -47,7 +53,7 @@ test('no tee shot has a trunk on the line the hole asks for', () => {
 test('the corridor only looks forward, so trees beside and behind a tee survive', () => {
  // Deliberate: trees around a tee box are wanted. They give it something to sit
  // in and they break up the basin the terracing leaves. A bubble would kill them.
- const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw'});
+ const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw', fairwayFeature: 0});
  const corr = launchCorridors(w.holes);
  let beside = 0, behind = 0;
  for (const h of w.holes) for (const tee of Object.values(h.tees)) {
@@ -65,7 +71,7 @@ test('the corridor only looks forward, so trees beside and behind a tee survive'
 });
 
 test('the corridor asks about height, not just distance', () => {
- const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw'});
+ const w = world({holes: 9, biome: 'pnw', seed: 'corridor-pnw', fairwayFeature: 0});
  const h = w.holes[0], tee = h.tees.blue, corr = launchCorridors(w.holes, w.height);
  const from = h.toWorld(tee), aim = h.toWorld(fairwayAim(h, tee, LAUNCH.reach));
  const a = Math.atan2(aim.x - from.x, aim.z - from.z), dx = Math.sin(a), dz = Math.cos(a);
@@ -94,7 +100,7 @@ test('the corridor rejects candidates without thinning the forest', () => {
  // corridor for the ocean.
  const SEA_LIMITED = {island: 1200};
  for (const biome of CASES) {
-  const w = world({holes: 9, biome, seed: 'corridor-' + biome});
+  const w = world({holes: 9, biome, seed: 'corridor-' + biome, fairwayFeature: 0});
   const {trees: perHole, holes} = w.settings;
   const target = Math.round(perHole * holes * w.bio.treeDensity);
   const floor = SEA_LIMITED[biome];

@@ -32,7 +32,13 @@ test('islands have substantial surrounding and interior water without flooding f
  const w=buildWorld({biome:'island',seed:'HORIZON-5714',holes:18,elevation:100,landform:100,trees:0});let wet=0,total=0;for(let x=-w.halfX;x<w.halfX;x+=25)for(let z=-w.halfZ;z<w.halfZ;z+=25){total++;if(w.surface(x,z)==='water')wet++;assert(w.land(x,z)>=-w.settings.waterMax-1e-8);}assert(wet/total>.35);for(const h of w.holes){assert.equal(h.surface(Object.values(h.tees)[0].x,Object.values(h.tees)[0].z),'tee');assert.equal(h.surface(h.pin.x,h.pin.z),'green');for(let z=25;z<h.length-25;z+=15)assert.notEqual(h.surface(h.center(z),z),'water');}
 });
 test('mountains and dunes grow between holes, and every biome has mixed vegetation',()=>{
- for(const biome of Object.keys(BIOMES)){const w=buildWorld({biome,trees:45,elevation:70,landform:100});assert(new Set(w.trees.map(t=>t.kind)).size>=3);assert(w.trees.every(t=>w.surface(t.x,t.z)==='rough'));
+ for(const biome of Object.keys(BIOMES)){const w=buildWorld({biome,trees:45,elevation:70,landform:100});assert(new Set(w.trees.map(t=>t.kind)).size>=3);// SCATTER planting only. A SPECIMEN tree is deliberately in the short grass --
+  // the lone cypress, the oak in the middle of the fairway -- and is marked
+  // `feature` for exactly this reason. Dropping the assertion rather than
+  // narrowing it would stop it catching the thing it was written for, which is
+  // scatter planting wandering onto a corridor.
+  assert(w.trees.filter(t=>!t.feature).every(t=>w.surface(t.x,t.z)==='rough'));
+  assert(w.trees.some(t=>!t.feature),'no scatter trees at all -- the assertion above is vacuous');
   if(['mountain','links'].includes(biome)){let peak=0;for(let x=-w.halfX;x<w.halfX;x+=40)for(let z=-w.halfZ;z<w.halfZ;z+=40)peak=Math.max(peak,w.height(x,z));assert(peak>(biome==='mountain'?80:30));}
  }
 });
