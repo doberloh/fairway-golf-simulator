@@ -161,12 +161,40 @@ prevent.
   one it was written against -- a single-seed threshold was written first and
   failed on an outlier at 38%.
 
-- [ ] **Slice C, greens, still open and still the owner's call.** They measure
-  0% inside 20 m and 10-11% at 20-35 m, with that 160-179% ring beyond. Letting
-  trees in is a PLAYABILITY decision rather than a look one: an approach needs
-  somewhere to land, and a green ringed with trees is a different game. Likely a
-  gentler taper than tees, keeping real clearance on the approach side while the
-  back and sides close in.
+- [x] **Slice C done: greens open on the approach, closed behind and beside.**
+  `greenTrees`, 0-100%, default 40. The arc facing back down the fairway keeps
+  its full 46 m at EVERY setting -- measured, the nearest tree on the approach
+  stays at 35.8 m whether the slider is at 0 or 100 -- and the slider moves the
+  back and the flanks only: 6, 7, 10, 15, 30 trees within 40 m of a green across
+  0/25/50/75/100. The approach direction is taken from the middle of the hole
+  70 m short of the green, so a dogleg's approach is where the shot really comes
+  from rather than the line from the tee.
+
+- [x] **The slider's top end was a wall before it was tuned.** At `near` 11 m the
+  20-35 m band ran at 266% of course density, because the thinning ramp had
+  stopped biting before the rough even started -- mown ground reaches about 24 m
+  out, so any keep-out below that does nothing except remove the taper. Swept:
+  `near` 24 with a 20 m ramp gives 51/64/153% across the slider, which is a
+  frame rather than a wall.
+
+- [x] **A combined TEE FAN, not three separate wedges.** A tree can miss the
+  back tee's own wedge and still stand in what you SEE from it: the three tees
+  are staggered and can be ninety metres apart across a hole, so judging each
+  alone leaves the ground between them plantable and that ground is straight
+  down the view. Planting is now refused inside the convex hull of all three
+  wedges -- trees go behind the complex or outside the widest tee on each side.
+  It ignores height, because a tree the ball flies over still hides where the
+  ball is going. Costs some surround density (pnw worst case 75% to 58%) and
+  tee shots stay at 0 of 648 blocked.
+
+- [ ] **The far ring around greens is probably structural, not a pile-up.** It
+  was recorded earlier as bunching at a hard edge, but it sits at 179-205% at
+  55-120 m even with the edge softened and at every slider setting. More likely:
+  rough far from any corridor is fully planted while rough near one is thinned,
+  and a green sits at a corridor's end so its far field is disproportionately
+  far-from-corridor. Worth confirming before anyone treats it as a defect --
+  the earlier claim that softening the edge would fix it was not borne out.
+
 
 ## Obstructions in the shot path
 

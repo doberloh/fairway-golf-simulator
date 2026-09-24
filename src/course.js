@@ -372,6 +372,110 @@ export function fairwayAim(h,p,range){
 //   minHalf   the narrowest corridor that gets one at all
 //   standoff  how far from a tee it must stand: inside this there is nothing a
 //             player can do about it, which is the original complaint
+// THE GREEN SURROUND: open where the shot comes in, closed behind and beside.
+//
+// Greens had the same moat as tees and worse -- 0% of course tree density inside
+// 20 m, 10% out to 35 m, then a ring of 160-179% beyond it. But a green is not a
+// tee: the clearance there is doing real work, because an approach has to have
+// somewhere to land. Closing one in on every side changes how the hole plays,
+// not just how it looks.
+//
+// So the keep-out is ASYMMETRIC. The approach -- the arc facing back down the
+// fairway, where the shot comes from -- keeps its full clearance at every
+// setting of the slider. Everything else, the back and the flanks, is what
+// `greenTrees` moves: at 0 the trees stand off as far as they ever did, at 100
+// they come in close to the collar.
+export const GREEN={
+ // Half-angle of the protected approach arc, measured off the line back down
+ // the hole. Wide enough to cover a shot coming in from either side of the
+ // fairway rather than only from dead centre.
+ arc:62*Math.PI/180,
+ open:46,          // clearance on the approach side, whatever the slider says
+ far:40, near:24,  // back and flanks, at slider 0 and slider 100
+ zone:90,          // how far out this rule replaces the ordinary corridor gate
+ ramp:20,          // metres over which acceptance climbs once past the keep-out
+};
+// Every green with the direction its approach comes FROM, in world space.
+// NOT `greenGuards` -- that name is already taken inside generateWorld by the
+// tee-shoulder guard, and using it here silently shadowed this one.
+export function greenApproaches(holes){
+ const out=[];
+ for(const h of holes||[]){
+  const g=h.worldGreen;
+  // A point back down the middle of the hole: that is where a shot comes from,
+  // and on a dogleg it is not the same as the straight line from the tee.
+  const backZ=Math.max(0,h.length-70);
+  const back=h.toWorld({x:h.center(backZ),z:backZ});
+  const dx=back.x-g.x,dz=back.z-g.z,len=Math.hypot(dx,dz)||1;
+  out.push({x:g.x,z:g.z,dx:dx/len,dz:dz/len});
+ }
+ return out;
+}
+// How far a tree must stand off this green here, or 0 if it is out of range.
+export function greenKeepOut(guards,x,z,closeness){
+ let worst=0;
+ for(const g of guards){
+  const lx=x-g.x,lz=z-g.z,d=Math.hypot(lx,lz);
+  if(d>GREEN.zone||d<1e-6)continue;
+  // Angle off the approach direction: 0 means straight back down the fairway.
+  const cos=(lx*g.dx+lz*g.dz)/d;
+  const open=cos>=Math.cos(GREEN.arc);
+  const keep=open?GREEN.open:GREEN.far+(GREEN.near-GREEN.far)*clamp(closeness,0,1);
+  if(keep>worst)worst=keep;
+ }
+ return worst;
+}
+// THE TEE FAN: one combined cone for the whole tee complex.
+//
+// The shot test is per tee and stays that way -- each tee plays its own line.
+// But a tree can sit outside the back tee's own wedge and still stand squarely
+// in what you SEE from it, because the three tees are staggered and can be
+// ninety metres apart across the hole. Judging each tee alone leaves the ground
+// between them plantable, and that ground is directly down the view from the
+// back of the complex.
+//
+// So planting is refused anywhere inside the convex hull of all three tees'
+// wedges: trees go BEHIND the complex or outside the widest tee on each side,
+// and nowhere in front of it. Unlike the shot test this ignores height, because
+// a tree the ball flies over still blocks the view of where it is going.
+const FAN_NEAR=10, FAN_ANGLE=9*Math.PI/180, FAN_LENGTH=200;
+// Monotone chain. Tiny input -- twelve points per hole -- so clarity wins.
+function hull(pts){
+ const p=[...pts].sort((a,b)=>a.x-b.x||a.z-b.z);
+ if(p.length<3)return p;
+ const cross=(o,a,b)=>(a.x-o.x)*(b.z-o.z)-(a.z-o.z)*(b.x-o.x);
+ const half=src=>{const out=[];for(const q of src){while(out.length>1&&cross(out[out.length-2],out[out.length-1],q)<=0)out.pop();out.push(q);}out.pop();return out;};
+ return [...half(p),...half([...p].reverse())];
+}
+export function teeFans(holes){
+ const fans=[];
+ for(const h of holes||[]){
+  const pts=[];
+  for(const tee of Object.values(h.tees||{})){
+   const aim=fairwayAim(h,tee,LAUNCH.reach);
+   const from=h.toWorld(tee),to=h.toWorld(aim);
+   const dx=to.x-from.x,dz=to.z-from.z,len=Math.hypot(dx,dz)||1;
+   const ux=dx/len,uz=dz/len,px=-uz,pz=ux;
+   const endW=FAN_NEAR+FAN_LENGTH*Math.tan(FAN_ANGLE);
+   pts.push({x:from.x+px*FAN_NEAR,z:from.z+pz*FAN_NEAR},{x:from.x-px*FAN_NEAR,z:from.z-pz*FAN_NEAR});
+   pts.push({x:from.x+ux*FAN_LENGTH+px*endW,z:from.z+uz*FAN_LENGTH+pz*endW},
+            {x:from.x+ux*FAN_LENGTH-px*endW,z:from.z+uz*FAN_LENGTH-pz*endW});
+  }
+  if(pts.length>=3)fans.push(hull(pts));
+ }
+ return fans;
+}
+export function inTeeFan(fans,x,z){
+ for(const poly of fans){
+  let inside=true;
+  for(let i=0;i<poly.length;i++){
+   const a=poly[i],b=poly[(i+1)%poly.length];
+   if((b.x-a.x)*(z-a.z)-(b.z-a.z)*(x-a.x)<0){inside=false;break;}
+  }
+  if(inside)return true;
+ }
+ return false;
+}
 // A TREE LINE THINS OUT; IT DOES NOT STOP DEAD.
 //
 // Planting obeyed one hard rule -- at least 10 m outside any corridor -- and a
@@ -1570,6 +1674,8 @@ export function* generateWorldSteps(settings={}){
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
  const launch=launchCorridors(holes,height);
+ const fans=teeFans(holes);
+ const guards=greenApproaches(holes),closeness=(s.greenTrees??0)/100;
  // How far this point is from the nearest tee. The launch corridors already
  // carry every tee in world coordinates, so there is no second list to keep in
  // step with where the tees ended up.
@@ -1626,17 +1732,27 @@ export function* generateWorldSteps(settings={}){
    // course -- measured at 129-160% of average, a thicket rather than a frame.
    const cover=GROUND_PLANTS.has(kind);
    if(!cover){
-    const tee=teeNear(x,z)<EDGE.teeZone;
-    const floor=tee?EDGE.teeFloor:EDGE.floor,soft=tee?EDGE.teeSoft:EDGE.soft;
-    if(n.d<floor)continue;
-    if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
+    // Near a green the green's own rule replaces the corridor gate, for the
+    // same reason it does near a tee: the corridor envelope there is far wider
+    // than the mown surround, so the ordinary gate bans everything.
+    const keep=greenKeepOut(guards,x,z,closeness);
+    if(keep>0){
+     const dg=Math.min(...guards.map(g=>Math.hypot(x-g.x,z-g.z)));
+     if(dg<keep)continue;
+     if(dg<keep+GREEN.ramp&&rng()>smooth((dg-keep)/GREEN.ramp))continue;
+    }else{
+     const tee=teeNear(x,z)<EDGE.teeZone;
+     const floor=tee?EDGE.teeFloor:EDGE.floor,soft=tee?EDGE.teeSoft:EDGE.soft;
+     if(n.d<floor)continue;
+     if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
+    }
    }
   }
   const tree={x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole};
   // Ground cover threads between the trunks and needs no room of its own.
   // A ground plant is ankle height with no trunk, so nothing can hit it and it
   // is exactly what should still grow in front of a tee.
-  if(!small&&blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2))continue;
+  if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z)))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
