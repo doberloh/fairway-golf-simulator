@@ -687,7 +687,80 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
-### Planting density around tees, across the fairway width slider
+### How un-round a green and a bunker are
+
+Both outlines are a radius that varies with angle: the nominal size times one
+plus a few harmonics. A green carries three (two-, three- and five-lobed waves),
+a bunker two. Measured over 108 greens and 284 bunkers, the amplitudes were small
+enough that nothing was really a shape — widest radius over narrowest, and a
+"bend" figure that is non-zero only where an outline turns back on itself:
+
+| | widest/narrowest | bend |
+|---|---|---|
+| greens | 1.15 – **1.24** – 1.40 | 0.00 everywhere |
+| bunkers | 1.11 – **1.48** – 2.40 | 0.00 everywhere |
+
+A circle is 1.00 and 0.00; an ellipse is its aspect and 0.00. So every one of the
+392 shapes measured was a smooth oval.
+
+### Scaling the drawn mix was tried first, and it looked wrong
+
+The first version scaled all three harmonics together, on the reasoning that it
+would keep each green's own character. What it actually kept was **which harmonic
+dominated** — and the three-lobed wave is drawn from `.025 + rng*.075`, always
+positive and the largest of the three on average. Measured: it leads on **69 of
+81 greens**, with the biggest harmonic owning half the wobble. Amplifying that
+gives a clean three-lobed flower, and a three-lobed flower stretched by a green's
+aspect ratio is two round lobes at one end and a tapering shaft. It was rejected
+on sight.
+
+A first attempt to diagnose it also failed, and the reason is worth keeping: the
+descriptor measured how far an outline differs from its own 180° rotation, which
+**cannot see harmonic 2 at all**, since that harmonic is symmetric under exactly
+that rotation. It returned identical figures for four very different mixes.
+
+So the sliders do two things: raise the amplitude, and pull the harmonics toward
+equal so none of them runs away with the shape. Equal thirds of a modest total is
+an irregular outline; one harmonic holding all of it is a flower.
+
+| slider | greens (median) | bunkers (median) | biggest harmonic's share |
+|---|---|---|---|
+| 0% | 1.24 | 1.48 | 50% |
+| 30% (default) | 1.42 | 1.63 | 45% |
+| 100% | 1.74 | 1.83 | 33% |
+
+**Evening the mix costs range, deliberately.** The rejected version reached a
+median of 2.45 at full against 1.74 here — but that extra range was the flower.
+
+**Scaling happens at generation, not at read time, and that is the important
+part.** The route texture packs whatever the hole carries and the hazard texture
+packs whatever the bunker carries, so the painted surface and the lie the ball
+gets come from one set of numbers. Scaling in the shader instead would have meant
+the same arithmetic in two places, which is how the apron was once painted as
+fairway and played as semi-rough.
+
+A cap on the total wave amplitude — 0.34 for greens, 0.30 for bunkers — is what
+keeps a radius safely positive: at the cap the narrowest point of a green is
+still comfortably over half its nominal radius, so an outline can pinch without
+folding through itself.
+
+### What it costs: green surrounds get steeper
+
+Shaping a green steepens the ground falling away from it, because the shoulder is
+blended on the green's NOMINAL size and does not follow the outline — so wherever
+a shaped green bulges outward, its shoulder has less room.
+
+| | slider 0 | 30 (default) | 60 | 100 |
+|---|---|---|---|---|
+| default terrain, steepest | 0.570 | 0.709 | 0.800 | 0.806 |
+| harshest terrain, steepest | 0.685 | 0.795 | 0.945 | 1.032 |
+
+On the eight seeds the surround characterisation test uses, at the harshest
+settings the game offers, the steepest goes 1.056 at slider 0 to 1.372 at the
+default and 1.933 at full. That test was re-pinned, and the shoulder blending is
+filed as the real fix.
+
+## Planting density around tees, across the fairway width slider
 
 Measured with `node tools/bench.mjs surrounds --set trees=65`, which reports the
 trees standing within 20 m of a tee as a multiple of that course's own average,
