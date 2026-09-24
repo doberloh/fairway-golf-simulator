@@ -121,6 +121,53 @@ prevent.
   checking whether the adopt path is being missed there, separately from the
   chunking work.
 
+## Tee surrounds, and the moat that made them
+
+- [x] **Tee boxes read as clear-cut, and one signed number was the cause.**
+  Measured per hectare of ROUGH (mown turf can never hold a tree, so counting it
+  understates the rest): the first 20 m around a tee ran at 19-50% of course
+  density, recovering only past 60 m. `nearest().d` IS SIGNED -- it is the
+  distance outside a hole's corridor ENVELOPE, and near a tee that envelope is
+  far wider than the mown turf. 99% of the rough around a tee sits at a negative
+  d, as deep as -34 m, so "at least 10 m outside a corridor" banned the entire
+  surround while the surface classifier called that same ground rough.
+  Now 65-105% across seeds, with the shot still clear.
+
+- [x] **It was safe to drop only because of the launch corridor.** The blanket
+  10 m used to be the thing keeping a tee shot clear. `blocksLaunch` does that
+  exactly now, pointing where the shot actually goes, so the blanket was free to
+  stop being a moat. 0 of 648 tee shots blocked, unchanged.
+
+- [x] **The hard edge is a ramp everywhere else too.** A cliff produces two
+  artefacts at once: a bare moat, and a PILE-UP just outside it, because every
+  refused candidate is pushed outward and bunches at the boundary -- greens
+  measured 0% inside 20 m and 160-179% at 55-120 m. Acceptance now climbs from
+  nothing at the floor to certainty by `EDGE.soft`, so edge candidates are
+  sometimes kept rather than all shoved out.
+
+- [x] **Overcorrected first, and the measurement caught it.** Dropping the gate
+  near tees with no ramp at all left the surround DENSER than the course
+  average, 129-160% -- a thicket rather than a frame. A ramp over negative
+  distances brought it back to roughly average.
+
+- [x] **A blocked tee shot appeared and was slice 3 working.** The harness was
+  not setting `fairwayFeature: 0` the way the real test does, so it counted a
+  specimen redwood at 207 m as a defect. Before spotting that I added a carry
+  `overrun` to "fix" it; that fixed nothing and was reverted rather than left in
+  as unmeasured margin.
+
+- [x] **One seed says very little here.** The same biome ranges 38% to 88%
+  across seeds, so the test averages several rather than pinning to whichever
+  one it was written against -- a single-seed threshold was written first and
+  failed on an outlier at 38%.
+
+- [ ] **Slice C, greens, still open and still the owner's call.** They measure
+  0% inside 20 m and 10-11% at 20-35 m, with that 160-179% ring beyond. Letting
+  trees in is a PLAYABILITY decision rather than a look one: an approach needs
+  somewhere to land, and a green ringed with trees is a different game. Likely a
+  gentler taper than tees, keeping real clearance on the approach side while the
+  back and sides close in.
+
 ## Obstructions in the shot path
 
 Measured across 216 holes, 648 tee shots (8 biomes x 3 seeds x 3 tees): **29 tee

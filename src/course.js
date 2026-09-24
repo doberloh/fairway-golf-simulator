@@ -372,6 +372,39 @@ export function fairwayAim(h,p,range){
 //   minHalf   the narrowest corridor that gets one at all
 //   standoff  how far from a tee it must stand: inside this there is nothing a
 //             player can do about it, which is the original complaint
+// A TREE LINE THINS OUT; IT DOES NOT STOP DEAD.
+//
+// Planting obeyed one hard rule -- at least 10 m outside any corridor -- and a
+// cliff produces two artefacts at once. Measured around tee boxes: density in
+// the first 25 m ran at 18-50% of the course average, and around greens 0% at
+// 20 m with a RING of 160-179% further out, because every candidate the rule
+// refused was pushed outward and bunched at the boundary. Together that reads
+// as a clear-cut with a wall of trees round it, which is what it is.
+//
+// So the edge is a ramp: nothing at all below `floor`, then acceptance climbing
+// to certainty by `soft`. Candidates near the edge are sometimes KEPT rather
+// than all shoved out, which is what removes the bare moat and the pile-up in
+// the same move.
+//
+// AROUND A TEE THE RAMP IS MUCH TIGHTER, and that is only safe because of the
+// launch corridor. The blanket 10 m used to be what kept a tee shot clear; now
+// `blocksLaunch` does that exactly, pointing where the shot actually goes, so
+// the blanket is free to stop being a moat. Trees come right up to the mown
+// apron behind and beside a pad, where they frame the box instead of standing
+// back from it in a ring.
+//
+// Ground cover has no trunk and cannot block anything, so it runs closest of all.
+// NEAR A TEE THE CORRIDOR-DISTANCE GATE GOES ENTIRELY, and it has to: measured,
+// 71.5% of the ground in a 3-20 m ring around a tee sits within 2 m of a
+// corridor by that rule while the SURFACE classifier calls it rough. The two
+// disagree there, because the corridor envelope is wider than the mown turf at
+// a hole's start. Any floor at all on `n.d` therefore bans most of the tee
+// surround, which is precisely the clear-cut being complained about.
+//
+// What keeps it safe is that two other rules already do the real work: nothing
+// may stand on mown turf, and nothing may stand in the launch corridor. Trees
+// grow right up to the apron behind and beside the pad, and not in front of it.
+export const EDGE={floor:5,soft:18,teeFloor:-20,teeSoft:5,teeZone:45};
 export const FEATURE={gap:13,greenKeep:75,minHalf:15,standoff:130};
 export const LAUNCH={near:8,angle:9*Math.PI/180,reach:210,apexShare:30/210};
 // Every tee of every hole, as a world-space ray. Built once and reused: the
@@ -1537,6 +1570,14 @@ export function* generateWorldSteps(settings={}){
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
  const launch=launchCorridors(holes,height);
+ // How far this point is from the nearest tee. The launch corridors already
+ // carry every tee in world coordinates, so there is no second list to keep in
+ // step with where the tees ended up.
+ const teeNear=(x,z)=>{
+  let best=Infinity;
+  for(const c of launch){const d=Math.hypot(c.x-x,c.z-z);if(d<best)best=d;}
+  return best;
+ };
  const rng=random(s.seed+':ecology'),pick=()=>{let r=rng();for(const[k,f]of bio.plants){r-=f;if(r<=0)return k;}return bio.plants[0][0];};
  // A species may be understorey: a third number scales its height, so a biome
  // can have a mid-storey under its giants instead of everything reaching the
@@ -1566,8 +1607,31 @@ export function* generateWorldSteps(settings={}){
  // The drawn trunk radius, which physics also uses. Kept local rather than
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
- for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d<10||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
+ for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
   const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
+  // The soft edge. Drawn before anything else is decided about this candidate,
+  // so a rejection here costs one number and not a whole tree's worth of them.
+  {
+   // `n.d` IS SIGNED, and that is the whole story. It is the distance outside a
+   // hole's corridor ENVELOPE, which near a tee is far wider than the mown turf
+   // -- measured, 99% of the rough around a tee sits at a negative d, as deep as
+   // -34 m. So "at least 10 m outside" banned the entire tee surround while the
+   // surface classifier was calling that same ground rough.
+   //
+   // Near a tee, and for ground cover anywhere, the gate simply does not apply:
+   // nothing may stand on mown turf and nothing may stand in the launch
+   // corridor, and those two are the rules that actually matter.
+   // Near a tee the ramp runs over NEGATIVE distances, because that is where the
+   // ground is. Without one the tee zone ends up denser than the rest of the
+   // course -- measured at 129-160% of average, a thicket rather than a frame.
+   const cover=GROUND_PLANTS.has(kind);
+   if(!cover){
+    const tee=teeNear(x,z)<EDGE.teeZone;
+    const floor=tee?EDGE.teeFloor:EDGE.floor,soft=tee?EDGE.teeSoft:EDGE.soft;
+    if(n.d<floor)continue;
+    if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
+   }
+  }
   const tree={x,z,y:height(x,z),h,r,shade:rng(),kind,hole:n.h.hole};
   // Ground cover threads between the trunks and needs no room of its own.
   // A ground plant is ankle height with no trunk, so nothing can hit it and it
