@@ -68,8 +68,12 @@ prevent.
   canopy tops out at 111 m. There is one `canopyTop` now and both the flight and
   the arrival ask it rather than assuming. Four biomes x nine holes in the test.
 
-- [ ] **THE HOLE FLYOVER FLIES THROUGH THE TREES, and has since redwoods landed.**
-  Same stale assumption, not yet fixed because fixing it is a framing decision
+- [ ] **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
+  trees, and has since redwoods landed.** Owner's call: not worth changing for
+  now. Left open because it is still true, NOT because it is waiting on
+  somebody -- do not pick this up as pending work, and do not re-report it as a
+  new discovery. Reopen it only if the flyover starts looking wrong on screen.
+  Same stale assumption as the arrival pose had; fixing it is a framing decision
   rather than a one-line clamp. `makeHoleTour` clears TERRAIN by 34 m and never
   looks at the canopy. Measured against real canopy, worst gap per biome over
   nine holes each: **redwood -91.1 m** (tallest canopy 186 m), **mountain -0.0 m**
@@ -220,13 +224,17 @@ prevent.
   ball is going. Costs some surround density (pnw worst case 75% to 58%) and
   tee shots stay at 0 of 648 blocked.
 
-- [ ] **The far ring around greens is probably structural, not a pile-up.** It
-  was recorded earlier as bunching at a hard edge, but it sits at 179-205% at
-  55-120 m even with the edge softened and at every slider setting. More likely:
-  rough far from any corridor is fully planted while rough near one is thinned,
-  and a green sits at a corridor's end so its far field is disproportionately
-  far-from-corridor. Worth confirming before anyone treats it as a defect --
-  the earlier claim that softening the edge would fix it was not borne out.
+- [ ] **UNEXPLAINED, AND THAT IS FINE FOR NOW, 23 September 2026. The far ring
+  around greens is probably structural rather than a pile-up.** Owner's call:
+  keep it on the list, do not chase it. It was recorded earlier as bunching at a
+  hard edge, but it sits at 179-205% at 55-120 m even with the edge softened and
+  at every slider setting. More likely: rough far from any corridor is fully
+  planted while rough near one is thinned, and a green sits at a corridor's end
+  so its far field is disproportionately far-from-corridor. **The earlier claim
+  that softening the edge would fix it was wrong and is withdrawn** -- that is
+  the part worth remembering, because it is written into the commit message for
+  the soft-edge change where nobody will think to look for a correction.
+  `tools/bench.mjs surrounds --set trees=65` is what measures it.
 
 
 ## Obstructions in the shot path
