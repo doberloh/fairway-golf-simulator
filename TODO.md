@@ -123,6 +123,39 @@ prevent.
 
 ## Tee surrounds, and the moat that made them
 
+- [x] **The tee ramp is a share of the hole's width, not a number of metres.**
+  A fixed -20 m floor is compared against `n.d`, which grows with the corridor,
+  so it held at the 38 m default and collapsed at the top of the width slider:
+  0.25 of course average at 92 m, and 0.03 at worst, which is worse than the
+  clear-cut this work started from. Scaled to three times the corridor
+  half-width it runs **0.34 to 0.90 across all eight biomes and the whole
+  slider**. Tee shots stay at 0 of 648 blocked.
+
+- [x] **`surrounds` is a bench metric now, not a throwaway script.** This
+  question gets asked every time planting or corridor width moves, across eight
+  biomes and a slider, and each answer costs a course. It imports
+  `greenApproaches` from src rather than recomputing which way a green faces.
+  Run it with `--set trees=65`: the standard fixtures build with `trees: 0`
+  because every other metric measures terrain, where planting is irrelevant and
+  costs time.
+
+- [x] **The metric lied twice before it was right.** First it measured each tee's
+  own 20 m circle -- a circle that small holds a handful of trees, so every
+  reading was zero or a spike and the median came out at zero on a course
+  planted perfectly well. Then it reported a shelf of zeros on the standard
+  fixtures and tripped its own invariant, because those courses have no trees at
+  all. It pools every tee into one reading per course and refuses to report when
+  there is nothing planted.
+
+- [x] **Links has no trees and never did.** It plants gorse, heather and shrub,
+  all of them ground cover with no trunk, so none of the tee or green planting
+  rules touch it. Worth knowing before anyone reads a blank row as a failure.
+
+- [x] **Generator versions 24 to 29 had no entries.** The list in
+  settings-schema.js stopped at 23 while the constant climbed through five
+  bumps in one session -- the exact failure the file warns about, committed
+  repeatedly. All six written up.
+
 - [x] **Tee boxes read as clear-cut, and one signed number was the cause.**
   Measured per hectare of ROUGH (mown turf can never hold a tree, so counting it
   understates the rest): the first 20 m around a tee ran at 19-50% of course

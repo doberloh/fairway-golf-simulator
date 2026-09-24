@@ -508,7 +508,21 @@ export function inTeeFan(fans,x,z){
 // What keeps it safe is that two other rules already do the real work: nothing
 // may stand on mown turf, and nothing may stand in the launch corridor. Trees
 // grow right up to the apron behind and beside the pad, and not in front of it.
-export const EDGE={floor:5,soft:18,teeFloor:-20,teeSoft:5,teeZone:45};
+// THE TEE RAMP IS A SHARE OF THE HOLE'S OWN WIDTH, NOT A NUMBER OF METRES.
+//
+// `teeFloor` was -20 m flat, and the quantity it is compared against scales with
+// the fairway: `n.d` is the distance outside the corridor ENVELOPE, so a wider
+// hole pushes the ground near its tee further negative. Measured across the
+// width slider, the tee surround held at the 38 m default and collapsed at the
+// top of the range -- 40% of course density on midwest and 26% on pnw at 92 m,
+// worse than the clear-cut this work started from. A fixed floor cannot track a
+// corridor that doubles in width.
+//
+// So the floor is `teeSpan` times the corridor's half-width at the tee, which
+// holds the same shape of surround whatever the hole is doing. `teeFloorMin`
+// keeps a sensible floor on the narrowest holes, where half of very little is
+// not enough room for anything.
+export const EDGE={floor:5,soft:18,teeSpan:-3,teeFloorMin:-20,teeSoft:5,teeZone:45};
 export const FEATURE={gap:13,greenKeep:75,minHalf:15,standoff:130};
 export const LAUNCH={near:8,angle:9*Math.PI/180,reach:210,apexShare:30/210};
 // Every tee of every hole, as a world-space ray. Built once and reused: the
@@ -1742,7 +1756,10 @@ export function* generateWorldSteps(settings={}){
      if(dg<keep+GREEN.ramp&&rng()>smooth((dg-keep)/GREEN.ramp))continue;
     }else{
      const tee=teeNear(x,z)<EDGE.teeZone;
-     const floor=tee?EDGE.teeFloor:EDGE.floor,soft=tee?EDGE.teeSoft:EDGE.soft;
+     // The hole's own half-width where this ground sits, so the ramp tracks a
+     // corridor that widens instead of being a fixed number of metres beside it.
+     const floor=tee?Math.min(EDGE.teeFloorMin,EDGE.teeSpan*(n.h?.width?.(Math.max(0,n.p?.z??0))??EDGE.soft)):EDGE.floor;
+     const soft=tee?EDGE.teeSoft:EDGE.soft;
      if(n.d<floor)continue;
      if(n.d<soft&&rng()>smooth((n.d-floor)/(soft-floor)))continue;
     }

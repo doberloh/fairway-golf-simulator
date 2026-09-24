@@ -85,7 +85,33 @@ export const SCHEMA_VERSION=7;
 //     into `holeLine` in course-plan.js, which also moved the tee draws earlier
 //     in the hole's stream so a scorecard can reach them. Every hole on every
 //     course changes length, par or both: all eight biome fingerprints moved.
-export const GENERATOR_VERSION=28;
+// 24: tee shots got a launch corridor. Planting obeyed one rule -- at least
+//     10 m outside a corridor -- which beside a tee is a tree in your face:
+//     29 of 648 tee shots (4.5%) had a trunk on the line to the fairway, the
+//     close ones 8 to 20 m out. `blocksLaunch` refuses anything standing where
+//     the nominal shot would pass through it, judged on HEIGHT rather than a
+//     fixed length, aimed along the played line rather than the tee pad's
+//     bearing. Six biome fingerprints moved; links and desert did not, their
+//     plantings being shrub and cactus.
+// 25: boulders became generation output. They were placed by the renderer from
+//     an rng the generator never saw, so nothing could collide with one -- a
+//     ball flew through a six-metre stone. `world.rocks` now, carrying reach
+//     and crown height, and the fingerprint hashes them.
+// 26: `fairwayFeature` -- a specimen tree or a cluster of stones standing in a
+//     hole's own short grass, sited to leave a route past it.
+// 27: planting stopped stepping at the corridor edge and started ramping.
+//     `nearest().d` is SIGNED, and near a tee the corridor envelope is far
+//     wider than the mown turf, so the old rule banned the whole tee surround:
+//     19-50% of course density in the first 20 m. Now 65-105%.
+// 28: a combined tee fan replaced three separate wedges, so nothing plants in
+//     the view from the back tee, and `greenTrees` opened green surrounds on
+//     the back and flanks while keeping the approach clear.
+// 29: the tee ramp scales with the hole's own width instead of being a fixed
+//     -20 m. `n.d` grows with the corridor, so a flat floor collapsed at wide
+//     settings -- the tee surround fell to 0.03 of course average at a 92 m
+//     fairway, worse than before any of this work. Now 0.34 to 0.90 across
+//     every biome and the whole width slider.
+export const GENERATOR_VERSION=29;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

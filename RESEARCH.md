@@ -687,7 +687,49 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
-### What "agreeing with a launch monitor" is actually worth
+### Planting density around tees, across the fairway width slider
+
+Measured with `node tools/bench.mjs surrounds --set trees=65`, which reports the
+trees standing within 20 m of a tee as a multiple of that course's own average,
+counted per hectare of ROUGH — mown turf can never hold a tree, so including it
+in the denominator makes a surround look emptier than it is.
+
+The keep-out near a tee is compared against `nearest().d`, the distance outside a
+hole's corridor **envelope**, and that envelope grows with the fairway. A floor
+fixed at −20 m therefore held at the default width and fell apart at the top of
+the range:
+
+| fairway width | fixed −20 m floor | scaled to the hole |
+|---|---|---|
+| 20 m | 0.75 | 0.71 |
+| 38 m (default) | 0.46 | 0.68 |
+| 60 m | 0.48 | 0.60 |
+| 92 m | **0.25** | 0.53 |
+
+Scaled, the floor is three times the corridor's half-width at that point. Across
+all eight biomes and the whole width slider the surround now runs **0.34 to
+0.90** of course average, against 0.03 at its worst before:
+
+| biome | 20 m | 38 m | 60 m | 92 m |
+|---|---|---|---|---|
+| pnw | 0.81 | 0.68 | 0.59 | 0.53 |
+| desert | 0.80 | 0.45 | 0.47 | 0.39 |
+| mountain | 0.66 | 0.75 | 0.80 | 0.83 |
+| links | — | — | — | — |
+| midwest | 0.75 | 0.67 | 0.76 | 0.61 |
+| island | 0.47 | 0.52 | 0.34 | 0.54 |
+| redwood | 0.90 | 0.83 | 0.54 | 0.72 |
+| autumn | 0.69 | 0.72 | 0.70 | 0.45 |
+
+**Links reports nothing, and that is correct.** It plants gorse, heather and
+shrub — all ground cover, zero trunked trees — so there is nothing for a tree
+rule to act on. The metric refuses to report rather than printing zeros, because
+the first version of it did print zeros and tripped its own clear-cut invariant
+on courses that simply had no trees.
+
+Tee shots stay clear throughout: 0 of 648 blocked on the line the hole asks for.
+
+## What "agreeing with a launch monitor" is actually worth
 
 A launch monitor does not hand back a measured apex; it derives one, from what it
 can see, through its own model. A photometric unit and a radar-assisted one start
