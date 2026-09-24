@@ -111,3 +111,48 @@ test('the corridor rejects candidates without thinning the forest', () => {
     `${biome} placed ${w.trees.length}, below its ${floor} floor -- the corridor is now costing real trees`);
  }
 });
+
+test('trees encroach on a tee instead of standing back from it in a ring', () => {
+ // The tee surround used to run at 19-50% of the course average and it read as
+ // a clear-cut. The cause was `nearest().d`, which is SIGNED: it measures
+ // distance outside a hole's corridor ENVELOPE, and near a tee that envelope is
+ // far wider than the mown turf -- 99% of the rough around a tee sits at a
+ // negative d, as deep as -34 m. "At least 10 m outside" therefore banned the
+ // whole surround while the surface classifier called that same ground rough.
+ //
+ // MEASURED OVER SEVERAL SEEDS, because one seed says very little here: the
+ // same biome ranges 65% to 88% across seeds, and a single-seed threshold would
+ // be pinned to whichever one it was written against. Density is per hectare of
+ // ROUGH, not of ground -- mown turf can never hold a tree, so counting it in
+ // the denominator would understate the rest.
+ const SEEDS = ['a', 'b', 'c', 'd'];
+ for (const biome of ['midwest', 'pnw', 'redwood']) {
+  const each = SEEDS.map(seed => {
+   const w = world({holes: 9, biome, seed});
+   const tees = w.holes.flatMap(h => Object.values(h.tees).map(t => h.toWorld(t)));
+   let s2 = 5;
+   const rnd = () => (s2 = (s2 * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+   let n = 0, rough = 0;
+   for (let i = 0; i < 30000; i++) {
+    const x = (rnd() - .5) * w.halfX * 2, z = (rnd() - .5) * w.halfZ * 2;
+    n++; if (w.surface(x, z) === 'rough') rough++;
+   }
+   const overall = w.trees.length / ((w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4);
+   let rr = 0, rn = 0;
+   for (const t of tees) for (let i = 0; i < 700; i++) {
+    const ang = rnd() * 6.283, r = Math.sqrt(rnd()) * 20;
+    rn++; if (w.surface(t.x + Math.cos(ang) * r, t.z + Math.sin(ang) * r) === 'rough') rr++;
+   }
+   const near = new Set();
+   for (const t of tees) for (let i = 0; i < w.trees.length; i++)
+    if (Math.hypot(w.trees[i].x - t.x, w.trees[i].z - t.z) < 20) near.add(i);
+   return (near.size / (tees.length * Math.PI * 400 / 1e4 * (rr / rn))) / overall;
+  });
+  const mean = each.reduce((x, y) => x + y, 0) / each.length;
+  const show = each.map(v => (v * 100).toFixed(0) + '%').join(', ');
+  assert.ok(mean > .6,
+   `${biome}: tee surrounds average ${(mean * 100).toFixed(0)}% of course density (${show}) -- the moat is back`);
+  assert.ok(mean < 1.6,
+   `${biome}: tee surrounds average ${(mean * 100).toFixed(0)}% (${show}) -- that is a thicket, not a frame`);
+ }
+});

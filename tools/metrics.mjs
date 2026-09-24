@@ -1,3 +1,5 @@
+import {greenApproaches, GREEN} from '../src/course.js';
+import {GROUND_PLANTS} from '../src/species.js';
 // What a generated course is measured on.
 //
 // EVERY METRIC IMPORTS ITS GEOMETRY FROM `src`. It never reimplements it.
@@ -42,6 +44,98 @@ const boundary = (h, p, n = 64) => Array.from({length: n}, (_, i) => {
 // and named counts (summed). An `invariant` is a count that must stay at zero;
 // the harness reports those separately because they are rules, not readings.
 export const METRICS = {
+
+ surrounds: {
+  describe: 'planting density around tees and greens, against the course average -- NEEDS `--set trees=65`',
+  run(w) {
+   // WHY THIS IS A METRIC AND NOT A SCRIPT. It gets asked every time planting
+   // or corridor width moves, across eight biomes and a width slider, and each
+   // answer costs a course. `greenApproaches` comes from `src` rather than
+   // being recomputed here, because four measurements in this project have
+   // lied and every one recomputed what it was checking.
+   //
+   // ONE READING PER COURSE, POOLED OVER EVERY TEE. A first version measured
+   // each tee's own 20 m circle and was useless: a circle that small holds a
+   // handful of trees, so every reading was either zero or a spike and the
+   // median came out at zero on a course that was planted perfectly well.
+   //
+   // Density is per hectare of ROUGH, not of ground. Mown turf can never hold a
+   // tree, so counting it in the denominator understates how planted the rest
+   // is and makes a surround look emptier than it is.
+   const series = {teeSurround: [], greenBack: [], greenApproach: []};
+   const counts = {holes: 0, tees: 0, greens: 0};
+   const trunked = w.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+   // THE STANDARD FIXTURES BUILD COURSES WITH `trees: 0`, because every other
+   // metric measures terrain and routing, where planting is irrelevant and
+   // costs time. So this one reports NOTHING rather than a shelf of zeros that
+   // reads as a clear-cut -- the first version did exactly that and tripped its
+   // own invariant on courses that simply had no trees.
+   //   node tools/bench.mjs surrounds --set trees=65
+   if (trunked.filter(t => !t.feature).length < 50) return {series: {}, counts: {}, invariants: {}};
+   // Deterministic: the same course must give the same reading twice.
+   let seed = 20260923;
+   const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+
+   let n = 0, rough = 0;
+   for (let i = 0; i < 20000; i++) {
+    const x = (rnd() - .5) * w.halfX * 2, z = (rnd() - .5) * w.halfZ * 2;
+    n++; if (w.surface(x, z) === 'rough') rough++;
+   }
+   const roughHa = (w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4;
+   const average = roughHa > 0 ? trunked.length / roughHa : 0;
+
+   // Pooled density in a ring round a set of centres, as a multiple of average.
+   const pooled = (centres, radius, pick) => {
+    if (!centres.length || !average) return null;
+    let roughHits = 0, samples = 0;
+    for (const c of centres) for (let i = 0; i < 400; i++) {
+     const a = rnd() * 6.283, r = Math.sqrt(rnd()) * radius;
+     samples++;
+     if (w.surface(c.x + Math.cos(a) * r, c.z + Math.sin(a) * r) === 'rough') roughHits++;
+    }
+    const area = centres.length * Math.PI * radius * radius / 1e4 * (roughHits / samples);
+    if (!area) return null;
+    // Deduped: two tees of one complex share ground, and a tree between them is
+    // one tree, not two.
+    const seen = new Set();
+    for (let i = 0; i < trunked.length; i++) {
+     const t = trunked[i];
+     for (const c of centres) {
+      const d = Math.hypot(t.x - c.x, t.z - c.z);
+      if (d < radius && (!pick || pick(t, c, d))) { seen.add(i); break; }
+     }
+    }
+    return (seen.size / area) / average;
+   };
+
+   const tees = [];
+   for (const h of w.holes) {
+    counts.holes++;
+    for (const tee of Object.values(h.tees || {})) { counts.tees++; tees.push(h.toWorld(tee)); }
+   }
+   const teeVal = pooled(tees, 20);
+   if (teeVal !== null) series.teeSurround.push(teeVal);
+
+   // Greens, split by the side the shot comes in from: the approach is meant to
+   // stay open at every setting of `greenTrees`, the back and flanks are not.
+   const guards = greenApproaches(w.holes);
+   counts.greens = guards.length;
+   const facing = (t, g) => {
+    const lx = t.x - g.x, lz = t.z - g.z, d = Math.hypot(lx, lz);
+    return d > 1e-6 && (lx * g.dx + lz * g.dz) / d >= Math.cos(GREEN.arc);
+   };
+   const back = pooled(guards, 45, (t, g) => !facing(t, g));
+   const front = pooled(guards, 45, facing);
+   if (back !== null) series.greenBack.push(back);
+   if (front !== null) series.greenApproach.push(front);
+
+   // A tee surround at a quarter of the course average is the clear-cut this
+   // work removed; it must not come back at any fairway width.
+   const invariants = {teeSurroundClearCut: teeVal !== null && teeVal < .25 ? 1 : 0};
+   return {series, counts, invariants};
+  },
+ },
+
 
  tees: {
   describe: 'tee complex levelling, pad flatness and the ground around a pad',

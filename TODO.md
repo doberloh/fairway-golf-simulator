@@ -121,6 +121,114 @@ prevent.
   checking whether the adopt path is being missed there, separately from the
   chunking work.
 
+## Tee surrounds, and the moat that made them
+
+- [x] **The tee ramp is a share of the hole's width, not a number of metres.**
+  A fixed -20 m floor is compared against `n.d`, which grows with the corridor,
+  so it held at the 38 m default and collapsed at the top of the width slider:
+  0.25 of course average at 92 m, and 0.03 at worst, which is worse than the
+  clear-cut this work started from. Scaled to three times the corridor
+  half-width it runs **0.34 to 0.90 across all eight biomes and the whole
+  slider**. Tee shots stay at 0 of 648 blocked.
+
+- [x] **`surrounds` is a bench metric now, not a throwaway script.** This
+  question gets asked every time planting or corridor width moves, across eight
+  biomes and a slider, and each answer costs a course. It imports
+  `greenApproaches` from src rather than recomputing which way a green faces.
+  Run it with `--set trees=65`: the standard fixtures build with `trees: 0`
+  because every other metric measures terrain, where planting is irrelevant and
+  costs time.
+
+- [x] **The metric lied twice before it was right.** First it measured each tee's
+  own 20 m circle -- a circle that small holds a handful of trees, so every
+  reading was zero or a spike and the median came out at zero on a course
+  planted perfectly well. Then it reported a shelf of zeros on the standard
+  fixtures and tripped its own invariant, because those courses have no trees at
+  all. It pools every tee into one reading per course and refuses to report when
+  there is nothing planted.
+
+- [x] **Links has no trees and never did.** It plants gorse, heather and shrub,
+  all of them ground cover with no trunk, so none of the tee or green planting
+  rules touch it. Worth knowing before anyone reads a blank row as a failure.
+
+- [x] **Generator versions 24 to 29 had no entries.** The list in
+  settings-schema.js stopped at 23 while the constant climbed through five
+  bumps in one session -- the exact failure the file warns about, committed
+  repeatedly. All six written up.
+
+- [x] **Tee boxes read as clear-cut, and one signed number was the cause.**
+  Measured per hectare of ROUGH (mown turf can never hold a tree, so counting it
+  understates the rest): the first 20 m around a tee ran at 19-50% of course
+  density, recovering only past 60 m. `nearest().d` IS SIGNED -- it is the
+  distance outside a hole's corridor ENVELOPE, and near a tee that envelope is
+  far wider than the mown turf. 99% of the rough around a tee sits at a negative
+  d, as deep as -34 m, so "at least 10 m outside a corridor" banned the entire
+  surround while the surface classifier called that same ground rough.
+  Now 65-105% across seeds, with the shot still clear.
+
+- [x] **It was safe to drop only because of the launch corridor.** The blanket
+  10 m used to be the thing keeping a tee shot clear. `blocksLaunch` does that
+  exactly now, pointing where the shot actually goes, so the blanket was free to
+  stop being a moat. 0 of 648 tee shots blocked, unchanged.
+
+- [x] **The hard edge is a ramp everywhere else too.** A cliff produces two
+  artefacts at once: a bare moat, and a PILE-UP just outside it, because every
+  refused candidate is pushed outward and bunches at the boundary -- greens
+  measured 0% inside 20 m and 160-179% at 55-120 m. Acceptance now climbs from
+  nothing at the floor to certainty by `EDGE.soft`, so edge candidates are
+  sometimes kept rather than all shoved out.
+
+- [x] **Overcorrected first, and the measurement caught it.** Dropping the gate
+  near tees with no ramp at all left the surround DENSER than the course
+  average, 129-160% -- a thicket rather than a frame. A ramp over negative
+  distances brought it back to roughly average.
+
+- [x] **A blocked tee shot appeared and was slice 3 working.** The harness was
+  not setting `fairwayFeature: 0` the way the real test does, so it counted a
+  specimen redwood at 207 m as a defect. Before spotting that I added a carry
+  `overrun` to "fix" it; that fixed nothing and was reverted rather than left in
+  as unmeasured margin.
+
+- [x] **One seed says very little here.** The same biome ranges 38% to 88%
+  across seeds, so the test averages several rather than pinning to whichever
+  one it was written against -- a single-seed threshold was written first and
+  failed on an outlier at 38%.
+
+- [x] **Slice C done: greens open on the approach, closed behind and beside.**
+  `greenTrees`, 0-100%, default 40. The arc facing back down the fairway keeps
+  its full 46 m at EVERY setting -- measured, the nearest tree on the approach
+  stays at 35.8 m whether the slider is at 0 or 100 -- and the slider moves the
+  back and the flanks only: 6, 7, 10, 15, 30 trees within 40 m of a green across
+  0/25/50/75/100. The approach direction is taken from the middle of the hole
+  70 m short of the green, so a dogleg's approach is where the shot really comes
+  from rather than the line from the tee.
+
+- [x] **The slider's top end was a wall before it was tuned.** At `near` 11 m the
+  20-35 m band ran at 266% of course density, because the thinning ramp had
+  stopped biting before the rough even started -- mown ground reaches about 24 m
+  out, so any keep-out below that does nothing except remove the taper. Swept:
+  `near` 24 with a 20 m ramp gives 51/64/153% across the slider, which is a
+  frame rather than a wall.
+
+- [x] **A combined TEE FAN, not three separate wedges.** A tree can miss the
+  back tee's own wedge and still stand in what you SEE from it: the three tees
+  are staggered and can be ninety metres apart across a hole, so judging each
+  alone leaves the ground between them plantable and that ground is straight
+  down the view. Planting is now refused inside the convex hull of all three
+  wedges -- trees go behind the complex or outside the widest tee on each side.
+  It ignores height, because a tree the ball flies over still hides where the
+  ball is going. Costs some surround density (pnw worst case 75% to 58%) and
+  tee shots stay at 0 of 648 blocked.
+
+- [ ] **The far ring around greens is probably structural, not a pile-up.** It
+  was recorded earlier as bunching at a hard edge, but it sits at 179-205% at
+  55-120 m even with the edge softened and at every slider setting. More likely:
+  rough far from any corridor is fully planted while rough near one is thinned,
+  and a green sits at a corridor's end so its far field is disproportionately
+  far-from-corridor. Worth confirming before anyone treats it as a defect --
+  the earlier claim that softening the edge would fix it was not borne out.
+
+
 ## Obstructions in the shot path
 
 Measured across 216 holes, 648 tee shots (8 biomes x 3 seeds x 3 tees): **29 tee

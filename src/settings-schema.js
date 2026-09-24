@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=6;
+export const SCHEMA_VERSION=7;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -19,6 +19,8 @@ export const SCHEMA_VERSION=6;
 //    circle, so they no longer bulldoze the ground around an elongated pond.
 // 4: footbridges removed. Walking routes cross channels on the ground again, so
 //    contact height and surface are read straight off the terrain everywhere.
+// 7: `greenTrees` added -- how close planting comes around a green, with
+//    the approach side kept open at every setting.
 // 6: `fairwayFeature` added -- how often a hole gets a specimen tree or a
 //    cluster of stones standing in its own short grass.
 // 5: channels are trimmed to the run they can hold within MAX_CUT and faded at
@@ -83,7 +85,33 @@ export const SCHEMA_VERSION=6;
 //     into `holeLine` in course-plan.js, which also moved the tee draws earlier
 //     in the hole's stream so a scorecard can reach them. Every hole on every
 //     course changes length, par or both: all eight biome fingerprints moved.
-export const GENERATOR_VERSION=26;
+// 24: tee shots got a launch corridor. Planting obeyed one rule -- at least
+//     10 m outside a corridor -- which beside a tee is a tree in your face:
+//     29 of 648 tee shots (4.5%) had a trunk on the line to the fairway, the
+//     close ones 8 to 20 m out. `blocksLaunch` refuses anything standing where
+//     the nominal shot would pass through it, judged on HEIGHT rather than a
+//     fixed length, aimed along the played line rather than the tee pad's
+//     bearing. Six biome fingerprints moved; links and desert did not, their
+//     plantings being shrub and cactus.
+// 25: boulders became generation output. They were placed by the renderer from
+//     an rng the generator never saw, so nothing could collide with one -- a
+//     ball flew through a six-metre stone. `world.rocks` now, carrying reach
+//     and crown height, and the fingerprint hashes them.
+// 26: `fairwayFeature` -- a specimen tree or a cluster of stones standing in a
+//     hole's own short grass, sited to leave a route past it.
+// 27: planting stopped stepping at the corridor edge and started ramping.
+//     `nearest().d` is SIGNED, and near a tee the corridor envelope is far
+//     wider than the mown turf, so the old rule banned the whole tee surround:
+//     19-50% of course density in the first 20 m. Now 65-105%.
+// 28: a combined tee fan replaced three separate wedges, so nothing plants in
+//     the view from the back tee, and `greenTrees` opened green surrounds on
+//     the back and flanks while keeping the approach clear.
+// 29: the tee ramp scales with the hole's own width instead of being a fixed
+//     -20 m. `n.d` grows with the corridor, so a flat floor collapsed at wide
+//     settings -- the tee surround fell to 0.03 of course average at a 92 m
+//     fairway, worse than before any of this work. Now 0.34 to 0.90 across
+//     every biome and the whole width slider.
+export const GENERATOR_VERSION=29;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -151,6 +179,7 @@ export const SETTINGS=[
  {key:'streamBends',category:'water',kind:'range',min:0,max:100,step:1,unit:'%',def:55,label:'Channel meandering',short:'Meandering',tip:'How much the channels wander. Bends are limited so a bank never folds through itself.'},
 
  {key:'trees',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:65,label:'Tree density',tip:'Planting density outside the playing corridors. Trunks collide with the ball; foliage does not.'},
+ {key:'greenTrees',category:'scenery',kind:'range',min:0,max:100,step:5,unit:'%',def:40,label:'Trees close to greens',short:'Closeness',tip:'How far planting comes in around a green. The APPROACH stays open at every setting — the side your shot comes in from is kept clear so there is always somewhere to land — and this moves the trees behind and to the sides. At 0 they stand well back, as they used to; at 100 they close right in on the collar.'},
  {key:'fairwayFeature',category:'scenery',kind:'range',min:0,max:100,step:5,unit:'%',def:20,label:'Feature tree or rocks in a fairway',short:'Occurrence',tip:'How often a hole gets a specimen tree or a cluster of stones standing in its own short grass, the way a famous hole often does. Placed so it is never on your tee shot and never seals the hole off: there is always a playable route past it, on at least one side.'},
  {key:'homes',category:'scenery',kind:'toggle',def:false,label:'Line fairways with houses',short:'Line the fairways',tip:'Houses on dry, gently sloping rough away from greens and tees. They are scenery: balls pass through them.'},
  {key:'homeDensity',category:'scenery',kind:'range',min:0,max:100,step:1,unit:'%',def:45,label:'House occurrence',short:'Occurrence',tip:'How often a suitable site is built on.'},
