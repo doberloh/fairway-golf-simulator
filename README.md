@@ -38,14 +38,20 @@ npm test         # the full regression suite, no external framework
 npm run build    # writes the single-file dist/index.html
 ```
 
-Packaging the release archives additionally needs Python 3:
+Cutting the release archives is one more command, and it rebuilds first so
+it cannot package a stale build:
 
 ```sh
-python3 tools/package_release.py
+npm run release
 ```
 
-That verifies the archives file by file and writes `RELEASE_SHA256.txt`. No
-CDN, font service, telemetry or backend is contacted at any point, during a
+That needs Python 3 — the only part of the toolchain that does — and finds it
+whether it is called `python3`, `python` or `py`. It verifies both archives
+file by file against their inputs and writes `RELEASE_SHA256.txt`. If it
+refuses, believe it: it refuses on a stale build, a missing embedded licence
+notice, or a dependency inventory that disagrees with the lockfile.
+
+No CDN, font service, telemetry or backend is contacted at any point, during a
 build or during play.
 
 ## How it simulates

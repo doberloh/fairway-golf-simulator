@@ -106,15 +106,8 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **The name is the blocking item, not the code.** "Fairway" cannot be
-  searched for -- put it in a search box with the word "golf" and see what it
-  competes with. Word of mouth requires a name somebody can hear once, type
-  in, and find. DISTRIBUTION_REVIEW has flagged brand identity as open since
-  11 September and it is now the thing everything else waits on. It also has
-  to be settled before a domain, a repository or a download link exists,
-  because each of those makes the old name more expensive to leave.
-
-- [ ] **A one-page site whose main feature is a Play button.** This product
+- [ ] **A one-page site whose main feature is a Play button. Deferred 25
+  September by the owner -- not cancelled, and not the next thing.** This product
   demos itself in a way almost nothing else does: ten seconds from a link to
   standing on a tee. That is worth more than any amount of copy, screenshots
   or feature bullets, and it is the single highest-leverage thing to build.
@@ -214,11 +207,6 @@ GitHub repository, and stop shipping what nobody needs.
   dependency and asset FOOTPRINT, not the source for similarity.
 
 ## Getting it into other people's hands
-
-- [ ] **The `file://` open has not been verified on the current build.** It is
-  the central portability claim -- double-click the HTML and it plays -- and the
-  last time anybody confirmed it, the file was an eighth of the size. Open the
-  rebuilt archive by hand before it goes to anyone.
 
 - [ ] **Weak hardware: the owner is testing it personally**, on a phone, an
   iPad and a laptop, and the answer is whatever those give. Decided 25
@@ -1892,6 +1880,19 @@ engineering provenance pass, not legal advice.
   PROJECT_HANDOFF.** No fetch, no image, no beacon. Re-verified in the browser
   with the diagnostic in use: the only request the page makes is the page.
 
+- [x] **The `file://` open WORKS on the current build.** Confirmed by the
+  owner on 25 September: unzip the portable archive, double-click
+  `Fairway.html`, and it plays. This is the central portability claim -- the
+  entire argument for a single-file build -- and it had been carried as
+  unverified across three review addenda, the last confirmation having been
+  made when the file was an eighth of its present size. It is now a 15.8 MB
+  document with the whole mesh ingest inlined, and it still opens off the
+  filesystem.
+
+  It stays worth re-checking whenever the build gains something structurally
+  new rather than merely bigger, because what breaks a file URL is a fetch, a
+  worker or a module boundary, not a megabyte.
+
 ## Obstructions in the shot path
 
 - [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
@@ -2496,4 +2497,20 @@ engineering provenance pass, not legal advice.
 
   Unaffected either way: three.js, lucide and ws keep their own MIT/ISC terms
   and their notices must still ship, which they do.
+
+- [x] **The name stays "Fairway". Settled 25 September by the owner; do not
+  reopen it.** The case against was searchability: put it in a search box with
+  the word "golf" and it competes with every course in the language, and word
+  of mouth wants a name somebody can hear once and find. The owner has heard
+  that, likes the name, and accepts the trade -- which is the whole of the
+  decision, because a name nobody is fond of is a worse asset than one that is
+  hard to search for.
+
+  What this unblocks: it was filed as the item everything waited on, because a
+  domain, a repository and a download link each make a rename more expensive.
+  None of them is blocked now.
+
+  Worth doing cheaply when the site exists, and NOT a reason to revisit the
+  name: pair it with a word in the title and the description -- "Fairway, a
+  browser golf simulator" -- so a search engine has something to hang it on.
 
