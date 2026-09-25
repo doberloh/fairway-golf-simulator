@@ -44,12 +44,13 @@ test('the shipped defaults are the ones the owner set on screen', () => {
  // and that is the right order of authority. Pinned so a later retune is a
  // deliberate act rather than a drift.
  assert.deepEqual(GREEN_READ,
-  {definition: 100, bands: 20, sun: 100, slopeShade: 50, grain: 65});
+  {definition: 35, bands: 10, sun: 20, slopeShade: 70, grain: 0});
  const u = greenCues({});
- assert.ok(u.greenLift > 4 && u.greenBend > 4, 'definition is at full');
- assert.ok(u.greenBandSoft < .25, 'bands are well down');
- assert.ok(u.greenSun > 4, 'the sunlight cue is at full');
- assert.ok(u.greenSlopeShade > 0 && u.greenGrain > 0, 'both former rejects are on');
+ assert.ok(u.greenLift > 1 && u.greenLift < 2, 'definition sits a third of the way up');
+ assert.ok(u.greenBandSoft < .15, 'bands are nearly off');
+ assert.ok(u.greenSun > 0 && u.greenSun < 1, 'the sunlight cue is present but low');
+ assert.ok(u.greenSlopeShade > 1, 'slope darkening is past what used to be full strength');
+ assert.equal(u.greenGrain, 0, 'grain is off');
 });
 
 test('half the slope slider is what used to be all of it', () => {

@@ -786,11 +786,23 @@ set the defaults:
 
 | setting | default | what it does |
 |---|---|---|
-| Green definition | 100 | tilts the shading normal, bends the mow bands to follow the surface |
-| Mowing band strength | 20 | softens the bands so they stop competing with the shading |
-| Sunlight on contours | 100 | shades by how much more light the exaggerated surface would catch |
-| Slope darkening | 50 | darkens by tilt regardless of direction |
-| Band grain | 65 | makes bands view-dependent, as real mowing stripes are |
+| Green definition | 35 | tilts the shading normal, bends the mow bands to follow the surface |
+| Mowing band strength | 10 | softens the bands so they stop competing with the shading |
+| Sunlight on contours | 20 | shades by how much more light the exaggerated surface would catch |
+| Slope darkening | 70 | darkens by tilt regardless of direction |
+| Band grain | 0 | makes bands view-dependent, as real mowing stripes are |
+
+**These are the second set the owner chose, and they invert the first.** The
+first pass ran everything near full (100 / 20 / 100 / 50 / 65). Sitting with it,
+the owner pulled definition, sunlight and grain right down and pushed slope
+darkening up past what used to be full strength. The shape of that answer is
+worth more than the numbers: **the cue that carries the reading is the
+direction-free one.** Definition, sunlight and grain all key off a fixed compass
+bearing or the viewer, so they describe a green as lit from somewhere — raise
+them together and a green reads as a lit object rather than a shaped one. Slope
+darkening has no bearing at all: it answers "how steep is this, anywhere", which
+is the question a player is actually asking. The bands are nearly off because
+they are pattern competing with shape.
 
 **These were chosen on screen, not derived from the measurements, and that is the
 right order of authority.** The two cues that measured no benefit are on: "0% of

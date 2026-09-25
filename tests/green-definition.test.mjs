@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {greenCues, GREEN_READ, loadGraphics, saveGraphics} from '../src/graphics.js';
+import {greenCues, GREEN_READ_GEN, loadGraphics, saveGraphics} from '../src/graphics.js';
 
 // The slider exists because a green is the flattest ground on the course and
 // every shading cue is proportional to slope. These pin the two things that
@@ -9,15 +9,14 @@ import {greenCues, GREEN_READ, loadGraphics, saveGraphics} from '../src/graphics
 
 test('70 still means what it meant in the comparison', () => {
  // The report's "strong" was lift 3.2, bend 3.5, bands at 60%, and that is what
- // 70 and 60 on these sliders produce. The DEFAULT has since moved -- the owner
- // set it higher after looking at a green -- but the mapping must not drift,
- // or a saved setting quietly changes meaning between versions.
+ // 70 and 60 on these sliders produce. The DEFAULT has since moved twice, up to
+ // 100 and back down to 35, because the owner tuned it on a real green -- but
+ // the MAPPING must not drift, or a saved setting quietly changes meaning
+ // between versions. Where the default sits is pinned in green-cue-wiring.
  const u = greenCues({greenDefinition: 70, greenBands: 60});
  assert.ok(Math.abs(u.greenLift - 3.2) < .01, `lift ${u.greenLift}`);
  assert.ok(Math.abs(u.greenBend - 3.5) < .01, `bend ${u.greenBend}`);
  assert.ok(Math.abs(u.greenBandSoft - .6) < .001, `bands ${u.greenBandSoft}`);
- // Where the default actually sits is pinned in green-cue-wiring.test.mjs.
- assert.ok(GREEN_READ.definition >= 70, `default fell to ${GREEN_READ.definition}`);
 });
 
 test('zero is exactly the look greens had before this existed', () => {
@@ -58,5 +57,9 @@ test('a saved graphics record carries the two settings', () => {
  assert.equal(saved.greenDefinition, 35);
  assert.equal(saved.greenBands, 80);
  // And out-of-range values are clamped on the way in, not on the way out.
- assert.equal(saveGraphics({greenDefinition: 500}).greenDefinition, 100);
+ // The record has to carry the current greenReadGen or the value is discarded
+ // for the default, which is the whole point of the stamp.
+ assert.equal(saveGraphics({greenReadGen: GREEN_READ_GEN, greenDefinition: 500}).greenDefinition, 100);
+ // A record from before the stamp takes today's defaults instead of its own.
+ assert.equal(saveGraphics({greenDefinition: 500}).greenDefinition, loadGraphics().greenDefinition);
 });

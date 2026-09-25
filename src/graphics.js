@@ -218,7 +218,7 @@ export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stri
 // the first thing the eye locks onto -- but fainter bands are a different look.
 // Owner's settings, chosen on screen rather than from the measurements: the
 // numbers below are what a person picked while looking at a green, and they win.
-export const GREEN_READ = {definition: 100, bands: 20, sun: 100, slopeShade: 50, grain: 65};
+export const GREEN_READ = {definition: 35, bands: 10, sun: 20, slopeShade: 70, grain: 0};
 // ONE mapping from slider to uniform, so the panel, the renderer and any dev
 // switch cannot drift apart. At definition 70 this is lift 3.2 and bend 3.5.
 export function greenCues(g) {
@@ -255,7 +255,7 @@ const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
 // So the green settings carry a generation. Raise it when the chosen defaults
 // change and every saved record adopts them ONCE; anything the player sets
 // afterwards sticks, because their record is saved at the current generation.
-export const GREEN_READ_GEN = 2;
+export const GREEN_READ_GEN = 3;
 const greenValue = (g, key, fallback) =>
  (g?.greenReadGen ?? 0) >= GREEN_READ_GEN ? clampPct(g?.[key], fallback) : fallback;
 const clean = g => ({

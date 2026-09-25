@@ -131,8 +131,10 @@ prevent.
   been tested on screen.** The anti-alias fade is measured on the PLAN coordinate
   deliberately -- measuring it on the bent one once made bands vanish on exactly
   the slopes they describe -- so raising the bend raises the frequency without
-  the fade knowing. The default is now definition 100, which bends at 4.57x --
-  well past the 3.5x this was written about -- so a far green is worth a look.
+  the fade knowing. It briefly defaulted to definition 100, bending at 4.57x --
+  well past the 3.5x this was written about. The owner then set 35, which bends
+  at 2.25x, below it again, so the risk is back to modest; it matters again if
+  anyone raises the slider.
 
 ## Green and bunker shapes
 
@@ -883,12 +885,22 @@ owner's eye rather than by any measurement here.
   physics -- with the sun overhead, tilting a surface barely changes what it
   catches. The `normal_fragment_maps` link in the shader chain is gone with it.
 
-- [x] **Owner's defaults, set on screen: definition 100, mowing band strength 20,
-  sunlight on contours 100, slope darkening 50, band grain 65.** Both cues that
-  measured no benefit are on. The measurement said 0% of greens, on this
-  generator at that day's settings; a person looking at a green saw otherwise,
-  and that wins. Slope darkening was rescaled so 50 is what 100 used to be,
-  leaving headroom above it.
+- [x] **Owner's first defaults, set on screen: 100 / 20 / 100 / 50 / 65.** Both
+  cues that measured no benefit went on. The measurement said 0% of greens, on
+  this generator at that day's settings; a person looking at a green saw
+  otherwise, and that wins. Slope darkening was rescaled so 50 is what 100 used
+  to be, leaving headroom above it.
+
+- [x] **And then the owner's second set inverted it: 35 / 10 / 20 / 70 / 0.**
+  Definition, sunlight and grain came right down; slope darkening went up past
+  what used to be full strength; grain went off. The shape of that answer is the
+  finding, not the numbers. Definition, sunlight and grain all key off a fixed
+  compass bearing or off where the viewer stands, so running them high makes a
+  green read as a LIT object rather than a SHAPED one. Slope darkening has no
+  bearing at all -- it answers "how steep is this, from anywhere" -- which is the
+  question a player is actually asking over a putt. Bands nearly off because a
+  regular pattern competes with shape. Whatever gets tried next should start from
+  that: direction-free beats directional on a surface this flat.
 
 - [x] **A saved record beat the new default, so the change reached nobody.**
   Graphics settings persist, so anyone who had opened the panel kept the old
