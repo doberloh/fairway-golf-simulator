@@ -21,11 +21,12 @@ bench/shots/
 # beside them.
 docs/studies/*.json
 
-# Private working files: real launch-monitor sessions and anything else that
-# carries a person's name or somebody else's data. NOT redistributable and not
-# ours to publish. The whole directory is ignored rather than individual files,
-# so dropping something in there is safe by default instead of safe if you
-# remember. docs/sources/README.md says it exists and what belongs in it.
+# Private working files: anything carrying a person's name or somebody else's
+# data. NOT redistributable and not ours to publish. The whole directory is
+# ignored rather than individual files, so dropping something in there is safe
+# by default rather than safe if you remember. docs/sources/README.md states
+# the rule; neither it nor anything else tracked lists what is in here, because
+# a public document inventorying an ignored directory defeats the point of it.
 docs/sources/private/
 
 # The asset contact sheet's data: 12 MB regenerated from vendor/ by
