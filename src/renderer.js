@@ -36,7 +36,7 @@ const FLAGSTICK_HEIGHT=7*0.3048, FLAGSTICK_TOP_R=.007, FLAGSTICK_BASE_R=.009;
 import {toonRamp} from './textures.js';
 import * as T from 'three';
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
-import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile} from './course.js';
+import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
 import {addVegetation} from './vegetation.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp} from './physics.js';
@@ -836,7 +836,14 @@ export class GolfView{
   for(const [name,t] of Object.entries(h.tees)){
    const target=teeAim(h,t);
    const dx=target.x-t.x,dz=target.z-t.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
-   for(const side of [-4,4]){
+   // ON THE TEE, SIX INCHES IN FROM ITS EDGE.
+   //
+   // They stood at 4 m either side of a pad whose half-width is 3, so both
+   // markers of every tee on the course were a METRE off the mown surface they
+   // mark, sitting in the collar. The pair now straddles the pad the way a real
+   // set does: in from each edge by `TEE_MARKER_INSET`, which is six inches.
+   const inset=TEE_PAD.x-TEE_MARKER_INSET;
+   for(const side of [-inset,inset]){
     // Perpendicular to the line of play, set a metre back from the tee centre.
     const x=t.x+uz*side-ux,z=t.z-ux*side-uz,q=h.toWorld({x,z});
     const marker=new T.Mesh(new T.SphereGeometry(.085,12,8),this.surfaceMaterial(TEE_COLORS[name]));
@@ -845,7 +852,42 @@ export class GolfView{
   }
   // Numbered tee sign, timber posts, and a timber bench beside every tee.
   const c=document.createElement('canvas');c.width=128;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203f30';ctx.fillRect(0,0,128,160);ctx.strokeStyle='#b9c4a0';ctx.strokeRect(6,6,116,148);ctx.textAlign='center';ctx.fillStyle='#f5efd9';ctx.font='52px Georgia';ctx.fillText(String(h.hole+1).padStart(2,'0'),64,73);ctx.font='15px sans-serif';ctx.fillText('PAR '+h.par,64,107);ctx.fillText(Math.round(h.routeLength/YARD)+' YD',64,134);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
-  const q=h.toWorld({x:-9,z:2}),sign=new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));sign.position.set(q.x,h.height(-9,2)+1.55,q.z);sign.rotation.y=h.rotation;group.add(sign);const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));post.position.set(q.x,h.height(-9,2)+.5,q.z);group.add(post);
+  // THE SIGN STANDS BESIDE THE BLUE TEE, ON THE PLAYER'S RIGHT.
+  //
+  // It used to sit at a fixed local (-9, 2) -- nine metres off the hole's own
+  // origin, which stopped meaning anything once tees were sited on ground that
+  // suits them and now sit a median 14 m off the centre line and anywhere from
+  // 18 m behind that origin to 60 m past it. The sign could end up in a wood
+  // with no tee in sight.
+  //
+  // WHICH SIDE IS RIGHT: local +x is the player's LEFT. Walking the frame out
+  // by hand, a hole plays along local +z, and three.js builds a camera's screen
+  // right as cross(up, eye-target), which is -x when you face +z. Checked
+  // across nine holes at nine rotations: the sign of the cross product between
+  // the play direction and local +x is the same on every one, so `toWorld` is a
+  // rotation with no mirror in it and this holds everywhere. Note the codebase
+  // ALSO calls +1 "right" in `fairwayWidth` -- that is a naming convention for
+  // which edge is which, and it does not agree with the player's view.
+  const backTee=h.tees?.blue||Object.values(h.tees||{})[0];
+  if(backTee){
+   const bt=teeAim(h,backTee),bdx=bt.x-backTee.x,bdz=bt.z-backTee.z,blen=Math.hypot(bdx,bdz)||1;
+   const bux=bdx/blen,buz=bdz/blen;
+   // Clear of the mown collar by a stride, and level with the markers.
+   const side=-(TEE_APRON.x+1.4);
+   const lx=backTee.x+buz*side,lz=backTee.z-bux*side;
+   const q=h.toWorld({x:lx,z:lz}),ground=h.height(lx,lz);
+   const sign=new T.Mesh(new T.BoxGeometry(1.0,1.25,.12),this.surfaceMaterial('#ffffff',{map:tex,roughness:.8}));
+   sign.position.set(q.x,ground+1.55,q.z);
+   // Facing the tee it belongs to, so it is read from where you stand rather
+   // than from behind. The box is thin in Z, so its face points along the
+   // rotated +Z and the bearing is measured in world space -- the pad is
+   // squared to the shot, which is not the hole's own rotation.
+   const bw=h.toWorld(backTee);
+   sign.rotation.y=Math.atan2(bw.x-q.x,bw.z-q.z);
+   group.add(sign);
+   const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.1,8),this.surfaceMaterial('#645340'));
+   post.position.set(q.x,ground+.5,q.z);group.add(post);
+  }
  }
  // Move the range's green, without rebuilding anything.
  //
