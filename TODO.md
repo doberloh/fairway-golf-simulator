@@ -218,6 +218,100 @@ a giant bush in the middle of a fairway.
   links every species IS ground cover, so it chose gorse and then sized it by
   the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
   rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+## Selling it: the attribution pass
+
+- [x] **The name lists grew 24x while being swept.** 30 first words by 20-22
+  second words per biome: 19,440 distinct names against roughly 800 before. The
+  no-collision rule is kept by a simpler mechanism -- every first word is unique
+  to its biome -- and the length check is exhaustive rather than sampled.
+
+- [x] **The fingerprint told us to bump the generator and was wrong.** Renaming
+  three biome titles moved three fingerprints, because the hash covers the biome
+  RECORD as well as the ground. Verified by hashing ground alone across the
+  change: byte-identical. The tool now reports the two separately, says plainly
+  when no bump is owed, and both paths were tested by making each kind of change.
+  An arbiter that cries wolf gets ignored the one time it matters.
+
+
+Asked for on 2026-09-25: is everything clear for making money off this. An
+engineering provenance pass, not legal advice.
+
+- [x] **Licences are clear.** 53 packages: 35 MIT, 12 MPL-2.0, 3 Apache-2.0,
+  2 ISC, 1 BSD-3-Clause, every one permitting commercial use with notice
+  retention only. All twelve MPL packages are Lightning CSS, build scope; MPL is
+  file-level copyleft and does not reach the output of running the tool. Only
+  three packages are runtime scope at all: three, lucide, ws.
+
+- [x] **`npm audit` runs now** -- it could not in September, and was remaining
+  release check 1. Zero vulnerabilities across 53 packages on this date.
+
+- [x] **The shipped imported-asset footprint is four PNGs, 64 KB, all CC0.**
+  Kenney house colour atlases. Verified rather than assumed: no texturecan
+  texture anywhere in the tree, no ez-tree leaf sprite in the build, no fonts,
+  no audio, and zero runtime network requests.
+
+- [x] **SIX COURSE NAMES WERE REAL GOLF DESTINATIONS, and are gone.** Titles are now Sitka Bluff, Vermilion Basin and Leeward Cay, the four generator words are removed, and a denylist test stops them returning. No generator bump was owed -- the ground was verified unchanged by hashing it alone across the change. Original note: Bandon and Turtle Bay are
+  default biome titles; Bandon, Dornoch, Kintyre and Saguaro are in the name
+  generator. Place names are weak marks, but a real resort's name on a course in
+  a golf product being sold is the combination that draws attention. Minutes to
+  remove, no generator bump needed since names are not generation settings. The
+  generator cannot currently produce "Bandon Dunes" only because those two words
+  live in different biome lists -- luck, not design.
+
+- [ ] **No trademark disclaimer exists anywhere.** GSPro, Garmin, Rapsodo and
+  PiTrac are named in player-facing text to describe compatibility, which is
+  ordinary, and nothing implies endorsement. One line saying marks belong to
+  their owners and no affiliation is claimed costs nothing and is absent.
+
+- [x] **The portable archive is six files now**: the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README, INSTALLATION. It was shipping the architecture handoff, the open defect list, the research measurements, the provenance review, the dependency inventory and AGENTS.md. Source archive keeps all of it. Original note: The internal engineering process
+  document, including write-ups of past failures. Harmless, odd to hand a paying
+  customer. Owner's call.
+
+- [ ] **Nothing since 11 September has had a provenance search.** The mesh
+  ingest, vegetation, greens and everything after. This pass checked the
+  dependency and asset FOOTPRINT, not the source for similarity.
+
+## Getting it into other people's hands
+
+- [x] **The archives were 124 commits stale and are rebuilt.** The
+  `Fairway.html` inside the shipped portable ZIP was 1.2 MB against a current
+  build of 15.1 MB -- it predated the whole mesh ingest, so anyone handed it was
+  playing a materially different game. Portable is 6.9 MB now, source 7.1 MB,
+  both verified file-by-file with fresh SHA-256 sums.
+
+- [x] **`package_release.py` could not read its own build.** It read the HTML
+  with the platform default encoding, cp1252 on Windows, which was fine while
+  the file was small and ASCII and died on byte 0x9d of 15 MB. Every read and
+  write names UTF-8 now.
+
+- [x] **Its dependency gate earned its keep.** It refuses to package while
+  `DEPENDENCY_INVENTORY.json` disagrees with the lockfile, and three build-scope
+  packages had arrived since the review: ez-tree (MIT, bakes geometry that
+  SHIPS), playwright and playwright-core (Apache-2.0, touch nothing shipped).
+
+- [x] **ATTRIBUTION.md was missing from both archives.** The review document
+  ships in both ZIPs and cites it by name for the CC0 pack credits, so the
+  archive pointed at a document it did not contain. It ships now, with
+  BALL_BEHAVIOUR_KNOBS.md and REFERENCES.md.
+
+- [ ] **The `file://` open has not been verified on the current build.** It is
+  the central portability claim -- double-click the HTML and it plays -- and the
+  last time anybody confirmed it, the file was an eighth of the size. Open the
+  rebuilt archive by hand before it goes to anyone.
+
+- [ ] **Weak hardware is the unanswered question for strangers.** There is an
+  open item saying the low tier cannot reach 30 fps on weak machines and that
+  tuning cannot fix it. Fine for a bay you control; it is the whole first
+  impression on somebody's laptop.
+
+- [ ] **Freeze GENERATOR_VERSION while people are testing.** It moved twice in
+  one night. Every bump silently rebuilds the ground under a tester's saved
+  round, and they will read that as the game losing their game.
+
+- [ ] **There is no way for a tester to tell you what went wrong.** No copyable
+  seed, settings, generator version and browser. Without it, feedback arrives as
+  "a hole looked weird" and cannot be acted on.
+
 ## Networked multiplayer
 
 Asked for on 2026-09-25 as a feasibility study, not a plan.

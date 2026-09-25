@@ -55,6 +55,8 @@ besides the house atlases:
 Nature's `PineTree_Leaves.png`, sitting beside the generated models that use
 it. Same pack, same CC0 licence, copied so the folder is self-contained.
 
+**Verified 25 September 2026 against the built file**: the only imported images that ship are four Kenney house atlases at 12 KB each. No leaf sprite ships -- `broadleaf` appears in the build as a species family name, not as a file -- and no texturecan asset is present anywhere in the tree. No fonts and no audio ship.
+
 **No bark images are taken.** Trunks are painted: the generated models state a
 bark colour and the game paints every surface from the biome palette anyway, so
 ez-tree's bark maps -- two of them Poly Haven CC0, two from texturecan whose
