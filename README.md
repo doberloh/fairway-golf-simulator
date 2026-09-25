@@ -102,7 +102,7 @@ are labelled as the monitor's, because they will not agree with ours and you sho
 which is which.
 
 **Every course has a name**, and the box is always filled in before you get there. Names are built from
-words that belong to the landscape — *Trade Wind Cove* on an island, *Dornoch Sands* on links, *Copper
+words that belong to the landscape — *Tradewind Cove* on an island, *Marram Braes* on links, *Copper
 Hollow* in autumn — and the same course always suggests the same name, so a name you turn down and
 come back to is the one you left. *Surprise me & play* takes the suggestion without asking, since the
 point of that button is not choosing anything. Anywhere you save or share a course the name comes with

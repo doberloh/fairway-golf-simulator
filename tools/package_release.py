@@ -11,19 +11,35 @@ import json
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# ATTRIBUTION.md IS NOT OPTIONAL. DISTRIBUTION_REVIEW.md ships in both archives
-# and points at it by name for the CC0 model-pack credits and the baked-tree
-# provenance -- so an archive without it cites a document it does not contain,
-# which is worse than not citing one. It was missing until 25 September 2026,
-# which is the whole reason this comment exists.
+# WHAT A CUSTOMER GETS, AND WHAT THEY DO NOT.
 #
-# Working documents stay out on purpose: a night's engineering log and a
-# speculative product study are not part of what somebody was handed to play.
-DOCS = [
-    'LICENSE', 'THIRD_PARTY_NOTICES.txt', 'ATTRIBUTION.md', 'DISTRIBUTION_REVIEW.md',
-    'DEPENDENCY_INVENTORY.json', 'INSTALLATION.md', 'README.md',
-    'PROJECT_HANDOFF.md', 'TODO.md', 'AGENTS.md', 'PROCEDURAL_GENERATION.md',
-    'RESEARCH.md', 'LANDSCAPE_RESEARCH.md', 'BALL_BEHAVIOUR_KNOBS.md', 'REFERENCES.md',
+# The portable archive is the PRODUCT. It carries the game, how to open it, how
+# to play it, and the notices that must travel with it -- and nothing else.
+# Everything below `PORTABLE` used to ship with it: the architecture handoff,
+# the open TODO list with every known defect on it, the research measurements,
+# the provenance review, the dependency inventory, and AGENTS.md, which is the
+# internal engineering process document including write-ups of past failures.
+# None of that is anything somebody who paid for a golf game needs, and a
+# defect list is an odd thing to hand over unasked.
+#
+# ATTRIBUTION.md IS NOT OPTIONAL in either archive. It carries the CC0
+# model-pack credits and the baked-tree provenance, and the MIT notice for
+# ez-tree's output has to travel with the geometry it produced.
+#
+# LICENSE and THIRD_PARTY_NOTICES.txt are the obligations. They are also
+# embedded inside the HTML itself, under Help, so copying just the file keeps
+# them -- but a licence that only exists inside the thing it licenses is a
+# worse answer than one sitting beside it.
+PORTABLE = [
+    'LICENSE', 'THIRD_PARTY_NOTICES.txt', 'ATTRIBUTION.md',
+    'README.md', 'INSTALLATION.md',
+]
+# The source archive is for somebody who is going to READ or BUILD the thing,
+# so it keeps everything the portable one drops.
+DOCS = PORTABLE + [
+    'DISTRIBUTION_REVIEW.md', 'DEPENDENCY_INVENTORY.json', 'PROJECT_HANDOFF.md',
+    'TODO.md', 'AGENTS.md', 'PROCEDURAL_GENERATION.md', 'RESEARCH.md',
+    'LANDSCAPE_RESEARCH.md', 'BALL_BEHAVIOUR_KNOBS.md', 'REFERENCES.md',
 ]
 ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html']
 DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'}, 'tools': {'.py'}}
@@ -59,7 +75,7 @@ def main():
     }:
         raise SystemExit('Dependency inventory is stale. Update it and review notices.')
     packages = {
-        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / n, n) for n in DOCS],
+        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / n, n) for n in PORTABLE],
         'Fairway-source.zip': [(p, p.relative_to(ROOT).as_posix()) for p in files],
     }
     for name, entries in packages.items():

@@ -185,7 +185,7 @@ Note the generator **cannot** produce "Bandon Dunes": `Dunes` is a desert word
 and `Bandon` a Pacific-Northwest one, and the lists do not cross. That is luck
 rather than design.
 
-**Cost to remove: minutes.** Six words in two files, no behaviour change, no
+**Removed on the same day.** All six are gone, the three biome titles are now Sitka Bluff, Vermilion Basin and Leeward Cay, and `tests/course-names.test.mjs` carries a denylist so they cannot return by accident. No generator bump was owed: the ground was verified unchanged. Original note follows. **Cost to remove: minutes.** Six words in two files, no behaviour change, no
 generator bump — names are not generation settings. Left in, they are the
 cheapest avoidable risk in the project; a lawyer should decide, and they can
 decide faster if the obvious ones are already gone.
@@ -202,9 +202,7 @@ claimed costs nothing and is missing.
 
 #### Two judgement calls for the owner, not defects
 
-- **`AGENTS.md` ships in both archives.** It is the internal engineering process
-  document, including write-ups of past failures. Harmless, and an odd thing to
-  hand a paying customer.
+- **~~`AGENTS.md` ships in both archives.~~ Fixed the same day.** The portable archive now carries six files -- the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README and INSTALLATION -- and nothing else. It previously shipped the architecture handoff, the open TODO list with every known defect on it, the research measurements, this review, the dependency inventory and AGENTS.md. The source archive still carries all of them, which is the right place for them.
 - **`LICENSE` reads "Copyright (c) 2026 Fairway contributors".** Fine for a
   collective credit; if a company is going to sell this, the holder line and the
   publisher identity are worth settling before money changes hands. The September

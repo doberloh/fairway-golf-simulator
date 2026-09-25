@@ -220,6 +220,19 @@ a giant bush in the middle of a fairway.
   rock now. Only a tree, a desert cactus or stones may stand in a fairway.
 ## Selling it: the attribution pass
 
+- [x] **The name lists grew 24x while being swept.** 30 first words by 20-22
+  second words per biome: 19,440 distinct names against roughly 800 before. The
+  no-collision rule is kept by a simpler mechanism -- every first word is unique
+  to its biome -- and the length check is exhaustive rather than sampled.
+
+- [x] **The fingerprint told us to bump the generator and was wrong.** Renaming
+  three biome titles moved three fingerprints, because the hash covers the biome
+  RECORD as well as the ground. Verified by hashing ground alone across the
+  change: byte-identical. The tool now reports the two separately, says plainly
+  when no bump is owed, and both paths were tested by making each kind of change.
+  An arbiter that cries wolf gets ignored the one time it matters.
+
+
 Asked for on 2026-09-25: is everything clear for making money off this. An
 engineering provenance pass, not legal advice.
 
@@ -237,7 +250,7 @@ engineering provenance pass, not legal advice.
   texture anywhere in the tree, no ez-tree leaf sprite in the build, no fonts,
   no audio, and zero runtime network requests.
 
-- [ ] **SIX COURSE NAMES ARE REAL GOLF DESTINATIONS.** Bandon and Turtle Bay are
+- [x] **SIX COURSE NAMES WERE REAL GOLF DESTINATIONS, and are gone.** Titles are now Sitka Bluff, Vermilion Basin and Leeward Cay, the four generator words are removed, and a denylist test stops them returning. No generator bump was owed -- the ground was verified unchanged by hashing it alone across the change. Original note: Bandon and Turtle Bay are
   default biome titles; Bandon, Dornoch, Kintyre and Saguaro are in the name
   generator. Place names are weak marks, but a real resort's name on a course in
   a golf product being sold is the combination that draws attention. Minutes to
@@ -250,7 +263,7 @@ engineering provenance pass, not legal advice.
   ordinary, and nothing implies endorsement. One line saying marks belong to
   their owners and no affiliation is claimed costs nothing and is absent.
 
-- [ ] **`AGENTS.md` ships in both archives.** The internal engineering process
+- [x] **The portable archive is six files now**: the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README, INSTALLATION. It was shipping the architecture handoff, the open defect list, the research measurements, the provenance review, the dependency inventory and AGENTS.md. Source archive keeps all of it. Original note: The internal engineering process
   document, including write-ups of past failures. Harmless, odd to hand a paying
   customer. Owner's call.
 

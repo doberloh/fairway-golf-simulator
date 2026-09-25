@@ -821,6 +821,59 @@ neighbouring block took the span between two anchors with it. The value reached
 the GPU and the picture never changed. `tests/green-cue-wiring.test.mjs` now
 reads the shader source and fails if any cue uniform is never referenced.
 
+## Course names: swept for trade marks, and grown by 24x
+
+Two problems with one set of word lists.
+
+**Six names were real golf destinations.** Bandon and Turtle Bay were default
+biome titles; Bandon, Dornoch, Kintyre and Saguaro were in the generator. Swept,
+along with the titles Bandon Ridge, Turtle Bay and Saguaro Dunes. The rule is
+now a test with a denylist in it, and the denylist cannot be complete -- the
+instruction that matters is to search a candidate word together with the word
+"golf" before adding it.
+
+**And there were not many combinations.** Measured before and after:
+
+| | per biome | across all eight |
+|---|---|---|
+| before | 10 x 10 words, ~100 names | ~800 |
+| after | 30 x 20-22 words | **19,440** |
+
+The invariant that stops two biomes producing the same name is now kept by a
+simpler mechanism than before: **every first word is unique to its biome**, so
+the first-word intersection of any two biomes is empty and second words can be
+shared freely. The previous lists let both halves overlap and "Cedar Hollow" was
+reachable from two different landscapes.
+
+The length check is exhaustive rather than sampled now -- every first word
+against every second word against the longest suffix -- because a sample that
+happens to miss the longest pair is not a check. Longest possible name:
+"Salmonberry Crossing Country Club", 33 characters against a limit of 40.
+
+## The fingerprint told us to bump the generator, and it was wrong
+
+Renaming three biome titles moved three fingerprints, and the tool said what it
+always says: output moved for an unchanged seed, so `GENERATOR_VERSION` has to
+go up.
+
+**Nothing had moved.** Verified by hashing only the generated ground -- terrain
+height and surface on a grid, every tree, every rock -- across the title change:
+
+| biome | ground-only hash before | after |
+|---|---|---|
+| pnw | 0c1a18a1a8c94a5b | 0c1a18a1a8c94a5b |
+| desert | 10796c20155acceb | 10796c20155acceb |
+| island | 23bcdbbede91d5c9 | 23bcdbbede91d5c9 |
+
+The fingerprint hashes the biome RECORD as well as the ground -- deliberately,
+since a palette is worth watching -- and then reported both through one number
+with one instruction attached. It now reports them separately: a record change
+says plainly that no bump is owed, and a ground change still demands one. Both
+paths were tested by making each kind of change and reading what it said.
+
+**An arbiter that cries wolf gets ignored the one time it matters**, which is
+exactly the failure `GENERATOR_VERSION` exists to prevent.
+
 ## The tee boxes, and where a blind tee shot actually comes from
 
 Reported from play: ground in front of the tee boxes blocking the view to the
