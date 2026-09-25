@@ -21,6 +21,13 @@ bench/shots/
 # beside them.
 docs/studies/*.json
 
+# Private working files: real launch-monitor sessions and anything else that
+# carries a person's name or somebody else's data. NOT redistributable and not
+# ours to publish. The whole directory is ignored rather than individual files,
+# so dropping something in there is safe by default instead of safe if you
+# remember. docs/sources/README.md says it exists and what belongs in it.
+docs/sources/private/
+
 # The asset contact sheet's data: 12 MB regenerated from vendor/ by
 # `npm run assets`, so it is output rather than source. The page around it
 # (preview/assets.html, preview/assets.js) IS source and is checked in.
