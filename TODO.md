@@ -218,6 +218,31 @@ a giant bush in the middle of a fairway.
   links every species IS ground cover, so it chose gorse and then sized it by
   the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
   rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+## Networked multiplayer
+
+Asked for on 2026-09-25 as a feasibility study, not a plan.
+
+- [x] **`MULTIPLAYER_FEASIBILITY.md`.** Four shapes costed against each other:
+  async card-swapping (days, no server), live play on a LAN (moderate, reuses
+  the launch-monitor bridge), internet play (significant plus a permanent
+  operating burden), and a shared walkable world (high cost, low value, do not
+  build). Recommends async first, then host-authoritative LAN play.
+
+- [x] **The float risk was measured rather than assumed.** This model is not
+  chaotic: a relative perturbation of 1e-6 in launch speed moves the finish
+  0.12 mm and 1e-3 moves it 304 mm, so error grows roughly linearly. A last-bit
+  disagreement between two engines would move a ball by a hundredth of a micron.
+  The residual risk is BRANCHING -- a lip caught or not -- which is why the
+  host's finish stays authoritative.
+
+- [ ] **The product question is unanswered and blocks any code.** Two people in
+  different houses, or several people standing in one bay? They want different
+  things and the second is nearly free.
+
+- [ ] **Version skew would become a shipping constraint.** GENERATOR_VERSION was
+  at 32 and moved twice on the night the study was written. Once people play
+  together, a bump costs a MATCH rather than a saved round, and the handshake
+  has to refuse a mismatch at the door.
 
 ## A course has a name, not a serial number
 
