@@ -22,6 +22,7 @@ import {GROUND_PLANTS} from '../src/species.js';
 // `fairwayWidth`, `ovalRadius`, `sightline` and the rest come from the module
 // under test, and a metric's job is only to sample and count.
 import {ovalRadius, fairwayWidth, sightline, localSurface, teePad, teeBox,
+ launchCorridors, blocksLaunch, teeFans, inTeeFan,
  TEE_PAD, TEE_APRON, TEE_APRON_SCALE, TEE_ROUND, TEE_EYE} from '../src/course.js';
 
 const DEG = 180 / Math.PI;
@@ -210,6 +211,56 @@ export const METRICS = {
     }
    }
    return {series, counts, invariants};
+  },
+ },
+
+ // WHAT IS ACTUALLY STANDING IN A TEE SHOT, counted on the finished world.
+ //
+ // The generator refuses to PLACE anything in a launch corridor, so this looks
+ // like a metric that can only ever read zero. It is not, and that is the
+ // point: it calls the same `blocksLaunch` against the world that was built,
+ // which is the only thing that can catch a rule applied to one kind of body
+ // and not another. Rocks were tested as a dimensionless POINT against a
+ // ceiling that was not their height, and never consulted the tee fan at all,
+ // so the generator's own answer was "nothing is in the way" while boulders
+ // stood in the shot. Reported as blocked tee boxes in desert and mountain --
+ // the two biomes with the most rocks, at twice the scale of anywhere else.
+ //
+ // Rocks are counted on the standard fixtures because `scatter.rocks` does not
+ // depend on the trees setting. Trees need `--set trees=65`.
+ teeclear: {
+  describe: 'trees and rocks standing in a tee shot or in the view from the tees',
+  run(w) {
+   const launch = launchCorridors(w.holes, (x, z) => w.height(x, z));
+   const fans = teeFans(w.holes);
+   const counts = {rocks: 0, trees: 0, rocksChecked: 0, treesChecked: 0};
+   // An invariant, not a reading: the generator's own placement rules say none
+   // of this can happen, so any of it is a rule applied unevenly.
+   const invariants = {rockInATeeShot: 0, rockInTheTeeView: 0,
+    treeInATeeShot: 0, treeInTheTeeView: 0};
+   for (const r of w.rocks || []) {
+    // A FEATURE is placed in the fairway on purpose -- the lone cypress, the
+    // boulder you play around -- and it obeys its own standoff rule rather than
+    // this one. Counting it here would report the setting working as a fault,
+    // which is how a metric starts lying about the thing it exists to watch.
+    if (r.feature) continue;
+    counts.rocksChecked++;
+    // The stone's own crown and its own width, which is what a ball meets --
+    // never `scale`, which is neither.
+    if (blocksLaunch(launch, r.x, r.z, r.y, r.top, r.reach)) {counts.rocks++; invariants.rockInATeeShot++;}
+    else if (inTeeFan(fans, r.x, r.z, r.reach)) invariants.rockInTheTeeView++;
+   }
+   for (const t of w.trees || []) {
+    // Ground cover has no trunk and cannot block anything; a feature tree is
+    // placed in the fairway ON PURPOSE and gets only the near stretch, which
+    // `blocksLaunch` already knows about through its own standoff.
+    if (GROUND_PLANTS.has(t.kind) || t.feature) continue;
+    counts.treesChecked++;
+    const girth = Math.min(t.h * .027, 3.6);
+    if (blocksLaunch(launch, t.x, t.z, t.y, t.y + t.h, girth)) {counts.trees++; invariants.treeInATeeShot++;}
+    else if (inTeeFan(fans, t.x, t.z, girth)) invariants.treeInTheTeeView++;
+   }
+   return {series: {}, counts, invariants};
   },
  },
 

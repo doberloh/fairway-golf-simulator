@@ -473,12 +473,18 @@ export function teeFans(holes){
  }
  return fans;
 }
-export function inTeeFan(fans,x,z){
+// `pad` is how far OUTSIDE the fan still counts as in it, in metres, so a thing
+// with a body can be tested by its edge rather than by its centre. The cross
+// product is divided by the edge length to turn it into a distance -- left as a
+// raw cross it is an area, and a pad added to that would mean a different number
+// of metres on every edge of the hull.
+export function inTeeFan(fans,x,z,pad=0){
  for(const poly of fans){
   let inside=true;
   for(let i=0;i<poly.length;i++){
    const a=poly[i],b=poly[(i+1)%poly.length];
-   if((b.x-a.x)*(z-a.z)-(b.z-a.z)*(x-a.x)<0){inside=false;break;}
+   const ex=b.x-a.x,ez=b.z-a.z,len=Math.hypot(ex,ez)||1;
+   if((ex*(z-a.z)-ez*(x-a.x))/len<-pad){inside=false;break;}
   }
   if(inside)return true;
  }
@@ -1777,7 +1783,12 @@ export function* generateWorldSteps(settings={}){
   // Ground cover threads between the trunks and needs no room of its own.
   // A ground plant is ankle height with no trunk, so nothing can hit it and it
   // is exactly what should still grow in front of a tee.
-  if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z)))continue;
+  // BOTH TESTS ARE ABOUT THE BODY, not about the point it grew from. The
+  // corridor test has always padded by the trunk; the fan test did not, so a
+  // trunk up to 3.6 m across could stand half inside the view from the back
+  // tees with its centre just outside it. Measured across 35 planted courses,
+  // 154 trunks were over that line.
+  if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z,trunkGirth(tree))))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);
@@ -1802,14 +1813,28 @@ export function* generateWorldSteps(settings={}){
    if(surface(x,z)!=='rough'||nearest(x,z).d<5)continue;
    const scale=base*(.6+rockRng()*3),shape=Math.floor(rockRng()*STONES);
    const y=height(x,z);
-   if(blocksLaunch(launch,x,z,y,y+scale))continue;
    const rot=[rockRng(),rockRng()*6.28,rockRng()];
    const sx=scale*(1.15+rockRng()*.5),sy=scale*(.48+rockRng()*.42),sz=scale*(.82+rockRng()*.42);
    // `top` and `reach` are what physics reads: the stone is drawn as a squashed
    // icosahedron sunk a quarter of its scale into the ground, so its crown sits
    // at centre + sy and the widest it gets across is the larger half-extent.
-   rocks.push({x,z,y,scale,shape,rot,sx,sy,sz,
-    top:y+scale*.25+sy,reach:Math.max(sx,sz)});
+   const top=y+scale*.25+sy,reach=Math.max(sx,sz);
+   // BUILD IT, THEN JUDGE WHAT WAS BUILT -- the same order the specimen
+   // obstacles use, and for the same reason. A boulder used to be tested as a
+   // POINT with no width, against a ceiling of y+scale that is not its height:
+   // a stone is drawn up to 0.9 of its scale above centre and sunk a quarter
+   // of it, so its crown reaches y + 1.15 scale. Both errors let the same kind
+   // of rock through -- one whose centre sits just outside the launch cone and
+   // whose body, up to 1.65 scale across, stands in it. Desert and mountain
+   // carry the most rocks at twice the size of anywhere else, which is exactly
+   // where blocked tee shots were reported.
+   //
+   // The tee FAN is checked too. Trees have obeyed it since it was built -- it
+   // is the combined cone from all three tees, which is what stops something
+   // standing in the view from the back box without being in the shot line from
+   // the front one. Rocks never consulted it at all.
+   if(blocksLaunch(launch,x,z,y,top,reach)||inTeeFan(fans,x,z,reach))continue;
+   rocks.push({x,z,y,scale,shape,rot,sx,sy,sz,top,reach});
   }
  }
  // SPECIMEN OBSTACLES: the lone cypress, the oak in the middle of the fairway.
@@ -1833,6 +1858,9 @@ export function* generateWorldSteps(settings={}){
  const {gap:FEATURE_GAP,greenKeep:FEATURE_GREEN_KEEP,minHalf:FEATURE_MIN_HALF,standoff:FEATURE_STANDOFF}=FEATURE;
  {
   const fRng=random(s.seed+':features'),share=(s.fairwayFeature??0)/100;
+  // Decided once for the biome rather than per attempt: it is a property of
+  // what grows here, not of where this particular feature landed.
+  const featureTree=bio.plants.find(([k])=>!GROUND_PLANTS.has(k))?.[0]||null;
   for(const h of holes){
    if(h.range||fRng()>=share)continue;
    const from=Math.max((h.mowStart??h.fairwayStart??22)+70,95);
@@ -1854,7 +1882,19 @@ export function* generateWorldSteps(settings={}){
     if(lie==='green'||lie==='sand')continue;
     if(lakeOwner(w0.x,w0.z,6))continue;
     const ground=height(w0.x,w0.z);
-    const rock=fRng()<.3;
+    // ONLY A TREE, A CACTUS OR A ROCK MAY STAND IN A FAIRWAY.
+    //
+    // `featureTree` is the biome's first species that is not ground cover, and
+    // on LINKS there is no such species: gorse, heather and shrub are all
+    // ground plants, so the picker fell through to `bio.plants[0]` and chose
+    // GORSE -- then sized it by the biome canopy, 13 to 29 m. A gorse bush
+    // three times the height of a house, in the middle of the fairway. The
+    // fallback was silent, which is why it survived: every other biome leads
+    // with a real tree and nobody looked at links.
+    //
+    // A biome with no tree gets a rock instead of a stretched shrub. The roll
+    // happens either way so the choice does not shift the rest of the stream.
+    const rock=fRng()<.3||!featureTree;
     const spread=rock?2.2+fRng()*1.6:3.4+fRng()*2.2;
     const tall=rock?spread*1.1:bio.canopy.min+bio.canopy.range*(.75+fRng()*.35);
     // BUILD IT, THEN JUDGE WHAT WAS BUILT. The first version validated the
@@ -1877,9 +1917,8 @@ export function* generateWorldSteps(settings={}){
        top:ry+scale*.25+sy,reach:Math.max(sx,sz)});
      }
     }else{
-     const kind=bio.plants.find(([k])=>!GROUND_PLANTS.has(k))?.[0]||bio.plants[0][0];
      pieces.push({rock:false,x:w0.x,z:w0.z,y:ground,h:tall,r:spread,reach:spread,
-      shade:fRng(),kind,hole:h.hole});
+      shade:fRng(),kind:featureTree,hole:h.hole});
     }
     // Every piece: clear of the near stretch of every tee shot, and leaving a
     // route past it in the corridor it actually stands in.

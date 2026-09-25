@@ -121,7 +121,17 @@ export const SCHEMA_VERSION=8;
 //     settings -- the tee surround fell to 0.03 of course average at a 92 m
 //     fairway, worse than before any of this work. Now 0.34 to 0.90 across
 //     every biome and the whole width slider.
-export const GENERATOR_VERSION=30;
+// 30: rocks are judged as bodies, not as points. A boulder was tested against
+//     the launch corridor as a dimensionless point with a ceiling of y+scale,
+//     which is not its height -- it is drawn up to 0.9 scale above centre and
+//     sunk a quarter of it -- and it never consulted the tee fan at all. Four
+//     rocks stood in a tee shot and 41 in the view from the tees across four
+//     courses; now zero. Trees gained the same body test on the fan, where 154
+//     trunks across 35 courses had a centre just outside it and a trunk inside.
+//     A fairway FEATURE on a biome with no tree species fell through to
+//     `bio.plants[0]` and grew gorse to canopy height -- a 13 to 29 m bush in
+//     the middle of a links fairway. Those become rocks.
+export const GENERATOR_VERSION=31;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
