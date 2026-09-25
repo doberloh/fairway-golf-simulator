@@ -218,6 +218,46 @@ a giant bush in the middle of a fairway.
   links every species IS ground cover, so it chose gorse and then sized it by
   the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
   rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+## Selling it: the attribution pass
+
+Asked for on 2026-09-25: is everything clear for making money off this. An
+engineering provenance pass, not legal advice.
+
+- [x] **Licences are clear.** 53 packages: 35 MIT, 12 MPL-2.0, 3 Apache-2.0,
+  2 ISC, 1 BSD-3-Clause, every one permitting commercial use with notice
+  retention only. All twelve MPL packages are Lightning CSS, build scope; MPL is
+  file-level copyleft and does not reach the output of running the tool. Only
+  three packages are runtime scope at all: three, lucide, ws.
+
+- [x] **`npm audit` runs now** -- it could not in September, and was remaining
+  release check 1. Zero vulnerabilities across 53 packages on this date.
+
+- [x] **The shipped imported-asset footprint is four PNGs, 64 KB, all CC0.**
+  Kenney house colour atlases. Verified rather than assumed: no texturecan
+  texture anywhere in the tree, no ez-tree leaf sprite in the build, no fonts,
+  no audio, and zero runtime network requests.
+
+- [ ] **SIX COURSE NAMES ARE REAL GOLF DESTINATIONS.** Bandon and Turtle Bay are
+  default biome titles; Bandon, Dornoch, Kintyre and Saguaro are in the name
+  generator. Place names are weak marks, but a real resort's name on a course in
+  a golf product being sold is the combination that draws attention. Minutes to
+  remove, no generator bump needed since names are not generation settings. The
+  generator cannot currently produce "Bandon Dunes" only because those two words
+  live in different biome lists -- luck, not design.
+
+- [ ] **No trademark disclaimer exists anywhere.** GSPro, Garmin, Rapsodo and
+  PiTrac are named in player-facing text to describe compatibility, which is
+  ordinary, and nothing implies endorsement. One line saying marks belong to
+  their owners and no affiliation is claimed costs nothing and is absent.
+
+- [ ] **`AGENTS.md` ships in both archives.** The internal engineering process
+  document, including write-ups of past failures. Harmless, odd to hand a paying
+  customer. Owner's call.
+
+- [ ] **Nothing since 11 September has had a provenance search.** The mesh
+  ingest, vegetation, greens and everything after. This pass checked the
+  dependency and asset FOOTPRINT, not the source for similarity.
+
 ## Getting it into other people's hands
 
 - [x] **The archives were 124 commits stale and are rebuilt.** The

@@ -112,6 +112,113 @@ the platform default encoding, which is cp1252 on Windows. That worked while the
 build was small and ASCII; it died on byte 0x9d of the 15 MB file. Every read
 and write in the tool now names UTF-8.
 
+### Commercial-use pass, 25 September 2026
+
+Asked for specifically: is everything still clear for selling this eventually.
+**This is an engineering provenance pass, not a legal opinion and not trademark
+clearance.** Findings, not advice.
+
+#### Licences: nothing here blocks commercial use
+
+All 53 packages, by declared licence: **35 MIT, 12 MPL-2.0, 3 Apache-2.0,
+2 ISC, 1 BSD-3-Clause.** Every one permits commercial use. Obligations are
+notice-retention only, and the notices ship.
+
+Only three packages are runtime scope — the only ones that can reach a shipped
+artifact: **three 0.186.0 (MIT), lucide 1.44.0 (ISC), ws 8.21.3 (MIT)**.
+
+**All twelve MPL-2.0 packages are Lightning CSS**, build scope, one per
+platform. MPL-2.0 is file-level copyleft: it reaches modifications of its own
+files, not the output of running it, and we neither modify nor redistribute its
+source. This stays true only while no build ships its binaries or a modified
+copy — the September review says the same and it is worth re-checking whenever
+the toolchain moves.
+
+**`npm audit` now runs**, which it could not in September — remaining release
+check 1 above. Result on this date: **0 vulnerabilities** across 53 packages
+(prod 4, dev 50, optional 27).
+
+#### What actually ships, byte by byte
+
+The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
+64 KB in total**: Kenney house colour atlases (`colormap` plus three
+variations), CC0. Kenney's licence text states the content is free to use in
+personal, educational **and commercial** projects, with credit appreciated and
+not required. Quaternius ships the CC0 1.0 dedication.
+
+Everything else imported is **geometry with its materials stripped at ingest**
+and repainted from the biome palette. Verified this pass rather than assumed:
+
+- **No texturecan textures ship**, and none are present in the tree. ATTRIBUTION
+  flags them as the one asset whose terms were never checked; they are ez-tree's
+  bark maps, and no bark image is taken because trunks are painted.
+- **No ez-tree leaf sprite ships.** `broadleaf` appears 14 times in the build as
+  a species *family* name, not as the sprite file.
+- **No fonts ship.** `--font-display` and `--font-ui` are system stacks
+  (Georgia / Times New Roman, Inter / system sans). No `@font-face` anywhere, so
+  no font binary is distributed and naming a face in a CSS stack distributes
+  nothing.
+- **No audio of any kind** exists in the project.
+- **Zero runtime network requests**: no remote `<link>`, `<script>`, `fetch`,
+  `Image()` or CSS `@import` in the built file. The http URLs inside it are text
+  in the credits panel.
+
+#### The finding worth acting on: course names that are real golf destinations
+
+Nothing above is a problem. **This might be.**
+
+Place names are generally weak as marks, but *a name that identifies a real golf
+resort, used to name a course in a golf product you sell,* is the combination
+that attracts attention. Present in two places:
+
+| where | name | what it also is |
+|---|---|---|
+| `biomes.js` default title | **Bandon** Ridge | Bandon Dunes Resort, Oregon |
+| `biomes.js` default title | **Turtle Bay** | Turtle Bay Resort, Hawaii |
+| `course-names.js`, pnw | **Bandon** | as above |
+| `course-names.js`, links | **Dornoch** | Royal Dornoch Golf Club |
+| `course-names.js`, links | **Kintyre** | the Kintyre course, Turnberry |
+| `course-names.js`, desert | **Saguaro** | The Saguaro at We-Ko-Pa |
+
+The rest are ordinary geography (Tofino, Rainier, Chamonix, Sonora) or invented.
+Note the generator **cannot** produce "Bandon Dunes": `Dunes` is a desert word
+and `Bandon` a Pacific-Northwest one, and the lists do not cross. That is luck
+rather than design.
+
+**Cost to remove: minutes.** Six words in two files, no behaviour change, no
+generator bump — names are not generation settings. Left in, they are the
+cheapest avoidable risk in the project; a lawyer should decide, and they can
+decide faster if the obvious ones are already gone.
+
+#### Third-party marks used nominatively
+
+**GSPro** (3), **Garmin** (3), **Rapsodo** (2) and **PiTrac** (2) are named in
+player-facing text, to say what the software talks to. Naming a product to
+describe compatibility is ordinary; implying endorsement, partnership or
+certification is not, and nothing currently does. **There is no trademark
+disclaimer anywhere in the product or the docs** — a single line stating that
+all marks belong to their owners and that no affiliation or endorsement is
+claimed costs nothing and is missing.
+
+#### Two judgement calls for the owner, not defects
+
+- **`AGENTS.md` ships in both archives.** It is the internal engineering process
+  document, including write-ups of past failures. Harmless, and an odd thing to
+  hand a paying customer.
+- **`LICENSE` reads "Copyright (c) 2026 Fairway contributors".** Fine for a
+  collective credit; if a company is going to sell this, the holder line and the
+  publisher identity are worth settling before money changes hands. The September
+  review already flags brand identity as an open item and that stands.
+
+#### Still not established by this pass
+
+- No similarity or provenance search was run over anything written since
+  11 September, which is the mesh ingest, the vegetation work, the green work
+  and everything after. Only the dependency and asset *footprint* was checked.
+- No trademark registry was searched, for "Fairway" or for anything above.
+- Nothing here establishes who owns the copyright in AI-assisted portions, which
+  the original review also could not determine.
+
 ### What this addendum does NOT claim
 
 - No new similarity or provenance search was run over the source. The mesh
