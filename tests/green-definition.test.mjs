@@ -7,14 +7,17 @@ import {greenCues, GREEN_READ, loadGraphics, saveGraphics} from '../src/graphics
 // matter: the default lands on the setting that was actually chosen from the
 // comparison, and zero gives back exactly the old look.
 
-test('the default lands on the setting chosen from the comparison', () => {
- // "strong" in the report: lift 3.2, bend 3.5, bands at 60%. If the mapping is
- // ever retuned, this is the test that says the default moved with it.
- const u = greenCues({});
+test('70 still means what it meant in the comparison', () => {
+ // The report's "strong" was lift 3.2, bend 3.5, bands at 60%, and that is what
+ // 70 and 60 on these sliders produce. The DEFAULT has since moved -- the owner
+ // set it higher after looking at a green -- but the mapping must not drift,
+ // or a saved setting quietly changes meaning between versions.
+ const u = greenCues({greenDefinition: 70, greenBands: 60});
  assert.ok(Math.abs(u.greenLift - 3.2) < .01, `lift ${u.greenLift}`);
  assert.ok(Math.abs(u.greenBend - 3.5) < .01, `bend ${u.greenBend}`);
  assert.ok(Math.abs(u.greenBandSoft - .6) < .001, `bands ${u.greenBandSoft}`);
- assert.equal(GREEN_READ.definition, 70);
+ // Where the default actually sits is pinned in green-cue-wiring.test.mjs.
+ assert.ok(GREEN_READ.definition >= 70, `default fell to ${GREEN_READ.definition}`);
 });
 
 test('zero is exactly the look greens had before this existed', () => {

@@ -20,7 +20,11 @@ const frag = THREE.ShaderLib.toon.fragmentShader;
 const MAIN = frag.indexOf('void main()');
 
 // The anchors ground.js replaces in the FRAGMENT shader, in the order it uses.
-const FRAGMENT_ANCHORS = ['common', 'color_fragment', 'normal_fragment_maps'];
+// `normal_fragment_maps` was used briefly to tilt the normal the LIGHTING uses,
+// and removed: the cartoon ramp pins a near-flat green at its top step above
+// about 48 degrees of sun, so it did nothing in daylight. The green sun cue is
+// an albedo term that reads the sun direction directly instead.
+const FRAGMENT_ANCHORS = ['common', 'color_fragment'];
 
 test('every anchor ground.js replaces still exists in three\'s shader', () => {
  // three renames and removes chunks between versions; a silent miss means the

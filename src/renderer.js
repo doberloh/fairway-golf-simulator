@@ -361,6 +361,7 @@ export class GolfView{
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
   // Derived from the two sliders through ONE mapping in graphics.js, so the
   // panel and the shader cannot drift apart.
+  if(u.sunDir&&this.sunDir)u.sunDir.value.copy(this.sunDir);
   const g=greenCues(this.groundCues);
   for(const k of ['greenLift','greenBend','greenBandSoft','greenSun','greenSlopeShade','greenGrain'])
    if(u[k])u[k].value=g[k];
@@ -1438,6 +1439,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(d.rate)d.hour=advance(d.hour,d.rate,dt);
   const solar=solarState(d.hour,this.world.bio.sun);this.solar=solar;
   this.sunDir.copy(solar.direction);
+  // The green shading follows the real sun rather than a fixed bearing, so it
+  // needs the direction every time the clock moves.
+  {const u=this.terrain?.material?.userData?.cues;if(u?.sunDir)u.sunDir.value.copy(this.sunDir);}
   // One directional light by day, or the cascades' own set; both take the same
   // colour and direction so the swap at dusk is invisible.
   const key=this.sunBase.clone().lerp(solar.keyTint,solar.keyTintAmount);

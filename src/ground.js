@@ -138,7 +138,8 @@ export function groundMaterial(view,palette){
  // with their numbers in RESEARCH.md.
  const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
-  greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0}};
+  greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0},
+  sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
@@ -149,6 +150,7 @@ export function groundMaterial(view,palette){
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
+ uniform vec3 sunDir;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -504,6 +506,24 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
    vec3 gl4=normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift)));
    float rel4=dot(gl4.xz,normalize(vec2(-.6,-.5)));
    turf*=mix(1.,clamp(1.+rel4*4.,.78,1.18),cueRelief);
+   // THE SUN, WITHOUT GOING THROUGH THE TOON RAMP.
+   //
+   // Tilting the normal the lighting uses was tried first and is a dead end in
+   // this art style: the cartoon ramp is four steps, three.js samples it at
+   // dot(normal,light)*0.5+0.5, and a near-flat green sits PINNED at its top
+   // step above roughly 48 degrees of sun elevation. Measured, the brightness
+   // span across a green was 0 both with and without the cue at 50, 65 and 80
+   // degrees -- it only ever worked at dawn and dusk. The comment further down
+   // says the same thing about shadows at midday.
+   //
+   // So this asks the question directly: how much MORE light would this patch
+   // catch if the green were as steep as it looks under exaggeration. It follows
+   // the real sun through the day and nothing clamps it.
+   if(greenSun>.001){
+    vec3 tilted=normalize(vec3(gn.x*(1.+greenSun),gn.y,gn.z*(1.+greenSun)));
+    float gain=dot(tilted,sunDir)-dot(gn,sunDir);
+    turf*=clamp(1.+gain*1.35,.68,1.38);
+   }
    // MAGNITUDE, NOT ONLY DIRECTION. The dot product above is blind to ground
    // tilted ACROSS its bearing however steep it is; this darkens by how much the
    // ground tilts, whichever way it faces. Measured, that blind case is 0% of
@@ -582,30 +602,6 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  turf*=1.+(grain-.5)*.075*grainFade;
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
- `).replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
- // THE SUN NEVER SAW THE GREEN'S SHAPE, WHICH IS MOST OF WHY IT LOOKS FLAT.
- //
- // Everything above TINTS THE GRASS. The light is untouched, so a green's
- // undulation is described by an albedo shift of a few per cent sitting under
- // full sun and tone mapping, and it washes out. Measured, the sunlight itself
- // varies by only .009 to .024 across a green -- the comment upstream says the
- // same thing in words: a two metre roll casts no shadow at all.
- //
- // Tilting the normal the LIGHTING uses is the same cartographic exaggeration,
- // applied where it pays: the existing sun, sky and specular then describe the
- // contour themselves. Measured at 4.2x the variation in sunlight across a
- // green. The GEOMETRY is untouched, so the ball still rolls on exactly the
- // surface it always did.
- //
- // groundNormal is object space and coincides with world space here because the
- // course group and the terrain mesh both carry an identity transform. mat3 of
- // the view matrix takes it where three.js wants it; a camera matrix is
- // orthonormal, so no inverse transpose is needed.
- if(kind==4.&&greenSun>.001){
-  vec3 gsun=normalize(groundNormal);if(gsun.y<0.)gsun=-gsun;
-  vec3 lifted=normalize(vec3(gsun.x*(1.+greenSun),gsun.y,gsun.z*(1.+greenSun)));
-  normal=normalize(mat3(viewMatrix)*lifted);
- }
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v22';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v23';return m;
 }

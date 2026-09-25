@@ -216,7 +216,9 @@ export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stri
 // `bands` is separate because it is taste rather than legibility: softening the
 // mowing bands measurably helps the shape read -- a strong regular pattern is
 // the first thing the eye locks onto -- but fainter bands are a different look.
-export const GREEN_READ = {definition: 70, bands: 60, sun: 60, slopeShade: 0, grain: 0};
+// Owner's settings, chosen on screen rather than from the measurements: the
+// numbers below are what a person picked while looking at a green, and they win.
+export const GREEN_READ = {definition: 100, bands: 20, sun: 100, slopeShade: 50, grain: 65};
 // ONE mapping from slider to uniform, so the panel, the renderer and any dev
 // switch cannot drift apart. At definition 70 this is lift 3.2 and bend 3.5.
 export function greenCues(g) {
@@ -232,7 +234,12 @@ export function greenCues(g) {
   // Both measured as no help on this generator's greens, kept on sliders rather
   // than deleted so they can be judged on screen. Default 0: nothing changes
   // unless they are moved.
-  greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade) / 100,
+  // HALF THE SLIDER IS WHAT USED TO BE ALL OF IT. The owner wanted the old full
+  // strength to sit at 50 so there is room to push past it, so the range runs to
+  // twice what it did. The shader mixes with this, and a factor above one simply
+  // carries the same darkening further -- at 2.0 a steep patch reaches about 40%
+  // down instead of 20%.
+  greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade) / 100 * 2,
   greenGrain: clampPct(g?.greenGrain, GREEN_READ.grain) / 100,
  };
 }
@@ -240,7 +247,19 @@ const clampPct = (v, fallback) =>
  typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(100, v)) : fallback;
 
 const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
+// A SAVED RECORD BEATS A NEW DEFAULT, which is right for a preference and wrong
+// for a default nobody has deliberately chosen yet. Anyone who has opened the
+// graphics panel since the green cues landed has the old numbers written to
+// their browser, so a new default would never reach them.
+//
+// So the green settings carry a generation. Raise it when the chosen defaults
+// change and every saved record adopts them ONCE; anything the player sets
+// afterwards sticks, because their record is saved at the current generation.
+export const GREEN_READ_GEN = 2;
+const greenValue = (g, key, fallback) =>
+ (g?.greenReadGen ?? 0) >= GREEN_READ_GEN ? clampPct(g?.[key], fallback) : fallback;
 const clean = g => ({
+ greenReadGen: GREEN_READ_GEN,
  quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
  frameCap: FRAME_CAPS.includes(g?.frameCap) ? g.frameCap : 0,
  relief: bool(g?.relief, GROUND_CUES.relief),
@@ -249,11 +268,11 @@ const clean = g => ({
  stripes: bool(g?.stripes, GROUND_CUES.stripes),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
- greenDefinition: clampPct(g?.greenDefinition, GREEN_READ.definition),
- greenBands: clampPct(g?.greenBands, GREEN_READ.bands),
- greenSun: clampPct(g?.greenSun, GREEN_READ.sun),
- greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade),
- greenGrain: clampPct(g?.greenGrain, GREEN_READ.grain),
+ greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
+ greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
+ greenSun: greenValue(g, 'greenSun', GREEN_READ.sun),
+ greenSlopeShade: greenValue(g, 'greenSlopeShade', GREEN_READ.slopeShade),
+ greenGrain: greenValue(g, 'greenGrain', GREEN_READ.grain),
 });
 
 

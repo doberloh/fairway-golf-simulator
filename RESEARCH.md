@@ -737,25 +737,47 @@ cue with a real-world mechanism behind it. Softening the bands raises shape
 contrast from 0.262 to 0.309, because a strong regular pattern is what the eye
 locks onto first.
 
-### The cue never reached the light, which is most of the problem
+### The cue never reached the light, and then the toon ramp ate it
 
-Everything above **tints the grass**. The lighting is untouched, so a green's
-undulation was being described by an albedo shift sitting under full sun and tone
-mapping — and it washes out. The comparison images in the first report had no
-lighting at all, which is why they promised more than the game delivered.
+Everything else here **tints the grass**. The lighting was untouched, so a
+green's undulation was described by an albedo shift sitting under full sun and
+tone mapping. The first attempt tilted the normal the **lighting** uses, which is
+the textbook fix — and in this art style it is a dead end.
 
-Measured, the sunlight itself varies across a green by:
+The cartoon ground is a `MeshToonMaterial` with a **four-step ramp**
+(90, 145, 205, 245), and three.js samples it at `dot(normal, light) * 0.5 + 0.5`.
+Texel centres sit at 0.125, 0.375, 0.625 and 0.875, so anything past 0.875 is
+**clamped flat**. A near-flat green under a sun above roughly 48° lands there.
+Measured brightness across a green, out of 255:
 
-| sun elevation | as shipped | exaggerating the lighting normal |
+| sun elevation | without the cue | with the normal tilted | |
+|---|---|---|---|
+| 20° | span 3 | span 17 | works |
+| 35° | span 3 | span 14 | works |
+| 50° | span 0 | span 5 | pinned |
+| 65° | span 0 | **span 0** | pinned |
+| 80° | span 0 | **span 0** | pinned |
+
+So it only ever worked at dawn and dusk. This is not a defect — it is the art
+direction, and the shader's own comment says so: the raking-light cue exists
+precisely because "a two metre roll casts no shadow at all" at midday.
+
+**The cue asks the question directly instead.** Rather than tilting the normal
+and hoping the ramp responds, it computes how much *more* light the patch would
+catch if the green were as steep as the exaggeration makes it look, and applies
+that to the turf colour. It follows the real sun through the day and nothing
+clamps it:
+
+| sun elevation | tilting the normal | following the sun in the tint |
 |---|---|---|
-| 25° | 0.024 | 0.101 (4.2×) |
-| 45° | 0.020 | 0.082 (4.2×) |
-| 70° | 0.009 | 0.041 (4.4×) |
+| 20° | 6.7% | **23.4%** |
+| 35° | 5.5% | **20.1%** |
+| 50° | 2.0% | **15.2%** |
+| 65° | 0.0% | **10.5%** |
+| 80° | 0.0% | **4.6%** |
 
-Tilting the normal the **lighting** uses is the same cartographic exaggeration
-applied where it pays: the existing sun, sky and specular then describe the
-contour themselves. The geometry is untouched, so the ball still rolls on exactly
-the surface it always did. This is `greenSun`, on by default at 60.
+At 80° it is inherently small: with the sun overhead, tilting a surface barely
+changes how much light it catches. That is physics, not a shortfall.
 
 ### What shipped
 
@@ -764,15 +786,21 @@ set the defaults:
 
 | setting | default | what it does |
 |---|---|---|
-| Green definition | 70 | tilts the shading normal, bends the mow bands to follow the surface |
-| Mowing band strength | 60 | softens the bands so they stop competing with the shading |
-| Sunlight on contours | 60 | tilts the normal the SUN uses — the only one that reaches the light |
-| Slope darkening | 0 | darkens by tilt regardless of direction |
-| Band grain | 0 | makes bands view-dependent, as real mowing stripes are |
+| Green definition | 100 | tilts the shading normal, bends the mow bands to follow the surface |
+| Mowing band strength | 20 | softens the bands so they stop competing with the shading |
+| Sunlight on contours | 100 | shades by how much more light the exaggerated surface would catch |
+| Slope darkening | 50 | darkens by tilt regardless of direction |
+| Band grain | 65 | makes bands view-dependent, as real mowing stripes are |
 
-The last two measured no benefit and are off by default. They are sliders rather
-than deletions because "0% of greens" was measured on **this generator's** greens
-at today's settings, not on every green anyone will ever build.
+**These were chosen on screen, not derived from the measurements, and that is the
+right order of authority.** The two cues that measured no benefit are on: "0% of
+greens" was measured on this generator at the settings of the day, and the owner
+could see something the number could not.
+
+Slope darkening was rescaled so that **50 is what 100 used to be**, leaving room
+above it. A saved record carries `greenReadGen`; raising it makes every existing
+record adopt new defaults once, because otherwise a saved preference beats a new
+default and the change reaches nobody who has already opened the panel.
 
 **A slider reported the right number while nothing read it.** `greenBandSoft` was
 declared, plumbed, exposed and reported back correctly for two commits — and the

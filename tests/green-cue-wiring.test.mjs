@@ -39,16 +39,25 @@ test('greenCues hands back exactly the uniforms the shader declares', () => {
   `greenCues produces ${produced.join(', ')}`);
 });
 
-test('the shipped defaults turn on the cues that were chosen, and only those', () => {
+test('the shipped defaults are the ones the owner set on screen', () => {
+ // These were picked by eye on a real green, not derived from the measurements,
+ // and that is the right order of authority. Pinned so a later retune is a
+ // deliberate act rather than a drift.
+ assert.deepEqual(GREEN_READ,
+  {definition: 100, bands: 20, sun: 100, slopeShade: 50, grain: 65});
  const u = greenCues({});
- assert.ok(u.greenLift > 3 && u.greenBend > 3, 'definition should be on by default');
- assert.ok(u.greenBandSoft < 1, 'bands should be softened by default');
- assert.ok(u.greenSun > 2, 'the sunlight cue should be on by default');
- // The two that measured no benefit stay off until someone moves them.
- assert.equal(u.greenSlopeShade, 0);
- assert.equal(u.greenGrain, 0);
- assert.equal(GREEN_READ.slopeShade, 0);
- assert.equal(GREEN_READ.grain, 0);
+ assert.ok(u.greenLift > 4 && u.greenBend > 4, 'definition is at full');
+ assert.ok(u.greenBandSoft < .25, 'bands are well down');
+ assert.ok(u.greenSun > 4, 'the sunlight cue is at full');
+ assert.ok(u.greenSlopeShade > 0 && u.greenGrain > 0, 'both former rejects are on');
+});
+
+test('half the slope slider is what used to be all of it', () => {
+ // The owner asked for the old full strength to sit at 50, leaving room above
+ // it. Anything else here means a saved setting quietly changes meaning.
+ assert.equal(greenCues({greenSlopeShade: 50}).greenSlopeShade, 1);
+ assert.equal(greenCues({greenSlopeShade: 100}).greenSlopeShade, 2);
+ assert.equal(greenCues({greenSlopeShade: 0}).greenSlopeShade, 0);
 });
 
 test('every cue can be turned fully off, and that is the old look', () => {
