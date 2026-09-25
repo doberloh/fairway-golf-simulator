@@ -125,6 +125,146 @@ prevent.
   checking whether the adopt path is being missed there, separately from the
   chunking work.
 
+## Reading a green without the overlays
+
+- [ ] **Bands that follow the contour may alias at distance, and this has not
+  been tested on screen.** The anti-alias fade is measured on the PLAN coordinate
+  deliberately -- measuring it on the bent one once made bands vanish on exactly
+  the slopes they describe -- so raising the bend raises the frequency without
+  the fade knowing. It briefly defaulted to definition 100, bending at 4.57x --
+  well past the 3.5x this was written about. The owner then set 35, which bends
+  at 2.25x, below it again, so the risk is back to modest; it matters again if
+  anyone raises the slider.
+
+## Greens read better if the art style bends for greens only
+
+Asked for on 2026-09-24, after the second retune. Five sliders got a green from
+"flat from every angle" to readable-ish, and they are now near the end of what
+they can do, because every one of them is fighting the same two limits: the
+lighting is quantised into four steps, and every cue except slope darkening has
+a direction in it. These entries break one or other of those, on the putting
+surface and nowhere else.
+
+**None of this touches the ground.** No routing, no hazards, no planting, no
+collision, no `surface()` -- so **no `GENERATOR_VERSION` bump** for any of it,
+and the biome fingerprints must come back unchanged. They are all graphics
+settings, in `GREEN_READ` beside the other five, which DOES mean a
+`SCHEMA_VERSION` bump and a `GREEN_READ_GEN` bump per shipped batch, or a saved
+record beats the new default and the change reaches nobody. Every one of them
+also needs `customProgramCacheKey` in `ground.js` bumped, or the browser serves
+the old program from cache.
+
+**Ordered by payoff for how much style is broken.** The first is the one to do.
+
+- [ ] **Give greens their own lighting ramp -- this is the blocker, and it is
+  small.** `toonRamp()` in `textures.js` is four texels (90, 145, 205, 245) on
+  `LinearFilter`, sampled by three at `dot(normal,light)*0.5+0.5`; texel centres
+  stop at .875, so a near-flat green under a sun above about 48 degrees is
+  clamped and every lighting cue dies. Measured: brightness span across a green
+  was 0 out of 255 with AND without the old sun cue at 50, 65 and 80 degrees.
+  Smooth the ramp for the putting surface and all of it starts working again at
+  full strength, for free.
+
+  **It cannot be done with a second material.** The whole course is ONE mesh with
+  one `MeshToonMaterial`; greens are `kind==4.` inside the fragment shader. So
+  the ramp has to be bypassed IN the shader: declare `float gGreen=0.;` in the
+  `common` injection (a constant initialiser, which is legal at global scope --
+  a non-constant one is what once stopped the ground drawing entirely), set it
+  from the kind test inside the `color_fragment` injection, and replace three's
+  `getGradientIrradiance` so it mixes between the ramp lookup and the raw smooth
+  `dotNL` by `gGreen`. Order is on our side: `color_fragment` runs BEFORE
+  `lights_fragment_begin` in the toon fragment shader, so the kind is known by
+  the time lighting asks. That is a fourth link in the replace chain, so add the
+  anchor to `FRAGMENT_ANCHORS` in `tests/ground-shader-structure.test.mjs` --
+  and confirm the chunk name against the three version in use, which that test
+  already does for the others.
+
+  **The seam is at the collar**, where stepped fairway meets smooth green. Fade
+  `gGreen` across the fringe rather than switching it, using the same signed
+  distance the surrounding classification already has.
+
+  Rejected: remapping `dotNL` for greens so the flat region lands mid-ramp
+  instead of at the top. It is a one-line change and it works, but it moves a
+  green's average brightness down a whole step -- greens would read as a
+  different, darker grass than the fairway they sit in, which is a worse break
+  than the one being avoided.
+
+  **The measurement that decides it**: brightness span across a single green at
+  50, 65 and 80 degrees of sun, against the numbers above. Anything below about
+  15 out of 255 at 65 degrees means it did not land.
+
+- [ ] **Cross-cut the bands instead of striping them.** A stripe bends one way,
+  so it describes slope along one axis and says nothing across it; a grid bends
+  both ways and reads like a wireframe laid on the surface, which is shape
+  information rather than brightness information and therefore survives midday.
+  Real courses cross-cut greens, so this is arguably not breaking the style at
+  all.
+
+  In `ground.js`, the band block already computes `plan`, `coord`, `stripe` and
+  `spread` for `kind==4.` at a 3.2 m period. A second set at 90 degrees to `mow`,
+  combined multiplicatively, is most of the work. **The trap is the anti-alias
+  fade**, and it is written up at the top of that block: the fade is measured on
+  the PLAN coordinate, never the bent one, because the height term changes
+  fastest exactly where the ground is steep or seen at a grazing angle -- doing
+  it on the bent coordinate once made bands vanish on the slopes they describe.
+  The second axis needs its own `fwidth` on its own plan coordinate, not a reuse
+  of the first. Two sets also double the pattern energy, so `greenBandSoft` will
+  want re-tuning downward; the owner already has bands at 10%, which suggests
+  starting the grid lower still.
+
+- [ ] **Contour lines on greens only, at a fine interval.** The most legible cue
+  we own by a distance -- our own note on the course-wide toggle says so, because
+  it turns a slope into a spacing you can count -- and the reason it is off is
+  that a metre-interval topographic map across the whole course looks absurd.
+  Confined to the putting surface at 20-25 cm it stops being a map and becomes
+  the one place a golfer actually reads contour.
+
+  The code is already there: the `cueContours` block in `ground.js` is
+  `groundPoint.y/1.0` with an `fwidth` line and a moire fade at `smoothstep(.25,
+  .7,w)`. A green-only branch is the interval, the kind test, and its own
+  strength uniform. **At 25 cm the moire fade will trigger far earlier**, so the
+  lines will vanish at mid-distance unless the fade is re-fitted -- check it on a
+  green from the tee, not from over the ball.
+
+  **Say plainly that this is the closest of the five to being a green-reading
+  helper**, which is the thing the owner asked to do without. Ship it off by
+  default and let them decide.
+
+- [ ] **Bake shading into each green when the course is built.** Everything
+  sun-driven collapses at midday because that is what midday does; shading baked
+  from the geometry does not care where the sun is. `localReliefField()` in
+  `ground.js` already does exactly this at course scale, into the `localRelief`
+  vertex attribute and the `vRelief` varying. A green is roughly 500 square
+  metres against a course's several hundred thousand, so the same field over
+  just the putting surfaces is affordable at many times the resolution -- a
+  second, finer attribute sampled only where `kind==4.`, or a small per-green
+  data texture.
+
+  **Check the generation cost before committing**: this runs in the build, which
+  is already 3-5 seconds for 9 holes and 24% slower than it was. `bench.mjs
+  --tier full --since` before and after, and it is not worth more than a few
+  hundred milliseconds.
+
+- [ ] **Slope in colour, not brightness.** The ramp quantises LIGHT; it does not
+  touch the colour of the grass, so hue is an entirely unused channel on a
+  surface where the brightness channel is saturated. A few per cent cooler
+  running uphill, warmer running down, keyed off the same tilted normal
+  `greenLift` already builds. The eye reads hue and brightness separately, so
+  this ADDS a channel rather than competing for the one every existing cue is
+  fighting over. Closest relative is the existing `cueSlope` tint, which works on
+  the whole course and is the only one of the original three that works in colour
+  -- worth reading first, because it already solved the "does this look like
+  grass" problem once.
+
+- [ ] **The honest caveat, to be repeated to anyone who picks this up.** Part of
+  why a green reads flat is not shading at all: you are looking at it from near
+  ground level at a shallow angle, which compresses the slope out of the picture
+  geometrically. No shading cue fixes viewing geometry -- it is why real golfers
+  walk round a putt and crouch behind it. Expect a real improvement from the
+  above, not a solved problem, and do not chase the last of it with ever-stronger
+  cues; that is what produced a green that read as a lit object rather than a
+  shaped one and had to be walked back.
+
 ## Green and bunker shapes
 
 Both outlines were a smooth oval. Measured over 108 greens and 284 bunkers:
@@ -816,6 +956,183 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 Kept, not thrown away: the reasoning in a finished entry is often the only
 record of what was ruled out and why, which is worth more than a short file.
+
+## Reading a green without the overlays
+
+The overnight brief was "greens look flat from every angle"; what it
+turned into was five graphics settings and three faults found by the
+owner's eye rather than by any measurement here.
+
+- [x] **Measured why greens look flat.** Every shading cue is proportional to
+  slope, and a green is the flattest thing on the course by design. At the
+  default contour setting a green's shading spans .129 of brightness against the
+  .240 ordinary terrain gets. Raising the contour setting would fix the look and
+  change how the hole plays, so it is not the answer.
+
+- [x] **The terrain cues ARE applied to greens -- the owner's first guess was
+  worth checking and the answer is not the obvious one.** Greens get a weaker
+  landform relief (.07 against .15) and a weaker slope-drying colour (.25 against
+  1.0), but a STRONGER directional relief than anything else (gain 4 against
+  2.6). The problem is the input, not the treatment.
+
+- [x] **Four candidates built behind `lab.greenRead(...)`,** so they can be
+  compared live rather than argued about: exaggerate the shading normal, add
+  slope-magnitude shading, make the mow bands follow the contour, make the bands
+  view-dependent. Presets: off, lift, bands, grain, recommended, strong.
+
+- [x] **Exaggerating the NORMAL beats raising the gain, and that distinction is
+  the whole trick.** Gain multiplies the response and clips against the clamp, so
+  steep ground saturates while gentle ground stays invisible; tilting the normal
+  rescales the whole range so a two-centimetre roll and a tier both move within
+  it. Shape contrast .084 to .262, a 3.1x gain, with the geometry untouched --
+  the ball still rolls on the real surface.
+
+- [x] **Slope-magnitude shading was rejected by its own measurement.** The
+  directional cue should in theory be blind to ground tilted across its bearing;
+  measured on real greens that case is 0%. It solves a problem that does not
+  occur.
+
+- [x] **Softening the mow bands RAISES how well the shape reads** -- .262 to .309
+  -- because a strong regular pattern is the first thing the eye locks onto.
+  Bands that follow the contour score nothing on that metric by construction, the
+  blur stripping exactly the signal they live in, but they are plainly visible in
+  a render and they have a real mechanism behind them.
+
+- [x] **"Sunlight on contours" did nothing in daylight, and the owner spotted
+  it.** They said they could not see what it was doing, and they were right. The
+  cartoon ground is a four-step toon ramp sampled at `dot(normal,light)*0.5+0.5`,
+  clamped flat past .875 -- which a near-flat green reaches above about 48 degrees
+  of sun. Tilting the lighting normal measured a brightness span of 0 out of 255
+  WITH and WITHOUT the cue at 50, 65 and 80 degrees. It only ever worked at dawn
+  and dusk. Not a defect in the ramp: the art direction is flat at midday on
+  purpose, which the shader's own comment upstream says in words.
+
+- [x] **Reworked to follow the sun in the turf colour instead.** It asks how much
+  more light the patch would catch if the green were as steep as it looks, so
+  nothing clamps it: 23.4% variation at 20 degrees of sun, 20.1% at 35, 15.2% at
+  50, 10.5% at 65 where the old way gave exactly zero. At 80 it is 4.6%, which is
+  physics -- with the sun overhead, tilting a surface barely changes what it
+  catches. The `normal_fragment_maps` link in the shader chain is gone with it.
+
+- [x] **Owner's first defaults, set on screen: 100 / 20 / 100 / 50 / 65.** Both
+  cues that measured no benefit went on. The measurement said 0% of greens, on
+  this generator at that day's settings; a person looking at a green saw
+  otherwise, and that wins. Slope darkening was rescaled so 50 is what 100 used
+  to be, leaving headroom above it.
+
+- [x] **And then the owner's second set inverted it: 35 / 10 / 20 / 70 / 0.**
+  Definition, sunlight and grain came right down; slope darkening went up past
+  what used to be full strength; grain went off. The shape of that answer is the
+  finding, not the numbers. Definition, sunlight and grain all key off a fixed
+  compass bearing or off where the viewer stands, so running them high makes a
+  green read as a LIT object rather than a SHAPED one. Slope darkening has no
+  bearing at all -- it answers "how steep is this, from anywhere" -- which is the
+  question a player is actually asking over a putt. Bands nearly off because a
+  regular pattern competes with shape. Whatever gets tried next should start from
+  that: direction-free beats directional on a surface this flat.
+
+- [x] **A saved record beat the new default, so the change reached nobody.**
+  Graphics settings persist, so anyone who had opened the panel kept the old
+  numbers. `GREEN_READ_GEN` makes every saved record adopt new defaults once;
+  anything set afterwards sticks. Verified in the browser against a stale record:
+  it adopted 100/20/100/50/65, all six uniforms read back correctly on the GPU,
+  and a deliberate change to 35 stuck and saved at gen 2.
+
+- [x] **The ground stopped drawing entirely, and it was a deleted replace link.**
+  ground.js builds the fragment shader by replacing three of three's `#include`
+  anchors. A scripted edit of mine evaluated to `s.replace(anchor,'')` -- an
+  accidental empty replacement -- which deleted the `color_fragment` link while
+  printing a success message. The block did not vanish; it was appended to the
+  `common` chunk at GLOBAL scope, where `vec2 wp=groundPoint.xz;` is a
+  non-constant global initialiser. GLSL refuses it, the program fails to link,
+  and every draw call raises INVALID_OPERATION.
+
+- [x] **Nothing in the toolchain could see it.** `node --check` passes, the
+  bundler passes, all 499 tests passed, and the app boots with NO fatal card,
+  because a shader compile failure is not a JS exception. The only signal was the
+  ground being absent on screen and `THREE.WebGLProgram: Shader Error` in the
+  console. `tests/ground-shader-structure.test.mjs` now checks that every link in
+  the chain is present, that each anchor still exists in the three version in
+  use, and that statement blocks go to anchors INSIDE main(). Run against the
+  broken file it fails with exactly the right sentence.
+
+- [x] **A slider reported the right number while nothing read it.** The owner
+  said the shipped settings did less than the ones from the analysis, and they
+  were right. `greenBandSoft` was declared, plumbed, exposed on a slider and
+  reported back correctly for two commits, while the ONE LINE in the shader that
+  used it had been deleted -- removing the neighbouring grain block took the span
+  between two anchors with it. Band softening is a third of the recommendation
+  (.262 to .309 shape contrast) and it was silently absent.
+
+- [x] **`tests/green-cue-wiring.test.mjs` reads the shader source** and fails if
+  a cue uniform is declared and never referenced in the body, or if `greenCues`
+  and the shader disagree about names. Run against the broken code it fails with
+  exactly the right sentence.
+
+- [x] **The cue never reached the light, which is the bigger miss.** Everything
+  tinted the grass; the lighting was untouched, so the whole effect was an albedo
+  shift under full sun and tone mapping. Measured, sunlight varies across a green
+  by .009 to .024 -- almost nothing. The diagnosis was right; the first fix was
+  not. Tilting the normal the LIGHTING uses measured 4.2x the variation in an
+  unlit test and exactly nothing in the game, because of the toon ramp -- see the
+  entries above, which replaced it with a sun-aware tint.
+
+- [x] **The two rejected cues are back on sliders, and the owner then turned
+  both ON.** Their call, and the right one twice over: "0% of greens" was
+  measured on this generator at that day's settings, not on every green anyone
+  will ever build, and deleting them meant the measurement could never be
+  revisited by eye. It was revisited by eye, and the eye disagreed.
+
+- [x] **None of it was ever confirmed on screen by me, and the owner's eye
+  closed it.** The drawing buffer reads empty outside a requestAnimationFrame
+  callback and the browser pane keeps going hidden, which stops frames, so every
+  pixel measurement came back zeros. I could confirm only that the shader
+  compiles, that all six uniforms are live on the GPU at the right values, and
+  the offline maths. Two of the three faults in this section -- the dead
+  `greenBandSoft`, and a sun cue the ramp was eating -- were found by the owner
+  looking at a green, not by anything here. On a change that is ONLY a look,
+  assume the measurements are blind until someone sees it.
+
+- [x] **The sliders threw on every input event, and it was my markup.**
+  `wireSliders` wires every range in a panel to an output named `<id>Value` from
+  the input's `data-unit`; there is a `slider()` helper that emits both. I wrote
+  the markup by hand and named the readout `...Out`, so wireSliders looked up
+  nothing and threw once per input event -- while my own handler worked, so the
+  slider moved and the number updated and only the console showed it. Now built
+  with `slider()`.
+
+- [x] **The same trap was already set for three older sliders.** `labFirmness`,
+  `labStimp` and `timeHour` have no readout element at all. The lookup in
+  `wireSliders` is guarded now, which fixes those as well as mine.
+
+- [x] **I SAW THESE ERRORS DURING VERIFICATION AND EXPLAINED THEM AWAY** as a
+  stale console buffer left by my own probe script. They survived a reload,
+  which should have been the tell. The owner found them. Worth remembering: the
+  stale-buffer trap is real, and it is also a very comfortable excuse.
+
+- [x] **DONE: shipped as two graphics settings.** (Later five, at the owner's
+  defaults -- see above.) The owner picked "strong" from the comparison.
+  **Green definition**, then defaulting to 70, moves the shading tilt and
+  the band bending together, because they are one perceptual thing; it maps to
+  exactly the numbers that were judged, lift 3.2 and bend 3.5 -- which the
+  mapping still produces at 70, so the judged look is reachable. **Mowing band
+  strength** is separate because it is taste rather than legibility. Graphics settings rather than course settings -- this is a look,
+  not a property of the ground -- so no generator bump, and the fingerprints
+  confirm it.
+
+- [x] **The two rejected candidates were removed from the shader, not zeroed --
+  and then the owner asked for them back.** Removing them was right by the rule
+  against dead uniforms, and wrong by the outcome: both are now shipping cues at
+  50 and 65. The lesson is not "keep dead code"; it is that a measurement of a
+  LOOK is weaker evidence than a person looking, so a look-only cue deserves a
+  slider before it deserves a deletion.
+
+- [x] **A broken import reached the browser and the tests could not see it.**
+  `greenCues` was used in renderer.js without being imported: node --check
+  passes, the bundler passes, the whole suite passes, and the app dies on boot
+  with a fatal card -- because no test loads the renderer. Caught only by
+  opening it. The stale console buffer then reported the same error AFTER the
+  fix, which is its own trap.
 
 ## Menus and settings layout
 

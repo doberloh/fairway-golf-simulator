@@ -111,7 +111,35 @@ export function groundMaterial(view,palette){
  // the shader by reference, so flipping one is a float write rather than a new
  // program -- a define would recompile every lit material in the scene, which is
  // the same 2.5 second trap the floodlights fell into.
- const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1}};
+ // GREEN READABILITY, THREE CANDIDATE CUES, LIVE-TUNABLE.
+ //
+ // A green is the flattest thing on the course by design -- that is what makes
+ // it puttable -- and every shading cue here is proportional to slope, so the
+ // one surface a player most needs to read is the one with least to read from.
+ // Measured: at the default green contour setting a green's shading spans .129
+ // of brightness against the .240 ordinary terrain gets.
+ //
+ //   greenLift    exaggerates the shading NORMAL only, never the geometry. The
+ //                ball still rolls on the real surface. This is the cartographic
+ //                answer to low-relief ground, where 2x to 5x vertical
+ //                exaggeration is standard practice.
+ //   greenBend    how far the mow bands bend to follow the surface, so they
+ //                trace its shape the way contour lines do.
+ //   greenBandSoft band contrast. Softening them RAISES how well the shape
+ //                reads, because a strong regular pattern is the first thing
+ //                the eye locks onto -- measured, .262 to .309.
+ //
+ // TWO OTHER CUES WERE BUILT HERE AND REMOVED; do not rebuild them without
+ // reading why. Slope-magnitude shading, to catch ground tilted across the
+ // light bearing where the dot product is blind, was rejected by its own
+ // measurement: that case occurs on 0% of real greens. View-dependent bands,
+ // which is what a mow stripe genuinely is in life, measured no better than
+ // bending the bands and cost a per-fragment view vector. Both are written up
+ // with their numbers in RESEARCH.md.
+ const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},
+  greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
+  greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0},
+  sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
@@ -121,7 +149,8 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes;
+ varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
+ uniform vec3 sunDir;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -411,7 +440,12 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // they were added to be useful. Reported from a screenshot, where a near
   // sloping green had no bands on it at all.
   float plan=(p.y*mow.y+p.x*mow.x)/period;
-  float coord=plan+groundPoint.y*bend/period;
+  // BANDS THAT FOLLOW THE SURFACE READ AS CONTOUR LINES. Straight bands over a
+  // rolling green say nothing about it; bands that bend with the ground trace
+  // its shape the way a contour map does. Greens only -- a fairway is not
+  // being read for a putt and its bands are already long enough to wander.
+  float bendMul=kind==4.?greenBend:1.;
+  float coord=plan+groundPoint.y*bend*bendMul/period;
   float aa=max(fwidth(plan),.001);
   float stripe=smoothstep(-aa*6.283,aa*6.283,sin(coord*6.283));
   stripe=mix(stripe,.5,smoothstep(.12,.45,aa));
@@ -427,6 +461,23 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // disappear on exactly the ground they are meant to describe. Scaling instead
   // of adding keeps the bands present and still lets the slope modulate them.
   float spread=clamp(.115*(1.+along*2.),.06,.20);
+  // SOFTENING THE BANDS RAISES HOW WELL THE SHAPE READS -- measured, .262 to
+  // .309 -- because a strong regular pattern is the first thing the eye locks
+  // onto and it competes with the shading underneath. This line was deleted by
+  // accident once, when removing a neighbouring block took the span between two
+  // anchors with it, and the slider went on reporting a value nothing read.
+  if(kind==4.)spread*=greenBandSoft;
+  // VIEW-DEPENDENT GRAIN. In life a band is light because the blades are laid
+  // away from you and dark because they are laid toward you, so its tone shifts
+  // as the ground under it turns relative to where you stand. Measured no better
+  // than bending the bands, and kept on a slider rather than deleted so it can
+  // be judged on screen instead of from a number.
+  if(kind==4.&&greenGrain>.001){
+   vec3 toEye=normalize(cameraPosition-groundPoint);
+   vec2 lay=vec2(mow.x*tr.z-mow.y*tr.w,mow.x*tr.w+mow.y*tr.z);
+   float facing=dot(normalize(toEye.xz),lay)*(stripe*2.-1.);
+   spread=clamp(spread*(1.+greenGrain*1.6*facing),.04,.30);
+  }
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
@@ -447,12 +498,42 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // at midday when a two metre roll casts no shadow at all.
   float relief=dot(gn.xz,normalize(vec2(-.6,-.5)));
   if(kind==4.){
-   // THE GREEN IS UNCHANGED, deliberately and exactly. It has had this since
-   // green reading was built and it is tuned for reading a putt; the first
-   // version of this block also gave the green the crease term below, which on
-   // the most finely contoured surface on the course is the noisiest possible
-   // input and made greens look grubby rather than shaped.
-   turf*=mix(1.,clamp(1.+relief*4.,.78,1.18),cueRelief);
+   // Exaggerating the NORMAL rather than raising the gain is the difference that
+   // matters. Gain multiplies the response and clips against the clamp, so the
+   // steep parts of a green saturate while the gentle parts stay invisible.
+   // Tilting the normal further from vertical first rescales the whole range, so
+   // a two-centimetre roll and a tier both move within the band.
+   vec3 gl4=normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift)));
+   float rel4=dot(gl4.xz,normalize(vec2(-.6,-.5)));
+   turf*=mix(1.,clamp(1.+rel4*4.,.78,1.18),cueRelief);
+   // THE SUN, WITHOUT GOING THROUGH THE TOON RAMP.
+   //
+   // Tilting the normal the lighting uses was tried first and is a dead end in
+   // this art style: the cartoon ramp is four steps, three.js samples it at
+   // dot(normal,light)*0.5+0.5, and a near-flat green sits PINNED at its top
+   // step above roughly 48 degrees of sun elevation. Measured, the brightness
+   // span across a green was 0 both with and without the cue at 50, 65 and 80
+   // degrees -- it only ever worked at dawn and dusk. The comment further down
+   // says the same thing about shadows at midday.
+   //
+   // So this asks the question directly: how much MORE light would this patch
+   // catch if the green were as steep as it looks under exaggeration. It follows
+   // the real sun through the day and nothing clamps it.
+   if(greenSun>.001){
+    vec3 tilted=normalize(vec3(gn.x*(1.+greenSun),gn.y,gn.z*(1.+greenSun)));
+    float gain=dot(tilted,sunDir)-dot(gn,sunDir);
+    turf*=clamp(1.+gain*1.35,.68,1.38);
+   }
+   // MAGNITUDE, NOT ONLY DIRECTION. The dot product above is blind to ground
+   // tilted ACROSS its bearing however steep it is; this darkens by how much the
+   // ground tilts, whichever way it faces. Measured, that blind case is 0% of
+   // real greens, so it is off by default -- a slider rather than a deletion,
+   // because 0% was measured on this generator's greens, not on every green
+   // anyone will ever build.
+   if(greenSlopeShade>.001){
+    float tilt=length(gl4.xz);
+    turf*=mix(1.,clamp(1.-tilt*1.9,.80,1.),greenSlopeShade);
+   }
   }else{
    // Everything else: the same idea at a third of the gain. A green is being
    // read for a putt; a fairway only has to look like ground.
@@ -522,5 +603,5 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v21';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v23';return m;
 }

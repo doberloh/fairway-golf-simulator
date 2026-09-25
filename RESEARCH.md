@@ -687,7 +687,141 @@ GC3 says the model flies 8% low. SkyTrak said it flew 5.5% high, on an overlappi
 
 Two things make the GC3 the stronger reference beyond reputation: it reports total spin and spin axis directly rather than leaving them to be derived, and its hang time is given to hundredths where SkyTrak's is whole seconds and so cannot grade anything.
 
-### How un-round a green and a bunker are
+### Why greens look flat, and what reads as shape
+
+A green is the flattest thing on the course by design — that is what makes it
+puttable — and every shading cue in the ground shader is proportional to slope.
+So the one surface a player most needs to read has the least to read from.
+
+Measured, as the brightness multiplier the shader applies across a surface:
+
+| green contour setting | green surface | ordinary terrain |
+|---|---|---|
+| 0% | 0.000 | 0.240 |
+| **35% (the default)** | **0.129** | 0.240 |
+| 70% | 0.313 | 0.240 |
+| 100% | 0.400 | 0.240 |
+
+At the default a green gets roughly half the shading range the ground around it
+gets. Raising the contour setting fixes the look and changes how the hole plays,
+so it is not the answer.
+
+### The cue the flat measurement hides
+
+Total brightness variation is a poor measure here, because most of it is the mow
+bands rather than the shape. Blurring the bands away first — a box blur wider
+than the 3.2 m band period — leaves the part a player reads as three-dimensional:
+
+| option | shape contrast | band strength | blind slopes |
+|---|---|---|---|
+| shipped today | 0.084 | 0.119 | 0% |
+| **A** exaggerate the shading normal | **0.262** | 0.110 | 3% |
+| B add slope-magnitude shading | 0.088 | 0.117 | 0% |
+| D mow bands follow the contour | 0.082 | 0.119 | 0% |
+| A + D | 0.261 | 0.110 | 3% |
+| **A + D + softer bands** | **0.309** | 0.064 | 2% |
+
+**A is the win: 3.1× the shape contrast.** It exaggerates the shading NORMAL
+rather than raising the gain, which matters — gain multiplies the response and
+clips against the clamp, so steep parts saturate while gentle parts stay
+invisible; tilting the normal rescales the whole range instead.
+
+**B was rejected by its own measurement.** The existing relief is
+`dot(normal, a fixed bearing)`, so ground tilted across that bearing should in
+principle produce no cue however steep. On real greens that case is 0% — the
+concern is theoretical and does not occur, so the term buys nothing.
+
+**D scores nothing on this metric by construction** — the blur strips exactly the
+band signal D lives in — but it is plainly visible in a render, and it is the
+cue with a real-world mechanism behind it. Softening the bands raises shape
+contrast from 0.262 to 0.309, because a strong regular pattern is what the eye
+locks onto first.
+
+### The cue never reached the light, and then the toon ramp ate it
+
+Everything else here **tints the grass**. The lighting was untouched, so a
+green's undulation was described by an albedo shift sitting under full sun and
+tone mapping. The first attempt tilted the normal the **lighting** uses, which is
+the textbook fix — and in this art style it is a dead end.
+
+The cartoon ground is a `MeshToonMaterial` with a **four-step ramp**
+(90, 145, 205, 245), and three.js samples it at `dot(normal, light) * 0.5 + 0.5`.
+Texel centres sit at 0.125, 0.375, 0.625 and 0.875, so anything past 0.875 is
+**clamped flat**. A near-flat green under a sun above roughly 48° lands there.
+Measured brightness across a green, out of 255:
+
+| sun elevation | without the cue | with the normal tilted | |
+|---|---|---|---|
+| 20° | span 3 | span 17 | works |
+| 35° | span 3 | span 14 | works |
+| 50° | span 0 | span 5 | pinned |
+| 65° | span 0 | **span 0** | pinned |
+| 80° | span 0 | **span 0** | pinned |
+
+So it only ever worked at dawn and dusk. This is not a defect — it is the art
+direction, and the shader's own comment says so: the raking-light cue exists
+precisely because "a two metre roll casts no shadow at all" at midday.
+
+**The cue asks the question directly instead.** Rather than tilting the normal
+and hoping the ramp responds, it computes how much *more* light the patch would
+catch if the green were as steep as the exaggeration makes it look, and applies
+that to the turf colour. It follows the real sun through the day and nothing
+clamps it:
+
+| sun elevation | tilting the normal | following the sun in the tint |
+|---|---|---|
+| 20° | 6.7% | **23.4%** |
+| 35° | 5.5% | **20.1%** |
+| 50° | 2.0% | **15.2%** |
+| 65° | 0.0% | **10.5%** |
+| 80° | 0.0% | **4.6%** |
+
+At 80° it is inherently small: with the sun overhead, tilting a surface barely
+changes how much light it catches. That is physics, not a shortfall.
+
+### What shipped
+
+Five graphics settings rather than two, because the owner asked to tune them and
+set the defaults:
+
+| setting | default | what it does |
+|---|---|---|
+| Green definition | 35 | tilts the shading normal, bends the mow bands to follow the surface |
+| Mowing band strength | 10 | softens the bands so they stop competing with the shading |
+| Sunlight on contours | 20 | shades by how much more light the exaggerated surface would catch |
+| Slope darkening | 70 | darkens by tilt regardless of direction |
+| Band grain | 0 | makes bands view-dependent, as real mowing stripes are |
+
+**These are the second set the owner chose, and they invert the first.** The
+first pass ran everything near full (100 / 20 / 100 / 50 / 65). Sitting with it,
+the owner pulled definition, sunlight and grain right down and pushed slope
+darkening up past what used to be full strength. The shape of that answer is
+worth more than the numbers: **the cue that carries the reading is the
+direction-free one.** Definition, sunlight and grain all key off a fixed compass
+bearing or the viewer, so they describe a green as lit from somewhere — raise
+them together and a green reads as a lit object rather than a shaped one. Slope
+darkening has no bearing at all: it answers "how steep is this, anywhere", which
+is the question a player is actually asking. The bands are nearly off because
+they are pattern competing with shape.
+
+**These were chosen on screen, not derived from the measurements, and that is the
+right order of authority.** The two cues that measured no benefit are on: "0% of
+greens" was measured on this generator at the settings of the day, and the owner
+could see something the number could not.
+
+Slope darkening was rescaled so that **50 is what 100 used to be**, leaving room
+above it. A saved record carries `greenReadGen`; raising it makes every existing
+record adopt new defaults once, because otherwise a saved preference beats a new
+default and the change reaches nobody who has already opened the panel.
+
+**A slider reported the right number while nothing read it.** `greenBandSoft` was
+declared, plumbed, exposed and reported back correctly for two commits — and the
+one line in the shader that used it had been deleted, because removing a
+neighbouring block took the span between two anchors with it. The value reached
+the GPU and the picture never changed. `tests/green-cue-wiring.test.mjs` now
+reads the shader source and fails if any cue uniform is never referenced.
+
+## How un-round a green and a bunker are
 
 Both outlines are a radius that varies with angle: the nominal size times one
 plus a few harmonics. A green carries three (two-, three- and five-lobed waves),

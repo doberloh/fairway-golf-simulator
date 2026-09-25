@@ -33,7 +33,7 @@ import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRange
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R} from './physics.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -1767,7 +1767,20 @@ function drawLiveScore(){
 // the focus is. The course itself is left sharp on purpose.
 function setPanelFocus(on){$('world').classList.toggle('panel-open',on);document.getElementById('app').classList.toggle('panel-open',on);}
 function slider(id,label,value,min,max,unit='',step=1){return `<label class="field">${label}<output id="${id}Value">${value}${unit}</output><input type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" value="${value}" step="${step}" data-unit="${unit}"></label>`;}
-function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>$(el.id+'Value').textContent=el.value+el.dataset.unit));}
+// Every range in a panel gets its readout wired, BY CONVENTION: an output named
+// <id>Value, and the unit off the input's own data-unit. `slider()` builds both,
+// so use it rather than writing the markup by hand.
+//
+// THE READOUT IS OPTIONAL AND THE GUARD IS NOT OPTIONAL. This threw on every
+// input event for any slider without a matching output, which silently describes
+// `labFirmness`, `labStimp` and `timeHour` as well as a pair added by hand for
+// green definition. The slider still worked and its own handler still ran, so
+// the only symptom was a console filling up -- easy to write off as noise, which
+// is exactly what happened before a player reported it.
+function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{
+ const out=$(el.id+'Value');
+ if(out)out.textContent=el.value+(el.dataset.unit??'');
+}));}
 function openPanel(name){
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
@@ -2369,6 +2382,16 @@ function renderPanel(name,content){
   <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible of the three by a distance, because it turns a slope into a spacing you can count.</p>
   <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
   <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground.</p>
+  ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
+  <p class="note">A green is the flattest ground on the course, and every cue above is proportional to slope &mdash; so the one surface you actually have to read gets about half the shading the ground around it gets. This tilts the shading further from flat and bends the mowing bands to follow the surface, the way a contour line does. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did. At 0 a green looks the way it did before this existed.</p>
+  ${slider('gfxGreenBands','Mowing band strength',graphics.greenBands,0,100,'%',5)}
+  <p class="note">Bands on greens only. Softening them makes the shape easier to read, because a strong regular pattern is the first thing your eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
+  ${slider('gfxGreenSun','Sunlight on contours',graphics.greenSun,0,100,'%',5)}
+  <p class="note">Follows the real sun: it shades each patch by how much more light it would catch if the green were as steep as the settings above make it look. So a green shows its shape differently at breakfast than at noon, the way a real one does — and least of all with the sun straight overhead, where tilting ground barely changes what it catches. The ground is untouched — the ball rolls where it always did.</p>
+  ${slider('gfxGreenSlopeShade','Slope darkening',graphics.greenSlopeShade,0,100,'%',5)}
+  <p class="note">Darkens by how steeply a green tilts, whichever way it faces. The shading above works off one fixed compass bearing, so ground running across that bearing gets little from it; this one has no bearing at all, which is why it carries more than any other single cue here by default. Half the slider is as far as the whole of it used to go.</p>
+  ${slider('gfxGreenGrain','Band grain',graphics.greenGrain,0,100,'%',5)}
+  <p class="note">Makes the mowing bands change tone with where you stand, the way real ones do — turf mown away from you looks light, toward you dark. It is the only cue here with a real-world mechanism behind it, and it is off by default anyway: it measured no better than bending the bands, and on screen it fights them.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -2396,6 +2419,19 @@ function renderPanel(name,content){
   // no recompile, so these take effect on the frame after the click.
   for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxContours','contours'],['gfxStripes','stripes']])
    $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
+  // Live uniform writes, same as the toggles above: no rebuild, no recompile.
+  // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an
+  // output named <id>Value from the input's own data-unit, for every range in
+  // the panel. Hand-rolling the markup and the readout instead of using the
+  // `slider` helper left wireSliders looking up an element that did not exist,
+  // and it threw on EVERY input event while this handler quietly worked -- so
+  // the slider moved, the number updated, and the console filled up.
+  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
+   ['gfxGreenSun','greenSun'],['gfxGreenSlopeShade','greenSlopeShade'],['gfxGreenGrain','greenGrain']])
+   $(id).oninput=e=>{
+    graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
+    view.setGroundCues(graphics);
+   };
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
@@ -3156,6 +3192,42 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // moves the chop and the swell together and takes effect on the next frame.
    if(speed!==undefined)view.waterSpeed=Math.max(0,speed);
    return {chop:view.waterChop.value,swell:view.waterSwell.value,speed:view.waterSpeed};
+  },
+  // Green definition, from the console, driving the same two graphics settings
+  // the panel does -- so what is tried here is what gets saved.
+  //   lab.greenRead()            what is set now
+  //   lab.greenRead('off')       how greens looked before this existed
+  //   lab.greenRead('recommended') / lab.greenRead('strong')   the two compared
+  //   lab.greenRead(85)          a definition percentage
+  //   lab.greenRead({greenDefinition:85,greenBands:40})
+  greenRead:(v)=>{
+   const base={greenDefinition:0,greenBands:100,greenSun:0,greenSlopeShade:0,greenGrain:0};
+   const P={off:base,
+    recommended:{...base,greenDefinition:52},
+    strong:{...base,greenDefinition:70,greenBands:60},
+    shipped:{...base,greenDefinition:70,greenBands:60,greenSun:60},
+    everything:{...base,greenDefinition:70,greenBands:60,greenSun:60,greenSlopeShade:50,greenGrain:60}};
+   if(v!==undefined){
+    const next=typeof v==='number'?{greenDefinition:v}
+     :typeof v==='string'?(P[v]||P.strong):v;
+    graphics=saveGraphics({...graphics,...next});
+    view.setGroundCues(graphics);
+    // Same convention as the panel: the readout is <id>Value.
+    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands],
+     ['gfxGreenSun',graphics.greenSun],['gfxGreenSlopeShade',graphics.greenSlopeShade],['gfxGreenGrain',graphics.greenGrain]]){
+     if($(id))$(id).value=v;
+     if($(id+'Value'))$(id+'Value').textContent=v+'%';
+    }
+   }
+   // REPORT WHAT THE MATERIAL HOLDS, not what this function just computed.
+   // Reporting the computed value is how a dead slider looks alive: the numbers
+   // come back correct while the uniform the GPU reads never moved.
+   const live=view.terrain?.material?.userData?.cues;
+   return {greenDefinition:graphics.greenDefinition,greenBands:graphics.greenBands,
+    greenSun:graphics.greenSun,greenSlopeShade:graphics.greenSlopeShade,greenGrain:graphics.greenGrain,
+    wanted:greenCues(graphics),
+    onTheGpu:live?Object.fromEntries(['greenLift','greenBend','greenBandSoft','greenSun',
+     'greenSlopeShade','greenGrain','cueRelief'].map(k=>[k,live[k]?.value])):'no ground material'};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
