@@ -84,7 +84,24 @@ The main menu stays behind whichever dialogue you open from it — the wordmark 
 
 On the range the map also carries **dispersion**: one ellipse per club, drawn from the shots you actually hit, with a dot for every finish and the group's centre marked. It covers every ball that club hit, and it lies along the way the club actually misses rather than along the aim line — long and short is a different miss from left and right, and most clubs group about half as wide as they are deep. The legend gives both axes, long first. A club needs three shots before it draws. It is a read of what happened and not a model of what might: the simulator adds no miss of its own, so a club fed identical numbers ten times groups on a point. Toggle it and read the shot counts in Range controls.
 
-The **course card** carries the hole, the scores and the live shot readout in one panel, with the course seed in its top-right corner — click it to copy. Panels share one set of corners and shadows, and text follows one rule: a serif face for the course title, panel headings and the large numbers you glance at, and a sans face for every label, button and table.
+**Shot data** in the tools tray decides which numbers the card keeps. Everything you hit stays on
+the card until you hit the next one, so you can look at a drive while you walk up to it rather than
+watching the numbers vanish the moment the ball stops. While a ball is in the air the live speed,
+spin, distance and height tick along the small line under your name, and the card holds the shot
+before it — so nothing tells you where this one finished until it finishes.
+
+The card starts with the eight numbers every shot has: ball speed, launch angle, launch direction,
+spin, spin axis, carry, total and apex. Beyond those, anything your launch monitor sends can go on
+it — club speed, smash factor, attack angle, club path, face to target, dynamic loft, lie, closure
+rate, where on the face you hit it, the backspin and sidespin split, and the monitor's own carry
+and total alongside ours. There is also face to path, which no monitor sends because it is face
+minus path, worked out for you. Tick up to twelve of them and choose two, three or four across.
+
+Numbers that need a monitor show a dash without one rather than a zero, and the monitor's distances
+are labelled as the monitor's, because they will not agree with ours and you should be able to see
+which is which.
+
+The **course card** carries the hole, the scores and your shot numbers in one panel, with the course seed in its top-right corner — click it to copy. Panels share one set of corners and shadows, and text follows one rule: a serif face for the course title, panel headings and the large numbers you glance at, and a sans face for every label, button and table.
 
 **Every panel on screen moves and resizes, whenever you want.** The course card, the weather, the map, the shot controls, the tools tray and the shot information each carry a small grip in one corner and a resize handle in the other — drag the grip, pull the corner, or focus either and use the arrow keys. Where you put them is remembered, in every mode. There is no arrange mode to enter; *Reset panel layout* in the tools tray puts everything back.
 

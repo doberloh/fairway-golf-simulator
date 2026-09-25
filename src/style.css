@@ -467,3 +467,42 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* The biome picker is a card now, so its grid should not also carry the gap
    the loose version needed. */
 .control-card>.option-grid{margin-top:10px}
+
+/* THE SHOT GRID. Tiles of one number each, in the column count the player set.
+
+   A grid rather than the wrapping flex row it replaced: `.result-stats` let
+   every tile take its content's width, so BALL SPEED and SPIN sat at different
+   x positions from one shot to the next and the eye had to find each number
+   again. Equal columns mean a tile stays where it was, which is the whole point
+   of numbers that persist -- you compare this shot against the last one by
+   looking at the same spot on the card. `minmax(0,1fr)` rather than `1fr`
+   because a long value would otherwise push the column wider than its share. */
+.shot-grid{display:grid;grid-template-columns:repeat(var(--shot-cols,3),minmax(0,1fr));gap:13px 14px;margin-top:15px}
+.shot-grid>div{min-width:0}
+.shot-grid strong{display:block;font-family:var(--font-display);font-weight:400;letter-spacing:-.5px;
+ font-size:17px;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot-grid strong small{font-size:9px;letter-spacing:0;color:var(--ink-dim)}
+/* THE LABEL WRAPS; THE NUMBER NEVER DOES. At three columns in a 309px card a
+   tile is about 94px, and "5400 rpm" at the old 20px overflowed it -- so the
+   card ellipsed the one thing on it that matters, printing "5400 ...". The
+   value is sized to fit the narrowest column the settings allow, and a long
+   label like SMASH FACTOR takes a second line rather than losing its end. */
+.shot-grid span{display:block;font-size:8px;letter-spacing:.8px;line-height:1.3;
+ color:var(--ink-faint);margin-top:3px}
+/* A tile the device never filled. Dimmed, not hidden: a tile that comes and
+   goes as a monitor warms up moves every other tile with it. */
+.shot-grid>.blank strong{color:var(--ink-faint);opacity:.55}
+
+/* The live line, under the player's name. Tabular figures so the numbers stop
+   jittering sideways as they tick -- at 10px a proportional 1 against a 0 moves
+   the whole line, which is far more distracting than it sounds while you are
+   watching a ball. */
+#playerTurn{font-variant-numeric:tabular-nums}
+
+/* Group headings in the Shot data panel. The panel is a column of cards, one
+   per group, and each needs a quiet label rather than another `h3`. */
+.shot-field-group{margin:0 0 8px;font-size:8.5px;font-weight:650;letter-spacing:1.6px;
+ text-transform:uppercase;color:var(--ink-faint)}
+.control-card>.check small{color:var(--ink-faint);font-size:10px}
+.control-card>.check input:disabled+*,.control-card>.check input:disabled{opacity:.45}

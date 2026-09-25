@@ -136,6 +136,88 @@ prevent.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
+## Shot numbers that stay on the card
+
+Asked for on 2026-09-24, in the run-up to letting other people play it.
+
+- [x] **The numbers persist between shots, and the card is one function now.**
+  Three separate fixed stat blocks each decided for themselves what a shot was
+  worth showing, which is why the launch numbers were on screen for the two
+  seconds of a flight and then gone. One `gridHTML` from one record now serves
+  every state: just played, played ten minutes ago, a replay, a range session.
+
+- [x] **The live numbers moved to the small line under the player's name.** The
+  ticking speed, spin, distance and height used to REPLACE the grid, so the shot
+  you had just hit erased the shot you hit before it. Nothing about a ball in the
+  air belongs in a panel of finished numbers. `updateHUD` now leaves that line
+  alone while a flight is running -- it runs many times a second and would erase
+  the ticker between every frame that set it.
+
+- [x] **The invented commentary is gone.** "On to the next.", "Beautiful
+  flight." and "A little touch" were the card telling you in words how your shot
+  went, over the top of numbers that already said it. What is left are the four
+  things that are events rather than opinions: holed, lipped out, a penalty, and
+  the hole or round finishing.
+
+- [x] **A CONFIGURABLE GRID: up to twelve tiles, two to four across.** Every
+  field is declared once in `SHOT_FIELDS` in `src/shot-data.js` -- id, label,
+  unit, group, formatter -- and the grid, the panel checklist, the repair of a
+  saved layout and the tests all derive from it. The panel is Shot data in the
+  tools tray. Tiles are drawn in REGISTRY order, never tick order: a grid that
+  rearranged itself while you tried fields on would make comparing two shots
+  harder, which is the one thing the grid is for.
+
+- [x] **Everything else a monitor sends is captured now.** `readExtras` in
+  physics.js keeps club speed, speed at impact, attack angle, path, face to
+  target, dynamic loft, lie, closure rate, both face impact axes, the backspin
+  and sidespin split, and the device's own carry and total. Smash factor and
+  face to path are DERIVED -- no monitor sends either -- and face to path stays
+  blank when only one of its two halves arrived, rather than reading the half as
+  if it were the whole.
+
+- [x] **Not one field of it may reject a shot, and that asymmetry is the whole
+  design.** The five are validated hard because a bad one means the model cannot
+  run. The extras reach a readout and nothing else, so there is no `throw` and no
+  range check in `readExtras`: a device sending a string where a number belongs,
+  or a ClubData that is not an object, must not stop a real ball being played.
+  Tested against seven shapes of nonsense.
+
+- [x] **The grid gave away the result while the ball was still climbing.** Found
+  on screen, not by a test, and every number in it was correct -- `takeShot`
+  writes `lastShot` before the ball leaves and the entire flight is simulated in
+  that instant. A live flight now holds `priorShot`; a replay keeps lastShot,
+  because you already know how that one ended.
+
+- [x] **Two things the first screenshot showed.** The spin tile printed
+  "5400 ..." -- the value was sized at 20px in a 94px column and the card ellipsed
+  the one thing on it that matters. And sided readings came out "1.1L °", with
+  face impact as "2.1 heel mm". Values are sized to fit the narrowest column the
+  settings allow, labels wrap instead of truncating, and a field may now return
+  its own unit so the side goes after it.
+
+- [x] **The lab passes club numbers through.** `labStrike` rebuilt its payload
+  from exactly five fields and dropped everything else, so there was no way to
+  test a monitor's club data without a monitor. They ride along per-strike and
+  unvalidated, which is what they are on a real shot, and deliberately stay out
+  of the remembered launch.
+
+- [ ] **The card forgets its numbers on a reload.** `lastShot` is memory only,
+  so resuming a saved round opens with dashes and "Nothing hit yet" even though
+  the round is mid-hole. Saving the last shot with the round would fix it; the
+  question first is whether a shot from a previous SESSION should be presented as
+  though it just happened.
+
+- [ ] **The range's own session summary is still its own thing.** Average carry
+  and offline spread across the session sit in the paragraph above the grid
+  rather than being fields you can tick. They are session statistics rather than
+  shot readings, which is a real distinction -- but somebody will want them as
+  tiles.
+
+- [ ] **Nothing has been tested against a real monitor.** Every extra field is
+  exercised through the lab and through `parseLaunchMessage`, which is the same
+  code path a device drives, but no physical device has sent a ClubData block
+  into this. First thing to check at the R50 session.
+
 ## Greens read better if the art style bends for greens only
 
 Asked for on 2026-09-24, after the second retune. Five sliders got a green from
