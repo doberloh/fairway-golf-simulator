@@ -1,5 +1,10 @@
 import projectLicense from '../LICENSE?raw';
-import thirdPartyNotices from '../THIRD_PARTY_NOTICES.txt?raw';
+// The notices live under docs/ with the rest of the documentation; LICENSE
+// stays at the root, where a licence-detecting host looks for it. Both are
+// INLINED INTO THE BUILD from here, which is the whole reason a copy of
+// Fairway.html carries its own licences: moving either file without fixing
+// this line does not fail a test, it fails the build.
+import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';

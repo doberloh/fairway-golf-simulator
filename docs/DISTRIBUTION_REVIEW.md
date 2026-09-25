@@ -202,7 +202,7 @@ claimed costs nothing and is missing.
 
 #### Two judgement calls for the owner, not defects
 
-- **~~`AGENTS.md` ships in both archives.~~ Fixed the same day.** The portable archive now carries six files -- the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README and INSTALLATION -- and nothing else. It previously shipped the architecture handoff, the open TODO list with every known defect on it, the research measurements, this review, the dependency inventory and AGENTS.md. The source archive still carries all of them, which is the right place for them.
+- **~~`AGENTS.md` ships in both archives.~~ Fixed the same day.** The portable archive now carries seven files -- the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README, INSTALLATION and PLAYING (the manual) -- and nothing else. It previously shipped the architecture handoff, the open TODO list with every known defect on it, the research measurements, this review, the dependency inventory and AGENTS.md. The source archive still carries all of them, which is the right place for them.
 - **`LICENSE` reads "Copyright (c) 2026 Fairway contributors".** Fine for a
   collective credit; if a company is going to sell this, the holder line and the
   publisher identity are worth settling before money changes hands. The September
@@ -229,3 +229,52 @@ claimed costs nothing and is missing.
 - Nothing here is a fitness, safety or accuracy claim about the simulator. It
   remains suitable packaging for an experimental preview, with the open items in
   TODO.md disclosed.
+
+---
+
+## Addendum, 25 September 2026: the repository was reorganised for publication
+
+**Nothing about the build, the bundle or a licence obligation changed.** What
+changed is where files sit and what the archives carry, both of which this
+document makes claims about.
+
+**Documentation moved under `docs/`.** The repository root now holds README.md,
+CONTRIBUTING.md, AGENTS.md and LICENSE, and nothing else that is prose.
+`docs/README.md` indexes the rest. File names were deliberately not changed:
+953 references name these files in prose across the documents and the source
+comments, and a rename would have turned a reorganisation into a search-and-
+replace with no way to distinguish a miss from a mention.
+
+**LICENSE stays at the repository root**, where a licence-detecting host looks
+for it, and it is still the first file in the portable archive.
+
+**The portable archive carries seven files rather than six.** `PLAYING.md`,
+the player's manual, was added: it is the document a customer most obviously
+needs and it had been living inside README.md. The archive also gets its OWN
+README now -- `docs/PORTABLE_README.md` -- rather than the repository's. The
+root README links into `docs/` and explains `npm ci`, which resolves to a page
+of dead links for somebody who has unzipped a game and wants to start it. The
+same reasoning applies in reverse to the source archive, which keeps the
+repository's layout so a path written in a document still resolves once the
+ZIP is unpacked.
+
+**A trademark disclaimer now exists**, which closes the one finding the
+commercial-use pass above raised and did not fix ("There is no trademark
+disclaimer anywhere in the product or the docs"). It is in the root README, in the portable
+archive's README and at the foot of ATTRIBUTION.md: the marks named -- GSPro,
+Garmin, Rapsodo, SkyTrak, PiTrac, Foresight, Trackman -- belong to their
+owners, and no affiliation, endorsement, certification or hardware-
+compatibility guarantee is claimed. Naming them to describe compatibility is
+nominative use and continues; the gap was that nothing said so out loud.
+
+### What this addendum does NOT claim
+
+- **The `file://` open is still unverified on a current build.** It is the
+  central portability claim and it has now been carried across three addenda
+  without being exercised. Open the rebuilt portable archive by hand.
+- No new similarity or provenance search was run. The limits recorded in the
+  September 11 review and in the commercial-use pass apply unchanged.
+- Two publication decisions are recorded in TODO.md and are not settled here:
+  whether `vendor/baked_assets/` (106 MB, the largest thing in the tree, read
+  by nothing at build time) belongs in a public repository, and who the
+  copyright holder on `LICENSE` should actually be.

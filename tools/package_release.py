@@ -63,7 +63,14 @@ DOCS = [path for path, _ in PORTABLE] + [
     'docs/REFERENCES.md',
 ]
 ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html']
-DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'}, 'tools': {'.py'}}
+# `tools` used to ship its Python packager alone, which left the source
+# archive carrying a package.json whose scripts -- bench, profile, gpu,
+# assets, grove -- all pointed at files that were not in it. The .mjs tools
+# ship now. Some of them still cannot RUN from the archive, because
+# `vendor/` is several hundred megabytes of model packs and is in neither
+# archive; that is a deliberate limit and is recorded in DISTRIBUTION_REVIEW.
+DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
+               'tools': {'.py', '.mjs', '.js'}}
 
 
 def main():

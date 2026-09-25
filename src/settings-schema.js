@@ -121,7 +121,7 @@ export const SCHEMA_VERSION=8;
 //     settings -- the tee surround fell to 0.03 of course average at a 92 m
 //     fairway, worse than before any of this work. Now 0.34 to 0.90 across
 //     every biome and the whole width slider.
-// 30: rocks are judged as bodies, not as points. A boulder was tested against
+// 31: rocks are judged as bodies, not as points. A boulder was tested against
 //     the launch corridor as a dimensionless point with a ceiling of y+scale,
 //     which is not its height -- it is drawn up to 0.9 scale above centre and
 //     sunk a quarter of it -- and it never consulted the tee fan at all. Four
@@ -131,7 +131,7 @@ export const SCHEMA_VERSION=8;
 //     A fairway FEATURE on a biome with no tree species fell through to
 //     `bio.plants[0]` and grew gorse to canopy height -- a 13 to 29 m bush in
 //     the middle of a links fairway. Those become rocks.
-// 31: tee boxes. The pad is 7.2 m long rather than 9, its shoulder falls away
+// 32: tee boxes. The pad is 7.2 m long rather than 9, its shoulder falls away
 //     35% faster directly ahead than it does to the sides or behind, and the
 //     siting now staggers against EVERY tee already placed rather than only the
 //     one in front. Measured over 945 tees: pairs sitting in line fell from 110
