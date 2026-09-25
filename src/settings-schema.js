@@ -131,7 +131,14 @@ export const SCHEMA_VERSION=8;
 //     A fairway FEATURE on a biome with no tree species fell through to
 //     `bio.plants[0]` and grew gorse to canopy height -- a 13 to 29 m bush in
 //     the middle of a links fairway. Those become rocks.
-export const GENERATOR_VERSION=31;
+// 31: tee boxes. The pad is 7.2 m long rather than 9, its shoulder falls away
+//     35% faster directly ahead than it does to the sides or behind, and the
+//     siting now staggers against EVERY tee already placed rather than only the
+//     one in front. Measured over 945 tees: pairs sitting in line fell from 110
+//     to 10, and ground within 40 m of a tee standing above the sight line fell
+//     from 8 shots to 2. It did NOT move blind tee shots -- all 25 of those are
+//     caused by ground 96 to 190 m out, not by the tee.
+export const GENERATOR_VERSION=32;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

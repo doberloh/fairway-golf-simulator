@@ -305,7 +305,16 @@ export function generateCourse(settings={},hole=0){
 // Sizes uniformly smaller with it. The mown collar was 20 by 27 metres, which
 // is most of why three tees on one hole read as a single green blob and why a
 // quarter of consecutive pairs sat within 1.5 m of each other sideways.
-export const TEE_PAD={x:3,z:4.5},TEE_ROUND=1.1,TEE_APRON_SCALE=1.45;
+// SHORTER DOWN THE LINE OF PLAY THAN IT WAS. 9 m long became 7.2, on the
+// owner's call. Measured, it is not what makes a tee shot blind -- see
+// RESEARCH -- but it is half of what took the ground within 40 m of a tee out
+// of the sight line on 6 of the 8 shots where it was in it, and a 9 m pad on a
+// 6 m width reads long.
+export const TEE_PAD={x:3,z:3.6},TEE_ROUND=1.1,TEE_APRON_SCALE=1.45;
+// Six inches, which is where a marker stands relative to the mown edge. They
+// were set at 4 m either side of a pad 3 m wide, so both markers stood a metre
+// OFF the tee they mark.
+export const TEE_MARKER_INSET=.1524;
 export const TEE_APRON={x:TEE_PAD.x*TEE_APRON_SCALE,z:TEE_PAD.z*TEE_APRON_SCALE};
 // The middle of the fairway, which is not the centre line it is drawn around:
 // the two edges vary independently, so where one side runs wider the playable
@@ -629,6 +638,20 @@ const TEE_SEE=10;
 const TEE_MERGE=1.2;
 // How far apart across the hole two consecutive tees would like to sit.
 const TEE_STAGGER=10;
+// How hard the siting pushes a tee out of line with the ones already placed.
+// Swept against the measurement rather than chosen: see RESEARCH.
+const TEE_STAGGER_W=5;
+// HOW MUCH OF THE SHOULDER IS TAKEN OFF DIRECTLY IN FRONT OF A TEE.
+//
+// The shoulder was isotropic: the same reach in every direction, so the bank
+// that makes a tee read as built when you see it from the side is also a long
+// gentle slope sitting between you and the fairway when you stand on it. Those
+// two want opposite things, and only one of them is in shot while you play.
+//
+// 0 is the old behaviour. 0.5 halves the reach straight ahead and therefore
+// doubles the steepness there, tapering to nothing at the sides so the bank
+// behind and beside the pad -- the part you actually look at -- is untouched.
+const TEE_FRONT_FALL=0.35;
 // How much of the countryside's relief the ground behind a tee keeps.
 const TEE_AREA_RELIEF=.25;
 // THE PAD IS THE GROUND; THE TEE IS WHERE YOU STAND ON IT.
@@ -1297,7 +1320,14 @@ export function* generateWorldSteps(settings={}){
      // A quarter of consecutive pairs used to sit within 1.5 m of each other
      // sideways, which is in line. A preference and not a rule: on a tight
      // hole there may be nowhere to go, and a tee in line beats no tee.
-     +(placed.length?Math.max(0,TEE_STAGGER-Math.abs(cx-placed[placed.length-1].x))*.6:0);
+     //
+     // AGAINST EVERY TEE ALREADY PLACED, not only the one immediately in front.
+     // Blue can sit in line with red while white is in line with neither, and
+     // the pair that matters is whichever two share a sightline -- measured,
+     // 110 of 945 pairs had collars overlapping sideways while this looked only
+     // at consecutive ones. The worst offender decides the penalty, so moving
+     // clear of one tee cannot be paid for by sliding into another.
+     +placed.reduce((worst,p)=>Math.max(worst,Math.max(0,TEE_STAGGER-Math.abs(cx-p.x))),0)*TEE_STAGGER_W;
     if(!best||score<best.score)best={score,cx,cz,level,g};
    }
    if(!best){
@@ -1407,8 +1437,15 @@ export function* generateWorldSteps(settings={}){
    // the drop makes it. `smooth` flattens at both ends, so it meets the collar
    // and the natural ground without a crease at either. It barely matters in
    // practice any more, because siting picks ground that hardly needs a drop.
-   const level=pad.y,ramp=9+Math.min(24,Math.abs(y-level)*4);
-   const b=1-smooth(out/ramp);
+   // AND IT FALLS AWAY FASTER IN FRONT THAN IT DOES ANYWHERE ELSE.
+   //
+   // `f.along` is positive down the line of play, so this is the share of the
+   // way out that is FORWARD: 1 straight ahead, 0 to the side, 0 behind. The
+   // reach is cut by that share, which steepens the ground between the pad and
+   // the fairway without touching the bank you see when you look at the tee.
+   const ahead=f.along>0?f.along/Math.max(1e-6,Math.hypot(f.across,f.along)):0;
+   const level=pad.y,ramp=(9+Math.min(24,Math.abs(y-level)*4))*(1-TEE_FRONT_FALL*ahead);
+   const b=ramp>1e-6?1-smooth(out/ramp):0;
    if(b<=0)continue;
    // Same weighting the pond shelves use: the pad you are standing on decides
    // the height while neighbouring pads stay continuous with it, instead of

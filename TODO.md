@@ -136,6 +136,57 @@ prevent.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
+## Tee boxes: what was wrong, and what was not
+
+Reported from play on 2026-09-25, with an instruction to measure before
+changing anything. Worth it: one of the three assumptions was wrong.
+
+- [x] **A blind tee shot is never the tee.** All 25 of them across 945 shots are
+  caused by ground 96 to 190 m out -- the landing area, not the box. Nothing
+  within 80 m. Shortening the pad and steepening the front moved the count from
+  25 to 23, which is noise.
+
+- [x] **The generator's own sightline starts 12 m out**, so nothing in the code
+  had ever looked at the ground immediately in front of a tee. The `blind`
+  metric now walks its own ray from 2 m for that reading. Measured: near ground
+  stood above the sight line on 8 of 945 shots, now 2.
+
+- [x] **The stagger is the change that earned its place.** It compared each
+  candidate against the PREVIOUS tee only, so blue could sit in line with red
+  while white was in line with neither. Against every placed tee, with the worst
+  offender deciding: in-line pairs 110 -> 10 of 945, closest pair sideways
+  0.00 m -> 3.24 m, at a cost of 1.3 m of median slide.
+
+- [x] **Pad 9 m -> 7.2 m, shoulder 35% shorter directly ahead.** The front fall
+  was swept: 0.5 steepens the ground round a pad from a median 6.3 to 10.1
+  degrees for no further gain, 0.35 reaches the same result at 7.8.
+
+- [x] **Markers were a metre off the tee.** They stood 4 m either side of a pad
+  3 m wide, so both markers of every tee on the course sat in the collar. Six
+  inches in from each edge now.
+
+- [x] **The sign was nowhere near the tee.** Fixed at nine metres off the hole's
+  own origin, which stopped meaning anything when tees began being sited on
+  ground that suits them. It now stands beside the blue tee on the player's
+  right -- and which side that is needed working out, because local +x is the
+  player's LEFT while the code also calls it "right".
+
+- [x] **`tools/shot-sink.mjs`** lets the game photograph itself into files, so a
+  change about how something looks can be shown rather than described. No
+  headless browser: the picture is the renderer that ships. It hung its own
+  client within the hour when a branch checkout removed its output directory --
+  the write threw, no response was sent, and the page waited forever inside a
+  requestAnimationFrame callback. It always answers now.
+
+- [ ] **23 blind tee shots remain and every lever is a trade.** Lifting tees or
+  flattening the landing area, both of which the owner ruled out in principle
+  ("without building up too much land"). Needs a decision rather than a fix.
+
+- [ ] **No picture of a tee complex from above.** The overview camera frames the
+  whole course from very high with clouds in the way, so the stagger is
+  evidenced by numbers rather than by an image. A camera that frames one tee
+  complex would be worth having for exactly this.
+
 ## Obstructions standing where they should not
 
 Reported from play on 2026-09-25: blocked tee boxes in mountain and desert, and

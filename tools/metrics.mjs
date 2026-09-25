@@ -142,8 +142,8 @@ export const METRICS = {
   describe: 'tee complex levelling, pad flatness and the ground around a pad',
   run(w) {
    const series = {step: [], padSpread: [], collarRelief: [], normalJump: [], groundSlope: [],
-    siteSpread: [], slid: [], lift: [], lateral: []};
-   const counts = {holes: 0, tees: 0, sited: 0, needsWork: 0, raised: 0};
+    siteSpread: [], slid: [], lift: [], lateral: [], pairAcross: []};
+   const counts = {holes: 0, tees: 0, sited: 0, needsWork: 0, raised: 0, pairs: 0, pairsInLine: 0};
    // What the generator decided, read back rather than inferred: how uneven
    // each chosen site was before anything was built, how far it had to move to
    // be found, and how much it was then raised.
@@ -154,8 +154,24 @@ export const METRICS = {
     if (t.lift > .05) counts.raised++;
    }
    const invariants = {teeBelowTheOneInFront: 0, padOnGroundItMayNotUse: 0, markerOffItsPad: 0};
+   // IS A TEE DIRECTLY IN FRONT OF ANOTHER ONE? Measured as the sideways gap
+   // between each pair on a hole, against the width of the mown collar: two
+   // pads whose collars overlap sideways are in line, and the one behind looks
+   // over the one in front. Counted for every pair rather than only for
+   // consecutive ones -- blue can be in line with red without white being in
+   // line with either.
+   const inLine = 2 * TEE_APRON.x;
    for (const h of w.holes) {
     counts.holes++;
+    {
+     const ts = Object.values(h.tees);
+     for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) {
+      const across = Math.abs(ts[i].x - ts[j].x);
+      series.pairAcross.push(across);
+      counts.pairs++;
+      if (across < inLine) counts.pairsInLine++;
+     }
+    }
     // Object key order is back tee first.
     const ys = Object.values(h.tees).map(t => {const q = h.toWorld(t); return w.height(q.x, q.z);});
     for (let i = 0; i < ys.length - 1; i++) {
@@ -267,8 +283,10 @@ export const METRICS = {
  blind: {
   describe: 'how much ground stands between a tee and its landing area',
   run(w) {
-   const series = {blue: [], white: [], red: []};
-   const counts = {blockedOver1m: 0, blockedOver3m: 0, shots: 0};
+   const series = {blue: [], white: [], red: [], blockedAt: [], nearOver: []};
+   const counts = {blockedOver1m: 0, blockedOver3m: 0, shots: 0,
+    blockedInside30m: 0, blocked30to80m: 0, blockedBeyond80m: 0,
+    nearOver15cm: 0, nearOver50cm: 0};
    for (const h of w.holes) for (const [name, t] of Object.entries(h.tees)) {
     const q = h.toWorld(t);
     // The same call the generator makes, against the finished terrain.
@@ -277,6 +295,51 @@ export const METRICS = {
     counts.shots++;
     if (over > 1) counts.blockedOver1m++;
     if (over > 3) counts.blockedOver3m++;
+    // WHERE THE BLOCKING GROUND IS, which decides whether this is the tee's own
+    // platform or the country beyond it. Shortening a pad cannot help with a
+    // rise 90 m out, and the first attempt at this work assumed it could.
+    //
+    // The walk mirrors `sightline` exactly rather than re-deriving it: same
+    // start, same step, same corridor gate, same eye and target heights. It
+    // only records the distance at which the worst obstruction sits.
+    {
+     const reach = h.par === 3 ? h.length - t.z : Math.min(h.length - t.z - 30, 250 * .9144);
+     if (reach >= 60) {
+      const aimZ = t.z + reach, aim = {x: h.center(aimZ), z: aimZ};
+      const aw = h.toWorld(aim);
+      const target = w.height(aw.x, aw.z), eyeY = w.height(q.x, q.z) + TEE_EYE;
+      const span = Math.hypot(aim.x - t.x, aim.z - t.z) || 1;
+      const wide = (h.settings?.semiRough ?? 6) + 45;
+      // THE WALK STARTS AT 2 m, NOT AT 12. The generator's own `sightline`
+      // begins at 12 m because that is past its own pad -- which means nothing
+      // in the generator has ever looked at the ground immediately in front of
+      // a tee, and that is precisely where a shoulder ramping UP to higher
+      // natural ground would sit. A metric that inherits the blind spot of the
+      // thing it is checking cannot report on it.
+      let worst = 0, at = 0, near = 0;
+      for (let d = 2; d < span * .8; d += 2) {
+       const u = d / span, lx = t.x + (aim.x - t.x) * u, lz = t.z + (aim.z - t.z) * u;
+       const centre = h.center(lz), half = fairwayWidth(h, lz, 0, Math.sign(lx - centre) || 1);
+       if (half && Math.abs(lx - centre) > half + wide) continue;
+       const p = h.toWorld({x: lx, z: lz});
+       const o = w.height(p.x, p.z) - (eyeY + (target - eyeY) * u);
+       if (o > worst) {worst = o; at = d;}
+       if (d <= 40 && o > near) near = o;
+      }
+      // Every shot contributes its worst NEAR obstruction, so the distribution
+      // says how much ground sits in front of a tee across the whole course --
+      // not only on the shots already counted as blind.
+      series.nearOver.push(near);
+      if (near > .15) counts.nearOver15cm++;
+      if (near > .5) counts.nearOver50cm++;
+      if (over > 1) {
+       series.blockedAt.push(at);
+       if (at < 30) counts.blockedInside30m++;
+       else if (at < 80) counts.blocked30to80m++;
+       else counts.blockedBeyond80m++;
+      }
+     }
+    }
    }
    return {series, counts, invariants: {}};
   },
