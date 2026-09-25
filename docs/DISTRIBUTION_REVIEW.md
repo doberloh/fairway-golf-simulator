@@ -267,6 +267,20 @@ owners, and no affiliation, endorsement, certification or hardware-
 compatibility guarantee is claimed. Naming them to describe compatibility is
 nominative use and continues; the gap was that nothing said so out loud.
 
+**A diagnostic was added, and the zero-network-requests claim was re-checked
+rather than assumed.** Help carries a button that assembles the build stamp,
+the device, the GPU, the frame rate and the last few errors and puts them on
+the clipboard. It is the obvious place for telemetry to appear later and it
+must not: `src/diagnostic.js` has no `fetch`, no image and no beacon, the
+prohibition is recorded as an invariant in PROJECT_HANDOFF, and the built file
+was driven in a browser with the diagnostic in use while watching the network
+log. The only request the page makes is the page itself.
+
+**Builds are now identifiable.** `vite.config.js` injects the short git commit
+and the build time. Before this the only versions in the product were the
+settings schema and the generator, neither of which says which build somebody
+is running -- so a report from a tester could not be tied to a tree.
+
 ### What this addendum does NOT claim
 
 - **The `file://` open is still unverified on a current build.** It is the

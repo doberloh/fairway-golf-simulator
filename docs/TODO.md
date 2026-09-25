@@ -229,36 +229,6 @@ GitHub repository, and stop shipping what nobody needs.
   devices and stated honestly on the page, rather than discovered by a
   stranger.
 
-- [ ] **A tester still cannot tell you what went wrong, and the course code
-  only covers half of it.** Checked properly on 25 September rather than
-  assumed. `exportCourse` produces `FW1.<base64>.<checksum>` carrying the
-  schema version, the generator version, the course name and the settings
-  diff -- genuinely the full recipe, and paste it back and the same course
-  rebuilds. For "this hole looks wrong" it is most of the way there.
-
-  What it cannot carry, and what a tester cannot reliably report either:
-
-  - **Which build they are on. There is no app version anywhere in the
-    codebase.** `saveRecord` has a save-FORMAT `version:2` beside schema and
-    generator, and neither says which build of Fairway is running. Ship three
-    builds over three weeks and a report cannot be tied to one. This is the
-    largest gap and the cheapest to close: one constant.
-  - **The GPU.** The app never asks. `tools/gpu-probe.mjs` reads it from
-    outside through Playwright; nothing in `src/` queries
-    `UNMASKED_RENDERER_WEBGL`.
-  - **Which tier is actually running, and the frame rate it is getting** --
-    directly relevant to the weak-hardware item above, and the thing those
-    three device tests should be capturing anyway.
-  - **Browser, OS and device.** Reported from memory these are wrong about
-    half the time; people say Chrome and mean Edge.
-  - **Which hole, and where the ball was.** The code rebuilds all eighteen.
-  - **Console errors.**
-
-  And a course code only exists for a COURSE. The range has none, and a good
-  share of reports will be about a shot, a camera or the card rather than
-  about ground. Scope: one function assembling a text block, one button in the
-  Help panel, one new constant. Hours, not days.
-
 ## Networked multiplayer
 
 Asked for on 2026-09-25 as a feasibility study, not a plan.
@@ -1879,6 +1849,48 @@ engineering provenance pass, not legal advice.
   rebuilds the ground under a saved round, and a tester reads that as the game
   losing their game. It stands at 32. If a generation change becomes
   unavoidable mid-test, warn people BEFORE shipping the build, not after.
+
+- [x] **A tester can now tell you what went wrong.** Help & controls → Report
+  a problem → Copy diagnostic. `src/diagnostic.js` assembles it and
+  `collectDiagnostic()` in main.js gathers the facts; the split exists so the
+  formatting can be tested without a browser, which is where all 16 of its
+  tests live.
+
+  The course code was already carrying the recipe for the ground -- schema,
+  generator, name, settings diff -- so the report ADDS it rather than
+  duplicating it, and adds what it could not carry:
+
+  - **A build stamp, which did not exist at all.** `vite.config.js` now
+    injects `__FAIRWAY_BUILD__` with the short git commit and the build time.
+    Undefined under the test runner, so every read guards it -- a bare
+    reference to an absent `define` is a ReferenceError, not undefined, and
+    would take the module down on import. A source-archive build has no git
+    and gets a timestamp alone, which still distinguishes two builds.
+  - **The GPU**, which the running game had never asked for.
+    `WEBGL_debug_renderer_info` through the context three already holds. A
+    browser that withholds it is a normal answer; Firefox does under
+    resistFingerprinting.
+  - **Frame rate as a median and a worst frame, never a mean.** A mean hides
+    the complaint: a run that holds 60 and stalls twice a second averages out
+    respectable and is unplayable. Sampled past the frame cap, so a capped run
+    reports the rate it is capped to.
+  - **The last few errors.** console.error is wrapped at module scope, before
+    boot, because the interesting failures are the ones during start-up. The
+    original is always called -- a logger that swallowed what it logged would
+    make this harder to debug. Repeats are counted rather than repeated: a
+    broken frame throws sixty times a second.
+  - Browser, platform, screen, viewport, pixel ratio, cores, memory, touch,
+    tier, frame cap, mode, hole, biome, and the time it was taken.
+
+  Two kinds of missing are kept apart, which matters more than it sounds:
+  in MACHINE a blank prints "unknown", because a browser refusing to say is
+  itself worth knowing; in WHERE the row is dropped, because there is no hole
+  number in the menu and "unknown" there reads as a fault that was never
+  there.
+
+  **It is copied, never sent, and that is now an invariant in
+  PROJECT_HANDOFF.** No fetch, no image, no beacon. Re-verified in the browser
+  with the diagnostic in use: the only request the page makes is the page.
 
 ## Obstructions in the shot path
 

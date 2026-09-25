@@ -197,6 +197,27 @@ The ground is levelled into a shelf beneath each pond during generation, so a po
 
 The shot-result panel remains open, including during free flight. During a shot it displays live horizontal distance from the launch point and height above the terrain. A replay holds the final lie for **three seconds** before returning. Taking a putt animates the flag upward out of the cup. Hole completion leaves the cup visible for **three seconds** before opening the scorecard; its existing eight-second next-hole countdown starts afterward. Explicit skip/continue controls remain available.
 
+## Reporting a problem
+
+**Help & controls → Report a problem → Copy diagnostic.** It puts a short
+summary on your clipboard and shows it in the box underneath, so you can read
+what you are about to send before you send it.
+
+It carries the build you are running, the generator and settings versions, the
+mode and hole you were on, your browser, your graphics card, the screen and
+the frame rate, and the last few errors if anything went wrong. When you are
+playing a saved-shaped course it also carries the course code, which is enough
+to rebuild the exact landscape you were looking at.
+
+**Nothing is sent anywhere.** Fairway makes no network requests at all, and
+this is no exception -- the text goes to your clipboard and stops there. What
+happens to it afterwards is your decision.
+
+The frame rate is reported as a median and a worst frame rather than an
+average, because an average hides the thing worth reporting: a run that mostly
+holds 60 and stalls twice a second averages out respectable and is horrible to
+play.
+
 ## Launch monitor setup
 
 The browser cannot listen to raw TCP or automatically decode proprietary Bluetooth hardware. The included Node bridge receives the **Open Connect v1** format used by community launch-monitor connectors and relays it over WebSocket. No commercial simulator installation is required to run Fairway itself. Device software and connector requirements still apply.

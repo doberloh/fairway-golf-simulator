@@ -20,7 +20,8 @@ the change that made it stale, not a follow-up.
 **For a player**
 
 - **[PLAYING.md](PLAYING.md)** — every control, every course-studio setting,
-  the wind dial, the map, the scorecard, and the launch-monitor walkthrough.
+  the wind dial, the map, the scorecard, the launch-monitor walkthrough, and
+  how to report a problem.
 - **[INSTALLATION.md](INSTALLATION.md)** — supported platforms and the ones
   that are merely untested, portable and source setup, LAN and mobile access,
   bridge setup, troubleshooting.

@@ -28,6 +28,7 @@ import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,CO
 import {projectorFov,standForFov,ASPECTS} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {framedForBall} from './camera.js';
+import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
@@ -131,6 +132,22 @@ let clubs=customizeClubs(),layout=null,popups=null,dropState=null,staleGenerator
 // menu -> the entry point; studio -> shaping a landscape, no round on show;
 // play -> the golf. Generation controls exist only in studio, course selection
 // only in play, so neither mode can quietly change the other's state.
+// THE ERROR LOG IS INSTALLED BEFORE ANYTHING ELSE CAN THROW.
+//
+// It exists so a tester's report can carry what went wrong, and a tester will
+// never open a console to find out. Installed at module scope rather than in
+// boot(): the interesting failures are the ones during start-up, and a hook
+// installed after boot misses precisely those.
+//
+// It wraps console.error and always calls through to it. A logger that
+// swallowed what it logged would make this harder to debug, not easier.
+const diagnosticErrors=errorLog();
+diagnosticErrors.install();
+// Fed from the frame loop below. A fixed ring, so it costs nothing and cannot
+// grow, and it measures the frames that were actually DELIVERED -- sampled
+// past the frame cap, so a capped run reports the rate it is capped to rather
+// than the rate the display offered.
+const diagnosticFrames=frameMeter();
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
 // THE COURSE THE PLAYER WAS ON BEFORE THEY STEPPED INTO THE LAB OR THE RANGE.
 //
@@ -1502,6 +1519,48 @@ function playingCourseName(){
  if(round.endless)return suggestCourseName({seed:round.seed,biome:settings.biome});
  return settings.courseName||suggestCourseName(settings);
 }
+// EVERYTHING A BUG REPORT NEEDS AND A PERSON CANNOT BE EXPECTED TO KNOW.
+//
+// The course code already carries the recipe for the ground -- schema,
+// generator, name, and the settings that differ from the defaults -- so this
+// adds it rather than repeating it, and adds the things it cannot carry: which
+// BUILD is running, what the machine is, which GPU actually got the work, and
+// whether anything threw.
+//
+// Every read is defensive. This is collected at the moment somebody is already
+// having a problem, and a diagnostic that throws while being assembled is the
+// one thing worse than no diagnostic.
+function collectDiagnostic(){
+ // The context, not a new one: asking the canvas for a fresh context would
+ // return null anyway, since three already holds it.
+ let gl=null;
+ try{gl=view?.renderer?.getContext?.()??null;}catch{}
+ // Only a real course has a code. An endless run is one hole at a time and the
+ // range is not a course at all -- savableCourse says so in a sentence, and it
+ // is the same refusal the seed button uses.
+ let courseCode=null;
+ if(appMode==='play'&&!savableCourse().why){
+  try{courseCode=exportCourse({name:playingCourseName(),settings,generator:GENERATOR_VERSION});}catch{}
+ }
+ return diagnosticReport({
+  build:{label:buildLabel()},
+  app:{
+   generator:GENERATOR_VERSION,schema:SCHEMA_VERSION,
+   mode:rangeMode?'driving range':round.endless?'endless':appMode,
+   course:appMode==='menu'?null:playingCourseName(),
+   hole:(appMode==='play'&&!rangeMode)?`${round.hole+1} of ${round.holes}`:null,
+   biome:settings.biome,
+   tier:graphics.quality,
+   frameCap:graphics.frameCap,
+  },
+  device:deviceFacts(),
+  webgl:webglFacts(gl),
+  frames:diagnosticFrames.read(),
+  errors:diagnosticErrors.read(),
+  courseCode,
+  takenAt:new Date().toISOString(),
+ });
+}
 function savableCourse(){
  if(appMode==='studio')return {label:'Save this landscape'};
  if(appMode!=='play')return {why:'Play a course, or shape one in Course studio, and you can save it from here.'};
@@ -2774,6 +2833,30 @@ function renderPanel(name,content){
   $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armed=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armed=$('armMonitor').checked;updateHUD();sendPlayer();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
   content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><div class="help-shortcuts"><kbd>Click</kbd><span>Aim at a point on the course or map</span><kbd>← / →</kbd><span>Fine tune your aim</span><kbd>↑ / ↓</kbd><span>Adjust shot power</span><kbd>Space</kbd><span>Take your shot</span><kbd>Q / E</kbd><span>Change club</span><kbd>C</kbd><span>Toggle overview camera</span><kbd>Enter</kbd><span>Finish the shot animation</span><kbd>Escape</kbd><span>Close a panel</span></div><h3>Explore the course</h3><p>Press V or the bird icon for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
+  // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
+  //
+  // It sits in Help because that is where a person goes when something is
+  // wrong, and it is one button because anything longer than one button does
+  // not get used. The build, the machine, the GPU, the frame rate and the last
+  // few errors are things a tester genuinely cannot report accurately from
+  // memory -- half of them say Chrome and mean Edge, and nobody knows what
+  // their GPU is called.
+  //
+  // The report is shown in the box as well as copied, so a browser that
+  // refuses the clipboard is an inconvenience rather than a dead end, and so
+  // that nobody has to take on trust what they are about to paste.
+  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
+  $('copyDiagnostic').onclick=async()=>{
+   let text;
+   // Belt and braces: this is the button somebody presses when the app is
+   // already misbehaving, so it must not be the thing that throws next.
+   try{text=collectDiagnostic();}
+   catch(e){text=`Fairway diagnostic could not be collected: ${e&&e.message?e.message:e}`;}
+   $('diagnosticField').hidden=false;
+   $('diagnosticText').value=text;
+   $('diagnosticText').focus();$('diagnosticText').select();
+   toast(await copyText(text)?'Diagnostic copied.':'Diagnostic ready \u2014 copy it from the box.');
+  };
   content.insertAdjacentHTML('beforeend',`<h3>Open source & credits</h3><p>Fairway is MIT licensed. Optional donations support development and are not required to play. Third-party components retain their own licenses.</p><details><summary>Project license</summary><pre class="license-text">${escape(projectLicense)}</pre></details><details><summary>Third-party licenses & credits</summary><pre class="license-text">${escape(thirdPartyNotices)}</pre></details>`);
  }
  // EVERY variant of the round panel is tabbed. Endless and the range both have
@@ -3591,6 +3674,7 @@ function tick(now){
  // A cap trades refresh for headroom: skip the frame instead of rendering one
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
+ diagnosticFrames.sample(now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');
