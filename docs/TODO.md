@@ -77,11 +77,16 @@ changing anything. Worth it: one of the three assumptions was wrong.
 Planned on 2026-09-25. The decisions below are the owner's and are recorded so
 the next person does not reopen them.
 
-**Decided already.** The source stays CLOSED for now, possibly opening for
-contributions later. The owner holds the copyright outright, which is what
-keeps that door open -- a single holder can relicense at any time, and a
-project with outside contributors cannot. Distribution is free, funded by
-optional donations. No Discord and no social accounts yet.
+**Decided already.** The project **goes open source at launch, under MIT**,
+free, with a donation button. No Discord and no social accounts yet. The owner
+holds the copyright outright, which is what made the choice free to make in
+either direction and what keeps a later change possible.
+
+This reversed an earlier plan to keep the source closed, made two days into
+the same week -- read the MIT entry below for what was weighed. The open item
+that used to sit here saying MIT was the wrong licence is closed, because the
+premise it rested on (closed source) is gone: MIT and a public repository are
+a coherent pair, which closed source and MIT were not.
 
 **The one structural fact the plan turns on: there are two audiences and they
 need opposite timing.**
@@ -109,20 +114,6 @@ validation.** That sequencing is the plan; the channels are details.
   to be settled before a domain, a repository or a download link exists,
   because each of those makes the old name more expensive to leave.
 
-- [ ] **MIT is the wrong licence for a closed-source product, and that has
-  not been fixed yet.** MIT is a grant to RECIPIENTS, and it does not care
-  whether the source was published: anyone handed the built HTML under MIT may
-  legally redistribute or sell it. Closing the source and keeping MIT on the
-  build therefore gives away the exact thing closing the source was meant to
-  protect, while collecting none of the goodwill of an open repository,
-  because there is no repository to contribute to. What is wanted is a short
-  proprietary licence on the distributed build -- free to download, play and
-  share the link, not to redistribute or resell -- with the owner keeping
-  every right. Third-party components are unaffected: three.js, lucide and ws
-  stay MIT/ISC and their notices must still ship, which they do.
-  **`LICENSE` still reads MIT.** Decide, then change it before anything is
-  handed to anybody.
-
 - [ ] **A one-page site whose main feature is a Play button.** This product
   demos itself in a way almost nothing else does: ten seconds from a link to
   standing on a tee. That is worth more than any amount of copy, screenshots
@@ -135,7 +126,10 @@ validation.** That sequencing is the plan; the channels are details.
 
 - [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
   request for help, which is a different thing and gets a far better response
-  rate. Go where these people already are instead of asking them to come to
+  rate. With the repository public, Issues is where their reports should go;
+  that does not remove the need for the diagnostic block, because the thing a
+  tester cannot paste is the thing that is missing, not the place to paste
+  it. Go where these people already are instead of asking them to come to
   you: the golf-simulator subreddits, GolfSimulatorForum, the GSPro community,
   the home-simulator Facebook groups, and the owner communities for each
   specific monitor. **Check which of those are actually alive first**; this
@@ -152,8 +146,12 @@ validation.** That sequencing is the plan; the channels are details.
 
 - [ ] **Then one public moment, not a drip.** Hacker News, the procedural
   generation and WebGL communities, the three.js showcase, and the simulator
-  forums -- same week, one post each, every one of them pointing at the play
-  link rather than at a repository or a download.
+  forums -- same week, one post each. **Lead every one of them with the play
+  link, not the repository.** Open source is what makes the developer half of
+  that audience take it seriously, but nobody has ever been convinced by a
+  LICENSE file: they are convinced by being on a tee ten seconds after a
+  click, and they look at the source afterwards. "Show HN" with a repository
+  link under a play link is the right shape; a repository link alone is not.
 
 - [ ] **Donation wording is the part that carries risk, not the licence.**
   Recorded in DISTRIBUTION_REVIEW and worth repeating here because it is
@@ -194,13 +192,20 @@ GitHub repository, and stop shipping what nobody needs.
   kind of file worth opening and reading once before it goes public. The
   numbers actually used are in the `.txt` beside it.
 
-- [ ] **There is no public remote and no published licence decision.**
-  **The holder line is settled**: `LICENSE` names Dustin Oberloh, who holds the
-  copyright outright, which is what keeps relicensing possible -- a project
-  with outside contributors cannot change its licence without asking every one
-  of them, and "Fairway contributors" implied exactly that. **The LICENCE
-  ITSELF is not settled**: see the MIT entry under "Getting the word out".
-  There is still no public remote.
+- [ ] **There is still no public remote, and that is now the last thing
+  standing between this tree and a published project.** The licence is
+  settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
+  Dustin Oberloh, who holds the copyright outright, which is what made that
+  choice free to make; a project with outside contributors cannot change its
+  licence without asking every one of them, and "Fairway contributors"
+  implied exactly that situation.
+
+  Two things to settle in the same sitting, because publishing makes both
+  expensive to change: the NAME, which has its own entry and blocks the
+  repository as much as it blocks a domain, and whether
+  `vendor/baked_assets/` belongs in a public repository -- 106 MB that
+  nothing reads at build time, and a question that stops being hypothetical
+  the moment the tree is public.
 
 ## Selling it: the attribution pass
 
@@ -2451,9 +2456,32 @@ engineering provenance pass, not legal advice.
 
 ## Getting the word out
 
-- [x] **Discord: deliberately not yet.** An empty server is worse than none --
-  it is a room where the owner talks to himself, it signals that nobody is
-  there, and it costs daily attention. It earns its keep at roughly 50 to 100
-  engaged people, when conversation happens without the owner in it. Until
-  then GitHub Discussions or an email address is enough, and the signal to
-  build one is somebody asking for it.
+- [x] **Discord: deliberately not yet**, and going open source makes that
+  easier rather than harder. An empty server is worse than none -- a room
+  where the owner talks to himself, signalling that nobody is there, at the
+  cost of daily attention. It earns its keep at roughly 50 to 100 engaged
+  people, when conversation happens without the owner in it. A public
+  repository already provides the venue in the meantime: Issues for bugs,
+  Discussions for everything else, both of them searchable by the next person
+  with the same problem, which Discord is not. The signal to build one is
+  somebody asking for it.
+
+- [x] **MIT, open source at launch. Settled 25 September; do not reopen it.**
+  The alternative considered and rejected was a proprietary licence on the
+  built file -- free to play, not to redistribute -- which is what a
+  closed-source product actually needs, because MIT is a grant to RECIPIENTS
+  and says nothing about whether source was published. That reasoning only
+  bites while the source is closed. Open the repository and the pair is
+  coherent: MIT is what the audience that amplifies this expects to see, and
+  it costs nothing that was ever going to be collected.
+
+  **What is knowingly accepted**, recorded once here so it is a decision and
+  not a surprise: MIT lets anyone fork the project, rebrand it, and sell it or
+  take donations for it, with no obligation beyond keeping the notices. The
+  judgement is that for a niche simulator the product and the person behind it
+  are the moat, not the source, and that a fork of a one-person golf
+  simulator is a theoretical risk against a concrete gain in reach.
+
+  Unaffected either way: three.js, lucide and ws keep their own MIT/ISC terms
+  and their notices must still ship, which they do.
+
