@@ -2599,7 +2599,30 @@ Sources consulted:
 
 ## Launch-monitor interfaces
 
-[GSPro Open Connect v1 documentation](https://gsprogolf.com/GSProConnectV1.html) still documents version 1 and TCP port 921 at the research date. It describes DeviceID, ShotNumber, APIversion, BallData (Speed, HLA, VLA, TotalSpin/SpinAxis or BackSpin/SideSpin), ShotDataOptions, success code 200, and player/club code 201. The interface is openly documented; this does not mean the commercial simulator itself is open source. Fairway uses the documented message shape with its own server and does not redistribute GSPro.
+[GSPro Open Connect v1 documentation](https://gsprogolf.com/GSProConnectV1.html) still documents version 1 and TCP port 921 at the research date. It describes DeviceID, ShotNumber, APIversion, BallData (Speed, HLA, VLA, TotalSpin/SpinAxis or BackSpin/SideSpin), ShotDataOptions, success code 200, and player/club code 201.
+
+**The ClubData block, added 2026-09-24, and what is soft about it.** The card can
+now show everything a monitor sends beyond the five the model runs on, which
+meant reading a block the parser previously discarded. `readExtras` looks for
+`ClubData.Speed`, `SpeedAtImpact`, `AngleOfAttack`, `Path`, `FaceToTarget`,
+`Loft`, `Lie`, `ClosureRate`, `VerticalFaceImpact` and `HorizontalFaceImpact`,
+plus `BallData.BackSpin`, `SideSpin`, `CarryDistance` and `TotalDistance`.
+
+**These key names were written from knowledge of the v1 shape, NOT checked
+against a fetched copy of the page in this pass, and the units on four of them
+are assumptions.** Face impact is taken as millimetres and closure rate as
+degrees per second; both are read as "whatever number arrived", so a device
+using other units would print a wrong figure rather than fail. Nothing depends
+on any of it -- a key that does not exist is simply a blank tile, and no extra
+can reject a shot -- so the cost of being wrong here is a dash or a bad reading
+on a readout, never a shot the player cannot hit. **It is still the first thing
+to check when a real device is on the mat at the R50 session**, and a saved copy
+of the page belongs under `reference/` the moment somebody can open it.
+
+Smash factor and face to path are NOT in the protocol and are not sent by any
+monitor. Both are derived here: smash is ball speed over club speed, face to
+path is face-to-target minus path. Face to path stays blank when only one of its
+two halves arrived, rather than reading the half as if it were the whole. The interface is openly documented; this does not mean the commercial simulator itself is open source. Fairway uses the documented message shape with its own server and does not redistribute GSPro.
 
 The bridge defaults to unprivileged TCP port 1921; set FAIRWAY_TCP_PORT=921 only on a host configured to allow the standard privileged port. The bridge accepts fragmented and concatenated JSON objects, caps message sizes, validates ball data, relays one pending shot at a time, and waits for browser acceptance before acknowledging. The browser detects duplicate shot IDs. Reconnect starts a fresh duplicate window; don't resend historical shots after reconnect. Unexpected readiness/heartbeat frames with ContainsBallData=false or IsHeartBeat=true are acknowledged without creating shots. The optional 202 ready code is a community extension, not part of the original two-code specification.
 

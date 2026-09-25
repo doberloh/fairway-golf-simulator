@@ -1077,5 +1077,43 @@ export function parseLaunchMessage(raw){
  let spin,spinAxis;
  if(b.TotalSpin!==undefined){spin=number(b.TotalSpin,'spin',0,20000);spinAxis=number(b.SpinAxis,'spin axis',-180,180);}
  else{const back=number(b.BackSpin,'backspin',-20000,20000),side=number(b.SideSpin,'sidespin',-20000,20000);spin=hypot(back,side);spinAxis=Math.atan2(side,back)*180/Math.PI;}
- return {speed,vla,hla,spin,spinAxis,id:d.ShotNumber,device:String(d.DeviceID||'Launch monitor').slice(0,80)};
+ return {speed,vla,hla,spin,spinAxis,extra:readExtras(d,unit),id:d.ShotNumber,device:String(d.DeviceID||'Launch monitor').slice(0,80)};
+}
+// EVERYTHING ELSE THE DEVICE SENT, AND NOT ONE FIELD OF IT MAY REJECT A SHOT.
+//
+// The five above are validated hard, because a bad one means the model cannot
+// run and playing the shot would be inventing it. These are the opposite case:
+// club speed, attack angle, path, face, the spin split and the device's own
+// distances reach the screen and nothing else. A monitor that sends a garbage
+// loft, a string where a number belongs, or a ClubData block that is not an
+// object must not be able to stop a real ball being played -- so there is no
+// `throw` anywhere below this line, and no range check either. A number that is
+// not a number is simply absent, and the grid prints a dash for it.
+//
+// Normalised to SI at this boundary, like the five, so nothing downstream has
+// to know whether the device was talking yards or metres. Angles stay in
+// degrees and spins in rpm because that is what every monitor and every golfer
+// uses; face impact stays in millimetres for the same reason.
+function readExtras(d,unit){
+ const n=v=>typeof v==='number'&&Number.isFinite(v)?v:undefined;
+ const speed=v=>{const x=n(v);return x===undefined?undefined:x*(unit==='Meters'?1/3.6:MPH);};
+ const dist=v=>{const x=n(v);return x===undefined?undefined:x*(unit==='Meters'?1:YARD);};
+ const b=d.BallData&&typeof d.BallData==='object'?d.BallData:{};
+ // ClubData is optional in Open Connect v1 and plenty of devices never send it.
+ const c=d.ClubData&&typeof d.ClubData==='object'?d.ClubData:{};
+ const out={
+  backSpin:n(b.BackSpin),sideSpin:n(b.SideSpin),
+  deviceCarry:dist(b.CarryDistance),deviceTotal:dist(b.TotalDistance),
+  // `Speed` is the club head; `SpeedAtImpact` is a second reading some devices
+  // report and most do not. Kept apart rather than merged: a fallback between
+  // two quantities that are not the same quantity is how a metric starts lying.
+  clubSpeed:speed(c.Speed),speedAtImpact:speed(c.SpeedAtImpact),
+  attack:n(c.AngleOfAttack),path:n(c.Path),faceToTarget:n(c.FaceToTarget),
+  loft:n(c.Loft),lie:n(c.Lie),closureRate:n(c.ClosureRate),
+  impactVertical:n(c.VerticalFaceImpact),impactHorizontal:n(c.HorizontalFaceImpact),
+ };
+ // Dropping the absent ones keeps a saved round's record to what was actually
+ // measured, instead of a dozen undefineds per shot forever.
+ for(const k of Object.keys(out))if(out[k]===undefined)delete out[k];
+ return out;
 }
