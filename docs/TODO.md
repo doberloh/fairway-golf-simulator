@@ -129,13 +129,12 @@ validation.** That sequencing is the plan; the channels are details.
   list was written from general knowledge, not from looking.
 
 - [ ] **Validate against real hardware before approaching simulator owners.**
-  The cheapest validation available is already on disk and has never been
-  used: `docs/sources/private/wedge-session-2026-09-19.xlsx` is a real session
-  carrying every field the shot-data registry displays -- club speed and speed
-  at impact, attack angle, path, face to target and face to path, lie, dynamic
-  loft, closure rate, and impact position in both axes. Nothing is fitted or
-  checked against it. Doing that answers "do the extra columns mean what they
-  say" without owning a second launch monitor.
+  It is the first thing that audience checks and the weakest claim the project
+  makes: nothing has been tested against a physical launch monitor, and the
+  extra fields the shot-data grid can display -- club speed, attack angle,
+  path, face to target, closure rate, impact position -- are parsed but have
+  never been checked against a real session. Recorded here as the gate, not as
+  a plan: how it gets done is the owner's call.
 
 - [ ] **Then one public moment, not a drip.** Hacker News, the procedural
   generation and WebGL communities, the three.js showcase, and the simulator
