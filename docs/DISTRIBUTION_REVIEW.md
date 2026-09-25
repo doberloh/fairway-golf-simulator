@@ -203,7 +203,7 @@ claimed costs nothing and is missing.
 #### Two judgement calls for the owner, not defects
 
 - **~~`AGENTS.md` ships in both archives.~~ Fixed the same day.** The portable archive now carries seven files -- the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, README, INSTALLATION and PLAYING (the manual) -- and nothing else. It previously shipped the architecture handoff, the open TODO list with every known defect on it, the research measurements, this review, the dependency inventory and AGENTS.md. The source archive still carries all of them, which is the right place for them.
-- **`LICENSE` reads "Copyright (c) 2026 Fairway contributors".** Fine for a
+- **~~`LICENSE` reads "Copyright (c) 2026 Fairway contributors".~~ Settled 25 September: it now names Dustin Oberloh, who holds the copyright outright.** A single holder is what keeps relicensing possible at all -- a project with outside contributors cannot change its licence without asking every one of them, and "contributors" implied exactly that situation. The AI-assisted-authorship question the original review raised is separate and still unresolved. Original note follows. Fine for a
   collective credit; if a company is going to sell this, the holder line and the
   publisher identity are worth settling before money changes hands. The September
   review already flags brand identity as an open item and that stands.

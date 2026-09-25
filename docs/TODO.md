@@ -72,6 +72,96 @@ changing anything. Worth it: one of the three assumptions was wrong.
   evidenced by numbers rather than by an image. A camera that frames one tee
   complex would be worth having for exactly this.
 
+## Getting the word out
+
+Planned on 2026-09-25. The decisions below are the owner's and are recorded so
+the next person does not reopen them.
+
+**Decided already.** The project **goes open source at launch, under MIT**,
+free, with a donation button. No Discord and no social accounts yet. The owner
+holds the copyright outright, which is what made the choice free to make in
+either direction and what keeps a later change possible.
+
+This reversed an earlier plan to keep the source closed, made two days into
+the same week -- read the MIT entry below for what was weighed. The open item
+that used to sit here saying MIT was the wrong licence is closed, because the
+premise it rested on (closed source) is gone: MIT and a public repository are
+a coherent pair, which closed source and MIT were not.
+
+**The one structural fact the plan turns on: there are two audiences and they
+need opposite timing.**
+
+*Simulator owners* -- the people who might eventually donate -- care first and
+only about whether it works with their launch monitor. That is currently the
+weakest claim in the project: nothing has been verified against physical
+hardware, and that community establishes it within minutes. Going there now
+spends the one first impression on the worst feature.
+
+*Developers and procedural-generation people* cost nothing to reach, amplify
+hard, and do not care about launch monitors at all -- they will hit a ball
+with the keyboard. "A golf simulator that generates infinite courses and runs
+from a single 15.8 MB HTML file, offline, no install" is a real story for that
+audience, and their attention is what buys credibility with the first one.
+
+**So the order is: developers now, simulator owners after hardware
+validation.** That sequencing is the plan; the channels are details.
+
+- [ ] **The name is the blocking item, not the code.** "Fairway" cannot be
+  searched for -- put it in a search box with the word "golf" and see what it
+  competes with. Word of mouth requires a name somebody can hear once, type
+  in, and find. DISTRIBUTION_REVIEW has flagged brand identity as open since
+  11 September and it is now the thing everything else waits on. It also has
+  to be settled before a domain, a repository or a download link exists,
+  because each of those makes the old name more expensive to leave.
+
+- [ ] **A one-page site whose main feature is a Play button.** This product
+  demos itself in a way almost nothing else does: ten seconds from a link to
+  standing on a tee. That is worth more than any amount of copy, screenshots
+  or feature bullets, and it is the single highest-leverage thing to build.
+  Static hosting is free -- Cloudflare Pages, Netlify, GitHub Pages -- and the
+  built file is 15.8 MB, 6.5 MB gzipped, which is a heavy first load but
+  acceptable over a CDN. Note what it cannot demo: the launch-monitor bridge
+  needs Node running locally, so the hosted version is keyboard play only.
+  Say so on the page rather than letting somebody discover it.
+
+- [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
+  request for help, which is a different thing and gets a far better response
+  rate. With the repository public, Issues is where their reports should go;
+  that does not remove the need for the diagnostic block, because the thing a
+  tester cannot paste is the thing that is missing, not the place to paste
+  it. Go where these people already are instead of asking them to come to
+  you: the golf-simulator subreddits, GolfSimulatorForum, the GSPro community,
+  the home-simulator Facebook groups, and the owner communities for each
+  specific monitor. **Check which of those are actually alive first**; this
+  list was written from general knowledge, not from looking.
+
+- [ ] **Validate against real hardware before approaching simulator owners.**
+  The cheapest validation available is already on disk and has never been
+  used: `docs/sources/private/wedge-session-2026-09-19.xlsx` is a real session
+  carrying every field the shot-data registry displays -- club speed and speed
+  at impact, attack angle, path, face to target and face to path, lie, dynamic
+  loft, closure rate, and impact position in both axes. Nothing is fitted or
+  checked against it. Doing that answers "do the extra columns mean what they
+  say" without owning a second launch monitor.
+
+- [ ] **Then one public moment, not a drip.** Hacker News, the procedural
+  generation and WebGL communities, the three.js showcase, and the simulator
+  forums -- same week, one post each. **Lead every one of them with the play
+  link, not the repository.** Open source is what makes the developer half of
+  that audience take it seriously, but nobody has ever been convinced by a
+  LICENSE file: they are convinced by being on a tee ten seconds after a
+  click, and they look at the source afterwards. "Show HN" with a repository
+  link under a play link is the right shape; a repository link alone is not.
+
+- [ ] **Donation wording is the part that carries risk, not the licence.**
+  Recorded in DISTRIBUTION_REVIEW and worth repeating here because it is
+  written at the moment the page goes up: do not imply a donation is required
+  to play, unlocks anything that already works, buys promised hardware
+  compatibility, or reaches the third-party authors. Quaternius asks that
+  support go through their Patreon and Kenney appreciates credit; neither is
+  an obligation, but a donation page for a game built on their free work must
+  not read as though the money reaches them.
+
 ## Making the repository public
 
 Asked for on 2026-09-25: organise the tree and the documentation for a public
@@ -102,11 +192,20 @@ GitHub repository, and stop shipping what nobody needs.
   kind of file worth opening and reading once before it goes public. The
   numbers actually used are in the `.txt` beside it.
 
-- [ ] **There is no public remote and no published licence decision.**
-  `LICENSE` reads "Copyright (c) 2026 Fairway contributors", which is fine as
-  a collective credit and unsettled as a publisher identity. MIT lets anyone
-  fork and sell; that is a deliberate choice to make before the repository is
-  public, not after.
+- [ ] **There is still no public remote, and that is now the last thing
+  standing between this tree and a published project.** The licence is
+  settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
+  Dustin Oberloh, who holds the copyright outright, which is what made that
+  choice free to make; a project with outside contributors cannot change its
+  licence without asking every one of them, and "Fairway contributors"
+  implied exactly that situation.
+
+  Two things to settle in the same sitting, because publishing makes both
+  expensive to change: the NAME, which has its own entry and blocks the
+  repository as much as it blocks a domain, and whether
+  `vendor/baked_assets/` belongs in a public repository -- 106 MB that
+  nothing reads at build time, and a question that stops being hypothetical
+  the moment the tree is public.
 
 ## Selling it: the attribution pass
 
@@ -121,18 +220,44 @@ GitHub repository, and stop shipping what nobody needs.
   last time anybody confirmed it, the file was an eighth of the size. Open the
   rebuilt archive by hand before it goes to anyone.
 
-- [ ] **Weak hardware is the unanswered question for strangers.** There is an
-  open item saying the low tier cannot reach 30 fps on weak machines and that
-  tuning cannot fix it. Fine for a bay you control; it is the whole first
-  impression on somebody's laptop.
+- [ ] **Weak hardware: the owner is testing it personally**, on a phone, an
+  iPad and a laptop, and the answer is whatever those give. Decided 25
+  September: there is no route to a broad device matrix for a solo project and
+  waiting for one would stop everything. The open item saying the low tier
+  cannot reach 30 fps on weak machines still stands and tuning still cannot
+  fix it -- what changes is that the number gets MEASURED on three real
+  devices and stated honestly on the page, rather than discovered by a
+  stranger.
 
-- [ ] **Freeze GENERATOR_VERSION while people are testing.** It moved twice in
-  one night. Every bump silently rebuilds the ground under a tester's saved
-  round, and they will read that as the game losing their game.
+- [ ] **A tester still cannot tell you what went wrong, and the course code
+  only covers half of it.** Checked properly on 25 September rather than
+  assumed. `exportCourse` produces `FW1.<base64>.<checksum>` carrying the
+  schema version, the generator version, the course name and the settings
+  diff -- genuinely the full recipe, and paste it back and the same course
+  rebuilds. For "this hole looks wrong" it is most of the way there.
 
-- [ ] **There is no way for a tester to tell you what went wrong.** No copyable
-  seed, settings, generator version and browser. Without it, feedback arrives as
-  "a hole looked weird" and cannot be acted on.
+  What it cannot carry, and what a tester cannot reliably report either:
+
+  - **Which build they are on. There is no app version anywhere in the
+    codebase.** `saveRecord` has a save-FORMAT `version:2` beside schema and
+    generator, and neither says which build of Fairway is running. Ship three
+    builds over three weeks and a report cannot be tied to one. This is the
+    largest gap and the cheapest to close: one constant.
+  - **The GPU.** The app never asks. `tools/gpu-probe.mjs` reads it from
+    outside through Playwright; nothing in `src/` queries
+    `UNMASKED_RENDERER_WEBGL`.
+  - **Which tier is actually running, and the frame rate it is getting** --
+    directly relevant to the weak-hardware item above, and the thing those
+    three device tests should be capturing anyway.
+  - **Browser, OS and device.** Reported from memory these are wrong about
+    half the time; people say Chrome and mean Edge.
+  - **Which hole, and where the ball was.** The code rebuilds all eighteen.
+  - **Console errors.**
+
+  And a course code only exists for a COURSE. The range has none, and a good
+  share of reports will be about a shot, a camera or the card rather than
+  about ground. Scope: one function assembling a text block, one button in the
+  Help panel, one new constant. Hours, not days.
 
 ## Networked multiplayer
 
@@ -1746,6 +1871,15 @@ engineering provenance pass, not legal advice.
   archive pointed at a document it did not contain. It ships now, with
   BALL_BEHAVIOUR_KNOBS.md and REFERENCES.md.
 
+- [x] **GENERATOR_VERSION is frozen by decision, not by mechanism.** The
+  owner is making no generation changes during testing and will tell testers
+  directly if that changes. Decided 25 September, and it is the right call for
+  a handful of testers: a mechanism to enforce it would cost more than the
+  problem. **The reason it matters has not gone away** -- every bump silently
+  rebuilds the ground under a saved round, and a tester reads that as the game
+  losing their game. It stands at 32. If a generation change becomes
+  unavoidable mid-test, warn people BEFORE shipping the build, not after.
+
 ## Obstructions in the shot path
 
 - [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
@@ -2319,3 +2453,35 @@ engineering provenance pass, not legal advice.
   runner measures a software rasteriser two orders of magnitude off the real
   number, and a green tick from a machine measuring the wrong thing is worse
   than no tick.
+
+## Getting the word out
+
+- [x] **Discord: deliberately not yet**, and going open source makes that
+  easier rather than harder. An empty server is worse than none -- a room
+  where the owner talks to himself, signalling that nobody is there, at the
+  cost of daily attention. It earns its keep at roughly 50 to 100 engaged
+  people, when conversation happens without the owner in it. A public
+  repository already provides the venue in the meantime: Issues for bugs,
+  Discussions for everything else, both of them searchable by the next person
+  with the same problem, which Discord is not. The signal to build one is
+  somebody asking for it.
+
+- [x] **MIT, open source at launch. Settled 25 September; do not reopen it.**
+  The alternative considered and rejected was a proprietary licence on the
+  built file -- free to play, not to redistribute -- which is what a
+  closed-source product actually needs, because MIT is a grant to RECIPIENTS
+  and says nothing about whether source was published. That reasoning only
+  bites while the source is closed. Open the repository and the pair is
+  coherent: MIT is what the audience that amplifies this expects to see, and
+  it costs nothing that was ever going to be collected.
+
+  **What is knowingly accepted**, recorded once here so it is a decision and
+  not a surprise: MIT lets anyone fork the project, rebrand it, and sell it or
+  take donations for it, with no obligation beyond keeping the notices. The
+  judgement is that for a niche simulator the product and the person behind it
+  are the moat, not the source, and that a fork of a one-person golf
+  simulator is a theoretical risk against a concrete gain in reach.
+
+  Unaffected either way: three.js, lucide and ws keep their own MIT/ISC terms
+  and their notices must still ship, which they do.
+

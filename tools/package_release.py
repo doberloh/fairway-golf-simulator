@@ -89,7 +89,7 @@ def main():
     inputs.extend(p for p in files if p.is_relative_to(ROOT / 'src'))
     if any(p.stat().st_mtime_ns > html_path.stat().st_mtime_ns for p in inputs):
         raise SystemExit('Source or licenses changed since build. Run npm run build first.')
-    for marker in ['Fairway contributors', 'Copyright (c) 2024 bryc',
+    for marker in ['Dustin Oberloh', 'Copyright (c) 2024 bryc',
                    'Copyright (c) 2024, Mapbox', 'Lucide Icons and Contributors',
                    'Missing Deadlines (Benjamin Wrensch)', 'Apache License',
                    'Third-party licenses & credits']:
