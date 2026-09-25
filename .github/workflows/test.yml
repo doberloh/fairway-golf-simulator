@@ -1,0 +1,41 @@
+# The regression suite, on every push and pull request.
+#
+# `npm test` is the whole verification story for logic in this project: a few
+# hundred checks on the Node test runner, no external framework, no browser.
+# The browser-dependent work -- the frame profiler, the GPU probe, the asset
+# contact sheet -- is deliberately NOT run here. It needs a real GPU to mean
+# anything, and a headless runner silently falls back to a software rasteriser
+# whose frames are two orders of magnitude slower. A green tick from a machine
+# measuring the wrong thing is worse than no tick.
+#
+# For the same reason the Playwright browser download is skipped: Playwright is
+# a devDependency for the profiler alone, and nothing this workflow runs opens
+# a browser. Downloading a few hundred megabytes of Chromium to leave it unused
+# is the slowest line in the job.
+name: tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # The arbiter for GENERATOR_VERSION: if generated ground moved for an
+      # unchanged seed, a saved round would silently rebuild different terrain
+      # under a ball that has not moved, and the version has to go up.
+      - name: Generated ground has not moved for an unchanged seed
+        run: node tools/biome-fingerprint.mjs --check
+      - run: npm run build

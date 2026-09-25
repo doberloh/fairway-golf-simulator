@@ -1,6 +1,13 @@
 # Working on Fairway
 
-Read PROJECT_HANDOFF.md first. It explains the product, architecture, units, generation pipeline, persistence, testing, packaging and known limitations without requiring conversation history. Read TODO.md for prioritized follow-up work and README.md for player controls.
+**Every document lives under `docs/`, and `docs/README.md` is its index.** The
+repository root carries only README.md (the front door), CONTRIBUTING.md (the
+short version of this file), LICENSE and this file.
+
+Read `docs/PROJECT_HANDOFF.md` first. It explains the product, architecture,
+units, generation pipeline, persistence, testing, packaging and known
+limitations without requiring conversation history. Read `docs/TODO.md` for
+prioritized follow-up work and `docs/PLAYING.md` for player controls.
 
 Preserve the portable offline single-file build, Cartoon-only graphics, complete 9/18-hole landscapes, seeded procedural individual holes, real ball/cup dimensions, and current scoring formats. Keep terrain rendering, collision heights, surface queries and map geometry consistent. Generation changes require attention to older saved rounds and GPU data textures.
 
@@ -47,7 +54,7 @@ Adding a generation setting means **one schema entry** — default, bounds, step
 
 **How to know you owe a bump, rather than remembering to ask.** `node tools/biome-fingerprint.mjs --check` is the trigger, not a formality: if it reports any biome moved, generated output changed for an unchanged seed and `GENERATOR_VERSION` has to go up. The stored fingerprints carry the generator version they were taken at, so `--check` now fails with that message instead of leaving it to you to notice. Run it on any change that touches `src/course.js`, `src/course-plan.js`, `src/streams.js`, `src/lakes.js`, `src/homes.js` or `src/vegetation.js` -- and run it on changes that look unrelated too, because the ones that catch you are the changes nobody expected to move ground.
 
-**The bump is two edits, not one.** The number, and a line in the list above it saying what moved and why. That list stops at 12 while the constant reads 23: nine bumps went unrecorded and cannot be recovered, because this repository's history begins at one squashed commit. A version number with no entry tells a future reader that something changed and nothing about what, which is barely better than not bumping at all.
+**The bump is two edits, not one.** The number, and a line in the list above it saying what moved and why. The list currently runs 2 to 12 and then 23 to 32, which means ten bumps between them went unrecorded and cannot be recovered -- this repository's history begins at one squashed commit. Two of the recent entries were also mislabelled, 31 and 32 both written as one less than the version they produced, which was caught only by checking each number against the commit that moved the constant. **The number in the entry is the version it produced**, and if you are unsure, `git log -S"GENERATOR_VERSION=<n>"` settles it. A version number with no entry tells a future reader that something changed and nothing about what, which is barely better than not bumping at all.
 
 **What does NOT need a bump.** Rendering, HUD, cameras, materials, audio, the map, the scorecard, tests and tooling. If the ground, the routing, the hazards and the planting are all byte-identical for a given seed, nothing about the player's save is at risk. The fingerprint is the arbiter; if it is silent, leave both numbers alone. It reports two hashes and they mean different things: a **record** change is the biome's own fields -- its name, its palette, its light -- and owes NOTHING, because a look cannot move a ball or invalidate a saved round. A **ground** change is what the generator built, and that is the one that owes a bump. They used to be one hash, and it told a session to bump the version after three biome TITLES were renamed; an arbiter that cries wolf gets ignored the one time it matters.
 
@@ -61,33 +68,38 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 
 **After any change that reverses a direction, grep the docs for the old claim.** Edit the assertion rather than appending a newer one beside it — a document that says both things is worse than one that is merely out of date.
 
-**EVERY markdown file in the repository root is in scope.** Not a shortlist — the whole set, checked every pass. A file that is not on somebody's list is the one that rots, and the ones below are ordered by how often that has actually happened.
+**EVERY document under `docs/`, plus the root README.md and CONTRIBUTING.md, is in scope.** Not a shortlist — the whole set, checked every pass. A file that is not on somebody's list is the one that rots, and the ones below are ordered by how often that has actually happened.
 
 - **RESEARCH.md** — anything with a number behind it. What the model does, what it is anchored to, what it was measured at, and where it knowingly departs from the source. Record the measurement, not the intention.
 - **TODO.md** — a changelog as much as a list, split in two: open work at the top under its section headings, and everything finished in `# Done` at the foot, under a copy of the heading it came from. Tick an entry and move it into the matching `# Done` section with what was actually built, **and close any open entry the change has made untrue**. Never leave an open item nested as a note under a finished one — ten of them had accumulated that way, invisible, which is why the file was split. An open checkbox is a claim about the code as it stands; one entry here once asserted the exact opposite of what the physics did, which is how a correct behaviour nearly got "fixed" back into a bug.
 - **PROJECT_HANDOFF.md** — architecture, invariants and the traps. If something must stay true for the code to work, say so here and say what breaks when it does not.
 - **BALL_BEHAVIOUR_KNOBS.md** — the plain-language map from a tuning parameter to the ball behaviour it changes, and what each surface is anchored against. It is the file a request gets written against, so it goes stale faster than any other and matters more when it does. It has already sat asserting the reverse of the code once.
 - **PROCEDURAL_GENERATION.md** — what the generator produces and in what order.
-- **README.md** — anything a player can see, set or press.
+- **REFERENCES.md** — the source list behind RESEARCH.md and LANDSCAPE_RESEARCH.md. A source consulted and not listed here is a source the next person has to find again.
+- **docs/PLAYING.md** — anything a player can see, set or press. Every control, every studio setting, the launch-monitor walkthrough. This is the file that used to be most of README.md and it rots the same way.
+- **README.md** (root) — what the project IS, how to build it, what the repository contains, and what is claimed about it. A new top-level directory, a changed build command or a changed release claim belongs here.
+- **docs/README.md** — the documentation index. A document added, removed or renamed is not finished until this says so.
 - **INSTALLATION.md** — anything that changes how the thing is built, served or opened.
 - **LANDSCAPE_RESEARCH.md** — sources and figures behind terrain, vegetation and architecture, same standard as RESEARCH.md.
 - **ATTRIBUTION.md** and **THIRD_PARTY_NOTICES.txt** — any dependency added, removed or upgraded, and any asset or data source taken in.
 - **DISTRIBUTION_REVIEW.md** — anything affecting the offline build, file-URL behaviour, bundle size or release claims.
 
-**Check every one of them, every time, including the ones the change does not obviously touch.** README.md and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
+**Check every one of them, every time, including the ones the change does not obviously touch.** The player-facing manual and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
 
 A quick way to catch it, before committing:
 
 ```bash
-for f in *.md; do printf "%-28s %s
-" "$f" "$(git log -1 --format='%ad %h' --date=short -- $f)"; done
+for f in README.md CONTRIBUTING.md docs/*.md docs/reports/*.md; do
+  printf "%-36s %s
+" "$f" "$(git log -1 --format='%ad %h' --date=short -- "$f")"
+done
 ```
 
 A file many commits behind the others is the gap.
 
 **If a change touches nothing in a file, that is a finding, not a skip.** The question is asked every pass; the answer is often no.
 
-**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and README read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
+**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and PLAYING read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
 
 Write down the decisions and the **rejected alternatives**, especially ones that look obviously right. "The ladder of relaxations reads tidier and falls off a cliff", "reaching for the rim circle below lip height parks the ball inside the wall" — those sentences are worth more than a description of the code, which anyone can read. The same is true of a bug that was subtle: record what it looked like, because it is the recognisable symptom that saves the next hour, not the fix.
 
@@ -101,7 +113,7 @@ Record the figure and its units, not a paraphrase. "Spacing no more than three t
 
 A claim in this project that rests on outside work and carries no link is indistinguishable from one that was guessed.
 
-**A source that cannot be fetched gets committed, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `reference/` along with a short extract of the passage actually used, and link both from the RESEARCH.md entry. A link that nobody following it can read is not a citation; it is a promise.
+**A source that cannot be fetched gets committed, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `docs/sources/` along with a short extract of the passage actually used, and link both from the RESEARCH.md entry. A link that nobody following it can read is not a citation; it is a promise.
 
 **Say plainly when a number is placed rather than published, and go back for it.** Writing "these depths were chosen by judgement inside the instrument's range, and if someone can read that page they are the first thing to check" is what made the firmness presets get fixed — the note was still sitting there when the article finally arrived, naming exactly what to do. Flag the soft spot at the point it is created, in the file that carries it, and expect anchoring to *cost* range: the judged Burnt was more dramatic than the published one and had nothing behind it.
 

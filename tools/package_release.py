@@ -30,19 +30,47 @@ ROOT = Path(__file__).resolve().parents[1]
 # embedded inside the HTML itself, under Help, so copying just the file keeps
 # them -- but a licence that only exists inside the thing it licenses is a
 # worse answer than one sitting beside it.
+#
+# THE PORTABLE ARCHIVE GETS ITS OWN README, not the repository's. The root
+# README.md is a front door for a developer looking at a source tree: it links
+# into `docs/`, talks about `npm ci`, and lists directories the archive does
+# not contain. Handing that to somebody who unzipped a game gives them a page
+# of dead links. `docs/PORTABLE_README.md` is written for the person holding
+# the ZIP and says one useful thing first: double-click Fairway.html.
+#
+# THE PORTABLE ARCHIVE IS FLAT. Its five documents keep their own names at the
+# top of the ZIP even though four of them live under `docs/` in the repository:
+# somebody who unzips a game does not want to open a folder to find out how to
+# start it. Each entry is (path in this repository, name inside the archive).
 PORTABLE = [
-    'LICENSE', 'THIRD_PARTY_NOTICES.txt', 'ATTRIBUTION.md',
-    'README.md', 'INSTALLATION.md',
+    ('LICENSE', 'LICENSE'),
+    ('docs/THIRD_PARTY_NOTICES.txt', 'THIRD_PARTY_NOTICES.txt'),
+    ('docs/ATTRIBUTION.md', 'ATTRIBUTION.md'),
+    ('docs/PORTABLE_README.md', 'README.md'),
+    ('docs/INSTALLATION.md', 'INSTALLATION.md'),
+    ('docs/PLAYING.md', 'PLAYING.md'),
 ]
 # The source archive is for somebody who is going to READ or BUILD the thing,
-# so it keeps everything the portable one drops.
-DOCS = PORTABLE + [
-    'DISTRIBUTION_REVIEW.md', 'DEPENDENCY_INVENTORY.json', 'PROJECT_HANDOFF.md',
-    'TODO.md', 'AGENTS.md', 'PROCEDURAL_GENERATION.md', 'RESEARCH.md',
-    'LANDSCAPE_RESEARCH.md', 'BALL_BEHAVIOUR_KNOBS.md', 'REFERENCES.md',
+# so it keeps everything the portable one drops, and it keeps the repository's
+# own layout so that a path written in a document still points at the file it
+# names once the ZIP is unpacked.
+DOCS = [path for path, _ in PORTABLE] + [
+    'README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/README.md',
+    'docs/DISTRIBUTION_REVIEW.md', 'docs/DEPENDENCY_INVENTORY.json',
+    'docs/PROJECT_HANDOFF.md', 'docs/TODO.md',
+    'docs/PROCEDURAL_GENERATION.md', 'docs/RESEARCH.md',
+    'docs/LANDSCAPE_RESEARCH.md', 'docs/BALL_BEHAVIOUR_KNOBS.md',
+    'docs/REFERENCES.md',
 ]
 ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.html']
-DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'}, 'tools': {'.py'}}
+# `tools` used to ship its Python packager alone, which left the source
+# archive carrying a package.json whose scripts -- bench, profile, gpu,
+# assets, grove -- all pointed at files that were not in it. The .mjs tools
+# ship now. Some of them still cannot RUN from the archive, because
+# `vendor/` is several hundred megabytes of model packs and is in neither
+# archive; that is a deliberate limit and is recorded in DISTRIBUTION_REVIEW.
+DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
+               'tools': {'.py', '.mjs', '.js'}}
 
 
 def main():
@@ -56,8 +84,8 @@ def main():
                                  for part in p.relative_to(ROOT).parts))
     for path in files:
         if not path.is_file() or path.is_symlink():
-            raise SystemExit(f'Missing or symlinked release input: {path.name}')
-    inputs = [ROOT / n for n in ROOT_SOURCE + ['LICENSE', 'THIRD_PARTY_NOTICES.txt']]
+            raise SystemExit(f'Missing or symlinked release input: {path}')
+    inputs = [ROOT / n for n in ROOT_SOURCE + ['LICENSE', 'docs/THIRD_PARTY_NOTICES.txt']]
     inputs.extend(p for p in files if p.is_relative_to(ROOT / 'src'))
     if any(p.stat().st_mtime_ns > html_path.stat().st_mtime_ns for p in inputs):
         raise SystemExit('Source or licenses changed since build. Run npm run build first.')
@@ -68,14 +96,14 @@ def main():
         if marker not in html:
             raise SystemExit(f'Missing embedded notice: {marker}')
     lock = json.loads((ROOT / 'package-lock.json').read_text(encoding='utf-8'))['packages']
-    inventory = json.loads((ROOT / 'DEPENDENCY_INVENTORY.json').read_text(encoding='utf-8'))['packages']
+    inventory = json.loads((ROOT / 'docs/DEPENDENCY_INVENTORY.json').read_text(encoding='utf-8'))['packages']
     if {p['path']: (p['version'], p['declaredLicense'], p['integrity']) for p in inventory} != {
         k: (v['version'], v.get('license', 'UNKNOWN'), v.get('integrity'))
         for k, v in lock.items() if k
     }:
         raise SystemExit('Dependency inventory is stale. Update it and review notices.')
     packages = {
-        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / n, n) for n in PORTABLE],
+        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE],
         'Fairway-source.zip': [(p, p.relative_to(ROOT).as_posix()) for p in files],
     }
     for name, entries in packages.items():

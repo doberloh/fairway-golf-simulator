@@ -1,6 +1,6 @@
 # Fairway installation, building and device setup
 
-Updated September 11, 2026. These instructions describe the current source and release archives. For player controls, see [README.md](README.md). For architecture and maintenance, see [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md).
+Updated September 25, 2026. These instructions describe the current source and release archives. For player controls, see [PLAYING.md](PLAYING.md). For architecture and maintenance, see PROJECT_HANDOFF.md, which is in the source archive and the repository rather than the portable one.
 
 ## Choose your setup
 

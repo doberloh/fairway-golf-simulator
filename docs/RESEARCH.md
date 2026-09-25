@@ -182,7 +182,7 @@ Sources consulted:
 - [USGA — 365 days with the TruFirm](https://www.usga.org/course-care/2013/10/365-days-with-the-trufirm-four-things-ive-learned-21474861011.html): the device and its use in championship setup. Returns 403 to automated fetch; only the search summary was readable.
 - [PACE Turf — Evaluating USGA's TruFirm for greens firmness measurements](https://www.paceturf.org/journal/usga_trufirm_for_greens_firmness_measurements): correlates TruFirm against the Clegg impact tester. Read in full; reports **no numeric values**, so nothing was taken from it.
 - [Turf-Tec — TruFirm product manual](https://www.turf-tec.com/Instructions/TruFirm-Instructions.pdf) and [FieldScout TruFirm listing](https://alphaomega-electronics.com/en/soil-compactation/2426-6490s-fieldscout-trufirm-turf-firmness-meter-with-bluetooth.html): the 0.1–1.5 in measuring range and 0.003 in resolution, which is what `FIRMNESS_RANGE` clamps to.
-- [USGA — The GS3 ball: understanding the numbers](https://www.usga.org/content/usga/home-page/course-care/green-section-record/62/issue-22/gs3--understanding-the-numbers.html) (Green Section Record vol. 62 no. 22, 5 December 2024): **the source of the four preset depths.** Gives the typical 0.300″–0.500″ range and the named bands inside it, the after-maintenance-before-play measurement protocol, and the note that the ranges apply to all grass types. The page returns **403 to automated fetch** — it was read because the user saved it from a browser, and the saved copy is committed at [`reference/usga-gs3-understanding-the-numbers.html`](reference/usga-gs3-understanding-the-numbers.html) with the firmness passage extracted to [`reference/usga-gs3-firmness-ranges.txt`](reference/usga-gs3-firmness-ranges.txt) so the citation stays checkable.
+- [USGA — The GS3 ball: understanding the numbers](https://www.usga.org/content/usga/home-page/course-care/green-section-record/62/issue-22/gs3--understanding-the-numbers.html) (Green Section Record vol. 62 no. 22, 5 December 2024): **the source of the four preset depths.** Gives the typical 0.300″–0.500″ range and the named bands inside it, the after-maintenance-before-play measurement protocol, and the note that the ranges apply to all grass types. The page returns **403 to automated fetch** — it was read because the user saved it from a browser, and the saved copy is committed at [`sources/usga-gs3-understanding-the-numbers.html`](sources/usga-gs3-understanding-the-numbers.html) with the firmness passage extracted to [`sources/usga-gs3-firmness-ranges.txt`](sources/usga-gs3-firmness-ranges.txt) so the citation stays checkable.
   - The same article publishes **smoothness** (0.0–16.0, under 5.0 being high quality) and **trueness** (0.0–7.0, under 1.0 high quality) ranges. Neither is modelled — the putt roll is currently perfectly true — but they are the anchors if a "green quality" axis is ever wanted, and they are in the saved copy.
 - [Golfdom — What putting green firmness measurements actually tell us](https://www.golfdom.com/what-putting-green-firmness-measurements-actually-tell-us/): read in full; names the instruments but publishes no values, and notes ball-bounce data was still future work at the time.
 - [Asian Turfgrass Centre — Four tools to measure surface hardness](https://www.asianturfgrass.com/post/surface-hardness-correlations/): consulted for how the instruments relate to one another; nothing taken.
@@ -1368,7 +1368,7 @@ A full shot's aim line is lifted 100 mm so it clears the ground it crosses: it d
 
 ## The flight model against a launch monitor
 
-Thirty-six shots from a SkyTrak skills assessment (`reference/Export_SA_09182026_180829.pdf`, pages 7 to 11, with the ball data extracted to `reference/skytrak-36-shots.txt`) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
+Thirty-six shots from a SkyTrak skills assessment (`sources/skytrak-skills-assessment-2026-07-26.pdf`, pages 7 to 11, with the ball data extracted to `sources/skytrak-36-shots.txt`) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
 
 One note on the extraction, because it nearly poisoned the whole comparison: `pdftotext -layout` scrambles several of these tables, shuffling carry and offline between rows. `-table` reads them correctly. The parsed values were checked against the sheet's own per-target AVG rows -- nine targets by fourteen fields, zero mismatches -- which is the only reason to trust any of the numbers below.
 
@@ -1784,7 +1784,7 @@ Three crown models have now been chosen by looking at packs, and none of them wa
 
 ### It runs at bake time, and never ships
 
-The library is a devDependency. `node tools/bake-trees.mjs` runs it in Node, writes four variants as OBJ into `vendor/eztree-redwood/`, and from there they go through exactly the same ingest as a Kenney pine. **No library code and no runtime cost** — what ships is geometry.
+The library is a devDependency. `node tools/bake-trees.mjs` runs it in Node, writes four variants as OBJ into `vendor/baked_assets/`, and from there they go through exactly the same ingest as a Kenney pine. **No library code and no runtime cost** — what ships is geometry.
 
 Two things made that possible. `Tree` builds its meshes without a renderer, and it loads its bark and leaf textures at import time through three's `TextureLoader`, which wants a DOM — six lines of stub is enough, since an image that never loads does not matter to geometry.
 
@@ -2777,7 +2777,7 @@ on any of it -- a key that does not exist is simply a blank tile, and no extra
 can reject a shot -- so the cost of being wrong here is a dash or a bad reading
 on a readout, never a shot the player cannot hit. **It is still the first thing
 to check when a real device is on the mat at the R50 session**, and a saved copy
-of the page belongs under `reference/` the moment somebody can open it.
+of the page belongs under `sources/` the moment somebody can open it.
 
 Smash factor and face to path are NOT in the protocol and are not sent by any
 monitor. Both are derived here: smash is ball speed over club speed, face to

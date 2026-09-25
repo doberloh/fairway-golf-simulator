@@ -1,7 +1,7 @@
 // BAKING TREES INSTEAD OF SHOPPING FOR THEM.
 //
 // Run: node tools/bake-trees.mjs [--report] [name...]
-// Writes: vendor/eztree-redwood/*.obj + .mtl + the textures they name
+// Writes: vendor/baked_assets/*.obj + .mtl + the textures they name
 //
 // Every conifer in the CC0 packs is conical to the ground, so a redwood had to
 // be faked: a drawn cylinder with a borrowed crown balanced on top. That gets

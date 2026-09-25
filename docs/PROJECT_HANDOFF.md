@@ -27,72 +27,155 @@ npm test
 npm run build
 ```
 
-Vite serves http://127.0.0.1:5173. `vite.config.js` uses the single-file plugin, targets ES2022, and inlines assets. `dist/index.html` is the actual offline app, approximately 1.2 MB uncompressed. Open it directly in a WebGL 2 browser with hardware acceleration, or serve it locally. The browser automation environment used for development disallows file-URL navigation, so direct-file execution still needs a manual browser check.
+Vite serves http://127.0.0.1:5173. `vite.config.js` uses the single-file plugin, targets ES2022, and inlines assets. `dist/index.html` is the actual offline app, approximately 15.8 MB uncompressed and 6.5 MB gzipped. Most of that is the generated redwood forest, shipped whole rather than at reduced detail because measurement showed the geometry costs nothing on this path. This figure sat at "approximately 1.2 MB" for months after the mesh ingest landed, which is how the shipped archives came to be 124 commits stale without anyone noticing. Open it directly in a WebGL 2 browser with hardware acceleration, or serve it locally. The browser automation environment used for development disallows file-URL navigation, so direct-file execution still needs a manual browser check.
 
-Pinned dependencies: Three.js 0.186.0, ws 8.21.3, Lucide 1.44.0, Vite 8.3.0, vite-plugin-singlefile 2.3.3. The lockfile uses the public Yarn registry mirror and integrity hashes. Preserve LICENSE and THIRD_PARTY_NOTICES.txt when distributing. The owner selected MIT for project-authored code; third-party terms remain separate. Read DISTRIBUTION_REVIEW.md and DEPENDENCY_INVENTORY.json before adding or changing dependencies. Full licenses are imported as raw text into main.js and displayed offline in Help. Avoid dependency upgrades incidentally during graphics work; Three shader patches depend on the current shader include structure.
+Pinned dependencies. Runtime -- the only ones that can reach a shipped file: Three.js 0.186.0 (MIT), ws 8.21.3 (MIT), Lucide 1.44.0 (ISC). Build and tooling: Vite 8.3.0, vite-plugin-singlefile 2.3.3, @dgreenheck/ez-tree 1.1.0 (MIT, bakes geometry that ships), Playwright 1.63.0 (Apache-2.0, drives the profiler). The lockfile uses the public Yarn registry mirror and integrity hashes. Preserve LICENSE and THIRD_PARTY_NOTICES.txt when distributing. The owner selected MIT for project-authored code; third-party terms remain separate. Read `docs/DISTRIBUTION_REVIEW.md` and `docs/DEPENDENCY_INVENTORY.json` before adding or changing dependencies -- the packager refuses to build while the inventory disagrees with the lockfile, so a new dependency is a documentation change before it is a build. Full licenses are imported as raw text into main.js and displayed offline in Help. Avoid dependency upgrades incidentally during graphics work; Three shader patches depend on the current shader include structure.
 
-`Fairway-portable.zip` contains Fairway.html and documentation. `Fairway-source.zip` contains source, tests, bridge, package files, build configuration and documentation, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
+`Fairway-portable.zip` is the PRODUCT and carries six files, flat: Fairway.html, LICENSE, THIRD_PARTY_NOTICES.txt, ATTRIBUTION.md, README.md and INSTALLATION.md. Nothing else -- it used to ship the architecture handoff, the open defect list, the research measurements and AGENTS.md, none of which is anything a player needs. `Fairway-source.zip` keeps the repository's own layout and carries source, tests, bridge, package files, build configuration and the documentation set, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
 
 ## File map
 
+Grouped by what a file is for, because a newcomer's question is "where does
+water live", not "what comes after `course.js` alphabetically". Every `src/`
+module, every tool and every committed baseline is listed. Add a file, add a
+row -- this table went a long stretch with sixteen modules and fifteen tools
+missing from it, and still carrying a row for `src/water.js`, which had been
+deleted.
+
+Documentation is not in this table. [docs/README.md](README.md) is its index.
+
+### Making a world
+
+Everything that turns a seed into ground. `course.js` is the centre of it; the rest were pulled out of it by concern.
+
 | File | Responsibility |
 | --- | --- |
-| DISTRIBUTION_REVIEW.md | Dated provenance/license audit, donation distribution scope and remaining release checks |
-| DEPENDENCY_INVENTORY.json | All locked package versions, licenses and integrity metadata |
-| tools/package_release.py | Verified source/portable ZIP packaging and checksums |
-| INSTALLATION.md | Device support scope, portable/source setup, LAN/mobile access, bridge and troubleshooting |
-| index.html | Static app shell, canvas and primary HUD element IDs |
-| src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
-| src/graphics.js | Device-local quality tiers and frame cap, and the one table every graphics knob reads |
-| src/godrays.js | Additive crepuscular rays for the high tier, composited over the finished frame |
-| src/clouds.js | Cartoon cloud meshes drifting on the wind, and the discs they shade with |
-| src/cloud-shadows.js | Projects those discs onto the ground, patched into every lit material |
-| src/bloom.js | Bright-pass glow; the one effect that needs the rendered colour back |
-| tests/water-terrain.test.mjs | Water stays on land, islands carry none inland, fairway splits stay playable |
-| src/water-bodies.js | What the renderer needs about a body of water beyond its geometry: the probe hide/restore pair, and surface flow. Free of three, so both are testable |
-| src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |
-| src/mesh-assets.js | Decodes that geometry and instances it under the biome palette |
-| tools/build-meshes.mjs | Ingests vendor/*.glb into src/asset-meshes.js |
-| src/style.css | Responsive interface, custom HUD layout, studio previews |
 | src/settings-schema.js | Every generation setting's default, bounds, category and help text; validation, migration and both version numbers |
-| src/course-library.js | Named courses in localStorage, and the portable export/import code |
 | src/course.js | Biomes, seeded hole geometry, world landforms, basins, surface queries, ecology |
 | src/course-plan.js | Target yardage, bounded pars, tee distances and the green contour (tilt, ridges, dish, tier) |
 | src/routing.js | Candidate hole placement, corridor collision checks and world/local transforms |
 | src/footprints.js | Fourteen footprint names, curves and SVG preview icons |
+| src/biomes.js | EVERY BIOME IS ONE RECORD -- palette, light, landform, plant mix, rock and grass density. It was seven tables and forty-eight conditionals across eight files; adding a landscape now means adding a record |
+| src/species.js | What a plant species IS, independently of which biome grows it. Two named sets rather than two similar array literals in two files: tall enough to size like a tree, and solid enough to stop a ball, are different questions |
+| src/course-names.js | Seeded course names, so the box is already filled when somebody wants to play. NO WORD HERE MAY NAME A REAL GOLF DESTINATION -- see the denylist test |
 | src/terrain-grid.js | Adaptive connected terrain mesh and matching contact interpolation |
 | src/landscape-edge.js | Distant terrain joined to the detailed ground perimeter |
 | src/ground.js | Ground material, GPU course-data atlases, crisp surface classification, shared shoreline bands |
 | src/streams.js | The drainage model, river/creek routing off it, downhill grading, spatial query, biome bank colors and reflective channel geometry |
-| tools/bench.mjs | Measures the generator across many courses in parallel; `npm run bench` |
-| tools/metrics.mjs | What a course is measured on, and the rules that must stay at zero |
-| tools/fixtures.mjs | The three fixture sizes a measurement runs over |
-| bench/baseline.json | The last saved measurement, for `--since` |
 | src/lakes.js | Large-lake open-space candidate selection and procedural bank profiles |
+| src/water-bodies.js | What the renderer needs about a body of water beyond its geometry: the probe hide/restore pair, and surface flow. Free of three, so both are testable |
 | src/homes.js | Dry/gentle housing sites, tree exclusion footprints, terrain-fitted foundations and varied cartoon house meshes |
-| src/renderer.js | Three scene lifecycle, ball/cup/flag, camera modes, pond geometry and minimap drawing. `projectMarker` clamps a world point to a screen rectangle; `cameraHeading` is the camera bearing in the same `atan2(x, z)` convention the wind uses; `setPinOut` hides the flagstick |
-| src/water.js | MIT-licensed Three planar water implementation with render-target disposal and adjustable reflection-plane height |
 | src/vegetation.js | Instanced biome trees, shrubs, grass and rock geometry |
+
+### Moving a ball
+
+The simulation proper. Metres, seconds, kilograms and radians throughout.
+
+| File | Responsibility |
+| --- | --- |
+| src/physics.js | Flight/contact integration, cup capture, monitor shot normalization |
+| src/contact.js | The bounce as something that takes TIME, rather than one instant with a restitution. The only model that reproduces a spun ball hopping, standing up and coming back |
+| src/cup.js | Cup geometry and the ANALYTIC capture model, kept as the documented reference and anchor. `simulateShot` no longer uses it: the simulator resolves the rim as a real surface |
+| src/turf.js | Surface roll, Stimp and contact constants |
+| src/firmness.js | Turf firmness, kept as a separate axis from green speed. Speed is what a ball does once it is rolling; firmness is what happens the moment it lands |
+| src/clubs.js | Stock/custom clubs, distance calibration and manual flight profiles |
+| src/dispersion.js | Groups recorded shots by the club that hit them and reports a centre and a standard distance. A read of what was hit, never a model of what might be |
+| src/shot-data.js | WHAT A SHOT IS WORTH SHOWING, IN ONE LIST. The five numbers the model runs on, plus every extra a launch monitor may send. A missing reading renders as a dash, never as a zero |
+| src/shot-views.js | Reduces a trajectory to down-the-line and across-the-line numbers and draws the 2D side and plan plots |
+
+### Playing a round
+
+Rules, scoring, and the things that persist between sessions.
+
+| File | Responsibility |
+| --- | --- |
+| src/game.js | Round rules, team selection, score state, undo and sim drops |
+| src/scoring.js | How a round stands against par. Apart from the game and the page because it is the same small calculation in three places and decides what colour a number turns |
+| src/putting.js | Dartboard/decimal putting and fractional score formatting |
+| src/range.js | The driving range. Not a hole with the bends taken out -- a hole's corridor wanders and necks down at the green, and every one of those is wrong for a practice bay |
+| src/presentation.js | Three-second replay/scorecard constants and live distance calculation |
+| src/endless.js | Endless-run seeding, per-hole settings, and `endlessSettings` — the normalisation the menu backdrop and a run must share, and which must stay idempotent |
+| src/round-library.js | Rounds in progress, kept on this device. The sibling of course-library.js and deliberately the opposite kind of store |
+| src/course-library.js | Named courses in localStorage, and the portable export/import code |
+| src/player-colours.js | A colour per golfer, so four people's tracers can be told apart at the end of a hole |
+
+### Drawing it
+
+The renderer and everything patched into it. A change to any of these can move a frame -- see the profiling rule in AGENTS.md.
+
+| File | Responsibility |
+| --- | --- |
+| src/renderer.js | Three scene lifecycle, ball/cup/flag, camera modes, pond geometry and minimap drawing. `projectMarker` clamps a world point to a screen rectangle; `cameraHeading` is the camera bearing in the same `atan2(x, z)` convention the wind uses; `setPinOut` hides the flagstick |
+| src/graphics.js | Device-local quality tiers and frame cap, and the one table every graphics knob reads |
 | src/textures.js | Procedural textures and foliage animation shader hooks |
+| src/mesh-assets.js | Decodes that geometry and instances it under the biome palette |
+| src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |
 | src/shot-visuals.js | Wind debris, strike effects, aiming/tracer helpers |
+| src/clouds.js | Cartoon cloud meshes drifting on the wind, and the discs they shade with |
+| src/cloud-shadows.js | Projects those discs onto the ground, patched into every lit material |
+| src/mist.js | Height fog and the mist that pools in hollows at dawn. Two analytic layers in one fragment patch, no render pass |
+| src/godrays.js | Additive crepuscular rays for the high tier, composited over the finished frame |
+| src/bloom.js | Bright-pass glow; the one effect that needs the rendered colour back |
+| src/daylight.js | A live clock and the light that follows from it. Deliberately outside courseSettings: the hour belongs to the session, not to the landscape |
+| src/floodlights.js | Course floodlighting for night play, placed by published sports-lighting practice rather than taste. Every pole is a light because none of them casts a shadow |
 | src/green-reading.js | Colored slope grid, vertex-origin downhill markers, contour heat map |
 | src/green-map.js | The same contour field as a cached top-down tile, plus green bounds for the map |
 | src/course-map.js | Shared map bounds and invertible coordinate projection |
 | src/camera.js | Camera offset and return-to-play helpers |
 | src/camera-tours.js | Fairway aim targets, tree/camera bounds and the hole-orbit flyover with its terrain/canopy clearance ring |
-| src/physics.js | Flight/contact integration, cup capture, monitor shot normalization |
-| src/cup.js | Cup geometry and the ANALYTIC capture model, kept as the documented reference and anchor. `simulateShot` no longer uses it: the simulator resolves the rim as a real surface |
-| src/endless.js | Endless-run seeding, per-hole settings, and `endlessSettings` — the normalisation the menu backdrop and a run must share, and which must stay idempotent |
-| src/dispersion.js | Groups recorded shots by the club that hit them and reports a centre and a standard distance. A read of what was hit, never a model of what might be |
-| src/shot-views.js | Reduces a trajectory to down-the-line and across-the-line numbers and draws the 2D side and plan plots |
-| src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
-| src/turf.js | Surface roll, Stimp and contact constants |
-| src/clubs.js | Stock/custom clubs, distance calibration and manual flight profiles |
-| src/game.js | Round rules, team selection, score state, undo and sim drops |
-| src/putting.js | Dartboard/decimal putting and fractional score formatting |
-| src/presentation.js | Three-second replay/scorecard constants and live distance calculation |
+| src/camera-prefs.js | How you look at the course, kept on this device. A camera is a property of the ROOM, so it does not travel inside a shared round |
+| src/projector.js | The field of view a simulator bay actually has. In a bay this is a measurement, not a look: one vertical angle lines the drawing up with the room |
+
+### The interface
+
+What a player touches. `main.js` is large and its DOM paths are not covered by the tests -- there is a section on that below.
+
+| File | Responsibility |
+| --- | --- |
+| index.html | Static app shell, canvas and primary HUD element IDs |
+| src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
+| src/style.css | Responsive interface, custom HUD layout, studio previews |
 | src/layout.js | Saved draggable/resizable HUD layout |
+| src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
+| src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
+
+### Outside the game
+
+None of this ships inside `dist/index.html`. The bake tools are the exception in one direction only: the geometry they write does ship, the library that wrote it does not.
+
+| File | Responsibility |
+| --- | --- |
 | bridge/server.mjs | Optional local TCP/WebSocket bridge and static build server |
+| tools/build-meshes.mjs | Ingests vendor/*.glb into src/asset-meshes.js |
+| tools/mesh-read.mjs | Reads a vendored pack, GLB or OBJ, grouped by the palette role each material maps to. Its own module because two tools read these packs |
+| tools/bake-assets.mjs | Composes new trees out of the packs already owned, into vendor/baked_assets/ |
+| tools/bake-trees.mjs | Bakes redwood and fir variants with ez-tree (MIT, devDependency, never shipped) into vendor/baked_assets/. What ships is geometry, not a library |
+| tools/grow.mjs | Grows the redwood grove from nothing -- no imported models, no generator library. Writes vendor/grown-redwood-forest/, which is NOT committed because grow.mjs reproduces it exactly |
+| tools/grow-lib.mjs | The plant geometry that does the growing: triangles put together by hand |
+| tools/asset-preview.mjs | A contact sheet for every model in vendor/, so choosing one is looking rather than guessing. Two crown models were once picked by reading file names and both were wrong |
+| tools/glb-survey.mjs | Lists what is actually inside a pack's GLB files before anything is ingested |
+| tools/tree-spacing.mjs | How close trees actually stand, measured against how wide their crowns are |
+| tools/fetch-references.py | Pulls reference photographs from Wikimedia Commons into a scratch folder. REFERENCES, not assets: nothing derived from them is a copy |
+| tools/package_release.py | Verified source/portable ZIP packaging and checksums |
+
+### Measuring it
+
+Every one of these imports its geometry from `src/` and never reimplements it. Four measurements in this project have lied, and all four lied by recomputing the thing they were checking.
+
+| File | Responsibility |
+| --- | --- |
+| tools/bench.mjs | Measures the generator across many courses in parallel; `npm run bench` |
+| tools/bench-worker.mjs | One bench worker: builds the courses it is given and measures them there, because a generated world is full of closures and cannot cross a thread boundary |
+| tools/metrics.mjs | What a course is measured on, and the rules that must stay at zero |
+| tools/fixtures.mjs | The three fixture sizes a measurement runs over |
+| tools/biome-fingerprint.mjs | THE ARBITER FOR `GENERATOR_VERSION`. Hashes each biome's record and its generated ground separately; only a ground change owes a bump |
+| tools/profile.mjs | What a frame costs and what it is spent on. Minutes of a machine at full tilt -- run it deliberately |
+| tools/profile-probe.js | Injected into the page before anything else runs. Wraps WebGL and requestAnimationFrame from OUTSIDE the game, so it cannot be fooled by the app reporting on itself |
+| tools/gpu-probe.mjs | Which GPU a Playwright browser actually got. Asked before anything is measured, because headless Chromium falls back to software silently |
+| tools/shot-sink.mjs | Somewhere for the game to put a screenshot of itself. The game photographs itself in whatever browser is open and posts the frame here -- no headless browser, no second rendering path |
+| bench/baseline.json | The last saved measurement, for `--since` |
+| bench/profile-baseline.json | The last saved frame profile, for `--since` |
+| bench/biome-fingerprints.json | The stored fingerprints, with the generator version they were taken at |
 | tests/*.test.mjs | Node test-runner regression suites; no external test framework |
 
 ### Measuring the generator
@@ -258,7 +341,7 @@ The pad (the ground) is separate from the tee marker (where you stand). A marker
 
 `firmness.js` owns it. The value is TruFirm/GS3 penetration in inches — lower is firmer — and it rides in the turf config beside `stimp`, so it reaches every physics call site the same way. `turfConfig` accepts a preset name or a number and normalises to a number; anything unrecognised reads as Normal rather than throwing, because an old save has no firmness at all.
 
-**The four preset depths are the USGA's published GS3 bands and are not free to move.** They are not tuning knobs: each one sits on a named band from Green Section Record vol. 62 no. 22, the article is committed under `reference/` because the page 403s to automated fetch, and a test asserts each preset is still inside its band. If a setting feels wrong, change the *multipliers* — which are the unanchored part — rather than sliding a depth off the band it is named for.
+**The four preset depths are the USGA's published GS3 bands and are not free to move.** They are not tuning knobs: each one sits on a named band from Green Section Record vol. 62 no. 22, the article is committed under `docs/sources/` because the page 403s to automated fetch, and a test asserts each preset is still inside its band. If a setting feels wrong, change the *multipliers* — which are the unanchored part — rather than sliding a depth off the band it is named for.
 
 **Normal is exactly the model that was there before.** All three multipliers are 1 at `NORMAL_FIRMNESS` by construction, asserted by test. That is what pins the scale, and it is why an existing course plays precisely as it did — get this wrong and every saved round changes underneath its owner.
 
@@ -405,7 +488,7 @@ To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry 
 
 If the biome wants props no other biome uses, add the family to `PICK` in `tools/build-meshes.mjs` and rerun it -- the packs in `vendor/` hold far more than ships, so check there before going looking for assets. A PICK entry is a file name; three of the packs are Quaternius nature packs sharing 31 names, so an ambiguous one is an error and you disambiguate with `megakit:Pine_1`. `KEEP_ROLES` drops the parts of a model a family does not draw -- the conifer crowns keep their leaves and throw their trunks away. What a species IS, as opposed to which biome grows it, lives in `src/species.js`.
 
-**Generating a model rather than finding one:** `node tools/bake-trees.mjs` runs ez-tree (MIT, a devDependency, never shipped) in Node and writes redwood variants into `vendor/eztree-redwood/`, from where they go through the normal ingest. Reach for this when the shape you want does not exist in any pack -- a bare-columned giant does not. Re-run `node tools/build-meshes.mjs` afterwards.
+**Generating a model rather than finding one:** `node tools/bake-trees.mjs` runs ez-tree (MIT, a devDependency, never shipped) in Node and writes redwood variants into `vendor/baked_assets/`, from where they go through the normal ingest. Reach for this when the shape you want does not exist in any pack -- a bare-columned giant does not. Re-run `node tools/build-meshes.mjs` afterwards.
 
 **Textured models carry a `uvSpan`.** Texture coordinates are packed into 16 bits against the part's own range rather than against 0..1, because bark tiles far outside the unit square and the old packing silently clamped it. An atlas has no span and is unaffected. If you add anything textured, check that `uvSpan` survives into what is drawn.
 

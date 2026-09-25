@@ -119,3 +119,19 @@ node tools/build-meshes.mjs
 
 Reads `vendor/<pack>/*.glb` and `*.obj`, writes `src/asset-meshes.js`. Re-run
 after changing the model selection in `PICK`.
+
+## Trade marks
+
+**GSPro**, **Garmin**, **Rapsodo**, **SkyTrak**, **PiTrac**, **Foresight** and
+**Trackman** are named in this project, and in the software itself, only to
+describe what Fairway can talk to or what a measurement was taken on. That is
+nominative use: a product may be named in order to say what it is compatible
+with.
+
+All trade marks, product names and company names are the property of their
+respective owners. **No affiliation, sponsorship, endorsement, certification
+or hardware-compatibility guarantee is claimed or implied by any of them.**
+The connector paths Fairway can accept are protocol-level integrations; device
+firmware, vendor licences, connector versions and operating systems all affect
+whether any given one works, and none of that has been verified against
+physical hardware.

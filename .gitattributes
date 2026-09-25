@@ -2,8 +2,11 @@
 # Windows rewrites every file on checkout and every diff is noise.
 * text=auto eol=lf
 
-# Binary provenance: model packs and saved reference pages.
+# Binary provenance: model packs, saved reference pages and committed sources.
+# `* text=auto` guesses correctly for most of these; saying so explicitly keeps
+# a stray diff out of the log when the guess is close.
 *.glb binary
 *.png binary
 *.jpg binary
 *.zip binary
+*.pdf binary
