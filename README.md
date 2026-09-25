@@ -56,6 +56,12 @@ that vary with Reynolds number and spin, spin axis, spin decay, wind-relative
 velocity, temperature and altitude. The bounce and the roll read the surface
 underneath the ball, and putting runs on a Stimp-anchored rolling model.
 
+Tree trunks are solid and foliage is not, so a ball can be behind a tree
+without being stopped by a leaf; a trunk contact resolves the overlap and
+reflects only incoming motion, which means a close lie is always playable.
+Trunks on neighbouring holes count too. The ball is 42.67 mm across in the
+physics and in the picture, because they are the same number.
+
 **This is a research-informed implementation, not an empirically calibrated
 replacement for a commercial simulator.** [docs/RESEARCH.md](docs/RESEARCH.md)
 records every number, its source, and the places where the model knowingly

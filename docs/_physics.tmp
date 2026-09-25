@@ -1,7 +1,0 @@
-## Physics and testing
-
-All calculations use meters, seconds, kilograms, and radians internally. Ball-flight integration runs at 240 Hz with a midpoint method; it includes gravity, Reynolds/spin-dependent approximate drag and lift, spin axis, spin decay, wind-relative velocity, temperature, and altitude. Bounce uses surface restitution, a compliant contact-plane approximation, Coulomb impulses and spin coupling. Roll uses rotational-inertia-aware slopes, calibrated green Stimp and adjustable surface resistance. Tree trunks collide; foliage does not. Both the rendered ball and physics use a 42.67 mm diameter. Trunk contacts resolve penetration and reflect only incoming motion, so a ball can escape from a close tree lie. Neighboring-hole trunks are included through a spatial index.
-
-This is a research-informed implementation, **not an empirically calibrated replacement for a commercial simulator**. See RESEARCH.md for equations, sources, benchmarks, and limitations. Unit/integration tests cover physics plausibility, convergence, left/right curvature, wind, putting, water/out-of-bounds, deterministic biome generation, input validation, scoring formats, persistence, TCP framing, browser acknowledgments, and local-origin filtering. Physical launch monitors and physical gamepads remain untested.
-
-For a context-free architecture and maintenance guide, read [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md). Prioritized future work and known limitations are in [TODO.md](TODO.md); [AGENTS.md](AGENTS.md) is the entry point for coding agents.
