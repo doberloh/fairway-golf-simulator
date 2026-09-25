@@ -136,6 +136,135 @@ prevent.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
+## Greens read better if the art style bends for greens only
+
+Asked for on 2026-09-24, after the second retune. Five sliders got a green from
+"flat from every angle" to readable-ish, and they are now near the end of what
+they can do, because every one of them is fighting the same two limits: the
+lighting is quantised into four steps, and every cue except slope darkening has
+a direction in it. These entries break one or other of those, on the putting
+surface and nowhere else.
+
+**None of this touches the ground.** No routing, no hazards, no planting, no
+collision, no `surface()` -- so **no `GENERATOR_VERSION` bump** for any of it,
+and the biome fingerprints must come back unchanged. They are all graphics
+settings, in `GREEN_READ` beside the other five, which DOES mean a
+`SCHEMA_VERSION` bump and a `GREEN_READ_GEN` bump per shipped batch, or a saved
+record beats the new default and the change reaches nobody. Every one of them
+also needs `customProgramCacheKey` in `ground.js` bumped, or the browser serves
+the old program from cache.
+
+**Ordered by payoff for how much style is broken.** The first is the one to do.
+
+- [ ] **Give greens their own lighting ramp -- this is the blocker, and it is
+  small.** `toonRamp()` in `textures.js` is four texels (90, 145, 205, 245) on
+  `LinearFilter`, sampled by three at `dot(normal,light)*0.5+0.5`; texel centres
+  stop at .875, so a near-flat green under a sun above about 48 degrees is
+  clamped and every lighting cue dies. Measured: brightness span across a green
+  was 0 out of 255 with AND without the old sun cue at 50, 65 and 80 degrees.
+  Smooth the ramp for the putting surface and all of it starts working again at
+  full strength, for free.
+
+  **It cannot be done with a second material.** The whole course is ONE mesh with
+  one `MeshToonMaterial`; greens are `kind==4.` inside the fragment shader. So
+  the ramp has to be bypassed IN the shader: declare `float gGreen=0.;` in the
+  `common` injection (a constant initialiser, which is legal at global scope --
+  a non-constant one is what once stopped the ground drawing entirely), set it
+  from the kind test inside the `color_fragment` injection, and replace three's
+  `getGradientIrradiance` so it mixes between the ramp lookup and the raw smooth
+  `dotNL` by `gGreen`. Order is on our side: `color_fragment` runs BEFORE
+  `lights_fragment_begin` in the toon fragment shader, so the kind is known by
+  the time lighting asks. That is a fourth link in the replace chain, so add the
+  anchor to `FRAGMENT_ANCHORS` in `tests/ground-shader-structure.test.mjs` --
+  and confirm the chunk name against the three version in use, which that test
+  already does for the others.
+
+  **The seam is at the collar**, where stepped fairway meets smooth green. Fade
+  `gGreen` across the fringe rather than switching it, using the same signed
+  distance the surrounding classification already has.
+
+  Rejected: remapping `dotNL` for greens so the flat region lands mid-ramp
+  instead of at the top. It is a one-line change and it works, but it moves a
+  green's average brightness down a whole step -- greens would read as a
+  different, darker grass than the fairway they sit in, which is a worse break
+  than the one being avoided.
+
+  **The measurement that decides it**: brightness span across a single green at
+  50, 65 and 80 degrees of sun, against the numbers above. Anything below about
+  15 out of 255 at 65 degrees means it did not land.
+
+- [ ] **Cross-cut the bands instead of striping them.** A stripe bends one way,
+  so it describes slope along one axis and says nothing across it; a grid bends
+  both ways and reads like a wireframe laid on the surface, which is shape
+  information rather than brightness information and therefore survives midday.
+  Real courses cross-cut greens, so this is arguably not breaking the style at
+  all.
+
+  In `ground.js`, the band block already computes `plan`, `coord`, `stripe` and
+  `spread` for `kind==4.` at a 3.2 m period. A second set at 90 degrees to `mow`,
+  combined multiplicatively, is most of the work. **The trap is the anti-alias
+  fade**, and it is written up at the top of that block: the fade is measured on
+  the PLAN coordinate, never the bent one, because the height term changes
+  fastest exactly where the ground is steep or seen at a grazing angle -- doing
+  it on the bent coordinate once made bands vanish on the slopes they describe.
+  The second axis needs its own `fwidth` on its own plan coordinate, not a reuse
+  of the first. Two sets also double the pattern energy, so `greenBandSoft` will
+  want re-tuning downward; the owner already has bands at 10%, which suggests
+  starting the grid lower still.
+
+- [ ] **Contour lines on greens only, at a fine interval.** The most legible cue
+  we own by a distance -- our own note on the course-wide toggle says so, because
+  it turns a slope into a spacing you can count -- and the reason it is off is
+  that a metre-interval topographic map across the whole course looks absurd.
+  Confined to the putting surface at 20-25 cm it stops being a map and becomes
+  the one place a golfer actually reads contour.
+
+  The code is already there: the `cueContours` block in `ground.js` is
+  `groundPoint.y/1.0` with an `fwidth` line and a moire fade at `smoothstep(.25,
+  .7,w)`. A green-only branch is the interval, the kind test, and its own
+  strength uniform. **At 25 cm the moire fade will trigger far earlier**, so the
+  lines will vanish at mid-distance unless the fade is re-fitted -- check it on a
+  green from the tee, not from over the ball.
+
+  **Say plainly that this is the closest of the five to being a green-reading
+  helper**, which is the thing the owner asked to do without. Ship it off by
+  default and let them decide.
+
+- [ ] **Bake shading into each green when the course is built.** Everything
+  sun-driven collapses at midday because that is what midday does; shading baked
+  from the geometry does not care where the sun is. `localReliefField()` in
+  `ground.js` already does exactly this at course scale, into the `localRelief`
+  vertex attribute and the `vRelief` varying. A green is roughly 500 square
+  metres against a course's several hundred thousand, so the same field over
+  just the putting surfaces is affordable at many times the resolution -- a
+  second, finer attribute sampled only where `kind==4.`, or a small per-green
+  data texture.
+
+  **Check the generation cost before committing**: this runs in the build, which
+  is already 3-5 seconds for 9 holes and 24% slower than it was. `bench.mjs
+  --tier full --since` before and after, and it is not worth more than a few
+  hundred milliseconds.
+
+- [ ] **Slope in colour, not brightness.** The ramp quantises LIGHT; it does not
+  touch the colour of the grass, so hue is an entirely unused channel on a
+  surface where the brightness channel is saturated. A few per cent cooler
+  running uphill, warmer running down, keyed off the same tilted normal
+  `greenLift` already builds. The eye reads hue and brightness separately, so
+  this ADDS a channel rather than competing for the one every existing cue is
+  fighting over. Closest relative is the existing `cueSlope` tint, which works on
+  the whole course and is the only one of the original three that works in colour
+  -- worth reading first, because it already solved the "does this look like
+  grass" problem once.
+
+- [ ] **The honest caveat, to be repeated to anyone who picks this up.** Part of
+  why a green reads flat is not shading at all: you are looking at it from near
+  ground level at a shallow angle, which compresses the slope out of the picture
+  geometrically. No shading cue fixes viewing geometry -- it is why real golfers
+  walk round a putt and crouch behind it. Expect a real improvement from the
+  above, not a solved problem, and do not chase the last of it with ever-stronger
+  cues; that is what produced a green that read as a lit object rather than a
+  shaped one and had to be walked back.
+
 ## Green and bunker shapes
 
 Both outlines were a smooth oval. Measured over 108 greens and 284 bunkers:
