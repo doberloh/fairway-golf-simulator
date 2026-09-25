@@ -1,6 +1,13 @@
 # Working on Fairway
 
-Read PROJECT_HANDOFF.md first. It explains the product, architecture, units, generation pipeline, persistence, testing, packaging and known limitations without requiring conversation history. Read TODO.md for prioritized follow-up work and README.md for player controls.
+**Every document lives under `docs/`, and `docs/README.md` is its index.** The
+repository root carries only README.md (the front door), CONTRIBUTING.md (the
+short version of this file), LICENSE and this file.
+
+Read `docs/PROJECT_HANDOFF.md` first. It explains the product, architecture,
+units, generation pipeline, persistence, testing, packaging and known
+limitations without requiring conversation history. Read `docs/TODO.md` for
+prioritized follow-up work and `docs/PLAYING.md` for player controls.
 
 Preserve the portable offline single-file build, Cartoon-only graphics, complete 9/18-hole landscapes, seeded procedural individual holes, real ball/cup dimensions, and current scoring formats. Keep terrain rendering, collision heights, surface queries and map geometry consistent. Generation changes require attention to older saved rounds and GPU data textures.
 
@@ -61,33 +68,38 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 
 **After any change that reverses a direction, grep the docs for the old claim.** Edit the assertion rather than appending a newer one beside it — a document that says both things is worse than one that is merely out of date.
 
-**EVERY markdown file in the repository root is in scope.** Not a shortlist — the whole set, checked every pass. A file that is not on somebody's list is the one that rots, and the ones below are ordered by how often that has actually happened.
+**EVERY document under `docs/`, plus the root README.md and CONTRIBUTING.md, is in scope.** Not a shortlist — the whole set, checked every pass. A file that is not on somebody's list is the one that rots, and the ones below are ordered by how often that has actually happened.
 
 - **RESEARCH.md** — anything with a number behind it. What the model does, what it is anchored to, what it was measured at, and where it knowingly departs from the source. Record the measurement, not the intention.
 - **TODO.md** — a changelog as much as a list, split in two: open work at the top under its section headings, and everything finished in `# Done` at the foot, under a copy of the heading it came from. Tick an entry and move it into the matching `# Done` section with what was actually built, **and close any open entry the change has made untrue**. Never leave an open item nested as a note under a finished one — ten of them had accumulated that way, invisible, which is why the file was split. An open checkbox is a claim about the code as it stands; one entry here once asserted the exact opposite of what the physics did, which is how a correct behaviour nearly got "fixed" back into a bug.
 - **PROJECT_HANDOFF.md** — architecture, invariants and the traps. If something must stay true for the code to work, say so here and say what breaks when it does not.
 - **BALL_BEHAVIOUR_KNOBS.md** — the plain-language map from a tuning parameter to the ball behaviour it changes, and what each surface is anchored against. It is the file a request gets written against, so it goes stale faster than any other and matters more when it does. It has already sat asserting the reverse of the code once.
 - **PROCEDURAL_GENERATION.md** — what the generator produces and in what order.
-- **README.md** — anything a player can see, set or press.
+- **REFERENCES.md** — the source list behind RESEARCH.md and LANDSCAPE_RESEARCH.md. A source consulted and not listed here is a source the next person has to find again.
+- **docs/PLAYING.md** — anything a player can see, set or press. Every control, every studio setting, the launch-monitor walkthrough. This is the file that used to be most of README.md and it rots the same way.
+- **README.md** (root) — what the project IS, how to build it, what the repository contains, and what is claimed about it. A new top-level directory, a changed build command or a changed release claim belongs here.
+- **docs/README.md** — the documentation index. A document added, removed or renamed is not finished until this says so.
 - **INSTALLATION.md** — anything that changes how the thing is built, served or opened.
 - **LANDSCAPE_RESEARCH.md** — sources and figures behind terrain, vegetation and architecture, same standard as RESEARCH.md.
 - **ATTRIBUTION.md** and **THIRD_PARTY_NOTICES.txt** — any dependency added, removed or upgraded, and any asset or data source taken in.
 - **DISTRIBUTION_REVIEW.md** — anything affecting the offline build, file-URL behaviour, bundle size or release claims.
 
-**Check every one of them, every time, including the ones the change does not obviously touch.** README.md and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
+**Check every one of them, every time, including the ones the change does not obviously touch.** The player-facing manual and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
 
 A quick way to catch it, before committing:
 
 ```bash
-for f in *.md; do printf "%-28s %s
-" "$f" "$(git log -1 --format='%ad %h' --date=short -- $f)"; done
+for f in README.md CONTRIBUTING.md docs/*.md docs/reports/*.md; do
+  printf "%-36s %s
+" "$f" "$(git log -1 --format='%ad %h' --date=short -- "$f")"
+done
 ```
 
 A file many commits behind the others is the gap.
 
 **If a change touches nothing in a file, that is a finding, not a skip.** The question is asked every pass; the answer is often no.
 
-**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and README read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
+**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and PLAYING read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
 
 Write down the decisions and the **rejected alternatives**, especially ones that look obviously right. "The ladder of relaxations reads tidier and falls off a cliff", "reaching for the rim circle below lip height parks the ball inside the wall" — those sentences are worth more than a description of the code, which anyone can read. The same is true of a bug that was subtle: record what it looked like, because it is the recognisable symptom that saves the next hour, not the fix.
 
@@ -101,7 +113,7 @@ Record the figure and its units, not a paraphrase. "Spacing no more than three t
 
 A claim in this project that rests on outside work and carries no link is indistinguishable from one that was guessed.
 
-**A source that cannot be fetched gets committed, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `reference/` along with a short extract of the passage actually used, and link both from the RESEARCH.md entry. A link that nobody following it can read is not a citation; it is a promise.
+**A source that cannot be fetched gets committed, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `docs/sources/` along with a short extract of the passage actually used, and link both from the RESEARCH.md entry. A link that nobody following it can read is not a citation; it is a promise.
 
 **Say plainly when a number is placed rather than published, and go back for it.** Writing "these depths were chosen by judgement inside the instrument's range, and if someone can read that page they are the first thing to check" is what made the firmness presets get fixed — the note was still sitting there when the article finally arrived, naming exactly what to do. Flag the soft spot at the point it is created, in the file that carries it, and expect anchoring to *cost* range: the judged Burnt was more dramatic than the published one and had nothing behind it.
 

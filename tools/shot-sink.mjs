@@ -10,7 +10,11 @@
 // So the game photographs ITSELF, in whatever browser is already open, and
 // posts the frame here. This process only writes files.
 //
-//   node tools/shot-sink.mjs --out bench/shots/after
+//   node tools/shot-sink.mjs --out docs/reports/tee-screenshots/after
+//
+// The default output, `bench/shots/latest`, is scratch and is not committed.
+// Captures that a report actually cites go next to that report, under
+// `docs/reports/`, so the report and its evidence travel together.
 //
 // Then, in the page (console, or a driver):
 //

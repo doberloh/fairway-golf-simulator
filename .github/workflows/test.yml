@@ -1,0 +1,33 @@
+# The regression suite, on every push and pull request.
+#
+# `npm test` is the whole verification story for logic in this project: a few
+# hundred checks on the Node test runner, no external framework, no browser.
+# The browser-dependent work -- the frame profiler, the GPU probe, the asset
+# contact sheet -- is deliberately NOT run here. It needs a real GPU to mean
+# anything, and a headless runner silently falls back to a software rasteriser
+# whose numbers are two orders of magnitude out. A green tick from a machine
+# measuring the wrong thing is worse than no tick.
+name: tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # vendor/ is a few hundred megabytes of model packs that no test reads.
+        with:
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Generated ground has not moved for an unchanged seed
+        run: node tools/biome-fingerprint.mjs --check
+      - run: npm run build
