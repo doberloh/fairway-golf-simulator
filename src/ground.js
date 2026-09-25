@@ -217,7 +217,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   if(edge<0.){float deep=clamp(-edge/max(scale*.55,.6),0.,1.);shore=mix(wetSoil,soil*.4,deep*deep*(3.-2.*deep));}
   return shore;
  }
- 
+ `).replace('#include <color_fragment>',`#include <color_fragment>
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
  // OWNERSHIP, RESOLVED WHERE IT MATTERS.
  //

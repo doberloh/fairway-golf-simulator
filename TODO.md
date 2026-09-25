@@ -162,6 +162,24 @@ prevent.
   blur stripping exactly the signal they live in, but they are plainly visible in
   a render and they have a real mechanism behind them.
 
+- [x] **The ground stopped drawing entirely, and it was a deleted replace link.**
+  ground.js builds the fragment shader by replacing three of three's `#include`
+  anchors. A scripted edit of mine evaluated to `s.replace(anchor,'')` -- an
+  accidental empty replacement -- which deleted the `color_fragment` link while
+  printing a success message. The block did not vanish; it was appended to the
+  `common` chunk at GLOBAL scope, where `vec2 wp=groundPoint.xz;` is a
+  non-constant global initialiser. GLSL refuses it, the program fails to link,
+  and every draw call raises INVALID_OPERATION.
+
+- [x] **Nothing in the toolchain could see it.** `node --check` passes, the
+  bundler passes, all 499 tests passed, and the app boots with NO fatal card,
+  because a shader compile failure is not a JS exception. The only signal was the
+  ground being absent on screen and `THREE.WebGLProgram: Shader Error` in the
+  console. `tests/ground-shader-structure.test.mjs` now checks that every link in
+  the chain is present, that each anchor still exists in the three version in
+  use, and that statement blocks go to anchors INSIDE main(). Run against the
+  broken file it fails with exactly the right sentence.
+
 - [x] **A slider reported the right number while nothing read it.** The owner
   said the shipped settings did less than the ones from the analysis, and they
   were right. `greenBandSoft` was declared, plumbed, exposed on a slider and
