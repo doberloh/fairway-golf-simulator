@@ -15,6 +15,7 @@ npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the whole suite; it must be green before you commit
 npm run build    # single-file dist/index.html
+npm run release  # build, then cut and verify the release archives
 ```
 
 There is no test framework beyond the Node test runner, no linter config and

@@ -67,7 +67,7 @@ The production build and JavaScript syntax checks passed. The built HTML contain
 
 ## Repeatable packaging
 
-Run the normal tests appropriate to changes, then `npm run build` and `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). Python 3 is needed only for ZIP packaging, not playing or building the browser app. The packager uses an explicit file allowlist, refuses stale source builds or missing embedded notices, verifies every archived file against its source, and writes `RELEASE_SHA256.txt`. It excludes local saves, screenshots, credentials, `.git`, caches and `node_modules`. See the script when adding a new source/document directory.
+Run the normal tests appropriate to changes, then `npm run release`, which builds and packages in one step and refuses to package a stale build. Python 3 is needed only for ZIP packaging, not playing or building the browser app. The packager uses an explicit file allowlist, refuses stale source builds or missing embedded notices, verifies every archived file against its source, and writes `RELEASE_SHA256.txt`. It excludes local saves, screenshots, credentials, `.git`, caches and `node_modules`. See the script when adding a new source/document directory.
 
 For each release, update this dated review and the dependency inventory when dependencies change, preserve all license texts and origin comments, and repeat the advisory/device checks. Keep independent records of newly acquired code/assets and their exact licenses. Do not treat this review as clearance for later changes.
 
@@ -223,9 +223,9 @@ claimed costs nothing and is missing.
   ingest, the vegetation work and everything else since 11 September have not
   been re-reviewed for third-party material; the original review's limits apply
   unchanged and future imports still need their own check.
-- The `file://` open path was not re-verified on this pass. It is the central
-  portability claim and should be exercised by hand before the archive goes to
-  anyone.
+- ~~The `file://` open path was not re-verified on this pass.~~ **Verified
+  working on 25 September**: unzip the portable archive, double-click
+  `Fairway.html`, it plays. See the addendum at the foot.
 - Nothing here is a fitness, safety or accuracy claim about the simulator. It
   remains suitable packaging for an experimental preview, with the open items in
   TODO.md disclosed.
@@ -283,12 +283,50 @@ is running -- so a report from a tester could not be tied to a tree.
 
 ### What this addendum does NOT claim
 
-- **The `file://` open is still unverified on a current build.** It is the
-  central portability claim and it has now been carried across three addenda
-  without being exercised. Open the rebuilt portable archive by hand.
+- ~~**The `file://` open is still unverified on a current build.**~~ **It was
+  exercised by hand on 25 September and it works.** The central portability
+  claim now rests on a check of the current 15.8 MB build rather than on one
+  made when the file was an eighth of the size. It cannot be scripted -- the
+  browser automation used here refuses file-URL navigation -- so it stays a
+  manual check, worth repeating when the build gains something structurally
+  new rather than merely bigger.
 - No new similarity or provenance search was run. The limits recorded in the
   September 11 review and in the commercial-use pass apply unchanged.
 - Two publication decisions are recorded in TODO.md and are not settled here:
   whether `vendor/baked_assets/` (106 MB, the largest thing in the tree, read
   by nothing at build time) belongs in a public repository, and who the
   copyright holder on `LICENSE` should actually be.
+
+---
+
+## Addendum, 25 September 2026: the portability claim, checked at last
+
+**`file://` works.** The portable archive was unzipped and `Fairway.html`
+opened by double-click on the current build. It plays.
+
+This is the claim the whole single-file design exists to support, and it had
+been carried as unverified through three addenda of this document. The last
+confirmation anybody could point to was made when the built file was about
+1.2 MB; it is 15.8 MB now, with the entire mesh ingest inlined, and it still
+opens off the filesystem with no server, no installer and no network.
+
+It cannot be automated here -- the browser automation used for development
+refuses file-URL navigation, which is why it went unchecked for so long. It is
+a manual check and it stays one. Repeat it when the build gains something
+structurally new: a fetch, a worker, a module boundary or a cross-origin
+asset is what breaks a file URL, and none of those is a function of size.
+
+**Packaging is one command now.** `npm run release` builds and then packages,
+so a stale build cannot be shipped by forgetting a step -- and if the packager
+refuses, the refusal is what you see and the exit code is non-zero. That last
+part is why `tools/release.mjs` exists rather than a shell `||` chain across
+`python3`, `python` and `py`: a chain cannot distinguish an interpreter that
+is absent from a packaging run that FAILED, so a genuine refusal -- a stale
+build, a missing notice, an inventory that disagrees with the lockfile --
+would silently re-run under the next name and report whatever that said. The
+packager's job is to refuse loudly; nothing wrapping it may soften that.
+
+**Name settled, licence settled.** The project keeps the name Fairway and goes
+out open source under MIT, free, with optional donations. The donation-wording
+rule in "Remaining release checks" above is unchanged and is the part that
+still carries risk.
