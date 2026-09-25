@@ -821,6 +821,62 @@ neighbouring block took the span between two anchors with it. The value reached
 the GPU and the picture never changed. `tests/green-cue-wiring.test.mjs` now
 reads the shader source and fails if any cue uniform is never referenced.
 
+## The tee boxes, and where a blind tee shot actually comes from
+
+Reported from play: ground in front of the tee boxes blocking the view to the
+landing area. Owner's instruction was to measure before changing anything, and
+the measurement says the assumption is wrong.
+
+**Every blind tee shot is caused by ground 96 to 190 m out.** Over 945 tee
+shots on 35 courses, 25 have more than a metre of ground in the way, and the
+median distance to the obstruction is 167 m:
+
+| where the worst obstruction sits | shots |
+|---|---|
+| within 30 m | 0 |
+| 30 to 80 m | 0 |
+| beyond 80 m | 25 |
+
+That is a blind landing area -- a rise where the ball comes down -- and no
+change to a tee pad can touch it.
+
+**The generator could not have told us, because its own sightline starts 12 m
+out.** Nothing in the code has ever looked at the ground immediately in front of
+a tee. A metric that inherits the blind spot of the thing it checks cannot
+report on it, so `blind` now walks from 2 m at a 2 m step and records the worst
+obstruction within 40 m separately. Measured that way, ground near a tee stood
+above the sight line on **8 of 945 shots** and above half a metre on 3.
+
+### What the three tee changes actually did
+
+Swept rather than chosen. Shortening the pad and steepening the front were
+asked for on their own merits; the numbers say what they bought.
+
+| | before | after |
+|---|---|---|
+| pad length | 9.0 m | 7.2 m |
+| shoulder reach directly ahead | isotropic | 35% shorter |
+| pairs of tees in line | 110 / 945 | 10 / 945 |
+| closest two pads sideways | 0.00 m | 3.24 m |
+| ground within 40 m above the sight line | 8 shots | 2 shots |
+| blind shots over 1 m | 25 | 23 |
+| median distance a tee slid from where the hole put it | 22.1 m | 20.8 m |
+
+**The stagger is the change that earned its place.** It was already a scoring
+preference and it compared each site against the PREVIOUS tee only -- blue can
+sit in line with red while white is in line with neither. Against every tee
+already placed, with the worst offender deciding the penalty, in-line pairs fall
+by a factor of eleven and cost 1.3 m of median slide.
+
+**The front drop-off was swept and 0.5 was rejected.** At 0.5 the ground around
+a pad steepens from a median 6.3 degrees to 10.1 and a p95 of 21.5, for no
+further gain: 0.35 reaches the same 2 shots at a median of 7.8 degrees. The
+smallest change that clears it.
+
+**Shortening the pad and steepening the front did not move blind shots at all,
+and were never going to.** 25 to 23 is noise on a cause 100 m away. Recorded
+because a change that made no difference is a result.
+
 ## What was standing in a tee shot, and how it got there
 
 Reported from play: tee boxes blocked by rocks, in mountain and desert. Those

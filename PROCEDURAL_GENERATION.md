@@ -103,3 +103,23 @@ or a cluster of stones placed in the fairway on purpose from 95 m out. It obeys
 of open grass down one side, and keeps clear of the green. A biome whose species
 are all ground cover -- links -- gets stones rather than a shrub grown to canopy
 height.
+
+## Tee complexes
+
+Each tee is sited by a score over candidate ground: flatness first, then the
+order of the tees, then how much it can see, then how far out of line it sits
+with **every** tee already placed. The pad is 6 by 7.2 m with a mown collar
+1.45 times that, and its plateau reaches the collar's edge so the whole mown
+surface is flat. The shoulder that falls from the plateau to natural ground is
+a fixed reach with whatever steepness the drop makes -- and 35% shorter
+directly ahead than to the sides or behind, because the bank that makes a tee
+read as built when you see it from the side is a slope between you and the
+fairway when you stand on it.
+
+Markers sit six inches in from each edge of the pad, and the hole sign stands
+beside the blue tee on the player's right.
+
+A tee is raised only after siting has failed to find a view, and never by more
+than `TEE_LIFT_CAP`. Blind tee shots that remain are the landscape at the
+landing area rather than the tee: measured, every one of them is caused by
+ground 96 to 190 m out.

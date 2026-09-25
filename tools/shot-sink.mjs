@@ -44,6 +44,7 @@ const safe = n => /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(n);
 
 let written = 0;
 const server = createServer(async (req, res) => {
+ try {
  // The page is served from another port, so every reply needs these.
  res.setHeader('access-control-allow-origin', '*');
  res.setHeader('access-control-allow-headers', 'content-type');
@@ -62,10 +63,27 @@ const server = createServer(async (req, res) => {
  if (!m) {res.writeHead(400); res.end('Expected a png or jpeg data URL.'); return;}
  const file = path.join(outDir, `${name}.${m[1] === 'jpeg' ? 'jpg' : 'png'}`);
  const bytes = Buffer.from(m[2], 'base64');
- await writeFile(file, bytes);
+ // ALWAYS ANSWER, even when the write fails. The first version let the write
+ // throw out of the handler, which sends no response at all -- and the page is
+ // waiting on that fetch inside a requestAnimationFrame callback, so it hangs
+ // forever with no error anywhere. It happened within an hour of being written:
+ // a branch checkout removed the output directory under a running sink, and
+ // every capture after that simply never returned.
+ try {
+  await mkdir(path.dirname(file), {recursive: true});
+  await writeFile(file, bytes);
+ } catch (e) {
+  console.error(`could not write ${path.relative(ROOT, file)}: ${e.message}`);
+  res.writeHead(500); res.end(e.message);
+  return;
+ }
  written++;
  console.log(`${path.relative(ROOT, file)}  ${(bytes.length / 1024).toFixed(0)} KB`);
  res.writeHead(200); res.end('ok');
+ } catch (e) {
+  // A client that never hears back is worse than one that hears "no".
+  try { res.writeHead(500); res.end(String(e && e.message)); } catch {}
+ }
 });
 
 server.listen(port, '127.0.0.1', () => {
