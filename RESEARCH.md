@@ -737,50 +737,49 @@ cue with a real-world mechanism behind it. Softening the bands raises shape
 contrast from 0.262 to 0.309, because a strong regular pattern is what the eye
 locks onto first.
 
+### The cue never reached the light, which is most of the problem
+
+Everything above **tints the grass**. The lighting is untouched, so a green's
+undulation was being described by an albedo shift sitting under full sun and tone
+mapping — and it washes out. The comparison images in the first report had no
+lighting at all, which is why they promised more than the game delivered.
+
+Measured, the sunlight itself varies across a green by:
+
+| sun elevation | as shipped | exaggerating the lighting normal |
+|---|---|---|
+| 25° | 0.024 | 0.101 (4.2×) |
+| 45° | 0.020 | 0.082 (4.2×) |
+| 70° | 0.009 | 0.041 (4.4×) |
+
+Tilting the normal the **lighting** uses is the same cartographic exaggeration
+applied where it pays: the existing sun, sky and specular then describe the
+contour themselves. The geometry is untouched, so the ball still rolls on exactly
+the surface it always did. This is `greenSun`, on by default at 60.
+
 ### What shipped
 
-A + D + softer bands, on the owner's choice from the rendered comparison, as two
-graphics settings rather than a course setting — this is a look, not a property
-of the ground. **Green definition** defaults to 70, which maps to exactly the
-numbers that were judged: shading normal tilted by 3.2 and bands bending 3.5×.
-**Mowing band strength** defaults to 60. Definition at 0 returns the old look
-exactly, and there is a test pinning both ends.
+Five graphics settings rather than two, because the owner asked to tune them and
+set the defaults:
 
-The two rejected candidates were REMOVED from the shader rather than left behind
-a zeroed uniform. B solved a case that occurs 0% of the time, and C — making the
-bands view-dependent, which is what a mow stripe genuinely is in life — measured
-no better than bending them and cost a per-fragment view vector. Keeping either
-as dead shader code would repeat the `CONTACT_GAIN` mistake; the numbers above
-are the record.
+| setting | default | what it does |
+|---|---|---|
+| Green definition | 70 | tilts the shading normal, bends the mow bands to follow the surface |
+| Mowing band strength | 60 | softens the bands so they stop competing with the shading |
+| Sunlight on contours | 60 | tilts the normal the SUN uses — the only one that reaches the light |
+| Slope darkening | 0 | darkens by tilt regardless of direction |
+| Band grain | 0 | makes bands view-dependent, as real mowing stripes are |
 
-### Sources
+The last two measured no benefit and are off by default. They are sliders rather
+than deletions because "0% of greens" was measured on **this generator's** greens
+at today's settings, not on every green anyone will ever build.
 
-- **Relief shading and vertical exaggeration.** Cartography amplifies the
-  vertical scale by 2–5× to make subtle terrain visible in low-relief areas, and
-  combines slope shading (steeper is darker) with oblique hill shading. The
-  315° north-west light is the industry standard. This is the direct precedent
-  for option A: exaggerate the shading input, not the ground.
-  [OS guide to relief representation](https://docs.os.uk/more-than-maps/geographic-data-visualisation/guide-to-cartography/relief-representation),
-  [Relief shading, Geography Realm](https://www.geographyrealm.com/relief-shading/),
-  [Comparing relief shading techniques](https://www.maplibrary.org/1599/comparing-relief-shading-techniques/)
-- **Swiss-style shading** combines shaded relief with contour lines and colour
-  modulated by orientation — the precedent for making the mow bands trace the
-  surface rather than run straight. [Terrain cartography](https://grokipedia.com/page/Terrain_cartography)
-- **Why mow stripes are light or dark.** "Light stripes occur when turf is mowed
-  away from the viewer and dark stripes occur when turf is mowed toward the
-  viewer" — the banding is a VIEW-DEPENDENT reflectance effect, not a fixed
-  pattern. Our bands are fixed, which is why option C was tried.
-  [Sterling Golf, mowing patterns](https://www.sterlinggolf.com/course-conditioning/mowing-patterns/),
-  [GOLF.com on mowing patterns](https://golf.com/lifestyle/golf-courses-choose-mowing-patterns/)
-- **How golfers actually read greens** — shadows, grass sheen, grain direction,
-  and watching a ball roll. Read and not used directly: the transferable part is
-  that real reading leans on shine and shadow, which is shading, not geometry.
-  [USGA, Defining Definition](https://www.usga.org/content/usga/home-page/course-care/green-section-record/57/22/defining-definition.html),
-  [Green reading guide](https://greenbooks.com/blogs/blog/the-complete-guide-to-reading-greens-in-golf-tips-techniques-tools)
-
-Nothing here was taken from a game: no open, reusable implementation of golf
-green shading was found, and the techniques that transfer come from cartography
-and from how turf actually reflects light.
+**A slider reported the right number while nothing read it.** `greenBandSoft` was
+declared, plumbed, exposed and reported back correctly for two commits — and the
+one line in the shader that used it had been deleted, because removing a
+neighbouring block took the span between two anchors with it. The value reached
+the GPU and the picture never changed. `tests/green-cue-wiring.test.mjs` now
+reads the shader source and fails if any cue uniform is never referenced.
 
 ## How un-round a green and a bunker are
 

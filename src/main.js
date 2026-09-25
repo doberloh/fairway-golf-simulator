@@ -2384,7 +2384,13 @@ function renderPanel(name,content){
   ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
   <p class="note">A green is the flattest ground on the course, and every cue above is proportional to slope &mdash; so the one surface you actually have to read gets about half the shading the ground around it gets. This tilts the shading further from flat and bends the mowing bands to follow the surface, the way a contour line does. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did. At 0 a green looks the way it did before this existed.</p>
   ${slider('gfxGreenBands','Mowing band strength',graphics.greenBands,0,100,'%',5)}
-  <p class="note">Bands on greens only. Softening them makes the shape of a green easier to read, because a strong regular pattern is the first thing the eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
+  <p class="note">Bands on greens only. Softening them makes the shape easier to read, because a strong regular pattern is the first thing your eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
+  ${slider('gfxGreenSun','Sunlight on contours',graphics.greenSun,0,100,'%',5)}
+  <p class="note">The one that reaches the light rather than the grass. Everything above tints the turf; this exaggerates the surface the sun and sky actually shade, so the existing light describes the roll itself instead of a flat wash sitting over it. Measured at four times the variation in sunlight across a green. The ground is untouched — the ball rolls where it always did.</p>
+  ${slider('gfxGreenSlopeShade','Slope darkening',graphics.greenSlopeShade,0,100,'%',5)}
+  <p class="note">Darkens by how steeply a green tilts, whichever way it faces. The shading above works off one fixed compass bearing, so in theory ground running across that bearing gets no cue at all — measured, that never happens on these greens, which is why this is off. Here to tune rather than to trust.</p>
+  ${slider('gfxGreenGrain','Band grain',graphics.greenGrain,0,100,'%',5)}
+  <p class="note">Makes the mowing bands change tone with where you stand, the way real ones do — turf mown away from you looks light, toward you dark. It measured no better than bending the bands, so it is off by default, but it is the only cue here with a real-world mechanism behind it and it is worth a look on screen.</p>
   <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
@@ -2420,7 +2426,8 @@ function renderPanel(name,content){
   // `slider` helper left wireSliders looking up an element that did not exist,
   // and it threw on EVERY input event while this handler quietly worked -- so
   // the slider moved, the number updated, and the console filled up.
-  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands']])
+  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
+   ['gfxGreenSun','greenSun'],['gfxGreenSlopeShade','greenSlopeShade'],['gfxGreenGrain','greenGrain']])
    $(id).oninput=e=>{
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);
@@ -3194,16 +3201,20 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   //   lab.greenRead(85)          a definition percentage
   //   lab.greenRead({greenDefinition:85,greenBands:40})
   greenRead:(v)=>{
-   const P={off:{greenDefinition:0,greenBands:100},
-    recommended:{greenDefinition:52,greenBands:100},
-    strong:{greenDefinition:70,greenBands:60}};
+   const base={greenDefinition:0,greenBands:100,greenSun:0,greenSlopeShade:0,greenGrain:0};
+   const P={off:base,
+    recommended:{...base,greenDefinition:52},
+    strong:{...base,greenDefinition:70,greenBands:60},
+    shipped:{...base,greenDefinition:70,greenBands:60,greenSun:60},
+    everything:{...base,greenDefinition:70,greenBands:60,greenSun:60,greenSlopeShade:50,greenGrain:60}};
    if(v!==undefined){
     const next=typeof v==='number'?{greenDefinition:v}
      :typeof v==='string'?(P[v]||P.strong):v;
     graphics=saveGraphics({...graphics,...next});
     view.setGroundCues(graphics);
     // Same convention as the panel: the readout is <id>Value.
-    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands]]){
+    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands],
+     ['gfxGreenSun',graphics.greenSun],['gfxGreenSlopeShade',graphics.greenSlopeShade],['gfxGreenGrain',graphics.greenGrain]]){
      if($(id))$(id).value=v;
      if($(id+'Value'))$(id+'Value').textContent=v+'%';
     }
@@ -3213,9 +3224,10 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // come back correct while the uniform the GPU reads never moved.
    const live=view.terrain?.material?.userData?.cues;
    return {greenDefinition:graphics.greenDefinition,greenBands:graphics.greenBands,
+    greenSun:graphics.greenSun,greenSlopeShade:graphics.greenSlopeShade,greenGrain:graphics.greenGrain,
     wanted:greenCues(graphics),
-    onTheGpu:live?{greenLift:live.greenLift?.value,greenBend:live.greenBend?.value,
-     greenBandSoft:live.greenBandSoft?.value,cueRelief:live.cueRelief?.value}:'no ground material'};
+    onTheGpu:live?Object.fromEntries(['greenLift','greenBend','greenBandSoft','greenSun',
+     'greenSlopeShade','greenGrain','cueRelief'].map(k=>[k,live[k]?.value])):'no ground material'};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};

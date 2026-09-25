@@ -137,7 +137,8 @@ export function groundMaterial(view,palette){
  // bending the bands and cost a per-fragment view vector. Both are written up
  // with their numbers in RESEARCH.md.
  const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},
-  greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1}};
+  greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
+  greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0}};
  m.userData.cues=cues;
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
@@ -147,7 +148,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenBend,greenBandSoft;
+ varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -216,7 +217,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   if(edge<0.){float deep=clamp(-edge/max(scale*.55,.6),0.,1.);shore=mix(wetSoil,soil*.4,deep*deep*(3.-2.*deep));}
   return shore;
  }
- `).replace('#include <color_fragment>',`#include <color_fragment>
+ 
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
  // OWNERSHIP, RESOLVED WHERE IT MATTERS.
  //
@@ -458,6 +459,23 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // disappear on exactly the ground they are meant to describe. Scaling instead
   // of adding keeps the bands present and still lets the slope modulate them.
   float spread=clamp(.115*(1.+along*2.),.06,.20);
+  // SOFTENING THE BANDS RAISES HOW WELL THE SHAPE READS -- measured, .262 to
+  // .309 -- because a strong regular pattern is the first thing the eye locks
+  // onto and it competes with the shading underneath. This line was deleted by
+  // accident once, when removing a neighbouring block took the span between two
+  // anchors with it, and the slider went on reporting a value nothing read.
+  if(kind==4.)spread*=greenBandSoft;
+  // VIEW-DEPENDENT GRAIN. In life a band is light because the blades are laid
+  // away from you and dark because they are laid toward you, so its tone shifts
+  // as the ground under it turns relative to where you stand. Measured no better
+  // than bending the bands, and kept on a slider rather than deleted so it can
+  // be judged on screen instead of from a number.
+  if(kind==4.&&greenGrain>.001){
+   vec3 toEye=normalize(cameraPosition-groundPoint);
+   vec2 lay=vec2(mow.x*tr.z-mow.y*tr.w,mow.x*tr.w+mow.y*tr.z);
+   float facing=dot(normalize(toEye.xz),lay)*(stripe*2.-1.);
+   spread=clamp(spread*(1.+greenGrain*1.6*facing),.04,.30);
+  }
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
@@ -486,6 +504,16 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
    vec3 gl4=normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift)));
    float rel4=dot(gl4.xz,normalize(vec2(-.6,-.5)));
    turf*=mix(1.,clamp(1.+rel4*4.,.78,1.18),cueRelief);
+   // MAGNITUDE, NOT ONLY DIRECTION. The dot product above is blind to ground
+   // tilted ACROSS its bearing however steep it is; this darkens by how much the
+   // ground tilts, whichever way it faces. Measured, that blind case is 0% of
+   // real greens, so it is off by default -- a slider rather than a deletion,
+   // because 0% was measured on this generator's greens, not on every green
+   // anyone will ever build.
+   if(greenSlopeShade>.001){
+    float tilt=length(gl4.xz);
+    turf*=mix(1.,clamp(1.-tilt*1.9,.80,1.),greenSlopeShade);
+   }
   }else{
    // Everything else: the same idea at a third of the gain. A green is being
    // read for a putt; a fairway only has to look like ground.
@@ -554,6 +582,30 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  turf*=1.+(grain-.5)*.075*grainFade;
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
+ `).replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+ // THE SUN NEVER SAW THE GREEN'S SHAPE, WHICH IS MOST OF WHY IT LOOKS FLAT.
+ //
+ // Everything above TINTS THE GRASS. The light is untouched, so a green's
+ // undulation is described by an albedo shift of a few per cent sitting under
+ // full sun and tone mapping, and it washes out. Measured, the sunlight itself
+ // varies by only .009 to .024 across a green -- the comment upstream says the
+ // same thing in words: a two metre roll casts no shadow at all.
+ //
+ // Tilting the normal the LIGHTING uses is the same cartographic exaggeration,
+ // applied where it pays: the existing sun, sky and specular then describe the
+ // contour themselves. Measured at 4.2x the variation in sunlight across a
+ // green. The GEOMETRY is untouched, so the ball still rolls on exactly the
+ // surface it always did.
+ //
+ // groundNormal is object space and coincides with world space here because the
+ // course group and the terrain mesh both carry an identity transform. mat3 of
+ // the view matrix takes it where three.js wants it; a camera matrix is
+ // orthonormal, so no inverse transpose is needed.
+ if(kind==4.&&greenSun>.001){
+  vec3 gsun=normalize(groundNormal);if(gsun.y<0.)gsun=-gsun;
+  vec3 lifted=normalize(vec3(gsun.x*(1.+greenSun),gsun.y,gsun.z*(1.+greenSun)));
+  normal=normalize(mat3(viewMatrix)*lifted);
+ }
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v21';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v22';return m;
 }

@@ -362,9 +362,8 @@ export class GolfView{
   // Derived from the two sliders through ONE mapping in graphics.js, so the
   // panel and the shader cannot drift apart.
   const g=greenCues(this.groundCues);
-  u.greenLift.value=g.greenLift;
-  u.greenBend.value=g.greenBend;
-  u.greenBandSoft.value=g.greenBandSoft;
+  for(const k of ['greenLift','greenBend','greenBandSoft','greenSun','greenSlopeShade','greenGrain'])
+   if(u[k])u[k].value=g[k];
   return this.groundCues;
  }
  // THE GROUND'S OWN SHADOW. A mesh flag, not a material one, so it changes the

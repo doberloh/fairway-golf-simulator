@@ -162,6 +162,37 @@ prevent.
   blur stripping exactly the signal they live in, but they are plainly visible in
   a render and they have a real mechanism behind them.
 
+- [x] **A slider reported the right number while nothing read it.** The owner
+  said the shipped settings did less than the ones from the analysis, and they
+  were right. `greenBandSoft` was declared, plumbed, exposed on a slider and
+  reported back correctly for two commits, while the ONE LINE in the shader that
+  used it had been deleted -- removing the neighbouring grain block took the span
+  between two anchors with it. Band softening is a third of the recommendation
+  (.262 to .309 shape contrast) and it was silently absent.
+
+- [x] **`tests/green-cue-wiring.test.mjs` reads the shader source** and fails if
+  a cue uniform is declared and never referenced in the body, or if `greenCues`
+  and the shader disagree about names. Run against the broken code it fails with
+  exactly the right sentence.
+
+- [x] **The cue never reached the light, which is the bigger miss.** Everything
+  tinted the grass; the lighting was untouched, so the whole effect was an albedo
+  shift under full sun and tone mapping. Measured, sunlight varies across a green
+  by .009 to .024 -- almost nothing. `greenSun` tilts the normal the SUN uses:
+  4.2x the variation, geometry untouched. On by default at 60.
+
+- [x] **The two rejected cues are back, on sliders, off by default.** Owner's
+  call, and the right one: "0% of greens" was measured on this generator at
+  today's settings, not on every green anyone will ever build. Deleting them
+  meant the measurement could never be revisited on screen.
+
+- [ ] **None of this has been confirmed on screen by me.** The drawing buffer
+  reads empty outside a requestAnimationFrame callback and the browser pane keeps
+  going hidden, which stops frames -- so every pixel measurement came back zeros.
+  Confirmed instead: the shader compiles, all six uniforms are live on the GPU at
+  the right values, the five sliders drag end to end with zero exceptions, and
+  the offline maths. The look itself needs the owner's eye.
+
 - [x] **The sliders threw on every input event, and it was my markup.**
   `wireSliders` wires every range in a panel to an output named `<id>Value` from
   the input's `data-unit`; there is a `slider()` helper that emits both. I wrote

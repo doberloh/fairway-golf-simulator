@@ -136,6 +136,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **`groundPoint` IS OBJECT SPACE AND `cameraPosition` IS WORLD SPACE.** They coincide only because the course group and the terrain mesh both carry an identity transform. Any view-dependent shader term relies on that; put a transform on either and those terms silently start lying.
 
+**A UNIFORM CAN BE FULLY PLUMBED AND STILL DEAD.** Declared, written, exposed on a slider and reported back correctly -- while nothing in the shader body reads it. `greenBandSoft` shipped that way for two commits. `tests/green-cue-wiring.test.mjs` reads ground.js and fails if any cue uniform is never referenced; keep new cues on that list. And when deleting a shader block, delete the BLOCK -- not the span between two anchors, which is how the line using greenBandSoft went with it.
+
+**TINTING THE GRASS IS NOT SHADING THE GROUND.** Most cues here multiply albedo, which sits under the sun and tone mapping and washes out. `greenSun` tilts the normal the LIGHTING uses, injected at `#include <normal_fragment_maps>` so three.js has already built `normal`; it is 4.2x the effect of any albedo cue. It relies on `viewMatrix` being available in the fragment shader and on the terrain's identity transform. Bump `customProgramCacheKey` whenever the shader body changes.
+
 **BUILD A SLIDER WITH `slider()`, NEVER BY HAND.** `wireSliders` wires every range in a panel to an output named `<id>Value` using the input's own `data-unit`, and `slider()` emits both. Hand-written markup that names the readout anything else leaves wireSliders looking up nothing -- it used to throw on EVERY input event while the slider itself still worked, so the only symptom was a console filling up. Three older sliders (`labFirmness`, `labStimp`, `timeHour`) have no readout at all, so the lookup is guarded now; the guard is not optional.
 
 **A CONSOLE FULL OF ERRORS IS EVIDENCE, NOT NOISE.** These were visible during verification and were written off as a stale buffer from a probe script. They were real, and a player found them. When the same error survives a reload, reproduce it deliberately before deciding it is old.

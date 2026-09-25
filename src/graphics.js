@@ -216,7 +216,7 @@ export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stri
 // `bands` is separate because it is taste rather than legibility: softening the
 // mowing bands measurably helps the shape read -- a strong regular pattern is
 // the first thing the eye locks onto -- but fainter bands are a different look.
-export const GREEN_READ = {definition: 70, bands: 60};
+export const GREEN_READ = {definition: 70, bands: 60, sun: 60, slopeShade: 0, grain: 0};
 // ONE mapping from slider to uniform, so the panel, the renderer and any dev
 // switch cannot drift apart. At definition 70 this is lift 3.2 and bend 3.5.
 export function greenCues(g) {
@@ -225,6 +225,15 @@ export function greenCues(g) {
   greenLift: d * 4.571,
   greenBend: 1 + d * 3.571,
   greenBandSoft: clampPct(g?.greenBands, GREEN_READ.bands) / 100,
+  // THE ONE THAT REACHES THE LIGHT. Everything else tints the grass; this tilts
+  // the normal the sun and sky actually shade with, which is measured at 4.2x
+  // the variation in sunlight across a green. Same 0-100 slider, same ceiling.
+  greenSun: clampPct(g?.greenSun, GREEN_READ.sun) / 100 * 4.571,
+  // Both measured as no help on this generator's greens, kept on sliders rather
+  // than deleted so they can be judged on screen. Default 0: nothing changes
+  // unless they are moved.
+  greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade) / 100,
+  greenGrain: clampPct(g?.greenGrain, GREEN_READ.grain) / 100,
  };
 }
 const clampPct = (v, fallback) =>
@@ -242,6 +251,9 @@ const clean = g => ({
  reflections: bool(g?.reflections, true),
  greenDefinition: clampPct(g?.greenDefinition, GREEN_READ.definition),
  greenBands: clampPct(g?.greenBands, GREEN_READ.bands),
+ greenSun: clampPct(g?.greenSun, GREEN_READ.sun),
+ greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade),
+ greenGrain: clampPct(g?.greenGrain, GREEN_READ.grain),
 });
 
 
