@@ -162,6 +162,23 @@ prevent.
   blur stripping exactly the signal they live in, but they are plainly visible in
   a render and they have a real mechanism behind them.
 
+- [x] **The sliders threw on every input event, and it was my markup.**
+  `wireSliders` wires every range in a panel to an output named `<id>Value` from
+  the input's `data-unit`; there is a `slider()` helper that emits both. I wrote
+  the markup by hand and named the readout `...Out`, so wireSliders looked up
+  nothing and threw once per input event -- while my own handler worked, so the
+  slider moved and the number updated and only the console showed it. Now built
+  with `slider()`.
+
+- [x] **The same trap was already set for three older sliders.** `labFirmness`,
+  `labStimp` and `timeHour` have no readout element at all. The lookup in
+  `wireSliders` is guarded now, which fixes those as well as mine.
+
+- [x] **I SAW THESE ERRORS DURING VERIFICATION AND EXPLAINED THEM AWAY** as a
+  stale console buffer left by my own probe script. They survived a reload,
+  which should have been the tell. The owner found them. Worth remembering: the
+  stale-buffer trap is real, and it is also a very comfortable excuse.
+
 - [x] **DONE: shipped as two graphics settings.** The owner picked "strong" from
   the comparison. **Green definition** (default 70) moves the shading tilt and
   the band bending together, because they are one perceptual thing; it maps to

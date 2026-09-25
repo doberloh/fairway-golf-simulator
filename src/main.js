@@ -1767,7 +1767,20 @@ function drawLiveScore(){
 // the focus is. The course itself is left sharp on purpose.
 function setPanelFocus(on){$('world').classList.toggle('panel-open',on);document.getElementById('app').classList.toggle('panel-open',on);}
 function slider(id,label,value,min,max,unit='',step=1){return `<label class="field">${label}<output id="${id}Value">${value}${unit}</output><input type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" value="${value}" step="${step}" data-unit="${unit}"></label>`;}
-function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>$(el.id+'Value').textContent=el.value+el.dataset.unit));}
+// Every range in a panel gets its readout wired, BY CONVENTION: an output named
+// <id>Value, and the unit off the input's own data-unit. `slider()` builds both,
+// so use it rather than writing the markup by hand.
+//
+// THE READOUT IS OPTIONAL AND THE GUARD IS NOT OPTIONAL. This threw on every
+// input event for any slider without a matching output, which silently describes
+// `labFirmness`, `labStimp` and `timeHour` as well as a pair added by hand for
+// green definition. The slider still worked and its own handler still ran, so
+// the only symptom was a console filling up -- easy to write off as noise, which
+// is exactly what happened before a player reported it.
+function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{
+ const out=$(el.id+'Value');
+ if(out)out.textContent=el.value+(el.dataset.unit??'');
+}));}
 function openPanel(name){
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
@@ -2368,9 +2381,9 @@ function renderPanel(name,content){
   <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
   <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible of the three by a distance, because it turns a slope into a spacing you can count.</p>
   <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
-  <label class="field">Green definition<output id="gfxGreenDefOut">${graphics.greenDefinition}%</output><input id="gfxGreenDef" type="range" min="0" max="100" step="5" value="${graphics.greenDefinition}"></label>
+  ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
   <p class="note">A green is the flattest ground on the course, and every cue above is proportional to slope &mdash; so the one surface you actually have to read gets about half the shading the ground around it gets. This tilts the shading further from flat and bends the mowing bands to follow the surface, the way a contour line does. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did. At 0 a green looks the way it did before this existed.</p>
-  <label class="field">Mowing band strength<output id="gfxGreenBandsOut">${graphics.greenBands}%</output><input id="gfxGreenBands" type="range" min="0" max="100" step="5" value="${graphics.greenBands}"></label>
+  ${slider('gfxGreenBands','Mowing band strength',graphics.greenBands,0,100,'%',5)}
   <p class="note">Bands on greens only. Softening them makes the shape of a green easier to read, because a strong regular pattern is the first thing the eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
   <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground.</p>
   <h3>Costs a frame</h3>
@@ -2401,12 +2414,15 @@ function renderPanel(name,content){
   for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxContours','contours'],['gfxStripes','stripes']])
    $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
   // Live uniform writes, same as the toggles above: no rebuild, no recompile.
-  for(const [id,outId,key] of [['gfxGreenDef','gfxGreenDefOut','greenDefinition'],
-   ['gfxGreenBands','gfxGreenBandsOut','greenBands']])
-   $(id).oninput=()=>{
-    const v=Number($(id).value);
-    $(outId).textContent=v+'%';
-    graphics=saveGraphics({...graphics,[key]:v});
+  // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an
+  // output named <id>Value from the input's own data-unit, for every range in
+  // the panel. Hand-rolling the markup and the readout instead of using the
+  // `slider` helper left wireSliders looking up an element that did not exist,
+  // and it threw on EVERY input event while this handler quietly worked -- so
+  // the slider moved, the number updated, and the console filled up.
+  for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands']])
+   $(id).oninput=e=>{
+    graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);
    };
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
@@ -3186,11 +3202,20 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
      :typeof v==='string'?(P[v]||P.strong):v;
     graphics=saveGraphics({...graphics,...next});
     view.setGroundCues(graphics);
-    if($('gfxGreenDef')){$('gfxGreenDef').value=graphics.greenDefinition;$('gfxGreenDefOut').textContent=graphics.greenDefinition+'%';}
-    if($('gfxGreenBands')){$('gfxGreenBands').value=graphics.greenBands;$('gfxGreenBandsOut').textContent=graphics.greenBands+'%';}
+    // Same convention as the panel: the readout is <id>Value.
+    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands]]){
+     if($(id))$(id).value=v;
+     if($(id+'Value'))$(id+'Value').textContent=v+'%';
+    }
    }
+   // REPORT WHAT THE MATERIAL HOLDS, not what this function just computed.
+   // Reporting the computed value is how a dead slider looks alive: the numbers
+   // come back correct while the uniform the GPU reads never moved.
+   const live=view.terrain?.material?.userData?.cues;
    return {greenDefinition:graphics.greenDefinition,greenBands:graphics.greenBands,
-    uniforms:greenCues(graphics)};
+    wanted:greenCues(graphics),
+    onTheGpu:live?{greenLift:live.greenLift?.value,greenBend:live.greenBend?.value,
+     greenBandSoft:live.greenBandSoft?.value,cueRelief:live.cueRelief?.value}:'no ground material'};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};

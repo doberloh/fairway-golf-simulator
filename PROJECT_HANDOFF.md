@@ -136,6 +136,10 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 **`groundPoint` IS OBJECT SPACE AND `cameraPosition` IS WORLD SPACE.** They coincide only because the course group and the terrain mesh both carry an identity transform. Any view-dependent shader term relies on that; put a transform on either and those terms silently start lying.
 
+**BUILD A SLIDER WITH `slider()`, NEVER BY HAND.** `wireSliders` wires every range in a panel to an output named `<id>Value` using the input's own `data-unit`, and `slider()` emits both. Hand-written markup that names the readout anything else leaves wireSliders looking up nothing -- it used to throw on EVERY input event while the slider itself still worked, so the only symptom was a console filling up. Three older sliders (`labFirmness`, `labStimp`, `timeHour`) have no readout at all, so the lookup is guarded now; the guard is not optional.
+
+**A CONSOLE FULL OF ERRORS IS EVIDENCE, NOT NOISE.** These were visible during verification and were written off as a stale buffer from a probe script. They were real, and a player found them. When the same error survives a reload, reproduce it deliberately before deciding it is old.
+
 **THE GREEN CUES ARE GRAPHICS, NOT GENERATION.** `greenDefinition` and `greenBands` live in graphics.js with the other ground cues, persist to localStorage, and write uniforms live -- no rebuild, no recompile, no generator bump. `greenCues()` is the ONE mapping from slider to uniform; the panel, the renderer and `lab.greenRead` all go through it so they cannot drift. Definition 0 must keep returning lift 0 / bend 1 / bands 1, which is the old look exactly, and there is a test on both ends of that.
 
 **A TEST SUITE CANNOT SEE A MISSING IMPORT IN renderer.js.** Nothing in the suite loads it, so `node --check`, the bundler and all 494 tests passed while the app died on boot with the fatal card. Any change to renderer.js or ground.js gets opened in a browser before it is called done.
