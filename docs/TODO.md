@@ -2513,3 +2513,32 @@ engineering provenance pass, not legal advice.
   name: pair it with a word in the title and the description -- "Fairway, a
   browser golf simulator" -- so a search engine has something to hang it on.
 
+## Found by driving the built game
+
+- [x] **Putting has shown no distance on screen since 19 September, and threw
+  sixty exceptions a second while doing it.** `GolfView.projectMarker` named
+  the edges of its rectangle `L`, `R`, `T` and `B` -- and `T` is three.js in
+  `renderer.js`. The local `const T` shadowed the library for the whole
+  function, so the `new T.Vector3` at its top reached an uninitialised variable
+  on every call. It is called every frame the ball is on a green.
+
+  Measured before and after on the built file, ball dropped two yards from the
+  cup: **393 exceptions in six seconds** before, zero after. Before, the marker
+  sat frozen at one screen position whether facing the cup or turned away, and
+  never set its pointing angle; after, it sits over the cup reading "6.0 FEET
+  TO HOLE", follows the camera, and points. Silent throughout because the frame
+  loop schedules the next frame before doing anything else, so the game kept
+  running and skipped the rest of each frame -- which also meant the aim label,
+  meant to hide on the green, never did. PLAYING.md described the feature
+  correctly the whole time; it simply was not true.
+
+  The fix is four names: `left`, `right`, `top`, `bottom`.
+  `tests/three-namespace.test.mjs` (seven tests) scans all seventeen modules
+  that import three as `T` for any other binding of that name, proves the scan
+  goes red on the original line and stays quiet on look-alikes, and calls
+  `projectMarker` directly -- in view, behind the camera, and with uneven
+  insets. Red on the old code, green on the new.
+
+  Found by `tools/smoke.mjs`, the browser smoke test, the first time it dropped
+  a ball on a green. Nothing else could have found it: `node --check` parses
+  it, the bundler emits it, and no unit test had ever called the function.

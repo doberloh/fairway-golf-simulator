@@ -1621,12 +1621,21 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // The free rectangle, and its own centre -- pushing out from the SCREEN
   // centre through an off-centre rectangle lands short on one side and over
   // the edge on the other.
-  const L=i.left,R=Math.max(L+1,W-i.right),T=i.top,B=Math.max(T+1,H-i.bottom);
-  const cx=(L+R)/2,cy=(T+B)/2;
+  //
+  // WORDS, NOT LETTERS, FOR ITS EDGES. These were L, R, T and B, and `T` is
+  // three.js in this file: a `const T` here shadows the library for the whole
+  // function, so the `new T.Vector3` at the top reached an uninitialised
+  // variable and threw on EVERY call. That was every frame the ball sat on a
+  // green, from 19 September until the browser smoke test found it -- silent,
+  // because the frame loop schedules the next frame first, and fatal to this
+  // marker, which never once positioned itself. tests/three-namespace.test.mjs
+  // now refuses any binding named T in a module that imports three as T.
+  const left=i.left,right=Math.max(left+1,W-i.right),top=i.top,bottom=Math.max(top+1,H-i.bottom);
+  const cx=(left+right)/2,cy=(top+bottom)/2;
   let dx=x-cx,dy=y-cy;
   if(!dx&&!dy)dy=1;                     // dead centre and behind: send it downward
   const reach=(d,half)=>d?half/Math.abs(d):Infinity;
-  const s=Math.min(reach(dx,(R-L)/2),reach(dy,(B-T)/2));
+  const s=Math.min(reach(dx,(right-left)/2),reach(dy,(bottom-top)/2));
   const outside=behind||s<1;
   if(outside){x=cx+dx*s;y=cy+dy*s;}
   // Screen bearing, 0 pointing up, for rotating the marker toward its subject.

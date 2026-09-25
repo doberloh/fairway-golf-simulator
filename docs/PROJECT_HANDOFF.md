@@ -1281,6 +1281,31 @@ This branch lived in `labGreenAt`, and removing the lab mode left `setRangeGreen
 
 **`lab.greenAt` throws rather than no-opping.** `setRangeGreen` returns silently when `rangeMode` is off, which is right for a slider and wrong for a console call — a measurement that quietly did not move the green would be attributed to the physics. It now names the problem, rejects a distance outside `GREEN_RANGE`, and reports where the green actually ended up rather than what was asked for.
 
+## `T` is three.js, and a local `T` breaks its whole function
+
+Seventeen modules import the library as `import * as T from 'three'`. In any
+of them, **a local binding named `T` shadows the library for the entire
+function it sits in**, not just from its own line down -- `const` and `let` are
+scoped to the block. Every earlier `new T.Vector3()` in that function then
+reaches an uninitialised variable and throws a `ReferenceError` on every call.
+
+**What it looked like.** `GolfView.projectMarker` named the edges of a
+rectangle `L`, `R`, `T` and `B`. From 19 September it threw on every frame the
+ball sat on a green -- 393 exceptions in six seconds of putting, measured -- and
+nobody noticed for six days, because the frame loop requests the next frame
+before it does anything else, so the game kept running and simply skipped the
+rest of each frame. The putting distance marker that function exists for never
+positioned itself once: on every green there was **no distance on screen at
+all**. The aim label, which is meant to hide on the green, was never hidden,
+because hiding it was the line after the throw.
+
+`node --check` parses it; the bundler emits it; no unit test called that
+function. It was found by `tools/smoke.mjs` dropping a ball beside the pin.
+
+**`tests/three-namespace.test.mjs` now refuses any binding named `T` in a
+module that imports three as `T`**, and calls `projectMarker` directly. If you
+need a name for the top of something, it is `top`.
+
 ## The simulator never invents ball data
 
 Ball speed, launch angle, spin rate and spin axis are **inputs**. They come from a launch monitor, and the keyboard and mouse controls exist only so the game is playable without one — they are a stand-in for a measurement, not a model of a golfer.
