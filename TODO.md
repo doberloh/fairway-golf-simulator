@@ -136,6 +136,38 @@ prevent.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
+## Obstructions standing where they should not
+
+Reported from play on 2026-09-25: blocked tee boxes in mountain and desert, and
+a giant bush in the middle of a fairway.
+
+- [x] **Rocks were never judged as bodies.** A boulder was tested against the
+  launch corridor as a dimensionless POINT, with a ceiling of `y+scale` that is
+  not its height, and it never consulted the tee fan at all. Trees have passed
+  their trunk girth since the corridor was built. Measured on four courses:
+  4 rocks standing in a tee shot, 41 in the view from the tees. Now zero.
+  Mountain and desert carry 500 and 550 stones against 160 elsewhere, at twice
+  the scale -- exactly where it was reported.
+
+- [x] **Trees had the same gap on the fan, smaller.** They padded the corridor
+  test by their girth and the fan test by nothing, so a trunk up to 3.6 m across
+  could stand half inside the view from the back tees. 154 of them across 35
+  planted courses. The cost of closing it is 31 trees out of 45,909, and the tee
+  surround holds at 0.45-0.89 of course average.
+
+- [x] **`tools/bench.mjs teeclear`** calls the generator's own `blocksLaunch` and
+  `inTeeFan` against the FINISHED world. That is the only kind of check that
+  catches a rule applied unevenly, because during placement the generator's own
+  answer was "nothing is in the way". Its first version counted deliberate
+  fairway features as breaches and reported four faults that were the setting
+  working; features are excluded now.
+
+- [x] **The giant bush was a silent fallback.** The specimen picker took the
+  first species that is not ground cover and fell back to `bio.plants[0]`. On
+  links every species IS ground cover, so it chose gorse and then sized it by
+  the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
+  rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+
 ## A course has a name, not a serial number
 
 Asked for on 2026-09-25, in the run-up to letting other people play it. One

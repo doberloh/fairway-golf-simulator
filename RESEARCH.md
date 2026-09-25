@@ -821,6 +821,57 @@ neighbouring block took the span between two anchors with it. The value reached
 the GPU and the picture never changed. `tests/green-cue-wiring.test.mjs` now
 reads the shader source and fails if any cue uniform is never referenced.
 
+## What was standing in a tee shot, and how it got there
+
+Reported from play: tee boxes blocked by rocks, in mountain and desert. Those
+are the two biomes with the most stones (500 and 550 against 160 elsewhere) at
+twice the scale, which is the shape of the answer.
+
+`tools/bench.mjs teeclear` calls the generator's OWN `blocksLaunch` and
+`inTeeFan` against the finished world, rather than re-deriving either. On the
+four quick-tier courses, before:
+
+| | rocks in a tee shot | rocks in the tee view |
+|---|---|---|
+| before | 4 | 41 |
+| after | 0 | 0 |
+
+Three separate faults, all of the same shape -- a rule applied to one kind of
+body and not another:
+
+- a rock was tested as a POINT, with no width, while a trunk has always passed
+  its girth. A stone is up to 1.65 of its scale across.
+- its ceiling was `y + scale`, which is not its height. It is drawn up to 0.9
+  scale above centre and sunk a quarter of it, so the crown is `y + 1.15 scale`.
+- it never consulted the tee fan at all.
+
+On the full tier with trees planted (35 courses, 45,909 trunks, 8,037 stones)
+the same check found **154 trunks over the line** on the fan test, because trees
+padded the corridor test by their girth and the fan test by nothing. Both are
+padded now. The cost is 31 trees out of 45,909, and the tee surround holds at
+0.45 to 0.89 of course average density -- no sign of the clear-cut this work
+was originally about.
+
+**A feature placed in the fairway on purpose is excluded from the count.** The
+first version of the metric did not exclude it and reported four breaches that
+were the setting working: a specimen obstacle at 95 m or more is the hole, and
+it obeys its own standoff rather than the blanket rule. A metric that reports a
+feature as a fault is the fifth in this project's history to lie about the thing
+it exists to watch.
+
+## The giant bush in the middle of the fairway
+
+The specimen picker chose `bio.plants.find(k => !GROUND_PLANTS.has(k))` and fell
+back to `bio.plants[0]`. Links grows gorse, heather and shrub -- all three are
+ground cover -- so the fallback chose **gorse**, and the feature then sized it by
+the biome canopy at 13 to 29 m. A gorse bush three times the height of a house,
+standing in a links fairway.
+
+Every other biome leads its list with a real tree (pine, cactus, spruce, oak,
+palm, redwood, maple), which is why it survived. A biome with no tree species
+now gets a rock instead. Measured on a links course at 100% feature occurrence:
+19 feature rocks, 0 feature trees; on midwest, 5 oaks and no rocks.
+
 ## How un-round a green and a bunker are
 
 Both outlines are a radius that varies with angle: the nominal size times one
