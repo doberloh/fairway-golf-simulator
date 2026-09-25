@@ -218,6 +218,47 @@ a giant bush in the middle of a fairway.
   links every species IS ground cover, so it chose gorse and then sized it by
   the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
   rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+## Getting it into other people's hands
+
+- [x] **The archives were 124 commits stale and are rebuilt.** The
+  `Fairway.html` inside the shipped portable ZIP was 1.2 MB against a current
+  build of 15.1 MB -- it predated the whole mesh ingest, so anyone handed it was
+  playing a materially different game. Portable is 6.9 MB now, source 7.1 MB,
+  both verified file-by-file with fresh SHA-256 sums.
+
+- [x] **`package_release.py` could not read its own build.** It read the HTML
+  with the platform default encoding, cp1252 on Windows, which was fine while
+  the file was small and ASCII and died on byte 0x9d of 15 MB. Every read and
+  write names UTF-8 now.
+
+- [x] **Its dependency gate earned its keep.** It refuses to package while
+  `DEPENDENCY_INVENTORY.json` disagrees with the lockfile, and three build-scope
+  packages had arrived since the review: ez-tree (MIT, bakes geometry that
+  SHIPS), playwright and playwright-core (Apache-2.0, touch nothing shipped).
+
+- [x] **ATTRIBUTION.md was missing from both archives.** The review document
+  ships in both ZIPs and cites it by name for the CC0 pack credits, so the
+  archive pointed at a document it did not contain. It ships now, with
+  BALL_BEHAVIOUR_KNOBS.md and REFERENCES.md.
+
+- [ ] **The `file://` open has not been verified on the current build.** It is
+  the central portability claim -- double-click the HTML and it plays -- and the
+  last time anybody confirmed it, the file was an eighth of the size. Open the
+  rebuilt archive by hand before it goes to anyone.
+
+- [ ] **Weak hardware is the unanswered question for strangers.** There is an
+  open item saying the low tier cannot reach 30 fps on weak machines and that
+  tuning cannot fix it. Fine for a bay you control; it is the whole first
+  impression on somebody's laptop.
+
+- [ ] **Freeze GENERATOR_VERSION while people are testing.** It moved twice in
+  one night. Every bump silently rebuilds the ground under a tester's saved
+  round, and they will read that as the game losing their game.
+
+- [ ] **There is no way for a tester to tell you what went wrong.** No copyable
+  seed, settings, generator version and browser. Without it, feedback arrives as
+  "a hole looked weird" and cannot be acted on.
+
 ## Networked multiplayer
 
 Asked for on 2026-09-25 as a feasibility study, not a plan.

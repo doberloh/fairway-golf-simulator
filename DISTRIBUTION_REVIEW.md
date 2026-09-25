@@ -1,6 +1,6 @@
 # Distribution and provenance review
 
-Reviewed September 11, 2026. Applies to the source and rebuilt archives accompanying this file. This is an engineering provenance/license review, not a legal opinion, exhaustive plagiarism search, trademark clearance, or security certification.
+Reviewed September 11, 2026. **Dependency delta re-checked and archives rebuilt 25 September 2026 — see the addendum at the foot.** Applies to the source and rebuilt archives accompanying this file. This is an engineering provenance/license review, not a legal opinion, exhaustive plagiarism search, trademark clearance, or security certification.
 
 ## Outcome
 
@@ -34,6 +34,8 @@ There is no complete authorship history or universal source-code comparison data
 | Mulberry32 | `src/course.js` | Tommy Ettinger's CC0 algorithm; bryc's JavaScript variant offers a public-domain dedication and MIT fallback. MIT fallback and credits retained |
 | Mapbox Earcut 3.0.2 | Embedded by Three.js polygon triangulation | ISC; Mapbox notice added, independent of Three's MIT notice |
 | Vite 8.3.0 / Rolldown 1.2.8 helpers | Small generated helpers in browser output | MIT; core helper notices added |
+| ez-tree 1.1.0 | Build tool only; **its output geometry ships** | MIT. Runs at bake time in `tools/bake-trees.mjs`, never in the game. The trees it generates from our parameters go into `vendor/` and through the same ingest as the CC0 packs; credited in ATTRIBUTION.md with its notice vendored beside the output |
+| Playwright 1.63.0 (and playwright-core) | Build/measurement tool only | Apache-2.0. Drives a headless browser for `tools/profile.mjs` and `tools/gpu-probe.mjs`. Touches nothing that ships and is in neither archive |
 | Minimal AgX contrast approximation | Three.js shader chunk | Benjamin Wrensch / Missing Deadlines, MIT; notice added |
 | Filament AgX implementation attribution | Three.js shader chunk credits Filament | Apache-2.0 text and Android Open Source Project credit retained conservatively; this upstream Three adaptation is unchanged by Fairway |
 
@@ -68,3 +70,57 @@ The production build and JavaScript syntax checks passed. The built HTML contain
 Run the normal tests appropriate to changes, then `npm run build` and `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). Python 3 is needed only for ZIP packaging, not playing or building the browser app. The packager uses an explicit file allowlist, refuses stale source builds or missing embedded notices, verifies every archived file against its source, and writes `RELEASE_SHA256.txt`. It excludes local saves, screenshots, credentials, `.git`, caches and `node_modules`. See the script when adding a new source/document directory.
 
 For each release, update this dated review and the dependency inventory when dependencies change, preserve all license texts and origin comments, and repeat the advisory/device checks. Keep independent records of newly acquired code/assets and their exact licenses. Do not treat this review as clearance for later changes.
+
+---
+
+## Addendum, 25 September 2026: archives rebuilt
+
+**This is a dependency delta and a repackaging, not a fresh full review.** The
+September 11 review above stands for everything it covered; what follows is
+only what changed.
+
+**The archives were 124 commits out of date and had to be rebuilt.** The
+`Fairway.html` inside the shipped portable ZIP was **1.2 MB**; the current build
+is **15.1 MB**. The difference is the mesh-asset ingest, which landed after the
+review — so anyone given the old archive was playing a materially different
+game from the one in the repository. The portable ZIP is now 6.9 MB and the
+source ZIP 7.1 MB, both verified file-by-file against their inputs by
+`tools/package_release.py`, with fresh SHA-256 sums in `RELEASE_SHA256.txt`.
+
+**Three dependencies were added since the review, all build-scope**, and
+`DEPENDENCY_INVENTORY.json` now records them (53 packages, was 50):
+
+| package | version | licence | why it is here |
+|---|---|---|---|
+| `@dgreenheck/ez-tree` | 1.1.0 | MIT | bakes the redwood and fir geometry; **its output ships**, the library does not |
+| `playwright` | 1.63.0 | Apache-2.0 | headless browser for the frame profiler and GPU probe |
+| `playwright-core` | 1.63.0 | Apache-2.0 | dependency of the above |
+
+The packager's own gate caught the drift — it refuses to build an archive while
+the inventory disagrees with the lockfile — which is exactly what it is for.
+
+**ATTRIBUTION.md was missing from both archives and now ships.** This review
+document ships in both ZIPs and cites ATTRIBUTION.md by name for the CC0
+model-pack credits and the baked-tree provenance, so an archive without it cited
+a document it did not contain. `BALL_BEHAVIOUR_KNOBS.md` and `REFERENCES.md`
+were added at the same time. Working documents are deliberately still excluded:
+an engineering log and a speculative product study are not part of what somebody
+was handed to play.
+
+**One packaging bug fixed.** `tools/package_release.py` read the built HTML with
+the platform default encoding, which is cp1252 on Windows. That worked while the
+build was small and ASCII; it died on byte 0x9d of the 15 MB file. Every read
+and write in the tool now names UTF-8.
+
+### What this addendum does NOT claim
+
+- No new similarity or provenance search was run over the source. The mesh
+  ingest, the vegetation work and everything else since 11 September have not
+  been re-reviewed for third-party material; the original review's limits apply
+  unchanged and future imports still need their own check.
+- The `file://` open path was not re-verified on this pass. It is the central
+  portability claim and should be exercised by hand before the archive goes to
+  anyone.
+- Nothing here is a fitness, safety or accuracy claim about the simulator. It
+  remains suitable packaging for an experimental preview, with the open items in
+  TODO.md disclosed.
