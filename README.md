@@ -67,6 +67,12 @@ replacement for a commercial simulator.** [docs/RESEARCH.md](docs/RESEARCH.md)
 records every number, its source, and the places where the model knowingly
 departs from that source.
 
+Anything a player hits can be reported back: **Help & controls → Report a
+problem** copies a block carrying the build, the device, the GPU, the frame
+rate, the last few errors and the course code. It is assembled when the button
+is pressed and copied to the clipboard, and it is never transmitted — the
+built file makes no network requests at all, verified.
+
 Verification is `npm test` — a few hundred regression checks on the Node test
 runner covering physics plausibility and convergence, curvature, wind,
 putting, penalties, scoring, generation invariants and the bridge protocol —

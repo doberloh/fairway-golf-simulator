@@ -136,6 +136,7 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
 | src/layout.js | Saved draggable/resizable HUD layout |
+| src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
 
@@ -576,6 +577,23 @@ The legend reports both axes, long first (`31 × 11 yd`), because a group 40 yar
 **THE BIOME FINGERPRINT HASHES TWO THINGS AND ONLY ONE OWES A VERSION BUMP.** `recordHash` covers the biome's own fields -- name, title, palette, light -- and `fingerprint` covers what the generator built. A record change is a LOOK: it cannot move a ball or rebuild the ground under a saved round, so it owes nothing. A ground change owes `GENERATOR_VERSION`. They were one hash until 25 September 2026, when renaming three biome titles made the tool report "output moved for an unchanged seed, so it has to go up" -- which was false, and the kind of false that teaches people to ignore the check. If you split or add to either hash, re-save the baseline once: every stored hash shifts by construction and that first `--check` is a migration artefact, not a finding.
 
 **NO NAME IN `course-names.js` OR A BIOME TITLE MAY BE A REAL GOLF DESTINATION.** Place names are weak as trade marks; a real resort's name on a course inside a product being sold is a different proposition. The lists carried Bandon, Dornoch, Kintyre and Saguaro, and the titles carried Bandon Ridge, Turtle Bay and Saguaro Dunes. `tests/course-names.test.mjs` holds a denylist that cannot be complete and is not meant to be -- **search a candidate word together with the word "golf" before adding it.**
+
+**THE DIAGNOSTIC IS COPIED, NEVER SENT, AND THAT IS A PUBLISHED CLAIM.**
+`src/diagnostic.js` gathers a build stamp, the device, the GPU, the frame rate
+and the last few errors, and hands them to the clipboard. It has no `fetch`, no
+image, no beacon, and must never acquire one. DISTRIBUTION_REVIEW verifies that
+the built file makes **zero runtime network requests** -- re-verified with the
+diagnostic in place, and the only request the page makes is the page itself.
+Adding telemetry to this module is not a feature; it breaks a claim the project
+publishes about itself.
+
+**THE BUILD STAMP IS INJECTED, NOT WRITTEN DOWN.** `vite.config.js` defines
+`__FAIRWAY_BUILD__` with the short git commit and the build time. It is
+therefore **undefined under the test runner**, which imports `src/` directly,
+and a bare reference to an undefined `define` is a ReferenceError that takes
+the module down on import -- so every read goes through `buildStamp()`, which
+guards it. A build from the source archive has no git repository and gets a
+timestamp alone; that is a normal way to build this, not a failure.
 
 **A COURSE'S NAME IS NOT A GENERATION SETTING, AND MUST NEVER BECOME ONE.** `settings.courseName` rides on the live settings object and is answered for the card by `playingCourseName()`. It is filtered out by `courseSettings()` before anything is stored, and it is not in `worldKeyFor`, so naming a course can never move a metre of its ground or invalidate a saved round. It is deliberately NOT a `SETTINGS` entry for the same reason -- adding it there would make it a control, put it in the world key and demand a schema bump for a piece of text.
 
