@@ -136,6 +136,59 @@ prevent.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
+## A course has a name, not a serial number
+
+Asked for on 2026-09-25, in the run-up to letting other people play it. One
+idea under several bullet points: a course is presented by what it is CALLED,
+and the development chrome around that goes.
+
+- [x] **The seed is off the card.** It was printed under the course title,
+  where a player reads it once, never types it, and can do nothing with it. The
+  title carries the course's name now and the biome moved down to the subtitle,
+  so the card still says where in the world you are.
+
+- [x] **The copy button hands over the whole course.** It copied the SEED, which
+  is not enough to rebuild anything -- every setting that shapes the ground was
+  missing, so pasting it somewhere grew different land. It now produces the same
+  share code the library's Get code does, carrying the name and the settings,
+  without a trip through the library or a file download. It refuses in an
+  endless run using the same sentence a save refuses with, because `holes: 1` is
+  not a value a course can hold and the importer would reject it anyway.
+
+- [x] **`copyText` falls back to `execCommand`.** `navigator.clipboard` needs a
+  focused document and REJECTS rather than prompting without one, which is every
+  embedded preview. Found while verifying: the button worked and reported that
+  it could not reach the clipboard. The library's Get code had the same hole and
+  now shares the fallback.
+
+- [x] **"Your next great escape" and "An open world. Your game." are gone,** and
+  Play and Course studio leave the top-bar menu once you are in one of them.
+
+- [x] **EVERY COURSE HAS A NAME, and it is generated from the landscape.**
+  `src/course-names.js` builds them from words that belong to the biome --
+  Trade Wind Cove, Dornoch Sands, Copper Hollow -- seeded from the course's own
+  seed, so the same course always suggests the same name. The old suggestion was
+  the biome's title, which made every midwest course "Prairie Run"; before that
+  it was the seed, which is a serial number.
+
+- [x] **Surprise me names what it built** and says so in the toast. It is the
+  one entry point with nobody to ask, so it takes the suggestion rather than
+  offering it.
+
+- [x] **The name reaches the export**, which it already supported and nothing
+  was filling in. A course started from the library brings its name in on
+  `settings.courseName`; anything generated falls back to its own suggestion, so
+  there is no unnamed course in play for the card, the save button or the code
+  to have to invent something for.
+
+- [ ] **The library card still shows the seed** -- deliberately, since that is
+  metadata about a stored course rather than chrome on the playing screen. Worth
+  a second look if seeds are being retired from the player's view generally.
+
+- [ ] **A name is suggested, never enforced as unique.** Two saved courses can
+  have the same name; the dedupe on import compares name AND settings, so this
+  does not cause a collision there. It would read oddly in a long library.
+
 ## Shot numbers that stay on the card
 
 Asked for on 2026-09-24, in the run-up to letting other people play it.

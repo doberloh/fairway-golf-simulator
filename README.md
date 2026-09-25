@@ -101,7 +101,14 @@ Numbers that need a monitor show a dash without one rather than a zero, and the 
 are labelled as the monitor's, because they will not agree with ours and you should be able to see
 which is which.
 
-The **course card** carries the hole, the scores and your shot numbers in one panel, with the course seed in its top-right corner — click it to copy. Panels share one set of corners and shadows, and text follows one rule: a serif face for the course title, panel headings and the large numbers you glance at, and a sans face for every label, button and table.
+**Every course has a name**, and the box is always filled in before you get there. Names are built from
+words that belong to the landscape — *Trade Wind Cove* on an island, *Dornoch Sands* on links, *Copper
+Hollow* in autumn — and the same course always suggests the same name, so a name you turn down and
+come back to is the one you left. *Surprise me & play* takes the suggestion without asking, since the
+point of that button is not choosing anything. Anywhere you save or share a course the name comes with
+it, and a course cannot be saved without one.
+
+The **course card** carries the course's name, the hole, the scores and your shot numbers in one panel. **Copy course code** in its top-right corner puts the whole course on your clipboard as a share code — the same code Saved courses produces, carrying the name and every setting that shapes the ground, so whoever pastes it grows the identical course. An endless run has no code: it grows a new hole each time, so there is nothing to keep. Panels share one set of corners and shadows, and text follows one rule: a serif face for the course title, panel headings and the large numbers you glance at, and a sans face for every label, button and table.
 
 **Every panel on screen moves and resizes, whenever you want.** The course card, the weather, the map, the shot controls, the tools tray and the shot information each carry a small grip in one corner and a resize handle in the other — drag the grip, pull the corner, or focus either and use the arrow keys. Where you put them is remembered, in every mode. There is no arrange mode to enter; *Reset panel layout* in the tools tray puts everything back.
 

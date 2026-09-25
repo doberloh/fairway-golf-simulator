@@ -18,6 +18,7 @@ import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from '.
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
+import {suggestCourseName} from './course-names.js';
 import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
 import {projectorFov,standForFov,ASPECTS} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
@@ -191,6 +192,25 @@ let menuBackdrop=false,pendingRound=null,backdropRun=null,playerClock=null;
 // captions over sliders the browser had quietly parked at the midpoint of their
 // range. The defaults live in the schema; there is no second copy of them now.
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shape=0,launchAdjust=0,spinAdjust=0,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
+// COPYING, WITH THE OLD WAY AS THE FALLBACK. `navigator.clipboard` needs a
+// secure context AND the document to be focused, and it rejects rather than
+// prompting when it is not -- which is every embedded preview, and any window
+// that lost focus between the click and the promise. `execCommand('copy')` is
+// deprecated and has neither requirement, so it is what catches those. The
+// textarea is off-screen rather than hidden, because a `display:none` element
+// cannot be selected and the copy silently does nothing.
+async function copyText(text){
+ try{await navigator.clipboard.writeText(text);return true;}catch{}
+ try{
+  const box=document.createElement('textarea');
+  box.value=text;box.setAttribute('readonly','');
+  box.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(box);box.select();
+  const ok=document.execCommand('copy');
+  box.remove();
+  return ok;
+ }catch{return false;}
+}
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4200);}
 // THE MENU BACKDROP IS NOT A ROUND AND MUST NEVER BE WRITTEN HERE. The showcase
 // hole behind the menu builds a throwaway `Round` so the camera has something to
@@ -356,9 +376,14 @@ function updateHUD(){
  // announcing "HOLE 01 / 09 · PAR 4 · PIN THU front" over a flat bench green.
  const practice=rangeMode;
  const p=round.player;
- $('courseTitle').textContent=rangeMode?'Driving range':course.bio.name;
+ // THE COURSE'S NAME, not its biome and not its seed. A seed is a serial
+ // number; it was printed under the title, where a player reads it once, never
+ // types it, and cannot do anything with it. The code behind the copy button is
+ // the thing actually worth having, and the biome moves down to the subtitle so
+ // the card still says where in the world you are.
+ $('courseTitle').textContent=playingCourseName();
  $('courseSubtitle').textContent=rangeMode?'500 yards · practise anything'
-  :'Seed · '+settings.seed;
+  :round.endless?`Endless run · ${course.bio.name}`:course.bio.name;
  // A range has no hole number, no par and no pin position for the week. It does
  // have a distance, and that one is real -- it follows the green slider.
  $('holeNumber').innerHTML=rangeMode?'Range':round.endless?`${String(round.hole+1).padStart(2,'0')} <span>/ &infin;</span>`:`${String(round.hole+1).padStart(2,'0')} <span>/ ${String(round.holes).padStart(2,'0')}</span>`;$('holePar').textContent=practice?'—':course.par;
@@ -371,7 +396,7 @@ function updateHUD(){
  $('holeDistance').innerHTML=practice
   ? `${Math.round(rangeGreenYards(settings))} <span>yd</span>`
   : `${Math.round(course.tees[round.tee]?.yards??course.routeLength/YARD)} <span>yd</span>`;
- $('seedLabel').textContent=settings.seed;$('playerName').textContent=p.name;
+ $('playerName').textContent=p.name;
  // THE GOLFER'S OWN COLOUR, on the two chips that say who is up. It is the same
  // colour their tracer is drawn in and the same dot beside their scorecard row,
  // which is the whole point: the line over the fairway and the name on the card
@@ -1006,9 +1031,14 @@ function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$
 // Guarded at the entrance rather than at each call site: this is reachable from
 // the library panel, which opens in the studio too, and it used to walk straight
 // out of an unsaved landscape without a word.
-function startRoundOn(courseSettings,group){
+// `name` is what the course is CALLED, and it rides beside the settings all the
+// way in. A course out of the library brings its own; anything generated on the
+// spot is named by the suggestion for its seed, so there is no such thing as an
+// unnamed course in play any more -- the card, the save button and the course
+// code all had to invent something when there was.
+function startRoundOn(courseSettings,group,name){
  return new Promise(resolve=>{
-  const go=()=>buildRoundOn(courseSettings,group).then(resolve);
+  const go=()=>buildRoundOn(courseSettings,group,name).then(resolve);
   if(appMode==='studio')return guardStudio(go);
   if(appMode==='play')return guardRound(go);
   go();
@@ -1207,8 +1237,12 @@ async function buildEndless(group){
   begin();await prepareWorld(report);loadCourse();setMode('play');
  });
 }
-async function buildRoundOn(courseSettings,group){
+async function buildRoundOn(courseSettings,group,name){
  const next={...settings,...courseSettings};
+ // Not a generation setting: it is filtered out by `courseSettings()` before
+ // anything is saved, and it is not in the world key, so naming a course can
+ // never move a metre of its ground.
+ next.courseName=String(name||'').trim()||suggestCourseName(next);
  // Build the Round first: an invalid group must fail before the overlay appears.
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building your course…',async report=>{
@@ -1444,6 +1478,25 @@ function studioSaved(){
 // `validateSettings` rejects, so the section's primary button failed outright
 // with "Holes is not a recognised option." A button has to know whether the
 // thing it names exists.
+// THE NAME OF THE COURSE BEING PLAYED, answered once so the card, the save
+// button and the course code cannot disagree about what this place is called.
+//
+// A course started from the library brings its own name and it is kept on
+// `settings.courseName`; it is not a generation setting, never reaches
+// `courseSettings()` and is not in the world key, so it cannot move any ground.
+// Anything generated rather than chosen -- a surprise course, a landscape still
+// being shaped -- falls back to the SUGGESTION for its seed, which is the same
+// name the box would have offered, so a course is called the same thing before
+// and after somebody saves it.
+//
+// An endless run is named from the RUN's seed rather than from the settings,
+// because the settings are rebuilt for every hole: named from those, the course
+// would rename itself on each tee.
+function playingCourseName(){
+ if(rangeMode)return 'Driving range';
+ if(round.endless)return suggestCourseName({seed:round.seed,biome:settings.biome});
+ return settings.courseName||suggestCourseName(settings);
+}
 function savableCourse(){
  if(appMode==='studio')return {label:'Save this landscape'};
  if(appMode!=='play')return {why:'Play a course, or shape one in Course studio, and you can save it from here.'};
@@ -1451,7 +1504,7 @@ function savableCourse(){
  // Endless grows a fresh one-hole world for every hole, so there is no course
  // underneath it to name -- and `holes: 1` is not a value a course can hold.
  if(round.endless)return {why:'An endless run grows a new hole each time, so there is no course to keep. Its holes cannot be saved.'};
- return {label:`Save “${escape(course?.bio?.name||'this course')}”`};
+ return {label:`Save “${escape(playingCourseName())}”`};
 }
 
 // One dialog, driven by whichever guard needs it. Three options as a square
@@ -1481,7 +1534,7 @@ function guardStudio(next){
  askBeforeLeaving({
   title:'Leave the studio without saving?',
   body:'This landscape only exists while you are shaping it. Save it to your library to come back to it later, or leave and let it go.',
-  nameLabel:'Name this course',defaultName:settings.seed||'',
+  nameLabel:'Name this course',defaultName:playingCourseName(),
   saveHint:'Keep this landscape in your course library',
   discardHint:'This landscape is gone for good',
   onSave:value=>{const rec=saveCourse({name:value,settings});toast(`Saved “${rec.name}” to your library.`);},
@@ -1660,6 +1713,12 @@ function showVersionNotice(){
 // claims the highlight while it is open; otherwise the current mode does, so
 // the studio tab stays lit for as long as you are in the studio.
 function syncNav(){
+ // PLAY AND COURSE STUDIO ARE WAYS IN, so they go once you are in. Offering
+ // "Play" to somebody already playing means starting a different round from
+ // what looks like a settings menu, and "Course studio" mid-round is a guarded
+ // exit dressed as a nav item. Main menu is still one click away and is where
+ // both of them live.
+ for(const id of ['dropPlay','dropStudio'])if($(id))$(id).hidden=appMode!=='menu';
  // The top bar no longer has mode tabs, so "where am I" is said outright.
  const label=appMode==='play'&&round.endless?'Endless':({play:'Play',studio:'Course studio',menu:'Main menu'}[appMode]||'Play');
  const pill=$('modePill');
@@ -2003,7 +2062,10 @@ function wireRoundCards(content){
 }
 function renderPanel(name,content){
  if(name==='library'){
-  const courses=listCourses(),suggestion=BIOMES[settings.biome]?.title||'New course',savable=savableCourse();
+  // The box is pre-filled with the name this course is ALREADY going by on the
+  // card, so saving it keeps calling it the same thing. It used to offer the
+  // biome's own title -- every midwest course anybody built was "Prairie Run".
+  const courses=listCourses(),suggestion=playingCourseName(),savable=savableCourse();
   // A card in its normal state, or as an edit row while it is being renamed.
   // Renaming re-renders the panel rather than mutating the card in place, which
   // is how every other list action here works; the tab you were on is kept.
@@ -2047,11 +2109,11 @@ function renderPanel(name,content){
    $('renameCourseInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();content.querySelector('[data-rename-save]')?.click();}if(e.key==='Escape'){renamingCourse=null;openPanel('library');}};}
   $('importCourseCode').onclick=()=>{try{$('libraryError').textContent='';const rec=importCourse($('courseCode').value);const saved=saveCourse(rec);openPanel('library');toast(`Imported “${saved.name}”.`);}catch(e){fail(e);}};
   content.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{deleteCourse(b.dataset.remove);openPanel('library');toast('Course deleted.');});
-  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();try{await navigator.clipboard.writeText(code);toast('Course code copied.');}catch{toast('Course code ready — copy it from the box.');}});
+  content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
   content.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{
    const c=findCourse(b.dataset.play);if(!c)return;
    if(flight){toast('Finish the current shot first.');return;}
-   startRoundOn(c.settings,{players:round.players,mode:round.mode,tee:round.tee}).then(()=>toast(`Now playing “${c.name}”.`));
+   startRoundOn(c.settings,{players:round.players,mode:round.mode,tee:round.tee},c.name).then(()=>toast(`Now playing “${c.name}”.`));
   });
   // THE WHOLE LIBRARY, as one file. Codes move a course between people; a file
   // moves a collection between machines, which is the backup case codes are a
@@ -2368,7 +2430,14 @@ function renderPanel(name,content){
   // button in the tab row offered to throw the round away every time you opened
   // it. Starting a fresh round is a main-menu decision; from here, Apply changes
   // the group you have.
-  $('roundSurprise').onclick=async()=>{if(flight){toast('Finish the current shot first.');return;}try{await startRoundOn(randomSettings(Math.random),readGroup());toast('A course built just now. Play well.');}catch(e){$('roundError').textContent=e.message;}};
+  $('roundSurprise').onclick=async()=>{
+   if(flight){toast('Finish the current shot first.');return;}
+   try{
+    const fresh=randomSettings(Math.random),name=suggestCourseName(fresh);
+    await startRoundOn(fresh,readGroup(),name);
+    toast(`“${name}”, built just now. Play well.`);
+   }catch(e){$('roundError').textContent=e.message;}
+  };
   // APPLY TO A ROUND ALREADY IN PROGRESS, without restarting it. Golfers who
   // stay keep their scorecard and their ball; one who joins starts from the tee
   // with their earlier holes blank, because `cards` is indexed by hole and the
@@ -2425,7 +2494,7 @@ function renderPanel(name,content){
    if(flight){toast('Finish the current shot first.');return;}
    const chosen=findCourse($('roundCourse').value);
    if(!chosen){$('roundError').textContent='Choose a course first, or use Surprise me. Courses are shaped in Course studio.';return;}
-   try{await startRoundOn(chosen.settings,readGroup());toast(`Your round on “${chosen.name}” is ready.`);}catch(e){$('roundError').textContent=e.message;}
+   try{await startRoundOn(chosen.settings,readGroup(),chosen.name);toast(`Your round on “${chosen.name}” is ready.`);}catch(e){$('roundError').textContent=e.message;}
   };
   wireRoundCards(content);
   // EXPORTING "THE ROUND YOU ARE PLAYING" NEEDS ONE. At the menu `round` is the
@@ -3352,7 +3421,24 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // back the same way they do.
  $('greenView').onclick=()=>cameraMode(view.config.mode==='green'?'player':'green');
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}};
- $('seedButton').onclick=async()=>{try{await navigator.clipboard.writeText(settings.seed);toast('Course seed copied: '+settings.seed);}catch{toast('Course seed: '+settings.seed);}};
+ // THE WHOLE COURSE, ON THE CLIPBOARD, with no trip through the library. The
+ // button used to copy the SEED, which is not enough to rebuild a course --
+ // every setting that shapes it would be missing, so pasting it somewhere grew
+ // different ground. This is the same code the library's "Get code" produces,
+ // and it carries the name.
+ //
+ // It refuses for the same reasons a save refuses, in the same sentence: an
+ // endless run is one hole at a time and `holes: 1` is not a value a course can
+ // hold, so a code for it would be refused by the importer rather than here.
+ $('seedButton').onclick=async()=>{
+  const why=savableCourse().why;
+  if(why){toast(why);return;}
+  let code;
+  try{code=exportCourse({name:playingCourseName(),settings,generator:GENERATOR_VERSION});}
+  catch(e){toast(e.message);return;}
+  if(await copyText(code))toast(`Course code for “${playingCourseName()}” copied.`);
+  else toast('Could not reach the clipboard. Open Saved courses to copy the code by hand.');
+ };
  $('scene').onclick=e=>{if(dropState){const p=view.pick(e.clientX,e.clientY);if(p)previewDrop(p);return;}if(flight||panel||round.holeComplete||view.config.mode==='free')return;const point=view.pick(e.clientX,e.clientY);if(point)setAimPoint(point);};
  let dragging=false,lastMouse=null;
  $('scene').addEventListener('pointerdown',e=>{if(dropState||view.config.mode!=='free')return;dragging=true;lastMouse={x:e.clientX,y:e.clientY};$('scene').setPointerCapture(e.pointerId);});
