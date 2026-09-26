@@ -163,10 +163,11 @@ separate from Safari's, so the first time you open it from the home screen it
 asks for the password once. And it keeps its own saved rounds, so a round
 saved while playing in Safari does not appear in the home-screen app.
 
-If the home-screen icon still comes out as a screenshot of the page, delete it
-and add it again; iOS remembers the first icon it took. If it is still a
-screenshot after that, iOS is not reading an icon built into the page, and the
-fallback is to host just the icon somewhere public -- it is only the logo.
+If the home-screen icon comes out as a screenshot of the page, delete it and
+add it again; iOS remembers the first icon it took for an address. If it is
+still a screenshot, clear the site's stored data in Safari's settings and add
+it once more. The icon built into the page is confirmed working on an iPhone,
+behind Netlify's password protection.
 
 What it does not do yet: **it needs a connection each time it opens** -- it
 does not work offline -- and the controls are not yet kept clear of an

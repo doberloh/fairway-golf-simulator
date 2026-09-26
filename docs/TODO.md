@@ -112,15 +112,6 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
-- [ ] **Owner: check the home-screen icon on a real iPhone, on the private
-  site.** Upload the new `dist`, delete the old home-screen icon, add it again,
-  and confirm it shows the flag, opens without Safari's bars (asking for the
-  password once), and plays. The one unproven piece is whether iOS honours a
-  home-screen icon INSIDE the page as a data URL -- no documentation found
-  settled it. If it still shows a screenshot: host just the icon publicly (it
-  is only the logo) and point the link at it. Send a diagnostic from the phone
-  -- it reports the tier and frame rate.
-
 - [ ] **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
   cache named by the build stamp so an update replaces the old copy cleanly,
@@ -2790,10 +2781,18 @@ engineering provenance pass, not legal advice.
   Alternatives weighed: turning the password off (the owner's call, and
   declined -- it is there to stop scraping); a data-URL manifest (Chrome
   rejects its start_url as cross-origin); and hosting the icon publicly
-  elsewhere, kept as the fallback if iOS turns out not to read a data-URL
-  icon, which no documentation settled.
+  elsewhere, kept as the fallback if iOS turned out not to read a data-URL
+  icon, which no documentation settled. **It does read one** -- confirmed on
+  the owner's iPhone the same day, so the fallback was never used.
 
   Two iPhone facts now in INSTALLATION: the home-screen app asks for the
   password once, because it keeps its own login separate from Safari's; and
   it keeps its own saved rounds.
+
+- [x] **The home-screen icon works on a real iPhone, on the private site.**
+  Confirmed by the owner on 26 September: the flag icon shows on the home
+  screen. That settles the one piece nothing on the development machine could
+  test and no documentation found settled -- **iOS honours a home-screen icon
+  written INTO the page as a data URL**. The fallback of hosting the icon
+  publicly elsewhere is not needed.
 

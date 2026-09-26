@@ -25,7 +25,8 @@
 //
 //   - the home-screen icon is written INTO index.html as a data URL, so there
 //     is nothing to fetch. Whether iOS honours a data-URL apple-touch-icon was
-//     not something any documentation settled; it is checked on the phone.
+//     not something any documentation settled; it does -- confirmed on the
+//     owner's iPhone, behind Netlify's password, on 26 September 2026.
 //   - the manifest's icons are written INTO the manifest as data URLs, for the
 //     same reason. The manifest itself is still a file -- Chrome treats a
 //     start_url as invalid unless it shares an origin with the manifest, and a
