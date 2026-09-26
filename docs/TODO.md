@@ -46,33 +46,6 @@ same heading in `# Done`.
   width, restack the camera bar, or give the default layout a small-screen
   arrangement. The check is written; it goes green when the layout is right.
 
-- [ ] **Escape closes a tool window you cannot see before the panel you can.**
-  With the Tools window open, opening the scorecard puts the scorecard's blur
-  over the Tools window, and Escape's order is small windows first -- so the
-  first Escape shuts the hidden Tools window and the visible scorecard needs a
-  second. Found because the smoke test's first press of Escape did nothing it
-  could see. Worth deciding alongside the keyboard feedback: either a panel
-  opening closes the tool windows under it, or Escape closes whatever is
-  visually on top.
-
-- [ ] **A quick arrow-key tap on a slow machine can do nothing.** Aim and
-  power move only while a key is held, by 18 degrees a second of frame time,
-  read once per frame. A tap whose key-down and key-up both land between two
-  frames is never seen: at 60 fps frames are 17 ms apart and a human tap of
-  50-120 ms always registers, but at 20 fps they are 50 ms apart. Help
-  promises "← / → fine tune your aim", and how far a tap turns depends on the
-  frame rate as well as on the tap. Found because the smoke test's synthetic
-  key presses -- down and up with no frame between -- turned nothing. Keyboard
-  territory; left for the keyboard feedback rather than changed blind.
-
-- [ ] **The release packager ships whatever is on disk, not what is
-  committed.** It globs `src/`, `tests/`, `bridge/` and `tools/` by extension,
-  so three untracked scratch scripts in `tools/` went into a source archive
-  during this work: 166 files where there should have been 163. The archives
-  are not committed, so nothing escaped -- but a release cut from a working
-  tree with stray files in it ships them. Package from `git ls-files`, or
-  refuse a dirty tree.
-
 - [ ] **The smoke test checks the PLAY screen's layout only.** The studio bar
   visibly sits over the lower edge of the Saved courses panel at 1920x1080;
   the name box cleared it in the one case looked at, but the studio, the
@@ -2666,4 +2639,34 @@ engineering provenance pass, not legal advice.
   -- so the harness says `npx playwright install chromium` rather than
   printing a stack trace. That also made a comment in the CI workflow wrong;
   see the CI entry.
+
+- [x] **Escape now closes the panel in front of you before any tool window.**
+  With Tools open, opening the scorecard puts its blur over the Tools window,
+  and Escape used to shut the hidden Tools window first, leaving the visible
+  scorecard for a second press. Two fixes were weighed: close the tool windows
+  whenever a panel opens, or have Escape close whatever is in front. The
+  second won -- it keeps the player's Tools window where they put it for when
+  the card is gone, and it is one condition. An open panel is always in front,
+  because opening a tool closes the panel and never the reverse. The smoke
+  test presses Escape once with Tools open behind the scorecard; red on the
+  old build, green now.
+
+- [x] **A quick arrow tap now always registers.** Aim and power move while a
+  key is held, read once per frame, so a tap whose key-down and key-up fell
+  between two frames used to do nothing -- never at 60 fps, where a human tap
+  spans several frames, but a real risk at 20. Every key-down now also lands in
+  a `tapped` set that the frame loop treats as held for one frame, cleared once
+  per rendered frame. Deliberately NOT changed: how far a held key turns, or
+  replacing held movement with fixed-size steps. That is feel, and it waits for
+  the keyboard feedback. The smoke test taps left and down with no frame
+  between; the left tap read "0.2°" and never changed on the old build.
+
+- [x] **The release packager ships only what git tracks.** It globbed each
+  source directory, so three untracked scratch scripts went into a source
+  archive: 166 files where there should have been 163. It now takes `git
+  ls-files`, proven by planting a stray file in `tools/` and checking the
+  archive left it out. Refusing a dirty tree was considered and rejected --
+  cutting archives before committing is how this project works, and the
+  tracked files' working content is what matches the build beside them. A
+  checkout with no repository falls back to the glob and says so.
 

@@ -7,6 +7,7 @@
 //   node tools/smoke.mjs --software   the renderer CI has: no GPU at all
 //   node tools/smoke.mjs --headed     watch it happen
 //   node tools/smoke.mjs --list       what the journeys are
+//   node tools/smoke.mjs --file x.html  test some other built file
 //
 // WHY THIS EXISTS. `npm test` covers physics, generation and scoring, and
 // cannot see the interface at all: `main.js` is several thousand lines of
@@ -65,6 +66,10 @@ const option = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? ar
 const SOFTWARE = flag('software');
 const HEADED = flag('headed');
 const ONLY = option('only');
+// `--file some/Fairway.html` tests any built file instead of dist/ -- the one
+// inside a release ZIP, or an older build to prove a check goes red on the bug
+// it was written for. No staleness gate: the file was named on purpose.
+const FILE = option('file');
 
 // Same flags the profiler settled on for each renderer; see tools/profile.mjs.
 // `--enable-unsafe-swiftshader` is new since then: current Chromium refuses to
@@ -368,6 +373,21 @@ const JOURNEYS = [
     await t.hold('ArrowLeft', '#aimOutput');
     await t.hold('ArrowRight', '#aimOutput');
    });
+   // Power taps DOWN: it starts at 100% and up has nowhere to go -- the first
+   // draft of this tapped up and reported a dead key that was merely at its cap.
+   //
+   // THE TAP THAT NO FRAME SAW. A synthetic press puts key-down and key-up
+   // back to back with no frame between -- exactly the tap a slow machine used
+   // to lose, and exactly what this harness's first draft took for a broken
+   // control. The game now owes that tap to the next frame.
+   for (const [code, readout, what] of [['ArrowLeft', '#aimOutput', 'aim'], ['ArrowDown', '#powerOutput', 'power']]) {
+    await t.step(`an instant ${code} tap still moves ${what}`, async () => {
+     const before = await t.page.textContent(readout);
+     await t.key(code);
+     await t.until(async () => (await t.page.textContent(readout)) !== before,
+      `a tap of ${code} to register (it read "${before}" and never changed)`, 5 * SLOW);
+    });
+   }
    await t.step('power with ↑ and ↓', async () => {
     await t.hold('ArrowDown', '#powerOutput');
     await t.hold('ArrowUp', '#powerOutput');
@@ -438,10 +458,21 @@ const JOURNEYS = [
     await t.inPlay();
     await t.closeTools();
    });
-   await t.step('the scorecard', async () => {
+   // ONE ESCAPE CLOSES THE PANEL IN FRONT OF YOU. With the Tools window open,
+   // opening the scorecard puts its blur over the Tools window; Escape used to
+   // shut the hidden Tools window first and need a second press for the
+   // scorecard. The Tools window must survive, for when the card is gone.
+   await t.step('the scorecard over an open Tools window, closed by one Escape', async () => {
+    await t.tool('replayShot').catch(() => {});
+    if (await t.inFlight()) { await t.key('Enter'); await t.until(async () => !(await t.inFlight()), 'the replay to finish', 30 * SLOW); }
+    await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the Tools window to be open', 5 * SLOW);
     await t.page.click('#scoreNav');
     await t.until(() => t.drawerOpen(), 'the scorecard', 5 * SLOW);
-    await t.closeDrawer();
+    await t.key('Escape');
+    await t.until(async () => !(await t.drawerOpen()), 'ONE Escape to close the scorecard', 3 * SLOW);
+    const toolsStillOpen = await t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false);
+    if (!toolsStillOpen) throw new Error('Escape closed the scorecard and the Tools window with it');
+    await t.closeTools();
    });
    // Every panel the in-round menu offers, opened and closed. Found by the
    // label the player reads in the top menu.
@@ -554,8 +585,9 @@ const unknown = (wanted ?? []).filter(n => !JOURNEYS.some(j => j.name === n));
 if (unknown.length) fail(`No journey called ${unknown.map(n => `"${n}"`).join(', ')}. Try --list.`);
 const chosen = wanted ? wanted.map(n => JOURNEYS.find(j => j.name === n)) : JOURNEYS;
 
-refuseStaleBuild();
-const url = pathToFileURL(DIST).href;
+if (FILE && !fs.existsSync(FILE)) fail(`No file at ${FILE}.`);
+if (!FILE) refuseStaleBuild();
+const url = pathToFileURL(FILE ? path.resolve(FILE) : DIST).href;
 const started = Date.now();
 // `npm ci` DOES NOT FETCH THE BROWSER. Playwright 1.63 has no install script,
 // so a fresh checkout has the library and no Chromium, and the launch fails

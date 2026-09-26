@@ -31,7 +31,7 @@ Vite serves http://127.0.0.1:5173. `vite.config.js` uses the single-file plugin,
 
 Pinned dependencies. Runtime -- the only ones that can reach a shipped file: Three.js 0.186.0 (MIT), ws 8.21.3 (MIT), Lucide 1.44.0 (ISC). Build and tooling: Vite 8.3.0, vite-plugin-singlefile 2.3.3, @dgreenheck/ez-tree 1.1.0 (MIT, bakes geometry that ships), Playwright 1.63.0 (Apache-2.0, drives the profiler). The lockfile uses the public Yarn registry mirror and integrity hashes. Preserve LICENSE and THIRD_PARTY_NOTICES.txt when distributing. The owner selected MIT for project-authored code; third-party terms remain separate. Read `docs/DISTRIBUTION_REVIEW.md` and `docs/DEPENDENCY_INVENTORY.json` before adding or changing dependencies -- the packager refuses to build while the inventory disagrees with the lockfile, so a new dependency is a documentation change before it is a build. Full licenses are imported as raw text into main.js and displayed offline in Help. Avoid dependency upgrades incidentally during graphics work; Three shader patches depend on the current shader include structure.
 
-`Fairway-portable.zip` is the PRODUCT and carries seven files, flat: Fairway.html, LICENSE, THIRD_PARTY_NOTICES.txt, ATTRIBUTION.md, README.md, INSTALLATION.md and PLAYING.md. Its README is `docs/PORTABLE_README.md`, not the repository's -- the root one links into `docs/` and explains `npm ci`, which is a page of dead links to somebody who unzipped a game. Nothing else -- it used to ship the architecture handoff, the open defect list, the research measurements and AGENTS.md, none of which is anything a player needs. `Fairway-source.zip` keeps the repository's own layout and carries source, tests, bridge, package files, build configuration and the documentation set, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
+`Fairway-portable.zip` is the PRODUCT and carries seven files, flat: Fairway.html, LICENSE, THIRD_PARTY_NOTICES.txt, ATTRIBUTION.md, README.md, INSTALLATION.md and PLAYING.md. Its README is `docs/PORTABLE_README.md`, not the repository's -- the root one links into `docs/` and explains `npm ci`, which is a page of dead links to somebody who unzipped a game. Nothing else -- it used to ship the architecture handoff, the open defect list, the research measurements and AGENTS.md, none of which is anything a player needs. `Fairway-source.zip` keeps the repository's own layout and carries source, tests, bridge, package files, build configuration and the documentation set, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script packages only files git tracks -- a stray file in the working tree cannot ride along -- and verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
 
 ## File map
 
@@ -1314,6 +1314,31 @@ function. It was found by `tools/smoke.mjs` dropping a ball beside the pin.
 **`tests/three-namespace.test.mjs` now refuses any binding named `T` in a
 module that imports three as `T`**, and calls `projectMarker` directly. If you
 need a name for the top of something, it is `top`.
+
+## Escape closes what is in front; an arrow tap is owed to the next frame
+
+**Escape's order is: shot list, menu dropdown, clock, leave notice, OPEN PANEL,
+tool windows, then tour and drop.** An open panel is always in front of every
+tool window -- `openTool` closes the panel when a tool opens, never the reverse
+-- so a tool window can only ever sit behind a panel's blur. Escape used to
+take the tool windows first: with Tools open behind the scorecard, the first
+press shut the window the player could not see, and the scorecard in front of
+them needed a second. The tool window is left open for when the panel is gone.
+
+**A key pressed and released between two frames still counts, once.** Aim and
+power move while an arrow is held, read once per frame from `keys`. A tap that
+never overlapped a frame used to do nothing -- impossible to notice at 60 fps,
+where a human tap spans several frames, and real on a machine managing 20,
+where Help's "← / → fine tune" could simply not happen. Every key-down also
+lands in `tapped`, which the frame loop treats as held for exactly one frame
+and clears once per RENDERED frame -- after the frame cap, and whether or not
+the aim block ran, so a tap made behind an open panel is dropped rather than
+saved up and fired later. Holding is unchanged.
+
+Both were found by `tools/smoke.mjs` and both are checked there: its Endless
+journey taps with no frame between key-down and key-up, and its Surprise-me
+journey presses Escape once with Tools open behind the scorecard. Each check
+fails on the build before the fix.
 
 ## The simulator never invents ball data
 

@@ -350,3 +350,12 @@ request to appear one day.
 What this does not claim: coverage of multi-player rounds, match play, the
 launch-monitor bridge, or any browser but Chromium.
 
+**The source archive contains exactly what git tracks.** The packager used to
+glob each source directory by extension, so anything lying in the working tree
+went into the archive; three untracked scratch scripts did, and the count --
+166 against 163 -- was the only sign. It now takes `git ls-files`, and was
+proven by planting a stray file in `tools/` and confirming the archive left it
+out. Tracked files ship with their working-tree content, matching the
+`dist/index.html` built beside them. A build from the source archive, which has
+no repository, falls back to the glob and says so.
+
