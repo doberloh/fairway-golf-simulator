@@ -150,7 +150,8 @@ live on the home screen like an app.
 2. **Open that address in Safari on the phone.**
 3. **Tap Share, then Add to Home Screen.** The icon it adds opens Fairway full
    screen, without Safari's address bar, with the phone's status bar kept
-   visible above it.
+   visible above it. The game's menu says this too, once, the first time an
+   iPhone or iPad opens it in a browser.
 
 On Android, Chrome offers **Install app** from its menu for the same address;
 Chrome's own install check reports the game as installable.
@@ -174,7 +175,8 @@ does not work offline -- and the controls are not yet kept clear of an
 iPhone's rounded corners and home bar when held sideways. **A launch monitor
 cannot connect from a phone this way**: a secure `https://` page is not allowed
 to open the bridge's unencrypted connection on your network. On a phone,
-Fairway is touch play.
+Fairway is touch play: an aim pad for fine adjustment, a map that opens big
+and pinches to zoom, and controls sized for a thumb.
 
 The portable file is unchanged by any of this. Opened from disk, it links no
 manifest and makes no network requests.

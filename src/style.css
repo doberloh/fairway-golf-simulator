@@ -714,3 +714,132 @@ button.danger:hover{background:rgba(141,63,44,.1)}
  #menuHeading{display:none}
  .menu-tile{width:148px}
 }
+
+/* -------------------------------------------------------------------------
+   PLAYING BY TOUCH. Aiming by a tap on the course is close and never exact
+   on a phone, the map was a thumbnail nothing could zoom, and half the
+   buttons a thumb needs were a third the size of a thumb.
+   ------------------------------------------------------------------------- */
+
+/* THE AIM PAD: turn left and right, move the target further and shorter, and
+   the pin in the middle. It rides above the shot controls, so it goes where
+   they go -- hidden while exploring, on the menu and in the studio -- and it
+   shows only where nothing else fine-tunes the aim: every phone, and a touch
+   screen too narrow for the aim arrows in the bar (they leave below 820 px). */
+.aim-pad{display:none}
+@media(max-width:560px),(max-height:500px),(pointer:coarse) and (max-width:819px){
+ #world:not(.dropping) .aim-pad{display:grid;position:absolute;left:0;bottom:calc(100% + var(--hud-gap,10px));
+  grid-template:repeat(3,44px)/repeat(3,44px);gap:0;padding:4px;border-radius:50%;
+  background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--panel-shadow);
+  backdrop-filter:blur(16px) saturate(1.15)}
+}
+.aim-pad button{display:grid;place-items:center;padding:0;border:0;border-radius:50%;
+ background:transparent;color:var(--ink);cursor:pointer}
+.aim-pad button:active:not(:disabled){background:var(--field)}
+.aim-pad button:disabled{opacity:.35;cursor:default}
+.aim-pad svg{width:24px;height:24px}
+.aim-pad .pad-far{grid-area:1/2}
+.aim-pad .pad-left{grid-area:2/1}
+.aim-pad .pad-right{grid-area:2/3}
+.aim-pad .pad-near{grid-area:3/2}
+/* The pin is drawn smaller than it is: the painted circle sits inside a full
+   44 px button, so the middle of the pad is as easy to hit as its arms. */
+.aim-pad .pad-pin{grid-area:2/2;padding:5px;background:var(--accent);background-clip:content-box;color:var(--accent-ink)}
+.aim-pad .pad-pin svg{width:17px;height:17px}
+
+/* THE BIG MAP. The one map canvas, laid over the course as large as the
+   screen allows -- no wider than 960 px, where a hole would only be spread
+   thinner. Forced with !important because a player may have dragged or sized
+   the map panel, and those positions are inline styles. */
+/* ON THE MAP ITSELF, in its bottom-right corner, taking no room: the negative
+   top margin lifts it over the canvas and the bottom margin pays the height
+   back, so the panel is exactly as tall as before. Rejected on the way: the
+   header, where beside the title and the three green-reading switches it was
+   pushed off the panel on a tablet and, once the header could wrap, made the
+   map 25 px taller on a laptop; and the footer, which held sideways on a small
+   screen is squeezed out of the panel altogether. */
+.map-expand{position:relative;z-index:1;display:grid;place-items:center;width:26px;height:26px;
+ margin:-32px 6px 6px auto;padding:0;border-radius:6px;border:1px solid var(--glass-line);
+ background:var(--glass);color:var(--ink);cursor:pointer;backdrop-filter:blur(8px)}
+.map-expand:hover{color:var(--ink);background:var(--field);filter:none}
+.map-expand svg{width:12px;height:12px}
+.aim-view-bar{display:none}
+#world.aim-view .minimap{position:absolute!important;
+ inset:var(--hud-gap,12px) max(var(--hud-edge,12px),calc(50% - 480px))!important;
+ width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;
+ display:flex!important;flex-direction:column;z-index:30}
+#world.aim-view .minimap #map{flex:1 1 auto!important;height:auto!important;min-height:0!important;cursor:crosshair}
+#world.aim-view .aim-view-bar{display:flex;align-items:center;gap:12px;padding:6px 8px 6px 13px;
+ border-bottom:1px solid var(--glass-line);font-size:13px}
+#world.aim-view .aim-view-bar span{flex:1;min-width:0;color:var(--ink-dim)}
+#world.aim-view .aim-view-bar button{min-height:40px;padding:0 22px;border:0;border-radius:8px;
+ background:var(--accent);color:var(--accent-ink);font:600 13px/1 var(--font-ui);cursor:pointer}
+#world.aim-view .map-reading{display:flex}
+#world.aim-view .map-expand,#world.aim-view .minimap .hud-grip,#world.aim-view .minimap .hud-size{display:none}
+
+/* NO BROWSER GESTURES MID-ROUND. A double tap on a button zoomed the page, a
+   pull down the screen reloaded it and threw the round away, and holding an
+   aim arrow selected the words around it. Pinch-zoom is left alone
+   everywhere except the course and the map, which already use it themselves:
+   it is how someone who cannot read the small print reads it. */
+html,body{overscroll-behavior:none}
+#world,.topbar{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#world input,#world textarea{-webkit-user-select:text;user-select:text}
+
+/* A THUMB-SIZED TARGET for every control a round needs: 44 px, the size
+   Apple's guidelines give -- aimed at 48, so rounding and a clipping panel
+   edge cannot take it under. The top bar and the camera row have no room to grow
+   on a phone, so the button keeps its look and an invisible margin around it
+   takes the tap -- never shrinking a button that is already bigger. Where two
+   buttons are closer than that, the margins meet halfway. Panel grips are
+   left small on purpose: they rearrange the screen, and a generous grip
+   would steal taps meant for the controls beside it. */
+@media(pointer:coarse){
+ .topbar button,.view-tools .tool,.map-reading button,.map-expand,.card-toggle{position:relative}
+ .topbar button::after,.view-tools .tool::after,.map-reading button::after,.map-expand::after,.card-toggle::after,
+ .seed-button::after{content:'';position:absolute;inset:min(0px,calc(50% - 24px))}
+ /* On a touch screen the thumbnail itself opens the big map, so its small
+    enlarge button would only be a second, smaller way to do the same. */
+ .map-expand{display:none}
+ /* The details toggle sits at the foot of the course card, which clips
+    anything past its edge -- an invisible margin included. Held sideways the
+    card is too tight for the margin to make up the difference, so the toggle
+    itself is a little taller. */
+ .card-toggle{min-height:34px}
+ #world .shot-controls select{min-height:44px}
+ /* The power slider's track stays 4 px to look at and grows to 44 to touch;
+    the negative margins keep it where it was. */
+ #world #power{height:44px;margin:-5px 0 -8px}
+}
+/* Held sideways the pad is a row -- left, further, the pin, shorter, right --
+   because a round pad 136 px tall runs up into the course card on a screen
+   344 px high. */
+@media(max-height:500px){
+ #world:not(.dropping) .aim-pad{grid-template:44px/repeat(5,44px);border-radius:26px}
+ .aim-pad .pad-left{grid-area:1/1}
+ .aim-pad .pad-far{grid-area:1/2}
+ .aim-pad .pad-pin{grid-area:1/3}
+ .aim-pad .pad-near{grid-area:1/4}
+ .aim-pad .pad-right{grid-area:1/5}
+}
+/* The big map held sideways: a hole runs up the screen, so height is what it
+   is drawn in, and a phone on its side has 344 px of it. The title and the
+   Done bar share one row and the footer goes, which gives the hole about 40%
+   more height than stacking them. */
+@media(max-height:500px){
+ #world.aim-view .minimap{display:grid!important;grid-template:auto minmax(0,1fr)/auto minmax(0,1fr)}
+ #world.aim-view .minimap .map-header{grid-area:1/1}
+ #world.aim-view .aim-view-bar{grid-area:1/2;border-bottom:0}
+ #world.aim-view .minimap #map{grid-area:2/1/3/3;width:100%;height:100%!important}
+ #world.aim-view .minimap .map-footer{display:none}
+}
+
+/* ADD TO HOME SCREEN, on the menu, once, on an iPhone in a browser. Under the
+   menu's own note, as wide as the cards, in the menu's glass. */
+.home-hint{display:flex;align-items:center;gap:12px;width:100%;max-width:430px;margin:4px auto 0;
+ padding:12px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);
+ color:var(--ink);font-size:12px;line-height:1.45;text-align:left;backdrop-filter:blur(16px) saturate(1.15)}
+.home-hint[hidden]{display:none}
+.home-hint>svg{flex:none;width:22px;height:22px;color:var(--accent-ink)}
+.home-hint p{margin:0;flex:1}
+.home-hint button{flex:none;min-height:44px;padding:0 14px}

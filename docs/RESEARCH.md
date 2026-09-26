@@ -3611,3 +3611,42 @@ host never has a reason to refuse anything the home screen needs.
 unless it shares an origin with the manifest, and a data URL has no origin, so
 the manifest stays a real file fetched once with the login.
 
+## Touch targets, and the gestures a game page has to switch off
+
+For the phone controls on the `mobile-play` branch. Sources read, and what was
+taken:
+
+- [Accessibility -- Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+  (the page renders by script; its text was read from
+  [the JSON behind it](https://developer.apple.com/tutorials/data/design/human-interface-guidelines/accessibility.json)).
+  iOS and iPadOS: **default control size 44x44 pt, minimum 28x28 pt**. Spacing:
+  "about 12 points of padding around elements that include a bezel", about 24
+  around the visible edges of one without. **Taken:** 44 as the floor for
+  every control a round needs, aimed at 48 so rounding and a clipping panel
+  edge cannot take it under. **Departed from:** the spacing. The camera row's
+  buttons are 30 px with a few pixels between them and there is no room on a
+  phone for 12 pt of padding each; their invisible 48 px margins overlap and
+  split the gap halfway. The top bar and camera row are to be redrawn on the
+  `hud-layout` branch, which is where that gets fixed properly.
+- [touch-action -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action).
+  `manipulation` allows panning and pinch zoom and disables double-tap zoom;
+  the browser **intersects** the values of the touched element and its
+  ancestors, and the property is not inherited. **Taken:** `manipulation` on
+  the whole play area, which cannot loosen the `none` the scene and the map
+  already carry.
+- [overscroll-behavior -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior).
+  `contain` (and so `none`) disables the browser's own pull-to-refresh and
+  swipe navigation. MDN marks it **not Baseline**, with Safari the gap; on an
+  iPhone the home-screen app has no pull-to-refresh to begin with, so the
+  risk is Safari in a tab. **Taken:** `none` on the page.
+- [display-mode -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/display-mode).
+  `standalone` matches an installed web app. MDN says nothing about iOS or
+  about Safari's older, non-standard `navigator.standalone`; the hint checks
+  both, and that `navigator.standalone` is still set by iOS is from general
+  knowledge, not a source read here -- **the owner's iPhone is the check**.
+
+**Numbers placed rather than published**, and worth revisiting on a real
+phone: half a degree and one yard a tap, and the hold's climb from 3 to 24
+steps a second after 0.35 s. Half a degree is 1.7 yards sideways at 200, which
+is finer than a fingertip on the course and coarse enough that nobody taps
+forty times; nothing published says what a golf aim step should be.

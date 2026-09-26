@@ -37,7 +37,8 @@ no formatter. Match the style of the file you are editing.
   test` cannot see the interface at all, and two broken interfaces have
   shipped with every test green; this is what catches that. Run it after any
   change a player could click on, or to the stylesheet -- it checks the layout
-  from a desktop down to a phone. About a minute and a half with a GPU.
+  from a desktop down to a phone, and plays a hole by touch. About two
+  minutes with a GPU.
   The first time, `npx playwright install chromium` -- `npm ci` does not fetch
   the browser.
 - **`npm run profile`** — measures what a frame costs. Minutes of a machine at

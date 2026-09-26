@@ -712,6 +712,86 @@ control reachable everywhere, no page scrolls, and the course visible on 39% to
 EMULATES a phone -- a real iPhone's Safari and a real phone's GPU are still
 checked by hand.
 
+## Playing by touch
+
+A tap on the course aims wherever the finger lands, and at 200 yards a
+fingertip covers several yards of fairway: on a phone a tap got you close and
+nothing got you exact. Four pieces fix that, each with a rule.
+
+- **The aim pad (`#aimPad`) is a child of `.bottom-area`**, absolutely placed
+  above it, so it goes wherever the shot controls go -- hidden while exploring,
+  on the menu, in the studio, moved with them if the player drags them -- and
+  it does not change the box `layout.js` measures for `--controls-top`, because
+  an absolute child does not grow its parent. It shows on phones and on touch
+  screens under 820 px, where the bar's own aim arrows are hidden; a round
+  3x3 pad upright, a row of five sideways, where a 136 px pad ran into the
+  course card. Its buttons are disabled by the same test that gates them,
+  `canNudgeAim()`, set in `updateHUD` beside the swing button.
+- **Nudges are half a degree and a yard a tap** (`AIM_TAP_DEGREES`,
+  `AIM_TAP_YARDS`). "Further" moves `aimRange` for a full shot, but for a putt
+  it moves POWER, because a putt's length comes from its power and the roll
+  preview ignores `aimRange`. `holdToRepeat` drives the pad and the bar's
+  arrows: the press is exactly one tap, and a hold past 0.35 s repeats at a
+  rate climbing from 3 to 24 taps a second. A pointer's own `click` is
+  ignored because its press already stepped; a click with `detail` 0 is a
+  keyboard press on the focused button and counts once. **Symptom if the
+  press and the click both step: every tap moves twice.** `contextmenu` is
+  cancelled, because a long press on Android opens one and ends the sweep.
+- **The big map is the SAME canvas**, with `aim-view` on `#world` laying the
+  `.minimap` panel over the course. Its rules are `!important` because a
+  player may have dragged or sized the map, and those positions are inline
+  styles. `setAimView` resets the zoom both ways -- a zoom chosen on the big
+  map means nothing on a thumbnail. **A touch tap on the thumbnail opens it
+  instead of aiming** (`mapPointerType`); a mouse still aims from the
+  thumbnail. It closes itself in the frame loop whenever a ball is in the air,
+  a panel is open, the flyover runs or the menu is up -- checked every frame
+  rather than at each of those starts, because each starts several ways. The
+  enlarge button sits ON the canvas, lifted by a negative margin and paid back
+  below, so the panel is exactly as tall as before; the header (it pushed the
+  button off the panel on a tablet and, allowed to wrap, made the map 25 px
+  taller on a laptop) and the footer (squeezed out of the panel on a small
+  screen held sideways) were both tried and rejected.
+- **Two fingers zoom the map.** Every pointer on it is tracked in
+  `mapPointers`; with two down, the change in spread zooms about the OLD
+  midpoint and the change in midpoint then pans. Zooming about the new
+  midpoint in the old frame and panning as well moves the map twice.
+
+**No browser gestures in play**: `touch-action: manipulation` on `#world` and
+the top bar stops a double tap zooming the page (it intersects with the
+`none` already on the scene and the map, so those keep their own gestures);
+`overscroll-behavior: none` on the page stops a pull-down reloading it;
+`user-select: none` stops a held arrow selecting the words beside it.
+Pinch-zoom of the page is deliberately left alone outside the scene and the
+map -- it is how someone who cannot read the small print reads it.
+
+**Thumb-sized targets without moving anything.** On a coarse pointer, small
+top-bar, camera and map buttons get an invisible `::after` margin reaching
+48 px, `inset: min(0px, calc(50% - 24px))`, so nothing already bigger shrinks
+and the button looks the same. Where two buttons are closer than that the
+margins meet halfway. **A panel with `overflow: hidden` clips the margin too**:
+the details toggle at the foot of the course card measured 42 px until it was
+made 34 px tall itself. Panel grips are left small on purpose -- a generous
+grip steals taps from the controls beside it.
+
+**The Add to Home Screen hint** (`#homeHint`) shows on the menu once
+(`fairway-home-hint-v1`), only on iOS -- an iPad calls itself a Mac and is told
+apart by its touch points -- only over http(s), and never inside the installed
+app (`display-mode: standalone`, or Safari's own `navigator.standalone`).
+
+**Checked by** `touchAiming` in both phone journeys -- a tap on the pad turns
+exactly half a degree, further is exactly a yard, the pin button matches the
+bar's Aim at pin, a held arrow sweeps and stops when the finger lifts, the
+thumbnail opens the big map, a pinch zooms it, a tap on it aims, Done puts it
+away unzoomed -- and a probe that walks outward from the middle of every
+control a round needs and fails anything under 44 px to a finger that is not
+sharing the space with a neighbour. Two fingers go through Chrome's own touch
+input over the DevTools protocol (`fingers`), because Playwright's
+touchscreen can only tap. `home-screen-hint` runs as an iPhone on a served
+copy. **Use the smoke harness, not the in-app browser pane, for touch work**:
+at an emulated phone size the pane delivered clicks at half the coordinates,
+so a tap aimed at the pad landed on the course, swung the aim 170 degrees and
+once started the flyover -- which looks exactly like a bug in the pad.
+
 **`.view-tools` gets its grip outside its own box.** It is a 30px column of buttons, and a grip inside its top-left corner sits on the first button and steals its clicks. On a right-edge panel, just outside the left edge is still on screen.
 
 **Handles are dim, not hidden.** Seven permanently bright grips on the playing area is worse than the problem it solves; an invisible affordance is no affordance, and a touch screen has no hover. They sit at 0.22 opacity, rise on panel hover, and go fully bright while any panel is being dragged so you can see what you are lining up against.

@@ -482,7 +482,7 @@ function updateHUD(){
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
  $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
- $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
+ $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The indicator is driven by the DEVICE; the stripped-down controls are driven
   // by `armed`, which is the only state where the manual controls genuinely do
@@ -547,6 +547,72 @@ function setAimPoint(point){
  // instead of a range the preview would ignore.
  if($('club').value==='putter'){$('power').value=puttPowerFor(aimRange);aimRange=null;}
  updateAim();view.setCamera(round.position,aim);
+}
+
+// NUDGING THE AIM, for a thumb. Tapping the course aims wherever the finger
+// lands, and at 200 yards a fingertip covers several yards of fairway -- so on
+// a phone a tap got you close and nothing got you exact. The aim pad and the
+// aim arrows finish the job in steps small enough to matter: half a degree a
+// tap, under two yards sideways at 200, and a yard further or shorter. Held,
+// they sweep. For a putt "further" is the putt's LENGTH, which is its power --
+// the one number a putt's distance comes from -- so it moves that instead of
+// a target the roll preview would ignore.
+const AIM_TAP_DEGREES=.5,AIM_TAP_YARDS=1,PUTT_TAP_POWER=.5;
+function canNudgeAim(){return appMode==='play'&&!flight&&!dropState&&!round.holeComplete&&!round.scrambleSelection&&view.config.mode!=='free';}
+function nudgeAim(side,taps){
+ if(!canNudgeAim())return;
+ aim+=aimDelta(side,taps*AIM_TAP_DEGREES);updateAim();view.setCamera(round.position,aim);
+}
+function nudgeReach(dir,taps){
+ if(!canNudgeAim())return;
+ if($('club').value==='putter'){$('power').value=clamp(Number($('power').value)+dir*taps*PUTT_TAP_POWER,.5,100);updateAim();return;}
+ const c=clubs[$('club').value],current=aimRange??c.carry*YARD*(Number($('power').value)/100)**1.65;
+ aimRange=clamp(current/YARD+dir*taps*AIM_TAP_YARDS,1,2000)*YARD;updateAim();
+}
+// HOLD TO SWEEP. The press itself is one tap, so a quick tap is always exactly
+// one step. Held past a moment, it repeats at a rate that climbs from three
+// taps a second to twenty-four, so a short hold is still a fine adjustment and
+// a long one crosses the fairway. Pointer events, so a finger and a mouse
+// behave alike; a keyboard press on the focused button arrives as a click with
+// no pointer behind it (`detail` 0) and counts as one tap, and a pointer's own
+// click is ignored because its press already stepped.
+function holdToRepeat(button,step){
+ let frame=0,started=0,last=0;
+ const stop=()=>{cancelAnimationFrame(frame);frame=0;};
+ const loop=now=>{
+  const held=(now-started)/1000;
+  if(held>.35)step(Math.min(24,3+14*(held-.35))*(now-last)/1000);
+  last=now;frame=requestAnimationFrame(loop);
+ };
+ button.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  e.preventDefault();stop();step(1);started=last=performance.now();
+  try{button.setPointerCapture(e.pointerId);}catch{}
+  frame=requestAnimationFrame(loop);
+ });
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,stop);
+ button.addEventListener('click',e=>{if(e.detail===0)step(1);});
+ // A long press on Android opens a context menu, which would end the sweep.
+ button.addEventListener('contextmenu',e=>e.preventDefault());
+}
+
+// THE BIG MAP. The map is where aiming is precise -- it is drawn from above,
+// to scale, and nothing stands in front of the target -- but on a phone it is
+// a 104 px thumbnail. This lays the same canvas over the course, as large as
+// the screen allows, where a tap aims (or places a drop, or flies, whatever
+// the map does at that moment) and two fingers zoom. Everything else about the
+// map is untouched: it is still the one canvas, drawn by the one function.
+let aimViewOpen=false;
+function setAimView(on){
+ on=!!on;if(on===aimViewOpen)return;aimViewOpen=on;
+ $('world').classList.toggle('aim-view',on);
+ $('mapExpand').setAttribute('aria-pressed',String(on));
+ // Fitted both ways. A zoom picked on the big map means nothing on a
+ // thumbnail, and the big map should open on the whole hole.
+ resetMapNav();
+ if(on)$('aimViewHint').textContent=dropState?'Tap to place the ball · pinch to zoom'
+  :['free','overview'].includes(view.config.mode)?'Tap to fly there · pinch to zoom':'Tap to aim · pinch to zoom';
+ updateExplorer();
 }
 
 function takeShot(data=null){
@@ -3531,7 +3597,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
  $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('power').oninput=powerChanged;$('club').onchange=()=>{updateAim();updateHUD();sendPlayer();};
- $('aimLeft').onclick=()=>{if(flight)return;aim+=1;updateAim();view.setCamera(round.position,aim);};$('aimRight').onclick=()=>{if(flight)return;aim-=1;updateAim();view.setCamera(round.position,aim);};
+ holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
+ holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
+ holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));
+ $('padPin').onclick=()=>{if(canNudgeAim())setAimPoint(course.pin);};
+ $('mapExpand').onclick=()=>setAimView(!aimViewOpen);$('aimViewDone').onclick=()=>setAimView(false);
  $('holeFlyover').onclick=()=>tour?stopTour():startTour();
  // The tools button had no handler at all: openToolsBox existed and nothing
  // ever called it, so clicking Tools did nothing in any mode.
@@ -3576,6 +3646,23 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   setOpen(open);
   toggle.onclick=()=>setOpen(!$('world').classList.contains('card-open'));
  }
+ // ADD TO HOME SCREEN, SAID ONCE. iOS never offers it -- the option is in the
+ // Share sheet, where nobody looks -- and it is the only way an iPhone plays
+ // full screen. So a hosted copy opened in a browser on an iPhone or iPad says
+ // so on the menu, the first time only. Never from disk, where there is no
+ // address to add, and never inside the installed app. An iPad reports itself
+ // as a Mac and is told apart by its touch screen.
+ {
+  const KEY='fairway-home-hint-v1';
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const installed=navigator.standalone===true||!!globalThis.matchMedia?.('(display-mode: standalone)').matches;
+  let seen=false;try{seen=localStorage.getItem(KEY)==='1';}catch{}
+  if(ios&&!installed&&!seen&&/^https?:$/.test(location.protocol)){
+   $('homeHint').hidden=false;
+   try{localStorage.setItem(KEY,'1');}catch{}
+  }
+  $('homeHintClose').onclick=()=>{$('homeHint').hidden=true;};
+ }
  $('seedButton').onclick=async()=>{
   const why=savableCourse().why;
   if(why){toast(why);return;}
@@ -3595,10 +3682,20 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // A DRAG IS NOT A CLICK. The map has always been click-to-aim, and dragging it
  // would otherwise fire an aim at wherever the finger came up -- so a pointer
  // that moved more than a few pixels suppresses the click that follows it.
- let mapDrag=null,mapMoved=false;
+ //
+ // TWO FINGERS ZOOM. A pinch used to reach only the first finger, which panned,
+ // while the second did nothing -- on a phone the map could not be zoomed at
+ // all. Every pointer on the map is tracked; with two down, the spread between
+ // them zooms and the midpoint pans, so the ground under the fingers stays
+ // under the fingers. Zoom about the OLD midpoint, then pan to the new one:
+ // zooming about the new midpoint in the old frame and then panning as well
+ // moves the map twice.
+ const mapPointers=new Map();let mapMoved=false,mapPinch=null,mapPointerType='mouse';
+ const pinchOf=()=>{const [a,b]=mapPointers.values();return {d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),x:(a.x+b.x)/2,y:(a.y+b.y)/2};};
  $('map').onpointerdown=e=>{
-  
-  mapDrag={...mapPixels(e),id:e.pointerId};mapMoved=false;
+  if(!mapPointers.size){mapMoved=false;mapPointerType=e.pointerType;}
+  const p=mapPixels(e);mapPointers.set(e.pointerId,{...p,sx:p.x,sy:p.y});
+  if(mapPointers.size===2){mapPinch=pinchOf();mapMoved=true;}
   // Capture is a nicety -- it keeps the drag alive when the pointer leaves the
   // canvas -- and it must not be able to take the drag down with it if the
   // browser refuses the id. Without the guard a throw here aborts pointerdown
@@ -3606,25 +3703,35 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   try{$('map').setPointerCapture(e.pointerId);}catch{}
  };
  $('map').onpointermove=e=>{
-  if(!mapDrag||e.pointerId!==mapDrag.id)return;
-  const p=mapPixels(e),dx=p.x-mapDrag.x,dy=p.y-mapDrag.y;
-  if(!mapMoved&&Math.hypot(dx,dy)<5)return;
-  // `mapPixels` returns {x,y} and NOTHING ELSE, so re-anchoring with a bare `p`
-  // dropped the pointer id -- and the very next move failed its own
-  // `e.pointerId!==mapDrag.id` guard and returned. The map moved once and then
-  // stopped dead, which reads as the drag breaking rather than as a limit.
-  mapMoved=true;mapDrag={...p,id:mapDrag.id};
-  const m=$('map').mapTransform;if(!m)return;
+  const q=mapPointers.get(e.pointerId);if(!q)return;
+  const p=mapPixels(e),m=$('map').mapTransform;
+  if(mapPointers.size>=2){
+   mapPointers.set(e.pointerId,{...q,...p});
+   if(!m||!mapPinch)return;
+   const now=pinchOf();
+   let nav=zoomAbout(m,mapNav(),mapPinch.x,mapPinch.y,now.d/mapPinch.d);
+   nav=panBy({scale:m.scale/m.zoom*nav.zoom},nav,now.x-mapPinch.x,now.y-mapPinch.y);
+   mapPinch=now;$('map').mapNav=nav;redrawMap();
+   return;
+  }
+  if(!mapMoved&&Math.hypot(p.x-q.sx,p.y-q.sy)<5)return;
+  // Re-anchored by MERGING into the stored point. An earlier version stored the
+  // bare `{x,y}` that `mapPixels` returns and lost the pointer id with it, so
+  // the next move failed its own guard -- the map moved once and then stopped
+  // dead, which read as the drag breaking rather than as a limit.
+  const dx=p.x-q.x,dy=p.y-q.y;
+  mapMoved=true;mapPointers.set(e.pointerId,{...q,...p});
+  if(!m)return;
   $('map').mapNav=panBy(m,mapNav(),dx,dy);
   redrawMap();
  };
- const endMapDrag=e=>{
-  if(!mapDrag||e.pointerId!==mapDrag.id)return;
-  mapDrag=null;
+ const endMapPointer=e=>{
+  if(!mapPointers.delete(e.pointerId))return;
+  if(mapPointers.size<2&&mapPinch){mapPinch=null;updateExplorer();}
   if($('map').hasPointerCapture?.(e.pointerId))$('map').releasePointerCapture(e.pointerId);
  };
- $('map').onpointerup=endMapDrag;
- $('map').onpointercancel=endMapDrag;
+ $('map').onpointerup=endMapPointer;
+ $('map').onpointercancel=endMapPointer;
  // Zoom about the POINTER, not the centre: zooming about the centre makes the
  // map crawl away from whatever you were trying to look at.
  $('map').onwheel=e=>{
@@ -3640,9 +3747,15 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  $('map').ondblclick=()=>{resetMapNav();redrawMap();updateExplorer();toast('Map reset to fit.');};
  $('map').onclick=e=>{
   if(mapMoved){mapMoved=false;return;}
-  if(flight)return;const m=$('map').mapTransform,{x:mx,y:my}=mapPixels(e);
+  if(flight)return;
+  // A FINGER ON THE THUMBNAIL OPENS THE BIG MAP rather than aiming from it. On
+  // a thumbnail a fingertip is twenty yards wide, so a tap that aimed would
+  // always aim somewhere near; the big map is where it can land exactly. A
+  // mouse is precise at any size and still aims straight from the thumbnail.
+  if(!aimViewOpen&&mapPointerType==='touch'){setAimView(true);return;}
+  const m=$('map').mapTransform,{x:mx,y:my}=mapPixels(e);
   if(dropState){const q=mapPosition(m,mx,my),p=m.full?course.toLocal(q):q;previewDrop(p);return;}
-  if(m.full){cameraMode('free');const {x,z}=mapPosition(m,mx,my);view.targetPos.set(x,world.height(x,z)+80,z);view.freePitch=-.7;view.updateFreeLook();return;}
+  if(m.full){setAimView(false);cameraMode('free');const {x,z}=mapPosition(m,mx,my);view.targetPos.set(x,world.height(x,z)+80,z);view.freePitch=-.7;view.updateFreeLook();return;}
   if(round.holeComplete)return;const {x,z}=mapPosition(m,mx,my);setAimPoint({x,z});
  };
  window.addEventListener('keydown',e=>{if(e.code==='Escape'&&!$('shotList').hidden){closeShotList();return;}if(e.code==='Escape'&&!$('menuDrop').hidden){closeMenuDrop();return;}if(e.code==='Escape'&&!$('clockPop').hidden){toggleClockPop(false);return;}if(e.code==='Escape'&&!$('leaveNotice').hidden){$('leaveNotice').hidden=true;return;}
@@ -3653,6 +3766,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // not see and the scorecard in front of them needed a second -- found by the
  // browser smoke test pressing Escape once and seeing nothing change. The tool
  // window is left where it was, for when the panel is gone.
+ if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
  if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Space')takeShot();if(e.code==='Enter')finishShot();if(e.code==='KeyQ')cycleClub(-1);if(e.code==='KeyE')cycleClub(1);if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
@@ -3754,6 +3868,10 @@ function tick(now){
  // Once per rendered frame, whether or not the aim block above ran: a tap is
  // owed to the next frame that can use it, not saved up behind an open panel.
  tapped.clear();
+ // THE BIG MAP GIVES WAY to anything that needs the screen: a ball in the air,
+ // a panel, the flyover, the menu. Checked every frame for the same reason as
+ // the reading tools below -- each of those starts several ways.
+ if(aimViewOpen&&(flight||panel||tour||appMode==='menu'))setAimView(false);
  // While the scorecard is up, the hole is on screen behind it: every tracer of
  // it, from a slow orbit that keeps tee and green in the same frame.
  if(summaryCamera&&!flight){holeSummary+=dt;view.summaryOrbit(holeSummary);}
