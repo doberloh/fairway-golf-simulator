@@ -19,14 +19,19 @@
 #
 #   boot           opens by file://, starts without an error, makes no network
 #                  request, and names its build                          4 s
-#   range          the shot pipeline, twice, with a club change         31 s
+#   range          the shot pipeline, twice, with a club change         47 s
 #   endless-round  a hole from tee to holed putt to the next one,
-#                  which is where the green-marker crash lived          174 s
+#                  which is where the green-marker crash lived          262 s
 #
-# (Measured on that 32-core machine under `--software`. Expect a runner to be
-# slower, not faster.)
+# (Measured on that 32-core machine under `--software`, after the layout work;
+# the round loop was 174 s before it. Expect a runner to be slower, not
+# faster. With no GPU the scorecard's eight-second automatic advance usually
+# beats the harness to the Next hole button, and the log says so -- that is a
+# correct way to reach the next hole, not a failure.)
 #
-# The full seven journeys are the local gate before a merge; AGENTS.md makes
+# The full eleven journeys -- including the layout at nine screen sizes and a
+# hole played by touch on a phone both ways up -- are the local gate before a
+# merge; AGENTS.md makes
 # that a rule.
 #
 # NOT YET RUN ON GITHUB. This repository had no remote when this was written,

@@ -25,6 +25,8 @@ Manual play does not require an account, commercial golf software or a launch mo
 | Chromebook | Chrome; served app or locally opened built HTML where allowed | Optional Linux development environment | Conditional; school/work policy, GPU and memory can limit use |
 | Android phone/tablet | Current Chrome-compatible browser opening the served app | Build on a desktop; no supported on-device build workflow | Conditional and untested; touch layout, GPU memory and performance need validation |
 | iPhone/iPad | Current Safari opening the served app | Build on a desktop; no supported on-device build workflow | Conditional and untested; file previews are not the documented run route |
+
+**Phones and tablets now have their own layout**, checked on every run of the browser smoke test at an iPad's and a phone's screen size, both ways up, including a whole hole played by touch. That test browser only emulates a phone: it proves everything fits and answers a tap, not how a particular phone's browser feels or how fast its graphics run. Those rows stay "untested" until someone plays on the real device.
 | Steam Deck or similar Linux handheld | Desktop browser using the Linux route | Linux tools where available, or build elsewhere | Conditional and untested; no Steam package or verified built-in control mapping |
 | Raspberry Pi/other small ARM computers | May serve the built HTML; rendering requires a capable browser/GPU | Matching supported Node.js/OS, or build elsewhere | Experimental; not a supported performance target or a verified monitor host |
 | Smart TVs, consoles, VR headsets | No dedicated package or immersive mode | Build elsewhere | Not currently supported targets; use a desktop connected to a display instead |

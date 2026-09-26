@@ -135,7 +135,7 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | index.html | Static app shell, canvas and primary HUD element IDs |
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
-| src/layout.js | Saved draggable/resizable HUD layout |
+| src/layout.js | Saved draggable/resizable HUD layout, and the MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world |
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
@@ -638,6 +638,77 @@ THE TRAP, and it cost a broken build: `layout.sync()` had a comment saying “se
 **A grip, not the whole panel.** These are not inert boxes: the map is click-to-aim and drag-to-pan, the shot controls are sliders and a swing button. Making the panel itself draggable would take those gestures from the controls that own them. Verified that dragging inside the map still pans the map (59 m) and leaves the panel where it was, and that a click still moves the aim point.
 
 **The handles live INSIDE each panel, and a MutationObserver puts them back.** An overlay tracking a panel from outside has to be re-synced every time the panel changes size on its own — and these do constantly — so an always-visible overlay would spend half its life in the wrong place. Inside, they track for free. The cost is that `innerHTML` sweeps them away, which is exactly what `showLiveResult` does to `#shotResult` on every shot: the first build left the two most frequently rebuilt panels unmovable, and because the rest worked it read as intermittent rather than total. Each panel now carries a `childList` observer that re-appends its handles; the re-append fires the observer once more, whose check then passes, so it settles rather than looping. Do not replace this with a re-append at the call sites — the one that forgets is the one nobody notices.
+
+## The HUD fits the screen by measurement, not by constants
+
+**The default HUD positions are read from where things actually are.** They
+used to be pixel constants tuned on a 1920x1080 screen -- the camera bar 147 px
+from the top, the map 270 px up from the bottom (a guess at the shot controls'
+height), and the course card allowed the screen's height less 190 px, which
+forgot the top bar and the controls. And every layout rule answered to WIDTH.
+Laptops are wide and short, so a 1366x768 screen got the full desktop layout
+with 312 fewer pixels to put it in: the map, pinned from the bottom, rose into
+the camera bar, pinned from the top, and covered all five camera buttons.
+
+`createLayout` now writes four measurements onto `#world` as CSS variables, a
+frame after any watched element resizes:
+
+| variable | what it is |
+|---|---|
+| `--controls-top` | the top of whatever bar is at the bottom: shot controls, or the drop, free-flight or scramble bar when one has taken over |
+| `--weather-bottom` | the bottom of the weather panel |
+| `--card-bottom` | the bottom of the course card; the phone layout stacks the camera row and wind under it |
+| `--tools-bottom` | the bottom of the camera bar; a phone held sideways hangs the map from it |
+
+**Written a frame later, not inside the ResizeObserver.** The card's height
+depends on `--controls-top` and the card is observed; changing a variable inside
+the callback that resizes an observed element trips Chrome's "ResizeObserver
+loop completed with undelivered notifications", which is an ERROR event -- and
+the smoke test fails on error events, correctly.
+
+**Every rule skips `.hud-custom`.** A panel the player dragged keeps their
+geometry, and is left out of the sums too: where they put it is no guide to
+where the defaults should go.
+
+**The layout lives in one section at the end of `style.css`**, "Layout that
+fits the screen it is on", rather than as edits to the packed rules above it.
+On a laptop: weather on top, and beneath it the camera bar BESIDE the map,
+lined up with the weather's width -- spending width, which laptops have,
+instead of height, which they do not. The card is capped to the space above
+the controls (it scrolls inside) and at 380 px wide, so a long course name
+wraps rather than widening the card to a third of an iPad.
+
+**A phone is below 560 px wide OR below 500 px tall** -- both ways up. The card
+becomes a strip with a "Shot details" toggle (`#cardToggle`, class `card-open`
+on `#world`, remembered per device); the player row and shot numbers are hidden
+until it is tapped, by the owner's decision. The toggle only exists in the
+phone layout; elsewhere the details always show. Opened, the card is capped at
+45% of the play area so the controls and the course stay reachable. The camera
+bar becomes a row with the wind beside it, the map a thumbnail, and the shot
+controls fit a thumb -- two rows upright, one sideways. The tee choice leaves
+the bar upright; it stays in the round's Format & tees.
+
+**A game screen never scrolls; a menu may.** `#world` had a minimum height of
+620-640 px, so every phone scrolled -- sideways the shot button was off the
+bottom. That is gone. The main menu instead may scroll INSIDE itself if it ever
+must, because removing the page scroll would otherwise have stranded the
+buttons below its fold: the page scrolling had been the only way to reach them.
+
+**Two behaviours changed alongside, both found by the phone journeys**: starting
+a sim drop closes the Tools window (it sat over "Place ball" on a phone held
+sideways), and a toast is click-through (`pointer-events:none` -- it only ever
+holds text, and it sat on "Copy course code" at 820 wide).
+
+**How it is checked.** `tools/smoke.mjs`'s `hud-reachable` journey visits nine
+sizes -- desktop, four laptops, an iPad both ways up, a phone both ways up --
+and at each asks the browser what is under every control on the menu and the
+play screen, whether the page can scroll, and how much of the course shows;
+phones are checked with the details folded and open. `phone-portrait` and
+`phone-landscape` play a hole by touch alone. Measured when it landed: every
+control reachable everywhere, no page scrolls, and the course visible on 39% to
+65% of the screen folded (it was 7% on a phone upright). The browser only
+EMULATES a phone -- a real iPhone's Safari and a real phone's GPU are still
+checked by hand.
 
 **`.view-tools` gets its grip outside its own box.** It is a 30px column of buttons, and a grip inside its top-left corner sits on the first button and steals its clicks. On a right-edge panel, just outside the left edge is still on screen.
 

@@ -217,7 +217,10 @@ class Trip {
  // here; this harness stays neutral by not leaving the tray open.
  async closeTools() {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false)) {
-   await this.page.click('#toolsButton');
+   // By the window's own close button, the way a person closes it. On a phone
+   // the Tools window sits over the Tools BUTTON, so pressing the button a
+   // second time -- which is what this did first -- is not possible there.
+   await this.page.getByRole('button', {name: 'Close Tools', exact: true}).click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false), 'the tools tray to close', 5 * SLOW);
   }
  }
@@ -238,6 +241,23 @@ class Trip {
   if (where === 'window') await this.page.getByRole('button', {name: `Close ${title}`, exact: true}).click();
   else await this.key('Escape');
   await this.until(async () => !(await this.panelShowing(title)), `"${title}" to close`, 5 * SLOW);
+ }
+
+ // THE NEXT HOLE ARRIVES ONE OF TWO WAYS, and both are correct: the player
+ // presses Next hole on the scorecard, or the scorecard advances by itself
+ // after eight seconds. On a GPU the press lands in well under a second. With
+ // no GPU a frame takes a second, Playwright's check that the button is stable
+ // across two frames can outlast the eight, and the button is rightly gone --
+ // the first software run after the layout work waited six minutes to click it
+ // while the game sat on hole 2, three under. So: press it if it is still
+ // there, accept the automatic advance if it got there first, fail only if
+ // the hole never changes, and say which way it went.
+ async nextHole(press) {
+  const before = await this.page.textContent('#holeNumber');
+  const pressed = await press().then(() => true, () => false);
+  await this.inPlay();
+  await this.until(async () => (await this.page.textContent('#holeNumber')) !== before, 'the hole number to change', 30 * SLOW);
+  if (!pressed) console.log('       (arrived by the eight-second automatic advance; the button was gone before it could be pressed)');
  }
 
  async closeDrawer() {
@@ -269,10 +289,10 @@ const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {
 // can click. Checked by asking the browser what is actually under the centre of
 // each control -- the only honest test, because a control can be displayed,
 // enabled and in the DOM and still be sitting underneath another window.
-function unreachableControls() {
+function unreachableControls(scope = '#world button, #world input, #world select, #world a, #shotControls button, #shotControls input, #shotControls select, header button') {
  const out = [];
  const seen = new Set();
- for (const b of document.querySelectorAll('#world button, #world input, #world select, #world a, #shotControls button, #shotControls input, #shotControls select, header button')) {
+ for (const b of document.querySelectorAll(scope)) {
   if (seen.has(b)) continue; seen.add(b);
   const r = b.getBoundingClientRect(), cs = getComputedStyle(b);
   if (!r.width || !r.height || cs.visibility === 'hidden' || b.closest('[hidden]') || b.disabled) continue;
@@ -285,6 +305,33 @@ function unreachableControls() {
   out.push(`${label} is under ${c ? (c.id ? '#' + c.id : '.' + [...c.classList][0]) : hit?.tagName}`);
  }
  return out;
+}
+
+// The rest of the layout's health, beside reachability: a game screen must
+// never scroll, and the HUD must not hide most of the course. The second is a
+// floor, not a target -- phone portrait used to show 7% of the course, with
+// the card covering the rest, and 30% is far enough above that to catch it
+// coming back without failing a laptop that is merely busy.
+const SCENE_FLOOR = 30;
+// ...except with the card's details OPENED on a phone, which the player does on
+// purpose to read their numbers and folds with the same tap. Measured at 26%
+// with the card capped at 45% of the screen, and it reads well: the numbers
+// scroll inside the card, the camera row and the wind sit under it, the course
+// shows in the middle. Tuning that smaller to clear 30 would make the numbers
+// harder to read to satisfy a threshold written for a different state. It
+// keeps a floor of its own, so an open card that swallows the screen -- the
+// uncapped first draft covered 81% -- still fails.
+const OPENED_FLOOR = 20;
+function layoutHealth() {
+ let covered = 0, total = 0;
+ for (let y = 0; y < innerHeight; y += 20) for (let x = 0; x < innerWidth; x += 20) {
+  total++;
+  const el = document.elementFromPoint(x, y);
+  if (el && el.id !== 'scene') covered++;
+ }
+ const d = document.documentElement;
+ return {scene: Math.round(100 * (1 - covered / total)), scrolls: d.scrollWidth > innerWidth + 1 || d.scrollHeight > innerHeight + 1,
+  page: `${d.scrollWidth}x${d.scrollHeight}`};
 }
 
 class JourneyFailed extends Error {
@@ -316,8 +363,13 @@ const JOURNEYS = [
   },
  },
 
- {
-  name: 'menu-panels',
+ // Run three times: on a desktop, and on a phone both ways up -- the panels
+ // are what a phone player taps first, and a panel that fits a desktop can
+ // strand its buttons on 390 px.
+ ...[['', {}], ['-phone-portrait', {viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true}],
+     ['-phone-landscape', {viewport: {width: 844, height: 390}, hasTouch: true, isMobile: true}]].map(([suffix, context]) => ({
+  name: `menu-panels${suffix}`,
+  context,
   what: 'every panel the menu opens, every tab in it, and the diagnostic',
   async run(t) {
    await menuReady(t);
@@ -350,7 +402,7 @@ const JOURNEYS = [
     if (!/version\s+[0-9a-f]{7}/.test(text)) throw new Error('the diagnostic does not name the build');
    });
   },
- },
+ })),
 
  {
   name: 'endless-round',
@@ -421,12 +473,7 @@ const JOURNEYS = [
     const title = await t.drawerTitle();
     if (!title) throw new Error('no panel open after holing out');
    });
-   await t.step('next hole grows and loads', async () => {
-    const before = await t.page.textContent('#holeNumber');
-    await t.page.click('#nextHoleScore');
-    await t.inPlay();
-    await t.until(async () => (await t.page.textContent('#holeNumber')) !== before, 'the hole number to change', 30 * SLOW);
-   });
+   await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());
   },
  },
@@ -547,35 +594,144 @@ const JOURNEYS = [
 
  {
   name: 'hud-reachable',
-  what: 'every control on the play screen can actually be clicked, at common screen sizes',
-  // Runs its own window sizes rather than the shared one.
-  sizes: [[1920, 1080], [1536, 864], [1440, 900], [1366, 768], [1280, 720]],
+  what: 'every play-screen control can be clicked, nothing scrolls, and the course shows -- desktop to phone',
+  // Runs its own window sizes rather than the shared one. Desktop and the
+  // commonest laptops, an iPad both ways up, and a phone both ways up. The
+  // phone sizes are checked with the card's details folded AND open, because
+  // opening them makes the card taller and moves everything stacked under it.
+  sizes: [[1920, 1080], [1536, 864], [1440, 900], [1366, 768], [1280, 720],
+   [1180, 820], [820, 1180], [844, 390], [390, 844]],
   async run(t) {
    await menuReady(t);
+   // THE MENU FIRST, at every size. It is the first screen anybody sees, and
+   // on a phone its bottom buttons used to sit below the screen with no way to
+   // scroll to them. The splash fades for a couple of seconds; wait it out.
+   await t.page.waitForTimeout(3000);
+   const menuProblems = [];
+   for (const [w, h] of this.sizes) {
+    await t.page.setViewportSize({width: w, height: h});
+    await t.page.waitForTimeout(300 * SLOW);
+    const bad = await t.page.evaluate(unreachableControls, '#mainMenu button');
+    const health = await t.page.evaluate(layoutHealth);
+    const notes = [...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : []), ...(health.scrolls ? [`the page scrolls (${health.page})`] : [])];
+    console.log(`     menu ${`${w}x${h}`.padEnd(19)} ${notes.length ? notes.join('; ') : 'fine'}`);
+    if (notes.length) menuProblems.push(`${w}x${h}`);
+   }
+   await t.step('every menu button reachable, at every size', async () => {
+    if (menuProblems.length) throw new Error(`the menu has problems at ${menuProblems.join(', ')}`);
+   });
+   await t.page.setViewportSize({width: 1920, height: 1080});
    await t.step('Endless → Start an endless run', async () => {
     await fromMenu(t, 'Endless');
     await t.press('Start an endless run');
     await t.inPlay();
    });
-   const blocked = [];
+   // The toast that announces an Endless run sits at the top for four
+   // seconds. It no longer swallows clicks, but let it go before measuring.
+   await t.page.waitForTimeout(4500);
+   const problems = [];
+   const check = async (label, floor = SCENE_FLOOR) => {
+    // The HUD lays itself out on resize, and the layout measures itself a
+    // frame after that; give it a few.
+    await t.page.waitForTimeout(500 * SLOW);
+    const bad = await t.page.evaluate(unreachableControls);
+    const health = await t.page.evaluate(layoutHealth);
+    const notes = [];
+    if (bad.length) notes.push(`${bad.length} unreachable -- ${bad.join('; ')}`);
+    if (health.scrolls) notes.push(`the page scrolls (${health.page})`);
+    if (health.scene < floor) notes.push(`the HUD hides ${100 - health.scene}% of the course (floor ${floor}% visible)`);
+    console.log(`     ${label.padEnd(24)} course ${String(health.scene).padStart(2)}%  ${notes.length ? notes.join('; ') : 'fine'}`);
+    if (notes.length) problems.push(label);
+   };
    for (const [w, h] of this.sizes) {
     await t.page.setViewportSize({width: w, height: h});
-    // The HUD lays itself out on resize; give it a frame or two.
-    await t.page.waitForTimeout(400 * SLOW);
-    const bad = await t.page.evaluate(unreachableControls);
-    console.log(`     ${w}x${h}: ${bad.length ? bad.length + ' unreachable -- ' + bad.join('; ') : 'every control reachable'}`);
-    if (bad.length) blocked.push(`${w}x${h} (${bad.length})`);
+    const phone = w <= 560 || h <= 500;
+    if (!phone) { await check(`${w}x${h}`); continue; }
+    // The details toggle exists only on a phone. Folded is the default.
+    await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('card-open')) document.getElementById('cardToggle').click(); });
+    await check(`${w}x${h} details folded`);
+    await t.page.click('#cardToggle');
+    await check(`${w}x${h} details open`, OPENED_FLOOR);
+    await t.page.click('#cardToggle');
    }
-   await t.step('every control reachable at every size', async () => {
-    if (blocked.length) throw new Error(`controls covered by other windows at ${blocked.join(', ')}`);
+   await t.step('every control reachable, no scrolling, the course visible, at every size', async () => {
+    if (problems.length) throw new Error(`layout problems at ${problems.join(', ')}`);
    });
   },
  },
+ // A HOLE PLAYED ON A PHONE, WITH NOTHING BUT A THUMB. No keyboard at all:
+ // aim by tapping the course, shoot and skip with the on-screen buttons, drop
+ // through the tools, putt out, and take the next hole. The browser pretends
+ // to be a phone -- touch events, a phone's screen -- which proves everything
+ // fits and answers a tap. It cannot prove how a real iPhone's Safari feels or
+ // how fast a real phone renders; that takes the phone.
+ ...['portrait', 'landscape'].map(way => ({
+  name: `phone-${way}`,
+  what: `a hole on a phone held ${way === 'portrait' ? 'upright' : 'sideways'}, by touch alone`,
+  context: {viewport: way === 'portrait' ? {width: 390, height: 844} : {width: 844, height: 390},
+   hasTouch: true, isMobile: true, deviceScaleFactor: 2},
+  async run(t) {
+   await menuReady(t);
+   const tap = sel => t.page.tap(sel);
+   await t.step('Endless → Start an endless run', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
+    await t.inPlay();
+   });
+   await t.step('the details are folded, and one tap opens and closes them', async () => {
+    const visible = () => t.page.evaluate(() => !!document.getElementById('shotResult')?.offsetHeight);
+    if (await visible()) throw new Error('the shot numbers show before anything was tapped');
+    await tap('#cardToggle');
+    await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
+    await tap('#cardToggle');
+    await t.until(async () => !(await visible()), 'the shot numbers to fold away', 5 * SLOW);
+   });
+   await t.step('aim by tapping the course', async () => {
+    const before = await t.page.textContent('#aimOutput');
+    const box = await t.page.locator('#scene').boundingBox();
+    // Off to one side of the middle of the screen, which is fairway or rough
+    // on any hole -- the point is only that the aim moves.
+    await t.page.touchscreen.tap(box.x + box.width * 0.62, box.y + box.height * 0.45);
+    await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
+   });
+   const swing = async () => {
+    await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
+    await tap('#swing');
+    await t.until(() => t.inFlight(), 'the shot button to start a shot', 5 * SLOW);
+    await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});
+    await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);
+   };
+   await t.step('the shot button, then Skip', swing);
+   await t.step('drop beside the pin, through the tools', async () => {
+    await tap('#toolsButton');
+    await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools', 5 * SLOW);
+    await tap('#simDrop');
+    await tap('#dropAtGreen');
+    await tap('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+   });
+   await t.step('putt out with the shot button', async () => {
+    for (let putt = 1; putt <= 6; putt++) {
+     await swing();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false)) return;
+    }
+    throw new Error('six putts from two yards and the ball never dropped');
+   });
+   await t.step('the next hole, from the scorecard', () => t.nextHole(() => t.page.locator('#nextHoleScore').tap({timeout: 3000 * SLOW})));
+   await t.step('and plays', swing);
+   await t.step('nothing on the play screen is out of reach', async () => {
+    const bad = await t.page.evaluate(unreachableControls);
+    if (bad.length) throw new Error(`${bad.length} unreachable: ${bad.join('; ')}`);
+   });
+  },
+ })),
 ];
 
 // ------------------------------------------------------------------ runner
 if (flag('list')) {
- for (const j of JOURNEYS) console.log(`${j.name.padEnd(16)} ${j.what}`);
+ const width = Math.max(...JOURNEYS.map(j => j.name.length)) + 2;
+ for (const j of JOURNEYS) console.log(`${j.name.padEnd(width)} ${j.what}`);
  process.exit(0);
 }
 // `--only boot,range` runs a subset, in the order given. CI runs one: see
@@ -618,7 +774,8 @@ for (const journey of chosen) {
  // uncovered. Layout is a different question with its own journey --
  // `hud-reachable` -- so that a covered button and a dead one are never
  // reported as the same failure.
- const context = await browser.newContext({viewport: {width: 1920, height: 1080}});
+ // A journey may ask for its own screen -- the phone journeys do, with touch.
+ const context = await browser.newContext({viewport: {width: 1920, height: 1080}, ...(journey.context || {})});
  // The cheapest tier, so a slow machine spends its time on the journey rather
  // than on shadows. What is being tested is wiring, not pictures.
  await context.addInitScript(() => {

@@ -1047,6 +1047,12 @@ function openPlaySettings(name,content){
 }
 function beginDrop(){
  if(flight||round.holeComplete||round.scrambleSelection||round.candidates.length){toast('Finish this shot or choose the team lie first.');return;}
+ // A DROP PUTS THE TOOLS WINDOW AWAY, the way it already hides the camera bar
+ // (`.dropping .view-tools`). The drop is where Sim drop is pressed, so the
+ // Tools window was always open at this moment -- and on a phone held sideways
+ // it sat squarely on the drop bar, over "Place ball", the one button needed
+ // next. Found by the smoke test's phone journey, which could not reach it.
+ if(popups?.isOpen('tools'))popups.close('tools');
  closePanel();dropState={origin:{...round.position},candidate:{...round.position},mode:view.config.mode};$('dropBar').hidden=false;keys.clear();
  view.config.mode='free';view.wasFree=true;const p=course.toWorld(round.position);view.targetPos.set(p.x,world.height(p.x,p.z)+50,p.z-30);view.freeYaw=0;view.freePitch=-1.03;view.updateFreeLook();updateExplorer();$('world').classList.add('dropping');previewDrop(round.position);updateHUD();
 }
@@ -3526,6 +3532,25 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // It refuses for the same reasons a save refuses, in the same sentence: an
  // endless run is one hole at a time and `holes: 1` is not a value a course can
  // hold, so a code for it would be refused by the importer rather than here.
+ // THE CARD'S DETAILS FOLD AWAY ON A PHONE. The player row and the shot numbers
+ // are most of the card's height, and on a 390 px phone the card used to cover
+ // 93% of the screen. The owner's call, 25 September: on phones they are hidden
+ // by default and one tap away. The button only EXISTS in the phone layout --
+ // the stylesheet hides it everywhere else, and there the details always show
+ // whatever this class says -- so the choice is remembered per device without
+ // ever hiding anything on a laptop.
+ {
+  const toggle=$('cardToggle'),KEY='fairway-card-open-v1';
+  const setOpen=open=>{
+   $('world').classList.toggle('card-open',open);
+   toggle.setAttribute('aria-expanded',String(open));
+   $('cardToggleLabel').textContent=open?'Hide details':'Shot details';
+   try{localStorage.setItem(KEY,open?'1':'0');}catch{}
+  };
+  let open=false;try{open=localStorage.getItem(KEY)==='1';}catch{}
+  setOpen(open);
+  toggle.onclick=()=>setOpen(!$('world').classList.contains('card-open'));
+ }
  $('seedButton').onclick=async()=>{
   const why=savableCourse().why;
   if(why){toast(why);return;}

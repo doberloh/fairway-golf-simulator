@@ -168,6 +168,67 @@ export function createLayout(world) {
  }
  new ResizeObserver(restore).observe(world);
  restore();
+
+ // THE SPACE THE DEFAULT LAYOUT HAS TO FIT IN, MEASURED RATHER THAN GUESSED.
+ //
+ // The default positions used to be pixel constants: the camera bar 147 px from
+ // the top, the map 270 px from the bottom -- a guess at the height of the shot
+ // controls -- and the course card allowed the whole screen height less 190 px,
+ // which forgot the top bar and the controls altogether. On a 1920x1080 screen
+ // the guesses held. On a 1366x768 laptop the map, pinned from the bottom, rose
+ // straight into the camera bar, pinned from the top, and hid all five camera
+ // buttons; the card ran under the shot controls; and on a phone held sideways
+ // the shot button was off the screen. Every layout rule answered to WIDTH, and
+ // every one of those failures was about HEIGHT.
+ //
+ // So the stylesheet is told where things actually are, as variables on the
+ // playing area, and positions the panels from those:
+ //
+ //   --controls-top   the top edge of whatever bar sits at the bottom -- the
+ //                    shot controls, or the drop, free-flight or scramble bar
+ //                    when one of those has taken over
+ //   --weather-bottom the bottom edge of the weather panel
+ //   --card-bottom    the bottom edge of the course card, which the phone
+ //                    layout stacks the camera row and the weather under
+ //   --tools-bottom   the bottom edge of the camera bar, which a phone held
+ //                    sideways hangs the map from. The first cut of that
+ //                    layout GUESSED the row at 44 px; it is about 60, and the
+ //                    map sat 11 px over it, hiding a grip. Measured now.
+ //
+ // A panel the player has dragged is left out of the sums: it is theirs, and
+ // wherever they put it is no guide to where the defaults should go.
+ //
+ // Written a frame LATER, not inside the observer. The card's height depends on
+ // --controls-top, and the card is observed; changing a variable inside the
+ // callback that resizes an observed element trips Chrome's "ResizeObserver loop
+ // completed with undelivered notifications", which is an error event -- and an
+ // error event fails the browser smoke test, correctly.
+ const bottomBars = ['.bottom-area', '#exploreBar', '#dropBar', '#pickBar']
+  .map(s => world.querySelector(s)).filter(Boolean);
+ const weather = world.querySelector('.weather'), card = world.querySelector('.course-info');
+ const tools = world.querySelector('.view-tools');
+ const written = {};
+ const write = (name, px) => {
+  const v = Math.round(px) + 'px';
+  if (written[name] === v) return;
+  written[name] = v;
+  world.style.setProperty(name, v);
+ };
+ const shown = el => el && !el.classList.contains('hud-custom') && el.offsetWidth > 0 && el.offsetHeight > 0;
+ let pending = 0;
+ function measure() {
+  pending = 0;
+  const top = world.getBoundingClientRect().top, h = world.clientHeight;
+  const bars = bottomBars.filter(shown).map(b => b.getBoundingClientRect().top - top);
+  write('--controls-top', bars.length ? Math.min(...bars) : h - 16);
+  if (shown(weather)) write('--weather-bottom', weather.getBoundingClientRect().bottom - top);
+  if (shown(card)) write('--card-bottom', card.getBoundingClientRect().bottom - top);
+ if (shown(tools)) write('--tools-bottom', tools.getBoundingClientRect().bottom - top);
+ }
+ const soon = () => { if (!pending) pending = requestAnimationFrame(measure); };
+ const watch = new ResizeObserver(soon);
+ for (const el of [world, weather, card, tools, ...bottomBars]) if (el) watch.observe(el);
+ measure();
  // Only `reset` is left. There is no arranging MODE to toggle and no editing
  // state to report -- every panel drags and resizes whenever you like, so the
  // answer to "are we arranging?" was permanently yes and every caller asking it

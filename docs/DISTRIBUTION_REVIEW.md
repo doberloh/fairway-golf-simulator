@@ -359,3 +359,12 @@ out. Tracked files ship with their working-tree content, matching the
 `dist/index.html` built beside them. A build from the source archive, which has
 no repository, falls back to the glob and says so.
 
+**Phones and small screens.** The play HUD and the main menu now lay themselves
+out by measurement, with a phone layout below 560 px wide or 500 px tall. On
+every smoke run, at nine sizes from desktop to phone, every control is checked
+reachable and the page is checked not to scroll, and a hole is played by touch
+on an emulated phone both ways up. Before this, a phone held sideways could not
+reach the shot button at all. **This is emulation, not device testing**: the
+release claim for phones and tablets stays "intended and untested on real
+hardware" until someone plays on one.
+

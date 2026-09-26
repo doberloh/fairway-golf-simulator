@@ -24,6 +24,8 @@ Download a release archive, unzip it, and double-click `Fairway.html`. That is
 the whole procedure. [docs/INSTALLATION.md](docs/INSTALLATION.md) covers
 device support, LAN and mobile access, and what to do when a browser refuses.
 
+It lays itself out for the screen it is on, from a desktop down to a phone held either way up.
+
 Once you are in, [docs/PLAYING.md](docs/PLAYING.md) is the manual: every
 control, every course-studio setting, and the launch-monitor walkthrough.
 

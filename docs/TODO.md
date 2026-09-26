@@ -24,33 +24,26 @@ What `tools/smoke.mjs` turned up on its first full runs, and what building it
 turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
 
-- [ ] **The hole map covers the play controls on laptop-sized screens.** The
-  smoke test's `hud-reachable` journey asks the browser what is actually under
-  the centre of every visible control on the play screen. Measured:
+- [ ] **The studio and the tool windows have not been swept for layout.**
+  `hud-reachable` covers the main menu and the play screen at nine sizes, and
+  every menu panel and tab is opened on a phone both ways up. The studio bar,
+  and the floating tool windows during play, are not checked for overlap the
+  same way. The studio bar visibly sits over the lower edge of the Saved
+  courses panel at 1920x1080; its name box cleared it in the one case looked
+  at.
 
-  | screen | controls a player cannot click | which |
-  |---|---|---|
-  | 2560x1440 | none | |
-  | 1920x1080 | 2 | fullscreen; the Tools window's resize grip |
-  | 1600x900 | at least the Tools button | seen while capturing screenshots, not swept |
-  | 1536x864 | 6 | free flight, green view, flyover, **Tools**, fullscreen, a grip |
-  | 1440x900 | 6 | the same |
-  | 1366x768 | 8 | **all five camera buttons**, Tools, two grips |
-  | 1280x720 | 9 | all five camera buttons, three grips, a resize handle |
+- [ ] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
+  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
+  taken during the layout work. The aim marker steps aside when the two POINTS
+  are within 8 m of each other on the ground; it never checks whether the two
+  LABELS overlap on screen, which from the tee they often do. Not changed:
+  separate from the layout, and it wants a look at which should give way.
 
-  The Tools button matters most: it holds sim drop, mulligan and replay.
-  1366x768 is still among the commonest laptop screens there are. Keyboard
-  shortcuts for the cameras (C, V) keep working, so the game is playable, but
-  a mouse player on a laptop loses most of the camera bar. **A design call,
-  which is why it is not simply fixed:** move the map, shrink it below some
-  width, restack the camera bar, or give the default layout a small-screen
-  arrangement. The check is written; it goes green when the layout is right.
-
-- [ ] **The smoke test checks the PLAY screen's layout only.** The studio bar
-  visibly sits over the lower edge of the Saved courses panel at 1920x1080;
-  the name box cleared it in the one case looked at, but the studio, the
-  panels and the tool windows have not been swept the way `hud-reachable`
-  sweeps play.
+- [ ] **Nobody has measured a real phone.** The layout is checked under
+  emulation at a phone's size; the GPU is not. The low tier's known weakness on
+  weak hardware is the whole first impression on a phone, and the owner's own
+  phone and iPad test is the next data point. The tester diagnostic reports
+  the tier and the frame rate, so that test produces numbers.
 
 - [ ] **The CI smoke step has never run on GitHub.** There is no remote yet,
   so it has been proven locally with `--software` and not on a runner. A
@@ -62,9 +55,8 @@ same heading in `# Done`.
 - [ ] **What the smoke test does not walk is still checked by hand:**
   multi-player rounds, match play and scramble selection, the lab, the
   launch-monitor panel against a live bridge, a round saved and continued,
-  every tool window during play, Safari and Firefox.
-
-## Boot, generation and camera flights
+  free flight on a phone, Safari and Firefox, and any REAL phone or tablet --
+  the phone journeys run in a browser that emulates one.
 
 - [ ] **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
   trees, and has since redwoods landed.** Owner's call: not worth changing for
@@ -2670,3 +2662,59 @@ engineering provenance pass, not legal advice.
   tracked files' working content is what matches the build beside them. A
   checkout with no repository falls back to the glob and says so.
 
+- [x] **The HUD fits every screen from a desktop to a phone.** Measured first,
+  across eight sizes, before designing anything:
+
+  | screen | before | after |
+  |---|---|---|
+  | 1920x1080 | 2 controls unreachable | 0 |
+  | 1536x864 / 1440x900 | 6 | 0 |
+  | 1366x768 | 8 -- every camera button under the map | 0 |
+  | 1280x720 | 9 | 0 |
+  | iPad sideways 1180x820 | 8 | 0 |
+  | iPad upright 820x1180 | 0 | 0 |
+  | phone sideways 844x390 | 23, the page scrolled, shot button cut off | 0, no scroll |
+  | phone upright 390x844 | course 7% visible, page 177 px too wide | course 51% visible |
+
+  **The cause was one idea**: every layout rule answered to WIDTH and positions
+  were pixel constants tuned on 1920x1080, while every failure was about
+  HEIGHT. `layout.js` now measures where the bottom bar, the weather, the card
+  and the camera bar actually are and writes them as CSS variables; one new
+  section at the end of `style.css` positions the panels from those. The owner
+  chose between two prototypes photographed at every laptop size: **the camera
+  bar beside the map** (chosen) against a row under the weather (it stuck out
+  past the weather panel and read as bolted on). Also rejected: cameras in the
+  top bar (full already at 1280, and app chrome not game controls), and
+  height breakpoints alone (still guessed constants; break when the controls
+  wrap).
+
+  **Phones** get their own layout below 560 px wide or 500 px tall: the card as
+  a strip whose player row and shot numbers hide behind a "Shot details"
+  toggle by default (the owner's call), cameras in a row with the wind, the
+  map a thumbnail, controls for a thumb. `#world` lost its 620-640 px minimum
+  height, which was making every phone scroll, and the top bar drops its words
+  on a phone -- in a round it had been 177 px wider than the screen.
+
+  **Three bugs found on the way, all fixed**: the main menu could not scroll
+  and stranded Camera & bay, Graphics and Help below a phone's screen -- the
+  page scrolling had been the only way to reach them, so fixing that alone
+  would have made it worse; starting a sim drop left the Tools window over
+  "Place ball" on a phone held sideways; and a toast swallowed the clicks meant
+  for "Copy course code" underneath it for four seconds.
+
+  Checked by `hud-reachable` at nine sizes, menu and play screen, phone details
+  folded and open, and by `phone-portrait` and `phone-landscape`, which play a
+  hole by touch alone. A first draft guessed the camera row's height at 44 px
+  on a phone held sideways; it is about 60 and the map sat 11 px over it, which
+  is why that is measured too.
+
+
+- [x] **The smoke test raced the scorecard's own timer.** The scorecard advances
+  to the next hole by itself after eight seconds; the harness assumed it would
+  wait to be clicked. On a GPU the click lands in under a second, so it never
+  showed. With no GPU a frame takes about a second, Playwright's check that a
+  button is stable across two frames outlasted the eight, and the harness spent
+  six minutes waiting to click a button the game had correctly removed -- the
+  failure screenshot showed hole 2, three under. Both ways to the next hole are
+  now accepted, the log says which one happened, and it fails only if the hole
+  never changes. Looked like "Next hole is broken on slow machines"; was not.

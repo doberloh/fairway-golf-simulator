@@ -192,9 +192,11 @@ a panel checked for a class it never uses, keys pressed faster than a frame,
 a toggle pressed twice -- and three that were real. The screenshot it saves to
 `bench/shots/smoke/` is usually enough to tell which.
 
-**`hud-reachable` is expected to fail until the HUD layout is fixed** for
-laptop-sized screens. Everything else should be green; a red flow journey is a
-real problem.
+**Every journey should be green.** `hud-reachable` checks the menu and the play
+screen at nine sizes from desktop to phone; `phone-portrait` and
+`phone-landscape` play a hole by touch. A change to the stylesheet or to
+anything that moves a panel can break a size you are not looking at, which is
+the reason those exist -- a red one is a real problem.
 
 ## Measure with `tools/bench.mjs`, not with a throwaway script
 
