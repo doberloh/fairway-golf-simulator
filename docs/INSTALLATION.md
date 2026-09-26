@@ -155,6 +155,19 @@ live on the home screen like an app.
 On Android, Chrome offers **Install app** from its menu for the same address;
 Chrome's own install check reports the game as installable.
 
+**A password-protected site works.** If you keep the site private -- Netlify's
+password protection, say -- nothing the home screen needs is fetched without
+your login: the icon is inside the page and the manifest asks to carry the
+login. Two things to know. The home-screen app keeps **its own** login,
+separate from Safari's, so the first time you open it from the home screen it
+asks for the password once. And it keeps its own saved rounds, so a round
+saved while playing in Safari does not appear in the home-screen app.
+
+If the home-screen icon still comes out as a screenshot of the page, delete it
+and add it again; iOS remembers the first icon it took. If it is still a
+screenshot after that, iOS is not reading an icon built into the page, and the
+fallback is to host just the icon somewhere public -- it is only the logo.
+
 What it does not do yet: **it needs a connection each time it opens** -- it
 does not work offline -- and the controls are not yet kept clear of an
 iPhone's rounded corners and home bar when held sideways. **A launch monitor

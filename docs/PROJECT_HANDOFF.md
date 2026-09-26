@@ -1368,23 +1368,32 @@ This branch lived in `labGreenAt`, and removing the lab mode left `setRangeGreen
 Hosted -- Netlify, Cloudflare Pages, GitHub Pages -- Fairway can be added to a
 phone's home screen and open like an app. Four pieces, and one rule about each:
 
-- **`public/` is copied beside the page by the build.** It holds
-  `apple-touch-icon.png` (180 px, what an iPhone shows), `icon-192.png`,
-  `icon-512.png`, `icon-maskable.png` (the mark inside the central 80%, for
-  Android's cropping) and `manifest.webmanifest`. So `dist/` IS the upload.
-  The icons are drawn by `node tools/make-icons.mjs` from the brandmark path
-  already in `index.html`, through Playwright -- no image library -- and are
-  committed. The packager includes `public/` in the source archive; the
-  portable archive does not need it.
+- **The icons travel INSIDE what asks for them, never beside it.** The
+  owner's Netlify site is password-protected so it cannot be scraped, and
+  Netlify answers every request without the visitor's login with a 401. A
+  phone adding a page to its home screen fetches the icon ON ITS OWN, without
+  Safari's login -- so the first version, which linked icon files, got 401s
+  and iOS fell back to a screenshot. Now the 180 px home-screen icon is a data
+  URL inside `index.html`, and the manifest's three icons are data URLs inside
+  `manifest.webmanifest`. Both are WRITTEN by `node tools/make-icons.mjs`,
+  which draws the PNGs in `public/` from the brandmark path through Playwright
+  and then embeds them -- change them there, never by hand. The PNGs stay in
+  `public/` as the source and as the conventional files a public host serves.
+  `public/` is copied beside the page by the build, so `dist/` IS the upload;
+  the packager includes it in the source archive.
 - **The manifest is linked by `main.js`, and only over http or https.** A
   `<link rel="manifest">` is fetched as the page loads; opened from disk there
   is nothing beside the file to fetch, and it fails with an error in the
   console -- while the portable file promises no requests. **Never make it a
   static link in `index.html`.** Its addresses are relative, so it works at a
-  site's root and in a sub-folder alike.
-- **The iPhone tags and the icon link ARE static**, in `index.html`: metas
-  cost no request, and no desktop browser fetches `apple-touch-icon`. The
-  status bar is `black`, not `black-translucent` -- translucent slides the
+  site's root and in a sub-folder alike. **It is linked with
+  `crossorigin="use-credentials"`**: a manifest is fetched WITHOUT the
+  visitor's login unless the link asks, so behind a password it came back 401
+  even with the page itself loaded. It stays a real file rather than a data
+  URL because Chrome treats `start_url` as invalid unless it shares an origin
+  with the manifest, and a data URL has none.
+- **The iPhone tags are static**, in `index.html`: metas cost no request.
+  The status bar is `black`, not `black-translucent` -- translucent slides the
   game under the clock and the notch, and nothing yet keeps the controls clear
   of those.
 - **The tab icon is an inline SVG data URL**, so the page never asks a server
@@ -1395,10 +1404,15 @@ The fullscreen button hides where `document.fullscreenEnabled` is false: an
 iPhone's Safari has no element fullscreen, and the button did nothing there,
 silently.
 
-**Checked by `tools/smoke.mjs`'s `home-screen` journey**, the only one that
-serves the game rather than opening it from disk: it asks Chrome's own manifest
-parser and install check (through the DevTools protocol), loads every icon, and
-plays. Every other journey opens the file from disk and fails on any request,
+**Checked by `tools/smoke.mjs`'s `home-screen` and `home-screen-private`
+journeys**, the only ones that serve the game rather than open it from disk.
+The private one runs behind a local server that behaves like Netlify's
+password protection -- 401 to anything without the login -- logs in first, and
+fails on any 401 at all. Both ask Chrome's own manifest parser and install
+check (through the DevTools protocol), decode every icon, and play. Built
+against the version before this fix, the private journey goes red, and a
+direct probe showed the manifest and the icon both refused with 401 while the
+page loaded fine -- the owner's symptom exactly. Every other journey opens the file from disk and fails on any request,
 which is what proves the portable file never grew a manifest. What no test can
 reach is Safari on an iPhone -- the home-screen behaviour itself is checked on
 the phone.

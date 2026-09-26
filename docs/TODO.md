@@ -112,10 +112,14 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
-- [ ] **Owner: check the home-screen icon on a real iPhone.** Add the Netlify
-  copy to the home screen and confirm it opens without Safari's bars, shows the
-  flag icon, and plays. No test can reach Safari on iOS; this is the check
-  that counts. Send a diagnostic from it -- it reports the tier and frame rate.
+- [ ] **Owner: check the home-screen icon on a real iPhone, on the private
+  site.** Upload the new `dist`, delete the old home-screen icon, add it again,
+  and confirm it shows the flag, opens without Safari's bars (asking for the
+  password once), and plays. The one unproven piece is whether iOS honours a
+  home-screen icon INSIDE the page as a data URL -- no documentation found
+  settled it. If it still shows a screenshot: host just the icon publicly (it
+  is only the logo) and point the link at it. Send a diagnostic from the phone
+  -- it reports the tier and frame rate.
 
 - [ ] **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
@@ -2767,4 +2771,29 @@ engineering provenance pass, not legal advice.
   Also: the tab icon is inline, so a host without a `favicon.ico` never logs a
   404; and the fullscreen button hides where fullscreen cannot happen, which is
   every iPhone, where it had silently done nothing.
+
+- [x] **The home-screen icon survives a password-protected host.** The owner
+  keeps the Netlify site private so it cannot be scraped, and adding it to the
+  home screen gave a screenshot icon, with 401s in Netlify's log. Netlify
+  answers every request without the visitor's login with a 401, and a phone
+  fetches a linked icon ON ITS OWN, without Safari's login; the manifest is
+  fetched without credentials too, unless its link asks. Reproduced before
+  fixing, with a local server that behaves the same way: logged in, the page
+  loaded, and both the manifest and the icon came back 401. Now the
+  home-screen icon is a data URL inside the page, the manifest's icons are
+  data URLs inside the manifest, and the manifest link carries
+  `crossorigin="use-credentials"` -- the fix that worked in Netlify's own
+  support thread on this. Same probe after: nothing refused. Chrome still
+  rates it installable. `make-icons.mjs` now writes the manifest and the
+  page's icon itself, so neither can drift from the PNGs.
+
+  Alternatives weighed: turning the password off (the owner's call, and
+  declined -- it is there to stop scraping); a data-URL manifest (Chrome
+  rejects its start_url as cross-origin); and hosting the icon publicly
+  elsewhere, kept as the fallback if iOS turns out not to read a data-URL
+  icon, which no documentation settled.
+
+  Two iPhone facts now in INSTALLATION: the home-screen app asks for the
+  password once, because it keeps its own login separate from Safari's; and
+  it keeps its own saved rounds.
 

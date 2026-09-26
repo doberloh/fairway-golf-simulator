@@ -153,6 +153,12 @@ let clubs=customizeClubs(),layout=null,popups=null,dropState=null,staleGenerator
 if(/^https?:$/.test(location.protocol)){
  const link=document.createElement('link');
  link.rel='manifest';link.href='manifest.webmanifest';
+ // WITH THE VISITOR'S LOGIN. A manifest is fetched without credentials unless
+ // the link asks otherwise, so on a password-protected host -- the owner's
+ // Netlify site is private -- it came back 401 even though the page itself had
+ // loaded. The manifest's icons are inside it as data URLs, so this is the one
+ // extra request the hosted game makes, and it now carries the login.
+ link.crossOrigin='use-credentials';
  document.head.append(link);
 }
 const diagnosticErrors=errorLog();
