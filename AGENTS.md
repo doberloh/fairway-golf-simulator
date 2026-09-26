@@ -169,6 +169,33 @@ the display rather than the renderer. If it refuses, the harness is broken, not
 the check. This project has lost a fortnight to a frame number that was really a
 vsync interval; the check exists to make that impossible to repeat.
 
+## Drive the built game after touching anything a player can click
+
+`npm test` covers physics, generation and scoring, and cannot see the
+interface at all. `npm run smoke` can: it opens the built file by `file://` in
+a real browser and plays it, and fails on any uncaught error, any
+`console.error`, and any network request.
+
+**Run it after any change to `main.js`, `index.html`, `style.css`,
+`renderer.js`, `popups.js`, `layout.js`, or anything the frame loop calls.**
+About a minute with a GPU. It does not replace looking at a visual change --
+it proves the thing still WORKS, not that it looks right.
+
+This is a rule because of what the harness found on its first full run: a
+`ReferenceError` in `renderer.js` that had thrown sixty times a second on every
+green for six days, while all 546 tests passed. The putting distance marker it
+belonged to had never positioned itself once.
+
+**When it fails, find out whose fault it is before changing anything.** Its
+first draft reported six failures that were the harness misreading the game --
+a panel checked for a class it never uses, keys pressed faster than a frame,
+a toggle pressed twice -- and three that were real. The screenshot it saves to
+`bench/shots/smoke/` is usually enough to tell which.
+
+**`hud-reachable` is expected to fail until the HUD layout is fixed** for
+laptop-sized screens. Everything else should be green; a red flow journey is a
+real problem.
+
 ## Measure with `tools/bench.mjs`, not with a throwaway script
 
 Generating a 9-hole course takes three to five seconds, so any question asked

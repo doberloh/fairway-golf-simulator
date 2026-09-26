@@ -2,16 +2,38 @@
 #
 # `npm test` is the whole verification story for logic in this project: a few
 # hundred checks on the Node test runner, no external framework, no browser.
-# The browser-dependent work -- the frame profiler, the GPU probe, the asset
-# contact sheet -- is deliberately NOT run here. It needs a real GPU to mean
-# anything, and a headless runner silently falls back to a software rasteriser
-# whose frames are two orders of magnitude slower. A green tick from a machine
-# measuring the wrong thing is worse than no tick.
 #
-# For the same reason the Playwright browser download is skipped: Playwright is
-# a devDependency for the profiler alone, and nothing this workflow runs opens
-# a browser. Downloading a few hundred megabytes of Chromium to leave it unused
-# is the slowest line in the job.
+# The frame profiler and the GPU probe are deliberately NOT run here. They need
+# a real GPU to mean anything, and a runner has none: headless Chromium falls
+# back to a software rasteriser whose frames are two orders of magnitude
+# slower. A green tick from a machine measuring the wrong thing is worse than
+# no tick.
+#
+# THE BROWSER SMOKE TEST IS RUN, BUT ONLY PART OF IT. It asks a different
+# question from the profiler -- does it throw, is the button wired -- and a
+# software rasteriser answers that correctly, just slowly. Measured on a
+# 32-core machine with no GPU in play: the full suite took 24 minutes, the
+# studio journey alone ten, because building a course without a GPU is
+# dominated by something that does not scale with pixels. A runner has two to
+# four cores. So CI runs the three journeys that cover the most for the least:
+#
+#   boot           opens by file://, starts without an error, makes no network
+#                  request, and names its build                          4 s
+#   range          the shot pipeline, twice, with a club change         31 s
+#   endless-round  a hole from tee to holed putt to the next one,
+#                  which is where the green-marker crash lived          174 s
+#
+# (Measured on that 32-core machine under `--software`. Expect a runner to be
+# slower, not faster.)
+#
+# The full seven journeys are the local gate before a merge; AGENTS.md makes
+# that a rule.
+#
+# NOT YET RUN ON GITHUB. This repository had no remote when this was written,
+# so the smoke step has been proven with `--software` locally and never on a
+# runner. If it fails on the first push, the likeliest causes are Chromium's
+# system libraries (that is what `--with-deps` is for) and a runner slow
+# enough to trip a timeout -- every wait scales by 12x under `--software`.
 name: tests
 
 on:
@@ -19,12 +41,10 @@ on:
     branches: ['**']
   pull_request:
 
-env:
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,3 +59,19 @@ jobs:
       - name: Generated ground has not moved for an unchanged seed
         run: node tools/biome-fingerprint.mjs --check
       - run: npm run build
+      # `npm ci` does not fetch Playwright's browser -- 1.63 has no install
+      # script -- so it is fetched here, with the system libraries Chromium
+      # needs on a bare Ubuntu image. The previous version of this file set a
+      # variable to SKIP that download and called it the slowest line in the
+      # job; there was never a download to skip.
+      - name: Install Chromium for the smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Play the built file in a browser
+        run: node tools/smoke.mjs --software --only boot,range,endless-round
+      - name: Keep the smoke test's screenshots if it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-screenshots
+          path: bench/shots/smoke/
+          if-no-files-found: ignore

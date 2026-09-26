@@ -15,6 +15,7 @@ npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the whole suite; it must be green before you commit
 npm run build    # single-file dist/index.html
+npm run smoke    # build, then play the built file in a real browser
 npm run release  # build, then cut and verify the release archives
 ```
 
@@ -31,6 +32,13 @@ no formatter. Match the style of the file you are editing.
   (seconds), confirm on `--tier full`.
 - **`node tools/biome-fingerprint.mjs --check`** — tells you whether generated
   ground moved for an unchanged seed. This is not a formality; see below.
+- **`npm run smoke`** — opens the built file in a real browser and plays it,
+  failing on any error, any `console.error` and any network request. `npm
+  test` cannot see the interface at all, and two broken interfaces have
+  shipped with every test green; this is what catches that. Run it after any
+  change a player could click on. About a minute on a machine with a GPU.
+  The first time, `npx playwright install chromium` -- `npm ci` does not fetch
+  the browser.
 - **`npm run profile`** — measures what a frame costs. Minutes of a machine at
   full tilt, so it is run deliberately rather than routinely.
 

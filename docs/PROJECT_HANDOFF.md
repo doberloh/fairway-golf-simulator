@@ -174,6 +174,7 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 | tools/profile.mjs | What a frame costs and what it is spent on. Minutes of a machine at full tilt -- run it deliberately |
 | tools/profile-probe.js | Injected into the page before anything else runs. Wraps WebGL and requestAnimationFrame from OUTSIDE the game, so it cannot be fooled by the app reporting on itself |
 | tools/gpu-probe.mjs | Which GPU a Playwright browser actually got. Asked before anything is measured, because headless Chromium falls back to software silently |
+| tools/smoke.mjs | `npm run smoke`. Opens the BUILT file by `file://` in a real browser and plays it: menu panels and every tab, an Endless hole from tee to holed putt to the next hole, a Surprise-me nine, the range, the studio saving a course, and whether every play-screen control can actually be clicked at five screen sizes. Fails on any uncaught error, any `console.error`, and ANY network request. Drives by the names a player reads; uses `window.lab` only to look |
 | tools/shot-sink.mjs | Somewhere for the game to put a screenshot of itself. The game photographs itself in whatever browser is open and posts the frame here -- no headless browser, no second rendering path |
 | bench/baseline.json | The last saved measurement, for `--since` |
 | bench/profile-baseline.json | The last saved frame profile, for `--since` |
@@ -1049,6 +1050,14 @@ node --test tests/core.test.mjs tests/world.test.mjs tests/landscape.test.mjs te
 
 The waterways-tours suite covers monotonic grades in both directions, above-facing channel geometry and matching levels, lake size/ownership/clearances, fairway aim, continuous rotated-hole tour poses and tree bounds. The course-living suite covers all 14 previews/routings, water below outer banks, submerged channel beds/protected tees/greens, housing exclusion, green shoulders and presentation timing helpers. Existing suites cover complete rounds, rollback, protocol normalization, deterministic worlds, procedural variety, mesh seams, ball contact, cup-edge capture, wind/flight convergence and maps. Timing helpers alone cannot prove browser presentation; also inspect the real UI.
 
+**`npm run smoke` automates the wiring half of the list below**: it drives
+step 3's sim drop beside the cup, the putt, the three-second reveal, the
+scorecard and the next hole, and step 5's drop onto a green, in a real browser
+on the built file, failing on any error. What it cannot judge is how things
+LOOK -- the flag lifting, the cup drop, the contour tile, reflections, banks --
+and it plays one golfer, so multi-player completion and scramble selection
+stay manual. Treat the list as the visual pass after the smoke test is green.
+
 Manual/browser regression sequence:
 
 1. Generate 9 and 18 holes; try Square, Figure eight and Island chain, plus Links/Mountain/Island at high elevation. Inspect the full map and free-flight view. Check par/tee yardages and straight par 3s.
@@ -1402,7 +1411,9 @@ A free variable in `main.js` ships. `node --check` parses it happily, the bundle
 
 This has already bitten once: `practice` was computed inside `updateHUD` and then used in `drawLiveScore`, which is a different function. Everything passed; the page threw.
 
-**So when editing `main.js`, check the scope by hand.** `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them. Loading the built page once is worth more than any amount of `node --check` here.
+**So when editing `main.js`, check the scope by hand, then run `npm run smoke`.** `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them.
+
+`npm run smoke` is the answer to "load the built page and click things", done the same way every time: it opens the built file in a real browser, walks the main paths a player takes, and fails on any uncaught error or `console.error`. Its first full run found a `ReferenceError` in the renderer that had been throwing sixty times a second on every green for six days. **What it does NOT walk is still only checked by hand**: multi-player rounds, scramble selection, match play, the lab, the launch-monitor panel with a live bridge, a round saved and continued, and every tool window during play. Say which of those a change touches, and check it.
 
 ## Practice sessions record per player, and the topbar chip changes job
 
@@ -1450,5 +1461,5 @@ Panel bodies wire their controls in a single run after setting `innerHTML`. **A 
 
 This shipped once. `formatNote` was defined on the line next to `renderPlayers`, and removing the second took the first with it. The round panel then threw on render, and **"Surprise me", "Start fresh round", the course picker and the studio shortcut all went dead together** while the panel still looked completely normal.
 
-Two things follow. **Deleting a line means checking what else lived on its neighbours** — this file packs several definitions per line. And **the test suite cannot see it**: `npm test` never renders a panel, so all 301 passed with the panel broken. Open the built page and click the buttons.
+Two things follow. **Deleting a line means checking what else lived on its neighbours** — this file packs several definitions per line. And **`npm test` cannot see it**: it never renders a panel, so all 301 passed with the panel broken. `npm run smoke` can, and exists largely because of this: it opens every panel the main menu offers, presses every tab in each, and presses "Surprise me & play" by name.
 

@@ -117,6 +117,16 @@ Run the automated suites from the source folder:
 npm test
 ```
 
+To play the built file in a real browser the way a player would -- menus, a
+hole from tee to holed putt, a round, the range, the studio -- run the smoke
+test. It needs Playwright's Chromium, which `npm ci` does not download, so the
+first time:
+
+```sh
+npx playwright install chromium
+npm run smoke
+```
+
 The bridge tests bind temporary local ports; restricted environments may block them. Tests do not establish hardware/device compatibility. The graphics/gameplay-only command and release checklist are in [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md). Rebuilding does not automatically refresh the two distributable ZIPs.
 
 ## Phones, tablets and shared-network access
