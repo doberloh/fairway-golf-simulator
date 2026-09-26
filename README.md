@@ -24,6 +24,8 @@ Download a release archive, unzip it, and double-click `Fairway.html`. That is
 the whole procedure. [docs/INSTALLATION.md](docs/INSTALLATION.md) covers
 device support, LAN and mobile access, and what to do when a browser refuses.
 
+It lays itself out for the screen it is on, from a desktop down to a phone held either way up.
+
 Once you are in, [docs/PLAYING.md](docs/PLAYING.md) is the manual: every
 control, every course-studio setting, and the launch-monitor walkthrough.
 
@@ -83,9 +85,12 @@ Verification is `npm test` — a few hundred regression checks on the Node test
 runner covering physics plausibility and convergence, curvature, wind,
 putting, penalties, scoring, generation invariants and the bridge protocol —
 plus `npm run bench`, which builds courses in parallel and measures what the
-generator actually produced. Physical launch-monitor hardware and gamepads
-remain untested, and opening the built file directly by `file://` URL has not
-been re-verified on a current build.
+generator actually produced, plus `npm run smoke`, which opens the built file
+by `file://` in a real browser and plays it — menus, a hole from tee to holed
+putt, a nine-hole round, the range, the studio — failing on any error and on
+any network request. Physical launch-monitor hardware and gamepads remain
+untested, and the smoke test runs Chromium only: Safari and Firefox are
+checked by hand.
 
 ## Repository layout
 

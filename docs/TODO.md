@@ -18,7 +18,45 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
-## Boot, generation and camera flights
+## Found by driving the built game
+
+What `tools/smoke.mjs` turned up on its first full runs, and what building it
+turned up alongside. The one outright crash is fixed and recorded under the
+same heading in `# Done`.
+
+- [ ] **The studio and the tool windows have not been swept for layout.**
+  `hud-reachable` covers the main menu and the play screen at nine sizes, and
+  every menu panel and tab is opened on a phone both ways up. The studio bar,
+  and the floating tool windows during play, are not checked for overlap the
+  same way. The studio bar visibly sits over the lower edge of the Saved
+  courses panel at 1920x1080; its name box cleared it in the one case looked
+  at.
+
+- [ ] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
+  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
+  taken during the layout work. The aim marker steps aside when the two POINTS
+  are within 8 m of each other on the ground; it never checks whether the two
+  LABELS overlap on screen, which from the tee they often do. Not changed:
+  separate from the layout, and it wants a look at which should give way.
+
+- [ ] **Nobody has measured a real phone.** The layout is checked under
+  emulation at a phone's size; the GPU is not. The low tier's known weakness on
+  weak hardware is the whole first impression on a phone, and the owner's own
+  phone and iPad test is the next data point. The tester diagnostic reports
+  the tier and the frame rate, so that test produces numbers.
+
+- [ ] **The CI smoke step has never run on GitHub.** There is no remote yet,
+  so it has been proven locally with `--software` and not on a runner. A
+  runner has two to four cores against the 32 it was measured on; the job
+  has a 45-minute ceiling and every smoke wait scales twelvefold without a
+  GPU. If the first push fails there, look first at Chromium's system
+  libraries (which `--with-deps` installs) and at a timeout.
+
+- [ ] **What the smoke test does not walk is still checked by hand:**
+  multi-player rounds, match play and scramble selection, the lab, the
+  launch-monitor panel against a live bridge, a round saved and continued,
+  free flight on a phone, Safari and Firefox, and any REAL phone or tablet --
+  the phone journeys run in a browser that emulates one.
 
 - [ ] **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
   trees, and has since redwoods landed.** Owner's call: not worth changing for
@@ -692,7 +730,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
 
-- [ ] **Browser timing and state-transition regression.** Add repeatable UI checks for the three-second cup reveal and replay hold, manual skip, replay across holes, mulligan, multi-player completion, scramble selection and cancellation during pending timers. Current unit tests cover timing predicates, with browser checks performed manually.
+- [ ] **Browser timing and state-transition regression -- partly covered now.** `npm run smoke` drives the three-second cup reveal through to the scorecard and the next hole, a replay, a mulligan, and Enter skipping a flight. **Still manual:** replay across holes, multi-player completion, scramble selection, and cancellation during pending timers.
 
 ## Priority 2: landscape and performance
 
@@ -729,11 +767,11 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
 
-- [ ] **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels.
+- [ ] **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels. **The smaller-screen half is now measured**, by the smoke test's `hud-reachable` journey -- and it fails; see "Found by driving the built game".
 
 - [ ] **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
 
-- [ ] **Offline release matrix and packaging script.** Automate release archives and run actual file-URL/manual tests on Safari, Chrome, Edge and Firefox. Verify local saves and export/import behavior. Current browser automation disallows file URLs; the bundle is inspected statically and exercised through the local server.
+- [ ] **Offline release matrix -- the Chromium half is automated.** Archives are one command (`npm run release`), and `npm run smoke` opens the built file by file:// in Chromium on every run. **Still manual:** Safari, Firefox and Edge, and export/import round-trips. The last sentence this entry used to carry -- that browser automation disallows file URLs -- was the in-app preview pane, not browsers.
 
 ## Still open from the putting and cup update
 
@@ -1888,6 +1926,9 @@ engineering provenance pass, not legal advice.
   document with the whole mesh ingest inlined, and it still opens off the
   filesystem.
 
+  It is now checked on every `npm run smoke`, in Chromium, by file:// -- the
+  "cannot be scripted" in the original of this entry was the in-app preview
+  pane's limitation, not a browser's. Safari and Firefox remain by hand.
   It stays worth re-checking whenever the build gains something structurally
   new rather than merely bigger, because what breaks a file URL is a fetch, a
   worker or a module boundary, not a megabyte.
@@ -2460,11 +2501,15 @@ engineering provenance pass, not legal advice.
   same dead path was in PROJECT_HANDOFF and RESEARCH as a present-tense
   instruction.
 
-- [x] **A CI workflow runs the suite, the fingerprint check and the build**
-  on every push. It deliberately does not run the frame profiler: a headless
-  runner measures a software rasteriser two orders of magnitude off the real
-  number, and a green tick from a machine measuring the wrong thing is worse
-  than no tick.
+- [x] **A CI workflow runs the suite, the fingerprint check, the build, and
+  three journeys of the browser smoke test** on every push. It deliberately
+  does not run the frame profiler: a headless runner measures a software
+  rasteriser two orders of magnitude off the real number, and a green tick
+  from a machine measuring the wrong thing is worse than no tick. The smoke
+  test is different -- it asks whether things throw, which a software
+  rasteriser answers correctly, only slowly -- so `boot`, `range` and
+  `endless-round` run there. The whole suite took 24 minutes on 32 cores with
+  no GPU, against about one minute on one; the rest stays a local gate.
 
 ## Getting the word out
 
@@ -2513,3 +2558,163 @@ engineering provenance pass, not legal advice.
   name: pair it with a word in the title and the description -- "Fairway, a
   browser golf simulator" -- so a search engine has something to hang it on.
 
+## Found by driving the built game
+
+- [x] **Putting has shown no distance on screen since 19 September, and threw
+  sixty exceptions a second while doing it.** `GolfView.projectMarker` named
+  the edges of its rectangle `L`, `R`, `T` and `B` -- and `T` is three.js in
+  `renderer.js`. The local `const T` shadowed the library for the whole
+  function, so the `new T.Vector3` at its top reached an uninitialised variable
+  on every call. It is called every frame the ball is on a green.
+
+  Measured before and after on the built file, ball dropped two yards from the
+  cup: **393 exceptions in six seconds** before, zero after. Before, the marker
+  sat frozen at one screen position whether facing the cup or turned away, and
+  never set its pointing angle; after, it sits over the cup reading "6.0 FEET
+  TO HOLE", follows the camera, and points. Silent throughout because the frame
+  loop schedules the next frame before doing anything else, so the game kept
+  running and skipped the rest of each frame -- which also meant the aim label,
+  meant to hide on the green, never did. PLAYING.md described the feature
+  correctly the whole time; it simply was not true.
+
+  The fix is four names: `left`, `right`, `top`, `bottom`.
+  `tests/three-namespace.test.mjs` (seven tests) scans all seventeen modules
+  that import three as `T` for any other binding of that name, proves the scan
+  goes red on the original line and stays quiet on look-alikes, and calls
+  `projectMarker` directly -- in view, behind the camera, and with uneven
+  insets. Red on the old code, green on the new.
+
+  Found by `tools/smoke.mjs`, the browser smoke test, the first time it dropped
+  a ball on a green. Nothing else could have found it: `node --check` parses
+  it, the bundler emits it, and no unit test had ever called the function.
+
+- [x] **A browser smoke test, `npm run smoke` / `tools/smoke.mjs`.** Opens the
+  built file by `file://` in Chromium -- the way a player opens it -- and plays
+  seven journeys: boot; every main-menu panel and every tab in each, plus the
+  tester diagnostic; an Endless hole from tee to holed putt to the next hole,
+  including clubs, aim, power and cameras from the keyboard and a sim drop;
+  Play → Surprise me & play through a nine-hole course with replay, mulligan,
+  the scorecard and the in-round menu; the range; the studio growing and
+  saving a course; and `hud-reachable`. A journey fails on any uncaught error,
+  any `console.error`, and any network request -- which makes the published
+  zero-requests claim a check rather than an assertion. Six of seven pass;
+  `hud-reachable` fails on a real layout bug, recorded above.
+
+  **It presses buttons by the name a player reads**, so a relabelled button
+  fails it -- deliberately, since the label is the contract with the player.
+  **It uses `window.lab` only to look** -- whether a ball is in flight -- and
+  never to drive, because driving through the lab tests the lab.
+
+  Stable across four consecutive runs on four different random courses. Every
+  failure prints the course and seed, because Endless and Surprise me grow a
+  different course each time and a failure nobody can find again is worth
+  little.
+
+  **Measured before it was designed**: with no GPU a nine-hole course took 99 s
+  to build on one run and 213 s on the next, against 4.5 s on a GPU, and
+  halving the window halved the frame cost without shortening the build -- so
+  the cost is not pixels. That is why the round loop runs on Endless, whose
+  first hole is the menu backdrop the game has already grown.
+
+  **Nine of its first failures were the harness, and three were the game.**
+  The harness ones are worth knowing because each looks exactly like a game
+  bug: the drawer checked for an `open` class it has never used; arrow keys
+  pressed down and up before a frame could see them; the Tools button
+  pressed twice when it is a toggle; saved courses read from storage in the
+  wrong shape; Help's window expected under the menu label rather than its
+  own title; floating tool windows expected in the drawer; the tray put away
+  in the middle of a drop; two inputs sharing a label; a 1600x900 capture
+  window that the layout bug itself blocked. The game ones: the green-marker
+  crash (fixed), the HUD overlap, and Escape's order (both above).
+
+  `npm ci` does not fetch Playwright's browser -- 1.63 has no install script
+  -- so the harness says `npx playwright install chromium` rather than
+  printing a stack trace. That also made a comment in the CI workflow wrong;
+  see the CI entry.
+
+- [x] **Escape now closes the panel in front of you before any tool window.**
+  With Tools open, opening the scorecard puts its blur over the Tools window,
+  and Escape used to shut the hidden Tools window first, leaving the visible
+  scorecard for a second press. Two fixes were weighed: close the tool windows
+  whenever a panel opens, or have Escape close whatever is in front. The
+  second won -- it keeps the player's Tools window where they put it for when
+  the card is gone, and it is one condition. An open panel is always in front,
+  because opening a tool closes the panel and never the reverse. The smoke
+  test presses Escape once with Tools open behind the scorecard; red on the
+  old build, green now.
+
+- [x] **A quick arrow tap now always registers.** Aim and power move while a
+  key is held, read once per frame, so a tap whose key-down and key-up fell
+  between two frames used to do nothing -- never at 60 fps, where a human tap
+  spans several frames, but a real risk at 20. Every key-down now also lands in
+  a `tapped` set that the frame loop treats as held for one frame, cleared once
+  per rendered frame. Deliberately NOT changed: how far a held key turns, or
+  replacing held movement with fixed-size steps. That is feel, and it waits for
+  the keyboard feedback. The smoke test taps left and down with no frame
+  between; the left tap read "0.2°" and never changed on the old build.
+
+- [x] **The release packager ships only what git tracks.** It globbed each
+  source directory, so three untracked scratch scripts went into a source
+  archive: 166 files where there should have been 163. It now takes `git
+  ls-files`, proven by planting a stray file in `tools/` and checking the
+  archive left it out. Refusing a dirty tree was considered and rejected --
+  cutting archives before committing is how this project works, and the
+  tracked files' working content is what matches the build beside them. A
+  checkout with no repository falls back to the glob and says so.
+
+- [x] **The HUD fits every screen from a desktop to a phone.** Measured first,
+  across eight sizes, before designing anything:
+
+  | screen | before | after |
+  |---|---|---|
+  | 1920x1080 | 2 controls unreachable | 0 |
+  | 1536x864 / 1440x900 | 6 | 0 |
+  | 1366x768 | 8 -- every camera button under the map | 0 |
+  | 1280x720 | 9 | 0 |
+  | iPad sideways 1180x820 | 8 | 0 |
+  | iPad upright 820x1180 | 0 | 0 |
+  | phone sideways 844x390 | 23, the page scrolled, shot button cut off | 0, no scroll |
+  | phone upright 390x844 | course 7% visible, page 177 px too wide | course 51% visible |
+
+  **The cause was one idea**: every layout rule answered to WIDTH and positions
+  were pixel constants tuned on 1920x1080, while every failure was about
+  HEIGHT. `layout.js` now measures where the bottom bar, the weather, the card
+  and the camera bar actually are and writes them as CSS variables; one new
+  section at the end of `style.css` positions the panels from those. The owner
+  chose between two prototypes photographed at every laptop size: **the camera
+  bar beside the map** (chosen) against a row under the weather (it stuck out
+  past the weather panel and read as bolted on). Also rejected: cameras in the
+  top bar (full already at 1280, and app chrome not game controls), and
+  height breakpoints alone (still guessed constants; break when the controls
+  wrap).
+
+  **Phones** get their own layout below 560 px wide or 500 px tall: the card as
+  a strip whose player row and shot numbers hide behind a "Shot details"
+  toggle by default (the owner's call), cameras in a row with the wind, the
+  map a thumbnail, controls for a thumb. `#world` lost its 620-640 px minimum
+  height, which was making every phone scroll, and the top bar drops its words
+  on a phone -- in a round it had been 177 px wider than the screen.
+
+  **Three bugs found on the way, all fixed**: the main menu could not scroll
+  and stranded Camera & bay, Graphics and Help below a phone's screen -- the
+  page scrolling had been the only way to reach them, so fixing that alone
+  would have made it worse; starting a sim drop left the Tools window over
+  "Place ball" on a phone held sideways; and a toast swallowed the clicks meant
+  for "Copy course code" underneath it for four seconds.
+
+  Checked by `hud-reachable` at nine sizes, menu and play screen, phone details
+  folded and open, and by `phone-portrait` and `phone-landscape`, which play a
+  hole by touch alone. A first draft guessed the camera row's height at 44 px
+  on a phone held sideways; it is about 60 and the map sat 11 px over it, which
+  is why that is measured too.
+
+
+- [x] **The smoke test raced the scorecard's own timer.** The scorecard advances
+  to the next hole by itself after eight seconds; the harness assumed it would
+  wait to be clicked. On a GPU the click lands in under a second, so it never
+  showed. With no GPU a frame takes about a second, Playwright's check that a
+  button is stable across two frames outlasted the eight, and the harness spent
+  six minutes waiting to click a button the game had correctly removed -- the
+  failure screenshot showed hole 2, three under. Both ways to the next hole are
+  now accepted, the log says which one happened, and it fails only if the hole
+  never changes. Looked like "Next hole is broken on slow machines"; was not.

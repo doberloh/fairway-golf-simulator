@@ -286,10 +286,9 @@ is running -- so a report from a tester could not be tied to a tree.
 - ~~**The `file://` open is still unverified on a current build.**~~ **It was
   exercised by hand on 25 September and it works.** The central portability
   claim now rests on a check of the current 15.8 MB build rather than on one
-  made when the file was an eighth of the size. It cannot be scripted -- the
-  browser automation used here refuses file-URL navigation -- so it stays a
-  manual check, worth repeating when the build gains something structurally
-  new rather than merely bigger.
+  made when the file was an eighth of the size. It is now also checked on
+  every run of `npm run smoke`, which opens the built file by `file://` in
+  Chromium -- see the addendum at the foot.
 - No new similarity or provenance search was run. The limits recorded in the
   September 11 review and in the commercial-use pass apply unchanged.
 - Two publication decisions are recorded in TODO.md and are not settled here:
@@ -310,11 +309,11 @@ confirmation anybody could point to was made when the built file was about
 1.2 MB; it is 15.8 MB now, with the entire mesh ingest inlined, and it still
 opens off the filesystem with no server, no installer and no network.
 
-It cannot be automated here -- the browser automation used for development
-refuses file-URL navigation, which is why it went unchecked for so long. It is
-a manual check and it stays one. Repeat it when the build gains something
-structurally new: a fetch, a worker, a module boundary or a cross-origin
-asset is what breaks a file URL, and none of those is a function of size.
+~~It cannot be automated here.~~ That was true of the in-app browser pane
+used during development, which refuses file-URL navigation, and never true of
+a real browser -- see the addendum below. A fetch, a worker, a module boundary
+or a cross-origin asset is what breaks a file URL, and none of those is a
+function of size.
 
 **Packaging is one command now.** `npm run release` builds and then packages,
 so a stale build cannot be shipped by forgetting a step -- and if the packager
@@ -330,3 +329,42 @@ packager's job is to refuse loudly; nothing wrapping it may soften that.
 out open source under MIT, free, with optional donations. The donation-wording
 rule in "Remaining release checks" above is unchanged and is the part that
 still carries risk.
+
+---
+
+## Addendum, 25 September 2026: two release claims are checked on every smoke run
+
+**`file://` is automated.** `npm run smoke` opens the built `dist/index.html`
+by `file://` URL in Chromium -- no server -- and plays it. The claim that this
+"cannot be scripted" was a limitation of the preview pane used during
+development, never of browsers; it has been corrected where it was made.
+**Safari and Firefox are still manual**: the smoke test runs Chromium only.
+
+**Zero runtime network requests is enforced, not asserted.** The smoke test
+fails any journey during which the page requests anything other than `file:`,
+`data:` or `blob:`. Seven journeys -- the menu, a full Endless hole to the next
+one, a Surprise-me nine, the range, the studio saving a course -- make none.
+That covers the tester diagnostic too, which is the obvious place for a
+request to appear one day.
+
+What this does not claim: coverage of multi-player rounds, match play, the
+launch-monitor bridge, or any browser but Chromium.
+
+**The source archive contains exactly what git tracks.** The packager used to
+glob each source directory by extension, so anything lying in the working tree
+went into the archive; three untracked scratch scripts did, and the count --
+166 against 163 -- was the only sign. It now takes `git ls-files`, and was
+proven by planting a stray file in `tools/` and confirming the archive left it
+out. Tracked files ship with their working-tree content, matching the
+`dist/index.html` built beside them. A build from the source archive, which has
+no repository, falls back to the glob and says so.
+
+**Phones and small screens.** The play HUD and the main menu now lay themselves
+out by measurement, with a phone layout below 560 px wide or 500 px tall. On
+every smoke run, at nine sizes from desktop to phone, every control is checked
+reachable and the page is checked not to scroll, and a hole is played by touch
+on an emulated phone both ways up. Before this, a phone held sideways could not
+reach the shot button at all. **This is emulation, not device testing**: the
+release claim for phones and tablets stays "intended and untested on real
+hardware" until someone plays on one.
+

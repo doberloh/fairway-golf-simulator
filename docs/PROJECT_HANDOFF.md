@@ -31,7 +31,7 @@ Vite serves http://127.0.0.1:5173. `vite.config.js` uses the single-file plugin,
 
 Pinned dependencies. Runtime -- the only ones that can reach a shipped file: Three.js 0.186.0 (MIT), ws 8.21.3 (MIT), Lucide 1.44.0 (ISC). Build and tooling: Vite 8.3.0, vite-plugin-singlefile 2.3.3, @dgreenheck/ez-tree 1.1.0 (MIT, bakes geometry that ships), Playwright 1.63.0 (Apache-2.0, drives the profiler). The lockfile uses the public Yarn registry mirror and integrity hashes. Preserve LICENSE and THIRD_PARTY_NOTICES.txt when distributing. The owner selected MIT for project-authored code; third-party terms remain separate. Read `docs/DISTRIBUTION_REVIEW.md` and `docs/DEPENDENCY_INVENTORY.json` before adding or changing dependencies -- the packager refuses to build while the inventory disagrees with the lockfile, so a new dependency is a documentation change before it is a build. Full licenses are imported as raw text into main.js and displayed offline in Help. Avoid dependency upgrades incidentally during graphics work; Three shader patches depend on the current shader include structure.
 
-`Fairway-portable.zip` is the PRODUCT and carries seven files, flat: Fairway.html, LICENSE, THIRD_PARTY_NOTICES.txt, ATTRIBUTION.md, README.md, INSTALLATION.md and PLAYING.md. Its README is `docs/PORTABLE_README.md`, not the repository's -- the root one links into `docs/` and explains `npm ci`, which is a page of dead links to somebody who unzipped a game. Nothing else -- it used to ship the architecture handoff, the open defect list, the research measurements and AGENTS.md, none of which is anything a player needs. `Fairway-source.zip` keeps the repository's own layout and carries source, tests, bridge, package files, build configuration and the documentation set, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
+`Fairway-portable.zip` is the PRODUCT and carries seven files, flat: Fairway.html, LICENSE, THIRD_PARTY_NOTICES.txt, ATTRIBUTION.md, README.md, INSTALLATION.md and PLAYING.md. Its README is `docs/PORTABLE_README.md`, not the repository's -- the root one links into `docs/` and explains `npm ci`, which is a page of dead links to somebody who unzipped a game. Nothing else -- it used to ship the architecture handoff, the open defect list, the research measurements and AGENTS.md, none of which is anything a player needs. `Fairway-source.zip` keeps the repository's own layout and carries source, tests, bridge, package files, build configuration and the documentation set, without node_modules. Rebuild before repackaging, then run `python3 tools/package_release.py` (Windows: `py tools/package_release.py`). This allowlist-based script packages only files git tracks -- a stray file in the working tree cannot ride along -- and verifies notices, dependency inventory and archived bytes, and writes RELEASE_SHA256.txt. ZIPs are not automatically refreshed by `npm run build`. Add new release source directories/documents to its allowlist.
 
 ## File map
 
@@ -135,7 +135,7 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | index.html | Static app shell, canvas and primary HUD element IDs |
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
-| src/layout.js | Saved draggable/resizable HUD layout |
+| src/layout.js | Saved draggable/resizable HUD layout, and the MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world |
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
@@ -174,6 +174,7 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 | tools/profile.mjs | What a frame costs and what it is spent on. Minutes of a machine at full tilt -- run it deliberately |
 | tools/profile-probe.js | Injected into the page before anything else runs. Wraps WebGL and requestAnimationFrame from OUTSIDE the game, so it cannot be fooled by the app reporting on itself |
 | tools/gpu-probe.mjs | Which GPU a Playwright browser actually got. Asked before anything is measured, because headless Chromium falls back to software silently |
+| tools/smoke.mjs | `npm run smoke`. Opens the BUILT file by `file://` in a real browser and plays it: menu panels and every tab, an Endless hole from tee to holed putt to the next hole, a Surprise-me nine, the range, the studio saving a course, and whether every play-screen control can actually be clicked at five screen sizes. Fails on any uncaught error, any `console.error`, and ANY network request. Drives by the names a player reads; uses `window.lab` only to look |
 | tools/shot-sink.mjs | Somewhere for the game to put a screenshot of itself. The game photographs itself in whatever browser is open and posts the frame here -- no headless browser, no second rendering path |
 | bench/baseline.json | The last saved measurement, for `--since` |
 | bench/profile-baseline.json | The last saved frame profile, for `--since` |
@@ -638,6 +639,77 @@ THE TRAP, and it cost a broken build: `layout.sync()` had a comment saying “se
 
 **The handles live INSIDE each panel, and a MutationObserver puts them back.** An overlay tracking a panel from outside has to be re-synced every time the panel changes size on its own — and these do constantly — so an always-visible overlay would spend half its life in the wrong place. Inside, they track for free. The cost is that `innerHTML` sweeps them away, which is exactly what `showLiveResult` does to `#shotResult` on every shot: the first build left the two most frequently rebuilt panels unmovable, and because the rest worked it read as intermittent rather than total. Each panel now carries a `childList` observer that re-appends its handles; the re-append fires the observer once more, whose check then passes, so it settles rather than looping. Do not replace this with a re-append at the call sites — the one that forgets is the one nobody notices.
 
+## The HUD fits the screen by measurement, not by constants
+
+**The default HUD positions are read from where things actually are.** They
+used to be pixel constants tuned on a 1920x1080 screen -- the camera bar 147 px
+from the top, the map 270 px up from the bottom (a guess at the shot controls'
+height), and the course card allowed the screen's height less 190 px, which
+forgot the top bar and the controls. And every layout rule answered to WIDTH.
+Laptops are wide and short, so a 1366x768 screen got the full desktop layout
+with 312 fewer pixels to put it in: the map, pinned from the bottom, rose into
+the camera bar, pinned from the top, and covered all five camera buttons.
+
+`createLayout` now writes four measurements onto `#world` as CSS variables, a
+frame after any watched element resizes:
+
+| variable | what it is |
+|---|---|
+| `--controls-top` | the top of whatever bar is at the bottom: shot controls, or the drop, free-flight or scramble bar when one has taken over |
+| `--weather-bottom` | the bottom of the weather panel |
+| `--card-bottom` | the bottom of the course card; the phone layout stacks the camera row and wind under it |
+| `--tools-bottom` | the bottom of the camera bar; a phone held sideways hangs the map from it |
+
+**Written a frame later, not inside the ResizeObserver.** The card's height
+depends on `--controls-top` and the card is observed; changing a variable inside
+the callback that resizes an observed element trips Chrome's "ResizeObserver
+loop completed with undelivered notifications", which is an ERROR event -- and
+the smoke test fails on error events, correctly.
+
+**Every rule skips `.hud-custom`.** A panel the player dragged keeps their
+geometry, and is left out of the sums too: where they put it is no guide to
+where the defaults should go.
+
+**The layout lives in one section at the end of `style.css`**, "Layout that
+fits the screen it is on", rather than as edits to the packed rules above it.
+On a laptop: weather on top, and beneath it the camera bar BESIDE the map,
+lined up with the weather's width -- spending width, which laptops have,
+instead of height, which they do not. The card is capped to the space above
+the controls (it scrolls inside) and at 380 px wide, so a long course name
+wraps rather than widening the card to a third of an iPad.
+
+**A phone is below 560 px wide OR below 500 px tall** -- both ways up. The card
+becomes a strip with a "Shot details" toggle (`#cardToggle`, class `card-open`
+on `#world`, remembered per device); the player row and shot numbers are hidden
+until it is tapped, by the owner's decision. The toggle only exists in the
+phone layout; elsewhere the details always show. Opened, the card is capped at
+45% of the play area so the controls and the course stay reachable. The camera
+bar becomes a row with the wind beside it, the map a thumbnail, and the shot
+controls fit a thumb -- two rows upright, one sideways. The tee choice leaves
+the bar upright; it stays in the round's Format & tees.
+
+**A game screen never scrolls; a menu may.** `#world` had a minimum height of
+620-640 px, so every phone scrolled -- sideways the shot button was off the
+bottom. That is gone. The main menu instead may scroll INSIDE itself if it ever
+must, because removing the page scroll would otherwise have stranded the
+buttons below its fold: the page scrolling had been the only way to reach them.
+
+**Two behaviours changed alongside, both found by the phone journeys**: starting
+a sim drop closes the Tools window (it sat over "Place ball" on a phone held
+sideways), and a toast is click-through (`pointer-events:none` -- it only ever
+holds text, and it sat on "Copy course code" at 820 wide).
+
+**How it is checked.** `tools/smoke.mjs`'s `hud-reachable` journey visits nine
+sizes -- desktop, four laptops, an iPad both ways up, a phone both ways up --
+and at each asks the browser what is under every control on the menu and the
+play screen, whether the page can scroll, and how much of the course shows;
+phones are checked with the details folded and open. `phone-portrait` and
+`phone-landscape` play a hole by touch alone. Measured when it landed: every
+control reachable everywhere, no page scrolls, and the course visible on 39% to
+65% of the screen folded (it was 7% on a phone upright). The browser only
+EMULATES a phone -- a real iPhone's Safari and a real phone's GPU are still
+checked by hand.
+
 **`.view-tools` gets its grip outside its own box.** It is a 30px column of buttons, and a grip inside its top-left corner sits on the first button and steals its clicks. On a right-edge panel, just outside the left edge is still on screen.
 
 **Handles are dim, not hidden.** Seven permanently bright grips on the playing area is worse than the problem it solves; an invisible affordance is no affordance, and a touch screen has no hover. They sit at 0.22 opacity, rise on panel hover, and go fully bright while any panel is being dragged so you can see what you are lining up against.
@@ -1049,6 +1121,14 @@ node --test tests/core.test.mjs tests/world.test.mjs tests/landscape.test.mjs te
 
 The waterways-tours suite covers monotonic grades in both directions, above-facing channel geometry and matching levels, lake size/ownership/clearances, fairway aim, continuous rotated-hole tour poses and tree bounds. The course-living suite covers all 14 previews/routings, water below outer banks, submerged channel beds/protected tees/greens, housing exclusion, green shoulders and presentation timing helpers. Existing suites cover complete rounds, rollback, protocol normalization, deterministic worlds, procedural variety, mesh seams, ball contact, cup-edge capture, wind/flight convergence and maps. Timing helpers alone cannot prove browser presentation; also inspect the real UI.
 
+**`npm run smoke` automates the wiring half of the list below**: it drives
+step 3's sim drop beside the cup, the putt, the three-second reveal, the
+scorecard and the next hole, and step 5's drop onto a green, in a real browser
+on the built file, failing on any error. What it cannot judge is how things
+LOOK -- the flag lifting, the cup drop, the contour tile, reflections, banks --
+and it plays one golfer, so multi-player completion and scramble selection
+stay manual. Treat the list as the visual pass after the smoke test is green.
+
 Manual/browser regression sequence:
 
 1. Generate 9 and 18 holes; try Square, Figure eight and Island chain, plus Links/Mountain/Island at high elevation. Inspect the full map and free-flight view. Check par/tee yardages and straight par 3s.
@@ -1281,6 +1361,56 @@ This branch lived in `labGreenAt`, and removing the lab mode left `setRangeGreen
 
 **`lab.greenAt` throws rather than no-opping.** `setRangeGreen` returns silently when `rangeMode` is off, which is right for a slider and wrong for a console call — a measurement that quietly did not move the green would be attributed to the physics. It now names the problem, rejects a distance outside `GREEN_RANGE`, and reports where the green actually ended up rather than what was asked for.
 
+## `T` is three.js, and a local `T` breaks its whole function
+
+Seventeen modules import the library as `import * as T from 'three'`. In any
+of them, **a local binding named `T` shadows the library for the entire
+function it sits in**, not just from its own line down -- `const` and `let` are
+scoped to the block. Every earlier `new T.Vector3()` in that function then
+reaches an uninitialised variable and throws a `ReferenceError` on every call.
+
+**What it looked like.** `GolfView.projectMarker` named the edges of a
+rectangle `L`, `R`, `T` and `B`. From 19 September it threw on every frame the
+ball sat on a green -- 393 exceptions in six seconds of putting, measured -- and
+nobody noticed for six days, because the frame loop requests the next frame
+before it does anything else, so the game kept running and simply skipped the
+rest of each frame. The putting distance marker that function exists for never
+positioned itself once: on every green there was **no distance on screen at
+all**. The aim label, which is meant to hide on the green, was never hidden,
+because hiding it was the line after the throw.
+
+`node --check` parses it; the bundler emits it; no unit test called that
+function. It was found by `tools/smoke.mjs` dropping a ball beside the pin.
+
+**`tests/three-namespace.test.mjs` now refuses any binding named `T` in a
+module that imports three as `T`**, and calls `projectMarker` directly. If you
+need a name for the top of something, it is `top`.
+
+## Escape closes what is in front; an arrow tap is owed to the next frame
+
+**Escape's order is: shot list, menu dropdown, clock, leave notice, OPEN PANEL,
+tool windows, then tour and drop.** An open panel is always in front of every
+tool window -- `openTool` closes the panel when a tool opens, never the reverse
+-- so a tool window can only ever sit behind a panel's blur. Escape used to
+take the tool windows first: with Tools open behind the scorecard, the first
+press shut the window the player could not see, and the scorecard in front of
+them needed a second. The tool window is left open for when the panel is gone.
+
+**A key pressed and released between two frames still counts, once.** Aim and
+power move while an arrow is held, read once per frame from `keys`. A tap that
+never overlapped a frame used to do nothing -- impossible to notice at 60 fps,
+where a human tap spans several frames, and real on a machine managing 20,
+where Help's "← / → fine tune" could simply not happen. Every key-down also
+lands in `tapped`, which the frame loop treats as held for exactly one frame
+and clears once per RENDERED frame -- after the frame cap, and whether or not
+the aim block ran, so a tap made behind an open panel is dropped rather than
+saved up and fired later. Holding is unchanged.
+
+Both were found by `tools/smoke.mjs` and both are checked there: its Endless
+journey taps with no frame between key-down and key-up, and its Surprise-me
+journey presses Escape once with Tools open behind the scorecard. Each check
+fails on the build before the fix.
+
 ## The simulator never invents ball data
 
 Ball speed, launch angle, spin rate and spin axis are **inputs**. They come from a launch monitor, and the keyboard and mouse controls exist only so the game is playable without one — they are a stand-in for a measurement, not a model of a golfer.
@@ -1377,7 +1507,9 @@ A free variable in `main.js` ships. `node --check` parses it happily, the bundle
 
 This has already bitten once: `practice` was computed inside `updateHUD` and then used in `drawLiveScore`, which is a different function. Everything passed; the page threw.
 
-**So when editing `main.js`, check the scope by hand.** `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them. Loading the built page once is worth more than any amount of `node --check` here.
+**So when editing `main.js`, check the scope by hand, then run `npm run smoke`.** `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them.
+
+`npm run smoke` is the answer to "load the built page and click things", done the same way every time: it opens the built file in a real browser, walks the main paths a player takes, and fails on any uncaught error or `console.error`. Its first full run found a `ReferenceError` in the renderer that had been throwing sixty times a second on every green for six days. **What it does NOT walk is still only checked by hand**: multi-player rounds, scramble selection, match play, the lab, the launch-monitor panel with a live bridge, a round saved and continued, and every tool window during play. Say which of those a change touches, and check it.
 
 ## Practice sessions record per player, and the topbar chip changes job
 
@@ -1425,5 +1557,5 @@ Panel bodies wire their controls in a single run after setting `innerHTML`. **A 
 
 This shipped once. `formatNote` was defined on the line next to `renderPlayers`, and removing the second took the first with it. The round panel then threw on render, and **"Surprise me", "Start fresh round", the course picker and the studio shortcut all went dead together** while the panel still looked completely normal.
 
-Two things follow. **Deleting a line means checking what else lived on its neighbours** — this file packs several definitions per line. And **the test suite cannot see it**: `npm test` never renders a panel, so all 301 passed with the panel broken. Open the built page and click the buttons.
+Two things follow. **Deleting a line means checking what else lived on its neighbours** — this file packs several definitions per line. And **`npm test` cannot see it**: it never renders a panel, so all 301 passed with the panel broken. `npm run smoke` can, and exists largely because of this: it opens every panel the main menu offers, presses every tab in each, and presses "Surprise me & play" by name.
 

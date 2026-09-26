@@ -8,6 +8,7 @@ ASCII the moment mesh data was embedded in it -- the packager died on byte
 from pathlib import Path
 import hashlib
 import json
+import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,15 +74,43 @@ DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
                'tools': {'.py', '.mjs', '.js'}}
 
 
+# WHAT COUNTS AS SOURCE IS WHAT GIT TRACKS, not whatever sits on disk.
+#
+# This used to glob each directory by extension, so anything lying in the
+# working tree went into the archive -- three untracked scratch scripts in
+# `tools/` did, turning 163 files into 166, found only because the count
+# looked wrong. A release is a statement about the project, and an untracked
+# file is by definition not part of it.
+#
+# Tracked files are packaged with their working-tree CONTENT, deliberately:
+# `dist/index.html` is built from the working tree, and an archive whose
+# source disagreed with the build shipped beside it would be worse.
+#
+# Somebody building from the source archive has no repository at all. That is
+# a normal way to build this, so it falls back to the glob -- and an archive
+# unpacked from a release contains only what that release shipped, so the
+# glob cannot pick up strays there.
+def tracked_files():
+    try:
+        out = subprocess.run(['git', 'ls-files', '-z'], cwd=ROOT, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return {ROOT / Path(p.decode('utf-8')) for p in out.split(bytes(1)) if p}
+
+
 def main():
     html_path = ROOT / 'dist/index.html'
     html = html_path.read_text(encoding='utf-8')
     files = [ROOT / name for name in DOCS + ROOT_SOURCE]
+    tracked = tracked_files()
     for directory, suffixes in DIRECTORIES.items():
         files.extend(p for p in sorted((ROOT / directory).rglob('*'))
                      if p.is_file() and p.suffix in suffixes
+                     and (tracked is None or p in tracked)
                      and not any(part.startswith('.') or part == '__pycache__'
                                  for part in p.relative_to(ROOT).parts))
+    if tracked is None:
+        print('Not a git checkout: packaging every source file on disk.')
     for path in files:
         if not path.is_file() or path.is_symlink():
             raise SystemExit(f'Missing or symlinked release input: {path}')

@@ -214,6 +214,14 @@ let menuBackdrop=false,pendingRound=null,backdropRun=null,playerClock=null;
 // captions over sliders the browser had quietly parked at the midpoint of their
 // range. The defaults live in the schema; there is no second copy of them now.
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shape=0,launchAdjust=0,spinAdjust=0,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
+// A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
+// per frame, so a key pressed and released between two frames used to do
+// nothing at all -- at 60 fps a human tap spans several frames and always
+// counted, but on a machine managing 20 a quick one could vanish, and Help
+// promises the arrows "fine tune". Every key-down lands here as well as in
+// `keys`, and the frame loop treats it as held for exactly one frame before
+// clearing it. Holding is unchanged; only the lost tap is rescued.
+const tapped=new Set();
 // COPYING, WITH THE OLD WAY AS THE FALLBACK. `navigator.clipboard` needs a
 // secure context AND the document to be focused, and it rejects rather than
 // prompting when it is not -- which is every embedded preview, and any window
@@ -1039,6 +1047,12 @@ function openPlaySettings(name,content){
 }
 function beginDrop(){
  if(flight||round.holeComplete||round.scrambleSelection||round.candidates.length){toast('Finish this shot or choose the team lie first.');return;}
+ // A DROP PUTS THE TOOLS WINDOW AWAY, the way it already hides the camera bar
+ // (`.dropping .view-tools`). The drop is where Sim drop is pressed, so the
+ // Tools window was always open at this moment -- and on a phone held sideways
+ // it sat squarely on the drop bar, over "Place ball", the one button needed
+ // next. Found by the smoke test's phone journey, which could not reach it.
+ if(popups?.isOpen('tools'))popups.close('tools');
  closePanel();dropState={origin:{...round.position},candidate:{...round.position},mode:view.config.mode};$('dropBar').hidden=false;keys.clear();
  view.config.mode='free';view.wasFree=true;const p=course.toWorld(round.position);view.targetPos.set(p.x,world.height(p.x,p.z)+50,p.z-30);view.freeYaw=0;view.freePitch=-1.03;view.updateFreeLook();updateExplorer();$('world').classList.add('dropping');previewDrop(round.position);updateHUD();
 }
@@ -3518,6 +3532,25 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // It refuses for the same reasons a save refuses, in the same sentence: an
  // endless run is one hole at a time and `holes: 1` is not a value a course can
  // hold, so a code for it would be refused by the importer rather than here.
+ // THE CARD'S DETAILS FOLD AWAY ON A PHONE. The player row and the shot numbers
+ // are most of the card's height, and on a 390 px phone the card used to cover
+ // 93% of the screen. The owner's call, 25 September: on phones they are hidden
+ // by default and one tap away. The button only EXISTS in the phone layout --
+ // the stylesheet hides it everywhere else, and there the details always show
+ // whatever this class says -- so the choice is remembered per device without
+ // ever hiding anything on a laptop.
+ {
+  const toggle=$('cardToggle'),KEY='fairway-card-open-v1';
+  const setOpen=open=>{
+   $('world').classList.toggle('card-open',open);
+   toggle.setAttribute('aria-expanded',String(open));
+   $('cardToggleLabel').textContent=open?'Hide details':'Shot details';
+   try{localStorage.setItem(KEY,open?'1':'0');}catch{}
+  };
+  let open=false;try{open=localStorage.getItem(KEY)==='1';}catch{}
+  setOpen(open);
+  toggle.onclick=()=>setOpen(!$('world').classList.contains('card-open'));
+ }
  $('seedButton').onclick=async()=>{
   const why=savableCourse().why;
   if(why){toast(why);return;}
@@ -3587,7 +3620,16 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(m.full){cameraMode('free');const {x,z}=mapPosition(m,mx,my);view.targetPos.set(x,world.height(x,z)+80,z);view.freePitch=-.7;view.updateFreeLook();return;}
   if(round.holeComplete)return;const {x,z}=mapPosition(m,mx,my);setAimPoint({x,z});
  };
- window.addEventListener('keydown',e=>{if(e.code==='Escape'&&!$('shotList').hidden){closeShotList();return;}if(e.code==='Escape'&&!$('menuDrop').hidden){closeMenuDrop();return;}if(e.code==='Escape'&&!$('clockPop').hidden){toggleClockPop(false);return;}if(e.code==='Escape'&&!$('leaveNotice').hidden){$('leaveNotice').hidden=true;return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Space')takeShot();if(e.code==='Enter')finishShot();if(e.code==='KeyQ')cycleClub(-1);if(e.code==='KeyE')cycleClub(1);if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ window.addEventListener('keydown',e=>{if(e.code==='Escape'&&!$('shotList').hidden){closeShotList();return;}if(e.code==='Escape'&&!$('menuDrop').hidden){closeMenuDrop();return;}if(e.code==='Escape'&&!$('clockPop').hidden){toggleClockPop(false);return;}if(e.code==='Escape'&&!$('leaveNotice').hidden){$('leaveNotice').hidden=true;return;}
+ // AN OPEN PANEL IS ALWAYS ON TOP, so Escape closes it before any tool window.
+ // Opening a tool closes the panel (see openTool), never the reverse, so a tool
+ // window can only ever sit BEHIND a panel's blur. Escape used to take the tool
+ // windows first, which meant the first press shut a window the player could
+ // not see and the scorecard in front of them needed a second -- found by the
+ // browser smoke test pressing Escape once and seeing nothing change. The tool
+ // window is left where it was, for when the panel is gone.
+ if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
+ if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Space')takeShot();if(e.code==='Enter')finishShot();if(e.code==='KeyQ')cycleClub(-1);if(e.code==='KeyE')cycleClub(1);if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
@@ -3683,7 +3725,10 @@ function tick(now){
  if(pad){if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))takeShot();if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
  if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
- if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){let turn=(keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0),power=(keys.has('ArrowUp')?1:0)-(keys.has('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(turn||power){aim+=aimDelta(turn,dt*18);if(power){$('power').value=clamp(Number($('power').value)+power*dt*35,.5,100);if($('club').value==='putter')aimRange=null;}updateAim();view.setCamera(round.position,aim);}}
+ if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(turn||power){aim+=aimDelta(turn,dt*18);if(power){$('power').value=clamp(Number($('power').value)+power*dt*35,.5,100);if($('club').value==='putter')aimRange=null;}updateAim();view.setCamera(round.position,aim);}}
+ // Once per rendered frame, whether or not the aim block above ran: a tap is
+ // owed to the next frame that can use it, not saved up behind an open panel.
+ tapped.clear();
  // While the scorecard is up, the hole is on screen behind it: every tracer of
  // it, from a slow orbit that keeps tee and green in the same frame.
  if(summaryCamera&&!flight){holeSummary+=dt;view.summaryOrbit(holeSummary);}
