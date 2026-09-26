@@ -368,3 +368,26 @@ reach the shot button at all. **This is emulation, not device testing**: the
 release claim for phones and tablets stays "intended and untested on real
 hardware" until someone plays on one.
 
+---
+
+## Addendum, 26 September 2026: a hosted copy can be installed to a home screen
+
+**The portable file is unchanged in what it does.** Opened from disk it links
+no manifest and makes no network request -- the manifest link is added by the
+page only when it is served over http or https, and the smoke test's
+disk-opened journeys fail on any request, so this is checked, not asserted.
+
+**A hosted copy fetches only its own files.** Served from a web address, the
+page additionally loads `manifest.webmanifest` and its icons from the same
+address, and nothing from anywhere else; the smoke test's `home-screen`
+journey fails on any request to another origin. Chrome's own install check
+reports the hosted copy as installable.
+
+**The icons are the project's own artwork**: the flag path of the existing
+brandmark, drawn by `tools/make-icons.mjs`, with no third-party image involved.
+
+**What this does not claim**: that it works offline (it does not yet), or how
+the home-screen icon behaves on any particular iPhone -- that is checked on the
+device. A launch monitor cannot connect from a phone this way, because a
+secure page may not open the bridge's unencrypted connection.
+

@@ -1,5 +1,21 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#234d3a"><meta name="description" content="Your next round is somewhere new. A portable, procedural browser golf simulator."><title>Fairway — A world of golf</title></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#234d3a">
+<!-- HOME SCREEN. On an iPhone, Share > Add to Home Screen gives an icon that
+     opens the game full screen with no Safari bars: that is what these do.
+     The status bar stays visible and black -- not "black-translucent", which
+     would slide the game UNDER the clock and the notch before anything keeps
+     the controls clear of them. The manifest is linked from main.js, and only
+     when served from a web address: a manifest link is fetched as the page
+     loads, and opened from disk that fetch fails with an error in the console.
+     The icon link is safe to leave static -- desktop browsers never fetch
+     apple-touch-icon, and an iPhone cannot open a file from disk anyway.
+     Regenerate the icons with `node tools/make-icons.mjs`. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Fairway">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E %3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E %3Cstop offset='0' stop-color='%23234d3a'/%3E%3Cstop offset='1' stop-color='%230f2419'/%3E%3C/linearGradient%3E%3C/defs%3E %3Crect width='32' height='32' fill='url(%23g)'/%3E %3Cg transform='translate(2.24 2.24) scale(0.86) translate(1.5 -0.8)'%3E %3Cpath d='M8 26V6l17 5-17 6M4 27h12' fill='none' stroke='%23eef3e6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E %3Ccircle cx='21.5' cy='25.6' r='1.9' fill='%23a8c98a'/%3E %3C/g%3E%3C/svg%3E"><meta name="description" content="Your next round is somewhere new. A portable, procedural browser golf simulator."><title>Fairway — A world of golf</title></head>
 <body><div id="app">
 <!-- Painted by the document itself, before main.js is even fetched. Building it
      in script would leave the play UI bare for exactly the span this covers. -->

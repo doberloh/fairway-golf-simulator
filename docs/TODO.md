@@ -110,6 +110,29 @@ changing anything. Worth it: one of the three assumptions was wrong.
   evidenced by numbers rather than by an image. A camera that frames one tee
   complex would be worth having for exactly this.
 
+## On a phone's home screen
+
+- [ ] **Owner: check the home-screen icon on a real iPhone.** Add the Netlify
+  copy to the home screen and confirm it opens without Safari's bars, shows the
+  flag icon, and plays. No test can reach Safari on iOS; this is the check
+  that counts. Send a diagnostic from it -- it reports the tier and frame rate.
+
+- [ ] **It needs a connection every time it opens.** Offline play is a service
+  worker that keeps a copy of the game on the phone: about thirty lines, plus a
+  cache named by the build stamp so an update replaces the old copy cleanly,
+  plus a smoke journey that goes offline and reloads. It must never register
+  when the file is opened from disk.
+
+- [ ] **The controls are not kept clear of an iPhone's corners and home bar.**
+  Standalone mode letterboxes the page into the safe area without
+  `viewport-fit=cover`, which is why it was left off -- but check it held
+  sideways on the device. Going edge to edge needs `env(safe-area-inset-*)`
+  padding on the HUD first; only then is `black-translucent` worth having.
+
+- [ ] **iPhone users have to know about Add to Home Screen.** iOS never offers
+  it. A one-time hint in Safari on iOS -- and never inside the installed app,
+  where `navigator.standalone` is true -- would tell them.
+
 ## Getting the word out
 
 Planned on 2026-09-25. The decisions below are the owner's and are recorded so
@@ -2718,3 +2741,30 @@ engineering provenance pass, not legal advice.
   failure screenshot showed hole 2, three under. Both ways to the next hole are
   now accepted, the log says which one happened, and it fails only if the hole
   never changes. Looked like "Next hole is broken on slow machines"; was not.
+
+## On a phone's home screen
+
+- [x] **A hosted copy installs to a phone's home screen and opens like an
+  app.** Asked for on 26 September after the owner hosted the build on Netlify
+  and found getting it onto an iPhone was the hard part. Options weighed: a
+  native iPhone app through Capacitor needs a Mac with Xcode and either a $99
+  developer account or reinstalling every seven days, and this project is
+  built on Windows; the full offline web app was more than was needed to get
+  playing. This is the middle: the iPhone tags, a 180 px icon, and a manifest,
+  so Add to Home Screen opens it full screen without Safari's bars. The icons
+  are the existing brandmark flag with the wordmark's green dot where a ball
+  would sit, optically centred; the manifest is `display: standalone`, so the
+  phone's clock stays and nothing slides under the notch before the HUD keeps
+  clear of it.
+
+  **The portable file never knew.** A manifest link is fetched as the page
+  loads, and from disk that fetch fails with an error -- so it is linked from
+  script only over http or https. The disk-opened journeys, which fail on any
+  request, prove it; `home-screen`, the one journey that serves the game, asks
+  Chrome's own parser and install check. Verdict: parses clean, installable --
+  so Android and desktop Chrome can install it too.
+
+  Also: the tab icon is inline, so a host without a `favicon.ico` never logs a
+  404; and the fullscreen button hides where fullscreen cannot happen, which is
+  every iPhone, where it had silently done nothing.
+

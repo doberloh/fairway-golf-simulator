@@ -63,6 +63,8 @@ Putting offers three modes, set in two places that share one copy of the setting
 
 **Fairway lays itself out for the screen it is on.** On a laptop the camera buttons sit beside the course map, under the wind, and the course card scrolls if there is more on it than room. On a phone — upright or sideways — the card shrinks to a strip showing the hole, par, pin and distance; tap **Shot details** to fold out who is playing and the numbers from your last shot, and tap again to put them away. Your phone remembers which you prefer. Aim by tapping the course, hit with the big shot button, and use **Skip animation** to jump to where it lands. Upright, the tee you play from is chosen in the round's **Format & tees** rather than in the shot bar. Panels you have dragged somewhere stay where you put them on every screen.
 
+**On a phone, put it on your home screen.** Open the game's web address in Safari, tap Share, then **Add to Home Screen**; the icon opens Fairway full screen like an app. On Android, use Chrome's **Install app**. INSTALLATION.md has the details, including how to give it a web address in the first place. The fullscreen button is hidden on an iPhone, where browsers cannot go fullscreen — the home-screen icon is how an iPhone plays it full screen.
+
 Starting a **Sim drop** puts the Tools window away, so the drop bar and **Place ball** are never underneath it.
 
 **Escape closes the panel in front of you first.** If a tool window is open behind the scorecard or any other panel, Escape closes the panel and leaves the tool window where it was. A single tap of an arrow key always nudges the aim or the power, however quick the tap and however slow the machine.

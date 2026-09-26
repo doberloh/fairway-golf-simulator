@@ -24,7 +24,7 @@ Download a release archive, unzip it, and double-click `Fairway.html`. That is
 the whole procedure. [docs/INSTALLATION.md](docs/INSTALLATION.md) covers
 device support, LAN and mobile access, and what to do when a browser refuses.
 
-It lays itself out for the screen it is on, from a desktop down to a phone held either way up.
+It lays itself out for the screen it is on, from a desktop down to a phone held either way up. On a phone, host the `dist` folder anywhere static and add the page to your home screen: it opens full screen like an app.
 
 Once you are in, [docs/PLAYING.md](docs/PLAYING.md) is the manual: every
 control, every course-studio setting, and the launch-monitor walkthrough.
@@ -103,6 +103,7 @@ checked by hand.
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | CC0 model packs and the baked tree geometry ingested from them |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
+| `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |
 | `dist/` | Build output. Not committed |
 

@@ -1,0 +1,16 @@
+{
+  "name": "Fairway",
+  "short_name": "Fairway",
+  "description": "A world of golf. Every course is generated from a seed.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b160f",
+  "theme_color": "#234d3a",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

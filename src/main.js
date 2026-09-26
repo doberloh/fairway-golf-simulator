@@ -141,6 +141,20 @@ let clubs=customizeClubs(),layout=null,popups=null,dropState=null,staleGenerator
 //
 // It wraps console.error and always calls through to it. A logger that
 // swallowed what it logged would make this harder to debug, not easier.
+// THE HOME-SCREEN MANIFEST, LINKED ONLY WHEN THE GAME IS SERVED FROM A WEB ADDRESS.
+//
+// Hosted -- on Netlify, say -- the manifest is what lets a phone add the game to
+// its home screen with an icon and open it like an app. But a <link
+// rel="manifest"> is FETCHED as the page loads, and the portable file opened
+// from disk has no manifest beside it: that fetch fails with an error in the
+// console, and the portable file promises it makes no requests at all. So it is
+// linked here, at run time, and only over http or https. The path is relative,
+// so it resolves wherever the game is hosted -- a site's root or a sub-folder.
+if(/^https?:$/.test(location.protocol)){
+ const link=document.createElement('link');
+ link.rel='manifest';link.href='manifest.webmanifest';
+ document.head.append(link);
+}
 const diagnosticErrors=errorLog();
 diagnosticErrors.install();
 // Fed from the frame loop below. A fixed ring, so it costs nothing and cannot
@@ -3522,6 +3536,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // panel of things you set once. It joins the other three cameras, and toggles
  // back the same way they do.
  $('greenView').onclick=()=>cameraMode(view.config.mode==='green'?'player':'green');
+ // NO FULLSCREEN BUTTON WHERE FULLSCREEN CANNOT HAPPEN. An iPhone's Safari has no
+ // element fullscreen at all -- `requestFullscreen` does not exist there -- so
+ // the button did nothing, silently. Added to the home screen the game already
+ // opens without Safari's bars, which is the fullscreen an iPhone offers.
+ if(!document.fullscreenEnabled)$('fullscreen').hidden=true;
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}};
  // THE WHOLE COURSE, ON THE CLIPBOARD, with no trip through the library. The
  // button used to copy the SEED, which is not enough to rebuild a course --
