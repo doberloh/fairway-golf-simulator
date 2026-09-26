@@ -70,8 +70,11 @@ ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.htm
 # ship now. Some of them still cannot RUN from the archive, because
 # `vendor/` is several hundred megabytes of model packs and is in neither
 # archive; that is a deliberate limit and is recorded in DISTRIBUTION_REVIEW.
+# `public` holds what the build copies beside the page for a HOSTED copy -- the
+# home-screen icons and the manifest -- and a source archive without it builds a
+# game that installs to a phone with no icon.
 DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
-               'tools': {'.py', '.mjs', '.js'}}
+               'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'}}
 
 
 # WHAT COUNTS AS SOURCE IS WHAT GIT TRACKS, not whatever sits on disk.

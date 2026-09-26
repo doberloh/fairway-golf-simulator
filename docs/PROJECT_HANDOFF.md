@@ -158,6 +158,8 @@ None of this ships inside `dist/index.html`. The bake tools are the exception in
 | tools/tree-spacing.mjs | How close trees actually stand, measured against how wide their crowns are |
 | tools/fetch-references.py | Pulls reference photographs from Wikimedia Commons into a scratch folder. REFERENCES, not assets: nothing derived from them is a copy |
 | tools/package_release.py | Verified source/portable ZIP packaging and checksums |
+| tools/make-icons.mjs | Draws the home-screen icons in `public/` from the brandmark path, through Playwright. Rerun only if the mark changes |
+| public/ | Copied beside the page by the build: home-screen icons and `manifest.webmanifest`, for a HOSTED copy. The manifest is linked only over http(s) |
 | tools/release.mjs | What `npm run release` runs: finds a Python under any of its three names, then runs the packager ONCE and exits with its code. A shell `||` chain cannot tell a missing interpreter from a failed packaging, which would hide the refusals the packager exists to make |
 
 ### Measuring it
@@ -1360,6 +1362,60 @@ This branch lived in `labGreenAt`, and removing the lab mode left `setRangeGreen
 **The bench is built to order.** `enterRange(options)` takes `difficulty`, `seed`, `stimp`, `firmness` and `green`. It took none of the first three when the lab mode was removed, so `lab.green({difficulty:35})` quietly built a dead flat green and then honestly reported a slope of zero — the instrument was not lying about the result, but it was ignoring the request. `lab.open()` with no options resets the bench to flat, which is the clean starting state for a measurement.
 
 **`lab.greenAt` throws rather than no-opping.** `setRangeGreen` returns silently when `rangeMode` is off, which is right for a slider and wrong for a console call — a measurement that quietly did not move the green would be attributed to the physics. It now names the problem, rejects a distance outside `GREEN_RANGE`, and reports where the green actually ended up rather than what was asked for.
+
+## A hosted copy installs to a home screen; the portable file never knows
+
+Hosted -- Netlify, Cloudflare Pages, GitHub Pages -- Fairway can be added to a
+phone's home screen and open like an app. Four pieces, and one rule about each:
+
+- **The icons travel INSIDE what asks for them, never beside it.** The
+  owner's Netlify site is password-protected so it cannot be scraped, and
+  Netlify answers every request without the visitor's login with a 401. A
+  phone adding a page to its home screen fetches the icon ON ITS OWN, without
+  Safari's login -- so the first version, which linked icon files, got 401s
+  and iOS fell back to a screenshot. Now the 180 px home-screen icon is a data
+  URL inside `index.html`, and the manifest's three icons are data URLs inside
+  `manifest.webmanifest`. Both are WRITTEN by `node tools/make-icons.mjs`,
+  which draws the PNGs in `public/` from the brandmark path through Playwright
+  and then embeds them -- change them there, never by hand. The PNGs stay in
+  `public/` as the source and as the conventional files a public host serves.
+  `public/` is copied beside the page by the build, so `dist/` IS the upload;
+  the packager includes it in the source archive.
+- **The manifest is linked by `main.js`, and only over http or https.** A
+  `<link rel="manifest">` is fetched as the page loads; opened from disk there
+  is nothing beside the file to fetch, and it fails with an error in the
+  console -- while the portable file promises no requests. **Never make it a
+  static link in `index.html`.** Its addresses are relative, so it works at a
+  site's root and in a sub-folder alike. **It is linked with
+  `crossorigin="use-credentials"`**: a manifest is fetched WITHOUT the
+  visitor's login unless the link asks, so behind a password it came back 401
+  even with the page itself loaded. It stays a real file rather than a data
+  URL because Chrome treats `start_url` as invalid unless it shares an origin
+  with the manifest, and a data URL has none.
+- **The iPhone tags are static**, in `index.html`: metas cost no request.
+  The status bar is `black`, not `black-translucent` -- translucent slides the
+  game under the clock and the notch, and nothing yet keeps the controls clear
+  of those.
+- **The tab icon is an inline SVG data URL**, so the page never asks a server
+  for `/favicon.ico` -- which a browser does on its own, and which on a host
+  without one is a 404 in the console.
+
+The fullscreen button hides where `document.fullscreenEnabled` is false: an
+iPhone's Safari has no element fullscreen, and the button did nothing there,
+silently.
+
+**Checked by `tools/smoke.mjs`'s `home-screen` and `home-screen-private`
+journeys**, the only ones that serve the game rather than open it from disk.
+The private one runs behind a local server that behaves like Netlify's
+password protection -- 401 to anything without the login -- logs in first, and
+fails on any 401 at all. Both ask Chrome's own manifest parser and install
+check (through the DevTools protocol), decode every icon, and play. Built
+against the version before this fix, the private journey goes red, and a
+direct probe showed the manifest and the icon both refused with 401 while the
+page loaded fine -- the owner's symptom exactly. Every other journey opens the file from disk and fails on any request,
+which is what proves the portable file never grew a manifest. What no test can
+reach is Safari on an iPhone -- the home-screen behaviour itself is checked on
+the phone.
 
 ## `T` is three.js, and a local `T` breaks its whole function
 

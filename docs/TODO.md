@@ -110,6 +110,33 @@ changing anything. Worth it: one of the three assumptions was wrong.
   evidenced by numbers rather than by an image. A camera that frames one tee
   complex would be worth having for exactly this.
 
+## On a phone's home screen
+
+- [ ] **Owner: check the home-screen icon on a real iPhone, on the private
+  site.** Upload the new `dist`, delete the old home-screen icon, add it again,
+  and confirm it shows the flag, opens without Safari's bars (asking for the
+  password once), and plays. The one unproven piece is whether iOS honours a
+  home-screen icon INSIDE the page as a data URL -- no documentation found
+  settled it. If it still shows a screenshot: host just the icon publicly (it
+  is only the logo) and point the link at it. Send a diagnostic from the phone
+  -- it reports the tier and frame rate.
+
+- [ ] **It needs a connection every time it opens.** Offline play is a service
+  worker that keeps a copy of the game on the phone: about thirty lines, plus a
+  cache named by the build stamp so an update replaces the old copy cleanly,
+  plus a smoke journey that goes offline and reloads. It must never register
+  when the file is opened from disk.
+
+- [ ] **The controls are not kept clear of an iPhone's corners and home bar.**
+  Standalone mode letterboxes the page into the safe area without
+  `viewport-fit=cover`, which is why it was left off -- but check it held
+  sideways on the device. Going edge to edge needs `env(safe-area-inset-*)`
+  padding on the HUD first; only then is `black-translucent` worth having.
+
+- [ ] **iPhone users have to know about Add to Home Screen.** iOS never offers
+  it. A one-time hint in Safari on iOS -- and never inside the installed app,
+  where `navigator.standalone` is true -- would tell them.
+
 ## Getting the word out
 
 Planned on 2026-09-25. The decisions below are the owner's and are recorded so
@@ -2718,3 +2745,55 @@ engineering provenance pass, not legal advice.
   failure screenshot showed hole 2, three under. Both ways to the next hole are
   now accepted, the log says which one happened, and it fails only if the hole
   never changes. Looked like "Next hole is broken on slow machines"; was not.
+
+## On a phone's home screen
+
+- [x] **A hosted copy installs to a phone's home screen and opens like an
+  app.** Asked for on 26 September after the owner hosted the build on Netlify
+  and found getting it onto an iPhone was the hard part. Options weighed: a
+  native iPhone app through Capacitor needs a Mac with Xcode and either a $99
+  developer account or reinstalling every seven days, and this project is
+  built on Windows; the full offline web app was more than was needed to get
+  playing. This is the middle: the iPhone tags, a 180 px icon, and a manifest,
+  so Add to Home Screen opens it full screen without Safari's bars. The icons
+  are the existing brandmark flag with the wordmark's green dot where a ball
+  would sit, optically centred; the manifest is `display: standalone`, so the
+  phone's clock stays and nothing slides under the notch before the HUD keeps
+  clear of it.
+
+  **The portable file never knew.** A manifest link is fetched as the page
+  loads, and from disk that fetch fails with an error -- so it is linked from
+  script only over http or https. The disk-opened journeys, which fail on any
+  request, prove it; `home-screen`, the one journey that serves the game, asks
+  Chrome's own parser and install check. Verdict: parses clean, installable --
+  so Android and desktop Chrome can install it too.
+
+  Also: the tab icon is inline, so a host without a `favicon.ico` never logs a
+  404; and the fullscreen button hides where fullscreen cannot happen, which is
+  every iPhone, where it had silently done nothing.
+
+- [x] **The home-screen icon survives a password-protected host.** The owner
+  keeps the Netlify site private so it cannot be scraped, and adding it to the
+  home screen gave a screenshot icon, with 401s in Netlify's log. Netlify
+  answers every request without the visitor's login with a 401, and a phone
+  fetches a linked icon ON ITS OWN, without Safari's login; the manifest is
+  fetched without credentials too, unless its link asks. Reproduced before
+  fixing, with a local server that behaves the same way: logged in, the page
+  loaded, and both the manifest and the icon came back 401. Now the
+  home-screen icon is a data URL inside the page, the manifest's icons are
+  data URLs inside the manifest, and the manifest link carries
+  `crossorigin="use-credentials"` -- the fix that worked in Netlify's own
+  support thread on this. Same probe after: nothing refused. Chrome still
+  rates it installable. `make-icons.mjs` now writes the manifest and the
+  page's icon itself, so neither can drift from the PNGs.
+
+  Alternatives weighed: turning the password off (the owner's call, and
+  declined -- it is there to stop scraping); a data-URL manifest (Chrome
+  rejects its start_url as cross-origin); and hosting the icon publicly
+  elsewhere, kept as the fallback if iOS turns out not to read a data-URL
+  icon, which no documentation settled.
+
+  Two iPhone facts now in INSTALLATION: the home-screen app asks for the
+  password once, because it keeps its own login separate from Safari's; and
+  it keeps its own saved rounds.
+

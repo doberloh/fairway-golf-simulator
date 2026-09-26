@@ -120,6 +120,12 @@ node tools/build-meshes.mjs
 Reads `vendor/<pack>/*.glb` and `*.obj`, writes `src/asset-meshes.js`. Re-run
 after changing the model selection in `PICK`.
 
+## Icons
+
+The home-screen and tab icons in `public/` and `index.html` are the project's
+own flag mark -- the brandmark path already in the page, plus a dot -- drawn by
+`tools/make-icons.mjs`. No third-party image is used.
+
 ## Trade marks
 
 **GSPro**, **Garmin**, **Rapsodo**, **SkyTrak**, **PiTrac**, **Foresight** and

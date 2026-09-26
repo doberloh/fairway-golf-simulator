@@ -135,6 +135,49 @@ The bridge tests bind temporary local ports; restricted environments may block t
 
 This route serves the built app to another browser. Each browser runs its **own** course/round; this is not synchronized multiplayer or a remote control for the desktop. Up to four golfers share one app session through the game’s player settings.
 
+### On an iPhone or iPad: host it, then add it to the home screen
+
+**The easiest way onto an iPhone.** iOS will not run an HTML file from the
+Files app, so a phone needs the game at a web address. Once it has one, it can
+live on the home screen like an app.
+
+1. **Put `dist/` on a free static host.** After `npm run build`, the `dist`
+   folder holds the game (`index.html`) and, beside it, the home-screen icons
+   and `manifest.webmanifest`. Upload the **whole folder**. Netlify Drop is the
+   quickest: drag the folder onto its page and you get an `https://` address in
+   about a minute. Cloudflare Pages and, once the repository is public, GitHub
+   Pages work the same way. Anyone with the address can open it.
+2. **Open that address in Safari on the phone.**
+3. **Tap Share, then Add to Home Screen.** The icon it adds opens Fairway full
+   screen, without Safari's address bar, with the phone's status bar kept
+   visible above it.
+
+On Android, Chrome offers **Install app** from its menu for the same address;
+Chrome's own install check reports the game as installable.
+
+**A password-protected site works.** If you keep the site private -- Netlify's
+password protection, say -- nothing the home screen needs is fetched without
+your login: the icon is inside the page and the manifest asks to carry the
+login. Two things to know. The home-screen app keeps **its own** login,
+separate from Safari's, so the first time you open it from the home screen it
+asks for the password once. And it keeps its own saved rounds, so a round
+saved while playing in Safari does not appear in the home-screen app.
+
+If the home-screen icon still comes out as a screenshot of the page, delete it
+and add it again; iOS remembers the first icon it took. If it is still a
+screenshot after that, iOS is not reading an icon built into the page, and the
+fallback is to host just the icon somewhere public -- it is only the logo.
+
+What it does not do yet: **it needs a connection each time it opens** -- it
+does not work offline -- and the controls are not yet kept clear of an
+iPhone's rounded corners and home bar when held sideways. **A launch monitor
+cannot connect from a phone this way**: a secure `https://` page is not allowed
+to open the bridge's unencrypted connection on your network. On a phone,
+Fairway is touch play.
+
+The portable file is unchanged by any of this. Opened from disk, it links no
+manifest and makes no network requests.
+
 ### Serve from a desktop on the same network
 
 On the host computer, complete the source build above. Then, from the source folder:

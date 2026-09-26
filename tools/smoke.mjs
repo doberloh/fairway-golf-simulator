@@ -52,6 +52,7 @@
 // is the menu backdrop the game has already built, and only the journeys whose
 // whole point is a nine-hole course pay for one.
 import {chromium} from 'playwright';
+import {createServer} from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -106,14 +107,26 @@ function fail(message) { console.error(message); process.exit(2); }
 // round saved by one would be offered as "Continue" to the next, and a failure
 // in one would cascade into every journey after it and bury the first cause.
 class Trip {
- constructor(page, name) {
+ // `home` is where the page came from. Opened from disk it is a file: URL and
+ // ANY request is a failure -- the portable file promises none. Served, the
+ // page may fetch its own files from its own address (the manifest, the
+ // icons), and nothing from anywhere else.
+ constructor(page, name, home = null) {
   this.page = page; this.name = name;
   this.errors = []; this.requests = []; this.steps = [];
+  const own = home && /^https?:/.test(home) ? new URL(home).origin : null;
   page.on('pageerror', e => this.errors.push(`uncaught: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') this.errors.push(`console.error: ${m.text()}`); });
+  // A REFUSED REQUEST IS A FAILURE, whether or not anything logs it. A host
+  // behind a password answers 401 to any request without the visitor's login,
+  // and that is exactly how the home-screen icon went missing on the owner's
+  // private Netlify site -- the page loaded fine and the icon quietly did not.
+  page.on('response', r => { if (r.status() === 401) this.errors.push(`401 Unauthorized: ${r.url()}`); });
   page.on('request', r => {
    const u = r.url();
-   if (!/^(file|data|blob):/.test(u)) this.requests.push(u);
+   if (/^(file|data|blob):/.test(u)) return;
+   if (own && u.startsWith(own + '/')) return;
+   this.requests.push(u);
   });
  }
 
@@ -726,6 +739,84 @@ const JOURNEYS = [
    });
   },
  })),
+ // THE GAME AS A HOSTED WEB APP -- what an iPhone sees when it is added to the
+ // home screen from Netlify. Served from a real local web address rather than
+ // opened from disk, which only these two journeys do: every other one proves
+ // the PORTABLE file makes no requests and links no manifest.
+ //
+ // Twice: once as a public host, and once as a PASSWORD-PROTECTED one, the way
+ // the owner's Netlify site is kept private. That server refuses every request
+ // without the visitor's login with a 401, as Netlify does, and the journey
+ // logs in first, as the owner did in Safari. The first version of this failed
+ // there -- the icon and the manifest were fetched without the login and came
+ // back 401 -- and this is the journey that reproduces it.
+ //
+ // The verdicts come from Chrome itself, not from reading the spec: its own
+ // manifest parser, through the DevTools protocol, and its own install check.
+ // What it cannot test is Safari on an iPhone, which is checked on the phone.
+ ...[['home-screen', false], ['home-screen-private', true]].map(([name, protect]) => ({
+  name,
+  what: protect
+   ? 'served behind a password, like the private Netlify site: nothing the home screen needs is refused'
+   : 'served from a web address, the page links its manifest and icons, and Chrome can parse them',
+  serve: {protect},
+  async run(t) {
+   await menuReady(t);
+   await t.step('the iPhone tags are in the page', async () => {
+    const tags = await t.page.evaluate(() => ({
+     capable: document.querySelector('meta[name="apple-mobile-web-app-capable"]')?.content,
+     title: document.querySelector('meta[name="apple-mobile-web-app-title"]')?.content,
+     bar: document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.content,
+    }));
+    if (tags.capable !== 'yes') throw new Error('no apple-mobile-web-app-capable meta -- the home-screen icon would open inside Safari');
+    if (tags.title !== 'Fairway') throw new Error(`home-screen title is "${tags.title}"`);
+    // Deliberately not black-translucent until the controls keep clear of the notch.
+    if (tags.bar !== 'black') throw new Error(`status bar style is "${tags.bar}"`);
+   });
+   await t.step('the home-screen icon is INSIDE the page, a 180 px PNG', async () => {
+    const icon = await t.page.evaluate(() => document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href') || '');
+    // Inside, because a phone fetches a linked icon WITHOUT the visitor's login.
+    if (!icon.startsWith('data:image/png;base64,')) throw new Error(`the icon is a link to "${icon.slice(0, 60)}", which a password-protected host refuses`);
+    const size = await t.page.evaluate(src => new Promise((ok, no) => {
+     const img = new Image(); img.onload = () => ok([img.naturalWidth, img.naturalHeight]); img.onerror = () => no(new Error('the icon data does not decode')); img.src = src;
+    }), icon);
+    if (size.join('x') !== '180x180') throw new Error(`apple-touch-icon is ${size.join('x')}`);
+   });
+   await t.step('the manifest is linked, and asks to carry the login', async () => {
+    const link = await t.page.evaluate(() => { const l = document.querySelector('link[rel="manifest"]'); return l && {href: l.href, cross: l.crossOrigin}; });
+    if (!link) throw new Error('no manifest link on a served page');
+    if (link.cross !== 'use-credentials') throw new Error(`manifest crossorigin is "${link.cross}"; without use-credentials a private host refuses it`);
+   });
+   await t.step("Chrome's own parser reads the manifest, and every icon is inside it", async () => {
+    const cdp = await t.page.context().newCDPSession(t.page);
+    const got = await cdp.send('Page.getAppManifest');
+    const problems = (got.errors || []).map(e => e.message);
+    if (!got.data) throw new Error('Chrome could not fetch the manifest');
+    if (problems.length) throw new Error(`manifest problems: ${problems.join('; ')}`);
+    const m = JSON.parse(got.data);
+    if (m.display !== 'standalone') throw new Error(`display is "${m.display}"`);
+    for (const icon of m.icons) {
+     if (!icon.src.startsWith('data:image/png;base64,')) throw new Error(`manifest icon ${icon.src.slice(0, 40)} is a link a private host would refuse`);
+     const ok = await t.page.evaluate(src => new Promise(done => { const i = new Image(); i.onload = () => done(i.naturalWidth > 0); i.onerror = () => done(false); i.src = src; }), icon.src);
+     if (!ok) throw new Error(`manifest icon ${icon.sizes} does not decode`);
+    }
+   });
+   await t.step("Chrome's install check: what, if anything, stops it being installable", async () => {
+    const cdp = await t.page.context().newCDPSession(t.page);
+    const got = await cdp.send('Page.getInstallabilityErrors');
+    const errs = (got.installabilityErrors || []).map(e => e.errorId);
+    // Reported rather than required: Android and desktop installs are a bonus;
+    // the iPhone, which is the point, does not use this check.
+    console.log(`       Chrome installability: ${errs.length ? errs.join(', ') : 'installable'}`);
+   });
+   await t.step('and it still plays: into an Endless round', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+    await t.shot();
+   });
+  },
+ })),
 ];
 
 // ------------------------------------------------------------------ runner
@@ -789,11 +880,38 @@ for (const journey of chosen) {
  // The first software run lost two journeys to exactly this, both of them
  // working.
  page.setDefaultTimeout(30000 * SLOW);
- const trip = new Trip(page, journey.name);
+ // A journey that wants the HOSTED game gets dist/ from a small local server,
+ // the same files Netlify serves. Started per journey and closed after it.
+ let server = null, home = url;
+ if (journey.serve) {
+  const dir = path.dirname(FILE ? path.resolve(FILE) : DIST);
+  const TYPES = {'.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json'};
+  // A PRIVATE host refuses anything without the visitor's login cookie, with
+  // a 401 and a password page -- which is what Netlify's password protection
+  // does. The cookie is set on the browser below, before the page loads, the
+  // way a visitor is logged in after typing the password once.
+  const PASS = 'fairway-smoke-login';
+  server = createServer((req, res) => {
+   if (journey.serve.protect && !(req.headers.cookie || '').includes(`nf_private=${PASS}`)) {
+    res.writeHead(401, {'Content-Type': 'text/html; charset=utf-8'});
+    res.end('<!doctype html><title>Password required</title><p>This site is private.</p>');
+    return;
+   }
+   const name = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html';
+   const file = path.join(dir, name);
+   if (!file.startsWith(dir) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
+   res.writeHead(200, {'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream'});
+   fs.createReadStream(file).pipe(res);
+  });
+  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  home = `http://127.0.0.1:${server.address().port}/`;
+  if (journey.serve.protect) await context.addCookies([{name: 'nf_private', value: PASS, url: home}]);
+ }
+ const trip = new Trip(page, journey.name, home);
  const t0 = Date.now();
  let failure = null;
  try {
-  await page.goto(url, {waitUntil: 'load'});
+  await page.goto(home, {waitUntil: 'load'});
   await journey.run(trip);
  } catch (e) {
   failure = e;
@@ -820,6 +938,8 @@ for (const journey of chosen) {
  results.push({name: journey.name, ok: !failure, seconds});
  console.log(`   ${failure ? 'FAILED' : 'passed'} in ${seconds.toFixed(1)}s\n`);
  await context.close();
+ // The local server goes with its journey: nothing is left listening.
+ if (server) await new Promise(done => server.close(done));
 }
 await browser.close();
 
