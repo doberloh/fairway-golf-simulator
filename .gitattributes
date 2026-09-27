@@ -10,3 +10,7 @@
 *.jpg binary
 *.zip binary
 *.pdf binary
+
+# The Windows start scripts for the launch-monitor bridge must reach a player's
+# machine with CRLF line endings: cmd.exe misreads some LF-only batch files.
+*.cmd text eol=crlf

@@ -21,13 +21,38 @@ and which are merely untested, how to serve it over your local network to a
 phone or tablet, how to connect a launch monitor, and what to do when a
 browser refuses to cooperate.
 
+## Playing with a launch monitor
+
+The **Launch monitor** folder holds the bridge that carries shots from your
+monitor's connector software into the game. It needs **Node.js** (version 20
+or newer), installed once from [nodejs.org](https://nodejs.org) -- the LTS
+download.
+
+1. Double-click **Start bridge** in the Launch monitor folder: `Start
+   bridge.cmd` on Windows, `Start bridge.command` on a Mac. On a Mac the first
+   time, macOS may refuse to open it: Control-click it and choose **Open**. A
+   window opens and stays open while the bridge runs.
+2. Open **Fairway.html**, choose **Launch monitor** on the main menu, then
+   **Connect bridge**, and tick **Arm monitor for live shots**.
+3. Point your monitor's Open Connect connector at **this computer, TCP port
+   1921**, and hit.
+
+**To play on a phone or tablet**, use **Start bridge for a phone** instead. It
+prints an address such as `http://192.168.1.50:1922` -- open that on the phone,
+on the same Wi-Fi, then Launch monitor and Connect bridge as above. Windows may
+ask whether Node.js may use the network: allow it on **private** networks.
+The bridge has no password, so only do this on a network you trust.
+
+Close the bridge's window to stop it. **INSTALLATION.md** covers connectors,
+ports and what to do when one will not talk.
+
 ## What you are getting
 
 Every course is generated from a seed — nine or eighteen holes routed through
 one continuous landscape with its own terrain, water, weather, planting and
 light. You can shape one in the course studio, save it, and share it as a
 short code. Ball flight is integrated from real launch numbers and a launch
-monitor can drive it through the included bridge.
+monitor can drive it through the bridge in the Launch monitor folder.
 
 **This is an experimental preview.** It plays and it is enjoyable to play, but
 it has not been verified against physical launch-monitor hardware, it has not

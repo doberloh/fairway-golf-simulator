@@ -51,6 +51,18 @@ PORTABLE = [
     ('docs/INSTALLATION.md', 'INSTALLATION.md'),
     ('docs/PLAYING.md', 'PLAYING.md'),
 ]
+# THE LAUNCH-MONITOR BRIDGE, for a player: one bundled file that needs only
+# Node.js (built by tools/build-bridge.mjs into dist/) and a start script per
+# platform, in their own folder so the archive's top level stays the game and
+# its documents. The bridge serves the Fairway.html one folder up.
+BRIDGE_FOLDER = 'Launch monitor'
+BRIDGE_SCRIPTS = ['Start bridge.cmd', 'Start bridge for a phone.cmd',
+                  'Start bridge.command', 'Start bridge for a phone.command']
+# A double-clicked macOS script must be executable, and a ZIP only says so if
+# the entry carries Unix permissions -- archive.write copies the Windows file's,
+# which have no execute bit.
+EXECUTABLE = {f'{BRIDGE_FOLDER}/{n}' for n in BRIDGE_SCRIPTS if n.endswith('.command')}
+
 # The source archive is for somebody who is going to READ or BUILD the thing,
 # so it keeps everything the portable one drops, and it keeps the repository's
 # own layout so that a path written in a document still points at the file it
@@ -73,7 +85,7 @@ ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.htm
 # `public` holds what the build copies beside the page for a HOSTED copy -- the
 # home-screen icons and the manifest -- and a source archive without it builds a
 # game that installs to a phone with no icon.
-DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
+DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs', '.cmd', '.command'},
                'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'}}
 
 
@@ -117,6 +129,12 @@ def main():
     for path in files:
         if not path.is_file() or path.is_symlink():
             raise SystemExit(f'Missing or symlinked release input: {path}')
+    bundle_path = ROOT / 'dist/fairway-bridge.mjs'
+    if not bundle_path.is_file():
+        raise SystemExit('No bridge bundle in dist/. Run npm run build first.')
+    bridge_inputs = [ROOT / 'bridge/server.mjs'] + [p for p in files if p.is_relative_to(ROOT / 'src')]
+    if any(p.stat().st_mtime_ns > bundle_path.stat().st_mtime_ns for p in bridge_inputs):
+        raise SystemExit('The bridge or the physics changed since the bridge was bundled. Run npm run build first.')
     inputs = [ROOT / n for n in ROOT_SOURCE + ['LICENSE', 'docs/THIRD_PARTY_NOTICES.txt']]
     inputs.extend(p for p in files if p.is_relative_to(ROOT / 'src'))
     if any(p.stat().st_mtime_ns > html_path.stat().st_mtime_ns for p in inputs):
@@ -135,14 +153,22 @@ def main():
     }:
         raise SystemExit('Dependency inventory is stale. Update it and review notices.')
     packages = {
-        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE],
+        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE]
+            + [(bundle_path, f'{BRIDGE_FOLDER}/fairway-bridge.mjs')]
+            + [(ROOT / 'bridge/launch' / n, f'{BRIDGE_FOLDER}/{n}') for n in BRIDGE_SCRIPTS],
         'Fairway-source.zip': [(p, p.relative_to(ROOT).as_posix()) for p in files],
     }
     for name, entries in packages.items():
         target = ROOT / name
         with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as archive:
             for path, destination in entries:
-                archive.write(path, destination)
+                if destination in EXECUTABLE:
+                    info = zipfile.ZipInfo.from_file(path, destination)
+                    info.external_attr = (0o100755 << 16)
+                    info.compress_type = zipfile.ZIP_DEFLATED
+                    archive.writestr(info, path.read_bytes())
+                else:
+                    archive.write(path, destination)
         with zipfile.ZipFile(target) as archive:
             if archive.testzip() is not None:
                 raise SystemExit(f'ZIP integrity check failed: {name}')

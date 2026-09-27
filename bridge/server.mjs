@@ -2,6 +2,7 @@ import net from 'node:net';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import os from 'node:os';
 import {WebSocketServer,WebSocket} from 'ws';
 import {parseLaunchMessage,readDeviceStatus,MPH} from '../src/physics.js';
 
@@ -60,6 +61,42 @@ export function isLocalOrigin(origin){
  return false;
 }
 
+// THE GAME THE BRIDGE SERVES, found beside the bridge rather than assumed.
+// From the source tree the bridge is `bridge/server.mjs` and the game is
+// `dist/index.html`. Shipped to a player, the bridge is one bundled file,
+// `fairway-bridge.mjs`, in the portable archive's "Launch monitor" folder, and
+// the game is `Fairway.html` one folder up -- or beside it, if a player moved
+// it. So every place it could be is tried, in that order, and FAIRWAY_HTML
+// names any other.
+export const PAGE_CANDIDATES = ['Fairway.html', 'index.html', '../Fairway.html', '../dist/index.html'];
+async function readGame(){
+ const tries = process.env.FAIRWAY_HTML ? [process.env.FAIRWAY_HTML] : PAGE_CANDIDATES.map(c => new URL(c, import.meta.url));
+ for (const t of tries) { try { return await readFile(t); } catch {} }
+ return null;
+}
+// `FAIRWAY_HTTP_HOST=lan` -- what the "for a phone" start scripts set -- means
+// THIS computer's address on the home network, found rather than typed: a
+// player should not have to look up their computer's address to play from a
+// phone. Private IPv4 addresses only, and the HOME network's first: VPNs and
+// virtual machines add adapters with private addresses of their own, and on
+// the machine this was written on a VPN's 10.8.0.2 came before the real
+// 192.168.1.20 -- picked blind, the phone would have been told an address it
+// cannot reach. So adapters named like a VPN or a virtual machine are skipped,
+// and 192.168/16 (what home routers hand out) is preferred to 172.16/12
+// (Docker and WSL) and 10/8 (VPNs). Every candidate is returned, best first,
+// so the bridge can print the others in case the guess is wrong.
+const VIRTUAL=/vpn|nord|lynx|tailscale|zerotier|wireguard|wg\d|tun|tap|utun|vethernet|hyper-v|virtualbox|vbox|vmware|vmnet|docker|wsl|bridge\d|br-|veth|loopback/i;
+export function lanAddresses(interfaces = os.networkInterfaces()){
+ const found=[];
+ for (const [name, list] of Object.entries(interfaces)) for (const a of list || []) {
+  if (a.internal || (a.family !== 'IPv4' && a.family !== 4) || a.address.startsWith('127.')) continue;
+  if (!isLocalOrigin(`http://${a.address}`)) continue;
+  const rank=(VIRTUAL.test(name)?10:0)+(a.address.startsWith('192.168.')?0:a.address.startsWith('172.')?1:2);
+  found.push({name, address: a.address, rank});
+ }
+ return found.sort((x, y) => x.rank - y.rank);
+}
+export const lanAddress = interfaces => lanAddresses(interfaces)[0]?.address ?? null;
 export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',tcpHost=host,httpHost=host,onLog=console.log,verbose=false}={}){
  const sockets=new Set(),pending=new Map();let browser=null,player={Handed:'RH',Club:'DR'},ready=false,seq=0;
  // The DEVICE's own view of itself, relayed on to the browser. Null until a
@@ -130,7 +167,9 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
   if(req.method!=='GET'){res.writeHead(405);res.end();return;}
   if(req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,deviceConnected:sockets.size>0,browserConnected:!!browser,ready}));return;}
   if(req.url!=='/'&&req.url!=='/index.html'){res.writeHead(404);res.end();return;}
-  try{const html=await readFile(new URL('../dist/index.html',import.meta.url));res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});res.end(html);}catch{res.writeHead(503,{'content-type':'text/plain'});res.end('Build the simulator first: npm run build');}
+  const html=await readGame();
+  if(html){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});res.end(html);}
+  else{res.writeHead(503,{'content-type':'text/plain'});res.end('The game was not found beside the bridge. From the source folder run npm run build; from the portable folder keep Fairway.html one folder up from the bridge.');}
  });
  const wss=new WebSocketServer({noServer:true,maxPayload:65536});
  server.on('upgrade',(req,socket,head)=>{
@@ -157,11 +196,17 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
  try{await listen(tcp,tcpPort,tcpHost);await listen(server,httpPort,httpHost);}catch(e){tcp.close();server.close();wss.close();throw e;}
  if(verbose)onLog('Verbose logging on: every message in and out is printed.');
  else onLog('Set FAIRWAY_LOG=debug for per-message logging if a connector will not talk.');
- if(httpHost!=='127.0.0.1')onLog(`Browser access is open to ${httpHost} — anything on your network that can reach it can drive the simulator.`);
+ if(httpHost!=='127.0.0.1'){onLog(`Browser access is open to ${httpHost} — anything on your network that can reach it can drive the simulator.`);onLog(`On a phone on the same Wi-Fi, open http://${httpHost}:${server.address().port}`);}
  onLog(`Fairway bridge: http://${httpHost}:${server.address().port} · launch monitor TCP ${tcpHost}:${tcp.address().port}`);
  return {tcpPort:tcp.address().port,httpPort:server.address().port,async close(){for(const p of pending.values())clearTimeout(p.timer);pending.clear();for(const s of sockets)s.destroy();for(const c of wss.clients)c.terminate();await Promise.all([new Promise(r=>tcp.close(r)),new Promise(r=>server.close(r))]);wss.close();}};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- createBridge({tcpHost:process.env.FAIRWAY_TCP_HOST||'127.0.0.1',tcpPort:Number(process.env.FAIRWAY_TCP_PORT||1921),httpPort:Number(process.env.FAIRWAY_HTTP_PORT||1922),httpHost:process.env.FAIRWAY_HTTP_HOST||'127.0.0.1',verbose:/^(1|on|debug|verbose|true)$/i.test(process.env.FAIRWAY_LOG||'')
+ let httpHost=process.env.FAIRWAY_HTTP_HOST||'127.0.0.1';
+ if(httpHost.toLowerCase()==='lan'){
+  const all=lanAddresses();httpHost=all[0]?.address;
+  if(!httpHost){console.error('Could not start bridge: this computer has no home-network address. Join the same Wi-Fi as the phone and try again.');process.exit(1);}
+  if(all.length>1)console.log(`Using ${httpHost} (${all[0].name}). If the phone cannot reach it, set FAIRWAY_HTTP_HOST to one of: ${all.slice(1).map(a=>`${a.address} (${a.name})`).join(', ')}`);
+ }
+ createBridge({tcpHost:process.env.FAIRWAY_TCP_HOST||'127.0.0.1',tcpPort:Number(process.env.FAIRWAY_TCP_PORT||1921),httpPort:Number(process.env.FAIRWAY_HTTP_PORT||1922),httpHost,verbose:/^(1|on|debug|verbose|true)$/i.test(process.env.FAIRWAY_LOG||'')
   ||process.argv.slice(2).some(a=>['--debug','--verbose','-v'].includes(a))}).then(b=>{process.on('SIGINT',async()=>{await b.close();process.exit(0);});}).catch(e=>{console.error('Could not start bridge:',e.message);process.exitCode=1;});
 }

@@ -214,3 +214,24 @@ test('the bridge refuses an upgrade from a public origin and accepts a LAN one',
   good.close();
  } finally { await bridge.close(); }
 });
+
+// "FOR A PHONE" FINDS THE HOME NETWORK, NOT THE VPN. On the machine this was
+// written on, a VPN adapter's 10.8.0.2 came before the real 192.168.1.20, and
+// the first version of `lanAddress` would have told the phone the VPN's.
+test('lanAddress prefers the home network over VPN and virtual adapters', async () => {
+ const {lanAddress, lanAddresses} = await import('../bridge/server.mjs');
+ const v4 = address => [{address, family: 'IPv4', internal: false}];
+ const machine = {
+  WgTunnel: v4('10.8.0.2'),
+  'vEthernet (WSL)': v4('172.20.16.1'),
+  Ethernet: v4('192.168.1.20'),
+  'Loopback Pseudo-Interface 1': [{address: '127.0.0.1', family: 'IPv4', internal: true}],
+ };
+ assert.equal(lanAddress(machine), '192.168.1.20');
+ assert.deepEqual(lanAddresses(machine).map(a => a.address), ['192.168.1.20', '172.20.16.1', '10.8.0.2']);
+ // A real home network on 10.x still wins over a VPN on 10.x.
+ assert.equal(lanAddress({'Wi-Fi': v4('10.0.0.23'), WgTunnel: v4('10.8.0.2')}), '10.0.0.23');
+ // Public addresses are never offered, and no private address means none.
+ assert.equal(lanAddress({eth0: v4('203.0.113.9')}), null);
+ assert.equal(lanAddress({}), null);
+});

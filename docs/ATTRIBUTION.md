@@ -111,6 +111,11 @@ the ingestion step. **`vendor/` is not part of the build and not part of the
 release archives** — `tools/package_release.py` packages `src`, `tests`,
 `bridge` and `tools` only, and nothing in `src/` imports from it.
 
+**The portable archive ships the bridge bundled**: `Launch monitor/fairway-bridge.mjs`
+carries the bridge, the game's own physics and **ws** (MIT) in one file, with
+a banner naming ws and pointing at THIRD_PARTY_NOTICES.txt, which carries its
+licence and ships beside it.
+
 ## Regenerating
 
 ```
