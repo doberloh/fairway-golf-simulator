@@ -114,6 +114,7 @@ class Trip {
  constructor(page, name, home = null) {
   this.page = page; this.name = name;
   this.errors = []; this.requests = []; this.steps = [];
+  this.home = home;
   const own = home && /^https?:/.test(home) ? new URL(home).origin : null;
   page.on('pageerror', e => this.errors.push(`uncaught: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error') this.errors.push(`console.error: ${m.text()}`); });
@@ -320,6 +321,47 @@ function unreachableControls(scope = '#world button, #world input, #world select
  return out;
 }
 
+// A THUMB-SIZED TARGET, measured the way a finger meets it: from the middle
+// of each control, walk outward in each direction until the point no longer
+// lands on it. A control passes if it is 44 px across both ways, or if the
+// walk stopped on ANOTHER control -- two buttons sharing the space between
+// them is a fair split, dead space around a small one is the fault. The
+// invisible margins that give small buttons their reach are pseudo-elements,
+// and `elementFromPoint` reports them as the button, so this sees what a tap
+// sees rather than what the button looks like.
+function smallTargets(selectors) {
+ const out = [], REACH = 22;
+ const control = el => el?.closest('button,select,input,a,[role=button]');
+ for (const b of document.querySelectorAll(selectors)) {
+  const r = b.getBoundingClientRect();
+  if (!r.width || !r.height || b.closest('[hidden]') || getComputedStyle(b).visibility === 'hidden') continue;
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const walk = (dx, dy) => {
+   for (let d = 1; d <= REACH; d++) {
+    const x = cx + dx * d, y = cy + dy * d;
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return {d: d - 1, shared: true};
+    const hit = document.elementFromPoint(x, y);
+    if (hit === b || b.contains(hit)) continue;
+    return {d: d - 1, shared: !!control(hit) && control(hit) !== b};
+   }
+   return {d: REACH, shared: false};
+  };
+  const [l, rt, u, dn] = [walk(-1, 0), walk(1, 0), walk(0, -1), walk(0, 1)];
+  const short = (a, c) => a.d + c.d + 1 < 43 && !(a.shared || c.shared);
+  const label = b.id ? '#' + b.id : (b.getAttribute('aria-label') || b.textContent || b.tagName).trim().slice(0, 30);
+  if (short(l, rt) || short(u, dn)) out.push(`${label} ${l.d + rt.d + 1}x${u.d + dn.d + 1}`);
+ }
+ return out;
+}
+// TWO FINGERS AT ONCE, which Playwright's touchscreen cannot do -- it has
+// `tap` and nothing else. Chrome's own touch input, through the DevTools
+// protocol, can: the page receives real touch and pointer events, one pointer
+// per finger. `points` is a list of [x, y]; an empty list lifts every finger.
+async function fingers(t, type, points) {
+ t.cdp ??= await t.page.context().newCDPSession(t.page);
+ await t.cdp.send('Input.dispatchTouchEvent', {type, touchPoints: points.map(([x, y], id) => ({x, y, id}))});
+}
+
 // The rest of the layout's health, beside reachability: a game screen must
 // never scroll, and the HUD must not hide most of the course. The second is a
 // floor, not a target -- phone portrait used to show 7% of the course, with
@@ -349,6 +391,84 @@ function layoutHealth() {
 
 class JourneyFailed extends Error {
  constructor(step, problem) { super(`${step}: ${problem}`); this.step = step; }
+}
+
+// AIMING BY TOUCH: the aim pad, the big map and two-finger zoom, and a thumb's
+// worth of target on every control a round needs. Shared by both phone
+// journeys, run after a tap on the course has aimed once.
+async function touchAiming(t) {
+ const aimNow = () => t.page.evaluate(() => ({
+  aim: parseFloat(document.getElementById('aimOutput').textContent),
+  reach: parseFloat(document.getElementById('aimRange').value),
+ }));
+ const pad = name => t.page.locator('#aimPad').getByRole('button', {name, exact: true});
+ await t.step('the aim pad: half a degree a tap, a yard further, and the pin', async () => {
+  let was = await aimNow();
+  await pad('Aim right').tap();
+  let now = await aimNow();
+  if (Math.abs(now.aim - was.aim + 0.5) > 0.051) throw new Error(`one tap right turned the aim ${(now.aim - was.aim).toFixed(2)} degrees, not -0.5`);
+  was = now;
+  await pad('Aim further').tap();
+  now = await aimNow();
+  if (Math.abs(now.reach - was.reach - 1) > 0.051) throw new Error(`one tap further moved the target ${(now.reach - was.reach).toFixed(2)} yd, not 1`);
+  await pad('Aim at the pin').tap();
+  now = await aimNow();
+  // The same answer as the "Aim at pin" button a laptop has in its shot bar.
+  // That one is hidden on a phone, so it is pressed through the page -- as a
+  // yardstick for the pad, not as something a player on a phone could reach.
+  // (The card's DISTANCE is no yardstick: it is the tee yardage, measured
+  // along the hole, not the straight line to the pin.)
+  await pad('Aim right').tap();
+  await t.page.evaluate(() => document.getElementById('aimAtPin').click());
+  const bar = await aimNow();
+  if (bar.aim !== now.aim || bar.reach !== now.reach) throw new Error(`the pad aimed at ${now.aim} deg, ${now.reach} yd; the bar's Aim at pin at ${bar.aim} deg, ${bar.reach} yd`);
+ });
+ await t.step('held, the pad sweeps -- and stops when the finger lifts', async () => {
+  const box = await pad('Aim left').boundingBox();
+  const was = (await aimNow()).aim;
+  await fingers(t, 'touchStart', [[box.x + box.width / 2, box.y + box.height / 2]]);
+  await t.page.waitForTimeout(1500);
+  await fingers(t, 'touchEnd', []);
+  const held = (await aimNow()).aim;
+  if (held - was < 2) throw new Error(`a 1.5 s hold turned the aim ${(held - was).toFixed(1)} degrees`);
+  await t.page.waitForTimeout(600);
+  if ((await aimNow()).aim !== held) throw new Error('the aim kept turning after the finger lifted');
+ });
+ await t.step('a tap on the map thumbnail opens the big map', async () => {
+  await t.page.locator('#map').tap();
+  await t.until(() => t.page.evaluate(() => document.getElementById('world').classList.contains('aim-view')), 'the big map', 5 * SLOW);
+  const box = await t.page.locator('#map').boundingBox();
+  const vp = t.page.viewportSize();
+  if (box.width < vp.width * 0.6 || box.height < vp.height * 0.45) throw new Error(`the big map is ${Math.round(box.width)}x${Math.round(box.height)} on a ${vp.width}x${vp.height} screen`);
+ });
+ await t.step('two fingers zoom it', async () => {
+  const box = await t.page.locator('#map').boundingBox();
+  const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  await fingers(t, 'touchStart', [[cx - 25, cy], [cx + 25, cy]]);
+  for (let i = 1; i <= 8; i++) await fingers(t, 'touchMove', [[cx - 25 - i * 12, cy], [cx + 25 + i * 12, cy]]);
+  await fingers(t, 'touchEnd', []);
+  const zoom = await t.page.evaluate(() => document.getElementById('map').mapNav?.zoom ?? 1);
+  // Spread from 50 px apart to 242: close to five times, less the clamp.
+  if (zoom < 3) throw new Error(`a pinch from 50 px to 242 px zoomed the map to ${zoom.toFixed(2)}x`);
+  if (!/×/.test(await t.page.textContent('#mapTitle'))) throw new Error('the map title does not say it is zoomed');
+ });
+ await t.step('a tap on the big map aims, and Done puts it away', async () => {
+  const before = await t.page.textContent('#aimOutput');
+  const box = await t.page.locator('#map').boundingBox();
+  await t.page.touchscreen.tap(box.x + box.width * 0.4, box.y + box.height * 0.4);
+  await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the big map to aim', 5 * SLOW);
+  if (!await t.page.evaluate(() => document.getElementById('world').classList.contains('aim-view'))) throw new Error('aiming closed the big map; it should stay open to adjust');
+  await t.page.getByRole('button', {name: 'Done', exact: true}).tap();
+  await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('aim-view')), 'the big map to close', 5 * SLOW);
+  const zoom = await t.page.evaluate(() => document.getElementById('map').mapNav?.zoom ?? 1);
+  if (zoom !== 1) throw new Error(`the thumbnail came back zoomed ${zoom}x`);
+ });
+ await t.step('every control a round needs is a thumb wide', async () => {
+  const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
+  if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
+  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #world .view-tools .tool, #cardToggle, #seedButton, #aimPad button, #club, #power, #swing, #mapExpand');
+  if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
+ });
 }
 
 // ------------------------------------------------------------ the journeys
@@ -707,6 +827,7 @@ const JOURNEYS = [
     await t.page.touchscreen.tap(box.x + box.width * 0.62, box.y + box.height * 0.45);
     await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
    });
+   await touchAiming(t);
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
     await tap('#swing');
@@ -773,6 +894,9 @@ const JOURNEYS = [
     // Deliberately not black-translucent until the controls keep clear of the notch.
     if (tags.bar !== 'black') throw new Error(`status bar style is "${tags.bar}"`);
    });
+   await t.step('no Add to Home Screen hint: this is not an iPhone', async () => {
+    if (!await t.page.evaluate(() => document.getElementById('homeHint').hidden)) throw new Error('the iPhone hint shows on a desktop browser');
+   });
    await t.step('the home-screen icon is INSIDE the page, a 180 px PNG', async () => {
     const icon = await t.page.evaluate(() => document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href') || '');
     // Inside, because a phone fetches a linked icon WITHOUT the visitor's login.
@@ -817,6 +941,54 @@ const JOURNEYS = [
    });
   },
  })),
+ // THE ADD TO HOME SCREEN HINT, as an iPhone meets it: the hosted copy, a
+ // phone's screen and touch, and the identity Safari on an iPhone gives. It is
+ // Chrome underneath, which does not matter -- the hint only reads the
+ // identity and whether the page is running from the home screen, and both
+ // are set here the way an iPhone sets them.
+ {
+  name: 'home-screen-hint',
+  what: 'on an iPhone in a browser, the menu says once how to add Fairway to the home screen',
+  serve: {protect: false},
+  context: {viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true, deviceScaleFactor: 2,
+   userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1'},
+  async run(t) {
+   const shown = () => t.page.evaluate(() => !document.getElementById('homeHint').hidden && !!document.getElementById('homeHint').offsetHeight);
+   await menuReady(t);
+   await t.step('the hint is on the menu, and says what to press', async () => {
+    if (!await shown()) throw new Error('no hint on the first visit from an iPhone');
+    const text = await t.page.textContent('#homeHint');
+    if (!/Share/.test(text) || !/Add to Home Screen/.test(text)) throw new Error(`the hint says "${text.trim()}"`);
+    const bad = await t.page.evaluate(unreachableControls, '#homeHint button');
+    if (bad.length) throw new Error(bad.join('; '));
+   });
+   await t.step('"Got it" puts it away', async () => {
+    await t.page.getByRole('button', {name: 'Got it', exact: true}).tap();
+    if (await shown()) throw new Error('the hint is still showing');
+   });
+   await t.step('and it is said once: not again on the next visit', async () => {
+    await t.page.reload();
+    await t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW);
+    if (await shown()) throw new Error('the hint came back after it was dismissed');
+   });
+   await t.step('never from disk, where there is no address to add', async () => {
+    // A file opened from disk is its own origin with its own storage, so
+    // nothing remembered above hides the hint here: only the address does.
+    // Before the installed-app step, whose pretence would hide it anyway.
+    await t.page.goto(url);
+    await t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW);
+    if (await shown()) throw new Error('the hint shows on a file opened from disk');
+   });
+   await t.step('and never inside the home-screen app itself', async () => {
+    await t.page.goto(t.home);
+    await t.page.evaluate(() => localStorage.removeItem('fairway-home-hint-v1'));
+    await t.page.addInitScript(() => Object.defineProperty(navigator, 'standalone', {value: true}));
+    await t.page.reload();
+    await t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW);
+    if (await shown()) throw new Error('the hint shows in the installed app, which is already on the home screen');
+   });
+  },
+ },
 ];
 
 // ------------------------------------------------------------------ runner

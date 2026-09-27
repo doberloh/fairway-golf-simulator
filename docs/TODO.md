@@ -110,16 +110,28 @@ changing anything. Worth it: one of the three assumptions was wrong.
   evidenced by numbers rather than by an image. A camera that frames one tee
   complex would be worth having for exactly this.
 
-## On a phone's home screen
+## Playing on a phone
 
-- [ ] **Owner: check the home-screen icon on a real iPhone, on the private
-  site.** Upload the new `dist`, delete the old home-screen icon, add it again,
-  and confirm it shows the flag, opens without Safari's bars (asking for the
-  password once), and plays. The one unproven piece is whether iOS honours a
-  home-screen icon INSIDE the page as a data URL -- no documentation found
-  settled it. If it still shows a screenshot: host just the icon publicly (it
-  is only the logo) and point the link at it. Send a diagnostic from the phone
-  -- it reports the tier and frame rate.
+- [ ] **Owner: aim a few holes on a real iPhone.** The pad, the big map and
+  two-finger zoom are proven in a browser that EMULATES a phone. Whether the
+  half-degree step feels right under a real thumb, whether the pad sits where
+  a thumb rests, and whether iOS Safari ever steals the pinch or the hold are
+  things only the phone can answer.
+
+- [ ] **The layout plan approved on 26 September, for its own branch
+  (`hud-layout`), with mockups first.** Hole, par, yardage and pin in the top
+  bar at every size, with compact per-player score chips that open the
+  scorecard; the course card goes. The shot controls leave the bottom edge for
+  a left-side panel that scales -- a narrow column on a phone, the fuller
+  panel with shot numbers on a big screen -- with the **Swing button inside
+  it** (the owner's call). Tools: behind one button in the top bar on phones,
+  a slim strip down the right edge on bigger screens. And the controls kept
+  clear of an iPhone's corners and home bar (see the safe-area item below).
+  The aim pad will want a new home when the shot controls move. (The flag
+  and aim labels overlapping, offered alongside, the owner left for later; it
+  keeps its own entry under *Found by driving the built game*.)
+
+## On a phone's home screen
 
 - [ ] **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
@@ -132,10 +144,6 @@ changing anything. Worth it: one of the three assumptions was wrong.
   `viewport-fit=cover`, which is why it was left off -- but check it held
   sideways on the device. Going edge to edge needs `env(safe-area-inset-*)`
   padding on the HUD first; only then is `black-translucent` worth having.
-
-- [ ] **iPhone users have to know about Add to Home Screen.** iOS never offers
-  it. A one-time hint in Safari on iOS -- and never inside the installed app,
-  where `navigator.standalone` is true -- would tell them.
 
 ## Getting the word out
 
@@ -2790,10 +2798,59 @@ engineering provenance pass, not legal advice.
   Alternatives weighed: turning the password off (the owner's call, and
   declined -- it is there to stop scraping); a data-URL manifest (Chrome
   rejects its start_url as cross-origin); and hosting the icon publicly
-  elsewhere, kept as the fallback if iOS turns out not to read a data-URL
-  icon, which no documentation settled.
+  elsewhere, kept as the fallback if iOS turned out not to read a data-URL
+  icon, which no documentation settled. **It does read one** -- confirmed on
+  the owner's iPhone the same day, so the fallback was never used.
 
   Two iPhone facts now in INSTALLATION: the home-screen app asks for the
   password once, because it keeps its own login separate from Safari's; and
   it keeps its own saved rounds.
 
+- [x] **The home-screen icon works on a real iPhone, on the private site.**
+  Confirmed by the owner on 26 September: the flag icon shows on the home
+  screen. That settles the one piece nothing on the development machine could
+  test and no documentation found settled -- **iOS honours a home-screen icon
+  written INTO the page as a data URL**. The fallback of hosting the icon
+  publicly elsewhere is not needed.
+
+## Playing on a phone
+
+- [x] **Aiming by touch, a map that opens big and pinches, and a thumb's worth
+  of every control.** Asked for on 26 September: aiming and the map were
+  "REALLY hard" on a phone because everything was small. Options offered for
+  aiming were arrows, swipes, a zoom-to-aim view, or a mix; the owner chose
+  arrows plus the zoom view.
+
+  **The aim pad**: turn half a degree a tap, move the target a yard further or
+  shorter (a putt's length, on the green), the pin in the middle; hold to
+  sweep. On phones and touch screens under 820 px; a round pad upright, a row
+  sideways. The laptop's own aim arrows now step half a degree (they were one)
+  and sweep when held. **Swipe-to-turn was rejected**: a drag on the course
+  already moves the camera in free flight, the same gesture meaning two things
+  by mode is a trap, and a swipe that turns the aim is one stray thumb away
+  from spoiling a shot already lined up.
+
+  **The big map**: the one map canvas laid over the course. A tap on the
+  thumbnail opens it on a touch screen; a button on the map's corner opens it
+  anywhere. It aims, drops or flies wherever the small map would; two fingers
+  zoom it; Done or Escape closes it, and it gives way to a shot, a panel, the
+  flyover or the menu by itself. Held sideways the title and Done share a row
+  so the hole gets the height.
+
+  **Pinch zoom** on the map at any size, which had not worked at all: the
+  second finger was ignored.
+
+  **No stray browser gestures**: a double tap no longer zooms the page, a pull
+  down no longer reloads it and throws the round away, and holding an arrow no
+  longer selects text. **Every control a round needs is 44 px to a finger** --
+  Apple's recommended size -- through invisible margins where there is no room
+  to grow; the pad, the club picker and the power slider are that size
+  outright.
+
+  **The Add to Home Screen hint**, closing the open item from *On a phone's
+  home screen*: once, on the menu, on an iPhone or iPad in a browser; never
+  from disk and never inside the installed app.
+
+  Checked by new steps in both phone journeys and a new `home-screen-hint`
+  journey; 14 of 14 journeys green, 553 of 553 tests, no ground moved. Not
+  checked: a real iPhone, which is the open owner item above.

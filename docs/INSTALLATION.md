@@ -150,7 +150,8 @@ live on the home screen like an app.
 2. **Open that address in Safari on the phone.**
 3. **Tap Share, then Add to Home Screen.** The icon it adds opens Fairway full
    screen, without Safari's address bar, with the phone's status bar kept
-   visible above it.
+   visible above it. The game's menu says this too, once, the first time an
+   iPhone or iPad opens it in a browser.
 
 On Android, Chrome offers **Install app** from its menu for the same address;
 Chrome's own install check reports the game as installable.
@@ -163,17 +164,19 @@ separate from Safari's, so the first time you open it from the home screen it
 asks for the password once. And it keeps its own saved rounds, so a round
 saved while playing in Safari does not appear in the home-screen app.
 
-If the home-screen icon still comes out as a screenshot of the page, delete it
-and add it again; iOS remembers the first icon it took. If it is still a
-screenshot after that, iOS is not reading an icon built into the page, and the
-fallback is to host just the icon somewhere public -- it is only the logo.
+If the home-screen icon comes out as a screenshot of the page, delete it and
+add it again; iOS remembers the first icon it took for an address. If it is
+still a screenshot, clear the site's stored data in Safari's settings and add
+it once more. The icon built into the page is confirmed working on an iPhone,
+behind Netlify's password protection.
 
 What it does not do yet: **it needs a connection each time it opens** -- it
 does not work offline -- and the controls are not yet kept clear of an
 iPhone's rounded corners and home bar when held sideways. **A launch monitor
 cannot connect from a phone this way**: a secure `https://` page is not allowed
 to open the bridge's unencrypted connection on your network. On a phone,
-Fairway is touch play.
+Fairway is touch play: an aim pad for fine adjustment, a map that opens big
+and pinches to zoom, and controls sized for a thumb.
 
 The portable file is unchanged by any of this. Opened from disk, it links no
 manifest and makes no network requests.

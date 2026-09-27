@@ -3563,3 +3563,90 @@ The last column is the sanity check — what a ball reaching the same apex would
 
 **Left alone deliberately.** The remaining 0.3 s against tour average would have to come out of lift, and lift is fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%). The driver's real gap is carry — 261 against a sourced 275 — and chasing that risks the descent angle the whole bounce model depends on.
 
+## A home-screen icon on a password-protected host
+
+Not a physics question, but it took outside sources to answer, and two of them
+did not answer it -- recorded so the next person does not repeat the search.
+
+**The symptom.** The owner's Netlify site is password-protected so it cannot be
+scraped. Added to an iPhone's home screen, it got a screenshot of the page as
+its icon, with 401s in Netlify's log.
+
+**What the sources established:**
+
+- [Exclude .webmanifest from password protection -- Netlify Support Forums](https://answers.netlify.com/t/exclude-webmanifest-from-password-protection/7710).
+  The same failure on another site: Netlify's site-wide password protection
+  applies to every file, the manifest included, and a manifest fetched without
+  the login gets a 401. The poster reported the `crossorigin` attribute on the
+  manifest link fixed it; Netlify's reply offered path-scoped basic auth
+  instead. **Taken:** `crossorigin="use-credentials"` on the manifest link.
+  Also noted there and NOT acted on: `.webmanifest` files are not served
+  compressed on Netlify, `manifest.json` would be.
+- [Password Protection overview -- Netlify Docs](https://docs.netlify.com/manage/security/secure-access-to-sites/password-protection/).
+  Where the setting lives (Project configuration > General > Visitor access >
+  Password Protection, or "Project visibility" on credit-based plans; a team
+  default under Team settings > Access & security). Pro plans and above. It
+  says nothing about Netlify Drop sites being protected by default.
+- [How to password-protect a Netlify site or deploy previews -- Netlify Knowledge Base](https://www.netlify.com/knowledge-base/how-to-password-protect-a-netlify-site-or-deploy-previews/).
+  Consulted from the same search; nothing beyond the docs above.
+- [Set Apple Touch Icon for any website -- The Hidden Blog, 2019](https://blog.notmyhostna.me/posts/set-apple-touch-icon-for-any-website).
+  Useful for a different reason than expected: iOS reads the apple-touch-icon
+  link from the page AT THE MOMENT it is added, honours one injected by script,
+  and will fetch it from a completely different address. That made hosting the
+  icon publicly elsewhere a sound fallback. It does NOT use a data URL.
+- [Apple Touch Icon: The Complete Guide -- Premium Favicon Blog](https://www.premiumfavicon.com/blog/apple-touch-icon-guide).
+  Confirms the screenshot fallback when no icon is found; says nothing about
+  data URLs.
+
+**What no source settled:** whether iOS honours an apple-touch-icon given as a
+`data:image/png;base64,...` URL. A search for it found tricks and file paths,
+never a data URL. **Tested on the device instead: it does.** Confirmed on the
+owner's iPhone on 26 September 2026, behind Netlify's password protection -- the
+flag icon, full screen from the home screen, the password asked once inside
+the app. So the home-screen icon lives in `index.html` and the manifest's
+icons in the manifest, both written by `tools/make-icons.mjs`, and a private
+host never has a reason to refuse anything the home screen needs.
+
+**Rejected:** a data-URL MANIFEST. Chrome treats a `start_url` as invalid
+unless it shares an origin with the manifest, and a data URL has no origin, so
+the manifest stays a real file fetched once with the login.
+
+## Touch targets, and the gestures a game page has to switch off
+
+For the phone controls on the `mobile-play` branch. Sources read, and what was
+taken:
+
+- [Accessibility -- Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+  (the page renders by script; its text was read from
+  [the JSON behind it](https://developer.apple.com/tutorials/data/design/human-interface-guidelines/accessibility.json)).
+  iOS and iPadOS: **default control size 44x44 pt, minimum 28x28 pt**. Spacing:
+  "about 12 points of padding around elements that include a bezel", about 24
+  around the visible edges of one without. **Taken:** 44 as the floor for
+  every control a round needs, aimed at 48 so rounding and a clipping panel
+  edge cannot take it under. **Departed from:** the spacing. The camera row's
+  buttons are 30 px with a few pixels between them and there is no room on a
+  phone for 12 pt of padding each; their invisible 48 px margins overlap and
+  split the gap halfway. The top bar and camera row are to be redrawn on the
+  `hud-layout` branch, which is where that gets fixed properly.
+- [touch-action -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action).
+  `manipulation` allows panning and pinch zoom and disables double-tap zoom;
+  the browser **intersects** the values of the touched element and its
+  ancestors, and the property is not inherited. **Taken:** `manipulation` on
+  the whole play area, which cannot loosen the `none` the scene and the map
+  already carry.
+- [overscroll-behavior -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior).
+  `contain` (and so `none`) disables the browser's own pull-to-refresh and
+  swipe navigation. MDN marks it **not Baseline**, with Safari the gap; on an
+  iPhone the home-screen app has no pull-to-refresh to begin with, so the
+  risk is Safari in a tab. **Taken:** `none` on the page.
+- [display-mode -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/display-mode).
+  `standalone` matches an installed web app. MDN says nothing about iOS or
+  about Safari's older, non-standard `navigator.standalone`; the hint checks
+  both, and that `navigator.standalone` is still set by iOS is from general
+  knowledge, not a source read here -- **the owner's iPhone is the check**.
+
+**Numbers placed rather than published**, and worth revisiting on a real
+phone: half a degree and one yard a tap, and the hold's climb from 3 to 24
+steps a second after 0.35 s. Half a degree is 1.7 yards sideways at 200, which
+is finer than a fingertip on the course and coarse enough that nobody taps
+forty times; nothing published says what a golf aim step should be.
