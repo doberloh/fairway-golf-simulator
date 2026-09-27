@@ -783,6 +783,9 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  #world .shot-controls>.swing-button{margin:10px;padding:14px 10px;font-size:15px}
  #world .swing-button small{display:none}
  #world .last-shot-toggle{padding:9px 13px;gap:9px}
+ /* The label goes on a phone: beside it "250 carry · 272 total" was cut to
+    "250 ..." in a 190 px panel, and the numbers are the line's whole point. */
+ #world .last-shot-toggle .ls-title{display:none}
  #world .last-shot .shot-result{padding:4px 13px 10px}
  #world .last-shot .shot-grid{--shot-cols:2!important}
  /* A drop or a scramble pick takes the whole foot of a phone: between the
