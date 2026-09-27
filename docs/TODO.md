@@ -118,18 +118,16 @@ changing anything. Worth it: one of the three assumptions was wrong.
   a thumb rests, and whether iOS Safari ever steals the pinch or the hold are
   things only the phone can answer.
 
-- [ ] **The layout plan approved on 26 September, for its own branch
-  (`hud-layout`), with mockups first.** Hole, par, yardage and pin in the top
-  bar at every size, with compact per-player score chips that open the
-  scorecard; the course card goes. The shot controls leave the bottom edge for
-  a left-side panel that scales -- a narrow column on a phone, the fuller
-  panel with shot numbers on a big screen -- with the **Swing button inside
-  it** (the owner's call). Tools: behind one button in the top bar on phones,
-  a slim strip down the right edge on bigger screens. And the controls kept
-  clear of an iPhone's corners and home bar (see the safe-area item below).
-  The aim pad will want a new home when the shot controls move. (The flag
-  and aim labels overlapping, offered alongside, the owner left for later; it
-  keeps its own entry under *Found by driving the built game*.)
+- [ ] **Owner: the redrawn play screen on a real iPhone, both ways up.** The
+  layout is checked at a phone's size under emulation, where the safe-area
+  insets are zero. On the phone: nothing under the notch or the home bar held
+  sideways, nothing under the home bar upright, and the pad and the shot
+  button where thumbs rest.
+
+- [ ] **Owner: the launch-monitor panel with a real device.** It is checked
+  against a pretend bridge that sends what `bridge/server.mjs` sends. A real
+  connector may report the ball differently -- or never -- and the big numbers
+  wait for the monitor to see the next ball.
 
 ## On a phone's home screen
 
@@ -138,12 +136,6 @@ changing anything. Worth it: one of the three assumptions was wrong.
   cache named by the build stamp so an update replaces the old copy cleanly,
   plus a smoke journey that goes offline and reloads. It must never register
   when the file is opened from disk.
-
-- [ ] **The controls are not kept clear of an iPhone's corners and home bar.**
-  Standalone mode letterboxes the page into the safe area without
-  `viewport-fit=cover`, which is why it was left off -- but check it held
-  sideways on the device. Going edge to edge needs `env(safe-area-inset-*)`
-  padding on the HUD first; only then is `black-translucent` worth having.
 
 ## Getting the word out
 
@@ -2854,3 +2846,42 @@ engineering provenance pass, not legal advice.
   Checked by new steps in both phone journeys and a new `home-screen-hint`
   journey; 14 of 14 journeys green, 553 of 553 tests, no ground moved. Not
   checked: a real iPhone, which is the open owner item above.
+
+- [x] **The play screen redrawn: the hole in the top bar, the shot panel on
+  the left, and a launch-monitor mode of its own.** Approved from mockups on
+  26 September, for every screen size. The course card is gone from play: hole,
+  par, yardage and pin sit in the top bar, with a score chip per golfer --
+  colour, score against par tinted as the old live score was, the shot they
+  are on or *In* -- that opens the scorecard. The shot controls left the bottom
+  edge for a panel down the left, only as tall as its contents, with the shot
+  button inside it and the last shot at its foot (folded to carry and total;
+  always open on a big screen). Right: wind, the camera strip down the edge,
+  the map at the foot. On a phone: the chip of whoever is up with a count of
+  the others, Tools in the top bar, the cameras behind one button, the pad
+  under the map, the last shot folded above the club. **The controls keep
+  clear of the notch and home bar** (`viewport-fit=cover` and the safe-area
+  insets), which closes that item from *On a phone's home screen*.
+
+  **Monitor mode**, the owner's main mode: the panel leads with Ready / Finding
+  ball / No monitor and an Armed switch; power, shape, the shot button and the
+  tee go; **the aim stays** (it used to go -- the owner's call); the numbers are
+  always open, grouped Ball / Club / Result, the Club group left out when a
+  device sends none; the big numbers come up after each shot and stay until
+  the next ball is seen; red offers Reconnect and Hit by hand.
+
+  Measured: the course visible, folded, on 63-75% of laptops, tablets and
+  desktops (39-65% before), 60% of a phone held sideways (36%), 65% upright
+  (45%). Every journey green, a new `monitor` journey among them.
+
+  Found and fixed on the way: the shot caption printed the bridge's status
+  object ("Alex · Driver · [object Object]") under every monitor shot; new
+  tool windows opened 128 px down on any screen and ran off a phone held
+  sideways; and the playing area could be scrolled by the browser, which
+  slid the whole HUD under the top bar. Saved panel layouts reset once
+  (`fairway-layout-v2`), since a position saved for the old bottom bar would
+  park the panel across the course.
+
+  **Rejected:** keeping the course card and moving only the shot controls (the
+  card was the other half of what covered a phone); a fixed-time after-shot
+  card (runs out while you are still looking); a Club group of dashes for
+  devices without club data.

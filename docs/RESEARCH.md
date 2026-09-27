@@ -1348,7 +1348,7 @@ Three things key off one question — is the ball on the putting surface — and
 
 That needed a marker projection of its own. `project` reports whether a point is within the depth range and says nothing about the sides — and behind the camera it is worse than useless, because the perspective divide is by a negative w, so both axes flip and the marker lands on the *opposite* side from the thing it marks. `projectMarker` reads front-or-behind from camera space, mirrors the flip back, clamps, and reports the screen bearing.
 
-**It clamps to a measured rectangle, not an even inset.** An even margin assumes the four edges are equally free and they are not: the bottom of the screen is the shot controls and the right is the hole map. The panels are draggable and resizable, so the rectangle is measured rather than tabulated, twice a second rather than per frame — `getBoundingClientRect` forces layout, and a panel that was just dragged can wait half a second to be noticed. It never gives up more than a third of the screen to either side, because a marker squeezed into nothing is worse than one overlapping a panel. And it pushes out from the rectangle's *own* centre: through an off-centre rectangle, the screen centre lands short on one side and past the edge on the other.
+**It clamps to a measured rectangle, not an even inset.** An even margin assumes the four edges are equally free and they are not: on a laptop the left of the screen is the shot panel and the right the camera strip and the hole map; on a phone the panel, the map and the aim pad share the bottom. So a panel running most of the height is kept BESIDE and a panel along the bottom is kept BELOW -- treating a phone's panel as a side squeezed the markers into a sliver beside the map. The panels are draggable and resizable, so the rectangle is measured rather than tabulated, twice a second rather than per frame — `getBoundingClientRect` forces layout, and a panel that was just dragged can wait half a second to be noticed. It never gives up more than a third of the screen to a side, or half of it to the foot, because a marker squeezed into nothing is worse than one overlapping a panel. And it pushes out from the rectangle's *own* centre: through an off-centre rectangle, the screen centre lands short on one side and past the edge on the other.
 
 ## Debris that is carried rather than fired
 
@@ -3650,3 +3650,38 @@ phone: half a degree and one yard a tap, and the hold's climb from 3 to 24
 steps a second after 0.35 s. Half a degree is 1.7 yards sideways at 200, which
 is finer than a fingertip on the course and coarse enough that nobody taps
 forty times; nothing published says what a golf aim step should be.
+
+## The play screen's edges, and a launch monitor without a monitor
+
+For the redraw on the `hud-layout` branch. Sources read, and what was taken:
+
+- [viewport meta, `viewport-fit` -- MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/name/viewport).
+  `cover`: "The viewport is scaled to fill the device display", with the advice
+  to use the safe-area inset variables so content is not lost. `auto` (the
+  default) leaves the page letterboxed away from a notch. **Taken:**
+  `viewport-fit=cover`, and every panel padded by the insets.
+- [env() -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/env).
+  `safe-area-inset-top/right/bottom/left` are 0 on a rectangular viewport and
+  a px value where the display's shape or system UI takes space; `env()` takes
+  a fallback as its second argument. Baseline, widely available since January
+  2020. **Taken:** `env(safe-area-inset-*, 0px)` in four edge variables on the
+  playing area and in the top bar's side padding. MDN's page does not say the
+  insets need `viewport-fit=cover`; on iOS they are zero without it because
+  the page is letterboxed -- general knowledge, not read here, and the owner's
+  iPhone is the check.
+- [overflow -- MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow).
+  `hidden` clips but "content can also be scrolled to programmatically";
+  `clip` clips and "programmatic scrolling is not possible". **Taken:**
+  `overflow: clip` on the playing area, after a Tools window running off the
+  bottom of a phone had the browser scroll the whole HUD up under the top bar.
+- [WebSocketRoute -- Playwright docs](https://playwright.dev/docs/api/class-websocketroute).
+  Mocks or intercepts a page's WebSocket; added in v1.48 (this project runs
+  1.63). The page does not say when a route takes effect. **Measured here:** a
+  route added after the page loaded never saw the connection (the game logged
+  `ERR_CONNECTION_REFUSED`); added before `goto`, it did. The smoke harness's
+  `prepare(page)` hook exists for that.
+
+**Placed, not published:** the edge gutters (16 px, 10 on a phone), the
+panel widths (268 px, 330 on a big screen, 190 on a phone upright and 178
+sideways) and the map sizes. They came from the approved mockups and were
+then checked by the layout sweep, not taken from any source.
