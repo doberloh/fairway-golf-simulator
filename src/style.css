@@ -720,7 +720,7 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 /* A drop puts the camera strip away too, as it always did (main.js relies on it). */
 #world.dropping .view-tools{display:none!important}
 #world.exploring .minimap:not(.hud-custom){bottom:calc(100% - var(--controls-top,100%) + var(--gap))}
-#world[data-mode="menu"] .aim-pad,#world[data-mode="studio"] .aim-pad,#world.exploring .aim-pad,#world.dropping .aim-pad,
+#world[data-mode="menu"] .cam-button,#world[data-mode="menu"] .aim-pad,#world[data-mode="studio"] .aim-pad,#world.exploring .aim-pad,#world.dropping .aim-pad,
 #world[data-mode="menu"] .shot-card,#world[data-mode="studio"] .shot-card,#world.exploring .shot-card{display:none!important}
 /* A bar that takes over the foot of the screen -- a drop, a scramble pick,
    free flight -- starts right of the panel rather than under it. */
@@ -738,6 +738,9 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
   --edge-b:calc(10px + env(safe-area-inset-bottom,0px));--gap:8px;--panel-w:190px;--map-w:140px;--strip-w:0px}
  .topbar{height:56px;gap:8px;padding:0 calc(10px + env(safe-area-inset-right,0px)) 0 calc(10px + env(safe-area-inset-left,0px))}
  #world{height:calc(100dvh - 56px)}
+ /* "Connect monitor" leaves the phone's top bar for room; a phone reaches the
+    monitor from Tools and from the main menu ("Launch monitor"). It was
+    first hidden with no way in at all, and the owner found it. */
  .topbar .brand,#modePill,.header-right .divider,.sim-time-label,.topbar #clockIcon,.topbar #clockLabel,.connection,.header-right .icon-button:not(.bar-tools),.header-right .avatar{display:none}
  .topbar nav .nav-item{font-size:0;gap:0;width:40px;height:40px;padding:0;justify-content:center}
  .topbar nav .nav-item svg{display:block;width:19px;height:19px}

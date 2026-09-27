@@ -1137,6 +1137,64 @@ const JOURNEYS = [
    });
   },
  },
+ // A LAUNCH MONITOR FROM A PHONE, the way it actually works: the game loaded
+ // FROM the bridge over the home network (plain http -- a secure hosted copy
+ // cannot reach the bridge at all; RESEARCH.md has why), on a phone's screen.
+ // Served here by the harness's own server, with a pretend bridge answering at
+ // the address the page came from, which is where the real bridge would be.
+ // The phone's top bar has no room for "Connect monitor", so the ways in are
+ // the main menu and the Tools window -- the first cut hid the button with no
+ // way in at all, which the owner found on an iPhone.
+ {
+  name: 'monitor-phone',
+  what: 'a phone reaches the launch monitor from the menu and Tools, with the bridge address filled in and remembered',
+  serve: {protect: false},
+  context: {viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true, deviceScaleFactor: 2},
+  async prepare(page) {
+   await page.routeWebSocket(u => /^ws:\/\/127\.0\.0\.1:\d+\/?$/.test(String(u)), ws => { ws.onMessage(() => {}); ws.send(monitorStatus('green')); });
+  },
+  async run(t) {
+   const address = () => t.page.inputValue('#bridgeUrl');
+   const expected = new URL(t.home).host;
+   await menuReady(t);
+   await t.step('the main menu has a way to the launch monitor', async () => {
+    const bad = await t.page.evaluate(unreachableControls, '#menuMonitor');
+    if (bad.length) throw new Error(bad.join('; '));
+    // The phone's camera button belongs to play; it once floated over the menu.
+    if (await t.page.evaluate(() => !!document.getElementById('camButton').offsetParent)) throw new Error('the camera button shows on the main menu');
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).tap();
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel', 5 * SLOW);
+   });
+   await t.step('the bridge address is where the page came from, not this phone', async () => {
+    const got = await address();
+    if (got !== `ws://${expected}`) throw new Error(`the address box reads "${got}", not ws://${expected}`);
+    if (await t.page.evaluate(() => /loaded securely/.test(document.getElementById('drawerContent')?.textContent || ''))) throw new Error('the secure-copy warning shows on a page served over http');
+   });
+   await t.step('connect and arm', async () => {
+    await t.page.getByRole('button', {name: 'Connect bridge'}).tap();
+    await t.until(async () => (await t.page.textContent('#connectionLabel')) === 'Bridge connected', 'the bridge to connect', 5 * SLOW);
+    await t.page.getByLabel(/Arm monitor/).check();
+    await t.key('Escape');
+   });
+   await t.step('into a round: the shot panel says Ready, and Tools has the monitor too', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
+    await t.inPlay();
+    await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
+    await t.page.tap('#barTools');
+    await t.page.getByRole('button', {name: 'Launch monitor', exact: true}).tap();
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
+    await t.key('Escape');
+   });
+   await t.step('the address is remembered on this device', async () => {
+    await t.page.reload();
+    await t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW);
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).tap();
+    await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel', 5 * SLOW);
+    if ((await address()) !== `ws://${expected}`) throw new Error(`after a reload the address box reads "${await address()}"`);
+   });
+  },
+ },
 ];
 
 // ------------------------------------------------------------------ runner

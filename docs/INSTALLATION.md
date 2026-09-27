@@ -260,7 +260,7 @@ PowerShell:
 $env:FAIRWAY_HTTP_HOST = "192.168.1.50"; npm run bridge
 ```
 
-Then open `http://192.168.1.50:1922` on the phone. The bridge accepts browsers on loopback and on the private ranges 10.x, 172.16–172.31.x and 192.168.x, and refuses everything else. **It is not authenticated**: anything on your network that can reach that port can drive the simulator, so keep it off networks you do not control. Only one browser holds the bridge at a time — a second tab is refused until the first closes. A public HTTPS-hosted copy is also not the documented bridge client. No direct proprietary Bluetooth, USB-driver integration or vendor applications are included.
+Then open `http://192.168.1.50:1922` on the phone, tap **Launch monitor** on the main menu (or in Tools during a round), and **Connect bridge** -- the address box already holds the computer's address, because that is where the page came from, and it is remembered after the first connection. You can add that address to the home screen too; it is a separate icon from a hosted copy, with its own saved rounds. The bridge accepts browsers on loopback and on the private ranges 10.x, 172.16–172.31.x and 192.168.x, and refuses everything else. **It is not authenticated**: anything on your network that can reach that port can drive the simulator, so keep it off networks you do not control. Only one browser holds the bridge at a time — a second tab is refused until the first closes. A public HTTPS-hosted copy is also not the documented bridge client. No direct proprietary Bluetooth, USB-driver integration or vendor applications are included.
 
 If the connector requires a different port, use its configurable high-numbered port when possible. Example using TCP 1923 and HTTP/WebSocket 1924:
 
