@@ -713,6 +713,26 @@ phone held sideways did exactly that: the whole HUD slid up under the top bar
 and stayed there. New tool windows also open fitted to the screen now
 (`cascade` in `popups.js`); they used to open 128 px down whatever the height.
 
+**A ball in the air clears the screen** (`in-flight` on `#world`, set from
+`flight` every frame, so a shot, a replay, a skip and a settle all agree). The
+camera strip, the camera button, the aim pad and the keyboard hints fade over
+0.2 s -- a placed number, quick enough not to feel like a delay; on a phone the
+whole shot panel fades, and bigger than a phone the panel's children other
+than `.last-shot` are dropped so the panel folds to its numbers. The top bar,
+the wind and the map stay. **The map follows the ball**: during a flight it is
+redrawn every 60 ms, framed on `flight.origin` -- not `round.position`, which
+`round.takeShot` has already moved, and which the map's fit is built around,
+so the map would reframe mid-flight -- and `drawFlightOnMap` draws the line so
+far and the ball over it. **The live readout is gone**, by the owner's call:
+the ticking speed, spin, distance and height were replaced by the flight bar
+(`#flightBadge`, bottom centre at every size), which `drawFlightBar` fills once
+per flight with what was fixed at the strike -- club, ball speed, launch and
+spin; ball speed alone for a putt, labelled *Ball rolling* -- from the record
+the flight carries (`flight.record`, which a replay sets too). `liveLine` now
+writes the end-of-flight countdown into the bar's label; on a phone, where the
+label is hidden for room, the countdown takes the numbers' place
+(`.holding`).
+
 **Markers keep clear of panels by their SHAPE.** `hudInsets` treats a panel
 running most of the height as a side to keep beside (the laptop's shot panel
 on the left, strip and map on the right) and a panel along the bottom as a

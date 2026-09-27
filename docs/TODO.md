@@ -2885,3 +2885,19 @@ engineering provenance pass, not legal advice.
   card was the other half of what covered a phone); a fixed-time after-shot
   card (runs out while you are still looking); a Club group of dashes for
   devices without club data.
+
+## A ball in the air
+
+- [x] **The screen clears while a ball is in the air, at every size.** The
+  owner's ask, 26 September, first as phones only and then for every screen:
+  nothing on screen can be used while a ball flies, so the shot controls, the
+  cameras and the aim pad step aside and come back when it settles; replays
+  too. The top bar, the wind and the map stay, and the map now follows the
+  ball, drawing its line. The live readout (ticking speed, spin, distance,
+  height) is gone everywhere; a slim flight bar along the bottom carries the
+  numbers fixed at the strike -- club, ball speed, launch, spin -- and Skip,
+  which moved from near the top to the bottom centre, under the thumb. Bigger
+  than a phone, the shot panel folds to its numbers rather than going, so the
+  last shot stays readable. Checked in the Endless journey on a laptop and in
+  both phone journeys, mid-flight: the controls gone, the map and wind still
+  there, the bar reading mph, no live readout, and Skip reachable.

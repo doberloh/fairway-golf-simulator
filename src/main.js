@@ -9,7 +9,7 @@ import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {aimTarget,localWind} from './shot-visuals.js';
-import {mapPosition,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
+import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
 import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,launchForDistance} from './turf.js';
@@ -459,13 +459,9 @@ function updateHUD(){
  // THE CHIP SAYS WHAT IT OPENS. There is no scorecard on a practice ground, so
  // the same button becomes the way into that golfer's shot data.
  if($('scoreNavLabel'))$('scoreNavLabel').textContent=practice?'Shot data':'Scorecard';
- // THE LINE IN THE SHOT PANEL IS THE LIVE READOUT WHILE A BALL IS UP.
- // updateHUD runs many times a second during a flight, so writing the turn text
- // here unconditionally would erase the ticking numbers between every frame that
- // set them. Whose turn it is cannot change mid-flight anyway.
- // Between shots it is empty: the score chip in the top bar says whose shot
- // it is. It only speaks while a ball is up, or to say the hole or the round
- // is over.
+ // THE LINE IN THE SHOT PANEL says only that the hole or the round is over.
+ // It was the live readout while a ball was up, until the live numbers went
+ // (see drawFlightBar); between shots the score chip says whose shot it is.
  if(!flight)$('playerTurn').textContent=round.finished?'Round complete':round.holeComplete?'Hole complete':'';
  drawScoreChips();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
@@ -495,7 +491,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   if($('bottomHints'))$('bottomHints').hidden=armed;
  }
  $('powerOutput').innerHTML=`${Math.round(Number($('power').value))}<span>%</span>`;$('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd stock carry`;$('shapeLabel').textContent=shape<-2?'Draw':shape>2?'Fade':'Straight';
- drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
+ redrawMap();const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
   // Says why when it is off. "Nothing to take back yet" on a fresh tee is a
   // different answer from "finish the shot first", and a dimmed button with no
   // explanation reads as broken.
@@ -632,7 +628,7 @@ function takeShot(data=null){
   // floodlight group is hidden when the lights are down, and a ball stopping
   // dead against a mast nobody can see is worse than one flying through it.
   poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
- hideShotCard();latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;$('flightBadge').hidden=false;updateHUD();return true;
+ hideShotCard();latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;$('flightBadge').hidden=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(round.hole,true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();$('flightBadge').hidden=true;$('flightLabel').textContent='BALL IN FLIGHT';updateExplorer();updateHUD();return;}const result=flight.result;flight=null;$('flightBadge').hidden=true;
@@ -690,7 +686,7 @@ function finishShot(){
 function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
- flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin};
+ flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
  view.config.follow=true;view.setHole(record.hole,true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;$('flightBadge').hidden=false;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
@@ -1109,12 +1105,26 @@ function showLiveResult(){
  // the only shot there are finished numbers for.
  $('shotResult').innerHTML=`<h3>Shot information</h3><p>${escape(shotCaption())}</p>`+gridHTML();
  drawShotSummary();
- liveLine(`<span id="liveShotSpeed">0.0 mph</span> · <span id="liveShotSpin">0 rpm</span> · <span id="liveShotDistance">0.0 yd</span> · <span id="liveShotHeight">0 ft</span>`);
+ $('flightLabel').textContent='BALL IN FLIGHT';$('flightBadge').classList.remove('holding');
 }
-// The one place that writes the live line, so there is one answer to "what is
-// this element showing right now". updateHUD leaves it alone while a flight is
-// running; everything else here goes through this.
-function liveLine(html){const el=$('playerTurn');if(el)el.innerHTML=html;}
+// THE FLIGHT BAR: what was fixed the moment the ball was struck -- the club,
+// ball speed, launch and spin -- beside Skip, along the bottom of the screen
+// while everything else steps aside. It REPLACED a live readout that ticked
+// the ball's speed, spin, distance and height through the flight: the owner's
+// call, 26 September, was that the numbers worth a glance mid-flight are the
+// ones that do not change. Carry and total stay off it, as they always stayed
+// off the grid, because they are where the ball is going.
+function drawFlightBar(){
+ const record=flight?.record;if(!record)return;
+ const putt=!!flight.result?.puttStroke;
+ if(!flight.replay)$('flightLabel').textContent=putt?'BALL ROLLING':'BALL IN FLIGHT';
+ const cell=id=>shotGrid(record,{fields:[id],columns:2}).cells[0];
+ const nums=(putt?['ballSpeed']:['ballSpeed','launch','spin']).map(cell).filter(c=>!c.blank);
+ $('flightNums').innerHTML=[record.club?`<b>${escape(record.club)}</b>`:'',...nums.map(c=>`<span>${c.value}${c.unit?`<small>${c.unit.startsWith('°')?'':' '}${escape(c.unit)}</small>`:''}</span>`)].filter(Boolean).join('<i>·</i>');
+}
+// The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes on the
+// flight bar, which is the one thing on screen while a ball is up.
+function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;$('flightBadge')?.classList.add('holding');}
 
 function openPlaySettings(name,content){
  if(name==='shotdata'){
@@ -2014,9 +2024,31 @@ const mapNav=()=>($('map').mapNav ??= {...MAP_NAV_NONE});
 const resetMapNav=()=>{const c=$('map');if(c)c.mapNav={...MAP_NAV_NONE};};
 function redrawMap(){
  if(!course||!$('map'))return;
- drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,
+ // During a flight the map is framed on where the shot was STRUCK, not where
+ // the round says the ball is: `round.takeShot` has already moved on by then,
+ // and the frame is fitted around that position, so the map would reframe
+ // itself mid-flight.
+ drawMap($('map'),flight?.replay?view.course:course,flight?flight.origin:round.position,
   round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,
   flight||dropState?null:aimPoint,view.elapsed);
+ drawFlightOnMap();
+}
+// THE BALL IN FLIGHT, ON THE MAP: the line it has drawn so far and where it is
+// now, over whatever the map drew. The owner's ask, 26 September -- the map is
+// the one panel that stays while a ball is up, so it should be following it.
+function drawFlightOnMap(){
+ const c=$('map'),m=c?.mapTransform;if(!m||!flight||!flight.at)return;
+ const hole=flight.replay?view.course:course;
+ const at=q=>mapPoint(m,m.full?hole.toWorld({x:q.x,z:q.z}):q);
+ const pts=flight.result.points.slice(0,flight.index+1).concat([flight.at]);
+ const ctx=c.getContext('2d'),r=Math.max(1,c.width/(c.clientWidth||c.width));
+ ctx.save();
+ ctx.strokeStyle='#fff1ac';ctx.lineWidth=2.5*r;ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.beginPath();pts.forEach((q,i)=>{const [x,y]=at(q);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+ const [bx,by]=at(flight.at);
+ ctx.fillStyle='#fff';ctx.strokeStyle='#31503c';ctx.lineWidth=1.5*r;
+ ctx.beginPath();ctx.arc(bx,by,4.5*r,0,Math.PI*2);ctx.fill();ctx.stroke();
+ ctx.restore();
 }
 // Pointer position in the canvas's own pixels. The canvas is drawn at twice its
 // CSS size, so the two frames are NOT interchangeable and mixing them puts a
@@ -3981,15 +4013,23 @@ function tick(now){
  // a panel, the flyover, the menu. Checked every frame for the same reason as
  // the reading tools below -- each of those starts several ways.
  if(aimViewOpen&&(flight||panel||tour||appMode==='menu'))setAimView(false);
+ // A BALL IN THE AIR CLEARS THE SCREEN: the shot panel, the cameras, the aim
+ // pad and the like step aside until it settles, leaving the top bar, the
+ // wind, the map and the flight bar. Every frame, for the same reason as the
+ // line above -- a flight starts and ends several ways.
+ if($('world').classList.contains('in-flight')!==!!flight){
+  $('world').classList.toggle('in-flight',!!flight);
+  if(flight)drawFlightBar();
+ }
  // While the scorecard is up, the hole is on screen behind it: every tracer of
  // it, from a slow orbit that keeps tee and green in the same frame.
  if(summaryCamera&&!flight){holeSummary+=dt;view.summaryOrbit(holeSummary);}
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
  if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);$('flightAltitude').textContent='Hole flyover · Circling the hole';drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
- if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};view.setBall(p);flight.hold=(flight.hold||0)+dt*timeScale;if($('liveShotSpeed')){const speed=(a.v??0)+(((b.v??0)-(a.v??0))*f);$('liveShotSpeed').textContent=(speed/MPH).toFixed(1)+' mph';}
-  if($('liveShotSpin')){const rpm=(a.w??0)+(((b.w??0)-(a.w??0))*f);$('liveShotSpin').textContent=Math.round(rpm)+' rpm';}
-  if($('liveShotDistance'))$('liveShotDistance').textContent=(shotDistance(flight.origin,p)/YARD).toFixed(1)+' yd';if($('liveShotHeight'))$('liveShotHeight').textContent=Math.max(0,(p.y-view.course.height(p.x,p.z))/.3048).toFixed(0)+' ft';if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(pts.slice(0,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
+ if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};view.setBall(p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
+  if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
+  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(pts.slice(0,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
