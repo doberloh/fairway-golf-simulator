@@ -29,7 +29,11 @@ const sections = [
  ['.view-tools', 'Tools tray'],
  ['#exploreBar', 'Flight controls'],
 ];
-const KEY = 'fairway-layout-v1';
+// v2 since the play screen was redrawn on 26 September: the shot controls went
+// from a bar along the bottom to a panel down the left, and a position saved
+// for the bar would park the panel across the course. Everyone starts again
+// from the new defaults once; nothing else was stored under this key.
+const KEY = 'fairway-layout-v2';
 const MIN_W = 90, MIN_H = 45;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -190,6 +194,8 @@ export function createLayout(world) {
  //   --weather-bottom the bottom edge of the weather panel
  //   --card-bottom    the bottom edge of the course card, which the phone
  //                    layout stacks the camera row and the weather under
+ //   --weather-w      the weather panel's width, which a phone held sideways
+ //                    sets its camera button beside
  //   --tools-bottom   the bottom edge of the camera bar, which a phone held
  //                    sideways hangs the map from. The first cut of that
  //                    layout GUESSED the row at 44 px; it is about 60, and the
@@ -221,7 +227,12 @@ export function createLayout(world) {
   const top = world.getBoundingClientRect().top, h = world.clientHeight;
   const bars = bottomBars.filter(shown).map(b => b.getBoundingClientRect().top - top);
   write('--controls-top', bars.length ? Math.min(...bars) : h - 16);
-  if (shown(weather)) write('--weather-bottom', weather.getBoundingClientRect().bottom - top);
+  if (shown(weather)) {
+   write('--weather-bottom', weather.getBoundingClientRect().bottom - top);
+   // A phone held sideways puts its camera button beside the wind, and the
+   // wind's width is its reading plus a unit -- measured, not guessed.
+   write('--weather-w', weather.offsetWidth);
+  }
   if (shown(card)) write('--card-bottom', card.getBoundingClientRect().bottom - top);
  if (shown(tools)) write('--tools-bottom', tools.getBoundingClientRect().bottom - top);
  }

@@ -46,9 +46,15 @@ export function createPopups(world, {onChange = () => {}} = {}) {
   saved[p.id] = {x: r.x / w, y: r.y / h, w: r.w / w, h: r.h / h};
   persist();
  }
+ // A NEW WINDOW FITS THE SCREEN IT OPENS ON. It used to open 128 px down
+ // whatever the height, so on a phone held sideways -- 348 px of playing area --
+ // the Tools window ran 250 px off the bottom, and a button down there could
+ // only be reached by the browser scrolling the whole playing area to it, which
+ // slid every panel up under the top bar.
  const cascade = (size, index) => {
-  const {w} = area(), step = index * CASCADE;
-  return {x: w - size.w - 92 - step, y: 128 + step, w: size.w, h: size.h};
+  const {w, h} = area(), step = index * CASCADE;
+  const tall = Math.min(size.h, Math.max(MIN_H, h - 16));
+  return {x: w - size.w - 92 - step, y: Math.max(8, Math.min(128 + step, h - tall - 8)), w: size.w, h: tall};
  };
  // A popup with nowhere remembered steps off the last one opened, so it never
  // lands exactly on the window it was launched from.

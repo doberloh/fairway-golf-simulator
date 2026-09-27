@@ -605,7 +605,7 @@ timestamp alone; that is a normal way to build this, not a failure.
 
 **TWO BIOMES MAY SHARE A FIRST WORD OR A SECOND WORD, NEVER BOTH.** The word lists in `course-names.js` overlap on purpose, because cedar and hollow each genuinely belong in more than one landscape -- but an overlap in both halves means the same name can come out of two different places. "Cedar Hollow" was reachable from the Pacific Northwest and the Midwest. `tests/course-names.test.mjs` checks this against the LISTS rather than a sample, because a sample that happens not to collide is not the rule.
 
-**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the course card's copy button and the library's Get code go through it.
+**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the Tools window's Copy course code and the library's Get code go through it.
 
 **PLAY AND COURSE STUDIO ARE WAYS IN, so `syncNav` hides them from the top-bar menu once you are in one.** Offering "Play" to somebody already playing means starting a different round from what looks like a settings menu, and "Course studio" mid-round is a guarded exit dressed as a nav item. Main menu stays, and is where both of them live.
 
@@ -617,7 +617,7 @@ timestamp alone; that is a normal way to build this, not a failure.
 
 **A BLANK IS NOT A ZERO.** A field the device never sent renders a dash and stays in place, dimmed. A zero is a reading -- "your club path was dead straight" -- and printing one for a number nobody measured is the kind of lie that gets acted on. The tile stays rather than disappearing because a tile that comes and goes as a monitor warms up moves every other tile with it. The DEFAULT set is exactly the eight fields a keyboard shot can fill, for the same reason: a player with no monitor must not open the game to a grid of dashes.
 
-**The shot readout lives in the course card, and the seed sits in the card's top-right corner.** `#shotResult` was a second glass panel floating below the card saying the same kind of thing; it is now a section of the card underneath the scores, separated by a rule rather than by another border and background — a panel inside a panel reads as a mistake. It keeps its own `max-height` and scroll so a long result cannot push the card off the bottom of the screen, and it was dropped from `createLayout`'s section list: it moves and sizes with the card now, and its own grip would have been a panel handle inside another panel's handle.
+**The shot readout lives at the foot of the shot panel, and Copy course code in the Tools window.** `#shotResult` has moved twice: a floating glass panel, then a section of the course card, and since the play screen was redrawn in September the `.last-shot` section of the shot panel -- folded to carry and total by `#shotToggle`, opened to the grid. It is never a panel of its own (a panel inside a panel reads as a mistake) and has no grip of its own. When the shot panel runs out of height, **only the numbers scroll**: the club, the power and the shot button keep their height. The panel used to scroll as a whole, and held sideways on a phone with the numbers open that scrolled the three controls a turn needs out of sight.
 
 **One panel chrome, named once.** The HUD grew its panels before the tool windows existed and the two drifted: radius 9, 10 and 12 across six panels and two different drop shadows, so a popup beside the map read as a different kind of object rather than the same kind in a different place. `--panel-radius` and `--panel-shadow` are the single definition; nine shadow declarations and six radii collapsed onto them.
 
@@ -641,76 +641,105 @@ THE TRAP, and it cost a broken build: `layout.sync()` had a comment saying “se
 
 **The handles live INSIDE each panel, and a MutationObserver puts them back.** An overlay tracking a panel from outside has to be re-synced every time the panel changes size on its own — and these do constantly — so an always-visible overlay would spend half its life in the wrong place. Inside, they track for free. The cost is that `innerHTML` sweeps them away, which is exactly what `showLiveResult` does to `#shotResult` on every shot: the first build left the two most frequently rebuilt panels unmovable, and because the rest worked it read as intermittent rather than total. Each panel now carries a `childList` observer that re-appends its handles; the re-append fires the observer once more, whose check then passes, so it settles rather than looping. Do not replace this with a re-append at the call sites — the one that forgets is the one nobody notices.
 
-## The HUD fits the screen by measurement, not by constants
+## The play screen: the hole in the top bar, the shot panel on the left
 
-**The default HUD positions are read from where things actually are.** They
-used to be pixel constants tuned on a 1920x1080 screen -- the camera bar 147 px
-from the top, the map 270 px up from the bottom (a guess at the shot controls'
-height), and the course card allowed the screen's height less 190 px, which
-forgot the top bar and the controls. And every layout rule answered to WIDTH.
-Laptops are wide and short, so a 1366x768 screen got the full desktop layout
-with 312 fewer pixels to put it in: the map, pinned from the bottom, rose into
-the camera bar, pinned from the top, and covered all five camera buttons.
+Redrawn in September from mockups the owner approved, for every screen size.
+**The course card is gone from play.** The hole, par, yardage and pin are in
+the top bar (`.hole-strip`, ids `holeNumber`, `holePar`, `holeDistance`,
+`holePin` unchanged, so `updateHUD` writes them where it always did) with a
+score chip per golfer (`#scoreChips`). **The shot controls are a panel down the
+left** (`.bottom-area`, still, so the drag registry and every rule keyed on it
+kept working), only as tall as what is in it, with the shot button inside it
+and the last shot at its foot. On the right: the wind at the top, the camera
+strip down the edge, the map at the foot. `.course-info` survives for free
+flight, where it names the course, and is hidden everywhere else in play.
 
-`createLayout` now writes four measurements onto `#world` as CSS variables, a
+What it replaced, and why it was replaced rather than patched: the shot
+controls spanned the bottom of the screen and the card the top left, so on a
+phone the two of them covered most of the course, and the card needed its own
+"Shot details" fold to fit at all. That fold is gone with the card.
+
+**On a phone** (below 560 px wide OR below 500 px tall, both ways up) the top
+bar is the menu button, the hole, the chip of whoever is up with a count of the
+others, the clock's gear and a **Tools** button (`#barTools`); the shot panel is
+the club, the power and the shot button, with the last shot folded ABOVE them;
+the camera strip folds behind `#camButton` (class `cams-open` on `#world`,
+closed by picking a camera, tapping elsewhere or Escape); the map sits in the
+bottom-right corner with the aim pad under it. The tee picker, the aim arrows
+and the shot shape leave the phone's panel.
+
+**The safe area is read, not assumed.** The viewport asks for
+`viewport-fit=cover`, so on an iPhone the page runs edge to edge instead of
+being letterboxed away from the notch, and every panel pads itself with
+`env(safe-area-inset-*)` through four variables on `#world` -- `--edge-t`,
+`--edge-l`, `--edge-r`, `--edge-b` -- which are 16 px (10 on a phone) plus the
+inset, and the inset is zero on anything that is not a phone. The top bar pads
+its sides the same way. The status bar stays `black`, not translucent: with
+`black` the page starts below it, and nothing needs to go under it.
+
+`createLayout` still writes measurements onto `#world` as CSS variables, a
 frame after any watched element resizes:
 
 | variable | what it is |
 |---|---|
-| `--controls-top` | the top of whatever bar is at the bottom: shot controls, or the drop, free-flight or scramble bar when one has taken over |
-| `--weather-bottom` | the bottom of the weather panel |
-| `--card-bottom` | the bottom of the course card; the phone layout stacks the camera row and wind under it |
-| `--tools-bottom` | the bottom of the camera bar; a phone held sideways hangs the map from it |
+| `--controls-top` | the top of whatever bar has taken the foot of the screen: the drop, free-flight or scramble bar. The map sits above it while exploring |
+| `--weather-bottom` | the bottom of the weather panel; the phone hangs the camera button, and a phone held sideways the map, under it |
+| `--weather-w` | the weather panel's width; a phone held sideways sets the camera button beside it |
+| `--card-bottom`, `--tools-bottom` | the course card and the camera strip, still measured, no longer read by the play layout |
 
-**Written a frame later, not inside the ResizeObserver.** The card's height
-depends on `--controls-top` and the card is observed; changing a variable inside
-the callback that resizes an observed element trips Chrome's "ResizeObserver
-loop completed with undelivered notifications", which is an ERROR event -- and
-the smoke test fails on error events, correctly.
+**Written a frame later, not inside the ResizeObserver.** Changing a variable
+inside the callback that resizes an observed element trips Chrome's
+"ResizeObserver loop completed with undelivered notifications", which is an
+ERROR event -- and the smoke test fails on error events, correctly.
 
 **Every rule skips `.hud-custom`.** A panel the player dragged keeps their
-geometry, and is left out of the sums too: where they put it is no guide to
-where the defaults should go.
+geometry. **The saved layout key went to `fairway-layout-v2`** with the redraw:
+a position saved for the old bottom bar would have parked the new panel across
+the course. Everyone starts from the new defaults once.
 
-**The layout lives in one section at the end of `style.css`**, "Layout that
-fits the screen it is on", rather than as edits to the packed rules above it.
-On a laptop: weather on top, and beneath it the camera bar BESIDE the map,
-lined up with the weather's width -- spending width, which laptops have,
-instead of height, which they do not. The card is capped to the space above
-the controls (it scrolls inside) and at 380 px wide, so a long course name
-wraps rather than widening the card to a third of an iPad.
+**The layout lives in one section of `style.css`**, "The play screen: the hole
+in the top bar, the shot panel on the left", rather than as edits to the packed
+rules above it -- and those packed rules are strong: several set `display` on
+`.aim-control`, `.shape-button`, `.bar-tools`-like icon buttons and
+`#clockIcon` with selectors that beat a bare class. **When a rule in the new
+section does nothing, suspect specificity first**; the phone's Tools button and
+its pin both failed that way, and the fix was a longer selector, not
+`!important`.
 
-**A phone is below 560 px wide OR below 500 px tall** -- both ways up. The card
-becomes a strip with a "Shot details" toggle (`#cardToggle`, class `card-open`
-on `#world`, remembered per device); the player row and shot numbers are hidden
-until it is tapped, by the owner's decision. The toggle only exists in the
-phone layout; elsewhere the details always show. Opened, the card is capped at
-45% of the play area so the controls and the course stay reachable. The camera
-bar becomes a row with the wind beside it, the map a thumbnail, and the shot
-controls fit a thumb -- two rows upright, one sideways. The tee choice leaves
-the bar upright; it stays in the round's Format & tees.
+**The playing area cannot scroll, not even by script** -- `#world{overflow:clip}`.
+`overflow:hidden` still lets the browser scroll an element to bring a tapped or
+focused control into view, and a Tools window that ran past the bottom of a
+phone held sideways did exactly that: the whole HUD slid up under the top bar
+and stayed there. New tool windows also open fitted to the screen now
+(`cascade` in `popups.js`); they used to open 128 px down whatever the height.
 
-**A game screen never scrolls; a menu may.** `#world` had a minimum height of
-620-640 px, so every phone scrolled -- sideways the shot button was off the
-bottom. That is gone. The main menu instead may scroll INSIDE itself if it ever
-must, because removing the page scroll would otherwise have stranded the
-buttons below its fold: the page scrolling had been the only way to reach them.
+**Markers keep clear of panels by their SHAPE.** `hudInsets` treats a panel
+running most of the height as a side to keep beside (the laptop's shot panel
+on the left, strip and map on the right) and a panel along the bottom as a
+floor to keep above (a phone's panel, map and pad). Treating the phone's panel
+as a side squeezed the markers into a sliver beside the map, and the cap then
+let them sit on top of it.
 
-**Two behaviours changed alongside, both found by the phone journeys**: starting
-a sim drop closes the Tools window (it sat over "Place ball" on a phone held
-sideways), and a toast is click-through (`pointer-events:none` -- it only ever
-holds text, and it sat on "Copy course code" at 820 wide).
+**A game screen never scrolls; a menu may.** The main menu scrolls INSIDE
+itself if it ever must.
+
+**Two behaviours from the first phone layout survive**: starting a sim drop
+closes the Tools window, and a toast is click-through (`pointer-events:none` --
+it only ever holds text).
 
 **How it is checked.** `tools/smoke.mjs`'s `hud-reachable` journey visits nine
 sizes -- desktop, four laptops, an iPad both ways up, a phone both ways up --
 and at each asks the browser what is under every control on the menu and the
-play screen, whether the page can scroll, and how much of the course shows;
-phones are checked with the details folded and open. `phone-portrait` and
-`phone-landscape` play a hole by touch alone. Measured when it landed: every
-control reachable everywhere, no page scrolls, and the course visible on 39% to
-65% of the screen folded (it was 7% on a phone upright). The browser only
-EMULATES a phone -- a real iPhone's Safari and a real phone's GPU are still
-checked by hand.
+play screen, whether the page can scroll, and how much of the course shows,
+with the last shot folded and open. `phone-portrait` and `phone-landscape` play
+a hole by touch alone. `monitor` plays with a pretend launch monitor -- see the
+next section. Measured when the redraw landed: every control reachable at
+every size, no page scrolls, and the course visible, folded, on 63% to 75% of a
+laptop, tablet or desktop screen (39% to 65% with the old bottom bar and
+course card), 60% of a phone held sideways (was 36%) and 65% upright (was
+45%). Opened, the last shot costs at most 6 points, and 12 on a phone upright. The browser
+only EMULATES a phone -- a real iPhone's Safari, its safe-area insets (zero in
+emulation) and a real phone's GPU are still checked by hand.
 
 ## Playing by touch
 
@@ -718,15 +747,14 @@ A tap on the course aims wherever the finger lands, and at 200 yards a
 fingertip covers several yards of fairway: on a phone a tap got you close and
 nothing got you exact. Four pieces fix that, each with a rule.
 
-- **The aim pad (`#aimPad`) is a child of `.bottom-area`**, absolutely placed
-  above it, so it goes wherever the shot controls go -- hidden while exploring,
-  on the menu, in the studio, moved with them if the player drags them -- and
-  it does not change the box `layout.js` measures for `--controls-top`, because
-  an absolute child does not grow its parent. It shows on phones and on touch
-  screens under 820 px, where the bar's own aim arrows are hidden; a round
-  3x3 pad upright, a row of five sideways, where a 136 px pad ran into the
-  course card. Its buttons are disabled by the same test that gates them,
-  `canNudgeAim()`, set in `updateHUD` beside the swing button.
+- **The aim pad (`#aimPad`) sits in a phone's bottom-right corner**, under the
+  map, a child of `#world`. It was first a child of the old bottom bar, riding
+  above it, which moved with the bar for free; with the shot panel on the left
+  and the shot button in it, the pad went to the other thumb, and it now hides
+  itself wherever the panel hides (the "where it hides" rules). Phones only:
+  everywhere else the aim arrows are in the panel. Its buttons are disabled by
+  the same test that gates them, `canNudgeAim()`, set in `updateHUD` beside the
+  swing button.
 - **Nudges are half a degree and a yard a tap** (`AIM_TAP_DEGREES`,
   `AIM_TAP_YARDS`). "Further" moves `aimRange` for a full shot, but for a putt
   it moves POWER, because a putt's length comes from its power and the roll
@@ -768,9 +796,13 @@ map -- it is how someone who cannot read the small print reads it.
 top-bar, camera and map buttons get an invisible `::after` margin reaching
 48 px, `inset: min(0px, calc(50% - 24px))`, so nothing already bigger shrinks
 and the button looks the same. Where two buttons are closer than that the
-margins meet halfway. **A panel with `overflow: hidden` clips the margin too**:
-the details toggle at the foot of the course card measured 42 px until it was
-made 34 px tall itself. Panel grips are left small on purpose -- a generous
+margins meet halfway. **A container that clips clips the margin too**: the
+score chips (in a strip that hides overflow) and the last-shot line (in the
+panel) are therefore 44 px tall outright on a touch screen. And **the margin
+is measured from the nearest positioned ancestor**: "Copy course code" moved
+into the Tools window, lost its own positioning there, and its margin
+stretched across the whole window -- every tap in Tools landed on it. It has
+no margin now; it is a full-size button. Panel grips are left small on purpose -- a generous
 grip steals taps from the controls beside it.
 
 **The Add to Home Screen hint** (`#homeHint`) shows on the menu once
@@ -787,7 +819,18 @@ control a round needs and fails anything under 44 px to a finger that is not
 sharing the space with a neighbour. Two fingers go through Chrome's own touch
 input over the DevTools protocol (`fingers`), because Playwright's
 touchscreen can only tap. `home-screen-hint` runs as an iPhone on a served
-copy. **Use the smoke harness, not the in-app browser pane, for touch work**:
+copy. **Launch-monitor mode is checked without a monitor.** The `monitor` journey
+answers the game's WebSocket itself with Playwright's `routeWebSocket`, sending
+what `bridge/server.mjs` sends -- status messages for red, amber and green, and
+a shot message -- and checks the panel's words, which controls go and stay,
+that the shot is ACKed as accepted, the grouped numbers, that the big numbers
+wait for the next ball, and Hit by hand. **The route has to exist before the
+page loads**: Playwright patches the page's WebSocket as the document starts,
+so a route added after load never sees the connection and the game reports
+`ERR_CONNECTION_REFUSED`. Journeys may declare `prepare(page)` for that; it
+runs before `goto`.
+
+**Use the smoke harness, not the in-app browser pane, for touch work**:
 at an emulated phone size the pane delivered clicks at half the coordinates,
 so a tap aimed at the pad landed on the course, swung the aim 170 degrees and
 once started the flyover -- which looks exactly like a bug in the pad.
@@ -870,7 +913,7 @@ The CSS has to undo `.drawer .primary`, which sets `width:100%` and `margin-top:
 
 **Panel names are the player's words, not the code's.** The camera panel is *Game camera* (it was "find your angle"), the putting panel is *Putting options* (it was "hole out", which is also the name of one of the three modes inside it and therefore read as a mode switch), and the shot-result panel is *Shot information*. The `PANEL_TITLES` map in `main.js` is the single place these are set; the panel keys (`camera`, `putting`, `shot`) are unchanged, so renaming one is a title edit and nothing else.
 
-**The course card carries a live score.** `drawLiveScore` shows whose turn it is and their running relation to par, tinted behind the number — progressively red over par, green under, neutral at level — from `toPar(player)` against `roundPars()`. The scorecard shows the same relation per player. `roundPars()` is the awkward part: a normal round reads par off the built world, but an endless run has thrown away every landscape except the one it is standing on, so it reads `round.pars`, which `loadCourse` records per hole as it goes. Do not make the scorecard read par from `world.holes` — it will be wrong for endless from hole two onward.
+**The top bar carries a live score, one chip per golfer.** `drawScoreChips` renders every player's colour, name, running relation to par and a note (the shot they are on, or *In*), the one who is up lit; it replaced the course card's single player row and the Scorecard chip, and a tap on any chip opens the card (on a practice ground it hands the mat over, or opens the shot list). The score is tinted behind the number — progressively red over par, green under, neutral at level — from `toPar(player)` against `roundPars()`. The scorecard shows the same relation per player. `roundPars()` is the awkward part: a normal round reads par off the built world, but an endless run has thrown away every landscape except the one it is standing on, so it reads `round.pars`, which `loadCourse` records per hole as it goes. Do not make the scorecard read par from `world.holes` — it will be wrong for endless from hole two onward.
 
 **A round cannot be started from inside a round.** The play panel offers course selection only from the menu; reaching it mid-round used to let a player silently abandon a scored round with no confirmation.
 
@@ -1168,15 +1211,15 @@ BALL_FRAME is 0.85 for a reason: it leaves margin for the view axis's own downwa
 
 **The caption carries what the number measures.** `aimCaption` is module state set by `updateAim`: *TO AIM POINT* for a normal shot, *TO WHERE IT STOPS · OFF THE GREEN* for a putt preview, because a putt preview ends where the ball stops rather than where you pointed and whether that is still on the green is the whole point of it. That sentence used to live in the strip; removing the strip without moving it would have thrown the information away.
 
-**The tee selector moved into the shot bar** beside the club — what you are hitting with, and what you are hitting from. It stays visible in monitor mode: it is not a shot input, and it is the one other thing that belongs in that bar.
+**The tee selector sits in the shot panel** under the club -- what you are hitting with, and what you are hitting from. It leaves the panel in monitor mode and on a phone: the owner's call is that a tee is picked before playing, in the round's Format & tees, and both of those panels are short of height.
 
 CAUTION when editing the mode-hiding rules: they are long selector LISTS where the `#world[data-mode=…]` prefix belongs to each item individually. Inserting `.aim-label` after a comma made it a bare selector and `display:none!important` in every mode — the element measured 0×0 and looked like a projection bug. The give-away is a computed `display:none` on something whose own rule says `flex`.
 
 **The pin distance was on screen twice** — once in `#flagLabel` beside the flag and once as `#bottomPin` in the strip above the shot bar. The strip's copy is gone. NOTE the loop that fed it: `for(const id of ['bottomPin','explorePin'])$(id).textContent=…` would have thrown on a null and taken every line of `updateHUD` below it, which is most of the HUD. `#explorePin` is a separate readout in the flight bar and shares the `.pin-readout` class, so `querySelector('.pin-readout')` finds THAT one first — worth knowing before concluding the removal failed.
 
-**Red, amber, green, or nothing.** `monitorState()` is off with no bridge (a player who never uses a monitor should not see a permanently red light), red for bridge-but-no-device, amber for device-but-no-ball, green for ball detected. The colour lands on the club card because that is what you are already looking at. Amber BREATHES because the device is still searching; green pulses once and settles, because a light that keeps blinking while you stand over a shot is the opposite of helpful. Each state also carries a word — NO MONITOR / FINDING BALL / READY — since a colour alone is not a message and roughly one man in twelve cannot separate the red from the green.
+**Red, amber, green, or nothing.** `monitorState()` is off with no bridge (a player who never uses a monitor should not see a permanently red light), red for bridge-but-no-device, amber for device-but-no-ball, green for ball detected. The colour outlines the whole shot panel, and the word heads it (`#monState`), because that is what you are already looking at; the top bar repeats it. Amber BREATHES because the device is still searching; green pulses once and settles, because a light that keeps blinking while you stand over a shot is the opposite of helpful. Each state also carries words -- *No monitor* / *Finding ball* / *Ready*, with a line saying what to do -- since a colour alone is not a message and roughly one man in twelve cannot separate the red from the green. Red offers **Reconnect** (close and reopen the bridge at the address last used) and **Hit by hand** (disarm, which brings power and the shot button back).
 
-**The stripped control bar keys on `armed`, not on connection.** With a monitor armed, ball speed, launch, direction, spin and axis all come off the device, so the aim buttons, power slider, shot-shape picker and swing button decide nothing, and `takeShot` already refuses a manual swing. Keying it on mere connection would hide the swing button from someone who connected a monitor but never armed it, leaving them unable to hit at all. Aim survives without its buttons because clicking the map or the course still sets it. The class goes on `#shotControls` itself, so it follows every mode that shows that bar — verified in play and on the range.
+**The stripped panel keys on `armed`, not on connection.** With a monitor armed, ball speed, launch, direction, spin and axis all come off the device, so the power slider, shot-shape picker and swing button decide nothing, and `takeShot` already refuses a manual swing. Keying it on mere connection would hide the swing button from someone who connected a monitor but never armed it, leaving them unable to hit at all. **The aim controls stay.** They used to go too, on the reasoning that clicking the course still aims; the owner's call on 26 September was that aim is the one thing a player with a monitor still decides before every shot, so it stays in front of them. Armed, the numbers are always open and GROUPED (`groupedGridHTML`): Ball (measured), Club (from the monitor, dropped entirely when every club field is blank -- most devices send ball data only) and Result (simulated). A player who has saved their own Shot data fields (`hasCustomShotData`) gets theirs, grouped; otherwise the monitor set of eighteen. **The big numbers** (`#shotCard`: carry, total, offline, then ball speed, launch, spin) come up when a monitor shot settles and stay until the monitor reports amber and then green -- the next ball teed -- or until the next shot, a panel or the next hole. A device that never reports a ball leaves them up until the next shot, which is fine; a timer was rejected because it runs out while you are still looking. The class goes on `#shotControls` itself, so it follows every mode that shows that bar — verified in play and on the range.
 
 **Every response carries the Player block, not just the 201.** GSPro does this, and a real connector's log showed why it matters: it parses a Player out of each reply and was printing its own empty defaults — `"Player":{"Handed":"","Club":"","DistanceToTarget":0}` — on every heartbeat, because the bridge sent only `Code` and `Message`. A connector that tracks club changes from the response stream rather than only from the 201 would never see one.
 
@@ -1627,7 +1670,7 @@ long time and is wrong: course setups firm greens to protect par.
 alone looked excellent there and left a 7 iron running 12.3 yd; the fairway
 fitted to the driver alone left the 5 iron six yards short.
 
-## The course card describes whatever is on screen
+## The top bar describes whatever is on screen
 
 `updateHUD` branches on `practice = rangeMode`. A practice ground has no hole number, no par and no pin position for the week, so those read "Lab"/"Range" and em dashes. **DISTANCE stays real in both** — it is where the green has been put, and it follows `rangeGreenYards`, not the tee yardage.
 

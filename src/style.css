@@ -260,19 +260,8 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .hole-info strong{font-family:var(--font-display);font-weight:400;letter-spacing:-.6px}
 .shot-list-head h2{font-family:var(--font-display);font-weight:400;letter-spacing:-.5px}
 
-/* Launch-monitor mode: the club, and nothing that a keyboard or a mouse drives.
-   With a monitor armed, ball speed, launch, direction, spin and axis all come
-   off the device, so aim buttons, a power slider, a shot-shape picker and a
-   swing button are four controls that decide nothing. Aim is still settable by
-   clicking the map or the course, which is why losing the arrows costs nothing.
-   Applied on `#shotControls` itself, so it follows every mode that shows it. */
-.shot-controls.monitor-mode .aim-control,
-.shot-controls.monitor-mode .power-control,
-.shot-controls.monitor-mode .shape-button,
-.shot-controls.monitor-mode #swing,
-.shot-controls.monitor-mode #clubHint{display:none}
-.shot-controls.monitor-mode{justify-content:flex-start;gap:18px}
-.shot-controls.monitor-mode .club-control{min-width:270px}
+/* Launch-monitor mode's controls are with the shot panel, in "monitor mode"
+   near the end of this file. */
 
 /* The state light on the WHOLE card. Red: no device. Amber: device, no ball.
    Green: ball on the mat.
@@ -508,175 +497,329 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .control-card>.check input:disabled+*,.control-card>.check input:disabled{opacity:.45}
 
 /* =========================================================================
-   LAYOUT THAT FITS THE SCREEN IT IS ON
+   THE PLAY SCREEN: THE HOLE IN THE TOP BAR, THE SHOT PANEL ON THE LEFT
    =========================================================================
-   Everything above positioned the play HUD for WIDTH, with pixel constants
-   tuned on a 1920x1080 screen. Measured across eight real screen sizes on
-   25 September: fine at 1920x1080, six to nine controls a player could not
-   click on every common laptop (the hole map sat on top of the camera bar),
-   and on a phone held sideways the page scrolled and the shot button was off
-   the bottom of the screen. Every one of those was about HEIGHT.
+   Approved by the owner from mockups on 26 September. The course card is
+   gone from play: the hole, par, yardage and pin sit in the top bar at every
+   size, with a score chip per player that opens the scorecard. The shot
+   controls left the bottom edge for a panel down the left side that is only
+   as tall as what is in it, with the shot button inside it. On the right: the
+   wind at the top, the camera strip down the edge, the map at the foot. On a
+   phone the cameras fold behind one button and the aim pad sits under the map.
 
-   This section is the fix, and it reads positions from measurements rather
-   than guesses: src/layout.js writes --controls-top, --weather-bottom and
-   --card-bottom onto #world from where those panels actually are. Every rule
-   skips `.hud-custom` -- a panel the player dragged stays where they put it.
-   `tools/smoke.mjs` checks the result: hud-reachable asks the browser what is
-   under every control at eight sizes, and fails if anything is covered, if
-   the page scrolls, or if the HUD hides most of the course.
+   What this replaced, and why it was replaced rather than patched: the shot
+   controls spanned the bottom of the screen and the course card the top
+   left, so on a phone the two of them covered most of the course and the
+   card needed its own "Shot details" fold to fit at all.
+
+   Positions read the SAFE AREA, which is why the page now asks for
+   `viewport-fit=cover`. Without it an iPhone held sideways letterboxes the
+   page away from the notch and the home bar; with it the page runs edge to
+   edge and every panel pads itself by `env(safe-area-inset-*)`, which is
+   zero everywhere but a phone. Every rule skips `.hud-custom` -- a panel the
+   player dragged stays where they put it.
    ========================================================================= */
-
-/* The same edges the rules above use, as variables, so the pieces below can
-   position themselves off each other instead of off separate constants. */
-#world{--hud-edge:38px;--card-top:37px;--map-w:168px;--hud-gap:10px}
-@media(min-width:1600px){#world{--card-top:50px;--map-w:190px}}
-@media(max-width:1100px){#world{--hud-edge:25px}}
-@media(max-width:820px){#world{--hud-edge:20px;--card-top:25px;--map-w:125px}}
-#world.exploring{--map-w:205px}
-@media(max-width:1100px){#world.exploring{--map-w:165px}}
-
-/* A GAME SCREEN NEVER SCROLLS. The play area had a minimum height of 620 px
-   (640 below 820 wide), so any screen shorter than that grew a scrollbar --
-   on a phone held sideways, 698 px of page in a 390 px window, with the top
-   bar scrolled off the top and "Take your shot" off the bottom. */
-#world{min-height:0}
-
-/* THE RIGHT-HAND COLUMN: weather on top, and beneath it the camera bar and
-   the map side by side, lined up with the weather panel's width. The map
-   used to be pinned 270 px up from the bottom and the camera bar 147 px down
-   from the top, sharing one edge; on a short screen the map rose into the
-   camera bar and covered it. Beside each other, they spend width -- which a
-   laptop has -- instead of height, which it does not. The map keeps its size
-   and gives up height only when the screen is too short for it, and redraws
-   crisply when it does (main.js resizes its canvas to its displayed size). */
-#world .minimap:not(.hud-custom){
- top:calc(var(--weather-bottom,105px) + var(--hud-gap));bottom:auto;
- right:var(--hud-edge);width:var(--map-w);
- max-height:calc(var(--controls-top,100%) - var(--weather-bottom,105px) - 2 * var(--hud-gap));
- display:flex;flex-direction:column}
-#world .minimap:not(.hud-custom) #map{flex:0 1 auto;min-height:48px}
-#world .view-tools:not(.hud-custom){
- top:calc(var(--weather-bottom,105px) + var(--hud-gap));
- right:calc(var(--hud-edge) + var(--map-w) + 12px);
- max-height:calc(var(--controls-top,100%) - var(--weather-bottom,105px) - 2 * var(--hud-gap))}
-/* Too short for seven buttons in a column: two columns, half the height. */
-@media(max-height:700px){
- #world .view-tools:not(.hud-custom){display:grid;grid-template-columns:repeat(2,auto);gap:6px}}
-
-/* THE COURSE CARD: never taller than the space above the shot controls -- it
-   scrolls inside past that, as it already knew how to -- and never wider than
-   380 px. Its width used to follow the course's name, so "Coyote Sands
-   Country Club" took a third of an iPad. A long name wraps instead. */
-#world .course-info:not(.hud-custom){
- max-height:calc(var(--controls-top,100%) - var(--card-top) - var(--hud-gap));
- max-width:min(380px,calc(100% - 2 * var(--hud-edge) - var(--map-w) - 90px))}
-#world .course-info h1{overflow-wrap:anywhere;text-wrap:balance}
+/* THE PLAYING AREA CANNOT SCROLL, not even by script. `overflow:hidden` still
+   lets the browser scroll it to bring a focused or tapped control into view,
+   and a tool window that ran past the bottom on a phone did exactly that: the
+   whole HUD slid up under the top bar and stayed there. `clip` refuses. */
+#world{overflow:clip}
+#world{--edge-t:16px;--edge-l:calc(16px + env(safe-area-inset-left,0px));
+ --edge-r:calc(16px + env(safe-area-inset-right,0px));--edge-b:calc(16px + env(safe-area-inset-bottom,0px));
+ --gap:10px;--panel-w:268px;--map-w:200px;--strip-w:52px;min-height:0}
+@media(min-width:1600px) and (min-height:900px){#world{--panel-w:330px;--map-w:240px}}
 
 /* A toast is a sentence, never a control -- it only ever holds text -- so it
-   must not swallow the click meant for whatever is underneath it for the four
-   seconds it is up. At 820 wide it sat on "Copy course code". */
+   must not swallow the click meant for whatever is underneath it. */
 #world .toast{pointer-events:none}
 
-/* The card's details toggle exists only in the phone layout below. */
-.card-toggle{display:none}
+/* ---------------------------------------------------------------- top bar */
+.topbar{height:60px;gap:16px;padding:0 calc(24px + env(safe-area-inset-right,0px)) 0 calc(24px + env(safe-area-inset-left,0px))}
+.topbar .brand{font-size:24px;letter-spacing:-1px}
+.topbar .brandmark svg{width:26px;height:26px}
+.hole-strip{display:flex;align-items:center;gap:16px;min-width:0;flex:1 1 auto;overflow:hidden}
+.bar-course{display:none;font:15px var(--font-display);color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+@media(min-width:1600px){.bar-course{display:block}}
+.bar-hole{display:flex;align-items:flex-end;gap:16px;flex:none}
+.bar-hole>div{display:flex;flex-direction:column;gap:4px}
+.bar-hole small{font-size:8.5px;font-weight:650;letter-spacing:1.5px;color:var(--ink-faint)}
+.bar-hole strong{font:400 22px/1 var(--font-display);color:var(--ink);white-space:nowrap}
+.bar-hole strong span{font-size:12px;color:var(--ink-dim)}
+.bar-pin strong{font-size:17px}
+.bar-divider{flex:none;width:1px;height:30px;background:var(--glass-line)}
+.score-chips{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
+.score-chip{flex:none;display:flex;align-items:center;gap:7px;height:36px;padding:0 11px 0 4px;border-radius:999px;
+ border:1px solid rgba(236,243,230,.2);background:rgba(236,243,230,.04);color:var(--ink);font:12.5px var(--font-ui);white-space:nowrap;cursor:pointer}
+.score-chip:hover{background:var(--glass-raised);filter:none}
+.score-chip .chip-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--font-ui)}
+.score-chip b{font-weight:650;font-variant-numeric:tabular-nums;padding:2px 6px;border-radius:999px}
+.score-chip small{font-size:10.5px;color:var(--ink-faint)}
+.score-chip.up{border-color:rgba(168,201,138,.85);background:rgba(86,140,101,.28)}
+.score-chip .chip-more{font-size:10.5px;color:var(--ink-dim);margin-left:2px}
+.score-chip .chip-more:empty{display:none}
+/* Every chip but the one who is up hides its note below 1600 px, and the
+   count of the others only shows where the others are hidden. */
+@media(max-width:1599px){.score-chip:not(.up) small{display:none}}
+.score-chip .chip-more{display:none}
+/* The chips ARE the way to the scorecard now, and on a practice ground the
+   way to the shot list, so the old Scorecard chip would be a second copy. */
+#scoreNav{display:none}
+.bar-tools{display:none}
+/* Nothing to say about a hole on the menu or in the studio. */
+body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio"]) .hole-strip{visibility:hidden}
+@media(max-width:1300px){
+ .topbar{gap:12px}
+ .header-right{gap:12px}
+ #modePill,.header-right .divider,.sim-time-label{display:none}
+ #connectionLabel{font-size:0}
+ .score-chip:not(.up) span.chip-name{display:none}
+}
 
-/* -------------------------------------------------------------------------
-   PHONES. Narrower than 560 px, or shorter than 500 px -- which is a phone
-   held either way up. Measured before this: in portrait the course card
-   covered 93% of the screen and the top bar pushed the page 177 px wider than
-   the phone; held sideways the page scrolled and the shot button was cut off.
+/* ------------------------------------------------------- the right column */
+#world .weather:not(.hud-custom){top:var(--edge-t);right:calc(var(--edge-r) + var(--strip-w) + var(--gap));left:auto;bottom:auto}
+#world .view-tools:not(.hud-custom){top:var(--edge-t);right:var(--edge-r);left:auto;bottom:auto;
+ display:flex;flex-direction:column;gap:6px;width:auto;max-height:calc(100% - var(--edge-t) - var(--edge-b));padding:18px 6px 6px}
+#world .minimap:not(.hud-custom){top:auto;bottom:var(--edge-b);right:calc(var(--edge-r) + var(--strip-w) + var(--gap));
+ width:var(--map-w);max-height:calc(100% - var(--weather-bottom,90px) - var(--gap) - var(--edge-b));display:flex;flex-direction:column}
+#world .minimap:not(.hud-custom) #map{flex:0 1 auto;min-height:48px}
+.cam-button{display:none}
 
-   The owner's call, 25 September: on a phone the player row and the shot
-   numbers are hidden by default and one tap away, behind the card's own
-   "Shot details" toggle. Everything else stays reachable; nothing a laptop
-   shows is hidden there.
-   ------------------------------------------------------------------------- */
+/* ------------------------------------------------------- the shot panel */
+#world .bottom-area:not(.hud-custom){left:var(--edge-l);top:var(--edge-t);right:auto;bottom:auto;width:var(--panel-w);
+ max-height:calc(100% - var(--edge-t) - var(--edge-b));display:flex;flex-direction:column}
+#world .shot-controls{flex-direction:column;align-items:stretch;gap:0;padding:0;min-height:0;overflow:hidden}
+/* WHEN THE PANEL RUNS OUT OF HEIGHT, ONLY THE NUMBERS SCROLL. The panel used to
+   scroll as a whole, and held sideways on a phone with the last shot open the
+   grid pushed the club, the power and the shot button out of sight -- the
+   three things a turn needs, scrolled away behind the numbers from the turn
+   before. The controls keep their height; the last shot gives way. */
+#world .shot-controls>.last-shot{flex:0 1 auto;min-height:0}
+#world .last-shot .shot-result{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#world .shot-controls>*{flex:none;margin:0;padding:13px 16px;border:0;border-bottom:1px solid rgba(236,243,230,.12);
+ min-width:0;max-width:100%;box-sizing:border-box;align-self:stretch}
+/* A select sizes itself to its longest option -- "Pitching wedge" -- and in a
+   flex row it will not shrink below that unless told, which pushed a 190 px
+   phone panel's contents 20 px past its own edge. */
+#world .club-select select{min-width:0}
+#world .shot-controls>*:last-child{border-bottom:0}
+#world .shot-controls>[hidden]{display:none}
+#world .club-control,#world .tee-control,#world .power-control{flex:none;padding:13px 16px}
+#world .aim-control{display:block;flex:none;padding:13px 16px}
+#world .aim-control .aim-buttons{justify-content:space-between;gap:8px}
+#world .aim-control .aim-buttons button{width:34px;height:34px;border-radius:8px;border:1px solid var(--glass-line);display:grid;place-items:center}
+#world .aim-control .aim-track{flex:1;width:auto}
+#world .aim-distance-control{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+#world .aim-distance-control input{width:72px}
+#world .shape-button{display:flex;border-left:0;padding:12px 16px}
+#world .shape-button>svg:first-child{display:block}
+#world .shot-controls>.swing-button{margin:12px 14px;padding:16px 14px;border:0;border-radius:10px;min-width:0;width:auto}
+#world .shot-controls>.swing-button:last-child,#world .shot-controls>.swing-button+.last-shot{margin-top:0}
+/* The keyboard hints and the input line ("Controller connected") sit under
+   the panel, on the course, where they used to sit under the bar. Not on a
+   phone, and not on a screen too short to spare the line. */
+#world .bottom-hints{flex-direction:column;align-items:flex-start;gap:5px;margin:8px 4px 0}
+#world .bottom-hints[hidden]{display:none}
+@media(max-height:699px){#world .bottom-hints{display:none}}
+#world .club-control label em{font-style:normal;font-weight:500;letter-spacing:.2px;text-transform:none;color:var(--ink-faint);margin-left:auto}
+
+/* THE LAST SHOT, at the foot of the panel: one line folded, the grid opened.
+   Always open on a big screen, where there is room for it, and always open in
+   launch-monitor mode, where the numbers are the point. */
+#world .last-shot{padding:0;display:flex;flex-direction:column}
+.last-shot-toggle{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;background:transparent;border:0;color:var(--ink);text-align:left;cursor:pointer}
+.last-shot-toggle .ls-title{white-space:nowrap;font-size:8.5px;font-weight:650;letter-spacing:1.5px;color:var(--ink-faint)}
+.last-shot-toggle .ls-summary{font:15px var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.last-shot-toggle .ls-summary small{font:10px var(--font-ui);color:var(--ink-dim)}
+.last-shot-toggle svg{margin-left:auto;width:15px;height:15px;flex:none;transition:transform .15s}
+#world.shot-open .last-shot-toggle svg{transform:rotate(180deg)}
+.ls-turn{padding:0 16px;font-size:10.5px;color:var(--ink-dim)}
+.ls-turn:empty{display:none}
+#world .last-shot .shot-result{padding:6px 16px 14px;margin:0;background:none;border:0}
+#world .last-shot .shot-result h3{display:none}
+#world .last-shot .shot-result p{font-size:10.5px;color:var(--ink-dim);margin:0 0 10px}
+#world:not(.shot-open) .last-shot .shot-result{display:none}
+/* With the grid showing, the folded line would say the same thing twice. */
+#world.shot-open .ls-summary,#world .shot-controls.monitor-mode .ls-summary{visibility:hidden}
+@media(min-width:1600px) and (min-height:900px){
+ #world .last-shot .shot-result{display:block!important}
+ #world .last-shot-toggle svg{display:none}
+ #world .last-shot-toggle{cursor:default}
+ #world .ls-summary{visibility:hidden}
+}
+#world .shot-controls.monitor-mode .last-shot .shot-result{display:block!important}
+#world .shot-controls.monitor-mode .last-shot-toggle svg{display:none}
+
+/* The monitor's grouped grid: ball, club, result -- each labelled with where
+   its numbers came from, because a measured number and a simulated one are
+   not the same kind of thing. */
+.shot-group+.shot-group{margin-top:10px}
+.shot-group .sg-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;
+ font-size:8.5px;font-weight:650;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-dim)}
+.shot-group .sg-head small{font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint)}
+
+/* ------------------------------------------------------- monitor mode */
+/* The club, the aim, and the numbers. Power, shape and the shot button decide
+   nothing when the monitor is armed -- the device measures the swing -- so
+   they go. Aim STAYS: it used to go too, on the reasoning that clicking the
+   course still aims, but it is the one thing a player with a monitor still
+   decides before every shot, and the owner's call on 26 September was to keep
+   it in front of them. */
+#world .shot-controls.monitor-mode .power-control,
+#world .shot-controls.monitor-mode .shape-button,
+#world .shot-controls.monitor-mode .tee-control,
+#world .shot-controls.monitor-mode #swing,
+#world .shot-controls.monitor-mode #clubHint{display:none}
+/* The whole panel carries the state light (the tint rules further up); the
+   words used to be a small label in its corner, and are the heading now. */
+#world .shot-controls[data-monitor]::after{content:none}
+#world .mon-state{display:flex;flex-direction:column;gap:5px;padding:12px 16px;border-radius:12px 12px 0 0}
+#world .mon-state[hidden]{display:none}
+.mon-head{display:flex;align-items:center;gap:9px}
+.mon-dot{width:11px;height:11px;border-radius:50%;background:var(--mon);box-shadow:0 0 10px var(--mon)}
+.mon-head strong{font:700 14px var(--font-ui);letter-spacing:1.4px;text-transform:uppercase;color:var(--mon)}
+.mon-arm{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px!important;font-weight:500!important;letter-spacing:0!important;color:var(--ink-dim)!important;cursor:pointer}
+.mon-arm input{appearance:none;-webkit-appearance:none;width:32px;height:18px;border-radius:9px;margin:0;background:rgba(236,243,230,.25);position:relative;cursor:pointer;transition:background .15s}
+.mon-arm input::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#eef3e6;transition:transform .15s}
+.mon-arm input:checked{background:var(--accent)}
+.mon-arm input:checked::after{transform:translateX(14px)}
+.mon-arm input:disabled{opacity:.4;cursor:default}
+.mon-text{font-size:11.5px;color:var(--ink-dim)}
+.mon-actions{display:none;gap:8px;margin-top:4px}
+.mon-actions button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;font-size:12px}
+.mon-actions button svg{width:14px;height:14px}
+.shot-controls[data-monitor=red] .mon-actions{display:flex}
+.shot-controls[data-monitor=red]{--mon:#e0685c}
+.shot-controls[data-monitor=amber]{--mon:#e8b650}
+.shot-controls[data-monitor=green]{--mon:#7ed68e}
+
+/* THE BIG NUMBERS after a monitor shot, along the bottom of the course, until
+   the monitor sees the next ball -- the owner's pick over a fixed few seconds,
+   because a timer runs out while you are still looking. */
+.shot-card{position:absolute;left:50%;bottom:var(--edge-b);transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:30px;
+ padding:16px 28px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);
+ box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15);pointer-events:none}
+.shot-card[hidden]{display:none}
+.sc-big{display:flex;gap:30px}
+.sc-big>div{text-align:center}
+.sc-big span{font-size:9px;font-weight:650;letter-spacing:1.5px;color:var(--ink-faint)}
+.sc-big strong{display:block;font:44px/1.05 var(--font-display)}
+.sc-big strong small{font:15px var(--font-ui);color:var(--ink-dim);margin-left:3px}
+.sc-rule{width:1px;align-self:stretch;background:var(--glass-line)}
+.sc-small{display:grid;grid-template-columns:auto auto;gap:4px 14px;margin:0;font-size:13px}
+.sc-small dt{color:var(--ink-dim)}
+.sc-small dd{margin:0;font-weight:600}
+
+/* ------------------------------------------------------- where it hides */
+/* The course card lives on for free flight, where it names the course, and
+   nowhere else in play. */
+#world:not(.exploring) .course-info{display:none!important}
+/* Free flight and a drop -- both "exploring" -- put the shot panel away, as
+   they always did; the panel's own display rule above would otherwise win. The
+   map then sits above whichever bar has taken the foot of the screen. */
+#world.exploring .bottom-area{display:none!important}
+/* A drop puts the camera strip away too, as it always did (main.js relies on it). */
+#world.dropping .view-tools{display:none!important}
+#world.exploring .minimap:not(.hud-custom){bottom:calc(100% - var(--controls-top,100%) + var(--gap))}
+#world[data-mode="menu"] .aim-pad,#world[data-mode="studio"] .aim-pad,#world.exploring .aim-pad,#world.dropping .aim-pad,
+#world[data-mode="menu"] .shot-card,#world[data-mode="studio"] .shot-card,#world.exploring .shot-card{display:none!important}
+/* A bar that takes over the foot of the screen -- a drop, a scramble pick,
+   free flight -- starts right of the panel rather than under it. */
+#world:not(.exploring) #dropBar:not(.hud-custom),#world:not(.exploring) #pickBar:not(.hud-custom){
+ left:calc(var(--edge-l) + var(--panel-w) + var(--gap));right:calc(var(--edge-r) + var(--strip-w) + var(--map-w) + 2 * var(--gap));bottom:var(--edge-b)}
+
+/* =========================================================================
+   PHONES: narrower than 560 px, or shorter than 500 px -- a phone either way
+   up. The top bar keeps the hole and the player who is up; the panel is the
+   club, the power and the shot button, with the last shot folded above them;
+   the cameras fold behind one button; the aim pad sits under the map.
+   ========================================================================= */
 @media(max-width:560px),(max-height:500px){
- #world{--hud-edge:12px;--hud-gap:8px;--map-w:104px}
+ #world{--edge-t:10px;--edge-l:calc(10px + env(safe-area-inset-left,0px));--edge-r:calc(10px + env(safe-area-inset-right,0px));
+  --edge-b:calc(10px + env(safe-area-inset-bottom,0px));--gap:8px;--panel-w:190px;--map-w:140px;--strip-w:0px}
+ .topbar{height:56px;gap:8px;padding:0 calc(10px + env(safe-area-inset-right,0px)) 0 calc(10px + env(safe-area-inset-left,0px))}
+ #world{height:calc(100dvh - 56px)}
+ .topbar .brand,#modePill,.header-right .divider,.sim-time-label,.topbar #clockIcon,.topbar #clockLabel,.connection,.header-right .icon-button:not(.bar-tools),.header-right .avatar{display:none}
+ .topbar nav .nav-item{font-size:0;gap:0;width:40px;height:40px;padding:0;justify-content:center}
+ .topbar nav .nav-item svg{display:block;width:19px;height:19px}
+ .header-right .bar-tools{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;border:1px solid var(--glass-line);color:var(--ink)}
+ .header-right .bar-tools svg{width:18px;height:18px}
+ .header-right{gap:6px}
+ .hole-strip{gap:10px}
+ .bar-divider,.bar-course{display:none}
+ .bar-hole{gap:8px;align-items:center}
+ .bar-hole>div:not(:first-child) small{font-size:8px}
+ .bar-hole strong{font-size:17px}
+ .bar-hole>div:first-child small{display:none}
+ .bar-hole>div:first-child strong{font-size:26px}
+ .bar-hole>div:first-child strong span{display:none}
+ .score-chips{margin-left:auto}
+ .score-chip{height:36px;padding:0 9px 0 3px;gap:5px}
+ .score-chip:not(.up),.score-chip span.chip-name,.score-chip small{display:none}
+ .score-chip .chip-more{display:inline}
 
- /* The top bar keeps every button and drops the words. The mode pill goes:
-    the card says the same thing. Help stays one tap away in the Menu. */
- .topbar .brand{font-size:0;gap:0}
- .topbar .brandmark{margin-right:0}
- #modePill,.sim-time-label,#scoreNavLabel,#connectionLabel,.topbar .divider,.header-right .icon-button{display:none}
- .header-right{gap:10px}
-
- /* The course card becomes a strip: the name, then hole, par, pin and
-    distance. The toggle folds out the player row and the shot numbers. */
- #world .course-info:not(.hud-custom){
-  left:var(--hud-edge);right:var(--hud-edge);top:var(--hud-gap);
-  max-width:none;padding:10px 12px}
- #world .course-info h1{font-size:21px;line-height:1.15;margin:0;padding-right:36px}
- #world #courseSubtitle{display:none}
- #world .seed-button{top:8px;right:8px}
- #world #seedLabel{display:none}
- #world .course-info .hole-info{margin-top:8px;padding:7px 10px;gap:10px;width:100%;max-width:100%}
- #world .course-info .hole-info strong{font-size:17px}
- #world:not(.card-open) #liveScore,#world:not(.card-open) #shotResult{display:none}
- /* Opened, the card is for reading numbers, and may cover some of the course
-    -- but at most about half, scrolling inside past that, so the camera row
-    and the wind still fit beneath it and the course shows round them. Left
-    uncapped it grew to the shot controls, pushed the wind into the map, and
-    covered 81% of a phone. */
- #world.card-open .course-info:not(.hud-custom){max-height:min(45%,calc(var(--controls-top,100%) - var(--card-top) - var(--hud-gap)))}
- .card-toggle{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;
-  border:1px solid var(--glass-line);border-radius:999px;background:transparent;color:var(--ink);
-  font:600 11px/1 var(--font-ui);letter-spacing:.3px;cursor:pointer}
- .card-toggle svg{width:14px;height:14px;transition:transform .15s}
- #world.card-open .card-toggle svg{transform:rotate(180deg)}
-
- /* Under the card, one row: the camera buttons on the left, the wind on the
-    right. The map is a thumbnail above the shot controls. */
- #world .view-tools:not(.hud-custom){display:flex;flex-direction:row;
-  top:calc(var(--card-bottom,140px) + var(--hud-gap));left:var(--hud-edge);right:auto;
-  max-height:none;width:auto;gap:5px}
- #world .weather:not(.hud-custom){top:calc(var(--card-bottom,140px) + var(--hud-gap));
-  right:var(--hud-edge);padding:6px 10px;gap:8px}
- #world .minimap:not(.hud-custom){top:auto;right:var(--hud-edge);width:var(--map-w);
-  bottom:calc(100% - var(--controls-top,100%) + var(--hud-gap));max-height:none}
- #world .minimap:not(.hud-custom) #map{height:104px;flex:none}
+ /* The right column: wind, the camera button, the map, the aim pad. */
+ #world .weather:not(.hud-custom){top:var(--edge-t);right:var(--edge-r);padding:5px 10px 5px 5px;gap:6px;border-radius:999px}
+ #world .weather>div:nth-child(2) #weatherText,#world .weather .weather-divider,#world .weather #temperature,#world .weather>svg{display:none}
+ .cam-button{display:grid;place-items:center;position:absolute;z-index:6;right:var(--edge-r);top:calc(var(--weather-bottom,52px) + var(--gap));
+  width:44px;height:44px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15)}
+ .cam-button svg{width:19px;height:19px}
+ #world .view-tools:not(.hud-custom){display:none;top:calc(var(--weather-bottom,52px) + var(--gap));right:calc(var(--edge-r) + 52px);
+  flex-direction:column;padding:6px;max-height:none;z-index:7}
+ #world.cams-open .view-tools:not(.hud-custom){display:flex}
+ #world .view-tools #toolsButton,#world .view-tools .hud-grip,#world .view-tools .hud-size{display:none}
+ #world .minimap:not(.hud-custom){right:var(--edge-r);bottom:calc(var(--edge-b) + 144px + var(--gap));width:var(--map-w);max-height:none}
+ #world .minimap:not(.hud-custom) #map{height:112px;flex:none}
  #world .map-reading{display:none}
 
- /* The shot controls, sized for a thumb. Aim is by tapping the course, as it
-    already was below 820 px wide; the aim arrows and the shot-shape button
-    stay out of the bar, as they already did there. */
- #world .aim-control,#world .shape-button,#world .bottom-hints{display:none}
- /* "or press SPACE" is a keyboard instruction, and a phone has no keyboard. */
+ /* The panel: bottom-left, as tall as what is in it. */
+ #world .bottom-area:not(.hud-custom){top:auto;bottom:var(--edge-b);width:var(--panel-w);max-height:calc(100% - var(--edge-t) - var(--edge-b))}
+ #world .shot-controls>*{padding:10px 13px}
+ #world .tee-control,#world .aim-control,#world .shape-button{display:none!important}
+ #world .last-shot{order:-1}
+ #world .club-select{margin:4px 0 2px}
+ #world .club-select select{font-size:19px}
+ #world #clubHint{font-size:10.5px}
+ #world .power-labels,#world .bottom-hints{display:none}
+ #world .shot-controls>.swing-button{margin:10px;padding:14px 10px;font-size:15px}
  #world .swing-button small{display:none}
+ #world .last-shot-toggle{padding:9px 13px;gap:9px}
+ /* The label goes on a phone: beside it "250 carry · 272 total" was cut to
+    "250 ..." in a 190 px panel, and the numbers are the line's whole point. */
+ #world .last-shot-toggle .ls-title{display:none}
+ #world .last-shot .shot-result{padding:4px 13px 10px}
+ #world .last-shot .shot-grid{--shot-cols:2!important}
+ /* A drop or a scramble pick takes the whole foot of a phone: between the
+    panel and the map there is 16 px, which is where the laptop rule put it. */
+ #world:not(.exploring) #dropBar:not(.hud-custom),#world:not(.exploring) #pickBar:not(.hud-custom){left:var(--edge-l);right:var(--edge-r)}
+ #world .shot-card{gap:16px;padding:10px 16px}
+ #world .sc-big{gap:16px}
+ #world .sc-big strong{font-size:28px}
+ #world .sc-rule,#world .sc-small{display:none}
 }
-
-/* Portrait: two rows -- club and power, then a full-width shot button. The
-   tee choice stays in the round's "Format & tees"; mid-hole it can only
-   change on an untouched hole anyway. */
+/* Upright, the bar is two short lines of hole; the panel is narrow. */
 @media(max-width:560px) and (min-height:501px){
- #world .shot-controls{padding:12px;gap:10px 14px}
- #world .tee-control{display:none}
- #world .club-control{flex:1;min-width:0}
- #world .power-control{flex:1.3;min-width:0}
- #world .swing-button{width:100%;padding:12px}
+ .bar-hole .bar-pin{display:none}
 }
-
-/* Held sideways: a slimmer top bar, the card in the top-left corner, wind and
-   cameras on the right, and every shot control on one row. */
+/* Held sideways: a slim bar with the whole hole and every player's score,
+   the panel down the left, the map and the pad down the right. */
 @media(max-height:500px){
- .topbar{height:46px;padding:0 14px}
- #world{height:calc(100dvh - 46px)}
- #world .course-info:not(.hud-custom){right:auto;width:280px;padding:8px 10px}
- #world .course-info h1{font-size:17px}
- #world .course-info .hole-info{margin-top:6px;padding:5px 8px}
- #world .course-info .hole-info strong{font-size:15px}
- #world .course-info .hole-info small{font-size:7px}
- #world .card-toggle{margin-top:6px;padding:4px 9px}
- #world .weather:not(.hud-custom){top:var(--hud-gap)}
- #world .view-tools:not(.hud-custom){top:calc(var(--weather-bottom,52px) + var(--hud-gap));left:auto;right:var(--hud-edge)}
- #world .minimap:not(.hud-custom){top:calc(var(--tools-bottom,110px) + var(--hud-gap));
-  max-height:calc(var(--controls-top,100%) - var(--tools-bottom,110px) - 2 * var(--hud-gap))}
- #world .minimap:not(.hud-custom) #map{height:auto;flex:0 1 auto;min-height:40px}
- #world .bottom-area:not(.hud-custom){left:var(--hud-edge);right:var(--hud-edge);bottom:var(--hud-gap)}
- #world .shot-controls{flex-wrap:nowrap;padding:8px 12px;gap:12px;align-items:center}
- #world .club-control,#world .tee-control{flex:1;min-width:0;padding:0;border:0}
- #world .power-control{flex:1.4;min-width:0;padding:0}
- #world .swing-button{min-width:150px;padding:10px 14px}
+ .topbar{height:42px}
+ #world{height:calc(100dvh - 42px)}
+ #world{--panel-w:178px;--map-w:150px}
+ .bar-hole>div:first-child small{display:block}
+ .bar-hole>div:first-child strong{font-size:18px}
+ .bar-hole{gap:12px;align-items:flex-end}
+ .bar-hole strong{font-size:17px}
+ .score-chip:not(.up){display:flex}
+ .score-chip .chip-more{display:none}
+ .topbar nav .nav-item,.header-right .bar-tools{width:34px;height:34px}
+ #world .minimap:not(.hud-custom){top:calc(var(--weather-bottom,48px) + var(--gap));bottom:calc(var(--edge-b) + 136px + var(--gap));right:calc(var(--edge-r) + 0px)}
+ #world .minimap:not(.hud-custom) #map{height:auto;flex:1 1 auto;min-height:40px}
+ #world .minimap .map-footer{display:none}
+ .cam-button{top:var(--edge-t);right:calc(var(--edge-r) + var(--weather-w,96px) + var(--gap))}
+ #world .view-tools:not(.hud-custom){top:calc(var(--edge-t) + 50px);right:calc(var(--edge-r) + var(--weather-w,96px) + var(--gap))}
+ #world .shot-controls>*{padding:8px 12px}
+ #world .shot-controls>.swing-button{margin:8px;padding:12px 10px}
 }
 
 /* -------------------------------------------------------------------------
@@ -722,13 +865,13 @@ button.danger:hover{background:rgba(141,63,44,.1)}
    ------------------------------------------------------------------------- */
 
 /* THE AIM PAD: turn left and right, move the target further and shorter, and
-   the pin in the middle. It rides above the shot controls, so it goes where
-   they go -- hidden while exploring, on the menu and in the studio -- and it
-   shows only where nothing else fine-tunes the aim: every phone, and a touch
-   screen too narrow for the aim arrows in the bar (they leave below 820 px). */
+   the pin in the middle. On a phone only, in the bottom-right corner under the
+   map, where the thumb that is not on the shot button rests. Everywhere else
+   the aim arrows are in the shot panel. It hides wherever the shot panel does
+   (see "where it hides" above). */
 .aim-pad{display:none}
-@media(max-width:560px),(max-height:500px),(pointer:coarse) and (max-width:819px){
- #world:not(.dropping) .aim-pad{display:grid;position:absolute;left:0;bottom:calc(100% + var(--hud-gap,10px));
+@media(max-width:560px),(max-height:500px){
+ #world .aim-pad{display:grid;position:absolute;z-index:6;right:var(--edge-r);bottom:var(--edge-b);
   grid-template:repeat(3,44px)/repeat(3,44px);gap:0;padding:4px;border-radius:50%;
   background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--panel-shadow);
   backdrop-filter:blur(16px) saturate(1.15)}
@@ -765,7 +908,7 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .map-expand svg{width:12px;height:12px}
 .aim-view-bar{display:none}
 #world.aim-view .minimap{position:absolute!important;
- inset:var(--hud-gap,12px) max(var(--hud-edge,12px),calc(50% - 480px))!important;
+ inset:var(--edge-t,12px) max(var(--edge-r,12px),calc(50% - 480px)) var(--edge-b,12px) max(var(--edge-l,12px),calc(50% - 480px))!important;
  width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;
  display:flex!important;flex-direction:column;z-index:30}
 #world.aim-view .minimap #map{flex:1 1 auto!important;height:auto!important;min-height:0!important;cursor:crosshair}
@@ -795,32 +938,16 @@ html,body{overscroll-behavior:none}
    left small on purpose: they rearrange the screen, and a generous grip
    would steal taps meant for the controls beside it. */
 @media(pointer:coarse){
- .topbar button,.view-tools .tool,.map-reading button,.map-expand,.card-toggle{position:relative}
- .topbar button::after,.view-tools .tool::after,.map-reading button::after,.map-expand::after,.card-toggle::after,
- .seed-button::after{content:'';position:absolute;inset:min(0px,calc(50% - 24px))}
+ .topbar button,.view-tools .tool,.map-reading button,.map-expand{position:relative}
+ .topbar button::after,.view-tools .tool::after,.map-reading button::after,
+ .map-expand::after{content:'';position:absolute;inset:min(0px,calc(50% - 24px))}
  /* On a touch screen the thumbnail itself opens the big map, so its small
     enlarge button would only be a second, smaller way to do the same. */
  .map-expand{display:none}
- /* The details toggle sits at the foot of the course card, which clips
-    anything past its edge -- an invisible margin included. Held sideways the
-    card is too tight for the margin to make up the difference, so the toggle
-    itself is a little taller. */
- .card-toggle{min-height:34px}
  #world .shot-controls select{min-height:44px}
  /* The power slider's track stays 4 px to look at and grows to 44 to touch;
     the negative margins keep it where it was. */
  #world #power{height:44px;margin:-5px 0 -8px}
-}
-/* Held sideways the pad is a row -- left, further, the pin, shorter, right --
-   because a round pad 136 px tall runs up into the course card on a screen
-   344 px high. */
-@media(max-height:500px){
- #world:not(.dropping) .aim-pad{grid-template:44px/repeat(5,44px);border-radius:26px}
- .aim-pad .pad-left{grid-area:1/1}
- .aim-pad .pad-far{grid-area:1/2}
- .aim-pad .pad-pin{grid-area:1/3}
- .aim-pad .pad-near{grid-area:1/4}
- .aim-pad .pad-right{grid-area:1/5}
 }
 /* The big map held sideways: a hole runs up the screen, so height is what it
    is drawn in, and a phone on its side has 344 px of it. The title and the
@@ -843,3 +970,20 @@ html,body{overscroll-behavior:none}
 .home-hint>svg{flex:none;width:22px;height:22px;color:var(--accent-ink)}
 .home-hint p{margin:0;flex:1}
 .home-hint button{flex:none;min-height:44px;padding:0 14px}
+
+/* "Copy course code" left the course card for the Tools window, under "This
+   course". It keeps its id and its handler; it loses the card's corner
+   positioning, which in the Tools window parked it on the close button. It
+   also lost its invisible touch margin: sized for a small corner button, and
+   measured from the Tools window once the button stopped being positioned
+   itself, the margin covered the whole window and every tap in it landed on
+   "Copy course code". */
+.tools-tray .tools-seed{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;inset:auto}
+.tools-tray .tools-seed #seedLabel{display:inline}
+/* Two controls whose containers clip an invisible touch margin -- the score
+   chips scroll sideways in the top bar, the last-shot line sits in the
+   panel's scroller -- are simply made thumb-sized on a touch screen. */
+@media(pointer:coarse){
+ .score-chip{height:44px}
+ .last-shot-toggle{min-height:44px}
+}

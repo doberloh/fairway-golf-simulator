@@ -178,6 +178,13 @@ export function loadShotData() {
  }
 }
 
+// Whether the player has ever saved a choice in Shot data. Launch-monitor mode
+// shows its own grouped set -- ball, club, result -- until they have, because
+// the default eight are what a keyboard shot can fill, not what a monitor does.
+export function hasCustomShotData() {
+ try { return localStorage.getItem(KEY) != null; } catch { return false; }
+}
+
 export function saveShotData(prefs) {
  const next = clean(prefs);
  try {

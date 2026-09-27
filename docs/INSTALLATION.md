@@ -171,8 +171,9 @@ it once more. The icon built into the page is confirmed working on an iPhone,
 behind Netlify's password protection.
 
 What it does not do yet: **it needs a connection each time it opens** -- it
-does not work offline -- and the controls are not yet kept clear of an
-iPhone's rounded corners and home bar when held sideways. **A launch monitor
+does not work offline. The controls keep clear of an iPhone's notch, rounded
+corners and home bar in either orientation; that is built to Apple's safe-area
+measurements and not yet confirmed on a real phone. **A launch monitor
 cannot connect from a phone this way**: a secure `https://` page is not allowed
 to open the bridge's unencrypted connection on your network. On a phone,
 Fairway is touch play: an aim pad for fine adjustment, a map that opens big

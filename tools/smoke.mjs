@@ -215,7 +215,10 @@ class Trip {
  // only if it is shut, and then the tool is pressed.
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
-   await this.page.click('#toolsButton');
+   // Whichever Tools button this screen shows: the camera strip's on a
+   // laptop, the top bar's on a phone, where the strip folds away.
+   const bar = this.page.locator('#barTools');
+   await (await bar.isVisible() ? bar : this.page.locator('#toolsButton')).click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
   await this.page.click(`#${id}`);
@@ -453,10 +456,13 @@ async function touchAiming(t) {
   if (!/×/.test(await t.page.textContent('#mapTitle'))) throw new Error('the map title does not say it is zoomed');
  });
  await t.step('a tap on the big map aims, and Done puts it away', async () => {
-  const before = await t.page.textContent('#aimOutput');
+  // Either number may move: a tap that happens to land on the line already
+  // aimed down changes the distance and not the bearing, which the first
+  // version of this read as the tap doing nothing.
+  const before = JSON.stringify(await aimNow());
   const box = await t.page.locator('#map').boundingBox();
   await t.page.touchscreen.tap(box.x + box.width * 0.4, box.y + box.height * 0.4);
-  await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the big map to aim', 5 * SLOW);
+  await t.until(async () => JSON.stringify(await aimNow()) !== before, 'a tap on the big map to aim', 5 * SLOW);
   if (!await t.page.evaluate(() => document.getElementById('world').classList.contains('aim-view'))) throw new Error('aiming closed the big map; it should stay open to adjust');
   await t.page.getByRole('button', {name: 'Done', exact: true}).tap();
   await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('aim-view')), 'the big map to close', 5 * SLOW);
@@ -466,10 +472,16 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #world .view-tools .tool, #cardToggle, #seedButton, #aimPad button, #club, #power, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #power, #swing, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
+
+// What the bridge says about the device: red is no device, amber a device with
+// no ball on the mat, green a ball ready to hit. Shaped as `bridge/server.mjs`
+// sends it.
+const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status', deviceConnected: false}
+ : {type: 'status', deviceConnected: true, device: {ready: true, ballDetected: state === 'green'}});
 
 // ------------------------------------------------------------ the journeys
 //
@@ -646,7 +658,8 @@ const JOURNEYS = [
     await t.tool('replayShot').catch(() => {});
     if (await t.inFlight()) { await t.key('Enter'); await t.until(async () => !(await t.inFlight()), 'the replay to finish', 30 * SLOW); }
     await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the Tools window to be open', 5 * SLOW);
-    await t.page.click('#scoreNav');
+    // The score chips in the top bar are the way to the card now.
+    await t.page.getByRole('button', {name: /Open the scorecard/}).first().click();
     await t.until(() => t.drawerOpen(), 'the scorecard', 5 * SLOW);
     await t.key('Escape');
     await t.until(async () => !(await t.drawerOpen()), 'ONE Escape to close the scorecard', 3 * SLOW);
@@ -779,13 +792,14 @@ const JOURNEYS = [
    for (const [w, h] of this.sizes) {
     await t.page.setViewportSize({width: w, height: h});
     const phone = w <= 560 || h <= 500;
-    if (!phone) { await check(`${w}x${h}`); continue; }
-    // The details toggle exists only on a phone. Folded is the default.
-    await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('card-open')) document.getElementById('cardToggle').click(); });
-    await check(`${w}x${h} details folded`);
-    await t.page.click('#cardToggle');
-    await check(`${w}x${h} details open`, OPENED_FLOOR);
-    await t.page.click('#cardToggle');
+    // The last shot folds to one line at every size, and folded is the
+    // default. Open, it is checked too: an open grid is the tallest the
+    // shot panel gets, and on a phone the one state that can crowd the map.
+    await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('shot-open')) document.getElementById('shotToggle').click(); });
+    await check(`${w}x${h} last shot folded`);
+    await t.page.click('#shotToggle');
+    await check(`${w}x${h} last shot open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
+    await t.page.click('#shotToggle');
    }
    await t.step('every control reachable, no scrolling, the course visible, at every size', async () => {
     if (problems.length) throw new Error(`layout problems at ${problems.join(', ')}`);
@@ -811,12 +825,12 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
-   await t.step('the details are folded, and one tap opens and closes them', async () => {
+   await t.step('the last shot is folded, and one tap opens and closes it', async () => {
     const visible = () => t.page.evaluate(() => !!document.getElementById('shotResult')?.offsetHeight);
     if (await visible()) throw new Error('the shot numbers show before anything was tapped');
-    await tap('#cardToggle');
+    await tap('#shotToggle');
     await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
-    await tap('#cardToggle');
+    await tap('#shotToggle');
     await t.until(async () => !(await visible()), 'the shot numbers to fold away', 5 * SLOW);
    });
    await t.step('aim by tapping the course', async () => {
@@ -837,7 +851,7 @@ const JOURNEYS = [
    };
    await t.step('the shot button, then Skip', swing);
    await t.step('drop beside the pin, through the tools', async () => {
-    await tap('#toolsButton');
+    await tap('#barTools');
     await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools', 5 * SLOW);
     await tap('#simDrop');
     await tap('#dropAtGreen');
@@ -989,6 +1003,85 @@ const JOURNEYS = [
    });
   },
  },
+ // PLAYING WITH A LAUNCH MONITOR, which is the way Fairway is meant to be
+ // played. No device and no bridge process: Playwright answers the game's
+ // WebSocket itself, the way the bridge in `bridge/server.mjs` does -- a
+ // status message for what the device is doing, a shot message for a swing --
+ // and the journey checks what a player at the mat would see.
+ {
+  name: 'monitor',
+  what: 'a launch monitor through a pretend bridge: the state light, a measured shot, the big numbers, and hitting by hand',
+  context: {viewport: {width: 1366, height: 768}},
+  async prepare(page) {
+   this.acks = [];
+   await page.routeWebSocket('ws://127.0.0.1:1922/', ws => {
+    this.bridge = ws;
+    ws.onMessage(m => { try { const d = JSON.parse(m); if (d.type === 'ack') this.acks.push(d); } catch {} });
+    ws.send(monitorStatus('green'));
+   });
+  },
+  async run(t) {
+   const acks = this.acks, bridge = {send: m => this.bridge.send(m)}, status = monitorStatus;
+   const shown = sel => t.page.evaluate(s => { const e = document.querySelector(s); return !!e && !e.closest('[hidden]') && e.offsetParent !== null; }, sel);
+   const title = () => t.page.textContent('#monTitle');
+   await menuReady(t);
+   await t.step('Endless → Start an endless run', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.step('connect the bridge and arm the monitor', async () => {
+    await t.page.getByRole('button', {name: 'Connect monitor'}).click();
+    await t.press('Connect bridge');
+    await t.until(() => shown('#monState'), 'the monitor state in the shot panel', 5 * SLOW);
+    await t.page.getByLabel(/Arm monitor/).check();
+    await t.key('Escape');
+    await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
+   });
+   await t.step('armed: power, shape and the shot button go; the club and the aim stay', async () => {
+    for (const sel of ['#swing', '#power', '.shape-button']) if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
+    for (const sel of ['#club', '.aim-control']) if (!await shown(sel)) throw new Error(`${sel} is hidden with the monitor armed`);
+   });
+   await t.step('a measured shot flies, and the big numbers come up when it lands', async () => {
+    bridge.send(JSON.stringify({type: 'shot', requestId: 'smoke-1', payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: 1, APIversion: '1',
+     BallData: {Speed: 147.5, VLA: 14.3, HLA: 2.3, TotalSpin: 3250, SpinAxis: -13.2}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}}));
+    await t.until(() => t.inFlight(), 'the monitor shot to start', 5 * SLOW);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
+    if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
+    await t.until(() => shown('#shotCard'), 'the big numbers', 5 * SLOW);
+    const card = await t.page.textContent('#shotCard');
+    if (!/CARRY/.test(card) || !/TOTAL/.test(card)) throw new Error(`the card reads "${card}"`);
+   });
+   await t.step('the numbers are grouped, and the club group stays out without club data', async () => {
+    const heads = await t.page.$$eval('#shotResult .sg-head span', els => els.map(e => e.textContent));
+    if (!heads.includes('Ball') || !heads.includes('Result')) throw new Error(`groups are ${JSON.stringify(heads)}`);
+    if (heads.includes('Club')) throw new Error('a Club group of blanks, from a shot with no club data');
+    // The caption names the device the shot came from -- it once printed the
+    // bridge's status object instead, as "[object Object]".
+    const caption = await t.page.textContent('#shotResult p');
+    if (!/Smoke/.test(caption) || /object/i.test(caption)) throw new Error(`the caption reads "${caption}"`);
+   });
+   await t.step('the big numbers stay until the monitor sees the next ball', async () => {
+    bridge.send(status('amber'));
+    await t.until(async () => (await title()) === 'Finding ball', 'the panel to say Finding ball', 5 * SLOW);
+    if (!await shown('#shotCard')) throw new Error('the big numbers went before the next ball was teed');
+    bridge.send(status('green'));
+    await t.until(async () => !(await shown('#shotCard')), 'the big numbers to go when the next ball is teed', 5 * SLOW);
+   });
+   await t.step('no device: red, with Reconnect and Hit by hand', async () => {
+    bridge.send(status('red'));
+    await t.until(async () => (await title()) === 'No monitor', 'the panel to say No monitor', 5 * SLOW);
+    for (const name of ['Reconnect', 'Hit by hand']) await t.page.getByRole('button', {name, exact: true}).waitFor({state: 'visible', timeout: 5000 * SLOW});
+   });
+   await t.step('Hit by hand brings back power and the shot button', async () => {
+    await t.press('Hit by hand');
+    await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
+    if (!await shown('#power')) throw new Error('the power slider did not come back');
+    await t.shot();
+   });
+  },
+ },
 ];
 
 // ------------------------------------------------------------------ runner
@@ -1083,6 +1176,10 @@ for (const journey of chosen) {
  const t0 = Date.now();
  let failure = null;
  try {
+  // A journey may set the page up BEFORE it loads. WebSocket routing has to
+  // be: Playwright patches the page's WebSocket as the document starts, so a
+  // route added after load never sees the game's connection.
+  if (journey.prepare) await journey.prepare(page);
   await page.goto(home, {waitUntil: 'load'});
   await journey.run(trip);
  } catch (e) {
