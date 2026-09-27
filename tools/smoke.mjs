@@ -483,6 +483,48 @@ async function touchAiming(t) {
 const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status', deviceConnected: false}
  : {type: 'status', deviceConnected: true, device: {ready: true, ballDetected: state === 'green'}});
 
+// A BALL IN THE AIR CLEARS THE SCREEN. Checked while a flight is running: the
+// shot panel's controls, the camera strip and the aim pad have stepped aside
+// (a phone loses the whole panel; bigger screens keep its shot numbers), the
+// map and the wind are still there, the flight bar carries the numbers fixed
+// at the strike and a Skip that can be pressed, and there is no ticking live
+// readout anywhere. `phone` says which of the two rules applies.
+// The panels FADE, over a fifth of a second, so a check made the instant the
+// ball leaves catches them half-way; it is retried until it passes or two
+// seconds are up, and only the last failure is reported.
+async function flightClearsTheScreen(t, phone) {
+ const until = Date.now() + 2000 * SLOW;
+ for (;;) {
+  try { return await flightScreenOnce(t, phone); }
+  catch (e) { if (Date.now() > until || !(await t.inFlight())) throw e; await t.page.waitForTimeout(100); }
+ }
+}
+async function flightScreenOnce(t, phone) {
+ const state = await t.page.evaluate(() => {
+  const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
+  return {
+   flag: document.getElementById('world').classList.contains('in-flight'),
+   panel: gone('.bottom-area'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
+   numbers: gone('#lastShot'), map: gone('#map'), wind: gone('.weather'),
+   bar: document.getElementById('flightNums')?.textContent || '', live: !!document.getElementById('liveShotSpeed'),
+  };
+ });
+ const bad = [];
+ if (!state.flag) bad.push('the playing area is not marked in-flight');
+ if (!state.club || !state.swing) bad.push('the club or the shot button is still showing');
+ if (!state.strip) bad.push('the camera strip is still showing');
+ if (!state.pad) bad.push('the aim pad is still showing');
+ if (phone && !state.panel) bad.push('the shot panel is still showing on a phone');
+ if (!phone && state.numbers) bad.push('the shot numbers went on a big screen, where they should stay');
+ if (state.map) bad.push('the map went, and it should follow the ball');
+ if (state.wind) bad.push('the wind went');
+ if (!/mph/.test(state.bar)) bad.push(`the flight bar reads "${state.bar}"`);
+ if (state.live) bad.push('a live readout is still ticking');
+ if (bad.length) throw new Error(bad.join('; '));
+ const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
+ if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
+}
+
 // ------------------------------------------------------------ the journeys
 //
 // Each is a thing a player actually does, start to finish, in a fresh page.
@@ -592,7 +634,15 @@ const JOURNEYS = [
    await t.step('cameras: overview, player, green view, back', async () => {
     for (const id of ['overview', 'playerView', 'greenView', 'playerView']) await t.page.click(`#${id}`);
    });
-   await t.step('tee shot', () => t.shot());
+   await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
+    await t.key('Space');
+    await t.until(() => t.inFlight(), 'Space to start a shot', 5 * SLOW);
+    await flightClearsTheScreen(t, false);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
+    await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
+    if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
+   });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
     // two yards from the pin, which makes the putting below deterministic
@@ -842,12 +892,17 @@ const JOURNEYS = [
     await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
    });
    await touchAiming(t);
+   let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
     await tap('#swing');
     await t.until(() => t.inFlight(), 'the shot button to start a shot', 5 * SLOW);
+    if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);
+    // The screen comes back a frame after the ball settles, and fades in.
+    await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back after the shot', 5 * SLOW);
+    await t.page.waitForTimeout(300);
    };
    await t.step('the shot button, then Skip', swing);
    await t.step('drop beside the pin, through the tools', async () => {

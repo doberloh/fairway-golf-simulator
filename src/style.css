@@ -987,3 +987,49 @@ html,body{overscroll-behavior:none}
  .score-chip{height:44px}
  .last-shot-toggle{min-height:44px}
 }
+
+/* =========================================================================
+   A BALL IN THE AIR CLEARS THE SCREEN
+   =========================================================================
+   The owner's call, 26 September, for every size: while a ball flies (or a
+   shot is replayed) nothing on screen can be used, so it steps aside and the
+   shot gets the screen. What stays: the top bar, the wind, the map -- which
+   follows the ball now -- and the flight bar along the bottom, carrying the
+   numbers fixed at the strike and Skip. On anything bigger than a phone the
+   shot panel shrinks to its shot numbers rather than going, because those are
+   worth reading while the ball is up; on a phone the whole panel goes. The
+   class is `in-flight` on #world, set from the flight itself every frame.
+   ========================================================================= */
+#world .bottom-area,#world .view-tools,#world .cam-button,#world .aim-pad,#world .course-info{
+ transition:opacity .2s ease,visibility 0s linear 0s}
+#world.in-flight .view-tools,#world.in-flight .cam-button,#world.in-flight .aim-pad,#world.in-flight .bottom-hints{
+ opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+/* Bigger than a phone: the panel folds to its numbers. */
+#world.in-flight .shot-controls>*:not(.last-shot){display:none}
+#world.in-flight .shot-controls>.last-shot{border-bottom:0}
+
+/* The flight bar: bottom centre at every size, where a thumb already is. */
+#world .flight-badge{top:auto;bottom:var(--edge-b);left:50%;transform:translateX(-50%);z-index:14;
+ max-width:calc(100% - var(--edge-l) - var(--edge-r));gap:12px;padding:8px 8px 8px 16px;font-size:10px}
+.flight-nums{display:flex;align-items:baseline;gap:8px;font:14px var(--font-display);letter-spacing:0}
+.flight-nums:empty{display:none}
+.flight-nums b{font:600 11px var(--font-ui);letter-spacing:.3px}
+.flight-nums small{font:10px var(--font-ui);color:var(--ink-dim)}
+.flight-nums i{font-style:normal;color:var(--ink-faint)}
+#world .flight-badge button{display:flex;align-items:center;gap:6px;min-height:36px;margin-left:4px;padding:0 14px;
+ border:1px solid var(--glass-line);border-left:1px solid var(--glass-line);border-radius:999px;background:var(--field);
+ font-size:11px;color:var(--ink)}
+
+@media(max-width:560px),(max-height:500px){
+ #world.in-flight .bottom-area{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+ /* A phone has no room for the words: the dot says a ball is up. */
+ #world .flight-badge #flightLabel{display:none}
+ /* ...except the countdown once the ball has landed, which takes the numbers'
+    place: "Final lie · playing on in 3s" is what matters by then. */
+ #world .flight-badge.holding #flightLabel{display:inline}
+ #world .flight-badge.holding .flight-nums{display:none}
+ #world .flight-badge{padding-left:12px;gap:10px}
+ #world .flight-badge button{min-height:44px}
+ #world .flight-badge button kbd,#world .flight-badge .skip-long{display:none}
+ #world .flight-nums{gap:6px;font-size:13px;min-width:0;overflow:hidden}
+}
