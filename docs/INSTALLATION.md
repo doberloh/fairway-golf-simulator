@@ -175,8 +175,10 @@ does not work offline. The controls keep clear of an iPhone's notch, rounded
 corners and home bar in either orientation; that is built to Apple's safe-area
 measurements and not yet confirmed on a real phone. **A launch monitor
 cannot connect from a phone this way**: a secure `https://` page is not allowed
-to open the bridge's unencrypted connection on your network. On a phone,
-Fairway is touch play: an aim pad for fine adjustment, a map that opens big
+to open the bridge's unencrypted connection on your network. To play with a
+monitor on a phone, load the game from the bridge instead of from the hosted
+copy -- see *To play from a phone or tablet on your own network* below. On a
+phone without one, Fairway is touch play: an aim pad for fine adjustment, a map that opens big
 and pinches to zoom, and controls sized for a thumb.
 
 The portable file is unchanged by any of this. Opened from disk, it links no

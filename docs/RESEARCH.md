@@ -3685,3 +3685,80 @@ For the redraw on the `hud-layout` branch. Sources read, and what was taken:
 panel widths (268 px, 330 on a big screen, 190 on a phone upright and 178
 sideways) and the map sizes. They came from the approved mockups and were
 then checked by the layout sweep, not taken from any source.
+
+## A launch monitor on an iPhone, and why the hosted copy cannot reach it
+
+Asked on 27 September: can the Netlify copy, added to an iPhone's home screen,
+connect to a launch monitor? It cannot, and no setting in the game changes
+that. Sources read, and what each established:
+
+- [Mixed Content, W3C](https://w3c.github.io/webappsec-mixed-content/). Only
+  images, video and audio are "upgradeable"; everything else fetched insecurely
+  from a secure page is **blockable**, and a WebSocket is not in the upgradeable
+  set. Loopback addresses count as potentially trustworthy -- but the bridge is
+  on the computer, not the phone, so from the phone it is a LAN address and
+  gets no exemption.
+- [MDN, the WebSocket constructor](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket)
+  and [MDN, Mixed content](https://developer.mozilla.org/en-US/docs/Web/Security/Mixed_content).
+  Neither states the WebSocket case outright; MDN confirms only that loopback
+  and `file:` count as secure. Read and not relied on.
+- [WHATWG WebSockets](https://websockets.spec.whatwg.org/). Delegates the
+  mixed-content decision to Fetch; nothing further.
+- [Apple Developer Forums 120869](https://developer.apple.com/forums/thread/120869).
+  Safari blocks `ws://` from an `https://` page, and a SELF-SIGNED certificate
+  for `wss://` fails validation (-9807); certificate handling for WebSockets
+  cannot be customised. An Apple DTS engineer's answer for apps was native
+  messaging (`WKScriptMessage`), which a web page does not have.
+- [Apple Developer Forums 792842](https://developer.apple.com/forums/thread/792842).
+  On iOS 26 beta 3 a `wss://` socket to a LAN address failed "The certificate
+  for this server is invalid" even with the page's certificate accepted --
+  clicking through a warning does not make a socket trust it -- and an
+  insecure LAN socket sometimes needed a second attempt. Reported fixed by
+  beta 5. Worth knowing if a phone connects on the second try only.
+- [Apple community 256075428](https://discussions.apple.com/thread/256075428),
+  [254087609](https://discussions.apple.com/thread/254087609),
+  [251351003](https://discussions.apple.com/thread/251351003) and
+  [Chromium 40386732](https://issues.chromium.org/issues/40386732): the same
+  block reported from the field; found by search, not read in full.
+- [TN3179, Understanding local network privacy](https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy).
+  The page would not render for an automated fetch. Search summaries say the
+  check is a packet filter covering every networking API and that a web view
+  counts as its app; whether Safari itself ever prompts on iOS was NOT settled.
+  If a phone cannot reach the bridge at all, Settings > Privacy & Security >
+  Local Network is the first place to look.
+- [caniuse, Web Bluetooth](https://caniuse.com/web-bluetooth). Not supported in
+  Safari on iOS or iPadOS. So a phone's browser cannot talk to a monitor
+  directly either: a computer running the connector and the bridge is needed in
+  every arrangement, and the phone is the screen.
+
+**What does work, today:** the page loaded FROM the bridge. Run the bridge with
+`FAIRWAY_HTTP_HOST` set to the computer's LAN address and open
+`http://<that address>:1922` on the phone. The page is then plain `http`, its
+socket plain `ws`, and there is no mixed content to block. Checked on 27
+September against the real bridge code (served on loopback, in Chrome): the
+page loads with no console errors and connects. The one papercut: the monitor
+panel's address box defaults to `ws://127.0.0.1:1922`, which on a phone is the
+phone, so the computer's address has to be typed.
+
+**What it would take for the HOSTED copy to connect** -- all three need the
+bridge to speak `wss://` with a certificate the phone trusts, and its origin
+check (loopback and private addresses only) to accept the hosted site:
+
+- [Tailscale HTTPS certificates](https://tailscale.com/kb/1153/enabling-https).
+  Real Let's Encrypt certificates for `machine.tailnet.ts.net`, issued by DNS
+  challenge, private key kept on the machine, trusted by Safari. Machine names
+  are published in Certificate Transparency logs. The name resolves to a
+  Tailscale address, so -- this is the reading of how the name works, not a
+  quote -- the iPhone needs the Tailscale app. The cleanest of the three.
+- [Apple: trust manually installed certificate profiles](https://support.apple.com/en-us/102390).
+  A home-made root certificate installed as a profile must also be switched on
+  under Settings > General > About > Certificate Trust Settings. Works, per
+  device, and fiddly.
+- [Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/).
+  A random public `https` address for a local service, no account, "testing
+  and development only", 200 in-flight requests, no uptime promise; the page
+  read did not confirm WebSockets. **Rejected** in any case: it puts the
+  bridge, which has no authentication, on the public internet.
+
+A native iPhone app, which could open any connection it liked, was weighed on
+26 September and set aside (it needs a Mac with Xcode and a developer account).
