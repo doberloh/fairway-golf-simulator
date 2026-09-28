@@ -62,29 +62,32 @@ Ground rules that apply to every item below:
   full-detail trees within 120 m plus everything else at ~1.5k vertices comes
   to about what the whole course cost before baked trees. The far versions can
   be generated (ez-tree `generateLODs`, or the same parameters with fewer
-  sections). Rendering only; collision untouched. Builds on F1 (done): the
-  view cull in `src/instance-cull.js` already sorts every instance into 64 m
-  squares and knows which are in view, so a near/far split can be a second
-  mesh per model (the far version) filled from the same squares by distance.
+  sections). Rendering only; collision untouched. Builds on F1 and F3 (done):
+  the view cull in `src/instance-cull.js` already sorts every instance into
+  64 m squares and knows which are in view, and `farParts` in
+  `src/mesh-assets.js` already derives each tree's thinned twin at load (a
+  third of the sprays, grown to keep the crown full; ~37% of the triangles),
+  so the far version exists -- F2 needs a second drawn mesh per model filled
+  from the squares by on-screen size. Owner's steer (28 September): Ultra must
+  stay amazing -- swap by on-screen size, Ultra late; fade across the swap
+  (dither) so there is no line; report the share of visible trees drawn thin
+  per tee, because the 19 September swap was removed for making "nearly every
+  visible tree" the thin one; screenshots per tier to the owner before merge.
+  Note from F3: a twin must never be what a near crown is SHADED by, so if
+  the far mesh casts, it casts only into maps beyond the nearest.
 
-- [ ] **F3. Only nearby trees cast shadows.** Every tree the camera can see
-  (or whose shadow it can see) is drawn into the shadow map, and on High and
-  Ultra into each of three shadow cascades (`cascades: 3` in
-  `src/graphics.js`); that is why High draws twice Low's triangles. Restrict
-  shadow casters to about 250 m around the camera (13% of trees from an
-  average tee) and drop small ground plants from the far cascades. HOW, given
-  F1: the view cull (`src/instance-cull.js`) packs ONE instance set per mesh
-  and three draws that same set into the main view and every cascade, so a
-  shorter caster list needs a SECOND instanced mesh per heavy model sharing
-  the geometry -- castShadow only, `colorWrite`-free depth material, holding
-  the instances within the shadow distance -- with `castShadow` turned off on
-  the drawn one. The cull's squares already give the distance. Also worth
-  taking with it: the god-ray pass (`src/godrays.js`) re-submits the whole
-  scene as its occlusion mask whenever the sun is in shot (Redwood tees 6, 8
-  and 9 draw twice the calls of their neighbours); the mask could skip the
-  ground cover and use the same near/far split. No visible change expected;
-  verify with screenshots at dawn and dusk, when shadows are longest, the way
-  F1 was verified (RESEARCH.md *Drawing only what is in view*).
+- [ ] **F6. Tighter shadow cascades -- sharper near shadows, cheaper too.**
+  Found doing F3: three's `CSM` makes each cascade a square whose side is the
+  diagonal of its slice of the view, and with `practical` splits (lambda 0.5)
+  over 2.5 km the nearest slice runs to ~420 m, so the NEAREST cascade covers
+  about a kilometre and holds 84-100% of the trees in view (Redwood). Custom
+  splits (`customSplitsCallback`, e.g. near ~80-120 m, middle ~500 m) would put
+  the nearest map's texels where the player stands -- crisper contact shadows,
+  which is an Ultra win -- and let F3's per-map trimming actually trim the
+  near maps. Changes the look, so screenshots at dawn, noon and dusk for the
+  owner, and watch for a visible line where cascades meet (`fade` is off).
+  Keep `thinShadowsFrom` pointing at a cascade that no near crown shades
+  itself from (see F3 in Done).
 
 - [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
   pixel ratio a step when frames run slow, raise it when there is headroom,
@@ -1119,6 +1122,22 @@ record of what was ruled out and why, which is worth more than a short file.
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 ### Frame rate
+
+- [x] **F3. Only the trees a shadow map can reach, and thinner beyond the
+  nearest cascade.** Branch `tree-shadows`. Each shadow map now draws only
+  the trees whose square lies inside it (instances written in order of the
+  first map that needs them; `onBeforeShadow` cuts each map to its prefix),
+  and on High and Ultra the middle and far cascades take each crown's shadow
+  from its thinned twin (`farParts`, derived at load, nothing added to the
+  download). Graphics ms, first tee / tee 5: Low 4.12 -> 3.23 / 1.89 -> 1.78;
+  Medium 6.37 -> 5.74 / 4.03 -> 4.01; High 13.28 -> 11.42 / 7.91 -> 7.34;
+  Ultra 13.63 -> 11.87 / 7.75 -> 7.22. Screenshots at 18:24 and 10:15 match
+  within frame-to-frame noise on every tier. REJECTED: the twin in Low and
+  Medium's single map -- it shades the nearest crowns, which went visibly
+  darker. Found on the way: the nearest cascade is ~1 km across (F6, open),
+  and layers cannot split shadow maps in three. Tests in
+  `tests/instance-cull.test.mjs`. Detail in RESEARCH.md *Only the trees a
+  shadow map can reach*.
 
 - [x] **F0. Re-save the frame-profile baseline.** Done 28 September after the
   probe fix (RESEARCH.md *The profiler counted every frame twice*): full sweep,

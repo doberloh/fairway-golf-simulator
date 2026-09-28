@@ -50,6 +50,13 @@ export const TIERS = {
   // Cascades off: one shadow frustum that follows the camera, so ground beyond
   // it is simply lit. Medium has always worked this way.
   cascades: 0, shadowFar: 0, overviewShadowFar: 0,
+  // NO thinned shadow trees (instance-cull.js). The single map covers the
+  // trees beside the player, and a crown shades ITSELF from it: shaded by a
+  // thinned twin whose grown sprays do not sit where the drawn ones do, every
+  // near crown went visibly darker (28 September screenshots, RESEARCH.md
+  // *Only the trees a shadow map can reach*). A caster standing in for a
+  // receiver has to be the same shape.
+  thinShadowsFrom: Infinity,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -83,6 +90,8 @@ export const TIERS = {
   shadowSpan: {half: 185, top: 250, bottom: -160, far: 900},
   shadowBias: {normal: .15, constant: -.0002},
   cascades: 0, shadowFar: 0, overviewShadowFar: 0,
+  // No thinned shadow trees, for the same reason as low.
+  thinShadowsFrom: Infinity,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -112,6 +121,9 @@ export const TIERS = {
   // Three cascades out to 2.5 km, so a tree casts a shadow wherever it stands
   // rather than only inside a 370 m box around the camera.
   cascades: 3, shadowFar: 2500, overviewShadowFar: 0,
+  // The nearest cascade keeps the whole tree -- it is the one a player stands
+  // in -- and the two beyond it shadow from the thinned twins (instance-cull.js).
+  thinShadowsFrom: 1,
   // Shafts are composited additively over the finished frame, so this is how
   // bright they get, not how much of the picture they replace.
   godRays: .85,
@@ -162,6 +174,8 @@ export const TIERS = {
   // Three cascades reaching 3.5 km rather than high's 2.5, at half again the
   // texels: the far hills keep their shadows and the near ones sharpen.
   cascades: 3, shadowFar: 3500,
+  // As high: full trees in the nearest cascade, thinned twins beyond it.
+  thinShadowsFrom: 1,
   // Zoomed all the way out the whole course should keep its shadows. The
   // cascades stop at shadowFar to hold resolution up close, but in overview
   // there is no close, so they stretch to cover everything instead.
@@ -304,5 +318,7 @@ export function needsRebuild(a, b) {
  if (x.reflection !== y.reflection) return true;
  // Cascades are built with the course and register themselves against every
  // material in it, so turning them on or off needs the scene built again.
- return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades;
+ // The thinned shadow twins are made with the course, for the tiers that use them.
+ return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades ||
+  (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity);
 }

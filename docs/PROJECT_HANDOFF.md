@@ -108,8 +108,8 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/renderer.js | Three scene lifecycle, ball/cup/flag, camera modes, pond geometry and minimap drawing. `projectMarker` clamps a world point to a screen rectangle; `cameraHeading` is the camera bearing in the same `atan2(x, z)` convention the wind uses; `setPinOut` hides the flagstick |
 | src/graphics.js | Device-local quality tiers and frame cap, and the one table every graphics knob reads |
 | src/textures.js | Procedural textures and foliage animation shader hooks |
-| src/mesh-assets.js | Decodes that geometry and instances it under the biome palette |
-| src/instance-cull.js | Draws only the part of each course-wide instanced mesh (trees, deadfall, rocks, ground cover, homes, floodlights) that the camera can see or whose shadow it can see |
+| src/mesh-assets.js | Decodes that geometry and instances it under the biome palette. `farParts` derives a tree's thinned twin -- a third of its leaf sprays, each grown to keep the crown full -- at load, for shadows beyond the nearest cascade |
+| src/instance-cull.js | Draws only the part of each course-wide instanced mesh (trees, deadfall, rocks, ground cover, homes, floodlights) that the camera can see or whose shadow it can see, and gives each shadow map only the trees inside it -- as thinned twins from the middle cascade out on High and Ultra |
 | src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |
 | src/shot-visuals.js | Wind debris, strike effects, aiming/tracer helpers |
 | src/clouds.js | Cartoon cloud meshes drifting on the wind, and the discs they shade with |
@@ -492,6 +492,10 @@ The traps:
 - **Meshes built after `cullInstances` are not culled**, and a mesh whose instances MOVE after the build must opt out with `userData.noCull = true` (the near-field grass tiles do). A new course-wide instanced thing belongs before the call in `build`.
 - **`frustumCulled` is off on every culled mesh** and `computeBoundingSphere` on one sees only what is currently held. Both would otherwise leave three testing a stale sphere and dropping a mesh that has since come into view.
 - **Do not change a culled buffer's usage to `DynamicDrawUsage`.** It is the obvious hint for a buffer rewritten as the camera moves, and on Windows it tripled High's graphics time (12.6 -> 33 ms) for the whole page -- but only on a page opened after another in the same browser, so a single fresh load never shows it and `npm run profile`, which opens the tiers one after another, did. The buffers keep whatever usage they were built with. RESEARCH.md *Drawing only what is in view* has the runs.
+- **Each shadow map draws a prefix of the same buffer.** Instances are written in order of the first shadow map that needs their square, and `onBeforeShadow` cuts `count` to that map's prefix (`onAfterShadow` puts it back). The renderer passes the shadow-casting lights to `update` AFTER `csm.update()` and after placing their shadow cameras (`light.shadow.updateMatrices`), because the test is against where the maps are this frame. A shadow camera the cull was not told about -- a floodlight's -- draws everything, as before.
+- **Layers cannot do this.** Three tests an object's `layers` against the MAIN camera in the shadow pass too, so putting a mesh on a layer only one cascade enables changes nothing. The hooks are the mechanism.
+- **The shadow twin is never drawn into the picture.** It shares its mesh's instance buffer (no upload, always the same trees) and zeroes its own `count` in `onBeforeRender`, which also keeps it out of the god-ray mask and the water probes. It draws only into maps from the tier's `thinShadowsFrom` on.
+- **Never give the map that shades the nearest trees a twin.** A crown shades itself from the same map, and a twin whose grown sprays do not sit where the drawn ones are darkens every near crown -- which is why Low and Medium, whose one map covers the player's surroundings, have `thinShadowsFrom: Infinity`, and High and Ultra start at 1.
 - **Rendering only.** `world.trees`, collision and everything physics reads are untouched; a tree that is not drawn is still exactly where it was, which is why no generator version is involved.
 
 ## Near-field grass is built on a budget

@@ -4007,3 +4007,89 @@ its GPU the way every other case does, so its "processor-bound" reading was
 probably the old probe); High at 1x, 1.5x and 2x pixels 10.69, 12.44, 14.36; a
 water course's reflection toggle 7.16 against 7.20 (still nothing); the
 software rasteriser 3.3-3.8 s a frame.
+
+## Only the trees a shadow map can reach (F3, 28 September)
+
+`src/instance-cull.js` and `farParts` in `src/mesh-assets.js`; the traps are in
+PROJECT_HANDOFF *The planting is drawn from the camera's view, not the
+course's*. All measurements with the corrected probe, Redwood seed PROFILE,
+1600x900 at 2x, 10:15, real GPU.
+
+**Where tree shadows go.** A scratch run that took trees out of one shadow map
+at a time (High, first tee) found every cascade drawing the same ~35 M
+triangles of tree: 152 M a frame with all three, 118 M without the far one, 83 M
+with only one, 48 M with none. The view cull (F1) had made that true -- a
+culled mesh has no bounding sphere worth testing, so three put every held tree
+into every map -- and so had the cascades themselves (below).
+
+Graphics ms per frame, trees' shadows as they were -> as they are now:
+
+| Tier | Tee 1 | Tee 5 | Tee 9 |
+| --- | --- | --- | --- |
+| Low | 4.12 -> 3.23 | 1.89 -> 1.78 | 1.91 -> 1.73 |
+| Medium | 6.37 -> 5.74 | 4.03 -> 4.01 | 4.33 -> 4.20 |
+| High | 13.28 -> 11.42 | 7.91 -> 7.34 | 8.12 -> 7.55 |
+| Ultra | 13.63 -> 11.87 | 7.75 -> 7.22 | 8.19 -> 7.64 |
+
+(each the mean of two alternating samples on the same page, `lab.cullTune({shadowMaps,
+thinShadowsFrom})` switching between them). Upper bound for comparison: trees
+casting no shadow at all took High's tee 1 to 9.3 ms and tee 5 to 6.3.
+
+**Two parts, and why each tier gets what it gets.**
+
+1. *Each shadow map draws only the trees inside it.* The instances are written
+   in order of the first map whose volume contains their square, and each map
+   draws a prefix. Exact for a single map (Low and Medium), where it drew 22-66%
+   of the held trees depending on the tee. For the cascades it bought almost
+   nothing: the nearest cascade held 84-100% of the trees. That is three's
+   `CSM`, not the cull -- each cascade's shadow camera is a square whose side is
+   the DIAGONAL of its slice of the view, and with `practical` splits at
+   lambda 0.5 over 2.5 km the nearest slice runs to ~420 m, so the nearest
+   square is about a kilometre across. Tighter splits would sharpen near
+   shadows as well as shrink the cost; filed in TODO, not done, because it
+   changes the look.
+2. *From the middle cascade out, a crown's shadow comes from its thinned twin*
+   -- a third of the leaf sprays, each grown about its own centre so the crown
+   keeps its fullness (`farParts`; the trunk is shared). High and Ultra only.
+
+**Rejected for Low and Medium: the twin in the single map.** It was the first
+plan -- one shadow texel on Low is over half a metre -- and the screenshots
+threw it out. Low's one map covers the trees beside the player, and a crown
+shades ITSELF from it; shaded by a twin whose grown sprays do not sit where the
+drawn ones are, every near crown went visibly darker (113,000 changed pixels
+at 10:15 against ~4,000 of frame-to-frame noise, all of it in the crowns). A
+caster that stands in for a receiver has to be the same shape as the receiver.
+On High and Ultra the nearest cascade keeps the whole tree, and the twin only
+shades what is beyond ~420 m, where the same comparison came out at the noise
+floor: Ultra 20,386 changed pixels at 10:15 against 23,058 between two frames
+of the unchanged scene, and the difference image shows only wind in the
+near-field grass and a drifting cloud edge.
+
+**Lossless checks.** The same on/off screenshot comparison as F1, at 18:24 and
+10:15 on hole 4: map trimming on Low 1,935 changed pixels against 922 of
+noise, 8,428 against 5,694; Medium 9,083 against 6,226, 20,245 against
+11,655. The difference images show only grass blades and the animated aim
+line: no shadow moved.
+
+**A measuring mistake worth recognising.** The first round of these
+screenshots reported every tier and both hours at exactly ~6,150 changed
+pixels. The script built its settings inside the page from `process.env`,
+which does not exist there; the page's setup threw before storing anything, so
+every "tier" was the default and every hour was midnight. Identical numbers
+across cases that should differ is the symptom -- the same one the profiler's
+double counting had.
+
+**Three facts about three.js this rests on (0.186).** `Object3D.layers` cannot
+split shadow maps: `WebGLShadowMap` tests an object's layers against the MAIN
+camera's, not the shadow camera's, so a mesh cannot be put in one cascade and
+not another that way (tried first; it changed nothing). `onBeforeShadow` and
+`onAfterShadow` run around each object in each shadow map, with the shadow
+camera as an argument, and a changed `count` is read after them -- that is the
+mechanism. `onBeforeRender` works the same way for the picture, which is how
+the twin is kept out of it.
+
+**Cost of thinning.** 8-10 ms per tree model in the browser's thread (typed
+arrays; the first version with Maps took 16-35), done once per model a course
+uses: about 0.15 s on a Redwood course, High and Ultra only. Nothing is added
+to the download: the grower's `_Far` twins would have added an estimated 4-5
+MB to the single file.

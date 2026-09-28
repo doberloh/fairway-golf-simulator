@@ -101,3 +101,67 @@ test('meshes that opt out, and single meshes, are left alone', () => {
  assert.equal(cullInstances(group), null);
  assert.equal(mesh.count, spots.length);
 });
+
+// A sun overhead whose shadow map covers only the square around the camera.
+const sunOver = (half = 120) => {
+ const light = new T.DirectionalLight();
+ light.position.set(0, 500, -520); light.target.position.set(0, 0, -520);
+ Object.assign(light.shadow.camera, {left: -half, right: half, top: half, bottom: -half, near: 1, far: 1000});
+ light.shadow.camera.updateProjectionMatrix();
+ light.updateMatrixWorld(); light.target.updateMatrixWorld(); light.shadow.updateMatrices(light);
+ return light;
+};
+const shadowCount = (mesh, light) => {
+ mesh.onBeforeShadow?.(null, mesh, null, light.shadow.camera);
+ const n = mesh.count; mesh.onAfterShadow?.(); return n;
+};
+
+test('a shadow map draws only the trees inside it, and every one of them', () => {
+ const {group, mesh} = field(), cull = cullInstances(group), cam = camera(), light = sunOver();
+ cull.update(cam, null, [light]);
+ const drawn = mesh.count, inMap = shadowCount(mesh, light);
+ assert.ok(inMap < drawn * .5, `map drew ${inMap} of ${drawn}`);
+ assert.equal(mesh.count, drawn, 'the count is put back after the shadow pass');
+ // Every tree the map's volume touches is inside the prefix it draws.
+ const kept = held(mesh), prefix = new Set(kept.slice(0, inMap).map(t => t.x + ',' + t.z));
+ for (const t of kept) if (Math.abs(t.x) <= 120 && Math.abs(t.z + 520) <= 120) assert.ok(prefix.has(t.x + ',' + t.z), `tree at ${t.x},${t.z} is in the map but not drawn into it`);
+ // A shadow camera it was not told about -- a floodlight's -- draws everything.
+ const other = new T.SpotLight(); assert.equal(shadowCount(mesh, other), drawn);
+});
+
+test('the thinned twin stands in from its map onward and is never drawn into the picture', async () => {
+ const {modelParts, farParts} = await import('../src/mesh-assets.js');
+ const parts = modelParts('Redwood_Giant_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const group = new T.Group(), n = 40, mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
+ const m = new T.Matrix4();
+ for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeTranslation((i % 8) * 30 - 105, 0, Math.floor(i / 8) * 30 - 520));
+ mesh.castShadow = true; mesh.userData = {model: 'Redwood_Giant_1', part: leaf, role: 'leaf'};
+ group.add(mesh);
+ const cull = cullInstances(group, {thinShadowsFrom: 1}), cam = camera(), near = sunOver(60), far = sunOver(400);
+ cull.update(cam, null, [near, far]);
+ const twin = group.children.find(o => o.name === 'shadow twin');
+ assert.ok(twin, 'no twin was made');
+ assert.equal(twin.instanceMatrix, mesh.instanceMatrix, 'the twin must share the instance buffer');
+ assert.ok(twin.geometry.index.count < parts[leaf].geometry.index.count * .5);
+ assert.equal(twin.geometry, farParts('Redwood_Giant_1')[leaf].geometry);
+ // Map 0 keeps the whole tree; map 1 draws the twin instead.
+ assert.ok(shadowCount(mesh, near) > 0); assert.equal(shadowCount(twin, near), 0);
+ assert.equal(shadowCount(mesh, far), 0); assert.ok(shadowCount(twin, far) > 0);
+ // Any render that is not a shadow map sees no instances of the twin.
+ twin.onBeforeRender(); assert.equal(twin.count, 0); twin.onAfterRender();
+ assert.equal(twin.count, mesh.count);
+});
+
+test('thinning keeps a third of the sprays, grown about their own centres, and shares the trunk', async () => {
+ const {modelParts, farParts} = await import('../src/mesh-assets.js');
+ const full = modelParts('DouglasFir_2'), far = farParts('DouglasFir_2');
+ for (let i = 0; i < full.length; i++) {
+  if (full[i].role !== 'leaf') { assert.equal(far[i].geometry, full[i].geometry); continue; }
+  const ratio = far[i].geometry.index.count / full[i].geometry.index.count;
+  assert.ok(ratio > .3 && ratio < .37, `kept ${ratio}`);
+  // Same crown: the thinned sprays fill the same envelope.
+  full[i].geometry.computeBoundingBox(); far[i].geometry.computeBoundingBox();
+  const a = full[i].geometry.boundingBox, b = far[i].geometry.boundingBox;
+  for (const k of ['x', 'y', 'z']) assert.ok(Math.abs((a.max[k] - a.min[k]) - (b.max[k] - b.min[k])) < (a.max[k] - a.min[k]) * .12, `envelope ${k}`);
+ }
+});
