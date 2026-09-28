@@ -10,6 +10,12 @@ dist/
 Fairway-portable.zip
 Fairway-source.zip
 RELEASE_SHA256.txt
+# ...and the release archives UNZIPPED in place, which is how they get tested.
+# Without this a `git add -A` once swept an unzipped Fairway-portable/ -- a
+# 15.9 MB copy of the game -- into a commit (27 September; it is in history
+# from ee1d401 and untracked since).
+/Fairway-portable/
+/Fairway-source/
 
 # Scratch screenshots from `node tools/shot-sink.mjs`. Captures a report
 # actually cites are committed beside that report, under docs/reports/.
