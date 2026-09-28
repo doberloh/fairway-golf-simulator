@@ -55,12 +55,32 @@
   wrap('bindTexture', () => { if (state.running) state.textures++; });
  }
 
- // ---- GPU time, one TIME_ELAPSED query spanning each frame
+ // ---- GPU time: a TIME_ELAPSED query around every animation callback,
+ // summed into the ANIMATION FRAME it ran in.
+ //
+ // ONE FRAME IS EVERY CALLBACK THAT SHARES A TIMESTAMP, not every callback.
+ // This file used to treat each callback as a frame of its own, and the
+ // harness that drives it counts frames with a requestAnimationFrame of its
+ // own -- so every real frame arrived as two samples: the game's, and a
+ // near-empty one from the counter. Frame counts doubled (a 300-frame sample
+ // reported 602), draws and triangles per frame came out at HALF their true
+ // value, and every median was taken over a 50/50 mix of real frames and
+ // nothing, which put it at the boundary between the two -- close to the
+ // fastest real frame, and liable to jump. Found 28 September 2026 while
+ // timing tree shadows, when a control row kept reporting the previous row's
+ // time. See RESEARCH.md *The profiler counted every frame twice*.
+ //
+ // A query per callback rather than one spanning the frame: on Direct3D the
+ // elapsed time is two GPU timestamps, so a query left open across the gap
+ // between frames would time the wait for the display, which is exactly the
+ // mistake this file exists to make impossible.
+ let run = 0, frame = -1, frameT = null, cpuNow = 0;
+ const gpuByFrame = new Map(), spoiled = new Set();
  function gpuBegin() {
   const {gl, ext} = state;
   if (!gl || !ext || state.active) return;
   const q = state.pool.pop() || gl.createQuery();
-  try { gl.beginQuery(ext.TIME_ELAPSED_EXT, q); state.active = q; } catch { state.active = null; }
+  try { gl.beginQuery(ext.TIME_ELAPSED_EXT, q); state.active = {q, run, frame}; } catch { state.active = null; }
  }
  function gpuEnd() {
   const {gl, ext} = state;
@@ -73,11 +93,15 @@
   if (!gl || !ext) return;
   const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
   for (let i = state.pending.length - 1; i >= 0; i--) {
-   const q = state.pending[i];
+   const {q, run: r, frame: f} = state.pending[i];
    if (!gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) continue;
-   // A disjoint GPU (a context switch, a power state change) invalidates the
-   // reading rather than merely perturbing it, so it is dropped, not kept.
-   if (!disjoint) state.gpu.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6);
+   // A query from an earlier sample is recycled and not counted.
+   if (r === run) {
+    // A disjoint GPU (a context switch, a power state change) invalidates the
+    // reading rather than merely perturbing it, so its frame is dropped.
+    if (disjoint) spoiled.add(f);
+    else gpuByFrame.set(f, (gpuByFrame.get(f) || 0) + gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6);
+   }
    state.pending.splice(i, 1);
    state.pool.push(q);
   }
@@ -92,22 +116,27 @@
  // by the check that runs before any number is believed.
  //
  // So the frame is measured as WORK rather than as pacing. `cpu` is the time
- // spent inside the animation callback, which is the game's whole tick. `gpu`
- // is a TIME_ELAPSED query spanning the same callback. Neither can be padded
- // by a wait for the display, and both collapse toward zero on an idle page,
- // which is how the harness proves it is looking at the right thing.
+ // spent inside the frame's animation callbacks, which is the game's whole
+ // tick. `gpu` is TIME_ELAPSED queries spanning the same callbacks. Neither can
+ // be padded by a wait for the display, and both collapse toward zero on an
+ // idle page, which is how the harness proves it is looking at the right thing.
  let last = 0;
  const realRAF = window.requestAnimationFrame.bind(window);
  window.requestAnimationFrame = cb => realRAF(t => {
   if (!state.running) { last = 0; return cb(t); }
-  gpuDrain();
-  if (last) state.frames.push(t - last);
-  last = t;
-  state.frameCount++;
+  if (t !== frameT) {
+   // The first callback of a new animation frame closes the last one.
+   if (frameT !== null) state.cpu.push(cpuNow);
+   frameT = t; cpuNow = 0; frame++;
+   gpuDrain();
+   if (last) state.frames.push(t - last);
+   last = t;
+   state.frameCount++;
+  }
   gpuBegin();
   const a = performance.now();
   try { return cb(t); } finally {
-   state.cpu.push(performance.now() - a);
+   cpuNow += performance.now() - a;
    gpuEnd();
   }
  });
@@ -115,10 +144,16 @@
  window.__profStart = () => {
   Object.assign(state, {frames: [], cpu: [], gpu: [], calls: 0, tris: 0, programs: 0,
    textures: 0, frameCount: 0, running: true});
-  last = 0;
+  last = 0; run++; frame = -1; frameT = null; cpuNow = 0;
+  gpuByFrame.clear(); spoiled.clear();
  };
  window.__profStop = () => {
   state.running = false; gpuEnd(); gpuDrain();
+  if (frameT !== null) state.cpu.push(cpuNow);
+  frameT = null;
+  // The last few frames' queries may not have resolved yet, and a frame with
+  // half its callbacks counted would read short, so they are left out.
+  for (const [f, ms] of gpuByFrame) if (f < frame - 3 && !spoiled.has(f)) state.gpu.push(ms);
   const f = [...state.frames].sort((a, b) => a - b), g = [...state.gpu].sort((a, b) => a - b);
   const c = [...state.cpu].sort((a, b) => a - b);
   const at = (arr, p) => arr.length ? arr[Math.min(arr.length - 1, Math.floor(arr.length * p))] : null;

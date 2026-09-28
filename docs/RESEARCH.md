@@ -1148,6 +1148,14 @@ Three measurement errors, all of the same species: a number that looked plausibl
 
 Measured on an RTX 4090, redwood, player view, 300 frames a case.
 
+**CORRECTED 28 September: every number in this table was taken with a probe
+that counted each frame twice** (*The profiler counted every frame twice*, at
+the end of this file). The draws and triangles are HALF the true figures --
+Redwood on High draws about 180 M triangles a frame, not 92.9 M -- and each
+"GPU ms" is close to the FASTEST frame rather than the median. The ratios
+between rows are roughly right, because every row was wrong the same way; the
+conclusions below are marked where the corrected probe disagrees.
+
 | tier | GPU ms | draws | triangles |
 |---|---|---|---|
 | low | 4.52 | 168 | 46.5 M |
@@ -1155,9 +1163,9 @@ Measured on an RTX 4090, redwood, player view, 300 frames a case.
 | high | 12.66 | 289 | 92.9 M |
 | ultra | 11.42 | 235 | 69.7 M |
 
-**It is geometry, and it is almost entirely one biome.** Redwood draws 92.9 M triangles where every other biome draws 3.1 to 4.6 M -- twenty times the load, for 12.66 ms against about 4. The grown grove is the whole story, exactly as the LOD removal predicted it would be on hardware that could not absorb it.
+**It is geometry, and it is almost entirely one biome.** Redwood draws 92.9 M triangles (truly about 186 M) where every other biome draws 3.1 to 4.6 M (truly 6-9 M) -- twenty times the load, for 12.66 ms against about 4. The grown grove is the whole story, exactly as the LOD removal predicted it would be on hardware that could not absorb it.
 
-**Shadow cascades double it.** Medium has none and draws 46.5 M; high has three and draws 92.9 M for the same scene. Each cascade re-renders the casters.
+**Shadow cascades double it.** Medium has none and draws 46.5 M; high has three and draws 92.9 M for the same scene (truly 93 M and 186 M; the doubling stands). Each cascade re-renders the casters.
 
 **Pixel ratio is real but secondary.** Halving it on high gives back 26% (12.72 to 9.36 ms), which matters and is nothing like the 20x that content does.
 
@@ -1184,7 +1192,7 @@ Low spends where a weak device loses time: pixel ratio to 0.75, so it draws smal
 
 Ultra was high with a glow on it: bloom, a bigger reflection buffer and overview shadows were the entire difference and measured 12.64 ms against high's 12.69. It now has half again the shadow texels (6144) reaching a kilometre further (3500 m).
 
-**It also came out faster than high, which was not the intention.** 11.42 ms against 12.66, on 69.7 M triangles against 92.9 M. Spreading three cascades over a longer distance moves the split planes apart, and fewer casters straddle two cascades and get drawn into both -- draws fell from 289 to 235. Better looking and cheaper, discovered rather than designed, and the only reason it is known is that the run was measured afterwards rather than assumed.
+**It also came out faster than high, which was not the intention -- and the corrected probe does not reproduce it.** On 28 September, fixed probe, the same sweep gave Ultra 15.17 ms against High 14.35, on the same 158 M triangles each; the finding below was probably the old probe's fastest-frame reading, not the frame. As first recorded: 11.42 ms against 12.66, on 69.7 M triangles against 92.9 M. Spreading three cascades over a longer distance moves the split planes apart, and fewer casters straddle two cascades and get drawn into both -- draws fell from 289 to 235. Better looking and cheaper, discovered rather than designed, and the only reason it is known is that the run was measured afterwards rather than assumed.
 
 **A fourth cascade was considered and rejected on the file's own evidence.** Three already spend fifteen of the sixteen texture units the real GPU reports, alongside the toon gradient, the environment map and the ground atlases. A fourth would take the last unit or overflow it, and a program that fails to link draws nothing -- which is exactly how floodlight shadows came to be off on every tier.
 
@@ -3793,9 +3801,12 @@ better on Ultra, and build courses faster. The plan it produced is TODO.md
 *OPUS5.5 GFX and OPTIMIZATIONS*; the measurements behind it are here. All on
 the development machine (desktop RTX 4090), 1366x768 unless stated.
 
-**Frames** (from `bench/profile-baseline.json`, 22 September, 1600x900 at 2x):
-Redwood draws 46.5 M triangles a frame on Low and Medium, 92.9 M on High and
-69.7 M on Ultra; every other biome at High draws 3.1-4.6 M. Graphics time per
+**Frames** (from `bench/profile-baseline.json`, 22 September, 1600x900 at 2x;
+taken with the probe that counted every frame twice, so triangles are half the
+true figure and times are near-fastest-frame -- see *The profiler counted every
+frame twice*): Redwood draws 46.5 M triangles a frame on Low and Medium, 92.9 M
+on High and 69.7 M on Ultra (truly about double); every other biome at High
+draws 3.1-4.6 M. Graphics time per
 frame at High: Redwood 12.7 ms, Island 8.1 ms, the rest 3.7-4.8 ms. Island
 also spends 6.8 ms of processor time per frame against about 1 ms elsewhere,
 unexplained. **Why Redwood:** each tree model is one `InstancedMesh` over the
@@ -3850,31 +3861,35 @@ course's edge with the whole of it ahead) to 24% (tee 9). The Pacific
 Northwest gains little because its triangles are mostly the ground (1.24 M)
 and one light ground-cover mesh; the cull is aimed at heavy trees.
 
-**Frame time** (graphics ms per frame, median; `npm run profile -- --only
-tiers`, Redwood seed PROFILE, 1600x900 at 2x, real GPU; the "before" column is
-the same sweep run on commit f3ac8dc, the one before the cull, in a separate
-worktree on the same night, rather than the six-day-old stored baseline):
+**Frame time**, with the CORRECTED probe (28 September; see *The profiler
+counted every frame twice*). Graphics ms per frame, median, Redwood seed
+PROFILE, 1600x900 at 2x, 10:15, real GPU; the cull holding everything
+(`lab.cullTune({near: 1e9})`, which is the pre-cull scene) -> the cull on:
 
-| Tier | Before | After |
-| --- | --- | --- |
-| Low | 4.69 | 4.28 |
-| Medium | 6.12 | 5.98 |
-| High | 12.62 | 12.34 |
-| Ultra | 12.79 | 12.45 |
+| Tier | Tee 1 | Tee 5 | Tee 9 |
+| --- | --- | --- | --- |
+| Low | 4.60 -> 4.23 | 4.12 -> 2.44 | 4.24 -> 2.53 |
+| High | 14.43 -> 13.85 | 11.55 -> 7.78 | 12.02 -> 8.24 |
+| Ultra | 14.49 -> 13.91 | 11.67 -> 7.82 | 12.21 -> 8.48 |
 
-Small, because the profiler's case is the FIRST tee, which is the cull's worst
-case (it keeps ~90% of the course; see above). From tees that look across less
-of the course the saving is real: seed PROFILE, High, graphics ms with the cull
-on against the cull holding everything (`lab.cullTune({near: 1e9})`): tee 5
-10.61 -> 7.18, tee 9 10.80 -> 7.20 (a third off); tee 4, which looks into the
-sun (god-ray mask pass) and keeps nearly everything, 21.32 -> 21.03. The
-stored baseline (`bench/profile-baseline.json`, 22 September) was not re-saved.
+Tee 1 is the cull's worst case (it keeps ~90% of the course; see above) and is
+the only view `npm run profile` measures, which is why the profiler shows the
+cull as a few per cent. From tees that look across less of the course it is a
+third to two-fifths off. The processor time per frame tracks the graphics time
+closely in every row (High tee 5: 10.9 -> 7.2 ms), because an unthrottled page
+waits on the card inside its own callback.
+
+The first before/after, taken with the old probe the night before (the same
+sweep on commit f3ac8dc in a separate worktree, and tees 5 and 9 by the same
+on/off switch), read High 12.62 -> 12.34 and tees 5 and 9 10.7 -> 7.2; its
+direction was right and its values were near-fastest-frame readings.
 
 **The trap the profile caught: do not mark the buffers dynamic.** The first
 version set `DynamicDrawUsage` on every instance matrix and colour buffer it
 managed -- the obvious hint for a buffer rewritten as the camera moves. The
 profile came back with High at 33 ms and Ultra at 34, against 12.6 and 12.8
-before the cull, with Low and Medium untouched. Reproduced in a scratch
+before the cull, with Low and Medium untouched (old probe: the direction and
+the size are not in doubt, the exact values are near-fastest-frame readings). Reproduced in a scratch
 harness it was steady for the whole page (eight 60-frame chunks, all 32-34 ms),
 present even in frames where the cull rewrote nothing, the processor time was
 ~31 ms too (waiting on the card), and it happened ONLY on a page opened after
@@ -3926,4 +3941,59 @@ rejected: three's `BatchedMesh` with per-object culling, which tests every
 instance on the processor for every pass -- the main view and three cascades,
 ~88,000 instances each on Redwood.
 
+## The profiler counted every frame twice (28 September)
 
+**Symptom.** Timing tree shadows with a scratch script, each "control" row --
+the scene restored exactly as it was -- reported the PREVIOUS row's graphics
+time: 8.44 ms after a case at 8.43, although the triangle count had come back
+to 77 M from 21 M. Every measurement taken that way was suspect.
+
+**Cause.** `tools/profile-probe.js` wraps `requestAnimationFrame` and treated
+EVERY callback as a frame of its own. The harness counts frames with a
+requestAnimationFrame of its own (`profile.mjs` does, and so did every scratch
+script), so each real frame arrived as two samples: the game's, and a
+near-empty one from the counter. The stored baseline shows it plainly -- a
+300-frame sample recorded 602 frames. Three consequences:
+
+- draws, triangles, programs and textures per frame were divided by twice the
+  real frame count, so every recorded figure is HALF the truth (Redwood High:
+  92.9 M recorded, ~180 M drawn);
+- every median -- CPU and GPU -- was taken over a 50/50 mix of real frames and
+  nothing, which lands it at the boundary, near the FASTEST real frame, and
+  lets it jump when the mix shifts by a sample (the control-row symptom);
+- the 95th and 99th percentiles were roughly the real 90th and 98th.
+
+**Fix.** A frame is every callback sharing an animation timestamp. The probe
+still times each callback with its own `TIME_ELAPSED` query -- a query left
+open between frames would, on Direct3D, time the wait for the display, which is
+the trap this file exists to prevent -- and sums them into the frame they ran
+in; CPU time is summed the same way. Queries are tagged with the sample they
+belong to, so one left over from an earlier sample is recycled instead of
+counted, and the last three frames of a sample are left out because their
+queries may not have resolved. Checked by measuring the same still scene two
+ways, polled and counted by a second callback: 13.88 / 13.66 / 13.58 / 13.36
+ms, 202-204 frames for a 200-frame sample, 586 draws and 152 M triangles every
+time.
+
+**What it changes.** The corrected tier sweep (Redwood, seed PROFILE, tee 1,
+1600x900 at 2x):
+
+| Tier | GPU ms | CPU ms | Draws | Triangles |
+| --- | --- | --- | --- | --- |
+| Low | 5.69 | 5.00 | 308 | 79.4 M |
+| Medium | 8.86 | 5.30 | 320 | 79.6 M |
+| High | 14.35 | 12.80 | 582 | 159.4 M |
+| Ultra | 15.17 | 13.70 | 586 | 158.3 M |
+
+The CPU column is no longer a small independent number (it read 0.9-3.6 ms
+before). On a page that is not waiting for the display, time the card is
+behind is time the callback spends blocked in WebGL, so CPU follows GPU when
+the GPU is the bottleneck -- High's 12.8 ms is mostly waiting, not game logic.
+A truly processor-bound case (Island's unexplained 6.8 ms, F5 in TODO) needs
+re-measuring before it is believed either way.
+
+**Every profile number recorded before 28 September is affected**, including
+`bench/profile-baseline.json`, which `--since` compares against. Until it is
+re-saved from a full sweep, `--since` compares a correct run against a broken
+one and its differences mean nothing. The places in this file that quote the
+old figures are marked where they stand.

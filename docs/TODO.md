@@ -26,7 +26,10 @@ From the performance review of 27 September 2026 (published privately as
 depends on that page). Everything was measured on the development machine, a
 desktop RTX 4090 -- far faster than most players' hardware, so absolute times
 flatter the game and the PROPORTIONS are what carry over. Frame figures come
-from `bench/profile-baseline.json` (22 September); build times were measured
+from `bench/profile-baseline.json` (22 September) -- which was taken with a
+probe that counted every frame twice, so its triangle and draw figures are
+HALF the truth and its times are near the fastest frame (RESEARCH.md *The
+profiler counted every frame twice*, fixed 28 September); build times were measured
 on 27 September with the browser's CPU profiler over `window.lab.course({biome,
 holes, seed: 'REPORT1'})` at 1366x768.
 
@@ -49,6 +52,13 @@ Ground rules that apply to every item below:
 - One branch per item, each with its own before/after numbers.
 
 ### Frame rate
+
+- [ ] **F0. Re-save the frame-profile baseline.** `bench/profile-baseline.json`
+  (22 September) was taken with the probe that counted every frame twice, so
+  `npm run profile -- --since` currently compares a correct run against a
+  broken one and its differences mean nothing. Needs a FULL sweep (`npm run
+  profile -- --save`, about 10 minutes; the owner's call when to run it, per
+  AGENTS.md). Do it before F2/F3 are judged against it.
 
 - [ ] **F2. Draw distant trees cheaply, with the distance set by the tier.**
   Full detail near the camera, a simple version further out, and possibly
@@ -87,7 +97,8 @@ Ground rules that apply to every item below:
   pixel ratio a step when frames run slow, raise it when there is headroom,
   within the tier's own ceiling (`applyQuality` sets
   `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
-  4090: High at 1x pixels 9.4 ms, 1.5x 10.9 ms, 2x 12.7 ms. Matters most on
+  4090 with the old double-counting probe (so re-measure first): High at 1x
+  pixels 9.4 ms, 1.5x 10.9 ms, 2x 12.7 ms. Matters most on
   phones (many pixels, small graphics chip). Needs hysteresis so it does not
   flicker between steps, and a setting to turn it off.
 
@@ -1137,11 +1148,11 @@ record of what was ruled out and why, which is worth more than a short file.
   original index; the water probes call `showAll()` first; the near-field
   grass tiles opt out (`userData.noCull`). Lab: `lab.scene()` (what is built
   and held), `lab.cullTune()` (the margins, live), `lab.hole(n)` (jump to a
-  tee). Tests: `tests/instance-cull.test.mjs`. Frame time (`npm run profile
-  -- --only tiers`, first tee, against the pre-cull commit run the same
-  night): High 12.62 -> 12.34 ms, Ultra 12.79 -> 12.45 -- small, because the
-  first tee is the cull's worst case; from tees 5 and 9 High goes 10.7 -> 7.2
-  ms. The profile also caught a real regression in the first version:
+  tee). Tests: `tests/instance-cull.test.mjs`. Frame time, corrected probe,
+  graphics ms, cull holding everything -> cull on: High tee 1 14.4 -> 13.9
+  (the first tee is the cull's worst case, and the only view the profiler
+  measures), tee 5 11.6 -> 7.8, tee 9 12.0 -> 8.2; Low tee 5 4.1 -> 2.4;
+  Ultra follows High. The profile also caught a real regression in the first version:
   marking the buffers `DynamicDrawUsage` tripled High and Ultra (33 ms) on any
   page opened after another in the same browser; the buffers now keep their
   built usage. Detail, and the shadow bug the screenshots caught, in
@@ -1498,7 +1509,9 @@ problem: a control that belongs inside a box is sitting beside it.
   `bench/profile-baseline.json` in the shape `bench.mjs` already uses.
 
 - [x] **Have it name the bottleneck.** It is geometry, and it is one biome.
-  Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
+  (Figures below from the old probe, which halved triangles and read times
+  near the fastest frame; see RESEARCH.md *The profiler counted every frame
+  twice*.) Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
   twenty times, for 12.66 ms against about 4. Cascades double it (46.5 M to
   92.9 M). Pixel ratio is worth 26%. Every ground-cue toggle is free, inside
   the noise. The reflections toggle does nothing at all: 208 draws either way.
