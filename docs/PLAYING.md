@@ -237,7 +237,7 @@ The browser cannot listen to raw TCP or automatically decode proprietary Bluetoo
 
 1. Run `npm ci`, `npm run build`, and `npm run bridge` in this folder.
 2. Open http://127.0.0.1:1922 (or the standalone HTML file).
-3. In Fairway's **Connect monitor** panel, connect to `ws://127.0.0.1:1922` and check **Arm monitor for live shots**.
+3. In Fairway's **Connect monitor** panel (on a phone, where the top bar has no room for it: **Launch monitor** in the main menu or in Tools), connect to `ws://127.0.0.1:1922` and check **Arm monitor for live shots**. The address is filled in for you when the game was loaded from the bridge, and whatever address last connected is remembered on that device.
 4. Configure your launch monitor's existing Open Connect connector to send to **127.0.0.1, TCP port 1921**. Set the connector’s destination port explicitly. If it is fixed to the standard port 921, run the bridge with FAIRWAY_TCP_PORT=921 on a host that permits it (Windows normally does; macOS/Linux may require a privileged-port forwarding rule). Fairway defaults to 1921 so no administrator access is needed.
 5. Select the club and aim in Fairway. Shots are played from measured speed, launch angles, and spin. Manual shot power, lie penalties to launch speed, and shot-shape settings do not override measured monitor data.
 

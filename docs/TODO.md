@@ -131,14 +131,13 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
-- [ ] **A launch monitor on an iPhone: the owner's decision, researched 27
-  September** (RESEARCH.md, *A launch monitor on an iPhone*). The hosted copy
-  cannot reach the bridge -- Safari blocks an unencrypted connection from a
-  secure page -- so a phone with a monitor loads the game FROM the bridge,
-  which works today. Open choices: (a) default the monitor panel's bridge
-  address to the address the page came from, so a phone does not have to type
-  it; (b) give the bridge `wss://` with a Tailscale certificate and let it
-  accept the hosted site's origin, so the Netlify copy itself can connect.
+- [ ] **Owner: a launch monitor from the iPhone, loaded from the bridge.**
+  Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
+  open `http://<address>:1922` on the phone, **Launch monitor** in the main
+  menu, Connect bridge, arm, hit. Checked in emulation against a pretend
+  bridge; the first real test is the owner's. If the phone cannot reach the
+  computer at all: same Wi-Fi (not a guest network), and Settings > Privacy &
+  Security > Local Network.
 
 - [ ] **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
@@ -2910,3 +2909,20 @@ engineering provenance pass, not legal advice.
   last shot stays readable. Checked in the Endless journey on a laptop and in
   both phone journeys, mid-flight: the controls gone, the map and wind still
   there, the bar reading mph, no live readout, and Skip reachable.
+
+## A launch monitor on an iPhone
+
+- [x] **A phone reaches the launch monitor, and knows where the bridge is.**
+  Researched 27 September (RESEARCH.md): a hosted `https` copy cannot reach
+  the bridge from an iPhone, so a phone plays with a monitor from the page the
+  bridge serves over the home network. The owner set aside the ways to make a
+  hosted copy connect (Tailscale, an installed certificate, a tunnel) as too
+  much setup. Then found the phone had no way into the monitor settings at
+  all: the redraw hid "Connect monitor" from the phone's top bar for room.
+  Now **Launch monitor** is in the main menu and in Tools at every size; the
+  address box defaults to the address the page came from when it is plain
+  `http` (and to `ws://127.0.0.1:1922` otherwise, which was the default
+  everywhere -- on a phone, the phone); the last address that connected is
+  remembered; and a page loaded over `https` says why it cannot connect and
+  what to open instead. Also fixed: the phone's camera button floated over the
+  main menu. New `monitor-phone` journey; 16 of 16 green.

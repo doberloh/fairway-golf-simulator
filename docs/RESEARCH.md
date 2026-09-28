@@ -3736,9 +3736,9 @@ that. Sources read, and what each established:
 `http://<that address>:1922` on the phone. The page is then plain `http`, its
 socket plain `ws`, and there is no mixed content to block. Checked on 27
 September against the real bridge code (served on loopback, in Chrome): the
-page loads with no console errors and connects. The one papercut: the monitor
-panel's address box defaults to `ws://127.0.0.1:1922`, which on a phone is the
-phone, so the computer's address has to be typed.
+page loads with no console errors and connects. The address box then defaulted
+to `ws://127.0.0.1:1922`, which on a phone is the phone; it now defaults to the
+address the page came from, and remembers the last one that connected.
 
 **What it would take for the HOSTED copy to connect** -- all three need the
 bridge to speak `wss://` with a certificate the phone trusts, and its origin
