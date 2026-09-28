@@ -4093,3 +4093,57 @@ arrays; the first version with Maps took 16-35), done once per model a course
 uses: about 0.15 s on a Redwood course, High and Ultra only. Nothing is added
 to the download: the grower's `_Far` twins would have added an estimated 4-5
 MB to the single file.
+
+## Distant crowns drawn thinned (F2, 28 September)
+
+`farTrees` in `src/graphics.js`, the far meshes in `src/instance-cull.js`. A
+crown whose square is shorter on screen than a share of the screen's height is
+drawn as its thinned twin (`farParts`) by a second mesh with its own buffer;
+the full mesh keeps the rest. Every held crown is drawn exactly once, nothing
+within 60 m is ever thinned, a square stays thin until it grows 15% past the
+line (so a camera sitting on the line does not flicker it), and a thinned crown
+casts with the thinned shape -- F3 showed a crown shaded by a different shape
+goes dark.
+
+**It buys little, because almost every tree anyone sees is big on screen.** A
+90 m redwood is 15% of the screen's height at ~600 m. Sweep, Redwood seed
+PROFILE, graphics ms, and the share of crowns drawn thin:
+
+| Cutoff | Low tee 1 | High tee 1 | Thin, tee 1 | Thin, tee 5 |
+| --- | --- | --- | --- | --- |
+| none | 3.27 | 11.84 | 0% | 0% |
+| 6% | 3.25 | 11.61 | 3% | 3% |
+| 10% | 3.13 | 11.45 | 14% | 3% |
+| 15% | 2.81 | 10.78 | 43% | 4% |
+
+From tee 5 no cutoff changed the frame at all.
+
+**And it costs draw calls.** Each far mesh is one more draw in the picture and
+in every shadow map. Measured on and off (two alternating samples each):
+
+| Tier, cutoff | Tee 1 | Tee 5 | Tee 9 |
+| --- | --- | --- | --- |
+| Low, 15% | 3.15 -> 2.62 ms, 333 -> 385 calls | 1.78 -> 1.78, 279 -> 306 | 1.73 -> 1.72, 266 -> 298 |
+| Medium, 15% | 5.72 -> 5.23, 334 -> 391 | 4.00 -> 4.02, 279 -> 304 | 4.14 -> 4.24, 266 -> 301 |
+| High, 10% | 11.96 -> 11.71, 586 -> 753 | 7.42 -> 7.46, 523 -> 571 | 7.95 -> 7.89, 504 -> 566 |
+
+High: 0.25 ms for 167 more draws, and nothing for 50-60 more everywhere else --
+processor time spent to save no graphics time, so High is off. Ultra is off by
+the owner's instruction that it stays amazing, and would have gained no more
+than High. Low and Medium are ON at 15%, pending the owner: half a millisecond
+of graphics from the edge tee against 25-57 more draws, and whether that trade
+wins on a weak laptop -- the machine Low exists for -- cannot be measured on
+this one.
+
+**How it looks.** At 15% on High from the first tee, the changed pixels lie
+only in the far band behind the green (plus wind and clouds); enlarged three
+times, the thinned distant crowns read very slightly darker and are otherwise
+the same trees. The 19 September swap looked dead because it swapped by
+distance at ~120 m and "nearly every visible tree was the thinned twin"; this
+one swaps by size on screen, and at its most aggressive setting 43% of crowns
+from an edge tee and 4-8% from a mid-course one are thin.
+
+**Where the frame actually goes, then.** With F1-F3 done, Redwood's cost is
+full-detail crowns that are large on screen, drawn once into the picture and
+three times into cascades that each cover a kilometre. The levers left are the
+cascades themselves (F6 in TODO), resolution (F4) and the crowns' own overdraw.
