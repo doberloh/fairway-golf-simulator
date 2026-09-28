@@ -194,3 +194,17 @@ test('small crowns are drawn thinned, every held crown exactly once, and none ne
  assert.equal(far.count, 0);
  cull.tune({farTrees: null});
 });
+
+test('the tiers that split cascades split them inside their own shadow reach', async () => {
+ const {TIERS} = await import('../src/graphics.js');
+ for (const [name, t] of Object.entries(TIERS)) {
+  if (!t.cascadeSplits) continue;
+  assert.ok(t.cascades >= 2, `${name} splits cascades it does not have`);
+  assert.equal(t.cascadeSplits.length, t.cascades - 1, `${name}: one edge per cascade but the last`);
+  let prev = 0;
+  for (const edge of t.cascadeSplits) { assert.ok(edge > prev && edge < t.shadowFar, `${name}: edge ${edge}`); prev = edge; }
+  // A crown that shades itself must do it from the whole tree: the nearest
+  // cascade never takes the thinned shadow twins (F3).
+  assert.ok((t.thinShadowsFrom ?? Infinity) >= 1, `${name} thins the nearest cascade`);
+ }
+});

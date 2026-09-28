@@ -4146,4 +4146,44 @@ from an edge tee and 4-8% from a mid-course one are thin.
 **Where the frame actually goes, then.** With F1-F3 done, Redwood's cost is
 full-detail crowns that are large on screen, drawn once into the picture and
 three times into cascades that each cover a kilometre. The levers left are the
-cascades themselves (F6 in TODO), resolution (F4) and the crowns' own overdraw.
+cascades themselves (F6, done the same day: see below), resolution (F4) and the crowns' own overdraw.
+
+## Shadow cascades split where the player stands (F6, 28 September)
+
+`cascadeSplits` in `src/graphics.js`, `GolfView.cascadeSplitter` in
+`src/renderer.js`. High and Ultra end their first two shadow cascades 100 m and
+500 m from the camera; the third runs to the tier's shadow reach as before.
+
+**Why.** three's `CSM` with `practical` splits (lambda 0.5) put the first edge
+at ~420 m on High's 2.5 km reach and ~590 m on Ultra's 3.5 km, and each
+cascade's shadow camera is a square as wide as its slice's diagonal -- so the
+nearest map was about a kilometre across, spent its texels on ground nobody
+stands on, and held 84-100% of the trees in view (found doing F3).
+
+**Measured** (Redwood, seed REPORT1, 1600x900 at 1x, graphics ms, two samples
+each taken alternately, three's split -> 100/500):
+
+| Tier, hour | Tee 4 | Tee 5 |
+| --- | --- | --- |
+| High, 10:15 | 12.30 -> 11.14 | 11.36 -> 9.92 |
+| High, 18:24 | 12.59 -> 11.66 | 15.26 -> 14.90 |
+| Ultra, 10:15 | 12.64 -> 11.93 | 11.21 -> 10.61 |
+| Ultra, 18:24 | 12.74 -> 12.78 | 15.69 -> 15.84 |
+
+**Judged by the owner** from a flip page of all eight views: Ultra
+indistinguishable, High's gains worth having, the seam where the nearest
+cascade hands over (~100 m, faintly visible on the evening shots) acceptable
+without blending. The seam is the split's own: with every tree in every map
+(`lab.cullTune({shadowMaps: false})`) it looked the same, so F3's per-map tree
+lists do not cause it.
+
+**Rejected: `fade`** (three's blend between neighbouring cascades). Turning it
+on recompiles every lit material with `CSM_FADE`, and the ground's own shader
+patch did not survive: the turf rendered white (and timed fastest, because it
+was drawing the wrong thing). Not needed once the seam was judged acceptable.
+
+**Not in the overview.** The overview camera is hundreds of metres up, so
+fixed 100/500 m edges would put the whole course in the last cascade; there the
+split is three's own, as before (High 483/1107/2500, Ultra 1597/3637/9000
+measured), and `render` re-splits on the way in and out even on High, whose
+reach does not change there.
