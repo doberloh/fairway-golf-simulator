@@ -3411,6 +3411,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // than assuming. 'player' is down at the ball; 'overview' is the whole hole
   // and is much the heavier of the two.
   view:(mode)=>{if(mode)cameraMode(mode);return view?.config?.mode;},
+  // Straight to a hole's tee (0-based), for measuring from more than the first.
+  hole:(n)=>{if(flight||round.endless||!world?.holes[n])return round.hole;round.hole=n;loadCourse();return round.hole;},
   // null on any field hands it back to the previous value.
   launch:(over={})=>{labLaunch={...labLaunch,...over};syncLabTool();return {...labLaunch};},
   strike:(over={})=>labStrike(over),
@@ -3722,6 +3724,30 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     wanted:greenCues(graphics),
     onTheGpu:live?Object.fromEntries(['greenLift','greenBend','greenBandSoft','greenSun',
      'greenSlopeShade','greenGrain','cueRelief'].map(k=>[k,live[k]?.value])):'no ground material'};
+  },
+  // WHAT IS BUILT, as opposed to what was drawn. `renderer.info` and the profile
+  // probe count the triangles a frame DREW; this lists what there is to draw,
+  // by the group each mesh sits in (named groups by name, loose meshes by kind),
+  // with the heaviest meshes on their own. It is how culling is judged: a group
+  // whose triangles are all drawn from every camera is one nothing culls.
+  // The view cull's margins, live: {near (m), margin (deg), shadows (bool)}.
+  cullTune:(next)=>view.cull?.tune(next)??null,
+  scene:()=>{
+   // A mesh the view cull manages holds only what is in view at the moment;
+   // its built total is kept on it, and `drawn` is the part currently held.
+   const groups={},meshes=[];
+   view.group?.traverse(o=>{
+    if(!o.isMesh)return;
+    let top=o;while(top.parent&&top.parent!==view.group)top=top.parent;
+    const g=o.geometry,per=(g.index?g.index.count:g.attributes.position?.count??0)/3,n=o.isInstancedMesh?(o.userData.cullTotal??o.count):1,held=o.isInstancedMesh?(o.visible?o.count:0):1;
+    const key=top.name||(o.isInstancedMesh?'instanced':'mesh');
+    const e=groups[key]??={meshes:0,instances:0,triangles:0,held:0,alwaysDrawn:0};
+    e.meshes++;e.instances+=n;e.triangles+=per*n;e.held+=held;if(!o.frustumCulled&&o.userData.cullTotal===undefined)e.alwaysDrawn++;
+    const r=o.isInstancedMesh?(o.boundingSphere?.radius??null):(g.boundingSphere?.radius??null);
+    meshes.push({group:key,name:o.name||o.material?.type||'',instances:n,triangles:per*n,radius:r==null?null:Math.round(r),shadow:!!o.castShadow});
+   });
+   meshes.sort((a,b)=>b.triangles-a.triangles);
+   return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};

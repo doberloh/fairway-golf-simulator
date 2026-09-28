@@ -3830,3 +3830,63 @@ sharpens shadows and triples grass; High adds 3D clouds, god rays and mist;
 High and Ultra are practically identical. The overhead view shows the ground
 past the course edge stretched into streaks.
 
+### Drawing only what is in view (F1, 27 September)
+
+`src/instance-cull.js`; the design and its traps are in PROJECT_HANDOFF
+*The planting is drawn from the camera's view, not the course's*. Measured
+from all nine blue tees of seed REPORT1 (`lab.hole(n)`, camera settled, 20
+frames counted by `tools/profile-probe.js`), 1600x900 at 1x, 10:15 sim time,
+with the cull on and then off in the same page (`lab.cullTune({near: 1e9})`
+keeps everything):
+
+| Course, tier | Triangles a frame, average of 9 tees | Draw calls |
+| --- | --- | --- |
+| Redwood, High | 241.4 M -> 143.1 M (-41%) | unchanged, 731 average |
+| Redwood, Low | 90.8 M -> 55.0 M (-39%) | unchanged |
+| Pacific Northwest, High | 6.2 M -> 5.5 M (-11%) | unchanged |
+
+Per tee the share of instances kept runs from 93% (tee 1, which stands at the
+course's edge with the whole of it ahead) to 24% (tee 9). The Pacific
+Northwest gains little because its triangles are mostly the ground (1.24 M)
+and one light ground-cover mesh; the cull is aimed at heavy trees. **Frame
+TIME is not measured here** -- that is `npm run profile`, which is the
+owner's call to run (AGENTS.md). Triangles are the quantity that was wrong.
+
+**Why some tees read double.** Tees 6, 8 and 9 on Redwood High drew 1,000+
+calls and ~360 M triangles without the cull, twice their neighbours: the sun is
+in shot there, so the god-ray pass (`src/godrays.js`) renders the whole scene a
+second time as its occlusion mask. It uses a flat black override material at
+reduced resolution, so the pixels are cheap, but every triangle is submitted
+again; the cull reduces that pass too, since it draws the same meshes.
+
+**Cost of the cull itself.** A rebuild (test ~400 squares, copy the held
+instances, upload only the used part of each buffer) took 0.5-1.0 ms on this
+machine; following a driven shot it ran 76 times in 9 s, about 8 a second.
+It does nothing while the camera is still.
+
+**Does anything look different?** Screenshots with the cull on and off at
+the same instant, counting pixels that changed noticeably (sum of RGB
+differences over 24), against two shots with the cull on taken 0.6 s apart
+(the wind and clouds keep moving): at 18:24 on Redwood hole 4, 12,550 changed
+against 11,345 for the still pair; at 19:18 and 06:24, about 6,300 against
+4,200-5,500. That is the noise floor plus at most ~1,500 pixels of 1.44 M.
+
+**The bug those screenshots caught.** The first version handed the sun's
+direction to the cull only when `this.sun.castShadow` was set -- but with
+cascaded shadows the main sun light does not cast, the cascades do. The
+shadow allowance silently did nothing, and at 18:24 332,539 pixels changed:
+the long evening shadows of trees just off screen were gone from the
+foreground. Raising the shadow-length cap from 400 m to 4 km changed nothing
+at all (the same 133 squares held each time), which is what gave it away.
+With the direction passed, 400 m and 1.5 km caps both came down to the noise
+floor; 1 km was kept for margin at the lowest sun.
+
+**Rejected: one mesh per square of the course.** It is the textbook split and
+lets three do the culling, but Redwood has ~80 model/role meshes; at ~25
+squares a course that is ~2,000 draw calls instead of ~600, which is processor
+time, and weak machines have less of that to spare than graphics. Also
+rejected: three's `BatchedMesh` with per-object culling, which tests every
+instance on the processor for every pass -- the main view and three cascades,
+~88,000 instances each on Redwood.
+
+

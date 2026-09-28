@@ -18,6 +18,7 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 From the performance review of 27 September 2026 (published privately as
@@ -49,32 +50,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F1. Draw only what is in view: split the planting into areas of the
-  course.** THE big one. Each tree model (and each role of it -- trunk, crown)
-  is ONE `InstancedMesh` covering the whole course (`instanceModels` in
-  `src/mesh-assets.js`, `instance()` in `src/vegetation.js`), so its bounding
-  sphere spans the course, three.js's frustum cull never rejects it, and every
-  instance is drawn every frame -- including the trees behind the camera -- and
-  drawn AGAIN into the shadow map. Measured: Redwood draws 46.5 M triangles a
-  frame on Low and 92.9 M on High, against 3-5 M for every other biome
-  (Redwood's baked trees run 17k-52k vertices each, and a grown Redwood course
-  holds about 117,000 instances counting ground cover). From an average tee
-  (Redwood, seed REPORT1, camera 6 m behind the blue tee, 53 deg vertical field
-  of view at 16:9), **39% of trees are in view, 16% in view AND within 600 m,
-  13% within 250 m**; with the planting grouped into ~120 m squares, about 45%
-  of squares' trees are in view, so ~55% of the tree geometry is skipped. Plan:
-  bucket instances into square cells of the course, one mesh per (cell, model,
-  role), each with its own bounding sphere so three.js culls it; keep the
-  draw-call count in check (too many small cells multiplies draw calls, which
-  cost processor time on weak machines -- size cells so each mesh carries many
-  instances, and measure calls as well as triangles). Must keep: per-instance
-  colours, the "camera is inside this tree" hiding (`view.clearCameraTrees`,
-  which walks `view.treeInstances` batches by index), `disposeCourse`, and the
-  near-field grass tiles (already camera-tiled). Extend the same treatment to
-  anything else instanced across the whole course: ground cover, deadfall,
-  rocks, floodlight masts and heads, homes. No visual change, all tiers, no
-  saved-round risk.
-
 - [ ] **F2. Draw distant trees cheaply, with the distance set by the tier.**
   Full detail near the camera, a simple version further out, and possibly
   nothing past the fog. Short handover on Low, long on Ultra. A distance swap
@@ -84,16 +59,29 @@ Ground rules that apply to every item below:
   full-detail trees within 120 m plus everything else at ~1.5k vertices comes
   to about what the whole course cost before baked trees. The far versions can
   be generated (ez-tree `generateLODs`, or the same parameters with fewer
-  sections). Rendering only; collision untouched. Depends on F1's cells.
+  sections). Rendering only; collision untouched. Builds on F1 (done): the
+  view cull in `src/instance-cull.js` already sorts every instance into 64 m
+  squares and knows which are in view, so a near/far split can be a second
+  mesh per model (the far version) filled from the same squares by distance.
 
-- [ ] **F3. Only nearby trees cast shadows.** Today every tree on the course is
-  drawn into the shadow map, and on High and Ultra into each of three shadow
-  cascades (`cascades: 3` in `src/graphics.js`); that is why High draws twice
-  Low's triangles (92.9 M vs 46.5 M). Restrict shadow casters to about 250 m
-  around the camera (13% of trees from an average tee), e.g. per F1 cell by
-  distance, and drop small ground plants from the far cascades. No visible
-  change expected; verify with screenshots at dawn and dusk, when shadows are
-  longest.
+- [ ] **F3. Only nearby trees cast shadows.** Every tree the camera can see
+  (or whose shadow it can see) is drawn into the shadow map, and on High and
+  Ultra into each of three shadow cascades (`cascades: 3` in
+  `src/graphics.js`); that is why High draws twice Low's triangles. Restrict
+  shadow casters to about 250 m around the camera (13% of trees from an
+  average tee) and drop small ground plants from the far cascades. HOW, given
+  F1: the view cull (`src/instance-cull.js`) packs ONE instance set per mesh
+  and three draws that same set into the main view and every cascade, so a
+  shorter caster list needs a SECOND instanced mesh per heavy model sharing
+  the geometry -- castShadow only, `colorWrite`-free depth material, holding
+  the instances within the shadow distance -- with `castShadow` turned off on
+  the drawn one. The cull's squares already give the distance. Also worth
+  taking with it: the god-ray pass (`src/godrays.js`) re-submits the whole
+  scene as its occlusion mask whenever the sun is in shot (Redwood tees 6, 8
+  and 9 draw twice the calls of their neighbours); the mask could skip the
+  ground cover and use the same near/far split. No visible change expected;
+  verify with screenshots at dawn and dusk, when shadows are longest, the way
+  F1 was verified (RESEARCH.md *Drawing only what is in view*).
 
 - [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
   pixel ratio a step when frames run slow, raise it when there is headroom,
@@ -129,10 +117,20 @@ the budget these spend.
   -- a multisampled render target (WebGL2 `samples`) or an AO that works
   without one is the way round.
 
-- [ ] **U2. Wind in trees and grass.** Vertex-shader sway driven by the
-  course's own wind speed and direction (`settings.wind`, `windDirection`),
-  stronger at canopy tips, near-free, every tier. Must not move trunk
-  collision (rendering only).
+- [ ] **U2. Wind in the baked trees.** Sway ALREADY EXISTS for part of the
+  planting: `windMaterial` in `src/textures.js` patches the procedural
+  species' leaves (`src/vegetation.js`, the `windMaterial(materials.leaf, ...)`
+  call in `addSpecies`) and the near-field grass blades, driven by the
+  renderer's `breeze` and `windVec` uniforms, which follow `settings.wind` and
+  `windDirection`. What does NOT sway is every species built from imported
+  models -- `addModelSpecies` hands `instanceModels` plain white
+  `MeshToonMaterial`s -- which is every tree on Redwood and most biomes, and the
+  ground cover and deadfall. Extend `windMaterial` to the crown/leaf roles of
+  those materials, stronger at canopy tips (height within the model), keeping
+  trunks still. Near-free, every tier. Rendering only: trunk collision must
+  not move. Note `windMaterial` REPLACES `<project_vertex>` (see the comments
+  in `src/mist.js`), so check it still composes with the cloud-shadow and mist
+  patches on those materials.
 
 - [ ] **U3. Colour variation in the rough.** Large rough areas are one flat
   olive broken only by shadows. Low-contrast patches of lighter, darker and
@@ -1112,6 +1110,37 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 Kept, not thrown away: the reasoning in a finished entry is often the only
 record of what was ruled out and why, which is worth more than a short file.
+
+
+## OPUS5.5 GFX and OPTIMIZATIONS
+
+### Frame rate
+
+- [x] **F1. Draw only what is in view.** Built as `src/instance-cull.js`, on
+  branch `view-culling`. Every course-wide `InstancedMesh` in `view.group` --
+  trees (model and procedural), deadfall, rocks, ground cover, homes,
+  floodlight masts and heads -- is registered at the end of `build`. Its
+  instances are sorted into 64 m squares; when the camera moves 4 m or turns
+  4 degrees, the squares in a view 7 degrees wider than the camera's (plus
+  everything within 60 m, plus squares whose shadow falls into view, from the
+  sun's direction, capped at 1 km) have their instances packed to the front
+  of the buffer and `count` set to match. **One draw call per mesh, as before**
+  -- the planned split into one mesh per area was rejected because it
+  multiplies draw calls about 25 times. Measured over all nine tees of seed
+  REPORT1: Redwood High 241 M -> 143 M triangles a frame (-41%), Redwood Low
+  91 M -> 55 M (-39%), Pacific Northwest High 6.2 M -> 5.5 M; draw calls
+  unchanged; a rebuild costs 0.5-1 ms and runs about 8 times a second while
+  the camera follows a shot, never while it is still. Screenshots with the
+  cull on and off at 06:24, 18:24 and 19:18 differ by no more than the wind
+  moves things between two frames. `clearCameraTrees` now hides a tree through
+  its flag (`mesh.userData.cullHidden`) instead of a zero matrix at its
+  original index; the water probes call `showAll()` first; the near-field
+  grass tiles opt out (`userData.noCull`). Lab: `lab.scene()` (what is built
+  and held), `lab.cullTune()` (the margins, live), `lab.hole(n)` (jump to a
+  tee). Tests: `tests/instance-cull.test.mjs`. Not measured: frame TIME, which
+  needs `npm run profile` -- offered to the owner, not run. Detail and the
+  bug the screenshots caught in RESEARCH.md *Drawing only what is in view*;
+  the traps in PROJECT_HANDOFF.
 
 ## Reading a green without the overlays
 

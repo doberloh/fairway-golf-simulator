@@ -107,7 +107,8 @@ function addModelSpecies(view,kind,trees){
   return materials.get(role);
  };
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
-  view.treeInstances.push({mesh,matrices,owners,hidden:new Uint8Array(matrices.length)});
+  const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
+  view.treeInstances.push({mesh,matrices,owners,hidden});
  });
  return true;
 }
@@ -190,7 +191,7 @@ function addSpecies(view,kind,trees){
    }
   }
  }
- const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});const owners=matrices===trunkMatrices?trunkOwners:matrices===branchMatrices?branchOwners:leafOwners;view.treeInstances.push({mesh,matrices,owners,hidden:new Uint8Array(matrices.length)});mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
+ const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});const owners=matrices===trunkMatrices?trunkOwners:matrices===branchMatrices?branchOwners:leafOwners;const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;view.treeInstances.push({mesh,matrices,owners,hidden});mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
  const trunkGeo=new T.CylinderGeometry(.62,1,1,real?12:Math.max(5,Math.round(6*(view.quality?.foliage??1))),['palm','hala'].includes(kind)?12:1);if(['palm','hala'].includes(kind)){const p=trunkGeo.attributes.position;for(let i=0;i<p.count;i++)p.setX(i,p.getX(i)+Math.sin((p.getY(i)+.5)*Math.PI)*1.8);trunkGeo.computeVertexNormals();}instance(trunkGeo,materials.bark,trunkMatrices);
  instance(new T.CylinderGeometry(.65,1,1,5),kind==='cactus'?mat(world.bio.tree):materials.bark,branchMatrices,null,real);
  let leafGeo;
@@ -214,15 +215,19 @@ export function addVegetation(view){
   last.copy(view.camera.position);
   const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));
   for(const batch of view.treeInstances){
-   let changed=false;
+   let changed=false;const culled=view.cull?.has(batch.mesh);
    batch.owners.forEach((t,i)=>{
     const hide=hidden.has(t)?1:0;
     if(hide!==batch.hidden[i]){
-     batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
+     // A culled mesh no longer holds instance i at index i -- the cull packs
+     // what is in view to the front -- so there it is the flag that hides the
+     // tree, and the cull that rewrites the buffer.
+     if(!culled)batch.mesh.setMatrixAt(i,hide?zero:batch.matrices[i]);
      batch.hidden[i]=hide;changed=true;
     }
    });
-   if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
+   if(changed&&culled)view.cull.dirty();
+   else if(changed)batch.mesh.instanceMatrix.needsUpdate=true;
   }
  };
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
@@ -409,7 +414,7 @@ function addNearbyGrass(view){
    kept++;
   }
   mesh.count=kept;
-  mesh.userData={tx,tz};mesh.receiveShadow=true;mesh.computeBoundingSphere();
+  mesh.userData={tx,tz,noCull:true};mesh.receiveShadow=true;mesh.computeBoundingSphere();
   return mesh;
  };
  // Out of range, but probably not for long. Held with its buffers intact and
