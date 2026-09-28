@@ -165,3 +165,32 @@ test('thinning keeps a third of the sprays, grown about their own centres, and s
   for (const k of ['x', 'y', 'z']) assert.ok(Math.abs((a.max[k] - a.min[k]) - (b.max[k] - b.min[k])) < (a.max[k] - a.min[k]) * .12, `envelope ${k}`);
  }
 });
+
+test('small crowns are drawn thinned, every held crown exactly once, and none near the camera', async () => {
+ const {modelParts} = await import('../src/mesh-assets.js');
+ const parts = modelParts('Redwood_Giant_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const group = new T.Group(), spots = [];
+ for (let z = -500; z <= 1500; z += 50) for (let x = -200; x <= 200; x += 50) spots.push([x, z]);
+ const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), spots.length), m = new T.Matrix4();
+ // Unit-height models scaled to 60 m trees.
+ spots.forEach(([x, z], i) => mesh.setMatrixAt(i, m.makeScale(60, 60, 60).setPosition(x, 0, z)));
+ mesh.castShadow = true; mesh.userData = {model: 'Redwood_Giant_1', part: leaf, role: 'leaf'};
+ group.add(mesh);
+ const cull = cullInstances(group, {farTrees: .15}), cam = camera();
+ cull.update(cam, null);
+ const far = group.children.find(o => o.name === 'far trees');
+ assert.ok(far && far.count > 0 && mesh.count > 0, `near ${mesh.count}, far ${far?.count}`);
+ const where = o => held(o).map(t => [t.x, t.z]);
+ const near = where(mesh), thin = where(far), key = ([x, z]) => x + ',' + z;
+ // Exactly once: no crown in both, none lost.
+ const a = new Set(near.map(key));
+ for (const t of thin) assert.ok(!a.has(key(t)), `crown at ${key(t)} drawn twice`);
+ assert.equal(near.length + thin.length, cull.stats().drawn);
+ // Thinned ones are the distant ones; nothing within 300 m is thinned.
+ for (const [x, z] of thin) assert.ok(Math.hypot(x, z + 520) > 300, `crown at ${x},${z} thinned too close`);
+ assert.ok(cull.stats().thinCrowns > 0 && cull.stats().thinCrowns < 1);
+ // Turned off, the far mesh empties and the full one holds everything again.
+ cull.tune({farTrees: 0}); cull.update(cam, null);
+ assert.equal(far.count, 0);
+ cull.tune({farTrees: null});
+});

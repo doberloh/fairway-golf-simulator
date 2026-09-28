@@ -44,7 +44,7 @@ import {farParts} from './mesh-assets.js';
 const CELL = 64;          // metres on a side
 // Live-tunable from the lab (`view.cull.tune`), which is how these were chosen.
 // `shadowMaps: false` gives every shadow map every held tree, as before 28 September.
-const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null};  // metres, degrees, metres
+const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null, farTrees: null};  // metres, degrees, metres
 const MOVE = 4;           // metres of camera travel before a rebuild
 const TURN = Math.cos(4 * Math.PI / 180);
 const SUN_TURN = Math.cos(.75 * Math.PI / 180);
@@ -52,17 +52,24 @@ const MARGIN = () => tune.margin * Math.PI / 180;
 
 // `thinShadowsFrom`: the first shadow map (0 = nearest) whose trees are drawn
 // as their thinned twins (`farParts`) rather than in full. Infinity: never.
-export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity} = {}) {
+// `farTrees`: a crown drawn smaller than this share of the screen's height is
+// drawn as its thinned twin (F2). 0: never.
+export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0} = {}) {
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);
  });
  if (!meshes.length) return null;
 
+ const restore = function () {
+  if (this.userData.cullHeld === undefined) return;
+  this.count = this.userData.cullHeld;
+  this.userData.cullHeld = undefined;
+ };
  // Every instance's bounding sphere, and the square it stands in.
  const cellOf = new Map(), boxes = [];
  const sphere = new T.Sphere(), m = new T.Matrix4(), corner = new T.Vector3();
- const records = meshes.map(mesh => {
+ const records = meshes.flatMap(mesh => {
   const geo = mesh.geometry;
   if (!geo.boundingSphere) geo.computeBoundingSphere();
   const n = mesh.count, cell = new Int32Array(n);
@@ -101,7 +108,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;
-  const record = {mesh, n, order, src, srcColour, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null};
+  const record = {mesh, n, order, src, srcColour, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false};
   const thinFrom = () => tune.thinShadowsFrom ?? thinShadowsFrom;
   // A SHADOW OF THE SAME TREE, DRAWN CHEAPER. From map `thinShadowsFrom` out,
   // a crown's shadow comes from its thinned twin -- a third of the sprays,
@@ -109,9 +116,10 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // metre or more cannot tell from the whole tree. It shares this mesh's
   // instance buffer, so it costs no upload and always holds the same trees.
   // It is never drawn into the picture: only into shadow maps.
-  const far = mesh.userData.role === 'leaf' && thinShadowsFrom !== Infinity && mesh.castShadow
+  const far = mesh.userData.role === 'leaf' && (thinShadowsFrom !== Infinity || farTrees > 0)
    ? farParts(mesh.userData.model)?.[mesh.userData.part]?.geometry : null;
-  if (far && far.index.count < geo.index.count * .6) {
+  const thins = far && far.index.count < geo.index.count * .6;
+  if (thins && thinShadowsFrom !== Infinity && mesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = mesh.instanceMatrix;
    twin.castShadow = true; twin.receiveShadow = false; twin.frustumCulled = false;
@@ -141,12 +149,30 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    this.userData.cullHeld = this.count;
    this.count = record.cum[k];
   };
-  mesh.onAfterShadow = function () {
-   if (this.userData.cullHeld === undefined) return;
-   this.count = this.userData.cullHeld;
-   this.userData.cullHeld = undefined;
+  mesh.onAfterShadow = restore;
+  if (!thins || farTrees <= 0) return [record];
+  // A CROWN FAR ENOUGH AWAY TO BE SMALL ON SCREEN IS DRAWN AS ITS TWIN (F2).
+  // Its own mesh with its own buffer, holding the squares whose trees are
+  // small on screen while the full mesh holds the rest. It casts its own
+  // shadows with the same thinned shape, so a thinned crown shades itself
+  // from the shape it is drawn with: a crown shaded by a DIFFERENT shape goes
+  // dark, which is what threw the twin out of Low's shadow map (F3).
+  const farMesh = new T.InstancedMesh(far, mesh.material, n);
+  if (srcColour) farMesh.instanceColor = new T.InstancedBufferAttribute(new Float32Array(n * 3), 3);
+  farMesh.castShadow = mesh.castShadow; farMesh.receiveShadow = mesh.receiveShadow; farMesh.frustumCulled = false;
+  farMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh};
+  farMesh.name = 'far trees'; farMesh.count = 0; farMesh.visible = false;
+  mesh.parent.add(farMesh);
+  const farRecord = {mesh: farMesh, n, order, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true};
+  record.near = true;
+  farMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+   const k = shadowOf.get(shadowCamera);
+   if (k === undefined || all || !farRecord.cum) return;
+   this.userData.cullHeld = this.count;
+   this.count = farRecord.cum[k];
   };
-  return record;
+  farMesh.onAfterShadow = restore;
+  return [record, farRecord];
  });
 
  const visible = new Uint8Array(boxes.length).fill(1);
@@ -166,6 +192,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  // square map i needs plus a few it does not; never fewer. `pass` is that group;
  // `cum` in each record is where each group ends.
  let casters = [];                    // the shadow cameras, nearest map first
+ const thin = new Uint8Array(boxes.length);  // 1: this square's crowns are drawn as twins
  const pass = new Uint8Array(boxes.length), shadowOf = new Map(), shadowFrustum = new T.Frustum();
  const casterPos = new T.Vector3(), casterAim = new T.Vector3();
  const wide = new T.PerspectiveCamera(), frustum = new T.Frustum(), vp = new T.Matrix4();
@@ -183,6 +210,8 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    for (let g = 0; g <= groups; g++) {
     for (let j = 0; j < runs.length; j += 3) {
      if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
+     if (r.near && thin[runs[j]] && !all) continue;
+     if (r.far && (all || !thin[runs[j]])) continue;
      const start = runs[j + 1], end = start + runs[j + 2];
      for (let k = start; k < end; k++) {
       if (hidden && hidden[order[k]]) continue;
@@ -257,6 +286,20 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
     }
     visible[c] = frustum.intersectsBox(box) ? 1 : 0;
    }
+   // Which squares are small enough on screen to draw as twins: the tallest
+   // thing in the square over its distance, as a share of the screen's height.
+   // A square stays thin until it grows 15% past the line, so a camera
+   // hovering at the boundary does not swap it back and forth.
+   const small = tune.farTrees ?? farTrees;
+   if (small > 0) {
+    const focal = 1 / (2 * Math.tan(T.MathUtils.degToRad(camera.fov) / 2));
+    for (let c = 0; c < boxes.length; c++) {
+     const b = boxes[c], d = b.distanceToPoint(camera.position);
+     if (d < tune.near) { thin[c] = 0; continue; }
+     const share = (b.max.y - b.min.y) / d * focal;
+     thin[c] = share < small * (thin[c] ? 1.15 : 1) ? 1 : 0;
+    }
+   } else thin.fill(0);
    // Each square's first shadow map. The maps move with the camera as it
    // does, so between rebuilds a map can drift by the camera's allowance of
    // travel and turn; each volume is grown by that much before it is tested.
@@ -280,10 +323,15 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // For the lab: how much is being drawn.
   stats() {
    let instances = 0, drawn = 0;
-   for (const r of records) { instances += r.n; drawn += r.drawn; }
+   for (const r of records) { if (!r.far) instances += r.n; drawn += r.drawn; }
    let shown = 0; for (const x of visible) shown += x;
    const shadow = casters.map((_, k) => records.reduce((a, r) => a + (r.cum?.[k] ?? r.drawn), 0));
+   // Of the crowns that have a twin, how many are drawn as it: the guard
+   // against the forest going dead, which is what the first distance swap did.
+   let nearCrowns = 0, farCrowns = 0;
+   for (const r of records) { if (r.near) nearCrowns += r.drawn; if (r.far) farCrowns += r.drawn; }
    return {meshes: records.length, squares: boxes.length, squaresDrawn: shown, instances, drawn, shadow,
+    thinCrowns: nearCrowns + farCrowns ? +(farCrowns / (nearCrowns + farCrowns)).toFixed(3) : 0,
     rebuilds, lastRebuildMs: +rebuildMs.toFixed(2)};
   }
  };

@@ -53,29 +53,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F2. Draw distant trees cheaply, with the distance set by the tier.**
-  Full detail near the camera, a simple version further out, and possibly
-  nothing past the fog. Short handover on Low, long on Ultra. A distance swap
-  was built once and REMOVED because it measured as free on a 4090 (it is,
-  there); see "THE BIG ONE" under *Graphics work the profiling turned up* below
-  and RESEARCH.md *The budget is frames, not megabytes*, which estimated ~40
-  full-detail trees within 120 m plus everything else at ~1.5k vertices comes
-  to about what the whole course cost before baked trees. The far versions can
-  be generated (ez-tree `generateLODs`, or the same parameters with fewer
-  sections). Rendering only; collision untouched. Builds on F1 and F3 (done):
-  the view cull in `src/instance-cull.js` already sorts every instance into
-  64 m squares and knows which are in view, and `farParts` in
-  `src/mesh-assets.js` already derives each tree's thinned twin at load (a
-  third of the sprays, grown to keep the crown full; ~37% of the triangles),
-  so the far version exists -- F2 needs a second drawn mesh per model filled
-  from the squares by on-screen size. Owner's steer (28 September): Ultra must
-  stay amazing -- swap by on-screen size, Ultra late; fade across the swap
-  (dither) so there is no line; report the share of visible trees drawn thin
-  per tee, because the 19 September swap was removed for making "nearly every
-  visible tree" the thin one; screenshots per tier to the owner before merge.
-  Note from F3: a twin must never be what a near crown is SHADED by, so if
-  the far mesh casts, it casts only into maps beyond the nearest.
-
 - [ ] **F6. Tighter shadow cascades -- sharper near shadows, cheaper too.**
   Found doing F3: three's `CSM` makes each cascade a square whose side is the
   diagonal of its slice of the view, and with `practical` splits (lambda 0.5)
@@ -87,7 +64,9 @@ Ground rules that apply to every item below:
   near maps. Changes the look, so screenshots at dawn, noon and dusk for the
   owner, and watch for a visible line where cascades meet (`fade` is off).
   Keep `thinShadowsFrom` pointing at a cascade that no near crown shades
-  itself from (see F3 in Done).
+  itself from (see F3 in Done). After F1-F3 and F2's result, this is the
+  biggest lever left on Redwood's frame (RESEARCH.md *Distant crowns drawn
+  thinned*).
 
 - [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
   pixel ratio a step when frames run slow, raise it when there is headroom,
@@ -1122,6 +1101,18 @@ record of what was ruled out and why, which is worth more than a short file.
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 ### Frame rate
+
+- [x] **F2. Draw distant crowns as their thinned twins -- built, and found to
+  be worth little.** Branch `far-trees`. A crown under a share of the screen's
+  height (`farTrees` per tier) is drawn by a second mesh using the thinned twin
+  (`farParts`), with its own buffer and its own thinned shadow; hysteresis so
+  it does not flicker; nothing within 60 m. Measured: on these courses almost
+  every visible tree is big on screen (a 90 m redwood is 15% of the screen at
+  ~600 m), so only the edge tee gains -- Low 3.15 -> 2.62 ms, Medium 5.72 ->
+  5.23, High 11.96 -> 11.71 -- and every tier pays draw calls (Low and Medium +25-57,
+  High +50-167). Ships ON at 15% on Low and Medium pending the owner's call on
+  that trade, OFF on High (calls for nothing) and Ultra (owner: Ultra stays
+  amazing). RESEARCH.md *Distant crowns drawn thinned*.
 
 - [x] **F3. Only the trees a shadow map can reach, and thinner beyond the
   nearest cascade.** Branch `tree-shadows`. Each shadow map now draws only
