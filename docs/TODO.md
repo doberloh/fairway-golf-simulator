@@ -18,6 +18,209 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+## OPUS5.5 GFX and OPTIMIZATIONS
+
+From the performance review of 27 September 2026 (published privately as
+"Where the frames and the wait go"; the numbers are repeated here so nothing
+depends on that page). Everything was measured on the development machine, a
+desktop RTX 4090 -- far faster than most players' hardware, so absolute times
+flatter the game and the PROPORTIONS are what carry over. Frame figures come
+from `bench/profile-baseline.json` (22 September); build times were measured
+on 27 September with the browser's CPU profiler over `window.lab.course({biome,
+holes, seed: 'REPORT1'})` at 1366x768.
+
+Ground rules that apply to every item below:
+
+- **A graphics tier may not change a played surface** (`src/graphics.js` says so
+  outright). Trunks are collidable and two players on different tiers must hit
+  the same trees, so culling, LOD and draw distance may change what is DRAWN,
+  never what exists in `world.trees` or what physics reads.
+- **Anything that changes generated output for an unchanged seed needs a
+  `GENERATOR_VERSION` bump** (AGENTS.md). `node tools/biome-fingerprint.mjs
+  --check` is the arbiter. The owner has generation FROZEN during testing, so
+  only the items marked "no course changes" are to be done now.
+- **Profile before and after anything that touches the frame**
+  (`npm run profile`, about 10 minutes for the full sweep, about a minute for
+  one group such as `--only tiers`; ask the owner first, per AGENTS.md), and
+  compare with `--since` against `bench/profile-baseline.json`. `renderer.info`
+  triangle and draw-call counts (the lab reports them) are a quick check in
+  between, not a substitute.
+- One branch per item, each with its own before/after numbers.
+
+### Frame rate
+
+- [ ] **F1. Draw only what is in view: split the planting into areas of the
+  course.** THE big one. Each tree model (and each role of it -- trunk, crown)
+  is ONE `InstancedMesh` covering the whole course (`instanceModels` in
+  `src/mesh-assets.js`, `instance()` in `src/vegetation.js`), so its bounding
+  sphere spans the course, three.js's frustum cull never rejects it, and every
+  instance is drawn every frame -- including the trees behind the camera -- and
+  drawn AGAIN into the shadow map. Measured: Redwood draws 46.5 M triangles a
+  frame on Low and 92.9 M on High, against 3-5 M for every other biome
+  (Redwood's baked trees run 17k-52k vertices each, and a grown Redwood course
+  holds about 117,000 instances counting ground cover). From an average tee
+  (Redwood, seed REPORT1, camera 6 m behind the blue tee, 53 deg vertical field
+  of view at 16:9), **39% of trees are in view, 16% in view AND within 600 m,
+  13% within 250 m**; with the planting grouped into ~120 m squares, about 45%
+  of squares' trees are in view, so ~55% of the tree geometry is skipped. Plan:
+  bucket instances into square cells of the course, one mesh per (cell, model,
+  role), each with its own bounding sphere so three.js culls it; keep the
+  draw-call count in check (too many small cells multiplies draw calls, which
+  cost processor time on weak machines -- size cells so each mesh carries many
+  instances, and measure calls as well as triangles). Must keep: per-instance
+  colours, the "camera is inside this tree" hiding (`view.clearCameraTrees`,
+  which walks `view.treeInstances` batches by index), `disposeCourse`, and the
+  near-field grass tiles (already camera-tiled). Extend the same treatment to
+  anything else instanced across the whole course: ground cover, deadfall,
+  rocks, floodlight masts and heads, homes. No visual change, all tiers, no
+  saved-round risk.
+
+- [ ] **F2. Draw distant trees cheaply, with the distance set by the tier.**
+  Full detail near the camera, a simple version further out, and possibly
+  nothing past the fog. Short handover on Low, long on Ultra. A distance swap
+  was built once and REMOVED because it measured as free on a 4090 (it is,
+  there); see "THE BIG ONE" under *Graphics work the profiling turned up* below
+  and RESEARCH.md *The budget is frames, not megabytes*, which estimated ~40
+  full-detail trees within 120 m plus everything else at ~1.5k vertices comes
+  to about what the whole course cost before baked trees. The far versions can
+  be generated (ez-tree `generateLODs`, or the same parameters with fewer
+  sections). Rendering only; collision untouched. Depends on F1's cells.
+
+- [ ] **F3. Only nearby trees cast shadows.** Today every tree on the course is
+  drawn into the shadow map, and on High and Ultra into each of three shadow
+  cascades (`cascades: 3` in `src/graphics.js`); that is why High draws twice
+  Low's triangles (92.9 M vs 46.5 M). Restrict shadow casters to about 250 m
+  around the camera (13% of trees from an average tee), e.g. per F1 cell by
+  distance, and drop small ground plants from the far cascades. No visible
+  change expected; verify with screenshots at dawn and dusk, when shadows are
+  longest.
+
+- [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
+  pixel ratio a step when frames run slow, raise it when there is headroom,
+  within the tier's own ceiling (`applyQuality` sets
+  `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
+  4090: High at 1x pixels 9.4 ms, 1.5x 10.9 ms, 2x 12.7 ms. Matters most on
+  phones (many pixels, small graphics chip). Needs hysteresis so it does not
+  flicker between steps, and a setting to turn it off.
+
+- [ ] **F5. Quick fixes already known.** (a) Low's short fog hides the
+  distance but still draws it: `camera.far` is fixed at 20000; tie the far plane
+  (or a per-cell draw distance) to the fog end so Low is genuinely cheaper
+  (see *Fog distance is not a performance setting* below). (b) Confirm turning
+  water reflections off really skips the reflection work (*Turning water
+  reflections off may not stop the reflection pass* below). (c) Island is an
+  outlier nobody has explained: 8.1 ms of graphics time at High (twice the
+  other biomes) and 6.8 ms of processor time per frame against ~1 ms
+  elsewhere -- profile it.
+
+### Looking better on Ultra (cartoon style throughout)
+
+Screenshots on 27 September (Redwood tee, seed REPORT1, 10:15 sim time) show
+High and Ultra are practically the same picture; Low to Medium sharpens
+shadows and triples grass, High adds 3D clouds, god rays and mist. F1-F3 free
+the budget these spend.
+
+- [ ] **U1. Soft ambient occlusion.** Trunks, rocks and bunker lips look set
+  down on the grass. A screen-space AO pass (three's GTAO/SAO, or a cheaper
+  depth-based one tuned to the toon look) grounds them and deepens forests
+  without darkening fairways. One extra full-screen pass: Ultra, maybe High.
+  Note from PROJECT_HANDOFF: the god rays deliberately avoid `EffectComposer`
+  because routing the scene through a render target costs the canvas its MSAA
+  -- a multisampled render target (WebGL2 `samples`) or an AO that works
+  without one is the way round.
+
+- [ ] **U2. Wind in trees and grass.** Vertex-shader sway driven by the
+  course's own wind speed and direction (`settings.wind`, `windDirection`),
+  stronger at canopy tips, near-free, every tier. Must not move trunk
+  collision (rendering only).
+
+- [ ] **U3. Colour variation in the rough.** Large rough areas are one flat
+  olive broken only by shadows. Low-contrast patches of lighter, darker and
+  drier grass in the ground shader (`src/ground.js`, where the mowing stripes
+  are painted), from world-position noise so it is stable per course. Every
+  tier, cheap.
+
+- [ ] **U4. Distance fades into the sky (aerial perspective).** Far hills are
+  the same green as near ones. Tint by distance toward the sky/fog colour,
+  warmer on the sun's side. Every tier, cheap; check it does not fight the
+  existing fog (`fog.near/far` per tier) and the biome's own fog colour.
+
+- [ ] **U5. Water with an edge and a glint.** Ponds (especially Redwood's dark
+  ones) read as flat shapes. A light foam rim at the shoreline (the bank
+  profiles are already in `bankAtlas`) and a sun glint. Every tier, cheap.
+
+- [ ] **U6. Spend the savings on more forest (after F1-F2).** With distant
+  trees cheap, Ultra keeps full-detail trees much further out and adds more
+  forest floor near the camera (ferns, logs, flowers); Low keeps today's
+  density. Decoration only -- nothing new may be collidable unless it is in
+  the generator.
+
+- [ ] **U7. The ground past the course edge is stretched into streaks.** Seen
+  from the overhead/overview camera and in free flight (screenshot 27
+  September, Redwood Ultra overview). A proper ring of distant land or an
+  earlier fade into the horizon (`src/landscape-edge.js`). Any tier; a flaw,
+  not an extra.
+
+- [ ] **U8. Make Ultra distinct from High.** Whichever of U1/U6 land, Ultra is
+  where they go first, so the ladder has four real rungs (see *high and ultra
+  are very nearly the same tier* below).
+
+### Build time (the wait from "play" to a playable course)
+
+Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
+(`makeGroundGridSteps` in `src/terrain-grid.js` calling `analyticHeight` per
+3 m grid point), routing/holes/water 0.5 s, building the 3D scene 2.0 s
+(`view.build`: ground shading data ~0.8 s, trees ~0.5 s, ground cover
+~0.5 s), screen updates while waiting 1.4 s, first-time shader compile 2.8 s.
+18 holes: 16.6 s (5.6 / 0.9 / 2.7 / 2.0 / 5.4). Opening the game: ~4.1 s to
+the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
+does this point belong to") is 1.7 s of the 3.0 s generation.
+
+- [ ] **B1. Compile shaders while the course builds.** The first frame after
+  a course is ready stalls while the graphics card compiles ~35 shader
+  programs from cold (`getProgramInfoLog` / `WebGLProgram.getUniforms` in the
+  profile): 2.8 s (9 holes) and 5.4 s (18) here, far more on a phone. The game
+  already uses `renderer.compileAsync` (KHR_parallel_shader_compile) for the
+  floodlights (`warmFloodlights` in `src/renderer.js`) but not for the course.
+  Call it after `view.build` while the progress overlay is still up, and at
+  start-up for the menu backdrop; consider `renderer.debug.checkShaderErrors =
+  false` in the production build (three.js recommends it). No course changes.
+  Measure: first-frame time after `lab.course` goes from ~2.8 s to ~0.1 s.
+
+- [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
+  core; the grid is row bands that can be computed in parallel with identical
+  numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
+  time*) ruled out a Web Worker because the finished world holds closures
+  that cannot cross a thread; the GRID VALUES can -- each worker rebuilds the
+  plan from the same settings (deterministic, ~0.5 s) and returns its band as
+  a Float32Array. Estimate 2.5 s -> under 1 s on 8 cores. Must check first:
+  workers inside the single-file build opened from `file://` (inline/blob
+  workers) in Chrome, Safari and Firefox; fall back to one thread if refused.
+  Fingerprints must stay identical. No course changes.
+
+- [ ] **B3. A faster nearest-hole lookup.** `nearest(x, z)` measures several
+  holes per ground point (a bounding-box skip already exists). A coarse
+  lookup built once -- which holes can possibly be nearest in each ~50 m area,
+  from conservative distance bounds -- cuts most measurements and returns the
+  identical answer (the true nearest is always among the candidates; keep the
+  same tie-break order). Bigger saving on 18 holes. No course changes;
+  fingerprints must stay identical.
+
+- [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
+  `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
+  Profile each (the unminified build shows real names:
+  `npx vite build --minify false --outDir <somewhere>`); some can move into
+  B2's workers.
+
+- [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
+  3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
+  time and triangles but CHANGES generated land: GENERATOR_VERSION bump, and
+  generation is frozen during testing. Wait for the owner.
+
+Estimate for B1-B3 together: 9 holes ~9 s -> ~4 s, 18 holes ~17 s -> ~7 s, on
+this machine, with every course unchanged. Suggested order overall: B1, then
+F1 + F3 (profile before/after), F2, the U items, then B2 and B3.
+
 ## Found by driving the built game
 
 What `tools/smoke.mjs` turned up on its first full runs, and what building it

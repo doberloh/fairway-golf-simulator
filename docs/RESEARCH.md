@@ -3785,3 +3785,48 @@ would start from -- the bridge bundled into one file (`tools/build-bridge.mjs`,
 rolldown, already installed with Vite) -- run by Node.js, with a start script
 per platform. **Placed, not published:** "Node.js 20 or newer" is the current
 LTS line, not a measured minimum; the bundle was only run on Node 24.
+
+## Where the frames and the wait go (27 September)
+
+A review asked for by the owner: can the game run faster everywhere, look
+better on Ultra, and build courses faster. The plan it produced is TODO.md
+*OPUS5.5 GFX and OPTIMIZATIONS*; the measurements behind it are here. All on
+the development machine (desktop RTX 4090), 1366x768 unless stated.
+
+**Frames** (from `bench/profile-baseline.json`, 22 September, 1600x900 at 2x):
+Redwood draws 46.5 M triangles a frame on Low and Medium, 92.9 M on High and
+69.7 M on Ultra; every other biome at High draws 3.1-4.6 M. Graphics time per
+frame at High: Redwood 12.7 ms, Island 8.1 ms, the rest 3.7-4.8 ms. Island
+also spends 6.8 ms of processor time per frame against about 1 ms elsewhere,
+unexplained. **Why Redwood:** each tree model is one `InstancedMesh` over the
+whole course, so its bounding sphere spans the course and it is never frustum
+culled -- every tree is drawn every frame and again for shadows.
+
+**How much of a course a tee can see**, computed in Node from
+`generateWorld` (Redwood, 9 holes, seed REPORT1, 2,225 trees; camera 6 m behind
+the blue tee looking at the centreline 220 m out; horizontal half-angle from a
+53 deg vertical field of view at 1366:768): averaged over the nine tees, 39% of
+trees are in view, 16% in view and within 600 m, 13% within 250 m; counting a
+tree as drawn if its ~120 m square is in view, 45%. The range between tees is
+wide -- 14% (tee 5) to 78% (tee 1) in view -- because a tee at the course's edge
+looks across all of it. The PNW course of the same seed gives the same
+averages.
+
+**The wait** (browser CPU profile of `window.lab.course`, unminified build so
+function names are real): 9 holes PNW 6.37 s to ready plus 2.83 s to the first
+frames -- generation 2.97 s (ground grid 2.52 s, of which `analyticHeight` 1.91
+s and `nearest` 1.67 s), `view.build` 2.03 s (`groundMaterial` ~0.8 s,
+`addVegetation` 0.50 s, `addGroundCover` 0.46 s, `prepareWorld` 0.38 s),
+the rest screen updates while waiting. The first frames are almost entirely
+shader compilation (`getProgramInfoLog` 3.5 s inclusive over the run). 18
+holes PNW: 11.21 s + 5.35 s (generation 6.55 s). **The compile is a cold
+cost**: the same courses loaded second in the same browser drew their first
+frame in 0.12-0.14 s; a course's program count is ~35 whatever the biome.
+Opening the game: 4.1 s to the menu on a fresh browser profile, 1.7-2.2 s on
+later loads.
+
+**Screenshots** (Redwood tee, 10:15 sim time, each tier): Low to Medium
+sharpens shadows and triples grass; High adds 3D clouds, god rays and mist;
+High and Ultra are practically identical. The overhead view shows the ground
+past the course edge stretched into streaks.
+
