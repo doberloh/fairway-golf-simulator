@@ -130,6 +130,11 @@ export const TIERS = {
   // Three cascades out to 2.5 km, so a tree casts a shadow wherever it stands
   // rather than only inside a 370 m box around the camera.
   cascades: 3, shadowFar: 2500, overviewShadowFar: 0,
+  // The first two cascades end 100 m and 500 m from the camera rather than
+  // where three's own split puts them (~420 m and ~900 m here): the nearest
+  // shadow map covers the player's surroundings instead of a kilometre.
+  // GolfView.cascadeSplitter says why, and why not in the overview.
+  cascadeSplits: [100, 500],
   // The nearest cascade keeps the whole tree -- it is the one a player stands
   // in -- and the two beyond it shadow from the thinned twins (instance-cull.js).
   thinShadowsFrom: 1,
@@ -187,6 +192,8 @@ export const TIERS = {
   // Three cascades reaching 3.5 km rather than high's 2.5, at half again the
   // texels: the far hills keep their shadows and the near ones sharpen.
   cascades: 3, shadowFar: 3500,
+  // As high (on Ultra three's split put the first edge near 590 m).
+  cascadeSplits: [100, 500],
   // As high: full trees in the nearest cascade, thinned twins beyond it.
   thinShadowsFrom: 1,
   // Off. Every crown on Ultra is the whole tree -- the owner's standing

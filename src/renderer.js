@@ -265,11 +265,53 @@ export class GolfView{
  // sunlight and shadow the scene twice.
  makeCascades(sunDir,color,intensity){
   this.csm=new CSM({camera:this.camera,parent:this.group,cascades:this.quality.cascades,
-   maxFar:this.quality.shadowFar,mode:'practical',shadowMapSize:this.quality.shadow.size,
+   maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
    lightDirection:sunDir.clone().negate().normalize(),lightMargin:400});
   for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
   this.sun.castShadow=false;this.sun.intensity=0;
+ }
+ // WHERE THE CASCADES SPLIT. three's own 'practical' split, on a 2.5 km reach,
+ // puts the first edge near 420 m (590 m on Ultra's 3.5 km) -- and each cascade
+ // is a square as wide as its slice's diagonal, so the NEAREST shadow map was a
+ // kilometre across: its texels spread over ground nobody stands on, and it
+ // held nearly every tree in view. The tier's `cascadeSplits` ends the first two
+ // cascades at fixed depths instead (100 m and 500 m), so the nearest map's
+ // resolution is spent around the player and F3's per-map tree lists can
+ // actually shorten. Measured: High 1-1.5 ms faster mid-morning, Ultra 0.6-1;
+ // the owner judged Ultra's picture indistinguishable (RESEARCH.md *Shadow
+ // cascades split where the player stands*).
+ //
+ // NOT IN THE OVERVIEW. The camera is hundreds of metres up there, so nothing
+ // is within 100 m of it and fixed edges would put the whole course in the last
+ // cascade; the overview keeps three's split, recomputed whenever the reach
+ // changes (render() calls updateFrustums on the way in and out).
+ //
+ // No `fade`: blending neighbouring cascades recompiles every lit material with
+ // CSM_FADE, and the ground's own shader patch does not survive it -- the turf
+ // went white. The seam at 100 m was judged acceptable without it.
+ cascadeSplitter(){
+  return (count,near,far,breaks)=>{
+   const splits=this.cascadeSplits??this.quality.cascadeSplits;
+   if(!splits?.length||this.config.mode==='overview'){
+    // three's 'practical' split, which the custom mode replaces.
+    for(let i=1;i<count;i++){
+     const uniform=(near+(far-near)*i/count)/far,log=(near*(far/near)**(i/count))/far;
+     breaks.push(T.MathUtils.lerp(uniform,log,.5));
+    }
+   }else for(let i=0;i<count-1;i++)breaks.push(Math.min(splits[i]??far,far)/far);
+   breaks.push(1);
+  };
+ }
+ // For the lab: splits in metres, or null for the tier's own. Returns the edges.
+ setCascadeSplits(splits){
+  if(!this.csm)return null;
+  this.cascadeSplits=splits??null;
+  this.csm.updateFrustums();
+  // The shadow maps moved: the cull's per-map lists are out of date.
+  this.cull?.dirty();
+  const far=Math.min(this.camera.far,this.csm.maxFar);
+  return {edges:this.csm.breaks.map(b=>Math.round(b*far))};
  }
  // Both patches run on the same shader. Their chunk targets are disjoint --
  // ours touches <common>, <color_fragment> and <begin_vertex>, CSM touches the
@@ -1593,7 +1635,11 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // tree keeps its shadow. Ultra only: the cost is resolution up close, and in
    // overview there is nothing up close to spend it on.
    const reach=this.config.mode==='overview'&&this.quality.overviewShadowFar?this.quality.overviewShadowFar:this.quality.shadowFar;
-   if(this.csm.maxFar!==reach){this.csm.maxFar=reach;this.csm.updateFrustums();}
+   // The splits also depend on the view (cascadeSplitter): the overview gets
+   // three's own, so crossing into or out of it re-splits even when the
+   // reach does not change, which on High it does not.
+   const over=this.config.mode==='overview';
+   if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();}
    this.camera.updateMatrixWorld();this.csm.update();
   }
   // After the cascades have moved, so each shadow map gets the trees it can

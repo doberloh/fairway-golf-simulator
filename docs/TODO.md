@@ -53,21 +53,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F6. Tighter shadow cascades -- sharper near shadows, cheaper too.**
-  Found doing F3: three's `CSM` makes each cascade a square whose side is the
-  diagonal of its slice of the view, and with `practical` splits (lambda 0.5)
-  over 2.5 km the nearest slice runs to ~420 m, so the NEAREST cascade covers
-  about a kilometre and holds 84-100% of the trees in view (Redwood). Custom
-  splits (`customSplitsCallback`, e.g. near ~80-120 m, middle ~500 m) would put
-  the nearest map's texels where the player stands -- crisper contact shadows,
-  which is an Ultra win -- and let F3's per-map trimming actually trim the
-  near maps. Changes the look, so screenshots at dawn, noon and dusk for the
-  owner, and watch for a visible line where cascades meet (`fade` is off).
-  Keep `thinShadowsFrom` pointing at a cascade that no near crown shades
-  itself from (see F3 in Done). After F1-F3 and F2's result, this is the
-  biggest lever left on Redwood's frame (RESEARCH.md *Distant crowns drawn
-  thinned*).
-
 - [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
   pixel ratio a step when frames run slow, raise it when there is headroom,
   within the tier's own ceiling (`applyQuality` sets
@@ -1102,6 +1087,17 @@ record of what was ruled out and why, which is worth more than a short file.
 
 ### Frame rate
 
+- [x] **F6. Shadow cascades split where the player stands.** Branch
+  `cascade-splits`. High and Ultra end the first two cascades at 100 m and
+  500 m (`cascadeSplits` per tier) instead of three's ~420/900 m (High) and
+  ~590/1260 m (Ultra); the overview keeps three's split. Graphics ms, tees 4
+  and 5 at 10:15: High 12.30 -> 11.14 and 11.36 -> 9.92, Ultra 12.64 -> 11.93
+  and 11.21 -> 10.61; at 18:24 High still gains 0.4-0.9, Ultra is level. The
+  owner judged the pictures from a flip page: Ultra indistinguishable, the
+  faint seam at ~100 m acceptable, no blending wanted (CSM `fade` also breaks
+  the ground shader). RESEARCH.md *Shadow cascades split where the player
+  stands*.
+
 - [x] **F2. Draw distant crowns as their thinned twins -- built, and found to
   be worth little.** Branch `far-trees`. A crown under a share of the screen's
   height (`farTrees` per tier) is drawn by a second mesh using the thinned twin
@@ -1125,7 +1121,7 @@ record of what was ruled out and why, which is worth more than a short file.
   Ultra 13.63 -> 11.87 / 7.75 -> 7.22. Screenshots at 18:24 and 10:15 match
   within frame-to-frame noise on every tier. REJECTED: the twin in Low and
   Medium's single map -- it shades the nearest crowns, which went visibly
-  darker. Found on the way: the nearest cascade is ~1 km across (F6, open),
+  darker. Found on the way: the nearest cascade is ~1 km across (F6, since done),
   and layers cannot split shadow maps in three. Tests in
   `tests/instance-cull.test.mjs`. Detail in RESEARCH.md *Only the trees a
   shadow map can reach*.
