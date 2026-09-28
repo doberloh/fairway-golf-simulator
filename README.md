@@ -6,7 +6,8 @@ Open `dist/index.html` and you are on a tee. No installer, no account, no
 network. Every course is generated from a seed: nine or eighteen holes routed
 through one continuous landscape, with its own terrain, water, weather,
 vegetation and light. Ball flight is integrated from real launch numbers, and
-a launch monitor can drive it through the included bridge.
+a launch monitor can drive it through the bridge, which the portable archive
+ships ready to run (it needs Node.js).
 
 The built file is about 15.8 MB (6.5 MB gzipped) and contains the renderer,
 the controls, the physics and every asset. It needs WebGL 2 and hardware
@@ -37,7 +38,7 @@ Node.js 22.12 or newer (developed on Node 26):
 npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the full regression suite, no external framework
-npm run build    # writes the single-file dist/index.html
+npm run build    # writes the single-file dist/index.html, and dist/fairway-bridge.mjs
 ```
 
 Cutting the release archives is one more command, and it rebuilds first so
@@ -99,7 +100,7 @@ checked by hand.
 | `src/` | The game. Generation, physics, rendering, interface — one module per concern, no framework |
 | `tests/` | Regression suites for the Node test runner. `npm test` |
 | `tools/` | Measurement, asset ingest, profiling and release packaging |
-| `bridge/` | The optional local TCP/WebSocket bridge a launch monitor talks to |
+| `bridge/` | The optional local TCP/WebSocket bridge a launch monitor talks to, and in `bridge/launch/` the start scripts the portable archive ships beside it |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | CC0 model packs and the baked tree geometry ingested from them |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |

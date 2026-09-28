@@ -131,6 +131,17 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
+- [ ] **Owner: the portable archive's Launch monitor folder on a Mac.** The
+  `.command` scripts have never been run on one. Unzip, Control-click **Start
+  bridge**, Open, and check it finds Node.js and serves the game. If a Mac
+  refuses it outright, the fallback in the README is `node fairway-bridge.mjs`
+  in Terminal.
+
+- [ ] **A bridge with nothing to install, when it is worth it.** A standalone
+  executable built with Bun (cross-compiles every platform from Windows) --
+  and, to lose the "unknown developer" warnings, code signing (paid). Built
+  from the same bundle. RESEARCH.md, *Shipping the bridge to players*.
+
 - [ ] **Owner: a launch monitor from the iPhone, loaded from the bridge.**
   Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
   open `http://<address>:1922` on the phone, **Launch monitor** in the main
@@ -2926,3 +2937,20 @@ engineering provenance pass, not legal advice.
   remembered; and a page loaded over `https` says why it cannot connect and
   what to open instead. Also fixed: the phone's camera button floated over the
   main menu. New `monitor-phone` journey; 16 of 16 green.
+
+- [x] **The bridge ships in the portable archive, ready to run.** Asked 27
+  September: how would other players launch the bridge? They could not -- it
+  shipped only in the source archive, and running it took `npm ci` and a
+  build; the portable README claimed an "included bridge" anyway. Now `npm run
+  build` bundles it into one file (`dist/fairway-bridge.mjs`, ~130 kB, needs
+  only Node.js), the portable archive carries it in a **Launch monitor**
+  folder with a **Start bridge** for Windows and for macOS, and the bridge
+  serves the `Fairway.html` beside it. The script listens on every address and
+  prints two links, this computer's and a phone's, finding the computer's
+  home-network address itself -- skipping a VPN adapter that, on the machine
+  this was written on, came first. There were two scripts per platform, one
+  for a phone, until the owner asked why: the phone one did not even serve the
+  computer's own browser, and the firewall prompt is gate enough. Checked by a new
+  `bridge-bundle` journey running the built bundle as its own process with a
+  pretend connector sending a real shot, and a unit test for the address
+  choice; the Windows script run by hand. Not yet run: the macOS scripts.

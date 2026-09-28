@@ -3762,3 +3762,26 @@ check (loopback and private addresses only) to accept the hosted site:
 
 A native iPhone app, which could open any connection it liked, was weighed on
 26 September and set aside (it needs a Mac with Xcode and a developer account).
+
+## Shipping the bridge to players
+
+For the `ship-bridge` branch, 27 September: how a player holding the portable
+archive runs the launch-monitor bridge. Sources read:
+
+- [Node.js: Single executable applications](https://nodejs.org/api/single-executable-applications.html).
+  Stability 1.1, active development. Building for another platform is possible
+  only with the code cache and snapshot off, and the page advises building on
+  the target; macOS needs `codesign`, and signing on Windows is recommended.
+  ES modules and CommonJS are both accepted as the entry.
+- [Bun: Single-file executables](https://bun.com/docs/bundler/executables).
+  `bun build --compile` cross-compiles for Windows, macOS and Linux, x64 and
+  arm64, from one machine, bundling the runtime; macOS still wants `codesign`
+  with a JIT entitlement to get past Gatekeeper.
+
+**Decided:** neither, for now. Both give a program with no Node.js to install,
+and both give an UNSIGNED one that Windows warns about and macOS refuses until
+the player overrides it; signing costs money. What shipped is the step both
+would start from -- the bridge bundled into one file (`tools/build-bridge.mjs`,
+rolldown, already installed with Vite) -- run by Node.js, with a start script
+per platform. **Placed, not published:** "Node.js 20 or newer" is the current
+LTS line, not a measured minimum; the bundle was only run on Node 24.

@@ -53,6 +53,8 @@
 // whole point is a nine-hole course pay for one.
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
+import net from 'node:net';
+import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -1195,6 +1197,53 @@ const JOURNEYS = [
    });
   },
  },
+ // THE BRIDGE A PLAYER RUNS: the bundled `fairway-bridge.mjs` from the build,
+ // started as its own process, serving the game, with a pretend CONNECTOR on
+ // its TCP port sending a real Open Connect shot -- the whole path from a
+ // launch monitor's software to a ball in the air, with nothing pretend on
+ // the Fairway side of it. The shot is acknowledged back to the connector
+ // with the bridge's own reply code.
+ {
+  name: 'bridge-bundle',
+  what: 'the shipped bridge, run as a player runs it: it serves the game, takes a connector, and a shot flies',
+  bridge: true,
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   const {tcp} = t.bridgePorts;
+   await menuReady(t);
+   await t.step('the page came from the bridge, and the panel already knows where it is', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).click();
+    const got = await t.page.inputValue('#bridgeUrl');
+    if (got !== `ws://127.0.0.1:${t.bridgePorts.http}`) throw new Error(`the address box reads "${got}"`);
+    await t.press('Connect bridge');
+    await t.until(async () => (await t.page.textContent('#connectionLabel')) === 'Bridge connected', 'the bridge to connect', 10 * SLOW);
+   });
+   const connector = net.connect(tcp, '127.0.0.1');
+   await new Promise((ok, no) => { connector.once('connect', ok); connector.once('error', no); });
+   let replies = '';
+   connector.on('data', d => { replies += d; });
+   try {
+    await t.step('a connector joins, and the panel sees the device', async () => {
+     connector.write(JSON.stringify({DeviceID: 'Smoke connector', ShotDataOptions: {ContainsBallData: false, LaunchMonitorIsReady: true, LaunchMonitorBallDetected: true}}));
+     await t.until(async () => /Ready|Finding ball/.test(await t.page.textContent('#monTitle') || ''), 'the device to show in the panel', 10 * SLOW);
+     await t.page.getByLabel(/Arm monitor/).check();
+     await t.key('Escape');
+    });
+    await t.step('into a round, and a shot from the connector flies and is acknowledged', async () => {
+     await fromMenu(t, 'Endless');
+     await t.press('Start an endless run');
+     await t.inPlay();
+     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 10 * SLOW);
+     connector.write(JSON.stringify({DeviceID: 'Smoke connector', Units: 'Yards', ShotNumber: 1, APIversion: '1',
+      BallData: {Speed: 147.5, VLA: 14.3, HLA: 2.3, TotalSpin: 3250, SpinAxis: -13.2}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}));
+     await t.until(() => t.inFlight(), 'the connector shot to fly', 10 * SLOW);
+     await t.key('Enter');
+     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
+     await t.until(async () => /"Code"\s*:\s*200/.test(replies), `the connector to hear 200 (it heard ${replies.trim() || 'nothing'})`, 10 * SLOW);
+    });
+   } finally { connector.destroy(); }
+  },
+ },
 ];
 
 // ------------------------------------------------------------------ runner
@@ -1285,7 +1334,27 @@ for (const journey of chosen) {
   home = `http://127.0.0.1:${server.address().port}/`;
   if (journey.serve.protect) await context.addCookies([{name: 'nf_private', value: PASS, url: home}]);
  }
+ // A journey that wants THE SHIPPED BRIDGE gets it: the bundled
+ // `fairway-bridge.mjs` from the build, started as its own process exactly as
+ // a player's start script starts it, on two free ports, serving the game
+ // beside it. The page is loaded from it. Stopped after the journey.
+ let bridgeProc = null, bridgePorts = null;
+ if (journey.bridge) {
+  const dir = path.dirname(FILE ? path.resolve(FILE) : DIST);
+  const free = () => new Promise(done => { const s = net.createServer().listen(0, '127.0.0.1', () => { const port = s.address().port; s.close(() => done(port)); }); });
+  bridgePorts = {http: await free(), tcp: await free()};
+  bridgeProc = spawn(process.execPath, [path.join(dir, 'fairway-bridge.mjs')], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'],
+   env: {...process.env, FAIRWAY_HTTP_PORT: String(bridgePorts.http), FAIRWAY_TCP_PORT: String(bridgePorts.tcp), FAIRWAY_HTTP_HOST: '127.0.0.1'}});
+  let said = '';
+  bridgeProc.stdout.on('data', d => { said += d; });
+  bridgeProc.stderr.on('data', d => { said += d; });
+  const until = Date.now() + 15000;
+  while (!said.includes('Fairway bridge:') && Date.now() < until && bridgeProc.exitCode === null) await new Promise(r => setTimeout(r, 100));
+  if (!said.includes('Fairway bridge:')) { bridgeProc.kill(); throw new Error(`the bundled bridge did not start: ${said.trim() || 'no output'}`); }
+  home = `http://127.0.0.1:${bridgePorts.http}/`;
+ }
  const trip = new Trip(page, journey.name, home);
+ trip.bridgePorts = bridgePorts;
  const t0 = Date.now();
  let failure = null;
  try {
@@ -1322,6 +1391,7 @@ for (const journey of chosen) {
  await context.close();
  // The local server goes with its journey: nothing is left listening.
  if (server) await new Promise(done => server.close(done));
+ if (bridgeProc) { bridgeProc.kill(); await new Promise(done => bridgeProc.exitCode !== null ? done() : bridgeProc.once('exit', done)); }
 }
 await browser.close();
 
