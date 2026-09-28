@@ -84,8 +84,16 @@ export function cullInstances(root, {minInstances = 2} = {}) {
    if (!runs.length || runs[runs.length - 3] !== cell[i]) runs.push(cell[i], k, 0);
    runs[runs.length - 1]++;
   }
-  mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
-  mesh.instanceColor?.setUsage(T.DynamicDrawUsage);
+  // THE BUFFERS KEEP THE USAGE THEY WERE BUILT WITH. Marking them all
+  // DynamicDrawUsage -- the obvious thing for a buffer rewritten as the camera
+  // moves -- tripled High's graphics time on Windows (12.6 -> 33 ms, Redwood,
+  // RTX 4090), steadily, even in frames where nothing was rewritten, and only
+  // on a page opened after another in the same browser. The driver underneath
+  // (ANGLE on Direct3D 11) probably put the ground cover and the colours
+  // somewhere the card reads slowly, and High reads them five times a frame:
+  // the view, three shadow cascades and the god-ray mask. Left alone, the same
+  // rewrites cost nothing measurable. See RESEARCH.md *Drawing only what is in
+  // view*.
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;

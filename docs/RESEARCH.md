@@ -3848,9 +3848,46 @@ keeps everything):
 Per tee the share of instances kept runs from 93% (tee 1, which stands at the
 course's edge with the whole of it ahead) to 24% (tee 9). The Pacific
 Northwest gains little because its triangles are mostly the ground (1.24 M)
-and one light ground-cover mesh; the cull is aimed at heavy trees. **Frame
-TIME is not measured here** -- that is `npm run profile`, which is the
-owner's call to run (AGENTS.md). Triangles are the quantity that was wrong.
+and one light ground-cover mesh; the cull is aimed at heavy trees.
+
+**Frame time** (graphics ms per frame, median; `npm run profile -- --only
+tiers`, Redwood seed PROFILE, 1600x900 at 2x, real GPU; the "before" column is
+the same sweep run on commit f3ac8dc, the one before the cull, in a separate
+worktree on the same night, rather than the six-day-old stored baseline):
+
+| Tier | Before | After |
+| --- | --- | --- |
+| Low | 4.69 | 4.28 |
+| Medium | 6.12 | 5.98 |
+| High | 12.62 | 12.34 |
+| Ultra | 12.79 | 12.45 |
+
+Small, because the profiler's case is the FIRST tee, which is the cull's worst
+case (it keeps ~90% of the course; see above). From tees that look across less
+of the course the saving is real: seed PROFILE, High, graphics ms with the cull
+on against the cull holding everything (`lab.cullTune({near: 1e9})`): tee 5
+10.61 -> 7.18, tee 9 10.80 -> 7.20 (a third off); tee 4, which looks into the
+sun (god-ray mask pass) and keeps nearly everything, 21.32 -> 21.03. The
+stored baseline (`bench/profile-baseline.json`, 22 September) was not re-saved.
+
+**The trap the profile caught: do not mark the buffers dynamic.** The first
+version set `DynamicDrawUsage` on every instance matrix and colour buffer it
+managed -- the obvious hint for a buffer rewritten as the camera moves. The
+profile came back with High at 33 ms and Ultra at 34, against 12.6 and 12.8
+before the cull, with Low and Medium untouched. Reproduced in a scratch
+harness it was steady for the whole page (eight 60-frame chunks, all 32-34 ms),
+present even in frames where the cull rewrote nothing, the processor time was
+~31 ms too (waiting on the card), and it happened ONLY on a page opened after
+another in the same browser -- High opened first was 12.6 ms every time, which
+is why the drawn-triangle measurements above never showed it. Twice-repeated
+switches, each after a Medium page: leaving the buffers' usage as built, 12.1-12.5
+ms; uploading whole buffers instead of the used range, 30-33; leaving empty
+meshes visible, 30-33. The newly dynamic buffers were the ground cover's (the
+trees' matrices were already dynamic and were fine before) and every instance
+colour buffer. The likely mechanism is the driver (ANGLE over Direct3D 11)
+placing dynamic buffers where the card reads them slowly -- High reads them five
+times a frame (view, three cascades, god-ray mask) -- but that is inferred, not
+confirmed. Leaving usage alone, the rewrites cost nothing measurable.
 
 **Why some tees read double.** Tees 6, 8 and 9 on Redwood High drew 1,000+
 calls and ~360 M triangles without the cull, twice their neighbours: the sun is

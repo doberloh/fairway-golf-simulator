@@ -1137,10 +1137,15 @@ record of what was ruled out and why, which is worth more than a short file.
   original index; the water probes call `showAll()` first; the near-field
   grass tiles opt out (`userData.noCull`). Lab: `lab.scene()` (what is built
   and held), `lab.cullTune()` (the margins, live), `lab.hole(n)` (jump to a
-  tee). Tests: `tests/instance-cull.test.mjs`. Not measured: frame TIME, which
-  needs `npm run profile` -- offered to the owner, not run. Detail and the
-  bug the screenshots caught in RESEARCH.md *Drawing only what is in view*;
-  the traps in PROJECT_HANDOFF.
+  tee). Tests: `tests/instance-cull.test.mjs`. Frame time (`npm run profile
+  -- --only tiers`, first tee, against the pre-cull commit run the same
+  night): High 12.62 -> 12.34 ms, Ultra 12.79 -> 12.45 -- small, because the
+  first tee is the cull's worst case; from tees 5 and 9 High goes 10.7 -> 7.2
+  ms. The profile also caught a real regression in the first version:
+  marking the buffers `DynamicDrawUsage` tripled High and Ultra (33 ms) on any
+  page opened after another in the same browser; the buffers now keep their
+  built usage. Detail, and the shadow bug the screenshots caught, in
+  RESEARCH.md *Drawing only what is in view*; the traps in PROJECT_HANDOFF.
 
 ## Reading a green without the overlays
 
