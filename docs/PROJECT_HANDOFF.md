@@ -175,12 +175,12 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 | tools/fixtures.mjs | The three fixture sizes a measurement runs over |
 | tools/biome-fingerprint.mjs | THE ARBITER FOR `GENERATOR_VERSION`. Hashes each biome's record and its generated ground separately; only a ground change owes a bump |
 | tools/profile.mjs | What a frame costs and what it is spent on. Minutes of a machine at full tilt -- run it deliberately |
-| tools/profile-probe.js | Injected into the page before anything else runs. Wraps WebGL and requestAnimationFrame from OUTSIDE the game, so it cannot be fooled by the app reporting on itself |
+| tools/profile-probe.js | Injected into the page before anything else runs. Wraps WebGL and requestAnimationFrame from OUTSIDE the game, so it cannot be fooled by the app reporting on itself. A frame is every callback sharing an animation timestamp -- it once counted each callback as a frame, and the harness's own counting callback made every frame two samples (half the triangles, medians near the fastest frame). Anything that counts frames in the page may add callbacks freely now |
 | tools/gpu-probe.mjs | Which GPU a Playwright browser actually got. Asked before anything is measured, because headless Chromium falls back to software silently |
 | tools/smoke.mjs | `npm run smoke`. Opens the BUILT file by `file://` in a real browser and plays it: menu panels and every tab, an Endless hole from tee to holed putt to the next hole, a Surprise-me nine, the range, the studio saving a course, and whether every play-screen control can actually be clicked at five screen sizes. Fails on any uncaught error, any `console.error`, and ANY network request. Drives by the names a player reads; uses `window.lab` only to look |
 | tools/shot-sink.mjs | Somewhere for the game to put a screenshot of itself. The game photographs itself in whatever browser is open and posts the frame here -- no headless browser, no second rendering path |
 | bench/baseline.json | The last saved measurement, for `--since` |
-| bench/profile-baseline.json | The last saved frame profile, for `--since` |
+| bench/profile-baseline.json | The last saved frame profile, for `--since`. Re-saved 28 September after the probe fix; anything older counted every frame twice |
 | bench/biome-fingerprints.json | The stored fingerprints, with the generator version they were taken at |
 | tests/*.test.mjs | Node test-runner regression suites; no external test framework |
 

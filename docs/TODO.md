@@ -26,7 +26,10 @@ From the performance review of 27 September 2026 (published privately as
 depends on that page). Everything was measured on the development machine, a
 desktop RTX 4090 -- far faster than most players' hardware, so absolute times
 flatter the game and the PROPORTIONS are what carry over. Frame figures come
-from `bench/profile-baseline.json` (22 September); build times were measured
+from `bench/profile-baseline.json` (22 September) -- which was taken with a
+probe that counted every frame twice, so its triangle and draw figures are
+HALF the truth and its times are near the fastest frame (RESEARCH.md *The
+profiler counted every frame twice*, fixed 28 September); build times were measured
 on 27 September with the browser's CPU profiler over `window.lab.course({biome,
 holes, seed: 'REPORT1'})` at 1366x768.
 
@@ -87,7 +90,8 @@ Ground rules that apply to every item below:
   pixel ratio a step when frames run slow, raise it when there is headroom,
   within the tier's own ceiling (`applyQuality` sets
   `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
-  4090: High at 1x pixels 9.4 ms, 1.5x 10.9 ms, 2x 12.7 ms. Matters most on
+  4090 (corrected probe, 28 September baseline): High at 1x pixels 10.7 ms,
+  1.5x 12.4 ms, 2x 14.4 ms. Matters most on
   phones (many pixels, small graphics chip). Needs hysteresis so it does not
   flicker between steps, and a setting to turn it off.
 
@@ -1116,6 +1120,15 @@ record of what was ruled out and why, which is worth more than a short file.
 
 ### Frame rate
 
+- [x] **F0. Re-save the frame-profile baseline.** Done 28 September after the
+  probe fix (RESEARCH.md *The profiler counted every frame twice*): full sweep,
+  29 cases in 15.8 minutes (not the ~10 AGENTS.md quotes -- the software arm
+  and the corrected frame counting both run longer). Headlines, graphics ms:
+  Redwood Low 5.6, Medium 8.8, High 14.1, Ultra 15.4 from the first tee;
+  Redwood High OVERVIEW 27.7, the heaviest case in the sweep; every other
+  biome 5.0-8.7 at High; High at 1x/1.5x/2x pixels 10.7/12.4/14.4. `--since`
+  now compares like with like.
+
 - [x] **F1. Draw only what is in view.** Built as `src/instance-cull.js`, on
   branch `view-culling`. Every course-wide `InstancedMesh` in `view.group` --
   trees (model and procedural), deadfall, rocks, ground cover, homes,
@@ -1137,11 +1150,11 @@ record of what was ruled out and why, which is worth more than a short file.
   original index; the water probes call `showAll()` first; the near-field
   grass tiles opt out (`userData.noCull`). Lab: `lab.scene()` (what is built
   and held), `lab.cullTune()` (the margins, live), `lab.hole(n)` (jump to a
-  tee). Tests: `tests/instance-cull.test.mjs`. Frame time (`npm run profile
-  -- --only tiers`, first tee, against the pre-cull commit run the same
-  night): High 12.62 -> 12.34 ms, Ultra 12.79 -> 12.45 -- small, because the
-  first tee is the cull's worst case; from tees 5 and 9 High goes 10.7 -> 7.2
-  ms. The profile also caught a real regression in the first version:
+  tee). Tests: `tests/instance-cull.test.mjs`. Frame time, corrected probe,
+  graphics ms, cull holding everything -> cull on: High tee 1 14.4 -> 13.9
+  (the first tee is the cull's worst case, and the only view the profiler
+  measures), tee 5 11.6 -> 7.8, tee 9 12.0 -> 8.2; Low tee 5 4.1 -> 2.4;
+  Ultra follows High. The profile also caught a real regression in the first version:
   marking the buffers `DynamicDrawUsage` tripled High and Ultra (33 ms) on any
   page opened after another in the same browser; the buffers now keep their
   built usage. Detail, and the shadow bug the screenshots caught, in
@@ -1498,7 +1511,9 @@ problem: a control that belongs inside a box is sitting beside it.
   `bench/profile-baseline.json` in the shape `bench.mjs` already uses.
 
 - [x] **Have it name the bottleneck.** It is geometry, and it is one biome.
-  Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
+  (Figures below from the old probe, which halved triangles and read times
+  near the fastest frame; see RESEARCH.md *The profiler counted every frame
+  twice*.) Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
   twenty times, for 12.66 ms against about 4. Cascades double it (46.5 M to
   92.9 M). Pixel ratio is worth 26%. Every ground-cue toggle is free, inside
   the noise. The reflections toggle does nothing at all: 208 draws either way.
