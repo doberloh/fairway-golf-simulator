@@ -235,3 +235,20 @@ test('lanAddress prefers the home network over VPN and virtual adapters', async 
  assert.equal(lanAddress({eth0: v4('203.0.113.9')}), null);
  assert.equal(lanAddress({}), null);
 });
+
+// ONE START SCRIPT FOR THE COMPUTER AND THE PHONE. Listening on every address,
+// the bridge prints both links -- the phone's from the home network, never the
+// VPN's -- and says plainly that there is no password.
+test('listening on every address, the bridge prints a link for this computer and one for a phone', async () => {
+ const {addressLines, lanAddresses} = await import('../bridge/server.mjs');
+ const v4 = address => [{address, family: 'IPv4', internal: false}];
+ const lan = lanAddresses({WgTunnel: v4('10.8.0.2'), Ethernet: v4('192.168.1.20')});
+ const lines = addressLines('0.0.0.0', 1922, lan);
+ assert.equal(lines[0], 'On this computer, open http://127.0.0.1:1922');
+ assert.equal(lines[1], 'On a phone or tablet on the same Wi-Fi, open http://192.168.1.20:1922');
+ assert.match(lines[2], /10\.5\.0\.2:1922 \(WgTunnel\)/);
+ assert.match(lines.at(-1), /no password/);
+ assert.match(addressLines('0.0.0.0', 1922, []).join(' '), /only this computer can play/);
+ assert.deepEqual(addressLines('127.0.0.1', 1922, lan), []);
+});
+

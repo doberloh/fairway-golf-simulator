@@ -74,10 +74,9 @@ async function readGame(){
  for (const t of tries) { try { return await readFile(t); } catch {} }
  return null;
 }
-// `FAIRWAY_HTTP_HOST=lan` -- what the "for a phone" start scripts set -- means
-// THIS computer's address on the home network, found rather than typed: a
-// player should not have to look up their computer's address to play from a
-// phone. Private IPv4 addresses only, and the HOME network's first: VPNs and
+// THIS computer's address on the home network, found rather than typed, for
+// the link the bridge prints for a phone: a player should not have to look up
+// their computer's address to play from one. Private IPv4 addresses only, and the HOME network's first: VPNs and
 // virtual machines add adapters with private addresses of their own, and on
 // the machine this was written on a VPN's 10.8.0.2 came before the real
 // 192.168.1.20 -- picked blind, the phone would have been told an address it
@@ -97,6 +96,26 @@ export function lanAddresses(interfaces = os.networkInterfaces()){
  return found.sort((x, y) => x.rank - y.rank);
 }
 export const lanAddress = interfaces => lanAddresses(interfaces)[0]?.address ?? null;
+// WHAT THE BRIDGE TELLS THE PLAYER, for the address it is listening on. The
+// shipped start script listens on EVERY address (`FAIRWAY_HTTP_HOST=all`, which
+// is 0.0.0.0), so one script serves the computer and a phone at once; it used to
+// be two scripts, one per case, and the "for a phone" one listened on the home
+// network ONLY, so the computer's own browser could not use 127.0.0.1 while it
+// ran. The operating system's firewall decides whether a phone gets in: allowed
+// on a private network, the phone plays; refused, the computer still does.
+export function addressLines(httpHost, port, lan = lanAddresses()){
+ if (httpHost === '0.0.0.0') {
+  const lines = [`On this computer, open http://127.0.0.1:${port}`];
+  if (lan.length) {
+   lines.push(`On a phone or tablet on the same Wi-Fi, open http://${lan[0].address}:${port}`);
+   if (lan.length > 1) lines.push(`If the phone cannot reach that, try: ${lan.slice(1).map(a => `http://${a.address}:${port} (${a.name})`).join(', ')}`);
+  } else lines.push('No home-network address found, so only this computer can play. Join the same Wi-Fi as the phone and start the bridge again.');
+  lines.push('There is no password: anything on your home network that can reach this computer can drive the simulator.');
+  return lines;
+ }
+ if (httpHost !== '127.0.0.1') return [`Browser access is open to ${httpHost} — anything on your network that can reach it can drive the simulator.`, `On a phone on the same Wi-Fi, open http://${httpHost}:${port}`];
+ return [];
+}
 export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',tcpHost=host,httpHost=host,onLog=console.log,verbose=false}={}){
  const sockets=new Set(),pending=new Map();let browser=null,player={Handed:'RH',Club:'DR'},ready=false,seq=0;
  // The DEVICE's own view of itself, relayed on to the browser. Null until a
@@ -196,17 +215,15 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
  try{await listen(tcp,tcpPort,tcpHost);await listen(server,httpPort,httpHost);}catch(e){tcp.close();server.close();wss.close();throw e;}
  if(verbose)onLog('Verbose logging on: every message in and out is printed.');
  else onLog('Set FAIRWAY_LOG=debug for per-message logging if a connector will not talk.');
- if(httpHost!=='127.0.0.1'){onLog(`Browser access is open to ${httpHost} — anything on your network that can reach it can drive the simulator.`);onLog(`On a phone on the same Wi-Fi, open http://${httpHost}:${server.address().port}`);}
- onLog(`Fairway bridge: http://${httpHost}:${server.address().port} · launch monitor TCP ${tcpHost}:${tcp.address().port}`);
+ onLog(`Fairway bridge: http://${httpHost==='0.0.0.0'?'127.0.0.1':httpHost}:${server.address().port} · launch monitor TCP ${tcpHost}:${tcp.address().port}`);
+ for(const line of addressLines(httpHost,server.address().port))onLog(line);
  return {tcpPort:tcp.address().port,httpPort:server.address().port,async close(){for(const p of pending.values())clearTimeout(p.timer);pending.clear();for(const s of sockets)s.destroy();for(const c of wss.clients)c.terminate();await Promise.all([new Promise(r=>tcp.close(r)),new Promise(r=>server.close(r))]);wss.close();}};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  let httpHost=process.env.FAIRWAY_HTTP_HOST||'127.0.0.1';
- if(httpHost.toLowerCase()==='lan'){
-  const all=lanAddresses();httpHost=all[0]?.address;
-  if(!httpHost){console.error('Could not start bridge: this computer has no home-network address. Join the same Wi-Fi as the phone and try again.');process.exit(1);}
-  if(all.length>1)console.log(`Using ${httpHost} (${all[0].name}). If the phone cannot reach it, set FAIRWAY_HTTP_HOST to one of: ${all.slice(1).map(a=>`${a.address} (${a.name})`).join(', ')}`);
- }
+ // `all` is what the shipped start script sets: every address, so the computer
+ // and a phone on the home network can both reach it.
+ if(httpHost.toLowerCase()==='all')httpHost='0.0.0.0';
  createBridge({tcpHost:process.env.FAIRWAY_TCP_HOST||'127.0.0.1',tcpPort:Number(process.env.FAIRWAY_TCP_PORT||1921),httpPort:Number(process.env.FAIRWAY_HTTP_PORT||1922),httpHost,verbose:/^(1|on|debug|verbose|true)$/i.test(process.env.FAIRWAY_LOG||'')
   ||process.argv.slice(2).some(a=>['--debug','--verbose','-v'].includes(a))}).then(b=>{process.on('SIGINT',async()=>{await b.close();process.exit(0);});}).catch(e=>{console.error('Could not start bridge:',e.message);process.exitCode=1;});
 }

@@ -2944,10 +2944,13 @@ engineering provenance pass, not legal advice.
   build; the portable README claimed an "included bridge" anyway. Now `npm run
   build` bundles it into one file (`dist/fairway-bridge.mjs`, ~130 kB, needs
   only Node.js), the portable archive carries it in a **Launch monitor**
-  folder with **Start bridge** and **Start bridge for a phone** for Windows and
-  macOS, the bridge serves the `Fairway.html` beside it, and the phone script
-  finds the computer's home-network address itself -- skipping a VPN adapter
-  that, on the machine this was written on, came first. Checked by a new
+  folder with a **Start bridge** for Windows and for macOS, and the bridge
+  serves the `Fairway.html` beside it. The script listens on every address and
+  prints two links, this computer's and a phone's, finding the computer's
+  home-network address itself -- skipping a VPN adapter that, on the machine
+  this was written on, came first. There were two scripts per platform, one
+  for a phone, until the owner asked why: the phone one did not even serve the
+  computer's own browser, and the firewall prompt is gate enough. Checked by a new
   `bridge-bundle` journey running the built bundle as its own process with a
   pretend connector sending a real shot, and a unit test for the address
   choice; the Windows script run by hand. Not yet run: the macOS scripts.

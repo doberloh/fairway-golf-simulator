@@ -31,21 +31,17 @@ download.
 1. Double-click **Start bridge** in the Launch monitor folder: `Start
    bridge.cmd` on Windows, `Start bridge.command` on a Mac. On a Mac the first
    time, macOS may refuse to open it: Control-click it and choose **Open**. A
-   window opens and stays open while the bridge runs, with two links in it:
-   one for this computer and one for a phone.
+   window opens and stays open while the bridge runs.
 2. Open **Fairway.html**, choose **Launch monitor** on the main menu, then
    **Connect bridge**, and tick **Arm monitor for live shots**.
 3. Point your monitor's Open Connect connector at **this computer, TCP port
    1921**, and hit.
 
-**To play on a phone or tablet**, open the phone link the bridge printed --
-something like `http://192.168.1.50:1922` -- on the phone, on the same Wi-Fi,
-then Launch monitor and Connect bridge as above. The first time the bridge
-starts, Windows asks whether Node.js may use the network (a Mac with its
-firewall on asks something similar): allow it on **private** networks for a
-phone to get in. Refuse, and this computer still plays; only the phone is
-shut out. The bridge has no password, so anything on your home network could
-drive the simulator -- fine at home, not on a network you do not trust.
+**To play on a phone or tablet**, use **Start bridge for a phone** instead. It
+prints an address such as `http://192.168.1.50:1922` -- open that on the phone,
+on the same Wi-Fi, then Launch monitor and Connect bridge as above. Windows may
+ask whether Node.js may use the network: allow it on **private** networks.
+The bridge has no password, so only do this on a network you trust.
 
 Close the bridge's window to stop it. **INSTALLATION.md** covers connectors,
 ports and what to do when one will not talk.

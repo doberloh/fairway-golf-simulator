@@ -398,18 +398,20 @@ secure page may not open the bridge's unencrypted connection.
 ## Addendum, 27 September 2026: the portable archive ships the bridge
 
 **The portable archive now carries a program as well as the game.** It is
-twelve files: the seven it had, plus a **Launch monitor** folder holding
+ten files: the seven it had, plus a **Launch monitor** folder holding
 `fairway-bridge.mjs` -- the launch-monitor bridge, the game's physics and **ws
-8.21.3 (MIT)** bundled into one JavaScript file for Node.js -- and four start
-scripts (Windows `.cmd`, macOS `.command`). The README it shipped with had
+8.21.3 (MIT)** bundled into one JavaScript file for Node.js -- and a start
+script each for Windows (`.cmd`) and macOS (`.command`). The README it shipped with had
 claimed an "included bridge" that was not included; it is now true.
 
 **What did not change.** `Fairway.html` makes no network requests opened from
 disk, checked by every disk-opened smoke journey. The bridge is only ever run
-by the player, it listens on loopback (127.0.0.1) unless the player starts the
-"for a phone" script, and that script opens it to the home network without
-authentication, as the source bridge already could -- said in the README and
-in INSTALLATION. The ws licence ships beside it in THIRD_PARTY_NOTICES.txt and
+by the player. Started from the start script it listens on every address, so
+a phone on the home network can use it too, WITHOUT authentication -- as the
+source bridge already could when told to -- and the operating system's
+firewall decides whether anything off the computer gets in; the README and
+INSTALLATION say both. Started from source (`npm run bridge`) it still listens
+on loopback only unless told otherwise. The ws licence ships beside it in THIRD_PARTY_NOTICES.txt and
 the bundle names it in a banner. No dependency was added.
 
 **What this does not claim.** That the scripts run on every machine: the

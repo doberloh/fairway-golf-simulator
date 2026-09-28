@@ -216,7 +216,7 @@ For controller testing, prefer localhost on the same computer or a trusted HTTPS
 
 Skip this section for manual play. A browser page cannot listen for a connector's TCP shots, so a small program does: **the bridge**. The portable archive carries it ready to run in its **Launch monitor** folder -- one file, `fairway-bridge.mjs`, and start scripts for Windows (`.cmd`) and macOS (`.command`); it needs only [Node.js](https://nodejs.org) 20 or newer, installed once. The source package runs the same bridge from source. Monitor-specific connector software and vendor requirements are separate, and physical device testing remains deferred. Windows, macOS and Linux can run the Node bridge when their connector software supports that OS; this is not a promise that every connector supports every OS.
 
-**From the portable folder:** double-click **Start bridge** in the Launch monitor folder (on a Mac the first time: Control-click, **Open**). Or, in a terminal in that folder, `node fairway-bridge.mjs` -- which also takes every `FAIRWAY_*` setting below. The bridge serves the `Fairway.html` one folder up. The start script sets `FAIRWAY_HTTP_HOST=all`: the bridge listens on every address, so this computer and a phone on the same Wi-Fi can both use it, and it prints a link for each -- the phone's is this computer's home-network address, found for you. Whether a phone gets in is the firewall's decision (see below).
+**From the portable folder:** double-click **Start bridge** in the Launch monitor folder (on a Mac the first time: Control-click, **Open**). Or, in a terminal in that folder, `node fairway-bridge.mjs` -- which also takes every `FAIRWAY_*` setting below. The bridge serves the `Fairway.html` one folder up. **Start bridge for a phone** does the same with `FAIRWAY_HTTP_HOST=lan`, which finds this computer's home-network address itself and prints the address to open on the phone.
 
 **From the source folder**, after `npm ci` and `npm run build`:
 
@@ -250,7 +250,7 @@ Wrong units and swapped spin fields both look correct in the raw JSON and only s
 
 `FAIRWAY_LOG=debug` does the same thing. `npm run bridge:debug` is preferred because the environment-variable prefix form is bash syntax and PowerShell rejects it.
 
-To play from a phone or tablet on your own network, open the browser-facing server to it: `all` listens on every address -- what the portable **Start bridge** does -- or name one address, as below. With `all` the bridge prints the phone's link, choosing a `192.168.x` home-network address and passing over adapters named like a VPN or a virtual machine, and lists the others it saw in case the guess is wrong. The first time, Windows asks whether Node.js may use the network: allow it on private networks for a phone; refuse, and the computer's own browser still works, because connections from the computer to itself are not firewalled.
+To play from a phone or tablet on your own network, bind the browser-facing server to your LAN address as well -- or set it to `lan` and let the bridge find the address, which is what **Start bridge for a phone** does. `lan` prefers a `192.168.x` home-network address and passes over adapters named like a VPN or a virtual machine; it prints the others it saw, in case the guess is wrong. The first time, Windows asks whether Node.js may use the network: allow it on private networks.
 
 ```sh
 FAIRWAY_HTTP_HOST=192.168.1.50 npm run bridge

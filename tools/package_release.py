@@ -56,8 +56,9 @@ PORTABLE = [
 # platform, in their own folder so the archive's top level stays the game and
 # its documents. The bridge serves the Fairway.html one folder up.
 BRIDGE_FOLDER = 'Launch monitor'
-BRIDGE_SCRIPTS = ['Start bridge.cmd', 'Start bridge for a phone.cmd',
-                  'Start bridge.command', 'Start bridge for a phone.command']
+# One start script per platform. There were two -- one for this computer, one
+# for a phone -- until the bridge learned to listen on every address at once.
+BRIDGE_SCRIPTS = ['Start bridge.cmd', 'Start bridge.command']
 # A double-clicked macOS script must be executable, and a ZIP only says so if
 # the entry carries Unix permissions -- archive.write copies the Windows file's,
 # which have no execute bit.
