@@ -131,6 +131,15 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
+- [ ] **A launch monitor on an iPhone: the owner's decision, researched 27
+  September** (RESEARCH.md, *A launch monitor on an iPhone*). The hosted copy
+  cannot reach the bridge -- Safari blocks an unencrypted connection from a
+  secure page -- so a phone with a monitor loads the game FROM the bridge,
+  which works today. Open choices: (a) default the monitor panel's bridge
+  address to the address the page came from, so a phone does not have to type
+  it; (b) give the bridge `wss://` with a Tailscale certificate and let it
+  accept the hosted site's origin, so the Netlify copy itself can connect.
+
 - [ ] **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
   cache named by the build stamp so an update replaces the old copy cleanly,
