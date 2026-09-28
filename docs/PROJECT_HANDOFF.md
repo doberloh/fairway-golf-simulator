@@ -109,6 +109,7 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/graphics.js | Device-local quality tiers and frame cap, and the one table every graphics knob reads |
 | src/textures.js | Procedural textures and foliage animation shader hooks |
 | src/mesh-assets.js | Decodes that geometry and instances it under the biome palette |
+| src/instance-cull.js | Draws only the part of each course-wide instanced mesh (trees, deadfall, rocks, ground cover, homes, floodlights) that the camera can see or whose shadow it can see |
 | src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |
 | src/shot-visuals.js | Wind debris, strike effects, aiming/tracer helpers |
 | src/clouds.js | Cartoon cloud meshes drifting on the wind, and the discs they shade with |
@@ -469,6 +470,29 @@ Two things make the loan safe, and both are needed:
 ## Weather lives in the clock panel
 
 `fog` joins `floodlights` and `glowBall` in the daylight record, and is the first control that is about weather rather than time — more will want to sit beside it. Off, both the low sheet and the broad haze go to zero density. **The scene fog stays**: it is the distance cue the whole landscape is drawn against, and removing it shows the edge of the world rather than a clear day. Measured at dawn, when the sheet is strongest, turning it off takes mean frame luminance from 128 to 87 of 255.
+
+## The planting is drawn from the camera's view, not the course's
+
+Every tree model, rock shape, clump of ground cover, home and floodlight part is ONE `InstancedMesh` spread over the whole course. Its bounding sphere is therefore the course, three's frustum test never rejects it, and before `src/instance-cull.js` every instance was drawn every frame -- the trees behind the camera included -- and drawn again into each of the three shadow cascades on High and Ultra. Redwood drew about 181 M triangles a frame on High from any tee.
+
+`cullInstances(view.group)` runs at the end of `build`, after the last instanced mesh exists. It sorts each mesh's instances into 64 m squares of the course and keeps a private copy of the matrices and colours. When the camera has moved 4 m or turned 4 degrees (or the sun has moved, or something was hidden), `update` tests the squares -- a few hundred boxes, not tens of thousands of instances -- and copies the instances of the visible squares to the front of each mesh's buffer, pulling `count` back to match. **Each mesh keeps its one draw call**: splitting meshes per square would have let three do the culling, but Redwood has about 80 model/role meshes and that would have turned 600 draw calls into thousands, trading graphics time for processor time a weak machine has less of.
+
+What is kept, and why each margin exists:
+
+- **Squares in a view 7 degrees wider than the camera's, on every side**, and everything within 60 m -- so the few metres and degrees between rebuilds never uncover a gap at the edge of the screen.
+- **Squares whose shadow falls into view.** Each square's box is stretched away from the sun by the length of the shadow its tallest thing casts (height over the tangent of the sun's elevation, capped at 1 km). Without this, a tree just off screen loses its shadow and the shadow on screen vanishes with it.
+
+The numbers these were chosen at are live in the lab: `lab.cullTune({near, margin, shadows, shadowCap})`, `lab.scene()` lists what the course built by group with the heaviest meshes, and its `cull` field the squares and instances held and what the last rebuild cost; `lab.hole(n)` jumps to hole n's tee (0-based), because the first tee is the worst place to judge a cull from -- it stands at the edge of the course with the whole of it ahead.
+
+The traps:
+
+- **A culled mesh no longer holds instance `i` at index `i`.** Never `setMatrixAt` on one after the build. To hide an instance, set its flag in `mesh.userData.cullHidden` (a `Uint8Array` in the ORIGINAL order) and call `view.cull.dirty()`. That is how `clearCameraTrees` hides the tree the camera is standing in; it used to write a zero matrix at the original index, which on a culled mesh zeroes whichever tree happens to be packed there.
+- **Anything that renders the scene from somewhere other than the camera must call `view.cull.showAll()` first.** The water's reflection probes do; without it every pond photographs a course with its back half missing. The next frame's `update` puts the cull back.
+- **The sun direction must actually reach `update`.** The first version passed it only when `this.sun.castShadow` was true -- and with cascaded shadows the main sun does NOT cast, the cascades' lights do. The shadow margin silently did nothing: at 6:24 pm on Redwood the long shadows across the foreground changed on a quarter of the screen with the cull on. If shadows at the edge of the view ever pop as the camera turns, check this first.
+- **Meshes built after `cullInstances` are not culled**, and a mesh whose instances MOVE after the build must opt out with `userData.noCull = true` (the near-field grass tiles do). A new course-wide instanced thing belongs before the call in `build`.
+- **`frustumCulled` is off on every culled mesh** and `computeBoundingSphere` on one sees only what is currently held. Both would otherwise leave three testing a stale sphere and dropping a mesh that has since come into view.
+- **Do not change a culled buffer's usage to `DynamicDrawUsage`.** It is the obvious hint for a buffer rewritten as the camera moves, and on Windows it tripled High's graphics time (12.6 -> 33 ms) for the whole page -- but only on a page opened after another in the same browser, so a single fresh load never shows it and `npm run profile`, which opens the tiers one after another, did. The buffers keep whatever usage they were built with. RESEARCH.md *Drawing only what is in view* has the runs.
+- **Rendering only.** `world.trees`, collision and everything physics reads are untouched; a tree that is not drawn is still exactly where it was, which is why no generator version is involved.
 
 ## Near-field grass is built on a budget
 
