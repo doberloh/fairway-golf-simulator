@@ -498,7 +498,7 @@ export class GolfView{
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
   // Taken here, after the last of them is built; the near-field grass tiles come
   // later, move with the camera, and opt out.
-  this.cull=cullInstances(this.group);
+  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -1588,14 +1588,23 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.camera.position.copy(q.eye);this.look.copy(q.look);
   if(q.done)this.camFlight=null;
  }
- const t=this.camFlight?0:1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();this.cull?.update(this.camera,this.timed?this.sunDir:null);if(this.csm){
+ const t=this.camFlight?0:1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.csm){
    // Zoomed all the way out, stretch the cascades over the whole course so every
    // tree keeps its shadow. Ultra only: the cost is resolution up close, and in
    // overview there is nothing up close to spend it on.
    const reach=this.config.mode==='overview'&&this.quality.overviewShadowFar?this.quality.overviewShadowFar:this.quality.shadowFar;
    if(this.csm.maxFar!==reach){this.csm.maxFar=reach;this.csm.updateFrustums();}
    this.camera.updateMatrixWorld();this.csm.update();
-  }this.bloom?.begin(this.renderer);
+  }
+  // After the cascades have moved, so each shadow map gets the trees it can
+  // reach this frame (instance-cull.js). Their shadow cameras are placed here
+  // exactly as three places them when it draws the map.
+  if(this.cull){
+   const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];
+   for(const l of lights){l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
+   this.cull.update(this.camera,this.timed?this.sunDir:null,lights);
+  }
+  this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}

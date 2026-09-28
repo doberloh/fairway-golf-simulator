@@ -50,6 +50,86 @@ export function modelParts(name) {
  return parts;
 }
 
+// A TREE SEEN FROM FAR OFF, OR ONLY AS A SHADOW. The same tree with a share of
+// its leaf sprays, each enlarged about its own centre so the crown keeps its
+// fullness. Built here from the full model rather than shipped: the grower's
+// `_Far` twins would add megabytes to a single-file game for geometry this
+// derives in milliseconds.
+//
+// SAME TREE, SAME SILHOUETTE. A spray is a connected piece of the leaf part
+// (12-16 triangles on the grown trees, 2,000-4,200 of them a tree), and the
+// pieces kept are every nth in the order the grower laid them down -- which is
+// along the branches -- so what is left is spread over the whole crown rather
+// than thinned from one side. A level of detail that changes shape pops when
+// it swaps; one that changes only density does not (tools/grow.mjs says the
+// same about its own twins).
+//
+// Everything that is not foliage is shared with the full model as it is: the
+// trunk is about 5% of a grown tree and the part a player looks at.
+const farCache = new Map();
+export function farParts(name, keep = 1 / 3) {
+ const key = name + '|' + keep;
+ if (farCache.has(key)) return farCache.get(key);
+ const parts = modelParts(name);
+ if (!parts) return null;
+ const far = parts.map(p => p.role === 'leaf' ? {role: p.role, geometry: thinSprays(p.geometry, keep)} : p);
+ farCache.set(key, far);
+ return far;
+}
+
+export function thinSprays(geometry, keep) {
+ const index = geometry.index.array, n = geometry.attributes.position.count;
+ const parent = Int32Array.from({length: n}, (_, i) => i);
+ const find = i => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+ for (let t = 0; t < index.length; t += 3) {
+  const a = find(index[t]); parent[find(index[t + 1])] = a; parent[find(index[t + 2])] = a;
+ }
+ // Pieces numbered in the order their first triangle appears.
+ const pieceOfRoot = new Int32Array(n).fill(-1), piece = new Int32Array(n).fill(-1);
+ let pieces = 0;
+ for (let t = 0; t < index.length; t += 3) {
+  const r = find(index[t]);
+  if (pieceOfRoot[r] < 0) pieceOfRoot[r] = pieces++;
+ }
+ for (let v = 0; v < n; v++) piece[v] = pieceOfRoot[find(v)];
+ const step = 1 / keep, kept = new Uint8Array(pieces);
+ for (let k = 0; k < pieces; k++) kept[k] = Math.floor(k / step) !== Math.floor((k + 1) / step) ? 1 : 0;
+ // Each kept piece grows about its own centre so the crown keeps its area.
+ const grow = Math.sqrt(step), pos = geometry.attributes.position.array;
+ const centre = new Float64Array(pieces * 3), count = new Uint32Array(pieces);
+ for (let v = 0; v < n; v++) {
+  const k = piece[v];
+  if (k < 0) continue;
+  centre[k * 3] += pos[v * 3]; centre[k * 3 + 1] += pos[v * 3 + 1]; centre[k * 3 + 2] += pos[v * 3 + 2]; count[k]++;
+ }
+ const remap = new Int32Array(n).fill(-1);
+ let next = 0;
+ for (let v = 0; v < n; v++) if (piece[v] >= 0 && kept[piece[v]]) remap[v] = next++;
+ const g = new T.BufferGeometry();
+ for (const [a, src] of Object.entries(geometry.attributes)) {
+  const size = src.itemSize, dst = new Float32Array(next * size);
+  for (let v = 0; v < n; v++) {
+   const to = remap[v];
+   if (to < 0) continue;
+   for (let c = 0; c < size; c++) {
+    let x = src.array[v * size + c];
+    if (a === 'position') { const m = centre[piece[v] * 3 + c] / count[piece[v]]; x = m + (x - m) * grow; }
+    dst[to * size + c] = x;
+   }
+  }
+  g.setAttribute(a, new T.BufferAttribute(dst, size));
+ }
+ let tris = 0;
+ for (let t = 0; t < index.length; t += 3) if (remap[index[t]] >= 0) tris++;
+ const newIndex = next > 65535 ? new Uint32Array(tris * 3) : new Uint16Array(tris * 3);
+ for (let t = 0, o = 0; t < index.length; t += 3) if (remap[index[t]] >= 0) {
+  newIndex[o++] = remap[index[t]]; newIndex[o++] = remap[index[t + 1]]; newIndex[o++] = remap[index[t + 2]];
+ }
+ g.setIndex(new T.BufferAttribute(newIndex, 1));
+ g.computeBoundingSphere();
+ return g;
+}
+
 export const modelRadius = name => MESH_MODELS[name]?.radius || .35;
 
 export const modelTextured = name => !!MESH_MODELS[name]?.textured;
@@ -129,7 +209,7 @@ export function instanceModels(group, entries, materialFor, onMesh) {
   if (!parts) continue;
   for (const part of parts) {
    const key = `${entry.model}|${part.role}|${entry.variant ?? 0}`;
-   const bucket = buckets.get(key) || {part, variant: entry.variant ?? 0, matrices: [], colors: [], owners: []};
+   const bucket = buckets.get(key) || {part, model: entry.model, partIndex: parts.indexOf(part), variant: entry.variant ?? 0, matrices: [], colors: [], owners: []};
    bucket.matrices.push(entry.matrix);
    bucket.colors.push(entry.color[part.role] || entry.color.accent);
    bucket.owners.push(entry.owner);
@@ -137,13 +217,16 @@ export function instanceModels(group, entries, materialFor, onMesh) {
   }
  }
  const meshes = [];
- for (const {part, variant, matrices, colors, owners} of buckets.values()) {
+ for (const {part, model, partIndex, variant, matrices, colors, owners} of buckets.values()) {
   if (!matrices.length) continue;
   const mesh = new T.InstancedMesh(part.geometry, materialFor(part.role, variant), matrices.length);
   matrices.forEach((m, i) => { mesh.setMatrixAt(i, m); mesh.setColorAt(i, colors[i]); });
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
   mesh.castShadow = true; mesh.receiveShadow = true;
   mesh.frustumCulled = true;
+  // What it draws, so the renderer can find this part's thinned twin
+  // (`farParts`) without reverse-engineering it from the geometry.
+  mesh.userData.model = model; mesh.userData.part = partIndex; mesh.userData.role = part.role;
   group.add(mesh);
   meshes.push(mesh);
   onMesh?.({mesh, matrices, owners});

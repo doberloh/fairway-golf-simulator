@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {farParts} from './mesh-assets.js';
 
 // DRAW ONLY THE PLANTING THAT CAN BE SEEN.
 //
@@ -42,13 +43,16 @@ import * as T from 'three';
 
 const CELL = 64;          // metres on a side
 // Live-tunable from the lab (`view.cull.tune`), which is how these were chosen.
-const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000};  // metres, degrees, metres
+// `shadowMaps: false` gives every shadow map every held tree, as before 28 September.
+const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null};  // metres, degrees, metres
 const MOVE = 4;           // metres of camera travel before a rebuild
 const TURN = Math.cos(4 * Math.PI / 180);
 const SUN_TURN = Math.cos(.75 * Math.PI / 180);
 const MARGIN = () => tune.margin * Math.PI / 180;
 
-export function cullInstances(root, {minInstances = 2} = {}) {
+// `thinShadowsFrom`: the first shadow map (0 = nearest) whose trees are drawn
+// as their thinned twins (`farParts`) rather than in full. Infinity: never.
+export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity} = {}) {
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);
@@ -97,10 +101,73 @@ export function cullInstances(root, {minInstances = 2} = {}) {
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;
-  return {mesh, n, order, src, srcColour, runs: Int32Array.from(runs), drawn: n};
+  const record = {mesh, n, order, src, srcColour, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null};
+  const thinFrom = () => tune.thinShadowsFrom ?? thinShadowsFrom;
+  // A SHADOW OF THE SAME TREE, DRAWN CHEAPER. From map `thinShadowsFrom` out,
+  // a crown's shadow comes from its thinned twin -- a third of the sprays,
+  // each grown to keep the crown as full -- which a shadow texel of half a
+  // metre or more cannot tell from the whole tree. It shares this mesh's
+  // instance buffer, so it costs no upload and always holds the same trees.
+  // It is never drawn into the picture: only into shadow maps.
+  const far = mesh.userData.role === 'leaf' && thinShadowsFrom !== Infinity && mesh.castShadow
+   ? farParts(mesh.userData.model)?.[mesh.userData.part]?.geometry : null;
+  if (far && far.index.count < geo.index.count * .6) {
+   const twin = new T.InstancedMesh(far, mesh.material, n);
+   twin.instanceMatrix = mesh.instanceMatrix;
+   twin.castShadow = true; twin.receiveShadow = false; twin.frustumCulled = false;
+   twin.userData.noCull = true; twin.name = 'shadow twin';
+   // Kept out of the picture (and the god-ray mask, and the water probes):
+   // every render that is not a shadow map sees no instances.
+   twin.onBeforeRender = function () { this.userData.cullHeld = this.count; this.count = 0; };
+   twin.onAfterRender = function () { this.count = this.userData.cullHeld; this.userData.cullHeld = undefined; };
+   twin.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+    const k = shadowOf.get(shadowCamera);
+    this.userData.cullHeld = this.count;
+    this.count = k === undefined || k < thinFrom() ? 0 : all || !record.cum ? mesh.count : record.cum[k];
+   };
+   twin.onAfterShadow = function () { this.count = this.userData.cullHeld; this.userData.cullHeld = undefined; };
+   mesh.parent.add(twin);
+   record.twin = twin;
+  }
+  // Before each shadow map draws this mesh, cut it to that map's prefix -- or
+  // to nothing, where its twin stands in; put it back after. A shadow camera
+  // the cull was not told about -- a floodlight's -- draws everything, as it
+  // always did.
+  mesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+   const k = shadowOf.get(shadowCamera);
+   if (k === undefined) return;
+   if (record.twin && k >= thinFrom()) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if (all || !record.cum) return;
+   this.userData.cullHeld = this.count;
+   this.count = record.cum[k];
+  };
+  mesh.onAfterShadow = function () {
+   if (this.userData.cullHeld === undefined) return;
+   this.count = this.userData.cullHeld;
+   this.userData.cullHeld = undefined;
+  };
+  return record;
  });
 
  const visible = new Uint8Array(boxes.length).fill(1);
+ // WHICH SHADOW MAP A SQUARE IS FIRST NEEDED BY. Three draws a shadow caster
+ // into every shadow map whose volume it overlaps, testing the object's
+ // bounding sphere -- and a culled mesh has no sphere worth testing, so without
+ // this every tree in view went into every map: all three cascades on High and
+ // Ultra, near one included, and the single map on Low and Medium that covers
+ // only the ground around the player. Measured, each cascade was drawing the
+ // same ~35 M triangles (Redwood, first tee).
+ //
+ // A mesh has ONE instance buffer, so the maps cannot each get their own list.
+ // Instead the squares are written in order of the first map that needs them --
+ // map 0's squares first, then those map 1 needs and map 0 does not, and so on,
+ // with squares that only the camera needs last -- and each map draws a prefix.
+ // Map i's prefix holds every square any map up to i needs, which is every
+ // square map i needs plus a few it does not; never fewer. `pass` is that group;
+ // `cum` in each record is where each group ends.
+ let casters = [];                    // the shadow cameras, nearest map first
+ const pass = new Uint8Array(boxes.length), shadowOf = new Map(), shadowFrustum = new T.Frustum();
+ const casterPos = new T.Vector3(), casterAim = new T.Vector3();
  const wide = new T.PerspectiveCamera(), frustum = new T.Frustum(), vp = new T.Matrix4();
  const lastPos = new T.Vector3(Infinity, 0, 0), lastFwd = new T.Vector3(), lastSun = new T.Vector3();
  const fwd = new T.Vector3(), away = new T.Vector3(), box = new T.Box3();
@@ -110,22 +177,28 @@ export function cullInstances(root, {minInstances = 2} = {}) {
   for (const r of records) {
    const {mesh, order, src, srcColour, runs} = r, hidden = mesh.userData.cullHidden;
    const dst = mesh.instanceMatrix.array, dstColour = mesh.instanceColor?.array;
+   const groups = all ? 0 : casters.length;
+   if (!r.cum || r.cum.length !== groups + 1) r.cum = new Int32Array(groups + 1);
    let out = 0;
-   for (let j = 0; j < runs.length; j += 3) {
-    if (!all && !visible[runs[j]]) continue;
-    const start = runs[j + 1], end = start + runs[j + 2];
-    for (let k = start; k < end; k++) {
-     if (hidden && hidden[order[k]]) continue;
-     for (let q = 0; q < 16; q++) dst[out * 16 + q] = src[k * 16 + q];
-     if (dstColour) {
-      dstColour[out * 3] = srcColour[k * 3];
-      dstColour[out * 3 + 1] = srcColour[k * 3 + 1];
-      dstColour[out * 3 + 2] = srcColour[k * 3 + 2];
+   for (let g = 0; g <= groups; g++) {
+    for (let j = 0; j < runs.length; j += 3) {
+     if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
+     const start = runs[j + 1], end = start + runs[j + 2];
+     for (let k = start; k < end; k++) {
+      if (hidden && hidden[order[k]]) continue;
+      for (let q = 0; q < 16; q++) dst[out * 16 + q] = src[k * 16 + q];
+      if (dstColour) {
+       dstColour[out * 3] = srcColour[k * 3];
+       dstColour[out * 3 + 1] = srcColour[k * 3 + 1];
+       dstColour[out * 3 + 2] = srcColour[k * 3 + 2];
+      }
+      out++;
      }
-     out++;
     }
+    r.cum[g] = out;
    }
    r.drawn = out; mesh.count = out; mesh.visible = out > 0;
+   if (r.twin) { r.twin.count = out; r.twin.visible = out > 0; }
    // Only the part in use goes to the graphics card.
    const im = mesh.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(0, out * 16); im.needsUpdate = true;
    const ic = mesh.instanceColor;
@@ -139,9 +212,18 @@ export function cullInstances(root, {minInstances = 2} = {}) {
   dirty() { stale = true; },
   // Everything back in the buffer, for a render from somewhere else.
   showAll() { all = true; write(); stale = true; },
-  update(camera, sunDir) {
+  // `lights`: the shadow-casting lights to sort for, nearest map first (the
+  // cascades, or the one sun). Their shadow cameras must already be placed for
+  // this frame -- the renderer calls this after the cascades have moved.
+  update(camera, sunDir, lights = []) {
+   if (!tune.shadowMaps) lights = [];
    camera.updateMatrixWorld();
    camera.getWorldDirection(fwd);
+   if (lights.length !== casters.length || lights.some((l, i) => l.shadow.camera !== casters[i])) {
+    casters = lights.map(l => l.shadow.camera);
+    shadowOf.clear(); casters.forEach((c, i) => shadowOf.set(c, i));
+    stale = true;
+   }
    const moved = lastPos.distanceToSquared(camera.position) > MOVE * MOVE || fwd.dot(lastFwd) < TURN ||
     camera.fov !== lastFov || camera.aspect !== lastAspect || (sunDir && sunDir.dot(lastSun) < SUN_TURN);
    if (!moved && !stale) return false;
@@ -175,6 +257,21 @@ export function cullInstances(root, {minInstances = 2} = {}) {
     }
     visible[c] = frustum.intersectsBox(box) ? 1 : 0;
    }
+   // Each square's first shadow map. The maps move with the camera as it
+   // does, so between rebuilds a map can drift by the camera's allowance of
+   // travel and turn; each volume is grown by that much before it is tested.
+   pass.fill(casters.length);
+   for (let i = casters.length - 1; i >= 0; i--) {
+    const cam = casters[i];
+    shadowFrustum.setFromProjectionMatrix(vp.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
+    casterPos.setFromMatrixPosition(cam.matrixWorld);
+    // A turn swings a map sideways by its distance from the camera times the
+    // angle; its light-ward margin makes this distance an overestimate.
+    const reach = casterAim.copy(casterPos).sub(camera.position).length();
+    const grow = MOVE + Math.sin(Math.acos(TURN)) * reach;
+    for (const plane of shadowFrustum.planes) plane.constant += grow;
+    for (let c = 0; c < boxes.length; c++) if (visible[c] && shadowFrustum.intersectsBox(boxes[c])) pass[c] = i;
+   }
    write();
    rebuilds++; rebuildMs = performance.now() - started;
    return true;
@@ -185,7 +282,8 @@ export function cullInstances(root, {minInstances = 2} = {}) {
    let instances = 0, drawn = 0;
    for (const r of records) { instances += r.n; drawn += r.drawn; }
    let shown = 0; for (const x of visible) shown += x;
-   return {meshes: records.length, squares: boxes.length, squaresDrawn: shown, instances, drawn,
+   const shadow = casters.map((_, k) => records.reduce((a, r) => a + (r.cum?.[k] ?? r.drawn), 0));
+   return {meshes: records.length, squares: boxes.length, squaresDrawn: shown, instances, drawn, shadow,
     rebuilds, lastRebuildMs: +rebuildMs.toFixed(2)};
   }
  };

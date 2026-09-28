@@ -3730,7 +3730,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // by the group each mesh sits in (named groups by name, loose meshes by kind),
   // with the heaviest meshes on their own. It is how culling is judged: a group
   // whose triangles are all drawn from every camera is one nothing culls.
-  // The view cull's margins, live: {near (m), margin (deg), shadows (bool)}.
+  // The view cull's margins, live: {near (m), margin (deg), shadows (bool), shadowCap (m),
+  // shadowMaps (bool: each shadow map only its own trees), thinShadowsFrom (map index, 99 = never, null = the tier's)}.
   cullTune:(next)=>view.cull?.tune(next)??null,
   scene:()=>{
    // A mesh the view cull manages holds only what is in view at the moment;
