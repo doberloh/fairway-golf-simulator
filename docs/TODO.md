@@ -53,13 +53,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F0. Re-save the frame-profile baseline.** `bench/profile-baseline.json`
-  (22 September) was taken with the probe that counted every frame twice, so
-  `npm run profile -- --since` currently compares a correct run against a
-  broken one and its differences mean nothing. Needs a FULL sweep (`npm run
-  profile -- --save`, about 10 minutes; the owner's call when to run it, per
-  AGENTS.md). Do it before F2/F3 are judged against it.
-
 - [ ] **F2. Draw distant trees cheaply, with the distance set by the tier.**
   Full detail near the camera, a simple version further out, and possibly
   nothing past the fog. Short handover on Low, long on Ultra. A distance swap
@@ -97,8 +90,8 @@ Ground rules that apply to every item below:
   pixel ratio a step when frames run slow, raise it when there is headroom,
   within the tier's own ceiling (`applyQuality` sets
   `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
-  4090 with the old double-counting probe (so re-measure first): High at 1x
-  pixels 9.4 ms, 1.5x 10.9 ms, 2x 12.7 ms. Matters most on
+  4090 (corrected probe, 28 September baseline): High at 1x pixels 10.7 ms,
+  1.5x 12.4 ms, 2x 14.4 ms. Matters most on
   phones (many pixels, small graphics chip). Needs hysteresis so it does not
   flicker between steps, and a setting to turn it off.
 
@@ -1126,6 +1119,15 @@ record of what was ruled out and why, which is worth more than a short file.
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 ### Frame rate
+
+- [x] **F0. Re-save the frame-profile baseline.** Done 28 September after the
+  probe fix (RESEARCH.md *The profiler counted every frame twice*): full sweep,
+  29 cases in 15.8 minutes (not the ~10 AGENTS.md quotes -- the software arm
+  and the corrected frame counting both run longer). Headlines, graphics ms:
+  Redwood Low 5.6, Medium 8.8, High 14.1, Ultra 15.4 from the first tee;
+  Redwood High OVERVIEW 27.7, the heaviest case in the sweep; every other
+  biome 5.0-8.7 at High; High at 1x/1.5x/2x pixels 10.7/12.4/14.4. `--since`
+  now compares like with like.
 
 - [x] **F1. Draw only what is in view.** Built as `src/instance-cull.js`, on
   branch `view-culling`. Every course-wide `InstancedMesh` in `view.group` --

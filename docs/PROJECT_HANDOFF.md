@@ -180,7 +180,7 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 | tools/smoke.mjs | `npm run smoke`. Opens the BUILT file by `file://` in a real browser and plays it: menu panels and every tab, an Endless hole from tee to holed putt to the next hole, a Surprise-me nine, the range, the studio saving a course, and whether every play-screen control can actually be clicked at five screen sizes. Fails on any uncaught error, any `console.error`, and ANY network request. Drives by the names a player reads; uses `window.lab` only to look |
 | tools/shot-sink.mjs | Somewhere for the game to put a screenshot of itself. The game photographs itself in whatever browser is open and posts the frame here -- no headless browser, no second rendering path |
 | bench/baseline.json | The last saved measurement, for `--since` |
-| bench/profile-baseline.json | The last saved frame profile, for `--since`. The one from 22 September predates the probe fix and must be re-saved from a full sweep before `--since` means anything |
+| bench/profile-baseline.json | The last saved frame profile, for `--since`. Re-saved 28 September after the probe fix; anything older counted every frame twice |
 | bench/biome-fingerprints.json | The stored fingerprints, with the generator version they were taken at |
 | tests/*.test.mjs | Node test-runner regression suites; no external test framework |
 

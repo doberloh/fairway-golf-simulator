@@ -3997,3 +3997,13 @@ re-measuring before it is believed either way.
 re-saved from a full sweep, `--since` compares a correct run against a broken
 one and its differences mean nothing. The places in this file that quote the
 old figures are marked where they stand.
+
+**Re-saved the same day** (full sweep, 29 cases, 15.8 minutes). Graphics ms
+per frame, median: Redwood Low 5.63, Medium 8.82, High 14.12, Ultra 15.36 from
+the first tee; the whole-hole overview on Redwood is the heaviest case in the
+sweep at 27.66 (High) and 27.23 (Ultra), on 174 M triangles; every other biome
+at High 5.02-8.74 (Island the highest, and its CPU median of 8.40 now tracks
+its GPU the way every other case does, so its "processor-bound" reading was
+probably the old probe); High at 1x, 1.5x and 2x pixels 10.69, 12.44, 14.36; a
+water course's reflection toggle 7.16 against 7.20 (still nothing); the
+software rasteriser 3.3-3.8 s a frame.
