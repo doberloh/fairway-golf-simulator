@@ -629,6 +629,33 @@ export class GolfView{
   catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
   this.warmFloodlights();
  }
+ // THE FIRST FRAME, PAID FOR BEHIND THE LOADING SCREEN (B1 in TODO).
+ //
+ // `warmUp` above calls `compile`, which CREATES every program but does not
+ // wait for them: the driver links them on its own threads, and the first
+ // frame that draws with one blocks until it is done. So the loading screen
+ // went away and the picture froze -- measured, cold, 1.9 s on a nine-hole
+ // course and 3.5 s on eighteen, on an RTX 4090; a phone is slower. And
+ // `compile` never sees the programs made only when something is drawn: the
+ // shadow maps' depth programs, the god-ray mask, bloom.
+ //
+ // So before the screen goes: `compileAsync` waits for the driver's links
+ // without blocking the page (the spinner keeps turning), then one real frame
+ // is drawn under the overlay to make the rest. Called from `whileGenerating`,
+ // which every course build goes through.
+ async ready(){
+  if(!this.group)return 0;
+  const t0=performance.now();
+  try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+  catch(e){console.warn('Fairway: shader warm-up skipped',e);}
+  const t1=performance.now();
+  // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
+  try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
+  // For the lab: how long each half took. The first is time the page stays
+  // live; the second blocks it, so it is the one to keep small.
+  this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
+  return this.readyTimes;
+ }
  // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
  //
  // The lamps are invisible until the player switches them on, so `compile` above

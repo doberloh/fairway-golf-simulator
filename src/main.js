@@ -1557,7 +1557,14 @@ async function whileGenerating(label,work,quiet=false){
  // The frame wait still matters even when quiet: it is what lets whatever IS on
  // screen paint before the first block of work.
  await nextFrame();
- try{return await work(report=>{if(!quiet)setProgress(report);});}
+ try{
+  const result=await work(report=>{if(!quiet)setProgress(report);});
+  // The graphics card's share of the wait, behind the overlay rather than as a
+  // frozen first frame after it (GolfView.ready).
+  if(!quiet)setProgress({label:'Preparing the graphics',done:1});
+  await view?.ready?.();
+  return result;
+ }
  finally{if(!quiet){box.hidden=true;setProgress(null);}}
 }
 // The bar and the phase name. Null puts it back to indeterminate, for the
@@ -3750,7 +3757,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     meshes.push({group:key,name:o.name||o.material?.type||'',instances:n,triangles:per*n,radius:r==null?null:Math.round(r),shadow:!!o.castShadow});
    });
    meshes.sort((a,b)=>b.triangles-a.triangles);
-   return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null};
+   return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null,ready:view.readyTimes??null};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
