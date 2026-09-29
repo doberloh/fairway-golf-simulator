@@ -64,10 +64,24 @@ const SHORE_VERT=['#include <common>','#include <common>\nattribute float shore;
 const SHORE_VERT2=['#include <begin_vertex>','#include <begin_vertex>\nvShore=shore;'];
 const SHORE_FRAG=['#include <common>','#include <common>\nvarying float vShore;'];
 const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
+// The pond's foam strip: v is 0 at the bank and 1 a metre and a half in. A band
+// that surges in and out along the shore, broken into lace by drifting noise.
+const FOAM_FRAG=`
+uniform float waterTime;varying vec2 vFoamUv;varying vec3 vFoamWorld;
+float fHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
+float foamAlpha(){
+ float v=vFoamUv.y,t=waterTime;
+ float surge=.42+.16*sin(t*.8+vFoamWorld.x*.23+vFoamWorld.z*.19);
+ float band=smoothstep(0.,.12,v)*(1.-smoothstep(surge*.55,surge,v));
+ float lace=fNoise(vFoamWorld.xz*2.3+vec2(t*.21,-t*.16))*.62+fNoise(vFoamWorld.xz*5.7-vec2(t*.33,t*.12))*.38;
+ return band*smoothstep(.5,.8,lace)*.42;
+}
+`;
 // Ripples with no tile in them, for water with no reflection to carry it.
 // The water surface, generated rather than sampled. See `dressWater`.
 const WATER_NOISE=`
-uniform float waterTime;uniform float waterChop;uniform float waterSwell;
+uniform float waterTime;uniform float waterChop;uniform float waterSwell;uniform vec3 glintSun,glintColor;
 // Metres per second, in world XZ. Zero on a pond, along the channel on a creek.
 uniform vec2 waterFlow;
 varying vec3 vWaterWorld;
@@ -511,7 +525,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.waterTime=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -558,7 +572,7 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
-  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));}this.addHoleDetails(h);}
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level);}this.addHoleDetails(h);}
   if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
@@ -571,7 +585,8 @@ export class GolfView{
   // Every handoff was one pond turning from water into varnish and another
   // turning back. Nothing is handed around any more.
   if(this.waterBodies.length){
-   this.waterTime={value:0};
+   // Kept if the shore foam already made it this build (addShoreFoam).
+   this.waterTime??={value:0};
    this.waterSpeed=WATER_SPEED;
    this.waterChop={value:.55};this.waterSwell={value:.45};
    for(const b of this.waterBodies)this.dressWater(b.mesh.material,b);
@@ -832,6 +847,37 @@ export class GolfView{
  // built. Nothing here is decided per frame and nothing is shared between
  // bodies, so there is no state that can change under the camera and nothing
  // that can pop.
+ // FOAM WHERE A POND MEETS ITS BANK (U5 in TODO). A pond is one flat shape
+ // whose every vertex is on its outline, so nothing on its surface knows how
+ // far it is from the edge -- the stream shader's `shore` fade has nothing to
+ // read here. So the foam is its own strip: the outline, and a copy of it moved
+ // 1.4 m inward, drawn just above the water with a lacy, gently lapping alpha
+ // (FOAM_FRAG). Lit, so it dims with the evening like everything else.
+ addShoreFoam(points,level){
+  if(this.style==='blueprint'||points.length<3)return;
+  const n=points.length,W=1.4,pos=[],uv=[],idx=[];
+  let area=0;for(let i=0;i<n;i++){const a=points[i],b=points[(i+1)%n];area+=a.x*b.y-b.x*a.y;}
+  const inward=area>0?1:-1;
+  for(let i=0;i<n;i++){
+   const a=points[(i-1+n)%n],b=points[(i+1)%n],p=points[i];
+   let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+   pos.push(p.x,p.y,0,p.x-ty*inward*W,p.y+tx*inward*W,0);uv.push(i/n,0,i/n,1);
+   const k=i*2,m=((i+1)%n)*2;idx.push(k,m,k+1,k+1,m,m+1);
+  }
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,gradientMap:this.propRamp??=toonRamp(this)});
+  const time=this.waterTime??=({value:0});
+  mat.onBeforeCompile=shader=>{
+   shader.uniforms.waterTime=time;
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vFoamUv;varying vec3 vFoamWorld;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+   shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
+    .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
+  };
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v1';
+  const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
+  this.group.add(mesh);
+ }
  dressWater(material,body){
   if(!material)return;
   // Smooth and metallic enough for the probe to read as a REFLECTION rather
@@ -842,9 +888,12 @@ export class GolfView{
   // Per body, because it is the one thing about the surface that differs
   // between a creek and a pond.
   const f=flowFor(body),flow={value:new T.Vector2(f.x,f.y)};
+  // This course's sun, by reference: both change through the day.
+  const sun={value:this.sunDir},sunColor={value:this.sun.color};
   material.onBeforeCompile=shader=>{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
+   shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
    shader.uniforms.waterFlow=flow;
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
     .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;')
@@ -871,11 +920,24 @@ export class GolfView{
       // The sky takes over as it turns edge on, so the surface still reads as a
       // surface where it has gone opaque.
       diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.35+vec3(.06),fres);
+      // GLINT (U5): the sun caught by wavelets tilted just right. The mirror
+      // direction of the view off the rippled normal, raised to a very high
+      // power, and broken into sparks by fine noise that drifts with the
+      // ripples -- a scatter of points on the sun's path, not one smooth blob.
+      // Gone when the sun is down. Added to outgoingLight: by this include the
+      // lighting has already read diffuseColor, so a change to its colour here
+      // is never seen (only its alpha still counts).
+      vec3 wn=normalize((vec4(normal,0.)*viewMatrix).xyz);
+      vec3 rd=reflect(normalize(vWaterWorld-cameraPosition),wn);
+      float spark=smoothstep(.55,.95,wNoise(vWaterWorld.xz*3.1+vec2(waterTime*.9,-waterTime*.7))*.5+.5);
+      float glint=pow(max(dot(rd,glintSun),0.),700.)*spark*smoothstep(0.,.08,glintSun.y);
+      outgoingLight+=glintColor*glint*3.;
+      diffuseColor.a=max(diffuseColor.a,min(1.,glint*2.));
      }
      ${SHORE_ALPHA}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v1';
+  material.customProgramCacheKey=()=>'fairway-water-v2';
   material.needsUpdate=true;
  }
 

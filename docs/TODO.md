@@ -88,10 +88,6 @@ the budget these spend.
   -- a multisampled render target (WebGL2 `samples`) or an AO that works
   without one is the way round.
 
-- [ ] **U5. Water with an edge and a glint.** Ponds (especially Redwood's dark
-  ones) read as flat shapes. A light foam rim at the shoreline (the bank
-  profiles are already in `bankAtlas`) and a sun glint. Every tier, cheap.
-
 - [ ] **U6. Spend the savings on more forest (after F1-F2).** With distant
   trees cheap, Ultra keeps full-detail trees much further out and adds more
   forest floor near the camera (ferns, logs, flowers); Low keeps today's
@@ -1209,6 +1205,13 @@ record of what was ruled out and why, which is worth more than a short file.
   sun, and much less on steep sight lines so the bird's-eye view stays clear
   below. Every tier; graphics preference `haze`, default 50%. RESEARCH.md
   *Distance fading into the sky*.
+
+- [x] **U5. Water with an edge and a glint.** Branch `ultra-looks`. A strip of
+  lacy foam 1.4 m wide inside every pond's outline, lapping in and out, and a
+  scatter of sun sparks where the ripples catch the sun's reflection. Every tier
+  but Blueprint; gone once the sun is down. The foam is its own strip rather
+  than read from `bankAtlas`: nothing on a pond's surface knows how far it is
+  from the edge. RESEARCH.md *Foam and sun sparks on the ponds*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry

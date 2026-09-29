@@ -4589,3 +4589,38 @@ Not moved: the crowns' SHADOWS -- three draws shadows with its own depth
 material, which does not carry the patch; at these amplitudes a still shadow
 under a swaying crown does not read. A graphics preference `wind` (0-100%,
 default 100) scales every swaying material through one shared uniform.
+
+## Foam and sun sparks on the ponds (U5, 29 September)
+
+`addShoreFoam` and the glint term in `dressWater`, `src/renderer.js`.
+
+**Foam.** A pond is one flat shape whose every vertex is on its outline, so
+nothing on the water knows how far it is from the bank -- the stream shader's
+`shore` fade has nothing to read on a pond, and `bankAtlas` holds the bank's
+profile, not a distance on the water. So the foam is its own mesh: the outline
+and a copy moved 1.4 m inward, 3 cm above the water. Its opacity is a band that
+surges between about 0.3 and 0.6 of the strip's width along the shore, cut into
+lace by two drifting noise layers, at most 42% opaque. **The first attempt read
+as white tape round every pond** (colour #f3f7f4, 78%, a lower lace threshold);
+it was toned down to a grey-green white and a sparser lace. Lit by the toon ramp,
+so it dims with the evening. One draw per pond.
+
+**Glint.** The view reflected off the rippled normal, compared with the sun's
+direction and raised to the 700th power, then broken into sparks by fine noise
+drifting with the ripples: a scatter of points around the sun's mirror image,
+not a smooth blob. Fades out as the sun reaches the horizon.
+
+**A trap found on the way, worth knowing before touching this shader again.**
+The water's extra colour is written at `#include <opaque_fragment>`, and by then
+three.js has already turned `diffuseColor` into `outgoingLight`. Changing
+`diffuseColor.rgb` there does nothing on screen; only its alpha still counts.
+The glint was invisible from every pose tried until it was added to
+`outgoingLight` instead. The older line above it that brightens the water
+toward grazing (`diffuseColor.rgb=mix(...,fres)`) has the same problem and has
+never had any effect. It was left alone here, because making it work would
+change how every pond and creek looks at a distance -- that is a decision for
+the owner, not a side effect of U5.
+
+**Verified** by placing the camera on the sun's mirror line over the
+Pacific Northwest pond (seed REPORT1, 16:00, sun 38 degrees up): sparks around the reflection
+point and along the lit water, none on the shaded side. No outside sources.
