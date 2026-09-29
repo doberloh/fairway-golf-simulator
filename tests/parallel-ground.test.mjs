@@ -87,3 +87,30 @@ test('a pool that fails falls back to computing here, and gets the same grid', a
  half.extras = async () => null;
  sameGrid(serial.groundGrid, (await drive(settings, {gridPool: half})).groundGrid);
 });
+
+// THE OWNERSHIP ATLAS (B2c): the ground shader's record of which hole owns each
+// texel. The workers compute three of its four channels from their own copy of
+// the world; the main thread adds straw. Both halves must reproduce the loop
+// ground.js used to run, which is copied here as the reference.
+import {ownerAtlasSize, ownerRows, strawChannel} from '../src/owner-atlas.js';
+const referenceAtlas = (w, ex, ez, Sx, Sz) => {
+ const owners = new Float32Array(Sx * Sz * 4);
+ for (let j = 0; j < Sz; j++) for (let i = 0; i < Sx; i++) {const x = ((i + .5) / Sx * 2 - 1) * ex, z = ((j + .5) / Sz * 2 - 1) * ez, k = (j * Sx + i) * 4; const lake = w.lakeOwner(x, z, 7); owners[k] = (lake || w.nearest(x, z).h).hole; owners[k + 1] = w.groundCover(x, z) === 'straw' ? 1 : 0; owners[k + 2] = (w.streams.at(x, z)?.id ?? -1) + 1; owners[k + 3] = lake ? 1 : 0;}
+ return owners;
+};
+for (const settings of [{seed: 'PARALLEL', biome: 'links', holes: 9}, {seed: 'PARALLEL', biome: 'island', holes: 9}]) {
+ test(`${settings.biome}: the ownership atlas from the workers is the one ground.js built`, () => {
+  const w = generateWorld(settings), ex = w.groundGrid.halfX, ez = w.groundGrid.halfZ, {Sx, Sz} = ownerAtlasSize(ex, ez);
+  const reference = referenceAtlas(w, ex, ez, Sx, Sz);
+  // The main thread's own path, as ground.js now runs it.
+  const here = ownerRows({lakeOwner: w.lakeOwner, nearest: w.nearest, streamAt: (x, z) => w.streams.at(x, z)}, ex, ez, Sx, Sz, 0, Sz);
+  strawChannel(here, w.groundCover, ex, ez, Sx, Sz);
+  assert.deepEqual(Buffer.from(here.buffer), Buffer.from(reference.buffer));
+  // A worker's copy, in bands handed back in reverse.
+  const q = capture(settings), bands = 6, edges = Array.from({length: bands + 1}, (_, b) => Math.round(Sz * b / bands));
+  const theirs = new Float32Array(Sx * Sz * 4);
+  for (let b = bands - 1; b >= 0; b--) theirs.set(ownerRows(q, ex, ez, Sx, Sz, edges[b], edges[b + 1]), edges[b] * Sx * 4);
+  strawChannel(theirs, w.groundCover, ex, ez, Sx, Sz);
+  assert.deepEqual(Buffer.from(theirs.buffer), Buffer.from(reference.buffer));
+ });
+}

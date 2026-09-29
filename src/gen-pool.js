@@ -1,4 +1,5 @@
 import GenWorker from './gen-worker.js?worker&inline';
+import {ownerAtlasSize} from './owner-atlas.js';
 
 // THE WORKERS THAT COMPUTE GROUND HEIGHTS (B2 in TODO). Started when a course
 // starts generating, so each builds its copy of the world while the main thread
@@ -19,7 +20,7 @@ export function makeGridPool(settings, {count} = {}) {
  let workers = [];
  try { for (let i = 0; i < n; i++) workers.push(new GenWorker()); }
  catch { for (const w of workers) w.terminate(); return null; }
- let seq = 0;
+ let seq = 0, atlas = Promise.resolve(null);
  const call = (w, msg, transfer = []) => new Promise((ok, no) => {
   const id = ++seq, timer = setTimeout(() => done(new Error('worker timed out')), TIMEOUT);
   const done = (err, data) => { clearTimeout(timer); w.removeEventListener('message', onMessage); w.removeEventListener('error', onError); err ? no(err) : ok(data); };
@@ -56,6 +57,16 @@ export function makeGridPool(settings, {count} = {}) {
     return out;
    } catch (err) { console.warn('Fairway: ground workers unavailable, building here', err); return null; }
   },
+  // The ground's ownership atlas (owner-atlas.js), asked for as soon as the
+  // grid's heights are in and collected when generation ends. Null if it
+  // failed; the ground material then fills it itself.
+  prefetchAtlas(ex, ez) {
+   const {Sx, Sz} = ownerAtlasSize(ex, ez), edges = split(Sz, workers.length);
+   atlas = Promise.all(workers.map((w, b) => call(w, {type: 'atlas', ex, ez, Sx, Sz, j0: edges[b], j1: edges[b + 1]})))
+    .then(parts => {const data = new Float32Array(Sx * Sz * 4); parts.forEach((p, b) => data.set(p.values, edges[b] * Sx * 4)); return {Sx, Sz, data};})
+    .catch(err => {console.warn('Fairway: ground atlas workers unavailable, building here', err); return null;});
+  },
+  atlas: () => atlas,
   dispose() { for (const w of workers) w.terminate(); workers = []; },
  };
 }

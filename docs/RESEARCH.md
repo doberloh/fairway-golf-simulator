@@ -4336,9 +4336,20 @@ includes the workers finishing their own copy of the world) and 0.16-0.5 s
 for the refined points. Generation is now a minority of the wait: the rest is
 the scene build and the graphics card (B4's leftovers, below).
 
-**Left for the scene build.** Placing the ground cover (asks `surface`, which
-needs the finished grid for `height`) and the ownership atlas (`nearest` per
-texel) are the next per-point work that could move to the same workers; the
-first needs the grid sent to them, which is tens of megabytes per worker
-without shared memory, and shared memory is not available to a page opened
-from disk.
+**The ownership atlas too.** The ground shader's record of which hole owns
+each texel (up to a million of them, `nearest` per texel, 0.8 s of the scene
+build) needs only what exists before the grid -- except its straw channel.
+So the workers compute the hole, lake and stream channels from their own copy
+(`owner-atlas.js`, shared with `ground.js` so the size and the questions cannot
+drift apart), starting as soon as the grid's heights are in and running while
+the main thread assembles the grid and plants; the ground material only adds
+straw. Held to the byte against the loop `ground.js` used to run, both for the
+main thread's own path and for worker bands handed back in reverse
+(`tests/parallel-ground.test.mjs`). `largeLakes`/`lakeOwner` moved above the
+grid in `course.js` so a worker holds them; nothing in them depends on the
+grid. Measured (busy machine, alternated): the longest page freeze while
+loading 6.58/6.97 -> 5.79/5.81 s, the build 11.6/12.6 -> 10.0/10.1 s.
+
+**Left:** placing the ground cover asks `surface`, which needs the finished
+grid for `height` -- tens of megabytes per worker to send without shared
+memory, and shared memory is not available to a page opened from disk.

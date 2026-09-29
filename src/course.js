@@ -1714,11 +1714,16 @@ export function* generateWorldSteps(settings={},options={}){
   for(const b of h.bunkers)grow(b.x-b.rx*1.4-4,b.x+b.rx*1.4+4,b.z-b.rz*1.4-4,b.z+b.rz*1.4+4);
   return worldBoxOf(h,x0,x1,z0,z1);
  });
+ // Which large lake owns a point, if any. Defined before the grid (nothing in
+ // it depends on the grid) so a generation worker holds it too: the ground's
+ // ownership atlas asks it for every texel (owner-atlas.js).
+ const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
+ const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;
  // Which cells are cut to half a metre. Named, because a worker that computes
  // heights for the grid (B2) has to ask exactly this.
  const refineCell=(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some((h,i)=>{const w=refineBoxes[i];if(x<w.minX||x>w.maxX||z<w.minZ||z>w.maxZ)return false;const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);});
  // A worker stops here: it needed the land and the question, not the grid.
- if(options.capture){yield {capture:{sample:analyticHeight,refine:refineCell}};return null;}
+ if(options.capture){yield {capture:{sample:analyticHeight,refine:refineCell,nearest,lakeOwner,streamAt:(x,z)=>streams.at(x,z)}};return null;}
  const groundGrid=yield* stepGrid(options.gridPool
   ?makeGroundGridPooled(analyticHeight,halfX+150,halfZ+150,3,refineCell,options.gridPool)
   :makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,refineCell));
@@ -1727,8 +1732,6 @@ export function* generateWorldSteps(settings={},options={}){
  // rather than trying to infer it back out of the terrain.
  const teeSites=teePads.map(p=>({hole:p.h.hole,x:p.x,z:p.z,rz:p.rz,level:p.y,
   spread:p.spread??0,slid:p.slid??0,lift:p.lift??0}));
- const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
- const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;
  // THE LIE HALF OF THE MOWN BAND AROUND WATER. The painted half is in
  // ground.js and both use `semiRough`, because a first attempt at this changed
  // only this file -- the ground shader classifies from corridor geometry and

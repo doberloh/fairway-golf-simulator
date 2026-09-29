@@ -14,6 +14,7 @@
 // blob, and Chromium refuses a module one.
 import {generateWorldSteps} from './course.js';
 import {sampleRows, sampleExtras} from './terrain-grid.js';
+import {ownerRows} from './owner-atlas.js';
 
 let grid = null;
 self.onmessage = e => {
@@ -29,6 +30,9 @@ self.onmessage = e => {
   } else if (m.type === 'rows') {
    const out = sampleRows(grid.sample, grid.refine, m.dims, m.j0, m.j1);
    self.postMessage({id: m.id, ok: true, values: out.values, mask: out.mask}, [out.values.buffer, out.mask.buffer]);
+  } else if (m.type === 'atlas') {
+   const out = ownerRows(grid, m.ex, m.ez, m.Sx, m.Sz, m.j0, m.j1);
+   self.postMessage({id: m.id, ok: true, values: out}, [out.buffer]);
   } else if (m.type === 'extras') {
    const out = sampleExtras(grid.sample, m.at);
    self.postMessage({id: m.id, ok: true, values: out}, [out.buffer]);

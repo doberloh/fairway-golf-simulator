@@ -169,13 +169,11 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   course). A browser that refuses them falls back silently -- the thing to
   catch is a fallback nobody knew was happening.
 
-- [ ] **B2c. The scene build's per-point work on the same workers.** Placing
-  the ground cover asks `surface` per candidate (1.2 s) and the ownership atlas
-  asks `nearest` per texel (0.8 s) -- the leftovers of B4. The atlas needs only
-  what exists before the grid, so the workers could compute it from their
-  captured copy; the cover needs `height`, i.e. the finished grid, which is
-  tens of megabytes to send to each worker without shared memory (not
-  available from `file://`). Start with the atlas.
+- [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
+  the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
+  `height` -- the finished grid, tens of megabytes to send to each worker
+  without shared memory (not available from `file://`). The ownership atlas,
+  the other half of this entry, is done (see B2 in Done).
 
 - [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
   `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
@@ -1201,9 +1199,12 @@ record of what was ruled out and why, which is worth more than a short file.
   `lab.ground()` hash in the browser. Classic blob worker embedded in the
   single file (+89 KB), falling back to the main thread on any failure.
   Generation in the browser: PNW nine 2.6 -> 1.9 s, eighteen 9.0 -> 3.4 s,
-  Links eighteen 12.1 -> 3.6 s. Follow-ups B2b (Firefox/Safari) and B2c (the
-  scene build's per-point work). RESEARCH.md *The ground grid's heights on
-  every core*.
+  Links eighteen 12.1 -> 3.6 s. The workers then compute the ground's
+  ownership atlas too (hole, lake and stream per texel; `owner-atlas.js`),
+  started as soon as the grid is done and collected when generation ends, so
+  the ground material only adds straw: the longest page freeze while loading
+  6.6-7.0 -> 5.8 s on a busy machine. Follow-ups B2b (Firefox/Safari) and B2c
+  (the ground cover). RESEARCH.md *The ground grid's heights on every core*.
 
 ## Reading a green without the overlays
 

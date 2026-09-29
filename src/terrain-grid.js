@@ -104,6 +104,10 @@ export function* makeGroundGridPooled(sample,halfX,halfZ,spacing,refine,pool){
  const at=Float64Array.from(points);
  let extras=yield {await:pool.extras(at)};
  if(!extras||extras.length!==at.length/2){extras=new Float64Array(at.length/2);for(let k=0;k<extras.length;k++)extras[k]=sample(at[2*k],at[2*k+1]);}
+ // The workers' next job, started now so it runs while this thread assembles
+ // the grid and plants the course: the ground's ownership atlas, which covers
+ // the same extent as the grid (owner-atlas.js, gen-pool.js).
+ pool.prefetchAtlas?.(halfX,halfZ);
  let c=0,e=0,m=0;
  return yield* makeGroundGridSteps((x,z)=>c<coarse?rows.values[c++]:extras[e++],halfX,halfZ,spacing,()=>rows.mask[m++]===1);
 }

@@ -110,6 +110,7 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/textures.js | Procedural textures and foliage animation shader hooks |
 | src/mesh-assets.js | Decodes that geometry and instances it under the biome palette. `farParts` derives a tree's thinned twin -- a third of its leaf sprays, each grown to keep the crown full -- at load, for shadows beyond the nearest cascade |
 | src/gen-pool.js | The workers that compute the ground grid's heights while a course generates (B2). Every call resolves to null rather than failing, which sends the grid back to the main thread |
+| src/owner-atlas.js | The ground shader's ownership atlas: its size and the questions each texel asks, shared by `ground.js` and the generation workers, which compute three of its four channels while the course is planted |
 | src/gen-worker.js | One such worker: generates its own copy of the world from the same settings and stops at the grid. Built as a classic script embedded in the single file -- a page opened from disk may start a classic blob worker in Chromium, not a module one |
 | src/instance-cull.js | Draws only the part of each course-wide instanced mesh (trees, deadfall, rocks, ground cover, homes, floodlights) that the camera can see or whose shadow it can see, and gives each shadow map only the trees inside it -- as thinned twins from the middle cascade out on High and Ultra |
 | src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |

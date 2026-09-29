@@ -1565,6 +1565,10 @@ async function generateProgressively(next,onProgress){
   }
   step=it.next();
  }
+ // The ownership atlas the workers started when the grid was done; the world
+ // carries it to the ground material (ground.js), which fills it itself if not.
+ const atlas=await pool?.atlas?.();
+ if(atlas&&step.value)step.value.ownerAtlas=atlas;
  return step.value;
  }finally{pool?.dispose();lastGenerationMs=Math.round(performance.now()-began);}
 }
@@ -3766,7 +3770,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // proves it, where the Node test cannot reach.
   ground:()=>{const g=world?.groundGrid;if(!g)return null;let h=2166136261>>>0;
    for(const a of [g.values,g.positions,g.indices]){const b=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);for(let i=0;i<b.length;i++){h^=b[i];h=Math.imul(h,16777619)>>>0;}}
-   return {hash:h.toString(16),vertices:g.positions.length/3,triangles:g.indices.length/3,workers:lastGridWorkers,waitedMs:lastGridWait,generationMs:lastGenerationMs};},
+   return {hash:h.toString(16),vertices:g.positions.length/3,triangles:g.indices.length/3,workers:lastGridWorkers,waitedMs:lastGridWait,generationMs:lastGenerationMs,atlasFromWorkers:!!world?.ownerAtlas};},
   // Where the shadow cascades split: {splits: [metres, ...]}, or {} for the tier's own. See GolfView.cascadeSplitter.
   cascades:(o={})=>view.setCascadeSplits(o.splits??null),
   scene:()=>{
