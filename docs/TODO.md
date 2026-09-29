@@ -155,14 +155,6 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
   their times; a CPU profile over that window would name it.
 
-- [ ] **B2b. Check the ground workers in Firefox and Safari.** B2 was tested
-  only in Chromium (desktop, `file://` and served). On the owner's iPhone
-  (hosted copy) and a Mac, `lab.ground()` after a course starts should report
-  `workers` above 0, and the same hash with workers as without (hide them by
-  running `window.Worker = undefined` in the console before starting a
-  course). A browser that refuses them falls back silently -- the thing to
-  catch is a fallback nobody knew was happening.
-
 - [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
   the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
   `height` -- the finished grid, tens of megabytes to send to each worker
@@ -1178,6 +1170,11 @@ record of what was ruled out and why, which is worth more than a short file.
   19-30 ms, from a daylight or a floodlit start. Night unchanged, overview
   included. REJECTED first: a cap on live lamps (same win, but only the
   nearest poles lit at night -- the owner declined it for the overhead view).
+  FOLLOW-UP, found by the owner in the course creator: switching on in the
+  first seconds after arrival, while the lit programs were still being built,
+  froze the game (5.3 s on eighteen holes); such a switch now waits for the
+  build with the game running, and the lights come on when it is done (5.9 s
+  on eighteen holes, 2.1 s on nine; worst frame 48 ms).
   RESEARCH.md *Floodlit shaders built after the course is on screen*.
 
 - [x] **B4. The scene build and the loading screen -- partly.** Branch
@@ -1216,6 +1213,13 @@ record of what was ruled out and why, which is worth more than a short file.
   the ground material only adds straw: the longest page freeze while loading
   6.6-7.0 -> 5.8 s on a busy machine. Follow-ups B2b (Firefox/Safari) and B2c
   (the ground cover). RESEARCH.md *The ground grid's heights on every core*.
+
+- [x] **B2b. The ground workers checked on the owner's devices.** 28 September:
+  the owner tested the combined build (`build-time-all`) -- the checklist of
+  loading, floodlights mid-round, ponds and the night overview, and
+  `lab.ground()` on an iPhone and a Mac -- and reported all of it good. The one
+  problem found, a long pause switching the floodlights in the course creator,
+  is fixed under B6.
 
 ## Reading a green without the overlays
 

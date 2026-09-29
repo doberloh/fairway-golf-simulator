@@ -463,7 +463,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.probeDue=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -730,7 +730,13 @@ export class GolfView{
   try{
    const done=this.renderer.compileAsync?.(this.scene,this.camera)
     ??this.renderer.compile(this.scene,this.camera);
-   done?.catch?.(e=>console.warn('Fairway: floodlight pre-compile skipped',e));
+   // Held while it runs, so a switch that lands before it is done can wait for
+   // it (setFloodlights) rather than stall the frame on unfinished programs.
+   if(done?.then){
+    const pending=done.catch(e=>console.warn('Fairway: floodlight pre-compile skipped',e))
+     .finally(()=>{if(this.floodWarming===pending)this.floodWarming=null;});
+    this.floodWarming=pending;
+   }
   }catch(e){console.warn('Fairway: floodlight pre-compile skipped',e);}
   finally{if(rig)rig.visible=rigWas;for(const lamp of lamps)lamp.visible=this.floodlit;}
  }
@@ -1203,7 +1209,28 @@ export class GolfView{
  // Shown or hidden as a whole. Nothing is built here, so a player toggling this
  // twice a hole costs nothing but a visibility flag and four light intensities.
  setFloodlights(on){
-  const lit=!!on&&!!this.floodlights;
+  const want=!!on&&!!this.floodlights;
+  this.floodWanted=want;
+  // NOT BEFORE THEIR SHADERS ARE READY. `warmFloodlights` builds the other
+  // state's programs in the background once a course is on screen, and that
+  // takes a few seconds -- longer on eighteen holes, whose lit programs carry
+  // 141 lamps. Switched in that window, the next frame used programs the
+  // driver had not finished and froze until it had: measured in the course
+  // creator, where the switch is reached for straight away, at 2.1 s when
+  // switched 0.3 s after arrival and 0.9 s at 1.5 s (none after 4 s). So a
+  // switch that lands in the window waits for the build instead, with the game
+  // running; the lights come on the moment their shaders are ready. The latest
+  // request wins, so on-then-off in the window leaves them off.
+  if(this.floodWarming&&want!==this.floodlit){
+   // Only for the course it was asked on: a rebuild in between has its own
+   // lamps, set by its own build.
+   const course=this.group;
+   this.floodWarming.then(()=>{if(this.group===course&&this.floodWanted===want&&want!==this.floodlit)this.applyFloodlights(want);});
+   return;
+  }
+  this.applyFloodlights(want);
+ }
+ applyFloodlights(lit){
   if(this.floodlights)this.floodlights.visible=lit;
   // Shown or hidden, and lit. Changing what is visible changes the programs
   // three uses, which is free once `warmFloodlights` has built both sets; the
