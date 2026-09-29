@@ -145,7 +145,12 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
+- [ ] **B2. Shape the ground on every processor core.** (Also the home for
+  what B4 could not make cheaper: placing the ground cover asks `surface` per
+  candidate, 1.2 s, and the ground's ownership atlas asks `nearest` per texel,
+  0.8 s -- per-point work that can be split across workers but not trimmed
+  without changing answers. RESEARCH.md *The scene build and the loading
+  screen*.) Ground shaping is one
   core; the grid is row bands that can be computed in parallel with identical
   numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
   time*) ruled out a Web Worker because the finished world holds closures
@@ -163,12 +168,6 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   identical answer (the true nearest is always among the candidates; keep the
   same tie-break order). Bigger saving on 18 holes. No course changes;
   fingerprints must stay identical.
-
-- [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
-  `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
-  Profile each (the unminified build shows real names:
-  `npx vite build --minify false --outDir <somewhere>`); some can move into
-  B2's workers.
 
 - [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
   3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
@@ -1180,6 +1179,17 @@ record of what was ruled out and why, which is worth more than a short file.
   included. REJECTED first: a cap on live lamps (same win, but only the
   nearest poles lit at night -- the owner declined it for the overhead view).
   RESEARCH.md *Floodlit shaders built after the course is on screen*.
+
+- [x] **B4. The scene build and the loading screen -- partly.** Branch
+  `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
+  block of ~3.7 s -- ground cover 1.4 s, the ground-shading atlas 1.0 s, the
+  water probes 0.8 s. Done: the probes are taken after the shaders are built
+  (same capture, trees hidden as before), the outgoing menu scene no longer
+  re-photographs its ponds when the round's clock is applied (1.6 s), and the
+  game loop does not draw while the graphics prepare. Longest page freeze
+  while loading 3.7-4.8 s -> 3.1-3.2 s. The ground cover and atlas work cannot
+  be trimmed without changing answers; moved to B2. RESEARCH.md *The scene
+  build and the loading screen*.
 
 ## Reading a green without the overlays
 

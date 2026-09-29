@@ -4272,3 +4272,42 @@ screenshot at different moments); the floodlit holes do not differ.
 **Unmeasured:** whether hiding 57-141 zero-intensity spot lights in daylight
 also makes the daytime frame cheaper. It should (every lit fragment loops over
 them); it is a frame-rate question and frame-rate work is paused.
+
+## The scene build and the loading screen (B4, 28 September)
+
+A CPU profile of `lab.course` in the browser (unminified build, PNW nine, High)
+put the 3D scene build (`view.build`, one synchronous block, so the page is
+frozen for all of it) at ~3.7 s on a busy afternoon:
+
+| Part | Time | Of which |
+| --- | --- | --- |
+| `addGroundCover` | 1.4 s | `world.surface` for every candidate tuft, 1.2 s |
+| `groundMaterial` | 1.0 s | `nearest` for every texel of the ownership atlas (up to 1 M), 0.8 s |
+| `refreshWaterEnvironment` in `build` | 0.8 s | the card finishing programs on the spot (`getProgramInfoLog`), 0.75 s |
+
+It also found two stalls OUTSIDE the build: (1) at the start of every round
+the menu scene about to be discarded re-photographed its ponds, because the
+clock moved from the menu's hour to the player's -- 1.58 s measured with a
+trace; (2) during B1's wait the game loop kept drawing the new course, and
+the first frame to touch an unfinished program froze the page.
+
+**Done:** the water probes are taken inside `GolfView.ready` after the shaders
+are built (with the later additions hidden, so the capture is the same one),
+the outgoing scene no longer refreshes its environment (`view.retiring`), and
+the game loop does not draw while `ready` waits. Measured against the
+`daylight-lamps` branch it sits on, alternated, cold browser: the longest
+freeze of the page while loading 3.70 / 4.78 / 4.57 s -> 3.05 / 3.14 / 3.22 s.
+Press-play-to-smooth was within the afternoon's noise either way. The ponds
+look the same: enlarged, only the animated ripples differ between the two.
+
+**Not done, and why.** The ground cover's `surface` calls and the atlas's
+`nearest` calls cannot be made cheaper without changing their answers: the
+cover's order of random draws depends on which candidates are rejected first
+(testing its cheap `patch` roll before `surface` would move every tuft), and
+the atlas has to agree with the lie at hole boundaries, which rules out
+guessing a block's owner from its corners. Both are per-point work that could
+run on other cores; that is B2.
+
+**Tried and dropped** (no measurable gain, reverted): a straight-hole shortcut
+and an unrolled wiggle sum in `course-plan.js`'s `unitCenter` -- bit-identical,
+no faster.

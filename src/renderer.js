@@ -463,7 +463,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.probeDue=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -531,7 +531,13 @@ export class GolfView{
    // before the water is, so the refresh that runs from `addSky` finds no bodies
    // to probe for and returns -- and the next one is an elevation threshold
    // away, which on a still afternoon never comes.
-   this.refreshWaterEnvironment();
+   // TAKEN IN `ready`, NOT HERE, once the shaders are built: a probe renders
+   // the scene, and rendering it now made the graphics card finish every
+   // program on the spot -- a 0.8 s freeze of the page in the middle of the
+   // build. What the probe sees is kept exactly: everything added to the
+   // group after this point (the planting, homes, the ball) is hidden for the
+   // capture, as it simply did not exist yet when the probe was taken here.
+   this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
   this.addFloodlights();
@@ -653,6 +659,14 @@ export class GolfView{
   const t0=performance.now();
   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
   catch(e){console.warn('Fairway: shader warm-up skipped',e);}
+  // The water's probes, now that the programs they render with are built. A
+  // probe hands its water an environment map, which changes that material's
+  // program -- so the water is compiled once more before the first frame.
+  if(this.probeDue!=null){
+   this.takeDueProbes();
+   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+   catch(e){console.warn('Fairway: water warm-up skipped',e);}
+  }
   const t1=performance.now();
   // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
@@ -661,6 +675,16 @@ export class GolfView{
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
   this.readying=false;
   return this.readyTimes;
+ }
+ // The probes `build` left for later (see the note where it sets `probeDue`).
+ takeDueProbes(){
+  if(this.probeDue==null||!this.group)return;
+  const later=this.group.children.slice(this.probeDue).filter(o=>o.visible);
+  this.probeDue=null;
+  for(const o of later)o.visible=false;
+  try{this.refreshWaterEnvironment();}
+  finally{for(const o of later)o.visible=true;}
+  this.setReflections(this.waterReflectsCourse!==false);
  }
  // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
  //
@@ -1667,6 +1691,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
 
  render(dt){
+  // A course built without the loading screen's `ready` (none today, but the
+  // studio could) still gets its water's probes, on its first frame.
+  if(this.probeDue!=null&&!this.readying)this.takeDueProbes();
   // The floodlit programs, sent for on the first frame after the course is on
   // screen: the driver builds them while the player looks at the first tee.
   if(this.nightWarmDue&&!this.readying){this.nightWarmDue=false;this.warmFloodlights();}
