@@ -161,6 +161,16 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   corrected probe -- the "costs nothing" note in `updateFloodlights` predates
   the probe fix.
 
+- [ ] **B7. A hitch two to three seconds after a course appears.** Found
+  measuring B1-B6 (28 September): after the loading screen goes, frames run
+  smoothly and then, ~2-3 s in, one long frame (334 ms on PNW eighteen) or a
+  few of 50-150 ms (nine holes). It is NOT from the build-time work: `main`
+  before any of it shows the same ("smooth after 3.0 s" in the same runs).
+  Likely something scheduled after the arrival -- the intro camera finishing,
+  the near-field grass ring filling, a first cull rebuild at the new pose.
+  `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
+  their times; a CPU profile over that window would name it.
+
 - [ ] **B2b. Check the ground workers in Firefox and Safari.** B2 was tested
   only in Chromium (desktop, `file://` and served). On the owner's iPhone
   (hosted copy) and a Mac, `lab.ground()` after a course starts should report
