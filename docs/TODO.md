@@ -88,21 +88,6 @@ the budget these spend.
   -- a multisampled render target (WebGL2 `samples`) or an AO that works
   without one is the way round.
 
-- [ ] **U2. Wind in the baked trees.** Sway ALREADY EXISTS for part of the
-  planting: `windMaterial` in `src/textures.js` patches the procedural
-  species' leaves (`src/vegetation.js`, the `windMaterial(materials.leaf, ...)`
-  call in `addSpecies`) and the near-field grass blades, driven by the
-  renderer's `breeze` and `windVec` uniforms, which follow `settings.wind` and
-  `windDirection`. What does NOT sway is every species built from imported
-  models -- `addModelSpecies` hands `instanceModels` plain white
-  `MeshToonMaterial`s -- which is every tree on Redwood and most biomes, and the
-  ground cover and deadfall. Extend `windMaterial` to the crown/leaf roles of
-  those materials, stronger at canopy tips (height within the model), keeping
-  trunks still. Near-free, every tier. Rendering only: trunk collision must
-  not move. Note `windMaterial` REPLACES `<project_vertex>` (see the comments
-  in `src/mist.js`), so check it still composes with the cloud-shadow and mist
-  patches on those materials.
-
 - [ ] **U5. Water with an edge and a glint.** Ponds (especially Redwood's dark
   ones) read as flat shapes. A light foam rim at the shoreline (the bank
   profiles are already in `bankAtlas`) and a sun glint. Every tier, cheap.
@@ -1205,6 +1190,12 @@ record of what was ruled out and why, which is worth more than a short file.
   is fixed under B6.
 
 ### Looking better on Ultra (cartoon style throughout)
+
+- [x] **U2. Wind in the imported trees.** Branch `ultra-looks`. The leaves of
+  every imported tree and plant sway with the course's wind, by a lever that
+  grows with height in the model and with the plant's own height; trunks stay
+  still. Graphics preference `wind` scales all swaying. RESEARCH.md *Wind in
+  the imported trees*.
 
 - [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
   owner from "the rough" to every surface: rough, semi, fairway and tee ground,

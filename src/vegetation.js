@@ -60,6 +60,8 @@ const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
 // are simply not ingested. If this ever needs to come back for weaker
 // hardware, the models are one PICK entry away -- but measure on that
 // hardware, with a metric that is allowed to say "free".
+// Stiffer in a wind than a broadleaf: needled boughs on a heavy leader.
+const CONIFERS=new Set(['redwood','dougfir','hemlock','redcedar','pine','spruce','cedar']);
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -102,8 +104,13 @@ function addModelSpecies(view,kind,trees){
  // White materials: the instance colour carries the whole tint, so one material
  // per role serves every biome.
  const materials=new Map();
+ // The crowns sway (U2 in TODO); trunks and everything else stand still, so a
+ // trunk's collision and its drawn position never part company.
+ const sway=CONIFERS.has(kind)?.7:1;
  const materialFor=role=>{
-  if(!materials.has(role))materials.set(role,new T.MeshToonMaterial({color:'#ffffff'}));
+  if(!materials.has(role))materials.set(role,role==='leaf'
+   ?windMaterial(new T.MeshToonMaterial({color:'#ffffff'}),view,sway,false,true)
+   :new T.MeshToonMaterial({color:'#ffffff'}));
   return materials.get(role);
  };
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{

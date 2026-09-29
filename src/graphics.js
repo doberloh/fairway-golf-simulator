@@ -240,7 +240,7 @@ export function tierOf(name) {
 // they landed; banding the whole course at a fixed height interval is a
 // deliberate, and deliberately artificial, choice.
 export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stripes: true};
-export const LOOKS = {patches: 60, haze: 50};
+export const LOOKS = {patches: 60, haze: 50, wind: 100};
 
 // GREEN DEFINITION. A green is the flattest thing on the course by design, and
 // every shading cue is proportional to slope, so the one surface a player has to
@@ -317,6 +317,7 @@ const clean = g => ({
  // was judged at.
  patches: clampPct(g?.patches, LOOKS.patches),
  haze: clampPct(g?.haze, LOOKS.haze),
+ wind: clampPct(g?.wind, LOOKS.wind),
 });
 
 

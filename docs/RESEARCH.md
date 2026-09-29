@@ -4566,3 +4566,26 @@ Medium get the haze without paying for mist.
 30 m patches at 2-5 m a pixel. The patches now fade out below ~25 pixels
 across rather than ~7, which keeps them at play and flyover heights and drops
 them from a kilometre up.
+
+## Wind in the imported trees (U2, 29 September)
+
+`windMaterial` in `src/textures.js` (a `crown` mode) and `addModelSpecies` in
+`src/vegetation.js`. The procedural leaves and the near grass already swayed;
+every imported tree and plant -- every tree on Redwood, and most in other
+biomes -- stood rigid, because `addModelSpecies` handed `instanceModels` plain
+materials. Now each species' LEAF role gets a wind material; bark and every
+other role stay still, so a trunk never moves away from where it collides.
+
+The old lever (`.8 + y*.15`) was written for procedural shapes in metres; an
+imported model is unit height scaled by its instance, so on a 60 m redwood it
+would have moved the whole crown about a metre, top and bottom alike. The crown
+lever is `y^2 * (.006 * height + .12)` in metres at full gust: nothing at the
+base, ~0.48 m at the top of a 60 m tree, ~0.13 m at a fern's tips; conifers at
+.7 of broadleaf, needled boughs on a heavy leader. Checked by differencing two
+frames 0.6 s apart (Redwood tee, 14 mph): 50,602 changed pixels before (grass
+only), 137,560 after, the extra all in the crowns.
+
+Not moved: the crowns' SHADOWS -- three draws shadows with its own depth
+material, which does not carry the patch; at these amplitudes a still shadow
+under a swaying crown does not read. A graphics preference `wind` (0-100%,
+default 100) scales every swaying material through one shared uniform.

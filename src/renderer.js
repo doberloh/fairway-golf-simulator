@@ -261,7 +261,7 @@ export class GolfView{
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
-  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};
+  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};this.sway={value:1};
   // The bearing the wind blows TOWARD, as a unit vector in world XZ -- the same
   // convention `shot-visuals.js` and `clouds.js` already use.
   this.windVec={value:new T.Vector2(0,1)};this.resources=[];this.resize();new ResizeObserver(()=>this.resize()).observe(canvas.parentElement);
@@ -448,6 +448,8 @@ export class GolfView{
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
   if(u.cuePatches)u.cuePatches.value=(this.groundCues.patches??60)/100;
+  // Wind in the trees and grass (U2): one uniform every swaying material shares.
+  this.sway.value=(this.groundCues.wind??100)/100;
   // Derived from the two sliders through ONE mapping in graphics.js, so the
   // panel and the shader cannot drift apart.
   if(u.sunDir&&this.sunDir)u.sunDir.value.copy(this.sunDir);

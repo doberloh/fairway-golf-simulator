@@ -44,11 +44,18 @@ export function surfaceTextures(biome,kind){
 // So the ball faded right, the clouds crossed right, and the grass leaned
 // somewhere else. `windVec` is that same bearing, and it is the only direction
 // in here now.
-export function windMaterial(material,view,strength=1,ground=false){
+// `crown`: an imported tree or plant, modelled at unit height and scaled up by
+// its instance. Its sway grows with how high the vertex sits in the model
+// (squared, so the base is still and the top travels) and with the plant's own
+// height -- a 60 m redwood's top moves about a third of a metre in a gust, a
+// fern's tips about a tenth (U2 in TODO). The procedural shapes and the grass
+// keep the older, flatter lever. `sway` scales all of it: the Graphics panel's
+// "Wind in the trees and grass".
+export function windMaterial(material,view,strength=1,ground=false,crown=false){
  material.onBeforeCompile=shader=>{
   shader.uniforms.foliageTime=view.foliageTime;shader.uniforms.breeze=view.breeze;
-  shader.uniforms.windVec=view.windVec;
-  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float foliageTime; uniform float breeze; uniform vec2 windVec;');
+  shader.uniforms.windVec=view.windVec;shader.uniforms.sway=view.sway??{value:1};
+  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;');
   // Displace in world units AFTER instancing: all canopy pieces share a passing
   // gust, with additional small flutter. This also moves low-poly crowns.
   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`vec4 mvPosition=vec4(transformed,1.0);
@@ -61,7 +68,7 @@ export function windMaterial(material,view,strength=1,ground=false){
    float along=dot(instanceMatrix[3].xz,windVec)*.03;
    float gust=sin(foliageTime*1.5-along)*.65+sin(foliageTime*2.7-along*.4)*.25;
    // How much this vertex is free to move: a blade tip travels, its root does not.
-   float lever=${strength.toFixed(3)}*${ground?'max(position.y,0.)':'(0.8+position.y*.15)'};
+   float lever=sway*${strength.toFixed(3)}*${crown?'position.y*position.y*(.006*length(instanceMatrix[1].xyz)+.12)':ground?'max(position.y,0.)':'(0.8+position.y*.15)'};
    // Downwind, plus a lighter crosswind flutter on its own beat so a blade wags
    // instead of sliding along a rail.
    vec2 across=vec2(-windVec.y,windVec.x);
@@ -69,5 +76,5 @@ export function windMaterial(material,view,strength=1,ground=false){
                  +across*(sin(foliageTime*3.1-along*1.7)*.3*breeze*lever);
   #endif
   mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);
- };material.customProgramCacheKey=()=>`breeze-wind-${strength}-${ground}`;return material;
+ };material.customProgramCacheKey=()=>`breeze-wind-${strength}-${ground}-${crown}`;return material;
 }
