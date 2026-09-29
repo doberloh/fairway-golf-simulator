@@ -1643,7 +1643,12 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    const base=body.mesh?.material?.userData?.waterBase;
    if(base)body.mesh.material.color.copy(base).lerp(solar.tint,solar.tintAmount);
   }
-  if(this.envElevation===null||Math.abs(solar.elevation-this.envElevation)>(this.style==='cartoon'?6:3))this.refreshEnvironment();
+  // Not while a new course is on its way (`retiring`, set by whileGenerating):
+  // starting a round moves the clock from the menu's hour to the player's, and
+  // this used to re-photograph every pond of the scene being thrown away --
+  // measured at 1.6 s of the wait, on a nine-hole start. The new course takes
+  // its own when it is built.
+  if(!this.retiring&&(this.envElevation===null||Math.abs(solar.elevation-this.envElevation)>(this.style==='cartoon'?6:3)))this.refreshEnvironment();
   d.elapsedSinceSave+=dt;
   // localStorage is synchronous; writing the hour every frame would be a stall
   // for a value nobody reads until the next launch.

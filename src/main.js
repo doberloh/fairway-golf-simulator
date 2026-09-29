@@ -1554,6 +1554,10 @@ async function generateProgressively(next,onProgress){
 async function whileGenerating(label,work,quiet=false){
  const box=$('generating');
  if(!quiet){$('generatingLabel').textContent=label;setProgress(null);box.hidden=false;}
+ // Whatever is on screen is about to be replaced: it must not spend the wait
+ // re-photographing its ponds for a clock that only changed because the round
+ // is starting (GolfView.updateDaylight).
+ if(view)view.retiring=true;
  // The frame wait still matters even when quiet: it is what lets whatever IS on
  // screen paint before the first block of work.
  await nextFrame();
@@ -1565,7 +1569,7 @@ async function whileGenerating(label,work,quiet=false){
   await view?.ready?.();
   return result;
  }
- finally{if(!quiet){box.hidden=true;setProgress(null);}}
+ finally{if(view)view.retiring=false;if(!quiet){box.hidden=true;setProgress(null);}}
 }
 // The bar and the phase name. Null puts it back to indeterminate, for the
 // stretch before the first step lands and for work that never reports.
@@ -4088,7 +4092,12 @@ function tick(now){
  // at each of them is one that eventually gets missed at one of them. It did,
  // when this lived in updateExplorer, which does not run per shot.
  view.setReadingHidden(!!flight);
- view.render(dt);
+ // Not while the graphics card is preparing a new course (GolfView.ready):
+ // a frame drawn then uses programs the driver has not finished, and blocks
+ // the page until it has -- the loading screen froze during a wait that is
+ // meant to leave it moving. The overlay is up; the frame it would cover is
+ // drawn by `ready` itself as soon as the programs are done.
+ if(!view.readying)view.render(dt);
  setWindArrow();
  const worldLabels=!flight&&view.config.mode!=='free';
  // ON THE GREEN THE MARKER IS THE ONLY DISTANCE THERE IS, because the
