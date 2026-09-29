@@ -462,6 +462,7 @@ export class GolfView{
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
   if(u.cuePatches)u.cuePatches.value=(this.groundCues.patches??60)/100;
+  if(u.cueShade)u.cueShade.value=(this.groundCues.shade??60)/100;
   // Wind in the trees and grass (U2): one uniform every swaying material shares.
   this.sway.value=(this.groundCues.wind??100)/100;
   // Derived from the two sliders through ONE mapping in graphics.js, so the

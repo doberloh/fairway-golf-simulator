@@ -5,6 +5,7 @@ import * as T from 'three';
 import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND,BEACH_RISE,BEACH_FADE,GREEN_RAMP,BAND_ROUND} from './course.js';
 import {CUP_RADIUS} from './physics.js';
 import {biomeOf} from './biomes.js';
+import {occlusionAtlas} from './occlusion.js';
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
 //
@@ -141,20 +142,30 @@ export function groundMaterial(view,palette){
  // which is what a mow stripe genuinely is in life, measured no better than
  // bending the bands and cost a per-fragment view vector. Both are written up
  // with their numbers in RESEARCH.md.
- const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},cuePatches:{value:.6},
+ const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},cuePatches:{value:.6},cueShade:{value:.6},
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
   greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0},
   sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
+ // THE COVER TEXTURE: soft occlusion under trees and round boulders in red
+ // (U1; occlusion.js, which says why it is not a texture of its own) and the
+ // straw in green, linearly filtered. Bytes, not floats: a quarter of the
+ // memory the float copy of the ownership atlas it replaced took.
+ const occ=occlusionAtlas(w,extent.x,extent.y,Sx,Sz),coverBytes=new Uint8Array(Sx*Sz*4);
+ // Kept for the forest floor (U6, vegetation.js), which grows where the canopy is.
+ view.groundOcclusion={occ,Sx,Sz,ex:extent.x,ez:extent.y};
+ for(let k=0;k<Sx*Sz;k++){coverBytes[k*4]=Math.round(occ[k]*255);coverBytes[k*4+1]=Math.round(owners[k*4+1]*255);}
+ const coverTex=new T.DataTexture(coverBytes,Sx,Sz,T.RGBAFormat,T.UnsignedByteType);
+ coverTex.minFilter=coverTex.magFilter=T.LinearFilter;coverTex.needsUpdate=true;view.resources.push(coverTex);
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:texture(owners,Sx,Sz,true)},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
+ varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
  uniform vec3 sunDir;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
@@ -633,10 +644,23 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   }
   if(kind==5.)turf=mix(turf,turf*vec3(.86,.84,.8),smoothstep(.55,.85,n3)*.8*cuePatches);
  }
+ // SOFT OCCLUSION (U1 in TODO): darker at the foot of every trunk and boulder
+ // and under overlapping crowns, baked in occlusion.js. Only inside the course's
+ // own ground -- the landscape past the edge shares this material and has no
+ // texels. A little less blue taken out than red and green, so it reads as
+ // shade under leaves rather than as dirt. cueShade is the Graphics panel's
+ // "Shade under trees and rocks", 0..1.
+ if(cueShade>0.){
+  vec2 ou=(wp/extent+1.)*.5;
+  if(ou.x>0.&&ou.x<1.&&ou.y>0.&&ou.y<1.){
+   float occ=texture2D(cover,ou).r*cueShade*(kind==4.?.5:1.);
+   turf*=1.-occ*vec3(.95,.9,.78);
+  }
+ }
  float grain=hashGround(floor(wp*30.));float grainFade=1.-smoothstep(.02,.12,length(fwidth(wp)));
  turf*=1.+(grain-.5)*.075*grainFade;
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v24';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v25';return m;
 }

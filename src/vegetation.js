@@ -382,7 +382,37 @@ function addNearbyGrass(view){
  // Hand it over directly or the grass never samples a shadow map, and stays lit
  // at full strength inside shadows the ground beneath it is already in.
  view.lazyMaterials?.push(material);
- const compile=material.onBeforeCompile;material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float grassFade=1.-smoothstep(28.,48.,distance(mvPosition.xz,cameraPosition.xz));mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*grassFade;mvPosition=modelViewMatrix*mvPosition;`);};
+ // Shrinks into the ground between 28 and 48 m out, so the edge of the ring of
+ // tiles is never seen. `flat` shrinks every axis rather than only height --
+ // a fallen stick has no height to lose.
+ const fadeOut=(material,flat=false)=>{const compile=material.onBeforeCompile;material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float grassFade=1.-smoothstep(28.,48.,distance(mvPosition.xz,cameraPosition.xz));${flat?'mvPosition.xyz=instanceMatrix[3].xyz+(mvPosition.xyz-instanceMatrix[3].xyz)*grassFade;':'mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*grassFade;'}mvPosition=modelViewMatrix*mvPosition;`);};return material;};
+ fadeOut(material);
+ // THE FOREST FLOOR (U6 in TODO): Ultra only. Low fern clumps and fallen
+ // sticks, in the same tiles as the grass and from the same seeded draw, so
+ // they are where they were each time the camera comes back. Decoration only:
+ // none of it is in the world, so nothing here can stop a ball -- which is why
+ // it is small enough (ankle height at most) that a ball visibly rolling
+ // through it never looks wrong. Denser where the canopy is (the occlusion
+ // bake, occlusion.js), so it gathers under the trees and thins to nothing on
+ // open rough.
+ const floorOn=(view.quality?.forestFloor??0)>0;
+ const canopy=(x,z)=>{const o=view.groundOcclusion;if(!o)return 0;const i=Math.floor((x/o.ex+1)*.5*o.Sx),j=Math.floor((z/o.ez+1)*.5*o.Sz);return i<0||j<0||i>=o.Sx||j>=o.Sz?0:o.occ[j*o.Sx+i];};
+ let frondGeo=null,stickGeo=null,frondMat=null,stickMat=null;
+ if(floorOn){
+  // Seven fronds arching out from a centre, each a narrow leaf bent down at the tip.
+  const fv=[];for(let i=0;i<7;i++){const a=i*.898+(i%2)*.3,c=Math.cos(a),s=Math.sin(a),px=-s,pz=c,r1=.3,r2=.58,wd=.075;
+   const b=[c*.03,0,s*.03],m1=[c*r1+px*wd,.26,s*r1+pz*wd],m2=[c*r1-px*wd,.26,s*r1-pz*wd],tip=[c*r2,.1+(i%3)*.03,s*r2];
+   fv.push(...b,...m1,...m2,...m1,...tip,...m2);}
+  frondGeo=new T.BufferGeometry();frondGeo.setAttribute('position',new T.Float32BufferAttribute(fv,3));frondGeo.computeVertexNormals();
+  // A stick: a thin three-sided bar a metre long, lying along x.
+  const sv=[],tri=[[0,.05],[.043,-.025],[-.043,-.025]];
+  for(let k=0;k<3;k++){const [y0,z0]=tri[k],[y1,z1]=tri[(k+1)%3];sv.push(-.5,y0+.03,z0,.5,y0+.03,z0,.5,y1+.03,z1,-.5,y0+.03,z0,.5,y1+.03,z1,-.5,y1+.03,z1);}
+  stickGeo=new T.BufferGeometry();stickGeo.setAttribute('position',new T.Float32BufferAttribute(sv,3));stickGeo.computeVertexNormals();
+  frondMat=fadeOut(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,.12,true));
+  stickMat=fadeOut(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,0,true),true);
+  view.lazyMaterials?.push(frondMat,stickMat);
+  view.resources?.push(frondGeo,stickGeo);
+ }
  // Building the ring in one frame is what made the camera hitch.
  //
  // Crossing a tile boundary meant five new tiles at once: eight thousand
@@ -399,6 +429,22 @@ function addNearbyGrass(view){
  const RANGE=2,CACHE=32;
  const pending=[],parked=new Map();
  const keyOf=(tx,tz)=>tx+','+tz;
+ const floorTile=(tx,tz,key)=>{
+  const rng=random(w.seed+':floor:'+key),fronds=new T.InstancedMesh(frondGeo,frondMat,400),sticks=new T.InstancedMesh(stickGeo,stickMat,90);
+  let nf=0,ns=0;const tint=new T.Color(w.bio.tree),bark=new T.Color('#5b4631');
+  for(let i=0;i<490;i++){
+   const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,roll=rng(),frond=i<400;
+   if(Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||roll>canopy(x,z)*(frond?1.9:1.1))continue;
+   if(w.surface(x,z)!=='rough'||onShoreBank(w,x,z,false))continue;
+   const s=frond?.6+rng()*.9:.35+rng()*1.3;
+   dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,frond?0:(rng()-.5)*.12);dummy.scale.set(frond?s:s,frond?s*(.7+rng()*.6):1,frond?s:1);dummy.updateMatrix();
+   if(frond){fronds.setMatrixAt(nf,dummy.matrix);color.copy(tint).lerp(new T.Color('#7fa24a'),.12+rng()*.38);fronds.setColorAt(nf++,color);}
+   else{sticks.setMatrixAt(ns,dummy.matrix);color.copy(bark).lerp(new T.Color('#9a8a70'),rng()*.6);sticks.setColorAt(ns++,color);}
+  }
+  fronds.count=nf;sticks.count=ns;
+  for(const m of [fronds,sticks]){m.userData={noCull:true};m.receiveShadow=true;m.computeBoundingSphere();}
+  return [fronds,sticks];
+ };
  const buildTile=(tx,tz)=>{
   const key=keyOf(tx,tz);
   // Written straight into the mesh rather than cloned into arrays and copied in
@@ -422,6 +468,9 @@ function addNearbyGrass(view){
   }
   mesh.count=kept;
   mesh.userData={tx,tz,noCull:true};mesh.receiveShadow=true;mesh.computeBoundingSphere();
+  // The floor rides on the grass tile as its children, so parking, evicting
+  // and disposing a tile carries it along without a second bookkeeping.
+  if(floorOn){for(const m of floorTile(tx,tz,key))mesh.add(m);const dispose=mesh.dispose.bind(mesh);mesh.dispose=()=>{for(const c of mesh.children)c.dispose();dispose();};}
   return mesh;
  };
  // Out of range, but probably not for long. Held with its buffers intact and

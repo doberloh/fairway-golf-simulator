@@ -4624,3 +4624,74 @@ the owner, not a side effect of U5.
 **Verified** by placing the camera on the sun's mirror line over the
 Pacific Northwest pond (seed REPORT1, 16:00, sun 38 degrees up): sparks around the reflection
 point and along the lit water, none on the shaded side. No outside sources.
+
+## Soft shade under trees and rocks (U1, 29 September)
+
+`src/occlusion.js`, the cover texture in `groundMaterial` and the `cueShade`
+block in the ground shader (`src/ground.js`).
+
+**The brief asked for screen-space ambient occlusion and got a bake instead.**
+SAO or GTAO needs the scene drawn into a render target first, and routing the
+scene through one costs the canvas its MSAA -- the reason the god rays avoid
+EffectComposer. A multisampled target would have kept it, at the price of a
+full-screen pass on every frame, and the pass would darken whatever the depth
+buffer showed, fairways and bunker faces included. What the brief described is
+narrower: trunks and rocks that look set down on the grass, forests deeper
+than open rough. Every occluder is in the world data already, so the ground
+can know exactly how much sky it loses without looking at the screen.
+
+**The model.** Per texel, what reaches the ground is multiplied down by each
+nearby occluder, so overlaps deepen without passing full dark:
+
+| Occluder | Full strength inside | Gone by | Strength |
+| --- | --- | --- | --- |
+| Trunk (girth = 2.7% of height, max 3.6 m, as course.js pads launches) | half the girth | half girth + 2 m + 0.8 girth | 0.70 |
+| Crown (`crownRadius`) | a quarter of the crown | 1.1 crowns | 0.22 |
+| Boulder (`reach`) | 0.7 reach | 1.3 reach + 1.2 m | 0.60 |
+| Ground plant (fern, shrub) | centre | 0.8 r + 0.4 m | 0.22 |
+
+The shader multiplies the turf by one minus that, times the slider (default
+60%), taking a little less out of blue than red and green so it reads as shade
+under leaves rather than as dirt; half strength on greens. The strengths were
+judged on screen, not taken from a source: at the first figures (0.5, 0.16,
+0.45) the effect at the Redwood tee was only visible side by side.
+
+**Where it lives, and why not in its own texture.** The lit shaders have one
+texture sampler of headroom against the 16 WebGL guarantees (the note on
+floodlight shadows in PROJECT_HANDOFF), and a seventeenth does not slow a
+program, it stops it linking and the ground vanishes. The ground already
+sampled the ownership atlas twice -- once exact, once linearly filtered as
+`cover` for the straw -- and the second copy used one of its four float
+channels. `cover` is now its own texture of bytes: red the occlusion, green
+the straw. No new sampler, and a quarter of the memory the float copy took.
+The cost is resolution: the ownership atlas's 1.75 m texels (2 m on an
+eighteen), which is fine for something meant to be soft.
+
+**Measured.** Bake time on REPORT1: PNW nine 8 ms (2342 trees), Redwood
+eighteen 12 ms (4448), Links eighteen 4 ms, Desert nine 3 ms. No frame cost
+beyond one texture read the shader already made.
+
+## A forest floor on Ultra (U6, 29 September)
+
+`floorTile` in `addNearbyGrass`, `src/vegetation.js`; `forestFloor` in the
+Ultra tier.
+
+Fern clumps (seven arching fronds, 0.6 to 1.5 m across, tinted from the
+biome's tree colour toward a lighter green) and fallen sticks (0.35 to 1.65 m)
+in the same 24 m tiles as the near grass and from their own seeded draw, so
+they are where they were each time the camera returns. Up to 400 fern and 90
+stick candidates a tile, each kept with probability 1.9 or 1.1 times the U1
+occlusion at that spot -- so the floor gathers under the canopy and is nothing
+on open rough -- and only on rough. Both shrink into the ground between 28 and
+48 m out, as the grass does, so the edge of the tile ring is never seen.
+
+**Decoration only, on purpose.** Nothing here is in the world, so physics
+cannot know about it. That is acceptable only because none of it is taller
+than an ankle: a ball rolling through a fern looks right, a ball rolling
+through a log would not, which is why there are no logs. The first colour
+(lerped 25-65% toward #9fbf5a) looked like paper cut-outs against the Redwood
+rough; it was taken down to 12-50% toward #7fa24a.
+
+**Cost.** Two more instanced draws per grass tile, 25 tiles in the ring. The
+first half of the TODO item -- full-detail trees further out on Ultra -- was
+already true: Ultra has drawn every crown whole since F2 (`farTrees: 0`).

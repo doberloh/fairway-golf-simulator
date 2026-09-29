@@ -72,32 +72,6 @@ Ground rules that apply to every item below:
   other biomes) and 6.8 ms of processor time per frame against ~1 ms
   elsewhere -- profile it.
 
-### Looking better on Ultra (cartoon style throughout)
-
-Screenshots on 27 September (Redwood tee, seed REPORT1, 10:15 sim time) show
-High and Ultra are practically the same picture; Low to Medium sharpens
-shadows and triples grass, High adds 3D clouds, god rays and mist. F1-F3 free
-the budget these spend.
-
-- [ ] **U1. Soft ambient occlusion.** Trunks, rocks and bunker lips look set
-  down on the grass. A screen-space AO pass (three's GTAO/SAO, or a cheaper
-  depth-based one tuned to the toon look) grounds them and deepens forests
-  without darkening fairways. One extra full-screen pass: Ultra, maybe High.
-  Note from PROJECT_HANDOFF: the god rays deliberately avoid `EffectComposer`
-  because routing the scene through a render target costs the canvas its MSAA
-  -- a multisampled render target (WebGL2 `samples`) or an AO that works
-  without one is the way round.
-
-- [ ] **U6. Spend the savings on more forest (after F1-F2).** With distant
-  trees cheap, Ultra keeps full-detail trees much further out and adds more
-  forest floor near the camera (ferns, logs, flowers); Low keeps today's
-  density. Decoration only -- nothing new may be collidable unless it is in
-  the generator.
-
-- [ ] **U8. Make Ultra distinct from High.** Whichever of U1/U6 land, Ultra is
-  where they go first, so the ladder has four real rungs (see *high and ultra
-  are very nearly the same tier* below).
-
 ### Build time (the wait from "play" to a playable course)
 
 Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
@@ -704,14 +678,6 @@ None of these are tuning -- they are missing capability or wrong plumbing, so
 they were written down rather than done. Asked for on 2026-09-22 as the place
 to put "potential gfx improvements" instead of inventing features overnight.
 
-- [ ] **`high` and `ultra` are very nearly the same tier.** The whole difference
-  is bloom at .14, a 2048 reflection buffer instead of 1536, and shadows that
-  reach the far edge in overview. Everything else -- pixel ratio, shadow map,
-  cascades, fog, grass, foliage, god rays, clouds, mist -- is identical. Ultra
-  is meant to be "everything, for a card with room to spare" and is currently
-  high with a glow on it. Either it grows real extras or the ladder should
-  admit it has three rungs.
-
 - [ ] **Floodlight shadows are off on every tier, and not for frame time.**
   The existing comment is right and now confirmed from the outside: the real
   GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
@@ -1187,6 +1153,17 @@ record of what was ruled out and why, which is worth more than a short file.
 
 ### Looking better on Ultra (cartoon style throughout)
 
+- [x] **U1. Soft shade under trees and rocks.** Branch `ultra-looks`. Not a
+  screen-space pass: a bake per course of how much sky each patch of ground
+  loses to the trunks, crowns and boulders around it (`src/occlusion.js`), read
+  by the ground shader as a soft darkening -- tight at the foot of each trunk
+  and rock, broad and faint under crowns, deeper where they overlap. Every
+  tier, no extra pass, MSAA untouched, 3-12 ms of build time. It rides in the
+  red channel of the existing `cover` texture rather than a new one, because
+  the lit shaders have one sampler of headroom. Graphics slider *Shade under
+  trees and rocks*, default 60%. RESEARCH.md *Soft shade under trees and
+  rocks*.
+
 - [x] **U2. Wind in the imported trees.** Branch `ultra-looks`. The leaves of
   every imported tree and plant sway with the course's wind, by a lever that
   grows with height in the model and with the plant's own height; trunks stay
@@ -1219,6 +1196,23 @@ record of what was ruled out and why, which is worth more than a short file.
   vertices). The light rectangle round the course was the seam's normals and
   the landscape having no baked relief; both are carried across the seam now.
   RESEARCH.md *The ground past the course edge*.
+
+- [x] **U6. A forest floor on Ultra.** Branch `ultra-looks`. Low fern clumps
+  and fallen sticks in the grass tiles round the camera, denser where the
+  canopy is (the U1 bake), fading out between 28 and 48 m like the grass.
+  Decoration only: not in the world, nothing a ball can hit, and ankle height
+  at most so a ball rolling through it never looks wrong. Ultra only
+  (`quality.forestFloor`); every other tier keeps today's planting. The first
+  half of the brief -- full-detail trees further out on Ultra -- was already
+  true (`farTrees: 0` on Ultra since F2). RESEARCH.md *A forest floor on Ultra*.
+
+- [x] **U8. Ultra distinct from High, and the looks as settings.** Branch
+  `ultra-looks`. Ultra now differs from High in what you see standing in a
+  forest (U6) as well as in its shadows and bloom, and says so in the Quality
+  note. The four looks from this branch are sliders in Graphics under *The look
+  of the course* -- turf colour variation, shade under trees and rocks,
+  distance haze, wind in the trees and grass -- on every tier, since none costs
+  a measurable frame, and all live without a rebuild.
 
 ## Reading a green without the overlays
 
@@ -1544,6 +1538,16 @@ problem: a control that belongs inside a box is sitting beside it.
   **The target is reasonable agreement across devices, not exact agreement with
   any one of them.** The curve trusts the GC3 because it is the better
   instrument; that stays a judgement about the references, openly.
+
+## Graphics work the profiling turned up
+
+- [x] **`high` and `ultra` were very nearly the same tier.** When this was
+  written the difference was bloom, a bigger reflection buffer and overview
+  shadows. Ultra has since taken sharper shadows (6144, radius 4) reaching
+  3.5 km against High's 2.5, and on branch `ultra-looks` a forest floor of
+  ferns and fallen sticks round the camera (U6), which is what a player
+  standing among the trees actually sees change. The Quality note in Graphics
+  says so. Four rungs.
 
 ## Benchmarking and profiling worth deciding from
 

@@ -218,6 +218,10 @@ export const TIERS = {
   // 120 Hz, which is why they are not simply part of high.
   floodShadows: 0,
   bloom: .14,
+  // Ferns and fallen sticks on the forest floor round the camera (U6), in the
+  // grass tiles: two more draws a tile, and every tier below keeps today's
+  // planting. vegetation.js, addNearbyGrass.
+  forestFloor: 1,
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
   reflection: 2048,
@@ -240,7 +244,7 @@ export function tierOf(name) {
 // they landed; banding the whole course at a fixed height interval is a
 // deliberate, and deliberately artificial, choice.
 export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stripes: true};
-export const LOOKS = {patches: 60, haze: 50, wind: 100};
+export const LOOKS = {patches: 60, haze: 50, wind: 100, shade: 60};
 
 // GREEN DEFINITION. A green is the flattest thing on the course by design, and
 // every shading cue is proportional to slope, so the one surface a player has to
@@ -318,6 +322,7 @@ const clean = g => ({
  patches: clampPct(g?.patches, LOOKS.patches),
  haze: clampPct(g?.haze, LOOKS.haze),
  wind: clampPct(g?.wind, LOOKS.wind),
+ shade: clampPct(g?.shade, LOOKS.shade),
 });
 
 
@@ -350,6 +355,6 @@ export function needsRebuild(a, b) {
  // Cascades are built with the course and register themselves against every
  // material in it, so turning them on or off needs the scene built again.
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
- return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades ||
+ return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0);
 }
