@@ -597,6 +597,8 @@ Self time is spread thin -- no single function is over 12% -- because the cost i
 `makeGroundGrid` calling `analyticHeight` (53% inclusive) for every cell, which
 calls `shapedLand`, `nearest`, `greenContour` and the rest in turn. Vegetation
 does not appear: placing 18,720 trees is cheap next to sampling the ground.
+(These shares predate 28 September; the three biggest per-cell costs were cut
+then -- see *The ground grid stops asking every hole about every point*.)
 
 **This settles how to make generation yield.** The standing plan was to make
 `generateWorld` a `function*` yielding phase labels, with the caveat that it
@@ -4224,3 +4226,60 @@ lit fragment in DAYLIGHT is unmeasured with the corrected probe; the note in
 `renderer.debug.checkShaderErrors = false`, suggested in the plan, was not
 needed: once the links are awaited, the diagnostic reads it forces cost
 nothing measurable (the frame under the overlay is 7-10 ms).
+
+## The ground grid stops asking every hole about every point (B3, 28 September)
+
+`src/course.js`. The plan's B3 was a faster "which hole is nearest" lookup.
+Counted first: it already measured only 1.21 holes a call on nine-hole courses
+and 1.43 on eighteen (5.19 on Island, which keeps a minimum per group of holes),
+because the existing box rejection and last-winner-first order do the work.
+There was little to take. A CPU profile of an eighteen (PNW, seed REPORT1,
+7.5 s) found the time elsewhere, all of it questions the ground grid asks of
+every point it samples:
+
+1. **Which cells get refined** (`makeGroundGridSteps`' predicate): every hole
+   was asked about every cell -- green within 38 m, tee pads, ponds, bunkers --
+   after turning the point into that hole's frame. 1.4 s of its own plus the
+   frame changes, the single biggest item, and quadratic in the course (twice
+   the holes times twice the cells). Now each hole has a world box around every
+   one of those questions' reach, and a cell outside it is answered `false`
+   without the frame change.
+2. **Pond and bunker basins** in `analyticHeight`: every point asked every
+   basin, again by frame change first. Now a world box per basin (flat numbers,
+   rebuilt when the list changes) is tested first.
+3. **The green shaping** in `shapedNoTees`: every point inside a hole's
+   tee-to-green box (+180 m) computed the green's full contour (`greenContour`
+   -> `greenShape` -> `plateau`, ~1 s) BEFORE finding out how much the green
+   weighs there -- and past the widest shoulder (100 m) the weight is exactly
+   zero, because `smooth` clamps at 1. The contour is now skipped there.
+
+**Every shortcut is exact:** a box is the same test's region turned into the
+world and bounded, so anything outside it got the answer "no" before too, and
+the green skip only drops points whose blend was already exactly zero.
+`node tools/biome-fingerprint.mjs --check` -- every biome's GROUND hash -- was
+unchanged after each step, which is the proof; no `GENERATOR_VERSION` bump.
+
+**Measured**, generation only (`generateWorld` in Node, best of three, seed
+REPORT1, `main` and the branch run back to back):
+
+| Course | Before | After |
+| --- | --- | --- |
+| PNW, 9 holes | 2.46 s | 1.37-1.45 s |
+| PNW, 18 holes | 8.79 s | 4.19-4.25 s |
+| Redwood, 9 | 3.19 s | 1.73-1.90 s |
+| Island, 9 | 4.01 s | 2.76-2.91 s |
+| Links, 18 | 10.26 s | 4.79-4.93 s |
+
+About 40% off a nine and half an eighteen. The browser's press-play-to-smooth
+could not be measured cleanly that afternoon (the owner's machine was busy:
+`main` itself ran 14-16 s on nine holes against 7-8 s that morning), so the
+generation figures are the ones to trust.
+
+**Tried and dropped: rewriting `nearest` to allocate nothing** (no closure per
+call, the frame change inline, one object for the winner only). Bit-identical
+and measured no faster -- V8 was already removing those allocations -- so it
+was reverted rather than kept as complexity for nothing.
+
+**What is left** (profile of the same eighteen afterwards, 3.2 s): `nearest`
+0.8 s inclusive (the one measurement a point genuinely needs), land shaping
+and tee pads ~0.4 s, `routeHoles` 0.25 s, the grid's own bookkeeping ~0.4 s.

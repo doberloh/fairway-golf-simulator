@@ -172,14 +172,6 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   workers) in Chrome, Safari and Firefox; fall back to one thread if refused.
   Fingerprints must stay identical. No course changes.
 
-- [ ] **B3. A faster nearest-hole lookup.** `nearest(x, z)` measures several
-  holes per ground point (a bounding-box skip already exists). A coarse
-  lookup built once -- which holes can possibly be nearest in each ~50 m area,
-  from conservative distance bounds -- cuts most measurements and returns the
-  identical answer (the true nearest is always among the candidates; keep the
-  same tie-break order). Bigger saving on 18 holes. No course changes;
-  fingerprints must stay identical.
-
 - [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
   `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
   Profile each (the unminified build shows real names:
@@ -1184,6 +1176,17 @@ record of what was ruled out and why, which is worth more than a short file.
   Found why it is that long -- the floodlight lamps are in every lit shader --
   and filed it as B6. RESEARCH.md *The first frame, paid for behind the
   loading screen*.
+
+- [x] **B3. The ground grid stops asking every hole about every point.**
+  Branch `faster-ground`. Rescoped by measurement: the nearest-hole lookup
+  already measured 1.2-1.4 holes a call, so there was little there; the time
+  was three per-point questions asked of every hole or basin -- which cells to
+  refine, which basin a point is in, and the green contour computed before its
+  (often exactly zero) weight. Each now has an exact world-box or zero-weight
+  rejection in front; fingerprints unchanged, so no version bump. Generation,
+  best of three: PNW nine 2.46 -> 1.4 s, eighteen 8.79 -> 4.2 s, Links
+  eighteen 10.26 -> 4.9 s. RESEARCH.md *The ground grid stops asking every
+  hole about every point*.
 
 ## Reading a green without the overlays
 

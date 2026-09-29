@@ -186,6 +186,8 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 
 ### Measuring the generator
 
+**Per-point work in the ground grid is where generation goes** -- a million-plus samples on an eighteen. Anything asked of every point should be rejected cheaply first, by a world box around the region where the answer can be anything but "no" (`worldBoxOf` turns a rectangle in a hole's frame into one; see the refinement boxes, the basin boxes and the green-shaping skip in `course.js`). Such a shortcut must give EXACTLY the old answer, and `node tools/biome-fingerprint.mjs --check` is how that is proved: a shortcut that moves one sample moves the ground hash.
+
 `npm run bench` builds many courses in parallel and reports what they came out like. Every metric shares one generation pass and the courses are spread across all cores, which is a measured 25x against doing it serially — the point being that measuring before and after a change has to be cheap enough to actually do.
 
 - `node tools/bench.mjs --tier quick` — four courses, about seven seconds. For iterating.
