@@ -145,46 +145,21 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B6. Fewer floodlight lamps, so shaders are shared and quick.** Every
-  pole is a spot light (`FLOOD_LAMP_CAP` 192 in `src/renderer.js`, above the
-  longest course's 141), and three writes the spot-light count into every lit
-  shader -- so each course needs its own programs (the menu backdrop's cannot
-  be reused) and longer courses bigger ones. Measured (B1, cold browser, PNW,
-  High): cap 8 took shader preparation from 2.0 s to 0-0.6 s on nine holes and
-  3.5 s to 0.6 s on eighteen; press-play-to-smooth ~8.4 -> 5.2-7.1 s and 13.4
-  -> 9.6 s. Cost: at night only the lamps nearest the play are real lights
-  (`orderPoles` already picks them: the hole being played first, then nearest
-  the ball); the others' heads still glow. THE OWNER'S CALL: night screenshots
-  at a few caps (8, 16, 24) before deciding. A fixed cap also makes every
-  course's programs identical, so they could be built while the menu is up.
-  Also measure what 57-141 zero-intensity lights cost a DAYTIME frame with the
-  corrected probe -- the "costs nothing" note in `updateFloodlights` predates
-  the probe fix.
+- [ ] **B7. A hitch two to three seconds after a course appears.** Found
+  measuring B1-B6 (28 September): after the loading screen goes, frames run
+  smoothly and then, ~2-3 s in, one long frame (334 ms on PNW eighteen) or a
+  few of 50-150 ms (nine holes). It is NOT from the build-time work: `main`
+  before any of it shows the same ("smooth after 3.0 s" in the same runs).
+  Likely something scheduled after the arrival -- the intro camera finishing,
+  the near-field grass ring filling, a first cull rebuild at the new pose.
+  `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
+  their times; a CPU profile over that window would name it.
 
-- [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
-  core; the grid is row bands that can be computed in parallel with identical
-  numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
-  time*) ruled out a Web Worker because the finished world holds closures
-  that cannot cross a thread; the GRID VALUES can -- each worker rebuilds the
-  plan from the same settings (deterministic, ~0.5 s) and returns its band as
-  a Float32Array. Estimate 2.5 s -> under 1 s on 8 cores. Must check first:
-  workers inside the single-file build opened from `file://` (inline/blob
-  workers) in Chrome, Safari and Firefox; fall back to one thread if refused.
-  Fingerprints must stay identical. No course changes.
-
-- [ ] **B3. A faster nearest-hole lookup.** `nearest(x, z)` measures several
-  holes per ground point (a bounding-box skip already exists). A coarse
-  lookup built once -- which holes can possibly be nearest in each ~50 m area,
-  from conservative distance bounds -- cuts most measurements and returns the
-  identical answer (the true nearest is always among the candidates; keep the
-  same tie-break order). Bigger saving on 18 holes. No course changes;
-  fingerprints must stay identical.
-
-- [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
-  `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
-  Profile each (the unminified build shows real names:
-  `npx vite build --minify false --outDir <somewhere>`); some can move into
-  B2's workers.
+- [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
+  the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
+  `height` -- the finished grid, tens of megabytes to send to each worker
+  without shared memory (not available from `file://`). The ownership atlas,
+  the other half of this entry, is done (see B2 in Done).
 
 - [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
   3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
@@ -1185,6 +1160,67 @@ record of what was ruled out and why, which is worth more than a short file.
   and filed it as B6. RESEARCH.md *The first frame, paid for behind the
   loading screen*.
 
+- [x] **B6. Floodlit shaders built after the course is on screen.** Branch
+  `daylight-lamps`. The lamps are hidden while the floodlights are off, so a
+  daylight start builds programs with no spot lights -- the same on every
+  course -- and `warmFloodlights` builds the other state's in the background
+  once the course is on screen. Cold browser, PNW, High, alternated with
+  `main`: graphics prep 3.0-3.2 s -> 0.1-0.8 s, press play to smooth 2.3-3.2 s
+  shorter on nine holes. Switching the floodlights afterwards: worst frame
+  19-30 ms, from a daylight or a floodlit start. Night unchanged, overview
+  included. REJECTED first: a cap on live lamps (same win, but only the
+  nearest poles lit at night -- the owner declined it for the overhead view).
+  FOLLOW-UP, found by the owner in the course creator: switching on in the
+  first seconds after arrival, while the lit programs were still being built,
+  froze the game (5.3 s on eighteen holes); such a switch now waits for the
+  build with the game running, and the lights come on when it is done (5.9 s
+  on eighteen holes, 2.1 s on nine; worst frame 48 ms).
+  RESEARCH.md *Floodlit shaders built after the course is on screen*.
+
+- [x] **B4. The scene build and the loading screen -- partly.** Branch
+  `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
+  block of ~3.7 s -- ground cover 1.4 s, the ground-shading atlas 1.0 s, the
+  water probes 0.8 s. Done: the probes are taken after the shaders are built
+  (same capture, trees hidden as before), the outgoing menu scene no longer
+  re-photographs its ponds when the round's clock is applied (1.6 s), and the
+  game loop does not draw while the graphics prepare. Longest page freeze
+  while loading 3.7-4.8 s -> 3.1-3.2 s. The ground cover and atlas work cannot
+  be trimmed without changing answers; moved to B2. RESEARCH.md *The scene
+  build and the loading screen*.
+
+- [x] **B3. The ground grid stops asking every hole about every point.**
+  Branch `faster-ground`. Rescoped by measurement: the nearest-hole lookup
+  already measured 1.2-1.4 holes a call, so there was little there; the time
+  was three per-point questions asked of every hole or basin -- which cells to
+  refine, which basin a point is in, and the green contour computed before its
+  (often exactly zero) weight. Each now has an exact world-box or zero-weight
+  rejection in front; fingerprints unchanged, so no version bump. Generation,
+  best of three: PNW nine 2.46 -> 1.4 s, eighteen 8.79 -> 4.2 s, Links
+  eighteen 10.26 -> 4.9 s. RESEARCH.md *The ground grid stops asking every
+  hole about every point*.
+
+- [x] **B2. The ground grid's heights on every core.** Branch
+  `parallel-ground` (on `faster-ground`). Up to eight workers, each generating
+  its own copy of the world and stopping at the grid; the main thread feeds the
+  unchanged grid builder their answers in the order it asks, so the grid is
+  the serial one by construction -- byte-for-byte in the Node test and the same
+  `lab.ground()` hash in the browser. Classic blob worker embedded in the
+  single file (+89 KB), falling back to the main thread on any failure.
+  Generation in the browser: PNW nine 2.6 -> 1.9 s, eighteen 9.0 -> 3.4 s,
+  Links eighteen 12.1 -> 3.6 s. The workers then compute the ground's
+  ownership atlas too (hole, lake and stream per texel; `owner-atlas.js`),
+  started as soon as the grid is done and collected when generation ends, so
+  the ground material only adds straw: the longest page freeze while loading
+  6.6-7.0 -> 5.8 s on a busy machine. Follow-ups B2b (Firefox/Safari) and B2c
+  (the ground cover). RESEARCH.md *The ground grid's heights on every core*.
+
+- [x] **B2b. The ground workers checked on the owner's devices.** 28 September:
+  the owner tested the combined build (`build-time-all`) -- the checklist of
+  loading, floodlights mid-round, ponds and the night overview, and
+  `lab.ground()` on an iPhone and a Mac -- and reported all of it good. The one
+  problem found, a long pause switching the floodlights in the course creator,
+  is fixed under B6.
+
 ## Reading a green without the overlays
 
 The overnight brief was "greens look flat from every angle"; what it
@@ -2054,7 +2090,7 @@ problem: a control that belongs inside a box is sitting beside it.
   - **Importing a round destroyed the one in progress** with no prompt, and never entered play: from the main menu it built the course, said "Saved round restored" and left you on the menu. It now reads and validates the file first, then goes through `guardRound` like every other exit, then `setMode('play')`. The file input is cleared afterwards -- without that the same file could not be chosen twice running.
   - Verified end to end: discard then reload leaves no stored round and no Continue; a 225 yd driver survives an endless run and a reload; importing mid-round asks to save, saves, imports and lands in play. Four new tests in `settings-schema.test.mjs`, one of which fails if a play-scope key ever becomes a schema field and quietly makes the mechanism unnecessary.
 
-- [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps are created visible at zero intensity now and only their intensity is switched, so the count never changes: **18.7 ms in the studio, zero programs compiled**. Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
+- [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps were then created visible at zero intensity and only their intensity was switched, so the count never changed: **18.7 ms in the studio, zero programs compiled**. (Reversed 28 September, B6: that put every lamp into every lit shader at load; they are hidden while off again and both states' programs are built ahead.) Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
 
 - [x] **Terrain casts its own shadow.** It only ever received one, so trees shaded the turf and the turf shaded nothing -- a ridge did not darken the hollow behind it, which is a large part of why undulation is hard to read. One draw call per cascade over existing geometry: 8.6 ms against 8.5 ms.
 

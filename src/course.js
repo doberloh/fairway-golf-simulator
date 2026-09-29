@@ -2,7 +2,7 @@ import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
 import {planCourse,holeLine,enabledTees,greenContour,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
-import {makeGroundGrid,makeGroundGridSteps,groundHeight} from './terrain-grid.js';
+import {makeGroundGrid,makeGroundGridSteps,makeGroundGridPooled,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
 import {clamp} from './physics.js';
@@ -667,6 +667,14 @@ const TEE_AREA_RELIEF=.25;
 // pad of its own size and position, or carry none at all and simply stand on
 // a neighbour's. A tee that says nothing gets exactly the old behaviour, so
 // the driving range and everything else is untouched.
+// A rectangle in a hole's own frame, as a box in the world that contains it. The
+// frame is a rotation and a shift, so the four corners are enough; a metre of
+// slack keeps a point that sits on an edge from being lost to rounding.
+export function worldBoxOf(h,x0,x1,z0,z1,pad=1){
+ let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+ for(const [x,z] of [[x0,z0],[x0,z1],[x1,z0],[x1,z1]]){const w=h.toWorld({x,z});minX=Math.min(minX,w.x);maxX=Math.max(maxX,w.x);minZ=Math.min(minZ,w.z);maxZ=Math.max(maxZ,w.z);}
+ return {minX:minX-pad,maxX:maxX+pad,minZ:minZ-pad,maxZ:maxZ+pad};
+}
 export function teePad(t){
  if(t.pad===null)return null;
  return t.pad??{z:t.z,rz:TEE_PAD.z,ux:t.ux??0,uz:t.uz??1};
@@ -870,8 +878,13 @@ export const foreshore = (y, near = 1) => {
 // The grid reports its own 0..1; this lifts it onto the whole-build scale and
 // hands back the finished grid, so the call site reads like a function call.
 function* stepGrid(it){
- let r=it.next();
- while(!r.done){yield phaseAt(3,r.value);r=it.next();}
+ let r=it.next(),last=0;
+ while(!r.done){
+  // A wait on the workers is passed up to the driver with the progress so far,
+  // and whatever it resolves to is passed back down.
+  if(r.value&&r.value.await){const got=yield {...phaseAt(3,last),await:r.value.await};r=it.next(got);continue;}
+  last=r.value;yield phaseAt(3,r.value);r=it.next();
+ }
  return r.value;
 }
 const PHASE=[
@@ -890,7 +903,10 @@ export function generateWorld(settings={}){
  let r=it.next();while(!r.done)r=it.next();
  return r.value;
 }
-export function* generateWorldSteps(settings={}){
+// `options.gridPool`: heights for the ground grid computed on other cores (see
+// makeGroundGridPooled); the grid is the same either way. `options.capture`: a
+// worker's run, which stops at the grid and yields `{capture: {sample, refine}}`.
+export function* generateWorldSteps(settings={},options={}){
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)};s.holes=s.holes===18?18:s.holes===1?1:9;s.waterMin=clamp(s.waterMin,.2,8);s.waterMax=clamp(s.waterMax,s.waterMin,12);
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
@@ -1113,7 +1129,13 @@ export function* generateWorldSteps(settings={}){
   const weight=b/(1.001-b);
   pondBlend=Math.max(pondBlend,b);weightSum+=weight;targetSum+=weight*s.target;
  }
- if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z}),d=greenDistance(h,p.x,p.z),greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
+ if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z}),d=greenDistance(h,p.x,p.z);
+ // The shoulder is never wider than 100 m, so past it the blend below is
+ // exactly nothing (smooth clamps at 1) whatever the green's height. Asking for
+ // the green's contour first, as this did, was a third of what shaping an
+ // eighteen cost -- for points a hundred metres and more from any green.
+ if(d-s.fringe-1>=100)continue;
+ const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
  return y;}
  // A tee is a terrace cut into whatever the rest of the shaping already
  // decided, so its height is sampled from shapedNoTees rather than from the
@@ -1605,7 +1627,23 @@ export function* generateWorldSteps(settings={}){
  // `generateStreams`, because that is what says where the sinks are, and before
  // the ground grid, because `analyticHeight` closes over `basins` and the mesh
  // is sampled from it.
- function analyticHeight(x,z){let y=shapedLand(x,z);for(const {h,b,pond,reach} of basins){const q=h.toLocal({x,z});if(Math.abs(q.x-b.x)>reach||Math.abs(q.z-b.z)>reach)continue;const d=hazardMetric(q.x,q.z,b);
+ // EVERY GRID POINT ASKED EVERY BASIN on the course whether it was near, by
+ // turning itself into that basin's hole frame first -- the hole's rotation,
+ // for every pond and bunker, for every one of the ~1.6 M points an eighteen
+ // takes. `basinBox` is the same square as the test below, turned into the
+ // world and boxed there, so a point outside it is outside the square and the
+ // answer is exactly the one the full test would give; only the work goes.
+ // The boxes are rebuilt whenever the list is not the one they were made for
+ // (it is replaced when drowned bunkers are dropped, and grows by sink ponds),
+ // and are flat numbers because this runs for every point on the course.
+ let boxedFor=null,boxedCount=-1,boxes=null;
+ const basinBoxes=()=>{
+  if(boxedFor===basins&&boxedCount===basins.length)return boxes;
+  boxes=new Float64Array(basins.length*4);
+  basins.forEach(({h,b,reach},i)=>{const w=worldBoxOf(h,b.x-reach,b.x+reach,b.z-reach,b.z+reach);boxes.set([w.minX,w.maxX,w.minZ,w.maxZ],i*4);});
+  boxedFor=basins;boxedCount=basins.length;return boxes;
+ };
+ function analyticHeight(x,z){let y=shapedLand(x,z);const w=basinBoxes();for(let i=0;i<basins.length;i++){if(x<w[i*4]||x>w[i*4+1]||z<w[i*4+2]||z>w[i*4+3])continue;const {h,b,pond,reach}=basins[i];const q=h.toLocal({x,z});if(Math.abs(q.x-b.x)>reach||Math.abs(q.z-b.z)>reach)continue;const d=hazardMetric(q.x,q.z,b);
  // A cut bank rather than a ramp: natural ground is held right out to the rim
  // and then drops over WATER_LIP, which is what a bunker does and what makes one
  // read as excavated rather than as a dip.
@@ -1655,14 +1693,45 @@ export function* generateWorldSteps(settings={}){
   ?((x,z,a,b,c,d)=>a===undefined?false:Math.min(a,b,c,d)<waterLevel&&Math.max(a,b,c,d)>=waterLevel)
   :(()=>false);
  yield phaseAt(3);
- const groundGrid=yield* stepGrid(makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some(h=>{const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);})));
+ // WHICH CELLS ARE REFINED asked every hole about every cell -- green, tees,
+ // ponds, bunkers -- in that hole's own frame: the single most expensive thing
+ // in building an eighteen (1.4 s of its own, plus the frame changes, of 7.5 s
+ // measured). Each hole's box holds every one of those questions' reach, in
+ // the hole's frame, turned into the world; a cell outside it gets `false`
+ // from every question, which is what the full test would have said.
+ const refineBoxes=holes.map(h=>{
+  const g=h.green??h.pin;let x0=g.x-38,x1=g.x+38,z0=g.z-38,z1=g.z+38;
+  const grow=(a,b,c,d)=>{x0=Math.min(x0,a);x1=Math.max(x1,b);z0=Math.min(z0,c);z1=Math.max(z1,d);};
+  for(const t of Object.values(h.tees)){const q=teePad(t);if(q)grow(t.x-TEE_PAD.x-6,t.x+TEE_PAD.x+6,q.z-q.rz-6,q.z+q.rz+6);}
+  for(const b of h.ponds){
+   // hazardMetric < 1.35: the distance it divides is at least either axis on
+   // its own, and its divisor is at most 1 + |wave2| + |wave3| (1 with banks),
+   // so either axis stays inside 1.35 times that of the widest bank.
+   const f=1.35*(b.banks?1:1+Math.abs(b.wave2??0)+Math.abs(b.wave3??.07));
+   const banks=b.banks??[{x:b.x,rx:b.rx}];
+   for(const k of banks)grow(k.x-k.rx*f,k.x+k.rx*f,b.z-b.rz*f,b.z+b.rz*f);
+  }
+  for(const b of h.bunkers)grow(b.x-b.rx*1.4-4,b.x+b.rx*1.4+4,b.z-b.rz*1.4-4,b.z+b.rz*1.4+4);
+  return worldBoxOf(h,x0,x1,z0,z1);
+ });
+ // Which large lake owns a point, if any. Defined before the grid (nothing in
+ // it depends on the grid) so a generation worker holds it too: the ground's
+ // ownership atlas asks it for every texel (owner-atlas.js).
+ const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
+ const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;
+ // Which cells are cut to half a metre. Named, because a worker that computes
+ // heights for the grid (B2) has to ask exactly this.
+ const refineCell=(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some((h,i)=>{const w=refineBoxes[i];if(x<w.minX||x>w.maxX||z<w.minZ||z>w.maxZ)return false;const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);});
+ // A worker stops here: it needed the land and the question, not the grid.
+ if(options.capture){yield {capture:{sample:analyticHeight,refine:refineCell,nearest,lakeOwner,streamAt:(x,z)=>streams.at(x,z)}};return null;}
+ const groundGrid=yield* stepGrid(options.gridPool
+  ?makeGroundGridPooled(analyticHeight,halfX+150,halfZ+150,3,refineCell,options.gridPool)
+  :makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,refineCell));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
  // The sited pads, so a measurement can report what the generator decided
  // rather than trying to infer it back out of the terrain.
  const teeSites=teePads.map(p=>({hole:p.h.hole,x:p.x,z:p.z,rz:p.rz,level:p.y,
   spread:p.spread??0,slid:p.slid??0,lift:p.lift??0}));
- const largeLakes=holes.flatMap(h=>h.ponds.filter(p=>p.large).map(p=>({h,p})));
- const lakeOwner=(x,z,margin=0)=>largeLakes.find(({h,p})=>{const q=h.toLocal({x,z});return hazardMetric(q.x,q.z,p)<1+margin/Math.min(p.rx,p.rz);})?.h;
  // THE LIE HALF OF THE MOWN BAND AROUND WATER. The painted half is in
  // ground.js and both use `semiRough`, because a first attempt at this changed
  // only this file -- the ground shader classifies from corridor geometry and

@@ -73,6 +73,18 @@ For each release, update this dated review and the dependency inventory when dep
 
 ---
 
+## Addendum, 28 September 2026: background workers inside the single file
+
+Generation now computes the ground grid's heights in Web Workers (B2 in
+TODO). The worker is a classic script embedded in the page as a blob
+(`?worker&inline`), because a page opened by `file://` may start a classic
+blob worker in Chromium and may not start a module one -- checked with a
+scratch page, and by `npm run smoke`, which opens the built file by `file://`
+and passed with the workers running. It adds ~89 KB to the single file
+(15.89 -> 15.98 MB). Nothing is fetched: the worker's code is in the page.
+Firefox and Safari were not tested; a browser that refuses the worker gets
+the grid built on the main thread, the same course, only slower.
+
 ## Addendum, 25 September 2026: archives rebuilt
 
 **This is a dependency delta and a repackaging, not a fresh full review.** The

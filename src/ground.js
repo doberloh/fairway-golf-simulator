@@ -1,3 +1,4 @@
+import {ownerAtlasSize,ownerRows,strawChannel} from './owner-atlas.js';
 import {BANK_COLORS} from './streams.js';
 import {toonRamp} from './textures.js';
 import * as T from 'three';
@@ -94,12 +95,16 @@ export function groundMaterial(view,palette){
  // whichever way a boundary runs. The cap is what stops an unusually large
  // course asking for a texture nobody budgeted for; past it the atlas gets
  // coarser rather than the memory unbounded.
- const OWNER_TEXEL=1.75,OWNER_MAX=1<<20;
- let Sx=Math.max(256,Math.ceil(extent.x*2/OWNER_TEXEL)),Sz=Math.max(256,Math.ceil(extent.y*2/OWNER_TEXEL));
- if(Sx*Sz>OWNER_MAX){const k=Math.sqrt(OWNER_MAX/(Sx*Sz));Sx=Math.max(256,Math.round(Sx*k));Sz=Math.max(256,Math.round(Sz*k));}
+ // (Size and questions are in owner-atlas.js, shared with the workers.)
+ const {Sx,Sz}=ownerAtlasSize(extent.x,extent.y);
  const texture=(data,x,y,linear=false)=>{const t=new T.DataTexture(data,x,y,T.RGBAFormat,T.FloatType);t.minFilter=t.magFilter=linear?T.LinearFilter:T.NearestFilter;t.needsUpdate=true;view.resources.push(t);return t;};
  const owners=new Float32Array(Sx*Sz*4),route=new Float32Array(N*12),tees=new Float32Array(N*24),curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
- for(let j=0;j<Sz;j++)for(let i=0;i<Sx;i++){const x=((i+.5)/Sx*2-1)*extent.x,z=((j+.5)/Sz*2-1)*extent.y,k=(j*Sx+i)*4;const lake=w.lakeOwner(x,z,7);owners[k]=(lake||w.nearest(x,z).h).hole;owners[k+1]=w.groundCover(x,z)==='straw'?1:0;owners[k+2]=(w.streams.at(x,z)?.id??-1)+1;owners[k+3]=lake?1:0;}
+ // The expensive channels arrive precomputed when the generation workers
+ // built them (gen-pool.js); otherwise they are asked here, the same way.
+ const pre=w.ownerAtlas;
+ if(pre&&pre.Sx===Sx&&pre.Sz===Sz)owners.set(pre.data);
+ else owners.set(ownerRows({lakeOwner:w.lakeOwner,nearest:w.nearest,streamAt:(x,z)=>w.streams.at(x,z)},extent.x,extent.y,Sx,Sz,0,Sz));
+ strawChannel(owners,w.groundCover,extent.x,extent.y,Sx,Sz);
  for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);// Two texels a tee: where and how big, then which way it faces. The fourth
   // slot of the first was already the pad's half-length; the direction needed
   // somewhere of its own.

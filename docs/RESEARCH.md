@@ -597,6 +597,8 @@ Self time is spread thin -- no single function is over 12% -- because the cost i
 `makeGroundGrid` calling `analyticHeight` (53% inclusive) for every cell, which
 calls `shapedLand`, `nearest`, `greenContour` and the rest in turn. Vegetation
 does not appear: placing 18,720 trees is cheap next to sampling the ground.
+(These shares predate 28 September; the three biggest per-cell costs were cut
+then -- see *The ground grid stops asking every hole about every point*.)
 
 **This settles how to make generation yield.** The standing plan was to make
 `generateWorld` a `function*` yielding phase labels, with the caveat that it
@@ -2699,7 +2701,7 @@ Three.js builds its lighting uniforms from the **visible** lights in a scene, an
 
 Two fixes were measured. Pre-compiling the floodlit variant during generation took it to **554 ms**, then **270 ms** once the masts were included in the warm-up walk — better, but still a visible hitch, because 22 and then 3 programs were still being built at toggle time.
 
-The fix that works is to stop changing the count: the lamps are created **visible at zero intensity** and only their intensity is switched. The light count is then constant, everything compiles once while the course is being generated, and the toggle is **18.7 ms in the studio with zero programs compiled**. This is the same reasoning the ball's point light already carried.
+The fix that worked then was to stop changing the count: the lamps were created **visible at zero intensity** and only their intensity was switched. The light count was constant, everything compiled once while the course was being generated, and the toggle was **18.7 ms in the studio with zero programs compiled**. This is the same reasoning the ball's point light already carried. **Reversed 28 September (B6):** that put every lamp into every lit shader at load, which is most of the 2-3.5 s the loading screen spends on the graphics card; the lamps are hidden while off again, and both states' programs are now built ahead -- see *Floodlit shaders built after the course is on screen*.
 
 What it trades is a permanently wider light loop in every fragment, daylight included. Measured here that is inside the noise — **8.3 ms median with the lamps present against 8.5 ms without** — but it is real work, and a fragment-bound machine would feel it.
 
@@ -4216,11 +4218,239 @@ instead of 2.0 on nine holes (once 2 ms: the menu backdrop had already built
 identical programs, which never happens when the count differs per course) and
 0.6 s instead of 3.5 on eighteen; press-play-to-smooth 5.2-7.1 s on nine holes
 and 9.6 s on eighteen. Not adopted: it would light only the lamps nearest the
-play at night, which is a change to the look and the owner's to make. Filed as
-B6. The frame cost of 57-141 zero-intensity spot lights looped over by every
+play at night, which is a change to the look and the owner's to make -- and
+the owner declined it. B6 got the same win another way: see *Floodlit shaders
+built after the course is on screen*. The frame cost of 57-141 zero-intensity spot lights looped over by every
 lit fragment in DAYLIGHT is unmeasured with the corrected probe; the note in
 `updateFloodlights` saying it costs nothing was taken with the old one.
 
 `renderer.debug.checkShaderErrors = false`, suggested in the plan, was not
 needed: once the links are awaited, the diagnostic reads it forces cost
 nothing measurable (the frame under the overlay is 7-10 ms).
+
+## Floodlit shaders built after the course is on screen (B6, 28 September)
+
+`addFloodlights`, `setFloodlights` and `warmFloodlights` in `src/renderer.js`.
+The floodlight lamps are hidden while off, so a course that starts with the
+floodlights off builds programs with no spot lights in them -- the same set on
+every course, most of which the menu backdrop has already built -- and the
+programs for the lit state are built in the background once the course is on
+screen (and the unlit state's, for a course that starts floodlit).
+
+**Rejected first: a cap on live lamps.** The measured win was the same (B1:
+cap 8 took shader preparation from 2.0 to 0-0.6 s on nine holes and 3.5 to 0.6
+s on eighteen), but at night only the lamps nearest the play would light
+anything, and from the overhead view that is a different course. The owner
+declined it. This keeps every pole a light and moves the cost instead.
+
+**Measured** (cold browser each run, PNW, seed REPORT1, High; `main` and the
+branch alternated, because the machine's speed drifted over the session):
+
+| Run | `main`: build, of which graphics prep | Branch: build, of which graphics prep |
+| --- | --- | --- |
+| 1 | 10.52 s, 3.23 s | 8.27 s, 0.12 s |
+| 2 | 12.42 s, 3.10 s | 9.23 s, 0.76 s |
+| 3 | 11.98 s, 3.00 s | 9.16 s, 0.72 s |
+
+Press play to smooth: 2.3-3.2 s shorter on nine holes. Earlier, faster runs of
+the branch alone gave 0.12-0.14 s of graphics prep on nine holes and
+0.12-0.78 s on eighteen.
+
+**The switch.** Worst frame in the two seconds after switching (`lab.floodlights`),
+five seconds after the course appeared: starting in daylight, on 30 ms / off 21
+/ on 19; starting floodlit, off 22 / on 20 / off 19. No stall either way.
+
+**The cost moved, not removed.** Sending for the night programs is one scene
+walk that creates ~35 programs on the main thread; the first frame after the
+overlay now takes ~0.2 s instead of ~0.01 s. The linking itself happens on the
+driver's threads while the player looks at the tee.
+
+**Night looks the same.** Floodlit at 21:30, the branch against `main`: player
+view 3,520 changed pixels against 2,932 between two runs of `main`; overview
+39,087 against 9,959 -- and the difference image shows only the outlines of
+drifting clouds (they move with time since load, and the two builds reach the
+screenshot at different moments); the floodlit holes do not differ.
+
+**The switch, early -- found by the owner in the course creator.** The lit
+programs are built in the background from the first frame after arrival, and
+on eighteen holes (141 lamps) that takes ~6 s. The course creator is where the
+switch gets reached for straight away, and a switch in that window made the
+next frame use programs the driver had not finished: switched 0.3 s after an
+eighteen-hole studio landscape appeared, the game froze for **5.3 s** (nine
+holes: 2.1 s at 0.3 s, 0.9 s at 1.5 s, nothing after 4 s). Now a switch that
+lands while the build is running waits for it with the game live
+(`setFloodlights` / `floodWarming`): the lights come on 5.9 s after the switch
+on eighteen holes and 2.1 s on nine, and the worst frame meanwhile is 48 and
+36 ms. The wait is the driver's and is not shorter; the freeze is gone. The
+latest request wins, and a pending switch never carries over to a course
+rebuilt in the meantime.
+
+**Unmeasured:** whether hiding 57-141 zero-intensity spot lights in daylight
+also makes the daytime frame cheaper. It should (every lit fragment loops over
+them); it is a frame-rate question and frame-rate work is paused.
+
+## The scene build and the loading screen (B4, 28 September)
+
+A CPU profile of `lab.course` in the browser (unminified build, PNW nine, High)
+put the 3D scene build (`view.build`, one synchronous block, so the page is
+frozen for all of it) at ~3.7 s on a busy afternoon:
+
+| Part | Time | Of which |
+| --- | --- | --- |
+| `addGroundCover` | 1.4 s | `world.surface` for every candidate tuft, 1.2 s |
+| `groundMaterial` | 1.0 s | `nearest` for every texel of the ownership atlas (up to 1 M), 0.8 s |
+| `refreshWaterEnvironment` in `build` | 0.8 s | the card finishing programs on the spot (`getProgramInfoLog`), 0.75 s |
+
+It also found two stalls OUTSIDE the build: (1) at the start of every round
+the menu scene about to be discarded re-photographed its ponds, because the
+clock moved from the menu's hour to the player's -- 1.58 s measured with a
+trace; (2) during B1's wait the game loop kept drawing the new course, and
+the first frame to touch an unfinished program froze the page.
+
+**Done:** the water probes are taken inside `GolfView.ready` after the shaders
+are built (with the later additions hidden, so the capture is the same one),
+the outgoing scene no longer refreshes its environment (`view.retiring`), and
+the game loop does not draw while `ready` waits. Measured against the
+`daylight-lamps` branch it sits on, alternated, cold browser: the longest
+freeze of the page while loading 3.70 / 4.78 / 4.57 s -> 3.05 / 3.14 / 3.22 s.
+Press-play-to-smooth was within the afternoon's noise either way. The ponds
+look the same: enlarged, only the animated ripples differ between the two.
+
+**Not done, and why.** The ground cover's `surface` calls and the atlas's
+`nearest` calls cannot be made cheaper without changing their answers: the
+cover's order of random draws depends on which candidates are rejected first
+(testing its cheap `patch` roll before `surface` would move every tuft), and
+the atlas has to agree with the lie at hole boundaries, which rules out
+guessing a block's owner from its corners. Both are per-point work that could
+run on other cores; that is B2.
+
+**Tried and dropped** (no measurable gain, reverted): a straight-hole shortcut
+and an unrolled wiggle sum in `course-plan.js`'s `unitCenter` -- bit-identical,
+no faster.
+
+## The ground grid stops asking every hole about every point (B3, 28 September)
+
+`src/course.js`. The plan's B3 was a faster "which hole is nearest" lookup.
+Counted first: it already measured only 1.21 holes a call on nine-hole courses
+and 1.43 on eighteen (5.19 on Island, which keeps a minimum per group of holes),
+because the existing box rejection and last-winner-first order do the work.
+There was little to take. A CPU profile of an eighteen (PNW, seed REPORT1,
+7.5 s) found the time elsewhere, all of it questions the ground grid asks of
+every point it samples:
+
+1. **Which cells get refined** (`makeGroundGridSteps`' predicate): every hole
+   was asked about every cell -- green within 38 m, tee pads, ponds, bunkers --
+   after turning the point into that hole's frame. 1.4 s of its own plus the
+   frame changes, the single biggest item, and quadratic in the course (twice
+   the holes times twice the cells). Now each hole has a world box around every
+   one of those questions' reach, and a cell outside it is answered `false`
+   without the frame change.
+2. **Pond and bunker basins** in `analyticHeight`: every point asked every
+   basin, again by frame change first. Now a world box per basin (flat numbers,
+   rebuilt when the list changes) is tested first.
+3. **The green shaping** in `shapedNoTees`: every point inside a hole's
+   tee-to-green box (+180 m) computed the green's full contour (`greenContour`
+   -> `greenShape` -> `plateau`, ~1 s) BEFORE finding out how much the green
+   weighs there -- and past the widest shoulder (100 m) the weight is exactly
+   zero, because `smooth` clamps at 1. The contour is now skipped there.
+
+**Every shortcut is exact:** a box is the same test's region turned into the
+world and bounded, so anything outside it got the answer "no" before too, and
+the green skip only drops points whose blend was already exactly zero.
+`node tools/biome-fingerprint.mjs --check` -- every biome's GROUND hash -- was
+unchanged after each step, which is the proof; no `GENERATOR_VERSION` bump.
+
+**Measured**, generation only (`generateWorld` in Node, best of three, seed
+REPORT1, `main` and the branch run back to back):
+
+| Course | Before | After |
+| --- | --- | --- |
+| PNW, 9 holes | 2.46 s | 1.37-1.45 s |
+| PNW, 18 holes | 8.79 s | 4.19-4.25 s |
+| Redwood, 9 | 3.19 s | 1.73-1.90 s |
+| Island, 9 | 4.01 s | 2.76-2.91 s |
+| Links, 18 | 10.26 s | 4.79-4.93 s |
+
+About 40% off a nine and half an eighteen. The browser's press-play-to-smooth
+could not be measured cleanly that afternoon (the owner's machine was busy:
+`main` itself ran 14-16 s on nine holes against 7-8 s that morning), so the
+generation figures are the ones to trust.
+
+**Tried and dropped: rewriting `nearest` to allocate nothing** (no closure per
+call, the frame change inline, one object for the winner only). Bit-identical
+and measured no faster -- V8 was already removing those allocations -- so it
+was reverted rather than kept as complexity for nothing.
+
+**What is left** (profile of the same eighteen afterwards, 3.2 s): `nearest`
+0.8 s inclusive (the one measurement a point genuinely needs), land shaping
+and tee pads ~0.4 s, `routeHoles` 0.25 s, the grid's own bookkeeping ~0.4 s.
+
+## The ground grid's heights on every core (B2, 28 September)
+
+`src/gen-pool.js`, `src/gen-worker.js`, `makeGroundGridPooled` and
+`sampleRows`/`sampleExtras` in `src/terrain-grid.js`.
+
+**The earlier objection, and the way round it.** *Where generation actually
+spends its time* ruled out a worker because a generated world is full of
+closures that cannot cross a thread. The grid does not need the world to
+cross: each worker generates its OWN copy from the same settings (generation
+is deterministic) and stops at the grid (`generateWorldSteps(settings,
+{capture: true})`), keeping only `analyticHeight` and the refinement question.
+Nothing but numbers crosses: row bands of heights and mask bits, and lists of
+points and their heights.
+
+**Why the grid cannot come out different.** The main thread does not assemble
+the grid a second way. `makeGroundGridPooled` runs the unchanged
+`makeGroundGridSteps` twice -- a dry run that records where it asks for each
+refined vertex, then the real run -- feeding it `sample` and `refine` answers
+computed by the workers, in exactly the order it asks for them. The order of
+vertices, the refinement, and every float are the serial ones by construction.
+Held to the byte by `tests/parallel-ground.test.mjs` (PNW nine, Island nine,
+Links eighteen, with bands and chunks handed back in reverse order), and in the
+browser by `lab.ground()`: the same ground hash with workers and without, on
+every course tried, twice.
+
+**Browsers.** A page opened from disk (`file://`) may start a CLASSIC worker
+from a blob URL in Chromium, and may not start a MODULE one (tested with a
+scratch page: classic ok, module "worker error", data URL ok). So the worker is
+built as a classic script and embedded (`?worker&inline`); it adds ~89 KB to
+the single file (15.89 -> 15.98 MB). Firefox and Safari were not available to
+test here; on any browser that refuses, or any worker error or 60 s timeout,
+the pool answers null and the grid is built on the main thread as before --
+the same course, only slower.
+
+**How many.** One fewer than `navigator.hardwareConcurrency`, at most eight.
+Not for one-hole worlds (the range, endless), where starting the workers costs
+more than they save.
+
+**Measured** in the browser (Chromium, this machine while busy with other
+work, so absolute figures are high; workers off by hiding `Worker`, alternated):
+
+| Course | Generation, workers off | Generation, 8 workers | Course ready, off -> on |
+| --- | --- | --- | --- |
+| PNW, 9 | 2.59 s | 1.88 s | 11.6-11.7 -> 9.2-10.6 s |
+| PNW, 18 | 9.05 s | 3.42 s | 16.0-16.5 -> 13.9-14.2 s |
+| Links, 18 | 12.14 s | 3.64 s | 18.0-18.7 -> 14.3-15.1 s |
+
+The main thread's waits on the workers were 0.9-1.5 s for the rows (which
+includes the workers finishing their own copy of the world) and 0.16-0.5 s
+for the refined points. Generation is now a minority of the wait: the rest is
+the scene build and the graphics card (B4's leftovers, below).
+
+**The ownership atlas too.** The ground shader's record of which hole owns
+each texel (up to a million of them, `nearest` per texel, 0.8 s of the scene
+build) needs only what exists before the grid -- except its straw channel.
+So the workers compute the hole, lake and stream channels from their own copy
+(`owner-atlas.js`, shared with `ground.js` so the size and the questions cannot
+drift apart), starting as soon as the grid's heights are in and running while
+the main thread assembles the grid and plants; the ground material only adds
+straw. Held to the byte against the loop `ground.js` used to run, both for the
+main thread's own path and for worker bands handed back in reverse
+(`tests/parallel-ground.test.mjs`). `largeLakes`/`lakeOwner` moved above the
+grid in `course.js` so a worker holds them; nothing in them depends on the
+grid. Measured (busy machine, alternated): the longest page freeze while
+loading 6.58/6.97 -> 5.79/5.81 s, the build 11.6/12.6 -> 10.0/10.1 s.
+
+**Left:** placing the ground cover asks `surface`, which needs the finished
+grid for `height` -- tens of megabytes per worker to send without shared
+memory, and shared memory is not available to a page opened from disk.
