@@ -3446,6 +3446,21 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // than assuming. 'player' is down at the ball; 'overview' is the whole hole
   // and is much the heavier of the two.
   view:(mode)=>{if(mode)cameraMode(mode);return view?.config?.mode;},
+  // THE CAMERA, PUT EXACTLY SOMEWHERE -- so a before and an after are the same
+  // picture. {x, z, height (above the ground there), yaw, pitch} in world metres
+  // and degrees, or {hole, along, across, height, look: 'pin' | 'tee' | yaw} in
+  // that hole's own frame (along from the tee, across to the right). Free
+  // camera; returns the pose it used.
+  camera:(o={})=>{
+   let x=o.x??0,z=o.z??0,yaw=(o.yaw??0)*Math.PI/180;
+   if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
+    const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
+    yaw=aim?Math.atan2(aim.x-x,aim.z-z):(o.look??0)*Math.PI/180;}
+   const y=world.height(x,z)+(o.height??2);
+   const pitch=(o.pitch??-10)*Math.PI/180;
+   view.placeCamera({x,y,z},yaw,pitch);
+   return {x:+x.toFixed(1),y:+y.toFixed(1),z:+z.toFixed(1),yaw:+(yaw*180/Math.PI).toFixed(1),pitch:o.pitch??-10};
+  },
   // Straight to a hole's tee (0-based), for measuring from more than the first.
   hole:(n)=>{if(flight||round.endless||!world?.holes[n])return round.hole;round.hole=n;loadCourse();return round.hole;},
   // null on any field hands it back to the previous value.
