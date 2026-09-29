@@ -1179,6 +1179,11 @@ record of what was ruled out and why, which is worth more than a short file.
   19-30 ms, from a daylight or a floodlit start. Night unchanged, overview
   included. REJECTED first: a cap on live lamps (same win, but only the
   nearest poles lit at night -- the owner declined it for the overhead view).
+  FOLLOW-UP, found by the owner in the course creator: switching on in the
+  first seconds after arrival, while the lit programs were still being built,
+  froze the game (5.3 s on eighteen holes); such a switch now waits for the
+  build with the game running, and the lights come on when it is done (5.9 s
+  on eighteen holes, 2.1 s on nine; worst frame 48 ms).
   RESEARCH.md *Floodlit shaders built after the course is on screen*.
 
 ## Reading a green without the overlays

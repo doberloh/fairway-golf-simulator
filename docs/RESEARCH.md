@@ -4269,6 +4269,20 @@ view 3,520 changed pixels against 2,932 between two runs of `main`; overview
 drifting clouds (they move with time since load, and the two builds reach the
 screenshot at different moments); the floodlit holes do not differ.
 
+**The switch, early -- found by the owner in the course creator.** The lit
+programs are built in the background from the first frame after arrival, and
+on eighteen holes (141 lamps) that takes ~6 s. The course creator is where the
+switch gets reached for straight away, and a switch in that window made the
+next frame use programs the driver had not finished: switched 0.3 s after an
+eighteen-hole studio landscape appeared, the game froze for **5.3 s** (nine
+holes: 2.1 s at 0.3 s, 0.9 s at 1.5 s, nothing after 4 s). Now a switch that
+lands while the build is running waits for it with the game live
+(`setFloodlights` / `floodWarming`): the lights come on 5.9 s after the switch
+on eighteen holes and 2.1 s on nine, and the worst frame meanwhile is 48 and
+36 ms. The wait is the driver's and is not shorter; the freeze is gone. The
+latest request wins, and a pending switch never carries over to a course
+rebuilt in the meantime.
+
 **Unmeasured:** whether hiding 57-141 zero-intensity spot lights in daylight
 also makes the daytime frame cheaper. It should (every lit fragment loops over
 them); it is a frame-rate question and frame-rate work is paused.
