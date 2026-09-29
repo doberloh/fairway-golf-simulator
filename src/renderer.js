@@ -161,6 +161,13 @@ const FLOOD_CONE=1.15;
 // nearest-first fallback never runs -- it exists so a future course that grows
 // past this degrades instead of stalling.
 const FLOOD_LAMP_CAP=192;
+// How far sunward of its slice a cascade's shadow camera starts, so trees that
+// stand that far off still throw their shadows in: 1 km, the same allowance the
+// view cull keeps for off-screen casters (instance-cull.js, shadowCap). Three's
+// default is 200; this was 400, and at a low sun a tall tree's shadow runs
+// further than that. The far plane is fitted per frame (fitCascadeDepth), and
+// CASCADE_BASE_FAR is the depth the tier's shadow bias was tuned at.
+const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
 // nobody looks at closely at night.
@@ -267,9 +274,43 @@ export class GolfView{
   this.csm=new CSM({camera:this.camera,parent:this.group,cascades:this.quality.cascades,
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
-   lightDirection:sunDir.clone().negate().normalize(),lightMargin:400});
+   lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
   for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
   this.sun.castShadow=false;this.sun.intensity=0;
+ }
+ // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
+ //
+ // CSM gives every cascade's shadow camera a fixed depth -- `lightFar`, 2 km by
+ // default -- measured from a point `lightMargin` sunward of the slice. The far
+ // cascade's slice is several kilometres across, and how deep it runs along
+ // the sun's direction depends on which way the camera faces: measured on
+ // Redwood (High, 16:30), it overran the 2 km by 1.0 to 3.4 km as the camera
+ // turned. Everything in the overrun is outside the shadow map and reads as
+ // lit, so distant shadows came and went with the camera's heading, and worst
+ // looking down from the free camera -- the owner's report, 29 September.
+ //
+ // So each frame, after CSM has placed the cascades, each shadow camera's far
+ // plane is set to the deepest corner of its own slice plus a margin. The
+ // constant bias is in the map's normalised depth, so it grows with the depth
+ // it spans; it is scaled back to the same distance in metres it always was at
+ // 2 km, or shadows would lift off the ground in the deep cascades.
+ fitCascadeDepth(){
+  const csm=this.csm;if(!csm)return;
+  const cam=this.camera,v=fitScratch;
+  csm.frustums.forEach((f,i)=>{
+   const light=csm.lights[i];if(!light)return;
+   const sc=light.shadow.camera;light.updateMatrixWorld();light.target.updateMatrixWorld();light.shadow.updateMatrices(light);
+   let deepest=0;
+   for(const set of [f.vertices.near,f.vertices.far])for(const corner of set){
+    v.copy(corner).applyMatrix4(cam.matrixWorld).applyMatrix4(sc.matrixWorldInverse);
+    deepest=Math.max(deepest,-v.z);
+   }
+   // The ground under the slice can sit below its corners' plane on a steep
+   // course; 200 m covers the relief and a tree standing on it.
+   const far=Math.max(CASCADE_BASE_FAR,Math.ceil(deepest+200));
+   if(sc.far!==far){sc.far=far;sc.updateProjectionMatrix();}
+   light.shadow.bias=this.quality.shadowBias.constant*CASCADE_BASE_FAR/far;
+  });
  }
  // WHERE THE CASCADES SPLIT. three's own 'practical' split, on a 2.5 km reach,
  // puts the first edge near 420 m (590 m on Ultra's 3.5 km) -- and each cascade
@@ -1752,7 +1793,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // reach does not change, which on High it does not.
    const over=this.config.mode==='overview';
    if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();}
-   this.camera.updateMatrixWorld();this.csm.update();
+   this.camera.updateMatrixWorld();this.csm.update();this.fitCascadeDepth();
   }
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here

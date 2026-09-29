@@ -4454,3 +4454,33 @@ loading 6.58/6.97 -> 5.79/5.81 s, the build 11.6/12.6 -> 10.0/10.1 s.
 **Left:** placing the ground cover asks `surface`, which needs the finished
 grid for `height` -- tens of megabytes per worker to send without shared
 memory, and shared memory is not available to a page opened from disk.
+
+## Distant shadows that came and went with the camera's heading (29 September)
+
+Reported by the owner from the course creator's free camera over a Redwood
+eighteen: distant shadows changed as the camera turned, worst looking down.
+
+**Cause, measured.** CSM gives each cascade's shadow camera a fixed depth range
+-- `lightFar`, 2 km from a point `lightMargin` sunward of the slice. For each
+cascade, the deepest corner of its slice of the view in its shadow camera's
+space (`bench/shots/csm-clip.mjs`, scratch; Redwood eighteen, High, 16:30, eight
+headings, from a tee and from 300 m up): the near and middle cascades always
+fitted, and the FAR cascade's slice ran 1,040 to 3,404 m past the 2 km, by an
+amount set by the heading relative to the sun. Everything in the overrun lies
+outside the shadow map and reads as lit. The 400 m sunward margin had the same
+shape of problem at the near end: a tree standing further sunward than that,
+off to the side of the slice, could not throw its shadow in, and at a low sun
+a tall tree's shadow runs further. Neither is from this week's shadow work --
+three's own split has the same 2 km.
+
+**Fix.** `GolfView.fitCascadeDepth`, every frame after `csm.update()`: each
+shadow camera's far plane is set to the deepest corner of its slice plus 200 m
+(ground below the corners, and a tree on it), never under 2 km; the sunward
+margin is 1 km (`CASCADE_SUNWARD`), the same reach the view cull keeps for
+off-screen casters. The constant shadow bias is in normalised depth, so it
+would grow with the range and lift shadows off the ground; it is scaled by
+2 km / far, which keeps it the same distance in metres as before. Remeasured:
+no cascade overruns at any heading (the far one now reaches 3.8-6.2 km). The
+bird's-eye view at 17:30 facing west now shades the distant forest the way the
+foreground is shaded; near the tee the shadows are unchanged apart from a few
+more long ones from trees now allowed to cast from further sunward.
