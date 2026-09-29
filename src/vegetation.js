@@ -442,8 +442,10 @@ function addNearbyGrass(view){
    else{sticks.setMatrixAt(ns,dummy.matrix);color.copy(bark).lerp(new T.Color('#9a8a70'),rng()*.6);sticks.setColorAt(ns++,color);}
   }
   fronds.count=nf;sticks.count=ns;
-  for(const m of [fronds,sticks]){m.userData={noCull:true};m.receiveShadow=true;m.computeBoundingSphere();}
-  return [fronds,sticks];
+  // Open rough grows none, and an empty mesh is still an object every frame walks.
+  const kept=[fronds,sticks].filter(m=>m.count>0||(m.dispose(),false));
+  for(const m of kept){m.userData={noCull:true};m.receiveShadow=true;m.computeBoundingSphere();}
+  return kept;
  };
  const buildTile=(tx,tz)=>{
   const key=keyOf(tx,tz);

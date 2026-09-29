@@ -4692,6 +4692,29 @@ through a log would not, which is why there are no logs. The first colour
 (lerped 25-65% toward #9fbf5a) looked like paper cut-outs against the Redwood
 rough; it was taken down to 12-50% toward #7fa24a.
 
-**Cost.** Two more instanced draws per grass tile, 25 tiles in the ring. The
-first half of the TODO item -- full-detail trees further out on Ultra -- was
-already true: Ultra has drawn every crown whole since F2 (`farTrees: 0`).
+**Cost.** Up to two more instanced draws per grass tile, 25 tiles in the ring
+(a tile with no floor carries no empty meshes). The first half of the TODO
+item -- full-detail trees further out on Ultra -- was already true: Ultra has
+drawn every crown whole since F2 (`farTrees: 0`).
+
+## What the ultra-looks branch costs a frame (29 September)
+
+`npm run profile -- --only tiers`, Redwood player view, RTX 4090, graphics-card
+milliseconds per frame (median). "Before" is the branch's starting point
+(render-identical to main), swapped into `dist/` for the run; alternated twice.
+
+| Tier | Before | Branch | Branch, forest floor off |
+| --- | --- | --- | --- |
+| Low | 2.90 | 3.05 | -- |
+| Medium | 3.92 | 4.12 | -- |
+| High | 7.09-7.11 | 7.20-7.28 | -- |
+| Ultra | 7.45-7.59 | 8.44-8.73 | 7.58 |
+
+So everything but the forest floor together -- patches, shade, haze, sway,
+foam and glint, the landscape rings, the fitted shadow cascades -- costs about
+0.15 ms on every tier, and the forest floor about 0.9 ms of graphics time and
+about 1 ms of processor time on Ultra. Ultra at 8.4-8.7 ms is now just over a
+120 Hz frame (8.33 ms) on this card where it was just under. Later runs that
+evening were unusable -- High at 21 ms with nothing of the branch's changed --
+with Chrome Remote Desktop and a busy browser on the machine; they are not in
+the table. The baseline in `bench/profile-baseline.json` was not re-saved.
