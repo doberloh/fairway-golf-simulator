@@ -4187,3 +4187,40 @@ fixed 100/500 m edges would put the whole course in the last cascade; there the
 split is three's own, as before (High 483/1107/2500, Ultra 1597/3637/9000
 measured), and `render` re-splits on the way in and out even on High, whose
 reach does not change there.
+
+## The first frame, paid for behind the loading screen (B1, 28 September)
+
+`GolfView.ready()` in `src/renderer.js`, awaited by `whileGenerating` in
+`src/main.js`. Measured in a COLD browser each time (a fresh Playwright launch
+is a fresh profile with no shader cache on disk, as for a first-time player),
+Pacific Northwest seed REPORT1, High, 1600x900, RTX 4090; time from
+`lab.course` to frames running under 50 ms:
+
+| | Before: build, then frozen first frame | After: build (incl. prep), then first frame |
+| --- | --- | --- |
+| 9 holes | 5.0-6.8 s, then 1.9 s frozen | 7.1-8.4 s, then 0.01 s |
+| 18 holes | 9.1-10.4 s, then 3.4-3.5 s frozen | 12.5-13.3 s, then 0.01 s |
+
+The preparation splits into `compileAsync` (2.0 s on nine holes, 3.5 s on
+eighteen -- the page stays live) and one frame drawn under the overlay (7-10
+ms). Total press-play-to-smooth is unchanged within run-to-run spread on nine
+holes (7.0-8.9 s before, 7.2-8.6 after) and about a second shorter on eighteen
+(12.6-13.9 before, 12.7-13.4 after); what went is the frozen picture after the
+overlay.
+
+**Why it is two seconds at all: the floodlights.** Every pole is a spot light
+(57 on nine holes, 141 on the longest eighteen; `FLOOD_LAMP_CAP` is 192), and
+three writes the spot-light count into every lit material's program. With the
+cap set to 8 as an experiment, the same runs gave `compileAsync` 0-0.6 s
+instead of 2.0 on nine holes (once 2 ms: the menu backdrop had already built
+identical programs, which never happens when the count differs per course) and
+0.6 s instead of 3.5 on eighteen; press-play-to-smooth 5.2-7.1 s on nine holes
+and 9.6 s on eighteen. Not adopted: it would light only the lamps nearest the
+play at night, which is a change to the look and the owner's to make. Filed as
+B6. The frame cost of 57-141 zero-intensity spot lights looped over by every
+lit fragment in DAYLIGHT is unmeasured with the corrected probe; the note in
+`updateFloodlights` saying it costs nothing was taken with the old one.
+
+`renderer.debug.checkShaderErrors = false`, suggested in the plan, was not
+needed: once the links are awaited, the diagnostic reads it forces cost
+nothing measurable (the frame under the overlay is 7-10 ms).

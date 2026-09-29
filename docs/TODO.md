@@ -145,16 +145,21 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B1. Compile shaders while the course builds.** The first frame after
-  a course is ready stalls while the graphics card compiles ~35 shader
-  programs from cold (`getProgramInfoLog` / `WebGLProgram.getUniforms` in the
-  profile): 2.8 s (9 holes) and 5.4 s (18) here, far more on a phone. The game
-  already uses `renderer.compileAsync` (KHR_parallel_shader_compile) for the
-  floodlights (`warmFloodlights` in `src/renderer.js`) but not for the course.
-  Call it after `view.build` while the progress overlay is still up, and at
-  start-up for the menu backdrop; consider `renderer.debug.checkShaderErrors =
-  false` in the production build (three.js recommends it). No course changes.
-  Measure: first-frame time after `lab.course` goes from ~2.8 s to ~0.1 s.
+- [ ] **B6. Fewer floodlight lamps, so shaders are shared and quick.** Every
+  pole is a spot light (`FLOOD_LAMP_CAP` 192 in `src/renderer.js`, above the
+  longest course's 141), and three writes the spot-light count into every lit
+  shader -- so each course needs its own programs (the menu backdrop's cannot
+  be reused) and longer courses bigger ones. Measured (B1, cold browser, PNW,
+  High): cap 8 took shader preparation from 2.0 s to 0-0.6 s on nine holes and
+  3.5 s to 0.6 s on eighteen; press-play-to-smooth ~8.4 -> 5.2-7.1 s and 13.4
+  -> 9.6 s. Cost: at night only the lamps nearest the play are real lights
+  (`orderPoles` already picks them: the hole being played first, then nearest
+  the ball); the others' heads still glow. THE OWNER'S CALL: night screenshots
+  at a few caps (8, 16, 24) before deciding. A fixed cap also makes every
+  course's programs identical, so they could be built while the menu is up.
+  Also measure what 57-141 zero-intensity lights cost a DAYTIME frame with the
+  corrected probe -- the "costs nothing" note in `updateFloodlights` predates
+  the probe fix.
 
 - [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
   core; the grid is row bands that can be computed in parallel with identical
@@ -1165,6 +1170,20 @@ record of what was ruled out and why, which is worth more than a short file.
   page opened after another in the same browser; the buffers now keep their
   built usage. Detail, and the shadow bug the screenshots caught, in
   RESEARCH.md *Drawing only what is in view*; the traps in PROJECT_HANDOFF.
+
+### Build time
+
+- [x] **B1. The first frame paid for behind the loading screen.** Branch
+  `shader-warmup`. `GolfView.ready()`, awaited by `whileGenerating` before the
+  overlay goes (*Preparing the graphics*): `compileAsync` for the driver's
+  links with the page live, then one frame drawn under the overlay for the
+  programs only a draw makes. Cold browser, PNW, High: the frozen first frame
+  after the overlay went from 1.9 s (nine holes) and 3.5 s (eighteen) to
+  0.01 s; the total wait is about the same on nine holes and ~1 s shorter on
+  eighteen, because the time is the driver's and it still has to be spent.
+  Found why it is that long -- the floodlight lamps are in every lit shader --
+  and filed it as B6. RESEARCH.md *The first frame, paid for behind the
+  loading screen*.
 
 ## Reading a green without the overlays
 
