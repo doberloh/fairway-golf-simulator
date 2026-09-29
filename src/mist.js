@@ -304,7 +304,13 @@ vec3 applyMist(vec3 color){
   // so only the sun's own quarter warms.
   float toward=max(dot((vMistWorld-cameraPosition)/len,aerialSun),0.);
   vec3 air=mix(aerialColor,aerialWarm,pow(toward,6.)*.55);
-  lit=mix(lit,air,aerialStrength*(1.-exp(-len/aerialScale)));
+  // Thinner looking down: haze lives in the low air, and a steep sight line
+  // crosses little of it. Without this the bird's-eye view went grey from
+  // the ground straight below it, while sight lines near the horizon -- the
+  // far hills, from anywhere -- keep the full effect.
+  float steep=abs(vMistWorld.y-cameraPosition.y)/len;
+  float thin=1.-smoothstep(.12,.55,steep)*.8;
+  lit=mix(lit,air,aerialStrength*thin*(1.-exp(-len/aerialScale)));
  }
  return lit;
 }

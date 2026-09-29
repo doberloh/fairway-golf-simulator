@@ -618,8 +618,10 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   float n1=patchNoise(wp/s+vec2(17.3,-4.1)),n2=patchNoise(wp/s*2.7+vec2(-8.2,21.7)),n3=patchNoise(wp/(s*3.1)+vec2(3.3,9.9));
   float tone=(n1*.62+n2*.38)-.5;
   float amp=kind==4.?.045:kind==3.?.08:(kind==2.||mownTee)?.13:kind==1.?.14:kind==5.?.11:.18;
-  // Held back where a patch is smaller than a few pixels, so it never shimmers.
-  float keep=1.-smoothstep(.15,.6,length(fwidth(wp))/s);
+  // Held back where a patch is under ~25 pixels across: smaller than that it
+  // stops reading as ground and starts reading as camouflage (the overview,
+  // from a kilometre up), and smaller still it shimmers.
+  float keep=1.-smoothstep(.04,.14,length(fwidth(wp))/s);
   turf*=1.+tone*2.*amp*cuePatches*keep;
   if(kind<3.5){
    // Drier drifts shed blue and gain a little red, the way the slope tint's

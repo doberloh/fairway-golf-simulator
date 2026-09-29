@@ -4539,14 +4539,30 @@ they read as fescue rather than damage. Patches smaller than a few pixels are
 held back (`fwidth`), so nothing shimmers at distance. No new texture, no
 extra pass: a few noise lookups per ground fragment.
 
-## Distance fading into the sky (U4, 29 September -- in progress)
+## Distance fading into the sky (U4, 29 September)
 
-`src/mist.js` (the fog patch) and `updateDaylight` in `src/renderer.js`. Every
-lit fragment is drawn toward the horizon's colour by distance
-(1 - exp(-d / 1800 m)), and toward the sun's colour in the sun's own quarter.
-Strength from the new graphics preference `haze` (default 50%, `AERIAL_MAX`
-.62 at 100%). The fog patch now runs on every tier so this can; mist densities
-stay zero where the tier has no mist, and the water field is only baked where
-it does. First screenshots: far hills on PNW and desert now read bluer and
-paler; the foreground is unchanged. Not yet tuned against every biome, no
-Graphics-panel slider yet (U8), no TODO entry moved yet.
+`src/mist.js` (the fog patch) and `updateDaylight` in `src/renderer.js`. Far
+hills were the same green as near ones, which flattens a landscape more than
+anything else. Every lit fragment is now drawn toward the horizon's colour by
+distance (1 - exp(-d / 1800 m)), and toward the sun's colour in the sun's own
+quarter (the view direction's dot with the sun, to the 6th power, at most
+55%). Strength from the new graphics preference `haze`: 50% by default,
+`AERIAL_MAX` .62 at 100%. Weather off leaves it on -- this is the air, not fog.
+
+**Thinner looking down.** The first version greyed the whole bird's-eye view,
+the ground straight below included: a camera 300 m up is 300-600 m from
+everything it sees. Haze lives in the low air and a steep sight line crosses
+little of it, so the effect falls to a fifth for sight lines steeper than
+about 30 degrees (`steep` = |dy| / distance, eased between .12 and .55).
+Sight lines near the horizon -- the far hills, from the tee or from the air --
+keep all of it.
+
+**Every tier.** The fog patch used to be registered only on tiers with mist
+(High, Ultra). It is now registered everywhere, with mist densities zero where
+the tier has none and the water field baked only where it has it, so Low and
+Medium get the haze without paying for mist.
+
+**Found on the way.** The overview showed U3's rough patches as camouflage --
+30 m patches at 2-5 m a pixel. The patches now fade out below ~25 pixels
+across rather than ~7, which keeps them at play and flyover heights and drops
+them from a kilometre up.

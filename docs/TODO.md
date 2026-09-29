@@ -103,11 +103,6 @@ the budget these spend.
   in `src/mist.js`), so check it still composes with the cloud-shadow and mist
   patches on those materials.
 
-- [ ] **U4. Distance fades into the sky (aerial perspective).** Far hills are
-  the same green as near ones. Tint by distance toward the sky/fog colour,
-  warmer on the sun's side. Every tier, cheap; check it does not fight the
-  existing fog (`fog.near/far` per tier) and the biome's own fog colour.
-
 - [ ] **U5. Water with an edge and a glint.** Ponds (especially Redwood's dark
   ones) read as flat shapes. A light foam rim at the shoreline (the bank
   profiles are already in `bankAtlas`) and a sun glint. Every tier, cheap.
@@ -1217,6 +1212,12 @@ record of what was ruled out and why, which is worth more than a short file.
   patches), from world-position noise at each surface's own scale. A Graphics
   slider, *Turf colour variation*, default 60%. RESEARCH.md *Every surface in
   patches*.
+
+- [x] **U4. Distance fading into the sky.** Branch `ultra-looks`. Every lit
+  surface drifts toward the horizon's colour with distance, warmer toward the
+  sun, and much less on steep sight lines so the bird's-eye view stays clear
+  below. Every tier; graphics preference `haze`, default 50%. RESEARCH.md
+  *Distance fading into the sky*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
