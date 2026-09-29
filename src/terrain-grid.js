@@ -64,3 +64,71 @@ export function groundHeight(g,x,z,fallback){
  if(cell?.ring){const r=cell.ring;for(let k=0;k<r.length;k++){const A=r[k],B=r[(k+1)%r.length],den=(A.v-B.v)*(.5-B.u)+(B.u-A.u)*(.5-B.v),w=((A.v-B.v)*(a-B.u)+(B.u-A.u)*(b-B.v))/den,q=((B.v-.5)*(a-B.u)+(.5-B.u)*(b-B.v))/den;if(w>=-1e-8&&q>=-1e-8&&1-w-q>=-1e-8)return w*cell.y+q*A.y+(1-w-q)*B.y;}}
  return plane(g.values[k],g.values[k+1],g.values[k+g.nx+1],g.values[k+g.nx+2],a,b);
 }
+
+// THE SAME GRID, WITH ITS HEIGHTS COMPUTED ELSEWHERE (B2 in TODO).
+//
+// Nearly all of the grid's cost is `sample` -- a height at a point -- and every
+// height depends on nothing but its point, so they can be computed on other
+// processor cores. What must not change is everything else: the order vertices
+// are created in, which cells are refined, the float that ends up in each slot.
+// So this does not rebuild the grid a second way. It runs `makeGroundGridSteps`
+// itself, unchanged, and feeds it `sample` and `refine` answers that were
+// computed elsewhere, in exactly the order it asks for them:
+//
+//  1. `pool.rows(dims)` -- every coarse height, row-major, and the refinement
+//     mask, from the workers in row bands;
+//  2. a dry run of the grid with those, recording where it asks for each
+//     extra (refined) vertex, in the order it asks;
+//  3. `pool.extras(points)` -- those heights, from the workers in chunks;
+//  4. the real run, handed the coarse heights and then the extras, in order.
+//
+// `pool` is the caller's. Each of its calls returns a promise, and a step that
+// waits on one is yielded as `{await}`: the driver resolves it and passes the
+// result back in, or null if the workers failed, in which case this computes
+// that part here instead. Either way the grid is the one `makeGroundGridSteps`
+// would have built from `sample` and `refine` -- the test in
+// tests/parallel-ground.test.mjs holds that to the byte.
+export function gridDims(halfX,halfZ,spacing=3){
+ const nx=Math.ceil(halfX*2/spacing),nz=Math.ceil(halfZ*2/spacing);
+ return {nx,nz,dx:halfX*2/nx,dz:halfZ*2/nz,halfX,halfZ};
+}
+export function* makeGroundGridPooled(sample,halfX,halfZ,spacing,refine,pool){
+ const dims=gridDims(halfX,halfZ,spacing),{nx,nz}=dims,coarse=(nx+1)*(nz+1);
+ const rows=yield {await:pool.rows(dims)};
+ if(!rows)return yield* makeGroundGridSteps(sample,halfX,halfZ,spacing,refine);
+ // The dry run: coarse heights and the mask as computed, and every extra
+ // vertex recorded rather than sampled. Its geometry is thrown away.
+ const points=[];
+ {let c=0,m=0;
+  makeGroundGrid((x,z)=>c<coarse?rows.values[c++]:(points.push(x,z),0),halfX,halfZ,spacing,()=>rows.mask[m++]===1);}
+ const at=Float64Array.from(points);
+ let extras=yield {await:pool.extras(at)};
+ if(!extras||extras.length!==at.length/2){extras=new Float64Array(at.length/2);for(let k=0;k<extras.length;k++)extras[k]=sample(at[2*k],at[2*k+1]);}
+ let c=0,e=0,m=0;
+ return yield* makeGroundGridSteps((x,z)=>c<coarse?rows.values[c++]:extras[e++],halfX,halfZ,spacing,()=>rows.mask[m++]===1);
+}
+// What a worker computes for the rows j0..j1-1 of the coarse grid (rows run
+// 0..nz): their heights, and the mask for those of them that start a cell --
+// exactly as `makeGroundGridSteps` would. A cell's mask reads its four corners
+// from float32 storage, so the band is stored that way first, and one row past
+// the band is sampled for the corners of its last cells and not returned.
+export function sampleRows(sample,refine,dims,j0,j1){
+ const {nx,nz,dx,dz,halfX,halfZ}=dims,end=Math.min(j1,nz+1),last=Math.min(j1,nz);
+ const band=new Float32Array((last-j0+1)*(nx+1)),raw=new Float64Array((end-j0)*(nx+1));
+ for(let j=j0;j<=last;j++)for(let i=0;i<=nx;i++){
+  const y=sample(-halfX+i*dx,-halfZ+j*dz);band[(j-j0)*(nx+1)+i]=y;
+  if(j<end)raw[(j-j0)*(nx+1)+i]=y;
+ }
+ const mask=new Uint8Array(Math.max(0,last-j0)*nx);
+ for(let j=j0;j<last;j++)for(let i=0;i<nx;i++){
+  const r=j-j0;
+  mask[r*nx+i]=refine(-halfX+(i+.5)*dx,-halfZ+(j+.5)*dz,
+   band[r*(nx+1)+i],band[r*(nx+1)+i+1],band[(r+1)*(nx+1)+i],band[(r+1)*(nx+1)+i+1])?1:0;
+ }
+ return {values:raw,mask};
+}
+export function sampleExtras(sample,at){
+ const out=new Float64Array(at.length/2);
+ for(let k=0;k<out.length;k++)out[k]=sample(at[2*k],at[2*k+1]);
+ return out;
+}

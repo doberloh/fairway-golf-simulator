@@ -4283,3 +4283,62 @@ was reverted rather than kept as complexity for nothing.
 **What is left** (profile of the same eighteen afterwards, 3.2 s): `nearest`
 0.8 s inclusive (the one measurement a point genuinely needs), land shaping
 and tee pads ~0.4 s, `routeHoles` 0.25 s, the grid's own bookkeeping ~0.4 s.
+
+## The ground grid's heights on every core (B2, 28 September)
+
+`src/gen-pool.js`, `src/gen-worker.js`, `makeGroundGridPooled` and
+`sampleRows`/`sampleExtras` in `src/terrain-grid.js`.
+
+**The earlier objection, and the way round it.** *Where generation actually
+spends its time* ruled out a worker because a generated world is full of
+closures that cannot cross a thread. The grid does not need the world to
+cross: each worker generates its OWN copy from the same settings (generation
+is deterministic) and stops at the grid (`generateWorldSteps(settings,
+{capture: true})`), keeping only `analyticHeight` and the refinement question.
+Nothing but numbers crosses: row bands of heights and mask bits, and lists of
+points and their heights.
+
+**Why the grid cannot come out different.** The main thread does not assemble
+the grid a second way. `makeGroundGridPooled` runs the unchanged
+`makeGroundGridSteps` twice -- a dry run that records where it asks for each
+refined vertex, then the real run -- feeding it `sample` and `refine` answers
+computed by the workers, in exactly the order it asks for them. The order of
+vertices, the refinement, and every float are the serial ones by construction.
+Held to the byte by `tests/parallel-ground.test.mjs` (PNW nine, Island nine,
+Links eighteen, with bands and chunks handed back in reverse order), and in the
+browser by `lab.ground()`: the same ground hash with workers and without, on
+every course tried, twice.
+
+**Browsers.** A page opened from disk (`file://`) may start a CLASSIC worker
+from a blob URL in Chromium, and may not start a MODULE one (tested with a
+scratch page: classic ok, module "worker error", data URL ok). So the worker is
+built as a classic script and embedded (`?worker&inline`); it adds ~89 KB to
+the single file (15.89 -> 15.98 MB). Firefox and Safari were not available to
+test here; on any browser that refuses, or any worker error or 60 s timeout,
+the pool answers null and the grid is built on the main thread as before --
+the same course, only slower.
+
+**How many.** One fewer than `navigator.hardwareConcurrency`, at most eight.
+Not for one-hole worlds (the range, endless), where starting the workers costs
+more than they save.
+
+**Measured** in the browser (Chromium, this machine while busy with other
+work, so absolute figures are high; workers off by hiding `Worker`, alternated):
+
+| Course | Generation, workers off | Generation, 8 workers | Course ready, off -> on |
+| --- | --- | --- | --- |
+| PNW, 9 | 2.59 s | 1.88 s | 11.6-11.7 -> 9.2-10.6 s |
+| PNW, 18 | 9.05 s | 3.42 s | 16.0-16.5 -> 13.9-14.2 s |
+| Links, 18 | 12.14 s | 3.64 s | 18.0-18.7 -> 14.3-15.1 s |
+
+The main thread's waits on the workers were 0.9-1.5 s for the rows (which
+includes the workers finishing their own copy of the world) and 0.16-0.5 s
+for the refined points. Generation is now a minority of the wait: the rest is
+the scene build and the graphics card (B4's leftovers, below).
+
+**Left for the scene build.** Placing the ground cover (asks `surface`, which
+needs the finished grid for `height`) and the ownership atlas (`nearest` per
+texel) are the next per-point work that could move to the same workers; the
+first needs the grid sent to them, which is tens of megabytes per worker
+without shared memory, and shared memory is not available to a page opened
+from disk.

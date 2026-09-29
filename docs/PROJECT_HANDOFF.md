@@ -109,6 +109,8 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/graphics.js | Device-local quality tiers and frame cap, and the one table every graphics knob reads |
 | src/textures.js | Procedural textures and foliage animation shader hooks |
 | src/mesh-assets.js | Decodes that geometry and instances it under the biome palette. `farParts` derives a tree's thinned twin -- a third of its leaf sprays, each grown to keep the crown full -- at load, for shadows beyond the nearest cascade |
+| src/gen-pool.js | The workers that compute the ground grid's heights while a course generates (B2). Every call resolves to null rather than failing, which sends the grid back to the main thread |
+| src/gen-worker.js | One such worker: generates its own copy of the world from the same settings and stops at the grid. Built as a classic script embedded in the single file -- a page opened from disk may start a classic blob worker in Chromium, not a module one |
 | src/instance-cull.js | Draws only the part of each course-wide instanced mesh (trees, deadfall, rocks, ground cover, homes, floodlights) that the camera can see or whose shadow it can see, and gives each shadow map only the trees inside it -- as thinned twins from the middle cascade out on High and Ultra |
 | src/asset-meshes.js | GENERATED. Packed CC0 geometry, int16 positions and int8 normals |
 | src/shot-visuals.js | Wind debris, strike effects, aiming/tracer helpers |
@@ -185,6 +187,8 @@ Every one of these imports its geometry from `src/` and never reimplements it. F
 | tests/*.test.mjs | Node test-runner regression suites; no external test framework |
 
 ### Measuring the generator
+
+**The grid's heights are computed on other cores (B2), and that rests on two things staying true.** Generation must be DETERMINISTIC -- each worker generates its own copy of the world from the same settings, so a world that depended on timing, `Math.random` or anything else outside the seed would give the workers different land from the main thread's. And the grid must go on being built only by `makeGroundGridSteps`: `makeGroundGridPooled` feeds that same function answers computed elsewhere in the order it asks for them, so a change to the grid builder is automatically a change to both paths, but a SECOND grid builder would not be. `lab.ground()` hashes the built grid and says how many workers built it; the hash must not depend on the workers.
 
 **Per-point work in the ground grid is where generation goes** -- a million-plus samples on an eighteen. Anything asked of every point should be rejected cheaply first, by a world box around the region where the answer can be anything but "no" (`worldBoxOf` turns a rectangle in a hole's frame into one; see the refinement boxes, the basin boxes and the green-shaping skip in `course.js`). Such a shortcut must give EXACTLY the old answer, and `node tools/biome-fingerprint.mjs --check` is how that is proved: a shortcut that moves one sample moves the ground hash.
 

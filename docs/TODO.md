@@ -161,16 +161,21 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   corrected probe -- the "costs nothing" note in `updateFloodlights` predates
   the probe fix.
 
-- [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
-  core; the grid is row bands that can be computed in parallel with identical
-  numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
-  time*) ruled out a Web Worker because the finished world holds closures
-  that cannot cross a thread; the GRID VALUES can -- each worker rebuilds the
-  plan from the same settings (deterministic, ~0.5 s) and returns its band as
-  a Float32Array. Estimate 2.5 s -> under 1 s on 8 cores. Must check first:
-  workers inside the single-file build opened from `file://` (inline/blob
-  workers) in Chrome, Safari and Firefox; fall back to one thread if refused.
-  Fingerprints must stay identical. No course changes.
+- [ ] **B2b. Check the ground workers in Firefox and Safari.** B2 was tested
+  only in Chromium (desktop, `file://` and served). On the owner's iPhone
+  (hosted copy) and a Mac, `lab.ground()` after a course starts should report
+  `workers` above 0, and the same hash with workers as without (hide them by
+  running `window.Worker = undefined` in the console before starting a
+  course). A browser that refuses them falls back silently -- the thing to
+  catch is a fallback nobody knew was happening.
+
+- [ ] **B2c. The scene build's per-point work on the same workers.** Placing
+  the ground cover asks `surface` per candidate (1.2 s) and the ownership atlas
+  asks `nearest` per texel (0.8 s) -- the leftovers of B4. The atlas needs only
+  what exists before the grid, so the workers could compute it from their
+  captured copy; the cover needs `height`, i.e. the finished grid, which is
+  tens of megabytes to send to each worker without shared memory (not
+  available from `file://`). Start with the atlas.
 
 - [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
   `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
@@ -1187,6 +1192,18 @@ record of what was ruled out and why, which is worth more than a short file.
   best of three: PNW nine 2.46 -> 1.4 s, eighteen 8.79 -> 4.2 s, Links
   eighteen 10.26 -> 4.9 s. RESEARCH.md *The ground grid stops asking every
   hole about every point*.
+
+- [x] **B2. The ground grid's heights on every core.** Branch
+  `parallel-ground` (on `faster-ground`). Up to eight workers, each generating
+  its own copy of the world and stopping at the grid; the main thread feeds the
+  unchanged grid builder their answers in the order it asks, so the grid is
+  the serial one by construction -- byte-for-byte in the Node test and the same
+  `lab.ground()` hash in the browser. Classic blob worker embedded in the
+  single file (+89 KB), falling back to the main thread on any failure.
+  Generation in the browser: PNW nine 2.6 -> 1.9 s, eighteen 9.0 -> 3.4 s,
+  Links eighteen 12.1 -> 3.6 s. Follow-ups B2b (Firefox/Safari) and B2c (the
+  scene build's per-point work). RESEARCH.md *The ground grid's heights on
+  every core*.
 
 ## Reading a green without the overlays
 

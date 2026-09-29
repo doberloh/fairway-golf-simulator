@@ -2,7 +2,7 @@ import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
 import {planCourse,holeLine,enabledTees,greenContour,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
-import {makeGroundGrid,makeGroundGridSteps,groundHeight} from './terrain-grid.js';
+import {makeGroundGrid,makeGroundGridSteps,makeGroundGridPooled,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
 import {clamp} from './physics.js';
@@ -878,8 +878,13 @@ export const foreshore = (y, near = 1) => {
 // The grid reports its own 0..1; this lifts it onto the whole-build scale and
 // hands back the finished grid, so the call site reads like a function call.
 function* stepGrid(it){
- let r=it.next();
- while(!r.done){yield phaseAt(3,r.value);r=it.next();}
+ let r=it.next(),last=0;
+ while(!r.done){
+  // A wait on the workers is passed up to the driver with the progress so far,
+  // and whatever it resolves to is passed back down.
+  if(r.value&&r.value.await){const got=yield {...phaseAt(3,last),await:r.value.await};r=it.next(got);continue;}
+  last=r.value;yield phaseAt(3,r.value);r=it.next();
+ }
  return r.value;
 }
 const PHASE=[
@@ -898,7 +903,10 @@ export function generateWorld(settings={}){
  let r=it.next();while(!r.done)r=it.next();
  return r.value;
 }
-export function* generateWorldSteps(settings={}){
+// `options.gridPool`: heights for the ground grid computed on other cores (see
+// makeGroundGridPooled); the grid is the same either way. `options.capture`: a
+// worker's run, which stops at the grid and yields `{capture: {sample, refine}}`.
+export function* generateWorldSteps(settings={},options={}){
  const s={...SCHEMA_DEFAULTS,...settings,courseYards:settings.courseYards??(settings.holes===18?6480:3240)};s.holes=s.holes===18?18:s.holes===1?1:9;s.waterMin=clamp(s.waterMin,.2,8);s.waterMax=clamp(s.waterMax,s.waterMin,12);
  // The driving range is one hand-built hole rather than a generated one, but it
  // is still a hole, so everything past this line -- routing, terrain, ground
@@ -1706,7 +1714,14 @@ export function* generateWorldSteps(settings={}){
   for(const b of h.bunkers)grow(b.x-b.rx*1.4-4,b.x+b.rx*1.4+4,b.z-b.rz*1.4-4,b.z+b.rz*1.4+4);
   return worldBoxOf(h,x0,x1,z0,z1);
  });
- const groundGrid=yield* stepGrid(makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some((h,i)=>{const w=refineBoxes[i];if(x<w.minX||x>w.maxX||z<w.minZ||z>w.maxZ)return false;const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);})));
+ // Which cells are cut to half a metre. Named, because a worker that computes
+ // heights for the grid (B2) has to ask exactly this.
+ const refineCell=(x,z,a,b,c,d)=>(streams.at(x,z)?.edge<3)||nearShore(x,z,a,b,c,d)||holes.some((h,i)=>{const w=refineBoxes[i];if(x<w.minX||x>w.maxX||z<w.minZ||z>w.maxZ)return false;const p=h.toLocal({x,z});return Math.hypot(p.x-(h.green??h.pin).x,p.z-(h.green??h.pin).z)<38||Object.values(h.tees).some(t=>{const q=teePad(t);return q&&Math.abs(p.x-t.x)<TEE_PAD.x+6&&Math.abs(p.z-q.z)<q.rz+6;})||h.ponds.some(b=>{const d=hazardMetric(p.x,p.z,b);return d<1.35;})||h.bunkers.some(b=>Math.abs(p.x-b.x)<b.rx*1.4+4&&Math.abs(p.z-b.z)<b.rz*1.4+4);});
+ // A worker stops here: it needed the land and the question, not the grid.
+ if(options.capture){yield {capture:{sample:analyticHeight,refine:refineCell}};return null;}
+ const groundGrid=yield* stepGrid(options.gridPool
+  ?makeGroundGridPooled(analyticHeight,halfX+150,halfZ+150,3,refineCell,options.gridPool)
+  :makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,refineCell));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
  // The sited pads, so a measurement can report what the generator decided
  // rather than trying to infer it back out of the terrain.
