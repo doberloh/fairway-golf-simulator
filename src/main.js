@@ -3740,6 +3740,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The view cull's margins, live: {near (m), margin (deg), shadows (bool), shadowCap (m),
   // shadowMaps (bool: each shadow map only its own trees), thinShadowsFrom (map index, 99 = never, null = the tier's)}.
   cullTune:(next)=>view.cull?.tune(next)??null,
+  // The floodlights, switched the way the clock panel's box does it (without
+  // saving the choice). No argument reports.
+  floodlights:(on)=>{if(on!==undefined){view.daylight.floodlights=!!on;view.setFloodlights(!!on);}return !!view.floodlit;},
   // Where the shadow cascades split: {splits: [metres, ...]}, or {} for the tier's own. See GolfView.cascadeSplitter.
   cascades:(o={})=>view.setCascadeSplits(o.splits??null),
   scene:()=>{

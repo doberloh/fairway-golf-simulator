@@ -540,6 +540,8 @@ export class GolfView{
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
   // Taken here, after the last of them is built; the near-field grass tiles come
   // later, move with the camera, and opt out.
+  // The floodlit programs are built once the course is on screen (see addFloodlights).
+  this.nightWarmDue=true;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
@@ -627,7 +629,9 @@ export class GolfView{
   while(this.updateGrass?.()&&performance.now()<until);
   try{this.renderer.compile(this.scene,this.camera);}
   catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
-  this.warmFloodlights();
+  // The lit programs wait until the course is on screen (`render` sends for
+  // them) -- building them here put them in the wait behind the loading screen.
+  if(!this.nightWarmDue)this.warmFloodlights();
  }
  // THE FIRST FRAME, PAID FOR BEHIND THE LOADING SCREEN (B1 in TODO).
  //
@@ -645,6 +649,7 @@ export class GolfView{
  // which every course build goes through.
  async ready(){
   if(!this.group)return 0;
+  this.readying=true;
   const t0=performance.now();
   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
   catch(e){console.warn('Fairway: shader warm-up skipped',e);}
@@ -654,6 +659,7 @@ export class GolfView{
   // For the lab: how long each half took. The first is time the page stays
   // live; the second blocks it, so it is the one to keep small.
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
+  this.readying=false;
   return this.readyTimes;
  }
  // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
@@ -681,8 +687,15 @@ export class GolfView{
   // program slow to build. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
   const lamps=this.floodLamps;
-  if(!lamps?.length||this.floodlit)return;
+  if(!lamps?.length)return;
   const rig=this.floodlights,rigWas=rig?.visible;
+  // THE STATE THAT IS NOT SHOWING. The lamps are hidden while off, so the lit
+  // programs are the ones with every lamp in the count; a course that starts
+  // floodlit needs the unlit ones instead, or switching off would stall the
+  // same way. Either way it is one scene walk with the lamps flipped.
+  const other=!this.floodlit;
+  for(const lamp of lamps)lamp.visible=other;
+  if(rig)rig.visible=true;
   // The lamps are already in the walk -- they are never hidden. What is hidden
   // is the RIG: masts and heads, and the mast has a lit material of its own that
   // would otherwise compile on the first toggle. Put back SYNCHRONOUSLY once the
@@ -695,7 +708,7 @@ export class GolfView{
     ??this.renderer.compile(this.scene,this.camera);
    done?.catch?.(e=>console.warn('Fairway: floodlight pre-compile skipped',e));
   }catch(e){console.warn('Fairway: floodlight pre-compile skipped',e);}
-  finally{if(rig)rig.visible=rigWas;}
+  finally{if(rig)rig.visible=rigWas;for(const lamp of lamps)lamp.visible=this.floodlit;}
  }
  makeHazardAtlas(){
   // The centre and shape of each GREEN, which is what the ground shader needs to
@@ -1119,19 +1132,24 @@ export class GolfView{
   // per lamp per frame is the whole budget many times over, and the sun is below
   // the horizon when these are on, so CSM has nothing to draw anyway.
   //
-  // VISIBLE FROM BIRTH, AT ZERO INTENSITY. Three counts the VISIBLE lights in a
-  // scene to build its lighting uniforms, so hiding these and showing them again
-  // changes the light count and recompiles every lit material in the scene --
-  // measured at 2541 ms of frozen picture on a nine-hole course with 57 lamps,
-  // on a checkbox, and 12 ms on every toggle after it. Left visible, the light
-  // count never changes: the programs are built once while the course is being
-  // generated and the switch costs nothing at all.
+  // HIDDEN UNTIL THEY ARE ON, WITH THEIR SHADERS BUILT IN ADVANCE. Three counts
+  // the VISIBLE lights in a scene and writes the count into every lit program,
+  // so the lamp count decides which programs a course needs. Showing a lamp
+  // for the first time recompiles every lit material -- measured at 2541 ms of
+  // frozen picture on a nine-hole course with 57 lamps, on a checkbox -- which
+  // is why these used to be visible from birth at zero intensity.
   //
-  // What that trades is a permanently wider light loop in every fragment, in
-  // daylight too. Measured on this machine it is inside the noise -- 8.3 ms
-  // median with the lamps present against 8.5 ms without -- but it IS real work,
-  // and a machine that is fragment-bound would feel it. The ball light next to
-  // `this.ball` is built the same way for the same reason.
+  // That made every course wait for programs carrying ALL its lamps, in
+  // daylight too: 57 on nine holes and 141 on the longest eighteen, a different
+  // set per course (so the menu's could never be reused), and the bulk of the
+  // 2-3.5 s the loading screen spends on the graphics card (B1, B6 in TODO).
+  // Now they start hidden when the floodlights are off, and `warmFloodlights`
+  // builds the lit programs in the background once the course is on screen,
+  // so the first switch finds them ready and costs what every later one did.
+  // Switched on, they are shown; off, hidden. Each state has its programs.
+  //
+  // The ball light next to `this.ball` is still built visible at zero, for the
+  // old reason: it is one light, the same on every course.
   //
   // A FIXED FEW OF THEM CAST, decided here and never changed. The number of
   // shadow-casting lights is part of the shader program key exactly as the light
@@ -1146,7 +1164,7 @@ export class GolfView{
   const casters=this.quality.floodShadows??0;
   this.floodLamps=Array.from({length:Math.min(poles.length,FLOOD_LAMP_CAP)},(_,i)=>{
    const lamp=new T.SpotLight('#fff4d2',0,POLE_REACH*2,FLOOD_CONE,.55,2);
-   lamp.visible=true;lamp.intensity=0;
+   lamp.visible=false;lamp.intensity=0;
    lamp.castShadow=i<casters;
    if(lamp.castShadow){
     lamp.shadow.mapSize.set(FLOOD_SHADOW_SIZE,FLOOD_SHADOW_SIZE);
@@ -1163,10 +1181,12 @@ export class GolfView{
  setFloodlights(on){
   const lit=!!on&&!!this.floodlights;
   if(this.floodlights)this.floodlights.visible=lit;
-  // INTENSITY ONLY. `visible` is what three counts, and changing the count is
-  // what costs two and a half seconds. The shadow maps are switched with
-  // `autoUpdate` rather than `castShadow`, which is part of the same key.
+  // Shown or hidden, and lit. Changing what is visible changes the programs
+  // three uses, which is free once `warmFloodlights` has built both sets; the
+  // shadow maps are switched with `autoUpdate` rather than `castShadow`, which
+  // is part of the same key and is never changed.
   for(const lamp of this.floodLamps||[]){
+   lamp.visible=lit;
    lamp.intensity=lit?FLOOD_INTENSITY:0;
    if(lamp.castShadow){lamp.shadow.autoUpdate=lit;lamp.shadow.needsUpdate=lit;}
   }
@@ -1642,6 +1662,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
 
  render(dt){
+  // The floodlit programs, sent for on the first frame after the course is on
+  // screen: the driver builds them while the player looks at the first tee.
+  if(this.nightWarmDue&&!this.readying){this.nightWarmDue=false;this.warmFloodlights();}
   // The still bodies' own clock. Their ripples are the only thing that tells a
   // pond with no reflector from a sheet of glass, so it runs whatever else is
   // happening -- including while the ball is in the air.
