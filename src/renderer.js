@@ -1,6 +1,6 @@
 import {addHomes} from './homes.js';
 import {addStreams} from './streams.js';
-import {landscapeGeometry} from './landscape-edge.js';
+import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
 import {Line2} from 'three/addons/lines/Line2.js';
 import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
@@ -536,7 +536,7 @@ export class GolfView{
   this.addSky(sunDir);
   this.addLandscape();
   const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color('#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
-  const terrain=groundGeometry(world.groundGrid);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
   this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
   // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
   // buildings shaded the turf but the turf shaded nothing -- a ridge did not

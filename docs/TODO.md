@@ -124,12 +124,6 @@ the budget these spend.
   density. Decoration only -- nothing new may be collidable unless it is in
   the generator.
 
-- [ ] **U7. The ground past the course edge is stretched into streaks.** Seen
-  from the overhead/overview camera and in free flight (screenshot 27
-  September, Redwood Ultra overview). A proper ring of distant land or an
-  earlier fade into the horizon (`src/landscape-edge.js`). Any tier; a flaw,
-  not an extra.
-
 - [ ] **U8. Make Ultra distinct from High.** Whichever of U1/U6 land, Ultra is
   where they go first, so the ladder has four real rungs (see *high and ultra
   are very nearly the same tier* below).
@@ -1220,6 +1214,15 @@ record of what was ruled out and why, which is worth more than a short file.
   `lab.ground()` on an iPhone and a Mac -- and reported all of it good. The one
   problem found, a long pause switching the floodlights in the course creator,
   is fixed under B6.
+
+### Looking better on Ultra (cartoon style throughout)
+
+- [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
+  streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
+  only as many vertices as keep them near square (worst 6.6 to 1, a third of the
+  vertices). The light rectangle round the course was the seam's normals and
+  the landscape having no baked relief; both are carried across the seam now.
+  RESEARCH.md *The ground past the course edge*.
 
 ## Reading a green without the overlays
 

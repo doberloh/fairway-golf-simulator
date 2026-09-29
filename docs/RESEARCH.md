@@ -4484,3 +4484,30 @@ no cascade overruns at any heading (the far one now reaches 3.8-6.2 km). The
 bird's-eye view at 17:30 facing west now shades the distant forest the way the
 foreground is shaded; near the tee the shadows are unchanged apart from a few
 more long ones from trees now allowed to cast from further sunward.
+
+## The ground past the course edge (U7, 29 September)
+
+`src/landscape-edge.js`. Seen from the overview: the land around the course
+ran in streaks radiating from it, and a thin light rectangle marked where the
+course's ground met it.
+
+**The streaks were sliver triangles.** Every landscape ring carried every
+perimeter vertex (3 m apart at the course's edge) pushed outward, while the
+rings were 12 m to 4 km apart -- so far out each triangle was tens of metres
+along the ring and kilometres across it, about 70 to 1, and heights and normals
+sampled finely one way and coarsely the other shaded as streaks. Now the rings
+start 8 m apart and widen by 1.28 each step to 13 km, and each ring carries
+only as many vertices as keep its spacing along the ring near its step outward
+(at least 48); rings with different counts are stitched by walking both at
+once. Worst aspect among triangles over 50 m: 6.6 to 1. Vertices: ~6,600
+against ~20,000 before (Redwood nine); built in 19 ms.
+
+**The rectangle was two things.** Normals: each mesh computed them from its own
+triangles only, so they disagreed along the seam; `stitchSeam` gives both the
+average. And tone: the course's ground carries a baked relief value per vertex
+(`attachRelief` in ground.js) and the landscape had none, read as zero --
+wherever the perimeter sat on a crown, that was a light line. The landscape now
+takes the relief at the seam and fades it to nothing over the first 300 m.
+Remaining: the rectangle is still faintly readable from straight above, where
+the relief field ends; the ridges beyond it keep their creases, which are
+the ridge shape the ring lift draws on purpose.
