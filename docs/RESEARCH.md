@@ -4511,3 +4511,30 @@ takes the relief at the seam and fades it to nothing over the first 300 m.
 Remaining: the rectangle is still faintly readable from straight above, where
 the relief field ends; the ridges beyond it keep their creases, which are
 the ridge shape the ring lift draws on purpose.
+
+## Every surface in patches (U3, 29 September)
+
+`src/ground.js`, the block before the fine grain. The owner's brief: colour
+variation "tastefully for every surface, just like a real course has patches of
+different colors". From world position (two octaves of smooth value noise at
+the surface's own scale, plus a third, three times larger, for dry and lush
+drifts), so patches stay put as the camera moves. Full strength per surface,
+as a multiple of brightness either way, and the scale of a patch:
+
+| Surface | Brightness | Scale | Dry / lush drift |
+| --- | --- | --- | --- |
+| Rough | +-18% | 30 m | strongest |
+| Semi-rough | +-14% | 18 m | strong |
+| Fairway, and mown tee ground | +-13% | 13 m | moderate |
+| Fringe | +-8% | 8 m | light |
+| Green | +-4.5% | 5 m | none (tone only) |
+| Sand | +-11% | 9 m | damp patches instead |
+
+The Graphics panel's *Turf colour variation* scales all of it; 60% is the
+default the report was judged at, so a green varies about +-2.7%. Greens are
+kept faint on purpose: every green-reading cue works in brightness, and a
+patch at the scale of a break would compete with it. Dry drifts use the same
+parched multiplier the slope tint uses (blue shed, a little red gained), so
+they read as fescue rather than damage. Patches smaller than a few pixels are
+held back (`fwidth`), so nothing shimmers at distance. No new texture, no
+extra pass: a few noise lookups per ground fragment.

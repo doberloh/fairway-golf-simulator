@@ -443,6 +443,7 @@ export class GolfView{
   u.cueSlope.value=this.groundCues.slopeTint?1:0;
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
+  if(u.cuePatches)u.cuePatches.value=(this.groundCues.patches??60)/100;
   // Derived from the two sliders through ONE mapping in graphics.js, so the
   // panel and the shader cannot drift apart.
   if(u.sunDir&&this.sunDir)u.sunDir.value.copy(this.sunDir);

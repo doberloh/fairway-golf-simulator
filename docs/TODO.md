@@ -103,12 +103,6 @@ the budget these spend.
   in `src/mist.js`), so check it still composes with the cloud-shadow and mist
   patches on those materials.
 
-- [ ] **U3. Colour variation in the rough.** Large rough areas are one flat
-  olive broken only by shadows. Low-contrast patches of lighter, darker and
-  drier grass in the ground shader (`src/ground.js`, where the mowing stripes
-  are painted), from world-position noise so it is stable per course. Every
-  tier, cheap.
-
 - [ ] **U4. Distance fades into the sky (aerial perspective).** Far hills are
   the same green as near ones. Tint by distance toward the sky/fog colour,
   warmer on the sun's side. Every tier, cheap; check it does not fight the
@@ -1216,6 +1210,13 @@ record of what was ruled out and why, which is worth more than a short file.
   is fixed under B6.
 
 ### Looking better on Ultra (cartoon style throughout)
+
+- [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
+  owner from "the rough" to every surface: rough, semi, fairway and tee ground,
+  fringe, green (tone only, faint, so reading is not disturbed) and sand (damp
+  patches), from world-position noise at each surface's own scale. A Graphics
+  slider, *Turf colour variation*, default 60%. RESEARCH.md *Every surface in
+  patches*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
