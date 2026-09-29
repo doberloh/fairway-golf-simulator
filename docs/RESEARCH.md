@@ -4538,3 +4538,15 @@ parched multiplier the slope tint uses (blue shed, a little red gained), so
 they read as fescue rather than damage. Patches smaller than a few pixels are
 held back (`fwidth`), so nothing shimmers at distance. No new texture, no
 extra pass: a few noise lookups per ground fragment.
+
+## Distance fading into the sky (U4, 29 September -- in progress)
+
+`src/mist.js` (the fog patch) and `updateDaylight` in `src/renderer.js`. Every
+lit fragment is drawn toward the horizon's colour by distance
+(1 - exp(-d / 1800 m)), and toward the sun's colour in the sun's own quarter.
+Strength from the new graphics preference `haze` (default 50%, `AERIAL_MAX`
+.62 at 100%). The fog patch now runs on every tier so this can; mist densities
+stay zero where the tier has no mist, and the water field is only baked where
+it does. First screenshots: far hills on PNW and desert now read bluer and
+paler; the foreground is unchanged. Not yet tuned against every biome, no
+Graphics-panel slider yet (U8), no TODO entry moved yet.

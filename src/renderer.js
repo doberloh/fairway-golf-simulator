@@ -167,6 +167,10 @@ const FLOOD_LAMP_CAP=192;
 // default is 200; this was 400, and at a low sun a tall tree's shadow runs
 // further than that. The far plane is fitted per frame (fitCascadeDepth), and
 // CASCADE_BASE_FAR is the depth the tier's shadow bias was tuned at.
+// The distance haze at 100% on the panel: how far toward the horizon's colour
+// the farthest land goes. 50% (the default) takes a hill 2 km off about a fifth
+// of the way.
+const AERIAL_MAX=.62;
 const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
@@ -635,13 +639,18 @@ export class GolfView{
   if(this.config.mode==='free'){const pose=playerCameraPose(this.course,this.course.tee,0,this.config);this.camera.position.set(pose.eye.x,pose.eye.y,pose.eye.z);this.look.set(pose.target.x,pose.target.y,pose.target.z);this.wasFree=false;}this.setHole(holeIndex,true);this.renderer.shadowMap.needsUpdate=true;
   // Real clouds in the sky, and the discs they shade the ground with. Built
   // before material registration, because every lit material reads the discs.
-  if(this.quality.mist&&!blue){
+  // Every tier carries the patch now, because the distance haze (U4) lives in
+  // it and belongs to every tier; the MIST stays where the tier has it (its
+  // densities are zero otherwise), and so does the water field it needs.
+  if(!blue){
    this.mistUniforms=mistUniforms();
    // Baked once here rather than sampled per frame: where the water is cannot
    // change while a course is loaded.
-   const field=bakeWaterField(world);
-   const texture=setWaterField(this.mistUniforms,field);
-   if(texture)this.resources.push(texture);
+   if(this.quality.mist){
+    const field=bakeWaterField(world);
+    const texture=setWaterField(this.mistUniforms,field);
+    if(texture)this.resources.push(texture);
+   }
   }
   if(this.quality.clouds&&!blue){
    this.cloudUniforms=cloudShadowUniforms();
@@ -1732,6 +1741,13 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // so a hollow fills and a ridge stands clear of it.
    u.mistBase.value=this.world.waterLevel;
    u.mistTime.value=this.elapsed;
+   // The air (U4): the horizon's colour, the sun's colour toward the sun, and
+   // how strongly, from the Graphics panel's "Distance haze". Weather off
+   // leaves it on: this is the air itself, not fog.
+   u.aerialColor.value.copy(this.scene.fog.color).lerp(WHITE,.08);
+   u.aerialWarm.value.copy(this.sun.color).lerp(this.scene.fog.color,.35);
+   u.aerialSun.value.copy(this.sunDir);
+   u.aerialStrength.value=(this.groundCues?.haze??50)/100*AERIAL_MAX;
   }
   // Water is tinted by the clock like the fog and the sky. Without it a pond
   // glowed biome teal under a night sky while the course around it went dark.

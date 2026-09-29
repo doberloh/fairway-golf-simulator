@@ -210,6 +210,17 @@ export const mistUniforms = () => ({
  // Hugs the surface more tightly than the valley sheet: river fog is a low
  // ribbon you look over from the bank, not a layer filling the whole hollow.
  waterScale: {value: 13},
+ // AIR (U4 in TODO): distance fading into the sky. Far hills were the same
+ // green as near ones, which flattens a landscape more than anything else --
+ // the eye reads depth from colour long before it reads it from size. Every
+ // fragment is drawn toward the horizon's colour by distance, and toward the
+ // sun's colour when it lies toward the sun, the way real haze scatters.
+ // Strength 0 switches it off; the renderer sets it from the Graphics panel.
+ aerialStrength: {value: 0},
+ aerialScale: {value: 1800},
+ aerialColor: {value: new T.Color('#c9d6e0')},
+ aerialWarm: {value: new T.Color('#ffd9a0')},
+ aerialSun: {value: new T.Vector3(0, 1, 0)},
 });
 
 function blankField() {
@@ -236,6 +247,7 @@ uniform float mistBase,mistScale,mistDensity,sheetScale,sheetDensity,mistTime;
 uniform sampler2D waterField;
 uniform vec2 waterExtent;
 uniform float waterDensity,waterScale;
+uniform float aerialStrength,aerialScale;uniform vec3 aerialColor,aerialWarm,aerialSun;
 varying vec3 vMistWorld;
 float mistHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float mistNoise(vec2 p){
@@ -286,7 +298,15 @@ vec3 applyMist(vec3 color){
  // standing behind it and not just its own surface.
  float wet=texture2D(waterField,vMistWorld.xz/waterExtent*.5+.5).r;
  depth+=mistDepth(yc,yf,len,waterScale)*waterDensity*wet*(.55+.75*puff);
- return mix(color,mistColor,clamp(1.-exp(-max(depth,0.)),0.,1.));
+ vec3 lit=mix(color,mistColor,clamp(1.-exp(-max(depth,0.)),0.,1.));
+ if(aerialStrength>0.){
+  // Toward the sun the air glows its colour; away from it, the sky's. Sharp,
+  // so only the sun's own quarter warms.
+  float toward=max(dot((vMistWorld-cameraPosition)/len,aerialSun),0.);
+  vec3 air=mix(aerialColor,aerialWarm,pow(toward,6.)*.55);
+  lit=mix(lit,air,aerialStrength*(1.-exp(-len/aerialScale)));
+ }
+ return lit;
 }
 `;
 
