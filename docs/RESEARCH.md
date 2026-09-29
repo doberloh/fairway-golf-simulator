@@ -2699,7 +2699,7 @@ Three.js builds its lighting uniforms from the **visible** lights in a scene, an
 
 Two fixes were measured. Pre-compiling the floodlit variant during generation took it to **554 ms**, then **270 ms** once the masts were included in the warm-up walk — better, but still a visible hitch, because 22 and then 3 programs were still being built at toggle time.
 
-The fix that works is to stop changing the count: the lamps are created **visible at zero intensity** and only their intensity is switched. The light count is then constant, everything compiles once while the course is being generated, and the toggle is **18.7 ms in the studio with zero programs compiled**. This is the same reasoning the ball's point light already carried.
+The fix that worked then was to stop changing the count: the lamps were created **visible at zero intensity** and only their intensity was switched. The light count was constant, everything compiled once while the course was being generated, and the toggle was **18.7 ms in the studio with zero programs compiled**. This is the same reasoning the ball's point light already carried. **Reversed 28 September (B6):** that put every lamp into every lit shader at load, which is most of the 2-3.5 s the loading screen spends on the graphics card; the lamps are hidden while off again, and both states' programs are now built ahead -- see *Floodlit shaders built after the course is on screen*.
 
 What it trades is a permanently wider light loop in every fragment, daylight included. Measured here that is inside the noise — **8.3 ms median with the lamps present against 8.5 ms without** — but it is real work, and a fragment-bound machine would feel it.
 
@@ -4216,11 +4216,98 @@ instead of 2.0 on nine holes (once 2 ms: the menu backdrop had already built
 identical programs, which never happens when the count differs per course) and
 0.6 s instead of 3.5 on eighteen; press-play-to-smooth 5.2-7.1 s on nine holes
 and 9.6 s on eighteen. Not adopted: it would light only the lamps nearest the
-play at night, which is a change to the look and the owner's to make. Filed as
-B6. The frame cost of 57-141 zero-intensity spot lights looped over by every
+play at night, which is a change to the look and the owner's to make -- and
+the owner declined it. B6 got the same win another way: see *Floodlit shaders
+built after the course is on screen*. The frame cost of 57-141 zero-intensity spot lights looped over by every
 lit fragment in DAYLIGHT is unmeasured with the corrected probe; the note in
 `updateFloodlights` saying it costs nothing was taken with the old one.
 
 `renderer.debug.checkShaderErrors = false`, suggested in the plan, was not
 needed: once the links are awaited, the diagnostic reads it forces cost
 nothing measurable (the frame under the overlay is 7-10 ms).
+
+## Floodlit shaders built after the course is on screen (B6, 28 September)
+
+`addFloodlights`, `setFloodlights` and `warmFloodlights` in `src/renderer.js`.
+The floodlight lamps are hidden while off, so a course that starts with the
+floodlights off builds programs with no spot lights in them -- the same set on
+every course, most of which the menu backdrop has already built -- and the
+programs for the lit state are built in the background once the course is on
+screen (and the unlit state's, for a course that starts floodlit).
+
+**Rejected first: a cap on live lamps.** The measured win was the same (B1:
+cap 8 took shader preparation from 2.0 to 0-0.6 s on nine holes and 3.5 to 0.6
+s on eighteen), but at night only the lamps nearest the play would light
+anything, and from the overhead view that is a different course. The owner
+declined it. This keeps every pole a light and moves the cost instead.
+
+**Measured** (cold browser each run, PNW, seed REPORT1, High; `main` and the
+branch alternated, because the machine's speed drifted over the session):
+
+| Run | `main`: build, of which graphics prep | Branch: build, of which graphics prep |
+| --- | --- | --- |
+| 1 | 10.52 s, 3.23 s | 8.27 s, 0.12 s |
+| 2 | 12.42 s, 3.10 s | 9.23 s, 0.76 s |
+| 3 | 11.98 s, 3.00 s | 9.16 s, 0.72 s |
+
+Press play to smooth: 2.3-3.2 s shorter on nine holes. Earlier, faster runs of
+the branch alone gave 0.12-0.14 s of graphics prep on nine holes and
+0.12-0.78 s on eighteen.
+
+**The switch.** Worst frame in the two seconds after switching (`lab.floodlights`),
+five seconds after the course appeared: starting in daylight, on 30 ms / off 21
+/ on 19; starting floodlit, off 22 / on 20 / off 19. No stall either way.
+
+**The cost moved, not removed.** Sending for the night programs is one scene
+walk that creates ~35 programs on the main thread; the first frame after the
+overlay now takes ~0.2 s instead of ~0.01 s. The linking itself happens on the
+driver's threads while the player looks at the tee.
+
+**Night looks the same.** Floodlit at 21:30, the branch against `main`: player
+view 3,520 changed pixels against 2,932 between two runs of `main`; overview
+39,087 against 9,959 -- and the difference image shows only the outlines of
+drifting clouds (they move with time since load, and the two builds reach the
+screenshot at different moments); the floodlit holes do not differ.
+
+**Unmeasured:** whether hiding 57-141 zero-intensity spot lights in daylight
+also makes the daytime frame cheaper. It should (every lit fragment loops over
+them); it is a frame-rate question and frame-rate work is paused.
+
+## The scene build and the loading screen (B4, 28 September)
+
+A CPU profile of `lab.course` in the browser (unminified build, PNW nine, High)
+put the 3D scene build (`view.build`, one synchronous block, so the page is
+frozen for all of it) at ~3.7 s on a busy afternoon:
+
+| Part | Time | Of which |
+| --- | --- | --- |
+| `addGroundCover` | 1.4 s | `world.surface` for every candidate tuft, 1.2 s |
+| `groundMaterial` | 1.0 s | `nearest` for every texel of the ownership atlas (up to 1 M), 0.8 s |
+| `refreshWaterEnvironment` in `build` | 0.8 s | the card finishing programs on the spot (`getProgramInfoLog`), 0.75 s |
+
+It also found two stalls OUTSIDE the build: (1) at the start of every round
+the menu scene about to be discarded re-photographed its ponds, because the
+clock moved from the menu's hour to the player's -- 1.58 s measured with a
+trace; (2) during B1's wait the game loop kept drawing the new course, and
+the first frame to touch an unfinished program froze the page.
+
+**Done:** the water probes are taken inside `GolfView.ready` after the shaders
+are built (with the later additions hidden, so the capture is the same one),
+the outgoing scene no longer refreshes its environment (`view.retiring`), and
+the game loop does not draw while `ready` waits. Measured against the
+`daylight-lamps` branch it sits on, alternated, cold browser: the longest
+freeze of the page while loading 3.70 / 4.78 / 4.57 s -> 3.05 / 3.14 / 3.22 s.
+Press-play-to-smooth was within the afternoon's noise either way. The ponds
+look the same: enlarged, only the animated ripples differ between the two.
+
+**Not done, and why.** The ground cover's `surface` calls and the atlas's
+`nearest` calls cannot be made cheaper without changing their answers: the
+cover's order of random draws depends on which candidates are rejected first
+(testing its cheap `patch` roll before `surface` would move every tuft), and
+the atlas has to agree with the lie at hole boundaries, which rules out
+guessing a block's owner from its corners. Both are per-point work that could
+run on other cores; that is B2.
+
+**Tried and dropped** (no measurable gain, reverted): a straight-hole shortcut
+and an unrolled wiggle sum in `course-plan.js`'s `unitCenter` -- bit-identical,
+no faster.

@@ -145,23 +145,12 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B6. Fewer floodlight lamps, so shaders are shared and quick.** Every
-  pole is a spot light (`FLOOD_LAMP_CAP` 192 in `src/renderer.js`, above the
-  longest course's 141), and three writes the spot-light count into every lit
-  shader -- so each course needs its own programs (the menu backdrop's cannot
-  be reused) and longer courses bigger ones. Measured (B1, cold browser, PNW,
-  High): cap 8 took shader preparation from 2.0 s to 0-0.6 s on nine holes and
-  3.5 s to 0.6 s on eighteen; press-play-to-smooth ~8.4 -> 5.2-7.1 s and 13.4
-  -> 9.6 s. Cost: at night only the lamps nearest the play are real lights
-  (`orderPoles` already picks them: the hole being played first, then nearest
-  the ball); the others' heads still glow. THE OWNER'S CALL: night screenshots
-  at a few caps (8, 16, 24) before deciding. A fixed cap also makes every
-  course's programs identical, so they could be built while the menu is up.
-  Also measure what 57-141 zero-intensity lights cost a DAYTIME frame with the
-  corrected probe -- the "costs nothing" note in `updateFloodlights` predates
-  the probe fix.
-
-- [ ] **B2. Shape the ground on every processor core.** Ground shaping is one
+- [ ] **B2. Shape the ground on every processor core.** (Also the home for
+  what B4 could not make cheaper: placing the ground cover asks `surface` per
+  candidate, 1.2 s, and the ground's ownership atlas asks `nearest` per texel,
+  0.8 s -- per-point work that can be split across workers but not trimmed
+  without changing answers. RESEARCH.md *The scene build and the loading
+  screen*.) Ground shaping is one
   core; the grid is row bands that can be computed in parallel with identical
   numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
   time*) ruled out a Web Worker because the finished world holds closures
@@ -179,12 +168,6 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   identical answer (the true nearest is always among the candidates; keep the
   same tie-break order). Bigger saving on 18 holes. No course changes;
   fingerprints must stay identical.
-
-- [ ] **B4. Trim the 3D scene build.** 2.0 s: `groundMaterial` data ~0.8 s,
-  `addVegetation` ~0.5 s, `addGroundCover` ~0.46 s, `prepareWorld` ~0.38 s.
-  Profile each (the unminified build shows real names:
-  `npx vite build --minify false --outDir <somewhere>`); some can move into
-  B2's workers.
 
 - [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
   3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
@@ -1185,6 +1168,29 @@ record of what was ruled out and why, which is worth more than a short file.
   and filed it as B6. RESEARCH.md *The first frame, paid for behind the
   loading screen*.
 
+- [x] **B6. Floodlit shaders built after the course is on screen.** Branch
+  `daylight-lamps`. The lamps are hidden while the floodlights are off, so a
+  daylight start builds programs with no spot lights -- the same on every
+  course -- and `warmFloodlights` builds the other state's in the background
+  once the course is on screen. Cold browser, PNW, High, alternated with
+  `main`: graphics prep 3.0-3.2 s -> 0.1-0.8 s, press play to smooth 2.3-3.2 s
+  shorter on nine holes. Switching the floodlights afterwards: worst frame
+  19-30 ms, from a daylight or a floodlit start. Night unchanged, overview
+  included. REJECTED first: a cap on live lamps (same win, but only the
+  nearest poles lit at night -- the owner declined it for the overhead view).
+  RESEARCH.md *Floodlit shaders built after the course is on screen*.
+
+- [x] **B4. The scene build and the loading screen -- partly.** Branch
+  `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
+  block of ~3.7 s -- ground cover 1.4 s, the ground-shading atlas 1.0 s, the
+  water probes 0.8 s. Done: the probes are taken after the shaders are built
+  (same capture, trees hidden as before), the outgoing menu scene no longer
+  re-photographs its ponds when the round's clock is applied (1.6 s), and the
+  game loop does not draw while the graphics prepare. Longest page freeze
+  while loading 3.7-4.8 s -> 3.1-3.2 s. The ground cover and atlas work cannot
+  be trimmed without changing answers; moved to B2. RESEARCH.md *The scene
+  build and the loading screen*.
+
 ## Reading a green without the overlays
 
 The overnight brief was "greens look flat from every angle"; what it
@@ -2054,7 +2060,7 @@ problem: a control that belongs inside a box is sitting beside it.
   - **Importing a round destroyed the one in progress** with no prompt, and never entered play: from the main menu it built the course, said "Saved round restored" and left you on the menu. It now reads and validates the file first, then goes through `guardRound` like every other exit, then `setMode('play')`. The file input is cleared afterwards -- without that the same file could not be chosen twice running.
   - Verified end to end: discard then reload leaves no stored round and no Continue; a 225 yd driver survives an endless run and a reload; importing mid-round asks to save, saves, imports and lands in play. Four new tests in `settings-schema.test.mjs`, one of which fails if a play-scope key ever becomes a schema field and quietly makes the mechanism unnecessary.
 
-- [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps are created visible at zero intensity now and only their intensity is switched, so the count never changes: **18.7 ms in the studio, zero programs compiled**. Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
+- [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps were then created visible at zero intensity and only their intensity was switched, so the count never changed: **18.7 ms in the studio, zero programs compiled**. (Reversed 28 September, B6: that put every lamp into every lit shader at load; they are hidden while off again and both states' programs are built ahead.) Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
 
 - [x] **Terrain casts its own shadow.** It only ever received one, so trees shaded the turf and the turf shaded nothing -- a ridge did not darken the hollow behind it, which is a large part of why undulation is hard to read. One draw call per cascade over existing geometry: 8.6 ms against 8.5 ms.
 
