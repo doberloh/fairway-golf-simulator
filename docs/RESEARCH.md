@@ -597,6 +597,8 @@ Self time is spread thin -- no single function is over 12% -- because the cost i
 `makeGroundGrid` calling `analyticHeight` (53% inclusive) for every cell, which
 calls `shapedLand`, `nearest`, `greenContour` and the rest in turn. Vegetation
 does not appear: placing 18,720 trees is cheap next to sampling the ground.
+(These shares predate 28 September; the three biggest per-cell costs were cut
+then -- see *The ground grid stops asking every hole about every point*.)
 
 **This settles how to make generation yield.** The standing plan was to make
 `generateWorld` a `function*` yielding phase labels, with the caveat that it
@@ -4311,3 +4313,130 @@ run on other cores; that is B2.
 **Tried and dropped** (no measurable gain, reverted): a straight-hole shortcut
 and an unrolled wiggle sum in `course-plan.js`'s `unitCenter` -- bit-identical,
 no faster.
+
+## The ground grid stops asking every hole about every point (B3, 28 September)
+
+`src/course.js`. The plan's B3 was a faster "which hole is nearest" lookup.
+Counted first: it already measured only 1.21 holes a call on nine-hole courses
+and 1.43 on eighteen (5.19 on Island, which keeps a minimum per group of holes),
+because the existing box rejection and last-winner-first order do the work.
+There was little to take. A CPU profile of an eighteen (PNW, seed REPORT1,
+7.5 s) found the time elsewhere, all of it questions the ground grid asks of
+every point it samples:
+
+1. **Which cells get refined** (`makeGroundGridSteps`' predicate): every hole
+   was asked about every cell -- green within 38 m, tee pads, ponds, bunkers --
+   after turning the point into that hole's frame. 1.4 s of its own plus the
+   frame changes, the single biggest item, and quadratic in the course (twice
+   the holes times twice the cells). Now each hole has a world box around every
+   one of those questions' reach, and a cell outside it is answered `false`
+   without the frame change.
+2. **Pond and bunker basins** in `analyticHeight`: every point asked every
+   basin, again by frame change first. Now a world box per basin (flat numbers,
+   rebuilt when the list changes) is tested first.
+3. **The green shaping** in `shapedNoTees`: every point inside a hole's
+   tee-to-green box (+180 m) computed the green's full contour (`greenContour`
+   -> `greenShape` -> `plateau`, ~1 s) BEFORE finding out how much the green
+   weighs there -- and past the widest shoulder (100 m) the weight is exactly
+   zero, because `smooth` clamps at 1. The contour is now skipped there.
+
+**Every shortcut is exact:** a box is the same test's region turned into the
+world and bounded, so anything outside it got the answer "no" before too, and
+the green skip only drops points whose blend was already exactly zero.
+`node tools/biome-fingerprint.mjs --check` -- every biome's GROUND hash -- was
+unchanged after each step, which is the proof; no `GENERATOR_VERSION` bump.
+
+**Measured**, generation only (`generateWorld` in Node, best of three, seed
+REPORT1, `main` and the branch run back to back):
+
+| Course | Before | After |
+| --- | --- | --- |
+| PNW, 9 holes | 2.46 s | 1.37-1.45 s |
+| PNW, 18 holes | 8.79 s | 4.19-4.25 s |
+| Redwood, 9 | 3.19 s | 1.73-1.90 s |
+| Island, 9 | 4.01 s | 2.76-2.91 s |
+| Links, 18 | 10.26 s | 4.79-4.93 s |
+
+About 40% off a nine and half an eighteen. The browser's press-play-to-smooth
+could not be measured cleanly that afternoon (the owner's machine was busy:
+`main` itself ran 14-16 s on nine holes against 7-8 s that morning), so the
+generation figures are the ones to trust.
+
+**Tried and dropped: rewriting `nearest` to allocate nothing** (no closure per
+call, the frame change inline, one object for the winner only). Bit-identical
+and measured no faster -- V8 was already removing those allocations -- so it
+was reverted rather than kept as complexity for nothing.
+
+**What is left** (profile of the same eighteen afterwards, 3.2 s): `nearest`
+0.8 s inclusive (the one measurement a point genuinely needs), land shaping
+and tee pads ~0.4 s, `routeHoles` 0.25 s, the grid's own bookkeeping ~0.4 s.
+
+## The ground grid's heights on every core (B2, 28 September)
+
+`src/gen-pool.js`, `src/gen-worker.js`, `makeGroundGridPooled` and
+`sampleRows`/`sampleExtras` in `src/terrain-grid.js`.
+
+**The earlier objection, and the way round it.** *Where generation actually
+spends its time* ruled out a worker because a generated world is full of
+closures that cannot cross a thread. The grid does not need the world to
+cross: each worker generates its OWN copy from the same settings (generation
+is deterministic) and stops at the grid (`generateWorldSteps(settings,
+{capture: true})`), keeping only `analyticHeight` and the refinement question.
+Nothing but numbers crosses: row bands of heights and mask bits, and lists of
+points and their heights.
+
+**Why the grid cannot come out different.** The main thread does not assemble
+the grid a second way. `makeGroundGridPooled` runs the unchanged
+`makeGroundGridSteps` twice -- a dry run that records where it asks for each
+refined vertex, then the real run -- feeding it `sample` and `refine` answers
+computed by the workers, in exactly the order it asks for them. The order of
+vertices, the refinement, and every float are the serial ones by construction.
+Held to the byte by `tests/parallel-ground.test.mjs` (PNW nine, Island nine,
+Links eighteen, with bands and chunks handed back in reverse order), and in the
+browser by `lab.ground()`: the same ground hash with workers and without, on
+every course tried, twice.
+
+**Browsers.** A page opened from disk (`file://`) may start a CLASSIC worker
+from a blob URL in Chromium, and may not start a MODULE one (tested with a
+scratch page: classic ok, module "worker error", data URL ok). So the worker is
+built as a classic script and embedded (`?worker&inline`); it adds ~89 KB to
+the single file (15.89 -> 15.98 MB). Firefox and Safari were not available to
+test here; on any browser that refuses, or any worker error or 60 s timeout,
+the pool answers null and the grid is built on the main thread as before --
+the same course, only slower.
+
+**How many.** One fewer than `navigator.hardwareConcurrency`, at most eight.
+Not for one-hole worlds (the range, endless), where starting the workers costs
+more than they save.
+
+**Measured** in the browser (Chromium, this machine while busy with other
+work, so absolute figures are high; workers off by hiding `Worker`, alternated):
+
+| Course | Generation, workers off | Generation, 8 workers | Course ready, off -> on |
+| --- | --- | --- | --- |
+| PNW, 9 | 2.59 s | 1.88 s | 11.6-11.7 -> 9.2-10.6 s |
+| PNW, 18 | 9.05 s | 3.42 s | 16.0-16.5 -> 13.9-14.2 s |
+| Links, 18 | 12.14 s | 3.64 s | 18.0-18.7 -> 14.3-15.1 s |
+
+The main thread's waits on the workers were 0.9-1.5 s for the rows (which
+includes the workers finishing their own copy of the world) and 0.16-0.5 s
+for the refined points. Generation is now a minority of the wait: the rest is
+the scene build and the graphics card (B4's leftovers, below).
+
+**The ownership atlas too.** The ground shader's record of which hole owns
+each texel (up to a million of them, `nearest` per texel, 0.8 s of the scene
+build) needs only what exists before the grid -- except its straw channel.
+So the workers compute the hole, lake and stream channels from their own copy
+(`owner-atlas.js`, shared with `ground.js` so the size and the questions cannot
+drift apart), starting as soon as the grid's heights are in and running while
+the main thread assembles the grid and plants; the ground material only adds
+straw. Held to the byte against the loop `ground.js` used to run, both for the
+main thread's own path and for worker bands handed back in reverse
+(`tests/parallel-ground.test.mjs`). `largeLakes`/`lakeOwner` moved above the
+grid in `course.js` so a worker holds them; nothing in them depends on the
+grid. Measured (busy machine, alternated): the longest page freeze while
+loading 6.58/6.97 -> 5.79/5.81 s, the build 11.6/12.6 -> 10.0/10.1 s.
+
+**Left:** placing the ground cover asks `surface`, which needs the finished
+grid for `height` -- tens of megabytes per worker to send without shared
+memory, and shared memory is not available to a page opened from disk.

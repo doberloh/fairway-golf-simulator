@@ -145,29 +145,29 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B2. Shape the ground on every processor core.** (Also the home for
-  what B4 could not make cheaper: placing the ground cover asks `surface` per
-  candidate, 1.2 s, and the ground's ownership atlas asks `nearest` per texel,
-  0.8 s -- per-point work that can be split across workers but not trimmed
-  without changing answers. RESEARCH.md *The scene build and the loading
-  screen*.) Ground shaping is one
-  core; the grid is row bands that can be computed in parallel with identical
-  numbers. Earlier notes (RESEARCH.md *Where generation actually spends its
-  time*) ruled out a Web Worker because the finished world holds closures
-  that cannot cross a thread; the GRID VALUES can -- each worker rebuilds the
-  plan from the same settings (deterministic, ~0.5 s) and returns its band as
-  a Float32Array. Estimate 2.5 s -> under 1 s on 8 cores. Must check first:
-  workers inside the single-file build opened from `file://` (inline/blob
-  workers) in Chrome, Safari and Firefox; fall back to one thread if refused.
-  Fingerprints must stay identical. No course changes.
+- [ ] **B7. A hitch two to three seconds after a course appears.** Found
+  measuring B1-B6 (28 September): after the loading screen goes, frames run
+  smoothly and then, ~2-3 s in, one long frame (334 ms on PNW eighteen) or a
+  few of 50-150 ms (nine holes). It is NOT from the build-time work: `main`
+  before any of it shows the same ("smooth after 3.0 s" in the same runs).
+  Likely something scheduled after the arrival -- the intro camera finishing,
+  the near-field grass ring filling, a first cull rebuild at the new pose.
+  `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
+  their times; a CPU profile over that window would name it.
 
-- [ ] **B3. A faster nearest-hole lookup.** `nearest(x, z)` measures several
-  holes per ground point (a bounding-box skip already exists). A coarse
-  lookup built once -- which holes can possibly be nearest in each ~50 m area,
-  from conservative distance bounds -- cuts most measurements and returns the
-  identical answer (the true nearest is always among the candidates; keep the
-  same tie-break order). Bigger saving on 18 holes. No course changes;
-  fingerprints must stay identical.
+- [ ] **B2b. Check the ground workers in Firefox and Safari.** B2 was tested
+  only in Chromium (desktop, `file://` and served). On the owner's iPhone
+  (hosted copy) and a Mac, `lab.ground()` after a course starts should report
+  `workers` above 0, and the same hash with workers as without (hide them by
+  running `window.Worker = undefined` in the console before starting a
+  course). A browser that refuses them falls back silently -- the thing to
+  catch is a fallback nobody knew was happening.
+
+- [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
+  the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
+  `height` -- the finished grid, tens of megabytes to send to each worker
+  without shared memory (not available from `file://`). The ownership atlas,
+  the other half of this entry, is done (see B2 in Done).
 
 - [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
   3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
@@ -1190,6 +1190,32 @@ record of what was ruled out and why, which is worth more than a short file.
   while loading 3.7-4.8 s -> 3.1-3.2 s. The ground cover and atlas work cannot
   be trimmed without changing answers; moved to B2. RESEARCH.md *The scene
   build and the loading screen*.
+
+- [x] **B3. The ground grid stops asking every hole about every point.**
+  Branch `faster-ground`. Rescoped by measurement: the nearest-hole lookup
+  already measured 1.2-1.4 holes a call, so there was little there; the time
+  was three per-point questions asked of every hole or basin -- which cells to
+  refine, which basin a point is in, and the green contour computed before its
+  (often exactly zero) weight. Each now has an exact world-box or zero-weight
+  rejection in front; fingerprints unchanged, so no version bump. Generation,
+  best of three: PNW nine 2.46 -> 1.4 s, eighteen 8.79 -> 4.2 s, Links
+  eighteen 10.26 -> 4.9 s. RESEARCH.md *The ground grid stops asking every
+  hole about every point*.
+
+- [x] **B2. The ground grid's heights on every core.** Branch
+  `parallel-ground` (on `faster-ground`). Up to eight workers, each generating
+  its own copy of the world and stopping at the grid; the main thread feeds the
+  unchanged grid builder their answers in the order it asks, so the grid is
+  the serial one by construction -- byte-for-byte in the Node test and the same
+  `lab.ground()` hash in the browser. Classic blob worker embedded in the
+  single file (+89 KB), falling back to the main thread on any failure.
+  Generation in the browser: PNW nine 2.6 -> 1.9 s, eighteen 9.0 -> 3.4 s,
+  Links eighteen 12.1 -> 3.6 s. The workers then compute the ground's
+  ownership atlas too (hole, lake and stream per texel; `owner-atlas.js`),
+  started as soon as the grid is done and collected when generation ends, so
+  the ground material only adds straw: the longest page freeze while loading
+  6.6-7.0 -> 5.8 s on a busy machine. Follow-ups B2b (Firefox/Safari) and B2c
+  (the ground cover). RESEARCH.md *The ground grid's heights on every core*.
 
 ## Reading a green without the overlays
 

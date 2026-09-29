@@ -18,6 +18,7 @@ import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour} from './daylight.js';
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
+import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
 import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
@@ -1526,10 +1527,28 @@ const BUDGET=24;
 // A frame, or a timeout if frames are not coming: a background tab never fires
 // requestAnimationFrame, and waiting on one alone leaves the app hung on boot.
 const nextFrame=()=>new Promise(r=>{let settled=false;const go=()=>{if(!settled){settled=true;r();}};requestAnimationFrame(()=>setTimeout(go,0));setTimeout(go,150);});
+// How many workers built the last grid's heights (0: this thread did), how long
+// the main thread waited on them per round, and the whole generation, for lab.ground.
+let lastGridWorkers=0,lastGridWait=[],lastGenerationMs=0;
 async function generateProgressively(next,onProgress){
- const it=generateWorldSteps(next);
+ // The ground grid's heights on other cores (gen-pool.js). Not for one hole --
+ // the range, an endless hole -- where starting the workers costs more than
+ // the grid they would share.
+ const pool=next.holes>1&&!next.range?makeGridPool(next):null;
+ lastGridWorkers=pool?.count??0;lastGridWait=[];const began=performance.now();
+ try{
+ const it=generateWorldSteps(next,{gridPool:pool});
  let step=it.next(),mark=performance.now();
  while(!step.done){
+  // Waiting on the workers: the page stays live while they compute.
+  if(step.value?.await){
+   onProgress?.(step.value);
+   const waited=performance.now();
+   const got=await step.value.await.catch(()=>null);
+   lastGridWait.push(Math.round(performance.now()-waited));
+   if(!got)lastGridWorkers=0;
+   mark=performance.now();step=it.next(got);continue;
+  }
   // A HIDDEN TAB IS NOT PACED AT ALL, and that is not an optimisation.
   //
   // Pausing exists to let the browser paint and to keep the controls alive.
@@ -1546,7 +1565,12 @@ async function generateProgressively(next,onProgress){
   }
   step=it.next();
  }
+ // The ownership atlas the workers started when the grid was done; the world
+ // carries it to the ground material (ground.js), which fills it itself if not.
+ const atlas=await pool?.atlas?.();
+ if(atlas&&step.value)step.value.ownerAtlas=atlas;
  return step.value;
+ }finally{pool?.dispose();lastGenerationMs=Math.round(performance.now()-began);}
 }
 // The overlay. `work` may be async and is handed a reporter; whatever it reports
 // goes on screen. A caller that does no stepped generation never reports any and
@@ -3747,6 +3771,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The floodlights, switched the way the clock panel's box does it (without
   // saving the choice). No argument reports.
   floodlights:(on)=>{if(on!==undefined){view.daylight.floodlights=!!on;view.setFloodlights(!!on);}return !!view.floodlit;},
+  // A fingerprint of the ground this course was built on, and how it was
+  // built. The same seed must give the same number whether the grid's heights
+  // came from the workers or from here (gen-pool.js); this is how a browser
+  // proves it, where the Node test cannot reach.
+  ground:()=>{const g=world?.groundGrid;if(!g)return null;let h=2166136261>>>0;
+   for(const a of [g.values,g.positions,g.indices]){const b=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);for(let i=0;i<b.length;i++){h^=b[i];h=Math.imul(h,16777619)>>>0;}}
+   return {hash:h.toString(16),vertices:g.positions.length/3,triangles:g.indices.length/3,workers:lastGridWorkers,waitedMs:lastGridWait,generationMs:lastGenerationMs,atlasFromWorkers:!!world?.ownerAtlas};},
   // Where the shadow cascades split: {splits: [metres, ...]}, or {} for the tier's own. See GolfView.cascadeSplitter.
   cascades:(o={})=>view.setCascadeSplits(o.splits??null),
   scene:()=>{
