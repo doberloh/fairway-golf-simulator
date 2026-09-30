@@ -113,6 +113,17 @@ test('a save from before raised greens, punchbowls and false fronts keeps none o
  assert.ok(DEFAULT_COURSE.raisedGreens>0&&DEFAULT_COURSE.falseFronts>0);
 });
 
+test('the green slope slider warns past 75%, and says 100% is extreme',()=>{
+ // The studio turns the slider red and shows this note past `above`; the owner
+ // asked for the top of the range to be called out. A warning is not a setting,
+ // so it must not reach a saved settings object.
+ const w=FIELD.greenDifficulty.warn;
+ assert.equal(w.above,75);
+ assert.ok(/100%/.test(w.text)&&/extreme/.test(w.text),w.text);
+ assert.ok(w.toast.length<60,'the toast is one short line');
+ assert.ok(!('warn' in DEFAULT_COURSE));
+});
+
 test('migrating an already current save is a no-op, and gaps fall back to defaults',()=>{
  const current=validateSettings({...DEFAULT_COURSE,water:80});
  assert.deepEqual(migrateSettings(current,SCHEMA_VERSION),current);

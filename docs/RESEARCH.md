@@ -5044,6 +5044,8 @@ the whole putting surface):
 | 70 | 3.00% / 6.3% / 10.4% / 3.1 ft / 45% | 3.46% / 6.3% / 14.6% / 3.7 ft / 28% |
 | 100 | 5.39% / 11.4% / 18.6% / 5.6 ft / 12% | 7.23% / 14.5% / 26.7% / 7.2 ft / 7% |
 
+**The studio warns past 75%** (`warn` on the schema entry): the slider turns red, a note stays under it and a toast says so once as it is crossed, at the owner's request. 75 is where the average slope (3.8%) passes the 3% the sources below give for most of a putting surface; 90 averages 5.5%, which is the old 100.
+
 The curve stays superlinear, `s(0.6 + 0.4s^2) x 1.9`, now times
 `1 + 6.1 max(0, s - 0.4)^2` (was `1 + 3.75 max(0, s - 0.6)^2` in the first cut
 of this branch, and nothing before it). The default barely moves.
