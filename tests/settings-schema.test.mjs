@@ -100,6 +100,19 @@ test('a version 1 save migrates silently: dead tee toggles go, pond size arrives
  assert.doesNotThrow(()=>validateSettings(s));
 });
 
+test('a save from before raised greens, punchbowls and false fronts keeps none of them',()=>{
+ // 8 -> 9. Their greens change shape anyway (GENERATOR_VERSION 33, which the
+ // player is told about); what the migration must not do is quietly hand an old
+ // course a quarter of its greens on pedestals as well.
+ const old={...DEFAULT_COURSE,seed:'OLDGREENS'};
+ delete old.raisedGreens;delete old.sunkenGreens;delete old.falseFronts;
+ const s=migrateSettings(old,8);
+ assert.equal(s.raisedGreens,0);assert.equal(s.sunkenGreens,0);assert.equal(s.falseFronts,0);
+ assert.doesNotThrow(()=>validateSettings(s));
+ // And a new course gets the defaults.
+ assert.ok(DEFAULT_COURSE.raisedGreens>0&&DEFAULT_COURSE.falseFronts>0);
+});
+
 test('migrating an already current save is a no-op, and gaps fall back to defaults',()=>{
  const current=validateSettings({...DEFAULT_COURSE,water:80});
  assert.deepEqual(migrateSettings(current,SCHEMA_VERSION),current);
