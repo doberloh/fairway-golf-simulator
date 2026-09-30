@@ -68,3 +68,19 @@ test('a channel with nowhere to go has no direction', () => {
  for (const v of Object.values(flowFor({stream: [{x: 5, z: 5}, {x: 5, z: 5}]})))
   assert.ok(Number.isFinite(v));
 });
+
+import {streamFrame} from '../src/water-bodies.js';
+test('a channel flows along its own bends, downhill, whichever way its stations were stored', () => {
+ // An L: east for 50 m, then north for 50 m, falling all the way.
+ const path = [];
+ for (let x = 0; x <= 50; x += 5) path.push({x, z: 0, level: 10 - x * .01});
+ for (let z = 5; z <= 50; z += 5) path.push({x: 50, z, level: 9.5 - z * .01});
+ const f = streamFrame(path);
+ assert.ok(f[2].tx > .99 && Math.abs(f[2].tz) < .01, 'the first leg flows east');
+ assert.ok(f[path.length - 3].tz > .99 && Math.abs(f[path.length - 3].tx) < .01, 'the second leg flows north');
+ for (let i = 1; i < path.length; i++) assert.ok(f[i].s > f[i - 1].s, 'distance grows downstream');
+ // The same channel stored the other way round still flows downhill.
+ const back = streamFrame(path.slice().reverse());
+ assert.ok(back[path.length - 3].tx > .99, 'reversed storage: the east leg still flows east');
+ assert.ok(back[0].s > back[path.length - 1].s, 'and distance still grows downstream');
+});

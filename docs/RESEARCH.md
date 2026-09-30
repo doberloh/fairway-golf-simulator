@@ -5167,11 +5167,29 @@ visibly at a distance and still leaves the sawtooth).
 
 | kind | what it is | how it is drawn |
 | --- | --- | --- |
-| sea | swash -- broken water running up the beach and draining back | a foam line at a depth that runs from 0.62 m to 0.03 m and back on a 9 s cycle, 30% uprush and 70% backwash, phased along the coast; thinner foam behind it; a faint breaker line at about 1.15 m depth |
+| sea | swash -- broken water running up the beach and draining back | a foam line at a depth that runs from 0.62 m to 0.03 m and back on a 30 s cycle (9 s of the water's clock, run at 30% as the ponds are), 30% uprush and 70% backwash, phased along the coast; thinner foam behind it; a faint breaker line at about 1.15 m depth |
 | lake | wind-driven wavelets lapping, bigger than a pond's for more open water | the pond strip, 2.2 m wide (pond 1.4), coarser lace (0.75x), on 42% of the water's clock (pond 30%) |
 | pond | unchanged, approved by the owner | the 1.4 m lapping strip |
-| river | foam gathering along banks and on seams where currents meet, drifting downstream | lace stretched about two to one along the flow, carried with it, strongest near the banks, with a faint seam |
+| river | foam gathering along banks and on seams where currents meet, drifting downstream | lace stretched about two to one along the channel, carried at the water's own speed, strongest near the banks, with a faint seam |
 | creek | shallow, fast, broken over its bed | scattered white flecks carried by the current, more toward the banks |
+
+**Too fast, and all one way (the owner, after the first build).** The sea's
+surf and foam now run on 30% of the water's clock, the same slowdown the
+ponds took. Rivers and creeks were worse on two counts. The water's speed was
+0.25 m/s and the foam drifted at more than twice that, so both were busy; the
+water is now 0.12 m/s and the foam moves at exactly the water's speed. And a
+channel had ONE flow direction, first station to last (`flowFor`), so where a
+river bent back on itself its ripples and foam carried on the way it started.
+Every station now has its own downstream tangent and its distance along the
+channel (`streamFrame` in `water-bodies.js`, stored per vertex as `flow` and
+`chan`): the ripples use the local flow in the same two-phase flow-map
+sampling as before, and the foam is drawn in channel coordinates -- metres
+downstream minus how far the water has carried it, and metres across -- so it
+follows every bend exactly. Rotating a world-space noise pattern to the local
+flow was not used: it swims visibly round a bend, because a small turn of a
+large coordinate moves the sample a long way. Downstream is toward the lower
+end of the channel, not the order its stations were stored in; a test holds
+all three (`tests/water-bodies.test.mjs`).
 
 The foam in the water's own shader is lit by the light the water's diffuse
 received (divided back by the water's diffuse colour), so it dims at dusk with

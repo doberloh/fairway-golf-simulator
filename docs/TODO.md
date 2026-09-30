@@ -1211,7 +1211,11 @@ record of what was ruled out and why, which is worth more than a short file.
   offshore. Lakes (which are large ponds and already had the pond foam) get a
   wider, coarser and livelier strip; rivers get lacy foam along the banks
   drifting downstream; creeks get white flecks carried by the current. Ponds
-  unchanged. No measurable frame cost. RESEARCH.md *The water's edge, by kind*.
+  unchanged. No measurable frame cost. After the owner's first look: the sea's
+  foam slowed to 30% (as the ponds), rivers and creeks slowed by half with the
+  foam at the water's own speed, and their water and foam now follow each bend
+  of the channel instead of one direction for the whole river. RESEARCH.md
+  *The water's edge, by kind*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry

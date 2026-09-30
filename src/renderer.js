@@ -50,7 +50,7 @@ import {makeClouds,applyCloudFade} from './clouds.js';
 import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWaterField} from './mist.js';
 
 import {makeBloom} from './bloom.js';
-import {hideForProbe,restoreAfterProbe,flowFor} from './water-bodies.js';
+import {hideForProbe,restoreAfterProbe} from './water-bodies.js';
 const TAU=Math.PI*2;
 // Channel surfaces carry a per-vertex bank weight so the water feathers out at
 // the waterline instead of ending on a hard alpha step. Geometries without the
@@ -109,7 +109,9 @@ const WATER_EDGES={
   vec2 suv=(su*(seaGrid.zw-1.)+.5)/seaGrid.zw;
   float depth=mix(50.,seaLevel-texture2D(seaHeights,suv).r,inside);
   diffuseColor.a*=smoothstep(0.,.35,depth);
-  float t=waterTime,ph=wNoise(vWaterWorld.xz*.015)*6.2832+wNoise(vWaterWorld.xz*.004+3.1)*3.;
+  // At 30% of the water's clock, as the ponds are: at full speed the surf was
+  // frantic (the owner). The swash cycle is 9 s of that clock, 30 s of real time.
+  float t=waterTime*.3,ph=wNoise(vWaterWorld.xz*.015)*6.2832+wNoise(vWaterWorld.xz*.004+3.1)*3.;
   float cyc=fract(t/9.+ph/6.2832);
   float run=cyc<.3?smoothstep(0.,1.,cyc/.3):1.-smoothstep(0.,1.,(cyc-.3)/.7);
   float front=mix(.62,.03,run);
@@ -123,12 +125,14 @@ const WATER_EDGES={
   diffuseColor.a=max(diffuseColor.a,foam*.85);
  }`,
  river:`{
-  vec2 fdir=normalize(waterFlow+vec2(1e-6)),across2=vec2(-fdir.y,fdir.x);
-  float along=dot(vWaterWorld.xz,fdir),across=dot(vWaterWorld.xz,across2),t=waterTime;
-  // Lace drawn out about two to one along the flow and carried with it -- the
-  // first cut stretched it seven to one, and the rare survivors read as white
-  // scratches on the water rather than foam.
-  float lace=wNoise(vec2(along*.8-t*.45,across*1.6))*.6+wNoise(vec2(along*2.1-t*.7,across*3.4))*.4;
+  // In the channel's own coordinates, so the foam follows every bend: metres
+  // downstream minus how far the water has carried it, and metres across. It
+  // drifts at exactly the water's speed (it moved at twice it before, and the
+  // owner found it far too fast), and changes shape slowly on its own.
+  float t=waterTime,drift=vChan.x-t*length(vFlow),across=vChan.y;
+  // Lace drawn out about two to one along the flow -- the first cut stretched
+  // it seven to one, and the rare survivors read as white scratches.
+  float lace=wNoise(vec2(drift*.8,across*1.6+t*.02))*.6+wNoise(vec2(drift*2.1+t*.03,across*3.4))*.4;
   float bank=smoothstep(.4,.82,vShore)*(1.-smoothstep(.96,1.,vShore));
   float seam=exp(-pow((vShore-.22)/.08,2.));
   float foam=clamp(bank*smoothstep(.4,.7,lace)*.8+seam*smoothstep(.55,.8,lace)*.4,0.,1.);
@@ -137,9 +141,8 @@ const WATER_EDGES={
   diffuseColor.a=max(diffuseColor.a,foam*.8);
  }`,
  creek:`{
-  vec2 fdir=normalize(waterFlow+vec2(1e-6)),across2=vec2(-fdir.y,fdir.x);
-  float along=dot(vWaterWorld.xz,fdir),across=dot(vWaterWorld.xz,across2),t=waterTime;
-  float fleck=smoothstep(.6,.84,wNoise(vec2(along*1.1-t*.55,across*1.7))*.6+wNoise(vec2(along*2.6-t*.8,across*3.3))*.4);
+  float t=waterTime,drift=vChan.x-t*length(vFlow),across=vChan.y;
+  float fleck=smoothstep(.6,.84,wNoise(vec2(drift*1.1,across*1.7+t*.03))*.6+wNoise(vec2(drift*2.6+t*.04,across*3.3))*.4);
   float bank=smoothstep(.55,.9,vShore)*(1.-smoothstep(.97,1.,vShore));
   float foam=clamp(fleck*(.45+.5*vShore)+bank*.3*fleck,0.,1.)*.85;
   ${FOAM_LIGHT}
@@ -151,8 +154,11 @@ const WATER_EDGES={
 // The water surface, generated rather than sampled. See `dressWater`.
 const WATER_NOISE=`
 uniform float waterTime;uniform float waterChop;uniform float waterSwell;uniform vec3 glintSun,glintColor;
-// Metres per second, in world XZ. Zero on a pond, along the channel on a creek.
-uniform vec2 waterFlow;
+// Metres per second, in world XZ, HERE -- per vertex, so it turns with the
+// channel. Zero on a pond and on the sea, which have no such attribute.
+varying vec2 vFlow;
+// Along a channel: metres downstream, and metres across from the centre line.
+varying vec2 vChan;
 varying vec3 vWaterWorld;
 // Value noise, hashed from the world position itself: no tile, no texture
 // lookup, and a pattern that is different at every pond on the course.
@@ -196,13 +202,13 @@ float wFlowHeight(vec2 p,float t){
  // One assignment and one return: two returns translate to HLSL as a temp the
  // compiler cannot prove is written on every path, and it says so every launch.
  float h=0.;
- if(dot(waterFlow,waterFlow)<1e-6){
+ if(dot(vFlow,vFlow)<1e-6){
   h=wHeight(p,t);
  }else{
   float hc=WATER_CYCLE*.5;
   float o0=fract(t/WATER_CYCLE)*WATER_CYCLE;
   float o1=fract(t/WATER_CYCLE+.5)*WATER_CYCLE;
-  h=mix(wHeight(p-waterFlow*o0,t),wHeight(p-waterFlow*o1,t),abs(hc-o0)/hc);
+  h=mix(wHeight(p-vFlow*o0,t),wHeight(p-vFlow*o1,t),abs(hc-o0)/hc);
  }
  return h;
 }
@@ -981,9 +987,6 @@ export class GolfView{
   // back as a wash of green; water is a near-mirror and should be treated as one.
   material.roughness=.05;material.metalness=.62;material.envMapIntensity=2.1;
   const time=this.waterTime,chop=this.waterChop,swell=this.waterSwell;
-  // Per body, because it is the one thing about the surface that differs
-  // between a creek and a pond.
-  const f=flowFor(body),flow={value:new T.Vector2(f.x,f.y)};
   // WHAT KIND OF WATER, for its edge (see WATER_EDGES): the sea, a river, a
   // creek, or still water, whose foam is the separate strip in addShoreFoam.
   const path=Array.isArray(body?.stream)?body.stream:null;
@@ -996,11 +999,10 @@ export class GolfView{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
    shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
-   shader.uniforms.waterFlow=flow;
    if(sea){shader.uniforms.seaHeights={value:sea.texture};shader.uniforms.seaGrid={value:sea.grid};shader.uniforms.seaLevel={value:body.level};}
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
-    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;')
-    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+    .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;attribute vec2 flow;attribute vec2 chan;varying vec2 vFlow;varying vec2 vChan;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.)).xyz;vFlow=flow;vChan=chan;');
    shader.fragmentShader=shader.fragmentShader
     .replace(...SHORE_FRAG)
     .replace('#include <common>','#include <common>'+WATER_NOISE+(sea?'uniform sampler2D seaHeights;uniform vec4 seaGrid;uniform float seaLevel;':''))
@@ -1038,7 +1040,7 @@ export class GolfView{
      ${WATER_EDGES[kind]}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v3-'+kind;
+  material.customProgramCacheKey=()=>'fairway-water-v4-'+kind;
   material.needsUpdate=true;
  }
 
