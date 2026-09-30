@@ -612,6 +612,9 @@ export class GolfView{
   // registration time its group is empty and its material is invisible to a
   // walk of the scene.
   this.lazyMaterials=[];
+  // One hidden mesh per such material, shown only while shaders are built
+  // (withStandIns), so the warm-up compiles what the camera will meet later.
+  this.standIns=[];
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
   this.renderer.toneMappingExposure=blue?1:toon?1.0:.94;
@@ -775,13 +778,13 @@ export class GolfView{
  // first-appearance cost looks like. Moving it here puts it on the screen that
  // already says the course is being built.
  warmUp(){
-  // The near-field grass builds lazily and shares one material, so with no tile
-  // yet made a scene walk cannot find it and it would compile on the first step
-  // the player takes. Warm enough of the ring to put it in the scene -- bounded
-  // by time, because this also runs on a plain hole change with no overlay up.
+  // The near-field grass builds lazily. Its materials reach the compile through
+  // the stand-ins (withStandIns); the ring is still started here, bounded by
+  // time because this also runs on a plain hole change with no overlay up, so
+  // the ground round the camera is not bare on the first frame.
   const until=performance.now()+70;
   while(this.updateGrass?.()&&performance.now()<until);
-  try{this.renderer.compile(this.scene,this.camera);}
+  try{this.withStandIns(()=>this.renderer.compile(this.scene,this.camera));}
   catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
   // The lit programs wait until the course is on screen (`render` sends for
   // them) -- building them here put them in the wait behind the loading screen.
@@ -801,10 +804,32 @@ export class GolfView{
  // without blocking the page (the spinner keeps turning), then one real frame
  // is drawn under the overlay to make the rest. Called from `whileGenerating`,
  // which every course build goes through.
+ // THE STAND-INS. Materials that only reach the scene later (the near-field
+ // grass and the forest floor, which grow tiles as the camera moves) each leave
+ // one hidden mesh of a single zero-sized instance here (see vegetation.js).
+ //
+ // Compiling them is not enough. On Windows the browser draws through Direct3D
+ // (ANGLE), which finishes a program's shaders only on the FIRST DRAW that uses
+ // it -- so a program built behind the loading screen still cost its full ~75
+ // ms the first time the forest floor came into view (B7 in TODO). That is what
+ // the first frame under the overlay is for, and the stand-ins have to be in
+ // it: shown through the compile AND that frame, hidden again after. Being
+ // zero-sized they draw nothing a player could see.
+ //
+ // `withStandIns` is the compile-only form, for the warm-ups that do not draw.
+ // `compile` creates every program before it returns (only the driver's link
+ // waits), so hiding them once the call returns is safe.
+ showStandIns(on){for(const m of this.standIns||[])m.visible=on;}
+ withStandIns(compile){
+  this.showStandIns(true);
+  try{return compile();}
+  finally{this.showStandIns(false);}
+ }
  async ready(){
   if(!this.group)return 0;
   this.readying=true;
   const t0=performance.now();
+  this.showStandIns(true);
   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
   catch(e){console.warn('Fairway: shader warm-up skipped',e);}
   // The water's probes, now that the programs they render with are built. A
@@ -818,6 +843,7 @@ export class GolfView{
   const t1=performance.now();
   // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
+  finally{this.showStandIns(false);}
   // For the lab: how long each half took. The first is time the page stays
   // live; the second blocks it, so it is the one to keep small.
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
@@ -876,8 +902,8 @@ export class GolfView{
   // row of poles standing on a daylit course.
   if(rig)rig.visible=true;
   try{
-   const done=this.renderer.compileAsync?.(this.scene,this.camera)
-    ??this.renderer.compile(this.scene,this.camera);
+   const done=this.withStandIns(()=>this.renderer.compileAsync?.(this.scene,this.camera)
+    ??this.renderer.compile(this.scene,this.camera));
    // Held while it runs, so a switch that lands before it is done can wait for
    // it (setFloodlights) rather than stall the frame on unfinished programs.
    if(done?.then){

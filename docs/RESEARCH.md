@@ -5283,3 +5283,67 @@ Sources:
 - Also returned and not used: [Swash Zone Dynamics (Springer)](https://link.springer.com/rwe/10.1007/978-3-319-93806-6_404),
   [Breaking wave (Wikipedia)](https://en.wikipedia.org/wiki/Breaking_wave),
   [ALMS -- Foam on surface waters](https://alms.ca/wp-content/uploads/2014/02/Foam.pdf).
+
+## B7: the hitch after a course appears (30 September)
+
+Branch `frame-and-lights`. `withStandIns` / `showStandIns` and `ready` in
+`src/renderer.js`, `standIn` in `addNearbyGrass` (`src/vegetation.js`), and the
+`no-late-shaders` smoke journey.
+
+**What it looked like.** Cold browser, RTX 4090, 1600x900, `lab.course` (the
+same path as Play): on Ultra, PNW eighteen holes, one frame of 165-188 ms at
+2.83-2.88 s after the loading screen went, in every run. High on the same
+course no longer showed it (it did when B7 was logged on 28 September, at 334
+ms; the High case had since gone with other warm-up work). A CPU profile of
+that frame is all `getProgramInfoLog` under three's `getUniforms`: a shader
+program being built on its first draw.
+
+**What it was.** Wrapping the renderer's per-object draw named it: two
+`MeshToonMaterial` programs, about 75 ms each, for meshes under the group
+"Living rough" -- the forest floor's ferns and sticks (Ultra only). They live in
+the 24 m tiles that follow the camera, and grow only under canopy. The warm-up
+behind the loading screen compiles by walking the scene, and at the
+establishing pose the tiles round the camera held no floor at all, so there was
+nothing to find. When the arrival brought the camera down among trees, the
+first fern tile was drawn and its programs were built on the spot.
+
+**Rejected on the way: compiling a stand-in is not enough.** The first fix
+added one zero-sized instance of each late material and showed it only for
+the compile. The programs were then created behind the loading screen -- and
+the frame still froze, for the same 75 ms each. On Windows the browser draws
+through Direct3D (ANGLE), which finishes a program only on the first real draw
+that uses it; the one frame `ready` draws under the overlay exists to pay for
+exactly that, and the stand-ins were hidden again before it. Showing them
+through that frame too fixed it. Being zero-sized, they draw nothing visible.
+(Also learned: three's `compile` walks every object whether visible or not,
+so hiding does not keep a material out of the compile -- it keeps it out of
+the draw.)
+
+**A second case, on Island.** Ultra, Island nine, 111 ms at 0.1 s. A grass tile
+where nothing grows -- the sea, a fairway -- never had a blade coloured, so its
+mesh had no instance colours, which is a different program from every other
+tile's, and it was built on that tile's first (empty) draw: 96 ms. Empty tiles
+are now hidden (still kept, so the ring's bookkeeping is unchanged), unless the
+floor grew something in them.
+
+**Measured after,** one or two cold runs each, 6 s from ready: no frame over
+40 ms on PNW, Island, Desert, Links or Mountain at High or Ultra. Redwood
+eighteen on Ultra still shows two to four frames of 40-50 ms in its first
+0.4 s; a profile of those shows 17-20 ms of our code (the grass ring filling,
+one tile a frame) and the rest graphics-card time on the heaviest biome, not a
+shader build -- left alone. Loading time on Ultra PNW eighteen, before and
+after: build 6.4-6.8 s against 6.2-7.0 s, the first frame under the overlay
+2.24-2.26 s against 2.28 s -- unchanged within run-to-run noise.
+
+**What still builds after the course appears, by design or too small to
+matter:** the floodlit programs (about 36, warmed in the background so the
+lights switch without a stall, and not drawn until they are used); three
+shadow-depth programs in the first 50-70 ms (5-20 ms together); and a
+mist-tinted basic material and a sprite at the end of the arrival (2-3 ms).
+None is a lit program, which is the kind that costs 70 ms or more.
+
+**The guard.** The `no-late-shaders` smoke journey switches to Ultra, plays
+Surprise me, and fails if any lit program is created after the loading overlay
+goes and then drawn. It failed on the build before this fix (three late
+`MeshToonMaterial` programs at 3.0-3.4 s on a random course) and passed four
+times after on four different courses. GPU only.

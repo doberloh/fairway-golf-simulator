@@ -73,16 +73,6 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B7. A hitch two to three seconds after a course appears.** Found
-  measuring B1-B6 (28 September): after the loading screen goes, frames run
-  smoothly and then, ~2-3 s in, one long frame (334 ms on PNW eighteen) or a
-  few of 50-150 ms (nine holes). It is NOT from the build-time work: `main`
-  before any of it shows the same ("smooth after 3.0 s" in the same runs).
-  Likely something scheduled after the arrival -- the intro camera finishing,
-  the near-field grass ring filling, a first cull rebuild at the new pose.
-  `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
-  their times; a CPU profile over that window would name it.
-
 - [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
   the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
   `height` -- the finished grid, tens of megabytes to send to each worker
@@ -1069,6 +1059,28 @@ record of what was ruled out and why, which is worth more than a short file.
   RESEARCH.md *Drawing only what is in view*; the traps in PROJECT_HANDOFF.
 
 ### Build time
+
+- [x] **B7. A hitch two to three seconds after a course appears.** Branch
+  `frame-and-lights`. It was two shaders being built on the spot, not work
+  scheduled after the arrival: the **forest floor** (Ultra's ferns and fallen
+  sticks) grows only under canopy in the tiles around the camera, and the
+  establishing pose over open ground usually has none, so the shader warm-up
+  behind the loading screen never saw those materials. When the camera came
+  down among trees, the first fern was drawn and its two programs were built
+  there and then: one frame of 170 ms, 2.9 s in, every time, on PNW eighteen.
+  Fixed with **stand-ins** -- one hidden, zero-sized instance of each late
+  material, shown only while the warm-up compiles AND through the one frame
+  drawn under the loading screen (on Windows the browser finishes a shader on
+  its first real draw, so compiling alone left the whole cost in place). A
+  second case on Island: a grass tile with no rough in it has no instance
+  colours and so a different shader, built on its first (empty) draw -- 96 ms;
+  empty tiles are now hidden. Measured after: no long frame on PNW, Island,
+  Desert, Links or Mountain at High or Ultra; loading time unchanged. Redwood
+  on Ultra still has two or three frames of 40-50 ms in its first third of a
+  second (graphics-card work while the grass ring fills, not a shader). A new
+  smoke journey, `no-late-shaders`, fails if any lit shader is built after a
+  course appears; it fails on the old build. RESEARCH.md *B7: the hitch after
+  a course appears*.
 
 - [x] **B1. The first frame paid for behind the loading screen.** Branch
   `shader-warmup`. `GolfView.ready()`, awaited by `whileGenerating` before the

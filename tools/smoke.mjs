@@ -674,6 +674,72 @@ const JOURNEYS = [
    await t.step('and plays', () => t.shot());
   },
  },
+ // NO SHADER IS BUILT ONCE THE COURSE IS ON SCREEN (B7 in TODO). A lit program
+ // built on first draw freezes that frame for 70 ms or more -- an Ultra course
+ // on PNW froze for 170 ms three seconds in, when the arrival camera came down
+ // among trees and the forest floor was drawn for the first time. Every lit
+ // program must be built behind the loading screen, including those for things
+ // that only appear later. Counted from the moment the overlay goes: a program
+ // CREATED after that and then DRAWN is a miss. Created and never drawn is
+ // allowed -- the floodlit set is warmed in the background on purpose -- and so
+ // are shadow-depth and unlit programs, which build in a few milliseconds.
+ //
+ // Ultra, because it has the most to warm. GPU only: Ultra on the software
+ // rasteriser is minutes a frame, and what is checked is which programs exist,
+ // not how fast. Surprise me grows a different course every run, so this is a
+ // general check rather than the one PNW course the freeze was found on.
+ {
+  name: 'no-late-shaders',
+  what: 'an Ultra course builds every lit shader behind the loading screen, none after it appears',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', frameCap: 0})); } catch {}
+    const P = WebGL2RenderingContext.prototype, create = P.createProgram, use = P.useProgram;
+    const src = new WeakMap(), parts = new WeakMap();
+    let late = new WeakSet(), watching = false;
+    window.__lateLit = [];
+    const shaderSource = P.shaderSource, attach = P.attachShader;
+    P.shaderSource = function (shader, text) { src.set(shader, text); return shaderSource.call(this, shader, text); };
+    P.attachShader = function (program, shader) { (parts.get(program) || parts.set(program, []).get(program)).push(shader); return attach.call(this, program, shader); };
+    P.createProgram = function () { const program = create.call(this); if (watching) late.add(program); return program; };
+    P.useProgram = function (program) {
+     if (program && late.has(program)) {
+      late.delete(program);
+      const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
+      const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
+      if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push({type, after: Math.round(performance.now() - window.__shownAt)});
+     }
+     return use.call(this, program);
+    };
+    // The overlay going is the moment the course is on screen. Watched from
+    // inside the page so nothing slips through between two polls.
+    addEventListener('DOMContentLoaded', () => {
+     const overlay = document.getElementById('generating');
+     if (!overlay) return;
+     new MutationObserver(() => {
+      if (overlay.hidden && !watching) { watching = true; late = new WeakSet(); window.__lateLit = []; window.__shownAt = performance.now(); }
+      else if (!overlay.hidden) watching = false;
+     }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
+    });
+   });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play, on Ultra', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('no lit shader is built during the arrival', async () => {
+    // The arrival is about three seconds: the hold, then the descent that
+    // brings the camera down to where the grass and the forest floor are.
+    await t.page.waitForTimeout(5000);
+    const late = await t.page.evaluate(() => window.__lateLit);
+    if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+   });
+  },
+ },
  {
   name: 'surprise-round',
   what: 'Play → Surprise me & play builds a nine-hole course, and every in-round tool opens',
@@ -1287,6 +1353,7 @@ console.log(`Fairway smoke test · ${SOFTWARE ? 'SOFTWARE' : 'GPU'} · ${rendere
 const results = [];
 for (const journey of chosen) {
  console.log(`${journey.name} — ${journey.what}`);
+ if (journey.gpuOnly && SOFTWARE) { console.log('   skipped: needs a GPU\n'); continue; }
  // FLOWS RUN AT 1920x1080, the commonest desktop size, and a size where the
  // HUD's default layout is known to leave the controls a flow presses
  // uncovered. Layout is a different question with its own journey --
