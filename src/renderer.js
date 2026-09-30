@@ -71,7 +71,9 @@ uniform float waterTime;varying vec2 vFoamUv;varying vec3 vFoamWorld;
 float fHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
 float foamAlpha(){
- float v=vFoamUv.y,t=waterTime;
+ // At 30% of the water's own clock: at full speed the lapping read as frantic
+ // (the owner, after the first build).
+ float v=vFoamUv.y,t=waterTime*.3;
  float surge=.42+.16*sin(t*.8+vFoamWorld.x*.23+vFoamWorld.z*.19);
  float band=smoothstep(0.,.12,v)*(1.-smoothstep(surge*.55,surge,v));
  float lace=fNoise(vFoamWorld.xz*2.3+vec2(t*.21,-t*.16))*.62+fNoise(vFoamWorld.xz*5.7-vec2(t*.33,t*.12))*.38;
@@ -918,9 +920,6 @@ export class GolfView{
       // Clear where you look into it, the material's own depth-based opacity
       // where you look across it.
       diffuseColor.a*=mix(.22,1.,clamp(fres*1.6,0.,1.));
-      // The sky takes over as it turns edge on, so the surface still reads as a
-      // surface where it has gone opaque.
-      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.35+vec3(.06),fres);
       // GLINT (U5): the sun caught by wavelets tilted just right. The mirror
       // direction of the view off the rippled normal, raised to a very high
       // power, and broken into sparks by fine noise that drifts with the

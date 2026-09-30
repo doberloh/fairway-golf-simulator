@@ -1164,11 +1164,16 @@ record of what was ruled out and why, which is worth more than a short file.
   trees and rocks*, default 60%. RESEARCH.md *Soft shade under trees and
   rocks*.
 
-- [x] **U2. Wind in the imported trees.** Branch `ultra-looks`. The leaves of
-  every imported tree and plant sway with the course's wind, by a lever that
-  grows with height in the model and with the plant's own height; trunks stay
-  still. Graphics preference `wind` scales all swaying. RESEARCH.md *Wind in
-  the imported trees*.
+- [x] **U2. Wind in the imported trees.** Branch `ultra-looks`. Every imported
+  tree and plant bends in the course's wind, trunk and crown together, more at
+  the top than the bottom (the square of height, so a few millimetres where a
+  ball can reach a trunk), with the leaves fluttering on top. Cacti and agave
+  do not move. Gusts are patches that drift downwind across the course at a
+  speed set by the wind, so the rough visibly ripples rather than the whole
+  scene swinging as one; everything leans downwind in a gust and bobs on its
+  own beat. Graphics preference `wind` scales all of it. The first build moved
+  the leaves only and used one travelling sine wave; the owner asked for both
+  to change. RESEARCH.md *Wind in the imported trees*.
 
 - [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
   owner from "the rough" to every surface: rough, semi, fairway and tee ground,
@@ -1188,14 +1193,27 @@ record of what was ruled out and why, which is worth more than a short file.
   scatter of sun sparks where the ripples catch the sun's reflection. Every tier
   but Blueprint; gone once the sun is down. The foam is its own strip rather
   than read from `bankAtlas`: nothing on a pond's surface knows how far it is
-  from the edge. RESEARCH.md *Foam and sun sparks on the ponds*.
+  from the edge. The lapping runs at 30% of the water's own clock: at full
+  speed it looked frantic (the owner). RESEARCH.md *Foam and sun sparks on the
+  ponds*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
   only as many vertices as keep them near square (worst 6.6 to 1, a third of the
   vertices). The light rectangle round the course was the seam's normals and
   the landscape having no baked relief; both are carried across the seam now.
+  A faint rectangle still shows from overhead where the course's ground meets
+  the distant land; the owner judged it unnoticeable in play and closed this.
   RESEARCH.md *The ground past the course edge*.
+
+- [x] **Rough grass that looks like grass.** Branch `ultra-looks` (the owner,
+  after U8: not a fan of "5 2D tufts in a circle"). Clumps of seven curved,
+  tapering blades at uneven angles and heights, lit like the ground under them
+  (every normal up) and darker at the root than the tip; the course-wide blades
+  got the same lighting and root shading. Grass now bends by its real height
+  above the root -- the old lever was in model units, so a 7 cm tuft was pushed
+  further sideways than it was tall and lay flat as dark scratches. 21
+  triangles a clump against 5. RESEARCH.md *Rough grass clumps*.
 
 - [x] **U6. A forest floor on Ultra.** Branch `ultra-looks`. Low fern clumps
   and fallen sticks in the grass tiles round the camera, denser where the

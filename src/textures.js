@@ -51,30 +51,62 @@ export function surfaceTextures(biome,kind){
 // fern's tips about a tenth (U2 in TODO). The procedural shapes and the grass
 // keep the older, flatter lever. `sway` scales all of it: the Graphics panel's
 // "Wind in the trees and grass".
-export function windMaterial(material,view,strength=1,ground=false,crown=false){
+//
+// `leaf`: with `crown`, whether this part flutters as well as bends. The bark
+// of an imported tree takes the same bend as its leaves -- same lever, same
+// gust, so trunk and crown stay joined -- and only the leaves add the flutter.
+// The bend is squared in height, so at a ball's height up a trunk it is a few
+// millimetres: the trunk the physics collides with and the one drawn still
+// agree where a ball can reach it.
+//
+// GUSTS ARE PATCHES THAT TRAVEL. This was one sine wave down the wind, 200 m
+// crest to crest, crossing the course at 50 m/s -- so near enough everything in
+// view swung together, back and forth, and a field of grass moved as one sheet.
+// Real gusts are cat's paws: patches of stronger air a few tens of metres
+// across that drift downwind at about the wind's own speed, with calmer air
+// between. So the gust here is a noise field (two octaves, 38 m and 14 m)
+// dragged downwind at 3 + 4 x breeze m/s, and a plant LEANS downwind by how
+// much gust it is standing in, and bobs on its own beat on top -- faster for
+// grass, slower for a big tree -- rather than swinging to and fro through
+// upright. The patches are what you see rolling across the rough.
+export function windMaterial(material,view,strength=1,ground=false,crown=false,leaf=true){
  material.onBeforeCompile=shader=>{
   shader.uniforms.foliageTime=view.foliageTime;shader.uniforms.breeze=view.breeze;
   shader.uniforms.windVec=view.windVec;shader.uniforms.sway=view.sway??{value:1};
-  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;');
+  shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
+uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;
+float gustHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(gustHash(i),gustHash(i+vec2(1.,0.)),f.x),mix(gustHash(i+vec2(0.,1.)),gustHash(i+vec2(1.,1.)),f.x),f.y);}`);
   // Displace in world units AFTER instancing: all canopy pieces share a passing
   // gust, with additional small flutter. This also moves low-poly crowns.
   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`vec4 mvPosition=vec4(transformed,1.0);
   #ifdef USE_INSTANCING
    mvPosition=instanceMatrix*mvPosition;
-   // Phased ALONG the wind, so a gust travels downwind across a field and
-   // everything on the same line across the wind moves together. Phased by
-   // position alone, every plant keeps its own schedule and the field shimmers
-   // rather than breathing.
-   float along=dot(instanceMatrix[3].xz,windVec)*.03;
-   float gust=sin(foliageTime*1.5-along)*.65+sin(foliageTime*2.7-along*.4)*.25;
+   // The gust this plant is standing in, from a field of patches dragged
+   // downwind (see above), and its own phase so neighbours do not bob in step.
+   vec2 base=instanceMatrix[3].xz;
+   vec2 drift=base-windVec*foliageTime*(3.+4.*breeze);
+   float gust=smoothstep(.25,.85,gustNoise(drift/38.)*.7+gustNoise(drift/14.+vec2(9.1,3.7))*.3);
+   float phase=gustHash(floor(base*2.))*6.2832;
+   float beat=foliageTime*${crown?'1.2':ground?'2.4':'1.8'}+phase;
+   float push=.25+.95*gust+(.12+.3*gust)*sin(beat);
    // How much this vertex is free to move: a blade tip travels, its root does not.
-   float lever=sway*${strength.toFixed(3)}*${crown?'position.y*position.y*(.006*length(instanceMatrix[1].xyz)+.12)':ground?'max(position.y,0.)':'(0.8+position.y*.15)'};
+   // Ground cover bends by its REAL height above its root. It used the model's
+   // own units, which are the same for a 7 cm tuft and a metre of prairie, so
+   // the short rough was pushed further sideways than it was tall and lay flat
+   // as dark scratches on the ground.
+   float lever=sway*${strength.toFixed(3)}*${crown?'position.y*position.y*(.006*length(instanceMatrix[1].xyz)+.12)':ground?'max(mvPosition.y-instanceMatrix[3].y,0.)':'(0.8+position.y*.15)'};
    // Downwind, plus a lighter crosswind flutter on its own beat so a blade wags
    // instead of sliding along a rail.
    vec2 across=vec2(-windVec.y,windVec.x);
-   mvPosition.xz+=windVec*(gust*breeze*lever)
-                 +across*(sin(foliageTime*3.1-along*1.7)*.3*breeze*lever);
+   mvPosition.xz+=windVec*(push*breeze*lever)
+                 +across*(sin(beat*1.7+phase)*(.1+.2*gust)*breeze*lever);
+   ${crown&&leaf?`// Leaves flutter as well: a small shiver across the crown, varying
+   // smoothly through it so it ripples rather than jitters, scaled to the
+   // plant's height and livelier in a gust.
+   float shiver=sin(foliageTime*6.3+dot(position,vec3(7.1,5.3,3.7)))*.004*length(instanceMatrix[1].xyz)*position.y;
+   mvPosition.xyz+=vec3(across.x,.35,across.y)*shiver*(.3+gust)*breeze*sway*${strength.toFixed(3)};`:''}
   #endif
   mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);
- };material.customProgramCacheKey=()=>`breeze-wind-${strength}-${ground}-${crown}`;return material;
+ };material.customProgramCacheKey=()=>`breeze-wind-v2-${strength}-${ground}-${crown}-${leaf}`;return material;
 }

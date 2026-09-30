@@ -60,8 +60,52 @@ const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
 // are simply not ingested. If this ever needs to come back for weaker
 // hardware, the models are one PICK entry away -- but measure on that
 // hardware, with a metric that is allowed to say "free".
+// ROUGH GRASS (the owner, after U8: "not a huge fan of the 5 2D tufts in a
+// circle"). A clump of blades from one root, each tapering from a base to a
+// point in two segments and curving outward as it rises, at uneven angles and
+// heights so no two neighbours in the clump match and nothing reads as a ring.
+// The shape is seeded per course, then rotated and sized per instance.
+// Three triangles a blade; seven blades is 21 a clump against the old 5.
+function grassClump(blades,seed){
+ const rng=random(seed),pos=[],shade=[];
+ for(let i=0;i<blades;i++){
+  const a=i*2.399+(rng()-.5)*1.3,ca=Math.cos(a),sa=Math.sin(a),r0=rng()*.05,bx=ca*r0,bz=sa*r0;
+  const h=.55+rng()*.45,lean=.06+rng()*.2,w=.03+rng()*.02,px=-sa,pz=ca;
+  // A point up the blade at t (0 root, 1 tip): rises, and curves outward with t squared.
+  const at=t=>[bx+ca*lean*h*t*t,h*t,bz+sa*lean*h*t*t];
+  const b=at(0),m=at(.55),t=at(1),mw=w*.65;
+  const L=[b[0]-px*w,b[1],b[2]-pz*w],R=[b[0]+px*w,b[1],b[2]+pz*w],ML=[m[0]-px*mw,m[1],m[2]-pz*mw],MR=[m[0]+px*mw,m[1],m[2]+pz*mw];
+  pos.push(...L,...R,...MR,...L,...MR,...ML,...ML,...MR,...t);
+  shade.push(.62,.62,.86,.62,.86,.86,.86,.86,1.12);
+ }
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));
+ groundShaded(g,shade);
+ return g;
+}
+// Lit like the ground it grows from: every normal straight up, so a blade takes
+// the same light and shade as the turf under it rather than going dark
+// whenever it faces away from the sun -- a thin toon-shaded triangle facing
+// the wrong way is what made the old tufts read as scratches. And darker at the
+// root than the tip, through vertex colour (times the instance's own colour),
+// which is most of what makes a clump read as grass.
+function groundShaded(geometry,shade){
+ const n=geometry.attributes.position.count,normals=new Float32Array(n*3),colors=new Float32Array(n*3);
+ for(let i=0;i<n;i++){normals[i*3+1]=1;const s=shade[i]??1;colors[i*3]=colors[i*3+1]=colors[i*3+2]=s;}
+ geometry.setAttribute('normal',new T.BufferAttribute(normals,3));geometry.setAttribute('color',new T.BufferAttribute(colors,3));
+}
+// DoubleSide flips the normal of a back face, which would turn half of every
+// clump's blades to face the ground. These keep the normal they were given.
+function groundLit(material){
+ const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
+ material.customProgramCacheKey=()=>key.call(material)+'-groundlit';
+ material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>','#include <normal_fragment_begin>\nnormal=normalize(vNormal);');};
+ return material;
+}
 // Stiffer in a wind than a broadleaf: needled boughs on a heavy leader.
 const CONIFERS=new Set(['redwood','dougfir','hemlock','redcedar','pine','spruce','cedar']);
+// Rigid: a cactus is a column of water in a skin, and an agave's leaves are
+// stiff blades. Neither moves in any wind a round of golf is played in.
+const STILL=new Set(['cactus','agave']);
 function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
@@ -104,12 +148,17 @@ function addModelSpecies(view,kind,trees){
  // White materials: the instance colour carries the whole tint, so one material
  // per role serves every biome.
  const materials=new Map();
- // The crowns sway (U2 in TODO); trunks and everything else stand still, so a
- // trunk's collision and its drawn position never part company.
- const sway=CONIFERS.has(kind)?.7:1;
+ // The whole plant bends in the wind, more at the top than the bottom (U2 in
+ // TODO, and the owner's follow-up): bark and leaves take the same bend so the
+ // crown stays on its trunk, the leaves flutter on top. Stones and soil at the
+ // foot stay put. The bend grows with the square of height, so where a ball
+ // can reach a trunk it has moved a few millimetres at most, and the trunk
+ // physics collides with still agrees with the one drawn. A cactus does not
+ // move at all.
+ const sway=STILL.has(kind)?0:CONIFERS.has(kind)?.7:1;
  const materialFor=role=>{
-  if(!materials.has(role))materials.set(role,role==='leaf'
-   ?windMaterial(new T.MeshToonMaterial({color:'#ffffff'}),view,sway,false,true)
+  if(!materials.has(role))materials.set(role,sway&&['leaf','bark','accent'].includes(role)
+   ?windMaterial(new T.MeshToonMaterial({color:'#ffffff'}),view,sway,false,true,role!=='bark')
    :new T.MeshToonMaterial({color:'#ffffff'}));
   return materials.get(role);
  };
@@ -135,7 +184,7 @@ function addSpecies(view,kind,trees){
  const mat=(c,opts={})=>{const{flatShading,...toonOpts}=opts;return new (toon?T.MeshToonMaterial:T.MeshStandardMaterial)({color:c,...(toon?{}:{roughness:.92}),...(toon?toonOpts:opts)});};
  const materials={bark:mat(blue?'#9dc9c4':kind==='aspen'?'#d5d2b5':kind==='palo'?'#698149':['palm','hala'].includes(kind)?'#93876a':'#6b5942'),leaf:mat('#ffffff',{side:T.DoubleSide,flatShading:flat})};
  if(real)materials.bark.map=barkTexture(kind);
- windMaterial(materials.leaf,view,kind==='cactus'?.025:kind==='agave'?.12:flat?1.05:.7);
+ if(!STILL.has(kind))windMaterial(materials.leaf,view,flat?1.05:.7);
  let trunkMatrices=[],branchMatrices=[],leafMatrices=[],leafColors=[],trunkOwners=[],branchOwners=[],leafOwners=[],currentTree;
  const branch=(a,b,r1,r2=r1)=>{dummy.position.copy(a).add(b).multiplyScalar(.5);dummy.quaternion.setFromUnitVectors(UP,b.clone().sub(a).normalize());dummy.scale.set(r1,a.distanceTo(b),r2);dummy.updateMatrix();branchMatrices.push(dummy.matrix.clone());branchOwners.push(currentTree);};
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
@@ -366,17 +415,15 @@ function addGroundCover(view){
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
  for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
  for(const t of world.trees.filter(t=>['gorse','heather','palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
- const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));blade.computeVertexNormals();instance(blade,windMaterial(mat('#fff',{side:T.DoubleSide}),view,.38,true),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
+ const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
 }
 
 // Fine grass follows the camera in cached 24 m tiles. The complete course keeps
 // its taller meadow patches; only fine blades need this near-field detail.
 function addNearbyGrass(view){
  const w=view.world,tileSize=24,tiles=new Map(),group=new T.Group();group.name='Living rough';view.group.add(group);
- const geometry=new T.BufferGeometry(),vertices=[];
- for(let i=0;i<5;i++){const a=i*2.399,x=Math.cos(a)*.13,z=Math.sin(a)*.13,h=.55+(i%3)*.12;vertices.push(x-.035,0,z,x+.035,0,z,x+.16,h,z+.08);}
- geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();
- const material=windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,.17,true),dummy=new T.Object3D(),color=new T.Color();let lastKey='';
+ const geometry=grassClump(7,w.seed+':clump');
+ const material=groundLit(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,vertexColors:true,gradientMap:toonRamp(view)}),view,.2,true)),dummy=new T.Object3D(),color=new T.Color();let lastKey='';
  // Tiles are built on demand as the camera moves, so at cascade-registration
  // time this group holds no meshes and a scene walk cannot find this material.
  // Hand it over directly or the grass never samples a shadow map, and stays lit
@@ -385,7 +432,7 @@ function addNearbyGrass(view){
  // Shrinks into the ground between 28 and 48 m out, so the edge of the ring of
  // tiles is never seen. `flat` shrinks every axis rather than only height --
  // a fallen stick has no height to lose.
- const fadeOut=(material,flat=false)=>{const compile=material.onBeforeCompile;material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float grassFade=1.-smoothstep(28.,48.,distance(mvPosition.xz,cameraPosition.xz));${flat?'mvPosition.xyz=instanceMatrix[3].xyz+(mvPosition.xyz-instanceMatrix[3].xyz)*grassFade;':'mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*grassFade;'}mvPosition=modelViewMatrix*mvPosition;`);};return material;};
+ const fadeOut=(material,flat=false)=>{const compile=material.onBeforeCompile,key=material.customProgramCacheKey;material.customProgramCacheKey=()=>key.call(material)+'-fade-'+flat;material.onBeforeCompile=shader=>{compile(shader);shader.vertexShader=shader.vertexShader.replace('mvPosition=modelViewMatrix*mvPosition;',`float grassFade=1.-smoothstep(28.,48.,distance(mvPosition.xz,cameraPosition.xz));${flat?'mvPosition.xyz=instanceMatrix[3].xyz+(mvPosition.xyz-instanceMatrix[3].xyz)*grassFade;':'mvPosition.y=instanceMatrix[3].y+(mvPosition.y-instanceMatrix[3].y)*grassFade;'}mvPosition=modelViewMatrix*mvPosition;`);};return material;};
  fadeOut(material);
  // THE FOREST FLOOR (U6 in TODO): Ultra only. Low fern clumps and fallen
  // sticks, in the same tiles as the grass and from the same seeded draw, so
@@ -408,7 +455,7 @@ function addNearbyGrass(view){
   const sv=[],tri=[[0,.05],[.043,-.025],[-.043,-.025]];
   for(let k=0;k<3;k++){const [y0,z0]=tri[k],[y1,z1]=tri[(k+1)%3];sv.push(-.5,y0+.03,z0,.5,y0+.03,z0,.5,y1+.03,z1,-.5,y0+.03,z0,.5,y1+.03,z1,-.5,y1+.03,z1);}
   stickGeo=new T.BufferGeometry();stickGeo.setAttribute('position',new T.Float32BufferAttribute(sv,3));stickGeo.computeVertexNormals();
-  frondMat=fadeOut(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,.12,true));
+  frondMat=fadeOut(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,.3,true));
   stickMat=fadeOut(windMaterial(new T.MeshToonMaterial({color:'#ffffff',side:T.DoubleSide,gradientMap:toonRamp(view)}),view,0,true),true);
   view.lazyMaterials?.push(frondMat,stickMat);
   view.resources?.push(frondGeo,stickGeo);
@@ -461,8 +508,8 @@ function addNearbyGrass(view){
   // to be visibly BETWEEN fairway and rough. The mown-height difference is the
   // information; geometry on top of it was not adding any.
   for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(surface!=='rough'||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
-   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.07+rng()*.16;
-   dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.55,height,tall?1:.55);dummy.updateMatrix();
+   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.09+rng()*.17;
+   dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.8,height,tall?1:.8);dummy.updateMatrix();
    mesh.setMatrixAt(kept,dummy.matrix);
    color.set(tall?'#bd9e5f':w.bio.rough).lerp(new T.Color(tall?'#e8d797':'#aebd69'),rng()*.35);
    mesh.setColorAt(kept,color);

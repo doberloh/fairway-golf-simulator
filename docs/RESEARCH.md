@@ -4569,26 +4569,76 @@ them from a kilometre up.
 
 ## Wind in the imported trees (U2, 29 September)
 
-`windMaterial` in `src/textures.js` (a `crown` mode) and `addModelSpecies` in
-`src/vegetation.js`. The procedural leaves and the near grass already swayed;
-every imported tree and plant -- every tree on Redwood, and most in other
-biomes -- stood rigid, because `addModelSpecies` handed `instanceModels` plain
-materials. Now each species' LEAF role gets a wind material; bark and every
-other role stay still, so a trunk never moves away from where it collides.
+`windMaterial` in `src/textures.js` (a `crown` mode and a `leaf` flag) and
+`addModelSpecies` in `src/vegetation.js`. Every imported tree and plant stood
+rigid, because `addModelSpecies` handed `instanceModels` plain materials.
 
-The old lever (`.8 + y*.15`) was written for procedural shapes in metres; an
-imported model is unit height scaled by its instance, so on a 60 m redwood it
-would have moved the whole crown about a metre, top and bottom alike. The crown
-lever is `y^2 * (.006 * height + .12)` in metres at full gust: nothing at the
-base, ~0.48 m at the top of a 60 m tree, ~0.13 m at a fern's tips; conifers at
-.7 of broadleaf, needled boughs on a heavy leader. Checked by differencing two
-frames 0.6 s apart (Redwood tee, 14 mph): 50,602 changed pixels before (grass
-only), 137,560 after, the extra all in the crowns.
+**The whole tree bends, not just its leaves.** The first build gave the leaf
+role a wind material and left the bark still, so a trunk never moved from where
+it collides. The owner's verdict was that leaves moving on a rigid trunk looked
+wrong, which it does. Now bark, leaves and accents take the same bend -- same
+lever, same gust -- so the crown stays on its trunk, and only the leaves add a
+flutter. Stones and soil at the foot stay put. The lever is
+`y^2 * (.006 * height + .12)` metres, times the gust and the breeze: nothing
+at the base; at the top of a 60 m redwood about 0.4 m in a light wind and up to
+about 0.9 m at the peak of a gust in 15 mph; a few centimetres at a fern's
+tips; conifers at .7 of broadleaf. Because it is
+squared, at 3 m up a 60 m trunk (as high as a ball in the trees reaches) the
+bend is under a centimetre, so the trunk physics collides with and the one
+drawn still agree. The old procedural lever (`.8 + y*.15`, written for shapes
+in metres) would have moved a 60 m crown a metre top and bottom alike.
 
-Not moved: the crowns' SHADOWS -- three draws shadows with its own depth
-material, which does not carry the patch; at these amplitudes a still shadow
-under a swaying crown does not read. A graphics preference `wind` (0-100%,
-default 100) scales every swaying material through one shared uniform.
+**Cacti and agave do not move** (`STILL` in vegetation.js): a saguaro is a
+column of water in a skin and an agave's leaves are stiff blades. The cactus
+model had been swaying with the rest.
+
+**Gusts travel as patches.** The first version was one sine wave down the wind,
+about 200 m crest to crest, crossing the course at 50 m/s -- everything in view
+swung together, back and forth through upright. Real gusts are cat's paws:
+patches of stronger air tens of metres across drifting downwind at about the
+wind's speed. So the gust is now a noise field (38 m and 14 m octaves) dragged
+downwind at 3 + 4 x breeze m/s (5-12 m/s over the course's wind range), and a
+plant leans downwind by how much gust it stands in (.25 calm to 1.2 in a full
+gust) and bobs on its own beat on top -- 2.4 rad/s for grass, 1.8 for
+procedural shapes, 1.2 for big trees. Checked by differencing two exact frames
+0.3 s apart over the Links prairie (15 mph): before, motion spread evenly over
+the whole field; after, it is in patches with calm ground between. A cactus in
+the same test on Desert shows no motion; trunks on Redwood move near their tops
+and not at their feet.
+
+Not moved: the SHADOWS -- three draws them with its own depth material, which
+does not carry the patch; at these amplitudes a still shadow under a moving
+tree does not read. The graphics preference `wind` (0-100%, default 100)
+scales every swaying material through one shared uniform. The procedural trees
+(ocotillo and hala, the only ones left) still move their crowns as a piece:
+their trunks are separate cylinders with no height in the tree to bend by.
+
+## Rough grass clumps (29 September)
+
+`grassClump`, `groundShaded` and `groundLit` in `src/vegetation.js`.
+
+The owner was not a fan of the near grass: "5 2D tufts in a circle". Close up
+it read as dark scratches on the ground, for three reasons found in turn:
+
+- **The shape.** Five single triangles placed at golden-angle points on a ring,
+  every clump the same ring. Now seven blades from one root, each tapering in
+  two segments and curving outward as it rises, at uneven angles (golden angle
+  plus up to 37 degrees of jitter), heights 55-100% and lean 6-26% of the
+  height. Seeded per course; instances rotate and size it.
+- **The lighting.** A thin toon-shaded triangle facing away from the sun falls
+  to the ramp's darkest step, and DoubleSide flips a back face's normal
+  downward. Every blade normal now points straight up and is kept on both
+  faces, so grass takes the light and shade of the turf it grows from. Colour
+  runs from .62 at the root to 1.12 at the tip (times the instance colour).
+- **The wind.** Grass bent by its height in MODEL units, the same for a 7 cm
+  tuft and a metre of prairie, so the short rough was pushed further sideways
+  than it was tall and lay flat. It now bends by its real height above the root
+  (strength .2 near, .22 for the course-wide blades, .3 for the forest-floor
+  ferns, retuned for world heights).
+
+Short rough is also a little bigger (9-26 cm, 0.8 footprint, was 7-23 cm and
+0.55). The course-wide blades kept their shape and took the lighting and root
+shading. Cost: 21 triangles a clump against 5, in the 25 near tiles only.
 
 ## Foam and sun sparks on the ponds (U5, 29 September)
 
@@ -4600,7 +4650,8 @@ nothing on the water knows how far it is from the bank -- the stream shader's
 profile, not a distance on the water. So the foam is its own mesh: the outline
 and a copy moved 1.4 m inward, 3 cm above the water. Its opacity is a band that
 surges between about 0.3 and 0.6 of the strip's width along the shore, cut into
-lace by two drifting noise layers, at most 42% opaque. **The first attempt read
+lace by two drifting noise layers, at most 42% opaque, all on 30% of the
+water's clock -- at full speed the owner found the lapping frantic. **The first attempt read
 as white tape round every pond** (colour #f3f7f4, 78%, a lower lace threshold);
 it was toned down to a grey-green white and a sparser lace. Lit by the toon ramp,
 so it dims with the evening. One draw per pond.
@@ -4615,11 +4666,11 @@ The water's extra colour is written at `#include <opaque_fragment>`, and by then
 three.js has already turned `diffuseColor` into `outgoingLight`. Changing
 `diffuseColor.rgb` there does nothing on screen; only its alpha still counts.
 The glint was invisible from every pose tried until it was added to
-`outgoingLight` instead. The older line above it that brightens the water
-toward grazing (`diffuseColor.rgb=mix(...,fres)`) has the same problem and has
-never had any effect. It was left alone here, because making it work would
-change how every pond and creek looks at a distance -- that is a decision for
-the owner, not a side effect of U5.
+`outgoingLight` instead. An older line beside it, meant to brighten the water
+toward grazing (`diffuseColor.rgb=mix(...,fres)`), had the same problem and had
+never had any effect; the owner chose not to make it work, and it has been
+removed. The fresnel term still sets the water's opacity, which is the part
+that did work.
 
 **Verified** by placing the camera on the sun's mirror line over the
 Pacific Northwest pond (seed REPORT1, 16:00, sun 38 degrees up): sparks around the reflection
