@@ -3462,9 +3462,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // `fromPin`: that many metres from the pin, on the line back toward the tee
    // turned `around` degrees about the pin, looking at it -- a green seen from
    // wherever a putt is read, whatever shape the hole is.
-   if(o.fromPin!==undefined){const h=world.holes[o.hole??round.hole],pin=h.worldPin,tee=h.worldTee;
+   // `fromGreen` is the same about the green's centre, which stays put when the
+   // cup moves -- for comparing two versions of a green whose cups differ.
+   if(o.fromPin!==undefined||o.fromGreen!==undefined){const h=world.holes[o.hole??round.hole],pin=o.fromGreen!==undefined?h.worldGreen:h.worldPin,tee=h.worldTee,far=o.fromGreen??o.fromPin;
     const a=Math.atan2(tee.x-pin.x,tee.z-pin.z)+(o.around??0)*Math.PI/180;
-    x=pin.x+Math.sin(a)*o.fromPin;z=pin.z+Math.cos(a)*o.fromPin;yaw=Math.atan2(pin.x-x,pin.z-z);}
+    x=pin.x+Math.sin(a)*far;z=pin.z+Math.cos(a)*far;yaw=Math.atan2(pin.x-x,pin.z-z);}
    else if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
     const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
     yaw=aim?Math.atan2(aim.x-x,aim.z-z):(o.look??0)*Math.PI/180;}

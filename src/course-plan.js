@@ -321,7 +321,7 @@ export function planScorecard(s={}){
 // to where they were and spends the change at the top -- and since 33 the top
 // reaches 60% further than it did, at the owner's request. See RESEARCH.md.
 export function greenAmp(slider){
- return slider*(.60+.40*slider*slider)*1.90*(1+3.75*Math.max(0,slider-.6)**2);
+ return slider*(.60+.40*slider*slider)*1.90*(1+6.1*Math.max(0,slider-.4)**2);
 }
 export function greenContour(h,x,z){
  const slider=(h.settings.greenDifficulty??35)/100;
@@ -332,12 +332,16 @@ export function greenContour(h,x,z){
  // A severe green's rolls are broader as well as taller: scaling only their
  // height at the top of the range packed a metre of relief into a few paces, and
  // the slope under a putt jumped more than 5% in a metre (tests/lab.test.mjs).
- const spread=1+.6*Math.max(0,slider-.6);
+ const spread=1+1.2*Math.max(0,slider-.6);
  // The drainage tilt stops growing at about 70%: a severe green is severe in
  // its contours, not in leaning the whole surface -- scaled with everything else
  // a 100% green leaned 5-7% and had almost nowhere left level enough for a cup.
- const lean=Math.min(amp,greenAmp(.7));
- let y=lean*(r.tx*dx+r.tz*dz)+amp*(greenShape(r,dx,dz,spread)-r.zero);
+ const lean=Math.min(amp,1.3+.15*Math.max(0,amp-1.3));
+ // And a tier's face widens as its step grows, so a severe tier is a steep
+ // bank rather than a wall: at 100 a step of about a metre and a half has a face
+ // two to three times as wide as a default one.
+ const widen=Math.max(1,amp/2.5);
+ let y=lean*(r.tx*dx+r.tz*dz)+amp*(greenShape(r,dx,dz,spread,widen)-r.zero);
  // The false front: along the line of play (local -z is toward the tee), from
  // just in front of where front hole locations stop to the edge and beyond, so
  // the collar and the approach keep falling with it.
@@ -375,11 +379,11 @@ function greenRecipe(h){
  const reach=h.greenSize??17,a=h.phase??0;
  const between=(lo,hi)=>lo+g()*(hi-lo),sign=()=>g()<.5?-1:1;
  // Drainage: two greens in three fall toward the approach, higher at the back.
- const back=g()<.66,tiltAngle=back?Math.PI/2+between(-.8,.8):g()*Math.PI*2,tilt=between(.014,.024);
+ const back=g()<.66,tiltAngle=back?Math.PI/2+between(-.8,.8):g()*Math.PI*2,tilt=between(.016,.027);
  const pick=g(),character=pick<.32?'rolling':pick<.54?'tiered':pick<.74?'ridged':pick<.88?'crowned':'bowl';
  const mound=(amp,rlo,rhi,spread=.7)=>{const ang=g()*Math.PI*2,dist=Math.sqrt(g())*reach*spread;return {x:Math.cos(ang)*dist,z:Math.sin(ang)*dist,r:between(rlo,rhi),amp};};
  const mounds=[];
- if(character==='rolling')for(let i=0,n=3+(g()<.5?1:0);i<n;i++)mounds.push(mound(sign()*between(.10,.20),6,10.5));
+ if(character==='rolling')for(let i=0,n=3+(g()<.5?1:0);i<n;i++)mounds.push(mound(sign()*between(.12,.22),6,10.5));
  else for(let i=0;i<2;i++)mounds.push(mound(sign()*between(.05,.09),4.5,8));
  r={character,mounds,
   tx:Math.cos(tiltAngle)*tilt,tz:Math.sin(tiltAngle)*tilt,
@@ -398,13 +402,13 @@ function greenRecipe(h){
  RECIPES.set(h,r);
  return r;
 }
-function greenShape(r,dx,dz,spread=1){
+function greenShape(r,dx,dz,spread=1,widen=1){
  let y=0;
  dx/=spread;dz/=spread;
  for(const m of r.mounds){const q=((dx-m.x)**2+(dz-m.z)**2)/(m.r*m.r);y+=m.amp*Math.exp(-q);}
  if(r.character==='tiered'){
   const c=Math.cos(r.tierAngle),s=Math.sin(r.tierAngle),across=dx*c+dz*s-r.tierAt;
-  y+=r.tierDrop*Math.tanh(across/r.tierFace*1.6)*.5;
+  y+=r.tierDrop*Math.tanh(across/(r.tierFace*widen)*1.6)*.5;
  }else if(r.character==='ridged'){
   const c=Math.cos(r.ridgeAngle),s=Math.sin(r.ridgeAngle),across=dx*c+dz*s-r.ridgeAt;
   y+=r.ridgeAmp*Math.exp(-(across*across)/(r.ridgeHalf*r.ridgeHalf));
