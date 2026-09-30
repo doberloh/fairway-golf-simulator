@@ -2872,7 +2872,7 @@ function renderPanel(name,content){
   ${slider('gfxHaze','Distance haze',graphics.haze,0,100,'%',5)}
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
-  <p class="note">How far trees, leaves and grass move in the course's wind, in gusts you can watch roll across the rough. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
+  <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>

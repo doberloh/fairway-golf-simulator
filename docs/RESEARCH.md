@@ -4567,51 +4567,118 @@ Medium get the haze without paying for mist.
 across rather than ~7, which keeps them at play and flyover heights and drops
 them from a kilometre up.
 
-## Wind in the imported trees (U2, 29 September)
+## How a tree moves in the wind (U2, 29 September)
 
-`windMaterial` in `src/textures.js` (a `crown` mode and a `leaf` flag) and
-`addModelSpecies` in `src/vegetation.js`. Every imported tree and plant stood
-rigid, because `addModelSpecies` handed `instanceModels` plain materials.
+`windMaterial` in `src/textures.js` (`crown`, `leaf` and `rooted` modes),
+`addModelSpecies` and `addSpecies` in `src/vegetation.js`, and the `treeRoot`
+packing in `src/instance-cull.js`.
 
-**The whole tree bends, not just its leaves.** The first build gave the leaf
-role a wind material and left the bark still, so a trunk never moved from where
-it collides. The owner's verdict was that leaves moving on a rigid trunk looked
-wrong, which it does. Now bark, leaves and accents take the same bend -- same
-lever, same gust -- so the crown stays on its trunk, and only the leaves add a
-flutter. Stones and soil at the foot stay put. The lever is
-`y^2 * (.006 * height + .12)` metres, times the gust and the breeze: nothing
-at the base; at the top of a 60 m redwood about 0.4 m in a light wind and up to
-about 0.9 m at the peak of a gust in 15 mph; a few centimetres at a fern's
-tips; conifers at .7 of broadleaf. Because it is
-squared, at 3 m up a 60 m trunk (as high as a ball in the trees reaches) the
-bend is under a centimetre, so the trunk physics collides with and the one
-drawn still agree. The old procedural lever (`.8 + y*.15`, written for shapes
-in metres) would have moved a 60 m crown a metre top and bottom alike.
+**What real trees do, and where it comes from.**
 
-**Cacti and agave do not move** (`STILL` in vegetation.js): a saguaro is a
-column of water in a skin and an agave's leaves are stiff blades. The cactus
-model had been swaying with the rest.
+- A tree sways as ONE body in its first mode: the whole stem bends one way,
+  curving more toward the top, as a damped oscillator. Field studies place a
+  single accelerometer just below the main branching precisely because that
+  one point represents the whole tree; sensors on branches pick up "higher
+  order effects". Source: *Tree sway in response to wind*, Frontiers in Earth
+  Science 2018,
+  <https://www.frontiersin.org/journals/earth-science/articles/10.3389/feart.2018.00221/full>
+  (read; example spectrum peaks near 0.2 Hz).
+- The natural frequency rises with trunk diameter and falls with height:
+  linear in DBH / H^2 over 602 trees of eight conifer species, pines lower than
+  spruce and Douglas-fir for their size. Moore and Maguire 2004, *Natural sway
+  frequencies and damping ratios of trees: concepts, review and synthesis of
+  previous studies*, Trees 18: 195-203,
+  <https://link.springer.com/article/10.1007/s00468-003-0295-6>. The paper
+  itself is paywalled and was NOT read; the relationship and the tree count
+  are from its abstract as quoted in search results. Figures quoted from other
+  summaries in the same search: conifers dominantly 0.2-0.5 Hz, a 15 m tree
+  about 0.4 Hz, trees generally 0.1-5 Hz. *An architectural understanding of
+  natural sway frequencies in trees* (J. R. Soc. Interface 2019,
+  <https://royalsocietypublishing.org/doi/10.1098/rsif.2019.0116>) returned
+  403 and was not read.
+- Games do this as "main bending" plus "detail bending": the whole plant is
+  displaced along the wind by a factor that grows steeply with height, then
+  each vertex is pulled back to its original distance from the root
+  (`normalize(newPos) * length`) so the plant curves rather than shears; leaves
+  add small high-frequency motion on top. Tiago Sousa, *Vegetation Procedural
+  Animation and Shading in Crysis*, GPU Gems 3 ch. 16,
+  <https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-16-vegetation-procedural-animation-and-shading-crysis>
+  (read).
+- Gusts are carried downwind at about the mean wind speed -- Taylor's "frozen
+  turbulence" -- which is what makes honami, the waves that roll across a wheat
+  field, and cat's paws on water. Finnigan 1979, *Turbulence in waving wheat*,
+  Boundary-Layer Meteorology 16: 181,
+  <https://ui.adsabs.harvard.edu/abs/1979BoLMe..16..181F/abstract> (abstract
+  only). Dupont et al. 2010, *Modelling waving crops using large-eddy
+  simulation*, <https://yakari.polytechnique.fr/Django-pub/documents/duponts2010rp-1pp.pdf>
+  -- fetched, but the PDF could not be read here; its patch sizes and speeds are
+  still to be taken from it.
 
-**Gusts travel as patches.** The first version was one sine wave down the wind,
-about 200 m crest to crest, crossing the course at 50 m/s -- everything in view
-swung together, back and forth through upright. Real gusts are cat's paws:
-patches of stronger air tens of metres across drifting downwind at about the
-wind's speed. So the gust is now a noise field (38 m and 14 m octaves) dragged
-downwind at 3 + 4 x breeze m/s (5-12 m/s over the course's wind range), and a
-plant leans downwind by how much gust it stands in (.25 calm to 1.2 in a full
-gust) and bobs on its own beat on top -- 2.4 rad/s for grass, 1.8 for
-procedural shapes, 1.2 for big trees. Checked by differencing two exact frames
-0.3 s apart over the Links prairie (15 mph): before, motion spread evenly over
-the whole field; after, it is in patches with calm ground between. A cactus in
-the same test on Desert shows no motion; trunks on Redwood move near their tops
-and not at their feet.
+**What was built from that.**
 
-Not moved: the SHADOWS -- three draws them with its own depth material, which
-does not carry the patch; at these amplitudes a still shadow under a moving
-tree does not read. The graphics preference `wind` (0-100%, default 100)
-scales every swaying material through one shared uniform. The procedural trees
-(ocotillo and hala, the only ones left) still move their crowns as a piece:
-their trunks are separate cylinders with no height in the tree to bend by.
+- *One bend for the whole tree.* Every part of an imported tree -- bark, limbs,
+  foliage, flowers -- takes a single displacement that depends only on its
+  height up the tree: the cantilever shape h^2 (3 - h) / 2 (h from 0 at the
+  root to 1 at the top; the deflection of a beam loaded at its tip, where
+  Crysis uses a similar steepening polynomial), along the wind plus a smaller
+  crosswind sway a quarter-turn behind so the top traces an ellipse, then
+  pulled back to its distance from the root. Only the leaves add a rustle of a
+  few centimetres.
+- *Its own sway.* 3 H^-0.75 swings a second, which gives 1.0 at 5 m, 0.39 at
+  15 m (the 0.4 quoted), 0.23 at 30 m, 0.14 at 60 m -- inside the 0.2-0.5 Hz
+  conifer range where the trees are conifer-sized. The exponent and constant
+  are fitted to those quoted points, not taken from the paper: with no trunk
+  diameters in the world data, DBH / H^2 cannot be evaluated directly.
+- *How far.* Tip deflection = H x breeze x wind setting x species factor x
+  (0.004 + 0.010 x gust + (0.002 + 0.004 x gust) x sway). On a 60 m redwood
+  (species factor 0.7 for conifers) that is about a tenth of a metre on a still
+  day and up to about 1.3 m at the peak of a gust in 15 mph. PLACED, not
+  published: no source was found for tip deflection against wind speed, so
+  these are judged on screen and are the first thing to revisit if one turns
+  up.
+- *Gusts as fronts.* The gust field is noise stretched across the wind (160 m)
+  and short along it (45 m), with a 60 m by 17 m octave for texture, dragged
+  downwind at the course's wind speed converted to m/s (at least 1.5 m/s).
+  Every swaying thing samples it at its root, so a crosswind front bends the
+  trees on the upwind side of a fairway first and the far side seconds later --
+  the owner's description of what it should look like. Checked with the bend
+  exaggerated 15 times over a Pacific Northwest fairway from above: bands of
+  leaning trees with upright ones between, the bands moving in the direction
+  the trees lean.
+
+**The two versions before it, and why they were wrong.**
+
+1. Leaves only, bark still -- so a trunk never moved from where it collides.
+   Leaves swaying on a rigid trunk looked wrong to the owner at once.
+2. Bark and leaves bent together, but the leaves also shivered fast across the
+   crown (6.3 rad/s, up to 0.3 m at the top of a 60 m tree), and every tree
+   bobbed at the same 1.2 rad/s. The owner still saw leaves and trunk moving
+   separately: a crown moving by a rule the trunk does not share can never look
+   attached, however the numbers are tuned.
+
+The gust went through the same two steps: first one sine wave down the wind,
+200 m crest to crest, crossing at 50 m/s, so everything in view swung together
+back and forth through upright; then round noise patches, better, but a patch
+has no front, so nothing showed a gust arriving on one side first.
+
+**Procedural trees bend too.** The trees built from primitives (hala, ocotillo;
+every other species has an imported model) are a trunk, branches and leaf
+pieces, each its own instance, so an instance's own position says nothing
+about which tree it belongs to. Each instance now carries `treeRoot` -- the
+tree's root and height -- and bends about that. The instance cull repacks the
+instance buffers every time the view changes, so it packs `treeRoot` alongside
+the matrices and colours; without that a leaf would bend about another tree's
+root.
+
+**What does not move.** Cacti and agave (`STILL`): a saguaro is a column of
+water in a skin, an agave's leaves are stiff blades, and the cactus model had
+been swaying like a tree. Stones and soil at a tree's foot. And the SHADOWS:
+three draws them with its own depth material, which does not carry the patch;
+a 1 m shift at the top of a 60 m tree does not read in its shadow.
+
+**Collision.** The bend is under a centimetre at 3 m up a 60 m trunk (about 3
+mm at full gust), so the trunk physics collides with and the one drawn agree
+wherever a ball can reach.
 
 ## Rough grass clumps (29 September)
 

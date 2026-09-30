@@ -184,7 +184,10 @@ function addSpecies(view,kind,trees){
  const mat=(c,opts={})=>{const{flatShading,...toonOpts}=opts;return new (toon?T.MeshToonMaterial:T.MeshStandardMaterial)({color:c,...(toon?{}:{roughness:.92}),...(toon?toonOpts:opts)});};
  const materials={bark:mat(blue?'#9dc9c4':kind==='aspen'?'#d5d2b5':kind==='palo'?'#698149':['palm','hala'].includes(kind)?'#93876a':'#6b5942'),leaf:mat('#ffffff',{side:T.DoubleSide,flatShading:flat})};
  if(real)materials.bark.map=barkTexture(kind);
- if(!STILL.has(kind))windMaterial(materials.leaf,view,flat?1.05:.7);
+ // The whole tree bends as one, the same way the imported ones do: trunk,
+ // branches and leaves all bend about the tree's own root (`treeRoot`, filled
+ // in `instance` below), so a leaf piece never parts from its branch.
+ if(!STILL.has(kind)){const s=['pine','spruce','cedar'].includes(kind)?.7:1;windMaterial(materials.bark,view,s,false,true,false,true);windMaterial(materials.leaf,view,s,false,true,true,true);}
  let trunkMatrices=[],branchMatrices=[],leafMatrices=[],leafColors=[],trunkOwners=[],branchOwners=[],leafOwners=[],currentTree;
  const branch=(a,b,r1,r2=r1)=>{dummy.position.copy(a).add(b).multiplyScalar(.5);dummy.quaternion.setFromUnitVectors(UP,b.clone().sub(a).normalize());dummy.scale.set(r1,a.distanceTo(b),r2);dummy.updateMatrix();branchMatrices.push(dummy.matrix.clone());branchOwners.push(currentTree);};
  const leaf=(x,y,z,sx,sy,sz,rotation,tint)=>{dummy.position.set(x,y,z);dummy.rotation.set(...rotation);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();leafMatrices.push(dummy.matrix.clone());leafColors.push(tint.clone());leafOwners.push(currentTree);};
@@ -247,7 +250,7 @@ function addSpecies(view,kind,trees){
    }
   }
  }
- const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});const owners=matrices===trunkMatrices?trunkOwners:matrices===branchMatrices?branchOwners:leafOwners;const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;view.treeInstances.push({mesh,matrices,owners,hidden});mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
+ const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});const owners=matrices===trunkMatrices?trunkOwners:matrices===branchMatrices?branchOwners:leafOwners;if(material===materials.bark||material===materials.leaf){const root=new Float32Array(owners.length*4);owners.forEach((t,i)=>root.set([t.x,t.y,t.z,t.h],i*4));geo.setAttribute('treeRoot',new T.InstancedBufferAttribute(root,4));}const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;view.treeInstances.push({mesh,matrices,owners,hidden});mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
  const trunkGeo=new T.CylinderGeometry(.62,1,1,real?12:Math.max(5,Math.round(6*(view.quality?.foliage??1))),['palm','hala'].includes(kind)?12:1);if(['palm','hala'].includes(kind)){const p=trunkGeo.attributes.position;for(let i=0;i<p.count;i++)p.setX(i,p.getX(i)+Math.sin((p.getY(i)+.5)*Math.PI)*1.8);trunkGeo.computeVertexNormals();}instance(trunkGeo,materials.bark,trunkMatrices);
  instance(new T.CylinderGeometry(.65,1,1,5),kind==='cactus'?mat(world.bio.tree):materials.bark,branchMatrices,null,real);
  let leafGeo;

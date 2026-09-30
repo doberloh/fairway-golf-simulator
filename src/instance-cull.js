@@ -87,11 +87,16 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   const order = Int32Array.from({length: n}, (_, i) => i).sort((a, b) => cell[a] - cell[b]);
   const matrix = mesh.instanceMatrix.array, colour = mesh.instanceColor?.array;
   const src = new Float32Array(n * 16), srcColour = colour ? new Float32Array(n * 3) : null;
+  // A procedural tree's pieces carry the root of the tree they belong to
+  // (`treeRoot`, for the wind -- textures.js); it is per instance, so it is
+  // packed with the matrices or a leaf would bend about another tree's root.
+  const rootAttr = geo.attributes.treeRoot, root = rootAttr?.array, srcRoot = root ? new Float32Array(n * 4) : null;
   const runs = [];
   for (let k = 0; k < n; k++) {
    const i = order[k];
    src.set(matrix.subarray(i * 16, i * 16 + 16), k * 16);
    if (srcColour) srcColour.set(colour.subarray(i * 3, i * 3 + 3), k * 3);
+   if (srcRoot) srcRoot.set(root.subarray(i * 4, i * 4 + 4), k * 4);
    if (!runs.length || runs[runs.length - 3] !== cell[i]) runs.push(cell[i], k, 0);
    runs[runs.length - 1]++;
   }
@@ -108,7 +113,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // Culled here now; three's own test would only ever see the whole course.
   mesh.frustumCulled = false;
   mesh.userData.cullTotal = n;
-  const record = {mesh, n, order, src, srcColour, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false};
+  const record = {mesh, n, order, src, srcColour, srcRoot, rootAttr, runs: Int32Array.from(runs), drawn: n, cum: null, twin: null, near: false, far: false};
   const thinFrom = () => tune.thinShadowsFrom ?? thinShadowsFrom;
   // A SHADOW OF THE SAME TREE, DRAWN CHEAPER. From map `thinShadowsFrom` out,
   // a crown's shadow comes from its thinned twin -- a third of the sprays,
@@ -202,8 +207,8 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
 
  const write = () => {
   for (const r of records) {
-   const {mesh, order, src, srcColour, runs} = r, hidden = mesh.userData.cullHidden;
-   const dst = mesh.instanceMatrix.array, dstColour = mesh.instanceColor?.array;
+   const {mesh, order, src, srcColour, srcRoot, rootAttr, runs} = r, hidden = mesh.userData.cullHidden;
+   const dst = mesh.instanceMatrix.array, dstColour = mesh.instanceColor?.array, dstRoot = srcRoot ? rootAttr.array : null;
    const groups = all ? 0 : casters.length;
    if (!r.cum || r.cum.length !== groups + 1) r.cum = new Int32Array(groups + 1);
    let out = 0;
@@ -221,6 +226,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
        dstColour[out * 3 + 1] = srcColour[k * 3 + 1];
        dstColour[out * 3 + 2] = srcColour[k * 3 + 2];
       }
+      if (dstRoot) for (let q = 0; q < 4; q++) dstRoot[out * 4 + q] = srcRoot[k * 4 + q];
       out++;
      }
     }
@@ -232,6 +238,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    const im = mesh.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(0, out * 16); im.needsUpdate = true;
    const ic = mesh.instanceColor;
    if (ic) { ic.clearUpdateRanges(); ic.addUpdateRange(0, out * 3); ic.needsUpdate = true; }
+   if (dstRoot) { rootAttr.clearUpdateRanges(); rootAttr.addUpdateRange(0, out * 4); rootAttr.needsUpdate = true; }
   }
  };
 
