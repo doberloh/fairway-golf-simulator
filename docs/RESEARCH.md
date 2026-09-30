@@ -5129,3 +5129,86 @@ height are inside the ranges the sources give.
   <https://www.planetgolf.com/news/a-glossary-of-golf-course-architecture> --
   appeared in the searches for push-up and punchbowl greens; nothing specific
   taken.
+
+## The water's edge, by kind (30 September)
+
+Branch `water-edges`. `seaDepthMap`, `WATER_EDGES` and `addShoreFoam` in
+`src/renderer.js`.
+
+### The flicker on Island and Links
+
+The ocean is a single 14 km quad at sea level; the coast is wherever it cuts
+the terrain, whose triangles are 3 m across. On a gently shelving beach the
+two surfaces are within a degree or two of each other, so (1) the waterline
+followed the triangle facets as a sawtooth, and (2) the depth buffer could not
+settle which surface was in front along a strip of it, so that strip changed
+with every small camera move. Measured by photographing a shoreline, moving
+the camera 15 cm and differencing: on Links the whole waterline changed as a
+continuous line; after the fix it does not (only the ripples, which are
+animated, differ).
+
+**The fix is to let the sea know its depth.** The coarse height grid the
+terrain is built from (`world.groundGrid.values`, 3 m) is uploaded as a
+half-float texture -- half floats because linear filtering of full floats is not
+guaranteed in WebGL2 on phones; near sea level that is millimetres. The sea's
+shader samples it at each fragment, so it knows how deep it is, and fades its
+opacity over the last 35 cm. There is no hard edge left to flicker, and the
+bilinear heights make the shoreline smooth where the triangles made it
+jagged. Past the grid the sea is treated as deep. The grid and the drawn
+terrain agree except where the terrain was refined; coasts are not refined,
+and the fade is wide enough to hide the few centimetres where they differ.
+
+**Rejected:** a logarithmic depth buffer (it changes every shader in the scene
+and gives up early depth rejection, for a problem confined to one edge); and
+pulling the sea toward the camera with a depth offset (it moves the coastline
+visibly at a distance and still leaves the sawtooth).
+
+### Foam, by kind of water
+
+| kind | what it is | how it is drawn |
+| --- | --- | --- |
+| sea | swash -- broken water running up the beach and draining back | a foam line at a depth that runs from 0.62 m to 0.03 m and back on a 9 s cycle, 30% uprush and 70% backwash, phased along the coast; thinner foam behind it; a faint breaker line at about 1.15 m depth |
+| lake | wind-driven wavelets lapping, bigger than a pond's for more open water | the pond strip, 2.2 m wide (pond 1.4), coarser lace (0.75x), on 42% of the water's clock (pond 30%) |
+| pond | unchanged, approved by the owner | the 1.4 m lapping strip |
+| river | foam gathering along banks and on seams where currents meet, drifting downstream | lace stretched about two to one along the flow, carried with it, strongest near the banks, with a faint seam |
+| creek | shallow, fast, broken over its bed | scattered white flecks carried by the current, more toward the banks |
+
+The foam in the water's own shader is lit by the light the water's diffuse
+received (divided back by the water's diffuse colour), so it dims at dusk with
+everything else, and it is added to `outgoingLight` for the reason the glint
+note gives. Each kind is its own shader program (`fairway-water-v3-<kind>`),
+so the sea's texture read costs nothing on a pond.
+
+**Tried and rejected on the way:** the first river foam stretched its lace
+seven to one along the flow, and only the rare peaks survived the threshold --
+thin white slashes that read as scratches on the water. The first sea foam was
+too faint (a few white specks); the lace threshold came down and the lines
+up.
+
+**Cost.** Profiled on the biome group (High, RTX 4090): Island 4.09 ms of
+graphics time against 4.17 before, Links 3.39 against 3.26 -- inside the
+noise. One earlier run read Island at 6.5 ms and did not repeat.
+
+**The numbers are placed, not published.** The sources describe the processes
+(swash uprush faster and shorter than backwash, over seconds; foam collecting
+in lines along banks and seams) but give nothing to set a foam width or a cycle
+length by for a cartoon frame; the 9 s cycle and 0.62 m reach were chosen on
+screen.
+
+Sources:
+
+- [Wikipedia -- Swash](https://en.wikipedia.org/wiki/Swash) (via search
+  summary): swash is the turbulent layer of water washing up the beach after a
+  wave breaks, uprush and backwash, with uprush faster and shorter; greater on
+  flatter beaches.
+- [Coastal Wiki -- Swash zone dynamics](https://www.coastalwiki.org/introduced/Swash_zone_dynamics)
+  and [Swash zone](https://www.coastalwiki.org/wiki/Swash_zone) (via search
+  summary): time scales of seconds to minutes; uprush up to 2 m/s on gently
+  sloping foreshores.
+- [Wikipedia -- Foam line](https://en.wikipedia.org/wiki/Foam_line) and
+  [Lilly Center for Lakes & Streams -- Why is there foam in my river?](https://lakes.grace.edu/why-is-there-foam-in-in-my-river/)
+  (via search summary): foam collects where currents meet into a seam, along
+  shorelines and in eddies, downstream of rapids.
+- Also returned and not used: [Swash Zone Dynamics (Springer)](https://link.springer.com/rwe/10.1007/978-3-319-93806-6_404),
+  [Breaking wave (Wikipedia)](https://en.wikipedia.org/wiki/Breaking_wave),
+  [ALMS -- Foam on surface waters](https://alms.ca/wp-content/uploads/2014/02/Foam.pdf).
