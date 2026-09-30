@@ -456,13 +456,14 @@ export class GolfView{
  // Re-applied on every course build as well as on every change, because the
  // material is rebuilt with the world and comes back at its own defaults.
  setGroundCues(cues){
-  this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true}),...(cues||{})};
+  this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true,sheen:true}),...(cues||{})};
   const u=this.terrain?.material?.userData?.cues;
   if(!u)return this.groundCues;
   u.cueRelief.value=this.groundCues.relief?1:0;
   u.cueSlope.value=this.groundCues.slopeTint?1:0;
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
+  if(u.cueSheen)u.cueSheen.value=this.groundCues.sheen===false?0:1;
   if(u.cuePatches)u.cuePatches.value=(this.groundCues.patches??60)/100;
   if(u.cueShade)u.cueShade.value=(this.groundCues.shade??60)/100;
   // Wind in the trees and grass (U2): one uniform every swaying material shares.
@@ -471,7 +472,7 @@ export class GolfView{
   // panel and the shader cannot drift apart.
   if(u.sunDir&&this.sunDir)u.sunDir.value.copy(this.sunDir);
   const g=greenCues(this.groundCues);
-  for(const k of ['greenLift','greenBend','greenBandSoft','greenSun','greenSlopeShade','greenGrain'])
+  for(const k of ['greenLift','greenBend','greenBandSoft'])
    if(u[k])u[k].value=g[k];
   return this.groundCues;
  }
