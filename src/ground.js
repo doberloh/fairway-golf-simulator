@@ -142,9 +142,8 @@ export function groundMaterial(view,palette){
  // which is what a mow stripe genuinely is in life, measured no better than
  // bending the bands and cost a per-fragment view vector. Both are written up
  // with their numbers in RESEARCH.md.
- const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},cuePatches:{value:.6},cueShade:{value:.6},
+ const cues={cueRelief:{value:1},cueSlope:{value:1},cueContours:{value:0},cueStripes:{value:1},cuePatches:{value:.6},cueShade:{value:.6},cueSheen:{value:1},
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
-  greenSun:{value:0},greenSlopeShade:{value:0},greenGrain:{value:0},
   sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
  // THE COVER TEXTURE: soft occlusion under trees and round boulders in red
@@ -165,7 +164,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,greenLift,greenBend,greenBandSoft,greenSun,greenSlopeShade,greenGrain;
+ varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
@@ -484,19 +483,23 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   // accident once, when removing a neighbouring block took the span between two
   // anchors with it, and the slider went on reporting a value nothing read.
   if(kind==4.)spread*=greenBandSoft;
-  // VIEW-DEPENDENT GRAIN. In life a band is light because the blades are laid
-  // away from you and dark because they are laid toward you, so its tone shifts
-  // as the ground under it turns relative to where you stand. Measured no better
-  // than bending the bands, and kept on a slider rather than deleted so it can
-  // be judged on screen instead of from a number.
-  if(kind==4.&&greenGrain>.001){
-   vec3 toEye=normalize(cameraPosition-groundPoint);
-   vec2 lay=vec2(mow.x*tr.z-mow.y*tr.w,mow.x*tr.w+mow.y*tr.z);
-   float facing=dot(normalize(toEye.xz),lay)*(stripe*2.-1.);
-   spread=clamp(spread*(1.+greenGrain*1.6*facing),.04,.30);
-  }
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
   turf*=mix(1.,tone,stripeFade*cueStripes);
+  // THE CLEAN-UP LAP. A green is cut in straight passes and then once round
+  // its edge, one mower's width (a greens mower cuts about 0.55-0.65 m), laid
+  // the other way from the passes it crosses -- so a band of different tone
+  // runs round every green, right out to the collar. It traces the outline, and
+  // because it follows the ground it shows the green's edge rising and falling.
+  // Part of the mowing pattern, so it goes with the stripes switch.
+  //
+  // It runs from 0.65 m inside the edge TO the edge. The first cut drew it from
+  // 0.95 to 0.4 m in, which left a strip of plain green between the lap and
+  // the fringe that no mower would leave (the owner).
+  if(kind==4.){
+   float lapW=max(fwidth(greenD),1e-4);
+   float lap=smoothstep(-.65-lapW,-.65+lapW,greenD);
+   turf*=mix(1.,1.-.06*(stripe*2.-1.)-.03,lap*stripeFade*cueStripes*(1.-smoothstep(.25,.6,lapW)));
+  }
  }
  // UNDULATION, EVERYWHERE, AT EVERY HOUR.
  //
@@ -510,51 +513,63 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  // its own, and a raking light laid over the top of that reads as dirt.
  if(kind!=6.){
   vec3 gn=normalize(groundNormal);if(gn.y<0.)gn=-gn;
-  // DIRECTIONAL RELIEF. Ground tilted toward a fixed low bearing lifts, ground
-  // tilted away darkens -- a raking light that is not the sun, so it still reads
-  // at midday when a two metre roll casts no shadow at all.
-  float relief=dot(gn.xz,normalize(vec2(-.6,-.5)));
+  // DIRECTIONAL RELIEF, FROM THE SUN'S SIDE. Ground tilted toward the sun's
+  // compass bearing lifts and ground tilted away darkens -- a raking light at a
+  // fixed low angle, so it still reads at midday when a two metre roll casts no
+  // shadow, but from the SAME SIDE the real shadows fall from. It used a fixed
+  // bearing, (-.6, -.5), whatever the hour, so for much of the day it lit every
+  // slope from a direction the sun was not in: a second light source arguing
+  // with the cast shadows, plainest on bare dunes where no mowing pattern hides
+  // it. With the sun near overhead the bearing is barely defined, so it eases
+  // back to the old fixed one rather than swinging.
+  vec2 fromSun=sunDir.xz,oldBearing=normalize(vec2(-.6,-.5));
+  vec2 bearing=normalize(mix(oldBearing,normalize(fromSun+vec2(1e-5)),smoothstep(.05,.25,length(fromSun))));
+  float relief=dot(gn.xz,bearing);
+  // A green's shading normal, tilted further from vertical than the real one.
+  // Shading only: the ball rolls on the true surface. A green is graded to
+  // about half a degree, so without this nothing about its shape reaches the
+  // picture; tilting the normal rescales the whole range rather than clipping
+  // the steep parts, which is why it beats simply raising a gain.
+  vec3 gs4=kind==4.?normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift))):gn;
   if(kind==4.){
-   // Exaggerating the NORMAL rather than raising the gain is the difference that
-   // matters. Gain multiplies the response and clips against the clamp, so the
-   // steep parts of a green saturate while the gentle parts stay invisible.
-   // Tilting the normal further from vertical first rescales the whole range, so
-   // a two-centimetre roll and a tier both move within the band.
-   vec3 gl4=normalize(vec3(gn.x*(1.+greenLift),gn.y,gn.z*(1.+greenLift)));
-   float rel4=dot(gl4.xz,normalize(vec2(-.6,-.5)));
-   turf*=mix(1.,clamp(1.+rel4*4.,.78,1.18),cueRelief);
-   // THE SUN, WITHOUT GOING THROUGH THE TOON RAMP.
-   //
-   // Tilting the normal the lighting uses was tried first and is a dead end in
-   // this art style: the cartoon ramp is four steps, three.js samples it at
-   // dot(normal,light)*0.5+0.5, and a near-flat green sits PINNED at its top
-   // step above roughly 48 degrees of sun elevation. Measured, the brightness
-   // span across a green was 0 both with and without the cue at 50, 65 and 80
-   // degrees -- it only ever worked at dawn and dusk. The comment further down
-   // says the same thing about shadows at midday.
-   //
-   // So this asks the question directly: how much MORE light would this patch
-   // catch if the green were as steep as it looks under exaggeration. It follows
-   // the real sun through the day and nothing clamps it.
-   if(greenSun>.001){
-    vec3 tilted=normalize(vec3(gn.x*(1.+greenSun),gn.y,gn.z*(1.+greenSun)));
-    float gain=dot(tilted,sunDir)-dot(gn,sunDir);
-    turf*=clamp(1.+gain*1.35,.68,1.38);
-   }
-   // MAGNITUDE, NOT ONLY DIRECTION. The dot product above is blind to ground
-   // tilted ACROSS its bearing however steep it is; this darkens by how much the
-   // ground tilts, whichever way it faces. Measured, that blind case is 0% of
-   // real greens, so it is off by default -- a slider rather than a deletion,
-   // because 0% was measured on this generator's greens, not on every green
-   // anyone will ever build.
-   if(greenSlopeShade>.001){
-    float tilt=length(gl4.xz);
-    turf*=mix(1.,clamp(1.-tilt*1.9,.80,1.),greenSlopeShade);
-   }
+   // The tone greens had while "slope darkening" was on: at the owner's 70 it
+   // dimmed a typical green by about 8%, fairly evenly, and removing it left
+   // greens visibly paler than the fringe around them had been set against. The
+   // tone is kept; the blotches that came with it are not.
+   turf*=.93;
+   turf*=mix(1.,clamp(1.+dot(gs4.xz,bearing)*4.,.78,1.18),cueRelief);
   }else{
-   // Everything else: the same idea at a third of the gain. A green is being
-   // read for a putt; a fairway only has to look like ground.
+   // Everything else: the same idea at a lower gain. A green is being read for
+   // a putt; a fairway only has to look like ground.
    turf*=mix(1.,clamp(1.+relief*2.6,.88,1.12),cueRelief);
+  }
+  // GRASS SHEEN: HOW A REAL GREEN SHOWS ITS SHAPE. Mown grass looked at from a
+  // low angle is lighter than grass looked down on -- you see the length of the
+  // blades rather than the soil between them -- and from a player's eye a
+  // green is seen at a low angle: about 10 degrees above the surface from 10 m
+  // away. At that angle a tilt of one or two degrees changes how steeply you
+  // look at the turf by a large FRACTION, so ground tipped away from you reads
+  // lighter and ground tipped toward you darker, at any hour, with the sun
+  // anywhere. It is the reason a real green shows its slopes at noon.
+  //
+  // Only the difference from flat ground is applied, so level turf is exactly
+  // the colour it was and nothing brightens toward the horizon; what shows is
+  // the SHAPE.
+  //
+  // STRONG ON FAIRWAYS, GENTLE ON GREENS -- both the owner's calls, from the
+  // first build. On tees and fairways (gain 1, up to 28% either way) the owner
+  // liked it and asked to keep it. On the green it ran at 4.5x with the
+  // exaggerated shading normal and looked like a graphical bug: because it
+  // depends on where you stand, whole regions of the green changed tone as the
+  // camera moved. The green now takes about a quarter of that and the fringe
+  // less, clamped to 10% either way: a hint of which way the green tips, not a
+  // light show.
+  if(cueSheen>.001&&kind>=1.&&kind<=4.){
+   vec3 toEye=normalize(cameraPosition-groundPoint);
+   float onTurf=1.-clamp(dot(gs4,toEye),0.,1.),onFlat=1.-clamp(toEye.y,0.,1.);
+   float sheen=pow(onTurf,4.)-pow(onFlat,4.);
+   bool putting=kind>=3.;
+   turf*=clamp(1.+sheen*(kind==4.?1.2:putting?.5:1.)*cueSheen,putting?.9:.72,putting?1.1:1.3);
   }
   // SLOPE DRIES OUT, AND THAT IS A COLOUR, NOT A BRIGHTNESS.
   //
@@ -591,28 +606,28 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
    // is not, so one curve either does nothing on a fairway or saturates the
    // rough into a single flat tone. Two curves put both in their own middle.
    float dry=smoothstep(kind==0.?.07:.015,kind==0.?.30:.10,slope);
-   // Relative to whatever the biome's turf already is, so a links course goes
-   // further into its own fescue and a desert course into its own sandstone
-   // rather than everything converging on one straw colour.
-   // STRENGTH, MEASURED RATHER THAN GUESSED. The first version moved a fairway
-   // pixel by a mean of 1.8 of 255 in blue -- 0.7%, invisible, and reported as
-   // such. This moves it by 15 to 20, about ten times as far, which is where a
-   // hue shift starts to read against a toon ramp.
+   // DRYING TAKES OUT BLUE: (1.16, 1.00, 0.50), which on green grass reads as
+   // turf burning off. But ONLY AS FAR AS THE TURF IS GREEN. Applied to turf
+   // that is already straw -- desert scrub, links fescue, a sandy bank -- the
+   // same step pushed it toward orange (desert rough at full dryness went to
+   // 215, 153, 52), and the banks and dunes of those courses came out banded in
+   // saturated gold, which is what looked wrong there. Grass that is already
+   // dry has nowhere left to go. How green a colour is -- its green channel over
+   // its red and blue, relative to its brightness -- is how much it has to lose:
+   // a fairway all of it, a Pacific Northwest rough about half, links and
+   // desert rough none.
    //
-   // Blue carries it. Grass drying loses blue first and gains a little red; the
-   // green channel barely moves, which is why holding it at 1.0 keeps the turf
-   // recognisably turf instead of turning it brown. Checked across biomes at
-   // full dryness: pnw fairway 83,134,55 goes to 96,134,28 and links rough
-   // 168,157,101 to 195,157,51, which is fescue rather than damage.
+   // Rejected on the way: mixing toward a straw colour at the turf's own
+   // brightness instead. It fixed the desert and washed a sloping fairway out
+   // to a pale grey smear, and turned hillside rough khaki. Irrigated turf on a
+   // bank should yellow a little, not bleach.
+   float lum=dot(turf,vec3(.3,.59,.11));
+   float green=clamp((turf.g-max(turf.r,turf.b))/max(lum,1e-3)*2.5,0.,1.);
    const vec3 parched=vec3(1.16,1.,.50);
    // Irrigation, in effect. A green is watered to within an inch of its life and
-   // a fairway most of the way; rough gets whatever falls on it.
-   // Irrigation, in effect. A green is watered to within an inch of its life and
-   // a fringe most of the way; fairway and rough take what falls on them. The
-   // fairway used to be held at .55 as well, which halved an effect that was
-   // already too small to see.
+   // a fringe most of the way; fairway and rough take what falls on them.
    float dryGain=kind==4.?.25:kind==3.?.5:1.;
-   turf=mix(turf,turf*parched,dry*dryGain*cueSlope);
+   turf=mix(turf,turf*parched,dry*dryGain*green*cueSlope);
   }
  }
  // PATCHES (U3 in TODO). A real course is never one colour: the rough runs in
@@ -662,5 +677,5 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v25';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v28';return m;
 }

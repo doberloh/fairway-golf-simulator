@@ -232,36 +232,37 @@ export function tierOf(name) {
  return TIERS[name] || TIERS.medium;
 }
 
-// HOW THE GROUND SHOWS ITS SHAPE. Three cues, each switchable, because they are
-// taste as much as technique: one player wants the course to look like a
-// photograph and another wants to read every roll from the tee.
+// HOW THE GROUND SHOWS ITS SHAPE. Switches, because they are taste as much as
+// technique: one player wants the course to look like a photograph and another
+// wants to read every roll from the tee.
 //
 // They are settings rather than tiers because none of them costs anything worth
 // measuring -- they are arithmetic on values the shader already has. Nobody
 // should have to drop to Low to turn a look off.
 //
-// `contours` defaults OFF. The other two are how the ground has looked since
-// they landed; banding the whole course at a fixed height interval is a
-// deliberate, and deliberately artificial, choice.
-export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stripes: true};
+// `contours` defaults OFF: banding the whole course at a fixed height interval
+// is a deliberate, and deliberately artificial, choice. `sheen` is the grass
+// sheen (ground.js): lighter where mown turf tips away from you, darker where
+// it tips toward you, which is how a real green shows its slopes at any hour.
+export const GROUND_CUES = {relief: true, slopeTint: true, contours: false, stripes: true, sheen: true};
 export const LOOKS = {patches: 60, haze: 50, wind: 100, shade: 60};
 
-// GREEN DEFINITION. A green is the flattest thing on the course by design, and
-// every shading cue is proportional to slope, so the one surface a player has to
-// read has the least to read from -- measured, a green's shading spans .129 of
-// brightness against the .240 ordinary terrain gets.
+// THE GREEN. A green is the flattest thing on the course by design, so every
+// cue that works from slope has the least to work with exactly where a player
+// most needs it. Two settings, where there were five:
 //
-// The slider raises two things together because they are one perceptual thing:
-// how far the shading NORMAL is tilted from vertical, and how much the mow bands
-// bend to follow the surface. 70 is the setting chosen from the comparison, and
-// the mapping puts it exactly on the numbers that were judged there.
+//   definition  how far the green's SHADING normal is tilted beyond the real
+//               one (never the geometry -- the ball rolls on the true surface),
+//               which feeds the raking light and the grass sheen, and how far
+//               the mowing bands bend to follow the surface.
+//   bands       how strong the mowing bands are on the green.
 //
-// `bands` is separate because it is taste rather than legibility: softening the
-// mowing bands measurably helps the shape read -- a strong regular pattern is
-// the first thing the eye locks onto -- but fainter bands are a different look.
-// Owner's settings, chosen on screen rather than from the measurements: the
-// numbers below are what a person picked while looking at a green, and they win.
-export const GREEN_READ = {definition: 35, bands: 10, sun: 20, slopeShade: 70, grain: 0};
+// REMOVED on 29 September, with their reasons measured (RESEARCH.md, *Reading
+// the ground, again*): "sunlight on contours" moved a green by 0.2 of 255 at
+// noon -- nothing; "band grain" by 0.9; and "slope darkening" darkened by
+// steepness whichever way the ground faced, which reads as dirty patches rather
+// than shape. Their keys are simply dropped from a saved record.
+export const GREEN_READ = {definition: 50, bands: 40};
 // ONE mapping from slider to uniform, so the panel, the renderer and any dev
 // switch cannot drift apart. At definition 70 this is lift 3.2 and bend 3.5.
 export function greenCues(g) {
@@ -270,20 +271,6 @@ export function greenCues(g) {
   greenLift: d * 4.571,
   greenBend: 1 + d * 3.571,
   greenBandSoft: clampPct(g?.greenBands, GREEN_READ.bands) / 100,
-  // THE ONE THAT REACHES THE LIGHT. Everything else tints the grass; this tilts
-  // the normal the sun and sky actually shade with, which is measured at 4.2x
-  // the variation in sunlight across a green. Same 0-100 slider, same ceiling.
-  greenSun: clampPct(g?.greenSun, GREEN_READ.sun) / 100 * 4.571,
-  // Both measured as no help on this generator's greens, kept on sliders rather
-  // than deleted so they can be judged on screen. Default 0: nothing changes
-  // unless they are moved.
-  // HALF THE SLIDER IS WHAT USED TO BE ALL OF IT. The owner wanted the old full
-  // strength to sit at 50 so there is room to push past it, so the range runs to
-  // twice what it did. The shader mixes with this, and a factor above one simply
-  // carries the same darkening further -- at 2.0 a steep patch reaches about 40%
-  // down instead of 20%.
-  greenSlopeShade: clampPct(g?.greenSlopeShade, GREEN_READ.slopeShade) / 100 * 2,
-  greenGrain: clampPct(g?.greenGrain, GREEN_READ.grain) / 100,
  };
 }
 const clampPct = (v, fallback) =>
@@ -298,7 +285,7 @@ const bool = (v, fallback) => typeof v === 'boolean' ? v : fallback;
 // So the green settings carry a generation. Raise it when the chosen defaults
 // change and every saved record adopts them ONCE; anything the player sets
 // afterwards sticks, because their record is saved at the current generation.
-export const GREEN_READ_GEN = 3;
+export const GREEN_READ_GEN = 4;
 const greenValue = (g, key, fallback) =>
  (g?.greenReadGen ?? 0) >= GREEN_READ_GEN ? clampPct(g?.[key], fallback) : fallback;
 const clean = g => ({
@@ -309,13 +296,11 @@ const clean = g => ({
  slopeTint: bool(g?.slopeTint, GROUND_CUES.slopeTint),
  contours: bool(g?.contours, GROUND_CUES.contours),
  stripes: bool(g?.stripes, GROUND_CUES.stripes),
+ sheen: bool(g?.sheen, GROUND_CUES.sheen),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
- greenSun: greenValue(g, 'greenSun', GREEN_READ.sun),
- greenSlopeShade: greenValue(g, 'greenSlopeShade', GREEN_READ.slopeShade),
- greenGrain: greenValue(g, 'greenGrain', GREEN_READ.grain),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every
  // tier the tier allows them. Defaults are the settings the before/after report
  // was judged at.

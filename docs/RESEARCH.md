@@ -781,7 +781,12 @@ clamps it:
 At 80° it is inherently small: with the sun overhead, tilting a surface barely
 changes how much light it catches. That is physics, not a shortfall.
 
-### What shipped
+### What shipped (superseded 30 September)
+
+**Three of these five were removed on 30 September** -- measured at noon they
+barely moved a green, and the owner found the set made greens look unreal. See
+*Reading the ground, again*. What follows is the record of what was built and
+why.
 
 Five graphics settings rather than two, because the owner asked to tune them and
 set the defaults:
@@ -4836,3 +4841,144 @@ about 1 ms of processor time on Ultra. Ultra at 8.4-8.7 ms is now just over a
 evening were unusable -- High at 21 ms with nothing of the branch's changed --
 with Chrome Remote Desktop and a busy browser on the machine; they are not in
 the table. The baseline in `bench/profile-baseline.json` was not re-saved.
+
+## Reading the ground, again (30 September)
+
+Branch `ground-reading`. The owner's brief: many of the *Reading the ground*
+settings do nothing; ground shading and slope tinting are liked but look odd on
+desert and links; greens look flat even at the highest settings and the green
+settings make them look unreal. Free rein over the settings; nothing about how
+the course plays may change; the Ultra looks (patches, shade under trees) stay.
+
+### What each setting actually did
+
+Measured by `bench/shots/read-cues.mjs` (scratch): one setting changed at a
+time through the real Graphics panel, High, 12:00, wind sway off so nothing
+else moves, REPORT1; the change is the mean brightness shift over the ground
+part of the frame, out of 255. A "nothing changed" control reads 0.00 on the
+green view, so every figure below is the setting and not noise. A first run
+read everything as zero because it read the canvas back after the frame had
+been presented -- the pixels come back blank -- and was thrown away.
+
+On a green, standing 12 m from the pin (Pacific Northwest; Links and Desert
+within a few tenths):
+
+| setting | before | after |
+| --- | --- | --- |
+| Contour lines on | 16.4 | 13.5 |
+| Ground shading off | 2.9 | 2.1 |
+| Green definition 0 / 100 | 0.4 / 0.8 | 4.5 / 5.3 |
+| Mowing band strength 100 | 3.3 | 4.9 (as *Green mowing bands*) |
+| Mowing stripes off | 1.2 | 5.7 |
+| Sunlight on contours 0 / 100 | 0.04 / 0.15 | removed |
+| Slope darkening 0 / 100 | 1.9 / 0.9 | removed |
+| Band grain 100 | 0.9 | removed |
+| Grass sheen off | -- | 4.4 (new) |
+
+Sunlight on contours did nothing at noon for the reason already written above:
+with the sun high, tilting a surface barely changes the light it catches.
+Green definition barely moved anything because the only thing it fed that
+still survived was the raking-light term. Slope darkening was the one green
+cue that did something, and what it did was darken every green by about 8%
+fairly evenly -- which read as dirtier turf, not shape.
+
+### Why desert and links looked odd: slope tinting
+
+Toggling each setting over the land (30 m up) showed it plainly: with slope
+tinting on, the banks and dunes of Desert and Links were banded in saturated
+gold and orange, and the semi-rough strip beside a sloping fairway went lime.
+The tint multiplied the turf by (1.16, 1.00, 0.50) -- take out half the blue,
+which on green grass reads as drying -- and did it to turf that was already
+straw. The earlier write-up had measured the result and called it fescue:
+desert rough at full dryness went to 215, 153, 52, which is orange.
+
+**Fixed by drying only as far as the turf is green.** The same multiply, scaled
+by how green the colour is (its green channel over its red and blue, relative
+to its brightness, times 2.5, clamped): a fairway gets all of it, Pacific
+Northwest rough (82, 98, 56) about half, Links and Desert rough nothing, since
+dry grass has nowhere left to go.
+
+**Rejected, twice, on the way:**
+1. Mixing toward a straw colour at the turf's own brightness (`lum x (1.17,
+   1.05, .74)`). It fixed the dunes and turned steep rough on a Pacific
+   Northwest hillside grey-khaki and the desert grey -- odd in a new way.
+2. The same with the greenness gate and a warmer straw (`1.3, 1.12, .62`). The
+   rough was fine, but a sloping FAIRWAY washed out to a pale grey smear where
+   it fell toward a pond: irrigated turf on a bank should yellow a little, not
+   bleach. That is what sent it back to the original multiply.
+
+### Ground shading comes from the sun's side
+
+The raking light that makes a fairway read at noon was lit from a fixed
+compass bearing, (-0.6, -0.5), whatever the hour -- for much of the day a
+second light source arguing with the cast shadows, plainest on bare dunes. It
+now takes its bearing from the sun's (`sunDir.xz`, already refreshed as the
+clock moves), still at a fixed low angle so it reads at midday; with the sun
+within a few degrees of overhead the bearing eases back to the fixed one
+rather than swinging.
+
+### Greens: how flat they really are
+
+`bench/shots/green-shape.mjs` (scratch) samples the slope over the putting
+surface of five greens from the world's own `height` and `surface`:
+
+| Green slope & difficulty | overall tilt | variation about it | steepest |
+| --- | --- | --- | --- |
+| 0 | 0% | 0% | 0% |
+| **35 (default)** | **0.5-1.4%** | **0.5-0.7%** | 1.4-3.3% |
+| 70 | 1.2-3.3% | 1.3-1.8% | 3.4-8.0% |
+| 100 | 2.1-5.9% | 2.3-3.3% | 6.0-14.4% |
+
+At the default a green is very nearly a tilted plane: the shape a player reads
+-- the variation about the tilt -- is about half a percent. No shading can show
+contour that is not there, only exaggerate what is; raising *Green slope &
+difficulty* in the studio is the way to have more of it, and that changes how
+the course plays, which is the owner's call. For comparison, real putting
+surfaces are commonly built at 1-3% with hole locations kept under about 3%
+(NOT re-sourced in this pass; a figure to check before it is relied on).
+
+### What the green gets now
+
+- **Grass sheen** (new switch, on). Mown grass seen at a low angle is lighter
+  than grass seen from above, and a player sees a green at a low angle -- about
+  8-10 degrees from 10-12 m at eye height. At that angle a tilt of a degree or
+  two changes the angle you see the turf at by a large fraction, so turf tipped
+  away from you reads lighter and toward you darker, at any hour and with the
+  sun anywhere. Implemented as `(1 - N.V)^4` against the same for flat ground,
+  so level turf is untouched and nothing brightens toward the horizon. Mown
+  turf only. On a green it uses the tilted shading normal, so *Green
+  definition* drives it. **Strengths, after the owner saw it:** gain 1 on
+  fairway and tee, clamped to 0.72-1.30 -- the owner liked what it did to
+  fairways and asked to keep it; 1.2 on the green and 0.5 on the fringe,
+  clamped to 0.90-1.10. The first build ran the green at 4.5 (after 2.2 had
+  looked too faint on a still frame) with the fairway's clamp, and in play it
+  looked like a graphical bug: the sheen depends on where you stand, so whole
+  regions of a green changed tone as the camera moved. A still screenshot
+  cannot show that, which is why the first tuning got it wrong.
+- **The clean-up lap.** A green is cut in straight passes and then once round
+  its edge, one mower's width, the other way from the passes it crosses; a band
+  of different tone runs round every real green out to the collar. Drawn from
+  0.65 m inside the edge to the edge (a greens mower cuts roughly 0.55-0.65 m;
+  from memory, not re-sourced), anti-aliased and faded with distance, and part
+  of the mowing pattern, so it goes with the stripes switch. The first cut ran
+  from 0.95 to 0.4 m in and left a strip of plain green between the lap and the
+  fringe, which the owner spotted. It traces the outline, and because it
+  follows the ground it shows the edge rising and falling.
+- **A fixed 7% darker tone.** Removing slope darkening left greens visibly
+  paler than they had been; the tone is kept without the blotches.
+- **Defaults** (`GREEN_READ_GEN` 4, so saved records adopt them once): green
+  definition 50, green mowing bands 40. The bands were at 10 because they
+  competed with slope darkening's shading; with the sheen doing that job they
+  come back to where a green looks mown.
+
+**What this does not do, stated plainly.** At the default difficulty, from a
+standing view, a green still looks gentle, because it is: half a percent of
+shape. The sheen makes the tilt and the larger rolls visible and changes as you
+walk round, which is the cue a real green gives; it does not invent breaks,
+and should not. The TODO section *Greens read better if the art style bends
+for greens only* keeps the further options, with its own caveat about chasing
+the last of it.
+
+All shading: `surface()`, the physics and the generator are untouched; the
+biome fingerprints are unchanged and no version bump was owed. No outside
+sources were consulted for this pass.

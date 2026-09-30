@@ -2844,25 +2844,21 @@ function renderPanel(name,content){
   <label class="field">Frame rate cap<select id="gfxFrameCap">${FRAME_CAPS.map(f=>`<option value="${f}">${f?f+' fps':'Follow the display'}</option>`).join('')}</select></label>
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
   <h3>Reading the ground</h3>
-  <p>Three ways of showing the shape of the land that do not depend on where the sun is — a cast shadow only tells you anything at a low one. None of them costs a measurable frame, so they are taste rather than performance.</p>
+  <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
   <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
-  <p class="note">A raking light on a fixed bearing, plus a lift on crowns and a shade in hollows worked out when the course is built. This is what makes a fairway read as a surface rather than a sheet.</p>
+  <p class="note">Slopes facing the sun lift a little and slopes facing away darken, as if the sun were always low, plus a lift on crowns and a shade in hollows worked out when the course is built. It comes from the same side as the real shadows, so the two agree. This is what makes a fairway read as a surface rather than a sheet at noon.</p>
   <label class="check"><input id="gfxSlope" type="checkbox" ${graphics.slopeTint?'checked':''}> Slope tinting</label>
-  <p class="note">Slopes shed water and burn off; hollows hold it and stay lush. The only one of the three that works in colour rather than brightness, so it reads where the others are competing with the sun.</p>
+  <p class="note">Slopes shed water and burn off toward straw; hollows hold it and stay lush. Works in colour rather than brightness, so it reads where the others are competing with the sun. Turf that is already dry, on a desert or links course, has little left to lose and barely changes.</p>
+  <label class="check"><input id="gfxSheen" type="checkbox" ${graphics.sheen?'checked':''}> Grass sheen</label>
+  <p class="note">Mown grass looked at from a low angle is lighter than grass looked down on, so turf tipping away from you reads lighter and turf tipping toward you darker. From a player's eye a gentle slope changes that angle a lot, which is how a real green shows its breaks at any hour. Strongest on fairways; on greens only a gentle hint of which way the green tips.</p>
   <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
-  <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible of the three by a distance, because it turns a slope into a spacing you can count.</p>
+  <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible thing here by a distance, because it turns a slope into a spacing you can count.</p>
   <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>
-  <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground.</p>
+  <p class="note">Alternating cut bands that bend over a roll and change contrast with the slope, the way real ones do because the mower follows the ground, and the clean-up lap round the edge of each green.</p>
   ${slider('gfxGreenDef','Green definition',graphics.greenDefinition,0,100,'%',5)}
-  <p class="note">A green is the flattest ground on the course, and every cue above is proportional to slope &mdash; so the one surface you actually have to read gets about half the shading the ground around it gets. This tilts the shading further from flat and bends the mowing bands to follow the surface, the way a contour line does. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did. At 0 a green looks the way it did before this existed.</p>
-  ${slider('gfxGreenBands','Mowing band strength',graphics.greenBands,0,100,'%',5)}
-  <p class="note">Bands on greens only. Softening them makes the shape easier to read, because a strong regular pattern is the first thing your eye picks up and it competes with the shading underneath. Full strength is the mown look; lower is the legible one.</p>
-  ${slider('gfxGreenSun','Sunlight on contours',graphics.greenSun,0,100,'%',5)}
-  <p class="note">Follows the real sun: it shades each patch by how much more light it would catch if the green were as steep as the settings above make it look. So a green shows its shape differently at breakfast than at noon, the way a real one does — and least of all with the sun straight overhead, where tilting ground barely changes what it catches. The ground is untouched — the ball rolls where it always did.</p>
-  ${slider('gfxGreenSlopeShade','Slope darkening',graphics.greenSlopeShade,0,100,'%',5)}
-  <p class="note">Darkens by how steeply a green tilts, whichever way it faces. The shading above works off one fixed compass bearing, so ground running across that bearing gets little from it; this one has no bearing at all, which is why it carries more than any other single cue here by default. Half the slider is as far as the whole of it used to go.</p>
-  ${slider('gfxGreenGrain','Band grain',graphics.greenGrain,0,100,'%',5)}
-  <p class="note">Makes the mowing bands change tone with where you stand, the way real ones do — turf mown away from you looks light, toward you dark. It is the only cue here with a real-world mechanism behind it, and it is off by default anyway: it measured no better than bending the bands, and on screen it fights them.</p>
+  <p class="note">A green is the flattest ground on the course, so it has the least shape to show. This lets the shading and the sheen treat it as steeper than it is, and bends its mowing bands to follow the surface. It changes nothing about the surface itself: the ball rolls on exactly the ground it always did.</p>
+  ${slider('gfxGreenBands','Green mowing bands',graphics.greenBands,0,100,'%',5)}
+  <p class="note">How strong the light and dark bands are on greens. Stronger is the freshly mown look; softer leaves more of the shading to read.</p>
   <h3>The look of the course</h3>
   <p>Taste, not performance: none of these costs a measurable frame, and all four apply the moment you move them.</p>
   ${slider('gfxPatches','Turf colour variation',graphics.patches,0,100,'%',5)}
@@ -2898,7 +2894,7 @@ function renderPanel(name,content){
   };
   // A float write into uniforms the ground material already holds: no rebuild,
   // no recompile, so these take effect on the frame after the click.
-  for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxContours','contours'],['gfxStripes','stripes']])
+  for(const [id,key] of [['gfxRelief','relief'],['gfxSlope','slopeTint'],['gfxSheen','sheen'],['gfxContours','contours'],['gfxStripes','stripes']])
    $(id).onchange=()=>{graphics=saveGraphics({...graphics,[key]:$(id).checked});view.setGroundCues(graphics);};
   // Live uniform writes, same as the toggles above: no rebuild, no recompile.
   // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an
@@ -2908,7 +2904,6 @@ function renderPanel(name,content){
   // and it threw on EVERY input event while this handler quietly worked -- so
   // the slider moved, the number updated, and the console filled up.
   for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
-   ['gfxGreenSun','greenSun'],['gfxGreenSlopeShade','greenSlopeShade'],['gfxGreenGrain','greenGrain'],
    ['gfxPatches','patches'],['gfxShade','shade'],['gfxHaze','haze'],['gfxWind','wind']])
    $(id).oninput=e=>{
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
@@ -3464,7 +3459,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // camera; returns the pose it used.
   camera:(o={})=>{
    let x=o.x??0,z=o.z??0,yaw=(o.yaw??0)*Math.PI/180;
-   if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
+   // `fromPin`: that many metres from the pin, on the line back toward the tee
+   // turned `around` degrees about the pin, looking at it -- a green seen from
+   // wherever a putt is read, whatever shape the hole is.
+   if(o.fromPin!==undefined){const h=world.holes[o.hole??round.hole],pin=h.worldPin,tee=h.worldTee;
+    const a=Math.atan2(tee.x-pin.x,tee.z-pin.z)+(o.around??0)*Math.PI/180;
+    x=pin.x+Math.sin(a)*o.fromPin;z=pin.z+Math.cos(a)*o.fromPin;yaw=Math.atan2(pin.x-x,pin.z-z);}
+   else if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
     const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
     yaw=aim?Math.atan2(aim.x-x,aim.z-z):(o.look??0)*Math.PI/180;}
    const y=world.height(x,z)+(o.height??2);
@@ -3758,20 +3759,17 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   //   lab.greenRead(85)          a definition percentage
   //   lab.greenRead({greenDefinition:85,greenBands:40})
   greenRead:(v)=>{
-   const base={greenDefinition:0,greenBands:100,greenSun:0,greenSlopeShade:0,greenGrain:0};
+   const base={greenDefinition:0,greenBands:100};
    const P={off:base,
-    recommended:{...base,greenDefinition:52},
-    strong:{...base,greenDefinition:70,greenBands:60},
-    shipped:{...base,greenDefinition:70,greenBands:60,greenSun:60},
-    everything:{...base,greenDefinition:70,greenBands:60,greenSun:60,greenSlopeShade:50,greenGrain:60}};
+    recommended:{...base,greenDefinition:50,greenBands:40},
+    strong:{...base,greenDefinition:70,greenBands:60}};
    if(v!==undefined){
     const next=typeof v==='number'?{greenDefinition:v}
      :typeof v==='string'?(P[v]||P.strong):v;
     graphics=saveGraphics({...graphics,...next});
     view.setGroundCues(graphics);
     // Same convention as the panel: the readout is <id>Value.
-    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands],
-     ['gfxGreenSun',graphics.greenSun],['gfxGreenSlopeShade',graphics.greenSlopeShade],['gfxGreenGrain',graphics.greenGrain]]){
+    for(const [id,v] of [['gfxGreenDef',graphics.greenDefinition],['gfxGreenBands',graphics.greenBands]]){
      if($(id))$(id).value=v;
      if($(id+'Value'))$(id+'Value').textContent=v+'%';
     }
@@ -3781,10 +3779,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // come back correct while the uniform the GPU reads never moved.
    const live=view.terrain?.material?.userData?.cues;
    return {greenDefinition:graphics.greenDefinition,greenBands:graphics.greenBands,
-    greenSun:graphics.greenSun,greenSlopeShade:graphics.greenSlopeShade,greenGrain:graphics.greenGrain,
     wanted:greenCues(graphics),
-    onTheGpu:live?Object.fromEntries(['greenLift','greenBend','greenBandSoft','greenSun',
-     'greenSlopeShade','greenGrain','cueRelief'].map(k=>[k,live[k]?.value])):'no ground material'};
+    onTheGpu:live?Object.fromEntries(['greenLift','greenBend','greenBandSoft','cueRelief','cueSheen']
+     .map(k=>[k,live[k]?.value])):'no ground material'};
   },
   // WHAT IS BUILT, as opposed to what was drawn. `renderer.info` and the profile
   // probe count the triangles a frame DREW; this lists what there is to draw,

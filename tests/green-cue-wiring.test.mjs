@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {greenCues, GREEN_READ} from '../src/graphics.js';
+import {greenCues, GREEN_READ, GROUND_CUES, loadGraphics} from '../src/graphics.js';
 
 // A uniform can be declared, plumbed, exposed on a slider and reported back
 // correctly while NOTHING IN THE SHADER READS IT. That is not hypothetical:
@@ -12,22 +12,24 @@ import {greenCues, GREEN_READ} from '../src/graphics.js';
 
 const SRC = fs.readFileSync(new URL('../src/ground.js', import.meta.url), 'utf8');
 // Everything after the uniform declaration line is the shader body.
-const DECL = /uniform float [^;]*;/;
+const DECL = /uniform float cueRelief[^;]*;/;
 const body = SRC.slice(SRC.search(DECL) + SRC.match(DECL)[0].length);
 
-const CUES = ['greenLift', 'greenBend', 'greenBandSoft', 'greenSun', 'greenSlopeShade', 'greenGrain'];
+const GREEN = ['greenLift', 'greenBend', 'greenBandSoft'];
+// The switches in "Reading the ground" and "The look of the course".
+const CUES = ['cueRelief', 'cueSlope', 'cueContours', 'cueStripes', 'cueSheen', 'cuePatches', 'cueShade'];
 
-test('every green cue uniform is actually read by the shader', () => {
- for (const name of CUES) {
+test('every ground cue uniform is actually read by the shader', () => {
+ for (const name of [...GREEN, ...CUES]) {
   const uses = body.split(name).length - 1;
   assert.ok(uses >= 1,
-   `${name} is declared and plumbed but never read in the shader body -- the slider would do nothing`);
+   `${name} is declared and plumbed but never read in the shader body -- the setting would do nothing`);
  }
 });
 
-test('every green cue uniform is declared, or the shader will not compile', () => {
+test('every ground cue uniform is declared, or the shader will not compile', () => {
  const decl = SRC.match(DECL)[0];
- for (const name of CUES)
+ for (const name of [...GREEN, ...CUES])
   assert.ok(decl.includes(name), `${name} is used but not declared in ${decl}`);
 });
 
@@ -35,37 +37,41 @@ test('greenCues hands back exactly the uniforms the shader declares', () => {
  // A name that drifts on one side and not the other is silent: the renderer
  // writes a key nothing reads, and the uniform keeps its default forever.
  const produced = Object.keys(greenCues({}));
- assert.deepEqual(produced.slice().sort(), CUES.slice().sort(),
+ assert.deepEqual(produced.slice().sort(), GREEN.slice().sort(),
   `greenCues produces ${produced.join(', ')}`);
 });
 
-test('the shipped defaults are the ones the owner set on screen', () => {
- // These were picked by eye on a real green, not derived from the measurements,
- // and that is the right order of authority. Pinned so a later retune is a
- // deliberate act rather than a drift.
- assert.deepEqual(GREEN_READ,
-  {definition: 35, bands: 10, sun: 20, slopeShade: 70, grain: 0});
+test('the three removed green settings are gone from the shader and the saved record', () => {
+ // Sunlight on contours, slope darkening and band grain were removed on 29
+ // September because measured at noon they moved a green by 0.2, 1.9 and 0.9 of
+ // 255 -- nothing, or an even darkening that read as dirt. A saved record from
+ // before still carries their keys; they must not survive a load.
+ for (const gone of ['greenSun', 'greenSlopeShade', 'greenGrain'])
+  assert.ok(!SRC.includes(gone), `${gone} is still in ground.js`);
+ const g = loadGraphics();
+ for (const gone of ['greenSun', 'greenSlopeShade', 'greenGrain'])
+  assert.ok(!(gone in g), `${gone} survived into a loaded graphics record`);
+});
+
+test('the shipped defaults', () => {
+ assert.deepEqual(GREEN_READ, {definition: 50, bands: 40});
+ assert.equal(GROUND_CUES.sheen, true, 'grass sheen is on by default');
+ assert.equal(GROUND_CUES.contours, false, 'contour lines stay an opt-in map');
  const u = greenCues({});
- assert.ok(u.greenLift > 1 && u.greenLift < 2, 'definition sits a third of the way up');
- assert.ok(u.greenBandSoft < .15, 'bands are nearly off');
- assert.ok(u.greenSun > 0 && u.greenSun < 1, 'the sunlight cue is present but low');
- assert.ok(u.greenSlopeShade > 1, 'slope darkening is past what used to be full strength');
- assert.equal(u.greenGrain, 0, 'grain is off');
+ assert.ok(u.greenLift > 2 && u.greenLift < 2.5, 'definition sits halfway up');
+ assert.ok(Math.abs(u.greenBandSoft - .4) < 1e-9, 'bands at 40%');
 });
 
-test('half the slope slider is what used to be all of it', () => {
- // The owner asked for the old full strength to sit at 50, leaving room above
- // it. Anything else here means a saved setting quietly changes meaning.
- assert.equal(greenCues({greenSlopeShade: 50}).greenSlopeShade, 1);
- assert.equal(greenCues({greenSlopeShade: 100}).greenSlopeShade, 2);
- assert.equal(greenCues({greenSlopeShade: 0}).greenSlopeShade, 0);
-});
-
-test('every cue can be turned fully off, and that is the old look', () => {
- const off = greenCues({greenDefinition: 0, greenBands: 100, greenSun: 0,
-  greenSlopeShade: 0, greenGrain: 0});
+test('every cue can be turned fully off, and that is the plain green', () => {
+ const off = greenCues({greenDefinition: 0, greenBands: 100});
  assert.equal(off.greenLift, 0);
  assert.equal(off.greenBend, 1);
  assert.equal(off.greenBandSoft, 1);
- assert.equal(off.greenSun, 0);
+});
+
+test('slope tinting only dries turf that is green', () => {
+ // The fix for desert and links: drying is scaled by how green the turf is, so
+ // turf that is already straw has nothing to lose and does not go orange.
+ assert.ok(/float green=clamp\(\(turf\.g-max\(turf\.r,turf\.b\)\)/.test(body), 'greenness gate missing');
+ assert.ok(/dry\*dryGain\*green\*cueSlope/.test(body), 'slope tint is not scaled by greenness');
 });

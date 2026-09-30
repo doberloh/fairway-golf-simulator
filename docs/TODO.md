@@ -440,17 +440,18 @@ Asked for on 2026-09-24, in the run-up to letting other people play it.
 
 ## Greens read better if the art style bends for greens only
 
-Asked for on 2026-09-24, after the second retune. Five sliders got a green from
-"flat from every angle" to readable-ish, and they are now near the end of what
-they can do, because every one of them is fighting the same two limits: the
-lighting is quantised into four steps, and every cue except slope darkening has
-a direction in it. These entries break one or other of those, on the putting
-surface and nowhere else.
+Asked for on 2026-09-24, after the second retune. **Updated 30 September:**
+the five green sliders are now two (definition, bands) plus a course-wide grass
+sheen, which answers the midday problem from the viewer's side rather than the
+sun's -- see RESEARCH.md *Reading the ground, again*. These entries remain the
+further options, each breaking one of the two limits a green still has: the
+lighting is quantised into four steps, and at the default difficulty a green
+has only about half a percent of shape to show.
 
 **None of this touches the ground.** No routing, no hazards, no planting, no
 collision, no `surface()` -- so **no `GENERATOR_VERSION` bump** for any of it,
 and the biome fingerprints must come back unchanged. They are all graphics
-settings, in `GREEN_READ` beside the other five, which DOES mean a
+settings, in `GREEN_READ` beside the other two, which DOES mean a
 `SCHEMA_VERSION` bump and a `GREEN_READ_GEN` bump per shipped batch, or a saved
 record beats the new default and the change reaches nobody. Every one of them
 also needs `customProgramCacheKey` in `ground.js` bumped, or the browser serves
@@ -939,8 +940,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
 
-- [ ] **Reading undulation needs more than a cast shadow.** Terrain self-shadowing landed and helps at a low sun, but at midday the ground is still close to flat-looking. Candidates, cheapest first: slope-tinted turf in the ground shader; mowing stripes that bend over rolls; curvature darkening baked into the ground data texture; ambient occlusion on more than just ultra. None built -- needs a decision on which.
-
 - [ ] **Floodlight shadows: blocked on a texture unit, not on frame time.** The plan worked and the numbers were fine -- six casters at 512 square measured 8.3 ms floodlit against 8.4 in daylight, with the casters fixed at build time and `orderPoles` handing those lamps to the hole being played. Then it did not render: every shadow-casting spot light costs a texture sampler in every lit fragment shader, WebGL guarantees 16, and the cascades, the toon gradient, the environment map and the ground atlases already spend them. The program failed to link and the GROUND DISAPPEARED. **I shipped that and the user caught it, not me** -- the frame-time measurements said nothing, and the only signal was a shader link error in a console I had not re-read after the change. Walking the count up: one caster links, two does not. `floodShadows` is 0 on every tier. To do this properly a sampler has to be freed first -- a cascade fewer on high, or packed ground atlases. `orderPoles` is kept: it still decides which poles are lit when a course has more poles than lamps.
 
 - [ ] **Save/import/export, what is left.** Neither loses work.
@@ -1233,6 +1232,21 @@ record of what was ruled out and why, which is worth more than a short file.
   a measurable frame, and all live without a rebuild.
 
 ## Reading a green without the overlays
+
+- [x] **Reading the ground, rebuilt (30 September).** Branch `ground-reading`.
+  Measured each setting first: at noon *Sunlight on contours* moved a green by
+  0.2 of 255, *Band grain* 0.9, *Green definition* under 1, and *Slope
+  darkening* was an even 8% darkening that read as dirt -- removed those three.
+  Added **grass sheen** (lighter where mown turf tips away from you, darker
+  toward you -- strong on fairways, which the owner liked, and only a gentle
+  hint on greens, where full strength looked like a graphical bug) and the
+  mower's **clean-up lap** round every green, out to the fringe. **Ground shading** now comes from the
+  sun's side instead of a fixed bearing. **Slope tinting** dries turf only as
+  far as it is green, which ends the gold and orange banding on desert and
+  links. Every remaining green setting now moves a green by 4-6 of 255. Also
+  closes *Reading undulation needs more than a cast shadow* (Priority 3): the
+  sheen is the midday cue it asked for. RESEARCH.md *Reading the ground,
+  again*.
 
 The overnight brief was "greens look flat from every angle"; what it
 turned into was five graphics settings and three faults found by the

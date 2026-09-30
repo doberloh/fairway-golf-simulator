@@ -19,10 +19,10 @@ test('70 still means what it meant in the comparison', () => {
  assert.ok(Math.abs(u.greenBandSoft - .6) < .001, `bands ${u.greenBandSoft}`);
 });
 
-test('zero is exactly the look greens had before this existed', () => {
- // The neutral values: no extra tilt on the shading normal, bands bending by
- // their original amount, bands at full contrast. Anything else here would mean
- // a player who turns it off does not get the old game back.
+test('zero definition and full bands are the neutral values', () => {
+ // No extra tilt on the shading normal, bands bending by their original amount,
+ // bands at full contrast. (The grass sheen and the green's base tone are
+ // separate from these two sliders; the sheen has its own switch.)
  const u = greenCues({greenDefinition: 0, greenBands: 100});
  assert.equal(u.greenLift, 0);
  assert.equal(u.greenBend, 1);
