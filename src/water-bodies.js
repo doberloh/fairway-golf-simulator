@@ -38,8 +38,31 @@ export function restoreAfterProbe(hidden = []) {
 // Metres per second. Slow on purpose -- the visible speed of a stream surface
 // is mostly its ripples, and pushing the whole field faster than this reads as
 // a texture being dragged rather than as water moving.
-export const STREAM_FLOW = .25;
+// Halved from 0.25 after the owner found rivers and creeks far too busy.
+export const STREAM_FLOW = .12;
 
+// WHICH WAY IS DOWNSTREAM, AND HOW FAR ALONG, AT EVERY STATION. The water used
+// to take one direction for the whole channel, first station to last, so where
+// a river bent back on itself the ripples and the foam kept going the way it
+// started -- across the bank, or upstream (the owner). Each station now carries
+// its own downstream tangent (from its neighbours) and its distance along the
+// channel, and the shader works in those. Downstream is toward the lower end:
+// the station order is not promised to run with the water.
+export function streamFrame(path) {
+ const n = path?.length ?? 0;
+ if (n < 2) return [];
+ const down = (path[n - 1].level ?? 0) <= (path[0].level ?? 0) ? 1 : -1;
+ const order = down > 0 ? path.map((_, i) => i) : path.map((_, i) => n - 1 - i);
+ const out = new Array(n);
+ let s = 0;
+ for (let k = 0; k < n; k++) {
+  const i = order[k], a = path[order[Math.max(0, k - 1)]], b = path[order[Math.min(n - 1, k + 1)]];
+  if (k) { const q = path[order[k - 1]]; s += Math.hypot(path[i].x - q.x, path[i].z - q.z); }
+  let tx = b.x - a.x, tz = b.z - a.z; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+  out[i] = {tx, tz, s};
+ }
+ return out;
+}
 export function flowFor(body) {
  const path = body?.stream;
  if (!Array.isArray(path) || path.length < 2) return {x: 0, y: 0};

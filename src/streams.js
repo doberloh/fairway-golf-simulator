@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {streamFrame,STREAM_FLOW} from './water-bodies.js';
 // The bank colour is the biome's, like everything else about a biome. Still
 // exported from here because the ground shader has always asked this module
 // for it.
@@ -688,13 +689,17 @@ export function generateStreams(s,holes,halfX,halfZ,height,random,isSea=()=>fals
  return {streams,segments,at,carve,requested:specs.length};
 }
 export function addStreams(view){for(const stream of view.world.streams.streams){
- const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],indices=[];
+ const path=stream.points,level=path[Math.floor(path.length/2)].level,pos=[],shore=[],flow=[],chan=[],indices=[];
+ // Downstream direction and distance along the channel at every station, for
+ // the water's ripples and foam to follow the bends (streamFrame).
+ const frame=streamFrame(path);
  // Three vertices across each station: both banks plus a centre line. The centre
  // vertex is what lets the surface fade out at the waterline instead of ending
  // on a hard alpha step against the painted bed.
  for(let i=0;i<path.length;i++){const p=path[i],half=p.width*.5*(p.miter||1);
-  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));}
+  const f=frame[i]||{tx:0,tz:0,s:0};
+  for(const side of [-1,0,1]){pos.push(p.x+p.nx*half*side,-p.z-p.nz*half*side,p.level-level);shore.push(Math.abs(side));flow.push(f.tx*STREAM_FLOW,f.tz*STREAM_FLOW);chan.push(f.s,side*half);}
   if(i){const a=(i-1)*3;indices.push(a,a+3,a+1,a+1,a+3,a+4,a+1,a+4,a+2,a+2,a+4,a+5);}
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('shore',new T.Float32BufferAttribute(shore,1));g.setAttribute('flow',new T.Float32BufferAttribute(flow,2));g.setAttribute('chan',new T.Float32BufferAttribute(chan,2));g.setIndex(indices);g.computeVertexNormals();const center=path[Math.floor(path.length/2)];view.addWaterBody(g,level,center.depth,center,false,path);
 }}

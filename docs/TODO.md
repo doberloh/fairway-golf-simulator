@@ -860,7 +860,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
 
-- [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is now handled for channels by a per-vertex bank weight, but ponds, lakes and the ocean plane have no shore weight and so still end on a uniform alpha at their edge — giving them one needs shore distance in their geometry. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
+- [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is handled for channels by a per-vertex bank weight, and for the ocean since `water-edges` by a depth map of the terrain (the sea fades out over its last 35 cm); ponds and lakes still end on a uniform alpha at their edge, softened by their foam strip — a depth map per basin is the way to give them the same. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
 
 ## Priority 3: play and maintainability
 
@@ -1189,6 +1189,24 @@ record of what was ruled out and why, which is worth more than a short file.
   from the edge. The lapping runs at 30% of the water's own clock: at full
   speed it looked frantic (the owner). Approved by the owner after the slow-down.
   RESEARCH.md *Foam and sun sparks on the ponds*.
+
+- [x] **The sea's edge, and foam for every kind of water (30 September).**
+  Branch `water-edges`. The flicker where the ocean met the beach on Island and
+  Links was the flat 14 km sea cutting the terrain's 3 m triangles at a
+  shallow angle: a sawtooth waterline the depth buffer could not settle, so it
+  changed with every camera move. The sea's shader now reads the terrain's own
+  heights as a texture, knows its depth everywhere, and fades out over its last
+  35 cm -- no hard line left to flicker, and smooth where the triangles were
+  jagged. The same depth places the surf: a swash line that runs up quickly and
+  drains back slowly, foam left behind it, and a faint line of breakers
+  offshore. Lakes (which are large ponds and already had the pond foam) get a
+  wider, coarser and livelier strip; rivers get lacy foam along the banks
+  drifting downstream; creeks get white flecks carried by the current. Ponds
+  unchanged. No measurable frame cost. After the owner's first look: the sea's
+  foam slowed to 30% (as the ponds), rivers and creeks slowed by half with the
+  foam at the water's own speed, and their water and foam now follow each bend
+  of the channel instead of one direction for the whole river. RESEARCH.md
+  *The water's edge, by kind*.
 
 - [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
   streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
