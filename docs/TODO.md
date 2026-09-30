@@ -1173,8 +1173,8 @@ record of what was ruled out and why, which is worth more than a short file.
   fairway before the other. Cacti and agave do not move. Graphics preference
   `wind` scales all of it. Third version: the first moved the leaves apart from
   the trunk, the second bent trunks but still shivered leaves separately and
-  had no gust front; the owner rejected both. RESEARCH.md *How a tree moves in
-  the wind*.
+  had no gust front; the owner rejected both and approved the third.
+  RESEARCH.md *How a tree moves in the wind*.
 
 - [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
   owner from "the rough" to every surface: rough, semi, fairway and tee ground,
