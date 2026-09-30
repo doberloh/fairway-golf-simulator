@@ -2863,6 +2863,16 @@ function renderPanel(name,content){
   <p class="note">Darkens by how steeply a green tilts, whichever way it faces. The shading above works off one fixed compass bearing, so ground running across that bearing gets little from it; this one has no bearing at all, which is why it carries more than any other single cue here by default. Half the slider is as far as the whole of it used to go.</p>
   ${slider('gfxGreenGrain','Band grain',graphics.greenGrain,0,100,'%',5)}
   <p class="note">Makes the mowing bands change tone with where you stand, the way real ones do — turf mown away from you looks light, toward you dark. It is the only cue here with a real-world mechanism behind it, and it is off by default anyway: it measured no better than bending the bands, and on screen it fights them.</p>
+  <h3>The look of the course</h3>
+  <p>Taste, not performance: none of these costs a measurable frame, and all four apply the moment you move them.</p>
+  ${slider('gfxPatches','Turf colour variation',graphics.patches,0,100,'%',5)}
+  <p class="note">No real course is one colour. Drifts of lighter, darker, drier and lusher grass in the rough, worn and well-watered patches on a fairway, damp sand in a bunker, and only the faintest change of tone on a green, where anything more would get in the way of reading it.</p>
+  ${slider('gfxShade','Shade under trees and rocks',graphics.shade,0,100,'%',5)}
+  <p class="note">A soft darkening at the foot of every trunk and boulder, and deeper under a forest where the crowns overlap, so things look set down on the grass rather than pasted on it. Worked out once when the course is built, from where everything stands.</p>
+  ${slider('gfxHaze','Distance haze',graphics.haze,0,100,'%',5)}
+  <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
+  ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
+  <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -2874,7 +2884,7 @@ function renderPanel(name,content){
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',
    medium:'Renders exactly as Fairway always has.',
    high:'Soft shadows everywhere, drifting cloud shade, light shafts, a far horizon and thicker planting. Wants a discrete GPU.',
-   ultra:'Everything high does, plus bloom. Measured at the full frame budget of a 120 Hz display on an RTX 4090 — cap the frame rate if it struggles.',
+   ultra:'Everything high does, with sharper shadows reaching further, bloom, and a forest floor of ferns and fallen sticks round you under the trees. Measured at the full frame budget of a 120 Hz display on an RTX 4090 — cap the frame rate if it struggles.',
   }[graphics.quality];
   $('gfxQuality').value=graphics.quality;$('gfxFrameCap').value=String(graphics.frameCap);note();
   $('gfxQuality').onchange=()=>{
@@ -2898,7 +2908,8 @@ function renderPanel(name,content){
   // and it threw on EVERY input event while this handler quietly worked -- so
   // the slider moved, the number updated, and the console filled up.
   for(const [id,key] of [['gfxGreenDef','greenDefinition'],['gfxGreenBands','greenBands'],
-   ['gfxGreenSun','greenSun'],['gfxGreenSlopeShade','greenSlopeShade'],['gfxGreenGrain','greenGrain']])
+   ['gfxGreenSun','greenSun'],['gfxGreenSlopeShade','greenSlopeShade'],['gfxGreenGrain','greenGrain'],
+   ['gfxPatches','patches'],['gfxShade','shade'],['gfxHaze','haze'],['gfxWind','wind']])
    $(id).oninput=e=>{
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);
@@ -3446,6 +3457,21 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // than assuming. 'player' is down at the ball; 'overview' is the whole hole
   // and is much the heavier of the two.
   view:(mode)=>{if(mode)cameraMode(mode);return view?.config?.mode;},
+  // THE CAMERA, PUT EXACTLY SOMEWHERE -- so a before and an after are the same
+  // picture. {x, z, height (above the ground there), yaw, pitch} in world metres
+  // and degrees, or {hole, along, across, height, look: 'pin' | 'tee' | yaw} in
+  // that hole's own frame (along from the tee, across to the right). Free
+  // camera; returns the pose it used.
+  camera:(o={})=>{
+   let x=o.x??0,z=o.z??0,yaw=(o.yaw??0)*Math.PI/180;
+   if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
+    const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
+    yaw=aim?Math.atan2(aim.x-x,aim.z-z):(o.look??0)*Math.PI/180;}
+   const y=world.height(x,z)+(o.height??2);
+   const pitch=(o.pitch??-10)*Math.PI/180;
+   view.placeCamera({x,y,z},yaw,pitch);
+   return {x:+x.toFixed(1),y:+y.toFixed(1),z:+z.toFixed(1),yaw:+(yaw*180/Math.PI).toFixed(1),pitch:o.pitch??-10};
+  },
   // Straight to a hole's tee (0-based), for measuring from more than the first.
   hole:(n)=>{if(flight||round.endless||!world?.holes[n])return round.hole;round.hole=n;loadCourse();return round.hole;},
   // null on any field hands it back to the previous value.

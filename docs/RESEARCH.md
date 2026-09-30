@@ -4454,3 +4454,385 @@ loading 6.58/6.97 -> 5.79/5.81 s, the build 11.6/12.6 -> 10.0/10.1 s.
 **Left:** placing the ground cover asks `surface`, which needs the finished
 grid for `height` -- tens of megabytes per worker to send without shared
 memory, and shared memory is not available to a page opened from disk.
+
+## Distant shadows that came and went with the camera's heading (29 September)
+
+Reported by the owner from the course creator's free camera over a Redwood
+eighteen: distant shadows changed as the camera turned, worst looking down.
+
+**Cause, measured.** CSM gives each cascade's shadow camera a fixed depth range
+-- `lightFar`, 2 km from a point `lightMargin` sunward of the slice. For each
+cascade, the deepest corner of its slice of the view in its shadow camera's
+space (`bench/shots/csm-clip.mjs`, scratch; Redwood eighteen, High, 16:30, eight
+headings, from a tee and from 300 m up): the near and middle cascades always
+fitted, and the FAR cascade's slice ran 1,040 to 3,404 m past the 2 km, by an
+amount set by the heading relative to the sun. Everything in the overrun lies
+outside the shadow map and reads as lit. The 400 m sunward margin had the same
+shape of problem at the near end: a tree standing further sunward than that,
+off to the side of the slice, could not throw its shadow in, and at a low sun
+a tall tree's shadow runs further. Neither is from this week's shadow work --
+three's own split has the same 2 km.
+
+**Fix.** `GolfView.fitCascadeDepth`, every frame after `csm.update()`: each
+shadow camera's far plane is set to the deepest corner of its slice plus 200 m
+(ground below the corners, and a tree on it), never under 2 km; the sunward
+margin is 1 km (`CASCADE_SUNWARD`), the same reach the view cull keeps for
+off-screen casters. The constant shadow bias is in normalised depth, so it
+would grow with the range and lift shadows off the ground; it is scaled by
+2 km / far, which keeps it the same distance in metres as before. Remeasured:
+no cascade overruns at any heading (the far one now reaches 3.8-6.2 km). The
+bird's-eye view at 17:30 facing west now shades the distant forest the way the
+foreground is shaded; near the tee the shadows are unchanged apart from a few
+more long ones from trees now allowed to cast from further sunward.
+
+## The ground past the course edge (U7, 29 September)
+
+`src/landscape-edge.js`. Seen from the overview: the land around the course
+ran in streaks radiating from it, and a thin light rectangle marked where the
+course's ground met it.
+
+**The streaks were sliver triangles.** Every landscape ring carried every
+perimeter vertex (3 m apart at the course's edge) pushed outward, while the
+rings were 12 m to 4 km apart -- so far out each triangle was tens of metres
+along the ring and kilometres across it, about 70 to 1, and heights and normals
+sampled finely one way and coarsely the other shaded as streaks. Now the rings
+start 8 m apart and widen by 1.28 each step to 13 km, and each ring carries
+only as many vertices as keep its spacing along the ring near its step outward
+(at least 48); rings with different counts are stitched by walking both at
+once. Worst aspect among triangles over 50 m: 6.6 to 1. Vertices: ~6,600
+against ~20,000 before (Redwood nine); built in 19 ms.
+
+**The rectangle was two things.** Normals: each mesh computed them from its own
+triangles only, so they disagreed along the seam; `stitchSeam` gives both the
+average. And tone: the course's ground carries a baked relief value per vertex
+(`attachRelief` in ground.js) and the landscape had none, read as zero --
+wherever the perimeter sat on a crown, that was a light line. The landscape now
+takes the relief at the seam and fades it to nothing over the first 300 m.
+Remaining: the rectangle is still faintly readable from straight above, where
+the relief field ends; the ridges beyond it keep their creases, which are
+the ridge shape the ring lift draws on purpose.
+
+## Every surface in patches (U3, 29 September)
+
+`src/ground.js`, the block before the fine grain. The owner's brief: colour
+variation "tastefully for every surface, just like a real course has patches of
+different colors". From world position (two octaves of smooth value noise at
+the surface's own scale, plus a third, three times larger, for dry and lush
+drifts), so patches stay put as the camera moves. Full strength per surface,
+as a multiple of brightness either way, and the scale of a patch:
+
+| Surface | Brightness | Scale | Dry / lush drift |
+| --- | --- | --- | --- |
+| Rough | +-18% | 30 m | strongest |
+| Semi-rough | +-14% | 18 m | strong |
+| Fairway, and mown tee ground | +-13% | 13 m | moderate |
+| Fringe | +-8% | 8 m | light |
+| Green | +-4.5% | 5 m | none (tone only) |
+| Sand | +-11% | 9 m | damp patches instead |
+
+The Graphics panel's *Turf colour variation* scales all of it; 60% is the
+default the report was judged at, so a green varies about +-2.7%. Greens are
+kept faint on purpose: every green-reading cue works in brightness, and a
+patch at the scale of a break would compete with it. Dry drifts use the same
+parched multiplier the slope tint uses (blue shed, a little red gained), so
+they read as fescue rather than damage. Patches smaller than a few pixels are
+held back (`fwidth`), so nothing shimmers at distance. No new texture, no
+extra pass: a few noise lookups per ground fragment.
+
+## Distance fading into the sky (U4, 29 September)
+
+`src/mist.js` (the fog patch) and `updateDaylight` in `src/renderer.js`. Far
+hills were the same green as near ones, which flattens a landscape more than
+anything else. Every lit fragment is now drawn toward the horizon's colour by
+distance (1 - exp(-d / 1800 m)), and toward the sun's colour in the sun's own
+quarter (the view direction's dot with the sun, to the 6th power, at most
+55%). Strength from the new graphics preference `haze`: 50% by default,
+`AERIAL_MAX` .62 at 100%. Weather off leaves it on -- this is the air, not fog.
+
+**Thinner looking down.** The first version greyed the whole bird's-eye view,
+the ground straight below included: a camera 300 m up is 300-600 m from
+everything it sees. Haze lives in the low air and a steep sight line crosses
+little of it, so the effect falls to a fifth for sight lines steeper than
+about 30 degrees (`steep` = |dy| / distance, eased between .12 and .55).
+Sight lines near the horizon -- the far hills, from the tee or from the air --
+keep all of it.
+
+**Every tier.** The fog patch used to be registered only on tiers with mist
+(High, Ultra). It is now registered everywhere, with mist densities zero where
+the tier has none and the water field baked only where it has it, so Low and
+Medium get the haze without paying for mist.
+
+**Found on the way.** The overview showed U3's rough patches as camouflage --
+30 m patches at 2-5 m a pixel. The patches now fade out below ~25 pixels
+across rather than ~7, which keeps them at play and flyover heights and drops
+them from a kilometre up.
+
+## How a tree moves in the wind (U2, 29 September)
+
+`windMaterial` in `src/textures.js` (`crown`, `leaf` and `rooted` modes),
+`addModelSpecies` and `addSpecies` in `src/vegetation.js`, and the `treeRoot`
+packing in `src/instance-cull.js`.
+
+**What real trees do, and where it comes from.**
+
+- A tree sways as ONE body in its first mode: the whole stem bends one way,
+  curving more toward the top, as a damped oscillator. Field studies place a
+  single accelerometer just below the main branching precisely because that
+  one point represents the whole tree; sensors on branches pick up "higher
+  order effects". Source: *Tree sway in response to wind*, Frontiers in Earth
+  Science 2018,
+  <https://www.frontiersin.org/journals/earth-science/articles/10.3389/feart.2018.00221/full>
+  (read; example spectrum peaks near 0.2 Hz).
+- The natural frequency rises with trunk diameter and falls with height:
+  linear in DBH / H^2 over 602 trees of eight conifer species, pines lower than
+  spruce and Douglas-fir for their size. Moore and Maguire 2004, *Natural sway
+  frequencies and damping ratios of trees: concepts, review and synthesis of
+  previous studies*, Trees 18: 195-203,
+  <https://link.springer.com/article/10.1007/s00468-003-0295-6>. The paper
+  itself is paywalled and was NOT read; the relationship and the tree count
+  are from its abstract as quoted in search results. Figures quoted from other
+  summaries in the same search: conifers dominantly 0.2-0.5 Hz, a 15 m tree
+  about 0.4 Hz, trees generally 0.1-5 Hz. *An architectural understanding of
+  natural sway frequencies in trees* (J. R. Soc. Interface 2019,
+  <https://royalsocietypublishing.org/doi/10.1098/rsif.2019.0116>) returned
+  403 and was not read.
+- Games do this as "main bending" plus "detail bending": the whole plant is
+  displaced along the wind by a factor that grows steeply with height, then
+  each vertex is pulled back to its original distance from the root
+  (`normalize(newPos) * length`) so the plant curves rather than shears; leaves
+  add small high-frequency motion on top. Tiago Sousa, *Vegetation Procedural
+  Animation and Shading in Crysis*, GPU Gems 3 ch. 16,
+  <https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-16-vegetation-procedural-animation-and-shading-crysis>
+  (read).
+- Gusts are carried downwind at about the mean wind speed -- Taylor's "frozen
+  turbulence" -- which is what makes honami, the waves that roll across a wheat
+  field, and cat's paws on water. Finnigan 1979, *Turbulence in waving wheat*,
+  Boundary-Layer Meteorology 16: 181,
+  <https://ui.adsabs.harvard.edu/abs/1979BoLMe..16..181F/abstract> (abstract
+  only). Dupont et al. 2010, *Modelling waving crops using large-eddy
+  simulation*, <https://yakari.polytechnique.fr/Django-pub/documents/duponts2010rp-1pp.pdf>
+  -- fetched, but the PDF could not be read here; its patch sizes and speeds are
+  still to be taken from it.
+
+**What was built from that.**
+
+- *One bend for the whole tree.* Every part of an imported tree -- bark, limbs,
+  foliage, flowers -- takes a single displacement that depends only on its
+  height up the tree: the cantilever shape h^2 (3 - h) / 2 (h from 0 at the
+  root to 1 at the top; the deflection of a beam loaded at its tip, where
+  Crysis uses a similar steepening polynomial), along the wind plus a smaller
+  crosswind sway a quarter-turn behind so the top traces an ellipse, then
+  pulled back to its distance from the root. Only the leaves add a rustle of a
+  few centimetres.
+- *Its own sway.* 3 H^-0.75 swings a second, which gives 1.0 at 5 m, 0.39 at
+  15 m (the 0.4 quoted), 0.23 at 30 m, 0.14 at 60 m -- inside the 0.2-0.5 Hz
+  conifer range where the trees are conifer-sized. The exponent and constant
+  are fitted to those quoted points, not taken from the paper: with no trunk
+  diameters in the world data, DBH / H^2 cannot be evaluated directly.
+- *How far.* Tip deflection = H x breeze x wind setting x species factor x
+  (0.004 + 0.010 x gust + (0.002 + 0.004 x gust) x sway). On a 60 m redwood
+  (species factor 0.7 for conifers) that is about a tenth of a metre on a still
+  day and up to about 1.3 m at the peak of a gust in 15 mph. PLACED, not
+  published: no source was found for tip deflection against wind speed, so
+  these are judged on screen and are the first thing to revisit if one turns
+  up.
+- *Gusts as fronts.* The gust field is noise stretched across the wind (160 m)
+  and short along it (45 m), with a 60 m by 17 m octave for texture, dragged
+  downwind at the course's wind speed converted to m/s (at least 1.5 m/s).
+  Every swaying thing samples it at its root, so a crosswind front bends the
+  trees on the upwind side of a fairway first and the far side seconds later --
+  the owner's description of what it should look like. Checked with the bend
+  exaggerated 15 times over a Pacific Northwest fairway from above: bands of
+  leaning trees with upright ones between, the bands moving in the direction
+  the trees lean.
+
+**The two versions before it, and why they were wrong.**
+
+1. Leaves only, bark still -- so a trunk never moved from where it collides.
+   Leaves swaying on a rigid trunk looked wrong to the owner at once.
+2. Bark and leaves bent together, but the leaves also shivered fast across the
+   crown (6.3 rad/s, up to 0.3 m at the top of a 60 m tree), and every tree
+   bobbed at the same 1.2 rad/s. The owner still saw leaves and trunk moving
+   separately: a crown moving by a rule the trunk does not share can never look
+   attached, however the numbers are tuned.
+
+The gust went through the same two steps: first one sine wave down the wind,
+200 m crest to crest, crossing at 50 m/s, so everything in view swung together
+back and forth through upright; then round noise patches, better, but a patch
+has no front, so nothing showed a gust arriving on one side first.
+
+**Procedural trees bend too.** The trees built from primitives (hala, ocotillo;
+every other species has an imported model) are a trunk, branches and leaf
+pieces, each its own instance, so an instance's own position says nothing
+about which tree it belongs to. Each instance now carries `treeRoot` -- the
+tree's root and height -- and bends about that. The instance cull repacks the
+instance buffers every time the view changes, so it packs `treeRoot` alongside
+the matrices and colours; without that a leaf would bend about another tree's
+root.
+
+**What does not move.** Cacti and agave (`STILL`): a saguaro is a column of
+water in a skin, an agave's leaves are stiff blades, and the cactus model had
+been swaying like a tree. Stones and soil at a tree's foot. And the SHADOWS:
+three draws them with its own depth material, which does not carry the patch;
+a 1 m shift at the top of a 60 m tree does not read in its shadow.
+
+**Collision.** The bend is under a centimetre at 3 m up a 60 m trunk (about 3
+mm at full gust), so the trunk physics collides with and the one drawn agree
+wherever a ball can reach.
+
+## Rough grass clumps (29 September)
+
+`grassClump`, `groundShaded` and `groundLit` in `src/vegetation.js`.
+
+The owner was not a fan of the near grass: "5 2D tufts in a circle". Close up
+it read as dark scratches on the ground, for three reasons found in turn:
+
+- **The shape.** Five single triangles placed at golden-angle points on a ring,
+  every clump the same ring. Now seven blades from one root, each tapering in
+  two segments and curving outward as it rises, at uneven angles (golden angle
+  plus up to 37 degrees of jitter), heights 55-100% and lean 6-26% of the
+  height. Seeded per course; instances rotate and size it.
+- **The lighting.** A thin toon-shaded triangle facing away from the sun falls
+  to the ramp's darkest step, and DoubleSide flips a back face's normal
+  downward. Every blade normal now points straight up and is kept on both
+  faces, so grass takes the light and shade of the turf it grows from. Colour
+  runs from .62 at the root to 1.12 at the tip (times the instance colour).
+- **The wind.** Grass bent by its height in MODEL units, the same for a 7 cm
+  tuft and a metre of prairie, so the short rough was pushed further sideways
+  than it was tall and lay flat. It now bends by its real height above the root
+  (strength .2 near, .22 for the course-wide blades, .3 for the forest-floor
+  ferns, retuned for world heights).
+
+Short rough is also a little bigger (9-26 cm, 0.8 footprint, was 7-23 cm and
+0.55). The course-wide blades kept their shape and took the lighting and root
+shading. Cost: 21 triangles a clump against 5, in the 25 near tiles only.
+
+## Foam and sun sparks on the ponds (U5, 29 September)
+
+`addShoreFoam` and the glint term in `dressWater`, `src/renderer.js`.
+
+**Foam.** A pond is one flat shape whose every vertex is on its outline, so
+nothing on the water knows how far it is from the bank -- the stream shader's
+`shore` fade has nothing to read on a pond, and `bankAtlas` holds the bank's
+profile, not a distance on the water. So the foam is its own mesh: the outline
+and a copy moved 1.4 m inward, 3 cm above the water. Its opacity is a band that
+surges between about 0.3 and 0.6 of the strip's width along the shore, cut into
+lace by two drifting noise layers, at most 42% opaque, all on 30% of the
+water's clock -- at full speed the owner found the lapping frantic. **The first attempt read
+as white tape round every pond** (colour #f3f7f4, 78%, a lower lace threshold);
+it was toned down to a grey-green white and a sparser lace. Lit by the toon ramp,
+so it dims with the evening. One draw per pond.
+
+**Glint.** The view reflected off the rippled normal, compared with the sun's
+direction and raised to the 700th power, then broken into sparks by fine noise
+drifting with the ripples: a scatter of points around the sun's mirror image,
+not a smooth blob. Fades out as the sun reaches the horizon.
+
+**A trap found on the way, worth knowing before touching this shader again.**
+The water's extra colour is written at `#include <opaque_fragment>`, and by then
+three.js has already turned `diffuseColor` into `outgoingLight`. Changing
+`diffuseColor.rgb` there does nothing on screen; only its alpha still counts.
+The glint was invisible from every pose tried until it was added to
+`outgoingLight` instead. An older line beside it, meant to brighten the water
+toward grazing (`diffuseColor.rgb=mix(...,fres)`), had the same problem and had
+never had any effect; the owner chose not to make it work, and it has been
+removed. The fresnel term still sets the water's opacity, which is the part
+that did work.
+
+**Verified** by placing the camera on the sun's mirror line over the
+Pacific Northwest pond (seed REPORT1, 16:00, sun 38 degrees up): sparks around the reflection
+point and along the lit water, none on the shaded side. No outside sources.
+
+## Soft shade under trees and rocks (U1, 29 September)
+
+`src/occlusion.js`, the cover texture in `groundMaterial` and the `cueShade`
+block in the ground shader (`src/ground.js`).
+
+**The brief asked for screen-space ambient occlusion and got a bake instead.**
+SAO or GTAO needs the scene drawn into a render target first, and routing the
+scene through one costs the canvas its MSAA -- the reason the god rays avoid
+EffectComposer. A multisampled target would have kept it, at the price of a
+full-screen pass on every frame, and the pass would darken whatever the depth
+buffer showed, fairways and bunker faces included. What the brief described is
+narrower: trunks and rocks that look set down on the grass, forests deeper
+than open rough. Every occluder is in the world data already, so the ground
+can know exactly how much sky it loses without looking at the screen.
+
+**The model.** Per texel, what reaches the ground is multiplied down by each
+nearby occluder, so overlaps deepen without passing full dark:
+
+| Occluder | Full strength inside | Gone by | Strength |
+| --- | --- | --- | --- |
+| Trunk (girth = 2.7% of height, max 3.6 m, as course.js pads launches) | half the girth | half girth + 2 m + 0.8 girth | 0.70 |
+| Crown (`crownRadius`) | a quarter of the crown | 1.1 crowns | 0.22 |
+| Boulder (`reach`) | 0.7 reach | 1.3 reach + 1.2 m | 0.60 |
+| Ground plant (fern, shrub) | centre | 0.8 r + 0.4 m | 0.22 |
+
+The shader multiplies the turf by one minus that, times the slider (default
+60%), taking a little less out of blue than red and green so it reads as shade
+under leaves rather than as dirt; half strength on greens. The strengths were
+judged on screen, not taken from a source: at the first figures (0.5, 0.16,
+0.45) the effect at the Redwood tee was only visible side by side.
+
+**Where it lives, and why not in its own texture.** The lit shaders have one
+texture sampler of headroom against the 16 WebGL guarantees (the note on
+floodlight shadows in PROJECT_HANDOFF), and a seventeenth does not slow a
+program, it stops it linking and the ground vanishes. The ground already
+sampled the ownership atlas twice -- once exact, once linearly filtered as
+`cover` for the straw -- and the second copy used one of its four float
+channels. `cover` is now its own texture of bytes: red the occlusion, green
+the straw. No new sampler, and a quarter of the memory the float copy took.
+The cost is resolution: the ownership atlas's 1.75 m texels (2 m on an
+eighteen), which is fine for something meant to be soft.
+
+**Measured.** Bake time on REPORT1: PNW nine 8 ms (2342 trees), Redwood
+eighteen 12 ms (4448), Links eighteen 4 ms, Desert nine 3 ms. No frame cost
+beyond one texture read the shader already made.
+
+## A forest floor on Ultra (U6, 29 September)
+
+`floorTile` in `addNearbyGrass`, `src/vegetation.js`; `forestFloor` in the
+Ultra tier.
+
+Fern clumps (seven arching fronds, 0.6 to 1.5 m across, tinted from the
+biome's tree colour toward a lighter green) and fallen sticks (0.35 to 1.65 m)
+in the same 24 m tiles as the near grass and from their own seeded draw, so
+they are where they were each time the camera returns. Up to 400 fern and 90
+stick candidates a tile, each kept with probability 1.9 or 1.1 times the U1
+occlusion at that spot -- so the floor gathers under the canopy and is nothing
+on open rough -- and only on rough. Both shrink into the ground between 28 and
+48 m out, as the grass does, so the edge of the tile ring is never seen.
+
+**Decoration only, on purpose.** Nothing here is in the world, so physics
+cannot know about it. That is acceptable only because none of it is taller
+than an ankle: a ball rolling through a fern looks right, a ball rolling
+through a log would not, which is why there are no logs. The first colour
+(lerped 25-65% toward #9fbf5a) looked like paper cut-outs against the Redwood
+rough; it was taken down to 12-50% toward #7fa24a.
+
+**Cost.** Up to two more instanced draws per grass tile, 25 tiles in the ring
+(a tile with no floor carries no empty meshes). The first half of the TODO
+item -- full-detail trees further out on Ultra -- was already true: Ultra has
+drawn every crown whole since F2 (`farTrees: 0`).
+
+## What the ultra-looks branch costs a frame (29 September)
+
+`npm run profile -- --only tiers`, Redwood player view, RTX 4090, graphics-card
+milliseconds per frame (median). "Before" is the branch's starting point
+(render-identical to main), swapped into `dist/` for the run; alternated twice.
+
+| Tier | Before | Branch | Branch, forest floor off |
+| --- | --- | --- | --- |
+| Low | 2.90 | 3.05 | -- |
+| Medium | 3.92 | 4.12 | -- |
+| High | 7.09-7.11 | 7.20-7.28 | -- |
+| Ultra | 7.45-7.59 | 8.44-8.73 | 7.58 |
+
+So everything but the forest floor together -- patches, shade, haze, sway,
+foam and glint, the landscape rings, the fitted shadow cascades -- costs about
+0.15 ms on every tier, and the forest floor about 0.9 ms of graphics time and
+about 1 ms of processor time on Ultra. Ultra at 8.4-8.7 ms is now just over a
+120 Hz frame (8.33 ms) on this card where it was just under. Later runs that
+evening were unusable -- High at 21 ms with nothing of the branch's changed --
+with Chrome Remote Desktop and a busy browser on the machine; they are not in
+the table. The baseline in `bench/profile-baseline.json` was not re-saved.

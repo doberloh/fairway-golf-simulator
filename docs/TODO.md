@@ -72,68 +72,6 @@ Ground rules that apply to every item below:
   other biomes) and 6.8 ms of processor time per frame against ~1 ms
   elsewhere -- profile it.
 
-### Looking better on Ultra (cartoon style throughout)
-
-Screenshots on 27 September (Redwood tee, seed REPORT1, 10:15 sim time) show
-High and Ultra are practically the same picture; Low to Medium sharpens
-shadows and triples grass, High adds 3D clouds, god rays and mist. F1-F3 free
-the budget these spend.
-
-- [ ] **U1. Soft ambient occlusion.** Trunks, rocks and bunker lips look set
-  down on the grass. A screen-space AO pass (three's GTAO/SAO, or a cheaper
-  depth-based one tuned to the toon look) grounds them and deepens forests
-  without darkening fairways. One extra full-screen pass: Ultra, maybe High.
-  Note from PROJECT_HANDOFF: the god rays deliberately avoid `EffectComposer`
-  because routing the scene through a render target costs the canvas its MSAA
-  -- a multisampled render target (WebGL2 `samples`) or an AO that works
-  without one is the way round.
-
-- [ ] **U2. Wind in the baked trees.** Sway ALREADY EXISTS for part of the
-  planting: `windMaterial` in `src/textures.js` patches the procedural
-  species' leaves (`src/vegetation.js`, the `windMaterial(materials.leaf, ...)`
-  call in `addSpecies`) and the near-field grass blades, driven by the
-  renderer's `breeze` and `windVec` uniforms, which follow `settings.wind` and
-  `windDirection`. What does NOT sway is every species built from imported
-  models -- `addModelSpecies` hands `instanceModels` plain white
-  `MeshToonMaterial`s -- which is every tree on Redwood and most biomes, and the
-  ground cover and deadfall. Extend `windMaterial` to the crown/leaf roles of
-  those materials, stronger at canopy tips (height within the model), keeping
-  trunks still. Near-free, every tier. Rendering only: trunk collision must
-  not move. Note `windMaterial` REPLACES `<project_vertex>` (see the comments
-  in `src/mist.js`), so check it still composes with the cloud-shadow and mist
-  patches on those materials.
-
-- [ ] **U3. Colour variation in the rough.** Large rough areas are one flat
-  olive broken only by shadows. Low-contrast patches of lighter, darker and
-  drier grass in the ground shader (`src/ground.js`, where the mowing stripes
-  are painted), from world-position noise so it is stable per course. Every
-  tier, cheap.
-
-- [ ] **U4. Distance fades into the sky (aerial perspective).** Far hills are
-  the same green as near ones. Tint by distance toward the sky/fog colour,
-  warmer on the sun's side. Every tier, cheap; check it does not fight the
-  existing fog (`fog.near/far` per tier) and the biome's own fog colour.
-
-- [ ] **U5. Water with an edge and a glint.** Ponds (especially Redwood's dark
-  ones) read as flat shapes. A light foam rim at the shoreline (the bank
-  profiles are already in `bankAtlas`) and a sun glint. Every tier, cheap.
-
-- [ ] **U6. Spend the savings on more forest (after F1-F2).** With distant
-  trees cheap, Ultra keeps full-detail trees much further out and adds more
-  forest floor near the camera (ferns, logs, flowers); Low keeps today's
-  density. Decoration only -- nothing new may be collidable unless it is in
-  the generator.
-
-- [ ] **U7. The ground past the course edge is stretched into streaks.** Seen
-  from the overhead/overview camera and in free flight (screenshot 27
-  September, Redwood Ultra overview). A proper ring of distant land or an
-  earlier fade into the horizon (`src/landscape-edge.js`). Any tier; a flaw,
-  not an extra.
-
-- [ ] **U8. Make Ultra distinct from High.** Whichever of U1/U6 land, Ultra is
-  where they go first, so the ladder has four real rungs (see *high and ultra
-  are very nearly the same tier* below).
-
 ### Build time (the wait from "play" to a playable course)
 
 Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
@@ -740,14 +678,6 @@ None of these are tuning -- they are missing capability or wrong plumbing, so
 they were written down rather than done. Asked for on 2026-09-22 as the place
 to put "potential gfx improvements" instead of inventing features overnight.
 
-- [ ] **`high` and `ultra` are very nearly the same tier.** The whole difference
-  is bloom at .14, a 2048 reflection buffer instead of 1536, and shadows that
-  reach the far edge in overview. Everything else -- pixel ratio, shadow map,
-  cascades, fog, grass, foliage, god rays, clouds, mist -- is identical. Ultra
-  is meant to be "everything, for a card with room to spare" and is currently
-  high with a glow on it. Either it grows real extras or the ladder should
-  admit it has three rungs.
-
 - [ ] **Floodlight shadows are off on every tier, and not for frame time.**
   The existing comment is right and now confirmed from the outside: the real
   GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
@@ -948,8 +878,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [ ] **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
 
 - [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
-
-- [ ] **A CC0 grass model for the near-field tuft only.** Searched and priced (RESEARCH.md): CC0 grass exists and is properly licensed, but this project's blade is THREE triangles drawn up to 800,000 times, so a 50-triangle model is a 17x multiplier on the largest instanced draw in the scene and the 2M-triangle Poly Haven tuft is 800 billion on a links course. The one place it is affordable is `addNearbyGrass` -- 40,000 instances inside 24 m, where a 20-40 triangle tuft costs 0.8-1.6 M triangles. Owner is undecided; do not start without a decision.
 
 - [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is now handled for channels by a per-vertex bank weight, but ponds, lakes and the ocean plane have no shore weight and so still end on a uniform alpha at their edge — giving them one needs shore distance in their geometry. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
 
@@ -1220,6 +1148,89 @@ record of what was ruled out and why, which is worth more than a short file.
   `lab.ground()` on an iPhone and a Mac -- and reported all of it good. The one
   problem found, a long pause switching the floodlights in the course creator,
   is fixed under B6.
+
+### Looking better on Ultra (cartoon style throughout)
+
+- [x] **U1. Soft shade under trees and rocks.** Branch `ultra-looks`. Not a
+  screen-space pass: a bake per course of how much sky each patch of ground
+  loses to the trunks, crowns and boulders around it (`src/occlusion.js`), read
+  by the ground shader as a soft darkening -- tight at the foot of each trunk
+  and rock, broad and faint under crowns, deeper where they overlap. Every
+  tier, no extra pass, MSAA untouched, 3-12 ms of build time. It rides in the
+  red channel of the existing `cover` texture rather than a new one, because
+  the lit shaders have one sampler of headroom. Graphics slider *Shade under
+  trees and rocks*, default 60%. RESEARCH.md *Soft shade under trees and
+  rocks*.
+
+- [x] **U2. Trees and grass in the wind.** Branch `ultra-looks`. Every tree,
+  imported or procedural, bends as one body -- trunk, limbs and leaves by one
+  displacement that grows with height, curving rather than shearing -- and
+  sways at its own natural frequency (slower for taller trees), with only a
+  small leaf rustle on top. Gusts arrive as fronts carried downwind at the
+  course's wind speed, so a crosswind gust bends the trees on one side of the
+  fairway before the other. Cacti and agave do not move. Graphics preference
+  `wind` scales all of it. Third version: the first moved the leaves apart from
+  the trunk, the second bent trunks but still shivered leaves separately and
+  had no gust front; the owner rejected both and approved the third.
+  RESEARCH.md *How a tree moves in the wind*.
+
+- [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
+  owner from "the rough" to every surface: rough, semi, fairway and tee ground,
+  fringe, green (tone only, faint, so reading is not disturbed) and sand (damp
+  patches), from world-position noise at each surface's own scale. A Graphics
+  slider, *Turf colour variation*, default 60%. RESEARCH.md *Every surface in
+  patches*.
+
+- [x] **U4. Distance fading into the sky.** Branch `ultra-looks`. Every lit
+  surface drifts toward the horizon's colour with distance, warmer toward the
+  sun, and much less on steep sight lines so the bird's-eye view stays clear
+  below. Every tier; graphics preference `haze`, default 50%. RESEARCH.md
+  *Distance fading into the sky*.
+
+- [x] **U5. Water with an edge and a glint.** Branch `ultra-looks`. A strip of
+  lacy foam 1.4 m wide inside every pond's outline, lapping in and out, and a
+  scatter of sun sparks where the ripples catch the sun's reflection. Every tier
+  but Blueprint; gone once the sun is down. The foam is its own strip rather
+  than read from `bankAtlas`: nothing on a pond's surface knows how far it is
+  from the edge. The lapping runs at 30% of the water's own clock: at full
+  speed it looked frantic (the owner). Approved by the owner after the slow-down.
+  RESEARCH.md *Foam and sun sparks on the ponds*.
+
+- [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
+  streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
+  only as many vertices as keep them near square (worst 6.6 to 1, a third of the
+  vertices). The light rectangle round the course was the seam's normals and
+  the landscape having no baked relief; both are carried across the seam now.
+  A faint rectangle still shows from overhead where the course's ground meets
+  the distant land; the owner judged it unnoticeable in play and closed this.
+  RESEARCH.md *The ground past the course edge*.
+
+- [x] **Rough grass that looks like grass.** Branch `ultra-looks` (the owner,
+  after U8: not a fan of "5 2D tufts in a circle"). Clumps of seven curved,
+  tapering blades at uneven angles and heights, lit like the ground under them
+  (every normal up) and darker at the root than the tip; the course-wide blades
+  got the same lighting and root shading. Grass now bends by its real height
+  above the root -- the old lever was in model units, so a 7 cm tuft was pushed
+  further sideways than it was tall and lay flat as dark scratches. 21
+  triangles a clump against 5. Approved by the owner, who singled out the
+  prairie. RESEARCH.md *Rough grass clumps*.
+
+- [x] **U6. A forest floor on Ultra.** Branch `ultra-looks`. Low fern clumps
+  and fallen sticks in the grass tiles round the camera, denser where the
+  canopy is (the U1 bake), fading out between 28 and 48 m like the grass.
+  Decoration only: not in the world, nothing a ball can hit, and ankle height
+  at most so a ball rolling through it never looks wrong. Ultra only
+  (`quality.forestFloor`); every other tier keeps today's planting. The first
+  half of the brief -- full-detail trees further out on Ultra -- was already
+  true (`farTrees: 0` on Ultra since F2). RESEARCH.md *A forest floor on Ultra*.
+
+- [x] **U8. Ultra distinct from High, and the looks as settings.** Branch
+  `ultra-looks`. Ultra now differs from High in what you see standing in a
+  forest (U6) as well as in its shadows and bloom, and says so in the Quality
+  note. The four looks from this branch are sliders in Graphics under *The look
+  of the course* -- turf colour variation, shade under trees and rocks,
+  distance haze, wind in the trees and grass -- on every tier, since none costs
+  a measurable frame, and all live without a rebuild.
 
 ## Reading a green without the overlays
 
@@ -1546,6 +1557,16 @@ problem: a control that belongs inside a box is sitting beside it.
   any one of them.** The curve trusts the GC3 because it is the better
   instrument; that stays a judgement about the references, openly.
 
+## Graphics work the profiling turned up
+
+- [x] **`high` and `ultra` were very nearly the same tier.** When this was
+  written the difference was bloom, a bigger reflection buffer and overview
+  shadows. Ultra has since taken sharper shadows (6144, radius 4) reaching
+  3.5 km against High's 2.5, and on branch `ultra-looks` a forest floor of
+  ferns and fallen sticks round the camera (U6), which is what a player
+  standing among the trees actually sees change. The Quality note in Graphics
+  says so. Four rungs.
+
 ## Benchmarking and profiling worth deciding from
 
 - [x] **A frame benchmark, and it must not be able to return the refresh rate.**
@@ -1666,6 +1687,14 @@ problem: a control that belongs inside a box is sitting beside it.
 - [x] **Two detail levels per baked tree.** ~~Not the blocker. Not a blocker at all.~~ Built, measured against a benchmark that was reading vsync, and removed. See RESEARCH.md; the honest number is that eleven times the geometry costs nothing measurable on this path.
 
 ## Priority 2: landscape and performance
+
+- [x] **A CC0 grass model for the near-field tuft -- not needed.** Closed on
+  branch `ultra-looks`. The question was whether to buy the near grass a real
+  model; instead the near tuft became a hand-built clump of seven curved,
+  tapering blades (21 triangles, inside the 20-40 this entry had priced as
+  affordable for `addNearbyGrass`), lit like the ground and darker at the root,
+  and the owner approved it. No outside asset, so nothing to license.
+  RESEARCH.md *Rough grass clumps*.
 
 - [x] **Water sits on land, and a pond may split a hole.** Channels were being drawn on the seabed (2302 of 2452 stations at sea on a measured island seed) and were chosen for length, which after trimming selected runs entirely off the map. Island courses now carry no inland water at all -- the ocean is the hazard -- and Links keeps its coast handling. A mown semi-rough band now comes round every pond, lake and channel that meets a fairway, in the ground shader AND in the lie -- the first attempt changed only the lie and was invisible, see RESEARCH.md. Ponds may bite into a corridor or cross it, with the carry measured rather than assumed: 6% of holes split at default settings, median carry 33 yd, longest 101 yd at maximum water.
 

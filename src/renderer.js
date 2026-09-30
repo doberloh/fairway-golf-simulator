@@ -1,6 +1,6 @@
 import {addHomes} from './homes.js';
 import {addStreams} from './streams.js';
-import {landscapeGeometry} from './landscape-edge.js';
+import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
 import {Line2} from 'three/addons/lines/Line2.js';
 import {polesFor,orderPoles,POLE_REACH} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
@@ -64,10 +64,26 @@ const SHORE_VERT=['#include <common>','#include <common>\nattribute float shore;
 const SHORE_VERT2=['#include <begin_vertex>','#include <begin_vertex>\nvShore=shore;'];
 const SHORE_FRAG=['#include <common>','#include <common>\nvarying float vShore;'];
 const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
+// The pond's foam strip: v is 0 at the bank and 1 a metre and a half in. A band
+// that surges in and out along the shore, broken into lace by drifting noise.
+const FOAM_FRAG=`
+uniform float waterTime;varying vec2 vFoamUv;varying vec3 vFoamWorld;
+float fHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
+float foamAlpha(){
+ // At 30% of the water's own clock: at full speed the lapping read as frantic
+ // (the owner, after the first build).
+ float v=vFoamUv.y,t=waterTime*.3;
+ float surge=.42+.16*sin(t*.8+vFoamWorld.x*.23+vFoamWorld.z*.19);
+ float band=smoothstep(0.,.12,v)*(1.-smoothstep(surge*.55,surge,v));
+ float lace=fNoise(vFoamWorld.xz*2.3+vec2(t*.21,-t*.16))*.62+fNoise(vFoamWorld.xz*5.7-vec2(t*.33,t*.12))*.38;
+ return band*smoothstep(.5,.8,lace)*.42;
+}
+`;
 // Ripples with no tile in them, for water with no reflection to carry it.
 // The water surface, generated rather than sampled. See `dressWater`.
 const WATER_NOISE=`
-uniform float waterTime;uniform float waterChop;uniform float waterSwell;
+uniform float waterTime;uniform float waterChop;uniform float waterSwell;uniform vec3 glintSun,glintColor;
 // Metres per second, in world XZ. Zero on a pond, along the channel on a creek.
 uniform vec2 waterFlow;
 varying vec3 vWaterWorld;
@@ -161,6 +177,17 @@ const FLOOD_CONE=1.15;
 // nearest-first fallback never runs -- it exists so a future course that grows
 // past this degrades instead of stalling.
 const FLOOD_LAMP_CAP=192;
+// How far sunward of its slice a cascade's shadow camera starts, so trees that
+// stand that far off still throw their shadows in: 1 km, the same allowance the
+// view cull keeps for off-screen casters (instance-cull.js, shadowCap). Three's
+// default is 200; this was 400, and at a low sun a tall tree's shadow runs
+// further than that. The far plane is fitted per frame (fitCascadeDepth), and
+// CASCADE_BASE_FAR is the depth the tier's shadow bias was tuned at.
+// The distance haze at 100% on the panel: how far toward the horizon's colour
+// the farthest land goes. 50% (the default) takes a hill 2 km off about a fifth
+// of the way.
+const AERIAL_MAX=.62;
+const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
 // nobody looks at closely at night.
@@ -250,7 +277,7 @@ export class GolfView{
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
-  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};
+  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};this.sway={value:1};
   // The bearing the wind blows TOWARD, as a unit vector in world XZ -- the same
   // convention `shot-visuals.js` and `clouds.js` already use.
   this.windVec={value:new T.Vector2(0,1)};this.resources=[];this.resize();new ResizeObserver(()=>this.resize()).observe(canvas.parentElement);
@@ -267,9 +294,43 @@ export class GolfView{
   this.csm=new CSM({camera:this.camera,parent:this.group,cascades:this.quality.cascades,
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
-   lightDirection:sunDir.clone().negate().normalize(),lightMargin:400});
+   lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
   for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
   this.sun.castShadow=false;this.sun.intensity=0;
+ }
+ // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
+ //
+ // CSM gives every cascade's shadow camera a fixed depth -- `lightFar`, 2 km by
+ // default -- measured from a point `lightMargin` sunward of the slice. The far
+ // cascade's slice is several kilometres across, and how deep it runs along
+ // the sun's direction depends on which way the camera faces: measured on
+ // Redwood (High, 16:30), it overran the 2 km by 1.0 to 3.4 km as the camera
+ // turned. Everything in the overrun is outside the shadow map and reads as
+ // lit, so distant shadows came and went with the camera's heading, and worst
+ // looking down from the free camera -- the owner's report, 29 September.
+ //
+ // So each frame, after CSM has placed the cascades, each shadow camera's far
+ // plane is set to the deepest corner of its own slice plus a margin. The
+ // constant bias is in the map's normalised depth, so it grows with the depth
+ // it spans; it is scaled back to the same distance in metres it always was at
+ // 2 km, or shadows would lift off the ground in the deep cascades.
+ fitCascadeDepth(){
+  const csm=this.csm;if(!csm)return;
+  const cam=this.camera,v=fitScratch;
+  csm.frustums.forEach((f,i)=>{
+   const light=csm.lights[i];if(!light)return;
+   const sc=light.shadow.camera;light.updateMatrixWorld();light.target.updateMatrixWorld();light.shadow.updateMatrices(light);
+   let deepest=0;
+   for(const set of [f.vertices.near,f.vertices.far])for(const corner of set){
+    v.copy(corner).applyMatrix4(cam.matrixWorld).applyMatrix4(sc.matrixWorldInverse);
+    deepest=Math.max(deepest,-v.z);
+   }
+   // The ground under the slice can sit below its corners' plane on a steep
+   // course; 200 m covers the relief and a tree standing on it.
+   const far=Math.max(CASCADE_BASE_FAR,Math.ceil(deepest+200));
+   if(sc.far!==far){sc.far=far;sc.updateProjectionMatrix();}
+   light.shadow.bias=this.quality.shadowBias.constant*CASCADE_BASE_FAR/far;
+  });
  }
  // WHERE THE CASCADES SPLIT. three's own 'practical' split, on a 2.5 km reach,
  // puts the first edge near 420 m (590 m on Ultra's 3.5 km) -- and each cascade
@@ -402,6 +463,10 @@ export class GolfView{
   u.cueSlope.value=this.groundCues.slopeTint?1:0;
   u.cueContours.value=this.groundCues.contours?1:0;
   u.cueStripes.value=this.groundCues.stripes===false?0:1;
+  if(u.cuePatches)u.cuePatches.value=(this.groundCues.patches??60)/100;
+  if(u.cueShade)u.cueShade.value=(this.groundCues.shade??60)/100;
+  // Wind in the trees and grass (U2): one uniform every swaying material shares.
+  this.sway.value=(this.groundCues.wind??100)/100;
   // Derived from the two sliders through ONE mapping in graphics.js, so the
   // panel and the shader cannot drift apart.
   if(u.sunDir&&this.sunDir)u.sunDir.value.copy(this.sunDir);
@@ -463,7 +528,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.waterTime=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -495,7 +560,7 @@ export class GolfView{
   this.addSky(sunDir);
   this.addLandscape();
   const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color('#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
-  const terrain=groundGeometry(world.groundGrid);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
   this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
   // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
   // buildings shaded the turf but the turf shaded nothing -- a ridge did not
@@ -510,7 +575,7 @@ export class GolfView{
   // the cascades share it.
   // Set through `setTerrainShadows` just below, so the stored choice wins.
   this.terrain.castShadow=true;this.targets.push(this.terrain);
-  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));}this.addHoleDetails(h);}
+  for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level);}this.addHoleDetails(h);}
   if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
@@ -523,7 +588,8 @@ export class GolfView{
   // Every handoff was one pond turning from water into varnish and another
   // turning back. Nothing is handed around any more.
   if(this.waterBodies.length){
-   this.waterTime={value:0};
+   // Kept if the shore foam already made it this build (addShoreFoam).
+   this.waterTime??={value:0};
    this.waterSpeed=WATER_SPEED;
    this.waterChop={value:.55};this.waterSwell={value:.45};
    for(const b of this.waterBodies)this.dressWater(b.mesh.material,b);
@@ -593,13 +659,18 @@ export class GolfView{
   if(this.config.mode==='free'){const pose=playerCameraPose(this.course,this.course.tee,0,this.config);this.camera.position.set(pose.eye.x,pose.eye.y,pose.eye.z);this.look.set(pose.target.x,pose.target.y,pose.target.z);this.wasFree=false;}this.setHole(holeIndex,true);this.renderer.shadowMap.needsUpdate=true;
   // Real clouds in the sky, and the discs they shade the ground with. Built
   // before material registration, because every lit material reads the discs.
-  if(this.quality.mist&&!blue){
+  // Every tier carries the patch now, because the distance haze (U4) lives in
+  // it and belongs to every tier; the MIST stays where the tier has it (its
+  // densities are zero otherwise), and so does the water field it needs.
+  if(!blue){
    this.mistUniforms=mistUniforms();
    // Baked once here rather than sampled per frame: where the water is cannot
    // change while a course is loaded.
-   const field=bakeWaterField(world);
-   const texture=setWaterField(this.mistUniforms,field);
-   if(texture)this.resources.push(texture);
+   if(this.quality.mist){
+    const field=bakeWaterField(world);
+    const texture=setWaterField(this.mistUniforms,field);
+    if(texture)this.resources.push(texture);
+   }
   }
   if(this.quality.clouds&&!blue){
    this.cloudUniforms=cloudShadowUniforms();
@@ -779,6 +850,37 @@ export class GolfView{
  // built. Nothing here is decided per frame and nothing is shared between
  // bodies, so there is no state that can change under the camera and nothing
  // that can pop.
+ // FOAM WHERE A POND MEETS ITS BANK (U5 in TODO). A pond is one flat shape
+ // whose every vertex is on its outline, so nothing on its surface knows how
+ // far it is from the edge -- the stream shader's `shore` fade has nothing to
+ // read here. So the foam is its own strip: the outline, and a copy of it moved
+ // 1.4 m inward, drawn just above the water with a lacy, gently lapping alpha
+ // (FOAM_FRAG). Lit, so it dims with the evening like everything else.
+ addShoreFoam(points,level){
+  if(this.style==='blueprint'||points.length<3)return;
+  const n=points.length,W=1.4,pos=[],uv=[],idx=[];
+  let area=0;for(let i=0;i<n;i++){const a=points[i],b=points[(i+1)%n];area+=a.x*b.y-b.x*a.y;}
+  const inward=area>0?1:-1;
+  for(let i=0;i<n;i++){
+   const a=points[(i-1+n)%n],b=points[(i+1)%n],p=points[i];
+   let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+   pos.push(p.x,p.y,0,p.x-ty*inward*W,p.y+tx*inward*W,0);uv.push(i/n,0,i/n,1);
+   const k=i*2,m=((i+1)%n)*2;idx.push(k,m,k+1,k+1,m,m+1);
+  }
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,gradientMap:this.propRamp??=toonRamp(this)});
+  const time=this.waterTime??=({value:0});
+  mat.onBeforeCompile=shader=>{
+   shader.uniforms.waterTime=time;
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vFoamUv;varying vec3 vFoamWorld;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvFoamUv=uv;vFoamWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
+   shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>'+FOAM_FRAG)
+    .replace('#include <opaque_fragment>','diffuseColor.a*=foamAlpha();\n#include <opaque_fragment>');
+  };
+  mat.customProgramCacheKey=()=>'fairway-shore-foam-v1';
+  const mesh=new T.Mesh(g,mat);mesh.rotation.x=-Math.PI/2;mesh.position.y=level+.03;mesh.renderOrder=1;mesh.name='shore foam';
+  this.group.add(mesh);
+ }
  dressWater(material,body){
   if(!material)return;
   // Smooth and metallic enough for the probe to read as a REFLECTION rather
@@ -789,9 +891,12 @@ export class GolfView{
   // Per body, because it is the one thing about the surface that differs
   // between a creek and a pond.
   const f=flowFor(body),flow={value:new T.Vector2(f.x,f.y)};
+  // This course's sun, by reference: both change through the day.
+  const sun={value:this.sunDir},sunColor={value:this.sun.color};
   material.onBeforeCompile=shader=>{
    shader.uniforms.waterTime=time;
    shader.uniforms.waterChop=chop;shader.uniforms.waterSwell=swell;
+   shader.uniforms.glintSun=sun;shader.uniforms.glintColor=sunColor;
    shader.uniforms.waterFlow=flow;
    shader.vertexShader=shader.vertexShader.replace(...SHORE_VERT).replace(...SHORE_VERT2)
     .replace('#include <common>','#include <common>\nvarying vec3 vWaterWorld;')
@@ -815,14 +920,24 @@ export class GolfView{
       // Clear where you look into it, the material's own depth-based opacity
       // where you look across it.
       diffuseColor.a*=mix(.22,1.,clamp(fres*1.6,0.,1.));
-      // The sky takes over as it turns edge on, so the surface still reads as a
-      // surface where it has gone opaque.
-      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.35+vec3(.06),fres);
+      // GLINT (U5): the sun caught by wavelets tilted just right. The mirror
+      // direction of the view off the rippled normal, raised to a very high
+      // power, and broken into sparks by fine noise that drifts with the
+      // ripples -- a scatter of points on the sun's path, not one smooth blob.
+      // Gone when the sun is down. Added to outgoingLight: by this include the
+      // lighting has already read diffuseColor, so a change to its colour here
+      // is never seen (only its alpha still counts).
+      vec3 wn=normalize((vec4(normal,0.)*viewMatrix).xyz);
+      vec3 rd=reflect(normalize(vWaterWorld-cameraPosition),wn);
+      float spark=smoothstep(.55,.95,wNoise(vWaterWorld.xz*3.1+vec2(waterTime*.9,-waterTime*.7))*.5+.5);
+      float glint=pow(max(dot(rd,glintSun),0.),700.)*spark*smoothstep(0.,.08,glintSun.y);
+      outgoingLight+=glintColor*glint*3.;
+      diffuseColor.a=max(diffuseColor.a,min(1.,glint*2.));
      }
      ${SHORE_ALPHA}
 #include <opaque_fragment>`);
   };
-  material.customProgramCacheKey=()=>'fairway-water-v1';
+  material.customProgramCacheKey=()=>'fairway-water-v2';
   material.needsUpdate=true;
  }
 
@@ -1602,6 +1717,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}
  rotateFree(dx,dy){this.freeYaw-=dx*.004;this.freePitch=T.MathUtils.clamp(this.freePitch-dy*.003,-1.48,1.48);this.updateFreeLook();}
  moveFree(dt,forward,right,up,fast=false){const speed=this.config.freeSpeed*(fast?3:1)*dt,dir=new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch));this.targetPos.addScaledVector(dir,forward*speed);this.targetPos.x-=Math.cos(this.freeYaw)*right*speed;this.targetPos.z+=Math.sin(this.freeYaw)*right*speed;this.targetPos.y+=up*speed;this.targetPos.x=T.MathUtils.clamp(this.targetPos.x,-this.world.halfX-400,this.world.halfX+400);this.targetPos.z=T.MathUtils.clamp(this.targetPos.z,-this.world.halfZ-400,this.world.halfZ+400);this.targetPos.y=T.MathUtils.clamp(this.targetPos.y,Math.max(this.world.waterLevel+1,this.world.height(this.targetPos.x,this.targetPos.z)+(this.config.freeFloor??1.2)),1800);this.updateFreeLook();}
+ // The free camera put exactly somewhere, for measurements and screenshots that
+ // must be taken from the same place every time (lab.camera). Angles in radians.
+ placeCamera(eye,yaw,pitch){this.config.mode='free';this.wasFree=true;this.camFlight=null;this.trackingBall=false;this.targetPos.set(eye.x,eye.y,eye.z);this.freeYaw=yaw;this.freePitch=pitch;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.look);}
  flyToHole(index){const h=this.world.holes[index],p=h.toWorld({x:36,z:h.length-45});this.config.mode='free';this.wasFree=true;this.targetPos.set(p.x,h.height(36,h.length-45)+38,p.z);this.freeYaw=Math.atan2(h.worldPin.x-p.x,h.worldPin.z-p.z);this.freePitch=-.48;this.updateFreeLook();this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
  // The glow ball, and the two things around it that would otherwise stay lit for
  // a daytime that is no longer happening: the aim ring and the shot trail.
@@ -1687,6 +1805,13 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // so a hollow fills and a ridge stands clear of it.
    u.mistBase.value=this.world.waterLevel;
    u.mistTime.value=this.elapsed;
+   // The air (U4): the horizon's colour, the sun's colour toward the sun, and
+   // how strongly, from the Graphics panel's "Distance haze". Weather off
+   // leaves it on: this is the air itself, not fog.
+   u.aerialColor.value.copy(this.scene.fog.color).lerp(WHITE,.08);
+   u.aerialWarm.value.copy(this.sun.color).lerp(this.scene.fog.color,.35);
+   u.aerialSun.value.copy(this.sunDir);
+   u.aerialStrength.value=(this.groundCues?.haze??50)/100*AERIAL_MAX;
   }
   // Water is tinted by the clock like the fog and the sky. Without it a pond
   // glowed biome teal under a night sky while the course around it went dark.
@@ -1749,7 +1874,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // reach does not change, which on High it does not.
    const over=this.config.mode==='overview';
    if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();}
-   this.camera.updateMatrixWorld();this.csm.update();
+   this.camera.updateMatrixWorld();this.csm.update();this.fitCascadeDepth();
   }
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
