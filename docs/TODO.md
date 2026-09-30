@@ -879,8 +879,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
 
-- [ ] **A CC0 grass model for the near-field tuft only.** Searched and priced (RESEARCH.md): CC0 grass exists and is properly licensed, but this project's blade is THREE triangles drawn up to 800,000 times, so a 50-triangle model is a 17x multiplier on the largest instanced draw in the scene and the 2M-triangle Poly Haven tuft is 800 billion on a links course. The one place it is affordable is `addNearbyGrass` -- 40,000 instances inside 24 m, where a 20-40 triangle tuft costs 0.8-1.6 M triangles. Owner is undecided; do not start without a decision.
-
 - [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is now handled for channels by a per-vertex bank weight, but ponds, lakes and the ocean plane have no shore weight and so still end on a uniform alpha at their edge — giving them one needs shore distance in their geometry. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
 
 ## Priority 3: play and maintainability
@@ -1689,6 +1687,14 @@ problem: a control that belongs inside a box is sitting beside it.
 - [x] **Two detail levels per baked tree.** ~~Not the blocker. Not a blocker at all.~~ Built, measured against a benchmark that was reading vsync, and removed. See RESEARCH.md; the honest number is that eleven times the geometry costs nothing measurable on this path.
 
 ## Priority 2: landscape and performance
+
+- [x] **A CC0 grass model for the near-field tuft -- not needed.** Closed on
+  branch `ultra-looks`. The question was whether to buy the near grass a real
+  model; instead the near tuft became a hand-built clump of seven curved,
+  tapering blades (21 triangles, inside the 20-40 this entry had priced as
+  affordable for `addNearbyGrass`), lit like the ground and darker at the root,
+  and the owner approved it. No outside asset, so nothing to license.
+  RESEARCH.md *Rough grass clumps*.
 
 - [x] **Water sits on land, and a pond may split a hole.** Channels were being drawn on the seabed (2302 of 2452 stations at sea on a measured island seed) and were chosen for length, which after trimming selected runs entirely off the map. Island courses now carry no inland water at all -- the ocean is the hazard -- and Links keeps its coast handling. A mown semi-rough band now comes round every pond, lake and channel that meets a fairway, in the ground shader AND in the lie -- the first attempt changed only the lie and was invisible, see RESEARCH.md. Ponds may bite into a corridor or cross it, with the carry measured rather than assumed: 6% of holes split at default settings, median carry 33 yd, longest 101 yd at maximum water.
 
