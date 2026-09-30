@@ -53,15 +53,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
-  pixel ratio a step when frames run slow, raise it when there is headroom,
-  within the tier's own ceiling (`applyQuality` sets
-  `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
-  4090 (corrected probe, 28 September baseline): High at 1x pixels 10.7 ms,
-  1.5x 12.4 ms, 2x 14.4 ms. Matters most on
-  phones (many pixels, small graphics chip). Needs hysteresis so it does not
-  flicker between steps, and a setting to turn it off.
-
 ### Build time (the wait from "play" to a playable course)
 
 Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
@@ -963,6 +954,22 @@ record of what was ruled out and why, which is worth more than a short file.
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 ### Frame rate
+
+- [x] **F4. Automatic resolution to hold the frame rate.** Branch
+  `frame-and-lights`. `src/auto-resolution.js` decides, `main.js` feeds it one
+  frame interval per frame, the renderer applies it under the tier's ceiling
+  (`setResolutionScale`). Steps of 100/85/72/60/50% of the tier's pixels,
+  never below a pixel ratio of 0.5. Aims for 60 fps, or the cap when lower --
+  never a faster display's full rate, so a 120 Hz Ultra machine running 90 fps
+  is left alone. Steps down when a second of frames averages 15% over the
+  target; steps up after 4 s at the target, and a step up that does not hold
+  doubles that wait (up to a minute), which is what stops it flickering on the
+  edge. Held (not reset) while the page is hidden or the loading screen is up.
+  **A switch at every tier**, "Automatic resolution" under the frame rate cap,
+  on by default; the tester report says whether it was on and the resolution
+  drawn at. Checked in the built game with the processor slowed eightfold: 72%
+  after 2 s, 50% by 4 s; lifted, back to full in 20 s; switched off, never
+  moved. RESEARCH.md *F4: automatic resolution*.
 
 - [x] **F6. Shadow cascades split where the player stands.** Branch
   `cascade-splits`. High and Ultra end the first two cascades at 100 m and

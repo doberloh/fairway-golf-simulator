@@ -43,6 +43,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R} 
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {createAutoResolution} from './auto-resolution.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -1739,6 +1740,8 @@ function collectDiagnostic(){
    biome:settings.biome,
    tier:graphics.quality,
    frameCap:graphics.frameCap,
+   autoResolution:graphics.autoResolution,
+   resolution:Math.round((view?.resolutionScale??1)*100),
   },
   device:deviceFacts(),
   webgl:webglFacts(gl),
@@ -2852,6 +2855,8 @@ function renderPanel(name,content){
   <p class="note" id="gfxNote"></p>
   <label class="field">Frame rate cap<select id="gfxFrameCap">${FRAME_CAPS.map(f=>`<option value="${f}">${f?f+' fps':'Follow the display'}</option>`).join('')}</select></label>
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
+  <label class="check"><input id="gfxAutoRes" type="checkbox" ${graphics.autoResolution?'checked':''}> Automatic resolution</label>
+  <p class="note">When frames run slow, draw fewer pixels — a step at a time, down to half — and take them back once there is room. Aims for 60 frames a second, or your cap if it is lower, and never goes sharper than the quality setting above. Off, the picture stays exactly as sharp as the setting and the frame rate goes where it goes. <span id="gfxAutoResNow"></span></p>
   <h3>Reading the ground</h3>
   <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
   <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
@@ -2921,6 +2926,8 @@ function renderPanel(name,content){
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
+  $('gfxAutoRes').onchange=()=>{graphics=saveGraphics({...graphics,autoResolution:$('gfxAutoRes').checked});autoResolutionNote();toast(graphics.autoResolution?'Resolution now drops a step when frames run slow.':'Resolution stays where this setting puts it.');};
+  autoResolutionNote();
  }else if(name==='camera'){
   const c=view.config;
   // ONE SECTION, and which controls are in it depends on the answer to one
@@ -4111,12 +4118,33 @@ function toggleClockPop(open){
 }
 
 let gamepadActive=false;
+// AUTOMATIC RESOLUTION (F4). The decision is auto-resolution.js; this feeds it
+// one interval per rendered frame and applies the answer. The tier (and the
+// display's own pixel ratio) set the ceiling, and a change of either starts it
+// again from the sharpest step. Held, not reset, while the page is hidden or the
+// loading screen is up: those frames say nothing about play.
+const autoRes=createAutoResolution();let autoResKey='';
+function autoResolutionNote(){
+ const n=$('gfxAutoResNow');if(!n)return;
+ const s=view?.resolutionScale??1;
+ n.textContent=!graphics.autoResolution?'':s<1?`Drawing at ${Math.round(s*100)}% of this setting's resolution right now.`:'Drawing at full resolution right now.';
+}
+function autoResolutionFrame(now,interval){
+ if(!view)return;
+ if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
+ const key=graphics.quality+':'+view.pixelCeiling();
+ if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
+ if(document.hidden||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ const scale=autoRes.sample(interval,now,graphics.frameCap);
+ if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
+}
 function tick(now){
  requestAnimationFrame(tick);
  // A cap trades refresh for headroom: skip the frame instead of rendering one
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
  diagnosticFrames.sample(now-lastTick);
+ autoResolutionFrame(now,now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');

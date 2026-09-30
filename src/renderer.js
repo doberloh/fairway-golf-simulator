@@ -581,9 +581,20 @@ export class GolfView{
    if(m.envMap!==want){m.envMap=want;m.needsUpdate=true;}
   }
  }
+ // THE PIXELS, as the tier allows them (the ceiling) times what automatic
+ // resolution (auto-resolution.js, F4) currently asks for. The scale is only
+ // ever at or below 1: a step can draw fewer pixels than the tier, never more.
+ pixelCeiling(){return Math.min(devicePixelRatio,this.quality.pixelRatio);}
+ setResolutionScale(scale){
+  this.resolutionScale=Math.min(1,Math.max(.1,scale||1));
+  const ratio=this.pixelCeiling()*this.resolutionScale;
+  // Bloom and the god-ray mask size their targets from the canvas every frame,
+  // so they follow on the next frame without being told.
+  if(Math.abs(this.renderer.getPixelRatio()-ratio)>1e-6)this.renderer.setPixelRatio(ratio);
+ }
  applyQuality(name){
   this.quality=tierOf(name);
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.quality.pixelRatio));
+  this.setResolutionScale(this.resolutionScale??1);
   this.renderer.shadowMap.type=T.PCFShadowMap;
   if(this.sun){
    this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);

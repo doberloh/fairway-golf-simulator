@@ -299,6 +299,11 @@ const clean = g => ({
  sheen: bool(g?.sheen, GROUND_CUES.sheen),
  terrainShadows: bool(g?.terrainShadows, true),
  reflections: bool(g?.reflections, true),
+ // AUTOMATIC RESOLUTION (F4, auto-resolution.js): on by default, because the
+ // player who needs it most -- on a phone, or a laptop with no graphics card --
+ // is the one least likely to go looking for it. A switch at every tier, for
+ // anyone who would rather have a steady picture than a steady frame rate.
+ autoResolution: bool(g?.autoResolution, true),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every

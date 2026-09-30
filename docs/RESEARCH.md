@@ -5347,3 +5347,53 @@ Surprise me, and fails if any lit program is created after the loading overlay
 goes and then drawn. It failed on the build before this fix (three late
 `MeshToonMaterial` programs at 3.0-3.4 s on a random course) and passed four
 times after on four different courses. GPU only.
+
+## F4: automatic resolution (30 September)
+
+Branch `frame-and-lights`. `src/auto-resolution.js` (the decision, pure and
+unit-tested), `autoResolutionFrame` in `src/main.js` (feeding it),
+`setResolutionScale` / `pixelCeiling` in `src/renderer.js` (applying it).
+
+**Why the pixel ratio.** It is the only lever that trades picture for frame
+time smoothly on any machine: every pixel costs the same fragment work, and a
+phone has many pixels behind a small graphics chip. Measured before (TODO F4):
+High on the 4090 at 1x pixels 10.7 ms, 1.5x 12.4 ms, 2x 14.4 ms. Bloom's
+targets already size themselves from the canvas every frame, and the god-ray
+mask sizes from the window rather than the pixel ratio, so nothing else had to
+learn about it.
+
+**What it aims for: 60 fps, or the cap when lower.** Not the display's own
+rate. Chasing 120 on a 120 Hz display would soften an Ultra picture that is
+playing perfectly well at 90 -- the behaviour the owner called annoying in
+asking for a switch. So a fast display's extra frames are never bought with
+sharpness; the switch is still there for anyone who dislikes any of it.
+
+**How it knows there is room: it cannot, so it tries.** The display paces
+frames, so a frame that took 6 ms and one that took 15 ms both arrive 16.7 ms
+apart and the interval says nothing about headroom. After 4 s at the target
+it steps one sharper; if that step runs slow within its first judged second it
+steps back and DOUBLES the wait before the next try, up to 60 s, and a quiet
+spell four times the wait halves it again. In the tests a machine that fits at
+85% and not at 100% changes step at most 16 times in three minutes, where a
+plain up-after-4-s rule would change about 60 times.
+
+**Hitches are not the steady state.** A single frame over 200 ms straight
+after a normal one (a water probe, a tile, a shader) is not counted. A long
+frame after another long frame is: the first version ignored every frame over
+200 ms, which would have left a machine too slow for any frame -- the one that
+most needs it -- never stepping down.
+
+**The thresholds are placed, not published**: a second's window, 15% over the
+target to step down, 6% to count as steady, 0.6 s ignored after a change while
+render targets reallocate, and the 85/72/60/50% steps. They are the usual
+shape of such controllers rather than numbers from a source. Nobody has run it
+on a real phone yet; that is the first thing to check (TODO, *Nobody has
+measured a real phone*).
+
+**Checked in the built game** (High, PNW nine, 1600x900, processor slowed
+eightfold through the browser's own throttling): pixel ratio 1 -> 0.72 in 2 s,
+0.5 by 4 s; throttling lifted, 0.6, 0.72, 0.85, 1.0 at 5 s intervals; with the
+switch off it never moved. Throttling the processor is not something fewer
+pixels can fix, so the frame rate itself stayed at about 20 there -- it shows
+the mechanism, not the benefit, which needs a machine limited by its graphics
+chip.
