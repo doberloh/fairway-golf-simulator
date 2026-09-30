@@ -291,48 +291,131 @@ export function planScorecard(s={}){
 // moves and the ground does not. Every term is zeroed at that anchor so the
 // green meets the terrain it is blended into without a step.
 //
-// Four things are going on, and they are the four things a green architect
-// actually builds:
+// EACH GREEN HAS A CHARACTER (GENERATOR_VERSION 33). Every green used to be the
+// same recipe -- a tilt, three crossing ridges drawn as rounded SQUARE waves, a
+// dish and a tier -- with only the seed's angles changing. The square waves are
+// shelves with short steep faces between them, so nearly every green carried
+// one or two visible steps, and at a low sun each face lit up as a bright band
+// across the surface: the owner's "tiered elevation on many of our greens".
+// Now each green draws one character from its seed and is built from it:
 //
-//   TILT     the whole surface leaning, which is mostly drainage. Two or three
-//            per cent is ordinary; five is severe.
-//   RIDGES   crossing spines and swales that break the green into sections.
-//   DISH     a bowl or a crown. A punchbowl gathers balls to the middle; a
-//            turtleback sheds them off every side, which is what makes the
-//            Pinehurst greens what they are. The seed decides which, and how far.
-//   TIER     a step across the surface. Its face is the steepest ground a green
-//            has, and a foot or two of drop over three or four paces is normal.
+//   rolling   three or four broad mounds and hollows, each a smooth dome
+//   tiered    one real tier, a step with a face a few metres wide
+//   ridged    a single spine or swale running across the green
+//   crowned   a turtleback that sheds balls off every side
+//   bowl      a dish that gathers them to the middle
 //
-// The slider is deliberately not linear. A green architect's range is not evenly
-// spread: most greens sit in the gentle half and the severe ones are outliers,
-// so the curve keeps the bottom and middle close to where they were and spends
-// the change at the top. See RESEARCH.md for what the numbers are anchored to.
+// plus a drainage tilt on every green, mostly falling toward the approach the
+// way architects build them, and a couple of small rolls so no green is clean.
+// Only tiered greens have a step. Domes and swales have flat tops and floors,
+// which is what keeps somewhere level enough to cut a hole on a severe green.
+//
+// FALSE FRONTS live here too, because they are part of the putting surface: the
+// front few metres of the green, before the collar, falling away toward the
+// fairway so a ball that lands short of the shelf rolls back off. The share of
+// greens that get one is a setting; how far the front drops follows the green
+// slope setting, so at 0 a green is still level.
+//
+// The slider is deliberately not linear. Most greens sit in the gentle half and
+// the severe ones are outliers, so the curve keeps the bottom and middle close
+// to where they were and spends the change at the top -- and since 33 the top
+// reaches much further (7.2% mean and 7.2 ft of relief at 100, against 5.4% and
+// 5.6 ft), at the owner's request. See RESEARCH.md.
+export function greenAmp(slider){
+ return slider*(.60+.40*slider*slider)*1.90*(1+6.1*Math.max(0,slider-.4)**2);
+}
 export function greenContour(h,x,z){
  const slider=(h.settings.greenDifficulty??35)/100;
- const amp=slider*(.60+.40*slider*slider)*1.90;
+ const amp=greenAmp(slider);
  if(amp<=0)return 0;
- const anchor=h.green??h.pin,a=h.phase;
- const dx=x-anchor.x,dz=z-anchor.z,c=Math.cos(a),s=Math.sin(a);
- const u=dx*c+dz*s,v=-dx*s+dz*c;
- return amp*(greenShape(u,v,a)-greenShape(0,0,a));
+ const anchor=h.green??h.pin,r=greenRecipe(h);
+ const dx=x-anchor.x,dz=z-anchor.z;
+ // A severe green's rolls are broader as well as taller: scaling only their
+ // height at the top of the range packed a metre of relief into a few paces, and
+ // the slope under a putt jumped more than 5% in a metre (tests/lab.test.mjs).
+ const spread=1+1.2*Math.max(0,slider-.6);
+ // The drainage tilt stops growing at about 70%: a severe green is severe in
+ // its contours, not in leaning the whole surface -- scaled with everything else
+ // a 100% green leaned 5-7% and had almost nowhere left level enough for a cup.
+ const lean=Math.min(amp,1.3+.15*Math.max(0,amp-1.3));
+ // And a tier's face widens as its step grows, so a severe tier is a steep
+ // bank rather than a wall: at 100 a step of about a metre and a half has a face
+ // two to three times as wide as a default one.
+ const widen=Math.max(1,amp/2.5);
+ let y=lean*(r.tx*dx+r.tz*dz)+amp*(greenShape(r,dx,dz,spread,widen)-r.zero);
+ // The false front: along the line of play (local -z is toward the tee), from
+ // just in front of where front hole locations stop to the edge and beyond, so
+ // the collar and the approach keep falling with it.
+ if(r.falseFront<(h.settings.falseFronts??0)/100){
+  const reach=h.greenSize??17,start=-reach*.74,depth=r.frontDepth;
+  y-=r.frontDrop*Math.pow(slider,.6)*smoothstep01((start-dz)/depth);
+ }
+ return y;
 }
-// A rounded square wave. A green is not a sine: it is shelves with faces between
-// them, and a ball has to be able to stop somewhere. Flattening the tops and
-// steepening the transitions is what leaves ground worth cutting a hole on even
-// when the surface as a whole is severe -- and it is also just what tiered greens
-// look like.
-const plateau=t=>Math.tanh(2.1*Math.sin(t))/Math.tanh(2.1);
-function greenShape(u,v,a){
- const r=Math.hypot(u,v);
- const tilt=.0135*u+.0115*v*Math.sin(a*2.3);
- const ridges=.120*plateau(u/12+a)+.150*plateau(v/15+a*2)+.085*plateau((u+v)/14+a*1.3);
- // Positive is a crown, negative a punchbowl. Flat out at the rim so the edge of
- // the green is not a wall.
- const dish=.290*Math.sin(a*3.1)*Math.exp(-(r*r)/(17*17));
- // One tier, set somewhere off centre, running across the green at the seed's
- // angle. tanh gives a face about four metres wide rather than a cliff.
- const tier=.175*Math.sin(a*1.9)*Math.tanh((v-5.5*Math.sin(a*2.7))/2.4);
- return tilt+ridges+dish+tier;
+const smoothstep01=t=>{t=Math.min(1,Math.max(0,t));return t*t*(3-2*t);};
+// How far the green and its collar stand above (or sink below) the ground
+// around them, at `d` metres outside the green's edge (negative inside). The
+// terrain blend in course.js adds this to the green's height: a raised green is
+// a pedestal with banks falling away beyond the collar, a sunken one a dish the
+// surrounds rise out of. Constant across the putting surface, so it changes
+// nothing a putt can feel -- only what a chip has to climb or run down.
+export function greenPedestal(h,d){
+ const r=greenRecipe(h),s=h.settings;
+ const raised=(s.raisedGreens??0)/100,sunken=(s.sunkenGreens??0)/100;
+ let lift=0;
+ if(r.type<raised)lift=r.raise;
+ else if(r.type<Math.min(1,raised+sunken))lift=-r.sink;
+ if(!lift)return 0;
+ const collar=(s.fringe??2)+.4;
+ return lift*(1-smoothstep01((d-collar)/r.bank));
+}
+// The per-green draws, made once and kept. Everything a green's shape depends on
+// comes from the seed and the hole, never from the order greens are asked about,
+// so the generation workers and the main thread build identical greens.
+const RECIPES=new WeakMap();
+function greenRecipe(h){
+ let r=RECIPES.get(h);
+ if(r)return r;
+ const g=rng(`${h.seed??h.settings?.seed??'GREEN'}:green:${h.hole??0}`);
+ const reach=h.greenSize??17,a=h.phase??0;
+ const between=(lo,hi)=>lo+g()*(hi-lo),sign=()=>g()<.5?-1:1;
+ // Drainage: two greens in three fall toward the approach, higher at the back.
+ const back=g()<.66,tiltAngle=back?Math.PI/2+between(-.8,.8):g()*Math.PI*2,tilt=between(.016,.027);
+ const pick=g(),character=pick<.32?'rolling':pick<.54?'tiered':pick<.74?'ridged':pick<.88?'crowned':'bowl';
+ const mound=(amp,rlo,rhi,spread=.7)=>{const ang=g()*Math.PI*2,dist=Math.sqrt(g())*reach*spread;return {x:Math.cos(ang)*dist,z:Math.sin(ang)*dist,r:between(rlo,rhi),amp};};
+ const mounds=[];
+ if(character==='rolling')for(let i=0,n=3+(g()<.5?1:0);i<n;i++)mounds.push(mound(sign()*between(.12,.22),6,10.5));
+ else for(let i=0;i<2;i++)mounds.push(mound(sign()*between(.05,.09),4.5,8));
+ r={character,mounds,
+  tx:Math.cos(tiltAngle)*tilt,tz:Math.sin(tiltAngle)*tilt,
+  // tiered: a step across the green at its own angle, somewhere off centre.
+  tierAngle:g()*Math.PI*2,tierAt:between(-.35,.35)*reach,tierFace:between(2.6,3.6),tierDrop:sign()*between(.16,.26),
+  // ridged: a spine (positive) or swale (negative) with a smooth profile.
+  ridgeAngle:g()*Math.PI*2,ridgeAt:between(-.3,.3)*reach,ridgeHalf:between(4,6.5),ridgeAmp:sign()*between(.12,.22),
+  // crowned or bowl: the dish, broad enough to be the green's whole shape.
+  dish:character==='crowned'?between(.20,.32):character==='bowl'?-between(.20,.30):0,dishR:between(12,16),
+  // The types, drawn once and compared against the settings each time, so
+  // moving a slider changes which greens qualify without redrawing any shape.
+  type:g(),raise:between(.9,1.6),sink:between(.6,1.1),bank:between(5,8),
+  falseFront:g(),frontDrop:between(.55,.9),frontDepth:between(3.2,4.8),
+  phase:a};
+ r.zero=greenShape(r,0,0);
+ RECIPES.set(h,r);
+ return r;
+}
+function greenShape(r,dx,dz,spread=1,widen=1){
+ let y=0;
+ dx/=spread;dz/=spread;
+ for(const m of r.mounds){const q=((dx-m.x)**2+(dz-m.z)**2)/(m.r*m.r);y+=m.amp*Math.exp(-q);}
+ if(r.character==='tiered'){
+  const c=Math.cos(r.tierAngle),s=Math.sin(r.tierAngle),across=dx*c+dz*s-r.tierAt;
+  y+=r.tierDrop*Math.tanh(across/(r.tierFace*widen)*1.6)*.5;
+ }else if(r.character==='ridged'){
+  const c=Math.cos(r.ridgeAngle),s=Math.sin(r.ridgeAngle),across=dx*c+dz*s-r.ridgeAt;
+  y+=r.ridgeAmp*Math.exp(-(across*across)/(r.ridgeHalf*r.ridgeHalf));
+ }
+ if(r.dish){const q=(dx*dx+dz*dz)/(r.dishR*r.dishR);y+=r.dish*Math.exp(-q);}
+ return y;
 }
 export function greenGradient(h,x,z){const e=.35;return{x:(h.height(x+e,z)-h.height(x-e,z))/(2*e),z:(h.height(x,z+e)-h.height(x,z-e))/(2*e)};}
 // THE PUTTING CAMERA IS GONE. This used to swap `player` for a dedicated `putt`

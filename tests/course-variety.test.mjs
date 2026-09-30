@@ -54,9 +54,17 @@ test('enabled tee pads have distinct playable positions and route yardages; roun
  }
 });
 test('green difficulty changes real contact slopes and affects putt break',()=>{
- const settings={seed:'CONTOURS',holes:9,trees:0,water:0,bunkerCount:0,elevation:0},flat=generateWorld({...settings,greenDifficulty:0}),hard=generateWorld({...settings,greenDifficulty:100});
+ // Raised and punchbowl greens and false fronts shape the ground round a green on
+ // their own; this is about the slope setting, so they are off.
+ const settings={seed:'CONTOURS',holes:9,trees:0,water:0,bunkerCount:0,elevation:0,raisedGreens:0,sunkenGreens:0,falseFronts:0},flat=generateWorld({...settings,greenDifficulty:0}),hard=generateWorld({...settings,greenDifficulty:100});
  for(let i=0;i<9;i++){const a=flat.holes[i],h=hard.holes[i];let largest=0,spread=[];for(let x=-12;x<=12;x+=4)for(let z=-12;z<=12;z+=4){assert(Math.abs(a.height(x,a.pin.z+z)-a.height(0,a.pin.z))<.001);const g=greenGradient(h,x,h.pin.z+z);largest=Math.max(largest,Math.hypot(g.x,g.z));spread.push(h.height(x,h.pin.z+z));}assert(largest>.015);assert(Math.max(...spread)-Math.min(...spread)>.25);}
- const h=hard.holes[0],a=flat.holes[0],shot={origin:{x:0,z:h.pin.z-10},aim:0,speed:1.2,vla:0,spin:0,spinAxis:0,hla:0};const p=simulateShot(shot,h),q=simulateShot({...shot,origin:{x:0,z:a.pin.z-10}},a);assert(Math.abs(p.end.x-q.end.x)>.05);
+ // A straight putt from in front of the cup. Most greens now fall from back to
+ // front (as real ones are built), and a putt straight up that fall hardly
+ // breaks, so one hole proves nothing: across the nine, the severe greens have to
+ // turn at least one such putt clearly aside where the level ones do not.
+ let biggest=0;
+ for(let i=0;i<9;i++){const h=hard.holes[i],a=flat.holes[i],shot={origin:{x:0,z:h.pin.z-10},aim:0,speed:1.2,vla:0,spin:0,spinAxis:0,hla:0};const p=simulateShot(shot,h),q=simulateShot({...shot,origin:{x:0,z:a.pin.z-10}},a);biggest=Math.max(biggest,Math.abs(p.end.x-q.end.x));}
+ assert(biggest>.05,`the largest break across nine severe greens was ${biggest.toFixed(3)} m`);
 });
 // The camera the player chose is the camera they keep, on the green as much as
 // anywhere. This used to swap in a dedicated `putt` camera the moment the ball

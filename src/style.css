@@ -1036,3 +1036,9 @@ html,body{overscroll-behavior:none}
  #world .flight-badge button kbd,#world .flight-badge .skip-long{display:none}
  #world .flight-nums{gap:6px;font-size:13px;min-width:0;overflow:hidden}
 }
+
+/* A studio slider past its warning point (the green slope slider past 75%):
+   red slider and value, and a note under it saying why. */
+.field.danger input[type=range]{accent-color:#e5604b}
+.field.danger output{color:#ff8a73}
+.warn-note{display:block;margin:0;padding:8px 10px;border-left:3px solid #e5604b;background:rgba(229,96,75,.12);border-radius:4px;font-size:12px;line-height:1.45;color:var(--ink)}

@@ -2491,7 +2491,10 @@ function renderPanel(name,content){
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
    if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
-   return `<label class="field">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}"></label>`;};
+   // A field with `warn` in the schema turns red past its threshold and keeps a
+   // note under it saying why (wired below, after the panel is drawn).
+   const warned=f.warn&&settings[k]>f.warn.above;
+   return `<label class="field${warned?' danger':''}">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" ${warned?'':'hidden'}>${escape(f.warn.text)}</span>`:''}</label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
    holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
@@ -2567,6 +2570,12 @@ function renderPanel(name,content){
   };
   content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
+  // Past a field's `warn.above` (the green slope slider, past 75%): red, the
+  // note under it, and a toast the moment it is crossed -- not on every nudge.
+  for(const f of SETTINGS)if(f.warn&&$(f.key)){
+   const el=$(f.key);let was=Number(el.value)>f.warn.above;
+   el.addEventListener('input',()=>{const on=Number(el.value)>f.warn.above;el.closest('.field').classList.toggle('danger',on);$('warn-'+f.key).hidden=!on;if(on&&!was)toast(f.warn.toast);was=on;});
+  }
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
   $('openLibrary').onclick=()=>openPanel('library');
@@ -3462,9 +3471,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // `fromPin`: that many metres from the pin, on the line back toward the tee
    // turned `around` degrees about the pin, looking at it -- a green seen from
    // wherever a putt is read, whatever shape the hole is.
-   if(o.fromPin!==undefined){const h=world.holes[o.hole??round.hole],pin=h.worldPin,tee=h.worldTee;
+   // `fromGreen` is the same about the green's centre, which stays put when the
+   // cup moves -- for comparing two versions of a green whose cups differ.
+   if(o.fromPin!==undefined||o.fromGreen!==undefined){const h=world.holes[o.hole??round.hole],pin=o.fromGreen!==undefined?h.worldGreen:h.worldPin,tee=h.worldTee,far=o.fromGreen??o.fromPin;
     const a=Math.atan2(tee.x-pin.x,tee.z-pin.z)+(o.around??0)*Math.PI/180;
-    x=pin.x+Math.sin(a)*o.fromPin;z=pin.z+Math.cos(a)*o.fromPin;yaw=Math.atan2(pin.x-x,pin.z-z);}
+    x=pin.x+Math.sin(a)*far;z=pin.z+Math.cos(a)*far;yaw=Math.atan2(pin.x-x,pin.z-z);}
    else if(o.hole!==undefined){const h=world.holes[o.hole];const p=h.toWorld({x:o.across??0,z:o.along??0});x=p.x;z=p.z;
     const aim=o.look==='tee'?h.worldTee:o.look==='pin'||o.look===undefined?h.worldPin:null;
     yaw=aim?Math.atan2(aim.x-x,aim.z-z):(o.look??0)*Math.PI/180;}

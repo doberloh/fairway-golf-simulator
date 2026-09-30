@@ -1,7 +1,7 @@
 import {addLargeLakes} from './lakes.js';
 import {generateHomes} from './homes.js';
 import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js';
-import {planCourse,holeLine,enabledTees,greenContour,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
+import {planCourse,holeLine,enabledTees,greenContour,greenPedestal,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
 import {makeGroundGrid,makeGroundGridSteps,makeGroundGridPooled,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
 import {buildRange} from './range.js';
@@ -1135,7 +1135,10 @@ export function* generateWorldSteps(settings={},options={}){
  // the green's contour first, as this did, was a third of what shaping an
  // eighteen cost -- for points a hundred metres and more from any green.
  if(d-s.fringe-1>=100)continue;
- const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
+ // Raised and sunken greens (greenPedestal in course-plan.js): the green and its
+ // collar lifted or dropped as one, with banks beyond the collar. Inside the
+ // blend, so the shoulder still carries the terrain back to the land around it.
+ const greenY=base(h.worldGreen.x,h.worldGreen.z)+greenContour(h,p.x,p.z)+greenPedestal(h,d),shoulder=40+Math.min(60,Math.abs(y-greenY)*4),blend=1-smooth((d-s.fringe-1)/shoulder);if(blend>0)y=y*(1-blend)+greenY*blend;}
  return y;}
  // A tee is a terrace cut into whatever the rest of the shaping already
  // decided, so its height is sampled from shapedNoTees rather than from the

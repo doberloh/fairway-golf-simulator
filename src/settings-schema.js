@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=8;
+export const SCHEMA_VERSION=9;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -138,7 +138,15 @@ export const SCHEMA_VERSION=8;
 //     to 10, and ground within 40 m of a tee standing above the sight line fell
 //     from 8 shots to 2. It did NOT move blind tee shots -- all 25 of those are
 //     caused by ground 96 to 190 m out, not by the tee.
-export const GENERATOR_VERSION=32;
+// 33: every green has a character. The shape was one recipe for every green --
+//     a tilt, three crossing ridges drawn as rounded square waves, a dish and a
+//     tier -- so nearly every green had one or two steps, and at a low sun each
+//     face lit up across the surface. Each green now draws rolling, tiered,
+//     ridged, crowned or bowl from its seed; only tiered greens have a step.
+//     The top of the difficulty slider reaches much further: at 100 a green
+//     averages 7.2% with 7.2 ft of relief, against 5.4% and 5.6 ft. New settings for
+//     raised greens, punchbowl greens and false fronts (SCHEMA_VERSION 9).
+export const GENERATOR_VERSION=33;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -185,7 +193,15 @@ export const SETTINGS=[
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
  {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and an irregular edge. Raising it also EVENS OUT the waves that make the outline, so no single one takes over — letting one dominate is what turns a green into a clean three-lobed flower rather than a golf green.'},
  {key:'bunkerShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Bunker shape',short:'Irregularity',tip:'How ragged the outline of a bunker is. Low is a smooth oval; high gives waisted and lobed sand. Green-side bunkers are re-fitted to the green after shaping, so they keep the gap they are told to leave whatever this is set to.'},
- {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add broad tilts, crossing ridges and hollows.'},
+ {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add tilts, rolls, ridges, tiers and bowls, each green with a character of its own. The top of the range is severe: championship relief, with tier faces well past ten per cent.',
+  // NOT A SETTING, a caution the studio shows: past `above` the slider turns red,
+  // this note stays under it and a toast says so once as it is crossed. 75 is
+  // where a green's average slope (3.8%) passes the 3% that guidance gives for
+  // most of a putting surface; at 90 the greens are as severe as 100 used to be.
+  warn:{above:75,toast:'Greens past 75% are extremely difficult.',text:'Past 75% these are harder than almost any real course: most of the green is steeper than the 3% greens are usually built to, and there is less and less level ground to cut a cup. 90% is as severe as the old 100%, and 100% is extreme — expect three-putts.'}},
+ {key:'raisedGreens',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:25,label:'Raised greens',short:'Share of greens',tip:'The share of greens built up above the ground around them, with banks falling away beyond the collar. A shot that misses runs down the bank, and the chip back has to climb it. The putting surface itself is unchanged.'},
+ {key:'sunkenGreens',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:10,label:'Punchbowl greens',short:'Share of greens',tip:'The share of greens set down into a hollow, with the ground rising around them. Shots that miss tend to be fed back toward the green. Raised and punchbowl greens together never exceed every green.'},
+ {key:'falseFronts',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:20,label:'False fronts',short:'Share of greens',tip:'The share of greens whose front few metres fall away toward the fairway, so an approach that lands just short of the shelf rolls back off the green. How far the front drops follows the green slope setting; at 0 the green is still level.'},
 
  {key:'pinDay',category:'turf',kind:'choice',options:['Thursday','Friday','Saturday','Sunday'],def:'Thursday',label:'Pin difficulty',tip:'Which day of a tournament the cups are cut for. Thursday takes the flattest ground with the most green around it; Friday, Saturday and Sunday move to progressively more slope and tighter edges. No day will cut a cup somewhere a ball cannot come to rest. Hole locations work front, middle, back and around again as the round goes on.'},
 
@@ -235,7 +251,7 @@ const CONSTRAINTS=[
 const VARY={biome:true,footprint:true,homes:true,
  courseYards:s=>[s.holes*300,s.holes*400],landform:[25,95],elevation:[10,75],spacing:[12,40],
  doglegs:[30,90],doglegAngle:[25,60],doglegPosition:[40,70],width:[28,50],fringe:[1,4],semiRough:[3,10],
- greenDifficulty:[15,70],bunkerCount:[2,7],fairwayBunkers:[10,70],bunkerGap:[0,6],
+ greenDifficulty:[15,70],raisedGreens:[0,50],sunkenGreens:[0,25],falseFronts:[0,40],bunkerCount:[2,7],fairwayBunkers:[10,70],bunkerGap:[0,6],
  water:[10,70],pondSize:[80,190],waterMin:[.4,1.5],waterMax:[2,5],lakes:[0,2],lakeSize:[110,260],
  rivers:[0,1],creeks:[0,2],riverWidth:[8,20],creekWidth:[2,5],streamDepth:[.6,2],streamBends:[25,85],
  trees:[25,85],homeDensity:[25,70],homeSetback:[25,55],wind:[0,14],windDirection:[0,359]};
@@ -292,6 +308,10 @@ const MIGRATIONS={
  // the generator version already puts that change to the player rather than
  // applying it silently. It takes the default.
  4:s=>({...s,blindTees:0}),
+ // 8 -> 9: raised greens, punchbowl greens and false fronts. A save from before
+ // had none of them, so it keeps none rather than taking the defaults; its
+ // greens still change shape (GENERATOR_VERSION 33), which the player is told.
+ 8:s=>({...s,raisedGreens:0,sunkenGreens:0,falseFronts:0}),
 };
 
 // Play-scope keys (turf, flight profile, club yardages, art style) ride along in

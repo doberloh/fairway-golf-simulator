@@ -77,9 +77,9 @@ Terrain clearance is solved once per hole rather than clamped per frame. Clampin
 
 ## Greens and hole locations
 
-A putting surface here is four things a green architect actually builds, and nothing else: a TILT, which is mostly drainage and is ordinarily two or three per cent; crossing RIDGES, the spines and swales that break a green into sections; a DISH, which is a punchbowl if it gathers and a turtleback if it sheds, the latter being what the Pinehurst greens are known for; and a TIER, whose face is the steepest ground a green has. The ridges are rounded square waves rather than sines, because a green is shelves with faces between them and a ball has to be able to stop somewhere. A pure sine green is uniformly sloped everywhere and has nowhere to cut a hole.
+**Superseded 30 September (GENERATOR_VERSION 33): see *Greens with a character each* below.** Until then a putting surface here was one recipe for every green: a TILT, which is mostly drainage and is ordinarily two or three per cent; crossing RIDGES, the spines and swales that break a green into sections; a DISH, which is a punchbowl if it gathers and a turtleback if it sheds, the latter being what the Pinehurst greens are known for; and a TIER, whose face is the steepest ground a green has. The ridges were rounded square waves rather than sines, because a green is shelves with faces between them and a ball has to be able to stop somewhere -- which was right about pinnable ground and is also what put a step on nearly every green.
 
-The slider is deliberately not linear. Most greens sit in the gentle half of the range and the severe ones are outliers, so the curve keeps the bottom and middle where they already were and spends the change at the top. Measured across five seeds on a flat site, sampling the whole putting surface: at the default of 35 the mean slope is 1.2% with 1.3 ft of relief, unchanged from before; at 100 it is 5.3% mean, 10.2% at the 95th percentile, 18.5% at the steepest tier face, and 5.6 ft of relief. USGA guidance puts ordinary putting surfaces at 2 to 4 per cent, so the default sits under that and the top of the slider sits well past it, which is the intent: the top is meant to be Augusta and Oakmont rather than a municipal course. The one number that keeps it a golf green and not a hillside is that 14% of a severe surface is still under 2.5% — there is always somewhere to cut a hole.
+The slider is deliberately not linear. Most greens sit in the gentle half of the range and the severe ones are outliers, so the curve keeps the bottom and middle where they already were and spends the change at the top. Measured across five seeds on a flat site, sampling the whole putting surface, before GENERATOR_VERSION 33: at the default of 35 the mean slope was 1.2% with 1.3 ft of relief; at 100 it was 5.3% mean, 10.2% at the 95th percentile, 18.5% at the steepest tier face, and 5.6 ft of relief (the figures since then are in *Greens with a character each*). USGA guidance puts ordinary putting surfaces at 2 to 4 per cent, so the default sits under that and the top of the slider sits well past it, which is the intent: the top is meant to be Augusta and Oakmont rather than a municipal course. The one number that keeps it a golf green and not a hillside is that 14% of a severe surface is still under 2.5% — there is always somewhere to cut a hole.
 
 Hole locations move through the week. The cup is no longer the centre of the green; the green has a centre and the cup is a point on it, and the two are separated everywhere — routing, bunkering, the collision disc that packs corridors, the tree exclusion, the flyover orbit and the green-reading overlay all key off the green, while the physics, the flagstick and the cup mesh key off the pin. Anchoring any of those at the cup means recutting a hole location rebuilds the course, which is what happened: the routing disc was centred on the pin, so moving a pin moved the collision volume, moved the next hole and rerouted everything under it.
 
@@ -4982,3 +4982,150 @@ the last of it.
 All shading: `surface()`, the physics and the generator are untouched; the
 biome fingerprints are unchanged and no version bump was owed. No outside
 sources were consulted for this pass.
+
+## Greens with a character each (30 September, GENERATOR_VERSION 33)
+
+Branch `green-shapes`. `greenContour`, `greenRecipe`, `greenShape` and
+`greenPedestal` in `src/course-plan.js`; the pedestal is applied in the green
+blend in `course.js`'s `height`.
+
+### What the owner saw, and what caused it
+
+A screenshot of a green at an evening sun, from above: a bright diagonal band
+across the surface and the shelf beside it in shade -- "tiered elevation on
+many of our greens". Two things together:
+
+1. **Nearly every green had a step.** The shape was one recipe for every green:
+   a tilt, three crossing ridges drawn as rounded SQUARE waves
+   (`tanh(2.1 sin t)`), a dish and a tier. Square waves are shelves with short
+   steep faces between them, so almost every green carried one or two faces
+   whatever the seed. The height maps of nine greens at 60% difficulty make it
+   plain: five of them are the same diagonal lean with the contour lines bunched
+   along one or two faces (`bench/shots/green-maps.mjs`, scratch).
+2. **At a low sun the green's own raking light lit each face as a band.** The
+   green-only directional relief (`ground.js`) ran at a gain of 4 on a shading
+   normal tilted about 3x, and since the *Reading the ground* rebuild it comes
+   from the sun's side -- so at a low sun a face turned toward it went bright and
+   the shelf beside it dark, on top of the real light and shadows already
+   showing it. Reproduced on Desert at 17:48 and 18:30 (hole 6 of REPORT1).
+
+### Fixes
+
+**The raking light eases off with the sun.** Full strength above about 33
+degrees of sun elevation, a third of it below about 9 (`smoothstep(.15,.55,
+sunDir.y)` on the sun direction's height), and a narrower range, 0.86-1.12
+(was 0.78-1.18). At a low sun the real light carries the shape; this exists
+for midday.
+
+**Every green draws a character from its seed** (hole and seed, never the order
+greens are asked about, so the generation workers build identical greens):
+
+| character | share | what it is |
+| --- | --- | --- |
+| rolling | 32% | three or four broad smooth mounds and hollows (6-10.5 m radius) |
+| tiered | 22% | one real tier: a step across the green, face 2.6-3.6 m wide |
+| ridged | 20% | a single spine or swale with a smooth profile across the green |
+| crowned | 14% | a turtleback that sheds balls off every side |
+| bowl | 12% | a dish that gathers them to the middle |
+
+Every green also has a drainage tilt -- two in three falling toward the
+approach, the way greens are built to drain and to show their surface to the
+shot -- and two small rolls so no green is clean. Only the tiered fifth have a
+step. Domes and swales have flat tops and floors, which is what keeps level
+ground for a cup.
+
+**The top of the slope slider reaches further, at the owner's request.**
+Surveyed across five seeds, the same method as the numbers above (flat site,
+the whole putting surface):
+
+| setting | before: mean / 95th pct / steepest / relief / under 2.5% | after |
+| --- | --- | --- |
+| 35 (default) | 1.22% / 2.6% / 4.2% / 1.3 ft / 94% | 1.06% / 1.9% / 4.5% / 1.1 ft / 99% |
+| 70 | 3.00% / 6.3% / 10.4% / 3.1 ft / 45% | 3.46% / 6.3% / 14.6% / 3.7 ft / 28% |
+| 100 | 5.39% / 11.4% / 18.6% / 5.6 ft / 12% | 7.23% / 14.5% / 26.7% / 7.2 ft / 7% |
+
+**The studio warns past 75%** (`warn` on the schema entry): the slider turns red, a note stays under it and a toast says so once as it is crossed, at the owner's request. 75 is where the average slope (3.8%) passes the 3% the sources below give for most of a putting surface; 90 averages 5.5%, which is the old 100.
+
+The curve stays superlinear, `s(0.6 + 0.4s^2) x 1.9`, now times
+`1 + 6.1 max(0, s - 0.4)^2` (was `1 + 3.75 max(0, s - 0.6)^2` in the first cut
+of this branch, and nothing before it). The default barely moves.
+
+Three things had to change with it, each found by a test failing:
+
+- **The tilt stops scaling with everything else.** Scaled fully, a 100% green
+  leaned 5-7% and only 3.5% of it was flat enough for a cup
+  (`tests/pins.test.mjs` wants more than 6%). Real severe greens are severe in
+  their contours, not in leaning the whole surface. The tilt now grows fully to
+  an amplitude of 1.3 and at 15% of the rate past it.
+- **Severe greens' rolls are broader as well as taller.** Scaling only the
+  height put a metre of relief into a few paces, and the slope under a putt
+  jumped 5.3-5.9% in a metre (`tests/lab.test.mjs` allows 5%). Features spread
+  up to 48% wider at the top (`1 + 1.2 max(0, s - 0.6)`).
+- **A severe tier's face widens with its step.** At 100 a tier's step is about
+  1.5 m, and on the default face width its steepest point was 32% -- a wall.
+  The face widens in proportion once the amplitude passes 2.5; the steepest
+  ground on any green at 100 is now 21-27%.
+
+The default tilt was raised part-way through (draws of 1.6-2.7% x amplitude,
+from 1.0-1.9%): the first cut left default greens tilting 0.35-0.65%, well
+under the 1.5% surface-drainage minimum the sources below give, and gentler
+than before at a time the owner was already finding greens flat.
+
+### Raised greens, punchbowl greens and false fronts (SCHEMA_VERSION 9)
+
+Three new settings, each a share of greens, drawn per green from its seed so
+moving a slider changes which greens qualify without redrawing any shape.
+
+- **Raised greens** (default 25%): the green and its collar lifted 0.9-1.6 m
+  (3-5 ft) as one piece, with banks falling away over 5-8 m beyond the collar.
+  Constant across the putting surface, so a putt cannot feel it; a chip has to
+  climb it. From the fairway the surface hides behind its front bank and only
+  the flag shows, as with a real elevated green.
+- **Punchbowl greens** (default 10%): the same, sunk 0.6-1.1 m, surrounds
+  rising around it. Raised takes priority if the two shares add past 100%.
+- **False fronts** (default 20%): the front of the green, from 74% of its
+  radius out to the edge and on through the collar, falling 0.55-0.9 m times
+  (difficulty)^0.6 over 3.2-4.8 m -- at the default about 0.3-0.5 m (1-1.6 ft).
+  In the putting surface itself (`greenContour`), so the pin chooser sees it;
+  it starts beyond the front pin band, so it takes no hole locations.
+
+A save from before (schema 8) migrates to none of the three rather than the
+defaults; its greens change shape anyway, which GENERATOR_VERSION 33 tells the
+player. The range sets all three to 0. The studio shows them under *Fairways &
+greens*, derived from the schema entries.
+
+**Placed, not published:** the character shares, mound sizes, tier widths and
+bank widths are judgement. The false front's height and the raised green's
+height are inside the ranges the sources give.
+
+### Sources
+
+- LINKS Magazine, *False Fronts: History, Evolution, and 10 of the Best*,
+  <https://linksmagazine.com/false-fronts-history-evolution-and-10-of-the-best/>
+  -- via search summary: a false front is a portion at the very front sloped
+  back toward the fairway, often **one or two feet high at the edge**, too
+  steep for a ball to rest; most common on Golden Age courses (1910-37).
+  Not fetched in full.
+- Hole19 glossary, *False Front*,
+  <https://www.hole19golf.com/glossary/false-front> -- definition only.
+- Golf Course Industry, *Getting back-to-front green slope right*,
+  <https://www.golfcourseindustry.com/article/getting-back-to-front-green-slope-right/>
+  -- via search summary: **1.33% the minimum upslope to stop shots, 1.5% the
+  minimum for drainage**. A direct fetch returned no content.
+- Golf Course Industry, *Slippery Slopes*,
+  <https://www.golfcourseindustry.com/article/green-slopes-golf/> and the USGA
+  Green Section Record, *Putting Green Speeds, Slopes, and "Non-Conforming"
+  Hole Locations* (2008), <http://gsr.lib.msu.edu/2000s/2008/080721.pdf> --
+  via search summary: most of a putting surface should not exceed **3%**; hole
+  locations where combined downhill and cross slope is under **5.5%**. Neither
+  was read in full; both are the first to read if the pin caps are revisited.
+- Golf Info Guide, *Elevated Green (aka Push-up, Pedestal Green)*,
+  <https://golf-info-guide.com/golf-terms/elevated-green-aka-push-up-or-pedestal-green-term/>
+  -- via search summary: **most pedestal greens are raised less than 5 feet**
+  above the fairway, some five or ten. Informal source.
+- Fried Egg Golf, *Golf Course Architecture 101: Greens and Surrounds*,
+  <https://thefriedegg.com/golf-course-architecture-101-part-4-greens-surrounds/>
+  and Planet Golf's glossary,
+  <https://www.planetgolf.com/news/a-glossary-of-golf-course-architecture> --
+  appeared in the searches for push-up and punchbowl greens; nothing specific
+  taken.

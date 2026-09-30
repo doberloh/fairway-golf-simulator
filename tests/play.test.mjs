@@ -80,7 +80,11 @@ test('incoming rolling balls bounce off trunks and can be struck away afterward'
  // no validation data at all, so 1.46 is defensible rather than confirmed.
  assert(next.total>1.2,`stuck at the trunk: ${next.total.toFixed(2)} m`);});
 test('editable carry calibrates launch speed; flight profiles change height and curve',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);const normal=simulateShot({...shot,...manualLaunch(clubs.driver,1,1)},c),high=simulateShot({...shot,...manualLaunch(clubs.driver,1,1,{launch:6,axis:20})},c);assert(high.apex>normal.apex);assert(high.end.x>0);assert.throws(()=>customizeClubs({driver:-2}));});
-test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0});// MEASURED OVER THE MOWN CORRIDOR, which is what 'playing surfaces' means.
+test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{
+ // Raised and punchbowl greens lift or drop the end of the corridor on their own,
+ // whatever the elevation; this is about the elevation setting, so they are off.
+ const flatGreens={raisedGreens:0,sunkenGreens:0,falseFronts:0};
+ const low=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:0,trees:0,water:0,bunkerCount:0,...flatGreens}),high=generateWorld({seed:'HEIGHT',greenDifficulty:0,elevation:100,trees:0,water:0,bunkerCount:0,...flatGreens});// MEASURED OVER THE MOWN CORRIDOR, which is what 'playing surfaces' means.
  // The ground behind the tee is deliberately not flat any more -- it carries
  // its own relief so a tee has somewhere to be cut into -- and sampling from
  // the hole's origin swept that in and called it an elevation change.

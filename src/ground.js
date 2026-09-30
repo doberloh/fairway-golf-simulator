@@ -537,7 +537,15 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
    // greens visibly paler than the fringe around them had been set against. The
    // tone is kept; the blotches that came with it are not.
    turf*=.93;
-   turf*=mix(1.,clamp(1.+dot(gs4.xz,bearing)*4.,.78,1.18),cueRelief);
+   // EASED OFF AS THE SUN GOES DOWN. This raking light exists for midday, when
+   // the real sun shows a green nothing. With the sun low the real light and the
+   // terrain's own shadows already show every roll -- and this, on top of them,
+   // with a normal tilted to 3x, lit each face of a green as a bright band and
+   // left the shelves either side dark: the owner's "tiered" greens at a sharp
+   // sun angle. Full strength above about 33 degrees of sun, a third of it
+   // below about 9, and a narrower range than before (0.86-1.12, was 0.78-1.18).
+   float rake=mix(.35,1.,smoothstep(.15,.55,sunDir.y));
+   turf*=mix(1.,clamp(1.+dot(gs4.xz,bearing)*3.*rake,.86,1.12),cueRelief);
   }else{
    // Everything else: the same idea at a lower gain. A green is being read for
    // a putt; a fairway only has to look like ground.
@@ -677,5 +685,5 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v28';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v29';return m;
 }

@@ -584,6 +584,10 @@ and a bend figure that is non-zero only where an outline turns back on itself wa
   broad shoulder rather than a ridge was already not met before this change and
   is now further off.** The fix is to blend the shoulder off the outline rather
   than the nominal size, which is real work and has not been attempted.
+  **Since GENERATOR_VERSION 33 a quarter of greens are raised by default**, whose
+  banks are steep on purpose (3-5 ft over 5-8 m), so measure this with
+  `raisedGreens: 0, sunkenGreens: 0` to separate the unintended steepening
+  from the intended.
 
 - [ ] **True scalloped edges need a data channel that does not exist.** Capes and
   bays -- the fingers of grass that intrude into sandbelt bunkers -- want
@@ -2546,6 +2550,20 @@ engineering provenance pass, not legal advice.
   tee shots stay at 0 of 648 blocked.
 
 ## Green and bunker shapes
+
+- [x] **Greens with a character each, raised greens, punchbowls and false
+  fronts (30 September).** Branch `green-shapes`, GENERATOR_VERSION 33,
+  SCHEMA_VERSION 9. The owner's screenshot of a bright band across a green at
+  an evening sun was two things: nearly every green carried a square-wave step,
+  and the green's own raking light lit each face at a low sun. The raking light
+  now eases off as the sun drops; each green draws rolling, tiered, ridged,
+  crowned or bowl from its seed, and only tiered greens have a step. The top of
+  the slope slider reaches much further (7.2% mean and 7.2 ft of relief at 100,
+  against 5.4% and 5.6 ft), with broader rolls and wider tier faces so it stays
+  puttable and smooth. Three new share-of-greens settings: raised (default
+  25%), punchbowl (10%) and false fronts (20%). Past 75% the slope slider turns
+  red with a warning note and a toast, at the owner's request. RESEARCH.md
+  *Greens with a character each*.
 
 - [x] **`greenShape` and `bunkerShape`, 0-100%, default 30.** They raise the
   amplitude of the harmonics AND pull them toward equal as they rise, so no
