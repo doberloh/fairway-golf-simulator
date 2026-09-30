@@ -333,7 +333,11 @@ export function greenContour(h,x,z){
  // height at the top of the range packed a metre of relief into a few paces, and
  // the slope under a putt jumped more than 5% in a metre (tests/lab.test.mjs).
  const spread=1+.6*Math.max(0,slider-.6);
- let y=amp*(greenShape(r,dx,dz,spread)-r.zero);
+ // The drainage tilt stops growing at about 70%: a severe green is severe in
+ // its contours, not in leaning the whole surface -- scaled with everything else
+ // a 100% green leaned 5-7% and had almost nowhere left level enough for a cup.
+ const lean=Math.min(amp,greenAmp(.7));
+ let y=lean*(r.tx*dx+r.tz*dz)+amp*(greenShape(r,dx,dz,spread)-r.zero);
  // The false front: along the line of play (local -z is toward the tee), from
  // just in front of where front hole locations stop to the edge and beyond, so
  // the collar and the approach keep falling with it.
@@ -371,7 +375,7 @@ function greenRecipe(h){
  const reach=h.greenSize??17,a=h.phase??0;
  const between=(lo,hi)=>lo+g()*(hi-lo),sign=()=>g()<.5?-1:1;
  // Drainage: two greens in three fall toward the approach, higher at the back.
- const back=g()<.66,tiltAngle=back?Math.PI/2+between(-.8,.8):g()*Math.PI*2,tilt=between(.010,.019);
+ const back=g()<.66,tiltAngle=back?Math.PI/2+between(-.8,.8):g()*Math.PI*2,tilt=between(.014,.024);
  const pick=g(),character=pick<.32?'rolling':pick<.54?'tiered':pick<.74?'ridged':pick<.88?'crowned':'bowl';
  const mound=(amp,rlo,rhi,spread=.7)=>{const ang=g()*Math.PI*2,dist=Math.sqrt(g())*reach*spread;return {x:Math.cos(ang)*dist,z:Math.sin(ang)*dist,r:between(rlo,rhi),amp};};
  const mounds=[];
@@ -395,7 +399,7 @@ function greenRecipe(h){
  return r;
 }
 function greenShape(r,dx,dz,spread=1){
- let y=r.tx*dx+r.tz*dz;
+ let y=0;
  dx/=spread;dz/=spread;
  for(const m of r.mounds){const q=((dx-m.x)**2+(dz-m.z)**2)/(m.r*m.r);y+=m.amp*Math.exp(-q);}
  if(r.character==='tiered'){
