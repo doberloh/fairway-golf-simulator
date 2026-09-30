@@ -4945,16 +4945,24 @@ surfaces are commonly built at 1-3% with hole locations kept under about 3%
   two changes the angle you see the turf at by a large fraction, so turf tipped
   away from you reads lighter and toward you darker, at any hour and with the
   sun anywhere. Implemented as `(1 - N.V)^4` against the same for flat ground,
-  so level turf is untouched and nothing brightens toward the horizon; gain 1
-  on fairway and tee, 1.4 on fringe, 4.5 on the green (tried at 2.2 first --
-  visible, too faint), clamped to 0.72-1.30. Mown turf only. On a green it uses
-  the tilted shading normal, so *Green definition* drives it.
+  so level turf is untouched and nothing brightens toward the horizon. Mown
+  turf only. On a green it uses the tilted shading normal, so *Green
+  definition* drives it. **Strengths, after the owner saw it:** gain 1 on
+  fairway and tee, clamped to 0.72-1.30 -- the owner liked what it did to
+  fairways and asked to keep it; 1.2 on the green and 0.5 on the fringe,
+  clamped to 0.90-1.10. The first build ran the green at 4.5 (after 2.2 had
+  looked too faint on a still frame) with the fairway's clamp, and in play it
+  looked like a graphical bug: the sheen depends on where you stand, so whole
+  regions of a green changed tone as the camera moved. A still screenshot
+  cannot show that, which is why the first tuning got it wrong.
 - **The clean-up lap.** A green is cut in straight passes and then once round
   its edge, one mower's width, the other way from the passes it crosses; a band
-  of different tone runs round every real green just inside the collar. Drawn
-  from 0.4 to 0.95 m inside the edge (the signed distance the shader already
-  has), anti-aliased and faded with distance, and part of the mowing pattern,
-  so it goes with the stripes switch. It traces the outline, and because it
+  of different tone runs round every real green out to the collar. Drawn from
+  0.65 m inside the edge to the edge (a greens mower cuts roughly 0.55-0.65 m;
+  from memory, not re-sourced), anti-aliased and faded with distance, and part
+  of the mowing pattern, so it goes with the stripes switch. The first cut ran
+  from 0.95 to 0.4 m in and left a strip of plain green between the lap and the
+  fringe, which the owner spotted. It traces the outline, and because it
   follows the ground it shows the edge rising and falling.
 - **A fixed 7% darker tone.** Removing slope darkening left greens visibly
   paler than they had been; the tone is kept without the blotches.

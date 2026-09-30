@@ -486,14 +486,18 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
   turf*=mix(1.,tone,stripeFade*cueStripes);
   // THE CLEAN-UP LAP. A green is cut in straight passes and then once round
-  // its edge, one mower's width (about half a metre), laid the other way from
-  // the passes it crosses -- so a band of different tone runs round every green
-  // just inside the collar. It traces the outline, and because it follows the
-  // ground it shows the green's edge rising and falling. Part of the mowing
-  // pattern, so it goes with the stripes switch.
+  // its edge, one mower's width (a greens mower cuts about 0.55-0.65 m), laid
+  // the other way from the passes it crosses -- so a band of different tone
+  // runs round every green, right out to the collar. It traces the outline, and
+  // because it follows the ground it shows the green's edge rising and falling.
+  // Part of the mowing pattern, so it goes with the stripes switch.
+  //
+  // It runs from 0.65 m inside the edge TO the edge. The first cut drew it from
+  // 0.95 to 0.4 m in, which left a strip of plain green between the lap and
+  // the fringe that no mower would leave (the owner).
   if(kind==4.){
    float lapW=max(fwidth(greenD),1e-4);
-   float lap=smoothstep(-.95-lapW,-.95+lapW,greenD)*(1.-smoothstep(-.4-lapW,-.4+lapW,greenD));
+   float lap=smoothstep(-.65-lapW,-.65+lapW,greenD);
    turf*=mix(1.,1.-.06*(stripe*2.-1.)-.03,lap*stripeFade*cueStripes*(1.-smoothstep(.25,.6,lapW)));
   }
  }
@@ -550,14 +554,22 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   //
   // Only the difference from flat ground is applied, so level turf is exactly
   // the colour it was and nothing brightens toward the horizon; what shows is
-  // the SHAPE. Mown turf only (tees, fairway, fringe, green -- rough is too
-  // long and uneven to sheen), strongest on the green, where it uses the
-  // tilted shading normal above.
+  // the SHAPE.
+  //
+  // STRONG ON FAIRWAYS, GENTLE ON GREENS -- both the owner's calls, from the
+  // first build. On tees and fairways (gain 1, up to 28% either way) the owner
+  // liked it and asked to keep it. On the green it ran at 4.5x with the
+  // exaggerated shading normal and looked like a graphical bug: because it
+  // depends on where you stand, whole regions of the green changed tone as the
+  // camera moved. The green now takes about a quarter of that and the fringe
+  // less, clamped to 10% either way: a hint of which way the green tips, not a
+  // light show.
   if(cueSheen>.001&&kind>=1.&&kind<=4.){
    vec3 toEye=normalize(cameraPosition-groundPoint);
    float onTurf=1.-clamp(dot(gs4,toEye),0.,1.),onFlat=1.-clamp(toEye.y,0.,1.);
    float sheen=pow(onTurf,4.)-pow(onFlat,4.);
-   turf*=clamp(1.+sheen*(kind==4.?4.5:kind==3.?1.4:1.)*cueSheen,.72,1.3);
+   bool putting=kind>=3.;
+   turf*=clamp(1.+sheen*(kind==4.?1.2:putting?.5:1.)*cueSheen,putting?.9:.72,putting?1.1:1.3);
   }
   // SLOPE DRIES OUT, AND THAT IS A COLOUR, NOT A BRIGHTNESS.
   //
@@ -665,5 +677,5 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v26';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v28';return m;
 }

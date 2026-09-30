@@ -2850,7 +2850,7 @@ function renderPanel(name,content){
   <label class="check"><input id="gfxSlope" type="checkbox" ${graphics.slopeTint?'checked':''}> Slope tinting</label>
   <p class="note">Slopes shed water and burn off toward straw; hollows hold it and stay lush. Works in colour rather than brightness, so it reads where the others are competing with the sun. Turf that is already dry, on a desert or links course, has little left to lose and barely changes.</p>
   <label class="check"><input id="gfxSheen" type="checkbox" ${graphics.sheen?'checked':''}> Grass sheen</label>
-  <p class="note">Mown grass looked at from a low angle is lighter than grass looked down on, so turf tipping away from you reads lighter and turf tipping toward you darker. From a player's eye a gentle slope changes that angle a lot, which is how a real green shows its breaks at any hour. Strongest on greens.</p>
+  <p class="note">Mown grass looked at from a low angle is lighter than grass looked down on, so turf tipping away from you reads lighter and turf tipping toward you darker. From a player's eye a gentle slope changes that angle a lot, which is how a real green shows its breaks at any hour. Strongest on fairways; on greens only a gentle hint of which way the green tips.</p>
   <label class="check"><input id="gfxContours" type="checkbox" ${graphics.contours?'checked':''}> Contour lines</label>
   <p class="note">A topographic line every metre of height, across the whole course. Frankly artificial — a map drawn on the grass — and the most legible thing here by a distance, because it turns a slope into a spacing you can count.</p>
   <label class="check"><input id="gfxStripes" type="checkbox" ${graphics.stripes?'checked':''}> Mowing stripes</label>

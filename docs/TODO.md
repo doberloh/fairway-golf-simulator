@@ -1238,8 +1238,9 @@ record of what was ruled out and why, which is worth more than a short file.
   0.2 of 255, *Band grain* 0.9, *Green definition* under 1, and *Slope
   darkening* was an even 8% darkening that read as dirt -- removed those three.
   Added **grass sheen** (lighter where mown turf tips away from you, darker
-  toward you; how a real green shows its slopes at any hour) and the mower's
-  **clean-up lap** round every green. **Ground shading** now comes from the
+  toward you -- strong on fairways, which the owner liked, and only a gentle
+  hint on greens, where full strength looked like a graphical bug) and the
+  mower's **clean-up lap** round every green, out to the fringe. **Ground shading** now comes from the
   sun's side instead of a fixed bearing. **Slope tinting** dries turf only as
   far as it is green, which ends the gold and orange banding on desert and
   links. Every remaining green setting now moves a green by 4-6 of 255. Also
