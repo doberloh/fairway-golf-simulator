@@ -498,7 +498,10 @@ export class GolfView{
  // alone. Neither costs anything per frame; the difference is the probe pass at
  // course build, and a look.
  setReflections(on){
+  const was=this.waterReflectsCourse!==false;
   this.waterReflectsCourse=on!==false;
+  // Probes skipped while reflections were off are taken now.
+  if(this.waterReflectsCourse&&!was&&this.waterBodies?.some(b=>!b.probe))this.refreshWaterEnvironment();
   for(const b of this.waterBodies||[]){
    const m=b.mesh.material;
    const want=this.waterReflectsCourse?b.probe??null:null;
@@ -1006,12 +1009,24 @@ export class GolfView{
  // nearest probe, which is the closest thing to right that is free.
  refreshWaterEnvironment(){
   if(!this.waterBodies?.length||!this.group)return;
+  // WITH REFLECTIONS OFF THERE IS NOTHING TO PHOTOGRAPH (F5b in TODO). Each probe
+  // is a render of the whole course from the pond, taken at build and again
+  // every time the sun moves six degrees -- and it used to be taken whether or
+  // not the water was going to show it, so switching reflections off saved
+  // nothing. Off, the water shows the sky environment alone, and the probes are
+  // taken the moment reflections come back on (setReflections).
+  if(this.waterReflectsCourse===false){for(const b of this.waterBodies)if(b.mesh.material.envMap){b.mesh.material.envMap=null;b.mesh.material.needsUpdate=true;}return;}
   // The water must not photograph itself: a probe that can see other water
   // surfaces bakes them in, and one that can see its own is a feedback loop.
   // A probe looks every way at once, so it gets the whole course, not the
   // camera's share of it. The next frame's update puts the cull back.
   this.cull?.showAll();
   const shown=hideForProbe(this.waterBodies);
+  // The sky follows the camera, shrunk to fit its far plane (see the frame
+  // loop); a probe taken from a pond far from the camera would be outside it.
+  // Full size and centred for the probes, put back after.
+  const skyAt=this.sky?.position.clone(),skySize=this.sky?.scale.x;
+  if(this.sky){this.sky.position.set(0,0,0);this.sky.scale.setScalar(1);}
   try{
    if(!this.waterCubeTarget){
     // The tier's old planar-reflection size, repurposed: it is the one number
@@ -1054,6 +1069,7 @@ export class GolfView{
   }catch(e){console.warn('Fairway: water environment probe skipped',e);}
   finally{
    restoreAfterProbe(shown);
+   if(this.sky){this.sky.position.copy(skyAt);this.sky.scale.setScalar(skySize);}
   }
  }
  addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world),new T.MeshBasicMaterial());this.group.add(this.landscape);}
@@ -1856,7 +1872,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
-  const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
+  const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
+  // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
+  // while fog only faded what was drawn, so Low's short fog hid the distance and
+  // still paid for it: every tree and every ring of land out to the horizon,
+  // drawn and then painted over. The far plane now ends 5% past where the fog
+  // goes solid, and the frustum and the instance cull do the rest. The sky dome
+  // is 7.5 km across and would be cut by a nearer far plane, so it follows the
+  // camera and shrinks to fit inside it; its colour is a function of direction
+  // only, so neither move changes what it looks like.
+  {const far=Math.max(1500,this.scene.fog.far*1.05);
+   if(Math.abs(this.camera.far-far)>1){this.camera.far=far;this.camera.updateProjectionMatrix();}
+   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
   // A flight drives the camera outright. The damping below is a spring toward
   // a target; running both would fight the path and round off its ends.
   this.camFlight.elapsed+=dt;

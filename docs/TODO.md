@@ -62,16 +62,6 @@ Ground rules that apply to every item below:
   phones (many pixels, small graphics chip). Needs hysteresis so it does not
   flicker between steps, and a setting to turn it off.
 
-- [ ] **F5. Quick fixes already known.** (a) Low's short fog hides the
-  distance but still draws it: `camera.far` is fixed at 20000; tie the far plane
-  (or a per-cell draw distance) to the fog end so Low is genuinely cheaper
-  (see *Fog distance is not a performance setting* below). (b) Confirm turning
-  water reflections off really skips the reflection work (*Turning water
-  reflections off may not stop the reflection pass* below). (c) Island is an
-  outlier nobody has explained: 8.1 ms of graphics time at High (twice the
-  other biomes) and 6.8 ms of processor time per frame against ~1 ms
-  elsewhere -- profile it.
-
 ### Build time (the wait from "play" to a playable course)
 
 Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
@@ -692,14 +682,6 @@ to put "potential gfx improvements" instead of inventing features overnight.
   or packing the ground's data atlases. Until then a night course has lights
   that cast nothing, on every tier including ultra.
 
-- [ ] **Fog distance is not a performance setting, and the tiers treat it like
-  one.** `camera.far` is fixed at 20000 and fog only fades what is already
-  drawn; three culls against the frustum, not against fog. So low's near fog
-  buys atmosphere and exactly nothing in frame time, while still hiding the
-  course from a player who might have wanted to see it. Either tie the far
-  plane to the fog end so it genuinely culls, or stop implying fog is a
-  performance lever.
-
 - [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
   frame on a heavy biome is dominated by tree geometry, and no tier knob
   touches it. `grass` scales scatter grass, which is under 1% of the triangles
@@ -718,12 +700,6 @@ to put "potential gfx improvements" instead of inventing features overnight.
   It is not free on a laptop with no card. What that work should become is a
   TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
   the always-on swap that made every visible tree the thinned twin.
-
-- [ ] **Turning water reflections off may not stop the reflection pass.**
-  `setReflections(false)` nulls the `envMap` on each water material, which
-  stops the sampling. Whether the planar reflector still renders the scene a
-  second time every frame is a separate question and the answer decides whether
-  the setting is worth anything to a weak machine. Check the ablation row.
 
 - [ ] **`applyQuality` clamps pixel ratio to the display's own.**
   `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
@@ -1008,6 +984,21 @@ record of what was ruled out and why, which is worth more than a short file.
   faint seam at ~100 m acceptable, no blending wanted (CSM `fade` also breaks
   the ground shader). RESEARCH.md *Shadow cascades split where the player
   stands*.
+
+- [x] **F5. Quick fixes already known.** Branch `f5-quick-fixes`. (a) The far
+  plane now ends 5% past the fog, and the sky dome follows the camera scaled
+  inside it; measured, it saves nothing on the courses as generated -- on a
+  nine-hole course from the player's view almost nothing lies beyond Low's 3.5
+  km of fog (identical draws and triangles, 2.41 ms either way), so fog is still
+  mostly atmosphere, now with nothing wasted behind it. (b) Water reflections
+  cost nothing per frame (3.80 ms on, 3.78 off) since the planar mirror went;
+  what "off" did NOT save was each body's probe, re-taken at build and every six
+  degrees of sun, 40-65 ms a time. Off now skips it; turning it back on takes
+  it. (c) Island went from 8.1 ms of graphics time to 3.1 ms through the
+  earlier F work and sits 0.3 ms from Pacific Northwest; what is left is its
+  dense tall scatter grass (1.2 ms), a look choice -- the ocean costs nothing
+  measurable, and fading far grass bought nothing. RESEARCH.md *F5: the three
+  quick fixes*.
 
 - [x] **F2. Draw distant crowns as their thinned twins -- built, and found to
   be worth little.** Branch `far-trees`. A crown under a share of the screen's
@@ -1576,6 +1567,15 @@ problem: a control that belongs inside a box is sitting beside it.
   instrument; that stays a judgement about the references, openly.
 
 ## Graphics work the profiling turned up
+
+- [x] **Fog distance was not a performance setting.** Closed by F5a: the far
+  plane now follows the fog, so nothing past it is drawn -- which, measured,
+  was almost nothing anyway.
+
+- [x] **Turning water reflections off did not stop the reflection work.**
+  Closed by F5b: the per-frame reflection pass had already gone with the
+  planar mirror; the probe re-taken as the sun moves was still taken with
+  reflections off, and no longer is.
 
 - [x] **`high` and `ultra` were very nearly the same tier.** When this was
   written the difference was bloom, a bigger reflection buffer and overview
