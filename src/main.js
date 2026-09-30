@@ -2879,11 +2879,11 @@ function renderPanel(name,content){
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
   <h3>Costs a frame</h3>
-  <p>Unlike everything above, these three are real work on every frame. If the picture is uneven, start here.</p>
+  <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
   <p class="note">Ridges shade the hollows behind them. Only says anything when the sun is low — at midday a two metre roll casts almost nothing. One draw call per shadow cascade, over ground that is already built.</p>
   <label class="check"><input id="gfxReflections" type="checkbox" ${graphics.reflections?'checked':''}> Water reflections</label>
-  <p class="note">The largest body in view mirrors the course rather than only the sky. A second render of the whole scene: measured at 1.9 ms of a 10.4 ms frame, already halved by drawing it every other frame. Switched off, water still moves and still reflects the sky.</p>
+  <p class="note">Ponds, lakes and creeks reflect the course around them rather than only the sky. Nothing extra per frame: each body's reflection is photographed when the course is built and again whenever the sun moves about six degrees, a pause of around 40–65 ms each time. Switched off, none of that happens, and water still moves and still reflects the sky.</p>
 `;
   const note=()=>$('gfxNote').textContent={
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',

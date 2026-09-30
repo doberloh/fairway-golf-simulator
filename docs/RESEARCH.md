@@ -5129,3 +5129,56 @@ height are inside the ranges the sources give.
   <https://www.planetgolf.com/news/a-glossary-of-golf-course-architecture> --
   appeared in the searches for push-up and punchbowl greens; nothing specific
   taken.
+
+## F5: the three quick fixes (30 September)
+
+Branch `f5-quick-fixes`. Frame times from `npm run profile` (RTX 4090) and
+from a frame counter with vsync off, alternated against main built in the
+same sitting.
+
+**(a) The fog is the draw distance.** `camera.far` was a fixed 20 km while the
+fog only faded what was drawn. It now ends 5% past the fog's end, per view
+(player or overview), with a 1.5 km floor. The sky is a 7.5 km dome that a
+nearer far plane would cut, so it follows the camera and is scaled to 90% of
+the far plane; its colour depends on direction only, so neither changes its
+look -- except for the water probes, which render the scene from each pond:
+the sky goes back to full size at the origin for them and returns after.
+**Measured, it saves nothing on the courses as generated.** From the player's
+view on Low (fog ends at 3.5 km) a nine-hole course has nothing past the fog to
+cut: draws 364 and triangles 42,369,644 identical before and after, 2.41 ms of
+graphics time either way; Medium the same. The instance cull already reads
+`camera.far`, so trees past it are dropped when there are any. Kept because it
+is correct and costs nothing, and because it is the lever the tier ladder
+claims to have -- but Low is cheaper because of its shadows, pixels and
+planting, not its fog.
+
+**(b) Reflections off.** The per-frame planar mirror went some time ago; the
+setting now chooses what each body's cubemap probe shows. Profiled: 3.80 ms on,
+3.78 ms off, identical draws -- no per-frame cost either way. What "off" did
+not save was the probe itself: a render of the whole course from each body,
+taken at build and every time the sun moves six degrees, measured at 40.7-66.3
+ms a time on PNW and Midwest nine-hole courses (four and five bodies). It was
+taken whether or not the water showed it. Off, `refreshWaterEnvironment` now
+returns at once (0 ms), and switching reflections back on takes the probes.
+
+**(c) Island.** Logged as 8.1 ms of graphics time at High and 6.8 ms of
+processor time, twice the other biomes. Now, on the same profiler: 4.2 ms
+graphics and 3.6 ms processor, against 2.3-3.3 ms for the other light biomes
+(Redwood is heavier for its trees). With a frame counter, hiding one category
+at a time (High, Island tee view, 3.1 ms a frame):
+
+| hidden | Island saves | PNW saves |
+| --- | --- | --- |
+| scatter grass and flowers | 1.21 ms | 0.11 ms |
+| trees and plants | 0.55 ms | 1.62 ms |
+| near grass tiles | 0.17 ms | 0.18 ms |
+| water (Island: the ocean) | 0.03 ms | 0.23 ms |
+
+A CPU profile of steady frames on both shows only three.js's own drawing
+calls at the top; nothing of ours stands out. **Island's remaining cost is its
+scatter grass**: four times the blades of most biomes (400,000 candidates, tall
+and 1.4 wide). **Tried and rejected:** fading those blades out between 220 and
+360 m -- it saved nothing (1.17 ms against 1.21), because the cost is the
+blades near the player, not the distant ones. Thinning Island's grass would
+change how the biome looks; left as the owner's call. The ocean, a single 14 km
+quad, costs nothing measurable.
