@@ -2547,6 +2547,19 @@ engineering provenance pass, not legal advice.
 
 ## Green and bunker shapes
 
+- [x] **Greens with a character each, raised greens, punchbowls and false
+  fronts (30 September).** Branch `green-shapes`, GENERATOR_VERSION 33,
+  SCHEMA_VERSION 9. The owner's screenshot of a bright band across a green at
+  an evening sun was two things: nearly every green carried a square-wave step,
+  and the green's own raking light lit each face at a low sun. The raking light
+  now eases off as the sun drops; each green draws rolling, tiered, ridged,
+  crowned or bowl from its seed, and only tiered greens have a step. The top of
+  the slope slider reaches much further (7.2% mean and 7.2 ft of relief at 100,
+  against 5.4% and 5.6 ft), with broader rolls and wider tier faces so it stays
+  puttable and smooth. Three new share-of-greens settings: raised (default
+  25%), punchbowl (10%) and false fronts (20%). RESEARCH.md *Greens with a
+  character each*.
+
 - [x] **`greenShape` and `bunkerShape`, 0-100%, default 30.** They raise the
   amplitude of the harmonics AND pull them toward equal as they rise, so no
   single wave takes over. Medians go 1.24 to 1.42 to 1.74 for greens and 1.48 to

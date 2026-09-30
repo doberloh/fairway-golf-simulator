@@ -319,7 +319,8 @@ export function planScorecard(s={}){
 // The slider is deliberately not linear. Most greens sit in the gentle half and
 // the severe ones are outliers, so the curve keeps the bottom and middle close
 // to where they were and spends the change at the top -- and since 33 the top
-// reaches 60% further than it did, at the owner's request. See RESEARCH.md.
+// reaches much further (7.2% mean and 7.2 ft of relief at 100, against 5.4% and
+// 5.6 ft), at the owner's request. See RESEARCH.md.
 export function greenAmp(slider){
  return slider*(.60+.40*slider*slider)*1.90*(1+6.1*Math.max(0,slider-.4)**2);
 }
