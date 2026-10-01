@@ -19,55 +19,6 @@ back; live work nested inside the archive is the thing this split exists to
 prevent.
 
 
-## OPUS5.5 GFX and OPTIMIZATIONS
-
-From the performance review of 27 September 2026 (published privately as
-"Where the frames and the wait go"; the numbers are repeated here so nothing
-depends on that page). Everything was measured on the development machine, a
-desktop RTX 4090 -- far faster than most players' hardware, so absolute times
-flatter the game and the PROPORTIONS are what carry over. Frame figures come
-from `bench/profile-baseline.json` (22 September) -- which was taken with a
-probe that counted every frame twice, so its triangle and draw figures are
-HALF the truth and its times are near the fastest frame (RESEARCH.md *The
-profiler counted every frame twice*, fixed 28 September); build times were measured
-on 27 September with the browser's CPU profiler over `window.lab.course({biome,
-holes, seed: 'REPORT1'})` at 1366x768.
-
-Ground rules that apply to every item below:
-
-- **A graphics tier may not change a played surface** (`src/graphics.js` says so
-  outright). Trunks are collidable and two players on different tiers must hit
-  the same trees, so culling, LOD and draw distance may change what is DRAWN,
-  never what exists in `world.trees` or what physics reads.
-- **Anything that changes generated output for an unchanged seed needs a
-  `GENERATOR_VERSION` bump** (AGENTS.md). `node tools/biome-fingerprint.mjs
-  --check` is the arbiter. The owner has generation FROZEN during testing, so
-  only the items marked "no course changes" are to be done now.
-- **Profile before and after anything that touches the frame**
-  (`npm run profile`, about 10 minutes for the full sweep, about a minute for
-  one group such as `--only tiers`; ask the owner first, per AGENTS.md), and
-  compare with `--since` against `bench/profile-baseline.json`. `renderer.info`
-  triangle and draw-call counts (the lab reports them) are a quick check in
-  between, not a substitute.
-- One branch per item, each with its own before/after numbers.
-
-### Frame rate
-
-### Build time (the wait from "play" to a playable course)
-
-Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
-(`makeGroundGridSteps` in `src/terrain-grid.js` calling `analyticHeight` per
-3 m grid point), routing/holes/water 0.5 s, building the 3D scene 2.0 s
-(`view.build`: ground shading data ~0.8 s, trees ~0.5 s, ground cover
-~0.5 s), screen updates while waiting 1.4 s, first-time shader compile 2.8 s.
-18 holes: 16.6 s (5.6 / 0.9 / 2.7 / 2.0 / 5.4). Opening the game: ~4.1 s to
-the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
-does this point belong to") is 1.7 s of the 3.0 s generation.
-
-Estimate for B1-B3 together: 9 holes ~9 s -> ~4 s, 18 holes ~17 s -> ~7 s, on
-this machine, with every course unchanged. Suggested order overall: B1, then
-F1 + F3 (profile before/after), F2, the U items, then B2 and B3.
-
 ## Found by driving the built game
 
 What `tools/smoke.mjs` turned up on its first full runs, and what building it
@@ -597,125 +548,6 @@ dead anyway (see below), so the bubble never protected anything.
     type would be the first roll evidence this project has ever had.
   - **Ball speed, launch angle, azimuth, carry, offline** as usual.
 
-## Graphics work the profiling turned up
-
-Found while building `tools/profile.mjs` and reading the tier table against it.
-None of these are tuning -- they are missing capability or wrong plumbing, so
-they were written down rather than done. Asked for on 2026-09-22 as the place
-to put "potential gfx improvements" instead of inventing features overnight.
-
-- [ ] **`applyQuality` clamps pixel ratio to the display's own.**
-  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
-  it means the tier ladder collapses on a 1x display: low, medium and ultra all
-  render the same pixels and differ only in shadows and reflections. That is
-  worth knowing before anyone concludes from a 1x machine that the tiers do
-  nothing. It also caught this harness out -- see the note in profile.mjs.
-
-## Benchmarking and profiling worth deciding from
-
-Asked for on 2026-09-20, off the back of the "should this be ported" question in
-RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
-it is measurably NOT vertex throughput -- and that no performance decision
-should be taken until somebody does. This section is how that gets known.
-
-**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
-twelve workers, eight invariant rules that must stay clear, counts, and
-distributions with min/p05/median/p95/max. It has a saved baseline
-(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
-proves the generator did not move. Both are good and neither one renders
-anything.
-
-**What does not exist.** Any measurement of a frame. The only frame numbers this
-project has ever had were taken by hand, with a probe temporarily pasted into
-`renderer.js` and deleted afterwards, on one machine, on one course.
-
-- [ ] ~~A frame benchmark~~ (original note kept below for the reasoning)
-  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
-  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
-  is asked to draw, because the call is waiting for the display, not for the
-  GPU. That number was taken as real, a level of detail was built on it, and
-  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
-  the same lie in a different hat, and `gl.finish()` does not save you --
-  Chrome's command buffer makes it close to a no-op.
-
-  So the first requirement is not a feature, it is a property: **the harness
-  must be capable of reporting a number lower than the refresh interval.**
-  Prove it on day one by drawing an empty scene and checking the figure
-  collapses. If it does not, the harness is measuring the monitor.
-
-  Ways that actually work, roughly in order of how much they are worth:
-  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
-    thing that tells you where the time goes rather than how much there is.
-  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
-    `--disable-frame-rate-limit`, then render as fast as the machine allows.
-  - render to a framebuffer in a loop, with no presentation at all.
-
-- [ ] ~~Decide what headless is for~~ (original note below) A software rasteriser (`--use-angle=swiftshader`) gives
-  figures that are comparable between machines and over time, and are not the
-  truth about any real GPU. A real GPU in headless Chrome gives the truth about
-  THAT machine and nothing comparable to a run on another one. Both are useful
-  and they answer different questions -- regression tracking wants the first,
-  "will this run on the owner's laptop" wants the second. Say which the harness
-  is for, in the harness, or the numbers get read as the wrong kind.
-
-  Cost to be honest about: either route is a Playwright or Puppeteer
-  devDependency, and this project has treated a 24 MB devDependency as a real
-  cost before (it is why `vendor/baked_assets` was committed, until 30
-  September). Weigh that
-  deliberately rather than installing it on the way past.
-
-- [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
-  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
-  plus elevation, landform, water, trees and homes is a combinatorial explosion
-  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
-  says why each is in it: every biome at defaults (the common path), every
-  graphics tier on one heavy biome (the tier is the lever players actually
-  pull), the extremes that are known to be hard -- redwood for geometry,
-  elevation 100 / landform 100 for terrain, maximum water and homes for draw
-  calls -- and the driving range, which is the flattest and should be the
-  floor. A sweep that takes four minutes gets run; one that takes an hour gets
-  run once and quoted for a year.
-
-- [ ] ~~Report what a decision needs~~ (original note below) Frame time
-  as a distribution and never as a mean -- median, p95, p99 and the worst
-  frame, because stutter is what is felt and a mean hides it. Beside it, per
-  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
-  timer split by pass if the extension is there. Then generation time and peak
-  memory per case. The existing bench's table format is the right shape
-  already: columns of min/p05/median/p95/max with the case names down the side,
-  a `rules: all clear` line for anything that must not regress, and a `--since`
-  diff against a saved baseline so a change shows as movement rather than as
-  numbers somebody has to remember.
-
-- [ ] ~~Have it name the bottleneck~~ (original note below) The question is not
-  "how many milliseconds" but "of what". A run should end with a sentence a
-  human can act on: whether the frame is bound by draw calls, by fill, by
-  shadow passes, or by the CPU walking the scene graph -- and the simplest
-  version of that is an ablation rather than a profiler. Render the same frame
-  with shadows off, with the grass off, at quarter resolution, with the
-  vegetation removed, and print what each one gives back. Whatever returns the
-  most time is the answer, and it needs no tooling beyond the harness that is
-  already being built.
-
-- [ ] **The low tier cannot reach 30 fps on weak hardware, and tuning cannot
-  fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
-  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
-  typical weak device -- real integrated graphics is perhaps one to two orders
-  faster, which is the difference between playable and not, and that range is
-  an extrapolation this machine cannot narrow. What is certain is that a
-  hundredfold gap does not close by tuning. The vegetation draw distance that
-  was the remaining lever is closed as won't do (the owner, on the look);
-  automatic resolution (F4) is what Low has now. The real number needs a real
-  weak machine.
-
-- [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
-  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
-  generation if seven seconds a course becomes intolerable, a desktop shell if
-  this becomes a sim bay, and an engine port only if all of that has been done
-  and something still does not fit. The value of this section is that it makes
-  step one possible; skipping to step five has already been tried in miniature
-  and it produced the dead forest.
-
 
 Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
 
@@ -875,6 +707,49 @@ record of what was ruled out and why, which is worth more than a short file.
 
 
 ## OPUS5.5 GFX and OPTIMIZATIONS
+
+Every item on this list was finished or closed by 1 October 2026; the
+section's opening, its ground rules and the 27 September build-time baseline
+are kept here for the record.
+
+From the performance review of 27 September 2026 (published privately as
+"Where the frames and the wait go"; the numbers are repeated here so nothing
+depends on that page). Everything was measured on the development machine, a
+desktop RTX 4090 -- far faster than most players' hardware, so absolute times
+flatter the game and the PROPORTIONS are what carry over. Frame figures come
+from `bench/profile-baseline.json` (22 September) -- which was taken with a
+probe that counted every frame twice, so its triangle and draw figures are
+HALF the truth and its times are near the fastest frame (RESEARCH.md *The
+profiler counted every frame twice*, fixed 28 September); build times were measured
+on 27 September with the browser's CPU profiler over `window.lab.course({biome,
+holes, seed: 'REPORT1'})` at 1366x768.
+
+Ground rules that apply to every item below:
+
+- **A graphics tier may not change a played surface** (`src/graphics.js` says so
+  outright). Trunks are collidable and two players on different tiers must hit
+  the same trees, so culling, LOD and draw distance may change what is DRAWN,
+  never what exists in `world.trees` or what physics reads.
+- **Anything that changes generated output for an unchanged seed needs a
+  `GENERATOR_VERSION` bump** (AGENTS.md). `node tools/biome-fingerprint.mjs
+  --check` is the arbiter. The owner has generation FROZEN during testing, so
+  only the items marked "no course changes" are to be done now.
+- **Profile before and after anything that touches the frame**
+  (`npm run profile`, about 10 minutes for the full sweep, about a minute for
+  one group such as `--only tiers`; ask the owner first, per AGENTS.md), and
+  compare with `--since` against `bench/profile-baseline.json`. `renderer.info`
+  triangle and draw-call counts (the lab reports them) are a quick check in
+  between, not a substitute.
+- One branch per item, each with its own before/after numbers.
+
+Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
+(`makeGroundGridSteps` in `src/terrain-grid.js` calling `analyticHeight` per
+3 m grid point), routing/holes/water 0.5 s, building the 3D scene 2.0 s
+(`view.build`: ground shading data ~0.8 s, trees ~0.5 s, ground cover
+~0.5 s), screen updates while waiting 1.4 s, first-time shader compile 2.8 s.
+18 holes: 16.6 s (5.6 / 0.9 / 2.7 / 2.0 / 5.4). Opening the game: ~4.1 s to
+the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
+does this point belong to") is 1.7 s of the 3.0 s generation.
 
 ### Frame rate
 
@@ -1541,6 +1416,19 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Graphics work the profiling turned up
 
+Found while building `tools/profile.mjs` and reading the tier table against it.
+None of these are tuning -- they are missing capability or wrong plumbing, so
+they were written down rather than done. Asked for on 2026-09-22 as the place
+to put "potential gfx improvements" instead of inventing features overnight.
+
+- [x] **WON'T DO (owner, 1 October): `applyQuality` clamps pixel ratio to the display's own.**
+  A fact to know rather than a fault to fix, closed as it stands.
+  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
+  it means the tier ladder collapses on a 1x display: low, medium and ultra all
+  render the same pixels and differ only in shadows and reflections. That is
+  worth knowing before anyone concludes from a 1x machine that the tiers do
+  nothing. It also caught this harness out -- see the note in profile.mjs.
+
 - [x] **The menu hole stuttered as the game opened; and it is daylight only
   (1 October).** Branch `frame-and-lights`, reported by the
   owner. The menu hole's first real frames (117-217 ms on Ultra: the first
@@ -1634,6 +1522,109 @@ problem: a control that belongs inside a box is sitting beside it.
   says so. Four rungs.
 
 ## Benchmarking and profiling worth deciding from
+
+Asked for on 2026-09-20, off the back of the "should this be ported" question in
+RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
+it is measurably NOT vertex throughput -- and that no performance decision
+should be taken until somebody does. This section is how that gets known.
+
+**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
+twelve workers, eight invariant rules that must stay clear, counts, and
+distributions with min/p05/median/p95/max. It has a saved baseline
+(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
+proves the generator did not move. Both are good and neither one renders
+anything.
+
+**What does not exist.** Any measurement of a frame. The only frame numbers this
+project has ever had were taken by hand, with a probe temporarily pasted into
+`renderer.js` and deleted afterwards, on one machine, on one course.
+
+- [x] ~~A frame benchmark~~ (built: `tools/profile.mjs`; closed 1 October, original note below)
+  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
+  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
+  is asked to draw, because the call is waiting for the display, not for the
+  GPU. That number was taken as real, a level of detail was built on it, and
+  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
+  the same lie in a different hat, and `gl.finish()` does not save you --
+  Chrome's command buffer makes it close to a no-op.
+
+  So the first requirement is not a feature, it is a property: **the harness
+  must be capable of reporting a number lower than the refresh interval.**
+  Prove it on day one by drawing an empty scene and checking the figure
+  collapses. If it does not, the harness is measuring the monitor.
+
+  Ways that actually work, roughly in order of how much they are worth:
+  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
+    thing that tells you where the time goes rather than how much there is.
+  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
+    `--disable-frame-rate-limit`, then render as fast as the machine allows.
+  - render to a framebuffer in a loop, with no presentation at all.
+
+- [x] ~~Decide what headless is for~~ (built: `tools/profile.mjs`; closed 1 October, original note below) A software rasteriser (`--use-angle=swiftshader`) gives
+  figures that are comparable between machines and over time, and are not the
+  truth about any real GPU. A real GPU in headless Chrome gives the truth about
+  THAT machine and nothing comparable to a run on another one. Both are useful
+  and they answer different questions -- regression tracking wants the first,
+  "will this run on the owner's laptop" wants the second. Say which the harness
+  is for, in the harness, or the numbers get read as the wrong kind.
+
+  Cost to be honest about: either route is a Playwright or Puppeteer
+  devDependency, and this project has treated a 24 MB devDependency as a real
+  cost before (it is why `vendor/baked_assets` was committed, until 30
+  September). Weigh that
+  deliberately rather than installing it on the way past.
+
+- [x] ~~Sweep the presets~~ (built: `tools/profile.mjs`; closed 1 October, original note below) Eight biomes,
+  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
+  plus elevation, landform, water, trees and homes is a combinatorial explosion
+  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
+  says why each is in it: every biome at defaults (the common path), every
+  graphics tier on one heavy biome (the tier is the lever players actually
+  pull), the extremes that are known to be hard -- redwood for geometry,
+  elevation 100 / landform 100 for terrain, maximum water and homes for draw
+  calls -- and the driving range, which is the flattest and should be the
+  floor. A sweep that takes four minutes gets run; one that takes an hour gets
+  run once and quoted for a year.
+
+- [x] ~~Report what a decision needs~~ (built: `tools/profile.mjs`; closed 1 October, original note below) Frame time
+  as a distribution and never as a mean -- median, p95, p99 and the worst
+  frame, because stutter is what is felt and a mean hides it. Beside it, per
+  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
+  timer split by pass if the extension is there. Then generation time and peak
+  memory per case. The existing bench's table format is the right shape
+  already: columns of min/p05/median/p95/max with the case names down the side,
+  a `rules: all clear` line for anything that must not regress, and a `--since`
+  diff against a saved baseline so a change shows as movement rather than as
+  numbers somebody has to remember.
+
+- [x] ~~Have it name the bottleneck~~ (built: `tools/profile.mjs`; closed 1 October, original note below) The question is not
+  "how many milliseconds" but "of what". A run should end with a sentence a
+  human can act on: whether the frame is bound by draw calls, by fill, by
+  shadow passes, or by the CPU walking the scene graph -- and the simplest
+  version of that is an ablation rather than a profiler. Render the same frame
+  with shadows off, with the grass off, at quarter resolution, with the
+  vegetation removed, and print what each one gives back. Whatever returns the
+  most time is the answer, and it needs no tooling beyond the harness that is
+  already being built.
+
+- [x] **WON'T DO (owner, 1 October): the low tier cannot reach 30 fps on weak hardware, and
+  tuning cannot fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
+  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
+  typical weak device -- real integrated graphics is perhaps one to two orders
+  faster, which is the difference between playable and not, and that range is
+  an extrapolation this machine cannot narrow. What is certain is that a
+  hundredfold gap does not close by tuning. The vegetation draw distance that
+  was the remaining lever is closed as won't do (the owner, on the look);
+  automatic resolution (F4) is what Low has now. The real number needs a real
+  weak machine.
+
+- [x] **WON'T DO (owner, 1 October): then, and only then, act on it.** RESEARCH.md has the order: find the
+  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
+  generation if seven seconds a course becomes intolerable, a desktop shell if
+  this becomes a sim bay, and an engine port only if all of that has been done
+  and something still does not fit. The value of this section is that it makes
+  step one possible; skipping to step five has already been tried in miniature
+  and it produced the dead forest.
 
 - [x] **A frame benchmark, and it must not be able to return the refresh rate.**
   `tools/profile.mjs`, `npm run profile`. THE CHECK CAUGHT IT: a blank page read

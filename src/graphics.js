@@ -33,8 +33,9 @@ export const TIERS = {
  //
  // What it deliberately does NOT do is thin the planting. A tier may not
  // change a played surface and trunks are collidable, so two players on
- // different tiers must hit the same trees. See TODO: the honest fix is a
- // tier-driven draw distance, and it does not exist yet.
+ // different tiers must hit the same trees. A tier-driven draw distance (draw
+ // fewer, collide with all) was the remaining lever; the owner closed it as
+ // won't do on 30 September, on the look. Automatic resolution is what Low has.
  low: {
   pixelRatio: .75,
   shadow: {size: 512, radius: 1},
