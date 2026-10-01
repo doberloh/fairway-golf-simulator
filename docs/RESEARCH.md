@@ -5541,3 +5541,31 @@ still holding high over the new tee.
 starts a Surprise round, checks it starts at midday with the lights off,
 switches them on from the clock popover, and fails if the longest frame across
 the switch exceeds 500 ms.
+
+## The menu hole: daylight, and no stutter as it appears (1 October)
+
+Branch `frame-and-lights`. `smoothFrames`, the boot sequence, `whileGenerating`
+and `growBackdrop` in `src/main.js`; `MENU_HOURS` in `src/daylight.js`.
+Reported by the owner: hitching on the main menu hole after the game loads.
+
+**What it was.** Traced from page open (`bench/shots/menu-ratio.mjs`,
+`menu-prof.mjs`, scratch; Ultra, cold browser): the stalls before the menu --
+the hole's build (1.0-1.5 s), the water probes -- were all under the splash.
+The visible one was the first frame of the game's own render loop, 117-217 ms,
+which landed while the splash was fading. Not automatic resolution: the pixel
+ratio never moved. After that, 20 s of the menu with nothing over 25 ms.
+
+**The fix: let the first frames run under a cover.** The render loop starts and
+the menu opens beneath the splash; the splash fades once three frames in a row
+come under 40 ms, or after two seconds whatever happens (a slow machine is not
+kept on a black screen). Four cold opens after: every long frame fell while
+the splash was fully up, none after. `whileGenerating` holds its overlay the
+same way (at most a second), and the menu reached from a round now opens inside
+that wait instead of after it: from a round back to the menu, at most one 33 ms
+frame after the overlay went, against 0.6 s and 3.7 s on main
+(`bench/shots/menu-return.mjs`, scratch).
+
+**Daylight only.** `MENU_HOURS` had three night hours and a dusk one at 19.4,
+weighted so a floodlit hole came round now and then. Now nine hours from 6.4 to
+17.8; the dusk slot went too, being near enough to dark on some biomes to read
+as night. The test that required SOME dark visits now requires none.

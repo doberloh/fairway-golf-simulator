@@ -128,7 +128,7 @@ test('floodlights are off until asked for; fog is on unless turned off', () => {
  assert.equal(loadDaylight().fog, true);
 });
 
-test('the menu shows its hole at a variety of hours, mostly daylight', () => {
+test('the menu shows its hole at a variety of daylight hours, never at night', () => {
  // The menu used to inherit the player's clock. Somebody who had been putting at
  // one in the morning saw nothing but dark holes from then on -- and once
  // floodlights existed, nothing but dark FLOODLIT holes, which is how this was
@@ -140,10 +140,12 @@ test('the menu shows its hole at a variety of hours, mostly daylight', () => {
   assert.ok(h >= 0 && h < 24, `${h} is not an hour`);
   assert.equal(typeof dark, 'boolean');
  }
- // Weighted to daylight: a golf course in the sun is what a shop window shows,
- // with night in the rotation rather than dominating it.
- const dark = MENU_HOURS.filter(([, d]) => d).length / MENU_HOURS.length;
- assert.ok(dark > .1 && dark < .45, `${(dark * 100).toFixed(0)}% of menu visits would be dark`);
+ // Daylight only (the owner, 30 September): the menu never shows a hole at
+ // night, floodlit or not.
+ for (const [h, dark] of MENU_HOURS) {
+  assert.equal(dark, false, `${h} is a dark menu hour`);
+  assert.ok(h >= 6 && h <= 18, `${h} is outside dawn to golden hour`);
+ }
  // Every slot is reachable, and the top of the range cannot fall off the end.
  const picked = new Set();
  for (let i = 0; i < 2000; i++) picked.add(showcaseHour(i / 2000)[0]);

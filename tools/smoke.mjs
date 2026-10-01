@@ -300,8 +300,11 @@ class Trip {
 // Every journey starts here. The menu is up when the lab is attached and the
 // main menu is showing; the backdrop behind it is a real one-hole Endless
 // course, which is what makes the Endless journey nearly free to run.
+// The splash must be GONE too: the menu opens underneath it and the splash
+// fades only once frames come smoothly (main.js, smoothFrames), so a menu that
+// is "showing" can still be covered.
 const menuReady = t => t.step('menu ready', () =>
- t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW));
+ t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden && !document.getElementById('splash')), 'the main menu', 60 * SLOW));
 const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {name: entry}).first().click();
 
 // Every control on the play screen that a player can see must be one a player

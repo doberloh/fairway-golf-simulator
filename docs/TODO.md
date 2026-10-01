@@ -1541,6 +1541,21 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Graphics work the profiling turned up
 
+- [x] **The menu hole stuttered as the game opened; and it is daylight only
+  (1 October).** Branch `frame-and-lights`, reported by the
+  owner. The menu hole's first real frames (117-217 ms on Ultra: the first
+  render with the orbiting camera, the cull's first sort, the grass ring) fell
+  inside the splash's fade. The menu now opens under the splash, which fades
+  only once three frames in a row run under 40 ms (two seconds at most); every
+  loading overlay holds the same way (one second at most), and the menu
+  reached from a round opens inside that wait. Measured, four cold opens: no
+  frame over 25 ms once the splash starts to fade. Returning to the menu from
+  a round: at most one 33 ms frame, where main froze for 0.6 s and 3.7 s on
+  the same path. The menu hole is never at night any more (dawn to golden
+  hour, nine hours to rotate through); a player who wants night sets the
+  clock in a round. RESEARCH.md *The menu hole: daylight, and no stutter as it
+  appears*.
+
 - [x] **The floodlights froze the game on Ultra, and the work moved into
   loading (30 September).** Branch `frame-and-lights`, reported by the owner:
   a MASSIVE freeze when the floodlights came on, and a freeze after loading.

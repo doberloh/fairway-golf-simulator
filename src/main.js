@@ -1444,7 +1444,8 @@ function restoreClock(){
 // are a thing to switch on when it gets dark, not a setting a course inherits;
 // and since the loading screen builds everything they need (GolfView.ready),
 // switching them on mid-round costs nothing. The menu's showcase hole is not a
-// round and lights itself by the hour it picks.
+// round and lights itself by the hour it picks -- which is always daylight now
+// (MENU_HOURS), so in practice never.
 function lightsOffForRound(){
  view.daylight.floodlights=false;saveDaylight(view.daylight);view.setFloodlights(false);
  const box=$('timeFloods');if(box)box.checked=false;
@@ -1471,7 +1472,8 @@ async function loadMenuBackdrop(report){
  const backdrop=endlessSettings(endlessHole(seed,0));
  backdropRun={seed,settings:backdrop};
  // Its own hour, drawn from the seed so the hole and the light that falls on it
- // come out of the same shuffle. Floodlights follow the DARKNESS here rather
+ // come out of the same shuffle. Always daylight since 30 September (MENU_HOURS).
+ // Floodlights would follow the DARKNESS here rather
  // than the player's preference: a lit hole at midnight is one of the looks
  // worth showing, and a bank of poles over a midday fairway is not.
  restoreClock();
@@ -1609,6 +1611,11 @@ async function whileGenerating(label,work,quiet=false){
   // frozen first frame after it (GolfView.ready).
   if(!quiet)setProgress({label:'Preparing the graphics',done:1});
   await view?.ready?.();
+  // The first frames of what was built, still under the overlay: their one-off
+  // costs land behind it rather than on the first thing the player sees (the
+  // same reason the splash waits, at startup). A few frames normally; never
+  // more than a second.
+  if(!quiet)await smoothFrames(1000);
   return result;
  }
  finally{if(view)view.retiring=false;if(!quiet){box.hidden=true;setProgress(null);}}
@@ -1627,6 +1634,14 @@ function setProgress(report){
 // invisible full-screen element that still takes clicks is a bug waiting.
 // Called from the fatal path too: a black screen hiding the one message that
 // explains the black screen is the worst version of this.
+// Resolves after three frames in a row under 40 ms, or after `limit` ms.
+function smoothFrames(limit=2000){
+ return new Promise(done=>{
+  const start=performance.now();let last=start,run=0;
+  const f=t=>{run=t-last<40?run+1:0;last=t;if(run>=3||t-start>limit)done();else requestAnimationFrame(f);};
+  requestAnimationFrame(f);
+ });
+}
 function dismissSplash(){
  const el=$('splash');if(!el||el.classList.contains('ready'))return;
  el.classList.add('ready');
@@ -1855,13 +1870,16 @@ async function returnToMenu(){
   toggleClockPop(false);closeMenuDrop();
   pendingRound=null;
  };
- if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();openMenu();});
- if(appMode==='play')return guardRound(async()=>{leave();await growBackdrop();openMenu();});
+ if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();});
+ if(appMode==='play')return guardRound(async()=>{leave();await growBackdrop();});
  leave();openMenu();
 }
 
 // Generation blocks the main thread, so it needs the overlay.
-const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);});
+// The menu opens inside the wait, so its camera's first frames are drawn under
+// the overlay (whileGenerating waits for them to run smoothly) rather than on
+// screen.
+const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);openMenu();});
 function markStudioDirty(){if(appMode==='studio'&&!studioDirty){studioDirty=true;updateStudioState();}}
 // Studio keeps a throwaway round alive so the renderer, camera and map keep
 // working; the play HUD is simply hidden.
@@ -4301,5 +4319,13 @@ try{
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
  openMenu();
+ // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry
+ // one-off costs the loading work cannot reach -- the first render with a moving
+ // camera, the cull's first sort, the grass ring -- and one of them landed in
+ // the splash's fade: 133 ms on Ultra, a visible stutter on the first thing a
+ // player sees (the owner). So the loop runs and the menu opens under the
+ // splash, and it fades only once frames come steadily, or after two seconds
+ // whatever happens, so a slow machine is never kept on a black screen.
+ await smoothFrames();
  dismissSplash();
 }catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}
