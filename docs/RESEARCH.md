@@ -5044,7 +5044,7 @@ the whole putting surface):
 | 70 | 3.00% / 6.3% / 10.4% / 3.1 ft / 45% | 3.46% / 6.3% / 14.6% / 3.7 ft / 28% |
 | 100 | 5.39% / 11.4% / 18.6% / 5.6 ft / 12% | 7.23% / 14.5% / 26.7% / 7.2 ft / 7% |
 
-**The studio warns past 75%** (`warn` on the schema entry): the slider turns red, a note stays under it and a toast says so once as it is crossed, at the owner's request. 75 is where the average slope (3.8%) passes the 3% the sources below give for most of a putting surface; 90 averages 5.5%, which is the old 100.
+**The studio warns past 75%** (`warn` on the schema entry): the slider turns red as it is dragged across, and the note under it and a toast once it is let go, at the owner's request. The note first appeared mid-drag; it sits in the field's label, so it grew the field, the panel's balanced columns reflowed, and the slider jumped 229 px out from under the cursor (measured with a real mouse drag) -- the owner saw it as a glitch and a stutter. Only the colour follows the drag now, because it changes nobody's size; the note waits for `change`, which a pointer fires on release and the keyboard on each step. 75 is where the average slope (3.8%) passes the 3% the sources below give for most of a putting surface; 90 averages 5.5%, which is the old 100.
 
 The curve stays superlinear, `s(0.6 + 0.4s^2) x 1.9`, now times
 `1 + 6.1 max(0, s - 0.4)^2` (was `1 + 3.75 max(0, s - 0.6)^2` in the first cut

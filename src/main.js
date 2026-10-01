@@ -2608,11 +2608,17 @@ function renderPanel(name,content){
   };
   content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
-  // Past a field's `warn.above` (the green slope slider, past 75%): red, the
-  // note under it, and a toast the moment it is crossed -- not on every nudge.
+  // Past a field's `warn.above` (the green slope slider, past 75%): red while
+  // dragging, then the note under it and a toast once the slider is LET GO.
+  // The note used to appear mid-drag; it sits in the field's label, so it pushed
+  // the slider down out from under the cursor and the thumb jumped and stuttered
+  // (the owner). The colour changes nothing's size, so it can follow the drag.
+  // `change` fires on release for a pointer, and on each step for the keyboard,
+  // where nothing is under a cursor to move.
   for(const f of SETTINGS)if(f.warn&&$(f.key)){
    const el=$(f.key);let was=Number(el.value)>f.warn.above;
-   el.addEventListener('input',()=>{const on=Number(el.value)>f.warn.above;el.closest('.field').classList.toggle('danger',on);$('warn-'+f.key).hidden=!on;if(on&&!was)toast(f.warn.toast);was=on;});
+   el.addEventListener('input',()=>el.closest('.field').classList.toggle('danger',Number(el.value)>f.warn.above));
+   el.addEventListener('change',()=>{const on=Number(el.value)>f.warn.above;el.closest('.field').classList.toggle('danger',on);$('warn-'+f.key).hidden=!on;if(on&&!was)toast(f.warn.toast);was=on;});
   }
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
