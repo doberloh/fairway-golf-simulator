@@ -1688,7 +1688,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // of the read. The cup, its liner and the floor are separate objects and
  // stay: it is the flagstick that goes, not the hole.
  setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
- updateGreenGrid(){this.reading?.update(this.elapsed-this.readingEpoch);}
+ // The grid is square to the PLAY camera: its lines run along and across the
+ // way you are looking from the ball. Every other camera has it on the hole's
+ // axes, where squaring it would only make it swim as the view orbits.
+ updateGreenGrid(){
+  if(!this.reading)return;
+  let heading=null;
+  if(this.config.mode==='player'){this.camera.getWorldDirection(this.headingScratch??=new T.Vector3());heading={x:this.headingScratch.x,z:this.headingScratch.z};}
+  this.reading.update(this.elapsed-this.readingEpoch,heading);
+ }
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
  // WHAT PUTS THE BALL ON THE GROUND.
  //
