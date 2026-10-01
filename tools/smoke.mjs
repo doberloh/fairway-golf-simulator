@@ -740,6 +740,54 @@ const JOURNEYS = [
    });
   },
  },
+ // A FLOODLIT NIGHT ON ULTRA, WITH THE LAMPS CASTING SHADOWS. Each casting lamp
+ // is a texture unit in every lit shader, against the sixteen WebGL promises,
+ // and the first attempt at this went over: the ground's program failed to
+ // link and the ground disappeared at night, with every test green. A link
+ // failure is a console.error from three, which fails any step here; this is
+ // the journey that puts a page in that state. Ultra (and High) have the
+ // fewest units to spare. GPU only, for the same reason as above.
+ {
+  name: 'floodlit-night',
+  what: 'Ultra at night with the floodlights on: every shader links, the nearest lamps cast shadows, and the switch turns them off and on',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    try {
+     localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', frameCap: 0}));
+     localStorage.setItem('fairway-time-v1', JSON.stringify({hour: 22, rate: 0, syncToLocal: false, floodlights: true}));
+    } catch {}
+   });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play, at night, floodlit', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
+   await t.step('the lamps nearest the shot cast shadows', async () => {
+    await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
+   });
+   const flip = async on => {
+    await t.page.click('#menuNav');
+    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    // It lives on the window's "Costs a frame" tab.
+    await t.press('Costs a frame');
+    const box = t.page.getByRole('checkbox', {name: 'Floodlight shadows'});
+    await box.scrollIntoViewIfNeeded();
+    await box.setChecked(on);
+    // The new programs are built before the switch lands, so it takes a moment.
+    await t.until(async () => (await casting()) === (on ? 3 : 0), `floodlight shadows ${on ? 'on' : 'off'}`, 20 * SLOW);
+    await t.closePanel('Graphics & performance');
+   };
+   await t.step('Graphics → Floodlight shadows off', () => flip(false));
+   await t.step('and on again', () => flip(true));
+   await t.step('and keeps playing', () => t.shot());
+  },
+ },
  {
   name: 'surprise-round',
   what: 'Play → Surprise me & play builds a nine-hole course, and every in-round tool opens',

@@ -5397,3 +5397,84 @@ switch off it never moved. Throttling the processor is not something fewer
 pixels can fix, so the frame rate itself stayed at about 20 there -- it shows
 the mechanism, not the benefit, which needs a machine limited by its graphics
 chip.
+
+## Floodlight shadows (30 September)
+
+Branch `frame-and-lights`. `HOLE_ATLAS` (ground.js), `makeHazardAtlas`,
+`setFloodShadows`, `compilePrograms` / `whenLinked` and `FLOOD_SHADOW_EVERY`
+(renderer.js), the tiers' `floodShadows` (graphics.js),
+`tests/flood-shadows.test.mjs`, the `floodlit-night` smoke journey.
+
+**The budget, measured.** Each shadow-casting spot light is one texture unit in
+every lit fragment shader; WebGL guarantees 16 (MAX_TEXTURE_IMAGE_UNITS on the
+RTX 4090 through ANGLE is exactly 16, as on most phones). The ground is the
+hungriest program. Counted from the linked program's active uniforms on a
+floodlit night, PNW nine (`bench/shots/flood-samplers.mjs`, scratch):
+
+| tier | before: ground uses | casters that link | after packing | casters that link | tier uses |
+| --- | --- | --- | --- | --- | --- |
+| Low, Medium | 13 | 3 | 10 | 6 (7 fails) | 5 |
+| High, Ultra (3 cascades) | 15 | 1 (2 fails) | 12 | 4 (5 fails) | 3 |
+
+The ground's samplers before: water field (mist), owners, cover, route, curves,
+outer, hazards, cups, tees, banks, stream segments, the toon ramp, and the sun's
+shadow map(s).
+
+**What was packed, and why those.** `route` (3 texels a hole), `tees` (6), `cups`
+(2) and `hazards` (24) were four RGBA float textures with one row per hole,
+nearest-filtered, read texel by texel -- tables, not images. They are now one
+35-texel-wide table (`HOLE_ATLAS`: route 0-2, tees 3-8, cups 9-10, hazards
+11-34) read through one function. The renderer writes the cups and hazards
+(and the range's moved green, `setRangeGreen`), the ground the route and tees.
+Not packed: `curves`, `outer` and `banks` are linearly filtered along their
+length, and `owners`, `cover` and the stream segments have their own sizes;
+packing those is possible but buys units nothing needs yet. **Rejected:** a
+cascade fewer on High at night, which was the other way to free a unit -- it
+gives up moonlight shadows for the length of the course, for the sake of a few
+lamps.
+
+**Checked identical.** Fifteen views (two of a green, one back at the tee, on
+five biomes, High, 15:30, wind off) against the build before: at most 0.012% of
+pixels differ, the same as two runs of the same build (animated water).
+
+**One unit kept spare.** At the limit, the next texture anyone adds to the
+ground shader would make the ground disappear at night with the lights on --
+the failure the first attempt shipped. `tests/flood-shadows.test.mjs` counts the
+samplers the ground declares, adds the mist's, the ramp and the sun's maps, and
+fails if a tier's casters would use the spare unit.
+
+**Cost.** Frame time with vsync off, PNW nine, 22:00, floodlit: High 4.2 ms
+with shadows and 4.2 without; Low 2.9 against 2.6. The maps are redrawn only
+when a casting lamp moves to another pole, or the tree cull re-sorts because
+the view moved, and at most every 200 ms: nothing at night moves but trees in
+the wind. A floodlight's shadow draws the trees the view draws (the cull is
+not told about spot lights), which is what a pool of lamplight near the shot
+needs.
+
+**What shows.** The lamps stand at the fairway's edges aimed across it, so
+their shadows fall back into the trees: in view, trees shade each other and the
+tree line takes an edge (0.5% of the frame changed in the test view). The
+flagstick casts too.
+
+**The switch, and a bug it found in the warm-up.** Which lamps cast is part of
+every lit program's key, so switching rebuilds every lit material. Done the way
+the B6 floodlight warm-up did it -- set the state, `compileAsync`, put the state
+back -- switching OFF froze for 2.3 s. `compileAsync` waits on each material's
+CURRENT program, and once the state is put back the next frame makes the old,
+finished programs current again, so it resolved at once and the switch landed on
+programs still linking. Now the scene is compiled synchronously while the state
+is held, every program each material owns is noted (`compilePrograms`), and
+those are waited on (`whenLinked`). After: the worst frame around a switch is
+37-58 ms (the new programs' first draws), from 2.3 s. The B6 warm-up had the
+same flaw -- a light switch in its first few seconds could stall -- and now uses
+the same pair. **The first switch on a course is slow**: about 310 programs, of
+which the last ten -- floodlit ones carrying all 57 lamps of a nine -- take about
+14 s to link on Windows. The game runs smoothly through it, so the switch says
+it is preparing and confirms when it lands; every later switch on that course
+takes about a quarter of a second.
+
+**The strength sliders.** Floodlight strength multiplies the lamps' intensity;
+glow ball strength the ball's emissive glow, the light it throws and its halo
+(the ring and the trail keep following the dark). 0-200% of the tuned values,
+100% being exactly what was drawn before. Checked at 30%, 100% and 200% on a
+floodlit PNW night.

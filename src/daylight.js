@@ -246,7 +246,14 @@ const clean = t => ({
  // without it reads as a diorama. This is the first weather control rather than
  // a lighting one -- when there are more of them they belong together.
  fog: t?.fog !== false,
+ // The two strength sliders, as multiples of the tuned brightness: 0 to 2, 1
+ // being exactly what Fairway drew before they existed.
+ floodStrength: strength(t?.floodStrength),
+ glowStrength: strength(t?.glowStrength),
 });
+function strength(v) {
+ return Number.isFinite(v) ? Math.max(0, Math.min(2, v)) : 1;
+}
 
 export function loadDaylight() {
  try {

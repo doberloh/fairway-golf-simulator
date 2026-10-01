@@ -654,15 +654,6 @@ None of these are tuning -- they are missing capability or wrong plumbing, so
 they were written down rather than done. Asked for on 2026-09-22 as the place
 to put "potential gfx improvements" instead of inventing features overnight.
 
-- [ ] **Floodlight shadows are off on every tier, and not for frame time.**
-  The existing comment is right and now confirmed from the outside: the real
-  GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
-  reports 32, and the scene has one unit spare. Six casters at 512 measured 8.3
-  ms against 8.4 in daylight, so the cost was never the problem -- a program
-  that fails to link is. Freeing a unit is the work: one cascade fewer on high,
-  or packing the ground's data atlases. Until then a night course has lights
-  that cast nothing, on every tier including ultra.
-
 - [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
   frame on a heavy biome is dominated by tree geometry, and no tier knob
   touches it. `grass` scales scatter grass, which is under 1% of the triangles
@@ -900,8 +891,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
 
 - [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
-
-- [ ] **Floodlight shadows: blocked on a texture unit, not on frame time.** The plan worked and the numbers were fine -- six casters at 512 square measured 8.3 ms floodlit against 8.4 in daylight, with the casters fixed at build time and `orderPoles` handing those lamps to the hole being played. Then it did not render: every shadow-casting spot light costs a texture sampler in every lit fragment shader, WebGL guarantees 16, and the cascades, the toon gradient, the environment map and the ground atlases already spend them. The program failed to link and the GROUND DISAPPEARED. **I shipped that and the user caught it, not me** -- the frame-time measurements said nothing, and the only signal was a shader link error in a console I had not re-read after the change. Walking the count up: one caster links, two does not. `floodShadows` is 0 on every tier. To do this properly a sampler has to be freed first -- a cascade fewer on high, or packed ground atlases. `orderPoles` is kept: it still decides which poles are lit when a course has more poles than lamps.
 
 - [ ] **Save/import/export, what is left.** Neither loses work.
   - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
@@ -1605,6 +1594,33 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Graphics work the profiling turned up
 
+- [x] **Floodlight shadows, on every tier, with a switch (30 September).**
+  Branch `frame-and-lights`. The texture unit they were blocked on was freed by
+  packing four of the ground shader's per-hole tables (route, tees, cups,
+  hazards) into one (`HOLE_ATLAS`, ground.js): the ground now uses 10 of the 16
+  units WebGL guarantees on Low and Medium, 12 on High and Ultra, where it used
+  13 and 15. Measured, a floodlit night now links six casting lamps on Low and
+  Medium (fails at seven) and four on High and Ultra (fails at five); the tiers
+  use five and three, keeping ONE unit spare so the next texture added to the
+  ground cannot make it vanish at night again. Pixel-compared against the
+  build before over fifteen views on five biomes: identical within the noise
+  between two runs of the same build. The lamps nearest the shot cast; their
+  maps are redrawn only when a lamp moves or the view does (at most every 200
+  ms), so they cost nothing frame to frame (High 4.2 ms on and off; Low 2.9
+  against 2.6). **"Floodlight shadows"** in Graphics, under Costs a frame, on
+  by default; the first switch on a course builds every floodlit shader again
+  in the background (about 14 s on an Ultra nine with 57 lamps, the game
+  running smoothly) and says so, then instant. `tests/flood-shadows.test.mjs`
+  fails if any tier's count would leave no spare unit; the `floodlit-night`
+  smoke journey plays Ultra at night with the lights on. RESEARCH.md
+  *Floodlight shadows*.
+
+- [x] **Floodlight and glow ball strength sliders (30 September).** Branch
+  `frame-and-lights`. Two sliders in the Weather & time popover, 0-200% of the
+  tuned brightness, saved with the other time settings; uniform writes, nothing
+  rebuilds. The popover now scrolls within the screen: with the sliders it no
+  longer fit a 720 px window, and the bottom of it could not be reached.
+
 - [x] **Fog distance was not a performance setting.** Closed by F5a: the far
   plane now follows the fog, so nothing past it is drawn -- which, measured,
   was almost nothing anyway.
@@ -1920,6 +1936,12 @@ problem: a control that belongs inside a box is sitting beside it.
 - [x] Station joins no longer step: the ground shader tests the two neighbouring segments of the same channel and keeps the nearest.
 
 ## Distribution follow-up (September 11 review)
+
+- [x] **Floodlight shadows: blocked on a texture unit, not on frame time.**
+  Unblocked 30 September by packing the ground's per-hole tables; see
+  *Floodlight shadows, on every tier* under "Graphics work the profiling turned
+  up". The lesson from the first attempt stands and is now enforced twice: a
+  test counts the units, and a smoke journey plays the floodlit night.
 
 - [x] Owner-selected MIT license, package metadata, offline Help licenses and source/portable notices.
 

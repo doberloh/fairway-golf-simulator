@@ -2889,6 +2889,8 @@ function renderPanel(name,content){
   <p class="note">Ridges shade the hollows behind them. Only says anything when the sun is low — at midday a two metre roll casts almost nothing. One draw call per shadow cascade, over ground that is already built.</p>
   <label class="check"><input id="gfxReflections" type="checkbox" ${graphics.reflections?'checked':''}> Water reflections</label>
   <p class="note">Ponds, lakes and creeks reflect the course around them rather than only the sky. Nothing extra per frame: each body's reflection is photographed when the course is built and again whenever the sun moves about six degrees, a pause of around 40–65 ms each time. Switched off, none of that happens, and water still moves and still reflects the sky.</p>
+  <label class="check"><input id="gfxFloodShadows" type="checkbox" ${graphics.floodlightShadows?'checked':''}> Floodlight shadows</label>
+  <p class="note">With the course floodlit, the lamps nearest your shot throw shadows — five of them, or three on High and Ultra, whose own sun shadows take the room. Redrawn only when the lamps or the view move, so they cost nothing frame to frame. The first switch on a course takes a few seconds to prepare, longer on Ultra, while you play on; after that it is instant.</p>
 `;
   const note=()=>$('gfxNote').textContent={
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',
@@ -2925,6 +2927,17 @@ function renderPanel(name,content){
    };
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
+  // The first switch on a course builds every floodlit shader again with the new
+  // number of shadows -- measured at about 14 s on an Ultra nine with 57 lamps,
+  // the game running smoothly throughout -- so it says so, and says when it lands.
+  // Every switch after that on the same course is instant.
+  $('gfxFloodShadows').onchange=()=>{
+   graphics=saveGraphics({...graphics,floodlightShadows:$('gfxFloodShadows').checked});
+   const on=graphics.floodlightShadows,said=on?'Floodlight shadows on.':'Floodlight shadows off.';
+   let landed=false;
+   const slow=setTimeout(()=>{if(!landed)toast('Preparing floodlight shadows. Play on; they change when ready.');},400);
+   view.setFloodShadows(on).then(()=>{landed=true;clearTimeout(slow);if(graphics.floodlightShadows===on)toast(said);});
+  };
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
   $('gfxAutoRes').onchange=()=>{graphics=saveGraphics({...graphics,autoResolution:$('gfxAutoRes').checked});autoResolutionNote();toast(graphics.autoResolution?'Resolution now drops a step when frames run slow.':'Resolution stays where this setting puts it.');};
   autoResolutionNote();
@@ -3735,7 +3748,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   floodShadows:(count)=>{
    const lamps=view.floodLamps||[];
    if(count===undefined)return {casting:lamps.filter(l=>l.castShadow).length,lamps:lamps.length,
-    live:lamps.filter(l=>l.castShadow&&l.shadow.autoUpdate).length};
+    live:view.floodlit?lamps.filter(l=>l.castShadow).length:0};
    lamps.forEach((l,i)=>{
     const want=i<count;
     if(l.castShadow===want)return;
@@ -4083,7 +4096,10 @@ function buildClockPop(){
   <label class="check"><input id="timeGlow" type="checkbox" ${d.glowBall!==false?'checked':''}> Glow ball after dark</label>
   <label class="check"><input id="timeFog" type="checkbox" ${d.fog!==false?'checked':''}> Morning fog &amp; haze</label>
   <label class="check"><input id="timeFloods" type="checkbox" ${d.floodlights?'checked':''}> Floodlight the course</label>
-  <p class="note">Poles down alternating sides of every hole, spaced the way a sports field is lit. Off by default: nothing is built into the skyline and nothing is lit until you ask for it.</p>`;
+  <p class="note">Poles down alternating sides of every hole, spaced the way a sports field is lit. Off by default: nothing is built into the skyline and nothing is lit until you ask for it.</p>
+  ${slider('timeFloodStrength','Floodlight strength',Math.round((d.floodStrength??1)*100),0,200,'%',5)}
+  ${slider('timeGlowStrength','Glow ball strength',Math.round((d.glowStrength??1)*100),0,200,'%',5)}
+  <p class="note">How bright the floodlights and the glow ball are, against how Fairway tunes them (100%). The glow ball only glows after dark.</p>`;
  const setHour=h=>{claimClock();d.hour=wrapHour(h);view.solar=solarState(d.hour,world.bio.sun);saveDaylight(d);updateClock();};
  $('timeHour').oninput=e=>setHour(Number(e.target.value));
  for(const chip of $('clockPop').querySelectorAll('.time-chip[data-hour]'))
@@ -4094,6 +4110,12 @@ function buildClockPop(){
  $('timeGlow').onchange=e=>{claimClock();d.glowBall=e.target.checked;saveDaylight(d);};
  $('timeFog').onchange=e=>{claimClock();d.fog=e.target.checked;saveDaylight(d);};
  $('timeFloods').onchange=e=>{claimClock();d.floodlights=e.target.checked;saveDaylight(d);view.setFloodlights(d.floodlights);};
+ // Uniform writes the next frame picks up (the lamps and the ball are both set
+ // every frame from these): nothing rebuilds. Not `claimClock`: a brightness is
+ // not a time, and moving it should not stop the clock following the device.
+ wireSliders($('clockPop'));
+ $('timeFloodStrength').oninput=e=>{d.floodStrength=Number(e.target.value)/100;saveDaylight(d);};
+ $('timeGlowStrength').oninput=e=>{d.glowStrength=Number(e.target.value)/100;saveDaylight(d);};
  syncClockPop();
 }
 
@@ -4253,7 +4275,7 @@ try{
  view=new GolfView($('scene'),graphics.quality);
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
- view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);
+ view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.

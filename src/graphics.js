@@ -67,20 +67,28 @@ export const TIERS = {
   godRays: 0,
   clouds: 0,
   mist: 0,
-  // FLOODLIGHT SHADOWS ARE OFF ON EVERY TIER, and not because of frame time.
+  // HOW MANY FLOODLIGHTS CAST SHADOWS, the lamps nearest the shot.
   //
-  // Every shadow-casting spot light costs a texture sampler in EVERY lit
-  // fragment shader, and the scene has one unit of headroom against the
-  // MAX_TEXTURE_IMAGE_UNITS of 16 that WebGL guarantees: three CSM cascades, the
-  // toon gradient, the environment map and the ground's own data atlases spend
-  // the rest. Measured by walking the count up on a night course -- one caster
-  // links, TWO does not, and a program that fails to link does not draw, so the
-  // ground itself disappeared.
+  // Bounded by texture units, not frame time. Every shadow-casting spot light
+  // costs a texture sampler in EVERY lit fragment shader, and WebGL guarantees
+  // sixteen. Until 30 September the ground alone used 13 of them (15 with the
+  // three cascades of High and Ultra), so on High one caster linked and TWO did
+  // not -- a program that fails to link does not draw, and the ground itself
+  // disappeared. Packing four of the ground's per-hole tables into one
+  // (HOLE_ATLAS, ground.js) freed three: measured, Low and Medium now link six
+  // casters and fail at seven; High and Ultra four, failing at five.
   //
-  // Frame time was never the binding constraint: six casters at 512 measured 8.3
-  // ms against 8.4 in daylight. Freeing a unit is what this needs -- a cascade
-  // fewer on high, or packing the ground atlases -- not a smaller cap.
-  floodShadows: 0,
+  // ONE UNIT IS KEPT SPARE on every tier: five here, three on High and Ultra.
+  // At the limit, the next texture anyone adds to the ground shader would make
+  // the ground vanish at night with the lights on -- the failure this already
+  // shipped once. The `floodlit-night` smoke journey turns a link failure into a
+  // red build rather than a missing course.
+  //
+  // Frame time was never the constraint: six casters at 512 measured 8.3 ms
+  // against 8.4 in daylight, and they are now redrawn only when a lamp moves or
+  // the view does (renderer.js, FLOOD_SHADOW_EVERY), not every frame. The switch
+  // in Graphics turns them off on any tier.
+  floodShadows: 5,
   bloom: 0,
   // Smaller, not off. Measured: switching reflections off does not stop the
   // reflection pass -- the same 210 draws happen either way -- so the buffer
@@ -104,7 +112,7 @@ export const TIERS = {
   godRays: 0,
   clouds: 0,
   mist: 0,
-  floodShadows: 0,
+  floodShadows: 5,
   bloom: 0,
   reflection: 768,
  },
@@ -151,7 +159,7 @@ export const TIERS = {
   // already had, so this is strength, not a new pass.
   mist: 1,
   // How dark a crease gets where geometry meets geometry.
-  floodShadows: 0,
+  floodShadows: 3,
   bloom: 0,
   // The planar reflector is shared by every water body and redrawn each frame,
   // so this is the one knob that costs a whole extra scene render per step up.
@@ -216,7 +224,7 @@ export const TIERS = {
   // Ultra is where the passes that need the frame itself live. Measured
   // together they take high from about 6 ms to 8.3 ms of an 8.33 ms budget at
   // 120 Hz, which is why they are not simply part of high.
-  floodShadows: 0,
+  floodShadows: 3,
   bloom: .14,
   // Ferns and fallen sticks on the forest floor round the camera (U6), in the
   // grass tiles: two more draws a tile, and every tier below keeps today's
@@ -304,6 +312,10 @@ const clean = g => ({
  // is the one least likely to go looking for it. A switch at every tier, for
  // anyone who would rather have a steady picture than a steady frame rate.
  autoResolution: bool(g?.autoResolution, true),
+ // Shadows from the floodlights' nearest lamps (renderer.js, setFloodShadows).
+ // On by default: they cost nothing per frame, and a floodlit course whose
+ // lights throw no shadows looks unfinished.
+ floodlightShadows: bool(g?.floodlightShadows, true),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every
