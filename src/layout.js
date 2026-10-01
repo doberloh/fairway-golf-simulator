@@ -1,3 +1,4 @@
+import {uiZoom} from './ui-scale.js';
 // Every HUD panel moves and resizes, all the time.
 //
 // This used to be a MODE. You pressed "Arrange UI", dashed outlines appeared over
@@ -46,9 +47,12 @@ export function createLayout(world) {
 
  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
  const area = () => ({w: world.clientWidth, h: world.clientHeight});
+ // SCREEN PIXELS OVER THE ZOOM. A box's on-screen measurements are in screen
+ // pixels; the positions written back are in the app's CSS pixels, which Text
+ // size (ui-scale.js) makes `zoom` screen pixels each. At 100% they agree.
  const rect = e => {
-  const a = e.el.getBoundingClientRect(), b = world.getBoundingClientRect();
-  return {x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height};
+  const a = e.el.getBoundingClientRect(), b = world.getBoundingClientRect(), z = uiZoom();
+  return {x: (a.left - b.left) / z, y: (a.top - b.top) / z, w: a.width / z, h: a.height / z};
  };
 
  function apply(e, r) {
@@ -81,7 +85,7 @@ export function createLayout(world) {
   let from = null;
   const move = ev => {
    if (!from) return;
-   const r = {...from.r}, dx = ev.clientX - from.x, dy = ev.clientY - from.y;
+   const z = uiZoom(), r = {...from.r}, dx = (ev.clientX - from.x) / z, dy = (ev.clientY - from.y) / z;
    if (resizing) { r.w += dx; r.h += dy; } else { r.x += dx; r.y += dy; }
    apply(e, r);
   };
@@ -224,17 +228,17 @@ export function createLayout(world) {
  let pending = 0;
  function measure() {
   pending = 0;
-  const top = world.getBoundingClientRect().top, h = world.clientHeight;
-  const bars = bottomBars.filter(shown).map(b => b.getBoundingClientRect().top - top);
+  const top = world.getBoundingClientRect().top, h = world.clientHeight, z = uiZoom();
+  const bars = bottomBars.filter(shown).map(b => (b.getBoundingClientRect().top - top) / z);
   write('--controls-top', bars.length ? Math.min(...bars) : h - 16);
   if (shown(weather)) {
-   write('--weather-bottom', weather.getBoundingClientRect().bottom - top);
+   write('--weather-bottom', (weather.getBoundingClientRect().bottom - top) / z);
    // A phone held sideways puts its camera button beside the wind, and the
    // wind's width is its reading plus a unit -- measured, not guessed.
    write('--weather-w', weather.offsetWidth);
   }
-  if (shown(card)) write('--card-bottom', card.getBoundingClientRect().bottom - top);
- if (shown(tools)) write('--tools-bottom', tools.getBoundingClientRect().bottom - top);
+  if (shown(card)) write('--card-bottom', (card.getBoundingClientRect().bottom - top) / z);
+ if (shown(tools)) write('--tools-bottom', (tools.getBoundingClientRect().bottom - top) / z);
  }
  const soon = () => { if (!pending) pending = requestAnimationFrame(measure); };
  const watch = new ResizeObserver(soon);

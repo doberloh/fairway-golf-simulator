@@ -5569,3 +5569,65 @@ frame after the overlay went, against 0.6 s and 3.7 s on main
 weighted so a floodlit hole came round now and then. Now nine hours from 6.4 to
 17.8; the dusk slot went too, being near enough to dark on some biomes to read
 as night. The test that required SOME dark visits now requires none.
+
+## Text size for a projector bay (1 October)
+
+Branch `text-size`. `src/ui-scale.js`, the last rule of `src/style.css`, the
+container queries throughout it, `resize` / `pixelCeiling` in `src/renderer.js`,
+and the screen-pixel conversions in `src/layout.js`, `src/popups.js` and
+`hudInsets` in `src/main.js`. Asked by the owner: what does the story look like
+for appropriately sized text in projector mode? It was: none. Every size in the
+stylesheet is fixed pixels made for a laptop, mostly 8-12 px (headline numbers
+17-28 px), and nothing scaled any of it.
+
+**How big text looks in a bay, worked out.** The angle one CSS pixel subtends
+is the screen's width over the browser's width in CSS pixels, over the distance
+to the screen. A laptop -- 14-inch, 1920 px at 150% scaling, 20 inches away --
+gives 1.6 minutes of arc a pixel. The default bay (138" 16:9, 8 ft back) with a
+1080p projector gives 2.24, so text there already looks about 1.4 times the
+laptop's size; a 4K projector at 100% scaling halves it to 1.12, and standing 12
+ft back with 1080p gives 1.5. **The laptop reference is placed, not published**:
+one ordinary desk, standing in for "as legible as at a desk". Automatic text
+size in a bay is the reference over the bay's angle, never below 100% (a
+projected picture is softer and dimmer than a panel).
+
+**How it scales, and the alternatives rejected.** Converting ~330 fixed font
+sizes would have left the panels around them unscaled and overflowing. The
+browser's own page zoom does the whole thing correctly but no page can set it.
+So the app is CSS-zoomed and made that much smaller in CSS pixels, which lays it
+out as the browser's zoom would: a 1920x1080 screen at 150% lays out exactly as
+a 1280x720 window does (checked: the same controls in the same places, the
+same reachability results at the equivalent sizes with no zoom at all). The
+first try zoomed the app alone and the play area came out 1.5 screens tall and
+scrolled: the stylesheet's screen units and its 28 screen-size media queries
+still measured the screen. The units now divide by the zoom and the queries are
+container queries on the app.
+
+**The course stays sharp.** The 3D canvas is inside the zoom; sized from its
+container's on-screen box it was drawn 1.5 screens tall, and from its CSS size
+alone it would be drawn at two thirds of the screen's resolution. It is sized
+from the container's CSS size with the zoom carried in the pixel ratio: at 150%
+on 1080p, Low draws 1440 of 1920 pixels, its own three-quarters, as at 100%.
+
+**Bugs found on the way, both in code that mixes screen pixels and CSS pixels**
+(`getBoundingClientRect` and pointer events are screen pixels under the zoom;
+`clientWidth` and inline positions are CSS pixels): panel dragging moved a panel
+1.5 times as far as the pointer, and the markers' clear-of-the-panels margins
+(`hudInsets`) were 1.5 times too wide. A third was older: a tool window that was
+wholly on screen, held only to the drag rule (a grip left showing) when the area
+shrank, hung off the right edge with its close button out of reach -- a smaller
+browser window did it too. Such a window now stays wholly on screen; one parked
+half off the edge keeps the old rule. And two text sizes can leave the play area
+the same size in its own pixels (2560 at 200%, 1920 at 150%), so the renderer's
+resize watcher missed the change and kept the old pixel ratio; applying a text
+size now resizes the view itself.
+
+**The cap.** At 200% a 1080p screen lays out as 960x540, smaller than any desktop
+size the layout is checked at, and shot controls fall off the laptop layout
+there (the same as an unzoomed 960x540 window). So a size is held to what keeps
+the zoomed screen at least 1280x720, the smallest desktop size `hud-reachable`
+checks: 150% on 1080p, 200% on 2560x1440 or 4K. **Checked**: the `text-size`
+smoke journey at 150% on 1920x1080, 200% on 2560x1440, and 200% held to 150% on
+1080p -- every control reachable, nothing scrolling, 61-63% of the course
+visible, the course drawn at full resolution. At 100% fifteen screenshots
+against main differ only by the animated sea.

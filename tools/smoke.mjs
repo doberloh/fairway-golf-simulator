@@ -1005,6 +1005,68 @@ const JOURNEYS = [
    });
   },
  },
+ // TEXT SIZE, FOR A PROJECTOR (ui-scale.js). The whole interface is CSS-zoomed and
+ // laid out as a smaller window would be, so the same three things as above have
+ // to hold at a larger text size: every control reachable, nothing scrolling, the
+ // course showing. And the course must still be drawn at the screen's full
+ // resolution -- the canvas sits inside the zoom, and without the pixel ratio
+ // carrying it the course would be drawn smaller and stretched. 200% asked for on
+ // a 1080p screen must come out at the 150% that screen holds.
+ {
+  name: 'text-size',
+  what: 'larger text at 150% and 200%: every control reachable, nothing scrolls, the course sharp; 200% on 1080p held to 150%',
+  context: {viewport: {width: 1920, height: 1080}},
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'low', frameCap: 0, textSize: 150})); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const zoom = () => t.page.evaluate(() => Number(getComputedStyle(document.getElementById('app')).zoom));
+   await t.step('the menu, at 150%', async () => {
+    if (Math.abs((await zoom()) - 1.5) > .01) throw new Error(`the interface is at ${await zoom()}, not 1.5`);
+    const bad = await t.page.evaluate(unreachableControls, '#mainMenu button');
+    if (bad.length) throw new Error(`${bad.length} menu buttons unreachable: ${bad.join('; ')}`);
+   });
+   await t.step('Endless → Start an endless run', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.page.waitForTimeout(4500);
+   const play = async label => {
+    await t.page.waitForTimeout(800 * SLOW);
+    const bad = await t.page.evaluate(unreachableControls);
+    const health = await t.page.evaluate(layoutHealth);
+    const sharp = await t.page.evaluate(() => { const c = document.getElementById('scene'), r = c.getBoundingClientRect(); return {drawn: c.width, shown: Math.round(r.width * devicePixelRatio)}; });
+    const notes = [];
+    if (bad.length) notes.push(`${bad.length} unreachable -- ${bad.join('; ')}`);
+    if (health.scrolls) notes.push(`the page scrolls (${health.page})`);
+    if (health.scene < SCENE_FLOOR) notes.push(`the HUD hides ${100 - health.scene}% of the course`);
+    // Low draws at .75 of the screen's pixels on purpose (its tier); anything
+    // else under that is the zoom shrinking the course.
+    if (sharp.drawn < sharp.shown * .74) notes.push(`the course is drawn ${sharp.drawn} px wide for ${sharp.shown} on screen`);
+    console.log(`     ${label.padEnd(24)} course ${String(health.scene).padStart(2)}%  drawn ${sharp.drawn}/${sharp.shown}  ${notes.length ? notes.join('; ') : 'fine'}`);
+    if (notes.length) throw new Error(notes.join('; '));
+   };
+   await t.step('the play screen at 150% on 1920x1080', () => play('1920x1080 at 150%'));
+   await t.step('200% on 2560x1440, set in Graphics', async () => {
+    await t.page.setViewportSize({width: 2560, height: 1440});
+    await t.page.click('#menuNav');
+    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    await t.page.$eval('#gfxTextSize', el => { el.value = 200; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); });
+    await t.until(async () => Math.abs((await zoom()) - 2) < .01, 'the interface at 200%', 5 * SLOW);
+    await t.closePanel('Graphics & performance');
+    await play('2560x1440 at 200%');
+   });
+   await t.step('the same 200% on a 1080p screen is held to 150%', async () => {
+    await t.page.setViewportSize({width: 1920, height: 1080});
+    await t.until(async () => Math.abs((await zoom()) - 1.5) < .01, 'the interface held to 150%', 5 * SLOW);
+    await play('1920x1080, 200% held');
+   });
+   await t.step('and keeps playing', () => t.shot());
+  },
+ },
  // A HOLE PLAYED ON A PHONE, WITH NOTHING BUT A THUMB. No keyboard at all:
  // aim by tapping the course, shoot and skip with the on-screen buttons, drop
  // through the tools, putt out, and take the next hole. The browser pretends

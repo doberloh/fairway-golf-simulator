@@ -7,6 +7,7 @@
 // Nothing here may ever affect world.height, hazards or any played surface --
 // these are display knobs only, so two players on different tiers play the
 // identical course.
+import {cleanTextSize} from './ui-scale.js';
 const KEY = 'fairway-graphics-v1';
 
 export const QUALITY = ['low', 'medium', 'high', 'ultra'];
@@ -313,6 +314,9 @@ const clean = g => ({
  // is the one least likely to go looking for it. A switch at every tier, for
  // anyone who would rather have a steady picture than a steady frame rate.
  autoResolution: bool(g?.autoResolution, true),
+ // TEXT SIZE (ui-scale.js): 'auto' -- 100% at a desk, sized from the bay in
+ // simulator mode -- or a percentage the player chose, 75-200.
+ textSize: cleanTextSize(g?.textSize),
  // Shadows from the floodlights' nearest lamps (renderer.js, setFloodShadows).
  // On by default: they cost nothing per frame, and a floodlit course whose
  // lights throw no shadows looks unfinished.
