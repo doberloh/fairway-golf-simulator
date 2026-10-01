@@ -2596,6 +2596,19 @@ engineering provenance pass, not legal advice.
 
 ## Green and bunker shapes
 
+- [x] **The slope slider's warning jumped the slider out from under the cursor
+  (1 October).** Branch `slope-warning-on-release`, reported by the owner. The
+  note appeared the moment the slider crossed 75%, grew the field, and the
+  panel's columns reflowed mid-drag: the slider moved 229 px while held. Now
+  only the red follows the drag; the note and the toast wait for the release.
+  Checked with a real mouse drag: the slider stays put the whole way, turns red
+  at 76, and the note and toast appear on letting go. Shown in the field on
+  release, it still made the field hop to another column, so (the owner's
+  choice) it is a bubble that pops out over the panel instead and moves
+  nothing: the slider's position measured identical before, during and after.
+  It flips above the slider when the panel would cut it off below, and goes at
+  the next click, after 8 s, or back under 75%; the red stays.
+
 - [x] **Greens with a character each, raised greens, punchbowls and false
   fronts (30 September).** Branch `green-shapes`, GENERATOR_VERSION 33,
   SCHEMA_VERSION 9. The owner's screenshot of a bright band across a green at

@@ -2529,10 +2529,12 @@ function renderPanel(name,content){
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
    if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
-   // A field with `warn` in the schema turns red past its threshold and keeps a
-   // note under it saying why (wired below, after the panel is drawn).
+   // A field with `warn` in the schema turns red past its threshold, and says
+   // why in a bubble that pops out over the panel when the slider is let go
+   // (wired below, after the panel is drawn). Opening the panel on a value
+   // already past it shows the red alone.
    const warned=f.warn&&settings[k]>f.warn.above;
-   return `<label class="field${warned?' danger':''}">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" ${warned?'':'hidden'}>${escape(f.warn.text)}</span>`:''}</label>`;};
+   return `<label class="field${f.warn?' warns':''}${warned?' danger':''}">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" hidden>${escape(f.warn.text)}</span>`:''}</label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
    holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
@@ -2608,11 +2610,42 @@ function renderPanel(name,content){
   };
   content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
-  // Past a field's `warn.above` (the green slope slider, past 75%): red, the
-  // note under it, and a toast the moment it is crossed -- not on every nudge.
+  // Past a field's `warn.above` (the green slope slider, past 75%): red while
+  // dragging, then a bubble saying why, and a toast once, when the slider is
+  // LET GO. The note used to sit in the field and appear mid-drag: it grew the
+  // field, the panel's balanced columns reflowed, and the slider jumped 229 px
+  // out from under the cursor (the owner). Shown on release instead, it still
+  // reflowed -- the field hopped to another column -- so it floats over the
+  // panel now and moves nothing. The colour follows the drag; it changes no
+  // size. `change` fires on release for a pointer, and per step for the keys.
+  //
+  // The bubble covers whatever is under it, so it does not stay: it goes at
+  // the next click or tap anywhere, after eight seconds, or when the slider
+  // comes back under the line. The red stays as long as the value does.
   for(const f of SETTINGS)if(f.warn&&$(f.key)){
-   const el=$(f.key);let was=Number(el.value)>f.warn.above;
-   el.addEventListener('input',()=>{const on=Number(el.value)>f.warn.above;el.closest('.field').classList.toggle('danger',on);$('warn-'+f.key).hidden=!on;if(on&&!was)toast(f.warn.toast);was=on;});
+   const el=$(f.key),note=$('warn-'+f.key),field=el.closest('.field');
+   let was=Number(el.value)>f.warn.above,timer=null;
+   const hide=()=>{note.hidden=true;clearTimeout(timer);document.removeEventListener('pointerdown',away,true);};
+   const away=e=>{if(!note.contains(e.target))hide();};
+   const show=()=>{
+    note.hidden=false;note.classList.remove('above');
+    // Below the slider, unless the panel would cut it off there.
+    let scroller=document.documentElement;
+    for(let n=field.parentElement;n;n=n.parentElement){const o=getComputedStyle(n).overflowY;if(o==='auto'||o==='scroll'){scroller=n;break;}}
+    const room=scroller.getBoundingClientRect().bottom-field.getBoundingClientRect().bottom;
+    if(room<note.offsetHeight+12)note.classList.add('above');
+    clearTimeout(timer);timer=setTimeout(hide,8000);
+    // After this pointer's own events, so the release that showed it cannot close it.
+    setTimeout(()=>document.addEventListener('pointerdown',away,true),0);
+   };
+   el.addEventListener('input',()=>field.classList.toggle('danger',Number(el.value)>f.warn.above));
+   el.addEventListener('change',()=>{
+    const on=Number(el.value)>f.warn.above;
+    field.classList.toggle('danger',on);
+    if(on)show();else hide();
+    if(on&&!was)toast(f.warn.toast);
+    was=on;
+   });
   }
   let tipsOpen=false;
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
