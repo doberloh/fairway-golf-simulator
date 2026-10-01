@@ -1423,6 +1423,7 @@ async function buildRoundOn(courseSettings,group,name){
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building your course…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;
+  lightsOffForRound();middayForRound();
   round=fresh;settings=next;closePanel();
   await prepareWorld(report);
   loadCourse();setMode('play');
@@ -1436,9 +1437,25 @@ async function buildRoundOn(courseSettings,group,name){
 // rewrite a setting the player chose.
 function restoreClock(){
  view.borrowedClock=false;
- if(!playerClock)return;
- Object.assign(view.daylight,playerClock);playerClock=null;
- view.setFloodlights(view.daylight.floodlights);
+ if(playerClock){Object.assign(view.daylight,playerClock);playerClock=null;}
+ lightsOffForRound();
+}
+// EVERY ROUND STARTS WITH THE FLOODLIGHTS OFF (the owner, 30 September). They
+// are a thing to switch on when it gets dark, not a setting a course inherits;
+// and since the loading screen builds everything they need (GolfView.ready),
+// switching them on mid-round costs nothing. The menu's showcase hole is not a
+// round and lights itself by the hour it picks.
+function lightsOffForRound(){
+ view.daylight.floodlights=false;saveDaylight(view.daylight);view.setFloodlights(false);
+ const box=$('timeFloods');if(box)box.checked=false;
+}
+// A COURSE BUILT TO PLAY STARTS AT MIDDAY (the owner, 30 September): what was
+// just shaped or chosen is seen first in clear light, not in whatever dark the
+// clock happens to be in. "Start at my local time" still wins -- it is a choice
+// the player made explicitly. Endless keeps the hour of the showcase hole it
+// grows from.
+function middayForRound(){
+ const d=view.daylight;d.hour=d.syncToLocal?localHour():12;saveDaylight(d);
 }
 // Touch the clock and you own it. The backdrop borrows the hour for its picture,
 // but the moment the player sets one themselves the loan is off -- otherwise
@@ -2928,7 +2945,7 @@ function renderPanel(name,content){
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
-  // number of shadows -- measured at about 14 s on an Ultra nine with 57 lamps,
+  // number of shadows -- measured at 4.4 s on an Ultra nine with 57 lamps,
   // the game running smoothly throughout -- so it says so, and says when it lands.
   // Every switch after that on the same course is instant.
   $('gfxFloodShadows').onchange=()=>{

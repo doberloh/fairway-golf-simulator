@@ -1050,6 +1050,9 @@ record of what was ruled out and why, which is worth more than a short file.
   build with the game running, and the lights come on when it is done (5.9 s
   on eighteen holes, 2.1 s on nine; worst frame 48 ms).
   RESEARCH.md *Floodlit shaders built after the course is on screen*.
+  SUPERSEDED 30 September: the build now runs behind the loading screen, and
+  on Ultra this warm-up had never worked at all (see *The floodlights froze
+  the game on Ultra* under "Graphics work the profiling turned up").
 
 - [x] **B4. The scene build and the loading screen -- partly.** Branch
   `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
@@ -1538,6 +1541,26 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Graphics work the profiling turned up
 
+- [x] **The floodlights froze the game on Ultra, and the work moved into
+  loading (30 September).** Branch `frame-and-lights`, reported by the owner:
+  a MASSIVE freeze when the floodlights came on, and a freeze after loading.
+  Measured on Ultra, PNW: the first switch-on froze for 11.3 s on main, 16.1 s
+  on this branch before the fix, 26 s on eighteen holes; nothing at all on
+  High. Cause: Ultra draws the scene into bloom's off-screen target, and three
+  picks a program's version partly from the bound target, so every warm-up --
+  the loading screen's and the background floodlight one -- built versions no
+  frame used. Fixed by compiling against the target the frame draws into
+  (`asDrawn`). Then, as the owner asked, the floodlit programs are built
+  behind the loading screen, every round starts with the floodlights OFF, and
+  a round built through Play starts at MIDDAY ("Start at my local time" still
+  wins). Measured after, Ultra and High, nine and eighteen holes: no frame over
+  50 ms after loading, switching on, off or on again. Loading, Ultra: nine
+  holes 7.1 s on main -> 6.8 s, eighteen ~10 -> 11.9 s; opening the game to
+  the menu 4.6-7.7 s -> 3.1-5.5 s. A hole change also froze for 83-100 ms (on
+  main too): the warm-up spent 70 ms filling the grass ring with no overlay
+  up; now it fills a tile a frame. RESEARCH.md *The floodlight freeze on
+  Ultra*.
+
 - [x] **WON'T DO (owner, 30 September): a tier drawing less vegetation.** The
   frame on a heavy biome is dominated by tree geometry, and no tier knob
   reaches it: `grass` scales scatter grass (under 1% of the triangles on
@@ -1565,8 +1588,9 @@ problem: a control that belongs inside a box is sitting beside it.
   ms), so they cost nothing frame to frame (High 4.2 ms on and off; Low 2.9
   against 2.6). **"Floodlight shadows"** in Graphics, under Costs a frame, on
   by default; the first switch on a course builds every floodlit shader again
-  in the background (about 14 s on an Ultra nine with 57 lamps, the game
-  running smoothly) and says so, then instant. `tests/flood-shadows.test.mjs`
+  in the background (4.4 s on an Ultra nine once shaders were compiled for the
+  right target -- 14 s before that fix; the game running smoothly) and says
+  so, then instant. `tests/flood-shadows.test.mjs`
   fails if any tier's count would leave no spare unit; the `floodlit-night`
   smoke journey plays Ultra at night with the lights on. RESEARCH.md
   *Floodlight shadows*.

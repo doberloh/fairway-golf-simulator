@@ -5468,13 +5468,76 @@ those are waited on (`whenLinked`). After: the worst frame around a switch is
 37-58 ms (the new programs' first draws), from 2.3 s. The B6 warm-up had the
 same flaw -- a light switch in its first few seconds could stall -- and now uses
 the same pair. **The first switch on a course is slow**: about 310 programs, of
-which the last ten -- floodlit ones carrying all 57 lamps of a nine -- take about
-14 s to link on Windows. The game runs smoothly through it, so the switch says
-it is preparing and confirms when it lands; every later switch on that course
-takes about a quarter of a second.
+which the last ten -- floodlit ones carrying all 57 lamps of a nine -- took about
+14 s to link on Windows, measured before the render-target fix in *The
+floodlight freeze on Ultra* below (4.4 s after it). The game runs smoothly
+through it, so the switch says it is preparing and confirms when it lands;
+every later switch on that course takes about a quarter of a second.
 
 **The strength sliders.** Floodlight strength multiplies the lamps' intensity;
 glow ball strength the ball's emissive glow, the light it throws and its halo
 (the ring and the trail keep following the dark). 0-200% of the tuned values,
 100% being exactly what was drawn before. Checked at 30%, 100% and 200% on a
 floodlit PNW night.
+
+## The floodlight freeze on Ultra, and the work moved into loading (30 September)
+
+Branch `frame-and-lights`. `asDrawn`, `ready` and `warmUp(grassBudget)` in
+`src/renderer.js`; `lightsOffForRound` and `middayForRound` in `src/main.js`;
+the `floodlit-night` smoke journey. Reported by the owner: a massive freeze
+when the floodlights came on, and a freeze after loading into a course.
+
+**Measured** (`bench/shots/flood-freeze.mjs`, scratch: the Play path, then the
+clock popover's "Floodlight the course" pressed as a player presses it; cold
+browser, RTX 4090, 1600x900, PNW):
+
+| | main | branch, before | after |
+| --- | --- | --- | --- |
+| first switch-on, Ultra nine | 11.3 s frozen | 16.1 s | 33 ms worst frame |
+| first switch-on, Ultra eighteen | -- | 26.2 s | 50 ms |
+| first switch-on, High nine | -- | none | 33 ms |
+| loading floodlit, Ultra nine | -- | 23.9 s | (rounds now start unlit) |
+| loading, Ultra nine | 7.1 s | 7.1 s | 6.8 s |
+| loading, Ultra eighteen | -- | 10.0 s | 11.9 s |
+| opening the game to the menu, Ultra | 4.6-7.7 s | -- | 3.1-5.5 s |
+| a hole change, Ultra | 83-100 ms | 83 ms | 17 ms |
+
+**Ultra only, which named it.** High showed no freeze at all. Ultra draws the
+scene into bloom's off-screen target (bloom.js), and three picks a program's
+version partly from the render target bound when it is built: tone mapping
+applies on the screen and not into a target, and the output colour space
+differs. Every warm-up compiled with the screen bound -- `ready`'s
+`compileAsync`, `warmUp`'s `compile`, the floodlight warm-up -- so on Ultra all
+of them built versions no frame ever used. At load that cost was hidden in the
+first frame under the overlay (which built the real ones, synchronously), and
+loading floodlit took 23.9 s; with the lights off, the floodlit set was
+"warmed" in the wrong versions and built for real on the switch. B6 was
+measured on High, which is why it was never seen. Fix: compile with the frame's
+target bound (`asDrawn`, wrapped into `withStandIns` and `ready`). Loading got
+faster with it, because the duplicate builds stopped.
+
+**Rejected on the way: fewer live lamps.** A throwaway build with 6, 12 and 24
+live lamps instead of all 57 froze for 4.3, 5.1 and 7.1 s on the first
+switch-on: the lamp count was not most of it -- switching the light count at
+all swapped every lit program. (A lamp cap was also declined by the owner in
+B6, for the overhead view at night.)
+
+**Then the owner's direction: do the work while loading, start with the lights
+off.** `ready` now runs the floodlight warm-up itself and waits for its programs
+to link before the overlay goes. Every round starts with the floodlights off
+(they used to follow the saved preference) and a round built through Play
+starts at midday unless "Start at my local time" is ticked; Endless keeps the
+showcase hole's hour. Cost: about 3 s more loading on an Ultra nine than with
+the fix alone (3.5 -> 6.8 s), still a little under main.
+
+**The hole change.** Not floodlights: `warmUp` spent up to 70 ms building the
+near-field grass ring in one go, so the first frame would not be bare -- right
+behind the loading screen, and a frozen frame on every hole change, where
+there is no overlay (on main too). The hole change now builds none up front;
+the ring fills a tile a frame (about 0.4 s), while the arrival camera is
+still holding high over the new tee.
+
+**The guard.** `floodlit-night` (GPU only) saves night with the lights on,
+starts a Surprise round, checks it starts at midday with the lights off,
+switches them on from the clock popover, and fails if the longest frame across
+the switch exceeds 500 ms.

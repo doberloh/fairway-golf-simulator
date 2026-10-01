@@ -740,20 +740,29 @@ const JOURNEYS = [
    });
   },
  },
- // A FLOODLIT NIGHT ON ULTRA, WITH THE LAMPS CASTING SHADOWS. Each casting lamp
- // is a texture unit in every lit shader, against the sixteen WebGL promises,
- // and the first attempt at this went over: the ground's program failed to
- // link and the ground disappeared at night, with every test green. A link
- // failure is a console.error from three, which fails any step here; this is
- // the journey that puts a page in that state. Ultra (and High) have the
- // fewest units to spare. GPU only, for the same reason as above.
+ // THE FLOODLIGHTS ON ULTRA, SWITCHED ON MID-ROUND THE WAY A PLAYER DOES IT.
+ //
+ // Two failures this guards. Each casting lamp is a texture unit in every lit
+ // shader, against the sixteen WebGL promises, and the first attempt at lamp
+ // shadows went over: the ground's program failed to link and the ground
+ // disappeared, with every test green. A link failure is a console.error from
+ // three, which fails any step here. And switching the lights on used to swap
+ // every lit shader for one built on the spot -- 12 to 16 s frozen on Ultra,
+ // 26 s on eighteen holes -- because the warm-up built them for the screen
+ // while Ultra draws into bloom's target. Everything the lights need is now
+ // built behind the loading screen, so the switch must not freeze: the longest
+ // frame across it is measured and held under half a second.
+ //
+ // A round starts at midday with the lights off (the owner, 30 September), so
+ // that is checked too. GPU only, for the same reason as above.
  {
   name: 'floodlit-night',
-  what: 'Ultra at night with the floodlights on: every shader links, the nearest lamps cast shadows, and the switch turns them off and on',
+  what: 'Ultra: a round starts at midday with the lights off; switching them on mid-round does not freeze, the nearest lamps cast shadows, and the shadow switch turns them off and on',
   gpuOnly: true,
   async prepare(page) {
    await page.addInitScript(() => {
     try {
+     // Saved as night with the lights on: a new round must start at midday with them off anyway.
      localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', frameCap: 0}));
      localStorage.setItem('fairway-time-v1', JSON.stringify({hour: 22, rate: 0, syncToLocal: false, floodlights: true}));
     } catch {}
@@ -761,12 +770,33 @@ const JOURNEYS = [
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play, at night, floodlit', async () => {
+   await t.step('Play → Surprise me & play', async () => {
     await fromMenu(t, 'Play');
     await t.press('Surprise me & play');
     await t.inPlay(120 * SLOW);
    });
+   await t.step('it starts at midday with the floodlights off', async () => {
+    const lit = await t.page.evaluate(() => window.lab.floodlights());
+    if (lit) throw new Error('the floodlights were on at the start of the round');
+    const clock = (await t.page.textContent('#clockLabel'))?.trim() ?? '';
+    if (!/12:00\s*PM/i.test(clock)) throw new Error(`the clock reads "${clock}", not 12:00 PM`);
+   });
    const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
+   await t.step('Floodlight the course, from the clock: no freeze', async () => {
+    await t.page.click('#clockButton');
+    const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
+    await box.scrollIntoViewIfNeeded();
+    // Every frame for three seconds from the click.
+    const watch = t.page.evaluate(() => new Promise(done => {
+     const s = [], t0 = performance.now();
+     const f = n => { s.push(n); if (n - t0 < 3000) requestAnimationFrame(f); else done(Math.max(...s.slice(1).map((x, i) => x - s[i]))); };
+     requestAnimationFrame(f);
+    }));
+    await box.setChecked(true);
+    const worst = await watch;
+    if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
+    await t.page.click('#clockButton');
+   });
    await t.step('the lamps nearest the shot cast shadows', async () => {
     await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
    });

@@ -711,7 +711,7 @@ export class GolfView{
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
   // Taken here, after the last of them is built; the near-field grass tiles come
   // later, move with the camera, and opt out.
-  // The floodlit programs are built once the course is on screen (see addFloodlights).
+  // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0});
   // The saved preference applies to every course built after it, not only to
@@ -796,12 +796,15 @@ export class GolfView{
  // same ground produced none at all and compiled zero shaders, which is what a
  // first-appearance cost looks like. Moving it here puts it on the screen that
  // already says the course is being built.
- warmUp(){
+ warmUp(grassBudget=70){
   // The near-field grass builds lazily. Its materials reach the compile through
-  // the stand-ins (withStandIns); the ring is still started here, bounded by
-  // time because this also runs on a plain hole change with no overlay up, so
-  // the ground round the camera is not bare on the first frame.
-  const until=performance.now()+70;
+  // the stand-ins (withStandIns); the ring is still started here so the ground
+  // round the camera is not bare on the first frame -- but only behind the
+  // loading screen. On a plain hole change (grassBudget 0) there is no overlay,
+  // and those 70 ms were one frozen frame every time: 83-100 ms on Ultra. The
+  // ring fills a tile a frame instead (updateGrass), about 0.4 s for all of it,
+  // while the arrival camera is still holding high over the new tee.
+  const until=performance.now()+grassBudget;
   while(this.updateGrass?.()&&performance.now()<until);
   try{this.withStandIns(()=>this.renderer.compile(this.scene,this.camera));}
   catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
@@ -866,23 +869,46 @@ export class GolfView{
  }
  withStandIns(compile){
   this.showStandIns(true);
-  try{return compile();}
+  try{return this.asDrawn(compile);}
   finally{this.showStandIns(false);}
+ }
+ // COMPILED FOR WHERE THE FRAME IS REALLY DRAWN. Three picks a program's
+ // version partly from the render target bound when it is built: tone mapping
+ // and colour space differ between the screen and an off-screen target. Ultra
+ // draws the scene into bloom's target (bloom.js), so every warm-up that
+ // compiled with the screen bound built versions no frame ever used -- and the
+ // first time the floodlights came on, every lit program was built for real in
+ // one frame: 12-16 s frozen on Ultra, nothing on High, which has no bloom.
+ asDrawn(fn){
+  if(!this.bloom)return fn();
+  const was=this.renderer.getRenderTarget();
+  this.bloom.begin(this.renderer);
+  try{return fn();}
+  finally{this.renderer.setRenderTarget(was);}
  }
  async ready(){
   if(!this.group)return 0;
   this.readying=true;
   const t0=performance.now();
   this.showStandIns(true);
-  try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+  try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
   catch(e){console.warn('Fairway: shader warm-up skipped',e);}
   // The water's probes, now that the programs they render with are built. A
   // probe hands its water an environment map, which changes that material's
   // program -- so the water is compiled once more before the first frame.
   if(this.probeDue!=null){
    this.takeDueProbes();
-   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+   try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
    catch(e){console.warn('Fairway: water warm-up skipped',e);}
+  }
+  // THE FLOODLIT PROGRAMS TOO (the owner, 30 September): everything switching
+  // the lights on will need, built and linked before the screen goes, so the
+  // switch costs nothing in play. They were sent for on the first frame after
+  // instead, to keep the wait short -- but the wait is where the owner wants
+  // the work. Measured at the time: nothing over 50 ms at either switch.
+  if(this.nightWarmDue){
+   this.nightWarmDue=false;this.warmFloodlights();
+   try{if(this.floodWarming)await this.floodWarming;}catch{}
   }
   const t1=performance.now();
   // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
@@ -1525,16 +1551,14 @@ export class GolfView{
  setFloodlights(on){
   const want=!!on&&!!this.floodlights;
   this.floodWanted=want;
-  // NOT BEFORE THEIR SHADERS ARE READY. `warmFloodlights` builds the other
-  // state's programs in the background once a course is on screen, and that
-  // takes a few seconds -- longer on eighteen holes, whose lit programs carry
-  // 141 lamps. Switched in that window, the next frame used programs the
-  // driver had not finished and froze until it had: measured in the course
-  // creator, where the switch is reached for straight away, at 2.1 s when
-  // switched 0.3 s after arrival and 0.9 s at 1.5 s (none after 4 s). So a
-  // switch that lands in the window waits for the build instead, with the game
-  // running; the lights come on the moment their shaders are ready. The latest
-  // request wins, so on-then-off in the window leaves them off.
+  // NOT BEFORE THEIR SHADERS ARE READY. Since 30 September `ready` builds and
+  // links the other state's programs behind the loading screen, so in play
+  // this wait never happens. It stays for a hole change (warmUp warms again
+  // for the per-hole objects, with no overlay) and for any path that reaches
+  // the screen without `ready`: switched while the build is still going, the
+  // next frame would use programs the driver had not finished and freeze until
+  // it had (once measured at 2.1 s). A switch in that window waits instead,
+  // with the game running. The latest request wins.
   if(this.floodWarming&&want!==this.floodlit){
    // Only for the course it was asked on: a rebuild in between has its own
    // lamps, set by its own build.
@@ -1630,7 +1654,7 @@ export class GolfView{
   // and the ball's own materials are per-hole objects, and a first compile of
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
-  if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp());}
+  if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp(0));}
 for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
@@ -2093,8 +2117,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // A course built without the loading screen's `ready` (none today, but the
   // studio could) still gets its water's probes, on its first frame.
   if(this.probeDue!=null&&!this.readying)this.takeDueProbes();
-  // The floodlit programs, sent for on the first frame after the course is on
-  // screen: the driver builds them while the player looks at the first tee.
+  // The floodlit programs, for a course that reached the screen without
+  // `ready` (none today): sent for on its first frame. Every course built
+  // through the loading screen has them already.
   if(this.nightWarmDue&&!this.readying){this.nightWarmDue=false;this.warmFloodlights();}
   // The still bodies' own clock. Their ripples are the only thing that tells a
   // pond with no reflector from a sheet of glass, so it runs whatever else is
