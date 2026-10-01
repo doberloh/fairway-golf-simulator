@@ -17,7 +17,7 @@ import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
 const SHOT_LINE_COLOR='#ffe0a0';
-import {groundGeometry,groundMaterial} from './ground.js';
+import {groundGeometry,groundMaterial,HOLE_ATLAS} from './ground.js';
 import {rangeTargets} from './range.js';
 
 // A flagstick, to the dimensions that are actually specified.
@@ -265,6 +265,12 @@ const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
 // nobody looks at closely at night.
 const FLOOD_SHADOW_SIZE=512;
+// Floodlight shadows are redrawn when they could have changed -- a lamp moved
+// to a new pole, or the view moved far enough for the tree cull to re-sort
+// what is drawn -- and no more often than this. Nothing at night moves but the
+// trees in the wind, and a pool of lamplight under a swaying crown does not
+// need its shadow redrawn sixty times a second to read as a shadow.
+const FLOOD_SHADOW_EVERY=200;
 // How many water bodies get a probe of their own. Past this they share the
 // nearest one: the cost is one-off, but a dozen cubemaps is still a dozen.
 const WATER_PROBE_CAP=8;
@@ -581,9 +587,22 @@ export class GolfView{
    if(m.envMap!==want){m.envMap=want;m.needsUpdate=true;}
   }
  }
+ // THE PIXELS, as the tier allows them (the ceiling) times what automatic
+ // resolution (auto-resolution.js, F4) currently asks for. The scale is only
+ // ever at or below 1: a step can draw fewer pixels than the tier, never more.
+ pixelCeiling(){return Math.min(devicePixelRatio,this.quality.pixelRatio);}
+ setResolutionScale(scale){
+  this.resolutionScale=Math.min(1,Math.max(.1,scale||1));
+  const ratio=this.pixelCeiling()*this.resolutionScale;
+  // Bloom and the god-ray mask size their targets from the canvas every frame,
+  // so they follow on the next frame without being told.
+  if(Math.abs(this.renderer.getPixelRatio()-ratio)>1e-6)this.renderer.setPixelRatio(ratio);
+ }
  applyQuality(name){
   this.quality=tierOf(name);
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.quality.pixelRatio));
+  this.setResolutionScale(this.resolutionScale??1);
+  // A tier carries its own count of shadow-casting lamps.
+  if(this.floodLamps)this.setFloodShadows(this.floodShadowsOn!==false);
   this.renderer.shadowMap.type=T.PCFShadowMap;
   if(this.sun){
    this.sun.shadow.mapSize.set(this.quality.shadow.size,this.quality.shadow.size);
@@ -612,6 +631,9 @@ export class GolfView{
   // registration time its group is empty and its material is invisible to a
   // walk of the scene.
   this.lazyMaterials=[];
+  // One hidden mesh per such material, shown only while shaders are built
+  // (withStandIns), so the warm-up compiles what the camera will meet later.
+  this.standIns=[];
   const bio=world.bio,blue=style==='blueprint',toon=style==='cartoon',flat=style==='lowpoly',add=o=>{this.group.add(o);return o;};
   this.scene.background=new T.Color(blue?'#152e46':bio.sky);this.scene.fog=new T.Fog(blue?'#263e57':bio.sky,this.quality.fog.near,this.quality.fog.far);
   this.renderer.toneMappingExposure=blue?1:toon?1.0:.94;
@@ -689,7 +711,7 @@ export class GolfView{
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
   // Taken here, after the last of them is built; the near-field grass tiles come
   // later, move with the camera, and opt out.
-  // The floodlit programs are built once the course is on screen (see addFloodlights).
+  // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0});
   // The saved preference applies to every course built after it, not only to
@@ -774,14 +796,17 @@ export class GolfView{
  // same ground produced none at all and compiled zero shaders, which is what a
  // first-appearance cost looks like. Moving it here puts it on the screen that
  // already says the course is being built.
- warmUp(){
-  // The near-field grass builds lazily and shares one material, so with no tile
-  // yet made a scene walk cannot find it and it would compile on the first step
-  // the player takes. Warm enough of the ring to put it in the scene -- bounded
-  // by time, because this also runs on a plain hole change with no overlay up.
-  const until=performance.now()+70;
+ warmUp(grassBudget=70){
+  // The near-field grass builds lazily. Its materials reach the compile through
+  // the stand-ins (withStandIns); the ring is still started here so the ground
+  // round the camera is not bare on the first frame -- but only behind the
+  // loading screen. On a plain hole change (grassBudget 0) there is no overlay,
+  // and those 70 ms were one frozen frame every time: 83-100 ms on Ultra. The
+  // ring fills a tile a frame instead (updateGrass), about 0.4 s for all of it,
+  // while the arrival camera is still holding high over the new tee.
+  const until=performance.now()+grassBudget;
   while(this.updateGrass?.()&&performance.now()<until);
-  try{this.renderer.compile(this.scene,this.camera);}
+  try{this.withStandIns(()=>this.renderer.compile(this.scene,this.camera));}
   catch(e){console.warn('Fairway: shader pre-compile skipped',e);}
   // The lit programs wait until the course is on screen (`render` sends for
   // them) -- building them here put them in the wait behind the loading screen.
@@ -801,23 +826,94 @@ export class GolfView{
  // without blocking the page (the spinner keeps turning), then one real frame
  // is drawn under the overlay to make the rest. Called from `whileGenerating`,
  // which every course build goes through.
+ // THE STAND-INS. Materials that only reach the scene later (the near-field
+ // grass and the forest floor, which grow tiles as the camera moves) each leave
+ // one hidden mesh of a single zero-sized instance here (see vegetation.js).
+ //
+ // Compiling them is not enough. On Windows the browser draws through Direct3D
+ // (ANGLE), which finishes a program's shaders only on the FIRST DRAW that uses
+ // it -- so a program built behind the loading screen still cost its full ~75
+ // ms the first time the forest floor came into view (B7 in TODO). That is what
+ // the first frame under the overlay is for, and the stand-ins have to be in
+ // it: shown through the compile AND that frame, hidden again after. Being
+ // zero-sized they draw nothing a player could see.
+ //
+ // `withStandIns` is the compile-only form, for the warm-ups that do not draw.
+ // `compile` creates every program before it returns (only the driver's link
+ // waits), so hiding them once the call returns is safe.
+ showStandIns(on){for(const m of this.standIns||[])m.visible=on;}
+ // PROGRAMS BUILT FOR A STATE THE SCENE IS NOT IN YET. `compileAsync` cannot
+ // wait for these: it waits on each material's CURRENT program, and once the
+ // state is put back the next frame makes the old, finished programs current
+ // again -- so it resolves at once, and the switch that followed froze on
+ // programs still linking (measured: floodlight shadows switched off, 2.3 s).
+ // So the scene is compiled synchronously while the state is held, every
+ // program each material now owns is noted, and those are what is waited on.
+ // Programs that already existed are finished and drop out at once.
+ compilePrograms(){
+  const out=[];
+  for(const m of this.withStandIns(()=>this.renderer.compile(this.scene,this.camera)))
+   for(const p of this.renderer.properties.get(m).programs?.values()??[])out.push(p);
+  return out;
+ }
+ whenLinked(programs,limit=15000){
+  const until=performance.now()+limit;
+  return new Promise(done=>{
+   const check=()=>{
+    // A program released while waiting has no `program` left to ask about.
+    programs=programs.filter(p=>p.program&&!p.isReady());
+    if(!programs.length||performance.now()>until)done();else setTimeout(check,10);
+   };
+   check();
+  });
+ }
+ withStandIns(compile){
+  this.showStandIns(true);
+  try{return this.asDrawn(compile);}
+  finally{this.showStandIns(false);}
+ }
+ // COMPILED FOR WHERE THE FRAME IS REALLY DRAWN. Three picks a program's
+ // version partly from the render target bound when it is built: tone mapping
+ // and colour space differ between the screen and an off-screen target. Ultra
+ // draws the scene into bloom's target (bloom.js), so every warm-up that
+ // compiled with the screen bound built versions no frame ever used -- and the
+ // first time the floodlights came on, every lit program was built for real in
+ // one frame: 12-16 s frozen on Ultra, nothing on High, which has no bloom.
+ asDrawn(fn){
+  if(!this.bloom)return fn();
+  const was=this.renderer.getRenderTarget();
+  this.bloom.begin(this.renderer);
+  try{return fn();}
+  finally{this.renderer.setRenderTarget(was);}
+ }
  async ready(){
   if(!this.group)return 0;
   this.readying=true;
   const t0=performance.now();
-  try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+  this.showStandIns(true);
+  try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
   catch(e){console.warn('Fairway: shader warm-up skipped',e);}
   // The water's probes, now that the programs they render with are built. A
   // probe hands its water an environment map, which changes that material's
   // program -- so the water is compiled once more before the first frame.
   if(this.probeDue!=null){
    this.takeDueProbes();
-   try{if(this.renderer.compileAsync)await this.renderer.compileAsync(this.scene,this.camera);}
+   try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
    catch(e){console.warn('Fairway: water warm-up skipped',e);}
+  }
+  // THE FLOODLIT PROGRAMS TOO (the owner, 30 September): everything switching
+  // the lights on will need, built and linked before the screen goes, so the
+  // switch costs nothing in play. They were sent for on the first frame after
+  // instead, to keep the wait short -- but the wait is where the owner wants
+  // the work. Measured at the time: nothing over 50 ms at either switch.
+  if(this.nightWarmDue){
+   this.nightWarmDue=false;this.warmFloodlights();
+   try{if(this.floodWarming)await this.floodWarming;}catch{}
   }
   const t1=performance.now();
   // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
+  finally{this.showStandIns(false);}
   // For the lab: how long each half took. The first is time the page stays
   // live; the second blocks it, so it is the one to keep small.
   this.readyTimes={shaders:Math.round(t1-t0),firstFrame:Math.round(performance.now()-t1)};
@@ -876,15 +972,13 @@ export class GolfView{
   // row of poles standing on a daylit course.
   if(rig)rig.visible=true;
   try{
-   const done=this.renderer.compileAsync?.(this.scene,this.camera)
-    ??this.renderer.compile(this.scene,this.camera);
+   // The programs of the state NOT showing, waited on by name (compilePrograms
+   // says why `compileAsync` cannot do this).
+   const done=this.whenLinked(this.compilePrograms());
    // Held while it runs, so a switch that lands before it is done can wait for
    // it (setFloodlights) rather than stall the frame on unfinished programs.
-   if(done?.then){
-    const pending=done.catch(e=>console.warn('Fairway: floodlight pre-compile skipped',e))
-     .finally(()=>{if(this.floodWarming===pending)this.floodWarming=null;});
-    this.floodWarming=pending;
-   }
+   const pending=done.finally(()=>{if(this.floodWarming===pending)this.floodWarming=null;});
+   this.floodWarming=pending;
   }catch(e){console.warn('Fairway: floodlight pre-compile skipped',e);}
   finally{if(rig)rig.visible=rigWas;for(const lamp of lamps)lamp.visible=this.floodlit;}
  }
@@ -895,8 +989,18 @@ export class GolfView{
   // offset from the green you actually played -- surface() measures from the
   // green's own centre -- and the pin looked dead centre on every hole because
   // the green was being drawn around it.
-  const cupData=new Float32Array(this.world.holes.length*2*4);for(const h of this.world.holes){const g=h.green??h.pin;cupData.set([g.x,g.z,h.greenSize,h.greenAspect],h.hole*8);cupData.set([h.pin.x,h.pin.z,0,0],h.hole*8+4);}this.cupAtlas=new T.DataTexture(cupData,2,this.world.holes.length,T.RGBAFormat,T.FloatType);this.cupAtlas.minFilter=this.cupAtlas.magFilter=T.NearestFilter;this.cupAtlas.needsUpdate=true;this.resources.push(this.cupAtlas);
-  const rows=this.world.holes.length,data=new Float32Array(24*rows*4);for(const h of this.world.holes){const hazards=[...h.bunkers,...h.ponds];hazards.slice(0,12).forEach((b,j)=>{const i=(h.hole*24+j*2)*4;data.set([b.x,b.z,b.rx,b.rz,b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07],i);});}this.hazardAtlas=new T.DataTexture(data,24,rows,T.RGBAFormat,T.FloatType);this.hazardAtlas.minFilter=this.hazardAtlas.magFilter=T.NearestFilter;this.hazardAtlas.needsUpdate=true;this.resources.push(this.hazardAtlas);
+  // THE PER-HOLE TABLE (HOLE_ATLAS in ground.js): one row a hole, the cups and
+  // the hazards written here and the route and the tees by the ground. It was
+  // four textures, and each texture is a sampler in every fragment of the
+  // ground: packed, it frees three of the sixteen WebGL guarantees, which is
+  // what lets the floodlights cast shadows at all.
+  const rows=this.world.holes.length,W=HOLE_ATLAS.width,holeData=new Float32Array(W*rows*4);
+  const put=(hole,col,v)=>holeData.set(v,(hole*W+col)*4);
+  for(const h of this.world.holes){
+   const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);
+   [...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
+  }
+  this.holeAtlas=new T.DataTexture(holeData,W,rows,T.RGBAFormat,T.FloatType);this.holeAtlas.minFilter=this.holeAtlas.magFilter=T.NearestFilter;this.holeAtlas.needsUpdate=true;this.resources.push(this.holeAtlas);
   const bankData=new Float32Array(512*rows*4*4);for(const h of this.world.holes)h.ponds.forEach((p,j)=>{for(let k=0;k<512;k++){const b=hazardProfile(p,p.z+(k/511*2-1)*p.rz);bankData.set([b.x,b.rx,0,0],((h.hole*4+j)*512+k)*4);}});this.bankAtlas=new T.DataTexture(bankData,512,rows*4,T.RGBAFormat,T.FloatType);this.bankAtlas.minFilter=this.bankAtlas.magFilter=T.LinearFilter;this.bankAtlas.needsUpdate=true;this.resources.push(this.bankAtlas);
  }
  addWaterBody(geometry,level,depth,center,ocean=false,stream=false){
@@ -1257,8 +1361,8 @@ export class GolfView{
  setRangeGreen(){
   const h=this.world.holes[0];
   if(!h?.range)return;
-  const data=this.cupAtlas?.image?.data;
-  if(data){data.set([h.green.x,h.green.z,h.greenSize,h.greenAspect],h.hole*8);data.set([h.pin.x,h.pin.z,0,0],h.hole*8+4);this.cupAtlas.needsUpdate=true;}
+  const data=this.holeAtlas?.image?.data,at=(h.hole*HOLE_ATLAS.width+HOLE_ATLAS.cups)*4;
+  if(data){data.set([h.green.x,h.green.z,h.greenSize,h.greenAspect],at);data.set([h.pin.x,h.pin.z,0,0],at+4);this.holeAtlas.needsUpdate=true;}
   const props=this.greenProps?.[h.hole];
   if(props){
    const p=h.toWorld(h.pin),y=h.height(h.pin.x,h.pin.z);
@@ -1425,17 +1529,19 @@ export class GolfView{
   // `shadow.autoUpdate` is what stops them costing anything in daylight: with it
   // off three skips the depth pass entirely, and a stale map behind a lamp at
   // zero intensity contributes nothing.
-  const casters=this.quality.floodShadows??0;
+  const casters=this.floodCasters();
   this.floodLamps=Array.from({length:Math.min(poles.length,FLOOD_LAMP_CAP)},(_,i)=>{
    const lamp=new T.SpotLight('#fff4d2',0,POLE_REACH*2,FLOOD_CONE,.55,2);
    lamp.visible=false;lamp.intensity=0;
    lamp.castShadow=i<casters;
-   if(lamp.castShadow){
-    lamp.shadow.mapSize.set(FLOOD_SHADOW_SIZE,FLOOD_SHADOW_SIZE);
-    lamp.shadow.bias=this.quality.shadowBias.constant;
-    lamp.shadow.normalBias=this.quality.shadowBias.normal;
-    lamp.shadow.autoUpdate=false;lamp.shadow.needsUpdate=false;
-   }
+   // Set up on every lamp, casting or not, so the switch can hand shadows to a
+   // lamp later without the rig being rebuilt. A map is only allocated by
+   // three once the lamp casts. Never redrawn on their own (autoUpdate): see
+   // FLOOD_SHADOW_EVERY and the frame loop.
+   lamp.shadow.mapSize.set(FLOOD_SHADOW_SIZE,FLOOD_SHADOW_SIZE);
+   lamp.shadow.bias=this.quality.shadowBias.constant;
+   lamp.shadow.normalBias=this.quality.shadowBias.normal;
+   lamp.shadow.autoUpdate=false;lamp.shadow.needsUpdate=false;
    this.group.add(lamp,lamp.target);
    return lamp;
   });
@@ -1445,16 +1551,14 @@ export class GolfView{
  setFloodlights(on){
   const want=!!on&&!!this.floodlights;
   this.floodWanted=want;
-  // NOT BEFORE THEIR SHADERS ARE READY. `warmFloodlights` builds the other
-  // state's programs in the background once a course is on screen, and that
-  // takes a few seconds -- longer on eighteen holes, whose lit programs carry
-  // 141 lamps. Switched in that window, the next frame used programs the
-  // driver had not finished and froze until it had: measured in the course
-  // creator, where the switch is reached for straight away, at 2.1 s when
-  // switched 0.3 s after arrival and 0.9 s at 1.5 s (none after 4 s). So a
-  // switch that lands in the window waits for the build instead, with the game
-  // running; the lights come on the moment their shaders are ready. The latest
-  // request wins, so on-then-off in the window leaves them off.
+  // NOT BEFORE THEIR SHADERS ARE READY. Since 30 September `ready` builds and
+  // links the other state's programs behind the loading screen, so in play
+  // this wait never happens. It stays for a hole change (warmUp warms again
+  // for the per-hole objects, with no overlay) and for any path that reaches
+  // the screen without `ready`: switched while the build is still going, the
+  // next frame would use programs the driver had not finished and freeze until
+  // it had (once measured at 2.1 s). A switch in that window waits instead,
+  // with the game running. The latest request wins.
   if(this.floodWarming&&want!==this.floodlit){
    // Only for the course it was asked on: a rebuild in between has its own
    // lamps, set by its own build.
@@ -1472,10 +1576,51 @@ export class GolfView{
   // is part of the same key and is never changed.
   for(const lamp of this.floodLamps||[]){
    lamp.visible=lit;
-   lamp.intensity=lit?FLOOD_INTENSITY:0;
-   if(lamp.castShadow){lamp.shadow.autoUpdate=lit;lamp.shadow.needsUpdate=lit;}
+   lamp.intensity=lit?FLOOD_INTENSITY*this.floodStrength():0;
   }
   this.floodlit=lit;
+  this.floodShadowDirty=lit;
+ }
+ // THE STRENGTH SLIDER (Weather & time), as a multiple of FLOOD_INTENSITY. A
+ // light's intensity is a uniform, so moving it recompiles nothing.
+ floodStrength(){return Math.max(0,this.daylight?.floodStrength??1);}
+ // HOW MANY LAMPS CAST SHADOWS: the tier's count, or none with the switch off.
+ floodCasters(){return this.floodShadowsOn===false?0:(this.quality.floodShadows??0);}
+ // THE FLOODLIGHT SHADOWS SWITCH (Graphics). Which lamps cast is part of every
+ // lit program's key, so flipping it rebuilds every lit material in the scene
+ // -- two and a half seconds of frozen picture on a nine-hole course, done
+ // directly. So the new programs are built first, for both the lit and the
+ // unlit state, with the flags set only for the length of the call; the flags
+ // change for real once the driver has linked them, and the picture never
+ // waits. The latest request wins.
+ setFloodShadows(on){
+  this.floodShadowsOn=on!==false;
+  const lamps=this.floodLamps;
+  if(!lamps?.length)return Promise.resolve();
+  const n=Math.min(this.floodCasters(),lamps.length),want=lamps.map((_,i)=>i<n),was=lamps.map(l=>l.castShadow);
+  if(want.every((w,i)=>w===was[i]))return Promise.resolve();
+  const flags=f=>lamps.forEach((l,i)=>{l.castShadow=f[i];});
+  const course=this.group,asked=this.floodShadowsOn,rig=this.floodlights,rigWas=rig?.visible,lit=this.floodlit;
+  let done=Promise.resolve();
+  flags(want);
+  try{
+   const programs=this.compilePrograms();
+   for(const lamp of lamps)lamp.visible=!lit;
+   if(rig)rig.visible=true;
+   programs.push(...this.compilePrograms());
+   done=this.whenLinked(programs);
+  }catch(e){console.warn('Fairway: floodlight shadow pre-compile skipped',e);}
+  finally{
+   if(rig)rig.visible=rigWas;
+   for(const lamp of lamps)lamp.visible=lit;
+   flags(was);
+  }
+  return done.then(()=>{
+   if(this.group!==course||this.floodShadowsOn!==asked)return;
+   flags(want);
+   for(const [i,l] of lamps.entries())if(!want[i]&&l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}
+   this.floodShadowDirty=this.floodlit;
+  });
  }
  // Follows the point being played rather than the camera: a camera chasing a
  // ball down a fairway is behind the action, and lighting from it would light
@@ -1491,11 +1636,14 @@ export class GolfView{
   // The hole being played gets the first lamps, and the first lamps are the ones
   // that cast shadows. Everything else lights the course without casting.
   const near=orderPoles(this.poles,this.course?.hole,focus,this.floodLamps.length);
+  const strength=FLOOD_INTENSITY*this.floodStrength();
   this.floodLamps.forEach((lamp,i)=>{
    const p=near[i];
    // A lamp with no pole to stand on is dimmed, not hidden -- same reason.
-   lamp.intensity=p?FLOOD_INTENSITY:0;
+   lamp.intensity=p?strength:0;
    if(!p)return;
+   // A caster moved to another pole has a stale shadow.
+   if(lamp.castShadow&&(lamp.position.x!==p.x||lamp.position.z!==p.z||lamp.position.y!==p.y+p.height))this.floodShadowDirty=true;
    lamp.position.set(p.x,p.y+p.height,p.z);
    lamp.target.position.set(p.aimX,p.aimY,p.aimZ);
    lamp.target.updateMatrixWorld();
@@ -1506,7 +1654,7 @@ export class GolfView{
   // and the ball's own materials are per-hole objects, and a first compile of
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
-  if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp());}
+  if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp(0));}
 for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
@@ -1846,13 +1994,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // Emissive intensity is set so the ball clears the bloom threshold on ultra --
  // the flare is the bloom pass finding it, not a second effect. The sprite halo
  // carries the tiers that have no bloom.
+ // THE STRENGTH SLIDER (Weather & time) scales the ball's own glow, the light it
+ // throws and the halo; the ring and the trail keep following the dark, since
+ // they are dimmed for a reason that has nothing to do with how bright the
+ // ball is.
  updateGlowBall(solar,daylight){
   if(!this.ball)return;
-  const glow=daylight.glowBall===false?0:solar.lamplight;
-  this.ball.material.emissiveIntensity=glow*1.76;
-  this.ballLight.intensity=glow*2.08;
-  this.ballHalo.visible=glow>.01;
-  this.ballHalo.material.opacity=glow*.4;
+  const glow=daylight.glowBall===false?0:solar.lamplight,strength=Math.max(0,daylight.glowStrength??1);
+  this.ball.material.emissiveIntensity=glow*1.76*strength;
+  this.ballLight.intensity=glow*2.08*strength;
+  this.ballHalo.visible=glow*strength>.01;
+  this.ballHalo.material.opacity=Math.min(1,glow*.4*strength);
   // The ring and the trail are unlit materials, so nothing else would ever dim
   // them; left alone they stay daylight-bright against a dark course.
   this.ballRing.material.color.copy(this.ringBase).lerp(GLOW_BALL,glow);
@@ -1965,8 +2117,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // A course built without the loading screen's `ready` (none today, but the
   // studio could) still gets its water's probes, on its first frame.
   if(this.probeDue!=null&&!this.readying)this.takeDueProbes();
-  // The floodlit programs, sent for on the first frame after the course is on
-  // screen: the driver builds them while the player looks at the first tee.
+  // The floodlit programs, for a course that reached the screen without
+  // `ready` (none today): sent for on its first frame. Every course built
+  // through the loading screen has them already.
   if(this.nightWarmDue&&!this.readying){this.nightWarmDue=false;this.warmFloodlights();}
   // The still bodies' own clock. Their ripples are the only thing that tells a
   // pond with no reflector from a sheet of glass, so it runs whatever else is
@@ -2012,7 +2165,16 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.cull){
    const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];
    for(const l of lights){l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
-   this.cull.update(this.camera,this.timed?this.sunDir:null,lights);
+   // A re-sort changes which trees each map draws, the floodlights' included
+   // (they draw what the view does): their shadows are redrawn to match.
+   if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights)&&this.floodlit)this.floodShadowDirty=true;
+  }
+  if(this.floodShadowDirty&&this.floodlit){
+   const now=performance.now();
+   if(now-(this.floodShadowAt??-1e9)>=FLOOD_SHADOW_EVERY){
+    this.floodShadowAt=now;this.floodShadowDirty=false;
+    for(const lamp of this.floodLamps||[])if(lamp.castShadow)lamp.shadow.needsUpdate=true;
+   }
   }
   this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);

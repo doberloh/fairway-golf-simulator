@@ -53,15 +53,6 @@ Ground rules that apply to every item below:
 
 ### Frame rate
 
-- [ ] **F4. Automatic resolution to hold the frame rate.** Lower the renderer's
-  pixel ratio a step when frames run slow, raise it when there is headroom,
-  within the tier's own ceiling (`applyQuality` sets
-  `setPixelRatio(min(devicePixelRatio, tier.pixelRatio))`). Measured on the
-  4090 (corrected probe, 28 September baseline): High at 1x pixels 10.7 ms,
-  1.5x 12.4 ms, 2x 14.4 ms. Matters most on
-  phones (many pixels, small graphics chip). Needs hysteresis so it does not
-  flicker between steps, and a setting to turn it off.
-
 ### Build time (the wait from "play" to a playable course)
 
 Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
@@ -72,27 +63,6 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 18 holes: 16.6 s (5.6 / 0.9 / 2.7 / 2.0 / 5.4). Opening the game: ~4.1 s to
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
-
-- [ ] **B7. A hitch two to three seconds after a course appears.** Found
-  measuring B1-B6 (28 September): after the loading screen goes, frames run
-  smoothly and then, ~2-3 s in, one long frame (334 ms on PNW eighteen) or a
-  few of 50-150 ms (nine holes). It is NOT from the build-time work: `main`
-  before any of it shows the same ("smooth after 3.0 s" in the same runs).
-  Likely something scheduled after the arrival -- the intro camera finishing,
-  the near-field grass ring filling, a first cull rebuild at the new pose.
-  `bench/shots/b1-wait.mjs` (scratch, git-ignored) lists the long frames with
-  their times; a CPU profile over that window would name it.
-
-- [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
-  the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
-  `height` -- the finished grid, tens of megabytes to send to each worker
-  without shared memory (not available from `file://`). The ownership atlas,
-  the other half of this entry, is done (see B2 in Done).
-
-- [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
-  3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
-  time and triangles but CHANGES generated land: GENERATOR_VERSION bump, and
-  generation is frozen during testing. Wait for the owner.
 
 Estimate for B1-B3 together: 9 holes ~9 s -> ~4 s, 18 holes ~17 s -> ~7 s, on
 this machine, with every course unchanged. Suggested order overall: B1, then
@@ -191,18 +161,6 @@ changing anything. Worth it: one of the three assumptions was wrong.
   complex would be worth having for exactly this.
 
 ## Playing on a phone
-
-- [ ] **Owner: aim a few holes on a real iPhone.** The pad, the big map and
-  two-finger zoom are proven in a browser that EMULATES a phone. Whether the
-  half-degree step feels right under a real thumb, whether the pad sits where
-  a thumb rests, and whether iOS Safari ever steals the pinch or the hold are
-  things only the phone can answer.
-
-- [ ] **Owner: the redrawn play screen on a real iPhone, both ways up.** The
-  layout is checked at a phone's size under emulation, where the safe-area
-  insets are zero. On the phone: nothing under the notch or the home bar held
-  sideways, nothing under the home bar upright, and the pad and the shot
-  button where thumbs rest.
 
 - [ ] **Owner: the launch-monitor panel with a real device.** It is checked
   against a pretend bridge that sends what `bridge/server.mjs` sends. A real
@@ -323,31 +281,6 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **There is a second, stale git repository one directory up.** The
-  parent folder `Documents/Claude/fairway` is itself a git repo, last
-  committed 22 September, holding a complete older copy of this project --
-  its own `src/`, `dist/`, docs, and a 389 KB `Fairway-portable.zip` from
-  11 September. This repository sits inside it, untracked. Neither has a
-  remote. **Before anything is pushed, be certain which one is being
-  pushed**, and prefer deleting or archiving the outer one to leaving two
-  trees with the same name and different contents.
-
-- [ ] **Decide whether `vendor/baked_assets/` belongs in a public repo.**
-  106 MB of OBJ across 91 files, and the single biggest thing in the tree.
-  Nothing at build time reads it -- `npm run build` reads only `src/`, and
-  the ingested result `src/asset-meshes.js` is committed -- so it exists so
-  that the mesh pipeline can be re-run without the model packs and a 24 MB
-  devDependency. That is a real benefit; it is also most of why `.git` is
-  81 MB. Removing it now would not shrink the history, so this is a decision
-  about the next year rather than about today.
-
-- [ ] **The committed SkyTrak PDF is the owner's own session data.** 6.8 MB,
-  now at `docs/sources/skytrak-skills-assessment-2026-07-26.pdf`, cited by
-  RESEARCH.md for the 36 shots the flight model is checked against. Nothing
-  in the extracted strings looks personal, but a launch-monitor export is the
-  kind of file worth opening and reading once before it goes public. The
-  numbers actually used are in the `.txt` beside it.
-
 - [ ] **There is still no public remote, and that is now the last thing
   standing between this tree and a published project.** The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
@@ -356,12 +289,10 @@ GitHub repository, and stop shipping what nobody needs.
   licence without asking every one of them, and "Fairway contributors"
   implied exactly that situation.
 
-  Two things to settle in the same sitting, because publishing makes both
+  One thing to settle in the same sitting, because publishing makes it
   expensive to change: the NAME, which has its own entry and blocks the
-  repository as much as it blocks a domain, and whether
-  `vendor/baked_assets/` belongs in a public repository -- 106 MB that
-  nothing reads at build time, and a question that stops being hypothetical
-  the moment the tree is public.
+  repository as much as it blocks a domain. (`vendor/baked_assets/`, the
+  other one, was settled on 30 September: not committed.)
 
 ## Selling it: the attribution pass
 
@@ -673,34 +604,6 @@ None of these are tuning -- they are missing capability or wrong plumbing, so
 they were written down rather than done. Asked for on 2026-09-22 as the place
 to put "potential gfx improvements" instead of inventing features overnight.
 
-- [ ] **Floodlight shadows are off on every tier, and not for frame time.**
-  The existing comment is right and now confirmed from the outside: the real
-  GPU reports `MAX_TEXTURE_IMAGE_UNITS` of **16** while the software rasteriser
-  reports 32, and the scene has one unit spare. Six casters at 512 measured 8.3
-  ms against 8.4 in daylight, so the cost was never the problem -- a program
-  that fails to link is. Freeing a unit is the work: one cascade fewer on high,
-  or packing the ground's data atlases. Until then a night course has lights
-  that cast nothing, on every tier including ultra.
-
-- [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
-  frame on a heavy biome is dominated by tree geometry, and no tier knob
-  touches it. `grass` scales scatter grass, which is under 1% of the triangles
-  on redwood. `foliage` sets the segment count of DRAWN trunks and canopies, so
-  it does nothing at all on a biome whose plants are instanced mesh models --
-  which redwood now entirely is.
-
-  And a tier may not simply plant fewer trees: `src/graphics.js` says outright
-  that nothing in it may affect a played surface, and trunks are collidable, so
-  two players on different tiers must hit the same trees. The only legal lever
-  is drawing fewer while colliding with all -- a distance cull or a level of
-  detail that touches rendering only.
-
-  Which is what was removed. The LOD that came out was removed for good reason,
-  on a measurement that said geometry was free on a 4090 -- and it is, there.
-  It is not free on a laptop with no card. What that work should become is a
-  TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
-  the always-on swap that made every visible tree the thinned twin.
-
 - [ ] **`applyQuality` clamps pixel ratio to the display's own.**
   `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
   it means the tier ladder collapses on a 1x display: low, medium and ultra all
@@ -757,7 +660,8 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
   Cost to be honest about: either route is a Playwright or Puppeteer
   devDependency, and this project has treated a 24 MB devDependency as a real
-  cost before (it is why `vendor/baked_assets` is committed). Weigh that
+  cost before (it is why `vendor/baked_assets` was committed, until 30
+  September). Weigh that
   deliberately rather than installing it on the way past.
 
 - [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
@@ -799,8 +703,10 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   typical weak device -- real integrated graphics is perhaps one to two orders
   faster, which is the difference between playable and not, and that range is
   an extrapolation this machine cannot narrow. What is certain is that a
-  hundredfold gap does not close by tuning. It needs the vegetation draw
-  distance in the graphics section above.
+  hundredfold gap does not close by tuning. The vegetation draw distance that
+  was the remaining lever is closed as won't do (the owner, on the look);
+  automatic resolution (F4) is what Low has now. The real number needs a real
+  weak machine.
 
 - [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
   bottleneck, consider WebGPU before rewriting anything, WebAssembly for
@@ -920,8 +826,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
 
-- [ ] **Floodlight shadows: blocked on a texture unit, not on frame time.** The plan worked and the numbers were fine -- six casters at 512 square measured 8.3 ms floodlit against 8.4 in daylight, with the casters fixed at build time and `orderPoles` handing those lamps to the hole being played. Then it did not render: every shadow-casting spot light costs a texture sampler in every lit fragment shader, WebGL guarantees 16, and the cascades, the toon gradient, the environment map and the ground atlases already spend them. The program failed to link and the GROUND DISAPPEARED. **I shipped that and the user caught it, not me** -- the frame-time measurements said nothing, and the only signal was a shader link error in a console I had not re-read after the change. Walking the count up: one caster links, two does not. `floodShadows` is 0 on every tier. To do this properly a sampler has to be freed first -- a cascade fewer on high, or packed ground atlases. `orderPoles` is kept: it still decides which poles are lit when a course has more poles than lamps.
-
 - [ ] **Save/import/export, what is left.** Neither loses work.
   - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
   - `save()` swallows quota errors, so a full store means *Continue* silently stops updating with nothing said.
@@ -973,6 +877,22 @@ record of what was ruled out and why, which is worth more than a short file.
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 ### Frame rate
+
+- [x] **F4. Automatic resolution to hold the frame rate.** Branch
+  `frame-and-lights`. `src/auto-resolution.js` decides, `main.js` feeds it one
+  frame interval per frame, the renderer applies it under the tier's ceiling
+  (`setResolutionScale`). Steps of 100/85/72/60/50% of the tier's pixels,
+  never below a pixel ratio of 0.5. Aims for 60 fps, or the cap when lower --
+  never a faster display's full rate, so a 120 Hz Ultra machine running 90 fps
+  is left alone. Steps down when a second of frames averages 15% over the
+  target; steps up after 4 s at the target, and a step up that does not hold
+  doubles that wait (up to a minute), which is what stops it flickering on the
+  edge. Held (not reset) while the page is hidden or the loading screen is up.
+  **A switch at every tier**, "Automatic resolution" under the frame rate cap,
+  on by default; the tester report says whether it was on and the resolution
+  drawn at. Checked in the built game with the processor slowed eightfold: 72%
+  after 2 s, 50% by 4 s; lifted, back to full in 20 s; switched off, never
+  moved. RESEARCH.md *F4: automatic resolution*.
 
 - [x] **F6. Shadow cascades split where the player stands.** Branch
   `cascade-splits`. High and Ultra end the first two cascades at 100 m and
@@ -1070,6 +990,38 @@ record of what was ruled out and why, which is worth more than a short file.
 
 ### Build time
 
+- [x] **B2c. The ground cover's `surface` calls on the workers -- DROPPED
+  (owner, 30 September).** About 1.2 s of the wait on a nine; not worth the
+  cost, since the finished height grid would have to be copied to every worker
+  without shared memory (not available from `file://`).
+
+- [x] **B5. Coarser ground far outside the course -- DROPPED (owner, 30
+  September).** Not worth it: it would change every course's land for an
+  unchanged seed (a GENERATOR_VERSION bump) to save time and triangles where
+  nobody plays.
+
+- [x] **B7. A hitch two to three seconds after a course appears.** Branch
+  `frame-and-lights`. It was two shaders being built on the spot, not work
+  scheduled after the arrival: the **forest floor** (Ultra's ferns and fallen
+  sticks) grows only under canopy in the tiles around the camera, and the
+  establishing pose over open ground usually has none, so the shader warm-up
+  behind the loading screen never saw those materials. When the camera came
+  down among trees, the first fern was drawn and its two programs were built
+  there and then: one frame of 170 ms, 2.9 s in, every time, on PNW eighteen.
+  Fixed with **stand-ins** -- one hidden, zero-sized instance of each late
+  material, shown only while the warm-up compiles AND through the one frame
+  drawn under the loading screen (on Windows the browser finishes a shader on
+  its first real draw, so compiling alone left the whole cost in place). A
+  second case on Island: a grass tile with no rough in it has no instance
+  colours and so a different shader, built on its first (empty) draw -- 96 ms;
+  empty tiles are now hidden. Measured after: no long frame on PNW, Island,
+  Desert, Links or Mountain at High or Ultra; loading time unchanged. Redwood
+  on Ultra still has two or three frames of 40-50 ms in its first third of a
+  second (graphics-card work while the grass ring fills, not a shader). A new
+  smoke journey, `no-late-shaders`, fails if any lit shader is built after a
+  course appears; it fails on the old build. RESEARCH.md *B7: the hitch after
+  a course appears*.
+
 - [x] **B1. The first frame paid for behind the loading screen.** Branch
   `shader-warmup`. `GolfView.ready()`, awaited by `whileGenerating` before the
   overlay goes (*Preparing the graphics*): `compileAsync` for the driver's
@@ -1098,6 +1050,9 @@ record of what was ruled out and why, which is worth more than a short file.
   build with the game running, and the lights come on when it is done (5.9 s
   on eighteen holes, 2.1 s on nine; worst frame 48 ms).
   RESEARCH.md *Floodlit shaders built after the course is on screen*.
+  SUPERSEDED 30 September: the build now runs behind the loading screen, and
+  on Ultra this warm-up had never worked at all (see *The floodlights froze
+  the game on Ultra* under "Graphics work the profiling turned up").
 
 - [x] **B4. The scene build and the loading screen -- partly.** Branch
   `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
@@ -1586,6 +1541,81 @@ problem: a control that belongs inside a box is sitting beside it.
 
 ## Graphics work the profiling turned up
 
+- [x] **The menu hole stuttered as the game opened; and it is daylight only
+  (1 October).** Branch `frame-and-lights`, reported by the
+  owner. The menu hole's first real frames (117-217 ms on Ultra: the first
+  render with the orbiting camera, the cull's first sort, the grass ring) fell
+  inside the splash's fade. The menu now opens under the splash, which fades
+  only once three frames in a row run under 40 ms (two seconds at most); every
+  loading overlay holds the same way (one second at most), and the menu
+  reached from a round opens inside that wait. Measured, four cold opens: no
+  frame over 25 ms once the splash starts to fade. Returning to the menu from
+  a round: at most one 33 ms frame, where main froze for 0.6 s and 3.7 s on
+  the same path. The menu hole is never at night any more (dawn to golden
+  hour, nine hours to rotate through); a player who wants night sets the
+  clock in a round. RESEARCH.md *The menu hole: daylight, and no stutter as it
+  appears*.
+
+- [x] **The floodlights froze the game on Ultra, and the work moved into
+  loading (30 September).** Branch `frame-and-lights`, reported by the owner:
+  a MASSIVE freeze when the floodlights came on, and a freeze after loading.
+  Measured on Ultra, PNW: the first switch-on froze for 11.3 s on main, 16.1 s
+  on this branch before the fix, 26 s on eighteen holes; nothing at all on
+  High. Cause: Ultra draws the scene into bloom's off-screen target, and three
+  picks a program's version partly from the bound target, so every warm-up --
+  the loading screen's and the background floodlight one -- built versions no
+  frame used. Fixed by compiling against the target the frame draws into
+  (`asDrawn`). Then, as the owner asked, the floodlit programs are built
+  behind the loading screen, every round starts with the floodlights OFF, and
+  a round built through Play starts at MIDDAY ("Start at my local time" still
+  wins). Measured after, Ultra and High, nine and eighteen holes: no frame over
+  50 ms after loading, switching on, off or on again. Loading, Ultra: nine
+  holes 7.1 s on main -> 6.8 s, eighteen ~10 -> 11.9 s; opening the game to
+  the menu 4.6-7.7 s -> 3.1-5.5 s. A hole change also froze for 83-100 ms (on
+  main too): the warm-up spent 70 ms filling the grass ring with no overlay
+  up; now it fills a tile a frame. RESEARCH.md *The floodlight freeze on
+  Ultra*.
+
+- [x] **WON'T DO (owner, 30 September): a tier drawing less vegetation.** The
+  frame on a heavy biome is dominated by tree geometry, and no tier knob
+  reaches it: `grass` scales scatter grass (under 1% of the triangles on
+  Redwood) and `foliage` only the DRAWN trees' segments, nothing on biomes
+  planted with instanced models. A tier may not plant fewer trees (trunks are
+  collidable; two players on different tiers must hit the same ones), so the
+  only legal lever was drawing fewer while colliding with all -- a tier-driven
+  draw distance or level of detail. The owner does not like the look of
+  drawing fewer trees and plants, so it is closed rather than left open. What
+  weak hardware has instead: Low's own trims, distant crowns drawn as their
+  thinned twins (F2), and automatic resolution (F4).
+
+- [x] **Floodlight shadows, on every tier, with a switch (30 September).**
+  Branch `frame-and-lights`. The texture unit they were blocked on was freed by
+  packing four of the ground shader's per-hole tables (route, tees, cups,
+  hazards) into one (`HOLE_ATLAS`, ground.js): the ground now uses 10 of the 16
+  units WebGL guarantees on Low and Medium, 12 on High and Ultra, where it used
+  13 and 15. Measured, a floodlit night now links six casting lamps on Low and
+  Medium (fails at seven) and four on High and Ultra (fails at five); the tiers
+  use five and three, keeping ONE unit spare so the next texture added to the
+  ground cannot make it vanish at night again. Pixel-compared against the
+  build before over fifteen views on five biomes: identical within the noise
+  between two runs of the same build. The lamps nearest the shot cast; their
+  maps are redrawn only when a lamp moves or the view does (at most every 200
+  ms), so they cost nothing frame to frame (High 4.2 ms on and off; Low 2.9
+  against 2.6). **"Floodlight shadows"** in Graphics, under Costs a frame, on
+  by default; the first switch on a course builds every floodlit shader again
+  in the background (4.4 s on an Ultra nine once shaders were compiled for the
+  right target -- 14 s before that fix; the game running smoothly) and says
+  so, then instant. `tests/flood-shadows.test.mjs`
+  fails if any tier's count would leave no spare unit; the `floodlit-night`
+  smoke journey plays Ultra at night with the lights on. RESEARCH.md
+  *Floodlight shadows*.
+
+- [x] **Floodlight and glow ball strength sliders (30 September).** Branch
+  `frame-and-lights`. Two sliders in the Weather & time popover, 0-200% of the
+  tuned brightness, saved with the other time settings; uniform writes, nothing
+  rebuilds. The popover now scrolls within the screen: with the sliders it no
+  longer fit a 720 px window, and the bottom of it could not be reached.
+
 - [x] **Fog distance was not a performance setting.** Closed by F5a: the far
   plane now follows the fog, so nothing past it is drawn -- which, measured,
   was almost nothing anyway.
@@ -1901,6 +1931,12 @@ problem: a control that belongs inside a box is sitting beside it.
 - [x] Station joins no longer step: the ground shader tests the two neighbouring segments of the same channel and keeps the nearest.
 
 ## Distribution follow-up (September 11 review)
+
+- [x] **Floodlight shadows: blocked on a texture unit, not on frame time.**
+  Unblocked 30 September by packing the ground's per-hole tables; see
+  *Floodlight shadows, on every tier* under "Graphics work the profiling turned
+  up". The lesson from the first attempt stands and is now enforced twice: a
+  test counts the units, and a smoke journey plays the floodlit night.
 
 - [x] Owner-selected MIT license, package metadata, offline Help licenses and source/portable notices.
 
@@ -2894,6 +2930,23 @@ engineering provenance pass, not legal advice.
 
 ## Making the repository public
 
+- [x] **The second, stale git repository one directory up (30 September).**
+  Handled by the owner outside this repository.
+
+- [x] **`vendor/baked_assets/` is not committed (30 September).** The owner's
+  call: kept on their machine, not in the repository. Untracked (the 91 files
+  stay on disk) and ignored, with the reason in `.gitignore`; nothing was
+  rewritten, so the copies already in history stay there. Nothing reads it at
+  build time -- `src/asset-meshes.js`, the ingested result, is committed. Its
+  ez-tree MIT notice, which has to travel with the redwood and fir geometry
+  that ships, was ONLY in that folder; it is now in
+  `docs/THIRD_PARTY_NOTICES.txt`.
+
+- [x] **The SkyTrak PDF is deleted (30 September).** The owner's own session
+  data; deleted at their request. `docs/sources/skytrak-36-shots.txt` -- the 36
+  shots as ball data, everything that was used from it -- stays, and the
+  RESEARCH.md citation points there.
+
 - [x] **A trademark disclaimer exists now**, in the root README, in the
   portable archive's README and in ATTRIBUTION.md: marks belong to their
   owners, and no affiliation, endorsement or certification is claimed. GSPro,
@@ -3217,6 +3270,11 @@ engineering provenance pass, not legal advice.
   publicly elsewhere is not needed.
 
 ## Playing on a phone
+
+- [x] **Owner: aiming and the redrawn play screen on a real iPhone (30
+  September).** Checked by the owner on their own iPhone: the pad, the big map,
+  two-finger zoom and the play screen both ways up. "Done and looks good." The
+  launch-monitor checks with a real device stay open: they need the monitor.
 
 - [x] **Aiming by touch, a map that opens big and pinches, and a thumb's worth
   of every control.** Asked for on 26 September: aiming and the map were

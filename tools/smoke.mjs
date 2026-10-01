@@ -300,8 +300,11 @@ class Trip {
 // Every journey starts here. The menu is up when the lab is attached and the
 // main menu is showing; the backdrop behind it is a real one-hole Endless
 // course, which is what makes the Endless journey nearly free to run.
+// The splash must be GONE too: the menu opens underneath it and the splash
+// fades only once frames come smoothly (main.js, smoothFrames), so a menu that
+// is "showing" can still be covered.
 const menuReady = t => t.step('menu ready', () =>
- t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden), 'the main menu', 60 * SLOW));
+ t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden && !document.getElementById('splash')), 'the main menu', 60 * SLOW));
 const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {name: entry}).first().click();
 
 // Every control on the play screen that a player can see must be one a player
@@ -672,6 +675,150 @@ const JOURNEYS = [
    });
    await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());
+  },
+ },
+ // NO SHADER IS BUILT ONCE THE COURSE IS ON SCREEN (B7 in TODO). A lit program
+ // built on first draw freezes that frame for 70 ms or more -- an Ultra course
+ // on PNW froze for 170 ms three seconds in, when the arrival camera came down
+ // among trees and the forest floor was drawn for the first time. Every lit
+ // program must be built behind the loading screen, including those for things
+ // that only appear later. Counted from the moment the overlay goes: a program
+ // CREATED after that and then DRAWN is a miss. Created and never drawn is
+ // allowed -- the floodlit set is warmed in the background on purpose -- and so
+ // are shadow-depth and unlit programs, which build in a few milliseconds.
+ //
+ // Ultra, because it has the most to warm. GPU only: Ultra on the software
+ // rasteriser is minutes a frame, and what is checked is which programs exist,
+ // not how fast. Surprise me grows a different course every run, so this is a
+ // general check rather than the one PNW course the freeze was found on.
+ {
+  name: 'no-late-shaders',
+  what: 'an Ultra course builds every lit shader behind the loading screen, none after it appears',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', frameCap: 0})); } catch {}
+    const P = WebGL2RenderingContext.prototype, create = P.createProgram, use = P.useProgram;
+    const src = new WeakMap(), parts = new WeakMap();
+    let late = new WeakSet(), watching = false;
+    window.__lateLit = [];
+    const shaderSource = P.shaderSource, attach = P.attachShader;
+    P.shaderSource = function (shader, text) { src.set(shader, text); return shaderSource.call(this, shader, text); };
+    P.attachShader = function (program, shader) { (parts.get(program) || parts.set(program, []).get(program)).push(shader); return attach.call(this, program, shader); };
+    P.createProgram = function () { const program = create.call(this); if (watching) late.add(program); return program; };
+    P.useProgram = function (program) {
+     if (program && late.has(program)) {
+      late.delete(program);
+      const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
+      const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
+      if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push({type, after: Math.round(performance.now() - window.__shownAt)});
+     }
+     return use.call(this, program);
+    };
+    // The overlay going is the moment the course is on screen. Watched from
+    // inside the page so nothing slips through between two polls.
+    addEventListener('DOMContentLoaded', () => {
+     const overlay = document.getElementById('generating');
+     if (!overlay) return;
+     new MutationObserver(() => {
+      if (overlay.hidden && !watching) { watching = true; late = new WeakSet(); window.__lateLit = []; window.__shownAt = performance.now(); }
+      else if (!overlay.hidden) watching = false;
+     }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
+    });
+   });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play, on Ultra', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('no lit shader is built during the arrival', async () => {
+    // The arrival is about three seconds: the hold, then the descent that
+    // brings the camera down to where the grass and the forest floor are.
+    await t.page.waitForTimeout(5000);
+    const late = await t.page.evaluate(() => window.__lateLit);
+    if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+   });
+  },
+ },
+ // THE FLOODLIGHTS ON ULTRA, SWITCHED ON MID-ROUND THE WAY A PLAYER DOES IT.
+ //
+ // Two failures this guards. Each casting lamp is a texture unit in every lit
+ // shader, against the sixteen WebGL promises, and the first attempt at lamp
+ // shadows went over: the ground's program failed to link and the ground
+ // disappeared, with every test green. A link failure is a console.error from
+ // three, which fails any step here. And switching the lights on used to swap
+ // every lit shader for one built on the spot -- 12 to 16 s frozen on Ultra,
+ // 26 s on eighteen holes -- because the warm-up built them for the screen
+ // while Ultra draws into bloom's target. Everything the lights need is now
+ // built behind the loading screen, so the switch must not freeze: the longest
+ // frame across it is measured and held under half a second.
+ //
+ // A round starts at midday with the lights off (the owner, 30 September), so
+ // that is checked too. GPU only, for the same reason as above.
+ {
+  name: 'floodlit-night',
+  what: 'Ultra: a round starts at midday with the lights off; switching them on mid-round does not freeze, the nearest lamps cast shadows, and the shadow switch turns them off and on',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    try {
+     // Saved as night with the lights on: a new round must start at midday with them off anyway.
+     localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', frameCap: 0}));
+     localStorage.setItem('fairway-time-v1', JSON.stringify({hour: 22, rate: 0, syncToLocal: false, floodlights: true}));
+    } catch {}
+   });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('it starts at midday with the floodlights off', async () => {
+    const lit = await t.page.evaluate(() => window.lab.floodlights());
+    if (lit) throw new Error('the floodlights were on at the start of the round');
+    const clock = (await t.page.textContent('#clockLabel'))?.trim() ?? '';
+    if (!/12:00\s*PM/i.test(clock)) throw new Error(`the clock reads "${clock}", not 12:00 PM`);
+   });
+   const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
+   await t.step('Floodlight the course, from the clock: no freeze', async () => {
+    await t.page.click('#clockButton');
+    const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
+    await box.scrollIntoViewIfNeeded();
+    // Every frame for three seconds from the click.
+    const watch = t.page.evaluate(() => new Promise(done => {
+     const s = [], t0 = performance.now();
+     const f = n => { s.push(n); if (n - t0 < 3000) requestAnimationFrame(f); else done(Math.max(...s.slice(1).map((x, i) => x - s[i]))); };
+     requestAnimationFrame(f);
+    }));
+    await box.setChecked(true);
+    const worst = await watch;
+    if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
+    await t.page.click('#clockButton');
+   });
+   await t.step('the lamps nearest the shot cast shadows', async () => {
+    await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
+   });
+   const flip = async on => {
+    await t.page.click('#menuNav');
+    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    // It lives on the window's "Costs a frame" tab.
+    await t.press('Costs a frame');
+    const box = t.page.getByRole('checkbox', {name: 'Floodlight shadows'});
+    await box.scrollIntoViewIfNeeded();
+    await box.setChecked(on);
+    // The new programs are built before the switch lands, so it takes a moment.
+    await t.until(async () => (await casting()) === (on ? 3 : 0), `floodlight shadows ${on ? 'on' : 'off'}`, 20 * SLOW);
+    await t.closePanel('Graphics & performance');
+   };
+   await t.step('Graphics → Floodlight shadows off', () => flip(false));
+   await t.step('and on again', () => flip(true));
+   await t.step('and keeps playing', () => t.shot());
   },
  },
  {
@@ -1287,6 +1434,7 @@ console.log(`Fairway smoke test · ${SOFTWARE ? 'SOFTWARE' : 'GPU'} · ${rendere
 const results = [];
 for (const journey of chosen) {
  console.log(`${journey.name} — ${journey.what}`);
+ if (journey.gpuOnly && SOFTWARE) { console.log('   skipped: needs a GPU\n'); continue; }
  // FLOWS RUN AT 1920x1080, the commonest desktop size, and a size where the
  // HUD's default layout is known to leave the controls a flow presses
  // uncovered. Layout is a different question with its own journey --

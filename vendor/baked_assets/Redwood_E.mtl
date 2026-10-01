@@ -1,9 +1,0 @@
-# Composed by tools/bake-assets.mjs. The game paints every surface from the
-# biome palette by the material's NAME; these are for anything reading the
-# model directly, the asset previewer included.
-newmtl Tree_Bark
-Kd 0.195 0.069 0.033
-
-newmtl Tree_Leaves
-Kd 1.000 1.000 1.000
-map_Kd Leaves_TwistedTree.png

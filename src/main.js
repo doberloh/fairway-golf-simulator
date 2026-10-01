@@ -43,6 +43,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R} 
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
+import {createAutoResolution} from './auto-resolution.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -1422,6 +1423,7 @@ async function buildRoundOn(courseSettings,group,name){
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building your course…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;
+  lightsOffForRound();middayForRound();
   round=fresh;settings=next;closePanel();
   await prepareWorld(report);
   loadCourse();setMode('play');
@@ -1435,9 +1437,26 @@ async function buildRoundOn(courseSettings,group,name){
 // rewrite a setting the player chose.
 function restoreClock(){
  view.borrowedClock=false;
- if(!playerClock)return;
- Object.assign(view.daylight,playerClock);playerClock=null;
- view.setFloodlights(view.daylight.floodlights);
+ if(playerClock){Object.assign(view.daylight,playerClock);playerClock=null;}
+ lightsOffForRound();
+}
+// EVERY ROUND STARTS WITH THE FLOODLIGHTS OFF (the owner, 30 September). They
+// are a thing to switch on when it gets dark, not a setting a course inherits;
+// and since the loading screen builds everything they need (GolfView.ready),
+// switching them on mid-round costs nothing. The menu's showcase hole is not a
+// round and lights itself by the hour it picks -- which is always daylight now
+// (MENU_HOURS), so in practice never.
+function lightsOffForRound(){
+ view.daylight.floodlights=false;saveDaylight(view.daylight);view.setFloodlights(false);
+ const box=$('timeFloods');if(box)box.checked=false;
+}
+// A COURSE BUILT TO PLAY STARTS AT MIDDAY (the owner, 30 September): what was
+// just shaped or chosen is seen first in clear light, not in whatever dark the
+// clock happens to be in. "Start at my local time" still wins -- it is a choice
+// the player made explicitly. Endless keeps the hour of the showcase hole it
+// grows from.
+function middayForRound(){
+ const d=view.daylight;d.hour=d.syncToLocal?localHour():12;saveDaylight(d);
 }
 // Touch the clock and you own it. The backdrop borrows the hour for its picture,
 // but the moment the player sets one themselves the loan is off -- otherwise
@@ -1453,7 +1472,8 @@ async function loadMenuBackdrop(report){
  const backdrop=endlessSettings(endlessHole(seed,0));
  backdropRun={seed,settings:backdrop};
  // Its own hour, drawn from the seed so the hole and the light that falls on it
- // come out of the same shuffle. Floodlights follow the DARKNESS here rather
+ // come out of the same shuffle. Always daylight since 30 September (MENU_HOURS).
+ // Floodlights would follow the DARKNESS here rather
  // than the player's preference: a lit hole at midnight is one of the looks
  // worth showing, and a bank of poles over a midday fairway is not.
  restoreClock();
@@ -1591,6 +1611,11 @@ async function whileGenerating(label,work,quiet=false){
   // frozen first frame after it (GolfView.ready).
   if(!quiet)setProgress({label:'Preparing the graphics',done:1});
   await view?.ready?.();
+  // The first frames of what was built, still under the overlay: their one-off
+  // costs land behind it rather than on the first thing the player sees (the
+  // same reason the splash waits, at startup). A few frames normally; never
+  // more than a second.
+  if(!quiet)await smoothFrames(1000);
   return result;
  }
  finally{if(view)view.retiring=false;if(!quiet){box.hidden=true;setProgress(null);}}
@@ -1609,6 +1634,14 @@ function setProgress(report){
 // invisible full-screen element that still takes clicks is a bug waiting.
 // Called from the fatal path too: a black screen hiding the one message that
 // explains the black screen is the worst version of this.
+// Resolves after three frames in a row under 40 ms, or after `limit` ms.
+function smoothFrames(limit=2000){
+ return new Promise(done=>{
+  const start=performance.now();let last=start,run=0;
+  const f=t=>{run=t-last<40?run+1:0;last=t;if(run>=3||t-start>limit)done();else requestAnimationFrame(f);};
+  requestAnimationFrame(f);
+ });
+}
 function dismissSplash(){
  const el=$('splash');if(!el||el.classList.contains('ready'))return;
  el.classList.add('ready');
@@ -1739,6 +1772,8 @@ function collectDiagnostic(){
    biome:settings.biome,
    tier:graphics.quality,
    frameCap:graphics.frameCap,
+   autoResolution:graphics.autoResolution,
+   resolution:Math.round((view?.resolutionScale??1)*100),
   },
   device:deviceFacts(),
   webgl:webglFacts(gl),
@@ -1835,13 +1870,16 @@ async function returnToMenu(){
   toggleClockPop(false);closeMenuDrop();
   pendingRound=null;
  };
- if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();openMenu();});
- if(appMode==='play')return guardRound(async()=>{leave();await growBackdrop();openMenu();});
+ if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();});
+ if(appMode==='play')return guardRound(async()=>{leave();await growBackdrop();});
  leave();openMenu();
 }
 
 // Generation blocks the main thread, so it needs the overlay.
-const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);});
+// The menu opens inside the wait, so its camera's first frames are drawn under
+// the overlay (whileGenerating waits for them to run smoothly) rather than on
+// screen.
+const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);openMenu();});
 function markStudioDirty(){if(appMode==='studio'&&!studioDirty){studioDirty=true;updateStudioState();}}
 // Studio keeps a throwaway round alive so the renderer, camera and map keep
 // working; the play HUD is simply hidden.
@@ -2852,6 +2890,8 @@ function renderPanel(name,content){
   <p class="note" id="gfxNote"></p>
   <label class="field">Frame rate cap<select id="gfxFrameCap">${FRAME_CAPS.map(f=>`<option value="${f}">${f?f+' fps':'Follow the display'}</option>`).join('')}</select></label>
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
+  <label class="check"><input id="gfxAutoRes" type="checkbox" ${graphics.autoResolution?'checked':''}> Automatic resolution</label>
+  <p class="note">When frames run slow, draw fewer pixels — a step at a time, down to half — and take them back once there is room. Aims for 60 frames a second, or your cap if it is lower, and never goes sharper than the quality setting above. Off, the picture stays exactly as sharp as the setting and the frame rate goes where it goes. <span id="gfxAutoResNow"></span></p>
   <h3>Reading the ground</h3>
   <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
   <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
@@ -2884,6 +2924,8 @@ function renderPanel(name,content){
   <p class="note">Ridges shade the hollows behind them. Only says anything when the sun is low — at midday a two metre roll casts almost nothing. One draw call per shadow cascade, over ground that is already built.</p>
   <label class="check"><input id="gfxReflections" type="checkbox" ${graphics.reflections?'checked':''}> Water reflections</label>
   <p class="note">Ponds, lakes and creeks reflect the course around them rather than only the sky. Nothing extra per frame: each body's reflection is photographed when the course is built and again whenever the sun moves about six degrees, a pause of around 40–65 ms each time. Switched off, none of that happens, and water still moves and still reflects the sky.</p>
+  <label class="check"><input id="gfxFloodShadows" type="checkbox" ${graphics.floodlightShadows?'checked':''}> Floodlight shadows</label>
+  <p class="note">With the course floodlit, the lamps nearest your shot throw shadows — five of them, or three on High and Ultra, whose own sun shadows take the room. Redrawn only when the lamps or the view move, so they cost nothing frame to frame. The first switch on a course takes a few seconds to prepare, longer on Ultra, while you play on; after that it is instant.</p>
 `;
   const note=()=>$('gfxNote').textContent={
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',
@@ -2920,7 +2962,20 @@ function renderPanel(name,content){
    };
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
+  // The first switch on a course builds every floodlit shader again with the new
+  // number of shadows -- measured at 4.4 s on an Ultra nine with 57 lamps,
+  // the game running smoothly throughout -- so it says so, and says when it lands.
+  // Every switch after that on the same course is instant.
+  $('gfxFloodShadows').onchange=()=>{
+   graphics=saveGraphics({...graphics,floodlightShadows:$('gfxFloodShadows').checked});
+   const on=graphics.floodlightShadows,said=on?'Floodlight shadows on.':'Floodlight shadows off.';
+   let landed=false;
+   const slow=setTimeout(()=>{if(!landed)toast('Preparing floodlight shadows. Play on; they change when ready.');},400);
+   view.setFloodShadows(on).then(()=>{landed=true;clearTimeout(slow);if(graphics.floodlightShadows===on)toast(said);});
+  };
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
+  $('gfxAutoRes').onchange=()=>{graphics=saveGraphics({...graphics,autoResolution:$('gfxAutoRes').checked});autoResolutionNote();toast(graphics.autoResolution?'Resolution now drops a step when frames run slow.':'Resolution stays where this setting puts it.');};
+  autoResolutionNote();
  }else if(name==='camera'){
   const c=view.config;
   // ONE SECTION, and which controls are in it depends on the answer to one
@@ -3728,7 +3783,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   floodShadows:(count)=>{
    const lamps=view.floodLamps||[];
    if(count===undefined)return {casting:lamps.filter(l=>l.castShadow).length,lamps:lamps.length,
-    live:lamps.filter(l=>l.castShadow&&l.shadow.autoUpdate).length};
+    live:view.floodlit?lamps.filter(l=>l.castShadow).length:0};
    lamps.forEach((l,i)=>{
     const want=i<count;
     if(l.castShadow===want)return;
@@ -4076,7 +4131,10 @@ function buildClockPop(){
   <label class="check"><input id="timeGlow" type="checkbox" ${d.glowBall!==false?'checked':''}> Glow ball after dark</label>
   <label class="check"><input id="timeFog" type="checkbox" ${d.fog!==false?'checked':''}> Morning fog &amp; haze</label>
   <label class="check"><input id="timeFloods" type="checkbox" ${d.floodlights?'checked':''}> Floodlight the course</label>
-  <p class="note">Poles down alternating sides of every hole, spaced the way a sports field is lit. Off by default: nothing is built into the skyline and nothing is lit until you ask for it.</p>`;
+  <p class="note">Poles down alternating sides of every hole, spaced the way a sports field is lit. Off by default: nothing is built into the skyline and nothing is lit until you ask for it.</p>
+  ${slider('timeFloodStrength','Floodlight strength',Math.round((d.floodStrength??1)*100),0,200,'%',5)}
+  ${slider('timeGlowStrength','Glow ball strength',Math.round((d.glowStrength??1)*100),0,200,'%',5)}
+  <p class="note">How bright the floodlights and the glow ball are, against how Fairway tunes them (100%). The glow ball only glows after dark.</p>`;
  const setHour=h=>{claimClock();d.hour=wrapHour(h);view.solar=solarState(d.hour,world.bio.sun);saveDaylight(d);updateClock();};
  $('timeHour').oninput=e=>setHour(Number(e.target.value));
  for(const chip of $('clockPop').querySelectorAll('.time-chip[data-hour]'))
@@ -4087,6 +4145,12 @@ function buildClockPop(){
  $('timeGlow').onchange=e=>{claimClock();d.glowBall=e.target.checked;saveDaylight(d);};
  $('timeFog').onchange=e=>{claimClock();d.fog=e.target.checked;saveDaylight(d);};
  $('timeFloods').onchange=e=>{claimClock();d.floodlights=e.target.checked;saveDaylight(d);view.setFloodlights(d.floodlights);};
+ // Uniform writes the next frame picks up (the lamps and the ball are both set
+ // every frame from these): nothing rebuilds. Not `claimClock`: a brightness is
+ // not a time, and moving it should not stop the clock following the device.
+ wireSliders($('clockPop'));
+ $('timeFloodStrength').oninput=e=>{d.floodStrength=Number(e.target.value)/100;saveDaylight(d);};
+ $('timeGlowStrength').oninput=e=>{d.glowStrength=Number(e.target.value)/100;saveDaylight(d);};
  syncClockPop();
 }
 
@@ -4111,12 +4175,33 @@ function toggleClockPop(open){
 }
 
 let gamepadActive=false;
+// AUTOMATIC RESOLUTION (F4). The decision is auto-resolution.js; this feeds it
+// one interval per rendered frame and applies the answer. The tier (and the
+// display's own pixel ratio) set the ceiling, and a change of either starts it
+// again from the sharpest step. Held, not reset, while the page is hidden or the
+// loading screen is up: those frames say nothing about play.
+const autoRes=createAutoResolution();let autoResKey='';
+function autoResolutionNote(){
+ const n=$('gfxAutoResNow');if(!n)return;
+ const s=view?.resolutionScale??1;
+ n.textContent=!graphics.autoResolution?'':s<1?`Drawing at ${Math.round(s*100)}% of this setting's resolution right now.`:'Drawing at full resolution right now.';
+}
+function autoResolutionFrame(now,interval){
+ if(!view)return;
+ if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
+ const key=graphics.quality+':'+view.pixelCeiling();
+ if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
+ if(document.hidden||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ const scale=autoRes.sample(interval,now,graphics.frameCap);
+ if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
+}
 function tick(now){
  requestAnimationFrame(tick);
  // A cap trades refresh for headroom: skip the frame instead of rendering one
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
  diagnosticFrames.sample(now-lastTick);
+ autoResolutionFrame(now,now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');
@@ -4225,7 +4310,7 @@ try{
  view=new GolfView($('scene'),graphics.quality);
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
- view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);
+ view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.
@@ -4234,5 +4319,13 @@ try{
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
  openMenu();
+ // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry
+ // one-off costs the loading work cannot reach -- the first render with a moving
+ // camera, the cull's first sort, the grass ring -- and one of them landed in
+ // the splash's fade: 133 ms on Ultra, a visible stutter on the first thing a
+ // player sees (the owner). So the loop runs and the menu opens under the
+ // splash, and it fades only once frames come steadily, or after two seconds
+ // whatever happens, so a slow machine is never kept on a black screen.
+ await smoothFrames();
  dismissSplash();
 }catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}

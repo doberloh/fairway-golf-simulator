@@ -303,10 +303,11 @@ is running -- so a report from a tester could not be tied to a tree.
   Chromium -- see the addendum at the foot.
 - No new similarity or provenance search was run. The limits recorded in the
   September 11 review and in the commercial-use pass apply unchanged.
-- Two publication decisions are recorded in TODO.md and are not settled here:
-  whether `vendor/baked_assets/` (106 MB, the largest thing in the tree, read
-  by nothing at build time) belongs in a public repository, and who the
-  copyright holder on `LICENSE` should actually be.
+- Two publication decisions were recorded in TODO.md and not settled here.
+  Both have been since: `LICENSE` names the owner as sole copyright holder,
+  and `vendor/baked_assets/` (106 MB, read by nothing at build time) is no
+  longer committed as of 30 September, its ez-tree notice moved into
+  `THIRD_PARTY_NOTICES.txt`.
 
 ---
 

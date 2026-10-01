@@ -246,7 +246,14 @@ const clean = t => ({
  // without it reads as a diorama. This is the first weather control rather than
  // a lighting one -- when there are more of them they belong together.
  fog: t?.fog !== false,
+ // The two strength sliders, as multiples of the tuned brightness: 0 to 2, 1
+ // being exactly what Fairway drew before they existed.
+ floodStrength: strength(t?.floodStrength),
+ glowStrength: strength(t?.glowStrength),
 });
+function strength(v) {
+ return Number.isFinite(v) ? Math.max(0, Math.min(2, v)) : 1;
+}
 
 export function loadDaylight() {
  try {
@@ -278,12 +285,16 @@ export const advance = (hour, rate, dt) => wrapHour(hour + rate * dt / 3600);
 // been putting at one in the morning saw nothing but dark holes from then on --
 // and once floodlights existed, nothing but dark FLOODLIT holes.
 //
-// Weighted toward daylight, because that is what a golf course looks like, with
-// enough dusk and night in the rotation that a floodlit hole comes round as one
-// of the looks rather than all of them.
+// DAYLIGHT ONLY, dawn to golden hour (the owner, 30 September). There were
+// three night slots and a dusk one, so a floodlit hole came round as one of the
+// looks -- but a dark hole is a poor first picture, and the floodlit shaders
+// were built on the starting screen for it. A player who wants night sets the
+// clock once in a round. The second element stays (whether the hour is dark
+// enough for the floodlights) so a night slot can come back as a decision
+// rather than as a code change.
 export const MENU_HOURS = [
- [6.4, false], [8.2, false], [10.5, false], [12.6, false], [15.1, false],
- [17.8, false], [19.4, false], [20.6, true], [22.3, true], [1.4, true],
+ [6.4, false], [7.3, false], [8.2, false], [10.5, false], [12.6, false],
+ [13.9, false], [15.1, false], [16.5, false], [17.8, false],
 ];
 // Takes a number in [0,1) rather than a seed, so the caller owns the stream and
 // this stays testable without pulling the generator in.

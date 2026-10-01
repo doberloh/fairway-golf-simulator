@@ -102,7 +102,7 @@ checked by hand.
 | `tools/` | Measurement, asset ingest, profiling and release packaging |
 | `bridge/` | The optional local TCP/WebSocket bridge a launch monitor talks to, and in `bridge/launch/` the start scripts the portable archive ships beside it |
 | `bench/` | Saved baselines the measurement harnesses compare against |
-| `vendor/` | CC0 model packs and the baked tree geometry ingested from them |
+| `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |

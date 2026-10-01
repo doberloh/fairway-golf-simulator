@@ -1383,7 +1383,7 @@ A full shot's aim line is lifted 100 mm so it clears the ground it crosses: it d
 
 ## The flight model against a launch monitor
 
-Thirty-six shots from a SkyTrak skills assessment (`sources/skytrak-skills-assessment-2026-07-26.pdf`, pages 7 to 11, with the ball data extracted to `sources/skytrak-36-shots.txt`) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
+Thirty-six shots from a SkyTrak skills assessment (the owner's own export, pages 7 to 11, with the ball data extracted to `sources/skytrak-36-shots.txt`; the export itself is no longer kept in the repository, and the extract is everything that was used from it) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
 
 One note on the extraction, because it nearly poisoned the whole comparison: `pdftotext -layout` scrambles several of these tables, shuffling carry and offline between rows. `-table` reads them correctly. The parsed values were checked against the sheet's own per-target AVG rows -- nine targets by fourteen fields, zero mismatches -- which is the only reason to trust any of the numbers below.
 
@@ -5283,3 +5283,289 @@ Sources:
 - Also returned and not used: [Swash Zone Dynamics (Springer)](https://link.springer.com/rwe/10.1007/978-3-319-93806-6_404),
   [Breaking wave (Wikipedia)](https://en.wikipedia.org/wiki/Breaking_wave),
   [ALMS -- Foam on surface waters](https://alms.ca/wp-content/uploads/2014/02/Foam.pdf).
+
+## B7: the hitch after a course appears (30 September)
+
+Branch `frame-and-lights`. `withStandIns` / `showStandIns` and `ready` in
+`src/renderer.js`, `standIn` in `addNearbyGrass` (`src/vegetation.js`), and the
+`no-late-shaders` smoke journey.
+
+**What it looked like.** Cold browser, RTX 4090, 1600x900, `lab.course` (the
+same path as Play): on Ultra, PNW eighteen holes, one frame of 165-188 ms at
+2.83-2.88 s after the loading screen went, in every run. High on the same
+course no longer showed it (it did when B7 was logged on 28 September, at 334
+ms; the High case had since gone with other warm-up work). A CPU profile of
+that frame is all `getProgramInfoLog` under three's `getUniforms`: a shader
+program being built on its first draw.
+
+**What it was.** Wrapping the renderer's per-object draw named it: two
+`MeshToonMaterial` programs, about 75 ms each, for meshes under the group
+"Living rough" -- the forest floor's ferns and sticks (Ultra only). They live in
+the 24 m tiles that follow the camera, and grow only under canopy. The warm-up
+behind the loading screen compiles by walking the scene, and at the
+establishing pose the tiles round the camera held no floor at all, so there was
+nothing to find. When the arrival brought the camera down among trees, the
+first fern tile was drawn and its programs were built on the spot.
+
+**Rejected on the way: compiling a stand-in is not enough.** The first fix
+added one zero-sized instance of each late material and showed it only for
+the compile. The programs were then created behind the loading screen -- and
+the frame still froze, for the same 75 ms each. On Windows the browser draws
+through Direct3D (ANGLE), which finishes a program only on the first real draw
+that uses it; the one frame `ready` draws under the overlay exists to pay for
+exactly that, and the stand-ins were hidden again before it. Showing them
+through that frame too fixed it. Being zero-sized, they draw nothing visible.
+(Also learned: three's `compile` walks every object whether visible or not,
+so hiding does not keep a material out of the compile -- it keeps it out of
+the draw.)
+
+**A second case, on Island.** Ultra, Island nine, 111 ms at 0.1 s. A grass tile
+where nothing grows -- the sea, a fairway -- never had a blade coloured, so its
+mesh had no instance colours, which is a different program from every other
+tile's, and it was built on that tile's first (empty) draw: 96 ms. Empty tiles
+are now hidden (still kept, so the ring's bookkeeping is unchanged), unless the
+floor grew something in them.
+
+**Measured after,** one or two cold runs each, 6 s from ready: no frame over
+40 ms on PNW, Island, Desert, Links or Mountain at High or Ultra. Redwood
+eighteen on Ultra still shows two to four frames of 40-50 ms in its first
+0.4 s; a profile of those shows 17-20 ms of our code (the grass ring filling,
+one tile a frame) and the rest graphics-card time on the heaviest biome, not a
+shader build -- left alone. Loading time on Ultra PNW eighteen, before and
+after: build 6.4-6.8 s against 6.2-7.0 s, the first frame under the overlay
+2.24-2.26 s against 2.28 s -- unchanged within run-to-run noise.
+
+**What still builds after the course appears, by design or too small to
+matter:** the floodlit programs (about 36, warmed in the background so the
+lights switch without a stall, and not drawn until they are used); three
+shadow-depth programs in the first 50-70 ms (5-20 ms together); and a
+mist-tinted basic material and a sprite at the end of the arrival (2-3 ms).
+None is a lit program, which is the kind that costs 70 ms or more.
+
+**The guard.** The `no-late-shaders` smoke journey switches to Ultra, plays
+Surprise me, and fails if any lit program is created after the loading overlay
+goes and then drawn. It failed on the build before this fix (three late
+`MeshToonMaterial` programs at 3.0-3.4 s on a random course) and passed four
+times after on four different courses. GPU only.
+
+## F4: automatic resolution (30 September)
+
+Branch `frame-and-lights`. `src/auto-resolution.js` (the decision, pure and
+unit-tested), `autoResolutionFrame` in `src/main.js` (feeding it),
+`setResolutionScale` / `pixelCeiling` in `src/renderer.js` (applying it).
+
+**Why the pixel ratio.** It is the only lever that trades picture for frame
+time smoothly on any machine: every pixel costs the same fragment work, and a
+phone has many pixels behind a small graphics chip. Measured before (TODO F4):
+High on the 4090 at 1x pixels 10.7 ms, 1.5x 12.4 ms, 2x 14.4 ms. Bloom's
+targets already size themselves from the canvas every frame, and the god-ray
+mask sizes from the window rather than the pixel ratio, so nothing else had to
+learn about it.
+
+**What it aims for: 60 fps, or the cap when lower.** Not the display's own
+rate. Chasing 120 on a 120 Hz display would soften an Ultra picture that is
+playing perfectly well at 90 -- the behaviour the owner called annoying in
+asking for a switch. So a fast display's extra frames are never bought with
+sharpness; the switch is still there for anyone who dislikes any of it.
+
+**How it knows there is room: it cannot, so it tries.** The display paces
+frames, so a frame that took 6 ms and one that took 15 ms both arrive 16.7 ms
+apart and the interval says nothing about headroom. After 4 s at the target
+it steps one sharper; if that step runs slow within its first judged second it
+steps back and DOUBLES the wait before the next try, up to 60 s, and a quiet
+spell four times the wait halves it again. In the tests a machine that fits at
+85% and not at 100% changes step at most 16 times in three minutes, where a
+plain up-after-4-s rule would change about 60 times.
+
+**Hitches are not the steady state.** A single frame over 200 ms straight
+after a normal one (a water probe, a tile, a shader) is not counted. A long
+frame after another long frame is: the first version ignored every frame over
+200 ms, which would have left a machine too slow for any frame -- the one that
+most needs it -- never stepping down.
+
+**The thresholds are placed, not published**: a second's window, 15% over the
+target to step down, 6% to count as steady, 0.6 s ignored after a change while
+render targets reallocate, and the 85/72/60/50% steps. They are the usual
+shape of such controllers rather than numbers from a source. Nobody has run it
+on a real phone yet; that is the first thing to check (TODO, *Nobody has
+measured a real phone*).
+
+**Checked in the built game** (High, PNW nine, 1600x900, processor slowed
+eightfold through the browser's own throttling): pixel ratio 1 -> 0.72 in 2 s,
+0.5 by 4 s; throttling lifted, 0.6, 0.72, 0.85, 1.0 at 5 s intervals; with the
+switch off it never moved. Throttling the processor is not something fewer
+pixels can fix, so the frame rate itself stayed at about 20 there -- it shows
+the mechanism, not the benefit, which needs a machine limited by its graphics
+chip.
+
+## Floodlight shadows (30 September)
+
+Branch `frame-and-lights`. `HOLE_ATLAS` (ground.js), `makeHazardAtlas`,
+`setFloodShadows`, `compilePrograms` / `whenLinked` and `FLOOD_SHADOW_EVERY`
+(renderer.js), the tiers' `floodShadows` (graphics.js),
+`tests/flood-shadows.test.mjs`, the `floodlit-night` smoke journey.
+
+**The budget, measured.** Each shadow-casting spot light is one texture unit in
+every lit fragment shader; WebGL guarantees 16 (MAX_TEXTURE_IMAGE_UNITS on the
+RTX 4090 through ANGLE is exactly 16, as on most phones). The ground is the
+hungriest program. Counted from the linked program's active uniforms on a
+floodlit night, PNW nine (`bench/shots/flood-samplers.mjs`, scratch):
+
+| tier | before: ground uses | casters that link | after packing | casters that link | tier uses |
+| --- | --- | --- | --- | --- | --- |
+| Low, Medium | 13 | 3 | 10 | 6 (7 fails) | 5 |
+| High, Ultra (3 cascades) | 15 | 1 (2 fails) | 12 | 4 (5 fails) | 3 |
+
+The ground's samplers before: water field (mist), owners, cover, route, curves,
+outer, hazards, cups, tees, banks, stream segments, the toon ramp, and the sun's
+shadow map(s).
+
+**What was packed, and why those.** `route` (3 texels a hole), `tees` (6), `cups`
+(2) and `hazards` (24) were four RGBA float textures with one row per hole,
+nearest-filtered, read texel by texel -- tables, not images. They are now one
+35-texel-wide table (`HOLE_ATLAS`: route 0-2, tees 3-8, cups 9-10, hazards
+11-34) read through one function. The renderer writes the cups and hazards
+(and the range's moved green, `setRangeGreen`), the ground the route and tees.
+Not packed: `curves`, `outer` and `banks` are linearly filtered along their
+length, and `owners`, `cover` and the stream segments have their own sizes;
+packing those is possible but buys units nothing needs yet. **Rejected:** a
+cascade fewer on High at night, which was the other way to free a unit -- it
+gives up moonlight shadows for the length of the course, for the sake of a few
+lamps.
+
+**Checked identical.** Fifteen views (two of a green, one back at the tee, on
+five biomes, High, 15:30, wind off) against the build before: at most 0.012% of
+pixels differ, the same as two runs of the same build (animated water).
+
+**One unit kept spare.** At the limit, the next texture anyone adds to the
+ground shader would make the ground disappear at night with the lights on --
+the failure the first attempt shipped. `tests/flood-shadows.test.mjs` counts the
+samplers the ground declares, adds the mist's, the ramp and the sun's maps, and
+fails if a tier's casters would use the spare unit.
+
+**Cost.** Frame time with vsync off, PNW nine, 22:00, floodlit: High 4.2 ms
+with shadows and 4.2 without; Low 2.9 against 2.6. The maps are redrawn only
+when a casting lamp moves to another pole, or the tree cull re-sorts because
+the view moved, and at most every 200 ms: nothing at night moves but trees in
+the wind. A floodlight's shadow draws the trees the view draws (the cull is
+not told about spot lights), which is what a pool of lamplight near the shot
+needs.
+
+**What shows.** The lamps stand at the fairway's edges aimed across it, so
+their shadows fall back into the trees: in view, trees shade each other and the
+tree line takes an edge (0.5% of the frame changed in the test view). The
+flagstick casts too.
+
+**The switch, and a bug it found in the warm-up.** Which lamps cast is part of
+every lit program's key, so switching rebuilds every lit material. Done the way
+the B6 floodlight warm-up did it -- set the state, `compileAsync`, put the state
+back -- switching OFF froze for 2.3 s. `compileAsync` waits on each material's
+CURRENT program, and once the state is put back the next frame makes the old,
+finished programs current again, so it resolved at once and the switch landed on
+programs still linking. Now the scene is compiled synchronously while the state
+is held, every program each material owns is noted (`compilePrograms`), and
+those are waited on (`whenLinked`). After: the worst frame around a switch is
+37-58 ms (the new programs' first draws), from 2.3 s. The B6 warm-up had the
+same flaw -- a light switch in its first few seconds could stall -- and now uses
+the same pair. **The first switch on a course is slow**: about 310 programs, of
+which the last ten -- floodlit ones carrying all 57 lamps of a nine -- took about
+14 s to link on Windows, measured before the render-target fix in *The
+floodlight freeze on Ultra* below (4.4 s after it). The game runs smoothly
+through it, so the switch says it is preparing and confirms when it lands;
+every later switch on that course takes about a quarter of a second.
+
+**The strength sliders.** Floodlight strength multiplies the lamps' intensity;
+glow ball strength the ball's emissive glow, the light it throws and its halo
+(the ring and the trail keep following the dark). 0-200% of the tuned values,
+100% being exactly what was drawn before. Checked at 30%, 100% and 200% on a
+floodlit PNW night.
+
+## The floodlight freeze on Ultra, and the work moved into loading (30 September)
+
+Branch `frame-and-lights`. `asDrawn`, `ready` and `warmUp(grassBudget)` in
+`src/renderer.js`; `lightsOffForRound` and `middayForRound` in `src/main.js`;
+the `floodlit-night` smoke journey. Reported by the owner: a massive freeze
+when the floodlights came on, and a freeze after loading into a course.
+
+**Measured** (`bench/shots/flood-freeze.mjs`, scratch: the Play path, then the
+clock popover's "Floodlight the course" pressed as a player presses it; cold
+browser, RTX 4090, 1600x900, PNW):
+
+| | main | branch, before | after |
+| --- | --- | --- | --- |
+| first switch-on, Ultra nine | 11.3 s frozen | 16.1 s | 33 ms worst frame |
+| first switch-on, Ultra eighteen | -- | 26.2 s | 50 ms |
+| first switch-on, High nine | -- | none | 33 ms |
+| loading floodlit, Ultra nine | -- | 23.9 s | (rounds now start unlit) |
+| loading, Ultra nine | 7.1 s | 7.1 s | 6.8 s |
+| loading, Ultra eighteen | -- | 10.0 s | 11.9 s |
+| opening the game to the menu, Ultra | 4.6-7.7 s | -- | 3.1-5.5 s |
+| a hole change, Ultra | 83-100 ms | 83 ms | 17 ms |
+
+**Ultra only, which named it.** High showed no freeze at all. Ultra draws the
+scene into bloom's off-screen target (bloom.js), and three picks a program's
+version partly from the render target bound when it is built: tone mapping
+applies on the screen and not into a target, and the output colour space
+differs. Every warm-up compiled with the screen bound -- `ready`'s
+`compileAsync`, `warmUp`'s `compile`, the floodlight warm-up -- so on Ultra all
+of them built versions no frame ever used. At load that cost was hidden in the
+first frame under the overlay (which built the real ones, synchronously), and
+loading floodlit took 23.9 s; with the lights off, the floodlit set was
+"warmed" in the wrong versions and built for real on the switch. B6 was
+measured on High, which is why it was never seen. Fix: compile with the frame's
+target bound (`asDrawn`, wrapped into `withStandIns` and `ready`). Loading got
+faster with it, because the duplicate builds stopped.
+
+**Rejected on the way: fewer live lamps.** A throwaway build with 6, 12 and 24
+live lamps instead of all 57 froze for 4.3, 5.1 and 7.1 s on the first
+switch-on: the lamp count was not most of it -- switching the light count at
+all swapped every lit program. (A lamp cap was also declined by the owner in
+B6, for the overhead view at night.)
+
+**Then the owner's direction: do the work while loading, start with the lights
+off.** `ready` now runs the floodlight warm-up itself and waits for its programs
+to link before the overlay goes. Every round starts with the floodlights off
+(they used to follow the saved preference) and a round built through Play
+starts at midday unless "Start at my local time" is ticked; Endless keeps the
+showcase hole's hour. Cost: about 3 s more loading on an Ultra nine than with
+the fix alone (3.5 -> 6.8 s), still a little under main.
+
+**The hole change.** Not floodlights: `warmUp` spent up to 70 ms building the
+near-field grass ring in one go, so the first frame would not be bare -- right
+behind the loading screen, and a frozen frame on every hole change, where
+there is no overlay (on main too). The hole change now builds none up front;
+the ring fills a tile a frame (about 0.4 s), while the arrival camera is
+still holding high over the new tee.
+
+**The guard.** `floodlit-night` (GPU only) saves night with the lights on,
+starts a Surprise round, checks it starts at midday with the lights off,
+switches them on from the clock popover, and fails if the longest frame across
+the switch exceeds 500 ms.
+
+## The menu hole: daylight, and no stutter as it appears (1 October)
+
+Branch `frame-and-lights`. `smoothFrames`, the boot sequence, `whileGenerating`
+and `growBackdrop` in `src/main.js`; `MENU_HOURS` in `src/daylight.js`.
+Reported by the owner: hitching on the main menu hole after the game loads.
+
+**What it was.** Traced from page open (`bench/shots/menu-ratio.mjs`,
+`menu-prof.mjs`, scratch; Ultra, cold browser): the stalls before the menu --
+the hole's build (1.0-1.5 s), the water probes -- were all under the splash.
+The visible one was the first frame of the game's own render loop, 117-217 ms,
+which landed while the splash was fading. Not automatic resolution: the pixel
+ratio never moved. After that, 20 s of the menu with nothing over 25 ms.
+
+**The fix: let the first frames run under a cover.** The render loop starts and
+the menu opens beneath the splash; the splash fades once three frames in a row
+come under 40 ms, or after two seconds whatever happens (a slow machine is not
+kept on a black screen). Four cold opens after: every long frame fell while
+the splash was fully up, none after. `whileGenerating` holds its overlay the
+same way (at most a second), and the menu reached from a round now opens inside
+that wait instead of after it: from a round back to the menu, at most one 33 ms
+frame after the overlay went, against 0.6 s and 3.7 s on main
+(`bench/shots/menu-return.mjs`, scratch).
+
+**Daylight only.** `MENU_HOURS` had three night hours and a dusk one at 19.4,
+weighted so a floodlit hole came round now and then. Now nine hours from 6.4 to
+17.8; the dusk slot went too, being near enough to dark on some biomes to read
+as night. The test that required SOME dark visits now requires none.

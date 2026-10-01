@@ -210,6 +210,7 @@ export function diagnosticReport(facts = {}) {
   ' GRAPHICS',
   required('tier', app.tier),
   required('frame cap', app.frameCap ? `${app.frameCap} fps` : 'follow display'),
+  optional('auto resolution', app.autoResolution == null ? null : app.autoResolution ? `on, drawing at ${app.resolution ?? 100}%` : 'off'),
   required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms` : 'not measured yet'),
  ].filter(l => l !== null);
  if (errors.length) {

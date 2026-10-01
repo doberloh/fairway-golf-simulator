@@ -52,6 +52,13 @@ preview/assets-data.js
 # src/, and the ingested result (src/asset-meshes.js) IS committed. Only
 # `npm run assets` and `npm run grove` need it.
 #
-# vendor/baked_assets IS committed, because rebuilding that one needs the
-# model packs and a 24 MB devDependency; this one needs neither.
 vendor/grown-redwood-forest/
+
+# vendor/baked_assets: the composed and generated tree models (bake-assets.mjs,
+# bake-trees.mjs) that `npm run assets` ingests. Kept on the owner's machine,
+# no longer committed (30 September): 106 MB that nothing reads at build time,
+# since the ingested result, src/asset-meshes.js, IS committed. Rebuilding it
+# needs the model packs and the ez-tree devDependency. Its MIT notice, which
+# must travel with the geometry that ships, is in docs/THIRD_PARTY_NOTICES.txt.
+# The copies already in history stay there; nothing was rewritten.
+vendor/baked_assets/

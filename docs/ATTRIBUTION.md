@@ -41,8 +41,11 @@ than anybody's expression. REFERENCES.md lists every one of them anyway.
 produces it from [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel
 Greenheck, which is **MIT**, a devDependency, and never ships -- what ships is
 the geometry it produced. Unlike CC0, MIT *requires* its copyright notice be
-kept, so the notice is vendored at `vendor/baked_assets/LICENSE-ez-tree.txt`
-and reproduced with any distribution.
+kept, so the notice is in `docs/THIRD_PARTY_NOTICES.txt`, which travels with
+every distribution. (A copy also sits in `vendor/baked_assets/`, which since 30
+September is kept on the owner's machine and not committed -- until then that
+copy was the only one, so a repository without the folder would have shipped
+the geometry with no notice.)
 
 Two textures come with it, and they are the only imported images in the project
 besides the house atlases:

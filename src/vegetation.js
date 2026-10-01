@@ -463,6 +463,18 @@ function addNearbyGrass(view){
   view.lazyMaterials?.push(frondMat,stickMat);
   view.resources?.push(frondGeo,stickGeo);
  }
+ // STAND-INS FOR THE SHADER WARM-UP (B7 in TODO). The warm-up builds every
+ // program it can find by walking the scene, and these materials are only in
+ // the scene where a tile has grown something: the fronds and sticks only under
+ // canopy, which the establishing pose over open ground usually has none of. So
+ // the first time the camera came down among trees their programs were built on
+ // the spot -- two of them at about 75 ms each, one frame of 170 ms, 2.9 s after
+ // an Ultra course appeared. One hidden instance of each, the same kind of mesh
+ // as a tile (instanced, with instance colours, receiving shadow), is shown only
+ // while the renderer compiles (`withStandIns`).
+ const standIn=(geo,mat)=>{const m=new T.InstancedMesh(geo,mat,1);dummy.position.set(0,0,0);dummy.rotation.set(0,0,0);dummy.scale.set(0,0,0);dummy.updateMatrix();m.setMatrixAt(0,dummy.matrix);m.setColorAt(0,color.set('#ffffff'));m.receiveShadow=true;m.frustumCulled=false;m.userData={noCull:true};m.visible=false;group.add(m);view.standIns?.push(m);};
+ standIn(geometry,material);
+ if(floorOn){standIn(frondGeo,frondMat);standIn(stickGeo,stickMat);}
  // Building the ring in one frame is what made the camera hitch.
  //
  // Crossing a tile boundary meant five new tiles at once: eight thousand
@@ -520,9 +532,16 @@ function addNearbyGrass(view){
   }
   mesh.count=kept;
   mesh.userData={tx,tz,noCull:true};mesh.receiveShadow=true;mesh.computeBoundingSphere();
+  // A tile with no rough in it (the sea, a lake, a fairway) grows nothing, and
+  // never had a colour set, so its mesh carries no instance colours -- which is a
+  // different shader from every other tile's. Drawn, it built that shader on the
+  // spot for nothing: 96 ms, the first thing an Ultra course on Island did (B7).
+  // Kept as a record of the tile, and hidden unless its forest floor grew
+  // something (a hidden parent would hide that too).
   // The floor rides on the grass tile as its children, so parking, evicting
   // and disposing a tile carries it along without a second bookkeeping.
   if(floorOn){for(const m of floorTile(tx,tz,key))mesh.add(m);const dispose=mesh.dispose.bind(mesh);mesh.dispose=()=>{for(const c of mesh.children)c.dispose();dispose();};}
+  mesh.visible=kept>0||mesh.children.length>0;
   return mesh;
  };
  // Out of range, but probably not for long. Held with its buffers intact and

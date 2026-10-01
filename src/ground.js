@@ -77,6 +77,17 @@ export function groundGeometry(g){
  for(let j=0;j<=g.nz;j++)for(let i=0;i<=g.nx;i++){const n=j*(g.nx+1)+i;positions.set([-g.halfX+i*g.dx,g.values[n],-g.halfZ+j*g.dz],n*3);if(i<g.nx&&j<g.nz){const a=n,b=a+1,c=a+g.nx+1,d=c+1;indices.set([a,c,b,b,c,d],k);k+=6;}}
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));geometry.setIndex(new T.BufferAttribute(indices,1));geometry.computeVertexNormals();return attachRelief(geometry,g);
 }
+// THE PER-HOLE TABLE. One row a hole, one RGBA float texel a column, read with
+// nearest filtering -- four tables that used to be four textures: the route
+// (where the hole is and how it is mown, 3 texels), the tees (two texels each
+// for three tees), the cup (the green's centre and shape, then the pin) and up
+// to twelve hazards (two texels each). Packed because a texture is a sampler
+// in every fragment the ground draws, and WebGL guarantees sixteen: the ground
+// used fifteen on High, so a floodlight could not cast a shadow without the
+// program failing to link and the ground vanishing. Built by the renderer
+// (makeHazardAtlas, which writes the cups and hazards) before the ground,
+// which writes the route and the tees.
+export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, width: 35};
 export function groundMaterial(view,palette){
  const w=view.world,N=w.holes.length,span=Math.max(...w.holes.map(h=>h.length))+80,extent=new T.Vector2(w.groundGrid.halfX,w.groundGrid.halfZ);
  // WHICH HOLE OWNS EACH PATCH OF GROUND, AND HOW FINELY THAT IS RECORDED.
@@ -99,18 +110,18 @@ export function groundMaterial(view,palette){
  // (Size and questions are in owner-atlas.js, shared with the workers.)
  const {Sx,Sz}=ownerAtlasSize(extent.x,extent.y);
  const texture=(data,x,y,linear=false)=>{const t=new T.DataTexture(data,x,y,T.RGBAFormat,T.FloatType);t.minFilter=t.magFilter=linear?T.LinearFilter:T.NearestFilter;t.needsUpdate=true;view.resources.push(t);return t;};
- const owners=new Float32Array(Sx*Sz*4),route=new Float32Array(N*12),tees=new Float32Array(N*24),curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
+ const owners=new Float32Array(Sx*Sz*4),holeData=view.holeAtlas.image.data,HW=HOLE_ATLAS.width,curves=new Float32Array(N*512*4),outer=new Float32Array(N*512*4);
  // The expensive channels arrive precomputed when the generation workers
  // built them (gen-pool.js); otherwise they are asked here, the same way.
  const pre=w.ownerAtlas;
  if(pre&&pre.Sx===Sx&&pre.Sz===Sz)owners.set(pre.data);
  else owners.set(ownerRows({lakeOwner:w.lakeOwner,nearest:w.nearest,streamAt:(x,z)=>w.streams.at(x,z)},extent.x,extent.y,Sx,Sz,0,Sz));
  strawChannel(owners,w.groundCover,extent.x,extent.y,Sx,Sz);
- for(const h of w.holes){route.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],h.hole*12);// Two texels a tee: where and how big, then which way it faces. The fourth
+ for(const h of w.holes){holeData.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],(h.hole*HW+HOLE_ATLAS.route)*4);// Two texels a tee: where and how big, then which way it faces. The fourth
   // slot of the first was already the pad's half-length; the direction needed
   // somewhere of its own.
   Object.values(h.tees).forEach((t,i)=>{const p=teePad(t);
-   tees.set(p?[t.x,p.z,1,p.rz,p.ux,p.uz,0,0]:[0,0,0,0,0,0,0,0],h.hole*24+i*8);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
+   holeData.set(p?[t.x,p.z,1,p.rz,p.ux,p.uz,0,0]:[0,0,0,0,0,0,0,0],(h.hole*HW+HOLE_ATLAS.tees)*4+i*8);});for(let j=0;j<512;j++){const z=j/511*span-32;curves.set([h.center(z),fairwayWidth(h,z,0,-1),fairwayWidth(h,z,0,1),h.width(z)],(h.hole*512+j)*4);outer.set([fairwayWidth(h,z,w.settings.semiRough,-1),fairwayWidth(h,z,w.settings.semiRough,1),0,0],(h.hole*512+j)*4);}}
  const streamCount=Math.max(1,w.streams.segments.length),streamData=new Float32Array(streamCount*8);for(const q of w.streams.segments)streamData.set([q.a.x,q.a.z,q.b.x,q.b.z,q.a.width,q.b.width,q.stream+1,q.bank],q.id*8);const streamTexture=texture(streamData,2,streamCount);
  const steps=toonRamp(view);const m=new T.MeshToonMaterial({color:'#ffffff',gradientMap:steps}),colors=Object.fromEntries(Object.entries(palette).map(([k,v])=>['tint_'+k,{value:new T.Color(v)}]));
  // THE CUE SWITCHES, AS UNIFORMS. Held outside onBeforeCompile and handed to
@@ -158,7 +169,7 @@ export function groundMaterial(view,palette){
  coverTex.minFilter=coverTex.magFilter=T.LinearFilter;coverTex.needsUpdate=true;view.resources.push(coverTex);
  m.onBeforeCompile=shader=>{
  const bio=biomeOf(w.settings.biome);
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},route:{value:texture(route,3,N)},tees:{value:texture(tees,6,N)},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},hazards:{value:view.hazardAtlas},cups:{value:view.cupAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},holes:{value:view.holeAtlas},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
@@ -169,7 +180,9 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,route,curves,outer,hazards,cups,tees,banks;uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,holes,curves,outer,banks;
+// A texel of the per-hole table (HOLE_ATLAS): column, then the hole's row.
+vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_ATLAS.width}.,row));}uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach;
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  float hashGround(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -197,7 +210,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  // the atlas was built with, and the resolve would fight the data it is fixing.
  float holeDistance(float hole,vec2 wp){
   float r=(floor(hole+.5)+.5)/rows;
-  vec4 tr=texture2D(route,vec2(1./6.,r)),nfo=texture2D(route,vec2(.5,r));
+  vec4 tr=holeTexel(0.,r),nfo=holeTexel(1.,r);
   vec2 d=wp-tr.xy;
   vec2 q=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
   float len=nfo.x,zz=clamp(q.y,0.,len);
@@ -267,11 +280,11 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
   }
  }
  float row=(floor(owner.r+.5)+.5)/rows;
- vec4 tr=texture2D(route,vec2(1./6.,row)),info=texture2D(route,vec2(.5,row));vec2 d=wp-tr.xy;vec2 p=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
- vec4 curve=texture2D(curves,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row));vec4 cupInfo=texture2D(cups,vec2(.25,row));vec2 cup=cupInfo.xy;vec2 pin=texture2D(cups,vec2(.75,row)).xy;vec4 outline=texture2D(route,vec2(5./6.,row));
+ vec4 tr=holeTexel(0.,row),info=holeTexel(1.,row);vec2 d=wp-tr.xy;vec2 p=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
+ vec4 curve=texture2D(curves,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row));vec4 cupInfo=holeTexel(9.,row);vec2 cup=cupInfo.xy;vec2 pin=holeTexel(10.,row).xy;vec4 outline=holeTexel(2.,row);
  vec2 gd=vec2((p.x-cup.x)/cupInfo.w,p.y-cup.y);float angle=atan(gd.y,gd.x);float greenD=length(gd)-cupInfo.z*(1.+outline.y*sin(angle*2.+info.y)+outline.z*sin(angle*3.+info.y)+outline.w*cos(angle*5.));
  float width=p.x<curve.x?curve.y:curve.z;float fw=abs(p.x-curve.x)-width;float margin=info.w;
- float mowStart=texture2D(route,vec2(5./6.,row)).x;float start=mowStart-margin,end=info.x+8.+margin;
+ float mowStart=holeTexel(2.,row).x;float start=mowStart-margin,end=info.x+8.+margin;
  vec2 outerCurve=texture2D(outer,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row)).xy;float outerWidth=p.x<curve.x?outerCurve.x:outerCurve.y;
  float kind=0.;vec3 turf=tint_rough;float stripeFade=1.;
  if(altitudeRock>.5){turf=mix(turf,rock,smoothstep(50.,160.,groundPoint.y)*.65);turf=mix(turf,vec3(.84,.9,.94),smoothstep(550.,750.,groundPoint.y));}
@@ -288,8 +301,8 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  // this paints exactly what localSurface classifies. The collar only claims
  // ground that is still rough, so a fairway or green beside a tee keeps it.
  float teeGround=0.;
- for(int ti=0;ti<3;ti++){vec4 tee=texture2D(tees,vec2((float(ti)*2.+.5)/6.,row));
-  vec4 teeDir=texture2D(tees,vec2((float(ti)*2.+1.5)/6.,row));
+ for(int ti=0;ti<3;ti++){vec4 tee=holeTexel(3.+float(ti)*2.,row);
+  vec4 teeDir=holeTexel(4.+float(ti)*2.,row);
   // Into the pad's own frame: across the line of play, then along it.
   vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
   if(tee.z>.5&&kind<.5&&teeBox(tf,vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)}),${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)})<0.){turf=tint_semi;kind=1.;teeGround=1.;}
@@ -325,7 +338,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){vec4 hz=texture2D(hazards,vec2((float(i)*2.+.5)/24.,row));vec4 meta=texture2D(hazards,vec2((float(i)*2.+1.5)/24.,row));if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){vec2 bank=texture2D(banks,vec2((clamp(q.y*.5+.5,0.,1.)*511.+.5)/512.,(floor(owner.r+.5)*4.+meta.y-.5)/(rows*4.))).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){vec2 bank=texture2D(banks,vec2((clamp(q.y*.5+.5,0.,1.)*511.+.5)/512.,(floor(owner.r+.5)*4.+meta.y-.5)/(rows*4.))).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -685,5 +698,5 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
  if(kind==5.){float rake=sin((p.x*.8+p.y*.4+sin(p.y*.15)) * 38.);turf*=1.+rake*.025*grainFade;}
  diffuseColor.rgb=turf;
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v29';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v30';return m;
 }
