@@ -559,7 +559,7 @@ gets them again. Review it with the contact sheet, not the single-model viewer:
 `node tools/asset-preview.mjs grown-redwood-forest && npx vite build --config vite.sheet.config.js`, then open
 `dist/sheet.html`.
 
-**`vendor/baked_assets/` is a dumping ground for composed models**, not a vendored pack. `node tools/bake-assets.mjs` builds trees out of the CC0 packs -- a bare bole stretched out of a `DeadTree`, a crown borrowed from elsewhere, redwood proportions applied -- and `node tools/bake-trees.mjs` builds the ez-tree generated ones. Both write there, both are re-runnable, and nothing in the folder should be edited by hand.
+**`vendor/baked_assets/` is a dumping ground for composed models**, not a vendored pack. **It is not committed** (since 30 September; `.gitignore` says why): it lives on the owner's machine, nothing reads it at build time, and the ingested result `src/asset-meshes.js` is what the repository carries. Re-running the bake tools needs the folder locally. `node tools/bake-assets.mjs` builds trees out of the CC0 packs -- a bare bole stretched out of a `DeadTree`, a crown borrowed from elsewhere, redwood proportions applied -- and `node tools/bake-trees.mjs` builds the ez-tree generated ones. Both write there, both are re-runnable, and nothing in the folder should be edited by hand.
 
 **Choosing a model: `npm run assets`** builds `dist/assets.html`, a self-contained page showing every model in `vendor/` at a height you type, beside a 1.8 m figure, with its silhouette profile and the `pack:Name` string a PICK entry wants. Two crowns were picked by reading file names and both were wrong; this exists so that stops happening. `node tools/tree-spacing.mjs [biome] [seed]` answers "is this too dense" in numbers.
 

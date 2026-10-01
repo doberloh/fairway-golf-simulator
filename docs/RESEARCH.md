@@ -1383,7 +1383,7 @@ A full shot's aim line is lifted 100 mm so it clears the ground it crosses: it d
 
 ## The flight model against a launch monitor
 
-Thirty-six shots from a SkyTrak skills assessment (`sources/skytrak-skills-assessment-2026-07-26.pdf`, pages 7 to 11, with the ball data extracted to `sources/skytrak-36-shots.txt`) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
+Thirty-six shots from a SkyTrak skills assessment (the owner's own export, pages 7 to 11, with the ball data extracted to `sources/skytrak-36-shots.txt`; the export itself is no longer kept in the repository, and the extract is everything that was used from it) replayed through `simulateShot`, fed through the same conversion `parseLaunchMessage` uses for a live monitor: ball speed in mph, total spin as `hypot(back, side)`, spin axis as `atan2(side, back)`. The model was told nothing about which club was swung.
 
 One note on the extraction, because it nearly poisoned the whole comparison: `pdftotext -layout` scrambles several of these tables, shuffling carry and offline between rows. `-table` reads them correctly. The parsed values were checked against the sheet's own per-target AVG rows -- nine targets by fourteen fields, zero mismatches -- which is the only reason to trust any of the numbers below.
 

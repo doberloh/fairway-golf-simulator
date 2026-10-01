@@ -64,17 +64,6 @@ Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
 the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
 does this point belong to") is 1.7 s of the 3.0 s generation.
 
-- [ ] **B2c. The ground cover's `surface` calls on the workers.** Placing
-  the ground cover asks `surface` per candidate (1.2 s), and `surface` needs
-  `height` -- the finished grid, tens of megabytes to send to each worker
-  without shared memory (not available from `file://`). The ownership atlas,
-  the other half of this entry, is done (see B2 in Done).
-
-- [ ] **B5. Coarser ground far outside the course (LATER).** The grid runs at
-  3 m out to 150 m beyond the course, where nobody plays. Coarser there saves
-  time and triangles but CHANGES generated land: GENERATOR_VERSION bump, and
-  generation is frozen during testing. Wait for the owner.
-
 Estimate for B1-B3 together: 9 holes ~9 s -> ~4 s, 18 holes ~17 s -> ~7 s, on
 this machine, with every course unchanged. Suggested order overall: B1, then
 F1 + F3 (profile before/after), F2, the U items, then B2 and B3.
@@ -172,18 +161,6 @@ changing anything. Worth it: one of the three assumptions was wrong.
   complex would be worth having for exactly this.
 
 ## Playing on a phone
-
-- [ ] **Owner: aim a few holes on a real iPhone.** The pad, the big map and
-  two-finger zoom are proven in a browser that EMULATES a phone. Whether the
-  half-degree step feels right under a real thumb, whether the pad sits where
-  a thumb rests, and whether iOS Safari ever steals the pinch or the hold are
-  things only the phone can answer.
-
-- [ ] **Owner: the redrawn play screen on a real iPhone, both ways up.** The
-  layout is checked at a phone's size under emulation, where the safe-area
-  insets are zero. On the phone: nothing under the notch or the home bar held
-  sideways, nothing under the home bar upright, and the pad and the shot
-  button where thumbs rest.
 
 - [ ] **Owner: the launch-monitor panel with a real device.** It is checked
   against a pretend bridge that sends what `bridge/server.mjs` sends. A real
@@ -304,31 +281,6 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **There is a second, stale git repository one directory up.** The
-  parent folder `Documents/Claude/fairway` is itself a git repo, last
-  committed 22 September, holding a complete older copy of this project --
-  its own `src/`, `dist/`, docs, and a 389 KB `Fairway-portable.zip` from
-  11 September. This repository sits inside it, untracked. Neither has a
-  remote. **Before anything is pushed, be certain which one is being
-  pushed**, and prefer deleting or archiving the outer one to leaving two
-  trees with the same name and different contents.
-
-- [ ] **Decide whether `vendor/baked_assets/` belongs in a public repo.**
-  106 MB of OBJ across 91 files, and the single biggest thing in the tree.
-  Nothing at build time reads it -- `npm run build` reads only `src/`, and
-  the ingested result `src/asset-meshes.js` is committed -- so it exists so
-  that the mesh pipeline can be re-run without the model packs and a 24 MB
-  devDependency. That is a real benefit; it is also most of why `.git` is
-  81 MB. Removing it now would not shrink the history, so this is a decision
-  about the next year rather than about today.
-
-- [ ] **The committed SkyTrak PDF is the owner's own session data.** 6.8 MB,
-  now at `docs/sources/skytrak-skills-assessment-2026-07-26.pdf`, cited by
-  RESEARCH.md for the 36 shots the flight model is checked against. Nothing
-  in the extracted strings looks personal, but a launch-monitor export is the
-  kind of file worth opening and reading once before it goes public. The
-  numbers actually used are in the `.txt` beside it.
-
 - [ ] **There is still no public remote, and that is now the last thing
   standing between this tree and a published project.** The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
@@ -337,12 +289,10 @@ GitHub repository, and stop shipping what nobody needs.
   licence without asking every one of them, and "Fairway contributors"
   implied exactly that situation.
 
-  Two things to settle in the same sitting, because publishing makes both
+  One thing to settle in the same sitting, because publishing makes it
   expensive to change: the NAME, which has its own entry and blocks the
-  repository as much as it blocks a domain, and whether
-  `vendor/baked_assets/` belongs in a public repository -- 106 MB that
-  nothing reads at build time, and a question that stops being hypothetical
-  the moment the tree is public.
+  repository as much as it blocks a domain. (`vendor/baked_assets/`, the
+  other one, was settled on 30 September: not committed.)
 
 ## Selling it: the attribution pass
 
@@ -654,25 +604,6 @@ None of these are tuning -- they are missing capability or wrong plumbing, so
 they were written down rather than done. Asked for on 2026-09-22 as the place
 to put "potential gfx improvements" instead of inventing features overnight.
 
-- [ ] **THE BIG ONE: a tier has no legal way to draw less vegetation.** The
-  frame on a heavy biome is dominated by tree geometry, and no tier knob
-  touches it. `grass` scales scatter grass, which is under 1% of the triangles
-  on redwood. `foliage` sets the segment count of DRAWN trunks and canopies, so
-  it does nothing at all on a biome whose plants are instanced mesh models --
-  which redwood now entirely is.
-
-  And a tier may not simply plant fewer trees: `src/graphics.js` says outright
-  that nothing in it may affect a played surface, and trunks are collidable, so
-  two players on different tiers must hit the same trees. The only legal lever
-  is drawing fewer while colliding with all -- a distance cull or a level of
-  detail that touches rendering only.
-
-  Which is what was removed. The LOD that came out was removed for good reason,
-  on a measurement that said geometry was free on a 4090 -- and it is, there.
-  It is not free on a laptop with no card. What that work should become is a
-  TIER-DRIVEN draw distance, off on ultra and aggressive on low, rather than
-  the always-on swap that made every visible tree the thinned twin.
-
 - [ ] **`applyQuality` clamps pixel ratio to the display's own.**
   `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
   it means the tier ladder collapses on a 1x display: low, medium and ultra all
@@ -729,7 +660,8 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
   Cost to be honest about: either route is a Playwright or Puppeteer
   devDependency, and this project has treated a 24 MB devDependency as a real
-  cost before (it is why `vendor/baked_assets` is committed). Weigh that
+  cost before (it is why `vendor/baked_assets` was committed, until 30
+  September). Weigh that
   deliberately rather than installing it on the way past.
 
 - [ ] ~~Sweep the presets~~ (original note below) Eight biomes,
@@ -771,8 +703,10 @@ project has ever had were taken by hand, with a probe temporarily pasted into
   typical weak device -- real integrated graphics is perhaps one to two orders
   faster, which is the difference between playable and not, and that range is
   an extrapolation this machine cannot narrow. What is certain is that a
-  hundredfold gap does not close by tuning. It needs the vegetation draw
-  distance in the graphics section above.
+  hundredfold gap does not close by tuning. The vegetation draw distance that
+  was the remaining lever is closed as won't do (the owner, on the look);
+  automatic resolution (F4) is what Low has now. The real number needs a real
+  weak machine.
 
 - [ ] **Then, and only then, act on it.** RESEARCH.md has the order: find the
   bottleneck, consider WebGPU before rewriting anything, WebAssembly for
@@ -1055,6 +989,16 @@ record of what was ruled out and why, which is worth more than a short file.
   RESEARCH.md *Drawing only what is in view*; the traps in PROJECT_HANDOFF.
 
 ### Build time
+
+- [x] **B2c. The ground cover's `surface` calls on the workers -- DROPPED
+  (owner, 30 September).** About 1.2 s of the wait on a nine; not worth the
+  cost, since the finished height grid would have to be copied to every worker
+  without shared memory (not available from `file://`).
+
+- [x] **B5. Coarser ground far outside the course -- DROPPED (owner, 30
+  September).** Not worth it: it would change every course's land for an
+  unchanged seed (a GENERATOR_VERSION bump) to save time and triangles where
+  nobody plays.
 
 - [x] **B7. A hitch two to three seconds after a course appears.** Branch
   `frame-and-lights`. It was two shaders being built on the spot, not work
@@ -1593,6 +1537,18 @@ problem: a control that belongs inside a box is sitting beside it.
   instrument; that stays a judgement about the references, openly.
 
 ## Graphics work the profiling turned up
+
+- [x] **WON'T DO (owner, 30 September): a tier drawing less vegetation.** The
+  frame on a heavy biome is dominated by tree geometry, and no tier knob
+  reaches it: `grass` scales scatter grass (under 1% of the triangles on
+  Redwood) and `foliage` only the DRAWN trees' segments, nothing on biomes
+  planted with instanced models. A tier may not plant fewer trees (trunks are
+  collidable; two players on different tiers must hit the same ones), so the
+  only legal lever was drawing fewer while colliding with all -- a tier-driven
+  draw distance or level of detail. The owner does not like the look of
+  drawing fewer trees and plants, so it is closed rather than left open. What
+  weak hardware has instead: Low's own trims, distant crowns drawn as their
+  thinned twins (F2), and automatic resolution (F4).
 
 - [x] **Floodlight shadows, on every tier, with a switch (30 September).**
   Branch `frame-and-lights`. The texture unit they were blocked on was freed by
@@ -2935,6 +2891,23 @@ engineering provenance pass, not legal advice.
 
 ## Making the repository public
 
+- [x] **The second, stale git repository one directory up (30 September).**
+  Handled by the owner outside this repository.
+
+- [x] **`vendor/baked_assets/` is not committed (30 September).** The owner's
+  call: kept on their machine, not in the repository. Untracked (the 91 files
+  stay on disk) and ignored, with the reason in `.gitignore`; nothing was
+  rewritten, so the copies already in history stay there. Nothing reads it at
+  build time -- `src/asset-meshes.js`, the ingested result, is committed. Its
+  ez-tree MIT notice, which has to travel with the redwood and fir geometry
+  that ships, was ONLY in that folder; it is now in
+  `docs/THIRD_PARTY_NOTICES.txt`.
+
+- [x] **The SkyTrak PDF is deleted (30 September).** The owner's own session
+  data; deleted at their request. `docs/sources/skytrak-36-shots.txt` -- the 36
+  shots as ball data, everything that was used from it -- stays, and the
+  RESEARCH.md citation points there.
+
 - [x] **A trademark disclaimer exists now**, in the root README, in the
   portable archive's README and in ATTRIBUTION.md: marks belong to their
   owners, and no affiliation, endorsement or certification is claimed. GSPro,
@@ -3258,6 +3231,11 @@ engineering provenance pass, not legal advice.
   publicly elsewhere is not needed.
 
 ## Playing on a phone
+
+- [x] **Owner: aiming and the redrawn play screen on a real iPhone (30
+  September).** Checked by the owner on their own iPhone: the pad, the big map,
+  two-finger zoom and the play screen both ways up. "Done and looks good." The
+  launch-monitor checks with a real device stay open: they need the monitor.
 
 - [x] **Aiming by touch, a map that opens big and pinches, and a thumb's worth
   of every control.** Asked for on 26 September: aiming and the map were
