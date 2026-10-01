@@ -139,7 +139,7 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/camera.js | Camera offset and return-to-play helpers |
 | src/camera-tours.js | Fairway aim targets, tree/camera bounds and the hole-orbit flyover with its terrain/canopy clearance ring |
 | src/camera-prefs.js | How you look at the course, kept on this device. A camera is a property of the ROOM, so it does not travel inside a shared round |
-| src/projector.js | The field of view a simulator bay actually has. In a bay this is a measurement, not a look: one vertical angle lines the drawing up with the room |
+| src/projector.js | The field of view a simulator bay actually has. In a bay this is a measurement, not a look: one vertical angle lines the drawing up with the room. A mat off the screen's centre is a LENS SHIFT (`lensShift`), never a sideways camera: the renderer sets three's `filmOffset` (`applyLensShift`, again on every resize because it is in film-width units), and the view cull widens its frustum by the same amount -- anything else that rebuilds the camera's frustum from fov and aspect alone must do the same or it will cut the shifted side |
 
 ### The interface
 

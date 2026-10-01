@@ -2876,6 +2876,21 @@ It is deliberately a no-op for the broadcast rig. Nine metres up and twenty-thre
 
 The result is clamped to 10–140°. A bay entered wrong — a zero distance, a screen size in metres against a distance in feet — would otherwise ask for a degenerate projection, and a camera that renders nothing is a worse answer than one that is merely not to scale.
 
+**A mat off the screen's centre (1 October, branch `bay-stand-side`).** The
+owner asked for a left/right offset in the bay. The golfer still looks straight
+down the target line; what changes is that the screen is no longer centred on
+it, so the correct view is an off-axis frustum -- the picture shifted sideways
+without turning, as a projector's lens shift does. Standing `s` feet right of
+centre, `d` feet back, the window spans the screen's width shifted by `s/d` of a
+unit of depth to the left (`lensShift`). Applied as three's `filmOffset`. Checked
+in the built game on the default bay (138" 16:9, 8 ft back): with the mat 3 ft
+left the target line sits 23% in from the left edge, where the geometry says 20%
+(30" of a 120"-wide screen); mirrored at 3 ft right. **Rejected:** sliding the
+camera sideways (the desk mode's horizontal offset), which moves where you are
+standing on the course rather than where the window is. The view cull rebuilds
+its frustum from the field of view and the aspect, so it is widened by the same
+shift, or trees on the far side would be culled.
+
 ## The flight camera
 
 Three things decide where the camera sits while the ball is in the air, and all three changed together.

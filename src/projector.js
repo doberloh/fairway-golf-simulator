@@ -57,6 +57,28 @@ export function standForFov({diagonal, aspect = DEFAULT_ASPECT, fov} = {}) {
  return Math.round((h / 2) / Math.tan(a / 2) / INCHES_PER_FOOT * 10) / 10;
 }
 
+// WHERE THE MAT IS, LEFT OR RIGHT OF THE SCREEN'S CENTRE (the owner, 1 October).
+//
+// Hitting mats are often off-centre: a bay built for right- and left-handers, a
+// projector that could not go dead centre. The golfer still looks straight down
+// the target line, but the screen is no longer centred on that line, so the
+// correct view is an OFF-AXIS one -- the same frustum, shifted sideways the way a
+// projector's lens shift moves the picture without turning it. Sliding the camera
+// sideways instead would be wrong in a different way: it moves where you are
+// standing on the course, not where the window is.
+//
+// The shift, as a fraction of the distance to the screen: a mat `side` feet to
+// the right of centre puts the screen's centre that far to your LEFT, so the
+// picture moves left by side / stand (in the same units as the frustum's
+// half-width at one unit of depth). Negative is left. Clamped so a mistyped bay
+// cannot ask for a frustum that points somewhere else entirely.
+export const SIDE_MAX_FEET = 15;
+export function lensShift({standFeet, sideFeet} = {}) {
+ const stand = Number(standFeet), side = Number(sideFeet) || 0;
+ if (!(stand > 0)) return 0;
+ return side ? Math.max(-1.5, Math.min(1.5, -side / stand)) : 0;
+}
+
 // A default bay: a 10-foot-wide 16:9 impact screen, standing eight feet back.
 // Round numbers rather than a measurement of anything in particular -- it is a
 // starting point to correct, and it is stated as one in the panel.

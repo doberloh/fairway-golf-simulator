@@ -620,7 +620,13 @@ export class GolfView{
   // straight for camera.aspect.
   if(this.camera)this.resize();
  }
- resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();}
+ resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.applyLensShift();this.camera.updateProjectionMatrix();}
+ // THE BAY'S LENS SHIFT (lensShift in projector.js): the picture moved sideways
+ // without turning the camera, for a mat that is not in front of the screen's
+ // centre. Three shifts a frustum by `filmOffset` in units of its film width, so
+ // the fraction is converted here -- and again on a resize, because the film
+ // width follows the canvas's shape. Zero everywhere but the bay's player view.
+ applyLensShift(){if(this.camera)this.camera.filmOffset=(this.lensShift||0)*this.camera.getFilmWidth();}
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
@@ -1942,10 +1948,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // ON THE GREEN THE CAMERA BACKS OFF UNTIL THE BALL IS IN FRAME. A putt is aimed
   // from the ball, so the ball has to be on screen; everywhere else it may sit
   // below the bottom edge, which is where it is in the room.
-  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;}
+  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;}
   // Overview and the green view keep the chosen angle: neither is a view from
   // where anybody is standing, so a bay's measurements say nothing about them.
-  if(c.mode!=='player')this.camera.fov=c.fov;this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
+  if(c.mode!=='player'){this.camera.fov=c.fov;this.lensShift=0;}this.applyLensShift();this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
  }
  // FLY to where setCamera would have put us, instead of cutting there.
  //

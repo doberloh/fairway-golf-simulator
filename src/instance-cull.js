@@ -269,7 +269,10 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    const started = performance.now();
 
    // The same view, wider by MARGIN on every side.
-   const half = T.MathUtils.degToRad(camera.fov) / 2, across = Math.atan(Math.tan(half) * camera.aspect);
+   // A bay's lens shift (renderer.js, applyLensShift) moves the frustum sideways;
+   // widened on both sides by that much, so nothing on the far side is culled.
+   const shift = Math.abs(camera.filmOffset || 0) / (camera.getFilmWidth?.() || 1);
+   const half = T.MathUtils.degToRad(camera.fov) / 2, across = Math.atan(Math.tan(half) * camera.aspect + shift);
    const v = Math.min(half + MARGIN(), 1.5), h = Math.min(across + MARGIN(), 1.5);
    wide.fov = T.MathUtils.radToDeg(v * 2); wide.aspect = Math.tan(h) / Math.tan(v);
    wide.near = .1; wide.far = camera.far; wide.updateProjectionMatrix();

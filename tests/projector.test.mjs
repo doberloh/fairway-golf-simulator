@@ -63,7 +63,7 @@ test('standing distance is the exact inverse of the angle', () => {
 
 test('the simulator rig is measurements; the ordinary rig is the sliders', () => {
  const hand = cameraRig({...DEFAULT_CAMERA, sim: false, height: 9, distance: 23, offset: 4, fov: 53});
- assert.deepEqual(hand, {height: 9, offset: 4, distance: 23, fov: 53});
+ assert.deepEqual(hand, {height: 9, offset: 4, distance: 23, fov: 53, shift: 0});
 
  const bay = cameraRig({...DEFAULT_CAMERA, sim: true, eyeHeight: 1.75, ballAhead: 0.9,
   diagonal: 138, aspect: '16:9', standFeet: 8, offset: 4, height: 9, distance: 23});
@@ -158,4 +158,27 @@ test('the framing fraction leaves real margin', () => {
  // At 1.0 the ball would sit exactly on the bottom edge, which is not visible in
  // any useful sense once the axis tilts down at all.
  assert.ok(BALL_FRAME > 0.5 && BALL_FRAME < 1);
+});
+
+test('a mat off the screen centre shifts the picture, not the eye', async () => {
+ const {lensShift} = await import('../src/projector.js');
+ // Centred: no shift.
+ assert.equal(lensShift({standFeet: 8, sideFeet: 0}), 0);
+ // Mat 2 ft RIGHT of centre, 8 ft back: the screen's centre is 2 ft to your
+ // left, so the picture moves left by 2/8 of a unit of depth.
+ assert.equal(lensShift({standFeet: 8, sideFeet: 2}), -0.25);
+ assert.equal(lensShift({standFeet: 8, sideFeet: -2}), 0.25);
+ // Nonsense in, no shift out; an absurd bay is clamped rather than obeyed.
+ assert.equal(lensShift({standFeet: 0, sideFeet: 2}), 0);
+ assert.equal(lensShift({standFeet: 1, sideFeet: 15}), -1.5);
+ // In the rig: the eye stays behind the ball (offset 0) whatever the shift.
+ const rig = cameraRig({...DEFAULT_CAMERA, sim: true, standFeet: 8, standSide: 2});
+ assert.equal(rig.offset, 0);
+ assert.equal(rig.shift, -0.25);
+ assert.equal(cameraRig({...DEFAULT_CAMERA, sim: false, standSide: 2}).shift, 0, 'only the bay shifts');
+ // It survives being framed for a putt.
+ assert.equal(framedForBall(rig).shift, -0.25);
+ // Saved and range-checked like the other bay numbers.
+ assert.equal(validateCamera({standSide: 99}).standSide, 15);
+ assert.equal(validateCamera({}).standSide, 0);
 });

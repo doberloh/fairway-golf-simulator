@@ -6,7 +6,7 @@
 // property of the ROOM you are standing in, so it belongs with graphics, the
 // panel layout and the clock -- device preferences, never travelling with a
 // course or a round.
-import {projectorFov, DEFAULT_BAY, DEFAULT_ASPECT, ASPECTS} from './projector.js';
+import {projectorFov, lensShift, SIDE_MAX_FEET, DEFAULT_BAY, DEFAULT_ASPECT, ASPECTS} from './projector.js';
 
 const KEY = 'fairway-camera-v1';
 
@@ -23,13 +23,15 @@ export const DEFAULT_CAMERA = {
  // 1.75 m is eye height for a person of about 1.88 m; the ball is a little under
  // a metre away at address.
  eyeHeight: 1.75, ballAhead: 0.9,
+ // Feet of the mat to the right of the screen's centre; negative is left.
+ standSide: 0,
  ...DEFAULT_BAY,
 };
 
 const NUMBERS = {
  height: [0.2, 60], offset: [-40, 40], distance: [0.1, 120], fov: [10, 140],
  freeSpeed: [1, 400], eyeHeight: [0.5, 3], ballAhead: [0.1, 8],
- diagonal: [20, 400], standFeet: [1, 60],
+ diagonal: [20, 400], standFeet: [1, 60], standSide: [-SIDE_MAX_FEET, SIDE_MAX_FEET],
 };
 const MODES = ['player', 'overview', 'green', 'free'];
 
@@ -72,6 +74,9 @@ export function saveCamera(config = {}) {
 // become measurements: the eye is at eye height, the ball sits its own distance
 // in front, the lateral offset is zero because a golfer stands behind the ball
 // and not beside it, and the field of view is whatever the bay's geometry says.
+// A mat off the screen's centre does not move the eye: it shifts the picture
+// (`shift`, lensShift in projector.js), which the renderer applies as a lens
+// shift.
 // The ball may fall below the bottom of the frame at that height, which is
 // correct -- it is below your eyeline in the room too.
 //
@@ -79,12 +84,13 @@ export function saveCamera(config = {}) {
 // kept rather than the view collapsing.
 export function cameraRig(config = {}) {
  const c = {...DEFAULT_CAMERA, ...config};
- if (!c.sim) return {height: c.height, offset: c.offset, distance: c.distance, fov: c.fov};
+ if (!c.sim) return {height: c.height, offset: c.offset, distance: c.distance, fov: c.fov, shift: 0};
  return {
   height: c.eyeHeight,
   offset: 0,
   distance: c.ballAhead,
   fov: projectorFov({diagonal: c.diagonal, aspect: c.aspect, standFeet: c.standFeet}) ?? c.fov,
+  shift: lensShift({standFeet: c.standFeet, sideFeet: c.standSide}),
  };
 }
 
