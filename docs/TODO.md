@@ -3082,6 +3082,14 @@ engineering provenance pass, not legal advice.
 
 ## Found by driving the built game
 
+- [x] **An 18 px dark strip along the bottom of the play screen (1 October).**
+  Branch `play-area-fill`, found while measuring for Text size. The play area
+  set its own height as the screen minus a guessed bar height (78, 65, 56 or
+  42 px by size); a later rule made the bar 60 px and the guesses went stale --
+  18 px short at six of the nine sizes the smoke test checks, 5 px on an
+  upright iPad. The app is now a column and the play area takes whatever the
+  bar leaves: no gap at any of the nine sizes, phones unchanged.
+
 - [x] **Putting has shown no distance on screen since 19 September, and threw
   sixty exceptions a second while doing it.** `GolfView.projectMarker` named
   the edges of its rectangle `L`, `R`, `T` and `B` -- and `T` is three.js in
