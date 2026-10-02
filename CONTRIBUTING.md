@@ -22,6 +22,9 @@ npm run release  # build, compile the servers, cut and verify the downloads
 npm run site     # build, then assemble the website with the demo (site-dist/)
 ```
 
+Every other command is on one page in
+[docs/COMMAND_CHEAT_SHEET.md](docs/COMMAND_CHEAT_SHEET.md).
+
 There is no test framework beyond the Node test runner, no linter config and
 no formatter. Match the style of the file you are editing.
 
