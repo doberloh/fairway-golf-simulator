@@ -638,7 +638,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -1669,7 +1669,7 @@ export class GolfView{
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
   if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp(0));}
-for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
+for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.readingHeading=null;this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
   if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.greenGrid=null;this.reading=null;
@@ -1702,13 +1702,27 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // of the read. The cup, its liner and the floor are separate objects and
  // stay: it is the flagstick that goes, not the hole.
  setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
- // The grid is square to the PLAY camera: its lines run along and across the
- // way you are looking from the ball. Every other camera has it on the hole's
- // axes, where squaring it would only make it swim as the view orbits.
+ // THE GRID IS SQUARE TO THE SHOT, set once when it starts (the owner, 1
+ // October). It first followed the play camera every frame, so every nudge of
+ // the aim turned the whole grid with it -- hugely disorienting. Now `main`
+ // hands over the starting aim when a shot is set up (setReadingHeading) and the
+ // grid keeps that frame while the player aims. Every other camera has it on
+ // the hole's axes, where squaring it would only make it swim as the view
+ // orbits.
+ setReadingHeading(p,aim){
+  const h=this.course;if(!h||!p)return;
+  const a=aim*Math.PI/180,w0=h.toWorld({x:p.x,z:p.z}),w1=h.toWorld({x:p.x+Math.sin(a),z:p.z+Math.cos(a)});
+  this.readingHeading={x:w1.x-w0.x,z:w1.z-w0.z};
+ }
  updateGreenGrid(){
   if(!this.reading)return;
   let heading=null;
-  if(this.config.mode==='player'){this.camera.getWorldDirection(this.headingScratch??=new T.Vector3());heading={x:this.headingScratch.x,z:this.headingScratch.z};}
+  if(this.config.mode==='player'){
+   // A shot set up before this existed, or a reading built some other way: the
+   // camera's heading now, taken once and then held like any other.
+   if(!this.readingHeading){this.camera.getWorldDirection(this.headingScratch??=new T.Vector3());this.readingHeading={x:this.headingScratch.x,z:this.headingScratch.z};}
+   heading=this.readingHeading;
+  }
   this.reading.update(this.elapsed-this.readingEpoch,heading);
  }
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}

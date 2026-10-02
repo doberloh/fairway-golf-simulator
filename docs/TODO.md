@@ -1094,10 +1094,20 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
 
 ## Reading a green without the overlays
 
+- [x] **The grid's flow covers the whole green, and the grid holds still while
+  you aim (1 October).** Branch `green-grid-fixes`, from the owner's screenshot:
+  the moving light showed only in the middle of a green (it skipped slopes
+  under 1%, which on that green was most of it), and the grid turning with
+  every nudge of the aim was disorienting. The gentlest band flows now; the grid
+  takes the shot's starting direction and keeps it. RESEARCH.md *The slope grid
+  squared to the camera*, the correction at its end.
+
 - [x] **The slope grid squares to the play camera, and light flows on it
   instead of rolling balls (1 October).** Branch `green-grid-flow`, asked for by
   the owner. One shader surface draws both; in play the lines follow the
-  camera's heading every frame, other cameras keep the hole's axes. The flow is
+  direction faced at the START of each shot and hold it while aiming (corrected
+  1 October: it first followed the camera every frame, which was disorienting),
+  other cameras keep the hole's axes. The flow is
   dashes of light running downhill along the grid lines (the owner's pick of
   three). Faded where squares are a few pixels. Switching on is quicker than
   before (33-50 ms against 67-83). RESEARCH.md *The slope grid squared to the
