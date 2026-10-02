@@ -714,6 +714,16 @@ record of what was ruled out and why, which is worth more than a short file.
   shift), so the target line lands where it is in the room; the eye stays
   behind the ball. RESEARCH.md *Field of view is a measurement in a bay*.
 
+## Text size
+
+- [x] **Text size for a projector bay (1 October).** Branch `text-size`, asked
+  for by the owner. A Text size setting in Graphics, 75-200%, automatic by
+  default: 100% at a desk, worked out from the bay's screen, stance and
+  browser width in simulator mode. The whole interface is CSS-zoomed, with the
+  stylesheet's screen rules turned into container queries; the course is drawn
+  at full resolution at any size; capped at what keeps the screen at least
+  1280x720. RESEARCH.md *Text size for a projector bay*.
+
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 Every item on this list was finished or closed by 1 October 2026; the

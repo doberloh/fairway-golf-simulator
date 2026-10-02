@@ -1,3 +1,4 @@
+import {uiZoom} from './ui-scale.js';
 // Tools that stay out on the course.
 //
 // The bottom sheet is the right shape for setting something up: it is wide, it
@@ -75,7 +76,9 @@ export function createPopups(world, {onChange = () => {}} = {}) {
   // stuck under the cursor.
   const move = ev => {
    if (!from) return;
-   const r = {...from.r}, dx = ev.clientX - from.x, dy = ev.clientY - from.y;
+   // Screen pixels over the Text size zoom (ui-scale.js): the window's rect is in
+   // the app's CSS pixels, the pointer in the screen's.
+   const z = uiZoom(), r = {...from.r}, dx = (ev.clientX - from.x) / z, dy = (ev.clientY - from.y) / z;
    if (resizing) { r.w += dx; r.h += dy; } else { r.x += dx; r.y += dy; }
    place(p, r);
   };
@@ -147,8 +150,22 @@ export function createPopups(world, {onChange = () => {}} = {}) {
   for (const p of live.values()) if (!best || +p.el.style.zIndex > +best.el.style.zIndex) best = p;
   return best ? hide(best.id) : false;
  }
- // A window resize must not strand a popup outside the playing area.
- new ResizeObserver(() => { for (const p of live.values()) place(p, {...p.rect}); }).observe(world);
+ // A window resize must not strand a popup outside the playing area. And a window
+ // that was wholly on screen STAYS wholly on screen: held only to the drag rule
+ // (a grip left showing), a window near the right edge kept its position when
+ // the area shrank and hung off it with its close button out of reach -- which
+ // is what a larger Text size does (ui-scale.js) as well as a smaller browser
+ // window. One the player parked half off the edge keeps the drag rule.
+ let before = area();
+ new ResizeObserver(() => {
+  const now = area();
+  for (const p of live.values()) {
+   const r = {...p.rect}, inside = r.x >= 0 && r.x + r.w <= before.w + .5 && r.y + r.h <= before.h + .5;
+   if (inside) { r.w = Math.min(r.w, Math.max(MIN_W, now.w - 16)); r.x = Math.max(0, Math.min(r.x, now.w - r.w)); r.y = Math.max(0, Math.min(r.y, now.h - Math.min(r.h, now.h - 16))); }
+   place(p, r);
+  }
+  before = now;
+ }).observe(world);
 
  return {
   open: show, close: hide, closeAll: hideAll, closeTop: hideTop,

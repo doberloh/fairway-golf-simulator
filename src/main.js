@@ -28,6 +28,7 @@ import {suggestCourseName} from './course-names.js';
 import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,hasCustomShotData,loadShotData,saveShotData,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
 import {projectorFov,standForFov,ASPECTS} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
+import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName} from './scoring.js';
@@ -171,6 +172,24 @@ diagnosticErrors.install();
 // than the rate the display offered.
 const diagnosticFrames=frameMeter();
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
+// TEXT SIZE (ui-scale.js). Applied before anything is laid out, again whenever the
+// setting or the bay changes, and on a resize: automatic in a bay depends on how
+// many CSS pixels wide the browser is.
+function currentTextSize(){return effectiveTextSize(graphics.textSize,view?.config??loadCamera(),innerWidth,innerHeight);}
+// The view is resized too: two text sizes can leave the play area the same size
+// in its own pixels (2560 at 200% and 1920 at 150% are both 1280 wide), so its
+// resize watcher never fires, and the pixel ratio -- which carries the zoom --
+// would keep the old one.
+function applyUiScale(){applyTextSize(currentTextSize());view?.resize?.();textSizeNote();}
+function textSizeNote(){
+ const n=document.getElementById('gfxTextNote');if(!n)return;
+ const cam=view?.config??loadCamera(),now=currentTextSize();
+ const max=maxTextSize(innerWidth,innerHeight),capped=graphics.textSize!=='auto'&&graphics.textSize>max;
+ n.textContent=(graphics.textSize!=='auto'?`Set by hand at ${now}%.`
+  :cam.sim?`Automatic: sized for your bay -- ${now}%, so text looks at least as large from where you stand as it does on a laptop.`
+  :'Automatic: 100% at a desk. In simulator bay mode it is sized from your screen and how far back you stand.')
+  +(capped?` This screen holds up to ${max}%, so that is what is drawn.`:'');
+}
 // THE COURSE THE PLAYER WAS ON BEFORE THEY STEPPED INTO THE LAB OR THE RANGE.
 //
 // Both of those REPLACE `settings` wholesale rather than editing it, because
@@ -2176,6 +2195,9 @@ function hudInsets(now){
  ins.bottom=Math.min(ins.bottom,sr.height/2);
  ins.right=Math.min(ins.right,sr.width/3);
  ins.left=Math.min(ins.left,sr.width/3);
+ // Measured in screen pixels; the markers are placed in the app's own, which
+ // the Text size zoom makes `zoom` screen pixels each (ui-scale.js).
+ const z=uiZoom();if(z!==1){ins.top/=z;ins.right/=z;ins.bottom/=z;ins.left/=z;}
  hudInsetsCache=ins;
  return ins;
 }
@@ -2925,6 +2947,9 @@ function renderPanel(name,content){
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
   <label class="check"><input id="gfxAutoRes" type="checkbox" ${graphics.autoResolution?'checked':''}> Automatic resolution</label>
   <p class="note">When frames run slow, draw fewer pixels — a step at a time, down to half — and take them back once there is room. Aims for 60 frames a second, or your cap if it is lower, and never goes sharper than the quality setting above. Off, the picture stays exactly as sharp as the setting and the frame rate goes where it goes. <span id="gfxAutoResNow"></span></p>
+  ${slider('gfxTextSize','Text size',currentTextSize(),TEXT_SIZE.min,TEXT_SIZE.max,'%',TEXT_SIZE.step)}
+  <label class="check"><input id="gfxTextAuto" type="checkbox" ${graphics.textSize==='auto'?'checked':''}> Size text automatically</label>
+  <p class="note">Everything on screen, larger or smaller: panels, numbers, menus. For a projector or a screen you stand back from. The course itself is drawn the same either way. <span id="gfxTextNote"></span></p>
   <h3>Reading the ground</h3>
   <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
   <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
@@ -3007,6 +3032,12 @@ function renderPanel(name,content){
    view.setFloodShadows(on).then(()=>{landed=true;clearTimeout(slow);if(graphics.floodlightShadows===on)toast(said);});
   };
   $('gfxFrameCap').onchange=()=>{graphics=saveGraphics({...graphics,frameCap:Number($('gfxFrameCap').value)});toast(graphics.frameCap?`Capped at ${graphics.frameCap} fps.`:'Following the display refresh rate.');};
+  // Applied when the slider is LET GO, not while it moves: a new text size lays
+  // this panel out again, and doing that under a dragging cursor moved the slider
+  // out from under it (the same lesson as the green slope warning).
+  $('gfxTextSize').onchange=()=>{graphics=saveGraphics({...graphics,textSize:Number($('gfxTextSize').value)});$('gfxTextAuto').checked=false;applyUiScale();};
+  $('gfxTextAuto').onchange=()=>{graphics=saveGraphics({...graphics,textSize:$('gfxTextAuto').checked?'auto':Number($('gfxTextSize').value)});applyUiScale();const v=currentTextSize();$('gfxTextSize').value=v;$('gfxTextSizeValue').textContent=v+'%';};
+  textSizeNote();
   $('gfxAutoRes').onchange=()=>{graphics=saveGraphics({...graphics,autoResolution:$('gfxAutoRes').checked});autoResolutionNote();toast(graphics.autoResolution?'Resolution now drops a step when frames run slow.':'Resolution stays where this setting puts it.');};
   autoResolutionNote();
  }else if(name==='camera'){
@@ -3080,9 +3111,12 @@ function renderPanel(name,content){
   bayNote();
   // Switching the bay changes which controls exist, so it redraws rather than
   // leaving a set of dead sliders on screen.
-  $('cameraSim').onchange=()=>{c.sim=$('cameraSim').checked;saveCamera({...c,mode:loadCamera().mode});view.setCamera(round.position,aim,true);openPanel('camera');};
+  $('cameraSim').onchange=()=>{c.sim=$('cameraSim').checked;saveCamera({...c,mode:loadCamera().mode});view.setCamera(round.position,aim,true);applyUiScale();openPanel('camera');};
   content.querySelectorAll('input,select').forEach(e=>{if(e.id!=='cameraSim')e.addEventListener('input',apply);});
-  $('resetCamera').onclick=()=>{Object.assign(c,DEFAULT_CAMERA,{mode:c.mode});saveCamera({...DEFAULT_CAMERA,mode:loadCamera().mode});view.setCamera(round.position,aim,true);updateExplorer();save();openPanel('camera');};
+  // Automatic text size follows the bay -- once a slider is let go, not while it
+  // is dragged (it lays the panel out again).
+  content.querySelectorAll('input,select').forEach(e=>{if(e.id!=='cameraSim')e.addEventListener('change',applyUiScale);});
+  $('resetCamera').onclick=()=>{Object.assign(c,DEFAULT_CAMERA,{mode:c.mode});setTimeout(applyUiScale);saveCamera({...DEFAULT_CAMERA,mode:loadCamera().mode});view.setCamera(round.position,aim,true);updateExplorer();save();openPanel('camera');};
  }else if(name==='views'){
   // A TOOL, not a takeover. Side-on and top-down are the two shapes the 3D view
   // cannot make -- it looks down the one axis each of them measures -- but they
@@ -4342,6 +4376,8 @@ function tick(now){
  }
 }
 try{
+ // Text size first: the view measures its canvas as it is built.
+ applyUiScale();addEventListener('resize',applyUiScale);
  view=new GolfView($('scene'),graphics.quality);
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.

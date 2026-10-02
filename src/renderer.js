@@ -18,6 +18,7 @@ import {cameraRig,loadCamera} from './camera-prefs.js';
 // names no golfer.
 const SHOT_LINE_COLOR='#ffe0a0';
 import {groundGeometry,groundMaterial,HOLE_ATLAS} from './ground.js';
+import {uiZoom} from './ui-scale.js';
 import {rangeTargets} from './range.js';
 
 // A flagstick, to the dimensions that are actually specified.
@@ -590,7 +591,10 @@ export class GolfView{
  // THE PIXELS, as the tier allows them (the ceiling) times what automatic
  // resolution (auto-resolution.js, F4) currently asks for. The scale is only
  // ever at or below 1: a step can draw fewer pixels than the tier, never more.
- pixelCeiling(){return Math.min(devicePixelRatio,this.quality.pixelRatio);}
+ // Times the Text size zoom (ui-scale.js): the canvas sits inside the zoomed app,
+ // so one of its CSS pixels is `zoom` screen pixels, and without this a larger
+ // text size would draw the course at a lower resolution.
+ pixelCeiling(){return Math.min(devicePixelRatio,this.quality.pixelRatio)*uiZoom();}
  setResolutionScale(scale){
   this.resolutionScale=Math.min(1,Math.max(.1,scale||1));
   const ratio=this.pixelCeiling()*this.resolutionScale;
@@ -620,7 +624,11 @@ export class GolfView{
   // straight for camera.aspect.
   if(this.camera)this.resize();
  }
- resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.applyLensShift();this.camera.updateProjectionMatrix();}
+ // The container's own size, in its CSS pixels: under the Text size zoom its
+ // on-screen box (getBoundingClientRect) is `zoom` times that, and sizing the
+ // canvas from it drew the course 1.5 screens tall at 150%. The pixel ratio is
+ // refreshed too, because it carries the zoom (pixelCeiling).
+ resize(){const e=this.canvas.parentElement,w=e.clientWidth,h=e.clientHeight;if(this.quality)this.setResolutionScale(this.resolutionScale??1);this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.applyLensShift();this.camera.updateProjectionMatrix();}
  // THE BAY'S LENS SHIFT (lensShift in projector.js): the picture moved sideways
  // without turning the camera, for a mat that is not in front of the screen's
  // centre. Three shifts a frustum by `filmOffset` in units of its film width, so
