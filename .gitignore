@@ -66,3 +66,7 @@ vendor/baked_assets/
 # run_fairway_server for each platform (tools/build-server.mjs) and the per-platform
 # download ZIPs (tools/package_release.py): built, never committed.
 /release/
+
+# The website as deployed (tools/build-site.mjs): site/ plus a copy of the built
+# game in play/. Rebuilt by `npm run site`, never committed.
+/site-dist/

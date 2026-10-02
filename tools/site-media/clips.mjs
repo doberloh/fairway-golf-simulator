@@ -1,0 +1,93 @@
+// The website's background clips: camera flights and a tee shot, recorded from
+// the game's own canvas (captureStream + MediaRecorder, webm), interface
+// hidden, into site/media/video/<name>.webm with a <name>.jpg poster.
+// Needs the capture build first: node tools/site-media/build-hooked.mjs
+//   node tools/site-media/clips.mjs [name...]
+import {chromium} from 'playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const OUT = 'site/media/video';
+fs.mkdirSync(OUT, {recursive: true});
+// `keys` are lab.camera poses at evenly spaced moments; the flight passes
+// through them with its height smoothed so the ground's bumps do not shake it.
+export const CLIPS = [
+ {name: 'links-flyover', biome: 'links', seed: 'DUNE', hole: 1, hour: 17.8, seconds: 11,
+  keys: [{fromPin: 230, around: 8, height: 32, pitch: -12}, {fromPin: 140, around: 4, height: 26, pitch: -13},
+   {fromPin: 55, around: 0, height: 16, pitch: -15}]},
+ {name: 'desert-tee-shot', biome: 'desert', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
+  shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
+ {name: 'grove-green-orbit', biome: 'redwood', seed: 'GIANT', hole: 1, hour: 16.5, seconds: 12,
+  keys: [{fromPin: 62, around: -40, height: 16, pitch: -12}, {fromPin: 56, around: 0, height: 15, pitch: -12},
+   {fromPin: 62, around: 40, height: 16, pitch: -12}]},
+ {name: 'desert-flyover', biome: 'desert', seed: 'MESA', hole: 2, hour: 17.6, seconds: 11,
+  keys: [{fromPin: 250, around: -6, height: 24, pitch: -10}, {fromPin: 150, around: -3, height: 30, pitch: -14},
+   {fromPin: 50, around: 8, height: 18, pitch: -17}]},
+ {name: 'night-floodlit', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
+  keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
+   {fromPin: 105, around: 210, height: 40, pitch: -17}]},
+];
+const want = process.argv.slice(2);
+const b = await chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required']});
+for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
+ const p = await (await b.newContext({viewport: {width: 1280, height: 720}})).newPage();
+ p.on('console', m => { if (m.type() === 'error') console.log('  console:', m.text()); });
+ await p.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
+ await p.goto(pathToFileURL(path.resolve('bench/shots/dist-exp', 'index.html')).href);
+ await p.waitForFunction(() => window.lab && window.__view && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
+ await p.evaluate(c => window.lab.course(c), {biome: s.biome, holes: 9, seed: s.seed});
+ await p.evaluate(h => window.lab.hole(h), s.hole);
+ await p.waitForTimeout(7000);
+ await p.addStyleTag({content: '#world>*:not(#scene){display:none!important}header.topbar{display:none!important}#toast{display:none!important}'});
+ await p.evaluate(([s]) => {
+  const v = window.__view; v.daylight.hour = s.hour; v.daylight.rate = 0;
+  if (s.flood) v.setFloodlights(true);
+  for (const o of [v.aimLine, v.aimRing, v.ballRing]) if (o) o.visible = false;
+ }, [s]);
+ // The path: sample the keyed poses through lab.camera, then smooth the height.
+ if (s.keys) await p.evaluate(([s]) => {
+  const N = 240, lerp = (a, b, t) => a + (b - a) * t, poses = [];
+  const at = t => { const k = s.keys, f = t * (k.length - 1), i = Math.min(k.length - 2, Math.floor(f)), u = f - i, o = {};
+   for (const key of new Set([...Object.keys(k[i]), ...Object.keys(k[i + 1])])) o[key] = typeof k[i][key] === 'number' ? lerp(k[i][key], k[i + 1][key], u) : k[i][key];
+   return o; };
+  for (let i = 0; i <= N; i++) poses.push(window.lab.camera(at(i / N)));
+  const ys = poses.map(q => q.y);
+  for (let pass = 0; pass < 3; pass++) for (let i = 0; i <= N; i++) { let sum = 0, n = 0; for (let j = Math.max(0, i - 20); j <= Math.min(N, i + 20); j++) { sum += ys[j]; n++; } poses[i].y = Math.max(ys[i] - 3, sum / n); }
+  for (let i = 1; i <= N; i++) { while (poses[i].yaw - poses[i - 1].yaw > 180) poses[i].yaw -= 360; while (poses[i].yaw - poses[i - 1].yaw < -180) poses[i].yaw += 360; }
+  window.__path = poses;
+  const q = poses[0]; window.__view.placeCamera(q, q.yaw * Math.PI / 180, q.pitch * Math.PI / 180);
+ }, [s]);
+ await p.waitForTimeout(s.flood ? 4000 : 2500);
+ const poster = await p.screenshot({type: 'jpeg', quality: 78});
+ fs.writeFileSync(`${OUT}/${s.name}.jpg`, poster);
+ const b64 = await p.evaluate(async ([s]) => {
+  const canvas = window.__view.renderer.domElement;
+  const stream = canvas.captureStream(30);
+  const type = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+  const rec = new MediaRecorder(stream, {mimeType: type, videoBitsPerSecond: 3_000_000});
+  const chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  const done = new Promise(r => rec.onstop = r);
+  rec.start(500);
+  const t0 = performance.now(), ms = s.seconds * 1000;
+  if (s.shot) setTimeout(() => window.__takeShot(s.shot), 900);
+  if (window.__path) await new Promise(res => {
+   const path = window.__path, N = path.length - 1;
+   const step = () => {
+    const t = Math.min(1, (performance.now() - t0) / ms), e = t * t * (3 - 2 * t) * .3 + t * .7, f = e * N, i = Math.min(N - 1, Math.floor(f)), u = f - i;
+    const a = path[i], c = path[i + 1], L = (k) => a[k] + (c[k] - a[k]) * u;
+    window.__view.placeCamera({x: L('x'), y: L('y'), z: L('z')}, L('yaw') * Math.PI / 180, L('pitch') * Math.PI / 180);
+    if (t < 1) requestAnimationFrame(step); else res();
+   };
+   requestAnimationFrame(step);
+  }); else await new Promise(r => setTimeout(r, ms));
+  rec.stop(); await done;
+  const blob = new Blob(chunks, {type: 'video/webm'});
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+ }, [s]);
+ fs.writeFileSync(`${OUT}/${s.name}.webm`, Buffer.from(b64, 'base64'));
+ console.log(s.name, (b64.length * .75 / 1024 / 1024).toFixed(2) + ' MB');
+ await p.close();
+}
+await b.close();

@@ -8,6 +8,7 @@
     "build": "vite build && node tools/build-bridge.mjs",
     "release": "npm run build && node tools/build-server.mjs && node tools/release.mjs",
     "server": "node tools/build-server.mjs",
+    "site": "npm run build && node tools/build-site.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "bridge": "node bridge/server.mjs",
     "test": "node --test tests/*.test.mjs",

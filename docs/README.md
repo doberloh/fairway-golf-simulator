@@ -11,6 +11,7 @@ the change that made it stale, not a follow-up.
 | --- | --- |
 | play, and find the controls | [PLAYING.md](PLAYING.md) |
 | get it running on a device | [INSTALLATION.md](INSTALLATION.md) |
+| build or deploy the website | [INSTALLATION.md](INSTALLATION.md), *The website* |
 | change the code | [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), then [../AGENTS.md](../AGENTS.md) |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
 | know what is left to do | [TODO.md](TODO.md) |
@@ -27,7 +28,8 @@ the change that made it stale, not a follow-up.
   launch monitor through Rela, troubleshooting.
 - **[INSTALLATION.md](INSTALLATION.md)** — building from source, supported
   platforms and the ones that are merely untested, serving it yourself, the
-  bridge's details. Not shipped in the player downloads.
+  bridge's details, and building and deploying the website (`site/`). Not
+  shipped in the player downloads.
 
 **For somebody changing the code**
 

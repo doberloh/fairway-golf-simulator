@@ -325,3 +325,20 @@ For a first run, generate a nine-hole course, take a manual shot, check live sho
 Fairway’s own source and documentation use the MIT license in `LICENSE`; third-party terms are in `THIRD_PARTY_NOTICES.txt`. The portable HTML embeds both in **Help → Open source & credits**. Preserve these notices when sharing. Optional donations are permitted by the reviewed software licenses; a donation account or payment service is not included. See [DISTRIBUTION_REVIEW.md](DISTRIBUTION_REVIEW.md) for scope and outstanding checks.
 
 To refresh release downloads, run `npm run release`. It rebuilds the game and the four `run_fairway_server` programs first so it cannot package a stale build, then cuts and verifies every archive. It needs Python 3.9 or newer and finds it whether the command is `python3`, `python` or `py`; if none is installed it says so and stops, and `npm run build` on its own has already produced the playable file. It writes into `release/`: `Fairway-Windows.zip`, `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`, `Fairway-Linux.zip`, `Fairway-source.zip` and `RELEASE_SHA256.txt`, and checks their contents. The platform downloads are about 30-45 MB each, most of it the server program. This packaging step is optional for players and separate from the Node build. The source ZIP includes the scripts.
+
+## The website
+
+The project's website lives in `site/`: two hand-written pages (`index.html` and `media.html`), one stylesheet, one small script, and the screenshots and clips under `site/media/`, all captured from the game itself. It loads nothing from anywhere else -- no fonts, no scripts, no analytics.
+
+`npm run site` builds the game, then `tools/build-site.mjs` assembles `site-dist/`: a copy of `site/`, with the built game copied into `site-dist/play/` (the page, its manifest and icons) as the browser demo. It refuses if `dist/index.html` is older than `src/`, writes the sample course code on the front page from the game being shipped, and checks that every picture and clip the pages name is present. `site-dist/` is output, not committed.
+
+**Deploying to Netlify.** Two ways, both using the root `netlify.toml`:
+
+- **From the repository.** Connect the repository in Netlify; it runs `npm run site` and publishes `site-dist/` on every push to the branch you choose.
+- **By hand.** Run `npm run site` here and drag the `site-dist` folder onto Netlify Drop or the site's *Deploys* page.
+
+**It is private for now.** Every page carries a `noindex` tag, `netlify.toml` sends an `X-Robots-Tag: noindex` header, and `site/robots.txt` turns crawlers away. That keeps well-behaved search engines out; it does not stop someone who has the address. To keep people out as well, turn on Netlify's password protection -- the demo's home-screen install works behind it (see above). When the site is announced, remove all three together.
+
+**Placeholders the owner fills in.** The four download buttons point at `#download` and say "opens with the beta" when clicked; give each `href` the hosted zip's address and it becomes a plain download. The donation button is a disabled placeholder. Both are marked `OWNER:` in `site/index.html`.
+
+**Retaking the media.** `node tools/site-media/build-hooked.mjs` builds the game with three capture handles added while bundling (src/ is not edited), into `bench/shots/dist-exp/`. Then `tools/site-media/gallery.mjs`, `clips.mjs` and `features.mjs` retake the gallery, the background clips and the feature screenshots, each by name or all at once. The clips are WebM (VP9) recorded from the game's own canvas, because there is no video encoder in the toolchain; a browser that cannot play WebM shows each clip's still instead.

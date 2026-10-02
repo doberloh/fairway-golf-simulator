@@ -174,16 +174,23 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **A one-page site whose main feature is a Play button. Deferred 25
-  September by the owner -- not cancelled, and not the next thing.** This product
-  demos itself in a way almost nothing else does: ten seconds from a link to
-  standing on a tee. That is worth more than any amount of copy, screenshots
-  or feature bullets, and it is the single highest-leverage thing to build.
-  Static hosting is free -- Cloudflare Pages, Netlify, GitHub Pages -- and the
-  built file is 15.8 MB, 6.5 MB gzipped, which is a heavy first load but
-  acceptable over a CDN. Note what it cannot demo: the launch-monitor bridge
-  needs Node running locally, so the hosted version is keyboard play only.
-  Say so on the page rather than letting somebody discover it.
+- [ ] **Owner: fill in the website's placeholders.** The four download
+  buttons point at `#download` and answer "opens with the beta" when clicked;
+  give each `href` in `site/index.html` the hosted zip's address. The donation
+  button is a disabled placeholder until the payment links exist. Both are
+  marked `OWNER:` in the page. Keep the donation wording inside the limits in
+  the entry below.
+
+- [ ] **Owner: the website on a real iPhone and in Safari.** It was checked in
+  Chromium only, at desktop and phone sizes. The background clips are WebM,
+  because no video encoder exists in this toolchain; a browser that cannot play
+  WebM shows each clip's still, which is the designed fallback but has not been
+  seen on an iPhone. If the stills look wrong there, the fix is MP4 copies of
+  the five clips (any encoder), listed as a second `<source>`.
+
+- [ ] **At launch: take the website's no-index off.** Three places, removed
+  together: the `robots` meta tag in `site/index.html` and `site/media.html`,
+  the `X-Robots-Tag` header in `netlify.toml`, and `site/robots.txt`.
 
 - [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
   request for help, which is a different thing and gets a far better response
@@ -239,6 +246,63 @@ GitHub repository, and stop shipping what nobody needs.
   expensive to change: the NAME, which has its own entry and blocks the
   repository as much as it blocks a domain. (`vendor/baked_assets/`, the
   other one, was settled on 30 September: not committed.)
+
+- [ ] **Fewer, smaller documents before the private repository goes up.
+  PLAN ONLY -- asked for 1 October, nothing has been moved yet.** Today the
+  repository carries 19 Markdown files and about 1.5 MB of them, and three
+  hold almost all of it: RESEARCH.md (5,800 lines, 500 KB), TODO.md (3,500
+  lines, 330 KB, four fifths of it the `# Done` archive) and PROJECT_HANDOFF.md
+  (1,800 lines, 310 KB). The trouble for someone arriving with an AI agent is
+  not the NUMBER of files but that the entry point -- AGENTS.md, then
+  PROJECT_HANDOFF -- asks for 330 KB of reading before any work starts, most of
+  it dated narrative. The aim: an agent is oriented after reading two short
+  files, finds anything deeper by search, and no reasoning is lost.
+
+  Proposed shape: 19 files down to 16 -- the count matters less than the size,
+  which falls from about 330 KB of entry reading to under 80 KB:
+
+  | Keep / become | From | Change |
+  | --- | --- | --- |
+  | README.md, LICENSE | same | unchanged |
+  | AGENTS.md | AGENTS.md + CONTRIBUTING.md | one rules file; CONTRIBUTING's setup commands move into it, and README links to it |
+  | docs/ARCHITECTURE.md | PROJECT_HANDOFF.md | cut to the invariants, the traps and the file map, each a few lines with a pointer into RESEARCH or HISTORY; target under 60 KB. The dated "on 30 September the owner asked..." narrative moves to HISTORY.md |
+  | docs/RESEARCH.md | RESEARCH.md + LANDSCAPE_RESEARCH.md | one evidence file with a contents list at the top; the landscape sources become its last part |
+  | docs/BALL_BEHAVIOUR_KNOBS.md | same | kept apart on purpose: it is what a tuning request is written against, and inside a 500 KB file it would be buried |
+  | docs/GENERATION.md | PROCEDURAL_GENERATION.md | renamed only |
+  | docs/TODO.md | the open half of TODO.md | open work only, about 60 KB |
+  | docs/HISTORY.md | TODO's `# Done`, PROJECT_HANDOFF's narrative, DISTRIBUTION_REVIEW's dated addenda, both docs/reports/ | the changelog and the record of why. Nothing is deleted, only moved; it is the file that answers "was this tried?" |
+  | docs/PLAYING.md, docs/PORTABLE_README.md | same | both ship to players |
+  | docs/INSTALLATION.md | same | trimmed where it repeats PORTABLE_README |
+  | docs/REFERENCES.md, docs/ATTRIBUTION.md | same | the citations, and the asset credits every download carries |
+  | docs/DISTRIBUTION_REVIEW.md | its current-status part | the standing release checklist; the audit history goes to HISTORY |
+  | docs/README.md | same | rewritten as a "which question, which file" table |
+
+  `docs/sources/README.md` stays where it is: it states the rule for the
+  ignored private folder.
+
+  Before anything moves:
+  - **Scrub for what a private repository still should not hold**: machine
+    paths and user names (`C:\Users\...`), email addresses, and anything
+    naming what is in `docs/sources/private/` -- which stays ignored and is
+    never inventoried, per the rule in `.gitignore`.
+  - **Decide where the website's media lives.** `site/media/` is about 20 MB
+    of pictures and clips, and every retake adds its size to the history
+    permanently; Git LFS, or deploying by hand without committing the media,
+    are the alternatives to plain commits.
+  - **One branch per step**, in this order: AGENTS + CONTRIBUTING; HISTORY.md
+    (pure moves); the ARCHITECTURE cut; RESEARCH + LANDSCAPE; the index. A
+    pure move is reviewed with `git diff --color-moved`; mixing a move with an
+    edit makes both unreviewable.
+  - **AGENTS.md's documentation rule names every file**, and has to change in
+    the same branch as each rename, or it sends the next session looking for
+    files that are gone. The same goes for every cross-reference: grep for
+    each old name after each step, and add a small check under `tools/` that
+    every relative Markdown link resolves, run by `npm test`.
+  - **What is deliberately NOT proposed**: splitting RESEARCH.md into many
+    small files (more files, the opposite of the ask, and search already finds
+    things in one), and dropping the Done archive (this repository's history
+    starts at one squashed commit, so that archive is the only record of why
+    most decisions went the way they did).
 
 ## Selling it: the attribution pass
 
@@ -3040,6 +3104,29 @@ engineering provenance pass, not legal advice.
 
 ## Getting the word out
 
+- [x] **The website (1 October 2026).** Branch `productization`, asked for by
+  the owner. Was: "a one-page site whose main feature is a Play button,
+  deferred 25 September". Built in `site/`: a front page and a media page,
+  laid out as the game's glass panels over clips recorded from the game,
+  which change to match the section in view (a still for visitors who ask for
+  less motion or less data). The front page covers the eight landscapes,
+  ball physics (the GC3 figures, with SkyTrak named as the held-out check),
+  greens and the three putting modes, stroke, match, scramble and endless,
+  night golf, the course studio and course codes (a real code, written by the
+  build), the range, and four smaller points; then connecting through Rela
+  in five steps, the four downloads with how to run them, "always free" and
+  "open source soon". The media page has the 18 landscape pictures, filterable
+  by time of day, the clips, and the feature screenshots. **The Demo button**
+  (top right) asks first, saying that keyboard and touch are not how Fairway is
+  meant to be played and to download it for a launch monitor, then opens the
+  shipped game from `play/`. `npm run site` builds it all into `site-dist/`
+  for Netlify (`netlify.toml`), no-index until launch. Checked in Chromium at
+  1440 and 390 px wide: no errors, no sideways scroll, clips switch, the demo
+  reaches the main menu in 3.3 s from a local server and its manifest is
+  served. The media is retaken with `tools/site-media/`. INSTALLATION.md
+  *The website*.
+
+
 - [x] **Discord: deliberately not yet**, and going open source makes that
   easier rather than harder. An empty server is worse than none -- a room
   where the owner talks to himself, signalling that nobody is there, at the
@@ -3086,6 +3173,14 @@ engineering provenance pass, not legal advice.
   browser golf simulator" -- so a search engine has something to hang it on.
 
 ## Found by driving the built game
+
+- [x] **Course studio opened at midnight for a new player (1 October).**
+  Found while capturing the website's screenshots: a profile whose clock had
+  never been set opened the studio at 12:00 AM, because an unset hour reads as
+  0:00 -- anyone trying the demo who went to the studio before their first
+  round. Rounds already started at midday; opening the studio now does the
+  same, with the floodlights off. Checked on a fresh profile: 12:00 PM.
+
 
 - [x] **An 18 px dark strip along the bottom of the play screen (1 October).**
   Branch `play-area-fill`, found while measuring for Text size. The play area

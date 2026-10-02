@@ -45,7 +45,7 @@ Build dependencies are installed separately, not shipped as `node_modules` in ei
 
 ## Research, interoperability and originality
 
-`RESEARCH.md` and `LANDSCAPE_RESEARCH.md` distinguish mathematical/design references from software dependencies. Research-informed physics is an approximation, not a measured/calibrated claim. The U.S. Copyright Office distinguishes copyrightable program expression from functional algorithms and logic; citing a paper does not by itself grant permission to copy its code, figures or text. See [Copyright Office Circular 61](https://www.copyright.gov/circs/circ61.pdf).
+`RESEARCH.md` and `LANDSCAPE_RESEARCH.md` distinguish mathematical/design references from software dependencies. Research-informed physics is an approximation. One measured agreement is claimed -- the fit to a 100-shot GC3 session, with a SkyTrak session held out -- and RESEARCH.md states its figures and its limits; nothing beyond it is (corrected 1 October 2026, when the website began quoting it). The U.S. Copyright Office distinguishes copyrightable program expression from functional algorithms and logic; citing a paper does not by itself grant permission to copy its code, figures or text. See [Copyright Office Circular 61](https://www.copyright.gov/circs/circ61.pdf).
 
 - [OpenFairway](https://github.com/digitalhand/openfairway) is credited as an MIT research reference. Its project and current calibration data are not included as dependencies or assets.
 - [libgolf](https://github.com/gdifiore/libgolf) is GPL-3.0 and is referenced as an alternative, not linked, compiled or packaged here. No libgolf implementation was identified in the inspected files. GPL permits commercial activity, but incorporating its code could change redistribution obligations; a citation does not relicense it as MIT.
@@ -461,3 +461,41 @@ compiled with Bun into one program with nothing to install, beside
   certificate would remove the warnings.
 - **Rela and GSPro are named** in the README, PLAYING.md and the website to say
   what Fairway works with; no affiliation is claimed, and the README says so.
+
+---
+
+## Addendum, 1 October 2026: the website
+
+`site/`, built by `npm run site` into `site-dist/` for Netlify, with the
+shipped game copied into `play/` as a browser demo. Reviewed for what it
+claims and what it pulls in:
+
+- **No third-party code, fonts or analytics.** Two pages, one stylesheet, one
+  script, all written for the project; the icons are inline SVG drawn for it.
+  Outbound links only (Rela's documentation, Kenney, Quaternius, ez-tree,
+  Quaternius's Patreon). The demo is the same file as the downloads, so its
+  notices are the same and are inside it under Help.
+- **Media is the game's own output**: screenshots and clips captured from the
+  game, so the only third-party content in them is the CC0 model packs and the
+  ez-tree geometry already credited. The footer says "Created with CC0 assets
+  and the help of Claude Code" and names Kenney, Quaternius and ez-tree.
+- **Physics claim**: "fitted to real launch monitors", with the GC3 figures and
+  SkyTrak named as the held-out check -- see RESEARCH.md *The website: what it
+  claims*. Not "calibrated", not "certified", and no device beyond those two
+  (and the planned R50) is named in connection with accuracy.
+- **Marks named** to describe compatibility: GSPro, Rela, GC3, SkyTrak,
+  Garmin. The footer carries the line this review asked for in September --
+  all marks belong to their owners, no affiliation, endorsement or
+  certification claimed -- and so does the download README.
+- **Donation wording** follows item 4 above: free, nothing locked, donating
+  unlocks nothing, money goes to Fairway's own development, and it says
+  plainly that donations do not reach the model authors, with a link to
+  Quaternius's Patreon. The payment links themselves are not in yet.
+- **Not public yet**, at the owner's request: no-index meta tags, an
+  `X-Robots-Tag` header and a robots.txt that disallows everything. These keep
+  search engines out, not people; Netlify's password protection does that.
+- **Release claims on the page**: "free", "no account", "nothing ever sent
+  anywhere" (true of the game: the smoke test fails on any network request),
+  and "open source soon, under MIT, after a short beta" -- a statement of
+  intent the owner made, recorded in TODO.md *Getting the word out*.
+

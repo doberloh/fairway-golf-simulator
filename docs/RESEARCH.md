@@ -1,6 +1,6 @@
 # Research and implementation notes
 
-Reviewed September 10, 2026. Research informs the model architecture. Coefficients below are explicitly approximations; no numerical claim of a commercial calibration or measured hardware agreement is made.
+Reviewed September 10, 2026; the claim below corrected 1 October. Research informs the model architecture, and the coefficients below are approximations. **One measured agreement is claimed, and only one**: the flight model fitted to a 100-shot GC3 session (carry +1.25%, peak height -0.22 ft, offline 0.21 yd mean error), with a SkyTrak session held out -- see *The lift cap, and the carry that hid it*. The website quotes those three figures. Nothing is claimed beyond them: no commercial calibration, no agreement with any device not named here, and roll still has no reference data at all.
 
 ## Open research
 
@@ -5760,3 +5760,14 @@ simulator's address and port under **Settings**; vendor software is installed
 before Rela. The guides do not state Rela's default GSPro port; GSPro's own Open
 Connect port is 921 and Fairway's 1921, so the instructions say to set 1921.
 Rela's supported device list is not on those pages; nothing here claims one.
+
+## The website: what it claims, and how its media was made (1 October)
+
+**Every number on the site is one this file already carries**, so a reader can check it here. The physics panel quotes the GC3 fit -- carry 1.3%, peak height 0.2 ft, offline 0.2 yd -- rounded from +1.25%, -0.22 ft and 0.21 yd, and says the SkyTrak session was held out. It does not quote the two figures the fit made worse (descent angle 1.49 deg, hang time +0.71 s); they are open defects in TODO.md, and a page that quoted only the improvements while hiding them would be selective, so the page claims "fitted to", not "matches". The owner's brief asked for "calibrated to the most popular launch monitors"; the page heading reads "fitted to real launch monitors" because one fitted device and one held-out device is what exists. A Garmin R50 session is named as next. The landscape cards quote each biome's altitude and temperature from `biomes.js`, converted to feet and degrees Fahrenheit and rounded (1,800 m becomes 5,910 ft), because the shot panel in the game reads in mph and the audience is mostly American; both values do feed the flight (`simulateShot` takes `altitude` and `temperature`). The cup and ball are the game's 107.95 mm and 42.67 mm.
+
+**How the media was made.** No video encoder exists in this toolchain (no ffmpeg), so the clips are recorded inside the browser: the game's own canvas into `captureStream(30)` and `MediaRecorder` as WebM VP9 at 3 Mbit/s, 1280x720, 7 to 12 seconds, about 2.5 to 3.5 MB each. Camera flights are keyed poses through `lab.camera`, sampled 240 times, with the height smoothed over a 40-sample window (never more than 3 m below the ground-following height) so the camera does not bob over every dune, and eased in and out. The tee shot is a launch-monitor shot through the real shot path (67 m/s, 11.5 deg, 2,700 rpm). Stills are 1600x900 JPEG at quality 80, thumbnails 640x360 scaled in the browser (there is no image library here either). Everything is captured on Ultra with automatic resolution off.
+
+**What went wrong the first time, worth knowing before a retake**: a flight keyed in the hole's own frame ran past the pin on a short hole and spun round to look back at it (key flights by distance from the pin, `fromPin`, instead); the player camera behind a tee can sit behind a tree; a capture that does not wait for the shot to finish photographs a shot card that is still empty (wait for `lab.state().inFlight` to clear); and the course studio was captured at midnight, which turned out to be a real bug for new players, fixed on the same branch.
+
+**Rejected**: Google Fonts for the site (the project's rule is that nothing is fetched from anywhere else, and the game's own Georgia-and-system-sans pairing is the brand anyway); one background clip for the whole page (a night section over a sunny links reads as a stock video); autoplaying every clip on the media page (about 14 MB the visitor did not ask for -- they load when played).
+

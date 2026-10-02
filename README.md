@@ -58,8 +58,15 @@ file by file against their inputs and writes `RELEASE_SHA256.txt`. If it
 refuses, believe it: it refuses on a stale build, a missing embedded licence
 notice, or a dependency inventory that disagrees with the lockfile.
 
+The website is one more again: `npm run site` builds the game and assembles
+`site-dist/` -- the pages in `site/`, with the built game copied into
+`site-dist/play/` as the browser demo -- which is what Netlify publishes
+(`netlify.toml`). The demo is the same `Fairway.html` the downloads carry,
+never a separate build.
+
 No CDN, font service, telemetry or backend is contacted at any point, during a
-build or during play.
+build or during play. The website follows the same rule: no fonts, scripts or
+analytics from anywhere else.
 
 ## How it simulates
 
@@ -110,6 +117,7 @@ checked by hand.
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |
+| `site/` | The website: hand-written pages, and screenshots and clips captured from the game (`tools/site-media/`). `npm run site` assembles it with the game into `site-dist/` (not committed) for Netlify |
 | `dist/` | Build output. Not committed |
 
 ## Documentation

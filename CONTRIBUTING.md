@@ -18,6 +18,7 @@ npm run build    # single-file dist/index.html, and the bundled bridge
 npm run smoke    # build, then play the built file in a real browser
 npm run server   # compile run_fairway_server for every platform (Bun)
 npm run release  # build, compile the servers, cut and verify the downloads
+npm run site     # build, then assemble the website with the demo (site-dist/)
 ```
 
 There is no test framework beyond the Node test runner, no linter config and
