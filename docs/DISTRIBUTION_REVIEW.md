@@ -431,3 +431,33 @@ the bundle names it in a banner. No dependency was added.
 Windows one was run by hand, the macOS ones have not been run on a Mac. They
 are unsigned; macOS asks the player to confirm the first time (Control-click,
 Open), which the README says. It needs Node.js, which the player installs.
+
+---
+
+## Addendum, 1 October 2026: run_fairway_server and the per-platform downloads
+
+**What ships changed.** `Fairway-portable.zip` (game, docs, a Node.js bundle and
+start scripts) is replaced by one download per platform -- `Fairway-Windows.zip`,
+`Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`, `Fairway-Linux.zip`,
+into `release/` -- each carrying **run_fairway_server**, the launch-monitor bridge
+compiled with Bun into one program with nothing to install, beside
+`Fairway.html`, the player README, PLAYING.md and the notices. INSTALLATION.md
+(the build-from-source guide) moved to the source archive only. Sizes: 45 / 32 /
+34 / 42 MB, most of it the program.
+
+**For the owner to decide, flagged rather than settled:**
+
+- **Bun statically links JavaScriptCore (LGPL-2).** Bun's own documentation does
+  not address `bun build --compile` programs. The approach taken: the
+  application ships beside the program as the plain bundle it was built from
+  (`server-source/fairway-bridge.mjs`), so a user can rebuild it with a Bun of
+  their own carrying a modified JavaScriptCore; Bun's notice, its list of linked
+  libraries and the full LGPL 2.1 text are in THIRD_PARTY_NOTICES.txt. That is a
+  reading of the LGPL's object-file route, not legal advice. Bun also lists
+  tinycc (LGPL 2.1) and zstd (BSD or GPLv2, dual) among its linked libraries.
+- **The programs are unsigned** (the macOS ones are ad-hoc signed, which lets
+  Apple Silicon run them after the player allows it). Windows SmartScreen and
+  macOS Gatekeeper warn on first run; the README walks through both. A paid
+  certificate would remove the warnings.
+- **Rela and GSPro are named** in the README, PLAYING.md and the website to say
+  what Fairway works with; no affiliation is claimed, and the README says so.

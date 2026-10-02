@@ -5703,3 +5703,60 @@ it while the player aims. Measured in the built game on a putt 54 degrees off
 the hole's line: grid and camera both at -54.3 degrees at set-up; after holding
 the aim key, camera -70.8, grid still -54.3; the next shot from elsewhere on the
 green, both 135.1.
+
+## run_fairway_server: the bridge with nothing to install (1 October)
+
+Branch `productization`. `tools/build-server.mjs`, `COMPILED` and `readManifest`
+in `bridge/server.mjs`, `tools/package_release.py`, `docs/PORTABLE_README.md`,
+the `server-program` smoke journey. Asked for by the owner: everybody who
+downloads Fairway is setting up a launch monitor, and the download should need
+no npm install -- one program, `run_fairway_server`.
+
+**Bun, not Node's single-executable feature** (the owner chose, from the two).
+Bun cross-compiles every platform from one machine; Node's macOS builds must be
+signed on a Mac. Measured from this Windows machine with Bun 1.4.2: Windows x64
+82.2 MB, macOS arm64 59.5 MB, macOS x64 66.3 MB, Linux x64 77.7 MB; both macOS
+binaries carry an LC_CODE_SIGNATURE load command (read from their Mach-O
+headers), i.e. ad-hoc signed, which Apple Silicon requires. Zipped with the game
+and documents: 45 / 32 / 34 / 42 MB.
+
+**Licences.** Bun is MIT and statically links JavaScriptCore and WebKit under the
+LGPL-2, whose term is that an application statically linking it be provided
+"in an object (not necessarily source) format" so a user can relink with a
+modified library ([Bun's licensing page](https://bun.com/docs/project/licensing),
+[LICENSE.md at bun-v1.4.2](https://github.com/oven-sh/bun/blob/bun-v1.4.2/LICENSE.md)).
+Neither page says what that means for a `bun build --compile` program. What this
+project does, as a reading rather than legal advice: the application part ships
+beside the program as the plain bundle (`server-source/fairway-bridge.mjs`), so
+anybody can build Bun with a modified JavaScriptCore (patched source at
+github.com/oven-sh/webkit) and recompile; Bun's notice, its table of linked
+libraries and the full LGPL 2.1 text
+([gnu.org](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt)) are in
+THIRD_PARTY_NOTICES.txt. Flagged for the owner in DISTRIBUTION_REVIEW.
+
+**What compiling changed, found by testing the program rather than the bundle.**
+Inside the program, `import.meta.url` is `file:///B:/%7EBUN/root/...` on Windows
+(probed: `process.argv` is `['bun', 'B:/~BUN/root/...']`, `import.meta.main` true,
+`process.execPath` the real .exe) -- the first detection matched `~BUN` against
+the encoded URL, missed, and the program printed nothing and served nothing. It
+decodes first now. The game is read from beside the executable.
+
+**Checked.** The Windows program, unzipped from its download into an empty
+folder and started on loopback: serves the game (16 MB), the manifest (43 KB)
+and `/health`, accepts a launch-monitor TCP connection. The `server-program`
+smoke journey: the game loads from it, the browser connects, a pretend connector
+sends an Open Connect shot that flies and is acknowledged with code 200. Binding
+every address (its default) was not run here: it raises the firewall prompt on
+the owner's machine; the lines it prints for that case are unit-tested. The
+macOS and Linux programs have not been run on those systems.
+
+**Rela, as the documented connector path.** From its documentation
+([docs.rela.golf](https://docs.rela.golf/), the
+[user guide](https://docs.rela.golf/rela/user-guide/) and the
+[installation guide](https://docs.rela.golf/rela/installation/)): it runs on a
+Windows PC, the launch monitor is chosen under **Device** and found with
+**Search**, the output under **Simulator** (GSPro among the options), and the
+simulator's address and port under **Settings**; vendor software is installed
+before Rela. The guides do not state Rela's default GSPro port; GSPro's own Open
+Connect port is 921 and Fairway's 1921, so the instructions say to set 1921.
+Rela's supported device list is not on those pages; nothing here claims one.

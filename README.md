@@ -6,8 +6,8 @@ Open `dist/index.html` and you are on a tee. No installer, no account, no
 network. Every course is generated from a seed: nine or eighteen holes routed
 through one continuous landscape, with its own terrain, water, weather,
 vegetation and light. Ball flight is integrated from real launch numbers, and
-a launch monitor can drive it through the bridge, which the portable archive
-ships ready to run (it needs Node.js).
+a launch monitor can drive it through `run_fairway_server`, the program in
+each platform's download -- nothing to install.
 
 The built file is about 15.8 MB (6.5 MB gzipped) and contains the renderer,
 the controls, the physics and every asset. It needs WebGL 2 and hardware
@@ -21,9 +21,13 @@ acceleration, and nothing else.
 
 ## Play it
 
-Download a release archive, unzip it, and double-click `Fairway.html`. That is
-the whole procedure. [docs/INSTALLATION.md](docs/INSTALLATION.md) covers
-device support, LAN and mobile access, and what to do when a browser refuses.
+Download the release for your computer (Windows, macOS Apple Silicon, macOS
+Intel or Linux), unzip it and run **run_fairway_server**: it serves the game to
+this computer and to phones on your Wi-Fi, and takes shots from a launch
+monitor. Without one, double-click `Fairway.html`. The download's own README
+([docs/PORTABLE_README.md](docs/PORTABLE_README.md)) walks through it;
+[docs/INSTALLATION.md](docs/INSTALLATION.md) covers building it yourself,
+device support and serving it other ways.
 
 It lays itself out for the screen it is on, from a desktop down to a phone held either way up. On a phone, host the `dist` folder anywhere static and add the page to your home screen: it opens full screen like an app, aims with an on-screen pad or on a big map you pinch to zoom, and sizes every control for a thumb.
 
@@ -100,7 +104,7 @@ checked by hand.
 | `src/` | The game. Generation, physics, rendering, interface — one module per concern, no framework |
 | `tests/` | Regression suites for the Node test runner. `npm test` |
 | `tools/` | Measurement, asset ingest, profiling and release packaging |
-| `bridge/` | The optional local TCP/WebSocket bridge a launch monitor talks to, and in `bridge/launch/` the start scripts the portable archive ships beside it |
+| `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |

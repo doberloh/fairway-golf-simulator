@@ -120,16 +120,11 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
-- [ ] **Owner: the portable archive's Launch monitor folder on a Mac.** The
-  `.command` scripts have never been run on one. Unzip, Control-click **Start
-  bridge**, Open, and check it finds Node.js and serves the game. If a Mac
-  refuses it outright, the fallback in the README is `node fairway-bridge.mjs`
-  in Terminal.
-
-- [ ] **A bridge with nothing to install, when it is worth it.** A standalone
-  executable built with Bun (cross-compiles every platform from Windows) --
-  and, to lose the "unknown developer" warnings, code signing (paid). Built
-  from the same bundle. RESEARCH.md, *Shipping the bridge to players*.
+- [ ] **Owner: run_fairway_server on a real Mac and a Linux machine.** Built
+  and packaged from Windows (ad-hoc signed for macOS, checked in the binary)
+  and tested on Windows only. On a Mac: unzip, Control-click Open, allow it in
+  Privacy & Security if asked, and check it serves the game and prints a phone
+  link. On Linux: `./run_fairway_server` from a terminal.
 
 - [ ] **Owner: a launch monitor from the iPhone, loaded from the bridge.**
   Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
@@ -3260,6 +3255,19 @@ engineering provenance pass, not legal advice.
   never changes. Looked like "Next hole is broken on slow machines"; was not.
 
 ## On a phone's home screen
+
+- [x] **A bridge with nothing to install (1 October).** Branch
+  `productization`, asked for by the owner. `run_fairway_server`, compiled
+  with Bun for Windows, macOS (Apple Silicon and Intel) and Linux, is the
+  program in each platform's download; the Node start scripts are gone. It
+  serves the game and its web manifest (phones can add it to the home screen),
+  listens on the home network by default and prints where to point a browser,
+  a phone and the connector. The `server-program` smoke journey plays a real
+  connector shot through it on Windows. RESEARCH.md *run_fairway_server*.
+
+- [x] **Owner: the portable archive's Launch monitor folder on a Mac.**
+  Superseded on 1 October: there is no Launch monitor folder or start script
+  any more; see *run_fairway_server on a real Mac* above.
 
 - [x] **A hosted copy installs to a phone's home screen and opens like an
   app.** Asked for on 26 September after the owner hosted the build on Netlify

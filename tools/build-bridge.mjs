@@ -9,15 +9,11 @@
 //
 //   node fairway-bridge.mjs
 //
-// The portable archive carries it in a "Launch monitor" folder beside start
-// scripts for Windows and macOS (bridge/launch/), and the bridge serves the
-// `Fairway.html` one folder up (see PAGE_CANDIDATES in bridge/server.mjs).
-//
-// Rejected, for now: a standalone executable with no Node.js to install. Bun
-// can cross-compile one for every platform from here and Node's own
-// single-executable support builds per platform; both produce unsigned
-// programs that Windows and macOS warn about, and signing costs money. The
-// bundle below is what either would be built from, when that is worth it.
+// It is what tools/build-server.mjs compiles with Bun into run_fairway_server,
+// the program in each platform's download, with nothing to install; the bundle
+// itself ships beside it in server-source/ (the LGPL obligation for Bun's
+// JavaScriptCore, and a Node.js route for anyone who prefers one). The server
+// finds `Fairway.html` beside itself (PAGE_CANDIDATES in bridge/server.mjs).
 import {rolldown} from 'rolldown';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,12 +32,17 @@ const bundle = await rolldown({
  external: ['bufferutil', 'utf-8-validate'],
  logLevel: 'warn',
 });
+// The web manifest travels inside the bundle (bridge/server.mjs, readManifest),
+// so a phone can add the game to its home screen from the server with nothing
+// beside it but the game.
+const manifest = fs.readFileSync(path.join(ROOT, 'dist', 'manifest.webmanifest'), 'utf8');
 await bundle.write({
  file: OUT,
  format: 'esm',
  banner: `/*! Fairway launch-monitor bridge ${pkg.version ?? ''} -- MIT licence, see LICENSE.
  * Bundles ws ${wsVersion} (MIT); its notice is in THIRD_PARTY_NOTICES.txt.
- * Run: node fairway-bridge.mjs   (Node.js 20 or newer)  */`,
+ * Run: node fairway-bridge.mjs   (Node.js 20 or newer), or run_fairway_server  */
+globalThis.__FAIRWAY_MANIFEST__ = ${JSON.stringify(manifest)};`,
 });
 await bundle.close();
 console.log(`dist/fairway-bridge.mjs  ${(fs.statSync(OUT).size / 1024).toFixed(0)} kB`);

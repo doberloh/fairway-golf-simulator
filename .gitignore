@@ -62,3 +62,7 @@ vendor/grown-redwood-forest/
 # must travel with the geometry that ships, is in docs/THIRD_PARTY_NOTICES.txt.
 # The copies already in history stay there; nothing was rewritten.
 vendor/baked_assets/
+
+# run_fairway_server for each platform (tools/build-server.mjs) and the per-platform
+# download ZIPs (tools/package_release.py): built, never committed.
+/release/

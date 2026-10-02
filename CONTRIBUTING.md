@@ -16,7 +16,8 @@ npm run dev      # http://127.0.0.1:5173
 npm test         # the whole suite; it must be green before you commit
 npm run build    # single-file dist/index.html, and the bundled bridge
 npm run smoke    # build, then play the built file in a real browser
-npm run release  # build, then cut and verify the release archives
+npm run server   # compile run_fairway_server for every platform (Bun)
+npm run release  # build, compile the servers, cut and verify the downloads
 ```
 
 There is no test framework beyond the Node test runner, no linter config and

@@ -1,8 +1,9 @@
 import net from 'node:net';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import os from 'node:os';
+import path from 'node:path';
 import {WebSocketServer,WebSocket} from 'ws';
 import {parseLaunchMessage,readDeviceStatus,MPH} from '../src/physics.js';
 
@@ -69,9 +70,30 @@ export function isLocalOrigin(origin){
 // it. So every place it could be is tried, in that order, and FAIRWAY_HTML
 // names any other.
 export const PAGE_CANDIDATES = ['Fairway.html', 'index.html', '../Fairway.html', '../dist/index.html'];
+// RUN AS `run_fairway_server`, the program in the download (tools/build-server.mjs:
+// this bundle compiled with Bun into one executable, nothing to install). Inside
+// one, this file's own URL is a path in Bun's virtual filesystem, not a folder on
+// disk, so the game is looked for beside the EXECUTABLE instead.
+// Bun's virtual root is `B:/~BUN/root/` on Windows (the `~` arrives percent-
+// encoded) and `/$bunfs/root/` elsewhere, so the URL is decoded before it is read.
+export const COMPILED = typeof process.versions.bun === 'string' && /\/~BUN\/|\/\$bunfs\//i.test(decodeURIComponent(import.meta.url));
+const HERE = COMPILED ? pathToFileURL(path.dirname(process.execPath) + path.sep).href : import.meta.url;
 async function readGame(){
- const tries = process.env.FAIRWAY_HTML ? [process.env.FAIRWAY_HTML] : PAGE_CANDIDATES.map(c => new URL(c, import.meta.url));
+ const tries = process.env.FAIRWAY_HTML ? [process.env.FAIRWAY_HTML] : PAGE_CANDIDATES.map(c => new URL(c, HERE));
  for (const t of tries) { try { return await readFile(t); } catch {} }
+ return null;
+}
+// THE WEB MANIFEST, so a phone that opens the game from this server can add it
+// to its home screen as an app, with its icon and without the browser's bars.
+// The game links `manifest.webmanifest` beside itself whenever it is served
+// (main.js); the manifest carries its icons inside it as data URLs, so this one
+// file is all it needs. The build puts it in the bundle (globalThis
+// __FAIRWAY_MANIFEST__, tools/build-bridge.mjs); from the source tree it is read
+// from dist/. Until this, the bridge answered it with a 404, and a phone could
+// only bookmark the page.
+async function readManifest(){
+ if (typeof globalThis.__FAIRWAY_MANIFEST__ === 'string') return globalThis.__FAIRWAY_MANIFEST__;
+ for (const c of ['manifest.webmanifest', '../dist/manifest.webmanifest']) { try { return await readFile(new URL(c, HERE)); } catch {} }
  return null;
 }
 // THIS computer's address on the home network, found rather than typed, for
@@ -185,10 +207,11 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
  const server=http.createServer(async(req,res)=>{
   if(req.method!=='GET'){res.writeHead(405);res.end();return;}
   if(req.url==='/health'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,deviceConnected:sockets.size>0,browserConnected:!!browser,ready}));return;}
+  if(req.url==='/manifest.webmanifest'){const m=await readManifest();if(m){res.writeHead(200,{'content-type':'application/manifest+json','cache-control':'no-store'});res.end(m);}else{res.writeHead(404);res.end();}return;}
   if(req.url!=='/'&&req.url!=='/index.html'){res.writeHead(404);res.end();return;}
   const html=await readGame();
   if(html){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});res.end(html);}
-  else{res.writeHead(503,{'content-type':'text/plain'});res.end('The game was not found beside the bridge. From the source folder run npm run build; from the portable folder keep Fairway.html one folder up from the bridge.');}
+  else{res.writeHead(503,{'content-type':'text/plain'});res.end('The game was not found. Keep Fairway.html in the same folder as run_fairway_server (or one folder up from fairway-bridge.mjs). From the source folder, run npm run build.');}
  });
  const wss=new WebSocketServer({noServer:true,maxPayload:65536});
  server.on('upgrade',(req,socket,head)=>{
@@ -219,11 +242,28 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
  for(const line of addressLines(httpHost,server.address().port))onLog(line);
  return {tcpPort:tcp.address().port,httpPort:server.address().port,async close(){for(const p of pending.values())clearTimeout(p.timer);pending.clear();for(const s of sockets)s.destroy();for(const c of wss.clients)c.terminate();await Promise.all([new Promise(r=>tcp.close(r)),new Promise(r=>server.close(r))]);wss.close();}};
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){
- let httpHost=process.env.FAIRWAY_HTTP_HOST||'127.0.0.1';
+if(COMPILED||process.argv[1]===fileURLToPath(import.meta.url)){
+ // The program in the download listens on the home network by default: anyone
+ // running it is setting up a simulator, usually with a phone or a tablet too.
+ // From the source tree it stays on this computer unless asked.
+ let httpHost=process.env.FAIRWAY_HTTP_HOST||(COMPILED?'all':'127.0.0.1');
+ if(COMPILED){
+  console.log('');
+  console.log('  Fairway is running. Keep this window open while you play; close it to stop.');
+  console.log('  Launch monitor: in your connector (Rela, in GSPro mode), set the address to');
+  console.log(`  127.0.0.1 and the port to ${process.env.FAIRWAY_TCP_PORT||1921}.`);
+  console.log('');
+ }
  // `all` is what the shipped start script sets: every address, so the computer
  // and a phone on the home network can both reach it.
  if(httpHost.toLowerCase()==='all')httpHost='0.0.0.0';
  createBridge({tcpHost:process.env.FAIRWAY_TCP_HOST||'127.0.0.1',tcpPort:Number(process.env.FAIRWAY_TCP_PORT||1921),httpPort:Number(process.env.FAIRWAY_HTTP_PORT||1922),httpHost,verbose:/^(1|on|debug|verbose|true)$/i.test(process.env.FAIRWAY_LOG||'')
-  ||process.argv.slice(2).some(a=>['--debug','--verbose','-v'].includes(a))}).then(b=>{process.on('SIGINT',async()=>{await b.close();process.exit(0);});}).catch(e=>{console.error('Could not start bridge:',e.message);process.exitCode=1;});
+  ||process.argv.slice(2).some(a=>['--debug','--verbose','-v'].includes(a))}).then(b=>{process.on('SIGINT',async()=>{await b.close();process.exit(0);});}).catch(e=>{
+   console.error('Could not start Fairway:',e.message);
+   if(/EADDRINUSE/.test(e.code||e.message))console.error('Another copy is probably already running -- look for its window, or close it and try again.');
+   process.exitCode=1;
+   // Started by double-clicking, the window would close before anyone could
+   // read why. Wait for Enter when there is a person at a terminal.
+   if(COMPILED&&process.stdin.isTTY){console.error('Press Enter to close.');process.stdin.resume();process.stdin.once('data',()=>process.exit(1));}
+  });
 }

@@ -1,11 +1,12 @@
 # Playing Fairway
 
-Everything a player can see, set or press. If a device will not cooperate,
-[INSTALLATION.md](INSTALLATION.md) is the one with the troubleshooting in it.
+Everything a player can see, set or press. Setting up -- starting the server,
+playing on a phone, connecting a launch monitor, and what to do when something
+will not cooperate -- is in the README beside the game in the download.
 
-This file ships beside the game in the portable download, where only
-INSTALLATION.md sits next to it. It therefore names other documents rather
-than linking to them; those live in the repository and in the source archive.
+This file ships in the download beside that README. It names other documents
+rather than linking to them; those live in the repository and in the source
+archive, where INSTALLATION.md covers building Fairway yourself.
 
 ## Play
 
@@ -67,7 +68,7 @@ Putting offers three modes, set in two places that share one copy of the setting
 
 **On a phone** the top bar keeps the hole and the player who is up (with a count of the others), the shot panel is the club, the power and the shot button with the last shot folded above them, and the cameras fold behind one camera button under the wind. Tools is in the top bar. Aim by tapping the course to get close, then finish with the **aim pad** in the bottom-right corner, under the map: **‹ ›** turn the line half a degree a tap, **˄ ˅** move the target a yard further or shorter — on the green they make the putt longer or shorter — and the flag in the middle aims straight at the pin. Hold any arrow to sweep. **Tap the map** and it opens big over the course: tap where you want to aim, pinch with two fingers to zoom in for precision, drag to look around, and press **Done**. Hit with the big shot button, and use **Skip animation** to jump to where it lands. Buttons are sized for a thumb, a double tap never zooms the page, and pulling down never reloads it and loses your round. The tee you play from is chosen in the round's **Format & tees** rather than in the panel. Held sideways, everything keeps clear of the notch and the home bar. Panels you have dragged somewhere stay where you put them on every screen.
 
-**On a phone, put it on your home screen.** Open the game's web address in Safari, tap Share, then **Add to Home Screen**; the icon opens Fairway full screen like an app. On Android, use Chrome's **Install app**. INSTALLATION.md has the details, including how to give it a web address in the first place. The fullscreen button is hidden on an iPhone, where browsers cannot go fullscreen — the home-screen icon is how an iPhone plays it full screen. The first time you open the hosted game in a browser on an iPhone or iPad, the menu tells you how, once.
+**On a phone, put it on your home screen.** Open the game's web address in Safari, tap Share, then **Add to Home Screen**; the icon opens Fairway full screen like an app. On Android, use Chrome's **Install app**. The game needs a web address for this: open it from the link run_fairway_server prints for a phone (the download's README), or from any web host you put it on. The fullscreen button is hidden on an iPhone, where browsers cannot go fullscreen — the home-screen icon is how an iPhone plays it full screen. The first time you open the hosted game in a browser on an iPhone or iPad, the menu tells you how, once.
 
 Starting a **Sim drop** puts the Tools window away, so the drop bar and **Place ball** are never underneath it.
 
@@ -235,13 +236,12 @@ play.
 
 ## Launch monitor setup
 
-The browser cannot listen to raw TCP or automatically decode proprietary Bluetooth hardware. The included Node bridge receives the **Open Connect v1** format used by community launch-monitor connectors and relays it over WebSocket. No commercial simulator installation is required to run Fairway itself. Device software and connector requirements still apply.
+A browser page cannot listen for a launch monitor itself, so the download carries a small program that does: **run_fairway_server**. It serves the game to this computer and to phones and tablets on your Wi-Fi, and it receives shots in the **GSPro Open Connect (v1)** format that launch-monitor connectors already send to GSPro. Nothing needs installing; the download's README walks through starting it on Windows, macOS and Linux.
 
-1. Run `npm ci`, `npm run build`, and `npm run bridge` in this folder.
-2. Open http://127.0.0.1:1922 (or the standalone HTML file).
-3. In Fairway's **Connect monitor** panel (on a phone, where the top bar has no room for it: **Launch monitor** in the main menu or in Tools), connect to `ws://127.0.0.1:1922` and check **Arm monitor for live shots**. The address is filled in for you when the game was loaded from the bridge, and whatever address last connected is remembered on that device.
-4. Configure your launch monitor's existing Open Connect connector to send to **127.0.0.1, TCP port 1921**. Set the connector’s destination port explicitly. If it is fixed to the standard port 921, run the bridge with FAIRWAY_TCP_PORT=921 on a host that permits it (Windows normally does; macOS/Linux may require a privileged-port forwarding rule). Fairway defaults to 1921 so no administrator access is needed.
-5. Select the club and aim in Fairway. Shots are played from measured speed, launch angles, and spin. Manual shot power, lie penalties to launch speed, and shot-shape settings do not override measured monitor data.
+1. **Start run_fairway_server.** A window opens with two links: one for this computer (`http://127.0.0.1:1922`) and one for a phone or tablet on the same Wi-Fi. Keep the window open while you play.
+2. **Connect your launch monitor through its connector.** With **Rela** (Windows, [docs.rela.golf](https://docs.rela.golf/)): pick your monitor under **Device** and click **Search**, set **Simulator** to **GSPro**, and in Rela's **Settings** set the simulator address to **127.0.0.1** and the port to **1921**. Any other Open Connect connector works the same way: point it at the computer running Fairway, TCP port 1921.
+3. **Open the game** from one of the links, then **Launch monitor** on the main menu (or in Tools during a round) and **Connect bridge**. The address is filled in for you, and whichever address last connected is remembered on that device. Tick **Arm monitor for live shots**.
+4. **Select the club and aim in Fairway, and hit.** Shots are played from measured speed, launch angles and spin. Manual shot power, lie penalties to launch speed and shot-shape settings do not override measured monitor data.
 
 The panel also validates and plays sample JSON independently of hardware. This sample is a real physics input, not evidence of a connected device. Bridge connectivity and device connectivity are reported separately. Incoming shots are rejected while unarmed, during flight, or while a hole/lie selection needs attention. There is no silent shot queue. The bridge sends the monitor a success only after the browser accepts the shot. Club/handedness messages use code 201; the community ready extension uses 202. Duplicate device/shot-number pairs are rejected within each browser connection.
 
@@ -249,14 +249,6 @@ Two markers float in the world rather than in a bar: the **flag** shows yards to
 
 **With a monitor connected, the shot panel leads with its state**: **Ready** in green when a ball is on the mat, **Finding ball** in amber while the monitor hunts for one, **No monitor** in red when the bridge is running but no device is talking to it — in words as well as colour, with the whole panel outlined to match, and the **Armed** switch beside it. The top bar repeats the state. Armed, the panel is the club (sent to your monitor), the **aim**, and the numbers: power, shot shape and the shot button go, because ball speed, launch, direction, spin and axis all come off the device. The aim stays — it is the one thing you still decide before every shot. The last shot is always open, in three labelled groups: **Ball** (measured), **Club** (from your monitor, and left out when your device sends no club data) and **Result** (what Fairway's model did with it). Pick your own fields in *Shot data* and those are shown instead, grouped the same way. **After each shot the big numbers** — carry, total, offline, with ball speed, launch and spin beside them — come up along the bottom of the course and stay until the monitor sees the next ball. In red, **Reconnect** tries the bridge again and **Hit by hand** turns the monitor off and brings power and the shot button back. This applies in every mode that shows the shot panel, the driving range included.
 
-If a connector will not talk, run `npm run bridge:debug` (or set `FAIRWAY_LOG=debug`) for per-message logging: every raw payload in, every reply code out, and each shot decoded into mph and rpm, which is where wrong units and swapped spin fields actually show up. Defaults bind both servers to loopback, and only local/file browser origins are accepted. One browser controls the bridge at a time. Ports can be set with FAIRWAY_TCP_PORT and FAIRWAY_HTTP_PORT. If a connector runs on another machine (for example, a Raspberry Pi), set FAIRWAY_TCP_HOST to this computer's LAN address and allow that port on your trusted local network. The Open Connect TCP protocol has no authentication or encryption; do not expose it to the internet. Keep the browser and bridge on the same computer; the web interface remains loopback-bound.
+If a connector will not talk, start the server with `FAIRWAY_LOG=debug` set for per-message logging: every raw payload in, every reply code out, and each shot decoded into mph and rpm, which is where wrong units and swapped spin fields actually show up. Ports are set with `FAIRWAY_TCP_PORT` (the launch monitor's, 1921) and `FAIRWAY_HTTP_PORT` (the browser's, 1922): if a connector is fixed to GSPro's standard port 921, set `FAIRWAY_TCP_PORT=921` (Windows allows it; macOS and Linux may need permission for ports under 1024). The server accepts browsers from this computer and from home-network addresses only, and one browser controls it at a time. If a connector runs on another machine (for example, a Raspberry Pi), set `FAIRWAY_TCP_HOST` to this computer's home-network address and allow that port on your trusted local network. The Open Connect protocol has no authentication or encryption, and the server has no password: keep it off networks you do not trust and never expose it to the internet.
 
-Example macOS/Linux bridge command for a standard TCP port:
-
-```sh
-FAIRWAY_TCP_PORT=921 npm run bridge
-```
-
-PowerShell equivalent: `$env:FAIRWAY_TCP_PORT="921"; npm run bridge`.
-
-Potential connector paths include PiTrac, the Garmin R10 community connector, Rapsodo MLM2PRO's connector, and OpenSkyPlus. These are protocol-level integration paths, **not a verified hardware compatibility list**. Device firmware, vendor licenses, connector versions, and operating systems affect support. This project does not include vendor drivers. See RESEARCH.md for the verified project links and protocol assumptions.
+Potential connector paths include PiTrac, the Garmin R10 community connector, Rapsodo MLM2PRO's connector, and OpenSkyPlus. These are protocol-level integration paths, **not a verified hardware compatibility list**. Device firmware, vendor licenses, connector versions, and operating systems affect support. This project does not include vendor drivers. The project's research notes (RESEARCH.md, in the repository) list the verified project links and protocol assumptions.

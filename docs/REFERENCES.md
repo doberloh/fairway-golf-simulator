@@ -396,3 +396,10 @@ is only as good as the ability to go back and check what it was taken from.
 | understory | Oxalis oregana 06115.JPG | CC BY 2.5 | https://commons.wikimedia.org/wiki/File:Oxalis_oregana_06115.JPG |
 | understory | Oxalis oregana 06234.JPG | CC BY 2.5 | https://commons.wikimedia.org/wiki/File:Oxalis_oregana_06234.JPG |
 | understory | Oxalis oregana 1.jpg | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Oxalis_oregana_1.jpg |
+
+## Distribution: run_fairway_server and Rela (1 October 2026)
+
+- Bun licensing -- https://bun.com/docs/project/licensing -- Bun is MIT; statically links JavaScriptCore/WebKit (LGPL-2) and the libraries listed; patched WebKit source and relink steps.
+- Bun LICENSE.md at bun-v1.4.2 -- https://github.com/oven-sh/bun/blob/bun-v1.4.2/LICENSE.md -- the notice reproduced verbatim in THIRD_PARTY_NOTICES.txt.
+- GNU LGPL 2.1 text -- https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt -- reproduced in THIRD_PARTY_NOTICES.txt.
+- rēlā documentation -- https://docs.rela.golf/ ; user guide https://docs.rela.golf/rela/user-guide/ ; installation https://docs.rela.golf/rela/installation/ -- Device / Search / Simulator / Settings names, Windows PC, vendor software first. Default port not stated.

@@ -43,32 +43,49 @@ ROOT = Path(__file__).resolve().parents[1]
 # top of the ZIP even though four of them live under `docs/` in the repository:
 # somebody who unzips a game does not want to open a folder to find out how to
 # start it. Each entry is (path in this repository, name inside the archive).
+#
+# INSTALLATION.md is NOT in it (1 October 2026). It is the build-from-source and
+# developer guide -- npm, Vite, the source tree -- and handed to somebody who
+# unzipped a game it was a long page about tools they do not have. Everything a
+# player needs to set up is in the README, and the controls are in PLAYING.md.
+# It ships in the source archive.
 PORTABLE = [
     ('LICENSE', 'LICENSE'),
     ('docs/THIRD_PARTY_NOTICES.txt', 'THIRD_PARTY_NOTICES.txt'),
     ('docs/ATTRIBUTION.md', 'ATTRIBUTION.md'),
     ('docs/PORTABLE_README.md', 'README.md'),
-    ('docs/INSTALLATION.md', 'INSTALLATION.md'),
     ('docs/PLAYING.md', 'PLAYING.md'),
 ]
-# THE LAUNCH-MONITOR BRIDGE, for a player: one bundled file that needs only
-# Node.js (built by tools/build-bridge.mjs into dist/) and a start script per
-# platform, in their own folder so the archive's top level stays the game and
-# its documents. The bridge serves the Fairway.html one folder up.
-BRIDGE_FOLDER = 'Launch monitor'
-# One start script per platform. There were two -- one for this computer, one
-# for a phone -- until the bridge learned to listen on every address at once.
-BRIDGE_SCRIPTS = ['Start bridge.cmd', 'Start bridge.command']
-# A double-clicked macOS script must be executable, and a ZIP only says so if
-# the entry carries Unix permissions -- archive.write copies the Windows file's,
+# ONE DOWNLOAD PER PLATFORM, each carrying run_fairway_server for it (1 October
+# 2026). The server used to ship as a bundle needing Node.js plus a start script
+# per platform; now it is one program with nothing to install, compiled with Bun
+# by tools/build-server.mjs into release/server/<platform>/. Anybody downloading
+# Fairway is setting up a launch monitor, so the server is the front door: run
+# it, open the link it prints. Fairway.html still opens on its own for play
+# without one.
+#
+# The plain bundle the program was built from ships too, in server-source/: the
+# LGPL obligation for the JavaScriptCore inside Bun (THIRD_PARTY_NOTICES.txt),
+# and a way to run the server with Node.js for anyone who prefers it.
+PLATFORMS = [
+    ('Fairway-Windows.zip', 'windows', 'run_fairway_server.exe'),
+    ('Fairway-macOS-AppleSilicon.zip', 'macos-apple', 'run_fairway_server'),
+    ('Fairway-macOS-Intel.zip', 'macos-intel', 'run_fairway_server'),
+    ('Fairway-Linux.zip', 'linux', 'run_fairway_server'),
+]
+SERVER_SOURCE = 'server-source/fairway-bridge.mjs'
+# A program for macOS or Linux must be executable, and a ZIP only says so if the
+# entry carries Unix permissions -- archive.write copies the Windows file's,
 # which have no execute bit.
-EXECUTABLE = {f'{BRIDGE_FOLDER}/{n}' for n in BRIDGE_SCRIPTS if n.endswith('.command')}
+EXECUTABLE = {'run_fairway_server'}
+OUT = ROOT / 'release'
 
 # The source archive is for somebody who is going to READ or BUILD the thing,
 # so it keeps everything the portable one drops, and it keeps the repository's
 # own layout so that a path written in a document still points at the file it
 # names once the ZIP is unpacked.
 DOCS = [path for path, _ in PORTABLE] + [
+    'docs/INSTALLATION.md',
     'README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/README.md',
     'docs/DISTRIBUTION_REVIEW.md', 'docs/DEPENDENCY_INVENTORY.json',
     'docs/PROJECT_HANDOFF.md', 'docs/TODO.md',
@@ -86,7 +103,7 @@ ROOT_SOURCE = ['package.json', 'package-lock.json', 'vite.config.js', 'index.htm
 # `public` holds what the build copies beside the page for a HOSTED copy -- the
 # home-screen icons and the manifest -- and a source archive without it builds a
 # game that installs to a phone with no icon.
-DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs', '.cmd', '.command'},
+DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
                'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'}}
 
 
@@ -153,14 +170,20 @@ def main():
         for k, v in lock.items() if k
     }:
         raise SystemExit('Dependency inventory is stale. Update it and review notices.')
-    packages = {
-        'Fairway-portable.zip': [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE]
-            + [(bundle_path, f'{BRIDGE_FOLDER}/fairway-bridge.mjs')]
-            + [(ROOT / 'bridge/launch' / n, f'{BRIDGE_FOLDER}/{n}') for n in BRIDGE_SCRIPTS],
-        'Fairway-source.zip': [(p, p.relative_to(ROOT).as_posix()) for p in files],
-    }
+    servers = {}
+    for _, platform, program in PLATFORMS:
+        path = OUT / 'server' / platform / program
+        if not path.is_file():
+            raise SystemExit(f'No {path.relative_to(ROOT).as_posix()}. Run npm run server first.')
+        if path.stat().st_mtime_ns < bundle_path.stat().st_mtime_ns:
+            raise SystemExit(f'{path.relative_to(ROOT).as_posix()} is older than the bridge bundle. Run npm run server.')
+        servers[platform] = path
+    common = [(html_path, 'Fairway.html')] + [(ROOT / p, n) for p, n in PORTABLE] + [(bundle_path, SERVER_SOURCE)]
+    packages = {name: [(servers[platform], program)] + common for name, platform, program in PLATFORMS}
+    packages['Fairway-source.zip'] = [(p, p.relative_to(ROOT).as_posix()) for p in files]
+    OUT.mkdir(exist_ok=True)
     for name, entries in packages.items():
-        target = ROOT / name
+        target = OUT / name
         with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as archive:
             for path, destination in entries:
                 if destination in EXECUTABLE:
@@ -177,11 +200,11 @@ def main():
                 if archive.read(destination) != path.read_bytes():
                     raise SystemExit(f'Archive contents differ: {destination}')
         print(f'{name}: {len(entries)} verified files, {target.stat().st_size:,} bytes')
-    artifacts = [ROOT / n for n in packages] + [html_path]
-    (ROOT / 'RELEASE_SHA256.txt').write_text(''.join(
+    artifacts = [OUT / n for n in packages] + [html_path]
+    (OUT / 'RELEASE_SHA256.txt').write_text(''.join(
         f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(ROOT).as_posix()}\n'
         for p in artifacts), encoding='utf-8', newline='\n')
-    print('Wrote RELEASE_SHA256.txt')
+    print('Wrote release/RELEASE_SHA256.txt')
 
 
 if __name__ == '__main__':
