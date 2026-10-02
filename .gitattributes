@@ -11,6 +11,8 @@
 *.zip binary
 *.pdf binary
 
-# The Windows start scripts for the launch-monitor bridge must reach a player's
-# machine with CRLF line endings: cmd.exe misreads some LF-only batch files.
-*.cmd text eol=crlf
+# The website's pictures and clips live in Git LFS (owner's choice, 2 October):
+# about 40 MB that every retake would otherwise add to the history again,
+# permanently. The pages themselves are ordinary text. Media committed before
+# this line (the first, low-resolution set) stays in the history as it was.
+site/media/** filter=lfs diff=lfs merge=lfs -text

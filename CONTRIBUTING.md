@@ -11,6 +11,7 @@ you were there.
 Node.js 22.12 or newer. Python 3 only if you are cutting release archives.
 
 ```sh
+git lfs install --local && git lfs pull   # the website's pictures and clips
 npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the whole suite; it must be green before you commit

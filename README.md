@@ -117,7 +117,7 @@ checked by hand.
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |
-| `site/` | The website: hand-written pages, and screenshots and clips captured from the game (`tools/site-media/`). `npm run site` assembles it with the game into `site-dist/` (not committed) for Netlify |
+| `site/` | The website: hand-written pages, and screenshots and clips captured from the game (`tools/site-media/`), stored in Git LFS. `npm run site` assembles it with the game into `site-dist/` (not committed) for Netlify |
 | `dist/` | Build output. Not committed |
 
 ## Documentation

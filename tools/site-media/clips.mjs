@@ -1,12 +1,11 @@
 // The website's background clips: camera flights and a tee shot, recorded from
 // the game's own canvas (captureStream + MediaRecorder, webm), interface
-// hidden, into site/media/video/<name>.webm with a <name>.jpg poster.
+// hidden, into site/media/video/<name>.webm with a <name>.jpg poster: 1920x1080
+// on Ultra at 6 Mbit/s.
 // Needs the capture build first: node tools/site-media/build-hooked.mjs
 //   node tools/site-media/clips.mjs [name...]
-import {chromium} from 'playwright';
 import fs from 'node:fs';
-import path from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {launch, openGame, assertUltra, save, HIDE_HUD} from './capture.mjs';
 const OUT = 'site/media/video';
 fs.mkdirSync(OUT, {recursive: true});
 // `keys` are lab.camera poses at evenly spaced moments; the flight passes
@@ -17,7 +16,7 @@ export const CLIPS = [
    {fromPin: 55, around: 0, height: 16, pitch: -15}]},
  {name: 'desert-tee-shot', biome: 'desert', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
- {name: 'grove-green-orbit', biome: 'redwood', seed: 'GIANT', hole: 1, hour: 16.5, seconds: 12,
+ {name: 'redwood-green-orbit', biome: 'redwood', seed: 'GIANT', hole: 1, hour: 16.5, seconds: 12,
   keys: [{fromPin: 62, around: -40, height: 16, pitch: -12}, {fromPin: 56, around: 0, height: 15, pitch: -12},
    {fromPin: 62, around: 40, height: 16, pitch: -12}]},
  {name: 'desert-flyover', biome: 'desert', seed: 'MESA', hole: 2, hour: 17.6, seconds: 11,
@@ -28,17 +27,13 @@ export const CLIPS = [
    {fromPin: 105, around: 210, height: 40, pitch: -17}]},
 ];
 const want = process.argv.slice(2);
-const b = await chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required']});
+const b = await launch();
 for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
- const p = await (await b.newContext({viewport: {width: 1280, height: 720}})).newPage();
- p.on('console', m => { if (m.type() === 'error') console.log('  console:', m.text()); });
- await p.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
- await p.goto(pathToFileURL(path.resolve('bench/shots/dist-exp', 'index.html')).href);
- await p.waitForFunction(() => window.lab && window.__view && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
+ const p = await openGame(b, {width: 1920, height: 1080, density: 1});
  await p.evaluate(c => window.lab.course(c), {biome: s.biome, holes: 9, seed: s.seed});
  await p.evaluate(h => window.lab.hole(h), s.hole);
  await p.waitForTimeout(7000);
- await p.addStyleTag({content: '#world>*:not(#scene){display:none!important}header.topbar{display:none!important}#toast{display:none!important}'});
+ await p.addStyleTag({content: HIDE_HUD});
  await p.evaluate(([s]) => {
   const v = window.__view; v.daylight.hour = s.hour; v.daylight.rate = 0;
   if (s.flood) v.setFloodlights(true);
@@ -58,13 +53,13 @@ for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
   const q = poses[0]; window.__view.placeCamera(q, q.yaw * Math.PI / 180, q.pitch * Math.PI / 180);
  }, [s]);
  await p.waitForTimeout(s.flood ? 4000 : 2500);
- const poster = await p.screenshot({type: 'jpeg', quality: 78});
- fs.writeFileSync(`${OUT}/${s.name}.jpg`, poster);
+ await assertUltra(p, 1);
+ await save(p, [{file: `${OUT}/${s.name}.jpg`, width: 1920, quality: .85}]);
  const b64 = await p.evaluate(async ([s]) => {
   const canvas = window.__view.renderer.domElement;
   const stream = canvas.captureStream(30);
   const type = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
-  const rec = new MediaRecorder(stream, {mimeType: type, videoBitsPerSecond: 3_000_000});
+  const rec = new MediaRecorder(stream, {mimeType: type, videoBitsPerSecond: 6_000_000});
   const chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
   const done = new Promise(r => rec.onstop = r);
   rec.start(500);
@@ -88,6 +83,6 @@ for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
  }, [s]);
  fs.writeFileSync(`${OUT}/${s.name}.webm`, Buffer.from(b64, 'base64'));
  console.log(s.name, (b64.length * .75 / 1024 / 1024).toFixed(2) + ' MB');
- await p.close();
+ await p.context().close();
 }
 await b.close();

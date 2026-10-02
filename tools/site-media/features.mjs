@@ -1,13 +1,10 @@
 // The website's feature screenshots, interface showing, into
-// site/media/features/<name>.jpg.
+// site/media/features/<name>.jpg (2560x1440) and <name>-thumb.jpg (960x540),
+// rendered on Ultra at 3840x2160 (capture.mjs says why).
 // Needs the capture build first: node tools/site-media/build-hooked.mjs
 //   node tools/site-media/features.mjs [name...]
-import {chromium} from 'playwright';
-import fs from 'node:fs';
-import path from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {launch, openGame, assertUltra, save} from './capture.mjs';
 const OUT = 'site/media/features';
-fs.mkdirSync(OUT, {recursive: true});
 const course = (p, c, hole = 0) => p.evaluate(async ([c, hole]) => { await window.lab.course(c); window.lab.hole(hole); }, [c, hole]).then(() => p.waitForTimeout(7000));
 const hour = (p, h, flood) => p.evaluate(([h, flood]) => { const v = window.__view; v.daylight.hour = h; v.daylight.rate = 0; if (flood) v.setFloodlights(true); }, [h, flood]);
 const SCENES = {
@@ -72,17 +69,14 @@ const SCENES = {
  },
 };
 const want = process.argv.slice(2);
-const b = await chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist']});
+const b = await launch();
 for (const [name, scene] of Object.entries(SCENES).filter(([n]) => !want.length || want.includes(n))) {
- const p = await (await b.newContext({viewport: {width: 1600, height: 900}})).newPage();
- const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text().slice(0, 160)));
- await p.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
- await p.goto(pathToFileURL(path.resolve('bench/shots/dist-exp', 'index.html')).href);
- await p.waitForFunction(() => window.lab && window.__view && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
+ const p = await openGame(b);
  try { await scene(p); } catch (e) { console.log(name, 'FAILED', e.message.split('\n')[0]); }
  await p.addStyleTag({content: '#toast{display:none!important}'});
- fs.writeFileSync(`${OUT}/${name}.jpg`, await p.screenshot({type: 'jpeg', quality: 82}));
- console.log(name, errs.length ? errs.slice(0, 2) : 'ok');
- await p.close();
+ await p.waitForTimeout(600);
+ await assertUltra(p);
+ console.log(name, await save(p, [{file: `${OUT}/${name}.jpg`, width: 2560, quality: .9}, {file: `${OUT}/${name}-thumb.jpg`, width: 960, quality: .85}]), p.errors.length ? p.errors.slice(0, 2) : '');
+ await p.context().close();
 }
 await b.close();

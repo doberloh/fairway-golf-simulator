@@ -188,6 +188,28 @@ validation.** That sequencing is the plan; the channels are details.
   seen on an iPhone. If the stills look wrong there, the fix is MP4 copies of
   the five clips (any encoder), listed as a second `<source>`.
 
+- [ ] **Rework the website's ball physics wording.** Asked for by the owner on
+  2 October, with what it should say still to be decided. As it stands the
+  panel reads "Ball flight fitted to real launch monitors" and quotes the GC3
+  fit (carry 1.3%, peak height 0.2 ft, offline 0.2 yd) with SkyTrak as the
+  held-out check; the owner accepted "fitted" over "calibrated". Whatever
+  replaces it has to stay inside what RESEARCH.md can back -- see *The
+  website: what it claims*.
+
+- [ ] **Export the range's shot data.** The owner's copy for the website's
+  practice panel said "view and export your shot data"; the game has no such
+  export (it downloads the scorecard, saved rounds and courses, and nothing
+  else), so the page says "view your shot data" until it does. The shot list
+  already holds every shot of the session. When it exists, put "and export"
+  back in `site/index.html`.
+
+- [ ] **Owner: set `GIT_LFS_ENABLED` = `true` in the Netlify UI** before the
+  first deploy from the repository. The website's pictures and clips are in
+  Git LFS, and Netlify only fetches them with that variable set, which it reads
+  before cloning and so cannot take from `netlify.toml`. Without it the build
+  stops with a message saying exactly this. Not needed for a drag-and-drop
+  deploy of a locally built `site-dist/`.
+
 - [ ] **At launch: take the website's no-index off.** Three places, removed
   together: the `robots` meta tag in `site/index.html` and `site/media.html`,
   the `X-Robots-Tag` header in `netlify.toml`, and `site/robots.txt`.
@@ -285,10 +307,10 @@ GitHub repository, and stop shipping what nobody needs.
     paths and user names (`C:\Users\...`), email addresses, and anything
     naming what is in `docs/sources/private/` -- which stays ignored and is
     never inventoried, per the rule in `.gitignore`.
-  - **Decide where the website's media lives.** `site/media/` is about 20 MB
-    of pictures and clips, and every retake adds its size to the history
-    permanently; Git LFS, or deploying by hand without committing the media,
-    are the alternatives to plain commits.
+  - **The website's media is settled**: Git LFS, chosen by the owner on 2
+    October. Make sure the private repository has LFS on, and check the
+    first set's 18 MB, committed as ordinary files before the switch, is
+    acceptable to carry (it is in the history either way).
   - **One branch per step**, in this order: AGENTS + CONTRIBUTING; HISTORY.md
     (pure moves); the ARCHITECTURE cut; RESEARCH + LANDSCAPE; the index. A
     pure move is reviewed with `git diff --color-moved`; mixing a move with an
@@ -3124,7 +3146,11 @@ engineering provenance pass, not legal advice.
   1440 and 390 px wide: no errors, no sideways scroll, clips switch, the demo
   reaches the main menu in 3.3 s from a local server and its manifest is
   served. The media is retaken with `tools/site-media/`. INSTALLATION.md
-  *The website*.
+  *The website*. **Second pass, 2 October, from the owner's review**: every
+  picture and clip retaken at full resolution (the first set rendered at 1x;
+  RESEARCH.md *The website*), landscape names only rather than course names,
+  no em dashes, the stats box gone, and the hero, landscape, greens, game
+  modes and practice copy rewritten in the owner's words.
 
 
 - [x] **Discord: deliberately not yet**, and going open source makes that
