@@ -1940,7 +1940,11 @@ async function enterStudio(){
  // opened on the exact course you had been playing -- the shared-world problem
  // the mode split exists to remove, just in the other direction.
  await whileGenerating('Growing your landscape…',async report=>{
-  leaveBackdrop();
+  // The studio opens at midday too, like a round built in it. Without this a
+  // player whose clock had never been set -- anyone opening the studio before
+  // their first round, which is most people trying the demo -- landed in it at
+  // midnight, because an unset hour reads as 0:00.
+  leaveBackdrop();lightsOffForRound();middayForRound();
   round=new Round({holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
   loadCourse();
