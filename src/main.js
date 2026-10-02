@@ -428,7 +428,9 @@ function setUpTurn(){
  $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
  $('power').value=$('club').value==='putter'?clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100):100;
  const target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
- view.setBall(p);updateAim();view.setCamera(p,aim);updateHUD();sendPlayer();
+ // The slope grid takes this shot's frame now, from the aim it starts with, and
+ // keeps it while the player aims (GolfView.setReadingHeading).
+ view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
 }
 function updateHUD(){
  const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
@@ -1110,7 +1112,7 @@ function setUpRangeTurn(){
  const p=round.position;shape=0;launchAdjust=0;spinAdjust=0;
  aim=Math.atan2(course.pin.x-p.x,course.pin.z-p.z)*180/Math.PI;
  aimRange=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
- view.setBall(p);updateAim();view.setCamera(p,aim);updateHUD();
+ view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();
 }
 // BETWEEN SHOTS, WHICH IS MOST OF THE TIME. The numbers from the last shot stay
 // exactly where they were until the next one replaces them.

@@ -5600,7 +5600,8 @@ grid sat diagonally on screen.
 
 **What it is now.** One mesh over the green at half-metre resolution, at the
 same 6.5 cm lift the lines had, and a shader that draws the grid in whatever
-frame it is given: the play camera's heading on the ground, every frame, or the
+frame it is given: in play, the direction faced at the start of the shot (it
+first followed the camera every frame -- see the correction below), or the
 hole's axes for every other camera (the owner: they need not stay square).
 Lines through the cup, every 1.5 m, about 1.4 px wide at any distance, coloured
 by slopeColor's five bands from the putting surface's own gradient per vertex.
@@ -5609,7 +5610,8 @@ by slopeColor's five bands from the putting surface's own gradient per vertex.
 lines downhill, over marching chevrons in each square or keeping the balls. On
 each line, a dash travels the way the slope falls along that line; brighter the
 more of the slope runs along it, one speed per slope band (0, 0.45, 0.7, 1.0,
-1.4 m/s), none on the flat blue band. **Rejected inside it:** a speed that
+1.4 m/s), and still only where the ground is dead level (see the correction
+below; the first version skipped the whole blue band). **Rejected inside it:** a speed that
 varied smoothly point to point -- neighbouring points drift apart in phase as
 time runs, and within a minute the dashes are noise. Banded speeds only
 disagree at the band edges, where the colour changes anyway.
@@ -5686,3 +5688,18 @@ smoke journey at 150% on 1920x1080, 200% on 2560x1440, and 200% held to 150% on
 1080p -- every control reachable, nothing scrolling, 61-63% of the course
 visible, the course drawn at full resolution. At 100% fifteen screenshots
 against main differ only by the animated sea.
+
+**Corrected the same day (branch `green-grid-fixes`, the owner).** Two things.
+(1) *The flow covered only the middle of a green.* The first version gave the
+blue band (under 1%) no flow at all. On the owner's green most of the surface
+tilts about 0.9% -- measured: the slope read from the ground matches the
+green's designed contour point for point, so the data was right -- and enough
+to break a putt, yet the flow showed only on the 2-3% roll through the middle.
+The blue band now flows too, at 0.3 m/s, and only ground under 0.1% (round the
+cup) is still. (2) *The grid squared itself to the camera every frame*, so
+every nudge of the aim turned the whole grid: hugely disorienting, the owner. It
+now takes the shot's starting aim when `setUpTurn` sets the shot up and keeps
+it while the player aims. Measured in the built game on a putt 54 degrees off
+the hole's line: grid and camera both at -54.3 degrees at set-up; after holding
+the aim key, camera -70.8, grid still -54.3; the next shot from elsewhere on the
+green, both 135.1.

@@ -14,13 +14,18 @@ export function slopeColor(slope){return new T.Color(slope<.01?'#39afd2':slope<.
 // Now one mesh covers the green at half-metre resolution, lifted the same 6.5 cm
 // the lines were, and its shader draws both:
 //
-//   the grid   lines every 1.5 m through the cup, in a frame the renderer sets
-//              every frame: the play camera's heading, so they stay square to
-//              the screen, or the hole's axes for every other camera.
+//   the grid   lines every 1.5 m through the cup, in a frame the renderer
+//              sets: in play, the direction you face at the START of the shot
+//              (not while you aim -- a grid turning with every nudge of the aim
+//              was disorienting, the owner), or the hole's axes for every
+//              other camera.
 //   the flow   light running along those same lines, downhill: on each line, a
 //              dash travels the way the slope falls along it, brighter the more
 //              of the slope runs along that line, quicker on the steeper
-//              bands, and none at all on the flat blue band.
+//              bands. Everywhere the green slopes at all, the gentlest band
+//              included: it first skipped everything under 1%, and a green
+//              tilted 0.9% -- enough to break a putt -- showed flow only in
+//              its middle (the owner).
 //
 // Slope and fall direction are the putting surface's own (greenGradient), per
 // vertex. The band colours are slopeColor's. Pulses move at one speed per
@@ -67,7 +72,7 @@ const READING_FRAGMENT = `varying vec2 vXZ;varying float vSlope;varying vec2 vFa
 uniform vec2 axis,origin;uniform float time,showLines,showFlow;uniform vec3 band0,band1,band2,band3,band4;
 const float SP=${GRID_SPACING.toFixed(2)};
 vec3 band(float s){return s<.01?band0:s<.02?band1:s<.03?band2:s<.05?band3:band4;}
-float speed(float s){return s<.01?0.:s<.02?.45:s<.03?.7:s<.05?1.:1.4;}
+float speed(float s){return s<.01?.3:s<.02?.45:s<.03?.7:s<.05?1.:1.4;}
 // A dash with a bright head and a fading tail, the head leading.
 float dash(float p){return smoothstep(.5,.93,p)*(1.-smoothstep(.93,1.,p));}
 void main(){
@@ -89,7 +94,8 @@ void main(){
  // tee; drawn anyway, its lines fill it solid and the dashes turn to speckle.
  // Full strength while a square is over 10 px on screen, gone under 4.
  float cell=SP/max(max(wu,wv),1e-5),near=smoothstep(4.,10.,cell);
- float flow=max(alongA,alongB)*showFlow*step(.01,vSlope)*near;
+ // Still only where the ground is dead level (round the cup, under 0.1%).
+ float flow=max(alongA,alongB)*showFlow*smoothstep(.001,.003,vSlope)*near;
  float lines=max(nearU,nearV)*showLines*.9*near;
  float a=max(lines,flow);
  if(a<.01)discard;
@@ -121,9 +127,9 @@ export function createGreenReading(h){
  const toggle=()=>{let on=false;return {get visible(){return on;},set visible(v){on=!!v;sync();},parent:group};};
  const grid=toggle(),flow=toggle();
  sync();
- // Every frame: the time, and the frame the lines are drawn in -- the play
- // camera's heading on the ground (`heading`, world x and z), or the hole's axes
- // when there is none, or when the camera looks straight down.
+ // Every frame: the time, and the frame the lines are drawn in -- a heading on
+ // the ground (`heading`, world x and z; the renderer passes the shot's), or
+ // the hole's axes when there is none.
  const update=(time,heading)=>{
   uniforms.time.value=time;
   const l=heading?Math.hypot(heading.x,heading.z):0;
