@@ -1,27 +1,47 @@
 // The website's background clips: camera flights and a tee shot, recorded from
 // the game's own canvas (captureStream + MediaRecorder, webm), interface
 // hidden, into site/media/video/<name>.webm with a <name>.jpg poster: 1920x1080
-// on Ultra at 6 Mbit/s.
+// on Ultra at 5 Mbit/s.
 // Needs the capture build first: node tools/site-media/build-hooked.mjs
 //   node tools/site-media/clips.mjs [name...]
 import fs from 'node:fs';
-import {launch, openGame, assertUltra, save, HIDE_HUD} from './capture.mjs';
+import {launch, openGame, assertUltra, save, HIDE_HUD, hourFor} from './capture.mjs';
 const OUT = 'site/media/video';
 fs.mkdirSync(OUT, {recursive: true});
 // `keys` are lab.camera poses at evenly spaced moments; the flight passes
 // through them with its height smoothed so the ground's bumps do not shake it.
+// The eight landscape clips play one after another behind the website, in this
+// order; the tee shot and the night clip are for the media page. A clip's
+// light is a time of day (`when`, a sun height -- capture.mjs) unless it names
+// an hour outright.
 export const CLIPS = [
- {name: 'links-flyover', biome: 'links', seed: 'DUNE', hole: 1, hour: 17.8, seconds: 11,
+ {name: 'links-golden', biome: 'links', seed: 'DUNE', hole: 1, when: 'golden', seconds: 9,
   keys: [{fromPin: 230, around: 8, height: 32, pitch: -12}, {fromPin: 140, around: 4, height: 26, pitch: -13},
    {fromPin: 55, around: 0, height: 16, pitch: -15}]},
- {name: 'desert-tee-shot', biome: 'desert', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
-  shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
- {name: 'redwood-green-orbit', biome: 'redwood', seed: 'GIANT', hole: 1, hour: 16.5, seconds: 12,
-  keys: [{fromPin: 62, around: -40, height: 16, pitch: -12}, {fromPin: 56, around: 0, height: 15, pitch: -12},
-   {fromPin: 62, around: 40, height: 16, pitch: -12}]},
- {name: 'desert-flyover', biome: 'desert', seed: 'MESA', hole: 2, hour: 17.6, seconds: 11,
+ {name: 'desert-noon', biome: 'desert', seed: 'MESA', hole: 2, when: 'noon', seconds: 9,
   keys: [{fromPin: 250, around: -6, height: 24, pitch: -10}, {fromPin: 150, around: -3, height: 30, pitch: -14},
    {fromPin: 50, around: 8, height: 18, pitch: -17}]},
+ // Bird's eye, at first light, with the morning mist still lying in the valleys.
+ {name: 'pacific-northwest-dawn', biome: 'pnw', seed: 'CEDAR', hole: 1, when: 'dawn', seconds: 9,
+  keys: [{fromPin: 340, around: 25, height: 120, pitch: -26}, {fromPin: 210, around: 12, height: 105, pitch: -32},
+   {fromPin: 90, around: 0, height: 90, pitch: -40}]},
+ {name: 'autumn-golden', biome: 'autumn', seed: 'MAPLE', hole: 1, when: 'golden', seconds: 9,
+  keys: [{fromPin: 210, around: -8, height: 24, pitch: -10}, {fromPin: 120, around: -4, height: 20, pitch: -12},
+   {fromPin: 45, around: 0, height: 14, pitch: -14}]},
+ {name: 'mountain-morning', biome: 'mountain', seed: 'SUMMIT', hole: 4, when: 'morning', seconds: 9,
+  keys: [{fromPin: 95, around: 175, height: 34, pitch: -13}, {fromPin: 90, around: 205, height: 32, pitch: -13},
+   {fromPin: 95, around: 235, height: 34, pitch: -13}]},
+ {name: 'island-afternoon', biome: 'island', seed: 'LAGOON', hole: 1, when: 'afternoon', seconds: 9,
+  keys: [{fromPin: 90, around: 120, height: 26, pitch: -12}, {fromPin: 82, around: 150, height: 24, pitch: -12},
+   {fromPin: 90, around: 180, height: 26, pitch: -12}]},
+ {name: 'midwest-afternoon', biome: 'midwest', seed: 'MEADOW', hole: 1, when: 'afternoon', seconds: 9,
+  keys: [{fromPin: 230, around: -5, height: 20, pitch: -9}, {fromPin: 140, around: 0, height: 17, pitch: -10},
+   {fromPin: 60, around: 5, height: 12, pitch: -11}]},
+ {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 1, when: 'afternoon', seconds: 9,
+  keys: [{fromPin: 62, around: -40, height: 16, pitch: -12}, {fromPin: 56, around: 0, height: 15, pitch: -12},
+   {fromPin: 62, around: 40, height: 16, pitch: -12}]},
+ {name: 'desert-tee-shot', biome: 'desert', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
+  shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
  {name: 'night-floodlit', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
   keys: [{fromPin: 110, around: 170, height: 40, pitch: -17}, {fromPin: 100, around: 190, height: 38, pitch: -17},
    {fromPin: 105, around: 210, height: 40, pitch: -17}]},
@@ -35,10 +55,11 @@ for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
  await p.waitForTimeout(7000);
  await p.addStyleTag({content: HIDE_HUD});
  await p.evaluate(([s]) => {
-  const v = window.__view; v.daylight.hour = s.hour; v.daylight.rate = 0;
+  const v = window.__view; v.daylight.hour = s.at; v.daylight.rate = 0;
   if (s.flood) v.setFloodlights(true);
-  for (const o of [v.aimLine, v.aimRing, v.ballRing]) if (o) o.visible = false;
- }, [s]);
+  // A flyover hides the ball as well: at dusk the glow ball is a bright dot on the tee.
+  for (const o of [v.aimLine, v.aimRing, v.ballRing, ...(s.shot ? [] : [v.ball, v.ballHalo])]) if (o) o.visible = false;
+ }, [{...s, at: s.hour ?? hourFor(s.biome, s.when)}]);
  // The path: sample the keyed poses through lab.camera, then smooth the height.
  if (s.keys) await p.evaluate(([s]) => {
   const N = 240, lerp = (a, b, t) => a + (b - a) * t, poses = [];
@@ -59,7 +80,7 @@ for (const s of CLIPS.filter(s => !want.length || want.includes(s.name))) {
   const canvas = window.__view.renderer.domElement;
   const stream = canvas.captureStream(30);
   const type = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
-  const rec = new MediaRecorder(stream, {mimeType: type, videoBitsPerSecond: 6_000_000});
+  const rec = new MediaRecorder(stream, {mimeType: type, videoBitsPerSecond: 5_000_000});
   const chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
   const done = new Promise(r => rec.onstop = r);
   rec.start(500);

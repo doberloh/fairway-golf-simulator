@@ -14,7 +14,25 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
+import {hourForElevation, peakElevation, SUNRISE, SUNSET} from '../../src/daylight.js';
+import {BIOMES} from '../../src/biomes.js';
+
 export const GAME = path.resolve('bench/shots/dist-exp', 'index.html');
+
+// A TIME OF DAY IS A SUN HEIGHT, NOT A CLOCK READING. The game's warm light
+// follows the sun's elevation (`warmth` in daylight.js builds below 26 degrees
+// and peaks at the horizon), and each biome's sun climbs to a different noon,
+// so a fixed clock time is a different light in every landscape. The first
+// website set took "golden hour" at 5:48 PM: the sun was still 19 degrees up,
+// which is plain afternoon, and the owner spotted it on the links picture.
+// `dawn` is the one keyed by clock: the morning mist is (mistAmount), thickest
+// at first light and burnt off about three hours later.
+export function hourFor(biome, when) {
+ const peak = peakElevation(BIOMES[biome].sun), evening = e => hourForElevation(e, peak), morning = e => SUNRISE + SUNSET - evening(e);
+ const at = {dawn: SUNRISE + .7, morning: morning(18), noon: (SUNRISE + SUNSET) / 2, afternoon: evening(32), golden: evening(5), night: 22}[when];
+ if (at === undefined) throw Error(`unknown time of day "${when}"`);
+ return at;
+}
 
 export const launch = () => chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required']});
 
