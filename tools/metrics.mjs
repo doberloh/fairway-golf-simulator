@@ -438,6 +438,30 @@ export const METRICS = {
    return {series, counts, invariants};
   },
  },
+
+ // THE GROUND SHADER PAINTS ONLY THE OWNING HOLE'S HAZARDS. Which hole owns a
+ // patch of ground is the owner atlas's own rule (owner-atlas.js): a large
+ // lake's hole within 7 m of the lake, else `w.nearest` -- and a bunker reaching onto ground another hole owns is dug out there
+ // (the excavation is every hole's, everywhere) but painted as that hole's
+ // rough. Seen on the website's desert clip: a white sliver with a staircase
+ // edge where the sand should have been, the rest of the bowl grassed over.
+ // The ring is the excavation's own reach (1.15 of the outline, course.js).
+ bunkers: {
+  describe: 'whether every bunker sits wholly on ground its own hole owns',
+  run(w) {
+   const counts = {bunkers: 0};
+   const invariants = {bunkerOnAnotherHolesGround: 0};
+   for (const h of w.holes) for (const b of h.bunkers) {
+    counts.bunkers++;
+    const off = Array.from({length: 48}, (_, i) => {
+     const e = ovalRadius(b, i * Math.PI / 24);
+     return h.toWorld({x: b.x + e.x * 1.15, z: b.z + e.z * 1.15});
+    }).some(q => (w.lakeOwner(q.x, q.z, 7) || w.nearest(q.x, q.z).h) !== h);
+    if (off) invariants.bunkerOnAnotherHolesGround++;
+   }
+   return {series: {}, counts, invariants};
+  },
+ },
 };
 
 // Inside a body's own oval, by the same profile everything else reads.

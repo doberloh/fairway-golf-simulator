@@ -1003,6 +1003,18 @@ export function* generateWorldSteps(settings={},options={}){
  // Hazards follow their local ground elevation instead of draining every lake
  // down to a single sea level. Depth is the selected maximum basin depth.
  for(const h of holes){h.ponds=h.ponds.filter(p=>{const q=h.toWorld(p);return nearby(q.x,q.z)===h&&Array.from({length:24},(_,i)=>{const edge=ovalRadius(p,i*Math.PI/12,1);const v=h.toWorld({x:p.x+edge.x,z:p.z+edge.z});return nearby(v.x,v.z)===h;}).every(Boolean)&&!holes.some(other=>other!==h&&['tee','green','fringe','fairway'].includes(localSurface(other,other.toLocal(q).x,other.toLocal(q).z)));});for(const p of h.ponds){const q=h.toWorld(p);p.level=base(q.x,q.z)-.45;}}
+ // A BUNKER STAYS ON ITS OWN HOLE'S GROUND, as a pond already must. The ground
+ // shader paints only the owning hole's hazards, and the owner is `nearest`, so
+ // a bunker reaching onto a neighbour's ground was dug out there -- every
+ // hole's excavation applies everywhere -- but painted, and played, as that
+ // hole's rough: a buried bowl with a white sliver along a staircase edge
+ // (2 October, seen behind a green on the website's desert clip; about one
+ // bunker in twenty, `bench bunkers`). The ring is the excavation's own reach,
+ // 1.15 of the outline. Dropped rather than moved: nudging it inward would
+ // re-fit green-side pockets the binary search above already placed off the
+ // fringe, and handing the ground to the bunker's hole instead would cut the
+ // neighbour's corridor. No draw is taken, so nothing generated after shifts.
+ for(const h of holes)h.bunkers=h.bunkers.filter(b=>Array.from({length:48},(_,i)=>{const e=ovalRadius(b,i*Math.PI/24),v=h.toWorld({x:b.x+e.x*1.15,z:b.z+e.z*1.15});return nearby(v.x,v.z)===h;}).every(Boolean));
  function land(x,z,n=nearest(x,z)){
   const rolling=.45+.28*Math.sin(x/96+phase)*Math.cos(z/113)+.2*Math.sin(x/49-z/71),relief=s.landform/100;
   if(coastal){const reach=28+(1-relief)*50+12*Math.sin(x/66+Math.sin(z/91)),coast=Math.max(smooth((n.d-reach)/30),(1-smooth((n.other-n.d)/(18+relief*20)))*smooth(n.d/6));const depth=s.waterMin+(s.waterMax-s.waterMin)*(.5+.25*Math.sin(x/130+phase)+.25*Math.cos(z/170));return foreshore(base(x,z)*(1-coast)-depth*coast,coast);}

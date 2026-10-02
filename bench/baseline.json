@@ -1,102 +1,122 @@
 {
  "tier": "full",
  "metrics": [
+  "surrounds",
   "tees",
+  "teeclear",
   "blind",
   "channels",
-  "ponds"
+  "ponds",
+  "bunkers"
  ],
  "set": {},
  "courses": 35,
- "wallSeconds": 29.3,
- "buildSeconds": 651.6,
+ "wallSeconds": 15.1,
+ "buildSeconds": 350.1,
  "invariants": {
   "tees.teeBelowTheOneInFront": 0,
   "tees.padOnGroundItMayNotUse": 0,
   "tees.markerOffItsPad": 0,
+  "teeclear.rockInATeeShot": 0,
+  "teeclear.rockInTheTeeView": 0,
+  "teeclear.treeInATeeShot": 0,
+  "teeclear.treeInTheTeeView": 0,
   "channels.stationInsideAFairway": 0,
   "channels.stationOnAGreen": 0,
   "channels.waterInsideAnotherBody": 0,
   "ponds.pondCrossesAFairway": 0,
-  "ponds.overlappingBodies": 0
+  "ponds.overlappingBodies": 0,
+  "bunkers.bunkerOnAnotherHolesGround": 0
  },
  "counts": {
   "tees.holes": 315,
   "tees.tees": 945,
-  "tees.sited": 904,
-  "tees.needsWork": 21,
-  "tees.raised": 143,
-  "blind.blockedOver1m": 23,
-  "blind.blockedOver3m": 5,
+  "tees.sited": 912,
+  "tees.needsWork": 31,
+  "tees.raised": 138,
+  "tees.pairs": 945,
+  "tees.pairsInLine": 6,
+  "teeclear.rocks": 0,
+  "teeclear.trees": 0,
+  "teeclear.rocksChecked": 8000,
+  "teeclear.treesChecked": 0,
+  "blind.blockedOver1m": 25,
+  "blind.blockedOver3m": 7,
   "blind.shots": 945,
+  "blind.blockedInside30m": 0,
+  "blind.blocked30to80m": 0,
+  "blind.blockedBeyond80m": 25,
+  "blind.nearOver15cm": 2,
+  "blind.nearOver50cm": 0,
   "channels.requested": 105,
   "channels.placed": 105,
-  "channels.endEdge": 83,
-  "channels.endSink": 8,
-  "channels.endSea": 1,
-  "channels.endTrimmed": 11,
-  "channels.endConfluence": 2,
+  "channels.endEdge": 75,
+  "channels.endSink": 16,
+  "channels.endSea": 0,
+  "channels.endTrimmed": 10,
+  "channels.endConfluence": 4,
   "channels.endStall": 0,
-  "ponds.bodies": 233,
-  "ponds.bitingIn": 30,
-  "ponds.terminal": 8
+  "ponds.bodies": 270,
+  "ponds.bitingIn": 15,
+  "ponds.terminal": 4,
+  "bunkers.bunkers": 647
  },
  "summary": {
   "tees.step": {
    "n": 630,
-   "min": 0.0081939697265625,
-   "p05": 0.08944320678710938,
-   "median": 0.7920455932617188,
-   "p95": 7.326597213745117,
-   "max": 19.91824722290039
+   "min": 0.029916763305664062,
+   "p05": 0.12292861938476562,
+   "median": 0.7699079513549805,
+   "p95": 6.853055953979492,
+   "max": 22.927873611450195
   },
   "tees.padSpread": {
    "n": 945,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.0002215478819955763,
-   "max": 1.0991567334273284
+   "p95": 0.000052229682463433846,
+   "max": 0.003938267740643653
   },
   "tees.collarRelief": {
    "n": 945,
    "min": 0,
-   "p05": 2.722623122508594e-7,
-   "median": 0.000055370119458331146,
-   "p95": 0.0016208436594133957,
-   "max": 1.1267745798248825
+   "p05": 5.086421417388465e-7,
+   "median": 0.00004126548056149204,
+   "p95": 0.0003948753242184466,
+   "max": 0.030811554319203793
   },
   "tees.normalJump": {
    "n": 945,
-   "min": 0.07837099115005133,
-   "p05": 0.1975085434182014,
-   "median": 0.5847146385179119,
-   "p95": 1.9417967347323284,
-   "max": 15.618482928632845
+   "min": 0.045840069343604455,
+   "p05": 0.21177502138184767,
+   "median": 0.6428955126723566,
+   "p95": 1.3319608948590989,
+   "max": 7.219762701212826
   },
   "tees.groundSlope": {
    "n": 945,
-   "min": 0.7563954430380313,
-   "p05": 2.084466296718024,
-   "median": 6.150368922263384,
-   "p95": 12.798569072165519,
-   "max": 41.90761421683822
+   "min": 0.5461143576709837,
+   "p05": 2.4805389511214018,
+   "median": 7.549948409331736,
+   "p95": 14.980458399593369,
+   "max": 37.23044455963289
   },
   "tees.siteSpread": {
    "n": 945,
-   "min": 0.01581505610104017,
-   "p05": 0.0979945681031893,
-   "median": 0.4206646477828393,
-   "p95": 1.1308907968263,
-   "max": 2.967219885226676
+   "min": 0.001665599953998509,
+   "p05": 0.09821573142181705,
+   "median": 0.4866620298086204,
+   "p95": 1.1915820458509465,
+   "max": 4.601196653389081
   },
   "tees.slid": {
    "n": 945,
    "min": 0,
-   "p05": 3.285265630989062,
-   "median": 21.124442034574674,
-   "p95": 40.44762950648642,
-   "max": 48.39509417274918
+   "p05": 4.202011180585451,
+   "median": 20.50118195742236,
+   "p95": 39.539487670691614,
+   "max": 48.00695895121255
   },
   "tees.lift": {
    "n": 945,
@@ -109,74 +129,98 @@
   "tees.lateral": {
    "n": 945,
    "min": 0,
-   "p05": 0.2285571489483118,
-   "median": 14.506599502637982,
-   "p95": 38.07985198684037,
-   "max": 39.86985254101455
+   "p05": 0.43843346647918224,
+   "median": 13.523775367066264,
+   "p95": 37.50223334878683,
+   "max": 39.974795347079635
+  },
+  "tees.pairAcross": {
+   "n": 945,
+   "min": 5.28259265116214,
+   "p05": 10.156728353906487,
+   "median": 20.438240515631385,
+   "p95": 54.00606349761904,
+   "max": 88.74817533076131
   },
   "blind.blue": {
    "n": 315,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.1791561473963199,
-   "max": 3.644675933416373
+   "p95": 0.12494977854881384,
+   "max": 3.0973265817902984
   },
   "blind.white": {
    "n": 315,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 0.2077516997756632,
-   "max": 1.4332320890388495
+   "p95": 0.3947253337358312,
+   "max": 3.69193572748517
   },
   "blind.red": {
    "n": 315,
    "min": 0,
    "p05": 0,
    "median": 0,
-   "p95": 1.5912543021300358,
-   "max": 4.857182996778569
+   "p95": 1.1319425380043775,
+   "max": 3.3851684948016967
+  },
+  "blind.blockedAt": {
+   "n": 25,
+   "min": 98,
+   "p05": 126,
+   "median": 164,
+   "p95": 188,
+   "max": 188
+  },
+  "blind.nearOver": {
+   "n": 945,
+   "min": 0,
+   "p05": 0,
+   "median": 0,
+   "p95": 0,
+   "max": 0.3241752049147877
   },
   "channels.length": {
    "n": 105,
-   "min": 124.94982829965349,
-   "p05": 207.102842617042,
-   "median": 453.90233482812886,
-   "p95": 720.9227397847235,
-   "max": 1234.9546613839734
+   "min": 154.69613269525286,
+   "p05": 207.05120354071877,
+   "median": 432.9419491141147,
+   "p95": 836.0892409636218,
+   "max": 920.0548588514807
   },
   "channels.turning": {
    "n": 105,
-   "min": 0.268977118743047,
-   "p05": 0.4137409744059968,
-   "median": 1.5835729473385687,
-   "p95": 3.810146125479159,
-   "max": 4.3809053362145765
+   "min": 0.11508068161191275,
+   "p05": 0.5580715612420182,
+   "median": 1.5231528912968024,
+   "p95": 2.7514926110668516,
+   "max": 3.9927944058526115
   },
   "channels.greenClearance": {
    "n": 315,
-   "min": 13.761097280327196,
-   "p05": 29.286608482716176,
-   "median": 271.0564892598459,
-   "p95": 807.9876652798893,
-   "max": 1161.5045053549768
+   "min": 18.852433622789288,
+   "p05": 30.70095465935131,
+   "median": 283.14085457082336,
+   "p95": 794.273601709352,
+   "max": 1181.6776229529285
   },
   "channels.pondGap": {
-   "n": 225,
-   "min": 27.251048506422514,
-   "p05": 32.3305586360809,
-   "median": 281.5868495802128,
-   "p95": 680.5476638627084,
-   "max": 1002.1598440158267
+   "n": 266,
+   "min": 24.25549110070798,
+   "p05": 30.88881600367322,
+   "median": 246.84879924634805,
+   "p95": 656.9491141281617,
+   "max": 977.89800768924
   },
   "ponds.bite": {
-   "n": 30,
-   "min": 0.25613173695503555,
-   "p05": 0.25613173695503555,
-   "median": 5.651033348294494,
-   "p95": 13.033145714687883,
-   "max": 13.033145714687883
+   "n": 15,
+   "min": 1.2111034139282921,
+   "p05": 1.2111034139282921,
+   "median": 6.5780161335494505,
+   "p95": 8.327156064987552,
+   "max": 8.327156064987552
   }
  }
 }

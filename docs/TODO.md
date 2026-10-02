@@ -3150,7 +3150,11 @@ engineering provenance pass, not legal advice.
   picture and clip retaken at full resolution (the first set rendered at 1x;
   RESEARCH.md *The website*), landscape names only rather than course names,
   no em dashes, the stats box gone, and the hero, landscape, greens, game
-  modes and practice copy rewritten in the owner's words.
+  modes and practice copy rewritten in the owner's words. **Third pass, 2
+  October**: the light in every picture is now the time of day it is labelled
+  (the times had been clock readings, and "golden hour" was plain afternoon),
+  and the background plays all eight landscapes in turn instead of one clip
+  per section, which had left the desert on repeat.
 
 
 - [x] **Discord: deliberately not yet**, and going open source makes that
@@ -3199,6 +3203,15 @@ engineering provenance pass, not legal advice.
   browser golf simulator" -- so a search engine has something to hang it on.
 
 ## Found by driving the built game
+
+- [x] **Bunkers buried under a neighbour's rough (2 October, generator 34).**
+  Spotted by the owner behind a green on the website's desert clip: a white
+  sliver with a staircase edge, the rest of the bunker grassed over. A bunker
+  reaching onto ground another hole owns was dug out but painted and played as
+  that hole's rough; about one bunker in twenty (35 of 682 on the full bench).
+  Such bunkers are now dropped, as ponds already were. New bench invariant
+  `bunkers`, new test `tests/bunker-ground.test.mjs`. RESEARCH.md *Bunkers on
+  another hole's ground*.
 
 - [x] **Course studio opened at midnight for a new player (1 October).**
   Found while capturing the website's screenshots: a profile whose clock had
