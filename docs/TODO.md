@@ -706,6 +706,14 @@ Kept, not thrown away: the reasoning in a finished entry is often the only
 record of what was ruled out and why, which is worth more than a short file.
 
 
+## The simulator bay
+
+- [x] **A left/right offset for the simulator bay (1 October).** Branch
+  `bay-stand-side`, asked for by the owner. "Your mat, left or right of the
+  screen centre", in feet, in the Camera & bay panel: an off-axis view (a lens
+  shift), so the target line lands where it is in the room; the eye stays
+  behind the ball. RESEARCH.md *Field of view is a measurement in a bay*.
+
 ## OPUS5.5 GFX and OPTIMIZATIONS
 
 Every item on this list was finished or closed by 1 October 2026; the

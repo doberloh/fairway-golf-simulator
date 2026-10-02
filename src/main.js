@@ -3035,7 +3035,9 @@ function renderPanel(name,content){
   ${slider('ballAhead','Ball in front of you',c.ballAhead,.2,3,' m',.05)}
   ${slider('screenDiagonal','Screen size (diagonal)',c.diagonal,40,300,'"',1)}
   <label class="field">Screen shape<select id="screenAspect">${Object.keys(ASPECTS).map(a=>`<option value="${a}" ${c.aspect===a?'selected':''}>${a}</option>`).join('')}</select></label>
-  ${slider('standFeet','You stand from the screen',c.standFeet,2,30,' ft',.5)}`
+  ${slider('standFeet','You stand from the screen',c.standFeet,2,30,' ft',.5)}
+  ${slider('standSide','Your mat, left or right of the screen centre',c.standSide??0,-10,10,' ft',.25)}
+  <p class="note">Negative is left, as you face the screen. The camera still looks straight down your target line; the picture slides sideways, the way a projector's lens shift does, so the line lands where it really is in the room.</p>`
   :`
   ${slider('cameraHeight','Height above the ball',c.height,1,40,' m',.5)}
   ${slider('cameraDistance','Distance behind the ball',c.distance,5,70,' m')}
@@ -3063,7 +3065,7 @@ function renderPanel(name,content){
   const apply=()=>{
    Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked});
    if(c.sim)Object.assign(c,{eyeHeight:Number($('eyeHeight').value),ballAhead:Number($('ballAhead').value),
-    diagonal:Number($('screenDiagonal').value),aspect:$('screenAspect').value,standFeet:Number($('standFeet').value)});
+    diagonal:Number($('screenDiagonal').value),aspect:$('screenAspect').value,standFeet:Number($('standFeet').value),standSide:Number($('standSide').value)});
    else Object.assign(c,{height:Number($('cameraHeight').value),offset:Number($('cameraOffset').value),
     distance:Number($('cameraDistance').value),fov:Number($('cameraFov').value)});
    // Saved to the CAMERA's own key, never to the round. A bay describes the room
