@@ -4,8 +4,8 @@ import {cupCapture,simulateShot,R,CUP_RADIUS,YARD} from '../src/physics.js';
 import {makeGroundGrid,groundHeight} from '../src/terrain-grid.js';
 import {groundGeometry} from '../src/ground.js';
 import {generateCourse,generateWorld,fairwayWidth,greenDistance} from '../src/course.js';
-import {planCourse, PAR_YARDS} from '../src/course-plan.js';
-import {greenFlowPaths,slopeColor,createGreenReading} from '../src/green-reading.js';
+import {planCourse, PAR_YARDS, greenGradient} from '../src/course-plan.js';
+import {slopeColor,createGreenReading} from '../src/green-reading.js';
 import {mapLayout,mapPoint,mapPosition} from '../src/course-map.js';
 const flat={height:()=>0,surface:()=> 'green',bounds:{x:100,minZ:-100,maxZ:100},trees:[],pin:{x:0,z:0}};
 const shot={origin:{x:0,z:-1},aim:0,hla:0,vla:0,spin:0,spinAxis:0,speed:.8};
@@ -123,9 +123,34 @@ test('no tee stands in the fairway, and forward tee offsets vary on both sides o
 test('hole maps fit wide doglegs and project/unproject the exact same coordinates',()=>{
  for(let i=0;i<18;i++){const h=generateCourse({seed:'MAP',holes:18,width:70,doglegs:100,doglegAngle:70},i),m=mapLayout(h,120,300);for(let j=0;j<=100;j++){const z=h.fairwayStart+(h.length-h.fairwayStart)*j/100;for(const side of [-1,1]){const p={x:h.center(z)+side*fairwayWidth(h,z,h.settings.semiRough,side),z},q=mapPoint(m,p),r=mapPosition(m,...q);assert(q[0]>=0&&q[0]<=120&&q[1]>=0&&q[1]<=300);assert(Math.hypot(p.x-r.x,p.z-r.z)<1e-8);}}assert(mapPoint(m,{x:1,z:0})[0]<mapPoint(m,{x:-1,z:0})[0]);}
 });
-test('green markers originate at grid vertices, follow descending terrain, and tools coexist',()=>{
- const w=generateWorld({seed:'READING',trees:0,water:0,bunkerCount:0,greenDifficulty:85}),h=w.holes[0],paths=greenFlowPaths(h);assert(paths.length>100);
- for(const{path}of paths){const p=path[0];assert(Math.abs((p.x-h.pin.x)/1.5-Math.round((p.x-h.pin.x)/1.5))<1e-8);assert(Math.abs((p.z-h.pin.z)/1.5-Math.round((p.z-h.pin.z)/1.5))<1e-8);for(let i=1;i<path.length;i++)assert(h.height(path[i].x,path[i].z)<=h.height(path[i-1].x,path[i-1].z)+.0001);}
+test('the slope grid and its flow are one surface that knows the green, and squares to a heading',()=>{
+ const w=generateWorld({seed:'READING',trees:0,water:0,bunkerCount:0,greenDifficulty:85}),h=w.holes[0];
  assert.equal(new Set([.005,.015,.025,.04,.06].map(v=>slopeColor(v).getHex())).size,5);
- const reading=createGreenReading(h);assert(reading.grid&&reading.flow&&reading.heatmap);for(const item of [reading.grid,reading.flow,reading.heatmap]){item.visible=true;assert.equal(item.parent,reading.group);}reading.update(0);const p=reading.flow.geometry.attributes.position;const first=h.toWorld(paths[0].path[0]);assert(Math.abs(p.getX(0)-first.x)<.0001);assert(Math.abs(p.getZ(0)-first.z)<.0001);reading.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
+ const reading=createGreenReading(h);assert(reading.grid&&reading.flow&&reading.heatmap&&reading.surface);
+ for(const item of [reading.grid,reading.flow,reading.heatmap])assert.equal(item.parent,reading.group);
+ // Every vertex on the green carries the putting surface's own slope, and its
+ // fall direction really is downhill.
+ const g=reading.surface.geometry,pos=g.attributes.position,slope=g.attributes.slope,fall=g.attributes.fall,inside=g.attributes.inside;
+ let checked=0,steep=0;
+ for(let k=0;k<pos.count;k+=37){
+  if(inside.getX(k)>-.5)continue;
+  const local=h.toLocal({x:pos.getX(k),z:pos.getZ(k)}),grad=greenGradient(h,local.x,local.z);
+  assert(Math.abs(slope.getX(k)-Math.hypot(grad.x,grad.z))<1e-6);
+  if(slope.getX(k)<.01)continue;
+  const step=.2,ahead=h.toLocal({x:pos.getX(k)+fall.getX(k)*step,z:pos.getZ(k)+fall.getY(k)*step});
+  assert(h.height(ahead.x,ahead.z)<h.height(local.x,local.z),'fall points uphill');
+  checked++;if(slope.getX(k)>.03)steep++;
+ }
+ assert(checked>50&&steep>0,`checked ${checked} points, ${steep} steep`);
+ // The two buttons are two switches on the one surface.
+ const u=reading.surface.material.uniforms;
+ reading.grid.visible=false;reading.flow.visible=false;assert.equal(reading.surface.visible,false);
+ reading.flow.visible=true;assert.equal(u.showFlow.value,1);assert.equal(u.showLines.value,0);assert(reading.surface.visible);
+ reading.grid.visible=true;assert.equal(u.showLines.value,1);
+ // Square to a heading when given one; the hole's axes otherwise, or when the
+ // camera looks straight down.
+ reading.update(2,{x:3,z:4});assert(Math.abs(u.axis.value.x-.6)<1e-9&&Math.abs(u.axis.value.y-.8)<1e-9);assert.equal(u.time.value,2);
+ const w0=h.toWorld({x:0,z:0}),wz=h.toWorld({x:0,z:1}),l=Math.hypot(wz.x-w0.x,wz.z-w0.z);
+ reading.update(3,null);assert(Math.abs(u.axis.value.x-(wz.x-w0.x)/l)<1e-9&&Math.abs(u.axis.value.y-(wz.z-w0.z)/l)<1e-9);
+ reading.update(4,{x:0,z:0});assert(Math.abs(u.axis.value.x-(wz.x-w0.x)/l)<1e-9);
 });

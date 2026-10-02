@@ -5584,3 +5584,43 @@ frame after the overlay went, against 0.6 s and 3.7 s on main
 weighted so a floodlit hole came round now and then. Now nine hours from 6.4 to
 17.8; the dusk slot went too, being near enough to dark on some biomes to read
 as night. The test that required SOME dark visits now requires none.
+
+## The slope grid squared to the camera, and light flowing on it (1 October)
+
+Branch `green-grid-flow`. `readingSurface`, `READING_FRAGMENT` and
+`createGreenReading` in `src/green-reading.js`; `updateGreenGrid` in
+`src/renderer.js`. Asked for by the owner: in play mode the grid and the rolling
+balls did not square themselves with the camera, and a better animation than the
+balls, combined with the grid.
+
+**Why it was not square.** The grid was line segments on the hole's own axes,
+around the pin. The play camera looks from the ball toward the aim, which is
+rarely straight down the hole -- from a putt 54 degrees off the hole's line, the
+grid sat diagonally on screen.
+
+**What it is now.** One mesh over the green at half-metre resolution, at the
+same 6.5 cm lift the lines had, and a shader that draws the grid in whatever
+frame it is given: the play camera's heading on the ground, every frame, or the
+hole's axes for every other camera (the owner: they need not stay square).
+Lines through the cup, every 1.5 m, about 1.4 px wide at any distance, coloured
+by slopeColor's five bands from the putting surface's own gradient per vertex.
+
+**The flow, chosen by the owner from three:** light running along the grid
+lines downhill, over marching chevrons in each square or keeping the balls. On
+each line, a dash travels the way the slope falls along that line; brighter the
+more of the slope runs along it, one speed per slope band (0, 0.45, 0.7, 1.0,
+1.4 m/s), none on the flat blue band. **Rejected inside it:** a speed that
+varied smoothly point to point -- neighbouring points drift apart in phase as
+time runs, and within a minute the dashes are noise. Banded speeds only
+disagree at the band edges, where the colour changes anyway.
+
+**A fade with distance.** From the tee a 1.5 m square is a few pixels: the first
+build filled whole areas of the green solid with line colour, and the flow
+turned to speckle. Lines and flow now fade from full strength at 10 px a square
+to nothing at 4.
+
+**Measured.** Switching the grid and flow on: worst frame 50 and 33 ms (first
+and second time) against 67 and 83 ms for the old lines and balls on main --
+the balls' paths took more work to trace than the surface takes to build.
+Pictures: from a putt 54 degrees off the hole's line the cross lines run
+horizontally across the screen; the green view keeps the hole's axes.

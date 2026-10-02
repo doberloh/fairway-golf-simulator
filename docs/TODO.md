@@ -1084,6 +1084,15 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
 
 ## Reading a green without the overlays
 
+- [x] **The slope grid squares to the play camera, and light flows on it
+  instead of rolling balls (1 October).** Branch `green-grid-flow`, asked for by
+  the owner. One shader surface draws both; in play the lines follow the
+  camera's heading every frame, other cameras keep the hole's axes. The flow is
+  dashes of light running downhill along the grid lines (the owner's pick of
+  three). Faded where squares are a few pixels. Switching on is quicker than
+  before (33-50 ms against 67-83). RESEARCH.md *The slope grid squared to the
+  camera*.
+
 - [x] **Reading the ground, rebuilt (30 September).** Branch `ground-reading`.
   Measured each setting first: at noon *Sunlight on contours* moved a green by
   0.2 of 255, *Band grain* 0.9, *Green definition* under 1, and *Slope
