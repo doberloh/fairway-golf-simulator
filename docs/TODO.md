@@ -330,6 +330,16 @@ GitHub repository, and stop shipping what nobody needs.
     starts at one squashed commit, so that archive is the only record of why
     most decisions went the way they did).
 
+- [ ] **Owner: the email address on commits, before the repository goes
+  public.** Every commit so far carries the owner's personal email as author
+  and committer; anyone who can read the repository can read it. Two separate
+  choices: (1) from now on, commit as GitHub's private no-reply address
+  (shown under GitHub *Settings, Emails*, with "Keep my email addresses
+  private" on) -- one `git config user.email` in this repository; (2) the
+  existing history keeps the real address unless it is rewritten, which the
+  owner has declined so far and which would change every commit's ID.
+  DISTRIBUTION_REVIEW *What went to GitHub* has the full audit.
+
 ## Selling it: the attribution pass
 
 - [ ] **Nothing since 11 September has had a provenance search.** The mesh

@@ -499,3 +499,36 @@ claims and what it pulls in:
   and "open source soon, under MIT, after a short beta" -- a statement of
   intent the owner made, recorded in TODO.md *Getting the word out*.
 
+---
+
+## Addendum, 2 October 2026: what went to GitHub
+
+Audited after the first push to the private repository, across EVERY file
+version on all 69 branches (the history went up too, not only the current
+files), the commit messages and the commit identities:
+
+- **No secrets.** No passwords, tokens, API keys, private keys or credential
+  files, in any version. The only "password" is documentation saying the
+  bridge has none. The Netlify link (`.netlify/`), builds, release archives,
+  `docs/sources/private/` and scratch captures are ignored and were never
+  committed; `.gitignore` now also ignores `.env`, key and certificate files,
+  `.npmrc` and `.claude/settings.local.json` by default. The one editor file
+  that is tracked, `.claude/launch.json`, names the local dev-server commands
+  and nothing else.
+- **No machine paths or user names.** No `C:\Users\...` path, no Windows
+  account name, no Netlify site name or ID.
+- **The owner's home-network address (a 192.168 address), a VPN address and
+  the VPN adapter's name** sat in a bridge comment, a test, PROJECT_HANDOFF and
+  TODO, from when the bridge's address picking was written on this machine.
+  Replaced with documentation examples (192.168.1.20, 10.8.0.2, "WireGuard
+  Tunnel") -- the test checks the same thing. They remain in the history, which
+  is not being rewritten; they are private addresses that cannot be reached
+  from the internet and say nothing more than which VPN was in use.
+- **Personal by design**: the owner's name in LICENSE and the copyright notes,
+  as the copyright holder; other people's addresses in third-party licence
+  notices (the `ws` author) and a saved USGA page.
+- **Every commit carries the owner's personal email address** as author and
+  committer -- normal for git, visible to anyone who can read the repository.
+  It cannot be removed from the existing history without rewriting it. TODO.md
+  carries the decision.
+
