@@ -11,6 +11,8 @@ the change that made it stale, not a follow-up.
 | --- | --- |
 | play, and find the controls | [PLAYING.md](PLAYING.md) |
 | get it running on a device | [INSTALLATION.md](INSTALLATION.md) |
+| build or deploy the website | [INSTALLATION.md](INSTALLATION.md), *The website* |
+| find the command for something | [COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md) |
 | change the code | [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), then [../AGENTS.md](../AGENTS.md) |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
 | know what is left to do | [TODO.md](TODO.md) |
@@ -22,11 +24,18 @@ the change that made it stale, not a follow-up.
 - **[PLAYING.md](PLAYING.md)** — every control, every course-studio setting,
   the wind dial, the map, the scorecard, the launch-monitor walkthrough, and
   how to report a problem.
-- **[INSTALLATION.md](INSTALLATION.md)** — supported platforms and the ones
-  that are merely untested, portable and source setup, LAN and mobile access,
-  bridge setup, troubleshooting.
+- **[PORTABLE_README.md](PORTABLE_README.md)** — the README inside each
+  download: starting `run_fairway_server`, playing on a phone, connecting a
+  launch monitor through rēlā, troubleshooting.
+- **[INSTALLATION.md](INSTALLATION.md)** — building from source, supported
+  platforms and the ones that are merely untested, serving it yourself, the
+  bridge's details, and building and deploying the website (`site/`). Not
+  shipped in the player downloads.
 
 **For somebody changing the code**
+
+- **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
+  measurement, release and website command on one page.
 
 - **[PROJECT_HANDOFF.md](PROJECT_HANDOFF.md)** — the architecture with no
   conversation history assumed: modes, data flow, units, the generation

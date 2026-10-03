@@ -533,6 +533,8 @@ async function flightScreenOnce(t, phone) {
 // ------------------------------------------------------------ the journeys
 //
 // Each is a thing a player actually does, start to finish, in a fresh page.
+// The shipped-bridge journey, kept by name so the compiled-program one can reuse it.
+let JOURNEY_BRIDGE_BUNDLE;
 const JOURNEYS = [
  {
   name: 'boot',
@@ -1412,7 +1414,7 @@ const JOURNEYS = [
  // launch monitor's software to a ball in the air, with nothing pretend on
  // the Fairway side of it. The shot is acknowledged back to the connector
  // with the bridge's own reply code.
- {
+ JOURNEY_BRIDGE_BUNDLE = {
   name: 'bridge-bundle',
   what: 'the shipped bridge, run as a player runs it: it serves the game, takes a connector, and a shot flies',
   bridge: true,
@@ -1453,6 +1455,17 @@ const JOURNEYS = [
    } finally { connector.destroy(); }
   },
  },
+ // THE SAME, WITH THE PROGRAM IN THE DOWNLOAD: run_fairway_server, compiled with
+ // Bun for this computer (npm run server), instead of the bundle under Node.
+ // Inside Bun the WebSocket library runs on Bun's own implementation, so the one
+ // thing the bundle passing cannot prove is that a browser and a connector can
+ // still talk through it. Skipped until it has been built.
+ {
+  ...JOURNEY_BRIDGE_BUNDLE,
+  name: 'server-program',
+  what: 'run_fairway_server, the program in the download: it serves the game, takes a connector, and a shot flies',
+  bridge: 'program',
+ }
 ];
 
 // ------------------------------------------------------------------ runner
@@ -1553,8 +1566,16 @@ for (const journey of chosen) {
   const dir = path.dirname(FILE ? path.resolve(FILE) : DIST);
   const free = () => new Promise(done => { const s = net.createServer().listen(0, '127.0.0.1', () => { const port = s.address().port; s.close(() => done(port)); }); });
   bridgePorts = {http: await free(), tcp: await free()};
-  bridgeProc = spawn(process.execPath, [path.join(dir, 'fairway-bridge.mjs')], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'],
-   env: {...process.env, FAIRWAY_HTTP_PORT: String(bridgePorts.http), FAIRWAY_TCP_PORT: String(bridgePorts.tcp), FAIRWAY_HTTP_HOST: '127.0.0.1'}});
+  const env = {...process.env, FAIRWAY_HTTP_PORT: String(bridgePorts.http), FAIRWAY_TCP_PORT: String(bridgePorts.tcp), FAIRWAY_HTTP_HOST: '127.0.0.1'};
+  // `program`: this computer's run_fairway_server (tools/build-server.mjs), told
+  // where the built game is rather than copied beside it.
+  if (journey.bridge === 'program') {
+   const host = process.platform === 'win32' ? ['windows', 'run_fairway_server.exe'] : process.platform === 'darwin' ? [process.arch === 'arm64' ? 'macos-apple' : 'macos-intel', 'run_fairway_server'] : ['linux', 'run_fairway_server'];
+   const exe = path.join(ROOT, 'release', 'server', ...host);
+   if (!fs.existsSync(exe)) { console.log(`   skipped: no ${path.relative(ROOT, exe)} (npm run server)
+`); await context.close(); continue; }
+   bridgeProc = spawn(exe, [], {cwd: path.dirname(exe), stdio: ['ignore', 'pipe', 'pipe'], env: {...env, FAIRWAY_HTML: path.join(dir, path.basename(FILE ? path.resolve(FILE) : DIST))}});
+  } else bridgeProc = spawn(process.execPath, [path.join(dir, 'fairway-bridge.mjs')], {cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env});
   let said = '';
   bridgeProc.stdout.on('data', d => { said += d; });
   bridgeProc.stderr.on('data', d => { said += d; });

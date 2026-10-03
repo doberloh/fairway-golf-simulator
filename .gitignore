@@ -62,3 +62,27 @@ vendor/grown-redwood-forest/
 # must travel with the geometry that ships, is in docs/THIRD_PARTY_NOTICES.txt.
 # The copies already in history stay there; nothing was rewritten.
 vendor/baked_assets/
+
+# run_fairway_server for each platform (tools/build-server.mjs) and the per-platform
+# download ZIPs (tools/package_release.py): built, never committed.
+/release/
+
+# The website as deployed (tools/build-site.mjs): site/ plus a copy of the built
+# game in play/. Rebuilt by `npm run site`, never committed.
+/site-dist/
+
+# This folder's link to a Netlify site (`netlify link`, tools/deploy-site.mjs).
+# Per machine, never committed.
+/.netlify/
+
+# Secrets and per-machine settings never belong in the repository. Nothing of
+# the kind exists here now (audited 2 October across every pushed version);
+# these are here so that one created later is ignored by default.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.claude/settings.local.json

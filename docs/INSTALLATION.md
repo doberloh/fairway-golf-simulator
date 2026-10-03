@@ -1,17 +1,17 @@
 # Fairway installation, building and device setup
 
-Updated September 25, 2026. These instructions describe the current source and release archives. For player controls, see [PLAYING.md](PLAYING.md). For architecture and maintenance, see PROJECT_HANDOFF.md, which is in the source archive and the repository rather than the portable one.
+Updated October 1, 2026. This is the guide to building Fairway from source, serving it yourself and the details behind the downloads. **A player does not need it**: each platform's download carries its own README, which covers starting the server, phones and launch monitors (it is `docs/PORTABLE_README.md` here). For player controls, see [PLAYING.md](PLAYING.md). For architecture and maintenance, see PROJECT_HANDOFF.md. This file ships in the source archive and the repository, not in the player downloads.
 
 ## Choose your setup
 
 | What you want to do | What you need | Start here |
 | --- | --- | --- |
-| Play on a desktop or laptop | `Fairway-portable.zip` and a compatible browser | Portable app |
+| Play, with or without a launch monitor | The download for your computer (`Fairway-Windows.zip`, `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip` or `Fairway-Linux.zip`) and a compatible browser | The download's README |
 | Change the code or build your own release | `Fairway-source.zip`, Node.js and npm | Build from source |
-| Play on a phone, tablet or another computer | Compatible browser and a computer serving the built app, or HTTPS static hosting | Phones, tablets and shared-network access |
-| Use a launch monitor | Source package, Node.js and a device-specific Open Connect connector | Optional launch-monitor bridge |
+| Play on a phone, tablet or another computer | A computer running `run_fairway_server` from the download, or the built app on HTTPS static hosting | Phones, tablets and shared-network access |
+| Use a launch monitor | The download, and an Open Connect connector for your device (rēlā on Windows) | The download's README; *Optional launch-monitor bridge* below for the details |
 
-Manual play does not require an account, commercial golf software or a launch monitor. There is one browser build for all device types; there are no separate Windows, Mac, Android or iOS binaries.
+Manual play does not require an account, commercial golf software or a launch monitor. There is one browser game for every device; the platform downloads differ only in the server program, `run_fairway_server`, compiled for that computer.
 
 ## Device support and requirements
 
@@ -35,9 +35,11 @@ The app requires JavaScript, modern ES2022 browser features and **WebGL 2** with
 
 There is no measured minimum RAM/GPU specification yet. Start with nine holes, fewer trees, houses off, and fewer waterways on smaller devices. Entire courses are generated locally; generation can temporarily pause the page. Serving from a powerful PC does **not** move rendering or physics off the receiving phone/tablet.
 
-## Portable app: no build required
+## The download: no build required
 
-1. Extract `Fairway-portable.zip` into a normal folder. Keep the included documentation and third-party notices with it.
+Each platform's download holds the game (`Fairway.html`), `run_fairway_server` for that computer, and the player README that walks through using them. Without a launch monitor or a phone, the game file opens on its own:
+
+1. Extract the download into a normal folder. Keep the included documentation and third-party notices with it.
 2. Open the extracted **Fairway.html** in a compatible desktop browser. Use the file’s **Open with** menu if double-click opens an editor or preview app. Do not open the HTML while it is still inside the ZIP.
 3. Generate a course, select your players and tee, and play. The built file contains the app, graphics and physics; no Node.js installation is needed for this route.
 4. If direct-file opening is blocked, the scene stays blank, or saves behave inconsistently, use the local HTTP fallback below.
@@ -46,9 +48,9 @@ When building from source, the equivalent portable file is **dist/index.html**. 
 
 Once the built file is on the computer, ordinary manual play can run without internet access. File-mode storage varies between browsers, so export important rounds.
 
-### Local HTTP fallback for the portable ZIP
+### Local HTTP fallback without the server
 
-If Python 3 is installed, open a terminal **inside the extracted portable folder** and run one of these commands. Python is optional and not required when using the Node preview route later.
+`run_fairway_server` is the easy way to serve the game. Without it, if Python 3 is installed, open a terminal **inside the extracted folder** and run one of these commands. Python is optional and not required when using the Node preview route later.
 
 Windows:
 
@@ -202,11 +204,11 @@ This binds the static preview to all host interfaces. Stop it when finished; do 
 
 Alternatively, place the built HTML on an **HTTPS static host** as `index.html` and visit its URL. No application backend is needed for manual play. Only publish the built file and intended release documents, not the source/dependency directory. Hosting is a separate choice; no site is deployed by these instructions.
 
-The app has no service worker or installable PWA package. A browser bookmark/home-screen shortcut is not a guarantee of offline reopening. iOS/Android local-file preview tools may not execute the full app; the served-browser route avoids relying on them.
+Served from a web address, the game links a web manifest, so it can be added to a phone's home screen and opens full screen from there; it has no service worker, so it needs the address reachable each time it opens. iOS/Android local-file preview tools may not execute the full app; the served-browser route avoids relying on them.
 
 ## Mouse, touch and controllers
 
-Mouse/keyboard and on-screen controls are available without device drivers specific to Fairway. Basic controls are Space to shoot, arrow keys to aim/change power, Q/E to select clubs, V for free flight, and Escape to close a panel/end a flyover. Full controls are in README.md.
+Mouse/keyboard and on-screen controls are available without device drivers specific to Fairway. Basic controls are Space to shoot, arrow keys to aim/change power, Q/E to select clubs, V for free flight, and Escape to close a panel/end a flyover. Full controls are in PLAYING.md.
 
 For a controller, connect it through the operating system by USB or Bluetooth, focus the app and press a button. Fairway reads the first controller the browser exposes with the standard mapping. The [browser Gamepad API](https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API) and operating system determine which controllers are exposed; physical models have not been verified here.
 
@@ -214,9 +216,9 @@ For controller testing, prefer localhost on the same computer or a trusted HTTPS
 
 ## Optional launch-monitor bridge: desktop only
 
-Skip this section for manual play. A browser page cannot listen for a connector's TCP shots, so a small program does: **the bridge**. The portable archive carries it ready to run in its **Launch monitor** folder -- one file, `fairway-bridge.mjs`, and start scripts for Windows (`.cmd`) and macOS (`.command`); it needs only [Node.js](https://nodejs.org) 20 or newer, installed once. The source package runs the same bridge from source. Monitor-specific connector software and vendor requirements are separate, and physical device testing remains deferred. Windows, macOS and Linux can run the Node bridge when their connector software supports that OS; this is not a promise that every connector supports every OS.
+Skip this section for manual play. A browser page cannot listen for a connector's TCP shots, so a small program does: **the bridge**. Each download carries it as **run_fairway_server**, compiled with Bun into one program for that computer with nothing to install (`npm run server` builds all four; `tools/build-server.mjs`). The plain bundle it was built from ships beside it in `server-source/fairway-bridge.mjs` and runs on [Node.js](https://nodejs.org) 20 or newer. The source package runs the same bridge from source. Monitor-specific connector software and vendor requirements are separate, and physical device testing remains deferred. Windows, macOS and Linux can run the Node bridge when their connector software supports that OS; this is not a promise that every connector supports every OS.
 
-**From the portable folder:** double-click **Start bridge** in the Launch monitor folder (on a Mac the first time: Control-click, **Open**). Or, in a terminal in that folder, `node fairway-bridge.mjs` -- which also takes every `FAIRWAY_*` setting below. The bridge serves the `Fairway.html` one folder up. The start script sets `FAIRWAY_HTTP_HOST=all`: the bridge listens on every address, so this computer and a phone on the same Wi-Fi can both use it, and it prints a link for each -- the phone's is this computer's home-network address, found for you. Whether a phone gets in is the firewall's decision (see below).
+**From the download:** run **run_fairway_server** (the download's README covers each system's first-run warning). It takes every `FAIRWAY_*` setting below, serves the `Fairway.html` beside it, and listens on every address by default (`FAIRWAY_HTTP_HOST=all`), so this computer and a phone on the same Wi-Fi can both use it; it prints a link for each -- the phone's is this computer's home-network address, found for you. Whether a phone gets in is the firewall's decision (see below). It also serves the game's web manifest, so a phone can add the game to its home screen from it. `node server-source/fairway-bridge.mjs` behaves the same, except that it stays on this computer unless `FAIRWAY_HTTP_HOST=all` is set.
 
 **From the source folder**, after `npm ci` and `npm run build`:
 
@@ -250,7 +252,7 @@ Wrong units and swapped spin fields both look correct in the raw JSON and only s
 
 `FAIRWAY_LOG=debug` does the same thing. `npm run bridge:debug` is preferred because the environment-variable prefix form is bash syntax and PowerShell rejects it.
 
-To play from a phone or tablet on your own network, open the browser-facing server to it: `all` listens on every address -- what the portable **Start bridge** does -- or name one address, as below. With `all` the bridge prints the phone's link, choosing a `192.168.x` home-network address and passing over adapters named like a VPN or a virtual machine, and lists the others it saw in case the guess is wrong. The first time, Windows asks whether Node.js may use the network: allow it on private networks for a phone; refuse, and the computer's own browser still works, because connections from the computer to itself are not firewalled.
+To play from a phone or tablet on your own network, open the browser-facing server to it: `all` listens on every address -- what **run_fairway_server** does by default -- or name one address, as below. With `all` the bridge prints the phone's link, choosing a `192.168.x` home-network address and passing over adapters named like a VPN or a virtual machine, and lists the others it saw in case the guess is wrong. The first time, Windows asks whether Node.js may use the network: allow it on private networks for a phone; refuse, and the computer's own browser still works, because connections from the computer to itself are not firewalled.
 
 ```sh
 FAIRWAY_HTTP_HOST=192.168.1.50 npm run bridge
@@ -290,7 +292,7 @@ npm run bridge
 
 Use `http://127.0.0.1:1924/`, `ws://127.0.0.1:1924` and connector TCP port 1923 for that example. PowerShell/Command Prompt variables last for that terminal session; open a fresh terminal to return to defaults. Port 921 may need OS-specific privileged-port configuration on macOS/Linux; do not assume it will work just by changing the number.
 
-For a connector on another computer, README.md explains **FAIRWAY_TCP_HOST**. Bind only the connector-facing TCP listener to the desktop’s trusted LAN address, configure the remote connector to use that address, and keep the Fairway browser on the bridge computer. TCP Open Connect has no authentication or encryption; keep it off public networks. This guide does not change the bridge’s browser-origin restrictions.
+For a connector on another computer, PLAYING.md explains **FAIRWAY_TCP_HOST**. Bind only the connector-facing TCP listener to the desktop’s trusted LAN address, configure the remote connector to use that address, and keep the Fairway browser on the bridge computer. TCP Open Connect has no authentication or encryption; keep it off public networks. This guide does not change the bridge’s browser-origin restrictions.
 
 ## Saves, upgrades and removal
 
@@ -313,7 +315,7 @@ For a connector on another computer, README.md explains **FAIRWAY_TCP_HOST**. Bi
 | Port already in use | Stop your previous server or choose a free port and update the URL/connector settings. |
 | Phone cannot connect | Check host IP, same LAN, host awake, preview still running, private-network firewall access and guest-network isolation. Use the host IP, not localhost. |
 | Controller missing | Focus the page, press a controller button, check OS pairing/standard mapping and try localhost/HTTPS. |
-| Bridge connected but no shots | Check separate device status, connector destination/port, armed state and that no flight, tour or hole-selection state is blocking shots. See README.md for connector details. |
+| Bridge connected but no shots | Check separate device status, connector destination/port, armed state and that no flight, tour or hole-selection state is blocking shots. See PLAYING.md for connector details. |
 | Apparent missing save | Return to the same browser/profile/address or import an exported JSON; private browsing and cleared site data do not retain ordinary saves reliably. |
 
 For a first run, generate a nine-hole course, take a manual shot, check live shot distance, run a hole flyover and return to the ball. Export a round, reload the same address, and verify that the round is retained or can be imported. These checks should be repeated on each new device/browser; building successfully does not verify its graphics or input hardware.
@@ -322,4 +324,24 @@ For a first run, generate a nine-hole course, take a manual shot, check live sho
 
 Fairway’s own source and documentation use the MIT license in `LICENSE`; third-party terms are in `THIRD_PARTY_NOTICES.txt`. The portable HTML embeds both in **Help → Open source & credits**. Preserve these notices when sharing. Optional donations are permitted by the reviewed software licenses; a donation account or payment service is not included. See [DISTRIBUTION_REVIEW.md](DISTRIBUTION_REVIEW.md) for scope and outstanding checks.
 
-To refresh release downloads, run `npm run release`. It rebuilds first so it cannot package a stale build, then cuts and verifies both archives. It needs Python 3.9 or newer and finds it whether the command is `python3`, `python` or `py`; if none is installed it says so and stops, and `npm run build` on its own has already produced the playable file. It creates `Fairway-portable.zip`, `Fairway-source.zip` and `RELEASE_SHA256.txt`, and checks their contents. This packaging step is optional for players and separate from the Node build. The source ZIP includes the script.
+To refresh release downloads, run `npm run release`. It rebuilds the game and the four `run_fairway_server` programs first so it cannot package a stale build, then cuts and verifies every archive. It needs Python 3.9 or newer and finds it whether the command is `python3`, `python` or `py`; if none is installed it says so and stops, and `npm run build` on its own has already produced the playable file. It writes into `release/`: `Fairway-Windows.zip`, `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`, `Fairway-Linux.zip`, `Fairway-source.zip` and `RELEASE_SHA256.txt`, and checks their contents. The platform downloads are about 30-45 MB each, most of it the server program. This packaging step is optional for players and separate from the Node build. The source ZIP includes the scripts.
+
+## The website
+
+The project's website lives in `site/`: two hand-written pages (`index.html` and `media.html`), one stylesheet, one small script, and the screenshots and clips under `site/media/`, all captured from the game itself. It loads nothing from anywhere else -- no fonts, no scripts, no analytics.
+
+`npm run site` builds the game, then `tools/build-site.mjs` assembles `site-dist/`: a copy of `site/`, with the built game copied into `site-dist/play/` (the page, its manifest and icons) as the browser demo. It refuses if `dist/index.html` is older than `src/`, writes the sample course code on the front page from the game being shipped, and checks that every picture and clip the pages name is present. `site-dist/` is output, not committed.
+
+**The media is in Git LFS** (about 40 MB of pictures and clips, which plain git would keep a full copy of after every retake). After cloning, run `git lfs install --local` and `git lfs pull` once, or the pictures are 130-byte pointer files; `npm run site` says so and stops rather than building a site of broken images.
+
+**Deploying to Netlify.** Two ways, both using the root `netlify.toml`:
+
+- **From the repository.** Connect the repository in Netlify and, **in the Netlify UI**, add the environment variable `GIT_LFS_ENABLED` = `true` -- Netlify reads it before cloning, so it cannot go in `netlify.toml` ([Netlify's build variables](https://docs.netlify.com/build/configure-builds/environment-variables/)). It then runs `npm run site` and publishes `site-dist/` on every push to the branch you choose. Each build downloads the media from GitHub's LFS storage, which counts against GitHub's free LFS transfer allowance (1 GB a month): roughly twenty-five builds.
+- **By hand.** Run `npm run site` here and drag the `site-dist` folder onto Netlify Drop or the site's *Deploys* page.
+- **From this machine, by command.** `npm run deploy:preview` builds everything and uploads it as a draft with its own address, leaving the live site alone; `npm run deploy` does the same to the live site. Each deploy is labelled with the branch and commit, plus `+uncommitted` when the site or game has changes not yet committed. Once per machine, the owner signs in and links this folder -- `npx netlify-cli@27.10.2 login`, then `npx netlify-cli@27.10.2 link --name <site name>` -- and the link is kept in the git-ignored `.netlify/`. This route uploads the files as they are here, so it needs neither Git LFS on Netlify nor `GIT_LFS_ENABLED`. The Netlify CLI is fetched by `npx` at a pinned version rather than added to `package.json`, because it brings about a thousand packages the release's dependency inventory would have to list.
+
+**It is private for now.** Every page carries a `noindex` tag, `netlify.toml` sends an `X-Robots-Tag: noindex` header, and `site/robots.txt` turns crawlers away. That keeps well-behaved search engines out; it does not stop someone who has the address. To keep people out as well, turn on Netlify's password protection -- the demo's home-screen install works behind it (see above). When the site is announced, remove all three together.
+
+**Placeholders the owner fills in.** The four download buttons point at `#download` and say "opens with the beta" when clicked; give each `href` the hosted zip's address and it becomes a plain download. They are marked `OWNER:` in `site/index.html`. Donations go through Ko-fi (https://ko-fi.com/doberloh): a plain link styled as the site's own button, so nothing from Ko-fi loads -- no script, no cookies -- until a visitor clicks it. Ko-fi's embedded panel and its floating button were turned down for exactly that reason.
+
+**Retaking the media.** `node tools/site-media/build-hooked.mjs` builds the game with three capture handles added while bundling (src/ is not edited), into `bench/shots/dist-exp/`. Then `tools/site-media/gallery.mjs`, `clips.mjs` and `features.mjs` retake the gallery, the background clips and the feature screenshots, each by name or all at once. Pictures are rendered on Ultra at 3840x2160 and saved at 2560x1440 with a 960x540 thumbnail; clips are 1920x1080. A shot's light is named as a time of day (`dawn`, `morning`, `noon`, `afternoon`, `golden`), which `capture.mjs` turns into the hour that puts that landscape's sun at the right height. The eight landscape clips play in turn behind every page (the backdrop's `data-playlist`); the build checks each one is present. `capture.mjs` holds the shared setup and refuses to save anything not rendered on Ultra at full resolution -- a capture page must have a pixel density of 2, because the game never draws more pixels than the screen's density allows. A full retake takes about fifteen minutes on a fast graphics card. The clips are WebM (VP9) recorded from the game's own canvas, because there is no video encoder in the toolchain; a browser that cannot play WebM shows each clip's still instead.

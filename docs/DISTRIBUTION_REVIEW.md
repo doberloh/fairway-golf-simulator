@@ -45,7 +45,7 @@ Build dependencies are installed separately, not shipped as `node_modules` in ei
 
 ## Research, interoperability and originality
 
-`RESEARCH.md` and `LANDSCAPE_RESEARCH.md` distinguish mathematical/design references from software dependencies. Research-informed physics is an approximation, not a measured/calibrated claim. The U.S. Copyright Office distinguishes copyrightable program expression from functional algorithms and logic; citing a paper does not by itself grant permission to copy its code, figures or text. See [Copyright Office Circular 61](https://www.copyright.gov/circs/circ61.pdf).
+`RESEARCH.md` and `LANDSCAPE_RESEARCH.md` distinguish mathematical/design references from software dependencies. Research-informed physics is an approximation. One measured agreement is claimed -- the fit to a 100-shot GC3 session, with a SkyTrak session held out -- and RESEARCH.md states its figures and its limits; nothing beyond it is (corrected 1 October 2026, when the website began quoting it). The U.S. Copyright Office distinguishes copyrightable program expression from functional algorithms and logic; citing a paper does not by itself grant permission to copy its code, figures or text. See [Copyright Office Circular 61](https://www.copyright.gov/circs/circ61.pdf).
 
 - [OpenFairway](https://github.com/digitalhand/openfairway) is credited as an MIT research reference. Its project and current calibration data are not included as dependencies or assets.
 - [libgolf](https://github.com/gdifiore/libgolf) is GPL-3.0 and is referenced as an alternative, not linked, compiled or packaged here. No libgolf implementation was identified in the inspected files. GPL permits commercial activity, but incorporating its code could change redistribution obligations; a citation does not relicense it as MIT.
@@ -431,3 +431,122 @@ the bundle names it in a banner. No dependency was added.
 Windows one was run by hand, the macOS ones have not been run on a Mac. They
 are unsigned; macOS asks the player to confirm the first time (Control-click,
 Open), which the README says. It needs Node.js, which the player installs.
+
+---
+
+## Addendum, 1 October 2026: run_fairway_server and the per-platform downloads
+
+**What ships changed.** `Fairway-portable.zip` (game, docs, a Node.js bundle and
+start scripts) is replaced by one download per platform -- `Fairway-Windows.zip`,
+`Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`, `Fairway-Linux.zip`,
+into `release/` -- each carrying **run_fairway_server**, the launch-monitor bridge
+compiled with Bun into one program with nothing to install, beside
+`Fairway.html`, the player README, PLAYING.md and the notices. INSTALLATION.md
+(the build-from-source guide) moved to the source archive only. Sizes: 45 / 32 /
+34 / 42 MB, most of it the program.
+
+**For the owner to decide, flagged rather than settled:**
+
+- **Bun statically links JavaScriptCore (LGPL-2).** Bun's own documentation does
+  not address `bun build --compile` programs. The approach taken: the
+  application ships beside the program as the plain bundle it was built from
+  (`server-source/fairway-bridge.mjs`), so a user can rebuild it with a Bun of
+  their own carrying a modified JavaScriptCore; Bun's notice, its list of linked
+  libraries and the full LGPL 2.1 text are in THIRD_PARTY_NOTICES.txt. That is a
+  reading of the LGPL's object-file route, not legal advice. Bun also lists
+  tinycc (LGPL 2.1) and zstd (BSD or GPLv2, dual) among its linked libraries.
+- **The programs are unsigned** (the macOS ones are ad-hoc signed, which lets
+  Apple Silicon run them after the player allows it). Windows SmartScreen and
+  macOS Gatekeeper warn on first run; the README walks through both. A paid
+  certificate would remove the warnings.
+- **rēlā and GSPro are named** in the README, PLAYING.md and the website to say
+  what Fairway works with; no affiliation is claimed, and the README says so.
+
+---
+
+## Addendum, 1 October 2026: the website
+
+`site/`, built by `npm run site` into `site-dist/` for Netlify, with the
+shipped game copied into `play/` as a browser demo. Reviewed for what it
+claims and what it pulls in:
+
+- **No third-party code, fonts or analytics.** Two pages, one stylesheet, one
+  script, all written for the project; the icons are inline SVG drawn for it.
+  Outbound links only (rēlā's documentation, Kenney, Quaternius, ez-tree,
+  Quaternius's Patreon). The demo is the same file as the downloads, so its
+  notices are the same and are inside it under Help.
+- **Media is the game's own output**: screenshots and clips captured from the
+  game, so the only third-party content in them is the CC0 model packs and the
+  ez-tree geometry already credited. The footer says "Created with CC0 assets
+  and the help of Claude Code" and names Kenney, Quaternius and ez-tree.
+- **Physics claim**: "fitted to real launch monitors", with the GC3 figures and
+  SkyTrak named as the held-out check -- see RESEARCH.md *The website: what it
+  claims*. Not "calibrated", not "certified", and no device beyond those two
+  (and the planned R50) is named in connection with accuracy.
+- **Marks named** to describe compatibility: GSPro, rēlā, GC3, SkyTrak,
+  Garmin. The footer carries the line this review asked for in September --
+  all marks belong to their owners, no affiliation, endorsement or
+  certification claimed -- and so does the download README.
+- **Donation wording** (revised 2 October, the owner's words): Fairway is free
+  and stays free, donations are appreciated, and "donations go towards any
+  future development, and hosting costs for this site", through a Ko-fi link.
+  The explicit disclaimers that stood there -- "donating doesn't unlock
+  anything" and "donations here don't reach" the model artists -- were removed
+  at the owner's request. That still sits inside item 4: nothing on the page
+  says or implies that a donation is needed to play, unlocks anything, buys
+  hardware compatibility, or reaches the third-party authors -- it names where
+  the money does go. Keep it that way: a sentence suggesting donations support
+  the artists, or unlock a feature, would cross the line.
+- **Not public yet**, at the owner's request: no-index meta tags, an
+  `X-Robots-Tag` header and a robots.txt that disallows everything. These keep
+  search engines out, not people; Netlify's password protection does that.
+- **Release claims on the page**: "free", "no account", "nothing ever sent
+  anywhere" (true of the game: the smoke test fails on any network request),
+  and "open source soon, under MIT, after a short beta" -- a statement of
+  intent the owner made, recorded in TODO.md *Getting the word out*.
+
+---
+
+## Addendum, 2 October 2026: what went to GitHub
+
+Audited after the first push to the private repository, across EVERY file
+version on all 69 branches (the history went up too, not only the current
+files), the commit messages and the commit identities:
+
+- **No secrets.** No passwords, tokens, API keys, private keys or credential
+  files, in any version. The only "password" is documentation saying the
+  bridge has none. The Netlify link (`.netlify/`), builds, release archives,
+  `docs/sources/private/` and scratch captures are ignored and were never
+  committed; `.gitignore` now also ignores `.env`, key and certificate files,
+  `.npmrc` and `.claude/settings.local.json` by default. The one editor file
+  that is tracked, `.claude/launch.json`, names the local dev-server commands
+  and nothing else.
+- **No machine paths or user names.** No `C:\Users\...` path, no Windows
+  account name, no Netlify site name or ID.
+- **The owner's home-network address (a 192.168 address), a VPN address and
+  the VPN adapter's name** sat in a bridge comment, a test, PROJECT_HANDOFF and
+  TODO, from when the bridge's address picking was written on this machine.
+  Replaced with documentation examples (192.168.1.20, 10.8.0.2, "WireGuard
+  Tunnel") -- the test checks the same thing -- and then, at the owner's
+  request, removed from the HISTORY as well (below).
+- **Personal by design**: the owner's name in LICENSE and the copyright notes,
+  as the copyright holder; other people's addresses in third-party licence
+  notices (the `ws` author) and a saved USGA page.
+- **Every commit carried the owner's personal email address** as author and
+  committer. Replaced throughout the history (below); new commits in this
+  repository use GitHub's no-reply address (`git config user.email`, local to
+  the repository).
+
+**The history was rewritten, once, at the owner's request (2 October).** With
+`git filter-repo` 2.47.0, over all 69 branches and 265 commits: the home
+network address, the VPN address and the VPN adapter's name were replaced in
+every file version by the documentation examples (the adapter as `WgTunnel`,
+a valid key in the old test files), and every author and committer email by
+the owner's GitHub no-reply address. Afterwards, a scan of all 3,022 file
+versions and every commit message found none of them. Every commit ID
+changed: a hash quoted in an older note or deploy log names the old history.
+The branches were force-pushed to GitHub over the first push, so the old
+commits can still be fetched there by exact ID until GitHub clears them out
+(GitHub Support can purge them on request). A copy of the repository as it
+was before the rewrite is kept outside it, beside the project folder, for the
+owner to delete once satisfied.

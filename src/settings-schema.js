@@ -146,7 +146,15 @@ export const SCHEMA_VERSION=9;
 //     The top of the difficulty slider reaches much further: at 100 a green
 //     averages 7.2% with 7.2 ft of relief, against 5.4% and 5.6 ft. New settings for
 //     raised greens, punchbowl greens and false fronts (SCHEMA_VERSION 9).
-export const GENERATOR_VERSION=33;
+// 34: a bunker must sit wholly on its own hole's ground, as a pond already
+//     must. The ground shader paints only the owning (nearest) hole's hazards,
+//     so a bunker reaching onto a neighbour's ground was dug out but painted and
+//     played as that hole's rough -- a grassed-over bowl with a white sliver
+//     along a staircase edge, seen behind a green on the website's desert clip.
+//     35 of 682 bunkers across the 35 full-tier courses; they are dropped, not
+//     moved. Nothing else measured moved: every other bench figure is the same
+//     with and without the change.
+export const GENERATOR_VERSION=34;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

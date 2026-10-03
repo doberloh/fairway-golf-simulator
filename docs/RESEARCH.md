@@ -1,6 +1,6 @@
 # Research and implementation notes
 
-Reviewed September 10, 2026. Research informs the model architecture. Coefficients below are explicitly approximations; no numerical claim of a commercial calibration or measured hardware agreement is made.
+Reviewed September 10, 2026; the claim below corrected 1 October. Research informs the model architecture, and the coefficients below are approximations. **One measured agreement is claimed, and only one**: the flight model fitted to a 100-shot GC3 session (carry +1.25%, peak height -0.22 ft, offline 0.21 yd mean error), with a SkyTrak session held out -- see *The lift cap, and the carry that hid it*. The website quotes those three figures. Nothing is claimed beyond them: no commercial calibration, no agreement with any device not named here, and roll still has no reference data at all.
 
 ## Open research
 
@@ -5703,3 +5703,87 @@ it while the player aims. Measured in the built game on a putt 54 degrees off
 the hole's line: grid and camera both at -54.3 degrees at set-up; after holding
 the aim key, camera -70.8, grid still -54.3; the next shot from elsewhere on the
 green, both 135.1.
+
+## run_fairway_server: the bridge with nothing to install (1 October)
+
+Branch `productization`. `tools/build-server.mjs`, `COMPILED` and `readManifest`
+in `bridge/server.mjs`, `tools/package_release.py`, `docs/PORTABLE_README.md`,
+the `server-program` smoke journey. Asked for by the owner: everybody who
+downloads Fairway is setting up a launch monitor, and the download should need
+no npm install -- one program, `run_fairway_server`.
+
+**Bun, not Node's single-executable feature** (the owner chose, from the two).
+Bun cross-compiles every platform from one machine; Node's macOS builds must be
+signed on a Mac. Measured from this Windows machine with Bun 1.4.2: Windows x64
+82.2 MB, macOS arm64 59.5 MB, macOS x64 66.3 MB, Linux x64 77.7 MB; both macOS
+binaries carry an LC_CODE_SIGNATURE load command (read from their Mach-O
+headers), i.e. ad-hoc signed, which Apple Silicon requires. Zipped with the game
+and documents: 45 / 32 / 34 / 42 MB.
+
+**Licences.** Bun is MIT and statically links JavaScriptCore and WebKit under the
+LGPL-2, whose term is that an application statically linking it be provided
+"in an object (not necessarily source) format" so a user can relink with a
+modified library ([Bun's licensing page](https://bun.com/docs/project/licensing),
+[LICENSE.md at bun-v1.4.2](https://github.com/oven-sh/bun/blob/bun-v1.4.2/LICENSE.md)).
+Neither page says what that means for a `bun build --compile` program. What this
+project does, as a reading rather than legal advice: the application part ships
+beside the program as the plain bundle (`server-source/fairway-bridge.mjs`), so
+anybody can build Bun with a modified JavaScriptCore (patched source at
+github.com/oven-sh/webkit) and recompile; Bun's notice, its table of linked
+libraries and the full LGPL 2.1 text
+([gnu.org](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt)) are in
+THIRD_PARTY_NOTICES.txt. Flagged for the owner in DISTRIBUTION_REVIEW.
+
+**What compiling changed, found by testing the program rather than the bundle.**
+Inside the program, `import.meta.url` is `file:///B:/%7EBUN/root/...` on Windows
+(probed: `process.argv` is `['bun', 'B:/~BUN/root/...']`, `import.meta.main` true,
+`process.execPath` the real .exe) -- the first detection matched `~BUN` against
+the encoded URL, missed, and the program printed nothing and served nothing. It
+decodes first now. The game is read from beside the executable.
+
+**Checked.** The Windows program, unzipped from its download into an empty
+folder and started on loopback: serves the game (16 MB), the manifest (43 KB)
+and `/health`, accepts a launch-monitor TCP connection. The `server-program`
+smoke journey: the game loads from it, the browser connects, a pretend connector
+sends an Open Connect shot that flies and is acknowledged with code 200. Binding
+every address (its default) was not run here: it raises the firewall prompt on
+the owner's machine; the lines it prints for that case are unit-tested. The
+macOS and Linux programs have not been run on those systems.
+
+**rēlā, as the documented connector path.** From its documentation
+([docs.rela.golf](https://docs.rela.golf/), the
+[user guide](https://docs.rela.golf/rela/user-guide/) and the
+[installation guide](https://docs.rela.golf/rela/installation/)): it runs on a
+Windows PC, the launch monitor is chosen under **Device** and found with
+**Search**, the output under **Simulator** (GSPro among the options), and the
+simulator's address and port under **Settings**; vendor software is installed
+before rēlā. The guides do not state rēlā's default GSPro port; GSPro's own Open
+Connect port is 921 and Fairway's 1921, so the instructions say to set 1921.
+rēlā's supported device list is not on those pages; nothing here claims one.
+
+## The website: what it claims, and how its media was made (1 October)
+
+**Every number on the site is one this file already carries**, so a reader can check it here. The physics panel quotes the GC3 fit -- carry 1.3%, peak height 0.2 ft, offline 0.2 yd -- rounded from +1.25%, -0.22 ft and 0.21 yd, and says the SkyTrak session was held out. It does not quote the two figures the fit made worse (descent angle 1.49 deg, hang time +0.71 s); they are open defects in TODO.md, and a page that quoted only the improvements while hiding them would be selective, so the page claims "fitted to", not "matches". The owner's brief asked for "calibrated to the most popular launch monitors"; the page heading reads "fitted to real launch monitors" because one fitted device and one held-out device is what exists. A Garmin R50 session is named as next. The landscape cards quote each biome's altitude and temperature from `biomes.js`, converted to feet and degrees Fahrenheit and rounded (1,800 m becomes 5,910 ft), because the shot panel in the game reads in mph and the audience is mostly American; both values do feed the flight (`simulateShot` takes `altitude` and `temperature`). The cup and ball are the game's 107.95 mm and 42.67 mm.
+
+**How the media was made.** No video encoder exists in this toolchain (no ffmpeg), so the clips are recorded inside the browser: the game's own canvas into `captureStream(30)` and `MediaRecorder` as WebM VP9 at 6 Mbit/s, 1920x1080, 7 to 12 seconds. Camera flights are keyed poses through `lab.camera`, sampled 240 times, with the height smoothed over a 40-sample window (never more than 3 m below the ground-following height) so the camera does not bob over every dune, and eased in and out. The tee shot is a launch-monitor shot through the real shot path (67 m/s, 11.5 deg, 2,700 rpm). Stills are rendered at 3840x2160 and saved at 2560x1440 (JPEG quality 88-90), with 960x540 thumbnails, scaled in the browser by repeated halving (there is no image library here either; one big reduction samples too few pixels and brings the jagged edges back). Everything is captured on Ultra with automatic resolution off, and `tools/site-media/capture.mjs` refuses to save a picture that is not.
+
+**The first set was drawn at 1x, and looked it** (retaken 2 October, after the owner said the pictures looked low resolution and maybe not Ultra). Ultra WAS on -- 6144 shadow maps, confirmed in the page -- but the game never draws more pixels than the screen's pixel density allows (`pixelCeiling`: the lesser of `devicePixelRatio` and the tier's ratio, 2 on Ultra), and the capture page had density 1. So a 1600x900 capture was a 1600x900 render with no smoothing beyond the antialiasing, saved at JPEG quality 80, and its thumbnails were then shown at twice their size on a high-density screen. The fix is a density-2 capture page: a 1920x1080 page renders 3840x2160 on the real GPU (an RTX 4090, still 60 frames a second) and is scaled down. The clips are recorded at density 1 on purpose, because they are recorded from the canvas itself and the canvas has to be the video's size. File names changed with the retake, to the landscape's name (`links-golden.jpg`) rather than the course name its seed grows (`north-sea-links-golden.jpg`); the site shows only landscape names, at the owner's request.
+
+**What went wrong the first time, worth knowing before a retake**: a flight keyed in the hole's own frame ran past the pin on a short hole and spun round to look back at it (key flights by distance from the pin, `fromPin`, instead); the player camera behind a tee can sit behind a tree; a capture that does not wait for the shot to finish photographs a shot card that is still empty (wait for `lab.state().inFlight` to clear); and the course studio was captured at midnight, which turned out to be a real bug for new players, fixed on the same branch.
+
+**Rejected**: Google Fonts for the site (the project's rule is that nothing is fetched from anywhere else, and the game's own Georgia-and-system-sans pairing is the brand anyway); one background clip for the whole page (a night section over a sunny links reads as a stock video); autoplaying every clip on the media page (about 14 MB the visitor did not ask for -- they load when played).
+
+**Where the media lives: Git LFS** (owner's choice, 2 October, over plain commits and over keeping it out of git). Netlify can build from an LFS repository: [Netlify's build environment variables](https://docs.netlify.com/build/configure-builds/environment-variables/) -- "`GIT_LFS_ENABLED` ... If set, we'll use `git lfs clone` to check out your repository", with `GIT_LFS_FETCH_INCLUDE` limiting which extensions are fetched -- and both "should be set in the Netlify UI rather than in `netlify.toml`", because that file is read after the clone. The forum threads that turned up beside it ([LFS files aren't downloaded during build](https://answers.netlify.com/t/lfs-files-arent-downloaded-during-build/21948) and others) are about Netlify Large Media, Netlify's own LFS service, which never served files to builds and is not used here. Not yet tried on a real Netlify build. GitHub's free LFS allowance (1 GB stored, 1 GB transferred a month, as the owner's options listed it) is the cost: at about 40 MB a build, roughly twenty-five builds a month.
+
+**Times of day are sun heights** (2 October, after the owner noticed the links "golden hour" picture was not). The first two sets named their light by clock: golden at 17.8, morning at 7.3 to 10.5, afternoon at 15.1 to 16.5. But `solarState` derives the warm light from the sun's ELEVATION -- `warmth` is one minus a smoothstep from 1 to 26 degrees -- and each biome's sun peaks at its own height (`peakElevation`, 35 + 0.6 x the biome's sun figure: 46 to 63 degrees). At 17.8 on the links the sun stood at 18.8 degrees, warmth about 0.3: afternoon. `hourFor` in `tools/site-media/capture.mjs` now picks the hour from a target height on the right side of noon: golden 5 degrees (about 7:05 PM, warmth about 0.85), morning 18, afternoon 32, noon the middle of the day. Dawn is the one keyed by clock, 0.7 h after sunrise, because the morning mist is (`mistAmount`: thickest at first light, burnt off over about three hours) -- that is the Pacific Northwest clip's fog.
+
+**The background is a reel of all eight landscapes**, in the owner's choice of light: links at golden hour, desert at noon, the Pacific Northwest from 90 to 120 m up at first light with its mist, autumn at golden hour, and the rest picked here (mountain in the morning, island and midwest in the afternoon, the redwoods in the afternoon). Nine-second clips at 5 Mbit/s, each held eight seconds and crossfaded over 1.2. It replaced one clip per section: the section crossing the middle of the screen chose the clip, and with a short hero that was the landscape section's, so the desert clip was the one most visitors ever saw.
+
+## Bunkers on another hole's ground (generator 34, 2 October)
+
+**What it looked like**: behind a green on the website's desert clip, a white crescent of sand with a staircase edge, the rest of the bunker's bowl grassed over -- and from behind the green, no bunker at all. **Why**: the ground shader paints only the hazards of the hole that owns a fragment's ground (the owner atlas, `nearest` or a large lake's hole), while every hole's bunker excavation is applied to the height field everywhere. A bunker placed where a neighbouring hole is nearer was dug out but painted -- and played, since `surface` follows the same owner -- as the neighbour's rough. The staircase is the owner atlas's 1.75 m texels: the shader resolves the true owner only where the texel's hole changes. Ponds have been filtered by ownership since they were introduced; bunkers never were.
+
+**Measured** with a new bench metric, `bunkers` (invariant `bunkerOnAnotherHolesGround`, the outline at 1.15 -- the excavation's reach -- sampled 48 times against the atlas's own rule): **35 of 682 bunkers on the 35 full-tier courses, on 27 of them; 0 after**, with 647 bunkers left. Every other bench figure is identical with and without the change (checked by running `--since` both ways: the baseline had drifted with earlier generator work, and drifted identically), and the baseline was re-saved at generator 34.
+
+**Dropped, not moved.** Nudging a bunker inward would re-fit green-side pockets the placement's binary search had already put a set distance off the fringe; handing the ground to the bunker's own hole instead would cut into the neighbour's corridor and change which hole's rough the ball lies in. No random draw is taken, so nothing generated after it shifts. Including large-lake ownership in the rule changed nothing (zero either way), but the metric and the test use the atlas's full rule so they cannot disagree with what is drawn.
+

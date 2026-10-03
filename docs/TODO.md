@@ -120,16 +120,11 @@ changing anything. Worth it: one of the three assumptions was wrong.
 
 ## On a phone's home screen
 
-- [ ] **Owner: the portable archive's Launch monitor folder on a Mac.** The
-  `.command` scripts have never been run on one. Unzip, Control-click **Start
-  bridge**, Open, and check it finds Node.js and serves the game. If a Mac
-  refuses it outright, the fallback in the README is `node fairway-bridge.mjs`
-  in Terminal.
-
-- [ ] **A bridge with nothing to install, when it is worth it.** A standalone
-  executable built with Bun (cross-compiles every platform from Windows) --
-  and, to lose the "unknown developer" warnings, code signing (paid). Built
-  from the same bundle. RESEARCH.md, *Shipping the bridge to players*.
+- [ ] **Owner: run_fairway_server on a real Mac and a Linux machine.** Built
+  and packaged from Windows (ad-hoc signed for macOS, checked in the binary)
+  and tested on Windows only. On a Mac: unzip, Control-click Open, allow it in
+  Privacy & Security if asked, and check it serves the game and prints a phone
+  link. On Linux: `./run_fairway_server` from a terminal.
 
 - [ ] **Owner: a launch monitor from the iPhone, loaded from the bridge.**
   Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
@@ -179,16 +174,43 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **A one-page site whose main feature is a Play button. Deferred 25
-  September by the owner -- not cancelled, and not the next thing.** This product
-  demos itself in a way almost nothing else does: ten seconds from a link to
-  standing on a tee. That is worth more than any amount of copy, screenshots
-  or feature bullets, and it is the single highest-leverage thing to build.
-  Static hosting is free -- Cloudflare Pages, Netlify, GitHub Pages -- and the
-  built file is 15.8 MB, 6.5 MB gzipped, which is a heavy first load but
-  acceptable over a CDN. Note what it cannot demo: the launch-monitor bridge
-  needs Node running locally, so the hosted version is keyboard play only.
-  Say so on the page rather than letting somebody discover it.
+- [ ] **Owner: fill in the website's download links.** The four download
+  buttons point at `#download` and answer "opens with the beta" when clicked;
+  give each `href` in `site/index.html` the hosted zip's address. They are
+  marked `OWNER:` in the page. (Donations are done: Ko-fi, 2 October.)
+
+- [ ] **Owner: the website on a real iPhone and in Safari.** It was checked in
+  Chromium only, at desktop and phone sizes. The background clips are WebM,
+  because no video encoder exists in this toolchain; a browser that cannot play
+  WebM shows each clip's still, which is the designed fallback but has not been
+  seen on an iPhone. If the stills look wrong there, the fix is MP4 copies of
+  the five clips (any encoder), listed as a second `<source>`.
+
+- [ ] **Rework the website's ball physics wording.** Asked for by the owner on
+  2 October, with what it should say still to be decided. As it stands the
+  panel reads "Ball flight fitted to real launch monitors" and quotes the GC3
+  fit (carry 1.3%, peak height 0.2 ft, offline 0.2 yd) with SkyTrak as the
+  held-out check; the owner accepted "fitted" over "calibrated". Whatever
+  replaces it has to stay inside what RESEARCH.md can back -- see *The
+  website: what it claims*.
+
+- [ ] **Export the range's shot data.** The owner's copy for the website's
+  practice panel said "view and export your shot data"; the game has no such
+  export (it downloads the scorecard, saved rounds and courses, and nothing
+  else), so the page says "view your shot data" until it does. The shot list
+  already holds every shot of the session. When it exists, put "and export"
+  back in `site/index.html`.
+
+- [ ] **Owner: set `GIT_LFS_ENABLED` = `true` in the Netlify UI** before the
+  first deploy from the repository. The website's pictures and clips are in
+  Git LFS, and Netlify only fetches them with that variable set, which it reads
+  before cloning and so cannot take from `netlify.toml`. Without it the build
+  stops with a message saying exactly this. Not needed for a drag-and-drop
+  deploy of a locally built `site-dist/`.
+
+- [ ] **At launch: take the website's no-index off.** Three places, removed
+  together: the `robots` meta tag in `site/index.html` and `site/media.html`,
+  the `X-Robots-Tag` header in `netlify.toml`, and `site/robots.txt`.
 
 - [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
   request for help, which is a different thing and gets a far better response
@@ -232,8 +254,12 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **There is still no public remote, and that is now the last thing
-  standing between this tree and a published project.** The licence is
+- [ ] **There is still no PUBLIC remote, and that is now the last thing
+  standing between this tree and a published project.** A private one exists
+  since 2 October -- https://github.com/doberloh/fairway, `origin`, every
+  branch pushed, the website's media in its Git LFS storage -- so making it
+  public is a settings change on GitHub once the document plan below and the
+  name are settled, not a migration. The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
   Dustin Oberloh, who holds the copyright outright, which is what made that
   choice free to make; a project with outside contributors cannot change its
@@ -244,6 +270,63 @@ GitHub repository, and stop shipping what nobody needs.
   expensive to change: the NAME, which has its own entry and blocks the
   repository as much as it blocks a domain. (`vendor/baked_assets/`, the
   other one, was settled on 30 September: not committed.)
+
+- [ ] **Fewer, smaller documents before the private repository goes up.
+  PLAN ONLY -- asked for 1 October, nothing has been moved yet.** Today the
+  repository carries 19 Markdown files and about 1.5 MB of them, and three
+  hold almost all of it: RESEARCH.md (5,800 lines, 500 KB), TODO.md (3,500
+  lines, 330 KB, four fifths of it the `# Done` archive) and PROJECT_HANDOFF.md
+  (1,800 lines, 310 KB). The trouble for someone arriving with an AI agent is
+  not the NUMBER of files but that the entry point -- AGENTS.md, then
+  PROJECT_HANDOFF -- asks for 330 KB of reading before any work starts, most of
+  it dated narrative. The aim: an agent is oriented after reading two short
+  files, finds anything deeper by search, and no reasoning is lost.
+
+  Proposed shape: 19 files down to 16 -- the count matters less than the size,
+  which falls from about 330 KB of entry reading to under 80 KB:
+
+  | Keep / become | From | Change |
+  | --- | --- | --- |
+  | README.md, LICENSE | same | unchanged |
+  | AGENTS.md | AGENTS.md + CONTRIBUTING.md | one rules file; CONTRIBUTING's setup commands move into it, and README links to it |
+  | docs/ARCHITECTURE.md | PROJECT_HANDOFF.md | cut to the invariants, the traps and the file map, each a few lines with a pointer into RESEARCH or HISTORY; target under 60 KB. The dated "on 30 September the owner asked..." narrative moves to HISTORY.md |
+  | docs/RESEARCH.md | RESEARCH.md + LANDSCAPE_RESEARCH.md | one evidence file with a contents list at the top; the landscape sources become its last part |
+  | docs/BALL_BEHAVIOUR_KNOBS.md | same | kept apart on purpose: it is what a tuning request is written against, and inside a 500 KB file it would be buried |
+  | docs/GENERATION.md | PROCEDURAL_GENERATION.md | renamed only |
+  | docs/TODO.md | the open half of TODO.md | open work only, about 60 KB |
+  | docs/HISTORY.md | TODO's `# Done`, PROJECT_HANDOFF's narrative, DISTRIBUTION_REVIEW's dated addenda, both docs/reports/ | the changelog and the record of why. Nothing is deleted, only moved; it is the file that answers "was this tried?" |
+  | docs/PLAYING.md, docs/PORTABLE_README.md | same | both ship to players |
+  | docs/INSTALLATION.md | same | trimmed where it repeats PORTABLE_README |
+  | docs/REFERENCES.md, docs/ATTRIBUTION.md | same | the citations, and the asset credits every download carries |
+  | docs/DISTRIBUTION_REVIEW.md | its current-status part | the standing release checklist; the audit history goes to HISTORY |
+  | docs/README.md | same | rewritten as a "which question, which file" table |
+
+  `docs/sources/README.md` stays where it is: it states the rule for the
+  ignored private folder.
+
+  Before anything moves:
+  - **Scrub for what a private repository still should not hold**: machine
+    paths and user names (`C:\Users\...`), email addresses, and anything
+    naming what is in `docs/sources/private/` -- which stays ignored and is
+    never inventoried, per the rule in `.gitignore`.
+  - **The website's media is settled**: Git LFS, chosen by the owner on 2
+    October. Make sure the private repository has LFS on, and check the
+    first set's 18 MB, committed as ordinary files before the switch, is
+    acceptable to carry (it is in the history either way).
+  - **One branch per step**, in this order: AGENTS + CONTRIBUTING; HISTORY.md
+    (pure moves); the ARCHITECTURE cut; RESEARCH + LANDSCAPE; the index. A
+    pure move is reviewed with `git diff --color-moved`; mixing a move with an
+    edit makes both unreviewable.
+  - **AGENTS.md's documentation rule names every file**, and has to change in
+    the same branch as each rename, or it sends the next session looking for
+    files that are gone. The same goes for every cross-reference: grep for
+    each old name after each step, and add a small check under `tools/` that
+    every relative Markdown link resolves, run by `npm test`.
+  - **What is deliberately NOT proposed**: splitting RESEARCH.md into many
+    small files (more files, the opposite of the ask, and search already finds
+    things in one), and dropping the Done archive (this repository's history
+    starts at one squashed commit, so that archive is the only record of why
+    most decisions went the way they did).
 
 ## Selling it: the attribution pass
 
@@ -639,8 +722,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [ ] Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
 
 - [ ] Choose public publisher/support details and check the working product name before a broad release.
-
-- [ ] Configure an optional donation page when requested; no payment account or public posting has been created.
 
 - [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
   **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
@@ -2196,7 +2277,7 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 - [x] **Browsers on the private network can drive the bridge.** `isLocalOrigin` accepts loopback plus RFC 1918 (10/8, 172.16/12, 192.168/16) and `file://`'s `null`; `FAIRWAY_HTTP_HOST` binds the HTTP/WS listener somewhere a phone can reach it, since widening the origin check alone changes nothing while the server is loopback-bound. The bridge warns on startup when it is not loopback.
   - It parses with `URL` and tests `hostname` exactly rather than pattern-matching the origin string: a regex passes `http://192.168.1.50.evil.com`, which contains a private address.
   - The parser canonicalises too, which the tests document with measured values: `010.0.0.1` -> `8.0.0.1` (refused as public), `0x0a.0.0.1` and `167772161` -> `10.0.0.1` (allowed), `10.0.0` -> `10.0.0.0`. A leading-zero guard was written then deleted as dead code -- `hostname` never contains one.
-  - Two new tests, refusals first, plus a live check on this machine's real LAN address: reachable over 192.168.1.20, LAN origin accepted, public origin refused.
+  - Two new tests, refusals first, plus a live check on this machine's real home-network address: reachable over it, LAN origin accepted, public origin refused.
   - **Not authenticated.** Anything on the network that can reach the port can drive the simulator. Same caveat the connector's TCP port has always carried.
 
 - [x] **UI pass, first slice.** (1) The Putting options panel promised "A low putting camera activates on the green" -- removed two changes earlier, so the app was describing a feature it no longer had. (2) Arrange UI deleted entirely, along with the layout toolbar, `toggle`, the `editing` state and 18 dead gates; `Reset panel layout` now sits in the tools tray beside `Reset tool windows`. (3) `.view-tools` renamed from "Camera tools" to "Tools tray", and its resize handle fixed -- it was positioned with `margin-right` against `left:auto`, which places nothing, so it sat back in the default corner on top of a button. (4) Sim drop and Putting options disabled on the driving range -- and, added while the green-reading toggles got the same treatment, each says why in its title, because a dimmed control with no explanation reads as broken rather than as not-applicable.
@@ -2971,6 +3052,14 @@ engineering provenance pass, not legal advice.
 
 ## Making the repository public
 
+- [x] **The email address on commits, and this machine's network details in
+  the history (2 October).** At the owner's request the whole history was
+  rewritten with `git filter-repo`: the home network address, the VPN address
+  and adapter name replaced in every file version, and every commit's email
+  replaced by the owner's GitHub no-reply address, which new commits in this
+  repository now use. Every commit ID changed; GitHub got the clean history by
+  force-push. DISTRIBUTION_REVIEW *What went to GitHub*.
+
 - [x] **The second, stale git repository one directory up (30 September).**
   Handled by the owner outside this repository.
 
@@ -3045,6 +3134,48 @@ engineering provenance pass, not legal advice.
 
 ## Getting the word out
 
+- [x] **Donations: Ko-fi (2 October).** Was: "configure an optional donation
+  page when requested". The owner set up https://ko-fi.com/doberloh; the site's
+  support panel carries a "Support Fairway on Ko-fi" button and both footers a
+  Ko-fi link. A plain link, chosen over Ko-fi's embedded panel and floating
+  button, so nothing from Ko-fi loads before a click. The wording is the
+  owner's: "Donations go towards any future development, and hosting costs for
+  this site." The two disclaimers that stood there ("donating doesn't unlock
+  anything", "donations here don't reach" the model artists) were removed at
+  the owner's request; DISTRIBUTION_REVIEW records why that still sits inside
+  its guidance.
+
+- [x] **The website (1 October 2026).** Branch `productization`, asked for by
+  the owner. Was: "a one-page site whose main feature is a Play button,
+  deferred 25 September". Built in `site/`: a front page and a media page,
+  laid out as the game's glass panels over clips recorded from the game,
+  which change to match the section in view (a still for visitors who ask for
+  less motion or less data). The front page covers the eight landscapes,
+  ball physics (the GC3 figures, with SkyTrak named as the held-out check),
+  greens and the three putting modes, stroke, match, scramble and endless,
+  night golf, the course studio and course codes (a real code, written by the
+  build), the range, and four smaller points; then connecting through rēlā
+  in five steps, the four downloads with how to run them, "always free" and
+  "open source soon". The media page has the 18 landscape pictures, filterable
+  by time of day, the clips, and the feature screenshots. **The Demo button**
+  (top right) asks first, saying that keyboard and touch are not how Fairway is
+  meant to be played and to download it for a launch monitor, then opens the
+  shipped game from `play/`. `npm run site` builds it all into `site-dist/`
+  for Netlify (`netlify.toml`), no-index until launch. Checked in Chromium at
+  1440 and 390 px wide: no errors, no sideways scroll, clips switch, the demo
+  reaches the main menu in 3.3 s from a local server and its manifest is
+  served. The media is retaken with `tools/site-media/`. INSTALLATION.md
+  *The website*. **Second pass, 2 October, from the owner's review**: every
+  picture and clip retaken at full resolution (the first set rendered at 1x;
+  RESEARCH.md *The website*), landscape names only rather than course names,
+  no em dashes, the stats box gone, and the hero, landscape, greens, game
+  modes and practice copy rewritten in the owner's words. **Third pass, 2
+  October**: the light in every picture is now the time of day it is labelled
+  (the times had been clock readings, and "golden hour" was plain afternoon),
+  and the background plays all eight landscapes in turn instead of one clip
+  per section, which had left the desert on repeat.
+
+
 - [x] **Discord: deliberately not yet**, and going open source makes that
   easier rather than harder. An empty server is worse than none -- a room
   where the owner talks to himself, signalling that nobody is there, at the
@@ -3091,6 +3222,23 @@ engineering provenance pass, not legal advice.
   browser golf simulator" -- so a search engine has something to hang it on.
 
 ## Found by driving the built game
+
+- [x] **Bunkers buried under a neighbour's rough (2 October, generator 34).**
+  Spotted by the owner behind a green on the website's desert clip: a white
+  sliver with a staircase edge, the rest of the bunker grassed over. A bunker
+  reaching onto ground another hole owns was dug out but painted and played as
+  that hole's rough; about one bunker in twenty (35 of 682 on the full bench).
+  Such bunkers are now dropped, as ponds already were. New bench invariant
+  `bunkers`, new test `tests/bunker-ground.test.mjs`. RESEARCH.md *Bunkers on
+  another hole's ground*.
+
+- [x] **Course studio opened at midnight for a new player (1 October).**
+  Found while capturing the website's screenshots: a profile whose clock had
+  never been set opened the studio at 12:00 AM, because an unset hour reads as
+  0:00 -- anyone trying the demo who went to the studio before their first
+  round. Rounds already started at midday; opening the studio now does the
+  same, with the floodlights off. Checked on a fresh profile: 12:00 PM.
+
 
 - [x] **An 18 px dark strip along the bottom of the play screen (1 October).**
   Branch `play-area-fill`, found while measuring for Text size. The play area
@@ -3260,6 +3408,19 @@ engineering provenance pass, not legal advice.
   never changes. Looked like "Next hole is broken on slow machines"; was not.
 
 ## On a phone's home screen
+
+- [x] **A bridge with nothing to install (1 October).** Branch
+  `productization`, asked for by the owner. `run_fairway_server`, compiled
+  with Bun for Windows, macOS (Apple Silicon and Intel) and Linux, is the
+  program in each platform's download; the Node start scripts are gone. It
+  serves the game and its web manifest (phones can add it to the home screen),
+  listens on the home network by default and prints where to point a browser,
+  a phone and the connector. The `server-program` smoke journey plays a real
+  connector shot through it on Windows. RESEARCH.md *run_fairway_server*.
+
+- [x] **Owner: the portable archive's Launch monitor folder on a Mac.**
+  Superseded on 1 October: there is no Launch monitor folder or start script
+  any more; see *run_fairway_server on a real Mac* above.
 
 - [x] **A hosted copy installs to a phone's home screen and opens like an
   app.** Asked for on 26 September after the owner hosted the build on Netlify

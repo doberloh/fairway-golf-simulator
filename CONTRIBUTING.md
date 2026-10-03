@@ -11,13 +11,19 @@ you were there.
 Node.js 22.12 or newer. Python 3 only if you are cutting release archives.
 
 ```sh
+git lfs install --local && git lfs pull   # the website's pictures and clips
 npm ci
 npm run dev      # http://127.0.0.1:5173
 npm test         # the whole suite; it must be green before you commit
 npm run build    # single-file dist/index.html, and the bundled bridge
 npm run smoke    # build, then play the built file in a real browser
-npm run release  # build, then cut and verify the release archives
+npm run server   # compile run_fairway_server for every platform (Bun)
+npm run release  # build, compile the servers, cut and verify the downloads
+npm run site     # build, then assemble the website with the demo (site-dist/)
 ```
+
+Every other command is on one page in
+[docs/COMMAND_CHEAT_SHEET.md](docs/COMMAND_CHEAT_SHEET.md).
 
 There is no test framework beyond the Node test runner, no linter config and
 no formatter. Match the style of the file you are editing.
@@ -50,8 +56,15 @@ lied because it recomputed the thing it was checking.
 
 ## The rules that are not negotiable
 
-**Work on a branch.** Never commit to `main`, however small the change. The
+**One branch per journey.** A stretch of work the owner starts lives on one
+branch, follow-ups and side quests included, until the owner says to merge it
+back; no sub-branches. Never commit to `main`, however small the change. The
 branch is how the work gets reviewed, and merging it is the owner's call.
+
+**Push, deploy and publish only when asked.** Pushing to GitHub, force-pushing
+and deploying the website are each the owner's call, and the website stays
+private until launch. Nothing personal or machine-specific goes into a commit.
+AGENTS.md has the detail.
 
 **Two version numbers live in `src/settings-schema.js`.**
 `GENERATOR_VERSION` goes up whenever generated output changes for an unchanged
