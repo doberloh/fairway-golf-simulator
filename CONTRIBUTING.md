@@ -56,8 +56,15 @@ lied because it recomputed the thing it was checking.
 
 ## The rules that are not negotiable
 
-**Work on a branch.** Never commit to `main`, however small the change. The
+**One branch per journey.** A stretch of work the owner starts lives on one
+branch, follow-ups and side quests included, until the owner says to merge it
+back; no sub-branches. Never commit to `main`, however small the change. The
 branch is how the work gets reviewed, and merging it is the owner's call.
+
+**Push, deploy and publish only when asked.** Pushing to GitHub, force-pushing
+and deploying the website are each the owner's call, and the website stays
+private until launch. Nothing personal or machine-specific goes into a commit.
+AGENTS.md has the detail.
 
 **Two version numbers live in `src/settings-schema.js`.**
 `GENERATOR_VERSION` goes up whenever generated output changes for an unchanged

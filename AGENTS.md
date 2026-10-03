@@ -11,36 +11,91 @@ prioritized follow-up work and `docs/PLAYING.md` for player controls.
 
 Preserve the portable offline single-file build, Cartoon-only graphics, complete 9/18-hole landscapes, seeded procedural individual holes, real ball/cup dimensions, and current scoring formats. Keep terrain rendering, collision heights, surface queries and map geometry consistent. Generation changes require attention to older saved rounds and GPU data textures.
 
-## Every change goes on a branch, and the branch is not yours to merge
+## One branch per journey, and the branch is not yours to merge
 
-Start with a branch off `main`. Never commit to `main` directly, however small
-the change.
+**A journey is a stretch of work the owner starts, and it lives on one branch
+until the owner says "merge it back".** It can run across many requests,
+fixes and topics -- the `productization` pass went from a website to a
+generator bug to rewriting the repository's history -- and all of it belongs on
+that one branch.
+
+- **Starting a journey:** when the owner starts something new and no journey is
+  open (the last one has been merged), or says to start fresh, branch off
+  `main`. Name it for the journey in a few kebab-case words (`productization`,
+  `hud-polish`).
+- **During a journey:** everything goes on its branch -- follow-ups, side
+  quests, bugs found on the way. Do not make sub-branches, and do not start a
+  new branch because the topic changed. If you are unsure whether something
+  belongs, keep it on the current branch and say so.
+- **Never commit to `main` directly,** however small the change.
+
+This replaced "one branch per coherent piece of work" on 2 October, at the
+owner's request: that rule produced 69 branches in a few weeks, many of them a
+single commit and some branched off other branches, which was more to keep
+track of than the work itself.
 
 **The branch is how the owner reviews.** The desktop app's Changes pane defaults
 to showing all changes on the current branch, so an unmerged branch presents the
-whole piece of work in one readable place. A merged branch has nothing left to
+whole journey in one readable place. A merged branch has nothing left to
 compare against, and on `main` with everything merged the pane is simply blank.
 
 Commit freely ON the branch -- slice by slice, with real messages. Commits do not
 empty the pane. **The merge does.**
 
-So when the work is done: verify it, say what is on the branch, and **stop
-there**. Do not merge. The owner merges, or asks you to. This is the one rule in
-this file that exists because of a specific failure: four separate pieces of
-work in this project were branched, finished, and merged the moment the tests
-went green, and the owner could not see any of them in the pane that exists for
-exactly that purpose. Being finished is not permission to land it.
+So when a piece of work is done: verify it, say what is on the branch, and
+**stop there**. Do not merge. The owner merges, or says "merge it back". This
+rule exists because of a specific failure: four separate pieces of work in this
+project were branched, finished, and merged the moment the tests went green,
+and the owner could not see any of them in the pane that exists for exactly
+that purpose. Being finished is not permission to land it.
 
-If the owner does ask for the merge, use `--no-ff` so the branch stays legible
-as a unit in the history, and leave the merged branch in place -- deleting
-branches is the owner's call, not a tidy-up to do on the way past.
-
-Name the branch for the change in a few kebab-case words (`hud-polish`,
-`par-yardage`). One branch per coherent piece of work: if you find yourself
-explaining the branch with the word "and", it is probably two.
+When the owner does ask for the merge, use `--no-ff` so the journey stays
+legible as a unit in the history, and leave the merged branch in place --
+deleting branches is the owner's call, not a tidy-up to do on the way past.
 
 Rebuild `dist/` on the branch before handing it over, so what the owner opens is
 what the branch actually does.
+
+## Pushing to GitHub
+
+The repository's remote is `origin`, https://github.com/doberloh/fairway, and it
+is private.
+
+- **Push only when the owner asks.** Finishing work, committing it, or merging
+  it is not a request to push.
+- **Never force-push unless the owner asks for exactly that.** The one
+  force-push so far replaced the history after the owner asked for it to be
+  rewritten (2 October, DISTRIBUTION_REVIEW *What went to GitHub*).
+- **`main` goes up only after a merge the owner asked for.**
+- The website's pictures and clips are in Git LFS: a fresh clone needs
+  `git lfs install --local` and `git lfs pull` before `npm run site` will build.
+
+## Deploying the website to Netlify
+
+- **Deploy only when the owner asks, and as a preview first** --
+  `npm run deploy:preview`, then give the owner its link -- unless they say to
+  deploy it live, which is `npm run deploy`.
+- **The site stays private until the owner says it is launching.** Netlify's
+  password protection stays on, and the no-index meta tags, the
+  `X-Robots-Tag` header in `netlify.toml` and `site/robots.txt` stay in place.
+- **Netlify's own settings are the owner's**: the password, domains,
+  environment variables, and signing in or linking this folder to the site.
+
+## What stays local
+
+- **No passwords, tokens, keys, credential files, machine paths, account names
+  or network details in any commit.** Where an example address is needed, use
+  documentation values (192.168.1.20, 10.8.0.2), never this machine's. The
+  repository was audited for all of these on 2 October and its history
+  rewritten to remove the network details that had crept in; DISTRIBUTION_REVIEW
+  has the audit.
+- **Commits use the owner's GitHub no-reply address,** set in this repository's
+  git config. Never commit as a personal email.
+- **Stage files by name, never `git add -A` or `git add .`** The owner unzips
+  release archives into this folder to test them, and a blanket add once swept a
+  16 MB unzipped copy of the game into a commit. `.netlify/`, builds, release
+  archives, `docs/sources/private/` and scratch captures are git-ignored; keep
+  anything new of that kind ignored too.
 
 ## Two version numbers, and when to bump them
 
