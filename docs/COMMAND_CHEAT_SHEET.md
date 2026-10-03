@@ -67,6 +67,7 @@ Environment settings it reads: `FAIRWAY_TCP_PORT`, `FAIRWAY_HTTP_PORT`,
 | `gh auth status` | Says whether the GitHub CLI is signed in; `gh auth login` signs it in (once per machine, by the owner) |
 | `gh release create v0.1.0 release/Fairway-*.zip release/RELEASE_SHA256.txt --title "Fairway 0.1.0 (beta)" --notes "..."` | Publishes a release with the zips, which the website's Download buttons then serve. **Only when the owner asks**, from `main`, with the version they name; never `--prerelease` (AGENTS.md, *Pushing to GitHub*) |
 | `gh release list` | The releases published so far |
+| `node tools/github-protect.mjs` | Puts the repository's safety settings in place (protected `main`, reviewed pull requests, permanent release tags, secret scanning) and lists any still waiting. **Run again the minute the repository goes public**; safe to run any time |
 
 ## Website
 

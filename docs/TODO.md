@@ -274,6 +274,22 @@ GitHub repository, and stop shipping what nobody needs.
   repository as much as it blocks a domain. (`vendor/baked_assets/`, the
   other one, was settled on 30 September: not committed.)
 
+  **The same minute it goes public: `node tools/github-protect.mjs`.** It
+  turns on what GitHub Free only allows on a public repository -- `main`
+  protected from deletion and force-pushes, changes by reviewed pull request,
+  permanent release tags, secret scanning that blocks a pushed password,
+  private security reports, and outside contributors' workflows held for
+  approval. Until it has run, the repository is public with none of that. It
+  prints each setting as done or waiting; nothing should still be waiting.
+
+- [ ] **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
+  is active, but GitHub shows 0 runs, on any branch, after many pushes (checked
+  3 October). Worth a look at the repository's Actions tab: Actions may be
+  switched off at the account level, or waiting on something the account has
+  to accept. Once it runs green, add it as a required check to the *main
+  changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
+  not before, or every pull request waits for a check that never comes.
+
 - [ ] **Fewer, smaller documents before the private repository goes up.
   PLAN ONLY -- asked for 1 October, nothing has been moved yet.** Today the
   repository carries 19 Markdown files and about 1.5 MB of them, and three

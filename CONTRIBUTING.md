@@ -56,6 +56,11 @@ lied because it recomputed the thing it was checking.
 
 ## The rules that are not negotiable
 
+**Changes reach `main` by pull request, and the owner reviews every one.**
+`main` cannot be force-pushed or deleted, release tags cannot be moved, and a
+first-time contributor's pull request runs no workflow until it is approved.
+Pull requests are merged with a merge commit.
+
 **One branch per journey.** A stretch of work the owner starts lives on one
 branch, follow-ups and side quests included, until the owner says to merge it
 back; no sub-branches. Never commit to `main`, however small the change. The

@@ -70,6 +70,28 @@ is private.
 - The website's pictures and clips are in Git LFS: a fresh clone needs
   `git lfs install --local` and `git lfs pull` before `npm run site` will build.
 
+**The repository's own settings protect `main`; do not work around them.**
+`node tools/github-protect.mjs` sets them and says which are still waiting.
+GitHub Free only offers branch rules on a public repository, so **run it again
+the moment the repository goes public** -- that is when strangers can first see
+it, and until it has run, nothing but these rules stops a mistaken push. Once
+public:
+
+- `main` cannot be deleted or force-pushed by anyone, the owner included. A
+  history rewrite the owner asks for means the owner switches the *main keeps
+  its history* ruleset off on GitHub, the push happens, and the owner switches
+  it back on. Never switch it off yourself.
+- Changes to `main` arrive by a pull request with one approving review. The
+  owner bypasses this, which is how the owner's own merges go up; anyone else,
+  including a future collaborator, needs the owner's review. Release tags
+  (`v*`) cannot be moved or deleted.
+- Pull requests merge with a merge commit only, matching `--no-ff`.
+- A first-time outside contributor's pull request runs no workflow until the
+  owner approves it, and workflows get a read-only token.
+
+Settings already on while private (3 October 2026): merge commits only,
+GitHub's own actions only, read-only workflow token, Dependabot alerts.
+
 **Releases -- the downloads players get -- go up only when the owner says so.**
 
 - **Publish a new GitHub release only when the owner asks for one,** in those

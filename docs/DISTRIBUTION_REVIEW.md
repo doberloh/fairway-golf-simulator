@@ -582,3 +582,23 @@ Until the repository is public, only the owner can download from it; a
 pre-release is never "latest", so betas are published as ordinary releases.
 `RELEASE_SHA256.txt` goes up beside the zips so a download can be checked.
 
+## Addendum, 3 October 2026: repository settings for going public
+
+`tools/github-protect.mjs` puts the repository's protections in place and is
+safe to rerun. Applied now, while private: pull requests merge with a merge
+commit only (squash, rebase and auto-merge off); workflows may use GitHub's
+own actions only, with a read-only token that cannot approve pull requests;
+Dependabot alerts on. The only collaborator is the owner, with no deploy keys
+or webhooks.
+
+Waiting for the repository to be public, because GitHub Free offers them
+nowhere else: rulesets keeping `main` from deletion and force-pushes (no
+bypass, the owner included), requiring a reviewed pull request for `main`
+(owner bypasses), and making `v*` release tags permanent; secret scanning
+with push protection; private vulnerability reporting; holding outside
+contributors' workflows for approval. TODO, *Making the repository public*,
+says to run the script the minute the repository goes public.
+
+Not set, on purpose: a required status check (the tests workflow has never
+run on GitHub), deleting merged branches, and immutable releases.
+
