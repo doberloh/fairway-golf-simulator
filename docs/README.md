@@ -65,6 +65,10 @@ the change that made it stale, not a follow-up.
 
 **Reports and studies**
 
+- **[reports/shotmaking/](reports/shotmaking/index.html)** — six showcase shots
+  for the website (stinger, high draw, power fade, knockdown, flop, zip-back),
+  1920x1080 with posters, each with its numbers and where they come from
+  (`tools/landing-report/shotmaking-*.mjs`).
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

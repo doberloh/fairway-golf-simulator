@@ -749,6 +749,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
   - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above says the driver's apex is 9% LOW against a sourced 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
   - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
+  - Searched again 3 October for the shot-making clips, with the same result. The stinger clip (2 iron, 152 mph, 7.5 deg, 2,800 rpm) peaks at 54 ft and says so on its page; RESEARCH.md, *Shot-making clips*.
 
 - [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
 
@@ -3229,6 +3230,14 @@ engineering provenance pass, not legal advice.
   Worth doing cheaply when the site exists, and NOT a reason to revisit the
   name: pair it with a word in the title and the description -- "Fairway, a
   browser golf simulator" -- so a search engine has something to hang it on.
+
+- [x] **Shot-making clips for the website (3 October).** Stinger, high draw,
+  power fade, knockdown, flop and zip-back at 1920x1080 on Ultra, interface
+  hidden, with posters: docs/reports/shotmaking/. Each is played on real
+  launch numbers and none needed a physics change. Not yet copied into
+  `site/media/` -- the owner picks which go on the site. The stinger peaks at
+  54 ft, the known gap under *A stinger needs a 2-5 degree launch*. RESEARCH.md,
+  *Shot-making clips*.
 
 ## Found by driving the built game
 

@@ -5833,3 +5833,30 @@ Rolling round the lip's edge -- the torus of radius R about the rim circle -- th
 
 **The friction is not what decides it.** Giving the lip 0.45, 0.6 and 0.7 instead of 0.305 leaves the longest Stimp 10 ride at 212 degrees each time, and moves Stimp 13's from 231 only to 255. The limit is the instants the load is near zero, when no coefficient grips. The 360-degree lip-out is therefore gone at any plausible friction; the rim test that required one (330-480 degrees) asks now for over 180, and says why. Bringing the full lap back would need physics the model lacks -- the turf edge deforming under the ball -- not a different number.
 
+
+## Shot-making clips (3 October)
+
+Six showcase shots for the website -- stinger, high draw, power fade, knockdown, flop, zip-back -- filmed on the test course (pnw REPORT1, no wind) from `tools/landing-report/shotmaking-plan.mjs` and `shotmaking-clips.mjs`, in `docs/reports/shotmaking/`. The brief was that none of them look outlandish, so each is played with numbers a strong real player produces and the plan prints what the physics then did. Nothing in the physics was changed for them.
+
+| Shot | Club | Ball speed | Launch | Spin | Axis | Carry | Peak | Landing | Then |
+|---|---|---|---|---|---|---|---|---|---|
+| Stinger | 2 iron | 152 mph | 7.5 | 2,800 | 0 | 238 yd | 54 ft | 36 | runs 24 yd |
+| High draw | driver | 167 mph | 13 | 2,400 | -6 | 262 yd | 111 ft | 42 | 12 yd of draw |
+| Power fade | driver | 167 mph | 10.5 | 3,000 | +5 | 263 yd | 100 ft | 42 | 14 yd of fade |
+| Knockdown | 7 iron | 100 mph (solved) | 12 | 5,500 | 0 | 139 yd | 36 ft | 35 | runs 26 yd to the flag |
+| Flop | 60 deg | 31 mph (solved) | 45 | 2,800 | 0 | 19 yd | 16 ft | 49 | stops by the flag |
+| Zip-back | 56 deg, Soft green | 83 mph (solved) | 30 | 9,600 | 0 | 95 yd | 77 ft | 51 | spins back 5.5 yd |
+
+Carries on the three tee shots are off raised tees, so they read longer than the flat-ground figures the flight was fitted to.
+
+**Where the numbers come from, and which are placed.**
+
+- **Driver**: 167 mph is the Trackman tour average already used for the flight fit (*Sourcing*, above), as is its roughly 11 degrees and 2,700 rpm. The draw and fade sit either side of it -- higher and less spin for the draw, lower and more spin for the fade -- and the spin axis was **chosen** for 10-15 yards of curve. Placed, not published.
+- **Knockdown**: taken off a full tour 7 iron (about 120 mph, 16 degrees, 7,000 rpm, same tour averages). How much comes off each is **judgement**; the ball speed is then solved so it finishes at the flag, which it does by landing short and running 26 yards. That run is the most "shown" number in the set and the first to check if a measured knockdown ever turns up.
+- **Flop**: GolfWRX, "The difference between a pitch shot and a flop shot on Trackman" -- flops launching 40-45 degrees averaged about 2,165 rpm, one example 3,702, club speed about 51 mph, landing angle about 51 degrees. **Read only through a search summary**: the page returns 403 to any automated fetch, so these figures are second-hand until someone saves it into `docs/sources/`. The first draft launched at 48 degrees on 3,300 rpm; it was brought down to 45 and 2,800 to sit inside the quoted band, and the model then landed it at 49 against the quoted 51.
+- **Zip-back**: the tour average for a full pitching wedge is about 9,300 rpm; 9,600 for a 56 degree at 83 mph is that plus a little for loft, **placed**. A first draft at 10,200 rpm came back 8.4 yards, which reads as theatrical; at 9,600 it comes back 5.5. Soft greens are where this shot happens, and the model's Soft is already anchored (*Firmness*).
+- **Stinger**: **no published launch-monitor figures for a stinger were found**, again. A search on 3 October for Trackman stinger launch, apex and spin returned only general launch-monitor explainers ([Trackman's guide](https://www.trackman.com/blog/the-ultimate-guide-to-understanding-trackman), [golf.com's driver numbers by swing speed](https://golf.com/gear/swing-speed-optimal-trackman-numbers-to-hit-your-drives-farther/)), as the earlier search did. Launch is set a few degrees under a normal long iron. The clip peaks at **54 ft**, which is the known gap in TODO, *A stinger needs a 2-5 degree launch in this model*: the usual description is 30-45 ft and this model cannot get there at a launch a golfer produces. It still reads as low beside the drivers (100-111 ft) because the tracer stays under the tree line. Say so before using it to claim anything specific about stingers.
+
+**Filming, and two things that went wrong first.** Each clip is a fixed camera 10 m behind and 4.5 m above the ball for the tee shots (7 m and 3 m for approaches), looking at where the ball will land, then a cut 0.8 s before it lands to a camera beside the landing that turns with the ball. The game's own chase camera was tried first and lost the ball. A camera 25 m from the landing on the game's normal lens showed nothing: a ball is two pixels wide from there, so the landing camera sits 9-13 m off with a 24-26 degree lens, which is how television does it. And hole 1's back tee looks over a ridge at its own landing area -- the drives vanished -- so the tee shots moved to the doglegs (holes 3, 5 and 9), which a line-of-sight check from each tee showed were open. The draw is on a dogleg left and the fade on a dogleg right, which is also how they would be played.
+
+The game's white ball-marker ring is put back every time it moves the ball, after anything a page callback can do, so it is hidden through its material instead.

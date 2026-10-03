@@ -413,3 +413,9 @@ is only as good as the ability to go back and check what it was taken from.
 - Up Your Club, pitching wedge launch and spin -- https://www.upyourclub.com/pitching-wedge-launch-angle-spin-rate/ -- quoted in a search summary as 6,000-8,000 rpm for a 50 yard partial wedge; not read directly, and not relied on.
 - Personal Golf Instruction, "Chipping Ratios" -- https://personalgolfinstruction.com/chipping-tips/chipping-ratios/ -- carry to roll: 8 iron 1:4, 9 iron 1:3, pitching wedge 1:2, sand wedge 1:1, lob wedge 1:0.5. No green speed stated, no author named.
 - Golf Distillery, chipping club selection -- https://www.golfdistillery.com/golf-tips/short-game/chipping/distance-control/ -- a 60 deg wedge flies 70-80% of the distance, a pitching wedge 50%, a 7 iron 20%. No green speed stated.
+
+## Shot-making clips (3 October 2026)
+
+- GolfWRX, "The difference between a pitch shot and a flop shot on Trackman" -- https://golfwrx.com/346670/the-difference-between-a-pitch-shot-and-a-flop-shot-on-trackman/ -- flops launching 40-45 deg averaged about 2,165 rpm (32-37 deg: about 2,249), one example 3,702 rpm, club speed about 51 mph, landing angle about 51 deg. Returns 403 to automated fetches; read through a search summary only.
+- Trackman, "The Ultimate Guide to Understanding Trackman" -- https://www.trackman.com/blog/the-ultimate-guide-to-understanding-trackman -- consulted for stinger data; has none.
+- golf.com, "Based on swing speed, here are the 'preferred' Trackman numbers" -- https://golf.com/gear/swing-speed-optimal-trackman-numbers-to-hit-your-drives-farther/ -- driver launch and spin by swing speed; consulted for stinger data, has none.
