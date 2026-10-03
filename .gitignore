@@ -74,3 +74,15 @@ vendor/baked_assets/
 # This folder's link to a Netlify site (`netlify link`, tools/deploy-site.mjs).
 # Per machine, never committed.
 /.netlify/
+
+# Secrets and per-machine settings never belong in the repository. Nothing of
+# the kind exists here now (audited 2 October across every pushed version);
+# these are here so that one created later is ignored by default.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.claude/settings.local.json

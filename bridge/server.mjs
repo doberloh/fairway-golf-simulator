@@ -100,8 +100,8 @@ async function readManifest(){
 // the link the bridge prints for a phone: a player should not have to look up
 // their computer's address to play from one. Private IPv4 addresses only, and the HOME network's first: VPNs and
 // virtual machines add adapters with private addresses of their own, and on
-// the machine this was written on a VPN's 10.8.0.2 came before the real
-// 192.168.1.20 -- picked blind, the phone would have been told an address it
+// the machine this was written on a VPN's 10.x address came before the real
+// 192.168.x one -- picked blind, the phone would have been told an address it
 // cannot reach. So adapters named like a VPN or a virtual machine are skipped,
 // and 192.168/16 (what home routers hand out) is preferred to 172.16/12
 // (Docker and WSL) and 10/8 (VPNs). Every candidate is returned, best first,
