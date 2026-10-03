@@ -256,8 +256,12 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **There is still no public remote, and that is now the last thing
-  standing between this tree and a published project.** The licence is
+- [ ] **There is still no PUBLIC remote, and that is now the last thing
+  standing between this tree and a published project.** A private one exists
+  since 2 October -- https://github.com/doberloh/fairway, `origin`, every
+  branch pushed, the website's media in its Git LFS storage -- so making it
+  public is a settings change on GitHub once the document plan below and the
+  name are settled, not a migration. The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
   Dustin Oberloh, who holds the copyright outright, which is what made that
   choice free to make; a project with outside contributors cannot change its
