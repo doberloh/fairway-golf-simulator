@@ -196,8 +196,13 @@ contact (`physics.js`, after the bounce), so in sand only gravity moves it back.
 the green's own sliding friction (0.305), times the press of going round. Raise it
 and slow balls ride the inside of the cup longer (at the old unlimited grip, up to
 three and a half laps); lower it and fast balls lose the grip to horseshoe out.
-The lip EDGE above the wall still assumes grip is always enough -- the next thing
-to cap, and it would change which putts lip out.
+The lip EDGE above the wall follows the same rule (3 October): it grips at most
+`WALL_FRICTION` times the ball's press on it, and the ball slides over the edge
+when rolling would need more. Lip-outs ride up to about two thirds of a lap
+(212 degrees at Stimp 10, 231 at 13), and that barely moves across a friction
+of 0.3 to 0.7 -- what limits it is the instants the ball is barely pressing on
+the lip. The full 360-degree lip-out it removed is the trade-off;
+docs/reports/LIP_GRIP_REPORT.md.
 
 ## How to ask for a change
 

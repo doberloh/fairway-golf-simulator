@@ -21,15 +21,6 @@ prevent.
 
 ## Found by driving the built game
 
-- [ ] **The lip edge assumes grip is always enough, as the cup wall did.** A
-  ball riding the very edge of the hole can still go round about a full circle
-  before lipping out (325-359 degrees, the rim test's longest). The wall below
-  the lip now grips only as hard as the ball presses into it (2 October); the
-  edge regime in `physics.js` has no such check. Capping it the same way would
-  shorten those rides, and it CHANGES WHICH PUTTS LIP OUT, so measure capture
-  speed and lip-out rate by line before and after, on its own branch of work.
-  docs/reports/BALL_LANDING_REPORT.md, plan item 1.
-
 - [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
   The keyboard keeps a club's full-swing launch at any power, so there is no
   keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
@@ -3240,6 +3231,12 @@ engineering provenance pass, not legal advice.
   browser golf simulator" -- so a search engine has something to hang it on.
 
 ## Found by driving the built game
+
+- [x] **The lip edge grips only as hard as the ball presses on it (3 October).**
+  The same rule as the cup wall. Longest lip-out ride 296 to 212 degrees at
+  Stimp 10 and 382 to 231 at Stimp 13 over 1,518 putts; 5 outcomes changed;
+  insensitive to the friction chosen (0.3 to 0.7). The full 360-degree lip-out
+  is gone, the known trade-off. docs/reports/LIP_GRIP_REPORT.md.
 
 - [x] **Keyboard, touch and controller chips spun far too hard (2 October).**
   Spin fell with the square root of power, so a 10% wedge left at 337 rpm per

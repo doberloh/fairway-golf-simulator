@@ -65,6 +65,10 @@ the change that made it stale, not a follow-up.
 
 **Reports and studies**
 
+- **[reports/LIP_GRIP_REPORT.md](reports/LIP_GRIP_REPORT.md)** — the lip of the
+  cup gripping only as hard as the ball presses on it: shorter lip-out rides,
+  the full 360-degree lip-out traded away. Visual version in
+  [reports/lip-grip/](reports/lip-grip/index.html).
 - **[reports/BALL_LANDING_REPORT.md](reports/BALL_LANDING_REPORT.md)** — what the
   ball does after it lands: keyboard chip spin, bunkers, the cup, sideways hops,
   and a plan for what comes next. The clips and charts are in
