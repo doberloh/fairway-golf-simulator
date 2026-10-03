@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateShot, R, MPH, CUP_RADIUS} from '../src/physics.js';
-import {turfConfig} from '../src/turf.js';
+import {turfConfig, rollDeceleration} from '../src/turf.js';
 import {customizeClubs, manualLaunch} from '../src/clubs.js';
 
 const turf = turfConfig({});
@@ -74,5 +74,21 @@ test('a ball that drops into the cup falls to the bottom inside a lap', () => {
    } else last = null;
   }
   assert.ok(swept < 2 * Math.PI, `${speed} m/s, ${offset * 1000} mm off line: ${(swept * 180 / Math.PI).toFixed(0)} degrees round the inside of the cup`);
+ }
+});
+
+test('a lip-out rides the edge under three quarters of a lap', () => {
+ // The lip held a ball to its edge with grip it did not have, at moments it was
+ // barely pressing on it: these two rode 382 and 296 degrees before lipping out.
+ // The lip now grips only as hard as it is pressed (3 October).
+ const onEdge = q => q.y >= 0 && Math.abs(Math.hypot(Math.hypot(q.x, q.z) - CUP_RADIUS, q.y) - R) < .0008;
+ for (const [stimp, offset, speed] of [[13, .045, .6], [10, .03, 1.2]]) {
+  const t = turfConfig({stimp}), run = .3, release = Math.sqrt(speed * speed + 2 * rollDeceleration('green', t) * run);
+  const r = simulateShot({origin: {x: offset, z: -run}, aim: 0, hla: 0, vla: 0, spin: 0, spinAxis: 0, speed: release, roll: release},
+   ground('green', {x: 0, z: 0}), {turf: t});
+  assert.ok(!r.holed, `Stimp ${stimp}, ${offset * 1000} mm, ${speed} m/s: now holed`);
+  const on = r.points.filter(onEdge);
+  let arc = 0; for (let i = 1; i < on.length; i++) { let s = Math.atan2(on[i].x, on[i].z) - Math.atan2(on[i - 1].x, on[i - 1].z); s = ((s + Math.PI * 3) % (Math.PI * 2)) - Math.PI; if (Math.abs(s) < 1.2) arc += Math.abs(s); }
+  assert.ok(arc * 180 / Math.PI < 270, `Stimp ${stimp}, ${offset * 1000} mm, ${speed} m/s: rode ${(arc * 180 / Math.PI).toFixed(0)} degrees`);
  }
 });

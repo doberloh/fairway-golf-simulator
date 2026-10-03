@@ -902,7 +902,29 @@ export function simulateShot(shot,course,options={}){
     const load=Math.max(0,G*Math.sin(edge.alpha)+rho*edge.rate*edge.rate*Math.cos(edge.alpha)-R*edge.alphaRate*edge.alphaRate);
     const drag=rimMu*load;
     const along=rho*edge.rate,around=R*edge.alphaRate,path=hypot(along,around)||1e-9;
-    edge.alphaRate+=(-(5/(7*R))*(rho*edge.rate*edge.rate*Math.sin(edge.alpha)+G*Math.cos(edge.alpha))-drag*(around/path)/R)*dt;
+    // THE LIP CAN ONLY GRIP AS HARD AS THE BALL PRESSES ON IT -- the same rule
+    // as the wall below it (3 October). Rolling round the edge's tube, the ball
+    // centre accelerates at 5/7 of what gravity and going round push it with,
+    // and the edge has to supply the other 2/7 as friction. Nothing checked it
+    // could: a ball barely resting on the lip, pressing with a fraction of a g,
+    // was held to the edge by grip it did not have, and rode it round up to 382
+    // degrees before lipping out. When the rolling answer needs more than the
+    // edge can give, the ball SLIDES over the edge instead, and `slip` -- the
+    // contact surface's own speed round the tube -- runs free of the centre's.
+    const push=-(rho*edge.rate*edge.rate*Math.sin(edge.alpha)+G*Math.cos(edge.alpha));
+    const lipGrip=WALL_FRICTION*load,lipNeeded=-(2/7)*push;
+    if(edge.slip===undefined)edge.slip=R*edge.alphaRate;
+    const lipSlip=R*edge.alphaRate-edge.slip;
+    if(Math.abs(lipSlip)<1e-3&&Math.abs(lipNeeded)<=lipGrip){
+     edge.alphaRate+=((5/7)*push/R-drag*(around/path)/R)*dt;
+     edge.slip=R*edge.alphaRate;
+    }else{
+     const f=Math.abs(lipSlip)>=1e-3?-Math.sign(lipSlip)*lipGrip:Math.sign(lipNeeded)*lipGrip;
+     edge.alphaRate+=((push+f)/R-drag*(around/path)/R)*dt;
+     // I = 2/5 m r^2: the friction that slows the centre spins the surface up.
+     edge.slip+=-2.5*f*dt;
+     if(Math.sign(R*edge.alphaRate-edge.slip)!==Math.sign(lipSlip||-f))edge.slip=R*edge.alphaRate;
+    }
     edge.alpha+=edge.alphaRate*dt;
     // Angular momentum about the cup axis carries the ball round, so it speeds
     // up as it falls inward and slows as it climbs back out.
