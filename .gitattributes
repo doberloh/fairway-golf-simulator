@@ -16,5 +16,3 @@
 # permanently. The pages themselves are ordinary text. Media committed before
 # this line (the first, low-resolution set) stays in the history as it was.
 site/media/** filter=lfs diff=lfs merge=lfs -text
-# Video clips in reports (docs/reports/*/), same reason as the website's media.
-docs/reports/**/*.webm filter=lfs diff=lfs merge=lfs -text

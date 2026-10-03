@@ -59,11 +59,17 @@ the change that made it stale, not a follow-up.
 - **[LANDSCAPE_RESEARCH.md](LANDSCAPE_RESEARCH.md)** — the same standard,
   applied to terrain, vegetation and course architecture.
 - **[REFERENCES.md](REFERENCES.md)** — the source list behind both.
-- **[sources/](sources/)** — pages and exports that cannot be fetched
-  automatically, committed so a citation stays readable. A link nobody
-  following it can open is a promise, not a citation.
+- **sources/** — pages and exports that cannot be fetched automatically,
+  saved so a citation stays readable. **Local only, not in the repository**;
+  RESEARCH.md quotes the passage it relies on.
 
-**Reports and studies**
+**Reports and studies -- local only**
+
+These are made for the owner and stay on the machine that made them: since
+3 October 2026 `docs/reports/`, `docs/studies/` and `docs/sources/` are
+git-ignored and are not in the repository or its history. The tools that
+generate them are tracked, and what was decided from them is in RESEARCH.md.
+The list below is what exists locally.
 
 - **[reports/shotmaking/](reports/shotmaking/index.html)** — six showcase shots
   for the website (stinger, high draw, power fade, knockdown, flop, zip-back),

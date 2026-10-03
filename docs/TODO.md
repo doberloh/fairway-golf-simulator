@@ -3070,6 +3070,15 @@ engineering provenance pass, not legal advice.
   repository now use. Every commit ID changed; GitHub got the clean history by
   force-push. DISTRIBUTION_REVIEW *What went to GitHub*.
 
+- [x] **Reports, studies and saved sources are local only (3 October).** At the
+  owner's request `docs/reports/`, `docs/studies/` and `docs/sources/` were
+  untracked, git-ignored and removed from every commit on every branch with
+  `git filter-repo`; the files stay on the owner's machine. AGENTS.md
+  *Reports made for the owner stay local* is the rule from now on. The USGA
+  firmness bands, the one source RESEARCH.md leaned on through a saved file,
+  are now quoted in RESEARCH.md itself. DISTRIBUTION_REVIEW, *Reports kept
+  local*.
+
 - [x] **The second, stale git repository one directory up (30 September).**
   Handled by the owner outside this repository.
 

@@ -550,3 +550,22 @@ commits can still be fetched there by exact ID until GitHub clears them out
 (GitHub Support can purge them on request). A copy of the repository as it
 was before the rewrite is kept outside it, beside the project folder, for the
 owner to delete once satisfied.
+
+## Addendum, 3 October 2026: reports kept local
+
+At the owner's request, `docs/reports/` (62 files, about 96 MB including the
+report clips in Git LFS), `docs/studies/` (2 files) and `docs/sources/`
+(4 files: two saved copies of a USGA article that 403s to automated fetch, a
+README and the owner's SkyTrak shot extract) are no longer part of the
+repository. They are git-ignored, and `git filter-repo` removed them from every
+commit on every branch, so every commit ID changed again. The files are still
+on the owner's machine; the tools that generate the reports are tracked.
+
+Two things a rewrite does not reach. GitHub keeps Git LFS objects (the report
+clips) in the repository's storage after the commits that referenced them are
+gone; they are unreachable but only deleting the repository or asking GitHub
+support purges them. And anyone who cloned before the rewrite still has the
+old history.
+
+Nothing in the build, the tests or the website read these folders, so the
+release claims above are unchanged.

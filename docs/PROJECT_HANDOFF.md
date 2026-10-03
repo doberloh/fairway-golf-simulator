@@ -372,7 +372,7 @@ The pad (the ground) is separate from the tee marker (where you stand). A marker
 
 `firmness.js` owns it. The value is TruFirm/GS3 penetration in inches — lower is firmer — and it rides in the turf config beside `stimp`, so it reaches every physics call site the same way. `turfConfig` accepts a preset name or a number and normalises to a number; anything unrecognised reads as Normal rather than throwing, because an old save has no firmness at all.
 
-**The four preset depths are the USGA's published GS3 bands and are not free to move.** They are not tuning knobs: each one sits on a named band from Green Section Record vol. 62 no. 22, the article is committed under `docs/sources/` because the page 403s to automated fetch, and a test asserts each preset is still inside its band. If a setting feels wrong, change the *multipliers* — which are the unanchored part — rather than sliding a depth off the band it is named for.
+**The four preset depths are the USGA's published GS3 bands and are not free to move.** They are not tuning knobs: each one sits on a named band from Green Section Record vol. 62 no. 22, the bands are quoted in RESEARCH.md (the page 403s to automated fetch; the saved copy is local, under `docs/sources/`, and not in the repository), and a test asserts each preset is still inside its band. If a setting feels wrong, change the *multipliers* — which are the unanchored part — rather than sliding a depth off the band it is named for.
 
 **Normal is exactly the model that was there before.** All three multipliers are 1 at `NORMAL_FIRMNESS` by construction, asserted by test. That is what pins the scale, and it is why an existing course plays precisely as it did — get this wrong and every saved round changes underneath its owner.
 
