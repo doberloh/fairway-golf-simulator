@@ -65,6 +65,9 @@ the change that made it stale, not a follow-up.
 
 **Reports and studies**
 
+- **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
+  approach clips at 10 to 100 yards, low, stock and high, each with its launch
+  numbers, carry and roll (`tools/landing-report/approach-*.mjs`).
 - **[reports/LIP_GRIP_REPORT.md](reports/LIP_GRIP_REPORT.md)** — the lip of the
   cup gripping only as hard as the ball presses on it: shorter lip-out rides,
   the full 360-degree lip-out traded away. Visual version in
