@@ -487,10 +487,16 @@ claims and what it pulls in:
   Garmin. The footer carries the line this review asked for in September --
   all marks belong to their owners, no affiliation, endorsement or
   certification claimed -- and so does the download README.
-- **Donation wording** follows item 4 above: free, nothing locked, donating
-  unlocks nothing, money goes to Fairway's own development, and it says
-  plainly that donations do not reach the model authors, with a link to
-  Quaternius's Patreon. The payment links themselves are not in yet.
+- **Donation wording** (revised 2 October, the owner's words): Fairway is free
+  and stays free, donations are appreciated, and "donations go towards any
+  future development, and hosting costs for this site", through a Ko-fi link.
+  The explicit disclaimers that stood there -- "donating doesn't unlock
+  anything" and "donations here don't reach" the model artists -- were removed
+  at the owner's request. That still sits inside item 4: nothing on the page
+  says or implies that a donation is needed to play, unlocks anything, buys
+  hardware compatibility, or reaches the third-party authors -- it names where
+  the money does go. Keep it that way: a sentence suggesting donations support
+  the artists, or unlock a feature, would cross the line.
 - **Not public yet**, at the owner's request: no-index meta tags, an
   `X-Robots-Tag` header and a robots.txt that disallows everything. These keep
   search engines out, not people; Netlify's password protection does that.

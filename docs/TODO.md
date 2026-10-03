@@ -174,12 +174,10 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **Owner: fill in the website's placeholders.** The four download
+- [ ] **Owner: fill in the website's download links.** The four download
   buttons point at `#download` and answer "opens with the beta" when clicked;
-  give each `href` in `site/index.html` the hosted zip's address. The donation
-  button is a disabled placeholder until the payment links exist. Both are
-  marked `OWNER:` in the page. Keep the donation wording inside the limits in
-  the entry below.
+  give each `href` in `site/index.html` the hosted zip's address. They are
+  marked `OWNER:` in the page. (Donations are done: Ko-fi, 2 October.)
 
 - [ ] **Owner: the website on a real iPhone and in Safari.** It was checked in
   Chromium only, at desktop and phone sizes. The background clips are WebM,
@@ -724,8 +722,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [ ] Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
 
 - [ ] Choose public publisher/support details and check the working product name before a broad release.
-
-- [ ] Configure an optional donation page when requested; no payment account or public posting has been created.
 
 - [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
   **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
@@ -3137,6 +3133,17 @@ engineering provenance pass, not legal advice.
   no GPU, against about one minute on one; the rest stays a local gate.
 
 ## Getting the word out
+
+- [x] **Donations: Ko-fi (2 October).** Was: "configure an optional donation
+  page when requested". The owner set up https://ko-fi.com/doberloh; the site's
+  support panel carries a "Support Fairway on Ko-fi" button and both footers a
+  Ko-fi link. A plain link, chosen over Ko-fi's embedded panel and floating
+  button, so nothing from Ko-fi loads before a click. The wording is the
+  owner's: "Donations go towards any future development, and hosting costs for
+  this site." The two disclaimers that stood there ("donating doesn't unlock
+  anything", "donations here don't reach" the model artists) were removed at
+  the owner's request; DISTRIBUTION_REVIEW records why that still sits inside
+  its guidance.
 
 - [x] **The website (1 October 2026).** Branch `productization`, asked for by
   the owner. Was: "a one-page site whose main feature is a Play button,
