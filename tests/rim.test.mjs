@@ -146,7 +146,14 @@ test('the rim costs the ball exactly what the green costs it', () => {
   return best;
  };
  const slow = longest(8), quick = longest(13);
- assert.ok(quick > slow * 1.2,
+ // Longer, not 20% longer. The 20% margin was met by ONE ride: a Stimp 13 putt
+ // that dropped below the lip, went a full lap round the cup wall, climbed back
+ // out and rode the edge again -- 666 degrees against Stimp 8's 325. That climb
+ // needed the wall to grip the ball harder than its own weight while pressing on
+ // it with barely one g, which no liner does; with the wall's grip capped at the
+ // green's sliding friction (2 October) the ball drops instead, and the longest
+ // rides on either green stay on the lip: 359 against 325.
+ assert.ok(quick > slow * 1.05,
   `a Stimp 13 green held ${quick.toFixed(0)} degrees against Stimp 8's ${slow.toFixed(0)}: the rim is not reading the green`);
  // And the coefficient really is the green's, not a number near it.
  for (const stimp of [8, 10, 13])
