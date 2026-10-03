@@ -459,7 +459,7 @@ compiled with Bun into one program with nothing to install, beside
   Apple Silicon run them after the player allows it). Windows SmartScreen and
   macOS Gatekeeper warn on first run; the README walks through both. A paid
   certificate would remove the warnings.
-- **Rela and GSPro are named** in the README, PLAYING.md and the website to say
+- **rēlā and GSPro are named** in the README, PLAYING.md and the website to say
   what Fairway works with; no affiliation is claimed, and the README says so.
 
 ---
@@ -472,7 +472,7 @@ claims and what it pulls in:
 
 - **No third-party code, fonts or analytics.** Two pages, one stylesheet, one
   script, all written for the project; the icons are inline SVG drawn for it.
-  Outbound links only (Rela's documentation, Kenney, Quaternius, ez-tree,
+  Outbound links only (rēlā's documentation, Kenney, Quaternius, ez-tree,
   Quaternius's Patreon). The demo is the same file as the downloads, so its
   notices are the same and are inside it under Help.
 - **Media is the game's own output**: screenshots and clips captured from the
@@ -483,7 +483,7 @@ claims and what it pulls in:
   SkyTrak named as the held-out check -- see RESEARCH.md *The website: what it
   claims*. Not "calibrated", not "certified", and no device beyond those two
   (and the planned R50) is named in connection with accuracy.
-- **Marks named** to describe compatibility: GSPro, Rela, GC3, SkyTrak,
+- **Marks named** to describe compatibility: GSPro, rēlā, GC3, SkyTrak,
   Garmin. The footer carries the line this review asked for in September --
   all marks belong to their owners, no affiliation, endorsement or
   certification claimed -- and so does the download README.

@@ -9,7 +9,7 @@ Updated October 1, 2026. This is the guide to building Fairway from source, serv
 | Play, with or without a launch monitor | The download for your computer (`Fairway-Windows.zip`, `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip` or `Fairway-Linux.zip`) and a compatible browser | The download's README |
 | Change the code or build your own release | `Fairway-source.zip`, Node.js and npm | Build from source |
 | Play on a phone, tablet or another computer | A computer running `run_fairway_server` from the download, or the built app on HTTPS static hosting | Phones, tablets and shared-network access |
-| Use a launch monitor | The download, and an Open Connect connector for your device (Rela on Windows) | The download's README; *Optional launch-monitor bridge* below for the details |
+| Use a launch monitor | The download, and an Open Connect connector for your device (rēlā on Windows) | The download's README; *Optional launch-monitor bridge* below for the details |
 
 Manual play does not require an account, commercial golf software or a launch monitor. There is one browser game for every device; the platform downloads differ only in the server program, `run_fairway_server`, compiled for that computer.
 

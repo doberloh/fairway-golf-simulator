@@ -3135,7 +3135,7 @@ engineering provenance pass, not legal advice.
   ball physics (the GC3 figures, with SkyTrak named as the held-out check),
   greens and the three putting modes, stroke, match, scramble and endless,
   night golf, the course studio and course codes (a real code, written by the
-  build), the range, and four smaller points; then connecting through Rela
+  build), the range, and four smaller points; then connecting through rēlā
   in five steps, the four downloads with how to run them, "always free" and
   "open source soon". The media page has the 18 landscape pictures, filterable
   by time of day, the clips, and the feature screenshots. **The Demo button**

@@ -5750,16 +5750,16 @@ every address (its default) was not run here: it raises the firewall prompt on
 the owner's machine; the lines it prints for that case are unit-tested. The
 macOS and Linux programs have not been run on those systems.
 
-**Rela, as the documented connector path.** From its documentation
+**rēlā, as the documented connector path.** From its documentation
 ([docs.rela.golf](https://docs.rela.golf/), the
 [user guide](https://docs.rela.golf/rela/user-guide/) and the
 [installation guide](https://docs.rela.golf/rela/installation/)): it runs on a
 Windows PC, the launch monitor is chosen under **Device** and found with
 **Search**, the output under **Simulator** (GSPro among the options), and the
 simulator's address and port under **Settings**; vendor software is installed
-before Rela. The guides do not state Rela's default GSPro port; GSPro's own Open
+before rēlā. The guides do not state rēlā's default GSPro port; GSPro's own Open
 Connect port is 921 and Fairway's 1921, so the instructions say to set 1921.
-Rela's supported device list is not on those pages; nothing here claims one.
+rēlā's supported device list is not on those pages; nothing here claims one.
 
 ## The website: what it claims, and how its media was made (1 October)
 

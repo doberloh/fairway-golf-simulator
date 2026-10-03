@@ -26,7 +26,7 @@ the change that made it stale, not a follow-up.
   how to report a problem.
 - **[PORTABLE_README.md](PORTABLE_README.md)** — the README inside each
   download: starting `run_fairway_server`, playing on a phone, connecting a
-  launch monitor through Rela, troubleshooting.
+  launch monitor through rēlā, troubleshooting.
 - **[INSTALLATION.md](INSTALLATION.md)** — building from source, supported
   platforms and the ones that are merely untested, serving it yourself, the
   bridge's details, and building and deploying the website (`site/`). Not

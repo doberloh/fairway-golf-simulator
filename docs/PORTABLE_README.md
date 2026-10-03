@@ -48,15 +48,15 @@ start with nine holes on a smaller device.
 
 Fairway listens for shots in the **GSPro Open Connect** format, so it works
 with the connector software that already drives GSPro. The quickest route is
-**Rela**, a free connector for Windows that talks to many launch monitors:
+**rēlā**, a free connector for Windows that talks to many launch monitors:
 [docs.rela.golf](https://docs.rela.golf/).
 
-1. **Install your launch monitor's own software, then Rela**, on the computer
-   running Fairway (Rela's installation guide walks through it).
-2. **Connect your launch monitor in Rela:** turn the monitor on, pick it under
+1. **Install your launch monitor's own software, then rēlā**, on the computer
+   running Fairway (rēlā's installation guide walks through it).
+2. **Connect your launch monitor in rēlā:** turn the monitor on, pick it under
    **Device** and click **Search**.
-3. **Set Rela's Simulator to GSPro.**
-4. **Point it at Fairway:** in Rela's **Settings**, set the simulator's
+3. **Set rēlā's Simulator to GSPro.**
+4. **Point it at Fairway:** in rēlā's **Settings**, set the simulator's
    address to **127.0.0.1** and its port to **1921** — Fairway's port. (GSPro
    itself uses 921; see *Ports* below if your connector cannot change it.)
 5. **Get playing:** in Fairway, choose **Launch monitor** on the main menu,
@@ -68,7 +68,7 @@ server is running but no device is talking to it.
 
 **Other connectors and other computers.** Any connector that sends the GSPro
 Open Connect (v1) format works the same way: point it at the computer running
-Fairway, TCP port 1921. Rela is Windows only; on a Mac or Linux, use a
+Fairway, TCP port 1921. rēlā is Windows only; on a Mac or Linux, use a
 connector your launch monitor supports there. Fairway has not yet been tested
 against every physical launch monitor.
 
@@ -85,8 +85,8 @@ around. **PLAYING.md** has every control and setting.
 | --- | --- |
 | The server says *Could not start Fairway* | Something else is using its ports — another copy of Fairway, or GSPro. Close it and start again. |
 | A phone cannot open the link | Same Wi-Fi as the computer (not a guest network); allow the server on private networks in the firewall; use the `192.168…` link, never `127.0.0.1` (on a phone that means the phone). |
-| Rela connects but no shots arrive | In Fairway: **Connect bridge**, then **Arm monitor for live shots**. A shot is refused while a ball is in the air or a panel needs an answer. |
-| Rela will not connect | Check the port is **1921** and the server's window is open. |
+| rēlā connects but no shots arrive | In Fairway: **Connect bridge**, then **Arm monitor for live shots**. A shot is refused while a ball is in the air or a panel needs an answer. |
+| rēlā will not connect | Check the port is **1921** and the server's window is open. |
 | The game is blank or very slow | Use a current browser with hardware acceleration on; try nine holes and the Low quality setting. |
 
 **Ports.** The server uses TCP **1921** for the launch monitor and **1922**
@@ -131,6 +131,6 @@ how to rebuild that program yourself). **ATTRIBUTION.md** credits the imported
 artwork, all of it CC0. The game's own notices are also inside Fairway.html,
 under **Help → Open source & credits**.
 
-GSPro, Rela, Garmin, Rapsodo and PiTrac are named only to describe what
+GSPro, rēlā, Garmin, Rapsodo and PiTrac are named only to describe what
 Fairway can talk to. All trade marks belong to their owners, and no
 affiliation, endorsement or certification is claimed or implied.

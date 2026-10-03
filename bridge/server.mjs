@@ -250,7 +250,7 @@ if(COMPILED||process.argv[1]===fileURLToPath(import.meta.url)){
  if(COMPILED){
   console.log('');
   console.log('  Fairway is running. Keep this window open while you play; close it to stop.');
-  console.log('  Launch monitor: in your connector (Rela, in GSPro mode), set the address to');
+  console.log('  Launch monitor: in your connector (rēlā, in GSPro mode), set the address to');
   console.log(`  127.0.0.1 and the port to ${process.env.FAIRWAY_TCP_PORT||1921}.`);
   console.log('');
  }
