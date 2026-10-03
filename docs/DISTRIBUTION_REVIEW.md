@@ -569,3 +569,16 @@ old history.
 
 Nothing in the build, the tests or the website read these folders, so the
 release claims above are unchanged.
+
+## Addendum, 3 October 2026: downloads served from GitHub releases
+
+The website's four Download buttons now link to
+`https://github.com/doberloh/fairway/releases/latest/download/<zip>` -- the
+same four per-platform zips `npm run release` builds, attached to a GitHub
+release. Nothing about the zips themselves changed, so the release claims
+above stand. What a player downloads is now decided by which release is newest,
+so publishing one is the owner's call alone (AGENTS.md, *Pushing to GitHub*).
+Until the repository is public, only the owner can download from it; a
+pre-release is never "latest", so betas are published as ordinary releases.
+`RELEASE_SHA256.txt` goes up beside the zips so a download can be checked.
+

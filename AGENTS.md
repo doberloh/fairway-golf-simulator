@@ -70,6 +70,24 @@ is private.
 - The website's pictures and clips are in Git LFS: a fresh clone needs
   `git lfs install --local` and `git lfs pull` before `npm run site` will build.
 
+**Releases -- the downloads players get -- go up only when the owner says so.**
+
+- **Publish a new GitHub release only when the owner asks for one,** in those
+  terms. Building the zips (`npm run release`), finishing a journey, merging,
+  or pushing is not a request to release. A release is what every player who
+  clicks Download receives, the moment it is published.
+- **The owner names the version.** Ask if they have not.
+- **Never mark one as a pre-release.** The website's buttons point at
+  `releases/latest/download/<zip>`, and GitHub's "latest" skips pre-releases,
+  so a pre-release would leave every Download button on the previous version.
+  "Beta" goes in the title and notes instead.
+- **Release from `main`, after a merge the owner asked for,** with `dist/` and
+  `release/` rebuilt from it, so the zips are exactly what `main` says.
+- **Editing or deleting a published release is the owner's call too**, the same
+  as a force-push.
+- The command, once the owner has signed the GitHub CLI in (`gh auth login`),
+  is in docs/COMMAND_CHEAT_SHEET.md, *Releases*.
+
 ## Deploying the website to Netlify
 
 - **Deploy only when the owner asks, and as a preview first** --
