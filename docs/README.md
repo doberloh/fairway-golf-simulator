@@ -65,6 +65,11 @@ the change that made it stale, not a follow-up.
 
 **Reports and studies**
 
+- **[reports/BALL_LANDING_REPORT.md](reports/BALL_LANDING_REPORT.md)** — what the
+  ball does after it lands: keyboard chip spin, bunkers, the cup, sideways hops,
+  and a plan for what comes next. The clips and charts are in
+  [reports/ball-landing/](reports/ball-landing/index.html).
+
 - **[reports/TEE_AND_OBSTRUCTION_REPORT.md](reports/TEE_AND_OBSTRUCTION_REPORT.md)**
   — what was blocking tee shots, what was measured, what was changed, and the
   one change that made no difference. Screenshots in

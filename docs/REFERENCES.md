@@ -406,3 +406,10 @@ is only as good as the ability to go back and check what it was taken from.
 - Netlify, build environment variables -- https://docs.netlify.com/build/configure-builds/environment-variables/ -- `GIT_LFS_ENABLED` (clone with `git lfs clone`) and `GIT_LFS_FETCH_INCLUDE`, both to be set in the Netlify UI, not `netlify.toml`. Used for the website's media in Git LFS (RESEARCH.md *The website*).
 - Netlify forum, "LFS files aren't downloaded during build" -- https://answers.netlify.com/t/lfs-files-arent-downloaded-during-build/21948 -- read and set aside: about Netlify Large Media, Netlify's own LFS service, which this project does not use.
 
+## After the ball lands (2 October 2026)
+
+- Trackman, "The Chip Shot Code" -- https://www.trackman.com/blog/the-chip-shot-code -- chips carrying about 1.25 to 24 yards; average spin 1,500 rpm (low launch, 6-14 deg) to 3,000 rpm (high, 27-35 deg), never above 3,750; the lowest chips launch about 6 deg at no more than 1,000 rpm. The anchor for keyboard chip spin.
+- Andrew Rice, "The Science Behind Superb Wedges, Part II" (Trackman study) -- https://www.andrewricegolf.com/andrew-rice-golf/2012/07/the-science-behind-superb-wedges-part-ii -- a 54 deg wedge hit 50 yards: 6,501 rpm clean off a lie board, 7,178 off turf, 4,408 with a dirty face; Molinari's 56 and 60 deg at 50 yards about 6,050 rpm. The anchor for keyboard pitch spin.
+- Up Your Club, pitching wedge launch and spin -- https://www.upyourclub.com/pitching-wedge-launch-angle-spin-rate/ -- quoted in a search summary as 6,000-8,000 rpm for a 50 yard partial wedge; not read directly, and not relied on.
+- Personal Golf Instruction, "Chipping Ratios" -- https://personalgolfinstruction.com/chipping-tips/chipping-ratios/ -- carry to roll: 8 iron 1:4, 9 iron 1:3, pitching wedge 1:2, sand wedge 1:1, lob wedge 1:0.5. No green speed stated, no author named.
+- Golf Distillery, chipping club selection -- https://www.golfdistillery.com/golf-tips/short-game/chipping/distance-control/ -- a 60 deg wedge flies 70-80% of the distance, a pitching wedge 50%, a 7 iron 20%. No green speed stated.

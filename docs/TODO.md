@@ -21,6 +21,23 @@ prevent.
 
 ## Found by driving the built game
 
+- [ ] **The lip edge assumes grip is always enough, as the cup wall did.** A
+  ball riding the very edge of the hole can still go round about a full circle
+  before lipping out (325-359 degrees, the rim test's longest). The wall below
+  the lip now grips only as hard as the ball presses into it (2 October); the
+  edge regime in `physics.js` has no such check. Capping it the same way would
+  shorten those rides, and it CHANGES WHICH PUTTS LIP OUT, so measure capture
+  speed and lip-out rate by line before and after, on its own branch of work.
+  docs/reports/BALL_LANDING_REPORT.md, plan item 1.
+
+- [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
+  The keyboard keeps a club's full-swing launch at any power, so there is no
+  keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
+  1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
+  for the 7 iron to the pitching wedge would add one. A feel decision as much as
+  a physics one. Report plan item 3.
+
+
 What `tools/smoke.mjs` turned up on its first full runs, and what building it
 turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
@@ -630,6 +647,11 @@ dead anyway (see below), so the bubble never protected anything.
     why roll still has no reference data at all. A range mat or a stated turf
     type would be the first roll evidence this project has ever had.
   - **Ball speed, launch angle, azimuth, carry, offline** as usual.
+  - **Roll, with the surface it happened on** -- the first measured roll this
+    project would have. Total distance and the landing surface for chips at
+    10, 20 and 30 yards, a 50 yard pitch, a 7 iron onto a green and a driver on
+    a fairway (2 October: the published chipping ratios disagree by a factor of
+    three, so only a measurement can settle them).
 
 
 Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
@@ -707,7 +729,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
 
-- [ ] **Short shots off the green pick the shortest club at 100% power.** Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+- [ ] **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
 
 - [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
 
@@ -727,7 +749,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
 
 - [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
-  - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron.
+  - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
   - [x] **The measured data DOES cover amateur speeds.** Campaign B spans 1.93-38.7 m/s, so the anchor is valid down to a chip. What is narrow is our tour validation set: it spans 3.49x in arrival spin but only 1.26x in landing speed, while the stock bag lands as slow as 14.7 m/s.
   - [x] **Partial shots show the release-spread defect from the other side:** a half 7-iron releases 17.5 yd against a full one's 3.5.
   **SUPERSEDED** by the fairway and green refits.
@@ -768,14 +790,10 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
   *(was a note under "Speed-dependent rolling resistance is ON (ROLL_SPEED..." -- see `# Done`.)*
 
-- [ ] **Same root cause as the inverted firmness order:** `PLOUGH_BY_FIRMNESS` is too high at the soft end (Soft 1.797, Normal 1.0 against Firm 0.634), so soft ground both skips the forward hop and produces MORE rollback than firm — backwards from real golf, where firm fast greens give the dramatic zip-back and soft ones plug and sit. Pulling the soft end down should fix both.
-
-  *(was a note under "The first bounce goes BACKWARD on Normal and Soft gr..." -- see `# Done`.)*
-
 - [ ] **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
-- [ ] **7 iron on a Burnt green runs 11.8 yd.** Defensible for a surface meant to reject shots, but worth an eye.
+- [ ] **7 iron on a Burnt green runs 11.4 yd** (11.8 when first noted; `node tools/landing-scorecard.mjs`, 2 October). Defensible for a surface meant to reject shots, but worth an eye.
 
 
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
@@ -3222,6 +3240,42 @@ engineering provenance pass, not legal advice.
   browser golf simulator" -- so a search engine has something to hang it on.
 
 ## Found by driving the built game
+
+- [x] **Keyboard, touch and controller chips spun far too hard (2 October).**
+  Spin fell with the square root of power, so a 10% wedge left at 337 rpm per
+  mph (a full swing's 107) and spun back behind its mark. Now proportional to
+  power for chips, the square root for pitches and full swings, blended
+  between 30% and 70% (`spinForPower`, clubs.js), on Trackman's chip and 50
+  yard wedge figures. Branch `ball-landing`; RESEARCH.md *After the ball lands*.
+
+- [x] **Balls checking back in bunkers (2 October).** Sand kept a third of a
+  wedge's backspin through the first contact; in real bunkers 28 of 264
+  landings came back over 0.3 m, up to 2.2 m. Sand now takes the spin: 4 of
+  264, max 0.5 m, all gravity.
+
+- [x] **The ball whirling round inside the cup (2 October).** The wall gripped
+  as hard as the rolling equations asked, up to 1.3 times the ball's weight at
+  about one g of press, so slow balls circled up to three and a half times.
+  It now grips at most the green's sliding friction times the press: under a
+  lap. Which putts drop and which lip out is unchanged.
+
+- [x] **Iron hops turning left or right on greens: measured, not a bug
+  (2 October).** About 3.3 degrees of turn per 1% of cross-slope, the slope
+  explaining nearly all of it over 973 landings; the triangle mesh is not the
+  cause. The greens reading flat on screen is what makes it look causeless.
+
+- [x] **"Chips roll too short" withdrawn as a defect (2 October).** It was
+  measured against one chart (pitching wedge 1:3); two more published charts
+  give 1:2 and 1:1, and the model's 1:1.9, 1:0.9 and 1:0.5 sit inside the
+  spread for every club. Every tuning lever that would push chips toward 1:3
+  breaks a full-shot anchor.
+
+- [x] **Stale: "PLOUGH_BY_FIRMNESS is too high at the soft end" (closed 2
+  October).** It asserted Soft 1.797 against Firm 0.634 and that soft greens
+  rolled back more than firm ones. The table has since been fitted flat (0.394
+  at every firmness) and softer greens check harder, which is what golf does
+  (a full wedge comes back 2.8 yd on Soft and runs 1.7 on Burnt). The entry
+  described code that no longer exists. Original text: **Same root cause as the inverted firmness order:** `PLOUGH_BY_FIRMNESS` is too high at the soft end (Soft 1.797, Normal 1.0 against Firm 0.634), so soft ground both skips the forward hop and produces MORE rollback than firm — backwards from real golf, where firm fast greens give the dramatic zip-back and soft ones plug and sit. Pulling the soft end down should fix both.    *(was a note under "The first bounce goes BACKWARD on Normal and Soft gr..." -- see `# Done`.)*
 
 - [x] **Bunkers buried under a neighbour's rough (2 October, generator 34).**
   Spotted by the owner behind a green on the website's desert clip: a white

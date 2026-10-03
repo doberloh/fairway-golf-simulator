@@ -3542,7 +3542,9 @@ This matters because the regime below about 20 m/s of arrival speed has had **no
 
 Chips were first tested at 2,800-4,200 rpm, which produced ratios of 1:0.2 against a wanted 1:1. That spin is unphysical. A full pitching wedge is **91 rpm per mph of ball speed**; a 22 mph chip at 3,800 rpm is **173 rpm per mph** — nearly double a full swing, with a clubhead that is barely moving. Spin per unit of ball speed is the check that catches this, and it should be applied to any hand-written short-game input.
 
-### With realistic spin, chips still roll too little
+### With realistic spin, chips still roll too little -- against one chart (withdrawn 2 October)
+
+**Withdrawn as a defect on 2 October** (*After the ball lands*, below): the 1:3 / 1:2 / 1:1 chart is one of three published ones, the others give a pitching wedge 1:2 and 1:1 and a lob wedge 1:0.5 and about 1:0.3, and the model's ratios sit inside that spread for every club. The 40-65 rpm per mph used for these inputs was a judgement with no source; Trackman's chips run nearer 100. The measurements below stand; the conclusion drawn from them does not.
 
 At 40-65 rpm per mph, rising with loft:
 
@@ -3555,7 +3557,7 @@ At 40-65 rpm per mph, rising with loft:
 
 The **56 degree is right**. The others are short, and the ordering is correct throughout — a pitching wedge runs, a lob wedge stops.
 
-**Solving for the ratio drives the spin off a cliff.** To reach 1:3 a pitching wedge needs the spin floor — 100 rpm, four rpm per mph — and still only gets to 1:2.1. A 60 degree needs 150 rpm to reach 1:1. Those are not chips. So this is a genuine defect: **the bounce over-checks at chipping speeds**, and no realistic input set fixes it.
+**Solving for the ratio drives the spin off a cliff.** To reach 1:3 a pitching wedge needs the spin floor — 100 rpm, four rpm per mph — and still only gets to 1:2.1. A 60 degree needs 150 rpm to reach 1:1. Those are not chips. So this WAS recorded as a genuine defect -- "the bounce over-checks at chipping speeds" -- and it is withdrawn: the target was one chart's, and the next two charts found put the model inside the published spread.
 
 ### `elasticGain` was the obvious suspect and it is not the cause
 
@@ -5787,3 +5789,38 @@ rēlā's supported device list is not on those pages; nothing here claims one.
 
 **Dropped, not moved.** Nudging a bunker inward would re-fit green-side pockets the placement's binary search had already put a set distance off the fringe; handing the ground to the bunker's own hole instead would cut into the neighbour's corridor and change which hole's rough the ball lies in. No random draw is taken, so nothing generated after it shifts. Including large-lake ownership in the rule changed nothing (zero either way), but the metric and the test use the atlas's full rule so they cannot disagree with what is drawn.
 
+## After the ball lands (2 October)
+
+Five things the owner noticed in play, each measured before anything changed. The owner's report is docs/reports/BALL_LANDING_REPORT.md, with clips and charts in docs/reports/ball-landing/; the scratch searches behind the numbers below are summarised there.
+
+### Keyboard spin fell with the square root of power, and chips paid for it
+
+`manualLaunch` scaled spin by `sqrt(power)` while speed scaled by power, so spin per mph of ball speed ROSE as power fell: a full keyboard wedge leaves at 107 rpm per mph, a 30% one at 195, a 10% one at 337. The 10% chip carried 1.4 yd and finished 1.1 yd behind its mark; sand-wedge chips at 10-20% did the same. **Trackman's "The Chip Shot Code"** puts chips carrying 1.25-24 yd at an average 1,500-3,000 rpm and never above 3,750; the square root gave 2,800-5,700 over that range. At the other end, **a 54 deg wedge hit 50 yards spins 6,501 rpm** (clean face, lie board; 7,178 off turf -- Andrew Rice's Trackman study), and the square root gave 6,970 for a 44 yard pitch, so it was right there. Spin in proportion to power keeps the full shot's spin per mph and lands chips in Trackman's band; the rule is proportional below 30% power, the square root above 70%, and a smoothstep blend between. After: chips 900-3,900 rpm (the 21 yd end is 4% over the 3,750 ceiling), a 44 yard pitch 6,730, full shots unchanged, and no keyboard chip finishes behind its mark. **Rejected**: a single power law (`p^1.3`) and a fixed blend `p(0.45 + 0.55p)` -- both fixed the chips and cut a 50 yard pitch to about 4,200 rpm, a third under the measured 6,500.
+
+### The sideways hop off a green is slope, not noise
+
+An iron landing on a green turns on its first hop by **about 3.3 degrees per 1% of cross-slope** (45 deg arrival, 25 m/s, 6,000 rpm, an even plane): 0 on the flat, 6.6 at 2%, 15.7 at 5%. Sidespin (6 deg axis) adds about 2 degrees, most of it curve already in the flight. Across 746 approach landings on 27 generated greens at green difficulty 70 (three courses), and 227 on nine at the default 35, the slope under the landing explains nearly all of the turn: unexplained residual 0.9 deg mean at difficulty 35, 3.4-4.3 at 70. Mean turn 2.5 deg at difficulty 35 (max 12.5), 7.7-9.1 at 70.
+
+**The triangle mesh was the suspect and is not the cause.** The physics reads height from the drawn mesh (`groundHeight`, piecewise planar, about 0.5 m cells on greens), so a bounce takes one facet's normal. Re-running every landing on the same ground smoothed over the ball's footprint (radius 0.35 m) moved the turn by less than 2 deg in every case at difficulty 35. The single 157 deg "turn" at difficulty 70 was a ball landing on an 11% face, popping nearly straight up and rolling back down -- real, and the same on the smoothed surface within the angle a near-vertical hop can define.
+
+**Is 3.3 deg/% right?** The compliant bounce works in the plane of travel and the surface normal and keeps the outgoing tangential velocity along the incoming tangential direction. Full Coulomb friction acts along the SLIP, which backspin makes far more forward than the tangential velocity; it would strip forward speed while barely touching the downhill component, so a real ball should kick somewhat MORE -- an estimate of about 4.5 deg/% for the same landing. Not changed: the direction is honest and the size, if anything, conservative. The owner's "no reason" is the green reading flatter on screen than it is (TODO, *Reading a green without the overlays*).
+
+### Sand kept its spin, and real bunkers showed it
+
+On flat sand nothing came back: a full wedge's first contact strips its forward speed and it hops nearly straight up and stops. On the game's real bunkers -- excavated bowls -- it did: **28 of 264 approach landings in 22 bunkers came back more than 0.3 m, up to 2.17 m**, and without spin the same landings came back far less. A wedge left its first sand contact with about a third of its backspin, which the next touchdown spent dragging it back. Sand's contact row cannot fix that: its spin column (2.5) is already the rigid ceiling. **Sand now takes the spin**: after a sand contact the ball keeps none. After: 4 of 264 over 0.3 m, max 0.54 m, and those come back as far with no spin at all -- gravity on a steep part of the bowl.
+
+The first flat-sand table recorded here was wrong by the ORIGIN of a drop shot: "finish minus carry" subtracted a carry measured from a start 0.23 m behind the landing point and reported every ball 0.25 yd behind its mark. Measure from the pitch mark itself.
+
+### The cup wall gripped as hard as it needed to
+
+Inside the cup a ball rolls round the wall, and the rolling equations (u' = -5g/7r - (2/7) theta' w; w' = theta' u) hold it up by friction: the vertical grip needed is (2/7)(g - r theta' w) per unit mass. Nothing checked the wall could supply it. At the bottom of a dive a ball entering at walking pace needs more than its own weight in grip while the wall presses on it with about 1.1 g (rho theta'^2 at 18 rad/s): a friction coefficient of 1.3, where cut turf and a plastic liner give a third of that. So a putt at 1.2 m/s, 45 mm off centre, dived to 10 mm off the floor, climbed back to 30 mm below the lip, and went round 2.4 times in 0.9 s; on hole 7 of the test course a 1.2 m putt went round 1,252 degrees. The wall now grips at most `WALL_FRICTION` (the green's sliding friction, 0.305) times the press, and slides when the rolling solution wants more, tracking the spin about the direction of travel separately. After: 0.75 laps in 0.21 s and 352 degrees respectively. **Which putts drop and which lip out is unchanged** in every case tested, because a fast ball presses at many g and keeps the grip to climb.
+
+The rim test asserting that a Stimp 13 green holds a lip-out ride 20% longer than Stimp 8 had passed on one ride: 666 degrees, of which 362 were down inside the cup on the wall and back out -- on exactly this grip. The longest rides are now edge-only, 325 against 359 degrees, and the test asks for 5%. **The edge regime (the lip above the wall) has the same unchecked assumption** and still allows rides of about a full lap; capping it changes which putts lip out, so it is its own piece of work.
+
+### Rollout against every anchor, and the chip defect that was the anchor
+
+`node tools/landing-scorecard.mjs` after this pass: driver 20.8 yd run on a fairway (wanted 21), 3 wood 18.1 (19), 5 iron 13.0 (15); a full keyboard wedge checks on a green and comes back 1.1 yd; a 7 iron releases 6.2; firmness runs the right way (a wedge comes back 2.8 yd on Soft, runs 1.7 on Burnt). Chips, on RESEARCH's own launch-monitor inputs: pitching wedge 1:1.9, 52 deg 1:1.4, 56 deg 1:0.9, 60 deg 1:0.5.
+
+**The chip ratios this project carried as a defect come from one chart.** GolfWRX and Golf Sidekick give pitching wedge 1:3, 52 deg 1:2, 56 and 60 deg 1:1. **Personal Golf Instruction** gives 8 iron 1:4, 9 iron 1:3, pitching wedge 1:2, sand wedge 1:1, lob wedge 1:0.5. **Golf Distillery** gives a 60 deg flying 70-80% of the distance (about 1:0.3), a pitching wedge 50% (1:1), a 7 iron 20% (1:4). None states a green speed. The model sits inside the published spread for every club, so "chips roll too short" is withdrawn as a defect: it was measured against the most roll-heavy chart.
+
+**Every lever was tried against chips anyway**, on the green contact only so the fairway rows stayed honest. More spin scrubbed (spin gain x1.5): chips +0.2 to +0.4 of roll, a 7 iron's release 6.2 to 15.4 yd. Friction x0.8, ploughing x0.6, restitution x0.8: chips barely move. Rolling resistance that does not rise with speed (`ROLL_SPEED_GAIN` 0): chips +0.1 to +0.5, the driver's fairway run 20.8 to 38.5. **The bounce paper's fixed crater tilt** (TODO, it beat the speed-dependent one 19.2% to 21.3%): partial shots change by yards -- a half driver's run 26.9 to 53.3, a full one 20.8 to 31.2 -- so it is not a drop-in; it needs a refit against every anchor. No lever moves chips without breaking a full-shot anchor, which is what fitting to a doubtful chart would have bought.

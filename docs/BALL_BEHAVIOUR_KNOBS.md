@@ -165,15 +165,39 @@ Other fixed points, none of them chosen by us:
 - A ball needs roughly **7,500 rpm** to hold a green at all.
 - A full 56 degree wedge spins **8,500–10,500 rpm**. The 10,400 rpm 7 iron this
   model was previously tuned against is not a shot anybody hits.
-- **Chipping** is anchored on carry-to-roll ratios: pitching wedge 1:3, 52° 1:2,
-  56° and 60° 1:1. Currently met only by the 56°; the others roll short, which is
-  the open low-speed defect in TODO.md.
+- **Chipping** is checked against carry-to-roll ratios, and the published ones
+  disagree by a factor of three: a pitching wedge is 1:3 (GolfWRX, Golf Sidekick),
+  1:2 (Personal Golf Instruction) or 1:1 (Golf Distillery); a lob wedge 1:1, 1:0.5
+  or about 1:0.3. The model's 1:1.9, 1:0.9 (56°) and 1:0.5 (60°) sit inside that
+  spread for every club. It was once recorded as a defect against the 1:3 chart
+  alone; it is not one, and nothing should be tuned toward any single chart
+  (2 October, RESEARCH.md *After the ball lands*).
 
 **Sanity check for any hand-written short-game input:** spin per mph of ball
-speed. A full pitching wedge is **91 rpm per mph**. A chip cannot exceed that —
-the clubhead is barely moving — so 40–65 is the realistic band. Testing chips at
-3,800 rpm once produced a 173 and made the model look badly wrong when the input
-was the problem.
+speed. A full tour pitching wedge is **91 rpm per mph**, and a chip cannot exceed
+its own club's full-swing figure -- the clubhead is barely moving. Trackman's chips
+average 1,500-3,000 rpm over carries of 1.25 to 24 yards, which puts a lofted chip
+nearer 100 rpm per mph than the 40-65 this file once called realistic; that band
+was a judgement with no source and is withdrawn. Testing chips at 3,800 rpm once
+produced 173 rpm per mph and made the model look badly wrong when the input was
+the problem.
+
+**Keyboard, touch and controller spin** is `spinForPower` in `clubs.js`: spin in
+proportion to power for chips (the same spin per mph as the full shot), the square
+root of power for pitches and full swings, blended between 30% and 70% power.
+The square root alone gave a 10% wedge 337 rpm per mph and spun chips back behind
+their marks. Anchored on Trackman: chips 1,500-3,000 rpm, a 50 yard wedge about
+6,500.
+
+**Sand takes the spin.** A ball landing in a bunker keeps no spin past that
+contact (`physics.js`, after the bounce), so in sand only gravity moves it back.
+
+**The cup wall grips no harder than the ball presses into it**: `WALL_FRICTION`,
+the green's own sliding friction (0.305), times the press of going round. Raise it
+and slow balls ride the inside of the cup longer (at the old unlimited grip, up to
+three and a half laps); lower it and fast balls lose the grip to horseshoe out.
+The lip EDGE above the wall still assumes grip is always enough -- the next thing
+to cap, and it would change which putts lip out.
 
 ## How to ask for a change
 
