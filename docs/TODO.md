@@ -330,16 +330,6 @@ GitHub repository, and stop shipping what nobody needs.
     starts at one squashed commit, so that archive is the only record of why
     most decisions went the way they did).
 
-- [ ] **Owner: the email address on commits, before the repository goes
-  public.** Every commit so far carries the owner's personal email as author
-  and committer; anyone who can read the repository can read it. Two separate
-  choices: (1) from now on, commit as GitHub's private no-reply address
-  (shown under GitHub *Settings, Emails*, with "Keep my email addresses
-  private" on) -- one `git config user.email` in this repository; (2) the
-  existing history keeps the real address unless it is rewritten, which the
-  owner has declined so far and which would change every commit's ID.
-  DISTRIBUTION_REVIEW *What went to GitHub* has the full audit.
-
 ## Selling it: the attribution pass
 
 - [ ] **Nothing since 11 September has had a provenance search.** The mesh
@@ -3065,6 +3055,14 @@ engineering provenance pass, not legal advice.
   chunking work.
 
 ## Making the repository public
+
+- [x] **The email address on commits, and this machine's network details in
+  the history (2 October).** At the owner's request the whole history was
+  rewritten with `git filter-repo`: the home network address, the VPN address
+  and adapter name replaced in every file version, and every commit's email
+  replaced by the owner's GitHub no-reply address, which new commits in this
+  repository now use. Every commit ID changed; GitHub got the clean history by
+  force-push. DISTRIBUTION_REVIEW *What went to GitHub*.
 
 - [x] **The second, stale git repository one directory up (30 September).**
   Handled by the owner outside this repository.

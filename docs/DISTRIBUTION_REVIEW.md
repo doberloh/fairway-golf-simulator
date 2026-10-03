@@ -521,14 +521,26 @@ files), the commit messages and the commit identities:
   the VPN adapter's name** sat in a bridge comment, a test, PROJECT_HANDOFF and
   TODO, from when the bridge's address picking was written on this machine.
   Replaced with documentation examples (192.168.1.20, 10.8.0.2, "WireGuard
-  Tunnel") -- the test checks the same thing. They remain in the history, which
-  is not being rewritten; they are private addresses that cannot be reached
-  from the internet and say nothing more than which VPN was in use.
+  Tunnel") -- the test checks the same thing -- and then, at the owner's
+  request, removed from the HISTORY as well (below).
 - **Personal by design**: the owner's name in LICENSE and the copyright notes,
   as the copyright holder; other people's addresses in third-party licence
   notices (the `ws` author) and a saved USGA page.
-- **Every commit carries the owner's personal email address** as author and
-  committer -- normal for git, visible to anyone who can read the repository.
-  It cannot be removed from the existing history without rewriting it. TODO.md
-  carries the decision.
+- **Every commit carried the owner's personal email address** as author and
+  committer. Replaced throughout the history (below); new commits in this
+  repository use GitHub's no-reply address (`git config user.email`, local to
+  the repository).
 
+**The history was rewritten, once, at the owner's request (2 October).** With
+`git filter-repo` 2.47.0, over all 69 branches and 265 commits: the home
+network address, the VPN address and the VPN adapter's name were replaced in
+every file version by the documentation examples (the adapter as `WgTunnel`,
+a valid key in the old test files), and every author and committer email by
+the owner's GitHub no-reply address. Afterwards, a scan of all 3,022 file
+versions and every commit message found none of them. Every commit ID
+changed: a hash quoted in an older note or deploy log names the old history.
+The branches were force-pushed to GitHub over the first push, so the old
+commits can still be fetched there by exact ID until GitHub clears them out
+(GitHub Support can purge them on request). A copy of the repository as it
+was before the rewrite is kept outside it, beside the project folder, for the
+owner to delete once satisfied.
