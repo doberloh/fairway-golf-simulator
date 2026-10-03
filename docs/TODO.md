@@ -182,11 +182,6 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **Owner: fill in the website's download links.** The four download
-  buttons point at `#download` and answer "opens with the beta" when clicked;
-  give each `href` in `site/index.html` the hosted zip's address. They are
-  marked `OWNER:` in the page. (Donations are done: Ko-fi, 2 October.)
-
 - [ ] **Owner: the website on a real iPhone and in Safari.** It was checked in
   Chromium only, at desktop and phone sizes. The background clips are WebM,
   because no video encoder exists in this toolchain; a browser that cannot play
@@ -3239,6 +3234,22 @@ engineering provenance pass, not legal advice.
   Worth doing cheaply when the site exists, and NOT a reason to revisit the
   name: pair it with a word in the title and the description -- "Fairway, a
   browser golf simulator" -- so a search engine has something to hang it on.
+
+- [x] **The website's download links (3 October).** Each of the four buttons
+  links to its zip on the newest GitHub release
+  (`releases/latest/download/<zip>`), so publishing a release updates them
+  with no change to the site. GitHub was chosen over Netlify because it serves
+  the files free, where Netlify counts about 150 MB per download round against
+  the plan. The GitHub CLI is installed on the owner's machine; AGENTS.md
+  says a release goes up only when the owner asks. INSTALLATION.md, *Downloads
+  are GitHub releases*. (Donations: Ko-fi, 2 October.)
+
+- [x] **The first release, v0.1 (3 October).** "Fairway 0.1 (beta)", published
+  at the owner's request from `main` at 7608156 (the ball-landing merge): the
+  four platform zips, the source zip and `RELEASE_SHA256.txt`, an ordinary
+  release so it is "latest". A downloaded copy matched its checksum. The
+  Download buttons reach it once the repository is public; until then only the
+  owner, signed in, can download.
 
 - [x] **Shot-making clips for the website (3 October).** Stinger, high draw,
   power fade, knockdown, flop and zip-back at 1920x1080 on Ultra, interface
