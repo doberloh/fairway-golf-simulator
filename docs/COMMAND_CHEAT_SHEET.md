@@ -42,6 +42,10 @@ smoke test and the profiler drive; `npm ci` does not.
 | `npm run profile` | Graphics frame cost, full sweep (~10 min; ask first, per AGENTS.md) |
 | `node tools/profile.mjs --only tiers --since` | One group (~1 min), compared with the baseline |
 | `npm run gpu` | Reports what graphics card the browser sees |
+| `node tools/landing-scorecard.mjs [--levers]` | Every bounce-and-roll anchor in one table (fairway run-out, green check, chip ratios, firmness), and what each tuning lever would do |
+| `node tools/landing-report/charts.mjs` / `clips.mjs` | Redraws the ball-landing report's charts and before/after clips (clips need two capture builds; see the file) |
+| `node tools/landing-report/approach-plan.mjs` then `approach-clips.mjs`, `approach-page.mjs` | Plans, films and pages the fifteen chipping and approach clips (needs the capture build: `node tools/site-media/build-hooked.mjs`) |
+| `node tools/landing-report/shotmaking-plan.mjs` then `shotmaking-clips.mjs`, `shotmaking-page.mjs` | The same for the six shot-making clips; the plan prints what each shot did before anything is filmed |
 
 ## Launch-monitor bridge (from source)
 

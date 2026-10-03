@@ -94,8 +94,31 @@ is private.
 - **Stage files by name, never `git add -A` or `git add .`** The owner unzips
   release archives into this folder to test them, and a blanket add once swept a
   16 MB unzipped copy of the game into a commit. `.netlify/`, builds, release
-  archives, `docs/sources/private/` and scratch captures are git-ignored; keep
-  anything new of that kind ignored too.
+  archives, `docs/reports/`, `docs/studies/`, `docs/sources/` and scratch
+  captures are git-ignored; keep anything new of that kind ignored too.
+
+## Reports made for the owner stay local
+
+**Reports, studies, clips, charts and saved source pages generated for the
+owner stay on this machine and are never committed.** That means everything
+under `docs/reports/`, `docs/studies/` and `docs/sources/`, which `.gitignore`
+covers. They are for deciding things, not for publishing: they carry large
+media, copies of other people's pages, and working that is not meant to go
+public with the code.
+
+- **The tools that make them ARE committed** (`tools/landing-report/`,
+  `tools/shot-sink.mjs` and the like), so any report can be regenerated from
+  the repository. Commit the generator, not its output.
+- **The tracked docs may still point at a local report** -- RESEARCH.md naming
+  the report a decision came from is useful to the owner -- but a finding the
+  next person needs goes into RESEARCH.md itself, in words and numbers, never
+  only in a report.
+- **Media meant for the website is the exception and only when the owner picks
+  it**: copy the chosen clip or picture into `site/media/`, which is tracked
+  (in Git LFS). The report folder itself still stays local.
+
+This rule dates from 3 October 2026, when the owner had all three folders
+removed from the repository and from its history.
 
 ## Two version numbers, and when to bump them
 
@@ -144,7 +167,7 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 A quick way to catch it, before committing:
 
 ```bash
-for f in README.md CONTRIBUTING.md docs/*.md docs/reports/*.md; do
+for f in README.md CONTRIBUTING.md docs/*.md; do
   printf "%-36s %s
 " "$f" "$(git log -1 --format='%ad %h' --date=short -- "$f")"
 done
@@ -168,7 +191,7 @@ Record the figure and its units, not a paraphrase. "Spacing no more than three t
 
 A claim in this project that rests on outside work and carries no link is indistinguishable from one that was guessed.
 
-**A source that cannot be fetched gets committed, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `docs/sources/` along with a short extract of the passage actually used, and link both from the RESEARCH.md entry. A link that nobody following it can read is not a citation; it is a promise.
+**A source that cannot be fetched gets saved, not just cited.** Several of the pages this model is anchored to return 403 to any automated request — the USGA's are the worst offenders. When the user opens one in a browser and saves it, put the saved copy under `docs/sources/` (local, not committed -- see *Reports made for the owner stay local*), and put a short extract of the passage actually used, with its figures, **into the RESEARCH.md entry itself**, so the tracked record stands on its own. A link that nobody following it can read is not a citation; it is a promise.
 
 **Say plainly when a number is placed rather than published, and go back for it.** Writing "these depths were chosen by judgement inside the instrument's range, and if someone can read that page they are the first thing to check" is what made the firmness presets get fixed — the note was still sitting there when the article finally arrived, naming exactly what to do. Flag the soft spot at the point it is created, in the file that carries it, and expect anchoring to *cost* range: the judged Burnt was more dramatic than the published one and had nothing behind it.
 

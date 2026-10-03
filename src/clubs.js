@@ -22,4 +22,19 @@ export function customizeClubs(yardages={}){
 // It joins the two that were already here: launch angle and spin axis each had
 // a per-shot adjustment and spin had none, which is why a shot could be flighted
 // down or shaped but never deliberately spun.
-export function manualLaunch(club,power,lieFactor,profile={},shape=0,launchAdjust=0,spinAdjust=0){const f=validateFlight(profile),putter=club.code==='PT';return{speed:club.speed*power*lieFactor*(putter?1:f.speed/100),vla:putter?0:clamp(club.vla+f.launch+launchAdjust,2,70),hla:0,spin:putter?0:Math.max(0,club.spin*Math.sqrt(power)*f.spin/100+spinAdjust),spinAxis:putter?0:f.axis+shape};}
+// HOW SPIN FALLS WITH POWER, for keyboard, touch and controller shots.
+//
+// It was the square root of power, which is right for a pitch and badly wrong
+// for a chip: a 10% wedge left at 337 rpm per mph of ball speed -- more than
+// three times a full swing's -- and spun back behind its own pitch mark. A
+// barely-moving clubhead cannot impart that.
+//
+// Trackman's numbers set both ends. A 54 degree wedge hit 50 yards spins about
+// 6,500 rpm (6,501 clean off a lie board, 7,178 off turf), which the square
+// root already gives within 10%. Chips carrying 1.25 to 24 yards average 1,500
+// to 3,000 rpm and stay under 3,750 ("The Chip Shot Code"), which spin in
+// PROPORTION to power gives -- the same spin per mph as the full shot. So:
+// proportional for chips, the square root for pitches and full swings, and a
+// smooth hand-over between 30% and 70% power. RESEARCH.md *Keyboard spin*.
+const spinForPower=p=>{const t=clamp((p-.3)/.4,0,1),blend=t*t*(3-2*t);return p+(Math.sqrt(p)-p)*blend;};
+export function manualLaunch(club,power,lieFactor,profile={},shape=0,launchAdjust=0,spinAdjust=0){const f=validateFlight(profile),putter=club.code==='PT';return{speed:club.speed*power*lieFactor*(putter?1:f.speed/100),vla:putter?0:clamp(club.vla+f.launch+launchAdjust,2,70),hla:0,spin:putter?0:Math.max(0,club.spin*spinForPower(power)*f.spin/100+spinAdjust),spinAxis:putter?0:f.axis+shape};}

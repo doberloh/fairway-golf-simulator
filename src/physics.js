@@ -275,6 +275,11 @@ const rimResistance=turf=>rollDeceleration('green',turf)/G;
 // against an orbit that never decays, and with real resistance in place no
 // trajectory reaches them -- if one ever does, the physics has stopped working.
 const WALL_MIN_RATE=3,WALL_MAX_SWEEP=Math.PI*6;
+// How hard the cup wall can grip a ball rolling round it, per unit of the press
+// that going round puts on it. The green's own sliding friction: the top of the
+// wall is the cut turf a skidding putt meets, and no separate number for the
+// liner below it has a source. See the wall regime in simulateShot.
+const WALL_FRICTION=slideFriction('green');
 const EDGE_MIN_RATE=2,EDGE_MAX_SWEEP=Math.PI*6;
 // Penner (2002), equation 23: Holmes capture-envelope approximation.
 // Full cup radius is the rolling support boundary, not cup radius minus ball radius.
@@ -682,6 +687,15 @@ export function simulateShot(shot,course,options={}){
    const impulse=Math.min(slipSpeed/3.5,mu*normalImpulse),J=slip.map(a=>-a*impulse/Math.max(slipSpeed,1e-12));
    v=v.map((a,i)=>a+normalImpulse*n[i]+J[i]);const torque=cross(n,J);nextOmega=omega.map((a,i)=>a-2.5/R*torque[i]);spin=hypot(...nextOmega);for(let i=0;i<3;i++)wdir[i]=nextOmega[i]/Math.max(spin,1e-12);
    }
+   // SAND TAKES THE SPIN. A ball landing in a bunker buries itself in loose
+   // sand -- the canopy column's 0.61 is the deepest grab on the course -- and
+   // whatever spin it brought in goes into moving sand, not into the ball. The
+   // contact above kept part of it (a wedge left a third of its backspin), and
+   // on the next touchdown that dragged the ball back past its own mark: a
+   // quarter of a yard on flat sand, the owner's "checks back in a bunker". With
+   // nothing left to turn it, a ball in sand stops where the sand stops it, and
+   // a face it landed on can only roll it back by gravity.
+   if(surface==='sand'){nextOmega=[0,0,0];spin=0;}
    bounces++;
    const rebound=v.reduce((sum,a,i)=>sum+a*groundNormal[i],0);
    if(rebound<.65){rolling=true;const settleCross=cross(nextOmega,groundNormal),settleSlip=v.map((a,i)=>a-rebound*groundNormal[i]-R*settleCross[i]);v=v.map((a,i)=>a-rebound*groundNormal[i]-settleSlip[i]/3.5);v[1]=0;w=[R*settleCross[0],R*settleCross[2]];}
@@ -888,7 +902,29 @@ export function simulateShot(shot,course,options={}){
     const load=Math.max(0,G*Math.sin(edge.alpha)+rho*edge.rate*edge.rate*Math.cos(edge.alpha)-R*edge.alphaRate*edge.alphaRate);
     const drag=rimMu*load;
     const along=rho*edge.rate,around=R*edge.alphaRate,path=hypot(along,around)||1e-9;
-    edge.alphaRate+=(-(5/(7*R))*(rho*edge.rate*edge.rate*Math.sin(edge.alpha)+G*Math.cos(edge.alpha))-drag*(around/path)/R)*dt;
+    // THE LIP CAN ONLY GRIP AS HARD AS THE BALL PRESSES ON IT -- the same rule
+    // as the wall below it (3 October). Rolling round the edge's tube, the ball
+    // centre accelerates at 5/7 of what gravity and going round push it with,
+    // and the edge has to supply the other 2/7 as friction. Nothing checked it
+    // could: a ball barely resting on the lip, pressing with a fraction of a g,
+    // was held to the edge by grip it did not have, and rode it round up to 382
+    // degrees before lipping out. When the rolling answer needs more than the
+    // edge can give, the ball SLIDES over the edge instead, and `slip` -- the
+    // contact surface's own speed round the tube -- runs free of the centre's.
+    const push=-(rho*edge.rate*edge.rate*Math.sin(edge.alpha)+G*Math.cos(edge.alpha));
+    const lipGrip=WALL_FRICTION*load,lipNeeded=-(2/7)*push;
+    if(edge.slip===undefined)edge.slip=R*edge.alphaRate;
+    const lipSlip=R*edge.alphaRate-edge.slip;
+    if(Math.abs(lipSlip)<1e-3&&Math.abs(lipNeeded)<=lipGrip){
+     edge.alphaRate+=((5/7)*push/R-drag*(around/path)/R)*dt;
+     edge.slip=R*edge.alphaRate;
+    }else{
+     const f=Math.abs(lipSlip)>=1e-3?-Math.sign(lipSlip)*lipGrip:Math.sign(lipNeeded)*lipGrip;
+     edge.alphaRate+=((push+f)/R-drag*(around/path)/R)*dt;
+     // I = 2/5 m r^2: the friction that slows the centre spins the surface up.
+     edge.slip+=-2.5*f*dt;
+     if(Math.sign(R*edge.alphaRate-edge.slip)!==Math.sign(lipSlip||-f))edge.slip=R*edge.alphaRate;
+    }
     edge.alpha+=edge.alphaRate*dt;
     // Angular momentum about the cup axis carries the ball round, so it speeds
     // up as it falls inward and slows as it climbs back out.
@@ -967,8 +1003,45 @@ export function simulateShot(shot,course,options={}){
     const drag=rimMu*load;
     const along=aRad*wall.rate,climb=R*wall.u,path=hypot(along,climb)||1e-9;
     wall.rate-=drag*(along/path)/aRad*dt;
-    wall.u+=(-5*G/(7*R)-(2/7)*wall.rate*wall.spin-drag*(climb/path)/R)*dt;
-    wall.spin+=wall.rate*wall.u*dt;
+    // THE WALL CAN ONLY GRIP AS HARD AS THE BALL PRESSES INTO IT.
+    //
+    // Rolling without slipping, the equations above hold the ball up by
+    // friction: the vertical grip it needs is (2/7)(g - r theta' w) per unit
+    // mass. Nothing checked that the wall could supply it, and at the bottom of
+    // a dive a slow ball needs MORE than its own weight while the wall presses
+    // on it with barely one g -- a friction coefficient of 1.3 where turf and a
+    // plastic liner give a third of that. So a ball that dropped in at walking
+    // pace swooped down to ten millimetres off the floor, climbed back up the
+    // wall, and went round two and a half times before anything caught it: the
+    // "violent spinning in the cup" the owner saw.
+    //
+    // The grip available is the green's own sliding friction times the press of
+    // going round, the same coefficient a skidding putt has on this turf. When
+    // the rolling solution needs more, the ball SLIDES: friction is capped and
+    // the spin about the direction of travel (`turn`, w_theta) runs free of the
+    // fall, so it stops being held up and drops. A fast ball pressing at many g
+    // still has the grip to climb, which is the horseshoe lip-out and stays.
+    if(wall.turn===undefined)wall.turn=wall.u;
+    const grip=WALL_FRICTION*load;
+    const needed=(2/7)*(G-R*wall.rate*wall.spin);
+    const slip=wall.u-wall.turn;
+    if(Math.abs(slip)<1e-3&&Math.abs(needed)<=grip){
+     wall.u+=(-5*G/(7*R)-(2/7)*wall.rate*wall.spin-drag*(climb/path)/R)*dt;
+     wall.spin+=wall.rate*wall.u*dt;
+     wall.turn=wall.u;
+    }else{
+     // Kinetic friction opposes the contact's vertical slip; at the moment
+     // slipping starts it acts the way the rolling solution wanted, capped.
+     const force=Math.abs(slip)>=1e-3?-Math.sign(slip)*grip:Math.sign(needed)*grip;
+     const turn0=wall.turn;
+     wall.u+=(force-G)/R*dt;
+     // I = 2/5 m r^2: the same force spins the ball up about its direction of
+     // travel, and the gyroscopic term trades that spin with w as it goes round.
+     wall.turn+=(-wall.rate*wall.spin-force/(.4*R))*dt;
+     wall.spin+=wall.rate*turn0*dt;
+     // Caught up within the step: it is rolling again from here.
+     if(Math.sign(wall.u-wall.turn)!==Math.sign(slip||-force))wall.turn=wall.u;
+    }
     wall.z+=R*wall.u*dt;
     wall.angle+=wall.rate*dt;
     wall.swept+=Math.abs(wall.rate)*dt;

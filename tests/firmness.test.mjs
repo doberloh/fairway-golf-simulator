@@ -56,8 +56,9 @@ test('Normal is the model that was already there, exactly', () => {
 });
 
 // The USGA's published GS3 reference bands, verbatim, from Green Section Record
-// vol. 62 no. 22. The saved article is in docs/sources/ because the page 403s to any
-// automated fetch, so this table is the thing that would otherwise drift.
+// vol. 62 no. 22, also quoted in RESEARCH.md. The page 403s to any automated
+// fetch and the saved copy is local only, so this table is the thing that would
+// otherwise drift.
 const USGA_BANDS = {
  Burnt: [0.300, 0.350],  // "Extremely Firm"
  Firm: [0.350, 0.400],  // "Firm"

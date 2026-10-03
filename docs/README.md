@@ -59,11 +59,33 @@ the change that made it stale, not a follow-up.
 - **[LANDSCAPE_RESEARCH.md](LANDSCAPE_RESEARCH.md)** — the same standard,
   applied to terrain, vegetation and course architecture.
 - **[REFERENCES.md](REFERENCES.md)** — the source list behind both.
-- **[sources/](sources/)** — pages and exports that cannot be fetched
-  automatically, committed so a citation stays readable. A link nobody
-  following it can open is a promise, not a citation.
+- **sources/** — pages and exports that cannot be fetched automatically,
+  saved so a citation stays readable. **Local only, not in the repository**;
+  RESEARCH.md quotes the passage it relies on.
 
-**Reports and studies**
+**Reports and studies -- local only**
+
+These are made for the owner and stay on the machine that made them: since
+3 October 2026 `docs/reports/`, `docs/studies/` and `docs/sources/` are
+git-ignored and are not in the repository or its history. The tools that
+generate them are tracked, and what was decided from them is in RESEARCH.md.
+The list below is what exists locally.
+
+- **[reports/shotmaking/](reports/shotmaking/index.html)** — six showcase shots
+  for the website (stinger, high draw, power fade, knockdown, flop, zip-back),
+  1920x1080 with posters, each with its numbers and where they come from
+  (`tools/landing-report/shotmaking-*.mjs`).
+- **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
+  approach clips at 10 to 100 yards, low, stock and high, each with its launch
+  numbers, carry and roll (`tools/landing-report/approach-*.mjs`).
+- **[reports/LIP_GRIP_REPORT.md](reports/LIP_GRIP_REPORT.md)** — the lip of the
+  cup gripping only as hard as the ball presses on it: shorter lip-out rides,
+  the full 360-degree lip-out traded away. Visual version in
+  [reports/lip-grip/](reports/lip-grip/index.html).
+- **[reports/BALL_LANDING_REPORT.md](reports/BALL_LANDING_REPORT.md)** — what the
+  ball does after it lands: keyboard chip spin, bunkers, the cup, sideways hops,
+  and a plan for what comes next. The clips and charts are in
+  [reports/ball-landing/](reports/ball-landing/index.html).
 
 - **[reports/TEE_AND_OBSTRUCTION_REPORT.md](reports/TEE_AND_OBSTRUCTION_REPORT.md)**
   — what was blocking tee shots, what was measured, what was changed, and the

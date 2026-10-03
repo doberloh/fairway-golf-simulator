@@ -38,14 +38,14 @@ export const launch = () => chromium.launch({args: ['--use-angle=d3d11', '--enab
 
 // The game, opened to its main menu on Ultra with automatic resolution off, so
 // it can never quietly draw fewer pixels to keep the frame rate up.
-export async function openGame(browser, {width = 1920, height = 1080, density = 2} = {}) {
- if (!fs.existsSync(GAME)) throw Error('No capture build. Run: node tools/site-media/build-hooked.mjs');
+export async function openGame(browser, {width = 1920, height = 1080, density = 2, game = GAME} = {}) {
+ if (!fs.existsSync(game)) throw Error(`No capture build at ${game}. Run: node tools/site-media/build-hooked.mjs`);
  const page = await (await browser.newContext({viewport: {width, height}, deviceScaleFactor: density})).newPage();
  page.errors = [];
  page.on('pageerror', e => page.errors.push(e.message));
  page.on('console', m => m.type() === 'error' && page.errors.push(m.text().slice(0, 160)));
  await page.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
- await page.goto(pathToFileURL(GAME).href);
+ await page.goto(pathToFileURL(game).href);
  await page.waitForFunction(() => window.lab && window.__view && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
  return page;
 }

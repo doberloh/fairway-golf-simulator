@@ -90,8 +90,9 @@ symptom looked like, because that is what saves the next hour.
 
 **External sources go in [docs/RESEARCH.md](docs/RESEARCH.md) with their
 links**, including the ones that were read and rejected. Record the figure and
-its units, not a paraphrase. If a page cannot be fetched, commit a copy under
-[docs/sources/](docs/sources/) rather than citing something nobody can open.
+its units, not a paraphrase. If a page cannot be fetched, quote the passage
+used in RESEARCH.md itself; a saved copy can go in `docs/sources/`, which stays
+local and is not committed.
 
 **Say plainly when something did not work.** A change that made no measurable
 difference is a result, and it gets reported as one.

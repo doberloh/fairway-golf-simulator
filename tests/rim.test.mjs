@@ -146,7 +146,14 @@ test('the rim costs the ball exactly what the green costs it', () => {
   return best;
  };
  const slow = longest(8), quick = longest(13);
- assert.ok(quick > slow * 1.2,
+ // Longer, not 20% longer. The 20% margin was met by ONE ride: a Stimp 13 putt
+ // that dropped below the lip, went a full lap round the cup wall, climbed back
+ // out and rode the edge again -- 666 degrees against Stimp 8's 325. That climb
+ // needed the wall to grip the ball harder than its own weight while pressing on
+ // it with barely one g, which no liner does; with the wall's grip capped at the
+ // green's sliding friction (2 October) the ball drops instead, and the longest
+ // rides on either green stay on the lip: 359 against 325.
+ assert.ok(quick > slow * 1.05,
   `a Stimp 13 green held ${quick.toFixed(0)} degrees against Stimp 8's ${slow.toFixed(0)}: the rim is not reading the green`);
  // And the coefficient really is the green's, not a number near it.
  for (const stimp of [8, 10, 13])
@@ -168,13 +175,17 @@ test('a ball rolling forward climbs the wall, so long rim rides come back out', 
   return {arc: rideArc(on), holed: r.holed, on, label: `${past}/${offset}`};
  });
  assert.ok(rides.every(r => !r.holed), 'these lines are lip outs, not makes');
- assert.ok(rides.every(r => r.arc > 80), rides.map(r => `${r.label}:${r.arc.toFixed(0)}`).join(' '));
- // A full lap is the limit on a Stimp 10 green, and it should stay the limit.
- // Before the rim was given the green's resistance this reached two and a half
- // laps, which is not a thing that happens; much below a lap and the famous
- // 360-degree lip out would have stopped being possible at all.
+ assert.ok(rides.every(r => r.arc > 60), rides.map(r => `${r.label}:${r.arc.toFixed(0)}`).join(' '));
+ // The horseshoe stays: the longest of these still rides well over half way
+ // round. It used to be required to reach a full lap (330 to 480 degrees), and
+ // that was the old model's, not golf's: the lip held the ball to its edge with
+ // grip it did not have, at moments the ball was barely pressing on it. Since
+ // the lip grips only as hard as it is pressed (3 October) the longest ride on
+ // a Stimp 10 green is about 215 degrees whatever friction from 0.3 to 0.7 the
+ // turf is given -- docs/reports/LIP_GRIP_REPORT.md. Two and a half laps, the
+ // version before the rim had any resistance, stays ruled out.
  const longest = Math.max(...rides.map(r => r.arc));
- assert.ok(longest > 330 && longest < 480, `the longest ride is ${longest.toFixed(0)} degrees`);
+ assert.ok(longest > 180 && longest < 480, `the longest ride is ${longest.toFixed(0)} degrees`);
  // It rides on top of the hole rather than sinking into it, which is what makes
  // it something to watch. Centre above the lip means the top half stays in view.
  for (const r of rides)

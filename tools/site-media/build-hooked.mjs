@@ -7,11 +7,13 @@
 // and reverting it by hand is how real work was once lost here.)
 //
 //   node tools/site-media/build-hooked.mjs     -> bench/shots/dist-exp/index.html
+//   OUT=bench/shots/dist-before node tools/site-media/build-hooked.mjs   (another folder)
 import {build} from 'vite';
 
 const LINE = " view=new GolfView($('scene'),graphics.quality);";
 const HOOK = 'window.__view=view;window.__takeShot=takeShot;'
  + 'window.__play=(b,a)=>{round.positions[round.active]={...b};round.teePlaced=true;view.setBall(b);setUpTurn();if(a!==undefined){aim=a;updateAim();}};';
+const OUT = process.env.OUT || 'bench/shots/dist-exp';
 const hook = {
  name: 'fairway-capture-hooks',
  transform(code, id) {
@@ -21,5 +23,5 @@ const hook = {
  },
 };
 await build({configFile: 'vite.config.js', plugins: [hook], logLevel: 'warn',
- build: {outDir: 'bench/shots/dist-exp', emptyOutDir: true}});
-console.log('bench/shots/dist-exp/index.html: the game with capture hooks.');
+ build: {outDir: OUT, emptyOutDir: true}});
+console.log(`${OUT}/index.html: the game with capture hooks.`);
