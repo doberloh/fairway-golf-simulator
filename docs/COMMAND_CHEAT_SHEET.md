@@ -67,6 +67,9 @@ Environment settings it reads: `FAIRWAY_TCP_PORT`, `FAIRWAY_HTTP_PORT`,
 | --- | --- |
 | `git lfs install --local && git lfs pull` | Once after cloning: downloads the real website pictures and clips |
 | `npm run site` | Builds the game, then assembles `site-dist/` with the demo in `play/`; drag that folder onto Netlify to deploy by hand |
+| `npm run deploy:preview` | Builds the site and uploads it to Netlify as a draft with its own address; the live site is untouched |
+| `npm run deploy` | Builds the site and uploads it to the live Netlify site |
+| `npx netlify-cli@27.10.2 login` then `… link --name <site>` | Once per machine, before the first deploy: sign in to Netlify and link this folder to the site |
 | `node tools/site-media/build-hooked.mjs` | Builds a copy of the game with the hooks the capture scripts need (required before the three below) |
 | `node tools/site-media/gallery.mjs [name…]` | Retakes the landscape pictures (all of them, or just the ones named) |
 | `node tools/site-media/features.mjs [name…]` | Retakes the feature screenshots |

@@ -70,3 +70,7 @@ vendor/baked_assets/
 # The website as deployed (tools/build-site.mjs): site/ plus a copy of the built
 # game in play/. Rebuilt by `npm run site`, never committed.
 /site-dist/
+
+# This folder's link to a Netlify site (`netlify link`, tools/deploy-site.mjs).
+# Per machine, never committed.
+/.netlify/
