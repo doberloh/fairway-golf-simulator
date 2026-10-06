@@ -5533,6 +5533,8 @@ measured on High, which is why it was never seen. Fix: compile with the frame's
 target bound (`asDrawn`, wrapped into `withStandIns` and `ready`). Loading got
 faster with it, because the duplicate builds stopped.
 
+**Rechecked 6 October, after two smoke failures that turned out to be a busy card.** On 5 October the `floodlit-night` journey froze for 7.05 s on `main` and 1.4 s on a branch, with the owner playing a game on the same RTX 4090 at the time. With the card free, every build from this fix onward (b7f9011, 47fc695, 00b4965, 35187fd, 0d7748d, 3e4f667, d58bf9e) measured a worst switch-on frame of 33-50 ms, including switching at once after loading and with automatic resolution on, and the journey passed 6 of 6. A shader build is GPU-driver work, so a card already running a game makes it slow; a smoke failure here means nothing unless the card was otherwise idle.
+
 **Rejected on the way: fewer live lamps.** A throwaway build with 6, 12 and 24
 live lamps instead of all 57 froze for 4.3, 5.1 and 7.1 s on the first
 switch-on: the lamp count was not most of it -- switching the light count at

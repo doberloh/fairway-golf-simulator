@@ -21,12 +21,6 @@ prevent.
 
 ## Found by driving the built game
 
-- [ ] **Switching the floodlights on freezes the picture on Ultra.** The
-  `floodlit-night` smoke journey failed on 5 October on `main` (7.05 s frozen)
-  and on `play-feedback` (1.4 s), so it is not from that branch's changes. The
-  owner's machine hard-crashed shortly after the run on `main`; whether the two
-  are related is not known. Do not rerun it on the owner's machine without
-  asking.
 
 - [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
   every monitor shot and every shaped keyboard shot mirrored; the Download
@@ -3298,6 +3292,18 @@ engineering provenance pass, not legal advice.
   in inches instead of a diagonal and a shape; the shape is worked out and the
   view is drawn in it whatever the window's size; old saves convert; the mat
   offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **The floodlight freeze was not back (6 October).** Two `floodlit-night`
+  smoke runs on 5 October froze the picture on switch-on (7.05 s on `main`,
+  1.4 s on `play-feedback`), and the owner's machine hard-crashed after the
+  second -- while the owner was playing a game on the same graphics card. Not
+  reproducible with the card free: `bench/shots/flood-freeze.mjs` on builds of
+  every commit since the 30 September fix (b7f9011 to d58bf9e), switching on
+  at once and after 8 s, with automatic resolution on and off, worst frame
+  33-50 ms every time; the smoke journey itself passed six runs out of six,
+  three on `main` and three on the branch. The fix holds. RESEARCH.md, *The
+  floodlight freeze on Ultra*. Graphics-heavy tests are no longer run while the
+  owner may be gaming.
 
 - [x] **Range controls could not be reopened once closed (5 October).** The
   Tools window carries a Range controls button on the range.
