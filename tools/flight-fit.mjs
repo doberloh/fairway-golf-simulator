@@ -5,6 +5,7 @@
 //   node tools/flight-fit.mjs --fit           search for better constants (prints them)
 //   node tools/flight-fit.mjs --set k=v,...   evaluate with constants changed
 //   node tools/flight-fit.mjs --json out.json write every shot's numbers
+//   node tools/flight-fit.mjs --physics src/old.js   the same, with another physics file
 //
 // THE DATA IS PRIVATE AND NOT IN THE REPOSITORY. It is read from
 // docs/sources/private/ (git-ignored) when present, and a missing file just
@@ -22,7 +23,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import {fileURLToPath} from 'node:url';
-import {simulateShot, airDensity, AERO, MPH, YARD} from '../src/physics.js';
+import {pathToFileURL} from 'node:url';
+// --physics FILE evaluates another physics module instead (a copy of an older
+// src/physics.js placed beside it, so its own imports resolve): before and after.
+const physicsArg = (() => { const i = process.argv.indexOf('--physics'); return i >= 0 ? process.argv[i + 1] : null; })();
+const {simulateShot, airDensity, AERO, MPH, YARD} = await import(physicsArg ? pathToFileURL(path.resolve(physicsArg)).href : '../src/physics.js');
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PRIVATE = path.join(ROOT, 'docs', 'sources', 'private');
