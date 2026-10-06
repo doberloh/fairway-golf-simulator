@@ -602,3 +602,11 @@ says to run the script the minute the repository goes public.
 Not set, on purpose: a required status check (the tests workflow has never
 run on GitHub), deleting merged branches, and immutable releases.
 
+## Addendum, 5 October 2026: v0.1 flies left and right mirrored
+
+Found on the first session with a real launch monitor: the v0.1 downloads send
+every monitor shot, and every shot shaped with the keyboard, the opposite way
+sideways from what the monitor reported. Fixed in the source the same day
+(RESEARCH.md, *Left and right were mirrored*); the downloads stay wrong until
+the owner publishes a newer release.
+

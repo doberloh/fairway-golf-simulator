@@ -227,8 +227,9 @@ test('side spin still curves, and firmness does not favour a side', () => {
  for (const firmness of LADDER) {
   const left = land('iron7', firmness, 'fairway', {axis: -12});
   const right = land('iron7', firmness, 'fairway', {axis: 12});
-  assert.ok(left.end.x < -1, `${firmness}: a -12 axis did not draw (${left.end.x.toFixed(1)} m)`);
-  assert.ok(right.end.x > 1, `${firmness}: a +12 axis did not fade (${right.end.x.toFixed(1)} m)`);
+  // The golfer's left is local +x (renderer.js, *Which side is right*).
+  assert.ok(left.end.x > 1, `${firmness}: a -12 axis did not draw (${left.end.x.toFixed(1)} m)`);
+  assert.ok(right.end.x < -1, `${firmness}: a +12 axis did not fade (${right.end.x.toFixed(1)} m)`);
   assert.ok(Math.abs(Math.abs(left.end.x) - Math.abs(right.end.x)) < Math.abs(right.end.x) * .06,
    `${firmness}: the bounce favoured one side (${left.end.x.toFixed(1)} against ${right.end.x.toFixed(1)})`);
   // Curve grows with axis whatever the ground is.

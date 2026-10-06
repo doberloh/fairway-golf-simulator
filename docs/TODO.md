@@ -21,6 +21,11 @@ prevent.
 
 ## Found by driving the built game
 
+- [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
+  every monitor shot and every shaped keyboard shot mirrored; the Download
+  buttons serve it until a newer release exists. The owner's call, and the
+  owner names the version (AGENTS.md, *Pushing to GitHub*).
+
 - [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
   The keyboard keeps a club's full-swing launch at any power, so there is no
   keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
@@ -3276,6 +3281,14 @@ engineering provenance pass, not legal advice.
   *Shot-making clips*.
 
 ## Found by driving the built game
+
+- [x] **Monitor shots flew the mirror image of what the monitor said (5 October).**
+  Found on the first R50 session: left went right and right went left, while
+  every other number looked right. The flight now treats launch direction and
+  spin axis as the golfer's left and right, as Open Connect defines them, and
+  the offline readouts and the plot agree with the picture. Three tests had
+  pinned the mirror; they now pin the right way. RESEARCH.md, *Left and right
+  were mirrored*.
 
 - [x] **The lip edge grips only as hard as the ball presses on it (3 October).**
   The same rule as the cup wall. Longest lip-out ride 296 to 212 degrees at

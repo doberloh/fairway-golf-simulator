@@ -5860,3 +5860,17 @@ Carries on the three tee shots are off raised tees, so they read longer than the
 **Filming, and two things that went wrong first.** Each clip is a fixed camera 10 m behind and 4.5 m above the ball for the tee shots (7 m and 3 m for approaches), looking at where the ball will land, then a cut 0.8 s before it lands to a camera beside the landing that turns with the ball. The game's own chase camera was tried first and lost the ball. A camera 25 m from the landing on the game's normal lens showed nothing: a ball is two pixels wide from there, so the landing camera sits 9-13 m off with a 24-26 degree lens, which is how television does it. And hole 1's back tee looks over a ridge at its own landing area -- the drives vanished -- so the tee shots moved to the doglegs (holes 3, 5 and 9), which a line-of-sight check from each tee showed were open. The draw is on a dogleg left and the fade on a dogleg right, which is also how they would be played.
 
 The game's white ball-marker ring is put back every time it moves the ball, after anything a page callback can do, so it is hidden through its material instead.
+
+## Left and right were mirrored (5 October)
+
+**The symptom**, on the owner's first session with a Garmin R50 through rēlā: carry, height and spin all looked right, but a shot the monitor said started or curved left went right on screen, and the other way round. The shot readout agreed with the monitor, which is why nothing at a desk had shown it.
+
+**The cause.** A hole plays along its local +z, and three.js puts a camera's screen-right at -x when it looks that way, so local +x is the golfer's LEFT -- written down in renderer.js (*Which side is right*) and course-map.js long before this. The flight took `hla` and `spinAxis` as they came and turned positive values toward +x: a monitor's "5 degrees right" started the ball 5 degrees left. The keyboard's Shot shape slider, labelled "positive fades right", did the same. And `offlineOf`, the shot card's `offline` and the plot's `shotProfile` all called +x "right", so they reported the monitor's own direction back while the picture showed the opposite. Three tests pinned that mirror image as correct (`core`, `firmness`, `range`), one of them under a comment noting that a direction sign error had already shipped four times.
+
+**The fix**, in `simulateShot`: `yaw = aim - hla` and the spin axis negated, so positive means the golfer's right for both, as Open Connect defines them. The three readouts now call local -x right. Checked end to end through `parseLaunchMessage`: a message with HLA +5 and spin axis +10 finishes 36.5 yd right of the aim line, on the right of the screen, and the readout says R; the mirror message finishes 36.5 yd left, says L.
+
+**Rejected: negating in `parseLaunchMessage`.** It would have fixed monitor shots and left the Shot shape slider, the five-number box and the flight profile's axis all still mirrored, and the stored shot would then disagree with what the monitor displayed. The convention belongs where direction becomes motion, once.
+
+**Not affected:** `aim`. It is a bearing in the hole's frame, set by the aim line the player sees, so the picture is its definition.
+
+**What remains wrong until a new release:** the v0.1 downloads (3 October) carry the mirrored flight. The website's Download buttons serve v0.1 until the owner publishes a newer one.

@@ -22,7 +22,8 @@ export function shotProfile(points, origin, aimDegrees = 0, groundAt = null) {
   const dx = p.x - origin.x, dz = p.z - origin.z;
   return {
    along: dx * sin + dz * cos,
-   off: dx * cos - dz * sin,
+   // The golfer's right is local -x (physics.js, simulateShot).
+   off: dz * sin - dx * cos,
    // Height above the turf under the ball, not above sea level. On a range they
    // are the same number; on a course they are not, and the one that means
    // anything is the clearance.

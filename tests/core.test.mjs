@@ -6,7 +6,10 @@ import {Round} from '../src/game.js';
 const flat={height:()=>0,surface:()=> 'fairway',bounds:{x:2000,minZ:-2000,maxZ:2000},trees:[]};
 const shot={origin:{x:0,z:0},aim:0,speed:155*MPH,vla:12.5,hla:0,spin:2700,spinAxis:0};
 test('driver flight is plausible, symmetric and time-step stable',()=>{const a=simulateShot(shot,flat),b=simulateShot(shot,flat,{dt:1/120});assert(a.carry>190&&a.carry<280,`carry ${a.carry}`);assert(a.apex>15&&a.apex<60,`apex ${a.apex}`);assert(Math.abs(a.end.x)<1e-8);assert(Math.abs(a.carry-b.carry)<1);assert(a.total>=a.carry);assert(a.time<35);});
-test('spin-axis changes curve direction; headwind reduces carry',()=>{const l=simulateShot({...shot,spinAxis:-20},flat),r=simulateShot({...shot,spinAxis:20},flat);assert(l.end.x<0&&r.end.x>0);assert(Math.abs(l.end.x+r.end.x)<.1);const still=simulateShot(shot,flat),wind=simulateShot(shot,flat,{wind:[0,0,-8]});assert(wind.carry<still.carry);assert(airDensity(1800)<airDensity(0));});
+// A negative axis draws to the golfer's LEFT, which is a hole's local +x
+// (renderer.js, *Which side is right*). Until 5 October this asserted the
+// mirror image, and every monitor shot flew the wrong way.
+test('spin-axis changes curve direction; headwind reduces carry',()=>{const l=simulateShot({...shot,spinAxis:-20},flat),r=simulateShot({...shot,spinAxis:20},flat);assert(l.end.x>0&&r.end.x<0);assert(Math.abs(l.end.x+r.end.x)<.1);const still=simulateShot(shot,flat),wind=simulateShot(shot,flat,{wind:[0,0,-8]});assert(wind.carry<still.carry);assert(airDensity(1800)<airDensity(0));});
 test('a struck putt skids before it rolls, and the cup still catches a slow ball',()=>{const green={...flat,surface:()=> 'green'};
  // Struck, so it leaves the face sliding: shorter than the 3.64 m a ball
  // released already rolling at 2 m/s would cover on a Stimp 10 green, with

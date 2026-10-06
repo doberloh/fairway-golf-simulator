@@ -75,9 +75,10 @@ test('offline is measured across the line the ball was aimed down', () => {
  // is a straight shot.
  const cell = r => shotGrid(r, {fields: ['offline']}).cells[0];
  assert.deepEqual([cell(record({}, {end: {x: 10, y: 0, z: 100}})).value,
-  cell(record({}, {end: {x: 10, y: 0, z: 100}})).unit], ['10.9', 'yd R']);
- assert.equal(cell(record({}, {end: {x: -10, y: 0, z: 100}})).unit, 'yd L');
- // Aimed 90° right, the same end point is now long rather than offline.
+  cell(record({}, {end: {x: 10, y: 0, z: 100}})).unit], ['10.9', 'yd L']);
+ // The golfer's right is local -x (renderer.js, *Which side is right*).
+ assert.equal(cell(record({}, {end: {x: -10, y: 0, z: 100}})).unit, 'yd R');
+ // Aimed 90° toward +x, the same end point is now long rather than offline.
  assert.equal(cell({...record({}, {end: {x: 100, y: 0, z: 0}}), aim: 90}).value, '0.0');
 });
 

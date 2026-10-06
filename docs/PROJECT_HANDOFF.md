@@ -410,6 +410,8 @@ Course setting: four names in the turf panel. The lab drives the raw number, bec
 
 **Those five are the whole input set**: ball speed, launch angle, launch direction, spin rate, spin axis. Everything further a Garmin R50 reports describes the CLUB, which never enters this model.
 
+**Left and right are the golfer's, and a hole's local +x is the golfer's LEFT.** Launch direction (`hla`) and spin axis are taken as a launch monitor reports them -- positive starts the ball right, positive curves it right -- and `simulateShot` negates both as they enter the flight, because a hole plays along local +z and the camera's screen-right is -x there (renderer.js, *Which side is right*). Every sideways READING follows the same rule: `offlineOf` (range.js), `offline` (shot-data.js) and `shotProfile` (shot-views.js) all call -x positive, right. `aim` is the one exception -- it is a bearing in the hole's own frame, set by the aim line the player can see, so it never needed a convention. **What breaks if this is lost:** every monitor shot and every shape set on the slider flies the mirror image of what it says, and the readout still agrees with the monitor, so nobody at a desk notices. That shipped until 5 October 2026 and was found on the first session with a real R50.
+
 **This replaced five sliders, which were wrong twice over** — they fired a shot on release, so every adjustment launched a ball, and a launch monitor does not hand you five knobs, it hands you one message.
 
 ## The green's centre and the cup are different points
@@ -959,7 +961,7 @@ A save written before this still carries `mode:'putt'`, so the restore coerces i
 
 **`viewShot` follows play until a row pins it.** Null means "the last shot", so an open panel is live; choosing *View* on a shot-list row pins that record and closes the list. Every new shot clears the pin — a panel that jumped to the live ball the moment you opened an old row would make the row unreadable, and one that stayed pinned forever would quietly stop being about the shot you just hit.
 
-**`shotProfile` and `offlineOf` must agree, and a test asserts it against each other rather than against a worked example.** Both reduce a shot to how far off the AIM line it finished — not off the line to the green — so a shot aimed at the 250 target and hit straight reads straight in the plot and in the OFFLINE column alike. Checking one against a hand-computed constant would let them share a sign error; checking them against each other cannot.
+**`shotProfile` and `offlineOf` must agree, and a test asserts it against each other rather than against a worked example.** Both reduce a shot to how far off the AIM line it finished — not off the line to the green — so a shot aimed at the 250 target and hit straight reads straight in the plot and in the OFFLINE column alike. Checking them against each other stops them disagreeing, but it cannot stop both being wrong the same way, and they were: until 5 October both called local +x "right", which is the golfer's left. `tests/range.test.mjs` and `tests/shot-views.test.mjs` now pin which way is right on its own, against the renderer's rule.
 
 **Height is clearance above the turf, not above sea level.** On the range they are the same number. On a course they are not, and the one that means anything is how far the ball was off the ground — so the profile samples `course.height` under each point. Clamped at zero, because a ball settled a hair into the turf is on it.
 

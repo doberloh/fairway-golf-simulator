@@ -193,9 +193,10 @@ export function rangeTargets() {
 // invisible until somebody notices a fade reported as a draw -- so the rotation
 // is pinned by assertion rather than by reading it and being satisfied.
 export function offlineOf(origin, end, aimDegrees) {
+ // Positive is the golfer's right, which is local -x (physics.js, simulateShot).
  const a = aimDegrees * Math.PI / 180;
  const dx = end.x - origin.x, dz = end.z - origin.z;
- return dx * Math.cos(a) - dz * Math.sin(a);
+ return dz * Math.sin(a) - dx * Math.cos(a);
 }
 
 // How far out the real green sits, clamped to what the slider allows.

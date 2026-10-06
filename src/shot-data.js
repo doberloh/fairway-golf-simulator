@@ -129,8 +129,9 @@ function offline(r) {
  const o = r?.shot?.origin, e = r?.result?.end, a = num(r?.aim ?? r?.shot?.aim);
  if (!o || !e || a == null) return null;
  const rad = a * Math.PI / 180;
- // The aim bearing points along (sin a, cos a); right of it is (cos a, -sin a).
- return (e.x - o.x) * Math.cos(rad) - (e.z - o.z) * Math.sin(rad);
+ // The aim bearing points along (sin a, cos a). The golfer's right of it is
+ // (-cos a, sin a): a hole's local +x is the player's LEFT (renderer.js).
+ return (e.z - o.z) * Math.sin(rad) - (e.x - o.x) * Math.cos(rad);
 }
 
 export const FIELD_GROUPS = [
