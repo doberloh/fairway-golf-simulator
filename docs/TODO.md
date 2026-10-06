@@ -21,6 +21,13 @@ prevent.
 
 ## Found by driving the built game
 
+- [ ] **Switching the floodlights on freezes the picture on Ultra.** The
+  `floodlit-night` smoke journey failed on 5 October on `main` (7.05 s frozen)
+  and on `play-feedback` (1.4 s), so it is not from that branch's changes. The
+  owner's machine hard-crashed shortly after the run on `main`; whether the two
+  are related is not known. Do not rerun it on the owner's machine without
+  asking.
+
 - [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
   every monitor shot and every shaped keyboard shot mirrored; the Download
   buttons serve it until a newer release exists. The owner's call, and the
@@ -3281,6 +3288,19 @@ engineering provenance pass, not legal advice.
   *Shot-making clips*.
 
 ## Found by driving the built game
+
+- [x] **Panels drag by a title bar like the tool windows' (5 October).** The
+  map, shot controls, weather, tools strip, course card and flight controls
+  each carry the grip-and-name bar a tool window has; phones keep the corner
+  grip. PROJECT_HANDOFF, *A title bar, not the whole panel*.
+
+- [x] **The bay is measured by its two sides (5 October).** Width and height
+  in inches instead of a diagonal and a shape; the shape is worked out and the
+  view is drawn in it whatever the window's size; old saves convert; the mat
+  offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **Range controls could not be reopened once closed (5 October).** The
+  Tools window carries a Range controls button on the range.
 
 - [x] **Monitor shots flew the mirror image of what the monitor said (5 October).**
   Found on the first R50 session: left went right and right went left, while

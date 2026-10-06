@@ -2856,11 +2856,11 @@ On a laptop the field of view is a look: pick what frames the hole nicely. In a 
 
     vertical FOV = 2 * atan((screen height / 2) / distance to the screen)
 
-Three.js takes the vertical angle and derives the horizontal one from the canvas aspect, so this is the whole of it provided the projector fills the screen and the canvas fills the projector — neither of which the code can check, so the panel states it.
+Three.js takes the vertical angle and derives the horizontal one from the camera's aspect. In a bay that aspect is the measured screen's shape, not the canvas's (5 October): a projector stretches the window onto the screen, so a picture drawn in the window's shape is stretched whenever the two differ, and resizing the window would change the bay's geometry. Drawn in the screen's shape, the projector's stretch undoes itself. **Rejected:** keeping the canvas aspect, which is right only when window and screen happen to match. The cost is that on a display whose shape differs from the screen's (testing at a desk) the picture looks stretched; the panel says so.
 
 Screens are sold by the diagonal, so the height comes from Pythagoras: `h = d / sqrt(1 + r²)` with `r` the width-over-height ratio. A 100 inch 16:9 screen is 49.03 inches tall; a 100 inch 4:3 screen is 60. Standing exactly as far back as the screen is tall gives `2 · atan(0.5)` = **53.13°**, which is a useful sanity check because it is close to the 53° the app has always shipped as its default — the old default was a laptop-sized guess that happens to describe someone standing about one screen-height away.
 
-The default bay in the panel is a 138 inch 16:9 screen from 8 feet, which works out at **38.8°**. Nothing is sourced here; it is a starting point to correct, and the panel prints both the angle a bay gives and, for a hand-set angle, how far back you would have to stand to justify it — the two are exact inverses and a test asserts the round trip.
+Since 5 October the panel asks for the two sides instead, as measured on the wall: the height is what the angle needs, the width gives the shape, and an impact screen is often no stock shape at all. A diagonal saved before that is converted with the formula above. The default bay is a 120 by 67.5 inch screen (the 138 inch 16:9 it used to be, to within half an inch) from 8 feet, which works out at **38.7°**. Nothing is sourced here; it is a starting point to correct, and the panel prints both the angle a bay gives and, for a hand-set angle, how far back you would have to stand to justify it — the two are exact inverses and a test asserts the round trip.
 
 ### The bay view cannot show the ball, and on the green that matters
 
