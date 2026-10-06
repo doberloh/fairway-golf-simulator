@@ -71,6 +71,13 @@ git-ignored and are not in the repository or its history. The tools that
 generate them are tracked, and what was decided from them is in RESEARCH.md.
 The list below is what exists locally.
 
+- **[reports/flight-refit/](reports/flight-refit/index.html)** — the ball flight
+  refitted against Trackman's tour averages, a GC3 and the owner's R50: before
+  and after by source and club, Trackman shots from the side, and the rollout
+  and backspin check (`tools/flight-fit.mjs`).
+- **[reports/r50-check/](reports/r50-check/index.html)** — the owner's R50
+  session against the flight model as it stood on 6 October, which started the
+  refit.
 - **[reports/shotmaking/](reports/shotmaking/index.html)** — six showcase shots
   for the website (stinger, high draw, power fade, knockdown, flop, zip-back),
   1920x1080 with posters, each with its numbers and where they come from
