@@ -34,9 +34,10 @@ test('a shot hit straight down the aim reads as straight, whatever the aim', () 
 });
 
 test('right of the aim is positive, which is what the R/L label depends on', () => {
- // Aim due north (0 deg is +z). A ball at +x finished right of the line.
- const [right] = shotProfile([at(9, 0, 100)], {x: 0, z: 0}, 0);
- const [left] = shotProfile([at(-9, 0, 100)], {x: 0, z: 0}, 0);
+ // Aim due north (0 deg is +z). The golfer's right is local -x (renderer.js,
+ // *Which side is right*), so a ball at -x finished right of the line.
+ const [right] = shotProfile([at(-9, 0, 100)], {x: 0, z: 0}, 0);
+ const [left] = shotProfile([at(9, 0, 100)], {x: 0, z: 0}, 0);
  assert.ok(right.off > 0, 'a ball right of the aim must read positive');
  assert.ok(left.off < 0, 'a ball left of the aim must read negative');
 });

@@ -476,7 +476,14 @@ export function rollPreview(course,origin,aimDegrees,speed,options={}){
 }
 
 export function simulateShot(shot,course,options={}){
- const dt=options.dt||1/240, rad=Math.PI/180, yaw=(shot.aim+shot.hla)*rad, pitch=shot.vla*rad;
+ // LEFT AND RIGHT ARE THE GOLFER'S, AS A LAUNCH MONITOR REPORTS THEM: positive
+ // `hla` starts the ball right of the aim line, positive `spinAxis` curves it
+ // right. A hole's local +x is the player's LEFT (renderer.js, *Which side is
+ // right*), so both enter the flight negated. Until 5 October they went in
+ // as they came, and every monitor shot, and every shape set on the slider,
+ // flew the mirror image of what it said -- while the readout, which made the
+ // same mistake, agreed with the monitor.
+ const dt=options.dt||1/240, rad=Math.PI/180, yaw=(shot.aim-shot.hla)*rad, pitch=shot.vla*rad;
  let v=[Math.sin(yaw)*Math.cos(pitch)*shot.speed,Math.sin(pitch)*shot.speed,Math.cos(yaw)*Math.cos(pitch)*shot.speed];
  // `height` starts the ball in the air instead of on the turf, which is how a
  // ball arriving on a green is put there: a descent angle and a landing speed
@@ -484,7 +491,7 @@ export function simulateShot(shot,course,options={}){
  // tee and hoping it arrives that way is not a controlled test.
  let p=[shot.origin.x,course.height(shot.origin.x,shot.origin.z)+R+(shot.height||0),shot.origin.z];
  const start=[...p],rho=airDensity(options.altitude||0,options.temperature??18),wind=options.wind||[0,0,0];
- const axis=shot.spinAxis*rad; const wdir=[-Math.cos(yaw)*Math.cos(axis),Math.sin(axis),Math.sin(yaw)*Math.cos(axis)];
+ const axis=-shot.spinAxis*rad; const wdir=[-Math.cos(yaw)*Math.cos(axis),Math.sin(axis),Math.sin(yaw)*Math.cos(axis)];
  let spin=shot.spin*Math.PI/30,rolling=shot.vla<2&&!(shot.height>0),carry=null,apex=0,landingSpeed=0,descentAngle=0,bounces=0;
  // The velocity the ball's contact point would need for it to be rolling. The
  // gap between this and the centre's velocity is the slip, and while there is

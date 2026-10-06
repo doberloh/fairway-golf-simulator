@@ -266,10 +266,12 @@ test('offline is measured across the aim line, and right is positive', () => {
  const origin = {x: 0, z: 0};
  // Aiming straight down the field (+z). A ball finishing right of the line is a
  // positive offline; left is negative; dead straight is zero at any distance.
+ // The golfer's right is local -x (renderer.js, *Which side is right*): this
+ // test pinned the mirror image until 5 October, which is the fifth time.
  assert.ok(Math.abs(offlineOf(origin, {x: 0, z: 140}, 0)) < 1e-9, 'a straight shot is not zero');
- assert.ok(offlineOf(origin, {x: 12, z: 140}, 0) > 0, '+x down a 0 deg aim is not reported right');
- assert.ok(offlineOf(origin, {x: -12, z: 140}, 0) < 0, '-x down a 0 deg aim is not reported left');
- assert.ok(Math.abs(offlineOf(origin, {x: 12, z: 140}, 0) - 12) < 1e-9, 'offline is not in metres');
+ assert.ok(offlineOf(origin, {x: -12, z: 140}, 0) > 0, '-x down a 0 deg aim is not reported right');
+ assert.ok(offlineOf(origin, {x: 12, z: 140}, 0) < 0, '+x down a 0 deg aim is not reported left');
+ assert.ok(Math.abs(offlineOf(origin, {x: -12, z: 140}, 0) - 12) < 1e-9, 'offline is not in metres');
 
  // The whole point of measuring across the AIM line: the same finishing spot is
  // a straight shot when you aimed there and a miss when you did not.
@@ -277,13 +279,15 @@ test('offline is measured across the aim line, and right is positive', () => {
  const onTheAimedLine = {x: Math.sin(aimed) * 140, z: Math.cos(aimed) * 140};
  assert.ok(Math.abs(offlineOf(origin, onTheAimedLine, 25)) < 1e-9,
   'a ball on the line it was aimed down is not being read as straight');
- assert.ok(offlineOf(origin, onTheAimedLine, 0) > 50,
-  'the same ball judged against a 0 deg aim should be a long way right');
+ // A +25 deg aim turns toward local +x, which is the golfer's left.
+ assert.ok(offlineOf(origin, onTheAimedLine, 0) < -50,
+  'the same ball judged against a 0 deg aim should be a long way left');
 
  // Symmetric about the aim, whichever way the aim points.
  for (const heading of [-140, -35, 0, 35, 140]) {
   const rad = heading * Math.PI / 180;
-  const across = {x: Math.cos(rad) * 8, z: -Math.sin(rad) * 8};
+  // The golfer's right of a bearing (sin a, cos a) is (-cos a, sin a).
+  const across = {x: -Math.cos(rad) * 8, z: Math.sin(rad) * 8};
   assert.ok(Math.abs(offlineOf(origin, across, heading) - 8) < 1e-9,
    `8 m right of a ${heading} deg aim did not read as 8 m right`);
  }

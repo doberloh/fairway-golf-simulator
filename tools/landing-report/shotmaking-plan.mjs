@@ -58,7 +58,8 @@ for (const s of SHOTS) {
    r = simulateShot(shot(mph), course, {turf});
   }
  }
- const rad = aim / DEG, along = q => (q.x - origin.x) * Math.sin(rad) + (q.z - origin.z) * Math.cos(rad), side = q => (q.x - origin.x) * Math.cos(rad) - (q.z - origin.z) * Math.sin(rad);
+ // Positive side is the golfer's right, which is local -x (physics.js, simulateShot).
+ const rad = aim / DEG, along = q => (q.x - origin.x) * Math.sin(rad) + (q.z - origin.z) * Math.cos(rad), side = q => (q.z - origin.z) * Math.sin(rad) - (q.x - origin.x) * Math.cos(rad);
  let peak = 0; for (const q of r.points) peak = Math.max(peak, side(q) * Math.sign(s.axis || 1));
  const total = along(r.end) / YARD;
  const row = {...s, from: undefined, mph: +mph.toFixed(1), speedMps: +(mph * MPH).toFixed(2), origin: {x: +origin.x.toFixed(3), z: +origin.z.toFixed(3)}, aim: +aim.toFixed(3),

@@ -21,6 +21,11 @@ prevent.
 
 ## Found by driving the built game
 
+- [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
+  every monitor shot and every shaped keyboard shot mirrored; the Download
+  buttons serve it until a newer release exists. The owner's call, and the
+  owner names the version (AGENTS.md, *Pushing to GitHub*).
+
 - [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
   The keyboard keeps a club's full-swing launch at any power, so there is no
   keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
@@ -273,6 +278,22 @@ GitHub repository, and stop shipping what nobody needs.
   expensive to change: the NAME, which has its own entry and blocks the
   repository as much as it blocks a domain. (`vendor/baked_assets/`, the
   other one, was settled on 30 September: not committed.)
+
+  **The same minute it goes public: `node tools/github-protect.mjs`.** It
+  turns on what GitHub Free only allows on a public repository -- `main`
+  protected from deletion and force-pushes, changes by reviewed pull request,
+  permanent release tags, secret scanning that blocks a pushed password,
+  private security reports, and outside contributors' workflows held for
+  approval. Until it has run, the repository is public with none of that. It
+  prints each setting as done or waiting; nothing should still be waiting.
+
+- [ ] **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
+  is active, but GitHub shows 0 runs, on any branch, after many pushes (checked
+  3 October). Worth a look at the repository's Actions tab: Actions may be
+  switched off at the account level, or waiting on something the account has
+  to accept. Once it runs green, add it as a required check to the *main
+  changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
+  not before, or every pull request waits for a check that never comes.
 
 - [ ] **Fewer, smaller documents before the private repository goes up.
   PLAN ONLY -- asked for 1 October, nothing has been moved yet.** Today the
@@ -3260,6 +3281,14 @@ engineering provenance pass, not legal advice.
   *Shot-making clips*.
 
 ## Found by driving the built game
+
+- [x] **Monitor shots flew the mirror image of what the monitor said (5 October).**
+  Found on the first R50 session: left went right and right went left, while
+  every other number looked right. The flight now treats launch direction and
+  spin axis as the golfer's left and right, as Open Connect defines them, and
+  the offline readouts and the plot agree with the picture. Three tests had
+  pinned the mirror; they now pin the right way. RESEARCH.md, *Left and right
+  were mirrored*.
 
 - [x] **The lip edge grips only as hard as the ball presses on it (3 October).**
   The same rule as the cup wall. Longest lip-out ride 296 to 212 degrees at

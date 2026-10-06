@@ -140,7 +140,9 @@ extrapolation, which is what `ROLL_SPEED_GAIN` exists to correct.
 
 - **The club.** Nothing in the model knows which club was swung. Everything comes
   from the five launch-monitor numbers: ball speed, launch angle, launch
-  direction, spin rate, spin axis.
+  direction, spin rate, spin axis. Direction and axis mean what the monitor
+  means: positive starts the ball right and curves it right (a fade), negative
+  left (a draw). Until 5 October the game flew both mirrored.
 - **Contact duration.** See above — structurally cannot matter.
 - **Dispersion.** Not modelled. The simulator never invents ball data.
 
