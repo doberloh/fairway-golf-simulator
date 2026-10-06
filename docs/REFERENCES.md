@@ -402,7 +402,7 @@ is only as good as the ability to go back and check what it was taken from.
 - Bun licensing -- https://bun.com/docs/project/licensing -- Bun is MIT; statically links JavaScriptCore/WebKit (LGPL-2) and the libraries listed; patched WebKit source and relink steps.
 - Bun LICENSE.md at bun-v1.4.2 -- https://github.com/oven-sh/bun/blob/bun-v1.4.2/LICENSE.md -- the notice reproduced verbatim in THIRD_PARTY_NOTICES.txt.
 - GNU LGPL 2.1 text -- https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt -- reproduced in THIRD_PARTY_NOTICES.txt.
-- rēlā documentation -- https://docs.rela.golf/ ; user guide https://docs.rela.golf/rela/user-guide/ ; installation https://docs.rela.golf/rela/installation/ -- Device / Search / Simulator / Settings names, Windows PC, vendor software first. Default port not stated.
+- rēlā documentation -- https://docs.rela.golf/ ; user guide https://docs.rela.golf/rela/user-guide/ ; installation https://docs.rela.golf/rela/installation/ -- Device / Search / Simulator / Settings names, Windows PC, vendor software first. Default port not stated. Checked again 6 October for which spin fields it sends a simulator (TotalSpin and SpinAxis, or BackSpin and SideSpin): not stated.
 - Netlify, build environment variables -- https://docs.netlify.com/build/configure-builds/environment-variables/ -- `GIT_LFS_ENABLED` (clone with `git lfs clone`) and `GIT_LFS_FETCH_INCLUDE`, both to be set in the Netlify UI, not `netlify.toml`. Used for the website's media in Git LFS (RESEARCH.md *The website*).
 - Netlify forum, "LFS files aren't downloaded during build" -- https://answers.netlify.com/t/lfs-files-arent-downloaded-during-build/21948 -- read and set aside: about Netlify Large Media, Netlify's own LFS service, which this project does not use.
 

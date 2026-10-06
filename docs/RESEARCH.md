@@ -5876,3 +5876,25 @@ The game's white ball-marker ring is put back every time it moves the ball, afte
 **Not affected:** `aim`. It is a bearing in the hole's frame, set by the aim line the player sees, so the picture is its definition.
 
 **What remains wrong until a new release:** the v0.1 downloads (3 October) carry the mirrored flight. The website's Download buttons serve v0.1 until the owner publishes a newer one.
+
+## The R50 session against the model (6 October)
+
+The owner's Garmin R50 session of 3 October, 133 shots across twelve clubs, replayed through `simulateShot` with the R50's own ball speed, launch angle, launch direction, spin rate and spin axis, in the air the R50 states (1.172 g/L at 72.5 °F: the model's altitude was solved to match that density). The shot data and the full local report stay on the owner's machine (`docs/reports/r50-check/`, not committed); what follows is what was found. The R50 measures launch and then **calculates** carry, apex and roll with its own model, so this is model against model on shared measured inputs, as the SkyTrak check was.
+
+| clubs | shots | carry, model minus R50 | apex, model minus R50 |
+|---|---|---|---|
+| 60°, 56°, 52°, gap, pitching wedge | 50 | +0.0 to +1.8% | −1.3 to 0% |
+| 9 iron, 8 iron | 20 | +2.8%, +2.2% | −2.5%, −5.0% |
+| 7, 6, 5 iron | 35 | +1.5%, +0.1%, −0.8% | −7.7%, −10.7%, −11.6% |
+| 5 wood | 10 | −2.7% | −11.1% |
+
+Wedges to 5 iron together: carry +1.6 yd (+1.1%), typical miss 3.1 yd (2.5%). **Every shot more than 2 yd offline finished on the same side in both (98 of 98)**, typical sideways gap 0.6 yd -- a clean check of the left/right fix of 5 October.
+
+**Apex falls away with spin.** Wedges agree; from the 8 iron down the model peaks progressively lower while carry stays close, so the long-iron flight is flatter rather than shorter. It is the same direction and size as the open driver gap against Trackman's 35 yd apex, and the opposite of the SkyTrak check (+0.9 yd). Not acted on: adding lift would also add carry, which is already right, so it wants a refit of lift and drag together against the whole bag (TODO, *The driver carries 261*).
+
+**The owner flagged the 5 wood and the driver as unusual swings.** The 5 wood's shortfall follows the long-iron pattern exactly. The driver session was not representative: four swings of 33-42 mph, and the rest low hard hooks (2-11° launch, spin axes −50 to −80°). Two findings came out of it anyway. Past a 40° spin axis the model curves the ball 1.6 times as far as the R50 (within 3-9% below 40°); nothing published covers axes that extreme, so it is left open. And the knuckleball below.
+
+**Fixed: a ball with no spin got lift.** Shot 130, 143.7 mph, 4.7°, 346 rpm (S = 0.012): the R50 said 49 yd, the model 111. A ball with no lift at all carries 61-64 yd at that launch for any drag coefficient from 0.22 to 0.30, and the model still carried it 99 yd with the spin set to zero -- `liftOffset + sqrt(liftFloor + liftGain*S)` is 0.07 at S = 0, a floor the square root never leaves. A ball that is not spinning has nothing to make it lift one way rather than another, so lift must reach zero with S; Bearman and Harvey's and Smits and Smith's curves both rise from it. `AERO.liftTaper` = 0.04 fades lift to zero below that S with a smoothstep. **The 0.04 is placed, not published**: their measurements start above it, and it sits just below the lowest-spin real shots in any session fitted or checked here (S 0.044-0.045: a 1,500 rpm drive, the R50's lowest hooks; a tour drive is 0.08). After: zero spin carries 64 yd, the knuckleball 72 (the R50's 49 is shorter than even no lift, so the R50 is doing something of its own there); 131 of the 133 shots are unchanged to the decimal, the landing scorecard is unchanged, and `tests/low-spin.test.mjs` pins all three.
+
+**Still to check:** the R50's export signs sidespin opposite to its own spin axis on all 111 curving shots. Fairway uses the spin axis when a connector sends one; if rēlā sends backspin and sidespin instead, a fade would arrive as a draw. rēlā's documentation does not say which it sends (https://docs.rela.golf/rela/user-guide/, checked 6 October). Confirm with one deliberate fade, or the bridge run with `FAIRWAY_LOG=debug`.
+

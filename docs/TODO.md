@@ -751,6 +751,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
   **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
+  - **The R50 says the same about long irons (6 October).** On the owner's R50 session the model's peak height matches within about 1% on wedges and falls away as spin falls: 5% low on the 8 iron, 8% on the 7, 11-12% (7-8 ft) on the 6 iron, 5 iron and 5 wood -- with carry still within 1% on those clubs, so the model's long-iron flight is flatter rather than shorter. Same direction and size as the driver gap above; the SkyTrak check pointed slightly the other way. Wanted before a refit: a normal driver session and a second day. RESEARCH.md, *The R50 session against the model*.
 
 - [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
   - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
@@ -3288,6 +3289,13 @@ engineering provenance pass, not legal advice.
   in inches instead of a diagonal and a shape; the shape is worked out and the
   view is drawn in it whatever the window's size; old saves convert; the mat
   offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **A ball with no spin got lift (6 October).** Found on the owner's R50
+  session: a 144 mph knuckleball (346 rpm) carried 111 yd in the model where a
+  ball with no lift carries 61-64, and still 99 yd with no spin at all. Lift now
+  fades to zero below a spin parameter of 0.04 (`AERO.liftTaper`); the
+  knuckleball carries 72 yd, and 131 of the session's 133 shots are unchanged
+  to the decimal. `tests/low-spin.test.mjs`.
 
 - [x] **v0.2 published with the left/right fix (6 October).** "Fairway 0.2
   (beta)", at the owner's request, from `main` at 94987ba: the left/right fix,

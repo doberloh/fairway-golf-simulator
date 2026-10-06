@@ -377,12 +377,23 @@ export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325
 // change trusts the GC3, which is the better instrument. That is a judgement
 // about the references, not a measurement, and it is the part of this to
 // revisit first if a third device ever disagrees with it.
-export const AERO={liftOffset:0.0214,liftFloor:0.0025,liftGain:0.2055,liftCap:0.60,spinDrag:0.23};
+// NO SPIN, NO LIFT (6 October). The square root below never reaches zero: with
+// no spin at all it still gave CL 0.07, and a 144 mph knuckleball off the owner's
+// R50 (346 rpm, S 0.012) carried 111 yd where a ball with no lift at all
+// carries 61-64 -- and still 99 yd with the spin set to nothing. A ball that is
+// not spinning has nothing to make it lift one way rather than another, so CL
+// must reach zero with S. `liftTaper` brings it down smoothly below S 0.04 and
+// leaves everything above untouched: the lowest-spin real shots in any session
+// fitted or checked here sit at S 0.044-0.045 (a 1,500 rpm drive, the R50's
+// lowest hooks), a tour-average drive at 0.08. Where the taper ends is PLACED,
+// not published -- the wind-tunnel data this curve rests on starts above it.
+export const AERO={liftOffset:0.0214,liftFloor:0.0025,liftGain:0.2055,liftCap:0.60,spinDrag:0.23,liftTaper:0.04};
 export function coefficients(speed,spin,rho=1.225){
  const re=rho*speed*R*2/0.0000181, s=Math.abs(spin)*R/Math.max(speed,0.1);
  // Smooth dimple drag-crisis transition; bounded spin lift fit (not ball-specific calibration).
  const cd=0.225+0.22/(1+Math.exp((re-65000)/9000))+AERO.spinDrag*Math.min(s,0.8);
- const cl=clamp(AERO.liftOffset+Math.sqrt(AERO.liftFloor+AERO.liftGain*s),0,AERO.liftCap);
+ const taper=Math.min(1,s/AERO.liftTaper),fade=taper*taper*(3-2*taper);
+ const cl=clamp(AERO.liftOffset+Math.sqrt(AERO.liftFloor+AERO.liftGain*s),0,AERO.liftCap)*fade;
  return {cd,cl};
 }
 // One step of a ball on the ground: sliding while the contact point has not
