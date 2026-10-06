@@ -22,10 +22,6 @@ prevent.
 ## Found by driving the built game
 
 
-- [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
-  every monitor shot and every shaped keyboard shot mirrored; the Download
-  buttons serve it until a newer release exists. The owner's call, and the
-  owner names the version (AGENTS.md, *Pushing to GitHub*).
 
 - [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
   The keyboard keeps a club's full-swing launch at any power, so there is no
@@ -3292,6 +3288,12 @@ engineering provenance pass, not legal advice.
   in inches instead of a diagonal and a shape; the shape is worked out and the
   view is drawn in it whatever the window's size; old saves convert; the mat
   offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **v0.2 published with the left/right fix (6 October).** "Fairway 0.2
+  (beta)", at the owner's request, from `main` at 94987ba: the left/right fix,
+  panel title bars, the bay measured by its sides, and Range controls in the
+  Tools window. The latest release, so the Download buttons serve it; a
+  downloaded zip matched its checksum.
 
 - [x] **The floodlight freeze was not back (6 October).** Two `floodlit-night`
   smoke runs on 5 October froze the picture on switch-on (7.05 s on `main`,

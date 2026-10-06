@@ -610,3 +610,10 @@ sideways from what the monitor reported. Fixed in the source the same day
 (RESEARCH.md, *Left and right were mirrored*); the downloads stay wrong until
 the owner publishes a newer release.
 
+## Addendum, 6 October 2026: v0.2
+
+Published at the owner's request from `main` at 94987ba, the same five zips
+and checksums `npm run release` builds. It carries the left/right fix (the
+5 October addendum above), so v0.1's mirrored flight is no longer what the
+Download buttons serve.
+
