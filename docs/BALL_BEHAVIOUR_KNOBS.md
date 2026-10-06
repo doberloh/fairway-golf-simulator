@@ -105,6 +105,7 @@ on the spin parameter. **No club ever enters it.**
 |---|---|
 | `liftGain`, `liftOffset`, `liftFloor` | how much lift spin generates → **carry and apex** |
 | `liftCap` | ceiling on lift; binds on the highest-spin clubs |
+| `liftTaper` | below this spin parameter (0.04) lift fades smoothly to zero, so a ball with no spin gets no lift. Touches only knuckleballs: the lowest-spin real shots seen are at 0.044 and up. Placed, not published |
 | `spinDrag` | extra drag from spin → shortens high-spin shots |
 
 Descent angle falls out of these; it is not set directly.
