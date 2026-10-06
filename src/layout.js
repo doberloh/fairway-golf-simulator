@@ -22,8 +22,11 @@ import {uiZoom} from './ui-scale.js';
 // parked in a corner on a 4K monitor would otherwise be off-screen the next time
 // the game opened in a smaller window.
 
+// The third field marks a panel laid out as a plain block rather than a flex
+// box: `order` cannot lift its title bar to the top, so the bar goes FIRST in its
+// markup instead (see the bar's own comment below for why the others go last).
 const sections = [
- ['.course-info', 'Course card'],
+ ['.course-info', 'Course card', 'block'],
  ['.weather', 'Weather'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
@@ -48,7 +51,7 @@ export function createLayout(world) {
  let saved = {};
  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
  const entries = sections
-  .map(([selector, name]) => ({el: world.querySelector(selector), name, selector}))
+  .map(([selector, name, layout]) => ({el: world.querySelector(selector), name, selector, block: layout === 'block'}))
   .filter(e => e.el);
 
  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
@@ -160,9 +163,13 @@ export function createLayout(world) {
   head.append(move);
   e.el.classList.add('hud-titled');
   // LAST in the panel, not first, though it shows at the top: the stylesheet
-  // picks some panels' contents out by position (`.weather>div:nth-child(2)`),
-  // and a bar put first shifted every one of them by one.
-  e.el.append(grip, size, head);
+  // picks some panels' contents out by position (`.weather>div:nth-child(2)`,
+  // `.explore-bar>div:first-child`), and a bar put first shifted every one of
+  // them by one. A block panel has no `order` to lift it with, so it goes first
+  // there -- the course card, whose contents nothing picks out by position.
+  const seat = () => { if (e.block) { if (e.el.firstElementChild !== head) e.el.prepend(head); } else if (e.el.lastElementChild !== head) e.el.append(head); };
+  e.el.append(grip, size);
+  seat();
   grab(e, grip, false);
   grab(e, move, false);
   grab(e, size, true);
@@ -177,8 +184,9 @@ export function createLayout(world) {
   // is the one nobody notices. Re-appending fires this observer once more, whose
   // check then passes, so it settles rather than looping.
   new MutationObserver(() => {
-   if (e.el.contains(grip) && e.el.contains(size) && e.el.contains(head)) return;
-   e.el.append(grip, size, head);
+   if (!e.el.contains(grip) || !e.el.contains(size)) e.el.append(grip, size);
+   // Settles: once seated, moving it again is a no-op and fires nothing.
+   seat();
   }).observe(e.el, {childList: true});
  }
 
