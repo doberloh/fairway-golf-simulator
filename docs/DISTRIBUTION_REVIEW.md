@@ -617,3 +617,12 @@ and checksums `npm run release` builds. It carries the left/right fix (the
 5 October addendum above), so v0.1's mirrored flight is no longer what the
 Download buttons serve.
 
+## Addendum, 6 October 2026: the flight refit and the website's claim
+
+The flight was refitted against Trackman's tour averages, a GC3 session and
+the owner's R50 session (RESEARCH.md). The website says the model is "around
+3%" on carry, offline and apex against real launch-monitor data; after the
+refit the typical misses per source are carry 1.5-2.5% and peak height
+1.7-5.5%, so the claim stands. The data the fit used is private and not in the
+repository; the fitting tool is. Not in any release yet: v0.2 predates it.
+

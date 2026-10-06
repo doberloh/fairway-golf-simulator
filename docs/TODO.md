@@ -616,7 +616,10 @@ dead anyway (see below), so the bubble never protected anything.
 
 - [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
   between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
-  tuned from here. Matching apex while overshooting hang means the ball takes
+  tuned from here. The 6 October refit left it at 0.70 s, and putting hang into
+  the fit with a heavy weight moved it only to 0.66 s while making height, carry
+  and landing worse -- which, with those three now agreeing with the GC3 to a
+  percent or a degree, points at the GC3 defining hang differently. Matching apex while overshooting hang means the ball takes
   too long to fall from the same height -- the SHAPE of the descent rather than
   its scale -- and descent angle running 1.5 degrees steep says the same. Needs
   a look at how drag varies through the descent, with its own evidence.
@@ -749,9 +752,9 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] Choose public publisher/support details and check the working product name before a broad release.
 
-- [ ] **The driver carries 261 against a sourced 275, and its apex is 9% low with it.** Tour driver apex is quoted at 35 yards ([Trackman](https://www.trackman.com/blog/golf/apex-height)); ours is 32. That is not a second defect — a shorter drive has a lower apex, so it is one gap counted twice. Every other club is close and the apex SHAPE across the bag is right (driver-to-PW spread 3.7 yd against a published 3).
-  **Do not chase it by adding lift.** Lift is currently fitted to carry (3.2% RMS), apex (3.7%) and descent angle (1.8%), and descent angle is what the entire bounce model is fed by. Trading three validated quantities against one club's carry is a bad deal. If it is picked up, it wants a proper refit against the whole bag, not a nudge.
-  - **The R50 says the same about long irons (6 October).** On the owner's R50 session the model's peak height matches within about 1% on wedges and falls away as spin falls: 5% low on the 8 iron, 8% on the 7, 11-12% (7-8 ft) on the 6 iron, 5 iron and 5 wood -- with carry still within 1% on those clubs, so the model's long-iron flight is flatter rather than shorter. Same direction and size as the driver gap above; the SkyTrak check pointed slightly the other way. Wanted before a refit: a normal driver session and a second day. RESEARCH.md, *The R50 session against the model*.
+- [ ] **The PGA driver carries 262 against Trackman's 275 and peaks about 4% high.** After the 6 October refit (RESEARCH.md, *The flight refitted against three launch monitors*), Trackman's tour inputs (167 mph, 10.9°, 2,686 rpm) carry 262 yd, peak 33.4 yd against the sheet's 32, land at 39° against 38, and total 284 against 296. The LPGA driver is within 1.2% on carry and +5% on height. The earlier entry said the apex was 9% LOW against a quoted 35 yd; Trackman's own sheet says 32, and the refit moved it to slightly high.
+  **What was tried and rejected:** letting lift and drag depend on airspeed fitted the PGA driver exactly, by making drag fall with speed against Kensrud and Smith's measurements. Next evidence wanted: a normal driver session on the owner's R50.
+  - **Acted on 6 October:** the refit closed the R50's long-iron gap to about 4%. **The R50 had said the same about long irons:** On the owner's R50 session the model's peak height matches within about 1% on wedges and falls away as spin falls: 5% low on the 8 iron, 8% on the 7, 11-12% (7-8 ft) on the 6 iron, 5 iron and 5 wood -- with carry still within 1% on those clubs, so the model's long-iron flight is flatter rather than shorter. Same direction and size as the driver gap above; the SkyTrak check pointed slightly the other way. Wanted before a refit: a normal driver session and a second day. RESEARCH.md, *The R50 session against the model*.
 
 - [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
   - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
@@ -761,7 +764,8 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
   - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
-  - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above says the driver's apex is 9% LOW against a sourced 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
+  - **Unchanged by the 6 October refit:** 150 mph, 7°, 2,800 rpm still peaks at 51 ft; 2,400 rpm gives 44 ft and 6,400 rpm 90 ft.
+  - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above said (before the refit) the driver's apex was 9% LOW against a quoted 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
   - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
   - Searched again 3 October for the shot-making clips, with the same result. The stinger clip (2 iron, 152 mph, 7.5 deg, 2,800 rpm) peaks at 54 ft and says so on its page; RESEARCH.md, *Shot-making clips*.
 
@@ -3289,6 +3293,23 @@ engineering provenance pass, not legal advice.
   in inches instead of a diagonal and a shape; the shape is worked out and the
   view is drawn in it whatever the window's size; old saves convert; the mat
   offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **The flight refitted against Trackman, a GC3 and the R50 (6 October).**
+  At the owner's request. All three agreed the old curve flew wedges slightly
+  high and long irons and woods low; peak height's typical miss is now 1.7% on
+  the GC3 (was 4.7), 2.8% on the R50 (7.0) and 5.5% on Trackman (8.3), carry
+  within 1.5-2.5%. Lift is a power law in spin (Smits and Smith's form); spin
+  decay scales with airspeed at the published rate. Rollout and backspin
+  checked rather than assumed: fairway runs moved toward their anchors, chips
+  unchanged, a tour wedge's spin-back on a Soft green 2.4 -> 4.6 yd. Rejected:
+  airspeed-dependent lift and drag, and a freely fitted spin decay (it tripled
+  spin-back). `tools/flight-fit.mjs`; the data stays in docs/sources/private.
+  RESEARCH.md, *The flight refitted against three launch monitors*.
+
+- [x] **A rolling ball skips, very slightly (6 October, cosmetic).** At random,
+  more in rough, almost none on greens, seeded per shot so replays match; only
+  the drawn ball moves. `src/roll-hop.js`; `ROLL_HOP.enabled` or
+  `lab.rollHop(false)` turns it off.
 
 - [x] **A ball with no spin got lift (6 October).** Found on the owner's R50
   session: a 144 mph knuckleball (346 rpm) carried 111 yd in the model where a

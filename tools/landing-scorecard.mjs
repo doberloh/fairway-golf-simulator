@@ -3,14 +3,21 @@
 //
 //   node tools/landing-scorecard.mjs                 the model as it stands
 //   node tools/landing-scorecard.mjs --levers        plus what each tuning lever would do
+//   node tools/landing-scorecard.mjs --set k=v,...   with AERO constants changed (a
+//                                                    candidate flight fit, before applying it)
 //
 // Anchors and their sources are in docs/BALL_BEHAVIOUR_KNOBS.md ("What each
 // surface is anchored to") and RESEARCH.md. Nothing here is fitted: it reports.
-import {simulateShot, YARD, MPH, contactOf} from '../src/physics.js';
+import {simulateShot, YARD, MPH, contactOf, AERO} from '../src/physics.js';
 import {turfConfig} from '../src/turf.js';
 import {customizeClubs, manualLaunch} from '../src/clubs.js';
 import {FIRMNESS_PRESETS} from '../src/firmness.js';
 
+// Before the clubs are built: their speeds are solved against the flight.
+{
+ const i = process.argv.indexOf('--set');
+ if (i >= 0) for (const kv of process.argv[i + 1].split(',')) { const [k, v] = kv.split('='); AERO[k] = v === 'true' ? true : v === 'false' ? false : +v; }
+}
 const clubs = customizeClubs();
 const ground = surface => ({height: () => 0, surface: () => surface,
  pin: {x: 9e9, z: 9e9}, trees: [], homes: [], bounds: {x: 1e6, minZ: -1e6, maxZ: 1e6}});
@@ -50,6 +57,20 @@ for (const [name, depth] of Object.entries(FIRMNESS_PRESETS)) {
  const a = run({...manualLaunch(clubs.iron7, 1, 1), origin: {x: 0, z: 0}, aim: 0}, 'green', {firmness: depth});
  const b = run({...manualLaunch(clubs.wedge, 1, 1), origin: {x: 0, z: 0}, aim: 0}, 'green', {firmness: depth});
  console.log(`  ${name.padEnd(7)} 7 iron ${a.roll.toFixed(1).padStart(5)}   wedge ${b.roll.toFixed(1).padStart(5)}`);
+}
+// THE SAME SHOTS EVERY TIME, FROM TRACKMAN'S PUBLISHED PGA TOUR AVERAGES (ball
+// mph, launch, spin; RESEARCH.md *The aerodynamic curve*). The keyboard clubs
+// above re-solve their speed for their carry whenever the flight changes, which
+// can hide what a flight change does to the landing; these cannot move.
+console.log("\nTrackman PGA tour inputs (land = the model's descent angle; Trackman says 38 / 49 / 50 / 52):");
+for (const [name, mph, vla, spin, land] of [['Driver', 167, 10.9, 2686, 38], ['5 iron', 132, 12.1, 5361, 49], ['7 iron', 120, 16.3, 7097, 50], ['PW', 102, 24.2, 9304, 52]]) {
+ const shot = lm(mph, vla, spin), r = simulateShot(shot, ground('fairway'), {turf: turfConfig({})});
+ const out = [`fairway ${run(shot, 'fairway').roll.toFixed(1).padStart(5)}`];
+ if (name !== 'Driver') for (const [f, depth] of [['Normal green', FIRMNESS_PRESETS.Normal], ['Soft green', FIRMNESS_PRESETS.Soft]]) {
+  const g = run(shot, 'green', {firmness: depth});
+  out.push(`${f} ${g.roll.toFixed(1).padStart(5)}${g.back > .2 ? ` (back ${g.back.toFixed(1)})` : ''}`);
+ }
+ console.log(`  ${name.padEnd(7)} carry ${(r.carry / YARD).toFixed(0).padStart(3)}  land ${r.descentAngle.toFixed(0)}  roll yd: ${out.join('   ')}`);
 }
 if (process.argv.includes('--levers')) {
  const green = contactOf('green');

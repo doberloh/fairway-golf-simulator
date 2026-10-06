@@ -103,12 +103,16 @@ on the spin parameter. **No club ever enters it.**
 
 | knob | effect |
 |---|---|
-| `liftGain`, `liftOffset`, `liftFloor` | how much lift spin generates → **carry and apex** |
+| `liftK`, `liftP`, `liftC` | how much lift spin generates (CL = liftK · S^liftP − liftC) → **carry and apex**. Fitted 6 October against Trackman, a GC3 and the owner's R50 |
 | `liftCap` | ceiling on lift; binds on the highest-spin clubs |
 | `liftTaper` | below this spin parameter (0.04) lift fades smoothly to zero, so a ball with no spin gets no lift. Touches only knuckleballs: the lowest-spin real shots seen are at 0.044 and up. Placed, not published |
 | `spinDrag` | extra drag from spin → shortens high-spin shots |
+| `dragBase`, `dragCrisis` | drag past the dimples' drag crisis, and the extra below it → how fast a ball slows, most of all slow, high wedges |
+| `spinTau` | how fast the ball loses spin in flight: 21.5 s at 100 mph, quicker at higher speed, so a driver sheds spin faster than a wedge. **Feeds spin-back**: a slower decay delivers more spin to the green (fitted freely it tripled a tour wedge's spin-back on a Soft green), so it is held at the published rate |
 
 Descent angle falls out of these; it is not set directly.
+
+**The skip of a rolling ball is not a physics knob.** `src/roll-hop.js` lifts the drawn ball a few millimetres at random while it rolls (more in rough, almost none on a green). Nothing in this file is affected by it: the simulation, where the ball stops and every readout ignore it. `ROLL_HOP.enabled` switches it off.
 
 ---
 

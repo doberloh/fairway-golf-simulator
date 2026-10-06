@@ -322,78 +322,77 @@ export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325
 // nothing here knows or cares which club was swung -- S is computed from the
 // ball's own speed and spin, both of which the launch monitor measures.
 //
-// FITTED against six measured tour rows: ball speed, launch angle and spin in,
-// carry and apex out. The previous curve was too spin-sensitive and it showed as
-// an ordered error -- irons ~10% long and ~15% high, the driver 7% short and 23%
-// low, sorted by spin. Flattening it (less gain, a higher floor, a lower cap)
-// fixed both ends at once. Carry 7.9% -> 3.2%, apex 14.6% -> 3.7%.
+// FITTED 6 October against the three launch monitors the owner trusts most:
+// Trackman's published PGA and LPGA tour averages (23 rows, driver to wedge), a
+// GC3 session (111 shots, 58 deg wedge to 4 iron) and the owner's R50 session
+// (115 shots, wedges to 5 wood; its driver swings were set aside as
+// unrepresentative). Each source counts equally; peak height and carry in
+// percent, carry at double weight, landing angle at a quarter; the two Trackman
+// driver rows count four times each, since nothing else covers the club a
+// player hits on every hole. `node tools/flight-fit.mjs` reruns it against the
+// private data (docs/sources/private, not committed). RESEARCH.md *The flight
+// refitted against three launch monitors* has every number.
 //
-// THEN 100 SHOTS FROM A GC3 SHOWED WHAT THE FLATTENING HAD COST. Every single
-// one of them flew LOW -- 8% on average, and 11 to 14% above 9,000 rpm. The
-// cause was the cap. `liftCap: 0.2913` binds at a spin parameter of 0.342, and
-// half of that session launched already clamped: past that point the ball got
-// no more lift however hard it was spinning.
+// THE PROBLEM IT FIXED: a tilt. All three sources agreed that the old curve
+// flew wedges slightly high and long irons and woods low -- the GC3 4 iron 10%
+// low, the R50's long irons 11-12%, Trackman's 3 woods to 5 irons 5-21% -- while
+// the averages looked fine, because the September fit had centred the average
+// on a curve the wrong SHAPE. Peak height, typical miss, before -> after:
+// GC3 4.7% -> 1.7%, R50 7.0% -> 2.8%, Trackman 8.3% -> 5.5%; carry stays within
+// about 1% on average for all three.
 //
-// Carry hid it. On the clamped half carry was out by two thirds of a yard,
-// because a flatter ball also carries less induced drag -- two errors
-// cancelling, which is the kind of agreement that conceals a fault rather than
-// confirming its absence. Checking apex as well as carry is what found it.
+// LIFT is a power law in S, CL = liftK * S^liftP - liftC: the form Smits and
+// Smith fitted to their wind-tunnel data (0.54 * S^0.4), with a small offset that
+// keeps the low-spin end (drivers) from lifting too hard. Fitted from their
+// published curve as the starting point, it stays close to its shape. The
+// square root it replaces was too stiff to bend the way the data wanted: fitted
+// freely it drove its own floor negative and stopped producing a number at all.
+// `liftCap` is a guard rail, not a shaping term (0.60 is reached past any golf
+// shot) -- the cap that used to bend the curve held half a GC3 session down,
+// and carry hid it, which is why apex is checked as well as carry, always.
 //
-// The plateau was never physical. Bearman and Harvey measured CL rising
-// monotonically to S = 0.3, and Smits and Smith took it to S = 1.4 -- "the
-// range of conditions experienced when using the full set of clubs" -- and
-// found no plateau, with CL slightly HIGHER than Bearman and Harvey again. The
-// square root in this formula already supplies the diminishing returns that a
-// cap was standing in for.
+// NO SPIN, NO LIFT (6 October): a ball that is not spinning has nothing to make
+// it lift one way rather than another, so lift fades to zero below S = 0.04
+// (`liftTaper`). Placed, not published, just under the lowest-spin real shots
+// seen anywhere here (S 0.044-0.045); a tour drive is 0.08. Without it a 144 mph
+// knuckleball off the R50 carried 111 yd where a ball with no lift carries 61-64.
 //
-// So the cap becomes a guard rail rather than a shaping term: 0.60 is not
-// reached until S is about 1.55, past anything Smits and Smith measured and far
-// past any golf shot. It exists so an absurd input cannot produce an absurd
-// force, not to bend the curve.
+// DRAG is a base, a step below the dimples' drag crisis, and a term rising with
+// spin. Fitted, the step is much smaller than it was (0.032 against 0.22): the
+// old step made slow, high wedges draggy in a way none of the three sources
+// supported. The spin term stays near Bearman and Harvey's slope.
 //
-// `spinDrag` moved 0.2025 -> 0.23, TOWARD the literature rather than away from
-// it. Bearman and Harvey's own figures imply a slope near 0.25 (CD rising 0.27
-// to 0.32 as S goes 0.1 to 0.3) and Smits and Smith report a stronger
-// dependence still, so the old value sat below both. Lifting the cap alone left
-// the ball carrying 3.6% too far; this is what pulls it back.
+// REJECTED: making lift and drag depend on airspeed above iron speeds. It fitted
+// Trackman's PGA driver exactly -- by making drag FALL with speed and cutting the
+// driver's lift by half. Kensrud and Smith measured golf-ball drag RISING with
+// speed past the drag crisis, and Smits and Smith found lift and drag
+// independent of Reynolds number at fixed S across 100,000-250,000. Two rows of
+// one source were bending the physics.
 //
-// Measured against the GC3's 100 shots: carry +1.42% -> +1.28%, apex -8.09% ->
-// -0.46%. The 36-shot SkyTrak session, held out and never fitted to, keeps its
-// carry (-0.43% -> -0.47%) and improves its descent (1.41 -> 1.25 degrees).
+// SPIN DECAY (`spinTau`, seconds at 100 mph) scales with airspeed: the torque
+// that slows the spin grows with speed, so a driver sheds spin faster than a
+// wedge. Smits and Smith measured 23.8 s at 100 mph and Tavares, by radar, 18.9 s
+// (both via Nathan 2008); 21.5 s sits between them. It was a fixed 24 s at every
+// speed before. Fitted freely the decay went slower for wedges, and the tour
+// wedge's spin-back on a Soft green tripled (2.4 -> 7.5 yd); held to the
+// published rate it rises only to 4.6 yd -- possible, not routine.
 //
-// WHAT THIS COST, SAID PLAINLY. Descent angle on the GC3 set goes from 1.33 to
-// 1.49 degrees of mean absolute error, hang time from +0.24 s to +0.71 s, and
-// SkyTrak's apex disagreement widens from +5.5% to +7.4%.
-//
-// The hang time is the interesting one and it is NOT a bad trade, it is a
-// second fault this one uncovered. It sits at 0.5 to 0.7 s for every value of
-// spinDrag tried, so it cannot be tuned out from here. Matching GC3 on apex
-// while overshooting its hang means our ball takes longer to come down from
-// the same height than theirs does -- a difference in the SHAPE of the
-// descent, not its scale, and the steeper descent angle says the same thing.
-// Chasing it means reworking how drag varies through the descent, which is its
-// own investigation with its own evidence. Filed rather than bodged. The two devices genuinely disagree about apex on
-// overlapping shots -- one says we fly low, the other says high -- and this
-// change trusts the GC3, which is the better instrument. That is a judgement
-// about the references, not a measurement, and it is the part of this to
-// revisit first if a third device ever disagrees with it.
-// NO SPIN, NO LIFT (6 October). The square root below never reaches zero: with
-// no spin at all it still gave CL 0.07, and a 144 mph knuckleball off the owner's
-// R50 (346 rpm, S 0.012) carried 111 yd where a ball with no lift at all
-// carries 61-64 -- and still 99 yd with the spin set to nothing. A ball that is
-// not spinning has nothing to make it lift one way rather than another, so CL
-// must reach zero with S. `liftTaper` brings it down smoothly below S 0.04 and
-// leaves everything above untouched: the lowest-spin real shots in any session
-// fitted or checked here sit at S 0.044-0.045 (a 1,500 rpm drive, the R50's
-// lowest hooks), a tour-average drive at 0.08. Where the taper ends is PLACED,
-// not published -- the wind-tunnel data this curve rests on starts above it.
-export const AERO={liftOffset:0.0214,liftFloor:0.0025,liftGain:0.2055,liftCap:0.60,spinDrag:0.23,liftTaper:0.04};
+// STILL OPEN, SAID PLAINLY: the PGA driver carries 262 against Trackman's 275
+// and peaks about 4% high; the GC3's hang times run 0.7 s shorter than ours
+// whatever the curve (weighting hang heavily moved it only to 0.66 s); and
+// Trackman's long-iron landing angles are 4-6 deg steeper than ours while the
+// GC3's, on near-identical shots, agree with ours to 0.2 deg -- the GC3 is
+// followed there.
+export const AERO={liftK:0.6781,liftP:0.2711,liftC:0.1856,liftCap:0.60,liftTaper:0.04,
+ dragBase:0.2178,dragCrisis:0.03216,crisisRe:65000,crisisWidth:9000,spinDrag:0.3419,
+ spinTau:21.5};
+// The speed spinTau is quoted at: 100 mph, as Smits and Smith and Tavares quote theirs.
+const SPIN_TAU_SPEED=100*MPH;
 export function coefficients(speed,spin,rho=1.225){
  const re=rho*speed*R*2/0.0000181, s=Math.abs(spin)*R/Math.max(speed,0.1);
- // Smooth dimple drag-crisis transition; bounded spin lift fit (not ball-specific calibration).
- const cd=0.225+0.22/(1+Math.exp((re-65000)/9000))+AERO.spinDrag*Math.min(s,0.8);
+ const cd=AERO.dragBase+AERO.dragCrisis/(1+Math.exp((re-AERO.crisisRe)/AERO.crisisWidth))+AERO.spinDrag*Math.min(s,0.8);
  const taper=Math.min(1,s/AERO.liftTaper),fade=taper*taper*(3-2*taper);
- const cl=clamp(AERO.liftOffset+Math.sqrt(AERO.liftFloor+AERO.liftGain*s),0,AERO.liftCap)*fade;
+ const cl=clamp(AERO.liftK*Math.pow(s,AERO.liftP)-AERO.liftC,0,AERO.liftCap)*fade;
  return {cd,cl};
 }
 // One step of a ball on the ground: sliding while the contact point has not
@@ -565,7 +564,7 @@ export function simulateShot(shot,course,options={}){
   if(!rolling){
    // Midpoint RK2 integration at 240 Hz, stable across rendering frame rates.
    const a=accel(v,spin),vm=v.map((x,i)=>x+a[i]*dt/2),am=accel(vm,spin);
-   p=p.map((x,i)=>x+vm[i]*dt);v=v.map((x,i)=>x+am[i]*dt);spin*=Math.exp(-dt/24);
+   p=p.map((x,i)=>x+vm[i]*dt);v=v.map((x,i)=>x+am[i]*dt);spin*=Math.exp(-dt*Math.hypot(...v)/SPIN_TAU_SPEED/AERO.spinTau);
   }else if(groundStep(course,p,v,w,dt,options.turf,skidTotal)){
    if(cupCapture(p,p,v,course.pin))holed=true;
    break;

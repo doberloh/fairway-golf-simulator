@@ -33,7 +33,7 @@ test('every spin a real shot has is untouched by the taper', () => {
  // real shots seen sit at S 0.044 (a 1,500 rpm drive), a tour drive at 0.08.
  for (const s of [AERO.liftTaper, .044, .08, .2, .5]) {
   const speed = 60, w = s / R * speed;
-  const fitted = Math.min(AERO.liftCap, Math.max(0, AERO.liftOffset + Math.sqrt(AERO.liftFloor + AERO.liftGain * s)));
+  const fitted = Math.min(AERO.liftCap, Math.max(0, AERO.liftK * Math.pow(s, AERO.liftP) - AERO.liftC));
   assert.equal(coefficients(speed, w).cl, fitted, `lift changed at S ${s}`);
  }
  assert.ok(rpm(170, AERO.liftTaper) < 1500, 'the taper reaches into the spin of a real drive');

@@ -34,6 +34,7 @@ import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} 
 import {relativeToPar,parText,parSide,parTint,holeScoreName} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
+import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
 import {playerColour,playerTracer,PLAYER_INK} from './player-colours.js';
 import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan,dropOutcome,jitterStream,groupStats} from './lab.js';
@@ -3632,6 +3633,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   launch:(over={})=>{labLaunch={...labLaunch,...over};syncLabTool();return {...labLaunch};},
   strike:(over={})=>labStrike(over),
   firmness:value=>labFirmness(value),
+  // The cosmetic skip of a rolling ball (roll-hop.js): on, off, or ask.
+  rollHop:(on)=>{if(on!==undefined)ROLL_HOP.enabled=!!on;return ROLL_HOP.enabled;},
   stimp:value=>labStimp(value),
   // `green` already means "build the bench and report its slope", so the
   // distance setter gets its own name rather than overloading one that answers a
@@ -4319,7 +4322,15 @@ function tick(now){
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
  if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);$('flightAltitude').textContent='Hole flyover · Circling the hole';drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
- if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};view.setBall(p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
+ if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
+  // The drawn ball skips a little while it rolls (roll-hop.js); `p` itself, which
+  // the trail and the camera use, is the simulated position, untouched.
+  flight.hop??=createRollHop(seedFor(flight.result));
+  // Touching at both ends of the step, each against its own ground: on a slope
+  // the ground under the midpoint is not the ground under either end.
+  const ground=q=>course.height(q.x,q.z)+BALL_R+.004>=q.y,rolling=ground(a)&&ground(b),hopSpeed=Math.hypot(b.x-a.x,b.z-a.z)/((b.t-a.t)||1);
+  const lift=flight.hop.step(dt*FLIGHT_PLAYBACK*timeScale,hopSpeed,course.surface(p.x,p.z),rolling&&flight.elapsed<flight.result.time);
+  view.rollHopLift=lift;view.setBall(lift?{...p,y:p.y+lift}:p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
   if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
   if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(pts.slice(0,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}

@@ -354,7 +354,12 @@ test('the bounce ladder is ordered by mowing height, and a green is not a fairwa
 // already post-bounce, v collapsed to 5.16 and spin to 796, and reading that one
 // is the mistake this comment exists to prevent. Cross-checked against the
 // analytic decay: 6500 * exp(-5.971 / 24) = 5068, to the rpm.
-const ARRIVAL = {speed: 22.57, vla: -49.06, spin: 5068, height: .02};
+// RE-PINNED 6 October for the three-monitor flight refit (physics.js, AERO):
+// 23.23 m/s and 48.47 deg at touchdown, 5524 rpm at the last airborne sample
+// (index 369; the next is post-bounce, v 5.45). Spin decay now scales with
+// airspeed at the published rate, gentler than the old fixed 24 s at iron
+// speeds, so the ball keeps more of its spin to the green.
+const ARRIVAL = {speed: 23.23, vla: -48.47, spin: 5524, height: .02};
 
 function drop(firmness, surface) {
  const shot = {...ARRIVAL, hla: 0, origin: {x: 0, z: 0}, aim: 0, spinAxis: 0};
@@ -419,8 +424,12 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // thing that actually matters survived unchanged -- hop height and run-out
  // both still rise monotonically from Soft to Burnt, which is the ladder this
  // anchor exists to defend.
+ // Re-pinned 6 October with the three-monitor flight refit: the 7 iron now
+ // arrives a little quicker, a little shallower and with more spin (ARRIVAL), so
+ // it hops about 0.2 ft higher and runs 0.1-0.9 yd further. No bounce parameter
+ // moved, and the ladder still rises the whole way.
  const WANT = {
-  Soft: [2.52, 3.4], Normal: [3.37, 6.2], Firm: [3.77, 8.7], Burnt: [4.14, 11.4],
+  Soft: [2.69, 3.5], Normal: [3.58, 6.5], Firm: [4.00, 9.2], Burnt: [4.39, 12.3],
  };
  for (const [firmness, [hop, roll]] of Object.entries(WANT)) {
   const got = drop(firmness, 'green');
@@ -445,8 +454,10 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // falls straight down the mowing height from green to sand, fairway still runs
  // longest, and a green still stops a ball soonest of the mown surfaces by
  // keeping backspin rather than by digging.
- const LADDER = {green: [3.37, 6.2], fringe: [2.94, 5.7], fairway: [2.61, 8.0],
-  semi: [1.98, 2.1], rough: [1.34, 1.2], sand: [0.43, 0.3]};
+ // Re-pinned again 6 October with the flight refit (ARRIVAL): every surface
+ // hops 0.02-0.21 ft higher and runs up to 0.5 yd further; every order holds.
+ const LADDER = {green: [3.58, 6.5], fringe: [3.11, 6.1], fairway: [2.76, 8.5],
+  semi: [2.10, 2.2], rough: [1.42, 1.3], sand: [0.45, 0.3]};
  for (const [surface, [hop, roll]] of Object.entries(LADDER)) {
   const got = drop('Normal', surface);
   assert.ok(Math.abs(got.firstHop / .3048 - hop) < .08, `${surface}: bounced ${(got.firstHop / .3048).toFixed(2)} ft, want ${hop}`);
