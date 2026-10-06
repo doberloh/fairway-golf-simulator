@@ -21,6 +21,7 @@ prevent.
 
 ## Found by driving the built game
 
+
 - [ ] **Publish a release with the left/right fix.** v0.1 (3 October) flies
   every monitor shot and every shaped keyboard shot mirrored; the Download
   buttons serve it until a newer release exists. The owner's call, and the
@@ -3281,6 +3282,31 @@ engineering provenance pass, not legal advice.
   *Shot-making clips*.
 
 ## Found by driving the built game
+
+- [x] **Panels drag by a title bar like the tool windows' (5 October).** The
+  map, shot controls, weather, tools strip, course card and flight controls
+  each carry the grip-and-name bar a tool window has; phones keep the corner
+  grip. PROJECT_HANDOFF, *A title bar, not the whole panel*.
+
+- [x] **The bay is measured by its two sides (5 October).** Width and height
+  in inches instead of a diagonal and a shape; the shape is worked out and the
+  view is drawn in it whatever the window's size; old saves convert; the mat
+  offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **The floodlight freeze was not back (6 October).** Two `floodlit-night`
+  smoke runs on 5 October froze the picture on switch-on (7.05 s on `main`,
+  1.4 s on `play-feedback`), and the owner's machine hard-crashed after the
+  second -- while the owner was playing a game on the same graphics card. Not
+  reproducible with the card free: `bench/shots/flood-freeze.mjs` on builds of
+  every commit since the 30 September fix (b7f9011 to d58bf9e), switching on
+  at once and after 8 s, with automatic resolution on and off, worst frame
+  33-50 ms every time; the smoke journey itself passed six runs out of six,
+  three on `main` and three on the branch. The fix holds. RESEARCH.md, *The
+  floodlight freeze on Ultra*. Graphics-heavy tests are no longer run while the
+  owner may be gaming.
+
+- [x] **Range controls could not be reopened once closed (5 October).** The
+  Tools window carries a Range controls button on the range.
 
 - [x] **Monitor shots flew the mirror image of what the monitor said (5 October).**
   Found on the first R50 session: left went right and right went left, while

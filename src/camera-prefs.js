@@ -6,7 +6,7 @@
 // property of the ROOM you are standing in, so it belongs with graphics, the
 // panel layout and the clock -- device preferences, never travelling with a
 // course or a round.
-import {projectorFov, lensShift, SIDE_MAX_FEET, DEFAULT_BAY, DEFAULT_ASPECT, ASPECTS} from './projector.js';
+import {projectorFov, lensShift, sidesFromDiagonal, aspectOf, SIDE_MAX_FEET, DEFAULT_BAY, DEFAULT_ASPECT, ASPECTS} from './projector.js';
 
 const KEY = 'fairway-camera-v1';
 
@@ -31,7 +31,7 @@ export const DEFAULT_CAMERA = {
 const NUMBERS = {
  height: [0.2, 60], offset: [-40, 40], distance: [0.1, 120], fov: [10, 140],
  freeSpeed: [1, 400], eyeHeight: [0.5, 3], ballAhead: [0.1, 8],
- diagonal: [20, 400], standFeet: [1, 60], standSide: [-SIDE_MAX_FEET, SIDE_MAX_FEET],
+ screenWidth: [12, 480], screenHeight: [8, 300], standFeet: [1, 60], standSide: [-SIDE_MAX_FEET, SIDE_MAX_FEET],
 };
 const MODES = ['player', 'overview', 'green', 'free'];
 
@@ -39,12 +39,15 @@ const MODES = ['player', 'overview', 'green', 'free'];
 // number cannot cost you the rest of the setup.
 export function validateCamera(raw = {}) {
  const out = {...DEFAULT_CAMERA};
+ // A bay saved before 5 October is a diagonal and a stock shape. It becomes the
+ // two sides it describes, once, and is saved that way from then on.
+ if (!(Number(raw.screenWidth) > 0) && Number(raw.diagonal) > 0)
+  raw = {...raw, ...sidesFromDiagonal(Number(raw.diagonal), raw.aspect in ASPECTS ? raw.aspect : DEFAULT_ASPECT)};
  for (const [key, [lo, hi]] of Object.entries(NUMBERS)) {
   const v = Number(raw[key]);
   if (Number.isFinite(v)) out[key] = Math.min(hi, Math.max(lo, v));
  }
  if (MODES.includes(raw.mode)) out.mode = raw.mode;
- if (raw.aspect in ASPECTS) out.aspect = raw.aspect;
  if (typeof raw.follow === 'boolean') out.follow = raw.follow;
  if (typeof raw.sim === 'boolean') out.sim = raw.sim;
  return out;
@@ -89,8 +92,14 @@ export function cameraRig(config = {}) {
   height: c.eyeHeight,
   offset: 0,
   distance: c.ballAhead,
-  fov: projectorFov({diagonal: c.diagonal, aspect: c.aspect, standFeet: c.standFeet}) ?? c.fov,
+  fov: projectorFov({screenHeight: c.screenHeight, standFeet: c.standFeet}) ?? c.fov,
   shift: lensShift({standFeet: c.standFeet, sideFeet: c.standSide}),
+  // THE PICTURE TAKES THE SCREEN'S SHAPE, NOT THE WINDOW'S. The projector
+  // stretches whatever the game draws onto the screen on the wall, so the view
+  // has to be drawn in the screen's proportions for the room to line up -- and
+  // it stays that shape however the game's window is resized. The renderer
+  // applies it (renderer.js, fitAspect).
+  aspect: aspectOf(c.screenWidth, c.screenHeight),
  };
 }
 

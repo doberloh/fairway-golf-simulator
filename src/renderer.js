@@ -628,7 +628,12 @@ export class GolfView{
  // on-screen box (getBoundingClientRect) is `zoom` times that, and sizing the
  // canvas from it drew the course 1.5 screens tall at 150%. The pixel ratio is
  // refreshed too, because it carries the zoom (pixelCeiling).
- resize(){const e=this.canvas.parentElement,w=e.clientWidth,h=e.clientHeight;if(this.quality)this.setResolutionScale(this.resolutionScale??1);this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.applyLensShift();this.camera.updateProjectionMatrix();}
+ resize(){const e=this.canvas.parentElement,w=e.clientWidth,h=e.clientHeight;if(this.quality)this.setResolutionScale(this.resolutionScale??1);this.renderer.setSize(w,h,false);this.fitAspect();this.applyLensShift();this.camera.updateProjectionMatrix();}
+ // The picture's shape: the window's, except in a simulator bay, where it is the
+ // measured screen's (cameraRig in camera-prefs.js) -- a projector stretches the
+ // window onto the screen, so drawing in the window's shape would stretch the
+ // course whenever the two differ, and resizing the window would change it.
+ fitAspect(){const e=this.canvas.parentElement;this.camera.aspect=this.screenAspect||(e.clientWidth/Math.max(1,e.clientHeight));}
  // THE BAY'S LENS SHIFT (lensShift in projector.js): the picture moved sideways
  // without turning the camera, for a mat that is not in front of the screen's
  // centre. Three shifts a frustum by `filmOffset` in units of its film width, so
@@ -1978,10 +1983,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // ON THE GREEN THE CAMERA BACKS OFF UNTIL THE BALL IS IN FRAME. A putt is aimed
   // from the ball, so the ball has to be on screen; everywhere else it may sit
   // below the bottom edge, which is where it is in the room.
-  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;}
+  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;this.screenAspect=rig.aspect||null;}
   // Overview and the green view keep the chosen angle: neither is a view from
   // where anybody is standing, so a bay's measurements say nothing about them.
-  if(c.mode!=='player'){this.camera.fov=c.fov;this.lensShift=0;}this.applyLensShift();this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
+  if(c.mode!=='player'){this.camera.fov=c.fov;this.lensShift=0;this.screenAspect=null;}this.fitAspect();this.applyLensShift();this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
  }
  // FLY to where setCamera would have put us, instead of cutting there.
  //

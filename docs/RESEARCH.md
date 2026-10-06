@@ -2856,11 +2856,11 @@ On a laptop the field of view is a look: pick what frames the hole nicely. In a 
 
     vertical FOV = 2 * atan((screen height / 2) / distance to the screen)
 
-Three.js takes the vertical angle and derives the horizontal one from the canvas aspect, so this is the whole of it provided the projector fills the screen and the canvas fills the projector — neither of which the code can check, so the panel states it.
+Three.js takes the vertical angle and derives the horizontal one from the camera's aspect. In a bay that aspect is the measured screen's shape, not the canvas's (5 October): a projector stretches the window onto the screen, so a picture drawn in the window's shape is stretched whenever the two differ, and resizing the window would change the bay's geometry. Drawn in the screen's shape, the projector's stretch undoes itself. **Rejected:** keeping the canvas aspect, which is right only when window and screen happen to match. The cost is that on a display whose shape differs from the screen's (testing at a desk) the picture looks stretched; the panel says so.
 
 Screens are sold by the diagonal, so the height comes from Pythagoras: `h = d / sqrt(1 + r²)` with `r` the width-over-height ratio. A 100 inch 16:9 screen is 49.03 inches tall; a 100 inch 4:3 screen is 60. Standing exactly as far back as the screen is tall gives `2 · atan(0.5)` = **53.13°**, which is a useful sanity check because it is close to the 53° the app has always shipped as its default — the old default was a laptop-sized guess that happens to describe someone standing about one screen-height away.
 
-The default bay in the panel is a 138 inch 16:9 screen from 8 feet, which works out at **38.8°**. Nothing is sourced here; it is a starting point to correct, and the panel prints both the angle a bay gives and, for a hand-set angle, how far back you would have to stand to justify it — the two are exact inverses and a test asserts the round trip.
+Since 5 October the panel asks for the two sides instead, as measured on the wall: the height is what the angle needs, the width gives the shape, and an impact screen is often no stock shape at all. A diagonal saved before that is converted with the formula above. The default bay is a 120 by 67.5 inch screen (the 138 inch 16:9 it used to be, to within half an inch) from 8 feet, which works out at **38.7°**. Nothing is sourced here; it is a starting point to correct, and the panel prints both the angle a bay gives and, for a hand-set angle, how far back you would have to stand to justify it — the two are exact inverses and a test asserts the round trip.
 
 ### The bay view cannot show the ball, and on the green that matters
 
@@ -5532,6 +5532,8 @@ loading floodlit took 23.9 s; with the lights off, the floodlit set was
 measured on High, which is why it was never seen. Fix: compile with the frame's
 target bound (`asDrawn`, wrapped into `withStandIns` and `ready`). Loading got
 faster with it, because the duplicate builds stopped.
+
+**Rechecked 6 October, after two smoke failures that turned out to be a busy card.** On 5 October the `floodlit-night` journey froze for 7.05 s on `main` and 1.4 s on a branch, with the owner playing a game on the same RTX 4090 at the time. With the card free, every build from this fix onward (b7f9011, 47fc695, 00b4965, 35187fd, 0d7748d, 3e4f667, d58bf9e) measured a worst switch-on frame of 33-50 ms, including switching at once after loading and with automatic resolution on, and the journey passed 6 of 6. A shader build is GPU-driver work, so a card already running a game makes it slow; a smoke failure here means nothing unless the card was otherwise idle.
 
 **Rejected on the way: fewer live lamps.** A throwaway build with 6, 12 and 24
 live lamps instead of all 57 froze for 4.3, 5.1 and 7.1 s on the first

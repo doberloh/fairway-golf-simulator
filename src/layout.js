@@ -22,8 +22,11 @@ import {uiZoom} from './ui-scale.js';
 // parked in a corner on a 4K monitor would otherwise be off-screen the next time
 // the game opened in a smaller window.
 
+// The third field marks a panel laid out as a plain block rather than a flex
+// box: `order` cannot lift its title bar to the top, so the bar goes FIRST in its
+// markup instead (see the bar's own comment below for why the others go last).
 const sections = [
- ['.course-info', 'Course card'],
+ ['.course-info', 'Course card', 'block'],
  ['.weather', 'Weather'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
@@ -35,6 +38,12 @@ const sections = [
 // for the bar would park the panel across the course. Everyone starts again
 // from the new defaults once; nothing else was stored under this key.
 const KEY = 'fairway-layout-v2';
+// Lucide's grip-horizontal, the icon a tool window's title bar carries. Inline
+// rather than a data-lucide placeholder, because these bars are built once at
+// start-up and nothing would come back to swap a placeholder for the icon.
+const GRIP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+ + '<circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/>'
+ + '<circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/></svg>';
 const MIN_W = 90, MIN_H = 45;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -42,7 +51,7 @@ export function createLayout(world) {
  let saved = {};
  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
  const entries = sections
-  .map(([selector, name]) => ({el: world.querySelector(selector), name, selector}))
+  .map(([selector, name, layout]) => ({el: world.querySelector(selector), name, selector, block: layout === 'block'}))
   .filter(e => e.el);
 
  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
@@ -139,8 +148,30 @@ export function createLayout(world) {
   size.className = 'hud-size';
   size.title = `Resize ${e.name}`;
   size.setAttribute('aria-label', `Resize ${e.name}. Arrow keys to adjust.`);
+  // THE SAME TITLE BAR A TOOL WINDOW HAS (popups.js): the grip icon and the
+  // panel's name, the whole width of the top, grabbed anywhere along it. The
+  // corner grip stays for the phone layout, where a bar on every panel would
+  // cost more height than a phone has; the stylesheet shows one or the other.
+  const head = document.createElement('div');
+  head.className = 'hud-head';
+  const move = document.createElement('button');
+  move.type = 'button';
+  move.className = 'hud-move';
+  move.title = `Move ${e.name}`;
+  move.setAttribute('aria-label', `Move ${e.name}. Arrow keys to nudge.`);
+  move.innerHTML = GRIP_ICON + `<span>${e.name}</span>`;
+  head.append(move);
+  e.el.classList.add('hud-titled');
+  // LAST in the panel, not first, though it shows at the top: the stylesheet
+  // picks some panels' contents out by position (`.weather>div:nth-child(2)`,
+  // `.explore-bar>div:first-child`), and a bar put first shifted every one of
+  // them by one. A block panel has no `order` to lift it with, so it goes first
+  // there -- the course card, whose contents nothing picks out by position.
+  const seat = () => { if (e.block) { if (e.el.firstElementChild !== head) e.el.prepend(head); } else if (e.el.lastElementChild !== head) e.el.append(head); };
   e.el.append(grip, size);
+  seat();
   grab(e, grip, false);
+  grab(e, move, false);
   grab(e, size, true);
 
   // THE HANDLES HAVE TO SURVIVE innerHTML. `#shotResult` is rebuilt wholesale on
@@ -153,8 +184,9 @@ export function createLayout(world) {
   // is the one nobody notices. Re-appending fires this observer once more, whose
   // check then passes, so it settles rather than looping.
   new MutationObserver(() => {
-   if (e.el.contains(grip) && e.el.contains(size)) return;
-   e.el.append(grip, size);
+   if (!e.el.contains(grip) || !e.el.contains(size)) e.el.append(grip, size);
+   // Settles: once seated, moving it again is a no-op and fires nothing.
+   seat();
   }).observe(e.el, {childList: true});
  }
 
@@ -173,6 +205,7 @@ export function createLayout(world) {
    e.el.classList.remove('hud-custom');
    e.el.removeAttribute('style');
   }
+  pads();
  }
  new ResizeObserver(restore).observe(world);
  restore();
@@ -224,10 +257,25 @@ export function createLayout(world) {
   written[name] = v;
   world.style.setProperty(name, v);
  };
+ // Each panel's own padding, for its title bar to reach the edges over
+ // (style.css, *The title bar*). Read, never written: the bar does not change a
+ // panel's padding, so measuring it cannot feed back. A panel laid out in a row
+ // is marked so its bar can take a line of its own.
+ function pads() {
+  for (const e of entries) {
+   const c = getComputedStyle(e.el);
+   e.el.style.setProperty('--hud-pt', c.paddingTop);
+   e.el.style.setProperty('--hud-pr', c.paddingRight);
+   e.el.style.setProperty('--hud-pl', c.paddingLeft);
+   e.el.style.setProperty('--hud-gap', c.rowGap === 'normal' ? '0px' : c.rowGap);
+   e.el.classList.toggle('hud-row', c.display.includes('flex') && c.flexDirection.startsWith('row'));
+  }
+ }
  const shown = el => el && !el.classList.contains('hud-custom') && el.offsetWidth > 0 && el.offsetHeight > 0;
  let pending = 0;
  function measure() {
   pending = 0;
+  pads();
   const top = world.getBoundingClientRect().top, h = world.clientHeight, z = uiZoom();
   const bars = bottomBars.filter(shown).map(b => (b.getBoundingClientRect().top - top) / z);
   write('--controls-top', bars.length ? Math.min(...bars) : h - 16);

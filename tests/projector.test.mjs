@@ -2,7 +2,7 @@
 // and the two ways it can be entered wrong.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {projectorFov, standForFov, screenHeight, fovForScreen, ASPECTS,
+import {projectorFov, standForFov, screenHeight, fovForScreen, aspectName, ASPECTS,
  FOV_MIN, FOV_MAX, INCHES_PER_FOOT, DEFAULT_BAY} from '../src/projector.js';
 import {cameraRig, validateCamera, DEFAULT_CAMERA} from '../src/camera-prefs.js';
 import {framedForBall, BALL_FRAME, playerCameraPose} from '../src/camera.js';
@@ -66,15 +66,40 @@ test('the simulator rig is measurements; the ordinary rig is the sliders', () =>
  assert.deepEqual(hand, {height: 9, offset: 4, distance: 23, fov: 53, shift: 0});
 
  const bay = cameraRig({...DEFAULT_CAMERA, sim: true, eyeHeight: 1.75, ballAhead: 0.9,
-  diagonal: 138, aspect: '16:9', standFeet: 8, offset: 4, height: 9, distance: 23});
+  screenWidth: 120, screenHeight: 67.5, standFeet: 8, offset: 4, height: 9, distance: 23});
  assert.equal(bay.height, 1.75, 'the eye is at eye height');
  assert.equal(bay.distance, 0.9, 'the ball is where the ball is');
  assert.equal(bay.offset, 0, 'a golfer stands BEHIND the ball, never beside it');
- assert.equal(bay.fov, projectorFov({diagonal: 138, aspect: '16:9', standFeet: 8}));
+ assert.equal(bay.fov, projectorFov({screenHeight: 67.5, standFeet: 8}));
+ // The picture is drawn in the screen's shape, not the window's (5 October).
+ assert.ok(Math.abs(bay.aspect - 120 / 67.5) < 1e-9, 'the view takes the measured screen\'s shape');
+ assert.equal(hand.aspect, undefined, 'off the bay, the window decides the shape');
+});
+
+test('the screen is entered as two sides, and the shape is worked out from them', () => {
+ // Only the height sets the angle: a wider screen of the same height is the
+ // same vertical view, just more of it sideways.
+ assert.equal(projectorFov({screenWidth: 120, screenHeight: 67.5, standFeet: 8}),
+  projectorFov({screenWidth: 160, screenHeight: 67.5, standFeet: 8}));
+ assert.equal(aspectName(120, 67.5), '16:9');
+ assert.equal(aspectName(96, 72), '4:3');
+ assert.equal(aspectName(100, 50), '2.00:1', 'a shape off the list is shown as a ratio');
+ assert.equal(aspectName(0, 50), '', 'no shape without both sides');
+});
+
+test('a bay saved as a diagonal becomes the two sides it describes', () => {
+ const old = validateCamera({sim: true, diagonal: 138, aspect: '16:9', standFeet: 9});
+ assert.ok(Math.abs(old.screenHeight - 67.5) <= .5 && Math.abs(old.screenWidth - 120.5) <= .5,
+  `138" 16:9 read as ${old.screenWidth}" x ${old.screenHeight}"`);
+ assert.equal(old.standFeet, 9, 'the rest of the bay survives');
+ const four = validateCamera({diagonal: 100, aspect: '4:3'});
+ assert.deepEqual([four.screenWidth, four.screenHeight], [80, 60], 'a 100" 4:3 screen is 80" x 60"');
+ // New sides win over an old diagonal left lying in the same save.
+ assert.equal(validateCamera({diagonal: 138, screenWidth: 100, screenHeight: 60}).screenWidth, 100);
 });
 
 test('an unusable bay keeps the chosen angle rather than collapsing the view', () => {
- const rig = cameraRig({...DEFAULT_CAMERA, sim: true, diagonal: 0, standFeet: 0, fov: 61});
+ const rig = cameraRig({...DEFAULT_CAMERA, sim: true, screenHeight: 0, standFeet: 0, fov: 61});
  assert.equal(rig.fov, 61);
 });
 

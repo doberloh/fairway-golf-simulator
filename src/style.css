@@ -227,6 +227,52 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* While a panel is being dragged, and in Arrange mode, every grip is obvious so
    you can see what you are lining up against. */
 .hud-arranging .hud-grip,.hud-arranging .hud-size{opacity:1}
+/* The bay's two screen sides, side by side. */
+.bay-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bay-sides input{width:100%;box-sizing:border-box}
+/* THE TITLE BAR, the same one a tool window has (.popup-head, .popup-move):
+   grip icon, name, a divider, grabbed anywhere along it. It is a real row of
+   the panel, put first with `order` (it is LAST in the markup -- see layout.js)
+   and pulled out over the panel's padding to the edges with negative margins.
+   The padding is measured per panel by layout.js into --hud-pt/-pr/-pl, because
+   every panel pads differently and several change it at each screen size.
+   Sticky, so a panel whose contents scroll keeps its bar.
+   Rejected: drawing the bar in a deepened top border. It needed no
+   measurement, but a panel with overflow hidden or auto -- the map, the course
+   card, and EVERY panel once the player resizes it -- clips its border area,
+   and the bar vanished. */
+.hud-head{order:-1;position:sticky;top:calc(-1 * var(--hud-pt,0px));z-index:6;flex:none;align-self:stretch;display:flex;align-items:center;
+ box-sizing:border-box;height:37px;padding:4px 4px 4px 6px;
+ margin:calc(-1 * var(--hud-pt,0px)) calc(-1 * var(--hud-pr,0px)) var(--hud-pt,0px) calc(-1 * var(--hud-pl,0px));
+ border-bottom:1px solid var(--glass-line);pointer-events:auto}
+/* A panel laid out in a row (the wind, the flight bar) wraps so the bar gets a
+   line of its own; the panel's own gap spaces it from what follows. */
+.hud-row{flex-wrap:wrap}
+.hud-row>.hud-head{flex-basis:calc(100% + var(--hud-pl,0px) + var(--hud-pr,0px));margin-bottom:0}
+/* The shot controls are a see-through column holding glass cards, so their bar
+   brings its own glass. */
+.bottom-area>.hud-head{margin:0 0 calc(-1 * var(--hud-gap,0px));background:var(--glass);border:1px solid var(--glass-line);
+ border-radius:var(--panel-radius) var(--panel-radius) 0 0;backdrop-filter:blur(16px) saturate(1.15)}
+/* ...and join the card under them, so bar and card read as one window. */
+.bottom-area.hud-titled>.shot-controls{border-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.hud-move{flex:1;display:flex;align-items:center;gap:8px;min-width:0;height:100%;padding:0 6px;border-radius:7px;cursor:grab;touch-action:none;
+ color:var(--ink);font-size:11.5px;font-weight:600;letter-spacing:.2px;text-align:left;background:none;border:0}
+.hud-move span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hud-move svg{width:15px;height:15px;flex:none;color:var(--ink-faint)}
+.hud-move:hover{background:var(--field);filter:none}
+.hud-dragging .hud-move{cursor:grabbing}
+/* The tools strip is one button wide: its bar carries the grip and no name. */
+.view-tools .hud-move{justify-content:center;padding:0}
+.view-tools .hud-move span{display:none}
+.view-tools>.hud-head{padding:4px}
+/* With the bar there, the corner grip would be a second handle doing its job. */
+.hud-titled>.hud-grip{display:none}
+/* No title bars on a phone: a 37px bar on every panel is height a phone does
+   not have. The corner grip takes over, as it always did here. */
+@container app (max-width:560px) or (max-height:500px){
+ .hud-head{display:none}
+ .hud-titled>.hud-grip{display:block}
+}
 .hud-dragging{outline:2px dashed #eaa958;outline-offset:2px}
 /* A panel given an explicit size has to be able to give its content somewhere to
    go, or resizing it smaller just clips the content off. */
@@ -612,6 +658,15 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 #world .aim-distance-control{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 #world .aim-distance-control input{width:72px}
 #world .shape-button{display:flex;border-left:0;padding:12px 16px}
+/* SHORT SCREENS PACK THE SECTIONS CLOSER (5 October). The title bar every panel
+   now carries (layout.js) cost the shot controls 37px, and at 1280x720 the
+   column then needed 46px more than it had: the last shot shrank to nothing and
+   its fold button slid under the keyboard hints. Tighter section spacing below
+   760px of height gives back about 70px without hiding anything. */
+@container app (max-height:760px){
+ #world .shot-controls>*,#world .club-control,#world .tee-control,#world .power-control,#world .aim-control{padding-top:8px;padding-bottom:8px}
+ #world .shape-button{padding-top:8px;padding-bottom:8px}
+}
 #world .shape-button>svg:first-child{display:block}
 #world .shot-controls>.swing-button{margin:12px 14px;padding:16px 14px;border:0;border-radius:10px;min-width:0;width:auto}
 #world .shot-controls>.swing-button:last-child,#world .shot-controls>.swing-button+.last-shot{margin-top:0}
@@ -923,6 +978,7 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  background:var(--accent);color:var(--accent-ink);font:600 13px/1 var(--font-ui);cursor:pointer}
 #world.aim-view .map-reading{display:flex}
 #world.aim-view .map-expand,#world.aim-view .minimap .hud-grip,#world.aim-view .minimap .hud-size{display:none}
+#world.aim-view .minimap .hud-head{display:none}
 
 /* NO BROWSER GESTURES MID-ROUND. A double tap on a button zoomed the page, a
    pull down the screen reloaded it and threw the round away, and holding an

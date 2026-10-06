@@ -22,6 +22,7 @@ export const METRES_PER_INCH = 0.0254;
 
 // A diagonal is what a screen is sold by; the height is what the angle needs.
 // h = d / sqrt(1 + r^2) with r the width/height ratio, straight from Pythagoras.
+// Kept for reading settings saved as a diagonal.
 export function screenHeight(diagonal, aspect = DEFAULT_ASPECT) {
  const r = ASPECTS[aspect] ?? ASPECTS[DEFAULT_ASPECT];
  return Math.max(0, diagonal) / Math.sqrt(1 + r * r);
@@ -41,18 +42,48 @@ export function fovForScreen(height, distance) {
  return Math.min(FOV_MAX, Math.max(FOV_MIN, Math.round(deg * 10) / 10));
 }
 
-// What the panel asks for: a screen in inches on the diagonal, and how far back
-// the golfer stands in feet. Anything unusable comes back null so the caller can
-// say so rather than silently rendering at some default.
-export function projectorFov({diagonal, aspect = DEFAULT_ASPECT, standFeet} = {}) {
- return fovForScreen(screenHeight(diagonal, aspect), Number(standFeet) * INCHES_PER_FOOT);
+// THE SCREEN AS TWO MEASURED SIDES (the owner, 5 October). It used to be a
+// diagonal and a shape picked from a list, which is how a screen is SOLD; a bay
+// owner holds a tape measure to the one on the wall, and an impact screen is
+// often no stock shape at all. The height is what the angle needs and the width
+// gives the shape, so both are asked for directly and the shape is worked out.
+// A diagonal and shape still work as input: that is how a setting saved before
+// this change arrives (camera-prefs.js turns it into sides once).
+const heightOf = ({screenHeight: h, diagonal, aspect = DEFAULT_ASPECT}) =>
+ Number(h) > 0 ? Number(h) : screenHeight(diagonal, aspect);
+
+// What the panel asks for: the screen's height in inches, and how far back the
+// golfer stands in feet. Anything unusable comes back null so the caller can say
+// so rather than silently rendering at some default.
+export function projectorFov({standFeet, ...screen} = {}) {
+ return fovForScreen(heightOf(screen), Number(standFeet) * INCHES_PER_FOOT);
+}
+
+// The two sides a diagonal and a stock shape describe: how an old setting
+// becomes the new one.
+export function sidesFromDiagonal(diagonal, aspect = DEFAULT_ASPECT) {
+ const h = screenHeight(diagonal, aspect), r = ASPECTS[aspect] ?? ASPECTS[DEFAULT_ASPECT];
+ return {screenWidth: Math.round(h * r * 2) / 2, screenHeight: Math.round(h * 2) / 2};
+}
+
+// The shape, worked out from the sides, named the way people name screens when
+// it is one of the stock shapes (within 1.5%) and as a ratio when it is not.
+export function aspectOf(width, height) {
+ const w = Number(width), h = Number(height);
+ return w > 0 && h > 0 ? w / h : null;
+}
+export function aspectName(width, height) {
+ const r = aspectOf(width, height);
+ if (!r) return '';
+ for (const [name, v] of Object.entries(ASPECTS)) if (Math.abs(r / v - 1) < .015) return name;
+ return `${r.toFixed(2)}:1`;
 }
 
 // The reverse, for showing what a bay WOULD have to look like to justify a field
 // of view -- useful when someone has an angle they like and wants to know where
 // to stand. Returns feet, to match the input above.
-export function standForFov({diagonal, aspect = DEFAULT_ASPECT, fov} = {}) {
- const h = screenHeight(diagonal, aspect), a = Number(fov) * Math.PI / 180;
+export function standForFov({fov, ...screen} = {}) {
+ const h = heightOf(screen), a = Number(fov) * Math.PI / 180;
  if (!(h > 0) || !(a > 0) || a >= Math.PI) return null;
  return Math.round((h / 2) / Math.tan(a / 2) / INCHES_PER_FOOT * 10) / 10;
 }
@@ -81,5 +112,6 @@ export function lensShift({standFeet, sideFeet} = {}) {
 
 // A default bay: a 10-foot-wide 16:9 impact screen, standing eight feet back.
 // Round numbers rather than a measurement of anything in particular -- it is a
-// starting point to correct, and it is stated as one in the panel.
-export const DEFAULT_BAY = {diagonal: 138, aspect: DEFAULT_ASPECT, standFeet: 8};
+// starting point to correct, and it is stated as one in the panel. (It was
+// 138" on the diagonal, which is the same screen to within half an inch.)
+export const DEFAULT_BAY = {screenWidth: 120, screenHeight: 67.5, standFeet: 8};

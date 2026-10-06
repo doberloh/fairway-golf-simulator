@@ -26,7 +26,7 @@ import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
 import {suggestCourseName} from './course-names.js';
 import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,hasCustomShotData,loadShotData,saveShotData,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
-import {projectorFov,standForFov,ASPECTS} from './projector.js';
+import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {framedForBall} from './camera.js';
@@ -523,6 +523,10 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   // Sim drop places a ball somewhere on a HOLE. The range has no hole to place
   // it on, so the control was there doing nothing; now it says so.
   $('simDrop').title=rangeMode?'Sim drop places a ball on a hole -- the range has none':'';}if($('labTool'))$('labTool').hidden=!rangeMode;
+ // The range controls open by themselves when the range does, and this is the
+ // way back to them once closed -- there was none, so a closed window stayed
+ // closed until the range was left and entered again.
+ if($('rangeTool'))$('rangeTool').hidden=!rangeMode;
  // Putting mode is forced to hole-out on a practice ground, so this would edit
  // a setting for the NEXT round while appearing to change where you are. A
  // dedicated putting mode is the plan; until then it is simply not offered.
@@ -3070,10 +3074,11 @@ function renderPanel(name,content){
   ${c.sim?`
   ${slider('eyeHeight','Your eye height',c.eyeHeight,1,2.4,' m',.01)}
   ${slider('ballAhead','Ball in front of you',c.ballAhead,.2,3,' m',.05)}
-  ${slider('screenDiagonal','Screen size (diagonal)',c.diagonal,40,300,'"',1)}
-  <label class="field">Screen shape<select id="screenAspect">${Object.keys(ASPECTS).map(a=>`<option value="${a}" ${c.aspect===a?'selected':''}>${a}</option>`).join('')}</select></label>
+  <div class="bay-sides"><label class="field">Screen width (in)<input type="number" id="screenWidth" min="12" max="480" step="0.5" value="${c.screenWidth}"></label>
+  <label class="field">Screen height (in)<input type="number" id="screenHeight" min="8" max="300" step="0.5" value="${c.screenHeight}"></label></div>
+  <p class="note" id="bayShape"></p>
   ${slider('standFeet','You stand from the screen',c.standFeet,2,30,' ft',.5)}
-  ${slider('standSide','Your mat, left or right of the screen centre',c.standSide??0,-10,10,' ft',.25)}
+  ${slider('standSide','Your mat, left or right of the screen centre',c.standSide??0,-10,10,' ft',.1)}
   <p class="note">Negative is left, as you face the screen. The camera still looks straight down your target line; the picture slides sideways, the way a projector's lens shift does, so the line lands where it really is in the room.</p>`
   :`
   ${slider('cameraHeight','Height above the ball',c.height,1,40,' m',.5)}
@@ -3092,17 +3097,24 @@ function renderPanel(name,content){
   const bayNote=()=>{
    const el=$('bayNote');if(!el)return;
    if(c.sim){
-    const angle=projectorFov({diagonal:Number($('screenDiagonal').value),aspect:$('screenAspect').value,standFeet:Number($('standFeet').value)});
-    el.textContent=angle?`That bay gives a ${angle}° field of view.`:'Enter a screen size and a distance to work out the field of view.';
+    const w=Number($('screenWidth').value),h=Number($('screenHeight').value);
+    const angle=projectorFov({screenHeight:h,standFeet:Number($('standFeet').value)});
+    el.textContent=angle?`That bay gives a ${angle}° field of view.`:'Enter the screen width and height and a distance to work out the field of view.';
+    // The shape, from the sides; and a warning when the game's window is a
+    // different shape from the screen, because the projector will stretch it.
+    const shape=$('bayShape');
+    if(shape){const name=aspectName(w,h),host=$('world'),win=host?host.clientWidth/Math.max(1,host.clientHeight):0,r=w>0&&h>0?w/h:0;
+     shape.textContent=name?`Screen shape ${name}. The view is drawn in that shape whatever size the game's window is, because the projector stretches the window onto the screen.`
+      +(r&&win&&Math.abs(win/r-1)>.03?` Right now the window is ${aspectName(win,1)}, so on this display the picture looks stretched; full screen on the projector, it lines up.`:''):'';}
    }else{
-    const stand=standForFov({diagonal:c.diagonal,aspect:c.aspect,fov:Number($('cameraFov').value)});
-    el.textContent=stand?`For reference: on a ${c.diagonal}" ${c.aspect} screen, ${Number($('cameraFov').value)}° is what you would see standing about ${stand} ft back.`:'';
+    const stand=standForFov({screenHeight:c.screenHeight,fov:Number($('cameraFov').value)});
+    el.textContent=stand?`For reference: on a ${c.screenWidth}" by ${c.screenHeight}" screen, ${Number($('cameraFov').value)}° is what you would see standing about ${stand} ft back.`:'';
    }
   };
   const apply=()=>{
    Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked});
    if(c.sim)Object.assign(c,{eyeHeight:Number($('eyeHeight').value),ballAhead:Number($('ballAhead').value),
-    diagonal:Number($('screenDiagonal').value),aspect:$('screenAspect').value,standFeet:Number($('standFeet').value),standSide:Number($('standSide').value)});
+    screenWidth:Number($('screenWidth').value)||c.screenWidth,screenHeight:Number($('screenHeight').value)||c.screenHeight,standFeet:Number($('standFeet').value),standSide:Number($('standSide').value)});
    else Object.assign(c,{height:Number($('cameraHeight').value),offset:Number($('cameraOffset').value),
     distance:Number($('cameraDistance').value),fov:Number($('cameraFov').value)});
    // Saved to the CAMERA's own key, never to the round. A bay describes the room
