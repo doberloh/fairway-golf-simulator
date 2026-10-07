@@ -1,11 +1,16 @@
-// THE PLAYER'S PROFILE: who they are, what they have hit, and every round they
-// have played -- kept on this device, in this browser, until its site data is
-// cleared.
+// THE PLAYERS' PROFILES: who plays on this device, what each of them has hit,
+// and every round each has played -- kept in this browser until its site data
+// is cleared.
 //
-// One record under one key, with its own version and its own migrations, so a
-// later build can add to it without losing what is already there. The profile
-// is deliberately NOT part of a round or a course: those can be exported,
-// shared and deleted, and a golfer's history should survive all three.
+// One store under one key: every golfer who has ever been in a group here, and
+// which of them is the MAIN profile -- the device's owner, who starts every new
+// group as player 1 and whom the menu and My profile open on. Apart from that
+// the main profile is a profile like any other; everyone's shots are counted.
+//
+// The store has its own version and its own migrations, so a later build can
+// add to it without losing what is already there. Profiles are deliberately NOT
+// part of a round or a course: those can be exported, shared and deleted, and a
+// golfer's history should survive all three.
 //
 // ADDING A STAT is one entry in COUNTERS or BESTS and one line in `tallyShot`
 // that counts it. Old profiles simply read zero for a counter they have never
@@ -14,13 +19,16 @@
 // round -- bumps PROFILE_VERSION and adds a MIGRATIONS entry, with a test that
 // the older record still loads.
 //
-// WHOSE STATS. A round can have up to four golfers on it; the profile follows
-// the one whose name matches the profile's, ignoring case. A round where nobody
-// does is played but not recorded.
+// WHOSE STATS. Every golfer in a group is a profile: a round's player carries
+// the profile's id, and each seat's shots and card go to that profile. A player
+// with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
 
-export const PROFILE_KEY = 'fairway-profile-v1';
-export const PROFILE_VERSION = 1;
+export const PROFILE_KEY = 'fairway-profiles-v1';
+// The single-profile record the first build wrote, read once and converted.
+export const LEGACY_KEY = 'fairway-profile-v1';
+export const PROFILE_VERSION = 2;
+export const MAX_PROFILES = 60;
 // The same limit a player's name has on a round, so the profile name always
 // fits in the group editor it is copied into.
 export const MAX_PLAYER_NAME = 24;
@@ -68,8 +76,12 @@ export function scoreType(score, par) {
  return rel <= -3 ? 'albatross' : rel === -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : rel === 2 ? 'double' : 'triple';
 }
 
-// `version` n upgrades a record FROM version n to n + 1. None yet.
-const MIGRATIONS = {};
+// `version` n upgrades a store FROM version n to n + 1.
+const MIGRATIONS = {
+ // 1 -> 2: one profile becomes a store of them, and that profile is main.
+ 1: d => { const id = newProfileId(); return {version: 2, main: id, profiles: [{...d, id}]}; },
+};
+export const newProfileId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 export const sameGolfer = (a, b) => typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase() && a.trim().length > 0;
 
@@ -80,43 +92,91 @@ export function validName(name) {
  return n;
 }
 
-export function blankProfile(name, now = Date.now()) {
- return {version: PROFILE_VERSION, name: validName(name), created: now, counters: {}, bests: {}, rounds: []};
+export function blankProfile(name, now = Date.now(), id = newProfileId()) {
+ return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: []};
 }
 
 const finite = v => Number.isFinite(v) ? v : 0;
 // What survives from a stored record. Anything unreadable is dropped rather
 // than allowed to take the profile down: a golfer who loses one corrupt round
 // keeps the rest, and one who loses a counter keeps the others.
-export function normalise(raw) {
- if (!raw || typeof raw !== 'object') return null;
- let d = raw, v = Number.isInteger(raw.version) ? raw.version : 1;
- while (v < PROFILE_VERSION) { if (!MIGRATIONS[v]) return null; d = MIGRATIONS[v](d); v++; }
- if (v > PROFILE_VERSION) return null;
+export function normaliseProfile(d) {
+ if (!d || typeof d !== 'object' || typeof d.id !== 'string') return null;
  let name;
  try { name = validName(d.name); } catch { return null; }
  const counters = {}, bests = {};
  for (const {key} of COUNTERS) if (Number.isFinite(d.counters?.[key]) && d.counters[key] >= 0) counters[key] = d.counters[key];
  for (const {key} of BESTS) if (Number.isFinite(d.bests?.[key]) && d.bests[key] > 0) bests[key] = d.bests[key];
  const rounds = Array.isArray(d.rounds) ? d.rounds.filter(r => r && typeof r.id === 'string' && Array.isArray(r.card)).slice(0, MAX_HISTORY) : [];
- return {version: PROFILE_VERSION, name, created: finite(d.created), counters, bests, rounds};
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds};
+}
+// The whole store. A profile that cannot be read is dropped, not the store; two
+// with the same name or id keep the first. Main falls back to the first profile
+// when it points at nothing. No profiles at all reads as no store.
+export function normalise(raw) {
+ if (!raw || typeof raw !== 'object') return null;
+ let d = raw, v = Number.isInteger(raw.version) ? raw.version : 1;
+ while (v < PROFILE_VERSION) { if (!MIGRATIONS[v]) return null; d = MIGRATIONS[v](d); v++; }
+ if (v > PROFILE_VERSION) return null;
+ const profiles = [], ids = new Set();
+ for (const raw of Array.isArray(d.profiles) ? d.profiles : []) {
+  const p = normaliseProfile(raw);
+  if (!p || ids.has(p.id) || profiles.some(q => sameGolfer(q.name, p.name))) continue;
+  ids.add(p.id); profiles.push(p);
+  if (profiles.length >= MAX_PROFILES) break;
+ }
+ if (!profiles.length) return null;
+ return {version: PROFILE_VERSION, main: ids.has(d.main) ? d.main : profiles[0].id, profiles};
 }
 
 // ---- storage --------------------------------------------------------------
-export function loadProfile() {
- try { return normalise(JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null')); } catch { return null; }
+// The store, or null when nobody has been named on this device yet. A store
+// written by the first, single-profile build is converted on the way in.
+export function loadProfiles() {
+ try {
+  const raw = localStorage.getItem(PROFILE_KEY) ?? localStorage.getItem(LEGACY_KEY);
+  return normalise(JSON.parse(raw || 'null'));
+ } catch { return null; }
 }
-// A full browser keeps the profile it has rather than throwing in the middle of
-// a shot. Round history is what gets big, so the oldest half goes first.
-export function storeProfile(p) {
- try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); return true; }
+// A full browser keeps the store it has rather than throwing in the middle of a
+// shot. Round history is what gets big, so the oldest half of everyone's goes.
+export function storeProfiles(store) {
+ const write = () => { localStorage.setItem(PROFILE_KEY, JSON.stringify(store)); try { localStorage.removeItem(LEGACY_KEY); } catch {} };
+ try { write(); return true; }
  catch {
-  try { p.rounds = p.rounds.slice(0, Math.ceil(p.rounds.length / 2)); localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); return true; }
+  try { for (const p of store.profiles) p.rounds = p.rounds.slice(0, Math.ceil(p.rounds.length / 2)); write(); return true; }
   catch { return false; }
  }
 }
-export function createProfile(name) { const p = blankProfile(name); storeProfile(p); return p; }
-export function renameProfile(p, name) { p.name = validName(name); storeProfile(p); return p; }
+export const findProfile = (store, id) => store?.profiles.find(p => p.id === id) || null;
+export const profileByName = (store, name) => store?.profiles.find(p => sameGolfer(p.name, name)) || null;
+export const mainProfile = store => findProfile(store, store?.main);
+
+// A new golfer. The first one on a device becomes main. Names are unique on a
+// device, ignoring case, because a name is what a player picks from a list.
+export function addProfile(store, name) {
+ const n = validName(name);
+ if (profileByName(store, n)) throw Error(`There is already a player called ${profileByName(store, n).name}.`);
+ if (store && store.profiles.length >= MAX_PROFILES) throw Error(`This device keeps at most ${MAX_PROFILES} players.`);
+ const p = blankProfile(n);
+ store ||= {version: PROFILE_VERSION, main: p.id, profiles: []};
+ store.profiles.push(p);
+ storeProfiles(store);
+ return {store, profile: p};
+}
+export function renameProfile(store, id, name) {
+ const p = findProfile(store, id), n = validName(name);
+ if (!p) throw Error('That player is no longer on this device.');
+ const other = profileByName(store, n);
+ if (other && other !== p) throw Error(`There is already a player called ${other.name}.`);
+ p.name = n; storeProfiles(store); return p;
+}
+export function setMainProfile(store, id) { if (findProfile(store, id)) { store.main = id; storeProfiles(store); } return store; }
+// Everyone but main can be removed; main has to be handed to someone else first.
+export function deleteProfile(store, id) {
+ if (id === store.main) throw Error('Make someone else the main profile first.');
+ store.profiles = store.profiles.filter(p => p.id !== id); storeProfiles(store); return store;
+}
 
 // ---- recording ------------------------------------------------------------
 // The history entry for a round, created the first time anything happens on it.

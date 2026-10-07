@@ -1160,3 +1160,9 @@ html,body{overscroll-behavior:none}
    Play, Course studio and Main menu behind the Shot controls bar. 50 clears every
    panel and window and stays under the shot list (60), the main menu (80), the
    notices (90) and the loading screen (95). Found by the profile smoke journey. */
+/* PROFILES IN THE GROUP (6 October). A row picks a profile; "New player..."
+   opens a name box beside the list, which wraps under it when the row is narrow. */
+.player-who{display:flex;flex-wrap:wrap;gap:6px;min-width:0}.player-who>select{flex:1 1 120px;min-width:0}.player-who>input{flex:1 1 130px;min-width:0}
+.profile-switch{margin-top:0}.profile-switch small{font-size:9px;opacity:.75;margin-left:3px}
+.profile-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.profile-actions:empty{display:none}.profile .profile-actions button{width:auto;margin:0;padding:7px 11px;font-size:10.5px}
+.profile-id>div{flex:1;min-width:0}.profile-id h3 .profile-tag{vertical-align:middle;font-family:inherit}.profile-id .field-error{margin:6px 0 0}.profile-id .field-error:empty{display:none}

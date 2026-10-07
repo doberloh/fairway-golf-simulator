@@ -839,9 +839,18 @@ const JOURNEYS = [
  {
   name: 'profile',
   fresh: true,
-  what: 'a first visit asks for a name, a shot reaches the profile, and a round in its history can be played again',
+  what: 'a first visit asks for a name; a new player joins mid-hole and leaves again; every shot reaches its own profile; a round in the history can be played again',
   async run(t) {
-   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profile-v1') || 'null'));
+   // The store, its main profile, and a profile by name.
+   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'));
+   const main = s => s?.profiles.find(p => p.id === s.main);
+   const named = (s, n) => s?.profiles.find(p => p.name === n);
+   const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
+   const groupPanel = async () => {
+    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
+    await t.press('Your group');
+   };
    await t.step('the welcome is up, over the menu', () =>
     t.until(() => t.page.evaluate(() => document.getElementById('welcome')?.hidden === false && !document.getElementById('splash')), 'the welcome', 60 * SLOW));
    await t.step('it will not take a blank name', async () => {
@@ -850,51 +859,76 @@ const JOURNEYS = [
     if (!why?.trim()) throw new Error('a blank name was accepted, or refused without saying why');
     if (await stored()) throw new Error('a profile was saved with no name');
    });
-   await t.step('a name, and it is gone', async () => {
+   await t.step('a name, and it is the main profile', async () => {
     await t.page.fill('#welcomeName', 'Tester');
     // Enter IN THE BOX, the way a player submits it. t.key() blurs the focused
     // element first so arrow keys reach the game, which here sends Enter nowhere.
     await t.page.press('#welcomeName', 'Enter');
     await t.until(() => t.page.evaluate(() => document.getElementById('welcome').hidden), 'the welcome to close', 5 * SLOW);
-    if ((await stored())?.name !== 'Tester') throw new Error('the name was not stored');
+    if (main(await stored())?.name !== 'Tester') throw new Error('the name was not stored as the main profile');
     const note = await t.page.textContent('#menuProfileNote');
     if (!note?.includes('Tester')) throw new Error(`the menu tile reads "${note}"`);
    });
-   await t.step('a new run starts with that golfer', async () => {
+   await t.step('a new run starts with the main profile as player 1', async () => {
     await fromMenu(t, 'Endless');
     await t.press('Start an endless run');
     await t.inPlay();
-    const who = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.players?.[0]?.name);
-    if (who !== 'Tester') throw new Error(`the first golfer is "${who}"`);
+    const who = (await saved())?.players?.[0], me = main(await stored());
+    if (who?.name !== 'Tester' || who.profile !== me.id) throw new Error(`player 1 is ${JSON.stringify(who)}`);
    });
-   await t.step('a tee shot is counted', async () => {
+   await t.step('a new player joins on the tee and becomes a profile', async () => {
+    await groupPanel();
+    await t.press('Add player');
+    // Nobody else is on this device yet, so the new row is a name to type.
+    await t.page.fill('#name1', 'Newcomer');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    const s = await stored(), n = named(s, 'Newcomer'), players = (await saved())?.players;
+    if (!n) throw new Error('no profile was made for the new player');
+    if (players?.[1]?.profile !== n.id) throw new Error(`player 2 is ${JSON.stringify(players?.[1])}`);
+   });
+   await t.step('the main profile tees off and is counted', async () => {
     await t.shot();
-    const p = await stored();
-    if (p?.counters?.shots !== 1) throw new Error(`shots reads ${p?.counters?.shots}`);
-    if (p.rounds.length !== 1) throw new Error(`${p.rounds.length} rounds in the history after one shot`);
+    const s = await stored();
+    if (main(s).counters.shots !== 1) throw new Error(`Tester's shots read ${main(s).counters.shots}`);
+    if (named(s, 'Newcomer').counters.shots) throw new Error("Tester's shot was counted for the newcomer");
    });
-   // History lists a round once a hole on it is finished, so finish one: the
-   // same two-yard drop and putt-out the endless journey uses.
+   // The same two-yard drop and putt-out the endless journey uses, waiting for
+   // the golfer to be IN rather than for the hole: the newcomer is still to play.
    await t.step('drop beside the pin and putt out', async () => {
     await t.tool('simDrop');
     await t.page.click('#dropAtGreen');
     await t.page.click('#confirmDrop');
     await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
     await t.closeTools();
-    for (let putt = 1; putt <= 6; putt++) {
+    for (let putt = 1; ; putt++) {
      await t.shot();
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false);
-     if (done) break;
+     if ((await saved())?.done?.[0]) break;
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
    });
+   await t.step("the newcomer's tee shot goes to the newcomer", async () => {
+    await t.shot();
+    const s = await stored(), n = named(s, 'Newcomer');
+    if (n.counters.shots !== 1) throw new Error(`the newcomer's shots read ${n.counters.shots}`);
+    if (n.rounds.length !== 1) throw new Error('the newcomer has no history entry for this round');
+   });
+   await t.step('the newcomer leaves mid-hole, and the hole is over', async () => {
+    await groupPanel();
+    await t.page.click('[data-drop="1"]');
+    // Removing a golfer asks twice, by name.
+    await t.page.click('#applyGroup');
+    await t.page.click('#applyGroup');
+    await t.until(() => t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 3000}).then(() => true, () => false), 'the hole to finish', 15 * SLOW);
+    if ((await saved())?.players?.length !== 1) throw new Error('the newcomer is still in the group');
+    if (!named(await stored(), 'Newcomer')) throw new Error("leaving the round removed the newcomer's profile");
+   });
    await t.step('the finished hole is on the history, matching the card', async () => {
-    const p = await stored(), card = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.cards?.[0]?.[0]);
-    const hole = p.rounds[0].card[0];
+    const card = (await saved())?.cards?.[0]?.[0], hole = main(await stored()).rounds[0].card[0];
     if (!Number.isFinite(hole?.score) || hole.score !== card) throw new Error(`the history says ${hole?.score}, the card says ${card}`);
     await t.closeDrawer().catch(() => {});
    });
-   await t.step('the profile page shows it', async () => {
+   await t.step('the profile page shows both players', async () => {
     await t.page.click('#menuNav');
     await t.page.click('#dropMenu');
     // Leaving asks whether to keep the round. The history keeps it either way:
@@ -906,9 +940,12 @@ const JOURNEYS = [
     await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
     const text = await t.page.textContent('#drawerContent');
     if (!/Tester/.test(text) || !/Shots hit/.test(text) || !/Replay this course/.test(text)) throw new Error('the profile page is missing its name, its stats or its history');
+    await t.press('Newcomer');
+    await t.until(async () => /Make main profile/.test(await t.page.textContent('#drawerContent')), "the newcomer's page", 5 * SLOW);
+    await t.press('Tester main');
    });
    await t.step('Replay this course grows the same run again', async () => {
-    const seed = (await stored()).rounds[0].course.seed;
+    const seed = main(await stored()).rounds[0].course.seed;
     await t.press('Replay this course');
     await t.until(() => t.page.evaluate(s => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.seed === s && !JSON.parse(localStorage.getItem('fairway-round-v1')).round.cards[0].some(Number.isFinite) && document.getElementById('app').dataset.mode === 'play', seed),
      `a fresh run on seed ${seed}`, 120 * SLOW);
@@ -1620,7 +1657,7 @@ for (const journey of chosen) {
  // there is none: init scripts run again on every reload, and a journey that
  // reloads must keep what it has recorded. `fresh` journeys meet the welcome.
  if (!journey.fresh) await context.addInitScript(() => {
-  try { if (!localStorage.getItem('fairway-profile-v1')) localStorage.setItem('fairway-profile-v1', JSON.stringify({version: 1, name: 'Smoke', created: Date.now(), counters: {}, bests: {}, rounds: []})); } catch {}
+  try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'psmoke', profiles: [{id: 'psmoke', name: 'Smoke', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); } catch {}
  });
  const page = await context.newPage();
  // EVERY wait scales with the renderer, including the ones not written here.

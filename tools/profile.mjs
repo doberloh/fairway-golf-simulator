@@ -141,7 +141,7 @@ async function newPage(browser, prefs, dpr = 2) {
   try { localStorage.setItem('fairway-graphics-v1', JSON.stringify(p)); } catch {}
   try { localStorage.removeItem('fairway-round-v1'); } catch {}
   // A named player, so the first-visit welcome is not over the frame being timed.
-  try { if (!localStorage.getItem('fairway-profile-v1')) localStorage.setItem('fairway-profile-v1', JSON.stringify({version: 1, name: 'Profiler', created: Date.now(), counters: {}, bests: {}, rounds: []})); } catch {}
+  try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'pprof', profiles: [{id: 'pprof', name: 'Profiler', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); } catch {}
  }, prefs);
  return page;
 }

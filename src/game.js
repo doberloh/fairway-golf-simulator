@@ -1,9 +1,10 @@
 import {puttingConfig,awardedPutts} from './putting.js';
 export class Round{
- // The first golfer's name when nobody has been named. main.js sets it to the
- // profile's name, so a new round starts with the person who is playing.
- static defaultName='Alex';
- constructor({players=[{name:Round.defaultName,team:'A',hand:'RH'}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid}={}){
+ // The golfer a round starts with when nobody has been chosen. main.js sets it
+ // to the main profile -- name and profile id -- so a new group starts with the
+ // person who owns the device.
+ static defaultPlayer={name:'Alex',team:'A',hand:'RH'};
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -85,7 +86,10 @@ export class Round{
   // `seat` is an instruction to this method, not part of a golfer. Spreading it
   // through would persist it into every save and then be read back as a seat in
   // a group that has since changed.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',id:i}));
+  // `profile` is which player profile this golfer is: it rides through so a
+  // golfer who stays keeps counting to the same profile, and one who joins
+  // counts to theirs from their first shot.
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,

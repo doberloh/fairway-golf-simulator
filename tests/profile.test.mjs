@@ -3,21 +3,57 @@ import assert from 'node:assert/strict';
 
 const map = new Map();
 globalThis.localStorage = {getItem: k => map.has(k) ? map.get(k) : null, setItem: (k, v) => map.set(k, String(v)), removeItem: k => map.delete(k), clear: () => map.clear()};
-const {PROFILE_KEY, blankProfile, normalise, loadProfile, createProfile, renameProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
+const {PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
  course: {name: 'Sitka Bluff', settings: {seed: 'abc', holes: 9}, seed: 'abc', biome: 'pnw', generator: 1, schema: 1}, ...extra});
 
-test('no profile until a name is given, and the name comes back after a reload', () => {
+test('no profiles until a name is given, and the first one is main', () => {
  localStorage.clear();
- assert.equal(loadProfile(), null);
- assert.throws(() => createProfile('   '), /name/);
- assert.throws(() => createProfile('x'.repeat(25)), /24/);
- createProfile('  Dustin   O  ');
- assert.equal(loadProfile().name, 'Dustin O');
- renameProfile(loadProfile(), 'Dee');
- assert.equal(loadProfile().name, 'Dee');
+ assert.equal(loadProfiles(), null);
+ assert.throws(() => addProfile(null, '   '), /name/);
+ assert.throws(() => addProfile(null, 'x'.repeat(25)), /24/);
+ const {store, profile} = addProfile(null, '  Dustin   O  ');
+ assert.equal(profile.name, 'Dustin O');
+ assert.equal(store.main, profile.id);
+ assert.equal(mainProfile(loadProfiles()).name, 'Dustin O');
+});
+
+test('more players join the same store; names stay unique and main can move', () => {
+ localStorage.clear();
+ const {store, profile: me} = addProfile(null, 'Dee');
+ const sam = addProfile(store, 'Sam').profile, jo = addProfile(store, 'Jo').profile;
+ assert.equal(loadProfiles().profiles.length, 3);
+ assert.equal(loadProfiles().main, me.id);
+ // A name is what a player picks from a list, so two the same would be a trap.
+ assert.throws(() => addProfile(store, ' sam '), /already/);
+ assert.throws(() => renameProfile(store, jo.id, 'DEE'), /already/);
+ renameProfile(store, jo.id, 'Joanne');
+ assert.equal(profileByName(loadProfiles(), 'joanne').id, jo.id);
+ // Main is a choice, and the main profile cannot be removed until it is handed on.
+ assert.throws(() => deleteProfile(store, me.id), /main/);
+ setMainProfile(store, sam.id);
+ assert.equal(loadProfiles().main, sam.id);
+ deleteProfile(store, me.id);
+ assert.equal(findProfile(loadProfiles(), me.id), null);
+ assert.equal(loadProfiles().profiles.length, 2);
+});
+
+test('the single profile the first build wrote becomes the main profile of a store', () => {
+ localStorage.clear();
+ map.set(LEGACY_KEY, JSON.stringify({version: 1, name: 'Dee', created: 5, counters: {shots: 12}, bests: {longestDrive: 250}, rounds: [{id: 'g1', card: [{par: 4, yards: 400, score: 5}]}]}));
+ const store = loadProfiles();
+ assert.equal(store.version, 2);
+ assert.equal(store.profiles.length, 1);
+ const m = mainProfile(store);
+ assert.equal(m.name, 'Dee');
+ assert.equal(m.counters.shots, 12);
+ assert.equal(m.rounds[0].card[0].score, 5);
+ // Written back under the new key, and the old one is gone.
+ addProfile(store, 'Sam');
+ assert.equal(map.has(LEGACY_KEY), false);
+ assert.equal(loadProfiles().profiles.length, 2);
 });
 
 test('a profile follows the golfer by name, not by seat or case', () => {
@@ -108,18 +144,24 @@ test('an unfinished, endless or three-hole round never reaches the handicap', ()
  assert.ok(!qualifies({...full, mode: 'scramble'}));
 });
 
-test('a damaged record keeps what it can and refuses what it cannot', () => {
+test('a damaged store keeps what it can and refuses what it cannot', () => {
  assert.equal(normalise(null), null);
- assert.equal(normalise({name: ''}), null);
- assert.equal(normalise({version: 99, name: 'Dee'}), null);
- const p = normalise({name: 'Dee', counters: {shots: 5, water: -1, nonsense: 3}, bests: {longestDrive: 'far'}, rounds: [{id: 'g1', card: []}, {card: []}, null]});
+ assert.equal(normalise({version: 2, profiles: []}), null);
+ assert.equal(normalise({version: 99, profiles: [{id: 'p1', name: 'Dee'}]}), null);
+ const store = normalise({version: 2, main: 'nobody', profiles: [
+  {id: 'p1', name: 'Dee', counters: {shots: 5, water: -1, nonsense: 3}, bests: {longestDrive: 'far'}, rounds: [{id: 'g1', card: []}, {card: []}, null]},
+  {id: 'p2', name: ''}, {id: 'p3', name: 'dee'}, {name: 'No id'}, {id: 'p1', name: 'Twin'}]});
+ // One readable profile; main falls back to it.
+ assert.equal(store.profiles.length, 1);
+ assert.equal(store.main, 'p1');
+ const p = store.profiles[0];
  assert.deepEqual(p.counters, {shots: 5});
  assert.deepEqual(p.bests, {});
  assert.equal(p.rounds.length, 1);
  // A counter added later reads zero on an old record rather than breaking it.
  assert.ok(COUNTERS.every(({key}) => p.counters[key] === undefined || Number.isFinite(p.counters[key])));
  map.set(PROFILE_KEY, '{not json');
- assert.equal(loadProfile(), null);
+ assert.equal(loadProfiles(), null);
 });
 
 test('a round carries its id through a save and a mulligan', () => {
@@ -132,8 +174,17 @@ test('a round carries its id through a save and a mulligan', () => {
  // A save written before rounds had ids gets one.
  const {uid, ...old} = JSON.parse(JSON.stringify(new Round()));
  assert.match(Round.restore(old).uid, /^g[a-z0-9]+$/);
- // The first golfer is whoever the profile says is playing.
- Round.defaultName = 'Dee';
- assert.equal(new Round().players[0].name, 'Dee');
- Round.defaultName = 'Alex';
+ // The first golfer is the main profile, carrying its id.
+ const was = Round.defaultPlayer;
+ Round.defaultPlayer = {name: 'Dee', team: 'A', hand: 'RH', profile: 'p1'};
+ assert.deepEqual([new Round().players[0].name, new Round().players[0].profile], ['Dee', 'p1']);
+ Round.defaultPlayer = was;
+});
+
+test('a golfer keeps their profile through a change of group, and a newcomer brings theirs', () => {
+ const r = new Round({players: [{name: 'Dee', team: 'A', profile: 'p1'}, {name: 'Sam', team: 'A', profile: 'p2'}]});
+ // Dee leaves mid-round; Jo joins.
+ r.setPlayers([{name: 'Sam', team: 'A', profile: 'p2', seat: 1}, {name: 'Jo', team: 'A', profile: 'p3'}], {blue: {x: 0, z: 0}});
+ assert.deepEqual(r.players.map(p => p.profile), ['p2', 'p3']);
+ assert.equal(Round.restore(JSON.parse(JSON.stringify(r))).players[1].profile, 'p3');
 });

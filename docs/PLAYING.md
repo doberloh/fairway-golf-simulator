@@ -207,20 +207,35 @@ Three seconds after everyone finishes a hole, the scorecard shows each score and
 
 ## Your profile
 
-**The first time Fairway opens in a browser, it asks your name.** That name
-starts every new round as the first golfer, and from your first shot Fairway
-keeps your stats, your round history and a sim handicap under **My profile** on
-the main menu. Change the name with the pencil beside it.
+**The first time Fairway opens in a browser, it asks your name.** That makes
+you the **main profile**: player 1 in every new group, and the player the menu
+and **My profile** open on. From your first shot Fairway keeps your stats, your
+round history and a sim handicap. Change the name with the pencil beside it.
+
+**Every golfer is a profile.** In the group setup -- for a round, an endless
+run or the driving range -- each row picks someone from the list, or **New
+player...** to type a name; a new player becomes a profile when the group is
+started or applied. Typing the name of someone already on this device picks them
+rather than making a second one, and nobody can be in a group twice. Mid-round,
+the player button in the top bar opens the same list: **Add player** brings
+someone in on the tee of the hole being played, a new player included, and
+removing someone takes them off the card (it asks first). The holes they
+already finished stay in their history.
+
+**My profile** shows one player at a time; the names across the top switch
+between everyone on this device, main first. Any player can be made the main
+profile, renamed, or removed with their history (it asks twice). The main
+profile cannot be removed until someone else is main.
 
 **It lives in this browser, on this device.** It survives reloads, closing the
 browser and updating Fairway, and is gone if the browser's site data is cleared.
 A private window never keeps it. The copy opened from disk and the copy on the
-website are separate places to a browser, so each has its own profile.
+website are separate places to a browser, so each has its own profiles.
 
-**Whose shots count.** The profile follows the golfer whose name matches yours,
-ignoring capitals. Friends in the same group are not counted, and a round with
-nobody of your name on it is played but not recorded. The driving range counts
-only its own ball total and your fastest ball speed.
+**Whose shots count.** Everyone's. Each ball is counted for the golfer who hit
+it, and each finished hole goes on that golfer's own history. Apart from being
+player 1, the main profile is recorded exactly like everyone else. The driving
+range counts only its own ball total and each golfer's fastest ball speed.
 
 **Overall** totals every ball you have hit on a course: shots, sand shots,
 bunkers found, water, out of bounds, trees and houses hit, chip-ins, lip-outs,
