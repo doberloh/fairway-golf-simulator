@@ -60,7 +60,7 @@
 /* Main menu: the entry point, over everything including the top bar. */
 .main-menu{position:fixed;inset:0;z-index:80;display:grid;grid-template-rows:auto 1fr auto;padding:0;color:#eef3e6;background:linear-gradient(180deg,rgba(10,20,14,.78) 0%,rgba(10,20,14,.34) 20%,rgba(10,20,14,0) 40%),linear-gradient(0deg,rgba(10,20,14,.86) 0%,rgba(10,20,14,.46) 24%,rgba(10,20,14,0) 50%)}#app[data-mode=menu] .topbar{display:none}#app[data-mode=menu] #world{height:calc(100dvh / var(--ui-zoom,1))}.menu-masthead{text-align:center;padding:52px 24px 0}.menu-view{pointer-events:none}.menu-deck{padding:0 24px 46px;display:flex;flex-direction:column;align-items:center;gap:18px}.menu-modes{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}.menu-tile{width:216px;min-height:118px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;padding:18px;border-radius:13px;text-align:left;color:#eef3e6;border:1px solid rgba(236,243,230,.22);background:rgba(16,30,21,.52);backdrop-filter:blur(6px);transition:transform .12s ease,background .12s ease,border-color .12s ease}.menu-tile i,.menu-tile svg{width:24px;height:24px;margin-bottom:auto;opacity:.85}.menu-tile strong{font-size:17px;font-weight:600;letter-spacing:-.3px}.menu-tile small{font-size:11px;opacity:.7}.menu-tile:hover{transform:translateY(-2px);background:rgba(24,44,31,.72);border-color:rgba(236,243,230,.42);filter:none}.menu-tile.primary{background:rgba(45,82,61,.82);border-color:rgba(140,190,150,.5)}.menu-tile.primary:hover{background:rgba(56,100,74,.92)}.menu-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.menu-link{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dbe6d3;opacity:.78;padding:8px 13px;border-radius:7px}.menu-link svg{width:14px;height:14px}.menu-link:hover{opacity:1;background:rgba(236,243,230,.12);filter:none}
 
-.menu-brand{display:flex;align-items:center;justify-content:center;gap:10px;font-size:52px;font-weight:650;letter-spacing:-2.6px;text-shadow:0 2px 24px rgba(6,14,9,.55)}.menu-brand .brandmark svg{width:48px;height:48px;stroke:#eef3e6;stroke-width:1.8;fill:none}.menu-brand .brand-dot{color:#a8c98a}#menuHeading{font:400 21px var(--font-display);letter-spacing:-.3px;opacity:.82;margin:10px 0 0;text-shadow:0 1px 16px rgba(6,14,9,.6)}
+.menu-brand{display:flex;align-items:center;justify-content:center;gap:10px;font-size:52px;font-weight:650;letter-spacing:-2.6px;text-shadow:0 2px 24px rgba(6,14,9,.55)}.menu-brand .brandmark svg{width:48px;height:48px;stroke:#eef3e6;stroke-width:1.8;fill:none}.menu-brand .brand-dot{color:#a8c98a}
 .menu-brand .brandmark svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 
@@ -893,7 +893,7 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  .menu-masthead{padding:26px 16px 0}
  .menu-brand{font-size:38px;letter-spacing:-1.8px}
  .menu-brand .brandmark svg{width:34px;height:34px}
- #menuHeading{font-size:15px;margin:4px 0 0}
+ 
  .menu-deck{padding:0 16px 18px;gap:10px}
  .menu-modes{gap:8px}
  .menu-tile{min-height:0;padding:12px 14px;gap:0}
@@ -910,7 +910,7 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  .menu-masthead{padding:10px 16px 0}
  .menu-brand{font-size:28px}
  .menu-brand .brandmark svg{width:26px;height:26px}
- #menuHeading{display:none}
+ 
  .menu-tile{width:148px}
 }
 
@@ -1184,7 +1184,7 @@ html,body{overscroll-behavior:none}
    take a heavier weight here, and figures that change in place are set
    tabular so a digit changing does not move its neighbours. */
 .drawer-header h2,.shot-result h3,.explore-bar strong,.drop-bar strong,.leave-card h2,.welcome-card h2,.profile-id h3,.relief-head strong,.course-plan strong,.match-status,.shot-list-head h2,.version-notice h2,.last-shot-toggle .ls-summary{font-weight:600;letter-spacing:-.3px}
-#menuHeading{font-weight:500;letter-spacing:-.2px}
+
 .course-info h1{font-weight:650;letter-spacing:-1.2px}
 .sc-big strong,.hole-summary-score strong,.hole-summary-par,.profile-hcp strong,.profile-round-score strong,.live-score-par strong,.result-stats strong,.hole-info strong,.clock-read,.flight-nums,.profile-avatar{font-weight:600;font-variant-numeric:lining-nums tabular-nums}
 
