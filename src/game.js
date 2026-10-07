@@ -1,6 +1,9 @@
 import {puttingConfig,awardedPutts} from './putting.js';
 export class Round{
- constructor({players=[{name:'Alex',team:'A',hand:'RH'}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed=''}={}){
+ // The first golfer's name when nobody has been named. main.js sets it to the
+ // profile's name, so a new round starts with the person who is playing.
+ static defaultName='Alex';
+ constructor({players=[{name:Round.defaultName,team:'A',hand:'RH'}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -8,6 +11,10 @@ export class Round{
   if(endless&&mode==='match')throw Error('Match play needs a last hole, so it cannot run endlessly.');
   if(typeof seed!=='string'||seed.length>40)throw Error('Invalid round seed.');
   if(!['blue','white','red'].includes(tee))throw Error('Invalid tee selection.');this.tee=tee;
+  // WHICH ROUND THIS IS, for the player's history. It rides through every save,
+  // mulligan and restore, so a round left and resumed is one entry, not two. A
+  // save from before it existed gets one on its first load.
+  this.uid=typeof uid==='string'&&/^[a-z0-9]{4,32}$/.test(uid)?uid:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   this.players=players.map((p,i)=>({...p,id:i}));this.mode=mode;this.holes=holes;this.gimme=gimme;this.hole=0;this.finished=false;this.endless=!!endless;this.seed=seed;this.pars=[];
   this.putting=puttingConfig(putting);this.history=[];this.puttCards=players.map(()=>[]);this.cards=players.map(()=>[]);this.teamCards={A:[],B:[]};this.match={A:0,B:0};this.beginHole();
  }

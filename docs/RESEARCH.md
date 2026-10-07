@@ -5962,3 +5962,70 @@ Hops arrive at random -- the gap before each is drawn from an exponential distri
 
 **Switched off by default the same day**, at the owner's request, to revisit later: the code and the owner's heights are kept. `ROLL_HOP.enabled = true` turns it back on; `lab.rollHop(true)` does the same in a running game.
 
+## The sim handicap (6 October)
+
+The owner asked for a "sim handicap" on the new profile page. It is the World
+Handicap System's own arithmetic, applied to courses that have no rating. Code:
+`src/handicap.js`; tests: `tests/handicap.test.mjs`.
+
+**Followed as published (USGA / England Golf WHS pages, REFERENCES.md):**
+
+- **Score differential** = (113 / Slope Rating) x (adjusted gross score - Course
+  Rating). The playing conditions adjustment is taken as zero; there is no field
+  to compare against. Rounded to a tenth.
+- **Hole caps.** With no index yet, every hole is capped at par + 5. With one,
+  at net double bogey: par + 2 + the handicap strokes received on that hole.
+- **The index** is the average of the lowest differentials among the most recent
+  20, by count: 3 scores, lowest 1 minus 2.0; 4, lowest 1 minus 1.0; 5, lowest
+  1; 6, lowest 2 averaged minus 1.0; 7-8, lowest 2; 9-11, lowest 3; 12-14,
+  lowest 4; 15-16, lowest 5; 17-18, lowest 6; 19, lowest 7; 20, lowest 8. Capped
+  at 54.0. Table read from England Golf's WHS page.
+- **Course Handicap** = index x Slope / 113 + (Course Rating - par), rounded; a
+  nine uses half the index.
+- **A nine-hole score (2024 revision)** becomes an 18-hole differential by adding
+  the expected differential for the nine not played, 0.52 x index + 1.2. Read
+  from a search summary of the USGA's 2024 nine-hole FAQ and MGA/TXGA summaries;
+  the USGA page itself was not fetched.
+
+**The rating, which is where this departs.** A real Course Rating is a team's
+judgement of effective playing length plus ten obstacle factors. A generated
+course has neither, so it is rated from its card yardage alone with the USGA
+yardage-rating formulas and no obstacle values:
+
+- scratch yardage rating (men) = length / 220 + 40.9 -- confirmed by a search
+  citing the USGA Course Rating System;
+- bogey yardage rating (men) = length / 160 + 50.7 -- **placed, not read.** It is
+  the companion formula in the same manual, from memory; no fetched page showed
+  it (the USGA's Section 13 page returns 403). If someone can open the Course
+  Rating System manual, this is the first number to check;
+- Slope = 5.381 x (bogey - scratch), the men's multiplier (women's 4.24), from
+  the Wikipedia "Slope rating" article and wiscogolfaddict's summary of the USGA
+  manual; clamped to the published 55-155 and rounded.
+
+A nine is rated as eighteen played twice: both constants halved, the bogey gap
+doubled for the slope. A 6,500-yard course rates 70.5 / 112; 7,200 yards rates
+73.6 / 119. **The consequence: two courses of equal length rate the same however
+much water, sand or slope one of them has.** That is the main reason the number
+is called a sim handicap.
+
+**Other departures, all deliberate:**
+
+- **Stroke index.** Generated cards have none, so holes are ranked by yards per
+  par stroke (a 470-yard par 4 before a 560-yard par 5) and strokes go to the
+  top of that list first. Placed.
+- **A first nine with no index yet** is doubled rather than held until a second
+  nine arrives, which is what the WHS would do. Otherwise a player of nines would
+  wait twice as long for a number.
+- **No soft or hard cap, no exceptional-score reduction.** Both depend on a
+  twelve-month low-index history that a sim profile rarely has; worth adding if
+  players keep long histories.
+- **What qualifies:** a 9 or 18 hole stroke or match play round, not endless,
+  with every hole scored. Scramble is a team score. Three-hole rounds are too
+  short for the WHS. A match conceded before its last hole is left out rather
+  than given "most likely scores".
+- **Decimal putting** gives fractional hole scores; they are used as they are.
+
+**What counts as a tree or a house hit.** physics.js counts a strike when the
+ball's velocity INTO a trunk or wall is reflected -- once per collision, not once
+per frame of contact -- and returns `treeHits` and `homeHits` with the shot. The
+counters change nothing about the flight.

@@ -22,8 +22,8 @@ the change that made it stale, not a follow-up.
 **For a player**
 
 - **[PLAYING.md](PLAYING.md)** — every control, every course-studio setting,
-  the wind dial, the map, the scorecard, the launch-monitor walkthrough, and
-  how to report a problem.
+  the wind dial, the map, the scorecard, your profile and sim handicap, the
+  launch-monitor walkthrough, and how to report a problem.
 - **[PORTABLE_README.md](PORTABLE_README.md)** — the README inside each
   download: starting `run_fairway_server`, playing on a phone, connecting a
   launch monitor through rēlā, troubleshooting.

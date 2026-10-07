@@ -45,6 +45,8 @@ export async function openGame(browser, {width = 1920, height = 1080, density = 
  page.on('pageerror', e => page.errors.push(e.message));
  page.on('console', m => m.type() === 'error' && page.errors.push(m.text().slice(0, 160)));
  await page.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
+ // A named player, or the first-visit welcome sits over every picture.
+ await page.addInitScript(() => { if (!localStorage.getItem('fairway-profile-v1')) localStorage.setItem('fairway-profile-v1', JSON.stringify({version: 1, name: 'Fairway', created: Date.now(), counters: {}, bests: {}, rounds: []})); });
  await page.goto(pathToFileURL(game).href);
  await page.waitForFunction(() => window.lab && window.__view && !document.getElementById('mainMenu').hidden && !document.getElementById('splash'), null, {timeout: 120000});
  return page;
