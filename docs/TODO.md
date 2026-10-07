@@ -814,6 +814,10 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 # Done
 
+## The website
+
+- [x] **A Ko-fi button in the website's top bar (7 October).** At the owner's request: "Support on Ko-fi", gold like Play the demo and just to its right, on the home page and the media page; on phones under 420 px it is the cup alone. Deployed live.
+
 ## Release 0.4 and going public (7 October)
 
 - [x] **v0.4 published, with its notes in the repository.** "Fairway 0.4 (beta)", at the owner's request, from the merge of `release-0.4` into `main`: penalty relief by the Rules of Golf with the Local Rule E-5 option, player backup and restore, removing a round from the history, one typeface and the cleaned-up top bar, the moving build progress bar and the shader-code credits. The notes are `docs/releases/v0.4.md`, published with `--notes-file` from the same commit the tag points at; v0.1 to v0.3's notes were copied in from GitHub. AGENTS.md now makes this the rule.
