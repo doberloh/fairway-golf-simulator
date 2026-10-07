@@ -297,7 +297,9 @@ with its score against par for the holes played. **Replay this course** builds
 the same course again for a fresh round with whoever is in your group now; an
 endless run starts again from the same first hole. A round marked *Earlier
 generator* was played before Fairway's course generator last changed, so the
-land comes back a little different.
+land comes back a little different. **Remove** (it asks twice) takes a round out
+of the history -- a practice nine you'd rather not count -- so its scores leave
+your scoring and your sim handicap. Your totals keep the balls you hit in it.
 
 **The sim handicap** works like a real Handicap Index under the World Handicap
 System. Each finished 9 or 18 hole round of stroke or match play becomes a score

@@ -20,7 +20,7 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
 import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
@@ -1801,11 +1801,25 @@ async function whileGenerating(label,work,quiet=false){
  // screen paint before the first block of work.
  await nextFrame();
  try{
-  const result=await work(report=>{if(!quiet)setProgress(report);});
+  const result=await work(report=>{if(!quiet)setProgress(report&&{...report,done:report.done*GROWING_SHARE});});
   // The graphics card's share of the wait, behind the overlay rather than as a
   // frozen first frame after it (GolfView.ready).
+  //
+  // IT IS MOST OF THE WAIT, AND IT USED TO SIT STILL. Generation reported its
+  // steps and filled the bar; then "Preparing the graphics" showed a FULL bar for
+  // the rest -- measured 7 October at 6.8 s of an 11.4 s 18-hole build, compiling
+  // shaders, with nothing on screen moving but the spinner. A full bar that does
+  // not finish reads as stuck. Generation now fills the first part of the bar
+  // and the graphics the rest; shader compilation is one wait with no steps to
+  // report, so the bar creeps through its share on a curve that slows as it goes,
+  // paced by how long the last compile took, and never reaches the end before
+  // the work does. The page really is working throughout: the compile runs off
+  // the main thread (compileAsync) and frames keep coming.
+  const creep=quiet?null:creepProgress('Preparing the graphics',GROWING_SHARE);
+  const g0=performance.now();
+  try{await view?.ready?.();}
+  finally{creep?.stop();graphicsMs=Math.max(500,performance.now()-g0);}
   if(!quiet)setProgress({label:'Preparing the graphics',done:1});
-  await view?.ready?.();
   // The first frames of what was built, still under the overlay: their one-off
   // costs land behind it rather than on the first thing the player sees (the
   // same reason the splash waits, at startup). A few frames normally; never
@@ -1814,6 +1828,22 @@ async function whileGenerating(label,work,quiet=false){
   return result;
  }
  finally{if(view)view.retiring=false;if(!quiet){box.hidden=true;setProgress(null);}}
+}
+// How much of the bar generation fills; the graphics get the rest. Measured on
+// an 18-hole build, generation is about a third of the wait and the graphics
+// about two thirds; half and half gives generation's steps room to be seen.
+const GROWING_SHARE=.5;
+// How long the last graphics stage took, which paces the next one's creep. The
+// menu's own quiet build at startup sets it before any bar is shown.
+let graphicsMs=5000;
+// A bar that keeps moving through a wait that cannot report its own progress:
+// from `from` toward 97% of the rest, two thirds of the way there after the last
+// graphics stage's duration, and slowing all the time.
+function creepProgress(label,from){
+ const t0=performance.now(),tau=graphicsMs/1.1;
+ const step=()=>setProgress({label,done:from+(.97-from)*(1-Math.exp(-(performance.now()-t0)/tau))});
+ step();const id=setInterval(step,120);
+ return {stop:()=>clearInterval(id)};
 }
 // The bar and the phase name. Null puts it back to indeterminate, for the
 // stretch before the first step lands and for work that never reports.
@@ -2675,7 +2705,7 @@ function profileCard(r){
   +`<div class="course-meta"><strong>${escape(r.course?.name||'A course')}</strong>`
   +`<span>${of} · ${format}${r.players>1?` · ${r.players} players`:''}</span>`
   +`<span class="course-when">${profileWhen(r.started)}${tags}</span></div>`
-  +`<div class="course-card-actions"><button class="secondary" data-replay-course="${escape(r.id)}"${tip}><i data-lucide="rotate-ccw"></i> Replay this course</button></div></div>`;
+  +`<div class="course-card-actions"><button class="secondary" data-replay-course="${escape(r.id)}"${tip}><i data-lucide="rotate-ccw"></i> Replay this course</button><button class="secondary" data-remove-round="${escape(r.id)}" aria-label="Remove ${escape(r.course?.name||'this round')} from the history">Remove</button></div></div>`;
 }
 function renderProfile(content){
  if(!profiles){content.innerHTML='<p>Nobody has signed the card yet.</p><button class="primary" id="profileStart">Enter your name</button>';$('profileStart').onclick=()=>{closePanel();showWelcome();};return;}
@@ -2719,6 +2749,13 @@ function renderProfile(content){
  $('profilesImport').onclick=()=>pickBackup(r=>{viewingProfile=profiles.main;openPanel('profile');toast(restoreSummary(r));},e=>{const el=$('backupError');if(el)el.textContent=e.message;});
  content.querySelectorAll('[data-view-profile]').forEach(b=>b.onclick=()=>{viewingProfile=b.dataset.viewProfile;renamingProfile=false;openPanel('profile');});
  content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
+ // Two presses, like removing a player: a round's scores cannot be put back.
+ content.querySelectorAll('[data-remove-round]').forEach(b=>b.onclick=()=>{
+  const id=b.dataset.removeRound;
+  if(b.dataset.armed!=='1'){b.dataset.armed='1';b.textContent='Remove from history? Press again';return;}
+  removeRound(profile,id);storeProfiles(profiles);profileSynced='';updateMenuProfile();openPanel('profile');
+  toast(`Round removed from ${profile.name}'s history. Its scores no longer count toward the sim handicap.`);
+ });
  if($('profileRename'))$('profileRename').onclick=()=>{renamingProfile=true;openPanel('profile');};
  if($('profileNameCancel'))$('profileNameCancel').onclick=()=>{renamingProfile=false;openPanel('profile');};
  if($('profileMakeMain'))$('profileMakeMain').onclick=()=>{setMainProfile(profiles,profile.id);useMainProfile();updateMenuProfile();openPanel('profile');toast(`${profile.name} is the main profile now.`);};

@@ -185,7 +185,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
 vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_ATLAS.width}.,row));}uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach;
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
- float hashGround(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
  // Distance to one channel station, with its width, channel index and valley
  // shoulder. Returned as xyzw so the shore bands can size themselves from the
@@ -220,7 +220,7 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
   float ramp=smoothstep(len,len+${GREEN_RAMP.toFixed(1)},q.y);
   return length(vec2(q.x-cv.x,q.y-zz))-(corridor+max(0.,greenEnd-corridor)*ramp);
  }
- float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+ /* Polynomial smooth minimum: Inigo Quilez (iquilezles.org/articles/smin), as published in glsl-smooth-min, (c)2014 stackgl contributors, MIT: THIRD_PARTY_NOTICES.txt */float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
  float smax(float a,float b,float k){return -smin(-a,-b,k);}
  // Band stops for a shoreline, in metres out from the water edge. The whole
  // profile shrinks by one factor on mown turf, so it keeps its shape instead of

@@ -92,7 +92,7 @@ export function windMaterial(material,view,strength=1,ground=false,crown=false,l
   shader.uniforms.windVec=view.windVec;shader.uniforms.sway=view.sway??{value:1};
   shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
 uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;${rooted?'\nattribute vec4 treeRoot;':''}
-float gustHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+/* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float gustHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(gustHash(i),gustHash(i+vec2(1.,0.)),f.x),mix(gustHash(i+vec2(0.,1.)),gustHash(i+vec2(1.,1.)),f.x),f.y);}`);
   // Displaced in world units AFTER instancing.
   shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`vec4 mvPosition=vec4(transformed,1.0);

@@ -6122,3 +6122,28 @@ the hole than where the ball went out. Hit out of bounds from a tee, where the
 ball crosses the line level with the tee, every point of the hole's fairway is
 nearer the hole, so E-5 cannot be used and stroke and distance applies. This is
 the rule, not a limitation; the tests carry a case of it.
+
+## The build overlay's progress, measured (7 October)
+
+Measured on the built file from disk, Low tier, `lab.course`:
+
+| | before | after |
+|---|---|---|
+| 18 holes (trees 80, water 60, homes): overlay up | 11.4 s | 10.2 s |
+| ...of which generation | 3.1 s | (the same work) |
+| ...of which "Preparing the graphics" | 8.3 s, bar full and still | creeping |
+| bar updates | 12 | 70 |
+| bar at 20/40/60/80/99% of the wait | 100% from 27% on | 49 / 64 / 81 / 89 / 93% |
+| longest still stretch | 8.3 s | 1.3 s |
+| 9 holes: overlay up | 5.2 s | 5.1 s |
+
+`view.ready()` broken down on the 18-hole build: shaders 6,800 ms, first frame
+39 ms. The compile is `renderer.compileAsync`, off the main thread: frames kept
+coming through it (longest frame gap 1.38 s, during generation, not the
+compile). So the wait was never frozen; it only looked it. The remaining 1.3 s
+still stretch is a real main-thread block inside generation -- the open
+*Generation worker and progress* item.
+
+**Rejected:** counting compiled programs for real progress. Three.js compiles
+them in parallel behind one promise; reaching into its program cache to count
+them would tie the bar to Three's internals for a cosmetic gain.
