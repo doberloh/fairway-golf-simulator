@@ -524,10 +524,14 @@ function updateHUD(){
   :round.endless?`Endless run · ${course.bio.name}`:course.bio.name;
  // A range has no hole number, no par and no pin position for the week. It does
  // have a distance, and that one is real -- it follows the green slider.
- $('holeNumber').innerHTML=rangeMode?'Range':round.endless?`${String(round.hole+1).padStart(2,'0')} <span>/ &infin;</span>`:`${String(round.hole+1).padStart(2,'0')} <span>/ ${String(round.holes).padStart(2,'0')}</span>`;$('holePar').textContent=practice?'—':course.par;
+ // No leading zero: "01" read as "O1" in the old serif, and a hole number is
+ // a count, not a code. The total rides beside it, lighter, on the same line.
+ $('holeNumber').innerHTML=rangeMode?'Range':`${round.hole+1}<span>/${round.endless?'&infin;':round.holes}</span>`;$('holePar').textContent=practice?'—':course.par;
  // Which day the cups are cut for, and where on the green this one is. Front,
  // middle and back come round in turn as the round goes on.
- $('holePin').innerHTML=practice?'&mdash;':`${pinDayOf(settings).slice(0,3).toUpperCase()} <span>${pinBandFor(round.hole)}</span>`;
+ // The day moves up into the label, so the value is one word in one case:
+ // "THU front" mixed capitals, lowercase and two sizes in a single slot.
+ {const band=pinBandFor(round.hole);$('holePinLabel').textContent=practice?'Pin':`Pin · ${pinDayOf(settings).slice(0,3)}`;$('holePin').textContent=practice?'—':band[0].toUpperCase()+band.slice(1);}
  // DISTANCE is the one field that stays real on a practice ground: it is where
  // the green has been put, and it follows the control that moves it. On a course
  // it is the tee yardage.

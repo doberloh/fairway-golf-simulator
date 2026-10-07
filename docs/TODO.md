@@ -821,6 +821,11 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 # Done
 
+## One typeface (7 October)
+
+- [x] **The top bar's hole, par, yards and pin, cleaned up and aligned.** The owner found it sloppy and disliked the font. Measured: Georgia's old-style figures made numbers bounce ("311", "O1"), the PIN label sat 5 px below the others because its value was smaller, values mixed sizes and cases ("01 / 18", "THU front"), and on a phone the hole number was larger and unlabelled. Now one grid -- one label line, one baseline, one size, rules between -- with "1/18" and "Pin · Thu / Front". Checked at 1920, 1366, 390 and 844 px wide.
+- [x] **One font across the whole game: the logo's.** The owner asked for the logo's font everywhere. The logo had always been the device's interface font (Inter was named first but never shipped), so Georgia is gone from every heading, number and the yardage markers painted into the scene, and the game now reads in Segoe UI on Windows, San Francisco on Apple and Roboto on Android. Five bundled webfonts were mocked up and set aside.
+
 ## Launch fixes (7 October)
 
 - [x] **Remove a round from a player's history.** Each round on My profile has **Remove**, which asks twice. Its scores leave the scoring totals and the sim handicap; the running totals keep the balls that were hit. The round's id is remembered (`removed` on the profile), so one removed while still being played is not written back by its next hole. `removeRound` in profile.js; tested.
