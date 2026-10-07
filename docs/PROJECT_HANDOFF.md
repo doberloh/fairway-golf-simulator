@@ -720,7 +720,27 @@ Redrawn in September from mockups the owner approved, for every screen size.
 **The course card is gone from play.** The hole, par, yardage and pin are in
 the top bar (`.hole-strip`, ids `holeNumber`, `holePar`, `holeDistance`,
 `holePin` unchanged, so `updateHUD` writes them where it always did) with a
-score chip per golfer (`#scoreChips`). **The shot controls are a panel down the
+score chip per golfer (`#scoreChips`). **Since 7 October it is one grid**: every
+label on one line, every value on one baseline and one size, a thin rule
+between the four stats. The hole reads `1/18` (no leading zero -- "01" read as
+"O1" in the old serif) and the pin's day moved into its label (`#holePinLabel`,
+"Pin · Thu") so the value is one word. Phones keep the same grid, smaller, with
+YARDS shortened to YDS and PIN hidden as before; the hole number is no longer
+the odd one out (it used to be bigger with no label).
+
+**One typeface, the device's own.** `--font-ui` is the system interface font
+(Segoe UI on Windows, San Francisco on Apple, Roboto on Android) -- what the
+logo was always drawn in -- and `--font-display` is an alias of it, so the 25
+rules that once set Georgia now follow. Canvas text painted into the scene
+(yardage markers and the like) uses the same stack through `UI_FONT` in
+renderer.js. Inter used to head the list but was never shipped, so it only
+appeared on a machine that happened to have it installed. Nothing is bundled:
+Segoe UI and San Francisco cannot be redistributed, and every device already
+has its own. Headings that were a 400-weight serif take weight 600 in a block at
+the foot of style.css, and numbers that change in place are tabular so a digit
+changing does not shift its neighbours. Rejected: bundling a webfont (Barlow,
+Inter and three others were mocked up) -- the owner chose the logo's font, and
+the logo was never a bundled font. **The shot controls are a panel down the
 left** (`.bottom-area`, still, so the drag registry and every rule keyed on it
 kept working), only as tall as what is in it, with the shot button inside it
 and the last shot at its foot. On the right: the wind at the top, the camera

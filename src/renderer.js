@@ -52,6 +52,9 @@ import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWate
 
 import {makeBloom} from './bloom.js';
 import {hideForProbe,restoreAfterProbe} from './water-bodies.js';
+// The interface font, for text painted onto a canvas: the same one the page
+// uses (style.css --font-ui), so a sign on the course matches the HUD over it.
+const UI_FONT='system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 const TAU=Math.PI*2;
 // Channel surfaces carry a per-vertex bank weight so the water feathers out at
 // the waterline instead of ending on a hard alpha step. Geometries without the
@@ -1329,7 +1332,7 @@ export class GolfView{
    }
   }
   // Numbered tee sign, timber posts, and a timber bench beside every tee.
-  const c=document.createElement('canvas');c.width=128;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203f30';ctx.fillRect(0,0,128,160);ctx.strokeStyle='#b9c4a0';ctx.strokeRect(6,6,116,148);ctx.textAlign='center';ctx.fillStyle='#f5efd9';ctx.font='52px Georgia';ctx.fillText(String(h.hole+1).padStart(2,'0'),64,73);ctx.font='15px sans-serif';ctx.fillText('PAR '+h.par,64,107);ctx.fillText(Math.round(h.routeLength/YARD)+' YD',64,134);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
+  const c=document.createElement('canvas');c.width=128;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#203f30';ctx.fillRect(0,0,128,160);ctx.strokeStyle='#b9c4a0';ctx.strokeRect(6,6,116,148);ctx.textAlign='center';ctx.fillStyle='#f5efd9';ctx.font='52px '+UI_FONT;ctx.fillText(String(h.hole+1).padStart(2,'0'),64,73);ctx.font='15px '+UI_FONT;ctx.fillText('PAR '+h.par,64,107);ctx.fillText(Math.round(h.routeLength/YARD)+' YD',64,134);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
   // THE SIGN STANDS BESIDE THE BLUE TEE, ON THE PLAYER'S RIGHT.
   //
   // It used to sit at a fixed local (-9, 2) -- nine metres off the hole's own
@@ -1448,8 +1451,8 @@ export class GolfView{
    ctx.fillStyle='#16241b';ctx.fillRect(0,0,512,330);
    ctx.strokeStyle=t.color;ctx.lineWidth=14;ctx.strokeRect(18,18,476,294);
    ctx.textAlign='center';
-   ctx.fillStyle=t.color;ctx.font='bold 210px Georgia';ctx.fillText(String(t.yards),256,228);
-   ctx.fillStyle='#dfe7d6';ctx.font='54px sans-serif';ctx.fillText('YARDS',256,292);
+   ctx.fillStyle=t.color;ctx.font='bold 210px '+UI_FONT;ctx.fillText(String(t.yards),256,228);
+   ctx.fillStyle='#dfe7d6';ctx.font='54px '+UI_FONT;ctx.fillText('YARDS',256,292);
    const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;this.resources.push(tex);
    const board=new T.Mesh(new T.BoxGeometry(width,height,.28),this.surfaceMaterial('#ffffff',{map:tex,roughness:.85}));
    const sz=t.z+t.radius+5,sw=h.toWorld({x:t.x,z:sz}),sy=h.height(t.x,sz);
@@ -2318,7 +2321,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   // The disc is the green, so it is drawn around the green's centre; the number
   // that labels the hole goes with it.
   const centre=hole.green??hole.pin;
-  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle='#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px sans-serif';ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
+  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle='#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
  }
  if(aimPoint){const from=to(position.x,position.z),target=to(aimPoint.x,aimPoint.z);ctx.save();ctx.strokeStyle='#fff1ac';ctx.lineWidth=3.5;ctx.setLineDash([8,6]);ctx.lineDashOffset=-time*22;ctx.beginPath();ctx.moveTo(...from);ctx.lineTo(...target);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#294c39';ctx.lineWidth=2;ctx.fillStyle='#ffed9e';ctx.beginPath();ctx.arc(...target,5,0,TAU);ctx.fill();ctx.stroke();ctx.restore();}
  ctx.save();if(full){ctx.beginPath();ctx.rect(w/2-world.halfX*scale,h/2-world.halfZ*scale,world.halfX*2*scale,world.halfZ*2*scale);ctx.clip();}
