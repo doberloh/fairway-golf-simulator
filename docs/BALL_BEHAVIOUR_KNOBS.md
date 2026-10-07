@@ -112,7 +112,7 @@ on the spin parameter. **No club ever enters it.**
 
 Descent angle falls out of these; it is not set directly.
 
-**The skip of a rolling ball is not a physics knob.** `src/roll-hop.js` lifts the drawn ball a few millimetres at random while it rolls (more in rough, almost none on a green). Nothing in this file is affected by it: the simulation, where the ball stops and every readout ignore it. `ROLL_HOP.enabled` switches it off.
+**The skip of a rolling ball is not a physics knob.** `src/roll-hop.js` lifts the drawn ball a few centimetres at random while it rolls (most on fairways, least on a green; the owner set the heights by eye on 6 October). Nothing in this file is affected by it: the simulation, where the ball stops and every readout ignore it. `ROLL_HOP.enabled` switches it off.
 
 ---
 

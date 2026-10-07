@@ -677,6 +677,18 @@ const JOURNEYS = [
    });
    await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());
+   // REPLAY ON A LATER ENDLESS HOLE (6 October). An endless world holds one hole,
+   // index 0, whatever hole the player has reached; Replay asked the renderer for
+   // the round's hole number instead, threw on every frame from hole 2 on and
+   // left the round unplayable. Hole 1 never showed it.
+   await t.step('replay that shot on the second hole, end it early, and play on', async () => {
+    await t.tool('replayShot');
+    await t.until(() => t.inFlight(), 'Replay to start', 5 * SLOW);
+    await t.closeTools();
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the replay to end', 30 * SLOW);
+    await t.shot();
+   });
   },
  },
  // NO SHADER IS BUILT ONCE THE COURSE IS ON SCREEN (B7 in TODO). A lit program

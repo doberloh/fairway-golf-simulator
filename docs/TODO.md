@@ -3306,8 +3306,19 @@ engineering provenance pass, not legal advice.
   spin-back). `tools/flight-fit.mjs`; the data stays in docs/sources/private.
   RESEARCH.md, *The flight refitted against three launch monitors*.
 
-- [x] **A rolling ball skips, very slightly (6 October, cosmetic).** At random,
-  more in rough, almost none on greens, seeded per shot so replays match; only
+- [x] **Replay broke an endless run from hole 2 on (6 October).** It asked the
+  renderer for the round's hole number, but an endless world only ever holds
+  hole 0, so every frame threw and the round could not continue. `worldHole()`
+  in main.js converts the number everywhere. Replay checked in every mode: a
+  round (holes 1 and 3), endless (holes 1 and 2), the range (Replay last shot,
+  and a shot-list row's Replay and View), a real two-player scramble and match
+  play. A replay watched while a scramble team is choosing its ball now
+  returns to the choice view instead of the play view. Guarded by the
+  `endless-round` smoke journey.
+
+- [x] **A rolling ball skips (6 October, cosmetic).** At random, most on
+  fairways and least on greens, at heights the owner set by eye in play;
+  seeded per shot so replays match; only
   the drawn ball moves. `src/roll-hop.js`; `ROLL_HOP.enabled` or
   `lab.rollHop(false)` turns it off.
 

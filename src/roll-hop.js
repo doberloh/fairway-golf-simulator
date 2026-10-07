@@ -21,15 +21,17 @@
 export const ROLL_HOP = {
  enabled: true,
  // The highest a hop goes on each surface, in metres, at full rolling speed.
- // Placed by eye against the owner's brief: "more on fairways and rough, very
- // very little on greens". A ball is 42.7 mm across.
- height: {rough: .024, semi: .016, fairway: .01, tee: .008, fringe: .004, green: .0006, sand: 0},
+ // SET BY THE OWNER, 6 October, by eye in play: these are the numbers to keep.
+ // (First placed at rough 24 mm, fairway 10, green 0.6, full height at 6 m/s
+ // and nothing below 0.35, 5 hops a second -- too subtle to see.) A ball is
+ // 42.7 mm across.
+ height: {rough: .05, semi: .05, fairway: .08, tee: .03, fringe: .03, green: .01, sand: 0},
  // Rolling speed (m/s) at which hops reach full height and frequency, and below
  // which there are none.
- fullSpeed: 6, minSpeed: .35,
+ fullSpeed: 3.5, minSpeed: 1.5,
  // Hops a second at full speed, on average. 3.2 was tried first and showed
  // about one hop in a whole fairway run-out: each lasts a tenth of a second.
- rate: 5,
+ rate: 4,
 };
 
 const G = 9.80665;
