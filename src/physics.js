@@ -485,6 +485,13 @@ export function rollPreview(course,origin,aimDegrees,speed,options={}){
   surface:course.surface(p[0],p[2])};
 }
 
+// THE BOUNDARY, in a course's own coordinates: the edge of the shared world
+// when the hole sits in one, the hole's own box when it does not. One test, so
+// the flight and a relief drop (relief.js) cannot disagree about where it is.
+export function outOfBounds(course,x,z){
+ const wp=course.world?course.toWorld({x,z}):null;
+ return wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ):(Math.abs(x)>course.bounds.x||z<course.bounds.minZ||z>course.bounds.maxZ);
+}
 export function simulateShot(shot,course,options={}){
  // LEFT AND RIGHT ARE THE GOLFER'S, AS A LAUNCH MONITOR REPORTS THEM: positive
  // `hla` starts the ball right of the aim line, positive `spinAxis` curves it
@@ -722,7 +729,7 @@ export function simulateShot(shot,course,options={}){
 
   }
   if(rolling&&surface==='water'){hazard='Water';break;}
-  const wp=course.world?course.toWorld({x:p[0],z:p[2]}):null;if(wp?(Math.abs(wp.x)>course.world.halfX||Math.abs(wp.z)>course.world.halfZ):(Math.abs(p[0])>course.bounds.x||p[2]<course.bounds.minZ||p[2]>course.bounds.maxZ)){hazard='Out of bounds';break;}
+  if(outOfBounds(course,p[0],p[2])){hazard='Out of bounds';break;}
   // Resolve penetration as well as swept contact. Reflect only incoming velocity;
   // an escaping ball must never be flipped back into the same trunk each tick.
   if(treeCells.size)for(const tree of treesAt(p)){

@@ -17,10 +17,10 @@ import './style.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour} from './daylight.js';
-import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
+import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,findProfile,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
 import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
@@ -42,7 +42,8 @@ import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
 import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,SHOT_LINE_MAX,loadShotLines,saveShotLines} from './range.js';
-import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R} from './physics.js';
+import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
+import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
@@ -262,6 +263,10 @@ let profiles=loadProfiles();
 // Every new group starts with the main profile as player 1.
 const useMainProfile=()=>{const m=mainProfile(profiles);if(m)Round.defaultPlayer={name:m.name,team:'A',hand:'RH',profile:m.id};};
 useMainProfile();
+// The round's out-of-bounds rule is a player preference: chosen once in Format &
+// tees, it stays for every round until changed.
+const RULES_KEY='fairway-rules-v1';
+try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.outOfBounds])Round.defaultOutOfBounds=r.outOfBounds;}catch{}
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shape=0,launchAdjust=0,spinAdjust=0,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
@@ -474,6 +479,8 @@ function setUpTurn(){
  // setting a club, a power and an aim line for `round.position` here would offer
  // a shot from a lie the team may be about to abandon. This is also the path a
  // reload takes back into a half-made selection.
+ if(round.relief){beginRelief();return;}
+ endRelief();
  if(round.scrambleSelection){beginPick();return;}
  endPick();
  aimRange=null;const p=round.position;shape=0;launchAdjust=0;spinAdjust=0;
@@ -558,7 +565,7 @@ function updateHUD(){
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
  $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
- $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
+ $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||!!round.relief||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The indicator is driven by the DEVICE; the stripped-down controls are driven
   // by `armed`, which is the only state where the manual controls genuinely do
@@ -577,7 +584,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   // different answer from "finish the shot first", and a dimmed button with no
   // explanation reads as broken.
   $('mulligan').title=!playing?'':flight?'Finish the current shot first':dropState?'Finish the drop first'
-   :round.canMulligan()?'Take back your last shot on this hole':'Nothing to take back on this hole yet';}if($('simDrop')){$('simDrop').disabled=!playing||rangeMode||!!flight||round.holeComplete||round.scrambleSelection;
+   :round.canMulligan()?'Take back your last shot on this hole':'Nothing to take back on this hole yet';}if($('simDrop')){$('simDrop').disabled=!playing||rangeMode||!!flight||round.holeComplete||round.scrambleSelection||!!round.relief;
   // Sim drop places a ball somewhere on a HOLE. The range has no hole to place
   // it on, so the control was there doing nothing; now it says so.
   $('simDrop').title=rangeMode?'Sim drop places a ball on a hole -- the range has none':'';}if($('labTool'))$('labTool').hidden=!rangeMode;
@@ -698,7 +705,7 @@ function setAimView(on){
 }
 
 function takeShot(data=null){
- if(appMode!=='play'||tour||flight||dropState||view.config.mode==='free'||round.holeComplete||round.scrambleSelection||round.finished||!$('versionNotice').hidden)return false;
+ if(appMode!=='play'||tour||flight||dropState||view.config.mode==='free'||round.holeComplete||round.scrambleSelection||round.relief||round.finished||!$('versionNotice').hidden)return false;
  // SPACE and the gamepad still reach this while the lab is open, and the lab's
  // controls are hidden -- so a manual shot would fire from a club, aim and power
  // the user cannot see. `data` is the launch-monitor path and stays open,
@@ -721,6 +728,8 @@ function finishShot(){
   // choice -- the camera behind the candidate on show, no aim line -- rather than
   // the ordinary play view the lines above restore.
   if(round.scrambleSelection)showPick();
+  // And a replay watched while a ball waits for relief goes back to the choice.
+  if(round.relief&&reliefList.length)showRelief();
   return;}const result=flight.result;flight=null;$('flightBadge').hidden=true;
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
@@ -748,6 +757,11 @@ function finishShot(){
   save();sendPlayer();
   return;
  }
+ // WHERE IT LAST CROSSED THE EDGE of the water or the boundary, found on the
+ // ball's own path (relief.js). A ball stopped by a house that is out of bounds
+ // never crossed the boundary line; the house is the edge, and it is where it
+ // stopped.
+ if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
  result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const event=round.takeShot(result,course.pin);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
@@ -794,7 +808,7 @@ function holeCard(event){
 }
 function renderResult(event){
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
- let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?'One penalty stroke; replay from previous lie.':event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:escape(shotCaption())}</p>`+gridHTML();
+ let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:escape(shotCaption())}</p>`+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
  // the bar at the foot of the screen steps between them. A duplicate list here
  // would be a second way to answer the same question, and the worse one.
@@ -835,7 +849,7 @@ function showPick(){
  $('pickCount').textContent=`${pickIndex+1} / ${list.length}`;
  $('pickSummary').innerHTML=`<span class="pick-who"><span class="player-dot" style="background:${c.colour}"></span>`
   +`${escape(c.name)}</span> · ${Math.round(c.distance/YARD)} yd to the pin`
-  +(c.putts?` · ${scoreText(c.putts)} putts`:c.penalty?' · +1 penalty':'')
+  +(c.putts?` · ${scoreText(c.putts)} putts`:c.penalty?` · +${c.penalty} penalty`:'')
   +(c.hazard?` · ${escape(String(c.hazard))}`:'');
  view.setCandidateBalls(list,pickIndex);
  // The playing ball is HIDDEN while the team decides. There is no single ball
@@ -1275,6 +1289,9 @@ function openPlaySettings(name,content){
  }
 }
 function beginDrop(){
+ // A ball waiting for penalty relief is the golfer's choice to make, not one a
+ // free drop should make for them.
+ if(round.relief){toast('Choose where to take relief first.');return;}
  if(flight||round.holeComplete||round.scrambleSelection||round.candidates.length){toast('Finish this shot or choose the team lie first.');return;}
  // A DROP PUTS THE TOOLS WINDOW AWAY, the way it already hides the camera bar
  // (`.dropping .view-tools`). The drop is where Sim drop is pressed, so the
@@ -1288,11 +1305,98 @@ function beginDrop(){
 function previewDrop(p,fields=true){if(!dropState)return;dropState.candidate={x:p.x,z:p.z};view.setBall(p);if(fields){$('dropX').value=((p.x-dropState.origin.x)/YARD).toFixed(2);$('dropZ').value=((p.z-dropState.origin.z)/YARD).toFixed(2);}const w=course.toWorld(p),valid=Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(w.x)<=world.halfX&&Math.abs(w.z)<=world.halfZ;$('confirmDrop').disabled=!valid;$('dropSummary').textContent=valid?`${course.surface(p.x,p.z)} · ${(Math.hypot(p.x-course.pin.x,p.z-course.pin.z)/YARD).toFixed(1)} yd to hole · no penalty`:'Choose a point within the generated course.';drawMap($('map'),course,p,[],true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}
 function endDrop(){const mode=dropState.mode;dropState=null;$('dropBar').hidden=true;$('world').classList.remove('dropping');view.config.mode=mode;setUpTurn();updateExplorer();save();}
 function cancelDrop(){if(!dropState)return;endDrop();toast('Drop cancelled. Your original lie is unchanged.');}
+// PENALTY RELIEF, CHOSEN ON THE COURSE. A ball in water or out of bounds waits
+// in the round (`round.relief`) for the golfer's choice; relief.js says what the
+// Rules allow and where, and this bar shows each option where it would put the
+// ball. The rules live in relief.js, the strokes in game.js: nothing here
+// decides either.
+let reliefChoice=0,reliefBack=0,reliefList=[];
+// The course as relief.js needs it: what surface a spot is, whether it is out
+// of bounds, and whether a trunk or a house stands on it. Trunks and houses are
+// indexed in ten-metre cells, built once per hole.
+let reliefSolids=null;
+function reliefGround(){
+ if(reliefSolids?.course!==course){
+  const cells=new Map(),add=(x,z,r)=>{const k=Math.floor(x/10)+','+Math.floor(z/10);if(!cells.has(k))cells.set(k,[]);cells.get(k).push({x,z,r});};
+  const local=s=>course.world?course.toLocal(s):s;
+  for(const t of course.world?.trees||course.trees||[]){const r=trunkRadius(t);if(r>0){const p=local(t);add(p.x,p.z,r+BALL_R+.2);}}
+  for(const h of course.world?.homes||course.homes||[]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
+  // The hole's own ground, for Local Rule E-5's "fairway of the hole being
+  // played": its corridor runs up the z axis from the tee to beyond the green.
+  const len=course.length||Math.hypot(course.pin.x,course.pin.z)+60;
+  reliefSolids={course,cells,area:{minX:-180,maxX:180,minZ:-40,maxZ:len+40}};
+ }
+ const {cells,area}=reliefSolids;
+ return {
+  area,
+  surface:(x,z)=>course.surface(x,z),
+  // What the hole itself calls fairway or fringe, before the landscape is
+  // composed: Local Rule E-5 only counts the fairway of the hole being played.
+  ownFairway:(x,z)=>['fairway','fringe'].includes(localSurface(course,x,z)),
+  out:(x,z)=>outOfBounds(course,x,z),
+  blocked:(x,z)=>{const cx=Math.floor(x/10),cz=Math.floor(z/10);for(let i=cx-2;i<=cx+2;i++)for(let j=cz-2;j<=cz+2;j++)for(const s of cells.get(i+','+j)||[])if(Math.hypot(x-s.x,z-s.z)<s.r)return true;return false;},
+ };
+}
+const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||s}`;};
+function beginRelief(){
+ if(!round.relief)return;
+ endPick();reliefBack=0;
+ reliefList=reliefOptions(reliefGround(),round.relief,course.pin,{outRule:round.outOfBounds,back:reliefBack});
+ // ONE OPTION IS NOT A CHOICE. Out of bounds under the Rules of Golf is stroke
+ // and distance and nothing else, and water with no dry ground in reach leaves
+ // only that too: it is applied, and said, rather than offered as a menu of one.
+ if(reliefList.length===1){
+  const r=round.relief;
+  takeReliefOption(reliefList[0],r.hazard==='Water'?'No dry ground within the rules, so stroke and distance: one penalty stroke, from where you hit.':'Out of bounds: one penalty stroke, and play again from where you hit.');
+  return;
+ }
+ reliefChoice=0;
+ // The lateral drop first when there is one: it is the option most golfers take
+ // and usually the best ball. Stroke and distance is always last in reach.
+ const side=reliefList.findIndex(o=>o.id==='lateral'||o.id==='e5');
+ if(side>=0)reliefChoice=side;
+ showRelief();
+}
+function showRelief(){
+ const r=round.relief;if(!r||!reliefList.length)return endRelief();
+ const o=reliefList[reliefChoice],who=round.players[r.player]?.name||'Player';
+ $('reliefBar').hidden=false;
+ $('reliefTitle').textContent=r.hazard==='Water'?`${who}'s ball is in the water`:`${who}'s ball is out of bounds`;
+ $('reliefNote').textContent=r.hazard==='Water'
+  ?'A penalty area: choose your relief. Every option is one penalty stroke.'
+  :'Out of bounds: play again for one penalty stroke, or drop near where it went out for two (Local Rule E-5).';
+ $('reliefOptions').innerHTML=reliefList.map((x,i)=>`<button class="relief-option${i===reliefChoice?' active':''}" data-relief="${i}" aria-pressed="${i===reliefChoice}">`
+  +`<strong>${escape(x.label)} <em>+${x.penalty}</em></strong><small>${escape(x.detail)}</small><span>${escape(reliefWhere(x.spot))}</span></button>`).join('');
+ $('reliefOptions').querySelectorAll('[data-relief]').forEach(b=>b.onclick=()=>{reliefChoice=Number(b.dataset.relief);showRelief();});
+ // Back on the line has no limit on how far back, so the golfer can walk it
+ // back to a yardage they like; the other options are a single best spot.
+ $('reliefBackRow').hidden=o.id!=='line';
+ $('reliefBackText').textContent=reliefBack?`${Math.round(reliefBack/YARD)} yd further back`:'Nearest dry ground';
+ $('reliefCloser').disabled=reliefBack<=0;
+ // The ball where it would be dropped, and the camera behind it looking at the
+ // hole -- the view the next shot is played from.
+ view.setBall(o.spot);view.aimLine.visible=false;view.aimRing.visible=false;
+ view.setCamera(o.spot,Math.atan2(course.pin.x-o.spot.x,course.pin.z-o.spot.z)*180/Math.PI,false);
+ redrawMap();updateHUD();
+}
+function moveReliefBack(by){
+ const next=Math.max(0,reliefBack+by),opts=reliefOptions(reliefGround(),round.relief,course.pin,{outRule:round.outOfBounds,back:next});
+ const line=opts.find(o=>o.id==='line');
+ if(!line){toast('There is no playable ground further back on that line.');return;}
+ reliefBack=next;reliefList=reliefList.map(o=>o.id==='line'?line:o);showRelief();
+}
+function endRelief(){$('reliefBar').hidden=true;reliefList=[];}
+function takeReliefOption(o,message){
+ try{round.takeRelief(o,course.pin);}catch(e){toast(e.message);return;}
+ endRelief();save();
+ toast(message||`${o.label}: ${o.penalty} penalty stroke${o.penalty===1?'':'s'}.`);
+ if(round.scrambleSelection){beginPick();updateHUD();}else setUpTurn();
+}
 function confirmDrop(){if(!dropState||$('confirmDrop').disabled)return;try{round.simDrop(dropState.candidate);endDrop();toast('Sim drop placed. No penalty added.');}catch(e){toast(e.message);}}
 
 // The group as the round panel currently describes it. Hole count is not here:
 // a course owns that, so the two can never disagree.
-function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$('roundTee').value};}
+function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$('roundTee').value,outOfBounds:$('roundOB')?.value||Round.defaultOutOfBounds};}
 // Guarded at the entrance rather than at each call site: this is reachable from
 // the library panel, which opens in the studio too, and it used to walk straight
 // out of an unsaved landscape without a word.
@@ -1959,7 +2063,7 @@ async function returnToMenu(){
  const leave=()=>{
   stopTour();closePanel();cancelAdvance();popups?.closeAll();rangeMode=false;closeRangeBox();restoreCourse();timeScale=1;view.config.freeFloor=1.2;
   
-  toggleClockPop(false);closeMenuDrop();
+  toggleClockPop(false);closeMenuDrop();endRelief();
   pendingRound=null;
  };
  if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();});
@@ -2207,7 +2311,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // `match` is false for endless: a match ends when the lead exceeds the holes
 // remaining and an endless run has no last hole, so `Round` rejects the
 // combination outright. Offering it and then throwing would be a worse answer.
-const formatFields=({match=true}={})=>`<label class="field">Format<select id="roundMode"><option value="stroke">Stroke play</option><option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
+const formatFields=({match=true}={})=>`<label class="field">Format<select id="roundMode"><option value="stroke">Stroke play</option><option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -2221,6 +2325,9 @@ function wireFormatFields(){
  const puttApply=()=>{try{puttingGuard();applyPutting(readPutting('roundPutting'));save();updateHUD();$('roundError').textContent='';}catch(e){$('roundError').textContent=e.message;toast(e.message);}};
  puttNote();$('roundPuttingMode').onchange=()=>{puttNote();puttApply();};
  for(const k of ['one','two','three'])$('roundPutting-'+k).onchange=puttApply;
+ // Applied as it is changed, like putting: to the round being played and to
+ // every round after it.
+ $('roundOB').onchange=()=>{const v=$('roundOB').value;if(!OB_RULES[v])return;Round.defaultOutOfBounds=v;round.outOfBounds=v;try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:v}));}catch{}save();};
  $('roundMode').onchange=formatNote;formatNote();
  return formatNote;
 }
@@ -2602,10 +2709,14 @@ function renderProfile(content){
   +tile('Putts per hole',avg(s.puttsPerHole),'Putts struck plus putts awarded, per hole.')+tile('Fairways hit',pct(s.fairways),'Tee shots on par 4s and 5s that finished on the fairway.')+tile('Greens in regulation',pct(s.greens),'On the green in par minus two strokes or fewer.')
   +tile('Best 9',best(s.best9),s.best9?s.best9.r.course?.name:'')+tile('Best 18',best(s.best18),s.best18?s.best18.r.course?.name:'')+`</div></div>`
   +`<h3>Round history</h3>${s.history.length?`<div class="course-list">${s.history.map(profileCard).join('')}</div>`:'<p class="note">No rounds yet. Finish a hole and the round shows up here, with a button to play the same course again.</p>'}`
+  +`<h3>Back up &amp; move</h3><p class="note">Players live in this browser on this device, and the game opened from the download, from the server and on a phone each keep their own. A backup file holds everyone; restoring it adds to the players already here and never removes any.</p>`
+  +`<div class="profile-actions profile-backup"><button class="secondary" id="profilesExport"><i data-lucide="download"></i> Save a backup file</button><button class="secondary" id="profilesImport"><i data-lucide="upload"></i> Restore from a backup</button></div><p class="field-error" id="backupError"></p>`
   +`<p class="research-label">Every golfer in a group is a profile, picked in the group setup; a new player gets one the moment they join. The sim handicap follows the World Handicap System: every finished 9 or 18 hole round becomes a score differential, holes are capped at net double bogey, and the index is the average of the best 8 of the last 20. Fairway's courses have never been rated, so each is rated from its length alone, the way the USGA's yardage formula rates a course; its hazards, slopes and greens are not counted. Scramble scores belong to the team and stay out of the totals. Profiles live in this browser on this device.</p>`
   +`</div>`;
  icon();
  const fail=e=>{const el=$('profileError');if(el)el.textContent=e.message;};
+ $('profilesExport').onclick=()=>{try{download('fairway-players.json',exportProfiles(profiles),'application/json');toast(`Saved ${profiles.profiles.length} player${profiles.profiles.length===1?'':'s'} to a backup file.`);}catch(e){fail(e);}};
+ $('profilesImport').onclick=()=>pickBackup(r=>{viewingProfile=profiles.main;openPanel('profile');toast(restoreSummary(r));},e=>{const el=$('backupError');if(el)el.textContent=e.message;});
  content.querySelectorAll('[data-view-profile]').forEach(b=>b.onclick=()=>{viewingProfile=b.dataset.viewProfile;renamingProfile=false;openPanel('profile');});
  content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
  if($('profileRename'))$('profileRename').onclick=()=>{renamingProfile=true;openPanel('profile');};
@@ -2657,12 +2768,37 @@ function replayFromHistory(profile,id){
  catch{toast('That course cannot be rebuilt by this version of Fairway.');return;}
  startRoundOn(grown,{players:round.players,mode:round.mode,tee:e.tee||round.tee},name).then(()=>toast(`Replaying “${name}”.`));
 }
+// RESTORING A BACKUP. One hidden file input serves the profile page and the
+// welcome; `importProfiles` does the merging and says what it did.
+function pickBackup(done,failed){
+ const input=$('profilesFile');input.value='';
+ input.onchange=async()=>{
+  const file=input.files?.[0];if(!file)return;
+  try{
+   const placeholder=Round.defaultPlayer.name,r=importProfiles(profiles,await file.text());
+   const hadMain=!!mainProfile(profiles);profiles=r.store;
+   // On a first visit the placeholder golfer becomes the restored main
+   // profile, exactly as a typed name would have.
+   if(!hadMain){const m=mainProfile(profiles);for(const g of [round,pendingRound])if(g)for(const p of g.players)if(!p.profile&&sameGolfer(p.name,placeholder)){p.name=m.name;p.profile=m.id;}}
+   useMainProfile();updateMenuProfile();profileSynced='';done(r);
+  }catch(e){failed(e);}
+ };
+ input.click();
+}
+const restoreSummary=r=>{
+ const parts=[];
+ if(r.added.length)parts.push(`added ${r.added.join(', ')}`);
+ if(r.updated.length)parts.push(`brought ${r.updated.join(', ')} up to date`);
+ if(r.kept.length)parts.push(`kept the newer ${r.kept.join(', ')} already here`);
+ return parts.length?`Restored: ${parts.join('; ')}.`:'Nothing new in that backup.';
+};
 // THE FIRST-LOAD WELCOME. Shown whenever this browser has no profiles, over the
 // menu, and gone only once a name has been given. That first name is the main
 // profile, and it takes over the placeholder golfer every round starts with.
 function showWelcome(){
  const box=$('welcome');box.hidden=false;$('welcomeError').textContent='';
  requestAnimationFrame(()=>$('welcomeName').focus());
+ $('welcomeRestore').onclick=()=>pickBackup(r=>{box.hidden=true;toast(restoreSummary(r));$('menuPlay').focus();},e=>{$('welcomeError').textContent=e.message;});
  $('welcomeForm').onsubmit=e=>{
   e.preventDefault();
   try{
@@ -3837,6 +3973,19 @@ function bind(){
  for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']])
   $(id).onclick=()=>{view.config[key]=!view.config[key];view.setGreenReading();updateHUD();save();};
 $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;const pristine=round.strokes.every(n=>n===0)&&Object.values(round.scrambleShots).every(n=>n===0)&&!round.candidates.length;round.tee=$('activeTee').value;if(pristine){round.teePlaced=false;round.placeTee(course.tees);setUpTurn();}else{updateHUD();toast('Tee preference saved for the next hole.');}save();};$('pickPrev').onclick=()=>stepPick(-1);$('pickNext').onclick=()=>stepPick(1);
+ $('reliefTake').onclick=()=>{const o=reliefList[reliefChoice];if(o)takeReliefOption(o);};
+ $('reliefCloser').onclick=()=>moveReliefBack(-10*YARD);$('reliefFurther').onclick=()=>moveReliefBack(10*YARD);
+ // THE KEYBOARD CHOOSES TOO, ahead of the game's own keys: while relief is
+ // waiting there is no shot to aim, so the arrows step through the options and
+ // Enter takes the one shown -- the same keys a controller's d-pad sends.
+ window.addEventListener('keydown',e=>{
+  if($('reliefBar').hidden||!reliefList.length||e.target?.closest?.('input,select,textarea'))return;
+  const step={ArrowLeft:-1,ArrowUp:-1,ArrowRight:1,ArrowDown:1}[e.code];
+  if(step){reliefChoice=(reliefChoice+step+reliefList.length)%reliefList.length;showRelief();}
+  else if(e.code==='Enter'||e.code==='NumpadEnter'){const o=reliefList[reliefChoice];if(o)takeReliefOption(o);}
+  else return;
+  e.preventDefault();e.stopImmediatePropagation();
+ },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{round.chooseScramble(pickIndex);afterSelection();}catch(e){toast(e.message);}};
  $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
@@ -3856,7 +4005,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // courses take, so what gets measured is what gets played. Resolves when the
   // world is built and the first frame can be drawn.
   course:(overrides={})=>startRoundOn({...DEFAULT_COURSE,...overrides},
-   {players:[{name:'Bench',team:'A'}],mode:'stroke',tee:'blue'}),
+   // `hand` like every group the editor builds: a save without it is refused on
+   // reload (validateSave), so a lab round could never be continued.
+   {players:[{name:'Bench',team:'A',hand:'RH'}],mode:'stroke',tee:'blue'}),
   // Which view the camera is in, so a run can state what it measured rather
   // than assuming. 'player' is down at the ball; 'overview' is the whole hole
   // and is much the heavier of the two.
@@ -3892,6 +4043,28 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   firmness:value=>labFirmness(value),
   // The cosmetic skip of a rolling ball (roll-hop.js): on, off, or ask.
   rollHop:(on)=>{if(on!==undefined)ROLL_HOP.enabled=!!on;return ROLL_HOP.enabled;},
+  // A BALL INTO TROUBLE, ON PURPOSE, for testing penalty relief. The path runs
+  // straight from the ball to the nearest water on this hole, or out across the
+  // nearest boundary, and goes through the same `finishShot` a struck ball does --
+  // so what gets tested is the relief a player is offered, not a copy of it.
+  // Returns the relief waiting in the round, or null when there is no such
+  // trouble here or a ball cannot be hit right now.
+  trouble:(kind='water')=>{
+   if(appMode!=='play'||rangeMode||flight||dropState||round.relief||round.holeComplete||round.scrambleSelection||round.finished)return null;
+   const from={...round.position};let target=null;
+   if(kind==='water'){let best=Infinity;for(let x=-300;x<=300;x+=3)for(let z=-150;z<=900;z+=3){if(course.surface(x,z)!=='water')continue;const d=Math.hypot(x-from.x,z-from.z);if(d<best){best=d;target={x,z};}}}
+   else for(let t=1;t<4000&&!target;t++)if(outOfBounds(course,from.x+t,from.z))target={x:from.x+t,z:from.z};
+   if(!target)return null;
+   const length=Math.hypot(target.x-from.x,target.z-from.z),n=Math.max(2,Math.ceil(length/2)),points=[];
+   for(let i=0;i<=n;i++)points.push({x:from.x+(target.x-from.x)*i/n,y:course.height(from.x+(target.x-from.x)*i/n,from.z+(target.z-from.z)*i/n),z:from.z+(target.z-from.z)*i/n});
+   const result={points,end:{...points[n]},carry:length,total:length,apex:0,time:2,landingSpeed:20,descentAngle:30,skid:0,holed:false,lipped:false,
+    hazard:kind==='water'?'Water':'Out of bounds',treeHits:0,homeHits:0,onGreen:false};
+   const shot={origin:from,aim,speed:30,vla:12,hla:0,spin:3000,spinAxis:0};
+   latest={shot,result,player:round.player.name,typed:true};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:false,aim,club:'Lab'};
+   flight={result,elapsed:0,index:0,origin:from,record:lastShot};
+   finishShot();
+   return round.relief?{...round.relief,options:reliefList.map(o=>({id:o.id,penalty:o.penalty,spot:o.spot}))}:null;
+  },
   stimp:value=>labStimp(value),
   // `green` already means "build the bench and report its slope", so the
   // distance setter gets its own name rather than overloading one that answers a

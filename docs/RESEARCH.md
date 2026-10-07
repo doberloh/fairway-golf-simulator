@@ -6029,3 +6029,96 @@ is called a sim handicap.
 ball's velocity INTO a trunk or wall is reflected -- once per collision, not once
 per frame of contact -- and returns `treeHits` and `homeHits` with the shot. The
 counters change nothing about the flight.
+
+## Penalty relief: water and out of bounds (7 October)
+
+The owner found that a ball in water made the golfer rehit from where they had
+played, and asked for the Rules of Golf to be researched and followed in every
+format. Code: `src/relief.js` (the rules, pure), `Round.takeShot`/`takeRelief`
+in `src/game.js` (the strokes), the relief bar in `main.js`. Tests:
+`tests/relief.test.mjs`, and the `relief` smoke journey.
+
+**What the Rules say (Rules of Golf 2023, randa.org Rule 17 and Rule 18):**
+
+- **Rule 17.1d, ball in a penalty area: one penalty stroke, three options.**
+  (1) Stroke and distance, from where the previous stroke was made.
+  (2) Back-on-the-line: drop outside the penalty area "keeping the estimated
+  point where the original ball last crossed the edge of the penalty area
+  between the hole and the spot where the ball is dropped", no limit how far
+  back; the relief area is one club-length round where the dropped ball first
+  lands, not nearer the hole, anywhere except the same penalty area.
+  (3) Lateral relief, red penalty areas only: two club-lengths from the point
+  where it last crossed the edge, not nearer the hole, anywhere except the same
+  penalty area.
+- **Colour.** "If the colour of a penalty area has not been marked or indicated
+  by the Committee, it is treated as a red penalty area" (the definition of
+  Penalty Area, quoted through a search result; the definitions pages on
+  randa.org redirect to a 404 for automated requests). Nobody marks a generated
+  course, so every pond, lake, river and creek here is red and gets all three.
+- **Rule 18.2b, out of bounds: stroke and distance, one penalty stroke.** A ball
+  is out of bounds "only when all of it is outside the boundary edge".
+- **Model Local Rule E-5, alternative to stroke and distance** (USGA article,
+  Hof Hausen's published copy of the text, TXGA/OGA summaries): two penalty
+  strokes. Ball reference point: where the ball last crossed the boundary.
+  Fairway reference point: the point of fairway OF THE HOLE BEING PLAYED nearest
+  the ball reference point, not nearer the hole than it; "fairway" means any
+  grass in the general area cut to fairway height or less. Relief area: between
+  the line from the hole through the ball reference point (plus two club-lengths
+  outside it) and the line from the hole through the fairway reference point
+  (plus two club-lengths to the fairway side); in the general area; not nearer
+  the hole than the ball reference point. Not for a ball in a penalty area.
+  Intended for general play, not elite competition.
+- **Club-length**: the longest club in the bag other than a putter.
+
+**What the game does, and where it departs:**
+
+- **The drop is placed, not dropped.** A real drop falls from knee height and
+  may roll up to the edge of the relief area (Rule 14.3); here the ball is set
+  on a spot inside the area, 30 cm clear of the water or the line.
+- **One spot per option.** The Rules let the golfer drop anywhere in the
+  relief area; the game picks the best lie it can find inside it (green and
+  fairway, then fringe and tee, semi, rough, sand), then the spot nearest the
+  hole, and shows it. Back-on-the-line, which has no limit, can be walked back
+  ten yards at a time. Choosing an arbitrary spot by hand is not built.
+- **E-5 drops at the fairway reference point itself** (in the relief area by
+  construction), or the best general-area spot within two club-lengths of it.
+- **Club-length is placed at 45.5 inches (1.16 m)**, a typical driver. The
+  Equipment Rules allow 48 inches and Model Local Rule G-10 46 (USGA/R&A, 2021).
+  It sets lateral relief at 2.31 m round the crossing point.
+- **Where the ball crossed the edge** is found on the ball's own path: walked
+  back from where it stopped to the last point outside the water (or inside
+  the boundary), then halved between that sample and the next to the
+  centimetre. A flight sampled every few metres would otherwise put the edge
+  metres away. A ball that flies over a pond, lands beyond it and rolls back in
+  last crossed the FAR bank, and that is the point used, as the Rules say.
+- **A house that plays as out of bounds** is its own boundary: the ball stops
+  against it, and where it stopped is the ball reference point.
+- **One option is not a choice.** Out of bounds under the Rules of Golf, or
+  water with no playable ground in reach, has only stroke and distance; it is
+  applied at once and said in a toast, not offered as a menu of one.
+- **Not built:** an unplayable ball (Rule 19), a provisional ball (18.3),
+  playing a ball as it lies inside a penalty area (impossible to strike from
+  water in this model), yellow penalty areas (nothing marks one), and lost balls
+  (a sim never loses one).
+
+**Rejected, and why:**
+
+- **Searching outward from the ball for E-5's fairway, capped at 250 m.** The
+  first version did; on a hole beside the world's edge the boundary can be
+  further than that from any fairway, and the search silently returned nothing,
+  so the round fell back to stroke and distance with no explanation. The hole's
+  own area is searched instead, on a 2 m grid refined to 25 cm, with a 50 cm
+  pass round the ball when a thin strip of fringe is all that qualifies.
+- **Counting any fairway.** In a shared landscape the next hole's fairway can be
+  nearer; the second version dropped a ball behind the tee on someone else's.
+  The hole's own `localSurface` now decides what is ITS fairway.
+- **Adding the penalty at the shot.** The old code added one penalty stroke as
+  the ball went in. With E-5 the cost depends on the choice, so the shot is
+  counted then and the penalty when the golfer chooses -- and a mulligan, which
+  goes back to before the shot, takes back both.
+
+**When E-5 is not available.** Its fairway reference point must be no nearer
+the hole than where the ball went out. Hit out of bounds from a tee, where the
+ball crosses the line level with the tee, every point of the hole's fairway is
+nearer the hole, so E-5 cannot be used and stroke and distance applies. This is
+the rule, not a limitation; the tests carry a case of it.

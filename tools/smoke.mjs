@@ -305,6 +305,13 @@ class Trip {
 // is "showing" can still be covered.
 const menuReady = t => t.step('menu ready', () =>
  t.until(() => t.page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden && !document.getElementById('splash')), 'the main menu', 60 * SLOW));
+// A RANDOM COURSE CAN PUT ANY SHOT IN THE WATER. Since penalty relief, a ball
+// in trouble waits for its golfer's choice and nothing else can be played --
+// a sim drop included. A journey that is not about relief takes whichever drop
+// is offered first and carries on; `press` is how it presses (a tap on a phone).
+const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
+ if (await t.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false)) await press('#reliefTake');
+};
 const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {name: entry}).first().click();
 
 // Every control on the play screen that a player can see must be one a player
@@ -655,6 +662,7 @@ const JOURNEYS = [
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
     // two yards from the pin, which makes the putting below deterministic
     // whatever the tee shot did.
+    await reliefFirst(t);
     await t.tool('simDrop');
     await t.page.click('#dropAtGreen');
     await t.page.click('#confirmDrop');
@@ -896,6 +904,7 @@ const JOURNEYS = [
    // The same two-yard drop and putt-out the endless journey uses, waiting for
    // the golfer to be IN rather than for the hole: the newcomer is still to play.
    await t.step('drop beside the pin and putt out', async () => {
+    await reliefFirst(t);
     await t.tool('simDrop');
     await t.page.click('#dropAtGreen');
     await t.page.click('#confirmDrop');
@@ -949,6 +958,93 @@ const JOURNEYS = [
     await t.press('Replay this course');
     await t.until(() => t.page.evaluate(s => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.seed === s && !JSON.parse(localStorage.getItem('fairway-round-v1')).round.cards[0].some(Number.isFinite) && document.getElementById('app').dataset.mode === 'play', seed),
      `a fresh run on seed ${seed}`, 120 * SLOW);
+   });
+  },
+ },
+
+ {
+  name: 'relief',
+  what: 'water and out of bounds offer the relief the Rules allow, through a reload, under both out-of-bounds rules; a player backup saves and restores',
+  async run(t) {
+   const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
+   const barUp = () => t.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false);
+   // `lab.trouble` sends the ball at the nearest water, or straight out of
+   // bounds, through the same finishShot a struck ball takes.
+   const trouble = kind => t.page.evaluate(k => window.lab.trouble(k), kind);
+   await menuReady(t);
+   await t.step('a course with plenty of water', async () => {
+    await t.page.evaluate(() => window.lab.course({water: 100, lakes: 2, holes: 9}));
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('out of bounds from the tee: stroke and distance, applied, one penalty', async () => {
+    const before = await saved();
+    const r = await trouble('out');
+    if (r) throw new Error('the Rules give out of bounds one option, so nothing should be left to choose');
+    const after = await saved();
+    if (after.strokes[0] !== 2) throw new Error(`strokes read ${after.strokes[0]}, want 2 (the shot and the penalty)`);
+    if (JSON.stringify(after.positions[0]) !== JSON.stringify(before.positions[0])) throw new Error('the ball did not go back to where it was hit from');
+    if (await barUp()) throw new Error('the relief bar is up with nothing to choose');
+   });
+   await t.step('into the water: the choices, and the drop', async () => {
+    const r = await trouble('water');
+    if (!r) throw new Error('no water found on this hole');
+    const ids = r.options.map(o => o.id);
+    if (ids[0] !== 'stroke' || !ids.includes('line') && !ids.includes('lateral')) throw new Error(`offered ${ids.join(', ')}`);
+    if (r.options.some(o => o.penalty !== 1)) throw new Error('water relief is one stroke, whichever option');
+    if (!(await barUp())) throw new Error('the relief bar did not appear');
+    if (!(await t.page.evaluate(() => document.getElementById('swing').disabled))) throw new Error('a shot could be taken before relief');
+   });
+   await t.step('the choice survives a reload', async () => {
+    await t.page.reload();
+    await menuReady(t);
+    await t.page.click('#menuContinue');
+    await t.inPlay(120 * SLOW);
+    await t.until(barUp, 'the relief bar to come back', 10 * SLOW);
+    // By keyboard: an arrow steps to another option, Enter takes it.
+    const active = () => t.page.evaluate(() => [...document.querySelectorAll('[data-relief]')].findIndex(b => b.classList.contains('active')));
+    const was = await active();
+    await t.key('ArrowRight');
+    if ((await active()) === was) throw new Error('the arrow key did not move to another option');
+    await t.key('Enter');
+    const after = await saved();
+    if (after.relief) throw new Error('relief is still waiting after the drop');
+    if (after.strokes[0] !== 4) throw new Error(`strokes read ${after.strokes[0]}, want 4`);
+    if (await barUp()) throw new Error('the relief bar stayed up');
+   });
+   await t.step('Local Rule E-5, chosen in Format & tees, offers the two-stroke drop', async () => {
+    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
+    await t.press('Format & tees');
+    await t.page.selectOption('#roundOB', 'e5');
+    await t.closeDrawer();
+    if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
+    await t.shot();
+    const before = (await saved()).strokes[0], r = await trouble('out');
+    const e5 = r?.options.find(o => o.id === 'e5');
+    if (e5) {
+     if (e5.penalty !== 2) throw new Error('E-5 is two penalty strokes');
+     await t.page.click(`[data-relief="${r.options.indexOf(e5)}"]`);
+     await t.page.click('#reliefTake');
+     if ((await saved()).strokes[0] !== before + 3) throw new Error('the shot and two penalty strokes were not counted');
+    } else if ((await saved()).strokes[0] !== before + 2) throw new Error('with no fairway to drop on, stroke and distance should have applied');
+   });
+   await t.step('a player backup saves, and restores a player into this device', async () => {
+    await t.page.click('#menuNav');
+    await t.page.click('#dropMenu');
+    await t.until(() => t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false), 'the leave question', 10 * SLOW);
+    await t.page.click('#leaveDiscard');
+    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('app').dataset.mode === 'menu'), 'the main menu', 60 * SLOW);
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    const [download] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#profilesExport')]);
+    const file = JSON.parse(await (await import('node:fs/promises')).readFile(await download.path(), 'utf8'));
+    if (file.kind !== 'fairway-profiles' || !file.profiles.some(p => p.name === 'Smoke')) throw new Error('the backup does not hold the players');
+    file.profiles.push({id: 'prestored', name: 'Restored', created: 1, counters: {shots: 3}, bests: {}, rounds: []});
+    const [chooser] = await Promise.all([t.page.waitForEvent('filechooser'), t.page.click('#profilesImport')]);
+    await chooser.setFiles({name: 'fairway-players.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file))});
+    await t.until(async () => /Restored/.test(await t.page.textContent('#drawerContent')), 'the restored player on the page', 5 * SLOW);
+    const names = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles.map(p => p.name));
+    if (!names.includes('Smoke') || !names.includes('Restored')) throw new Error(`players are ${names.join(', ')}`);
    });
   },
  },
@@ -1249,6 +1345,7 @@ const JOURNEYS = [
    };
    await t.step('the shot button, then Skip', swing);
    await t.step('drop beside the pin, through the tools', async () => {
+    await reliefFirst(t, tap);
     await tap('#barTools');
     await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools', 5 * SLOW);
     await tap('#simDrop');

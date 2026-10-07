@@ -309,3 +309,53 @@ export function profileSummary(p) {
   history: played,
  };
 }
+
+// ---- backup ---------------------------------------------------------------
+// EVERY PLAYER ON THIS DEVICE, AS A FILE. Profiles live in one browser, and the
+// game opened from disk, from the server and on a phone are three different
+// browsers as far as storage goes -- so a file is how a history moves, and how
+// it survives clearing the browser.
+export const BACKUP_KIND = 'fairway-profiles';
+export function exportProfiles(store, now = Date.now()) {
+ if (!store) throw Error('There are no players on this device to back up.');
+ return JSON.stringify({kind: BACKUP_KIND, version: PROFILE_VERSION, exported: now, main: store.main, profiles: store.profiles}, null, 1);
+}
+// When a player was last active: their newest round, or when they were made.
+const lastActive = p => Math.max(finite(p.created), ...p.rounds.map(r => finite(r.updated) || finite(r.started)));
+
+// A BACKUP IS MERGED, NEVER POURED OVER. Restoring onto a device that already
+// has players must not lose any of them, so:
+//  - a player the device does not have is added;
+//  - the SAME player (same id -- the file came from this device, or from one it
+//    was restored to) keeps whichever copy was active more recently, because
+//    counters cannot be added together without counting shots twice;
+//  - a DIFFERENT player with a name already taken here comes in renamed,
+//    "Sam (2)", since a name is what a player is picked by.
+// The device's main profile stays main; a device with nobody on it takes the
+// file's. Reads a backup of any version this build knows, the single-profile
+// first build's included. Returns the store and what happened.
+export function importProfiles(store, text) {
+ let raw;
+ try { raw = JSON.parse(text); } catch { throw Error('That file is not a Fairway player backup.'); }
+ if (raw?.kind && raw.kind !== BACKUP_KIND) throw Error('That file is not a Fairway player backup.');
+ const incoming = normalise(raw);
+ if (!incoming) throw Error('That file has no players this version of Fairway can read.');
+ const report = {added: [], updated: [], kept: [], renamed: []};
+ store ||= {version: PROFILE_VERSION, main: incoming.main, profiles: []};
+ for (const p of incoming.profiles) {
+  const same = findProfile(store, p.id);
+  if (same) {
+   if (lastActive(p) > lastActive(same)) { Object.assign(same, p); report.updated.push(p.name); } else report.kept.push(same.name);
+   continue;
+  }
+  if (store.profiles.length >= MAX_PROFILES) throw Error(`This device keeps at most ${MAX_PROFILES} players.`);
+  let name = p.name;
+  for (let n = 2; profileByName(store, name); n++) name = `${p.name.slice(0, MAX_PLAYER_NAME - 4)} (${n})`;
+  if (name !== p.name) report.renamed.push(`${p.name} → ${name}`);
+  store.profiles.push({...p, name});
+  report.added.push(name);
+ }
+ if (!findProfile(store, store.main)) store.main = findProfile(store, incoming.main) ? incoming.main : store.profiles[0].id;
+ storeProfiles(store);
+ return {store, ...report};
+}
