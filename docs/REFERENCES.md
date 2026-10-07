@@ -419,3 +419,11 @@ is only as good as the ability to go back and check what it was taken from.
 - GolfWRX, "The difference between a pitch shot and a flop shot on Trackman" -- https://golfwrx.com/346670/the-difference-between-a-pitch-shot-and-a-flop-shot-on-trackman/ -- flops launching 40-45 deg averaged about 2,165 rpm (32-37 deg: about 2,249), one example 3,702 rpm, club speed about 51 mph, landing angle about 51 deg. Returns 403 to automated fetches; read through a search summary only.
 - Trackman, "The Ultimate Guide to Understanding Trackman" -- https://www.trackman.com/blog/the-ultimate-guide-to-understanding-trackman -- consulted for stinger data; has none.
 - golf.com, "Based on swing speed, here are the 'preferred' Trackman numbers" -- https://golf.com/gear/swing-speed-optimal-trackman-numbers-to-hit-your-drives-farther/ -- driver launch and spin by swing speed; consulted for stinger data, has none.
+
+## The flight refitted against three launch monitors (6 October 2026)
+
+- Trackman, "PGA TOUR AVERAGES" and "LPGA TOUR AVERAGES" sheets -- re-hosted at https://teeituprva.com/wp-content/uploads/2019/03/PGA-AVERAGES-INTERACTIVE.pdf and https://teeituprva.com/wp-content/uploads/2019/03/LPGA-AVERAGES-INTERACTIVE.pdf -- per club: club speed, attack angle, ball speed, smash, launch, spin, max height, land angle, carry. The fit's Trackman data. Copies kept privately.
+- Trackman, "Introducing updated tour averages" -- https://www.trackman.com/blog/introducing-updated-tour-averages -- the tables are images only; nothing could be read from it.
+- A. M. Nathan, "The Effect of Spin-Down on the Flight of a Baseball" (2008) -- https://baseball.physics.illinois.edu/spindown.pdf -- golf-ball spin decay in the speed-proportional form: Smits and Smith 23.8 s and Tavares et al. 18.9 s at 100 mph; Smits and Smith's spin-down independent of Reynolds number at fixed S across 100,000-250,000. Cites A. J. Smits and D. R. Smith, Science and Golf II (1994) 340-347, and G. Tavares, K. Shannon and T. Melvin, Science and Golf III (1999) 464-472.
+- J. R. Kensrud and L. V. Smith, "Drag and lift measurements of solid sports balls in still air", Proc. IMechE Part P (2018) -- https://doi.org/10.1177/1754337117740749 -- read through a search summary: drag rises with speed in the supercritical regime. Why airspeed-dependent drag falling with speed was rejected.
+

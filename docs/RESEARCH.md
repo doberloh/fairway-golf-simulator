@@ -1,6 +1,6 @@
 # Research and implementation notes
 
-Reviewed September 10, 2026; the claim below corrected 1 October. Research informs the model architecture, and the coefficients below are approximations. **One measured agreement is claimed, and only one**: the flight model fitted to a 100-shot GC3 session (carry +1.25%, peak height -0.22 ft, offline 0.21 yd mean error), with a SkyTrak session held out -- see *The lift cap, and the carry that hid it*. The website quotes those three figures. Nothing is claimed beyond them: no commercial calibration, no agreement with any device not named here, and roll still has no reference data at all.
+Reviewed September 10, 2026; the claim below corrected 1 October and again 6 October. Research informs the model architecture, and the coefficients below are approximations. **The measured agreement claimed is the flight fitted to three launch monitors** -- Trackman's published PGA and LPGA tour averages, a 111-shot GC3 session and the owner's 115-shot R50 session -- with peak height within 1.7 to 5.5% and carry within 1.5 to 2.5% (typical miss) on each; see *The flight refitted against three launch monitors*. The website says "around 3%", which those figures support. Nothing is claimed beyond them: no commercial calibration, no agreement with any device not named here, and roll still has no reference data at all.
 
 ## Open research
 
@@ -3593,7 +3593,7 @@ TODO carried this as "5-10% long, driver 7.45 s" for a long time. That figure pr
 
 The last column is the sanity check — what a ball reaching the same apex would hang for in a vacuum. The ratio runs **1.35 for the driver down to 1.12 for the wedge**: lift holds the fastest ball up proportionally longest and a wedge is nearly ballistic. Inverted, or much above 1.5, would mean the lift curve had gone wrong somewhere the carry fit could not see. It has not.
 
-**Left alone deliberately.** The remaining 0.3 s against tour average would have to come out of lift, and lift is fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%). The driver's real gap is carry — 261 against a sourced 275 — and chasing that risks the descent angle the whole bounce model depends on.
+**Left alone deliberately.** The remaining 0.3 s against tour average would have to come out of lift, and lift was then fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%) -- figures superseded by the 6 October refit (*The flight refitted against three launch monitors*). The driver's real gap is carry — 261 against a sourced 275 — and chasing that risks the descent angle the whole bounce model depends on.
 
 ## A home-screen icon on a password-protected host
 
@@ -5767,7 +5767,7 @@ rēlā's supported device list is not on those pages; nothing here claims one.
 
 ## The website: what it claims, and how its media was made (1 October)
 
-**Every number on the site is one this file already carries**, so a reader can check it here. The physics panel quotes the GC3 fit -- carry 1.3%, peak height 0.2 ft, offline 0.2 yd -- rounded from +1.25%, -0.22 ft and 0.21 yd, and says the SkyTrak session was held out. It does not quote the two figures the fit made worse (descent angle 1.49 deg, hang time +0.71 s); they are open defects in TODO.md, and a page that quoted only the improvements while hiding them would be selective, so the page claims "fitted to", not "matches". The owner's brief asked for "calibrated to the most popular launch monitors"; the page heading reads "fitted to real launch monitors" because one fitted device and one held-out device is what exists. A Garmin R50 session is named as next. The landscape cards quote each biome's altitude and temperature from `biomes.js`, converted to feet and degrees Fahrenheit and rounded (1,800 m becomes 5,910 ft), because the shot panel in the game reads in mph and the audience is mostly American; both values do feed the flight (`simulateShot` takes `altitude` and `temperature`). The cup and ball are the game's 107.95 mm and 42.67 mm.
+**Every number on the site is one this file already carries**, so a reader can check it here. The physics panel quoted the GC3 fit -- carry 1.3%, peak height 0.2 ft, offline 0.2 yd -- until the owner rewrote it as "Avg around 3% carry, offline, apex against real LM data"; since the 6 October refit the typical misses behind that are carry 1.5-2.5% and peak height 1.7-5.5% per source (*The flight refitted against three launch monitors*). It does not quote the two figures the fit made worse (descent angle 1.49 deg, hang time +0.71 s); they are open defects in TODO.md, and a page that quoted only the improvements while hiding them would be selective, so the page claims "fitted to", not "matches". The owner's brief asked for "calibrated to the most popular launch monitors"; the page heading reads "fitted to real launch monitors" because one fitted device and one held-out device is what exists. A Garmin R50 session is named as next. The landscape cards quote each biome's altitude and temperature from `biomes.js`, converted to feet and degrees Fahrenheit and rounded (1,800 m becomes 5,910 ft), because the shot panel in the game reads in mph and the audience is mostly American; both values do feed the flight (`simulateShot` takes `altitude` and `temperature`). The cup and ball are the game's 107.95 mm and 42.67 mm.
 
 **How the media was made.** No video encoder exists in this toolchain (no ffmpeg), so the clips are recorded inside the browser: the game's own canvas into `captureStream(30)` and `MediaRecorder` as WebM VP9 at 6 Mbit/s, 1920x1080, 7 to 12 seconds. Camera flights are keyed poses through `lab.camera`, sampled 240 times, with the height smoothed over a 40-sample window (never more than 3 m below the ground-following height) so the camera does not bob over every dune, and eased in and out. The tee shot is a launch-monitor shot through the real shot path (67 m/s, 11.5 deg, 2,700 rpm). Stills are rendered at 3840x2160 and saved at 2560x1440 (JPEG quality 88-90), with 960x540 thumbnails, scaled in the browser by repeated halving (there is no image library here either; one big reduction samples too few pixels and brings the jagged edges back). Everything is captured on Ultra with automatic resolution off, and `tools/site-media/capture.mjs` refuses to save a picture that is not.
 
@@ -5890,11 +5890,75 @@ The owner's Garmin R50 session of 3 October, 133 shots across twelve clubs, repl
 
 Wedges to 5 iron together: carry +1.6 yd (+1.1%), typical miss 3.1 yd (2.5%). **Every shot more than 2 yd offline finished on the same side in both (98 of 98)**, typical sideways gap 0.6 yd -- a clean check of the left/right fix of 5 October.
 
-**Apex falls away with spin.** Wedges agree; from the 8 iron down the model peaks progressively lower while carry stays close, so the long-iron flight is flatter rather than shorter. It is the same direction and size as the open driver gap against Trackman's 35 yd apex, and the opposite of the SkyTrak check (+0.9 yd). Not acted on: adding lift would also add carry, which is already right, so it wants a refit of lift and drag together against the whole bag (TODO, *The driver carries 261*).
+**Apex falls away with spin.** Wedges agree; from the 8 iron down the model peaks progressively lower while carry stays close, so the long-iron flight is flatter rather than shorter. It is the same direction and size as the open driver gap against Trackman's 35 yd apex, and the opposite of the SkyTrak check (+0.9 yd). Acted on the same night: lift and drag were refitted together against this session, the GC3 and Trackman's tour averages, and the R50's long-iron gap closed from 11-12% to about 4% (*The flight refitted against three launch monitors*, below).
 
 **The owner flagged the 5 wood and the driver as unusual swings.** The 5 wood's shortfall follows the long-iron pattern exactly. The driver session was not representative: four swings of 33-42 mph, and the rest low hard hooks (2-11° launch, spin axes −50 to −80°). Two findings came out of it anyway. Past a 40° spin axis the model curves the ball 1.6 times as far as the R50 (within 3-9% below 40°); nothing published covers axes that extreme, so it is left open. And the knuckleball below.
 
 **Fixed: a ball with no spin got lift.** Shot 130, 143.7 mph, 4.7°, 346 rpm (S = 0.012): the R50 said 49 yd, the model 111. A ball with no lift at all carries 61-64 yd at that launch for any drag coefficient from 0.22 to 0.30, and the model still carried it 99 yd with the spin set to zero -- `liftOffset + sqrt(liftFloor + liftGain*S)` is 0.07 at S = 0, a floor the square root never leaves. A ball that is not spinning has nothing to make it lift one way rather than another, so lift must reach zero with S; Bearman and Harvey's and Smits and Smith's curves both rise from it. `AERO.liftTaper` = 0.04 fades lift to zero below that S with a smoothstep. **The 0.04 is placed, not published**: their measurements start above it, and it sits just below the lowest-spin real shots in any session fitted or checked here (S 0.044-0.045: a 1,500 rpm drive, the R50's lowest hooks; a tour drive is 0.08). After: zero spin carries 64 yd, the knuckleball 72 (the R50's 49 is shorter than even no lift, so the R50 is doing something of its own there); 131 of the 133 shots are unchanged to the decimal, the landing scorecard is unchanged, and `tests/low-spin.test.mjs` pins all three.
 
 **Still to check:** the R50's export signs sidespin opposite to its own spin axis on all 111 curving shots. Fairway uses the spin axis when a connector sends one; if rēlā sends backspin and sidespin instead, a fade would arrive as a draw. rēlā's documentation does not say which it sends (https://docs.rela.golf/rela/user-guide/, checked 6 October). Confirm with one deliberate fade, or the bridge run with `FAIRWAY_LOG=debug`.
+
+## The flight refitted against three launch monitors (6 October)
+
+At the owner's request, the aerodynamic curve (`AERO`, physics.js) was refitted to "the GC3, Trackman data and the R50 -- all much more trusted models", with the instruction that rollout and backspin across the surfaces must not change drastically, and that zip-back should stay possible "when the conditions are right" rather than routine. `node tools/flight-fit.mjs` is the whole method and reruns it.
+
+**The data**, all private and not committed (docs/sources/private/):
+
+- **Trackman's PGA and LPGA tour averages** -- 23 rows, driver to pitching wedge: ball speed, launch, spin, max height, land angle, carry. Trackman's own blog post shows the tables only as images (https://www.trackman.com/blog/introducing-updated-tour-averages); the numbers were read from the text layer of the same sheets re-hosted at https://teeituprva.com/wp-content/uploads/2019/03/PGA-AVERAGES-INTERACTIVE.pdf and .../LPGA-AVERAGES-INTERACTIVE.pdf, and checked against the images. The neogolfclub mirror cited earlier carries speeds and distances only. Driver row, PGA: 113 mph club, 167 ball, 10.9°, 2,686 rpm, 32 yd max height, 38° land, 275 yd carry; LPGA: 140 ball, 13.2°, 2,611 rpm, 25 yd, 37°, 218 yd.
+- **A GC3 session**, 111 shots, 58° wedge to 4 iron, each with carry, peak height, descent and hang time.
+- **The owner's R50 session** of 3 October, 115 shots, wedges to 5 wood. Its 18 driver swings were set aside (the owner judged them unrepresentative: four 33-42 mph swings and low hard hooks), so Trackman's two driver rows stand for the driver.
+
+Air: the R50 states its density and is flown in it; Trackman and the GC3 state none and fly in the model's default (sea level, 18 °C), as earlier fits did.
+
+**The cost.** Every source counts equally however many shots it brought, so the GC3's 111 cannot outvote Trackman's 23 averages. Within a source: peak height and carry in percent, squared, carry at double weight; landing angle in degrees at a quarter weight. Trackman's two driver rows count four times each, because nothing else covers the club a player hits on every hole. Nelder-Mead over the constants, scaled so each moves as a fraction of itself.
+
+**What was wrong: a tilt.** All three agreed the old curve flew wedges slightly high and long irons and woods low -- the GC3's 4 iron 10% low, the R50's long irons 11-12%, Trackman's woods and long irons 5-21% -- while every average looked fine, because the September fit had centred the average of a curve the wrong shape.
+
+| peak height, model minus source (typical miss) | before | after |
+|---|---|---|
+| Trackman (23 rows) | -4.3% (8.3%) | +0.2% (5.5%) |
+| GC3 (111 shots) | -0.7% (4.7%) | +0.5% (1.7%) |
+| R50 (115 shots) | -5.0% (7.0%) | -2.0% (2.8%) |
+
+| carry, model minus source (typical miss) | before | after |
+|---|---|---|
+| Trackman | -0.3% (2.1%) | -0.8% (2.5%) |
+| GC3 | +1.1% (1.6%) | -0.6% (1.5%) |
+| R50 | +0.8% (2.7%) | +1.1% (1.9%) |
+
+Landing angle: GC3 +1.0° → -0.2° (typical miss 1.1°); Trackman -3.3° → -3.4°.
+
+**The form, and what was rejected on the way:**
+
+- **The square root could not bend far enough.** Fitted freely, `liftOffset + sqrt(liftFloor + liftGain*S)` drove its floor negative and stopped returning a number for some shots. Replaced with the power law Smits and Smith fitted to their wind-tunnel data, CL = 0.54 S^0.4 -- which, taken as published with our drag, flew everything 11-20% high, but fitted with the drag landed at 0.49 S^0.41, almost their curve. A small offset (CL = 0.678 S^0.271 - 0.186) then let the driver's low-spin end lift less without dropping the long irons: the shipped curve.
+- **Lift and drag depending on airspeed: rejected.** Letting both change above 150,000 Reynolds number fitted Trackman's PGA driver exactly (cost 18.3 against 23.8), by making drag FALL with speed and cutting the driver's lift by half. Kensrud and Smith measured golf-ball drag RISING with speed past the drag crisis (Proc. IMechE Part P, 2018, https://doi.org/10.1177/1754337117740749), and Smits and Smith found lift, drag and spin-down independent of Reynolds number at fixed S across 100,000-250,000. Two rows of one source were bending the physics.
+- **Spin decay now scales with airspeed** -- the torque that slows the spin grows with speed. Alan Nathan's note "The Effect of Spin-Down on the Flight of a Baseball" (2008, https://baseball.physics.illinois.edu/spindown.pdf) gives both golf-ball measurements in that form: Smits and Smith 23.8 s at 100 mph, Tavares et al. (radar) 18.9 s at 100 mph. `spinTau` = 21.5 s at 100 mph, between them; it was a fixed 24 s at every speed. **Fitted freely the decay went slower** (38 s at 50 m/s): the fit was a touch better (23.5 against 23.7) but a tour wedge's spin-back on a Soft green tripled, 2.4 to 7.5 yd. Held at the published rate it is 4.6 yd. The fit does not see spin-back, so the published rate is what keeps it honest.
+- **Hang time can not be fitted from here.** The GC3's hang times run 0.70 s shorter than ours before and after. Weighting hang heavily in the cost moved it to 0.66 s and made everything else worse. Height, carry and landing angle all agree with the GC3 to a percent or a degree while its hang does not, so the most likely explanation is that it measures or defines hang differently. Left open.
+- **Trackman and the GC3 disagree on long-iron landing.** On near-identical 4 irons (137 mph, 11°, ~4,700 rpm; both 28 yd high, 203-205 yd carry) Trackman says 48° and the GC3 41°. A ball peaking at 28 yd over 203 yd lands near 40-41° unless its flight is extremely lopsided; the model agrees with the GC3 to 0.2°, and the GC3 is followed. Trackman's long-iron landing angles stay 4-6° steeper than ours.
+- **Two Trackman rows disagree with the rest of Trackman.** The PGA pitching wedge peaks 10% above the model while the GC3's pitching wedges, faster and spinnier, fit within 1%; the LPGA 3 wood peaks lower than its own 5 wood. Both left as residuals.
+
+**Still open:** the PGA driver carries 262 against 275 and peaks at 33.4 yd against 32 (+4%); total 284 against 296. The LPGA driver is within 1.2% on carry, +5% on height.
+
+**Rollout and backspin, checked rather than assumed** (`tools/landing-scorecard.mjs`, which now takes `--set` to score a candidate before it is applied, and plays four fixed Trackman shots the keyboard clubs cannot re-tune away):
+
+| | before | after | anchor |
+|---|---|---|---|
+| Driver run on a fairway (keyboard) | 20.8 yd | 21.9 yd | 21 |
+| 3 wood run | 18.1 yd | 19.0 yd | 19 |
+| 5 iron run | 13.0 yd | 13.8 yd | 15 |
+| 7 iron on a Normal green | 6.2 yd | 6.5 yd | a few yards |
+| Full wedge, Normal green (keyboard) | checks, back 1.1 yd | checks, back 1.8 yd | under 7 back |
+| Tour PW (Trackman inputs), Normal | back 0.7 yd | back 1.4 yd | |
+| Tour PW, Soft green | back 2.4 yd | back 4.6 yd | tour tops out at 5-7 |
+| Chips, carry to roll | 1:1.9 / 1.4 / 0.9 / 0.5 | 1:1.9 / 1.4 / 1.0 / 0.5 | |
+
+Every fairway run moved toward its anchor, chips did not move, and spin-back grew but stays inside what tour players manage: a full wedge on a Soft green comes back about 4½ yd, on a Normal one about a yard and a half. The bounce tests' pinned 7-iron arrival was re-pinned (23.23 m/s, 48.47°, 5,524 rpm; it was 22.57, 49.06, 5,068) and the firmness and surface ladders re-measured: hops 0.02-0.21 ft higher, run-outs up to 0.9 yd longer, every ordering intact. `biome-fingerprint --check`: every biome unchanged, so no generator version is owed -- the generator never flies a ball.
+
+## A rolling ball skips, very slightly (6 October, cosmetic)
+
+The owner asked for the ball to look as if it were "ever so slightly bouncing across the surface while it is rolling ... more on fairways and rough, very very little on greens ... not a patterned type of bounce effect, it needs to be random", easy to switch off. `src/roll-hop.js`, drawn only: the path, the tracer, where the ball stops and every readout come from the simulation, untouched.
+
+Hops arrive at random -- the gap before each is drawn from an exponential distribution, so there is no rhythm -- at up to 4 a second at full rolling speed (2.5 m/s), none below 1 m/s. Each is a random height inside its surface's limit, leaning small (the square of a uniform number), flown as a real parabola: rise and fall take the time gravity says that height takes. Limits at full speed, **set by the owner by eye in play on 6 October**: fairway 80 mm, rough and semi 50, tee and fringe 30, green 10, sand none (a ball is 42.7 mm across). They replaced a first placement (rough 24, fairway 10, green 0.6, full at 6 m/s, nothing below 0.35, 5 a second) that was too subtle to see -- the measurement below was taken on it. Seeded per shot, so a replay skips exactly as the shot did. In the built game a driver run-out into rough hopped up to 15.6 mm; switched off, never. 3.2 hops a second was tried first and showed about one in a whole fairway run-out, since each lasts a tenth of a second.
+
+**Switched off by default the same day**, at the owner's request, to revisit later: the code and the owner's heights are kept. `ROLL_HOP.enabled = true` turns it back on; `lab.rollHop(true)` does the same in a running game.
 

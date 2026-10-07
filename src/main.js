@@ -34,6 +34,7 @@ import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} 
 import {relativeToPar,parText,parSide,parTint,holeScoreName} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
+import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
 import {playerColour,playerTracer,PLAYER_INK} from './player-colours.js';
 import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan,dropOutcome,jitterStream,groupStats} from './lab.js';
@@ -383,13 +384,19 @@ async function prepareWorld(onProgress){
  world=await generateProgressively(settings,onProgress);
  worldKey=key;
 }
+// WHICH HOLE OF THE BUILT WORLD a round's hole is drawn from. An endless run
+// grows one hole at a time, so its world holds exactly one -- index 0 -- whatever
+// hole number the player has reached. Asking the renderer for `round.hole` there
+// asks for a hole that does not exist: Replay on endless hole 2 did exactly that,
+// threw on every frame after and left the round unplayable (6 October).
+const worldHole=n=>round.endless?0:n;
 function loadCourse(){
  stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced){lastShot=null;priorShot=null;}
  const key=settleSettings();
- if(!world||key!==worldKey){lastShot=null;priorShot=null;world=generateWorld(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style)view.build(world,settings.style,round.endless?0:round.hole);else view.setHole(round.endless?0:round.hole);
+ if(!world||key!==worldKey){lastShot=null;priorShot=null;world=generateWorld(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style)view.build(world,settings.style,worldHole(round.hole));else view.setHole(worldHole(round.hole));
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
- const holeIndex=round.endless?0:round.hole;
+ const holeIndex=worldHole(round.hole);
  course=world.holes[holeIndex];
  // What the hole was worth is recorded now, because the landscape behind it is
  // thrown away the moment the next one grows and the scorecard still needs par.
@@ -658,7 +665,12 @@ function takeShot(data=null){
  hideShotCard();latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;$('flightBadge').hidden=false;updateHUD();return true;
 }
 function finishShot(){
- if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(round.hole,true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();$('flightBadge').hidden=true;$('flightLabel').textContent='BALL IN FLIGHT';updateExplorer();updateHUD();return;}const result=flight.result;flight=null;$('flightBadge').hidden=true;
+ if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();$('flightBadge').hidden=true;$('flightLabel').textContent='BALL IN FLIGHT';updateExplorer();updateHUD();
+  // A replay watched while a scramble team is choosing its ball goes back to the
+  // choice -- the camera behind the candidate on show, no aim line -- rather than
+  // the ordinary play view the lines above restore.
+  if(round.scrambleSelection)showPick();
+  return;}const result=flight.result;flight=null;$('flightBadge').hidden=true;
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
  pushTrail(result.points);view.setTrail([]);view.setBall(result.end);
@@ -714,7 +726,7 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
- view.config.follow=true;view.setHole(record.hole,true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;$('flightBadge').hidden=false;updateExplorer();updateHUD();
+ view.config.follow=true;view.setHole(worldHole(record.hole),true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;$('flightBadge').hidden=false;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
@@ -2241,6 +2253,24 @@ function closePanel(){if((rangeSetup||endlessSetup)&&panel==='round'){rangeSetup
 // Only the trajectory clock carried it. Both hold timers count real seconds and
 // always did, so the camera hold and the settle pause are unaffected.
 const FLIGHT_PLAYBACK=1;
+// THE TRACER RUNS A MOMENT BEHIND THE BALL (the owner, 6 October), so the line
+// does not sit on top of the ball and the ball itself can be seen. A TIME lag
+// rather than a distance: it opens to about ten metres behind a driver at full
+// speed and closes to a few centimetres behind a slow putt, the way a broadcast
+// tracer trails, and it catches up once the ball stops, while the result holds.
+const TRACER_LAG=.15;
+// The flight's path up to time `t`, ending on the exact point the ball was at
+// then; nothing before the first point. Walks back from the frame's current
+// sample rather than forward from the tee: a long flight has thousands.
+function trailUpTo(pts,t,from){
+ if(!(t>0))return [];
+ let i=Math.min(from,pts.length-1);
+ while(i>0&&pts[i].t>t)i--;
+ const a=pts[i],b=pts[i+1];
+ if(!b||b.t<=a.t)return pts.slice(0,i+1);
+ const f=clamp((t-a.t)/(b.t-a.t),0,1);
+ return pts.slice(0,i+1).concat([{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f,t}]);
+}
 const CAMERA_HOLD=1.5;
 // Slow motion. Scales how fast the recorded flight is played back, not the
 // physics: the path is already computed at 240 Hz, so slowing it down samples
@@ -3632,6 +3662,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   launch:(over={})=>{labLaunch={...labLaunch,...over};syncLabTool();return {...labLaunch};},
   strike:(over={})=>labStrike(over),
   firmness:value=>labFirmness(value),
+  // The cosmetic skip of a rolling ball (roll-hop.js): on, off, or ask.
+  rollHop:(on)=>{if(on!==undefined)ROLL_HOP.enabled=!!on;return ROLL_HOP.enabled;},
   stimp:value=>labStimp(value),
   // `green` already means "build the bench and report its slope", so the
   // distance setter gets its own name rather than overloading one that answers a
@@ -3769,8 +3801,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
   state:()=>({inFlight:!!flight,
-   // The tracer should pass through the ball, so the gap between them is a
-   // number worth being able to read rather than squint at.
+   // How far the tracer's end sits from the ball, a number worth being able to
+   // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
+   // once the ball has stopped and the line caught up, it should be ~0.
    // Line2 packs each segment as start and end triples into one interleaved
    // buffer of stride 6, so the end point's height is index*6+4. Reading it with
    // getZ returns the z of the segment instead, which is how this first reported
@@ -4319,9 +4352,17 @@ function tick(now){
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
  if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);$('flightAltitude').textContent='Hole flyover · Circling the hole';drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
- if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};view.setBall(p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
+ if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
+  // The drawn ball skips a little while it rolls (roll-hop.js); `p` itself, which
+  // the trail and the camera use, is the simulated position, untouched.
+  flight.hop??=createRollHop(seedFor(flight.result));
+  // Touching at both ends of the step, each against its own ground: on a slope
+  // the ground under the midpoint is not the ground under either end.
+  const ground=q=>course.height(q.x,q.z)+BALL_R+.004>=q.y,rolling=ground(a)&&ground(b),hopSpeed=Math.hypot(b.x-a.x,b.z-a.z)/((b.t-a.t)||1);
+  const lift=flight.hop.step(dt*FLIGHT_PLAYBACK*timeScale,hopSpeed,course.surface(p.x,p.z),rolling&&flight.elapsed<flight.result.time);
+  view.rollHopLift=lift;view.setBall(lift?{...p,y:p.y+lift}:p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
   if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
-  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(pts.slice(0,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
+  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
