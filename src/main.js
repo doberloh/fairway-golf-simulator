@@ -2253,6 +2253,24 @@ function closePanel(){if((rangeSetup||endlessSetup)&&panel==='round'){rangeSetup
 // Only the trajectory clock carried it. Both hold timers count real seconds and
 // always did, so the camera hold and the settle pause are unaffected.
 const FLIGHT_PLAYBACK=1;
+// THE TRACER RUNS A MOMENT BEHIND THE BALL (the owner, 6 October), so the line
+// does not sit on top of the ball and the ball itself can be seen. A TIME lag
+// rather than a distance: it opens to about ten metres behind a driver at full
+// speed and closes to a few centimetres behind a slow putt, the way a broadcast
+// tracer trails, and it catches up once the ball stops, while the result holds.
+const TRACER_LAG=.15;
+// The flight's path up to time `t`, ending on the exact point the ball was at
+// then; nothing before the first point. Walks back from the frame's current
+// sample rather than forward from the tee: a long flight has thousands.
+function trailUpTo(pts,t,from){
+ if(!(t>0))return [];
+ let i=Math.min(from,pts.length-1);
+ while(i>0&&pts[i].t>t)i--;
+ const a=pts[i],b=pts[i+1];
+ if(!b||b.t<=a.t)return pts.slice(0,i+1);
+ const f=clamp((t-a.t)/(b.t-a.t),0,1);
+ return pts.slice(0,i+1).concat([{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f,t}]);
+}
 const CAMERA_HOLD=1.5;
 // Slow motion. Scales how fast the recorded flight is played back, not the
 // physics: the path is already computed at 240 Hz, so slowing it down samples
@@ -3783,8 +3801,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
   state:()=>({inFlight:!!flight,
-   // The tracer should pass through the ball, so the gap between them is a
-   // number worth being able to read rather than squint at.
+   // How far the tracer's end sits from the ball, a number worth being able to
+   // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
+   // once the ball has stopped and the line caught up, it should be ~0.
    // Line2 packs each segment as start and end triples into one interleaved
    // buffer of stride 6, so the end point's height is index*6+4. Reading it with
    // getZ returns the z of the segment instead, which is how this first reported
@@ -4343,7 +4362,7 @@ function tick(now){
   const lift=flight.hop.step(dt*FLIGHT_PLAYBACK*timeScale,hopSpeed,course.surface(p.x,p.z),rolling&&flight.elapsed<flight.result.time);
   view.rollHopLift=lift;view.setBall(lift?{...p,y:p.y+lift}:p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
   if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
-  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(pts.slice(0,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
+  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and

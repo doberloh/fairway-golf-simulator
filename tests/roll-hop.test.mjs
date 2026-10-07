@@ -4,12 +4,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ROLL_HOP, createRollHop} from '../src/roll-hop.js';
 
-// Ten seconds of rolling at a steady speed on one surface, sampled at 60 fps.
-const run = (seed, surface, speed = 6, rolling = true) => {
- const h = createRollHop(seed), lifts = [];
- for (let i = 0; i < 600; i++) lifts.push(h.step(1 / 60, speed, surface, rolling));
- return lifts;
+// Ten seconds of rolling at a steady speed on one surface, sampled at 60 fps,
+// with the feature switched ON for the run: it ships off by default (6 October)
+// and these test what it does when someone turns it back on.
+const run = (seed, surface, speed = 6, rolling = true, on = true) => {
+ const was = ROLL_HOP.enabled;
+ ROLL_HOP.enabled = on;
+ try {
+  const h = createRollHop(seed), lifts = [];
+  for (let i = 0; i < 600; i++) lifts.push(h.step(1 / 60, speed, surface, rolling));
+  return lifts;
+ } finally { ROLL_HOP.enabled = was; }
 };
+
+test('it ships switched off', () => {
+ assert.equal(ROLL_HOP.enabled, false, 'the roll hop is on by default; the owner asked for it off');
+});
 // When each hop starts, in frames.
 const starts = lifts => lifts.flatMap((v, i) => v > 0 && !(lifts[i - 1] > 0) ? [i] : []);
 
@@ -26,9 +36,7 @@ test('it never lifts the ball higher than its surface allows', () => {
 test('nothing in the air, nothing when slow, nothing when switched off', () => {
  assert.equal(Math.max(...run(3, 'rough', 6, false)), 0, 'a ball in the air was lifted');
  assert.equal(Math.max(...run(3, 'rough', .2)), 0, 'a ball barely moving skipped');
- ROLL_HOP.enabled = false;
- try { assert.equal(Math.max(...run(3, 'rough')), 0, 'switched off, it still skipped'); }
- finally { ROLL_HOP.enabled = true; }
+ assert.equal(Math.max(...run(3, 'rough', 6, true, false)), 0, 'switched off, it still skipped');
 });
 
 test('random, not a rhythm, and the same shot replays the same', () => {

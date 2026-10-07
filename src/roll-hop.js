@@ -15,11 +15,13 @@
 //
 // Seeded per shot, so a replay skips exactly as the shot did.
 //
-// TO TURN IT OFF: `ROLL_HOP.enabled = false` below, or `lab.rollHop(false)` in a
-// running game.
+// OFF BY DEFAULT (6 October): `ROLL_HOP.enabled = true` below turns it on, or
+// `lab.rollHop(true)` in a running game.
 
 export const ROLL_HOP = {
- enabled: true,
+ // OFF BY DEFAULT since 6 October, at the owner's request: kept, tuned, and
+ // waiting to be revisited. `true` here, or lab.rollHop(true), brings it back.
+ enabled: false,
  // The highest a hop goes on each surface, in metres, at full rolling speed.
  // SET BY THE OWNER, 6 October, by eye in play: these are the numbers to keep.
  // (First placed at rough 24 mm, fairway 10, green 0.6, full height at 6 m/s

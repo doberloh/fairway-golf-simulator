@@ -22,16 +22,15 @@ import {uiZoom} from './ui-scale.js';
 // parked in a corner on a 4K monitor would otherwise be off-screen the next time
 // the game opened in a smaller window.
 
-// The third field marks a panel laid out as a plain block rather than a flex
-// box: `order` cannot lift its title bar to the top, so the bar goes FIRST in its
-// markup instead (see the bar's own comment below for why the others go last).
+// The third field marks the panels whose title bar must go LAST in the markup
+// (see the bar's own comment below); every other panel has it first.
 const sections = [
- ['.course-info', 'Course card', 'block'],
- ['.weather', 'Weather'],
+ ['.course-info', 'Course card'],
+ ['.weather', 'Weather', 'last'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
  ['.view-tools', 'Tools tray'],
- ['#exploreBar', 'Flight controls'],
+ ['#exploreBar', 'Flight controls', 'last'],
 ];
 // v2 since the play screen was redrawn on 26 September: the shot controls went
 // from a bar along the bottom to a panel down the left, and a position saved
@@ -51,7 +50,7 @@ export function createLayout(world) {
  let saved = {};
  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
  const entries = sections
-  .map(([selector, name, layout]) => ({el: world.querySelector(selector), name, selector, block: layout === 'block'}))
+  .map(([selector, name, place]) => ({el: world.querySelector(selector), name, selector, last: place === 'last'}))
   .filter(e => e.el);
 
  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
@@ -162,12 +161,17 @@ export function createLayout(world) {
   move.innerHTML = GRIP_ICON + `<span>${e.name}</span>`;
   head.append(move);
   e.el.classList.add('hud-titled');
-  // LAST in the panel, not first, though it shows at the top: the stylesheet
-  // picks some panels' contents out by position (`.weather>div:nth-child(2)`,
-  // `.explore-bar>div:first-child`), and a bar put first shifted every one of
-  // them by one. A block panel has no `order` to lift it with, so it goes first
-  // there -- the course card, whose contents nothing picks out by position.
-  const seat = () => { if (e.block) { if (e.el.firstElementChild !== head) e.el.prepend(head); } else if (e.el.lastElementChild !== head) e.el.append(head); };
+  // FIRST in the panel, so it is at the top however the panel is laid out --
+  // except the weather and the flight controls, whose contents the stylesheet
+  // picks out by position (`.weather>div:nth-child(2)`,
+  // `.explore-bar>div:first-child`): a bar put first there shifted every one of
+  // them by one. Those two go LAST and are lifted with `order:-1`, which works
+  // only while the panel is a flex box -- and they are one moved or not.
+  // Lifting every panel that way was the first version, and it put the shot
+  // controls' bar at the BOTTOM once the player moved that panel: the shot
+  // controls are a flex column only in their default place
+  // (`.bottom-area:not(.hud-custom)`), a plain block once moved (6 October).
+  const seat = () => { if (!e.last) { if (e.el.firstElementChild !== head) e.el.prepend(head); } else if (e.el.lastElementChild !== head) e.el.append(head); };
   e.el.append(grip, size);
   seat();
   grab(e, grip, false);

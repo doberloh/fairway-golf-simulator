@@ -21,6 +21,13 @@ prevent.
 
 ## Found by driving the built game
 
+- [ ] **A panel moved while it is folded away for a shot keeps the folded size.**
+  While a ball is in the air the shot controls shrink out of the way; dragging
+  the panel in that moment stores the shrunken height (119 px instead of 674
+  in a test), and it stays that way until resized by hand. Older than the title
+  bar: moving a panel always stores its current size. Found 6 October, not yet
+  fixed.
+
 
 
 - [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
@@ -719,6 +726,7 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 - [ ] **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
 
 - [ ] **Tournament penalty options.** Add lateral water drops, relief zones and optional full rules. Current water/out-of-bounds behavior is simplified stroke-and-distance; sim drops are separately penalty-free by design.
+  - **The owner found it in play (6 October): a ball into a hazard makes you rehit automatically, and that is not how the rules work.** A golfer in a penalty area normally CHOOSES their relief -- stroke and distance is only one of the options -- and the game takes the choice away and plays the ball from where it was last hit. Not to be worked on yet. Research the current Rules of Golf for penalty areas and out of bounds first (record the source and what was taken from it in RESEARCH.md), then decide which options to offer, how a player picks one (keyboard, touch and launch monitor alike), and how scramble and match play handle it.
 
 - [ ] **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
 
@@ -3306,6 +3314,17 @@ engineering provenance pass, not legal advice.
   spin-back). `tools/flight-fit.mjs`; the data stays in docs/sources/private.
   RESEARCH.md, *The flight refitted against three launch monitors*.
 
+- [x] **The shot controls' title bar dropped to the bottom once the panel was
+  moved (6 October).** A moved panel is a plain block, where the trick that
+  lifted the bar (`order:-1`) does nothing. The bar now goes first in the
+  markup on every panel except the two whose contents are picked out by
+  position. PROJECT_HANDOFF, *A title bar, not the whole panel*.
+
+- [x] **The tracer runs a moment behind the ball (6 October).** It used to end at
+  the ball and sit on top of it. It now trails by 0.15 s (`TRACER_LAG`, main.js):
+  4-8 m behind a full shot in the air, a few centimetres behind a slow putt,
+  and it catches up once the ball stops.
+
 - [x] **Replay broke an endless run from hole 2 on (6 October).** It asked the
   renderer for the round's hole number, but an endless world only ever holds
   hole 0, so every frame threw and the round could not continue. `worldHole()`
@@ -3319,8 +3338,9 @@ engineering provenance pass, not legal advice.
 - [x] **A rolling ball skips (6 October, cosmetic).** At random, most on
   fairways and least on greens, at heights the owner set by eye in play;
   seeded per shot so replays match; only
-  the drawn ball moves. `src/roll-hop.js`; `ROLL_HOP.enabled` or
-  `lab.rollHop(false)` turns it off.
+  the drawn ball moves. `src/roll-hop.js`. **Off by default** since the same
+  day, at the owner's request, to revisit: `ROLL_HOP.enabled` or
+  `lab.rollHop(true)` turns it on.
 
 - [x] **A ball with no spin got lift (6 October).** Found on the owner's R50
   session: a 144 mph knuckleball (346 rpm) carried 111 yd in the model where a
