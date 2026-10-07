@@ -205,6 +205,40 @@ Three seconds after everyone finishes a hole, the scorecard shows each score and
 
 **Ball & turf** also sets green Stimp (6–15 ft) and fairway/semi-rough/rough roll (30–180%). Higher percentages produce more run. Defaults are Stimp 10 and 100% roll. Putter bag distance is calibrated at Stimp 10; faster/slower greens change its real distance. Turf conditions affect measured monitor shots as well as manual shots.
 
+## Water and out of bounds
+
+**A ball in water stops and asks where you want to play from.** Water is a
+penalty area, and because nothing on a Fairway course is marked otherwise, every
+pond, lake, river and creek is a *red* one. The relief bar at the foot of the
+screen offers what the Rules of Golf allow, each for one penalty stroke:
+
+- **Stroke and distance** -- play again from where you hit.
+- **Back on the line** -- drop on the far side of the water, keeping the point
+  where the ball last crossed into it between you and the hole. Use **+ 10 yd**
+  and **- 10 yd** to go further back for a yardage you like.
+- **Lateral relief** -- drop within two club-lengths of where it crossed, no
+  nearer the hole.
+
+Each option shows how far it leaves you and the lie, and the camera moves behind
+that ball. Pick with a click or tap, or the arrow keys, then **Drop here** (or
+Enter). Nothing else can be played until you choose; the choice is kept if you
+leave and come back.
+
+**Out of bounds** is one penalty stroke and play again from where you hit -- the
+Rules of Golf -- and the game does that for you. In **Format & tees**,
+**Out of bounds** can instead be set to **Local Rule E-5**, the casual-play rule
+many clubs use: you may also drop near where the ball went out, toward this
+hole's fairway and no nearer the hole, for **two** penalty strokes. E-5 is not
+always possible: from a tee, the whole fairway is nearer the hole than the spot
+where the ball went out, so it is stroke and distance again. The setting is
+remembered for every round after.
+
+It works the same in stroke play, match play (the farthest ball plays next once
+the drop is taken), scramble (the dropped ball is one of the team's choices and
+carries its penalty) and endless runs, under every putting mode. A **Mulligan**
+takes back the shot and the drop together. The **Sim drop** tool is separate: it
+moves a ball anywhere with no penalty, and it waits until relief is taken.
+
 ## Your profile
 
 **The first time Fairway opens in a browser, it asks your name.** That makes
@@ -226,6 +260,14 @@ already finished stay in their history.
 between everyone on this device, main first. Any player can be made the main
 profile, renamed, or removed with their history (it asks twice). The main
 profile cannot be removed until someone else is main.
+
+**Back up & move**, at the foot of My profile, saves every player to a file and
+restores them from one -- the way to keep a history when the browser is cleared,
+or to take it to another computer, the server's link or a phone. Restoring adds
+to the players already there and never removes one: a player who is already on
+this device keeps whichever copy was played more recently, and a different
+player with a name that is taken comes in as "Sam (2)". On a first visit, the
+welcome has **Restore your players from a backup file** instead of typing a name.
 
 **It lives in this browser, on this device.** It survives reloads, closing the
 browser and updating Fairway, and is gone if the browser's site data is cleared.

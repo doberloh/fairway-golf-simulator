@@ -1285,6 +1285,41 @@ BALL_FRAME is 0.85 for a reason: it leaves margin for the view axis's own downwa
 
 **Still open, and known.** Saved-round delete is one click while course delete in the round panel is a two-tap arm. `save()` swallows quota errors, so a full store means *Continue* silently stops updating.
 
+### Penalty relief
+
+**A ball in trouble waits in the round.** `Round.takeShot` with a `hazard`
+counts the stroke, records `round.relief = {player, hazard, from, cross,
+puttStroke}` and returns; nothing else -- another shot, a sim drop, the hole
+ending -- can happen until `takeRelief({spot, penalty}, pin)` is given the
+choice. The penalty is added THEN, because E-5 costs two and everything else
+one. In a scramble the dropped ball becomes the team's candidate carrying its
+penalty, which `chooseScramble` adds if the team takes it. `relief` is saved and
+restored with the round, follows its golfer through `setPlayers` (and goes with
+them if they leave), and is cleared by a mulligan, which returns to before the
+shot.
+
+**The rules are in relief.js and nowhere else.** It is pure: the course comes in
+as `ground` (`surface`, `out`, `blocked`, `area`, `ownFairway`), which main.js
+builds from the hole -- `outOfBounds` is the same function physics.js stops a
+ball with, so the boundary cannot be in two places. Where the ball crossed the
+edge is computed in `finishShot` from the ball's own path, before the round
+records the shot. `setUpTurn` checks `round.relief` first, which is also how a
+reload comes back to the choice.
+
+**`lab.trouble('water' | 'out')`** sends the current ball at the nearest water
+or straight out of bounds through the real `finishShot`; the `relief` smoke
+journey uses it on a course built with `lab.course({water: 100, lakes: 2})`.
+A `lab.course` player now carries `hand: 'RH'`: without it `validateSave`
+refused the save, and a lab round could never be continued after a reload --
+found by that journey.
+
+**Any smoke journey can meet water.** Courses are random, so a tee shot in a journey that is not about relief can find a pond, and then nothing but a relief choice can be played. The first full run after relief went in found exactly that: the phone journey's tee shot went in, and *Sim drop* opened over the relief bar. Sim drop now refuses while relief waits (and its button is disabled), and the journeys that drop afterwards call `reliefFirst`, which takes whatever drop is offered.
+
+**The out-of-bounds rule** is `round.outOfBounds` (`'stroke'` or `'e5'`), set in
+Format & tees, applied to the live round and kept as a preference
+(`fairway-rules-v1`, read into `Round.defaultOutOfBounds` before the first round
+is made).
+
 ### The profiles
 
 **Every golfer is a profile, by id.** A round's player carries `profile`, the id of the profile it is; `Round.setPlayers` passes it through, so a golfer who stays keeps counting to the same profile and one who joins counts to theirs from their first shot. `profileOf(player)` looks the id up, and falls back to the name (ignoring case) only for a player with no id -- a save from before profiles. Names are unique on a device for the same reason: a name is what a player picks from a list, and two the same would make the list a guess.
@@ -1292,6 +1327,8 @@ BALL_FRAME is 0.85 for a reason: it leaves margin for the view axis's own downwa
 **The main profile** is `store.main`: the first one made (by the welcome), player 1 in every new group because `useMainProfile()` sets `Round.defaultPlayer` to it, and the one the menu tile and My profile open on. It is otherwise a profile like any other -- every seat records -- and it cannot be deleted until main is handed on. The owner asked for exactly that: "users can select who the main profile or player 1 is ... other than that there should be no difference."
 
 **The group editor is where profiles are made.** Each row is a `<select>` of profiles not already in the group, plus *New player...*, which opens a name box. `readDraft()` turns the draft into players and is the ONE place a new player becomes a profile: a typed name that already belongs to a profile is that profile, an empty name or the same golfer twice throws before anything is created, and every caller shows the message. Because all four group setups -- round, endless, range and a mid-round change -- go through `groupEditor`/`readDraft`, adding a golfer anywhere makes them a profile. Rejected: free-text names matched to profiles by spelling (the first build's rule). A typo made a stranger, and a friend called Alex was silently merged with the placeholder.
+
+**A backup is merged, never poured over.** `exportProfiles` writes the whole store as a file (`kind: 'fairway-profiles'`); `importProfiles` reads any version `normalise` knows, the first build's single profile included, and merges: a new player is added, the same player (same id) keeps whichever copy was active more recently -- counters cannot be added together without counting shots twice -- and a different player with a taken name is renamed "Name (2)". The device's main profile stays main. A file that is not a backup throws before anything changes.
 
 **A rename follows the golfer.** `followRename` renames that profile's players in the round on screen, a round waiting behind *Continue* and an open group editor, so the card and the history keep agreeing.
 

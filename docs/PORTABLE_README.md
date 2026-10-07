@@ -88,7 +88,7 @@ around. **PLAYING.md** has every control and setting.
 | rēlā connects but no shots arrive | In Fairway: **Connect bridge**, then **Arm monitor for live shots**. A shot is refused while a ball is in the air or a panel needs an answer. |
 | rēlā will not connect | Check the port is **1921** and the server's window is open. |
 | The game is blank or very slow | Use a current browser with hardware acceleration on; try nine holes and the Low quality setting. |
-| My profile, saved rounds or saved courses have gone | The browser keeps them for the address the game was opened from: the server's link, `Fairway.html` opened directly and a phone each have their own. Open it the same way each time. Clearing the browser's site data clears them. |
+| My profile, saved rounds or saved courses have gone | The browser keeps them for the address the game was opened from: the server's link, `Fairway.html` opened directly and a phone each have their own. Open it the same way each time. Clearing the browser's site data clears them; **My profile → Save a backup file** keeps your players safe and moves them between the three. |
 
 **Ports.** The server uses TCP **1921** for the launch monitor and **1922**
 for the browser. To use others — say, 921 for a connector that cannot be

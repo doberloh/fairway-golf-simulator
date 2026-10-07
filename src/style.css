@@ -1166,3 +1166,17 @@ html,body{overscroll-behavior:none}
 .profile-switch{margin-top:0}.profile-switch small{font-size:9px;opacity:.75;margin-left:3px}
 .profile-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.profile-actions:empty{display:none}.profile .profile-actions button{width:auto;margin:0;padding:7px 11px;font-size:10.5px}
 .profile-id>div{flex:1;min-width:0}.profile-id h3 .profile-tag{vertical-align:middle;font-family:inherit}.profile-id .field-error{margin:6px 0 0}.profile-id .field-error:empty{display:none}
+/* PENALTY RELIEF (7 October). The same bar as the scramble ball picker, with
+   the options a golfer may take laid out as cards: what it is, what the Rules
+   say about it, and where it would leave the ball. */
+.relief-bar{flex-wrap:wrap;align-items:stretch;gap:12px}
+.relief-head{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}.relief-head strong{font:22px var(--font-display)}.relief-head small{font-size:11px;color:var(--ink-dim)}
+.relief-options{flex:1 1 520px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.relief-option{display:flex;flex-direction:column;gap:4px;text-align:left;padding:11px 13px!important;border-radius:9px;background:var(--field);border:1px solid var(--glass-line)!important;color:var(--ink)}
+.relief-option strong{font:600 12.5px var(--font-ui,inherit)!important;display:flex;justify-content:space-between;gap:8px}.relief-option strong em{font-style:normal;color:#f0b49a}
+.relief-option small{font-size:10px!important;color:var(--ink-dim)!important;line-height:1.4}.relief-option span{font-size:10.5px!important;color:var(--ink)!important;margin-top:auto}
+.relief-option.active{border-color:var(--accent)!important;background:rgba(86,140,101,.28)}
+.relief-back{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-dim)}.relief-back button{background:var(--field);color:var(--ink);border:1px solid var(--glass-line)!important}
+.relief-bar #reliefTake{align-self:center;margin-left:auto}
+.welcome-restore{align-self:flex-start;padding:0;font-size:11px;color:var(--ink-dim);text-decoration:underline;text-underline-offset:3px}.welcome-restore:hover{color:var(--ink);filter:none}
+.profile .profile-backup{margin-top:0}

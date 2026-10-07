@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const map = new Map();
 globalThis.localStorage = {getItem: k => map.has(k) ? map.get(k) : null, setItem: (k, v) => map.set(k, String(v)), removeItem: k => map.delete(k), clear: () => map.clear()};
-const {PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
+const {exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
@@ -187,4 +187,66 @@ test('a golfer keeps their profile through a change of group, and a newcomer bri
  r.setPlayers([{name: 'Sam', team: 'A', profile: 'p2', seat: 1}, {name: 'Jo', team: 'A', profile: 'p3'}], {blue: {x: 0, z: 0}});
  assert.deepEqual(r.players.map(p => p.profile), ['p2', 'p3']);
  assert.equal(Round.restore(JSON.parse(JSON.stringify(r))).players[1].profile, 'p3');
+});
+
+// ---- backup ---------------------------------------------------------------
+test('a backup restores every player exactly, onto a device with nobody on it', () => {
+ localStorage.clear();
+ const {store} = addProfile(null, 'Dee');
+ const sam = addProfile(store, 'Sam').profile;
+ tallyShot(sam, {lie: 'tee', rest: 'fairway', yards: 250});
+ syncHole(sam, meta('g1'), {index: 0, par: 4, yards: 400, score: 5, putts: 2});
+ setMainProfile(store, sam.id);
+ const file = exportProfiles(store);
+ localStorage.clear();
+ const back = importProfiles(null, file);
+ assert.deepEqual(back.added, ['Dee', 'Sam']);
+ assert.deepEqual(loadProfiles(), store, 'the same players, the same history, the same main profile');
+});
+
+test('a backup is merged into the players already here, never poured over them', () => {
+ localStorage.clear();
+ // The device: Dee (main) and Sam, Sam having played recently.
+ const {store} = addProfile(null, 'Dee');
+ const sam = addProfile(store, 'Sam').profile;
+ const file = JSON.parse(exportProfiles(store));
+ syncHole(sam, meta('fresh'), {index: 0, par: 4, yards: 400, score: 4}, Date.now() + 1000);
+ // The file, from another device: an older Sam, a new player Jo, and a
+ // different player who is also called Dee.
+ file.profiles = file.profiles.filter(p => p.name === 'Sam');
+ file.profiles.push({id: 'pjo', name: 'Jo', created: 1, counters: {shots: 9}, bests: {}, rounds: []},
+  {id: 'pother', name: 'dee', created: 1, counters: {}, bests: {}, rounds: []});
+ file.main = 'pjo';
+ const r = importProfiles(store, JSON.stringify(file));
+ assert.deepEqual(r.added, ['Jo', 'dee (2)']);
+ assert.deepEqual(r.renamed, ['dee → dee (2)']);
+ assert.ok(r.kept.includes('Sam'), 'the more recent Sam on this device is kept');
+ const now = loadProfiles();
+ assert.equal(now.profiles.length, 4);
+ assert.equal(findProfile(now, sam.id).rounds.length, 1, "Sam's newer round survives");
+ assert.equal(mainProfile(now).name, 'Dee', 'the device keeps its own main profile');
+});
+
+test('the same player from a newer backup replaces the older copy here', () => {
+ localStorage.clear();
+ const {store, profile: dee} = addProfile(null, 'Dee');
+ const later = JSON.parse(exportProfiles(store));
+ later.profiles[0].counters = {shots: 120};
+ later.profiles[0].rounds = [{id: 'g9', started: Date.now() + 5000, updated: Date.now() + 5000, card: [{par: 3, yards: 150, score: 3}]}];
+ const r = importProfiles(store, JSON.stringify(later));
+ assert.deepEqual(r.updated, ['Dee']);
+ assert.equal(findProfile(loadProfiles(), dee.id).counters.shots, 120);
+});
+
+test('a file that is not a player backup is refused, and changes nothing', () => {
+ localStorage.clear();
+ const {store} = addProfile(null, 'Dee');
+ const before = JSON.stringify(loadProfiles());
+ assert.throws(() => importProfiles(store, 'not json'), /not a Fairway player backup/);
+ assert.throws(() => importProfiles(store, JSON.stringify({kind: 'fairway-courses', courses: []})), /not a Fairway player backup/);
+ assert.throws(() => importProfiles(store, JSON.stringify({kind: 'fairway-profiles', version: 2, profiles: []})), /no players/);
+ assert.equal(JSON.stringify(loadProfiles()), before);
+ // The single profile the first build kept reads as a backup too.
+ const r = importProfiles(store, JSON.stringify({version: 1, name: 'Old Me', created: 3, counters: {shots: 2}, bests: {}, rounds: []}));
+ assert.deepEqual(r.added, ['Old Me']);
 });
