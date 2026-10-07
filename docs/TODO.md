@@ -215,13 +215,6 @@ validation.** That sequencing is the plan; the channels are details.
   already holds every shot of the session. When it exists, put "and export"
   back in `site/index.html`.
 
-- [ ] **Owner: set `GIT_LFS_ENABLED` = `true` in the Netlify UI** before the
-  first deploy from the repository. The website's pictures and clips are in
-  Git LFS, and Netlify only fetches them with that variable set, which it reads
-  before cloning and so cannot take from `netlify.toml`. Without it the build
-  stops with a message saying exactly this. Not needed for a drag-and-drop
-  deploy of a locally built `site-dist/`.
-
 - [ ] **At launch: take the website's no-index off.** Three places, removed
   together: the `robots` meta tag in `site/index.html` and `site/media.html`,
   the `X-Robots-Tag` header in `netlify.toml`, and `site/robots.txt`.
@@ -820,6 +813,12 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## Release 0.4 and going public (7 October)
+
+- [x] **v0.4 published, with its notes in the repository.** "Fairway 0.4 (beta)", at the owner's request, from the merge of `release-0.4` into `main`: penalty relief by the Rules of Golf with the Local Rule E-5 option, player backup and restore, removing a round from the history, one typeface and the cleaned-up top bar, the moving build progress bar and the shader-code credits. The notes are `docs/releases/v0.4.md`, published with `--notes-file` from the same commit the tag points at; v0.1 to v0.3's notes were copied in from GitHub. AGENTS.md now makes this the rule.
+- [x] **The website is public.** The owner turned Netlify's password protection off and moved to the Personal plan (7 October). The no-index signals stay until the owner says otherwise (the open *At launch* item).
+- [x] **`GIT_LFS_ENABLED` in Netlify: not needed.** It only matters if Netlify builds from the repository; the owner deploys from this machine with `npm run deploy` and does not plan to do it any other way (7 October).
 
 ## One typeface (7 October)
 

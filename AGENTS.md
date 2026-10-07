@@ -107,6 +107,16 @@ GitHub's own actions only, read-only workflow token, Dependabot alerts.
   `release/` rebuilt from it, so the zips are exactly what `main` says.
 - **Editing or deleting a published release is the owner's call too**, the same
   as a force-push.
+- **The release notes go up WITH the release, never after it.** Write them as
+  `docs/releases/v<version>.md` -- in the plain, player-facing voice of the
+  earlier ones -- and the release's record (a DISTRIBUTION_REVIEW addendum and a
+  TODO entry) on the release's branch, merge it to `main`, and build the zips
+  and tag the release from THAT commit, publishing it with
+  `--notes-file docs/releases/v<version>.md`. The notes in the repository and
+  the notes on GitHub are then the same text, and the commit the tag points at
+  already says what it is. Recording a release afterwards on a branch of its own
+  -- which is what happened with v0.3 -- leaves `main` and the release out of
+  step until someone remembers. Asked for by the owner on 7 October 2026.
 - The command, once the owner has signed the GitHub CLI in (`gh auth login`),
   is in docs/COMMAND_CHEAT_SHEET.md, *Releases*.
 
@@ -115,11 +125,23 @@ GitHub's own actions only, read-only workflow token, Dependabot alerts.
 - **Deploy only when the owner asks, and as a preview first** --
   `npm run deploy:preview`, then give the owner its link -- unless they say to
   deploy it live, which is `npm run deploy`.
-- **The site stays private until the owner says it is launching.** Netlify's
-  password protection stays on, and the no-index meta tags, the
-  `X-Robots-Tag` header in `netlify.toml` and `site/robots.txt` stay in place.
-- **Netlify's own settings are the owner's**: the password, domains,
-  environment variables, and signing in or linking this folder to the site.
+- **The site has been PUBLIC since 7 October 2026.** The owner turned
+  Netlify's password protection off and moved the account to Netlify's
+  **Personal** plan the same day. The address is
+  https://fairwaygolfsim.netlify.app (the project is `fairwaygolfsim`; it was
+  `storied-otter-2881e8` until the owner renamed it, and that address is dead).
+  Everything deployed there is seen by anyone with the link, so the
+  preview-first rule above matters more now, not less.
+- **The no-index signals are still on** -- the robots meta tags, the
+  `X-Robots-Tag` header in `netlify.toml` and `site/robots.txt` -- so search
+  engines are told to stay away. Take them off only when the owner says to.
+- **Netlify never builds from Git.** Every deploy is `npm run deploy` from this
+  folder with the Netlify CLI, and the owner does not plan to deploy any other
+  way, so `GIT_LFS_ENABLED` in Netlify is NOT needed (decided 7 October 2026).
+  Git LFS still matters locally: a fresh clone needs it for `npm run site`.
+- **Netlify's own settings are the owner's**: visibility and passwords, the
+  plan, domains, environment variables, team members, and signing in or
+  linking this folder to the site.
 
 ## What stays local
 

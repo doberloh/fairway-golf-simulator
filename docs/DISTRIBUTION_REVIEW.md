@@ -712,3 +712,25 @@ new copyright lines, as it already does for the others.
 **Still not established.** As before: no universal similarity database exists,
 so this cannot prove every line is unique; nothing here establishes who owns
 AI-assisted portions; no trademark registry was searched.
+
+## Addendum, 7 October 2026: v0.4, and the website goes public
+
+**v0.4** is published at the owner's request as "Fairway 0.4 (beta)", tag
+`v0.4`, not a pre-release, from the merge of the `release-0.4` branch into
+`main`: the same five zips and checksums `npm run release` builds from that
+commit. Its notes are `docs/releases/v0.4.md` in the same commit, published
+with `--notes-file`, so the repository and GitHub carry the same text. It
+carries everything since v0.3: penalty relief by the Rules of Golf, player
+backup, removing a round, one typeface and the cleaned-up top bar, the build
+progress bar, and the shader-code notices added by the licence check above.
+
+**The website is public.** The owner switched Netlify's password protection
+off and moved to Netlify's Personal plan the same day; the site is
+https://fairwaygolfsim.netlify.app (renamed from `storied-otter-2881e8`). The
+no-index signals stay in place until the owner says to remove them, so search
+engines are still asked to stay away. Netlify never builds from the repository
+-- every deploy is `npm run deploy` from the owner's machine -- so Git LFS is
+not configured on Netlify and does not need to be.
+
+The repository itself is still private as this is written; the owner is making
+it public separately, and `tools/github-protect.mjs` runs as soon as it is.

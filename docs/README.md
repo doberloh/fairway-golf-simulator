@@ -110,6 +110,7 @@ The list below is what exists locally.
   under what terms, and what was actually taken from it.
 - **[THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt)** — the notices that
   have to travel with a distribution. Also embedded in the built HTML.
+- **[releases/](releases/)** — the notes for every published release, one file each (`v0.1.md` …), word for word what GitHub shows. A release's notes are written here and merged before it is tagged.
 - **[DISTRIBUTION_REVIEW.md](DISTRIBUTION_REVIEW.md)** — the dated provenance
   and licence audit, the commercial-use pass, and the release checks that are
   still open.
