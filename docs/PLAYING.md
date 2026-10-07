@@ -205,6 +205,68 @@ Three seconds after everyone finishes a hole, the scorecard shows each score and
 
 **Ball & turf** also sets green Stimp (6–15 ft) and fairway/semi-rough/rough roll (30–180%). Higher percentages produce more run. Defaults are Stimp 10 and 100% roll. Putter bag distance is calibrated at Stimp 10; faster/slower greens change its real distance. Turf conditions affect measured monitor shots as well as manual shots.
 
+## Your profile
+
+**The first time Fairway opens in a browser, it asks your name.** That makes
+you the **main profile**: player 1 in every new group, and the player the menu
+and **My profile** open on. From your first shot Fairway keeps your stats, your
+round history and a sim handicap. Change the name with the pencil beside it.
+
+**Every golfer is a profile.** In the group setup -- for a round, an endless
+run or the driving range -- each row picks someone from the list, or **New
+player...** to type a name; a new player becomes a profile when the group is
+started or applied. Typing the name of someone already on this device picks them
+rather than making a second one, and nobody can be in a group twice. Mid-round,
+the player button in the top bar opens the same list: **Add player** brings
+someone in on the tee of the hole being played, a new player included, and
+removing someone takes them off the card (it asks first). The holes they
+already finished stay in their history.
+
+**My profile** shows one player at a time; the names across the top switch
+between everyone on this device, main first. Any player can be made the main
+profile, renamed, or removed with their history (it asks twice). The main
+profile cannot be removed until someone else is main.
+
+**It lives in this browser, on this device.** It survives reloads, closing the
+browser and updating Fairway, and is gone if the browser's site data is cleared.
+A private window never keeps it. The copy opened from disk and the copy on the
+website are separate places to a browser, so each has its own profiles.
+
+**Whose shots count.** Everyone's. Each ball is counted for the golfer who hit
+it, and each finished hole goes on that golfer's own history. Apart from being
+player 1, the main profile is recorded exactly like everyone else. The driving
+range counts only its own ball total and each golfer's fastest ball speed.
+
+**Overall** totals every ball you have hit on a course: shots, sand shots,
+bunkers found, water, out of bounds, trees and houses hit, chip-ins, lip-outs,
+mulligans, how far your balls have travelled and how long they have been in the
+air. Your longest drive (a driver off the tee that stayed in play), longest putt
+holed and fastest ball speed are kept as bests. A mulligan still counts as a
+ball hit, and as a mulligan.
+
+**Scoring** counts every finished hole by name -- holes in one, eagles, birdies,
+pars and the rest -- with your average on par 3s, 4s and 5s, putts per hole,
+fairways hit and greens in regulation. Decimal putting scores are named by the
+nearest whole stroke. A scramble card is the team's score, so scramble rounds are
+listed but kept out of these totals.
+
+**Round history** lists every round you have finished a hole on, newest first,
+with its score against par for the holes played. **Replay this course** builds
+the same course again for a fresh round with whoever is in your group now; an
+endless run starts again from the same first hole. A round marked *Earlier
+generator* was played before Fairway's course generator last changed, so the
+land comes back a little different.
+
+**The sim handicap** works like a real Handicap Index under the World Handicap
+System. Each finished 9 or 18 hole round of stroke or match play becomes a score
+differential, every hole capped at net double bogey (par plus five until you have
+an index). Your index is the average of your best eight of the last twenty, with
+the official allowance while you have fewer. It needs three rounds to start.
+Fairway's courses have never been rated, so each one is rated from its length
+alone; hazards, slopes and green speed do not make a course harder here the way
+they would on a real card. Endless runs, three-hole rounds and unfinished rounds
+do not count toward it.
+
 ## Homes, waterways and presentation
 
 Enable **Line fairways with houses** in Course studio and adjust **House occurrence** and **House setback from semi-rough**. Houses face the playing corridor, use regional colors, and occupy dry, gentle rough away from greens and tee pads. Trees stay clear of their footprints. Houses are solid: a ball rebounds off walls and roofs and stays in play, and one resting against a wall can still be played away from it. Turn on **Houses play as out of bounds** in Course studio if you would rather reaching one cost a penalty stroke and a replay from your previous lie; it is off unless you choose it. Houses vary their roof form, porches, garages, fences and planting, sit on foundations cut to their own ground, and are outlined on the full-course map. Constrained sites may produce fewer houses.

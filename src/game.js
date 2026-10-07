@@ -1,6 +1,10 @@
 import {puttingConfig,awardedPutts} from './putting.js';
 export class Round{
- constructor({players=[{name:'Alex',team:'A',hand:'RH'}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed=''}={}){
+ // The golfer a round starts with when nobody has been chosen. main.js sets it
+ // to the main profile -- name and profile id -- so a new group starts with the
+ // person who owns the device.
+ static defaultPlayer={name:'Alex',team:'A',hand:'RH'};
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -8,6 +12,10 @@ export class Round{
   if(endless&&mode==='match')throw Error('Match play needs a last hole, so it cannot run endlessly.');
   if(typeof seed!=='string'||seed.length>40)throw Error('Invalid round seed.');
   if(!['blue','white','red'].includes(tee))throw Error('Invalid tee selection.');this.tee=tee;
+  // WHICH ROUND THIS IS, for the player's history. It rides through every save,
+  // mulligan and restore, so a round left and resumed is one entry, not two. A
+  // save from before it existed gets one on its first load.
+  this.uid=typeof uid==='string'&&/^[a-z0-9]{4,32}$/.test(uid)?uid:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   this.players=players.map((p,i)=>({...p,id:i}));this.mode=mode;this.holes=holes;this.gimme=gimme;this.hole=0;this.finished=false;this.endless=!!endless;this.seed=seed;this.pars=[];
   this.putting=puttingConfig(putting);this.history=[];this.puttCards=players.map(()=>[]);this.cards=players.map(()=>[]);this.teamCards={A:[],B:[]};this.match={A:0,B:0};this.beginHole();
  }
@@ -78,7 +86,10 @@ export class Round{
   // `seat` is an instruction to this method, not part of a golfer. Spreading it
   // through would persist it into every save and then be read back as a seat in
   // a group that has since changed.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',id:i}));
+  // `profile` is which player profile this golfer is: it rides through so a
+  // golfer who stays keeps counting to the same profile, and one who joins
+  // counts to theirs from their first shot.
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,

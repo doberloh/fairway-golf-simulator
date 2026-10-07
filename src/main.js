@@ -20,6 +20,7 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,findProfile,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
 import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
@@ -255,6 +256,12 @@ let menuBackdrop=false,pendingRound=null,backdropRun=null,playerClock=null;
 // straight from here, so the twenty-seven missing keys came out as `undefined`
 // captions over sliders the browser had quietly parked at the midpoint of their
 // range. The defaults live in the schema; there is no second copy of them now.
+// THE PLAYERS' PROFILES, read before the first Round is made so that round
+// starts with the main one. Null until the welcome has asked for a name.
+let profiles=loadProfiles();
+// Every new group starts with the main profile as player 1.
+const useMainProfile=()=>{const m=mainProfile(profiles);if(m)Round.defaultPlayer={name:m.name,team:'A',hand:'RH',profile:m.id};};
+useMainProfile();
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shape=0,launchAdjust=0,spinAdjust=0,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
@@ -291,7 +298,51 @@ function toast(message){$('toast').textContent=message;$('toast').hidden=false;c
 // had played, and the next launch offered Continue on it. It is also what
 // resurrected a round the player had just discarded: the slot was cleared, the
 // backdrop grew, and the backdrop wrote itself straight back into it.
-function save(){if(menuBackdrop)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));}catch{}}
+function save(){if(menuBackdrop)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));}catch{}syncProfile();}
+// WHICH PROFILE A GOLFER IS. By the id the group editor gave them; a golfer
+// with none -- a save from before profiles -- by name, ignoring case. Null on
+// the menu's showcase hole, which is nobody's round.
+function profileOf(player){
+ if(!profiles||!player||menuBackdrop)return null;
+ return findProfile(profiles,player.profile)||profileByName(profiles,player.name);
+}
+// What a golfer's history needs to know about this round, or null when it is
+// not one the history keeps: the range (and the lab, which runs on it) never is.
+function profileMeta(seat){
+ if(rangeMode||!course)return null;
+ return {id:round.uid,me:seat,mode:round.mode,players:round.players.length,tee:round.tee,holes:round.endless?null:round.holes,endless:round.endless,finished:round.finished,
+  // The recipe for "Replay this course": generation settings for a course,
+  // the run's seed for an endless one, whose holes are grown from it.
+  course:{name:playingCourseName(),settings:round.endless?null:courseSettings(settings),seed:round.endless?round.seed:settings.seed,biome:settings.biome,generator:GENERATOR_VERSION,schema:SCHEMA_VERSION}};
+}
+const holeFacts=()=>({index:round.hole,par:course.par,yards:Math.round(course.tees?.[round.tee]?.yards||0)});
+// THE CARD, COPIED INTO EVERY GOLFER'S HISTORY. save() runs whenever the round
+// changes -- a shot, a scramble choice, a mulligan, a golfer joining -- so a
+// history can never disagree with the scorecard. It also runs for things that
+// change nothing here, like a green-reading toggle, so the store is only written
+// when some golfer's record for this hole actually moved.
+let profileSynced='';
+function syncProfile(){
+ if(!profiles||rangeMode||!course||menuBackdrop)return;
+ const rows=round.players.map((p,seat)=>({prof:profileOf(p),seat,score:round.cards[seat]?.[round.hole],putts:round.puttCards[seat]?.[round.hole]})).filter(r=>r.prof);
+ const key=[round.uid,round.hole,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
+ if(key===profileSynced)return;profileSynced=key;
+ for(const r of rows)syncHole(r.prof,profileMeta(r.seat),{...holeFacts(),score:r.score,putts:r.putts});
+ storeProfiles(profiles);
+}
+// ONE BALL, AS ITS GOLFER'S PROFILE COUNTS IT. `before` is what was true before
+// the round moved on: who hit, which stroke this was, and where it was played from.
+function recordProfileShot(result,before){
+ const prof=profileOf(round.players[before.seat]);if(!prof)return;
+ const shot=latest?.shot,range=rangeMode,meta=range?null:profileMeta(before.seat);
+ const pin=course?.pin,rest=result.hazard||!course?null:course.surface(result.end.x,result.end.z);
+ tallyShot(prof,{range,lie:before.lie,rest,hazard:result.hazard||null,holed:!!result.holed&&!result.hazard,lipped:!!result.lipped,
+  trees:result.treeHits||0,houses:result.homeHits||0,yards:(result.total||0)/YARD,airtime:result.time,mph:shot?shot.speed/MPH:NaN,
+  teeShot:before.stroke===1,driver:before.driver,
+  puttFeet:before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:NaN,
+  strokes:before.stroke+(result.hazard?1:0),hole:meta?holeFacts():null},meta);
+ storeProfiles(profiles);
+}
 // DISCARD HAS TO ACTUALLY DISCARD. "This round and its scores are gone" was a
 // lie: the guard cleared `pendingRound` in memory and left the autosave slot
 // alone, so the next reload read it back and offered Continue on the round the
@@ -685,8 +736,9 @@ function finishShot(){
  // The range never touches the round. No stroke is recorded, no hole can
  // complete, and nothing advances -- the ball goes back to the mat and the
  // tracers stay on the field so a session reads as a session.
+ const before={seat:round.active,stroke:round.stroke,driver:lastShot?.club==='Driver',lie:course.surface(lastShot.shot.origin.x,lastShot.shot.origin.z)};
  if(rangeMode){
-  recordRangeShot(result);
+  recordRangeShot(result);recordProfileShot(result,before);
   // The panel follows play unless a row has been pinned from the shot list.
   viewShot=null;drawShotViews();refreshDispersion();drawDispersionLegend();
   view.setShotHistory?.(visibleTrails());
@@ -696,7 +748,7 @@ function finishShot(){
   save();sendPlayer();
   return;
  }
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const event=round.takeShot(result,course.pin);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const event=round.takeShot(result,course.pin);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -1419,20 +1471,22 @@ function syncLabTool(){
  for(const b of document.querySelectorAll('[data-firm]'))b.classList.toggle('on',Math.abs(FIRMNESS_PRESETS[b.dataset.firm]-firm)<1e-9);
  for(const b of document.querySelectorAll('[data-stimp]'))b.classList.toggle('on',Math.abs(Number(b.dataset.stimp)-stimp)<1e-9);
 }
-function startEndless(group){
+function startEndless(group,replaySeed){
  return new Promise(resolve=>{
-  const go=()=>buildEndless(group).then(resolve);
+  const go=()=>buildEndless(group,replaySeed).then(resolve);
   if(appMode==='studio')return guardStudio(go);
   if(appMode==='play')return guardRound(go);
   go();
  });
 }
-async function buildEndless(group){
+// `replaySeed` starts a run that has been played before -- the profile's
+// "Replay this course" -- since an endless run's holes all grow from its seed.
+async function buildEndless(group,replaySeed){
  // Straight off the main menu there is nothing to grow: the hole on screen is
  // already hole one, so the run adopts its seed and its world and starts. No
  // overlay either, because an overlay over work that is not happening is a lie.
- const adopt=menuBackdrop&&backdropRun;
- const seed=adopt?backdropRun.seed:newRunSeed();
+ const adopt=menuBackdrop&&backdropRun&&(!replaySeed||replaySeed===backdropRun.seed);
+ const seed=replaySeed||(adopt?backdropRun.seed:newRunSeed());
  const fresh=new Round({players:round.players,mode:'stroke',tee:round.tee,...group,putting:restorePutting(),endless:true,seed});
  const begin=()=>{
   // Not leaveBackdrop(): that clears the world key to force a rebuild, which is
@@ -1720,6 +1774,7 @@ function openMenu(){
  // Continue is offered whenever a real course is loaded, or a saved round is
  // still waiting behind the backdrop.
  $('menuContinue').hidden=appMode==='studio'||(menuBackdrop&&!pendingRound);
+ updateMenuProfile();
  $('menuNote').textContent=listCourses().length?'':'No saved courses yet. Shape one in Course studio, or let Play surprise you.';
  setMode('menu');icon();$('menuContinue').hidden?$('menuPlay').focus():$('menuContinue').focus();
 }
@@ -2068,15 +2123,30 @@ function groupEditor(hostId,start,onChange){
  // `seat` is the id this golfer already holds in the round. It rides through the
  // editor so that removing a row removes THAT golfer's card rather than the last
  // one in the list. A row added here has none, which is what marks it as new.
- const draft=start.map(p=>({name:p.name,team:p.team,hand:p.hand||'RH',seat:p.id}));
+ //
+ // EVERY ROW IS A PROFILE. `profile` is the one picked; a row with none is a new
+ // player, whose name is typed and who becomes a profile when the group is
+ // applied (`readDraft`). A golfer from a save older than profiles is matched by
+ // name, and becomes a new player if nobody on this device has that name.
+ const draft=start.map(p=>{const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
+  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||'RH',seat:p.id};});
  groupDraft=draft;
+ const NEW='__new';
  const paint=()=>{
+  const taken=i=>new Set(draft.filter((q,j)=>j!==i&&q.profile).map(q=>q.profile));
+  // Main first, then everyone else in the order they joined -- the same order
+  // as the switcher on My profile.
+  const everyone=profiles?[mainProfile(profiles),...profiles.profiles.filter(p=>p.id!==profiles.main)]:[];
   // The dot is shown where the group is BUILT, not only where it is scored:
   // otherwise the first time anyone sees a golfer's colour is a tracer over a
   // fairway, with nothing on screen tying it to a name.
   host.innerHTML=draft.map((p,i)=>`<div class="player-row">`
    +`<span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>`
-   +`<input aria-label="Player ${i+1} name" id="name${i}" maxlength="24" value="${escape(p.name)}">`
+   +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
+   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)}</option>`).join('')
+   +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
+   +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
+   +`</div>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
    +`<select id="hand${i}" aria-label="Player ${i+1} handedness"><option ${p.hand==='RH'?'selected':''}>RH</option><option ${p.hand==='LH'?'selected':''}>LH</option></select>`
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
@@ -2084,29 +2154,55 @@ function groupEditor(hostId,start,onChange){
    // had no remove button at all, so the only way to drop the first name was to
    // remove everyone else and retype it. The spacer keeps the last remaining
    // row aligned with the others.
-   +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name)}"><i data-lucide="trash-2"></i></button>`
+   +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name||'player '+(i+1))}"><i data-lucide="trash-2"></i></button>`
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
    +`</div>`).join('')
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
   icon();
   draft.forEach((p,i)=>{
-   $('name'+i).oninput=e=>{p.name=e.target.value;};
+   $('who'+i).onchange=e=>{
+    const v=e.target.value;
+    if(v===NEW){p.profile=null;p.name='';}else{p.profile=v;p.name=findProfile(profiles,v)?.name??'';}
+    paint();onChange?.();
+    if(v===NEW)$('name'+i)?.focus();
+   };
+   if($('name'+i))$('name'+i).oninput=e=>{p.name=e.target.value;};
    $('team'+i).onchange=e=>{p.team=e.target.value;onChange?.();};
    $('hand'+i).onchange=e=>{p.hand=e.target.value;};
   });
   host.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{
    draft.splice(Number(b.dataset.drop),1);paint();onChange?.();});
   const add=host.querySelector('[data-add]');
+  // A new row offers the next profile nobody in the group is using, and a new
+  // player when everyone on the device is already playing.
   if(add)add.onclick=()=>{
-   draft.push({name:'Player '+(draft.length+1),team:draft.length%2?'B':'A',hand:'RH',seat:undefined});
-   paint();onChange?.();};
+   const used=new Set(draft.map(q=>q.profile)),free=everyone.find(q=>!used.has(q.id));
+   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:'RH',seat:undefined});
+   paint();onChange?.();
+   if(!free)$('name'+(draft.length-1))?.focus();};
  };
  paint();
  return draft;
 }
-// What the editor currently holds, cleaned up for `Round`.
-const readDraft=()=>(groupDraft||[]).map((p,i)=>({
- name:(p.name||'').trim()||'Player '+(i+1),team:p.team,hand:p.hand,seat:p.seat}));
+// What the editor currently holds, cleaned up for `Round` -- and the moment a
+// new player becomes a profile. A typed name that is already a profile on this
+// device IS that profile rather than a second one with the same name. Throws,
+// before anything is created, on an empty name or the same golfer twice.
+function readDraft(){
+ const rows=(groupDraft||[]).map((p,i)=>{
+  if(p.profile&&findProfile(profiles,p.profile))return {...p,prof:findProfile(profiles,p.profile)};
+  const name=(p.name||'').trim();
+  if(!name)throw Error(`Give player ${i+1} a name, or pick someone from the list.`);
+  return {...p,typed:name,prof:profileByName(profiles,name)};
+ });
+ const seen=new Set();
+ for(const r of rows){const key=r.prof?.id??r.typed.toLowerCase();if(seen.has(key))throw Error(`${r.prof?.name??r.typed} is in the group twice.`);seen.add(key);}
+ return rows.map(r=>{
+  let prof=r.prof;
+  if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
+  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,seat:r.seat};
+ });
+}
 const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next player tees off. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.'};
 // `match` is false for endless: a match ends when the lead exceeds the holes
 // remaining and an endless run has no last hole, so `Round` rejects the
@@ -2380,7 +2476,7 @@ function syncTools(){
 }
 function openSheet(name){stopTour();
  if(name!=='score')cancelAdvance();
- if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
+ if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
  syncNav();updateStudioState();
  renderPanel(name,$('drawerContent'));
@@ -2393,7 +2489,7 @@ function openSheet(name){stopTour();
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','bag','flight','putting','shot','range','lab','views','shotdata']);
 const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:300,height:260},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Your distances',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',shotdata:'Shot data'};
+const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Your distances',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -2454,7 +2550,134 @@ function wireRoundCards(content){
  if($('renameRoundInput')){requestAnimationFrame(()=>{const el=$('renameRoundInput');if(el){el.focus();el.select();}});
   $('renameRoundInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();content.querySelector('[data-rround-save]')?.click();}if(e.key==='Escape'){renamingRound=null;openPanel('round');}};}
 }
+// MY PROFILE. Everything here is worked from the store at the moment the page
+// opens, so there is no second copy of any number to fall out of step. It opens
+// on the main profile; the strip across the top switches to anyone else.
+let renamingProfile=false,viewingProfile=null;
+const profileWhen=t=>{const d=new Date(t);return isNaN(d)||!t?'':d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});};
+const pct=({hit,of})=>of?`${Math.round(hit/of*100)}%`:'—';
+const toParText=rel=>rel===0?'E':(rel>0?'+':'')+(Math.round(rel*100)/100);
+const hcpText=i=>i===null?'—':i<0?'+'+(-i).toFixed(1):i.toFixed(1);
+function profileCard(r){
+ const t=roundTotals(r),stale=r.course?.generator!==GENERATOR_VERSION;
+ const of=r.endless?`Endless · ${t.played} hole${t.played===1?'':'s'}`:t.played>=r.holes?`${r.holes} holes`:`${t.played} of ${r.holes} holes`;
+ const format={stroke:'Stroke play',match:'Match play',scramble:'Scramble'}[r.mode]||'Stroke play';
+ const tags=[qualifies(r)?'<em class="profile-tag counts">Counts toward handicap</em>':'',r.mode==='scramble'?'<em class="profile-tag">Team score</em>':'',stale?'<em class="profile-tag">Earlier generator</em>':''].join('');
+ const tip=stale?' title="Fairway&#39;s generator has changed since, so the land will grow a little differently."':'';
+ return `<div class="course-card profile-round"><div class="profile-round-score" data-side="${parSide(t.rel,t.played)}"><strong>${scoreText(t.score)}</strong><small>${toParText(t.rel)}</small></div>`
+  +`<div class="course-meta"><strong>${escape(r.course?.name||'A course')}</strong>`
+  +`<span>${of} · ${format}${r.players>1?` · ${r.players} players`:''}</span>`
+  +`<span class="course-when">${profileWhen(r.started)}${tags}</span></div>`
+  +`<div class="course-card-actions"><button class="secondary" data-replay-course="${escape(r.id)}"${tip}><i data-lucide="rotate-ccw"></i> Replay this course</button></div></div>`;
+}
+function renderProfile(content){
+ if(!profiles){content.innerHTML='<p>Nobody has signed the card yet.</p><button class="primary" id="profileStart">Enter your name</button>';$('profileStart').onclick=()=>{closePanel();showWelcome();};return;}
+ const profile=findProfile(profiles,viewingProfile)||mainProfile(profiles),isMain=profile.id===profiles.main;
+ viewingProfile=profile.id;
+ const s=profileSummary(profile),h=s.handicap,c=s.counters;
+ const hcpNote=h.index===null?`${h.needed} more finished 9 or 18 hole round${h.needed===1?'':'s'} to get one.`
+  :`From ${h.rounds} round${h.rounds===1?'':'s'}: the best ${h.counted} of the last ${Math.min(20,h.rounds)}.`;
+ const num=v=>v.toLocaleString(undefined,{maximumFractionDigits:1});
+ const tile=(label,value,help)=>`<div class="stat-tile"${help?` title="${escape(help)}"`:''}><strong>${value}</strong><span>${escape(label)}</span></div>`;
+ const counters=COUNTERS.map(k=>tile(k.label,`${num((c[k.key]||0)*(k.scale||1))}${k.unit?` <small>${k.unit}</small>`:''}`,k.help)).join('');
+ const bests=BESTS.map(k=>tile(k.label,s.bests[k.key]?`${num(s.bests[k.key])} <small>${k.unit}</small>`:'—',k.help)).join('');
+ const most=Math.max(1,...Object.values(s.types));
+ const types=SCORE_TYPES.map(t=>`<div class="score-type"><span>${t.label}</span><i style="--w:${(s.types[t.key]/most*100).toFixed(1)}%"></i><strong>${s.types[t.key]}</strong></div>`).join('');
+ const avg=v=>v===null?'—':v.toFixed(2);
+ const best=b=>b?`${scoreText(b.t.score)} <small>${toParText(b.t.rel)}</small>`:'—';
+ // Main first, then everyone else in the order they joined.
+ const everyone=[mainProfile(profiles),...profiles.profiles.filter(p=>p.id!==profiles.main)];
+ const strip=everyone.length>1?`<div class="panel-tabs profile-switch" role="tablist" aria-label="Players">${everyone.map(p=>
+  `<button class="panel-tab${p.id===profile.id?' active':''}" role="tab" aria-selected="${p.id===profile.id}" data-view-profile="${p.id}">${escape(p.name)}${p.id===profiles.main?' <small>main</small>':''}</button>`).join('')}</div>`:'';
+ const head=renamingProfile
+  ?`<div class="profile-rename"><label class="field">Name<input id="profileNameInput" maxlength="${MAX_PLAYER_NAME}" value="${escape(profile.name)}"></label><div class="course-card-actions"><button class="secondary" id="profileNameSave">Save name</button><button class="secondary" id="profileNameCancel">Cancel</button></div><p class="field-error" id="profileError"></p></div>`
+  :`<div class="profile-id"><span class="profile-avatar" aria-hidden="true">${escape(profile.name.slice(0,1).toUpperCase())}</span><div><h3>${escape(profile.name)}${isMain?' <em class="profile-tag counts">Main profile</em>':''}</h3><small>Playing since ${profileWhen(profile.created)} · ${s.roundsPlayed} round${s.roundsPlayed===1?'':'s'} · ${s.holes} hole${s.holes===1?'':'s'}</small>`
+   +`<div class="profile-actions">${isMain?'':`<button class="secondary" id="profileMakeMain">Make main profile</button><button class="secondary" id="profileDelete">Remove ${escape(profile.name)}</button>`}</div><p class="field-error" id="profileError"></p></div>`
+   +`<button class="small-icon" id="profileRename" aria-label="Change ${escape(profile.name)}'s name" title="Change the name"><i data-lucide="pencil"></i></button></div>`;
+ content.innerHTML=`<div class="profile">${strip}`
+  +`<div class="profile-head">${head}<div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
+  +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
+  +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
+  +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))
+  +tile('Putts per hole',avg(s.puttsPerHole),'Putts struck plus putts awarded, per hole.')+tile('Fairways hit',pct(s.fairways),'Tee shots on par 4s and 5s that finished on the fairway.')+tile('Greens in regulation',pct(s.greens),'On the green in par minus two strokes or fewer.')
+  +tile('Best 9',best(s.best9),s.best9?s.best9.r.course?.name:'')+tile('Best 18',best(s.best18),s.best18?s.best18.r.course?.name:'')+`</div></div>`
+  +`<h3>Round history</h3>${s.history.length?`<div class="course-list">${s.history.map(profileCard).join('')}</div>`:'<p class="note">No rounds yet. Finish a hole and the round shows up here, with a button to play the same course again.</p>'}`
+  +`<p class="research-label">Every golfer in a group is a profile, picked in the group setup; a new player gets one the moment they join. The sim handicap follows the World Handicap System: every finished 9 or 18 hole round becomes a score differential, holes are capped at net double bogey, and the index is the average of the best 8 of the last 20. Fairway's courses have never been rated, so each is rated from its length alone, the way the USGA's yardage formula rates a course; its hazards, slopes and greens are not counted. Scramble scores belong to the team and stay out of the totals. Profiles live in this browser on this device.</p>`
+  +`</div>`;
+ icon();
+ const fail=e=>{const el=$('profileError');if(el)el.textContent=e.message;};
+ content.querySelectorAll('[data-view-profile]').forEach(b=>b.onclick=()=>{viewingProfile=b.dataset.viewProfile;renamingProfile=false;openPanel('profile');});
+ content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
+ if($('profileRename'))$('profileRename').onclick=()=>{renamingProfile=true;openPanel('profile');};
+ if($('profileNameCancel'))$('profileNameCancel').onclick=()=>{renamingProfile=false;openPanel('profile');};
+ if($('profileMakeMain'))$('profileMakeMain').onclick=()=>{setMainProfile(profiles,profile.id);useMainProfile();updateMenuProfile();openPanel('profile');toast(`${profile.name} is the main profile now.`);};
+ // Two presses, the way deleting a course asks: a profile's history cannot be
+ // brought back.
+ if($('profileDelete'))$('profileDelete').onclick=()=>{
+  const el=$('profileDelete');
+  if(el.dataset.armed!==profile.id){el.dataset.armed=profile.id;el.textContent=`Remove ${profile.name} and their history? Press again`;return;}
+  try{deleteProfile(profiles,profile.id);viewingProfile=profiles.main;openPanel('profile');toast(`${profile.name} has been removed from this device.`);}catch(e){fail(e);}
+ };
+ if($('profileNameSave')){
+  const commit=()=>{try{const before=profile.name;renameProfile(profiles,profile.id,$('profileNameInput').value);followRename(profile,before);renamingProfile=false;openPanel('profile');toast(`${before} is ${profile.name} now.`);}catch(e){fail(e);}};
+  $('profileNameSave').onclick=commit;
+  requestAnimationFrame(()=>{const el=$('profileNameInput');if(el){el.focus();el.select();}});
+  $('profileNameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape'){renamingProfile=false;openPanel('profile');}};
+ }
+}
+// A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
+// in a round waiting behind Continue, and in an open group editor. A golfer is
+// that profile by id, or -- in a save from before ids -- by the old name.
+function followRename(profile,from){
+ const mine=p=>p.profile===profile.id||(!p.profile&&sameGolfer(p.name,from));
+ for(const r of [round,pendingRound])if(r)for(const p of r.players)if(mine(p)){p.name=profile.name;p.profile=profile.id;}
+ if(groupDraft)for(const p of groupDraft)if(p.profile===profile.id)p.name=profile.name;
+ useMainProfile();profileSynced='';updateMenuProfile();
+}
+function updateMenuProfile(){
+ const note=$('menuProfileNote'),m=mainProfile(profiles);if(!note)return;
+ if(!m){note.textContent='Stats, rounds, handicap';return;}
+ const h=profileSummary(m).handicap,others=profiles.profiles.length-1;
+ note.textContent=(h.index===null?`${m.name} · stats and rounds`:`${m.name} · sim handicap ${hcpText(h.index)}`)+(others?` · +${others} player${others===1?'':'s'}`:'');
+}
+// "REPLAY THIS COURSE": the same ground, a fresh card. A course comes back from
+// the settings it was grown from, an endless run from its seed; the group and
+// the format are whatever is set up now, the same as playing a saved course.
+function replayFromHistory(profile,id){
+ const e=profile?.rounds.find(r=>r.id===id);if(!e)return;
+ if(flight){toast('Finish the current shot first.');return;}
+ const name=e.course?.name||'that course';
+ if(e.endless){
+  if(!e.course?.seed){toast('That run did not keep its seed, so it cannot be grown again.');return;}
+  startEndless({players:round.players,tee:e.tee||round.tee},e.course.seed).then(()=>toast(`Replaying “${name}”.`));
+  return;
+ }
+ let grown;
+ try{grown=courseSettings(validateSettings(migrateSettings(e.course?.settings||{},e.course?.schema||SCHEMA_VERSION)));}
+ catch{toast('That course cannot be rebuilt by this version of Fairway.');return;}
+ startRoundOn(grown,{players:round.players,mode:round.mode,tee:e.tee||round.tee},name).then(()=>toast(`Replaying “${name}”.`));
+}
+// THE FIRST-LOAD WELCOME. Shown whenever this browser has no profiles, over the
+// menu, and gone only once a name has been given. That first name is the main
+// profile, and it takes over the placeholder golfer every round starts with.
+function showWelcome(){
+ const box=$('welcome');box.hidden=false;$('welcomeError').textContent='';
+ requestAnimationFrame(()=>$('welcomeName').focus());
+ $('welcomeForm').onsubmit=e=>{
+  e.preventDefault();
+  try{
+   const placeholder=Round.defaultPlayer.name,made=addProfile(profiles,$('welcomeName').value);
+   profiles=made.store;
+   for(const r of [round,pendingRound])if(r)for(const p of r.players)if(!p.profile&&sameGolfer(p.name,placeholder)){p.name=made.profile.name;p.profile=made.profile.id;}
+   useMainProfile();updateMenuProfile();
+   box.hidden=true;
+   toast(`Welcome, ${made.profile.name}. Your stats start with your next shot.`);
+   $('menuContinue').hidden?$('menuPlay').focus():$('menuContinue').focus();
+  }catch(err){$('welcomeError').textContent=err.message;}
+ };
+}
 function renderPanel(name,content){
+ if(name==='profile'){renderProfile(content);return;}
  if(name==='library'){
   // The box is pre-filled with the name this course is ALREADY going by on the
   // card, so saving it keeps calling it the same thing. It used to offer the
@@ -2782,8 +3005,8 @@ function renderPanel(name,content){
    if(flight){toast('Finish the current shot first.');return;}
    // Validated HERE rather than inside `buildEndless`: the overlay must not go
    // up over a group that is about to be rejected.
-   const group=readGroup();
-   try{new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
+   let group;
+   try{group=readGroup();new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
    endlessSetup=false;closePanel();
    await startEndless(group);
    toast('Endless: hole out and the next one grows.');
@@ -2805,7 +3028,8 @@ function renderPanel(name,content){
    +`<button class="primary" data-panel-action id="rangeGo">${live?'Apply to this session':'Open the driving range'} <i data-lucide="arrow-right"></i></button>`;
   groupEditor('playerRows',round.players);
   $('rangeGo').onclick=()=>{
-   const players=readDraft();
+   let players;
+   try{players=readDraft();}catch(e){$('roundError').textContent=e.message;return;}
    const green=Math.min(GREEN_RANGE[1],Math.max(GREEN_RANGE[0],Number($('rangeSetupGreen').value)||DEFAULT_GREEN_YARDS));
    if(live){
     // APPLIED IN PLACE. Shots already recorded keep the index they were hit
@@ -2881,7 +3105,8 @@ function renderPanel(name,content){
   // true. One who leaves takes their card with them, so this asks first.
   if($('applyGroup'))$('applyGroup').onclick=()=>{
    if(flight){toast('Finish the current shot first.');return;}
-   const players=readDraft();
+   let players;
+   try{players=readDraft();}catch(e){$('roundError').textContent=e.message;toast(e.message);return;}
    // WHO IS ACTUALLY LEAVING: the golfers whose seat is no longer in the draft.
    // This used to be `round.players.slice(players.length)` -- the tail of the
    // list -- which named the wrong golfer whenever the one removed was not the
@@ -3562,6 +3787,7 @@ function bind(){
  $('menuPlay').onclick=()=>openPanel('round');
  $('menuStudio').onclick=()=>openStudioSetup();
  $('menuCourses').onclick=()=>openPanel('library');
+ $('menuProfile').onclick=()=>{renamingProfile=false;viewingProfile=profiles?.main??null;openPanel('profile');};
  $('menuHelp').onclick=()=>openPanel('help');
  $('menuCamera').onclick=()=>openPanel('camera');
  $('menuMonitor').onclick=()=>openPanel('monitor');
@@ -3598,7 +3824,9 @@ function bind(){
   cancelAdvance();
   const keptTrails=holeTrails.slice(0,-1),keptShots=Math.max(0,practiceShots-1);
   if(!round.mulligan())return;
-  closePanel();loadCourse();
+  // The ball taken back belongs to whoever is up again now.
+  {const prof=rangeMode?null:profileOf(round.player);if(prof){tallyMulligan(prof);storeProfiles(profiles);}}
+  closePanel();loadCourse();save();
   holeTrails=keptTrails;practiceShots=keptShots;
   view.setShotHistory?.(visibleTrails());
   view.setTrail([]);
@@ -4449,6 +4677,7 @@ try{
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
  openMenu();
+ if(!profiles)showWelcome();
  // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry
  // one-off costs the loading work cannot reach -- the first render with a moving
  // camera, the cull's first sort, the grass ring -- and one of them landed in

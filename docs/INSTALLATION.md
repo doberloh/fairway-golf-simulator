@@ -163,8 +163,9 @@ password protection, say -- nothing the home screen needs is fetched without
 your login: the icon is inside the page and the manifest asks to carry the
 login. Two things to know. The home-screen app keeps **its own** login,
 separate from Safari's, so the first time you open it from the home screen it
-asks for the password once. And it keeps its own saved rounds, so a round
-saved while playing in Safari does not appear in the home-screen app.
+asks for the password once. And it keeps its own saved rounds and its own
+profile, so a round saved or a name given while playing in Safari does not
+appear in the home-screen app.
 
 If the home-screen icon comes out as a screenshot of the page, delete it and
 add it again; iOS remembers the first icon it took for an address. If it is

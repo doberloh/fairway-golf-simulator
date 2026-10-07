@@ -517,6 +517,9 @@ export function simulateShot(shot,course,options={}){
  const skidTotal={value:0};
  const points=[{x:p[0],y:p[1],z:p[2],t:0,v:hypot(...v),w:spin*30/Math.PI}],k=.5*rho*Math.PI*R*R/MASS;
  let holed=false,hazard=null,lipped=false,overCup=false,wall=null,edge=null;
+ // Counted for the player's profile, and for nothing else: a strike is a
+ // reflection of a ball moving INTO a trunk or a wall, not a frame spent touching one.
+ let treeHits=0,homeHits=0;
  // The rim is cut turf, so it costs the ball what this green's turf costs it.
  const rimMu=rimResistance(options.turf);
  // A small spatial index includes neighboring holes without testing every trunk
@@ -727,7 +730,7 @@ export function simulateShot(shot,course,options={}){
    const dx=p[0]-old[0],dz=p[2]-old[2],ox=old[0]-tree.x,oz=old[2]-tree.z,A=dx*dx+dz*dz,B=2*(ox*dx+oz*dz),C=ox*ox+oz*oz-radius*radius,disc=B*B-4*A*C;
    let u=C<0?0:A>1e-12&&disc>=0?(-B-Math.sqrt(disc))/(2*A):-1;if(u<0||u>1)continue;
    let nx=old[0]+u*dx-tree.x,nz=old[2]+u*dz-tree.z,n=hypot(nx,nz);if(n<1e-8){nx=-v[0];nz=-v[2];n=hypot(nx,nz)||1;if(n===1&&nx===0&&nz===0)nx=1;}nx/=n;nz/=n;
-   const incoming=v[0]*nx+v[2]*nz;if(incoming<0){v[0]-=1.3*incoming*nx;v[2]-=1.3*incoming*nz;w=[v[0],v[2]];}
+   const incoming=v[0]*nx+v[2]*nz;if(incoming<0){v[0]-=1.3*incoming*nx;v[2]-=1.3*incoming*nz;w=[v[0],v[2]];treeHits++;}
    p[0]=tree.x+nx*(radius+.003)+v[0]*dt*(1-u);p[2]=tree.z+nz*(radius+.003)+v[2]*dt*(1-u);if(rolling)p[1]=course.height(p[0],p[2])+R;break;
   }
   // Resolve the deepest overlap with a house and push the ball back out along
@@ -746,7 +749,7 @@ export function simulateShot(shot,course,options={}){
    const wx=nx*c+nz*s,wz=-nx*s+nz*c;
    p[0]+=wx*push;p[1]+=ny*push;p[2]+=wz*push;
    const incoming=v[0]*wx+v[1]*ny+v[2]*wz;
-   if(incoming<0){const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];}
+   if(incoming<0){const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];homeHits++;}
    if(ny>0&&rolling)p[1]=Math.max(p[1],top);
    if(course.residentialOB){hazard='Out of bounds';}
    break;
@@ -1117,7 +1120,7 @@ export function simulateShot(shot,course,options={}){
   t+=duration;
  }
  points.push({x:p[0],y:p[1],z:p[2],t});
- return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,onGreen:course.surface(p[0],p[2])==='green'};
+ return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,onGreen:course.surface(p[0],p[2])==='green'};
 }
 // What the DEVICE says about itself, from a status frame. `parseLaunchMessage`
 // returns null for these and the readiness never reached the browser, so the
