@@ -624,5 +624,31 @@ the owner's R50 session (RESEARCH.md). The website says the model is "around
 3%" on carry, offline and apex against real launch-monitor data; after the
 refit the typical misses per source are carry 1.5-2.5% and peak height
 1.7-5.5%, so the claim stands. The data the fit used is private and not in the
-repository; the fitting tool is. Not in any release yet: v0.2 predates it.
+repository; the fitting tool is. v0.2 predates it; it shipped in v0.3 (below).
+
+## Addendum, 7 October 2026: v0.3, and the website deployed live
+
+Published at the owner's request from `main` at 568e125 as "Fairway 0.3
+(beta)", tag `v0.3`, not a pre-release, with the five zips and checksums
+`npm run release` builds; it is the Latest release, and a downloaded zip matched
+its checksum. It carries the flight refit, player profiles (every golfer a
+profile, a main profile, stats, round history, the sim handicap), replay in
+endless runs, the tracer lag and the top-menu fix.
+
+The website was deployed LIVE the same day at the owner's request
+(`npm run deploy`, main@568e125). It is still private: Netlify's password
+answers 401 to an anonymous request, the `X-Robots-Tag: noindex` header covers
+every path, and `site/robots.txt` still disallows everything. Only the game page
+changed in that deploy.
+
+**Download buttons and a private repository.** The buttons point at
+`releases/latest/download/<zip>`, which GitHub answers with 404 to anyone not
+signed in while the repository is private. That was already true of v0.1 and
+v0.2; it ends when the repository goes public (and `tools/github-protect.mjs`
+has to run then).
+
+**A Dependabot alert, left open.** GitHub flags `braces` 3.0.3 (high, stack
+exhaustion on deeply nested patterns). It arrives through
+`vite-plugin-singlefile` -> `micromatch`, is used only while building, and is in
+nothing a player downloads. GitHub lists no patched version yet.
 

@@ -3362,6 +3362,12 @@ engineering provenance pass, not legal advice.
   knuckleball carries 72 yd, and 131 of the session's 133 shots are unchanged
   to the decimal. `tests/low-spin.test.mjs`.
 
+- [x] **v0.3 published, and the website deployed live (7 October).** "Fairway
+  0.3 (beta)", at the owner's request, from `main` at 568e125: player profiles
+  and the sim handicap, the flight refit, endless replay, tracer lag and the
+  top-menu fix. The Latest release; a downloaded zip matched its checksum. The
+  site went live with `npm run deploy` and is still password-protected and
+  unindexed. DISTRIBUTION_REVIEW has the addendum.
 - [x] **v0.2 published with the left/right fix (6 October).** "Fairway 0.2
   (beta)", at the owner's request, from `main` at 94987ba: the left/right fix,
   panel title bars, the bay measured by its sides, and Range controls in the
