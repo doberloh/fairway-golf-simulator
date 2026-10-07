@@ -1050,6 +1050,44 @@ const JOURNEYS = [
  },
 
  {
+  name: 'no-swallowed-errors',
+  what: 'starting the game and building a course throw nothing at all -- not even an error something catches and hides',
+  async run(t) {
+   // THE CONSOLE CANNOT SEE A CAUGHT ERROR. A TODO entry once reported a
+   // TypeError "thrown during load and swallowed"; it could not be reproduced
+   // on any version in the repository's history (7 October), so this keeps it
+   // from coming back unseen: the browser's debugger is told to stop on EVERY
+   // exception, caught or not, and each one is recorded and let go. A clean
+   // start and course build throw none, so any is a failure.
+   const cdp = await t.page.context().newCDPSession(t.page);
+   const thrown = [];
+   cdp.on('Debugger.paused', ev => {
+    const lines = (ev.data?.description || ev.reason || '').toString().split(String.fromCharCode(10));
+    thrown.push(lines.slice(0, 3).map(l => l.trim()).join(' | '));
+    cdp.send('Debugger.resume').catch(() => {});
+   });
+   await cdp.send('Debugger.enable');
+   await cdp.send('Debugger.setPauseOnExceptions', {state: 'all'});
+   const check = what => { if (thrown.length) throw new Error(`${thrown.length} thrown while ${what}: ${[...new Set(thrown)].slice(0, 3).join(' || ')}`); };
+   await t.step('a fresh start, to the menu', async () => {
+    await t.page.reload();
+    await menuReady(t);
+    check('starting');
+   });
+   await t.step('an 18-hole course', async () => {
+    await t.page.evaluate(() => window.lab.course({holes: 18}));
+    await t.inPlay(120 * SLOW);
+    check('building an 18-hole course');
+   });
+   await t.step('a tee shot', async () => {
+    await t.shot();
+    check('playing a shot');
+   });
+   await cdp.send('Debugger.disable').catch(() => {});
+  },
+ },
+
+ {
   name: 'surprise-round',
   what: 'Play → Surprise me & play builds a nine-hole course, and every in-round tool opens',
   async run(t) {

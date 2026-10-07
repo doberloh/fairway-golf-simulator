@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const map = new Map();
 globalThis.localStorage = {getItem: k => map.has(k) ? map.get(k) : null, setItem: (k, v) => map.set(k, String(v)), removeItem: k => map.delete(k), clear: () => map.clear()};
-const {exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
+const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, storeProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
@@ -249,4 +249,30 @@ test('a file that is not a player backup is refused, and changes nothing', () =>
  // The single profile the first build kept reads as a backup too.
  const r = importProfiles(store, JSON.stringify({version: 1, name: 'Old Me', created: 3, counters: {shots: 2}, bests: {}, rounds: []}));
  assert.deepEqual(r.added, ['Old Me']);
+});
+
+test('a round removed from the history leaves the scoring and the handicap, and stays removed', () => {
+ const p = blankProfile('Dee');
+ const nine = (id, score) => { const m = meta(id, {finished: true}); for (let i = 0; i < 9; i++) syncHole(p, m, {index: i, par: 4, yards: 400, score, putts: 2}); };
+ nine('a', 4); nine('b', 4); nine('c', 4); nine('bad', 9);
+ tallyShot(p, {lie: 'tee', rest: 'fairway', yards: 200});
+ const before = profileSummary(p);
+ assert.equal(before.handicap.rounds, 4);
+ removeRound(p, 'bad');
+ const after = profileSummary(p);
+ assert.equal(after.roundsPlayed, 3);
+ assert.equal(after.handicap.rounds, 3);
+ assert.ok(after.handicap.index <= before.handicap.index, 'the blow-up no longer counts');
+ assert.equal(after.types.triple, 0);
+ // The balls hit are still counted: a shot taken was still taken.
+ assert.equal(p.counters.shots, 1);
+ // A round removed while it is still being played is not written back.
+ syncHole(p, meta('bad', {finished: false}), {index: 0, par: 4, yards: 400, score: 5});
+ tallyShot(p, {lie: 'tee', rest: 'fairway', teeShot: true, strokes: 1, hole: {index: 1, par: 4, yards: 400}}, meta('bad'));
+ assert.ok(!p.rounds.some(r => r.id === 'bad'));
+ // And the store keeps the list through a save and a load.
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Dee');
+ removeRound(profile, 'gone'); storeProfiles(store);
+ assert.deepEqual(findProfile(loadProfiles(), profile.id).removed, ['gone']);
 });

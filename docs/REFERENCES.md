@@ -450,3 +450,10 @@ is only as good as the ability to go back and check what it was taken from.
 - Model Local Rule G-10 (club length 46 inches) -- https://www.usga.org/content/usga/home-page/articles/2021/10/local-rule-usga-randa-limits-club-length.html -- read through a search summary; the basis for placing a club-length at a typical 45.5 inch driver.
 - Rules of Golf PDF (RFEG mirror) -- https://rfegolf.es/ArtculosDocumento/REGLAS/Reglas%202023/2%20Rules%20of%20Golf%20RyA%202023.pdf -- found, not read: a search summary agreed with the randa.org Rule 17 text.
 - CDGA penalty relief presentation -- https://www.cdga.org/pdf/Penalty%20Relief%20Presentation.pdf -- found and set aside; nothing beyond the Rules themselves.
+
+## The licence check (7 October 2026)
+
+- David Hoskins, "Hash without Sine" -- https://www.shadertoy.com/view/4djSRW -- 403 to automated requests. MIT, Copyright (c)2014 David Hoskins; the licence header and the hash12/hash13 bodies were read from a redistribution, https://pyssv.readthedocs.io/en/latest/_modules/random.glsl.html, and match the code here. Notice in THIRD_PARTY_NOTICES.txt.
+- Inigo Quilez, "smooth minimum" -- https://iquilezles.org/articles/smin -- 404 to automated requests (redirect to http, then not found); its terms could not be read.
+- glsl-smooth-min -- https://github.com/glslify/glsl-smooth-min (poly.glsl, LICENSE.md) -- MIT, Copyright (c) 2014 stackgl contributors; poly.glsl is identical to the `smin` in ground.js. The licence relied on.
+- glsl-hash-blur, shadox, godotshaders "Rainier mood" -- found in the search for Hoskins's hash; they confirm how widely it is redistributed under MIT. Not used.

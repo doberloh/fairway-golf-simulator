@@ -29,6 +29,8 @@ export const PROFILE_KEY = 'fairway-profiles-v1';
 export const LEGACY_KEY = 'fairway-profile-v1';
 export const PROFILE_VERSION = 2;
 export const MAX_PROFILES = 60;
+// How many removed round ids a profile remembers; far more than are ever in play.
+const MAX_REMOVED = 200;
 // The same limit a player's name has on a round, so the profile name always
 // fits in the group editor it is copied into.
 export const MAX_PLAYER_NAME = 24;
@@ -93,7 +95,7 @@ export function validName(name) {
 }
 
 export function blankProfile(name, now = Date.now(), id = newProfileId()) {
- return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: []};
+ return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: [], removed: []};
 }
 
 const finite = v => Number.isFinite(v) ? v : 0;
@@ -108,7 +110,11 @@ export function normaliseProfile(d) {
  for (const {key} of COUNTERS) if (Number.isFinite(d.counters?.[key]) && d.counters[key] >= 0) counters[key] = d.counters[key];
  for (const {key} of BESTS) if (Number.isFinite(d.bests?.[key]) && d.bests[key] > 0) bests[key] = d.bests[key];
  const rounds = Array.isArray(d.rounds) ? d.rounds.filter(r => r && typeof r.id === 'string' && Array.isArray(r.card)).slice(0, MAX_HISTORY) : [];
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds};
+ // Rounds the player took out of their history (`removeRound`). A record from
+ // before this existed has none, which reads the same as an empty list -- so,
+ // like a new counter, it needs no migration.
+ const removed = Array.isArray(d.removed) ? d.removed.filter(x => typeof x === 'string' && x.length <= 40).slice(-MAX_REMOVED) : [];
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile
@@ -231,7 +237,7 @@ export function tallyShot(p, f, meta = null, now = Date.now()) {
  // Fairway and green in regulation belong to the HOLE, so they are written on
  // the round's card rather than counted: a hole replayed after a mulligan
  // overwrites its own record instead of counting twice.
- if (meta && f.hole) {
+ if (meta && f.hole && !p.removed?.includes(meta.id)) {
   const h = holeRecord(entryFor(p, meta, now), f.hole.index);
   h.par = f.hole.par; h.yards = f.hole.yards;
   if (f.teeShot && f.hole.par >= 4) h.fairway = !f.hazard && f.rest === 'fairway';
@@ -246,14 +252,23 @@ export function tallyMulligan(p) { p.counters.mulligans = (p.counters.mulligans 
 // mulligan that un-holes a putt takes the score back off as well.
 export function syncHole(p, meta, {index, par, yards, score, putts}, now = Date.now()) {
  const e = p.rounds.find(r => r.id === meta.id);
- if (!e && !Number.isFinite(score)) return p;
+ if ((!e && !Number.isFinite(score)) || p.removed?.includes(meta.id)) return p;
  const h = holeRecord(entryFor(p, meta, now), index);
  h.par = par; h.yards = yards;
  if (Number.isFinite(score)) { h.score = score; h.putts = Number.isFinite(putts) ? putts : null; }
  else { delete h.score; delete h.putts; }
  return p;
 }
-export function deleteHistory(p, id) { p.rounds = p.rounds.filter(r => r.id !== id); return p; }
+// REMOVING A ROUND FROM THE HISTORY. Its scores leave the scoring totals and
+// the sim handicap; the running totals keep the balls that were hit, because a
+// shot taken was still taken and the totals cannot say which round they came
+// from. The id is remembered so a round removed while it is still being played
+// is not written back by the next hole it finishes.
+export function removeRound(p, id) {
+ p.rounds = p.rounds.filter(r => r.id !== id);
+ p.removed = [...(p.removed || []).filter(x => x !== id), id].slice(-MAX_REMOVED);
+ return p;
+}
 
 // ---- reading --------------------------------------------------------------
 const scored = h => h && Number.isFinite(h.score) && Number.isInteger(h.par);

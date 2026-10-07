@@ -69,7 +69,7 @@ const SHORE_ALPHA='diffuseColor.a*=1.-.8*smoothstep(.5,1.,vShore);';
 // that surges in and out along the shore, broken into lace by drifting noise.
 const FOAM_FRAG=`
 uniform float waterTime,foamPace,foamGrain;varying vec2 vFoamUv;varying vec3 vFoamWorld;
-float fHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+/* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float fHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float fNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fHash(i),fHash(i+vec2(1.,0.)),f.x),mix(fHash(i+vec2(0.,1.)),fHash(i+vec2(1.,1.)),f.x),f.y);}
 float foamAlpha(){
  // A pond at 30% of the water's own clock: at full speed the lapping read as
@@ -163,7 +163,7 @@ varying vec2 vChan;
 varying vec3 vWaterWorld;
 // Value noise, hashed from the world position itself: no tile, no texture
 // lookup, and a pattern that is different at every pond on the course.
-float wHash(vec2 p){
+/* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float wHash(vec2 p){
  vec3 q=fract(vec3(p.xyx)*vec3(.1031,.1030,.0973));
  q+=dot(q,q.yzx+33.33);
  return fract((q.x+q.y)*q.z);
@@ -1172,7 +1172,7 @@ export class GolfView{
 
  addSky(sunDir){
   const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
- float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
+ /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
  // view direction rather than screen space is what makes them hold still

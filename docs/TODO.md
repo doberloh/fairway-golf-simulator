@@ -101,7 +101,9 @@ same heading in `# Done`.
   PHASE table in course.js and LOOP_WEIGHT in terrain-grid.js were fitted to one
   profile on one machine. A very different course shape could make the bar
   advance unevenly. It cannot stall or go backward -- there is a test for both --
-  but it is an estimate wearing a percentage.
+  but it is an estimate wearing a percentage. Since 7 October the graphics
+  half of the bar is an estimate too: shader compilation cannot report its
+  progress, so the bar creeps through it, paced by the last compile.
 
 ## Reading a green without the overlays
 
@@ -358,9 +360,6 @@ GitHub repository, and stop shipping what nobody needs.
 
 ## Selling it: the attribution pass
 
-- [ ] **Nothing since 11 September has had a provenance search.** The mesh
-  ingest, vegetation, greens and everything after. This pass checked the
-  dependency and asset FOOTPRINT, not the source for similarity.
 
 ## Getting it into other people's hands
 
@@ -674,7 +673,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
 
-- [ ] **A TypeError on every course load, pre-existing.** 'Cannot set properties of undefined (setting value)' is thrown during load and swallowed; it is present at HEAD and the scene renders anyway, so nothing visibly depends on it. Found while chasing an unrelated blank screen and wrongly assumed to be the cause. Worth finding: an exception on the load path is a trap for the next person debugging something else.
 
 - [ ] **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
 
@@ -721,7 +719,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 ## Player profile
 
-- [ ] **Remove a round from the history.** There is no way to take a round out of the profile once it has a hole on it, so a practice nine played badly on purpose counts toward the sim handicap for twenty rounds. `deleteHistory` was written and left out of the page until the owner wants it.
 - [ ] **Rate courses by more than their length.** The sim handicap rates every course from yardage alone (RESEARCH.md *The sim handicap*). The generator knows where the water, sand, trees and slopes are; obstacle values from the USGA's ten factors would make a hard course rate hard. Also check the placed bogey-rating formula against the Course Rating System manual.
 - [ ] **WHS soft and hard caps, and exceptional scores.** Left out until profiles carry a year of history.
 
@@ -823,6 +820,14 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## Launch fixes (7 October)
+
+- [x] **Remove a round from a player's history.** Each round on My profile has **Remove**, which asks twice. Its scores leave the scoring totals and the sim handicap; the running totals keep the balls that were hit. The round's id is remembered (`removed` on the profile), so one removed while still being played is not written back by its next hole. `removeRound` in profile.js; tested.
+- [x] **The licence check of everything since 11 September.** Dependencies unchanged; assets all CC0, ours or credited; two pieces of MIT shader code were missing their notices (Hoskins's hash, the Quilez/stackgl smooth-min) and now have them; five copies of a shader one-liner with no identifiable author were replaced. DISTRIBUTION_REVIEW has the addendum, with what it still cannot establish.
+- [x] **The swallowed TypeError on course load could not be found.** Searched with the browser's debugger set to stop on every exception, caught or not: none is thrown at startup, building a 9- or 18-hole course, on Low or High, from the dev server or the built file from disk, in an endless run or on the range -- and none in a build of the repository's first commit either. Whatever it was went before the history began. A smoke journey, `no-swallowed-errors`, now fails if anything is thrown, even caught, while starting and building a course, so it cannot come back unseen.
+- [x] **The build overlay sat on a full bar for most of the wait.** Measured on an 18-hole build: generation filled the bar in 3 s, then "Preparing the graphics" showed it full for another 6.8 s while shaders compiled. Generation now fills the first half and the graphics the second, creeping through the compile on a curve paced by the last one; the bar moves throughout (70 updates against 12) and never reaches the end before the work does.
+- [x] **Donation wording reviewed by the owner and kept as it is.**
 
 ## Penalty relief
 

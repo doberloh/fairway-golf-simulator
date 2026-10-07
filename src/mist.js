@@ -249,7 +249,7 @@ uniform vec2 waterExtent;
 uniform float waterDensity,waterScale;
 uniform float aerialStrength,aerialScale;uniform vec3 aerialColor,aerialWarm,aerialSun;
 varying vec3 vMistWorld;
-float mistHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+/* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float mistHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float mistNoise(vec2 p){
  vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
  return mix(mix(mistHash(i),mistHash(i+vec2(1,0)),f.x),mix(mistHash(i+vec2(0,1)),mistHash(i+1.),f.x),f.y);

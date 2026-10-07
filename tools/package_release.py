@@ -160,6 +160,7 @@ def main():
     for marker in ['Dustin Oberloh', 'Copyright (c) 2024 bryc',
                    'Copyright (c) 2024, Mapbox', 'Lucide Icons and Contributors',
                    'Missing Deadlines (Benjamin Wrensch)', 'Apache License',
+                   'Copyright (c)2014 David Hoskins', 'Copyright (c) 2014 stackgl contributors',
                    'Third-party licenses & credits']:
         if marker not in html:
             raise SystemExit(f'Missing embedded notice: {marker}')
