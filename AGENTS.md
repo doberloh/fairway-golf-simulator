@@ -4,10 +4,19 @@
 repository root carries only README.md (the front door), CONTRIBUTING.md (the
 short version of this file), LICENSE and this file.
 
-Read `docs/PROJECT_HANDOFF.md` first. It explains the product, architecture,
-units, generation pipeline, persistence, testing, packaging and known
-limitations without requiring conversation history. Read `docs/TODO.md` for
-prioritized follow-up work and `docs/PLAYING.md` for player controls.
+Read `docs/ARCHITECTURE.md` first -- about 4 thousand tokens: the product,
+where every file lives, the units, the generation pipeline and the traps, each
+pointing at the section that has the detail.
+
+**Never read PROJECT_HANDOFF.md, TODO.md or RESEARCH.md whole.** They are
+roughly 80, 90 and 140 thousand tokens, and one of them read top to bottom
+costs more than most changes do. List a document's headings
+(`grep -n "^## \|^### " docs/PROJECT_HANDOFF.md`), search it for the subject
+(`grep -n -i "<subject>" docs/*.md`), and read only the sections that match.
+TODO.md's open work is everything above `# Done`; PLAYING.md is searched the
+same way for a control or a setting. (Owner's request, 7 October 2026: these
+documents had grown so large that following the old "read PROJECT_HANDOFF
+first" rule spent most of a session's budget before any work began.)
 
 Preserve the portable offline single-file build, Cartoon-only graphics, complete 9/18-hole landscapes, seeded procedural individual holes, real ball/cup dimensions, and current scoring formats. Keep terrain rendering, collision heights, surface queries and map geometry consistent. Generation changes require attention to older saved rounds and GPU data textures.
 
@@ -221,6 +230,7 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 - **RESEARCH.md** — anything with a number behind it. What the model does, what it is anchored to, what it was measured at, and where it knowingly departs from the source. Record the measurement, not the intention.
 - **TODO.md** — a changelog as much as a list, split in two: open work at the top under its section headings, and everything finished in `# Done` at the foot, under a copy of the heading it came from. Tick an entry and move it into the matching `# Done` section with what was actually built, **and close any open entry the change has made untrue**. Never leave an open item nested as a note under a finished one — ten of them had accumulated that way, invisible, which is why the file was split. An open checkbox is a claim about the code as it stands; one entry here once asserted the exact opposite of what the physics did, which is how a correct behaviour nearly got "fixed" back into a bug.
 - **PROJECT_HANDOFF.md** — architecture, invariants and the traps. If something must stay true for the code to work, say so here and say what breaks when it does not.
+- **ARCHITECTURE.md** — the short map every session reads first. A file added, removed or renamed gets its line in *Where things live*; a new invariant or trap gets ONE line in *The traps*, naming the PROJECT_HANDOFF phrase to search for. The detail never lives only here, and the file stays under about 40 KB -- the moment it grows into a second PROJECT_HANDOFF it stops saving anything.
 - **BALL_BEHAVIOUR_KNOBS.md** — the plain-language map from a tuning parameter to the ball behaviour it changes, and what each surface is anchored against. It is the file a request gets written against, so it goes stale faster than any other and matters more when it does. It has already sat asserting the reverse of the code once.
 - **PROCEDURAL_GENERATION.md** — what the generator produces and in what order.
 - **REFERENCES.md** — the source list behind RESEARCH.md and LANDSCAPE_RESEARCH.md. A source consulted and not listed here is a source the next person has to find again.
@@ -232,7 +242,7 @@ Use focused regression tests for the behavior being changed, inspect visual chan
 - **ATTRIBUTION.md** and **THIRD_PARTY_NOTICES.txt** — any dependency added, removed or upgraded, and any asset or data source taken in.
 - **DISTRIBUTION_REVIEW.md** — anything affecting the offline build, file-URL behaviour, bundle size or release claims.
 
-**Check every one of them, every time, including the ones the change does not obviously touch.** The player-facing manual and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
+**Check every one of them, every time, including the ones the change does not obviously touch -- by SEARCHING, not by reading.** Grep every document for the names, settings, numbers and behaviours the change touched (`grep -n -i "<name>" README.md CONTRIBUTING.md docs/*.md`), read the sections that match, and edit those. A document with no match has been checked. Reading every document whole would cost several hundred thousand tokens per pass; a search reaches the same lines for a few thousand. The player-facing manual and PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md, PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. Nothing about the rule changed. "Update the docs" was read as "write up what was measured", RESEARCH.md is the natural home for that, so it always got written and always felt like compliance. The two that rotted describe what a PLAYER sees and what the ARCHITECTURE guarantees -- the two a newcomer reads first, and the two least connected to whatever was just measured.
 
 A quick way to catch it, before committing:
 
@@ -247,7 +257,7 @@ A file many commits behind the others is the gap.
 
 **If a change touches nothing in a file, that is a finding, not a skip.** The question is asked every pass; the answer is often no.
 
-**AND SAY SO. Name the files that were read and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and PLAYING read, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
+**AND SAY SO. Name the files that were searched and judged not to need changing, in the reply, not silently.** An unmentioned file is indistinguishable from a forgotten one -- by the reader and, in practice, by the writer too. "PROJECT_HANDOFF and PLAYING searched for the names involved, nothing a player can see or an invariant changed" is one line, and it is the line that makes the audit real rather than intended. If that sentence is hard to write honestly, the file probably did need editing.
 
 Write down the decisions and the **rejected alternatives**, especially ones that look obviously right. "The ladder of relaxations reads tidier and falls off a cliff", "reaching for the rim circle below lip height parks the ball inside the wall" — those sentences are worth more than a description of the code, which anyone can read. The same is true of a bug that was subtle: record what it looked like, because it is the recognisable symptom that saves the next hour, not the fix.
 

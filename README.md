@@ -120,11 +120,13 @@ checked by hand.
 ## Documentation
 
 [docs/README.md](docs/README.md) is the index and says which document answers
-which question. The four that matter most:
+which question. The five that matter most:
 
 - **[docs/PLAYING.md](docs/PLAYING.md)** — the player's manual.
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the short map: where
+  everything lives, the units, and the traps. Read this before changing anything.
 - **[docs/PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md)** — the architecture,
-  the invariants, and the traps. Read this before changing anything.
+  the invariants, and the traps in full. Search it; it is long.
 - **[docs/RESEARCH.md](docs/RESEARCH.md)** — every number in the simulator,
   what it is anchored to, and where it knowingly departs from its source.
 - **[docs/TODO.md](docs/TODO.md)** — open work at the top, a changelog of

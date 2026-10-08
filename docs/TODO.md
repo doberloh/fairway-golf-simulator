@@ -252,8 +252,11 @@ GitHub repository, and stop shipping what nobody needs.
   changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
   not before, or every pull request waits for a check that never comes.
 
-- [ ] **Fewer, smaller documents before the private repository goes up.
-  PLAN ONLY -- asked for 1 October, nothing has been moved yet.** Today the
+- [ ] **Fewer, smaller documents.** Asked for 1 October. **The first step is
+  done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
+  14 KB, and AGENTS.md says to search the long documents rather than read them**
+  -- see the Done entry. The rest below is still a plan; nothing else has moved.
+  The figures that follow are from 1 October. Then the
   repository carries 19 Markdown files and about 1.5 MB of them, and three
   hold almost all of it: RESEARCH.md (5,800 lines, 500 KB), TODO.md (3,500
   lines, 330 KB, four fifths of it the `# Done` archive) and PROJECT_HANDOFF.md
@@ -270,7 +273,7 @@ GitHub repository, and stop shipping what nobody needs.
   | --- | --- | --- |
   | README.md, LICENSE | same | unchanged |
   | AGENTS.md | AGENTS.md + CONTRIBUTING.md | one rules file; CONTRIBUTING's setup commands move into it, and README links to it |
-  | docs/ARCHITECTURE.md | PROJECT_HANDOFF.md | cut to the invariants, the traps and the file map, each a few lines with a pointer into RESEARCH or HISTORY; target under 60 KB. The dated "on 30 September the owner asked..." narrative moves to HISTORY.md |
+  | docs/ARCHITECTURE.md | PROJECT_HANDOFF.md | **Done differently, 7 October**: ARCHITECTURE.md was written as a 14 KB summary BESIDE PROJECT_HANDOFF rather than cut out of it, so nothing was moved or lost. Still open: moving PROJECT_HANDOFF's dated narrative to HISTORY.md |
   | docs/RESEARCH.md | RESEARCH.md + LANDSCAPE_RESEARCH.md | one evidence file with a contents list at the top; the landscape sources become its last part |
   | docs/BALL_BEHAVIOUR_KNOBS.md | same | kept apart on purpose: it is what a tuning request is written against, and inside a 500 KB file it would be buried |
   | docs/GENERATION.md | PROCEDURAL_GENERATION.md | renamed only |
@@ -767,6 +770,25 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## Making the repository public
+
+- [x] **A short entry document, and searching instead of reading (7 October).**
+  At the owner's request, after measuring what a session spent before doing
+  anything: AGENTS.md said to read PROJECT_HANDOFF.md first (about 83 thousand
+  tokens) and to check every document every pass, which with TODO.md (about 93
+  thousand) and RESEARCH.md (about 141 thousand) read whole cost several hundred
+  thousand. Now `docs/ARCHITECTURE.md` (14 KB, about 3,500 tokens) is read
+  first: the product, every `src/` file in one line, units and coordinates, the
+  pipeline in seven steps, and 40 traps, each naming the PROJECT_HANDOFF phrase
+  to search for (every phrase checked to exist, every `src/` file checked to be
+  listed). AGENTS.md now forbids reading the three large documents whole and
+  makes the every-document check a search for the names a change touched,
+  keeping the rule to name the documents judged unchanged. CONTRIBUTING, the
+  README, the docs index and the source archive's document list follow.
+  **Rejected**: cutting PROJECT_HANDOFF down to the short version (the plan's
+  first shape) -- it moves 300 KB of reasoning in one step and risks losing
+  some; a summary beside it loses nothing and can be followed by the move later.
 
 ## Release 0.5, the first from the new repository (7 October)
 

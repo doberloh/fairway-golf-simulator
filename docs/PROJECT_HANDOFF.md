@@ -1,5 +1,7 @@
 # Fairway: project handoff
 
+**Start with [ARCHITECTURE.md](ARCHITECTURE.md)**, the short version of this file. This one is long -- about 80 thousand tokens -- and is meant to be searched, not read top to bottom: `grep -n "^## \|^### " docs/PROJECT_HANDOFF.md` lists its sections, and every trap in ARCHITECTURE.md names the phrase to search for here.
+
 Validation: all 79 gameplay/physics/generation tests passed on September 11, 2026 (82 including the bridge suite); production single-file build passed and reproduced the released `dist/index.html` byte for byte. Browser checks inspected channel passage through fairways, the staged shoreline, feathered waterlines and cartoon ripples, plus large-lake maps/reflections, camera tree disappearance/restoration, flyover heatmap orbit and preference restoration; no shader/runtime errors were logged. Hardware testing remains deferred.
 
 Updated September 11, 2026. This guide is for a developer or coding agent joining without the original conversation. Read INSTALLATION.md for device setup and build/run procedures, README.md for player instructions, PROCEDURAL_GENERATION.md for generation rationale, RESEARCH.md for physics/protocol sources, and TODO.md for remaining work.

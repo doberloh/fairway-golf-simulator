@@ -2,9 +2,10 @@
 
 Short version of [AGENTS.md](AGENTS.md), which is the long version and also
 the entry point for coding agents. Read
-[docs/PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) before changing anything —
-it explains the architecture, the units and the invariants without assuming
-you were there.
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) before changing anything — a short
+map of the architecture, the units and the traps that points into
+[docs/PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md) for the detail. Search the
+long documents for what you need rather than reading them whole.
 
 ## Getting set up
 
