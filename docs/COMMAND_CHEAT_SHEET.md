@@ -6,8 +6,8 @@ one lives in [CONTRIBUTING.md](../CONTRIBUTING.md), [AGENTS.md](../AGENTS.md)
 and [INSTALLATION.md](INSTALLATION.md); this page is only the list.
 
 The ones you will use most: `npm run dev` while working, `npm test` and
-`npm run smoke` before committing, `npm run release` for the downloads, and
-`npm run site` for the website.
+`npm run smoke` before committing, and `npm run release` for the downloads.
+The website has its own repository and its own commands.
 
 ## Day to day
 
@@ -45,7 +45,7 @@ smoke test and the profiler drive; `npm ci` does not.
 | `node tools/flight-fit.mjs [--fit]` | The flight against Trackman's tour averages, a GC3 and the owner's R50, per source and club; `--fit` searches for better `AERO` constants; `--physics FILE` scores another physics file (an older copy placed in `src/`) for a before-and-after. Reads private data from `docs/sources/private/` |
 | `node tools/landing-scorecard.mjs [--levers]` | Every bounce-and-roll anchor in one table (fairway run-out, green check, chip ratios, firmness), fixed Trackman tour shots, and what each tuning lever would do; `--set k=v,...` scores a candidate flight before it is applied |
 | `node tools/landing-report/charts.mjs` / `clips.mjs` | Redraws the ball-landing report's charts and before/after clips (clips need two capture builds; see the file) |
-| `node tools/landing-report/approach-plan.mjs` then `approach-clips.mjs`, `approach-page.mjs` | Plans, films and pages the fifteen chipping and approach clips (needs the capture build: `node tools/site-media/build-hooked.mjs`) |
+| `node tools/landing-report/approach-plan.mjs` then `approach-clips.mjs`, `approach-page.mjs` | Plans, films and pages the fifteen chipping and approach clips (needs the capture build: `node tools/capture/build-hooked.mjs`) |
 | `node tools/landing-report/shotmaking-plan.mjs` then `shotmaking-clips.mjs`, `shotmaking-page.mjs` | The same for the six shot-making clips; the plan prints what each shot did before anything is filmed |
 
 ## Launch-monitor bridge (from source)
@@ -70,19 +70,16 @@ Environment settings it reads: `FAIRWAY_TCP_PORT`, `FAIRWAY_HTTP_PORT`,
 | `gh release list` | The releases published so far |
 | `node tools/github-protect.mjs` | Puts the repository's safety settings in place (protected `main`, reviewed pull requests, permanent release tags, secret scanning) and lists any still waiting. **Run again the minute the repository goes public**; safe to run any time |
 
-## Website
+## Pictures and clips of the game
+
+Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points. Heavy on the graphics card: ask the owner first.
 
 | Command | What it does |
 | --- | --- |
-| `git lfs install --local && git lfs pull` | Once after cloning: downloads the real website pictures and clips |
-| `npm run site` | Builds the game, then assembles `site-dist/` with the demo in `play/`; drag that folder onto Netlify to deploy by hand |
-| `npm run deploy:preview` | Builds the site and uploads it to Netlify as a draft with its own address; the live site is untouched |
-| `npm run deploy` | Builds the site and uploads it to the live Netlify site |
-| `npx netlify-cli@27.10.2 login` then `… link --name <site>` | Once per machine, before the first deploy: sign in to Netlify and link this folder to the site |
-| `node tools/site-media/build-hooked.mjs` | Builds a copy of the game with the hooks the capture scripts need (required before the three below) |
-| `node tools/site-media/gallery.mjs [name…]` | Retakes the landscape pictures (all of them, or just the ones named) |
-| `node tools/site-media/features.mjs [name…]` | Retakes the feature screenshots |
-| `node tools/site-media/clips.mjs [name…]` | Re-records the background clips |
+| `node tools/capture/build-hooked.mjs` | Builds a copy of the game with the hooks the capture scripts need (required before the three below) |
+| `node tools/capture/gallery.mjs [name…]` | Retakes the landscape pictures (all of them, or just the ones named) |
+| `node tools/capture/features.mjs [name…]` | Retakes the feature screenshots |
+| `node tools/capture/clips.mjs [name…]` | Re-records the background clips |
 
 ## Art assets (rarely needed)
 

@@ -1,4 +1,4 @@
-// What every website capture shares: the browser, the game on Ultra, and how a
+// What every capture of the game shares: the browser, the game on Ultra, and how a
 // picture is saved.
 //
 // RESOLUTION IS THE WHOLE POINT OF THIS FILE. The game never draws more pixels
@@ -39,7 +39,7 @@ export const launch = () => chromium.launch({args: ['--use-angle=d3d11', '--enab
 // The game, opened to its main menu on Ultra with automatic resolution off, so
 // it can never quietly draw fewer pixels to keep the frame rate up.
 export async function openGame(browser, {width = 1920, height = 1080, density = 2, game = GAME} = {}) {
- if (!fs.existsSync(game)) throw Error(`No capture build at ${game}. Run: node tools/site-media/build-hooked.mjs`);
+ if (!fs.existsSync(game)) throw Error(`No capture build at ${game}. Run: node tools/capture/build-hooked.mjs`);
  const page = await (await browser.newContext({viewport: {width, height}, deviceScaleFactor: density})).newPage();
  page.errors = [];
  page.on('pageerror', e => page.errors.push(e.message));

@@ -1,12 +1,15 @@
-// The website's gallery: each landscape at two times of day, plus floodlit
-// nights, interface hidden, into site/media/gallery/ -- 2560x1440 and a 960x540
+// A gallery of the landscapes: each at two times of day, plus floodlit
+// nights, interface hidden -- 2560x1440 and a 960x540
 // thumbnail, rendered on Ultra at 3840x2160 (capture.mjs says why).
 // Files are named for the landscape, not the course name it happens to grow.
-// Needs the capture build first: node tools/site-media/build-hooked.mjs
-//   node tools/site-media/gallery.mjs [name...]     (no names: all of them)
+// Needs the capture build first: node tools/capture/build-hooked.mjs
+//   node tools/capture/gallery.mjs [name...]     (no names: all of them)
 import {launch, openGame, assertUltra, save, HIDE_HUD, hourFor} from './capture.mjs';
 
-const OUT = 'site/media/gallery';
+// Saves under bench/shots/media/gallery/ (not committed), or under $MEDIA_OUT/gallery/.
+// Pictures for the website are picked from there and copied into the
+// website's own repository by hand, under new names.
+const OUT = `${process.env.MEDIA_OUT || 'bench/shots/media'}/gallery`;
 const behind = {fromPin: 70, around: 170, height: 22, pitch: -14};
 const tee = h => ({hole: h, along: 0, height: 9, look: 'pin', pitch: -6});
 export const SHOTS = [

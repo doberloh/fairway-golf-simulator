@@ -1,12 +1,16 @@
-// The website's background clips: camera flights and a tee shot, recorded from
+// Background clips of each landscape (the website plays them behind its pages):
+// camera flights and a tee shot, recorded from
 // the game's own canvas (captureStream + MediaRecorder, webm), interface
-// hidden, into site/media/video/<name>.webm with a <name>.jpg poster: 1920x1080
+// hidden, as <name>.webm with a <name>.jpg poster: 1920x1080
 // on Ultra at 5 Mbit/s.
-// Needs the capture build first: node tools/site-media/build-hooked.mjs
-//   node tools/site-media/clips.mjs [name...]
+// Needs the capture build first: node tools/capture/build-hooked.mjs
+//   node tools/capture/clips.mjs [name...]
 import fs from 'node:fs';
 import {launch, openGame, assertUltra, save, HIDE_HUD, hourFor} from './capture.mjs';
-const OUT = 'site/media/video';
+// Saves under bench/shots/media/video/ (not committed), or under $MEDIA_OUT/video/.
+// Pictures for the website are picked from there and copied into the
+// website's own repository by hand, under new names.
+const OUT = `${process.env.MEDIA_OUT || 'bench/shots/media'}/video`;
 fs.mkdirSync(OUT, {recursive: true});
 // `keys` are lab.camera poses at evenly spaced moments; the flight passes
 // through them with its height smoothed so the ground's bumps do not shake it.

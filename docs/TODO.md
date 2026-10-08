@@ -193,31 +193,13 @@ audience, and their attention is what buys credibility with the first one.
 **So the order is: developers now, simulator owners after hardware
 validation.** That sequencing is the plan; the channels are details.
 
-- [ ] **Owner: the website on a real iPhone and in Safari.** It was checked in
-  Chromium only, at desktop and phone sizes. The background clips are WebM,
-  because no video encoder exists in this toolchain; a browser that cannot play
-  WebM shows each clip's still, which is the designed fallback but has not been
-  seen on an iPhone. If the stills look wrong there, the fix is MP4 copies of
-  the five clips (any encoder), listed as a second `<source>`.
-
-- [ ] **Rework the website's ball physics wording.** Asked for by the owner on
-  2 October, with what it should say still to be decided. As it stands the
-  panel reads "Ball flight fitted to real launch monitors" and quotes the GC3
-  fit (carry 1.3%, peak height 0.2 ft, offline 0.2 yd) with SkyTrak as the
-  held-out check; the owner accepted "fitted" over "calibrated". Whatever
-  replaces it has to stay inside what RESEARCH.md can back -- see *The
-  website: what it claims*.
-
 - [ ] **Export the range's shot data.** The owner's copy for the website's
   practice panel said "view and export your shot data"; the game has no such
   export (it downloads the scorecard, saved rounds and courses, and nothing
   else), so the page says "view your shot data" until it does. The shot list
-  already holds every shot of the session. When it exists, put "and export"
-  back in `site/index.html`.
-
-- [ ] **At launch: take the website's no-index off.** Three places, removed
-  together: the `robots` meta tag in `site/index.html` and `site/media.html`,
-  the `X-Robots-Tag` header in `netlify.toml`, and `site/robots.txt`.
+  already holds every shot of the session. When a release carries it, tell the
+  owner: the website's repository has the matching item to put "and export"
+  back.
 
 - [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
   request for help, which is a different thing and gets a far better response
@@ -261,12 +243,21 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
+- [ ] **The GitHub half of taking the website out (7 October).** Done by the
+  owner: the old repository renamed `fairway-backup` (kept private, with
+  v0.1-v0.4), and two new private ones, `fairway-golf-simulator` for this and
+  `fairway-website`. Left: push the rewritten history there, and publish v0.5
+  as its first release -- until then the website's Download buttons have no
+  release to serve.
+  DISTRIBUTION_REVIEW, *The website leaves this repository*, sets out the
+  choice.
+
 - [ ] **There is still no PUBLIC remote, and that is now the last thing
   standing between this tree and a published project.** A private one exists
-  since 2 October -- https://github.com/doberloh/fairway, `origin`, every
-  branch pushed, the website's media in its Git LFS storage -- so making it
-  public is a settings change on GitHub once the document plan below and the
-  name are settled, not a migration. The licence is
+  since 7 October -- https://github.com/doberloh/fairway-golf-simulator,
+  `origin` -- so
+  making it public is a settings change on GitHub once the item above is done
+  and the document plan below is settled, not a migration. The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
   Dustin Oberloh, who holds the copyright outright, which is what made that
   choice free to make; a project with outside contributors cannot change its
@@ -332,10 +323,6 @@ GitHub repository, and stop shipping what nobody needs.
     paths and user names (`C:\Users\...`), email addresses, and anything
     naming what is in `docs/sources/private/` -- which stays ignored and is
     never inventoried, per the rule in `.gitignore`.
-  - **The website's media is settled**: Git LFS, chosen by the owner on 2
-    October. Make sure the private repository has LFS on, and check the
-    first set's 18 MB, committed as ordinary files before the switch, is
-    acceptable to carry (it is in the history either way).
   - **One branch per step**, in this order: AGENTS + CONTRIBUTING; HISTORY.md
     (pure moves); the ARCHITECTURE cut; RESEARCH + LANDSCAPE; the index. A
     pure move is reviewed with `git diff --color-moved`; mixing a move with an
@@ -813,6 +800,23 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## The website leaves this repository (7 October)
+
+- [x] **The website has its own private repository**, at the owner's request,
+  so the game can be public under MIT while the website stays all rights
+  reserved. It took its pages, media, build and deploy tools, `netlify.toml`
+  and its rules and docs, with its own history cut from this one's. Here:
+  `site/`, `netlify.toml`, `tools/build-site.mjs`, `tools/deploy-site.mjs`,
+  the `site`/`deploy` scripts, the Git LFS rule and the website's rules in
+  AGENTS.md are gone, and a rewritten copy of the history without them waits
+  for the owner (DISTRIBUTION_REVIEW, *The website leaves this repository*).
+  The capture tools stayed and became `tools/capture/`, saving to
+  `bench/shots/media/` instead of into the site. The built page now opens with
+  a `fairway-versions` tag (generator and settings versions), which is how the
+  website writes its sample course code without this repository's source
+  (PROJECT_HANDOFF, *The built page states its versions*). The website's own
+  done list (the Ko-fi button, going public, the download links) went with it.
 
 ## Release 0.4 and going public (7 October)
 
@@ -3236,7 +3240,7 @@ engineering provenance pass, not legal advice.
   for Netlify (`netlify.toml`), no-index until launch. Checked in Chromium at
   1440 and 390 px wide: no errors, no sideways scroll, clips switch, the demo
   reaches the main menu in 3.3 s from a local server and its manifest is
-  served. The media is retaken with `tools/site-media/`. INSTALLATION.md
+  served. The media is retaken with `tools/capture/`. INSTALLATION.md
   *The website*. **Second pass, 2 October, from the owner's review**: every
   picture and clip retaken at full resolution (the first set rendered at 1x;
   RESEARCH.md *The website*), landscape names only rather than course names,
