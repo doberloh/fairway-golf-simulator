@@ -808,3 +808,22 @@ v0.4; the built file differs only by the `fairway-versions` meta tag, and the
 generator is unchanged (34), so saved rounds and course codes carry over. Its
 source zip is the first that carries no website tooling. Releases v0.1 to v0.4
 stay in the private `fairway-backup` and are not reachable from the website.
+
+## Addendum, 7 October 2026: the repository is public
+
+At the owner's request, `doberloh/fairway-golf-simulator` was made public, and
+`node tools/github-protect.mjs` ran in the same command, reporting every
+setting done: the three rulesets (`main` keeps its history; `main` changes by
+reviewed pull request, which the owner bypasses; release tags `v*` are
+permanent), merge commits only, GitHub's own actions only, a read-only workflow
+token, outside contributors' workflows held for approval, Dependabot alerts,
+secret scanning with push protection, and private vulnerability reporting.
+
+Checked from outside, with no sign-in: the repository page answers; each of
+the four `releases/latest/download/<zip>` addresses the website's buttons use
+redirects to v0.5's file and serves it; and the old `doberloh/fairway` address
+answers 404, because GitHub forwards it to the private `fairway-backup`.
+
+The website was then deployed live from its own repository, its demo the
+`Fairway.html` from v0.5, checked against `RELEASE_SHA256.txt`. Its no-index
+signals stay on until the owner says otherwise.

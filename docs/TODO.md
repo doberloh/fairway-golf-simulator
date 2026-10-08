@@ -243,34 +243,10 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **There is still no PUBLIC remote, and that is now the last thing
-  standing between this tree and a published project.** A private one exists
-  since 7 October -- https://github.com/doberloh/fairway-golf-simulator,
-  `origin` -- so
-  making it public is a settings change on GitHub once the item above is done
-  and the document plan below is settled, not a migration. The licence is
-  settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names
-  Dustin Oberloh, who holds the copyright outright, which is what made that
-  choice free to make; a project with outside contributors cannot change its
-  licence without asking every one of them, and "Fairway contributors"
-  implied exactly that situation.
-
-  One thing to settle in the same sitting, because publishing makes it
-  expensive to change: the NAME, which has its own entry and blocks the
-  repository as much as it blocks a domain. (`vendor/baked_assets/`, the
-  other one, was settled on 30 September: not committed.)
-
-  **The same minute it goes public: `node tools/github-protect.mjs`.** It
-  turns on what GitHub Free only allows on a public repository -- `main`
-  protected from deletion and force-pushes, changes by reviewed pull request,
-  permanent release tags, secret scanning that blocks a pushed password,
-  private security reports, and outside contributors' workflows held for
-  approval. Until it has run, the repository is public with none of that. It
-  prints each setting as done or waiting; nothing should still be waiting.
-
 - [ ] **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
   is active, but GitHub shows 0 runs, on any branch, after many pushes (checked
-  3 October). Worth a look at the repository's Actions tab: Actions may be
+  3 October, and again on 7 October in the new public repository, with Actions
+  enabled and the workflow listed as active, after two pushes to `main`). Worth a look at the repository's Actions tab: Actions may be
   switched off at the account level, or waiting on something the account has
   to accept. Once it runs green, add it as a required check to the *main
   changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
@@ -794,6 +770,19 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 ## Release 0.5, the first from the new repository (7 October)
 
+- [x] **The repository is public (7 October).** At the owner's request,
+  `doberloh/fairway-golf-simulator` was made public and
+  `node tools/github-protect.mjs` run the same minute: every setting done --
+  `main` keeps its history, changes by reviewed pull request (the owner
+  bypasses), permanent release tags, merge commits only, GitHub's own actions
+  with a read-only token, outside contributors' workflows held for approval,
+  Dependabot alerts, secret scanning with push protection, private security
+  reports. Checked from outside with no sign-in: the four Download addresses
+  reach v0.5's zips, and the old `doberloh/fairway` address shows nothing.
+  The licence (MIT) and the name were settled earlier; this closes *There is
+  still no PUBLIC remote*.
+- [x] **The website went live on v0.5** the same day, its demo the release's
+  own `Fairway.html` and its Download buttons on this repository.
 - [x] **The rewritten history is on GitHub.** The owner renamed the original
   repository `fairway-backup` (private, keeping v0.1-v0.4 and the website's
   history) and created `fairway-golf-simulator` and `fairway-website`.

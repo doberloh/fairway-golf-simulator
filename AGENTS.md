@@ -60,8 +60,8 @@ what the branch actually does.
 
 The repository's remote is `origin`,
 https://github.com/doberloh/fairway-golf-simulator, created on 7 October 2026
-for the history with the website taken out. It is private until the owner
-makes it public. The original repository, with the website still in its
+for the history with the website taken out. **It has been PUBLIC since
+7 October 2026**: anyone can read it, and anything pushed is seen by anyone. The original repository, with the website still in its
 history and releases v0.1 to v0.4, is `doberloh/fairway-backup`: private, kept
 as an archive, never pushed to. **GitHub forwards the old address
 `doberloh/fairway` to that backup**, so nothing may name the old address --
@@ -71,17 +71,16 @@ not a link, a script or a doc.
   it is not a request to push.
 - **Never force-push unless the owner asks for exactly that.** The one
   force-push so far replaced the history after the owner asked for it to be
-  rewritten (2 October, DISTRIBUTION_REVIEW *What went to GitHub*). The
-  owner asked for a second on 7 October, to take the website out of the
-  history (DISTRIBUTION_REVIEW, *The website leaves this repository*).
+  rewritten (2 October, DISTRIBUTION_REVIEW *What went to GitHub*). The second
+  rewrite, taking the website out of the history on 7 October, needed no
+  force-push: the rewritten history went into this fresh repository instead
+  (DISTRIBUTION_REVIEW, *The website leaves this repository*).
 - **`main` goes up only after a merge the owner asked for.**
 
 **The repository's own settings protect `main`; do not work around them.**
 `node tools/github-protect.mjs` sets them and says which are still waiting.
-GitHub Free only offers branch rules on a public repository, so **run it again
-the moment the repository goes public** -- that is when strangers can first see
-it, and until it has run, nothing but these rules stops a mistaken push. Once
-public:
+It ran the minute the repository went public (7 October 2026) and reported
+every setting done; running it again is safe and changes nothing. In force:
 
 - `main` cannot be deleted or force-pushed by anyone, the owner included. A
   history rewrite the owner asks for means the owner switches the *main keeps
