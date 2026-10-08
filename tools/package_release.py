@@ -88,7 +88,7 @@ DOCS = [path for path, _ in PORTABLE] + [
     'docs/INSTALLATION.md',
     'README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/README.md',
     'docs/DISTRIBUTION_REVIEW.md', 'docs/DEPENDENCY_INVENTORY.json',
-    'docs/PROJECT_HANDOFF.md', 'docs/TODO.md',
+    'docs/ARCHITECTURE.md', 'docs/PROJECT_HANDOFF.md', 'docs/TODO.md',
     'docs/PROCEDURAL_GENERATION.md', 'docs/RESEARCH.md',
     'docs/LANDSCAPE_RESEARCH.md', 'docs/BALL_BEHAVIOUR_KNOBS.md',
     'docs/REFERENCES.md',

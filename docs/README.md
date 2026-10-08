@@ -13,7 +13,7 @@ the change that made it stale, not a follow-up.
 | get it running on a device | [INSTALLATION.md](INSTALLATION.md) |
 | publish a release, or retake pictures and clips of the game | [INSTALLATION.md](INSTALLATION.md), *Publishing a release on GitHub* and *Pictures and clips of the game* |
 | find the command for something | [COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md) |
-| change the code | [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), then [../AGENTS.md](../AGENTS.md) |
+| change the code | [ARCHITECTURE.md](ARCHITECTURE.md), then [../AGENTS.md](../AGENTS.md); search [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the detail |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
 | know what is left to do | [TODO.md](TODO.md) |
 
@@ -38,10 +38,16 @@ the change that made it stale, not a follow-up.
 - **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
   measurement, release and capture command on one page.
 
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — read first: the product, where
+  every file lives, units and coordinates, the generation pipeline in seven
+  steps, and the traps, one line each with the PROJECT_HANDOFF section to
+  search for. About 4 thousand tokens.
 - **[PROJECT_HANDOFF.md](PROJECT_HANDOFF.md)** — the architecture with no
   conversation history assumed: modes, data flow, units, the generation
   pipeline, the file map, and the invariants that break things quietly when
-  violated. The single most useful document in the repository.
+  violated. The single most useful document in the repository, and about 80
+  thousand tokens: search it for the section you need rather than reading it
+  whole.
 - **[PROCEDURAL_GENERATION.md](PROCEDURAL_GENERATION.md)** — what the
   generator produces, in what order, and which stage owns which decision.
 - **[BALL_BEHAVIOUR_KNOBS.md](BALL_BEHAVIOUR_KNOBS.md)** — the plain-language
