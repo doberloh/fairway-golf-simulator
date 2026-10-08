@@ -58,8 +58,14 @@ what the branch actually does.
 
 ## Pushing to GitHub
 
-The repository's remote is `origin`, https://github.com/doberloh/fairway, and it
-is private.
+The repository's remote is `origin`,
+https://github.com/doberloh/fairway-golf-simulator, created on 7 October 2026
+for the history with the website taken out. It is private until the owner
+makes it public. The original repository, with the website still in its
+history and releases v0.1 to v0.4, is `doberloh/fairway-backup`: private, kept
+as an archive, never pushed to. **GitHub forwards the old address
+`doberloh/fairway` to that backup**, so nothing may name the old address --
+not a link, a script or a doc.
 
 - **Push only when the owner asks.** Finishing work, committing it, or merging
   it is not a request to push.

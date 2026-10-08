@@ -42,7 +42,7 @@
 // immutable releases (a broken zip could then only be fixed by a new version).
 import {spawnSync} from 'node:child_process';
 
-const REPO = 'doberloh/fairway';
+const REPO = 'doberloh/fairway-golf-simulator';
 const GH = process.env.GH || 'gh';
 const ADMIN = 5; // GitHub's id for the built-in "Repository admin" role
 

@@ -243,19 +243,19 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **Owner: the GitHub half of taking the website out (7 October).** The
-  website now has its own repository, and this one has had it removed from its
-  files and -- in a rewritten copy waiting beside this folder -- from its whole
-  history. What is left needs GitHub and is the owner's: whether the rewritten
-  history goes up by force-push to this repository or into a fresh one, what
-  becomes of releases v0.1-v0.4 (their source zips carry the website's build
-  and deploy scripts), and creating the website's private repository.
+- [ ] **The GitHub half of taking the website out (7 October).** Done by the
+  owner: the old repository renamed `fairway-backup` (kept private, with
+  v0.1-v0.4), and two new private ones, `fairway-golf-simulator` for this and
+  `fairway-website`. Left: push the rewritten history there, and publish v0.5
+  as its first release -- until then the website's Download buttons have no
+  release to serve.
   DISTRIBUTION_REVIEW, *The website leaves this repository*, sets out the
   choice.
 
 - [ ] **There is still no PUBLIC remote, and that is now the last thing
   standing between this tree and a published project.** A private one exists
-  since 2 October -- https://github.com/doberloh/fairway, `origin` -- so
+  since 7 October -- https://github.com/doberloh/fairway-golf-simulator,
+  `origin` -- so
   making it public is a settings change on GitHub once the item above is done
   and the document plan below is settled, not a migration. The licence is
   settled: MIT, open at launch -- see "Getting the word out". `LICENSE` names

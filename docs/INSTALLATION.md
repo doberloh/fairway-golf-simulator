@@ -341,7 +341,7 @@ repository is public; GitHub's "latest" skips releases marked as pre-releases,
 so a beta must not be marked as one or every Download button stays on the
 previous version; and each release has to use the same four platform zip
 names, because the buttons link to
-`https://github.com/doberloh/fairway/releases/latest/download/<zip>`.
+`https://github.com/doberloh/fairway-golf-simulator/releases/latest/download/<zip>`.
 
 ## Pictures and clips of the game
 

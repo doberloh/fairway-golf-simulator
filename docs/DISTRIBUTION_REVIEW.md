@@ -785,3 +785,12 @@ serve GitHub's not-found page between the rename and v0.5. The alternative --
 force-push into the existing repository and delete releases v0.1 to v0.4 --
 leaves the old commits reachable by hash and the media in LFS storage once the
 repository is public.
+
+**What the owner did, the same day.** The fresh route, with one change to the
+plan: the old repository became `doberloh/fairway-backup`, and the new public
+one is `doberloh/fairway-golf-simulator`, not `doberloh/fairway`. Because no
+new repository took the old name, GitHub forwards `doberloh/fairway` to the
+backup -- so every link to the old address had to change (the website's
+Download buttons and build, `tools/github-protect.mjs`, the docs), or it would
+have served the private backup's releases. The website's private repository is
+`doberloh/fairway-website`.
