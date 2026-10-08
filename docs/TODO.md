@@ -165,7 +165,9 @@ Planned on 2026-09-25. The decisions below are the owner's and are recorded so
 the next person does not reopen them.
 
 **Decided already.** The project **goes open source at launch, under MIT**,
-free, with a donation button. No Discord and no social accounts yet. The owner
+free, with a donation button. No social accounts yet; a Discord server since
+7 October 2026 (see its entry under *Done*, which reverses the earlier "not
+yet"). The owner
 holds the copyright outright, which is what made the choice free to make in
 either direction and what keeps a later change possible.
 
@@ -3290,15 +3292,18 @@ engineering provenance pass, not legal advice.
   per section, which had left the desert on repeat.
 
 
-- [x] **Discord: deliberately not yet**, and going open source makes that
-  easier rather than harder. An empty server is worse than none -- a room
-  where the owner talks to himself, signalling that nobody is there, at the
-  cost of daily attention. It earns its keep at roughly 50 to 100 engaged
+- [x] **Discord: the owner created a server (7 October 2026)**, reversing the
+  "deliberately not yet" settled on 25 September, with an open-beta announcement
+  drafted for it from the highlights of v0.1 to v0.5. The earlier reasoning is kept
+  because it still says what makes a server work: an empty server is worse
+  than none -- a room where the owner talks alone, signalling that nobody is
+  there, at the cost of daily attention. It earns its keep at roughly 50 to 100 engaged
   people, when conversation happens without the owner in it. A public
   repository already provides the venue in the meantime: Issues for bugs,
   Discussions for everything else, both of them searchable by the next person
-  with the same problem, which Discord is not. The signal to build one is
-  somebody asking for it.
+  with the same problem, which Discord is not -- so a bug worth keeping is
+  still best filed as a GitHub issue, even when it is first reported on
+  Discord.
 
 - [x] **MIT, open source at launch. Settled 25 September; do not reopen it.**
   The alternative considered and rejected was a proprietary licence on the
