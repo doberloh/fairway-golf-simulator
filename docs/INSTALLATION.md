@@ -343,6 +343,14 @@ previous version; and each release has to use the same four platform zip
 names, because the buttons link to
 `https://github.com/doberloh/fairway-golf-simulator/releases/latest/download/<zip>`.
 
+**What a new release does NOT update by itself: the website's demo.** The
+buttons follow the latest release automatically, but the browser demo is a copy
+of the game taken when the website was last deployed, and the sample course code
+on its front page is written at the same moment. So after publishing a release,
+the website is deployed again from its own repository (no changes to its
+files: its build fetches the newest release itself). Until then, visitors play
+the previous version in their browser.
+
 ## Pictures and clips of the game
 
 `tools/capture/` takes the screenshots and clips used to show the game off --

@@ -77,6 +77,11 @@ read-only token.
   addendum and a TODO entry, on the release branch; merge; build and tag from
   THAT commit; publish with `--notes-file docs/releases/v<version>.md`.
 - **Editing or deleting a published release is the owner's call.**
+- **After publishing, the website needs a redeploy for its demo.** The
+  Download buttons follow the new release by themselves; the browser demo and
+  the sample course code stay on the old version until the website is deployed
+  again from its own folder (no file changes, about a minute). Tell the owner,
+  and do it only when asked.
 - The command is in docs/COMMAND_CHEAT_SHEET.md, *Releases*.
 
 ## The website is not in this repository
