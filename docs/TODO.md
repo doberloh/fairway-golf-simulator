@@ -263,15 +263,6 @@ GitHub repository, and stop shipping what nobody needs.
   asks, and `npm test` plus a build. A second alert, on `braces`, was closed
   by GitHub itself: development-only, with no fix published.
 
-- [ ] **Trim AGENTS.md (owner's idea, 7 October).** It is about 33 KB, roughly
-  8 thousand tokens, and is loaded with EVERY message of every session, so
-  each thousand tokens cut is saved over and over. Much of it is the story
-  behind each rule -- what went wrong and when -- which is the valuable part to
-  keep, but it can live in the documents the rules point to while AGENTS.md
-  keeps the rule and one sentence of why. Measure before and after; keep every
-  rule. Do it on its own branch so the owner can read the old and new side by
-  side.
-
 - [ ] **Fewer, smaller documents.** Asked for 1 October. **The first step is
   done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
   14 KB, and AGENTS.md says to search the long documents rather than read them**
@@ -792,6 +783,17 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 # Done
 
 ## Making the repository public
+
+- [x] **AGENTS.md trimmed from 33 KB to 14.5 KB (7 October).** At the owner's
+  request: it is loaded with every message, so it went from roughly 8,300
+  tokens to 3,600 on each one. Every rule stayed, each with one line of why;
+  the incidents behind them (dates, costs, what went wrong) moved to the new
+  `docs/RULES_HISTORY.md`, so nothing was lost. Two sections merged (*Reports
+  made for the owner stay local* into *What stays local*) and four were
+  retitled shorter; the one pointer to an old title, in `.gitignore`, was
+  updated. Deliberately NOT added while trimming: two rules from the saved
+  session notes (push `main` alone before a release; ask before a smoke run if
+  the owner may be gaming) -- a trim should not change what the rules say.
 
 - [x] **A short entry document, and searching instead of reading (7 October).**
   At the owner's request, after measuring what a session spent before doing

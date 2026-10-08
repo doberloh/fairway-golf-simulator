@@ -86,7 +86,7 @@ OUT = ROOT / 'release'
 # names once the ZIP is unpacked.
 DOCS = [path for path, _ in PORTABLE] + [
     'docs/INSTALLATION.md',
-    'README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/README.md',
+    'README.md', 'CONTRIBUTING.md', 'AGENTS.md', 'docs/RULES_HISTORY.md', 'docs/README.md',
     'docs/DISTRIBUTION_REVIEW.md', 'docs/DEPENDENCY_INVENTORY.json',
     'docs/ARCHITECTURE.md', 'docs/PROJECT_HANDOFF.md', 'docs/TODO.md',
     'docs/PROCEDURAL_GENERATION.md', 'docs/RESEARCH.md',
