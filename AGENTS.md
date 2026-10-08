@@ -65,10 +65,10 @@ is private.
   it is not a request to push.
 - **Never force-push unless the owner asks for exactly that.** The one
   force-push so far replaced the history after the owner asked for it to be
-  rewritten (2 October, DISTRIBUTION_REVIEW *What went to GitHub*).
+  rewritten (2 October, DISTRIBUTION_REVIEW *What went to GitHub*). The
+  owner asked for a second on 7 October, to take the website out of the
+  history (DISTRIBUTION_REVIEW, *The website leaves this repository*).
 - **`main` goes up only after a merge the owner asked for.**
-- The website's pictures and clips are in Git LFS: a fresh clone needs
-  `git lfs install --local` and `git lfs pull` before `npm run site` will build.
 
 **The repository's own settings protect `main`; do not work around them.**
 `node tools/github-protect.mjs` sets them and says which are still waiting.
@@ -102,7 +102,10 @@ GitHub's own actions only, read-only workflow token, Dependabot alerts.
 - **Never mark one as a pre-release.** The website's buttons point at
   `releases/latest/download/<zip>`, and GitHub's "latest" skips pre-releases,
   so a pre-release would leave every Download button on the previous version.
-  "Beta" goes in the title and notes instead.
+  "Beta" goes in the title and notes instead. For the same reason, **keep the
+  four platform zips' names** (`Fairway-Windows.zip`,
+  `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`,
+  `Fairway-Linux.zip`): the buttons name them.
 - **Release from `main`, after a merge the owner asked for,** with `dist/` and
   `release/` rebuilt from it, so the zips are exactly what `main` says.
 - **Editing or deleting a published release is the owner's call too**, the same
@@ -120,28 +123,28 @@ GitHub's own actions only, read-only workflow token, Dependabot alerts.
 - The command, once the owner has signed the GitHub CLI in (`gh auth login`),
   is in docs/COMMAND_CHEAT_SHEET.md, *Releases*.
 
-## Deploying the website to Netlify
+## The website is not in this repository
 
-- **Deploy only when the owner asks, and as a preview first** --
-  `npm run deploy:preview`, then give the owner its link -- unless they say to
-  deploy it live, which is `npm run deploy`.
-- **The site has been PUBLIC since 7 October 2026.** The owner turned
-  Netlify's password protection off and moved the account to Netlify's
-  **Personal** plan the same day. The address is
-  https://fairwaygolfsim.netlify.app (the project is `fairwaygolfsim`; it was
-  `storied-otter-2881e8` until the owner renamed it, and that address is dead).
-  Everything deployed there is seen by anyone with the link, so the
-  preview-first rule above matters more now, not less.
-- **The no-index signals are still on** -- the robots meta tags, the
-  `X-Robots-Tag` header in `netlify.toml` and `site/robots.txt` -- so search
-  engines are told to stay away. Take them off only when the owner says to.
-- **Netlify never builds from Git.** Every deploy is `npm run deploy` from this
-  folder with the Netlify CLI, and the owner does not plan to deploy any other
-  way, so `GIT_LFS_ENABLED` in Netlify is NOT needed (decided 7 October 2026).
-  Git LFS still matters locally: a fresh clone needs it for `npm run site`.
-- **Netlify's own settings are the owner's**: visibility and passwords, the
-  plan, domains, environment variables, team members, and signing in or
-  linking this folder to the site.
+**The website (https://fairwaygolfsim.netlify.app) has its own private
+repository since 7 October 2026**, so this one can be public under MIT while
+the site stays all rights reserved. Its pages, media, build and deploy tools,
+Netlify settings and the rules for deploying it all live there. **Do not add
+any of them back here**, and do not deploy anything to Netlify from this
+folder.
+
+What the website takes from this repository, and so what must not break
+without telling it:
+
+- **The releases.** Its demo is the `Fairway.html` inside the newest release's
+  zips, checked against `RELEASE_SHA256.txt`, and its Download buttons link to
+  the zips by name (*Releases*, above).
+- **The `fairway-versions` tag** that `vite.config.js` puts at the top of the
+  built page. The website writes its sample course code from it.
+- **`public/manifest.webmanifest` and the icons**, which it keeps copies of.
+  Changing them means telling the owner the website's copies are stale.
+- **Pictures and clips** come from `tools/capture/` here, saved under
+  `bench/shots/media/`, which is not committed. The owner picks what goes on
+  the site and it is copied there by hand.
 
 ## What stays local
 
@@ -155,9 +158,10 @@ GitHub's own actions only, read-only workflow token, Dependabot alerts.
   git config. Never commit as a personal email.
 - **Stage files by name, never `git add -A` or `git add .`** The owner unzips
   release archives into this folder to test them, and a blanket add once swept a
-  16 MB unzipped copy of the game into a commit. `.netlify/`, builds, release
-  archives, `docs/reports/`, `docs/studies/`, `docs/sources/` and scratch
-  captures are git-ignored; keep anything new of that kind ignored too.
+  16 MB unzipped copy of the game into a commit. `.netlify/`, `site-dist/`,
+  builds, release archives, `docs/reports/`, `docs/studies/`, `docs/sources/`
+  and scratch captures are git-ignored; keep anything new of that kind ignored
+  too.
 
 ## Reports made for the owner stay local
 
@@ -175,9 +179,8 @@ public with the code.
   the report a decision came from is useful to the owner -- but a finding the
   next person needs goes into RESEARCH.md itself, in words and numbers, never
   only in a report.
-- **Media meant for the website is the exception and only when the owner picks
-  it**: copy the chosen clip or picture into `site/media/`, which is tracked
-  (in Git LFS). The report folder itself still stays local.
+- **Media meant for the website goes to the website's repository**, only when
+  the owner picks it. Nothing of it is committed here.
 
 This rule dates from 3 October 2026, when the owner had all three folders
 removed from the repository and from its history.

@@ -58,15 +58,13 @@ file by file against their inputs and writes `RELEASE_SHA256.txt`. If it
 refuses, believe it: it refuses on a stale build, a missing embedded licence
 notice, or a dependency inventory that disagrees with the lockfile.
 
-The website is one more again: `npm run site` builds the game and assembles
-`site-dist/` -- the pages in `site/`, with the built game copied into
-`site-dist/play/` as the browser demo -- which is what Netlify publishes
-(`netlify.toml`). The demo is the same `Fairway.html` the downloads carry,
-never a separate build.
-
 No CDN, font service, telemetry or backend is contacted at any point, during a
-build or during play. The website follows the same rule: no fonts, scripts or
-analytics from anywhere else.
+build or during play.
+
+The website, https://fairwaygolfsim.netlify.app, is not part of this
+repository: it is kept separately and is not open source. Its browser demo is
+the `Fairway.html` from the newest release here, unchanged, and its Download
+buttons serve this repository's release zips.
 
 ## How it simulates
 
@@ -110,14 +108,13 @@ checked by hand.
 | --- | --- |
 | `src/` | The game. Generation, physics, rendering, interface — one module per concern, no framework |
 | `tests/` | Regression suites for the Node test runner. `npm test` |
-| `tools/` | Measurement, asset ingest, profiling and release packaging |
+| `tools/` | Measurement, asset ingest, profiling, release packaging, and capturing pictures and clips of the game (`tools/capture/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |
 | `public/` | Home-screen icons and the web-app manifest, copied beside the game for a hosted copy |
 | `docs/` | Everything written down. Start at [docs/README.md](docs/README.md) |
-| `site/` | The website: hand-written pages, and screenshots and clips captured from the game (`tools/site-media/`), stored in Git LFS. `npm run site` assembles it with the game into `site-dist/` (not committed) for Netlify |
 | `dist/` | Build output. Not committed |
 
 ## Documentation

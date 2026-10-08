@@ -1,11 +1,11 @@
 // Records the chipping and approach clips planned by approach-plan.mjs, on the
 // current capture build, from the player's own camera: what a player sees.
 //
-//   node tools/site-media/build-hooked.mjs
+//   node tools/capture/build-hooked.mjs
 //   node tools/landing-report/approach-plan.mjs
 //   node tools/landing-report/approach-clips.mjs [index...]
 import fs from 'node:fs';
-import {launch, openGame, HIDE_HUD} from '../site-media/capture.mjs';
+import {launch, openGame, HIDE_HUD} from '../capture/capture.mjs';
 
 const DIR = 'docs/reports/chipping';
 const plan = JSON.parse(fs.readFileSync(`${DIR}/plan.json`, 'utf8'));

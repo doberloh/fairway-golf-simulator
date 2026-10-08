@@ -327,22 +327,47 @@ Fairway’s own source and documentation use the MIT license in `LICENSE`; third
 
 To refresh release downloads, run `npm run release`. It rebuilds the game and the four `run_fairway_server` programs first so it cannot package a stale build, then cuts and verifies every archive. It needs Python 3.9 or newer and finds it whether the command is `python3`, `python` or `py`; if none is installed it says so and stops, and `npm run build` on its own has already produced the playable file. It writes into `release/`: `Fairway-Windows.zip`, `Fairway-macOS-AppleSilicon.zip`, `Fairway-macOS-Intel.zip`, `Fairway-Linux.zip`, `Fairway-source.zip` and `RELEASE_SHA256.txt`, and checks their contents. The platform downloads are about 30-45 MB each, most of it the server program. This packaging step is optional for players and separate from the Node build. The source ZIP includes the scripts.
 
+## Publishing a release on GitHub
+
+Players download Fairway from this repository's GitHub releases. Cutting one:
+write the notes as `docs/releases/<version>.md` and merge them to `main`, run
+`npm run release` there, then
+`gh release create <version> release/Fairway-*.zip release/RELEASE_SHA256.txt --notes-file docs/releases/<version>.md`
+(the GitHub CLI, signed in once with `gh auth login`). Only the owner decides
+that a release goes up, and names it (AGENTS.md, *Pushing to GitHub*).
+
+Three things the website depends on: a release only reaches visitors once the
+repository is public; GitHub's "latest" skips releases marked as pre-releases,
+so a beta must not be marked as one or every Download button stays on the
+previous version; and each release has to use the same four platform zip
+names, because the buttons link to
+`https://github.com/doberloh/fairway/releases/latest/download/<zip>`.
+
+## Pictures and clips of the game
+
+`tools/capture/` takes the screenshots and clips used to show the game off --
+the website's gallery, feature pictures and background clips among them.
+`node tools/capture/build-hooked.mjs` builds the game with three capture handles
+added while bundling (src/ is not edited), into `bench/shots/dist-exp/`. Then
+`tools/capture/gallery.mjs`, `clips.mjs` and `features.mjs` retake the gallery,
+the background clips and the feature screenshots, each by name or all at once,
+into `bench/shots/media/` (not committed; set `MEDIA_OUT` to save elsewhere).
+Pictures are rendered on Ultra at 3840x2160 and saved at 2560x1440 with a
+960x540 thumbnail; clips are 1920x1080. A shot's light is named as a time of
+day (`dawn`, `morning`, `noon`, `afternoon`, `golden`), which `capture.mjs`
+turns into the hour that puts that landscape's sun at the right height.
+`capture.mjs` holds the shared setup and refuses to save anything not rendered
+on Ultra at full resolution -- a capture page must have a pixel density of 2,
+because the game never draws more pixels than the screen's density allows. A
+full retake takes about fifteen minutes on a fast graphics card, at full load:
+ask the owner first. The clips are WebM (VP9) recorded from the game's own
+canvas, because there is no video encoder in the toolchain.
+
 ## The website
 
-The project's website lives in `site/`: two hand-written pages (`index.html` and `media.html`), one stylesheet, one small script, and the screenshots and clips under `site/media/`, all captured from the game itself. It loads nothing from anywhere else -- no fonts, no scripts, no analytics.
-
-`npm run site` builds the game, then `tools/build-site.mjs` assembles `site-dist/`: a copy of `site/`, with the built game copied into `site-dist/play/` (the page, its manifest and icons) as the browser demo. It refuses if `dist/index.html` is older than `src/`, writes the sample course code on the front page from the game being shipped, and checks that every picture and clip the pages name is present. `site-dist/` is output, not committed.
-
-**The media is in Git LFS** (about 40 MB of pictures and clips, which plain git would keep a full copy of after every retake). After cloning, run `git lfs install --local` and `git lfs pull` once, or the pictures are 130-byte pointer files; `npm run site` says so and stops rather than building a site of broken images.
-
-**Deploying to Netlify.** Two ways, both using the root `netlify.toml`:
-
-- **From the repository** (not how Fairway is deployed -- see *From this machine* below; kept for anyone forking it). Connect the repository in Netlify and, **in the Netlify UI**, add the environment variable `GIT_LFS_ENABLED` = `true` -- Netlify reads it before cloning, so it cannot go in `netlify.toml` ([Netlify's build variables](https://docs.netlify.com/build/configure-builds/environment-variables/)). It then runs `npm run site` and publishes `site-dist/` on every push to the branch you choose. Each build downloads the media from GitHub's LFS storage, which counts against GitHub's free LFS transfer allowance (1 GB a month): roughly twenty-five builds.
-- **By hand.** Run `npm run site` here and drag the `site-dist` folder onto Netlify Drop or the site's *Deploys* page.
-- **From this machine, by command.** `npm run deploy:preview` builds everything and uploads it as a draft with its own address, leaving the live site alone; `npm run deploy` does the same to the live site. Each deploy is labelled with the branch and commit, plus `+uncommitted` when the site or game has changes not yet committed. Once per machine, the owner signs in and links this folder -- `npx netlify-cli@27.10.2 login`, then `npx netlify-cli@27.10.2 link --name <site name>` -- and the link is kept in the git-ignored `.netlify/`. This route uploads the files as they are here, so it needs neither Git LFS on Netlify nor `GIT_LFS_ENABLED`. The Netlify CLI is fetched by `npx` at a pinned version rather than added to `package.json`, because it brings about a thousand packages the release's dependency inventory would have to list.
-
-**It is public, but not indexed.** Since 7 October 2026 there is no password: anyone with the address can open it. Every page still carries a `noindex` tag, `netlify.toml` sends an `X-Robots-Tag: noindex` header, and `site/robots.txt` turns crawlers away, so well-behaved search engines leave it out. When the site is announced, remove all three together. (To make it private again, turn Netlify's password protection back on -- the demo's home-screen install works behind it, see above.)
-
-**Downloads are GitHub releases.** Each of the four download buttons links to `https://github.com/doberloh/fairway/releases/latest/download/<zip>`, the matching file on the newest release, so publishing a release updates every button with no change to the site. Cutting one: write the notes as `docs/releases/<version>.md` and merge them to `main`, `npm run release` there, then `gh release create <version> release/Fairway-*.zip release/RELEASE_SHA256.txt --notes-file docs/releases/<version>.md` (the GitHub CLI, signed in once with `gh auth login`). GitHub serves the files free and without counting them against storage, which is why this was chosen over hosting 150 MB of zips on Netlify, whose plan counts download traffic. Three things to know: a release only reaches visitors once the repository is public -- until then the buttons give everyone but the owner GitHub's not-found page, which is fine while the site is password-protected; GitHub's "latest" skips releases marked as pre-releases, so a beta must not be marked as one or the buttons stay on the previous version; and each new release has to use the same four file names. If the buttons are ever pointed back at `#download`, the site's script says "opens with the beta" instead of scrolling. Donations go through Ko-fi (https://ko-fi.com/doberloh): a plain link styled as the site's own button, so nothing from Ko-fi loads -- no script, no cookies -- until a visitor clicks it. Ko-fi's embedded panel and its floating button were turned down for exactly that reason.
-
-**Retaking the media.** `node tools/site-media/build-hooked.mjs` builds the game with three capture handles added while bundling (src/ is not edited), into `bench/shots/dist-exp/`. Then `tools/site-media/gallery.mjs`, `clips.mjs` and `features.mjs` retake the gallery, the background clips and the feature screenshots, each by name or all at once. Pictures are rendered on Ultra at 3840x2160 and saved at 2560x1440 with a 960x540 thumbnail; clips are 1920x1080. A shot's light is named as a time of day (`dawn`, `morning`, `noon`, `afternoon`, `golden`), which `capture.mjs` turns into the hour that puts that landscape's sun at the right height. The eight landscape clips play in turn behind every page (the backdrop's `data-playlist`); the build checks each one is present. `capture.mjs` holds the shared setup and refuses to save anything not rendered on Ultra at full resolution -- a capture page must have a pixel density of 2, because the game never draws more pixels than the screen's density allows. A full retake takes about fifteen minutes on a fast graphics card. The clips are WebM (VP9) recorded from the game's own canvas, because there is no video encoder in the toolchain; a browser that cannot play WebM shows each clip's still instead.
+The website, https://fairwaygolfsim.netlify.app, is kept in its own private
+repository since 7 October 2026 and is not open source. Nothing in this
+repository builds or deploys it. Its demo is the `Fairway.html` from this
+repository's newest release, unchanged, and it reads the generator and settings
+versions from the `fairway-versions` tag `vite.config.js` puts at the top of the
+built page.

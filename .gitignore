@@ -66,12 +66,10 @@ vendor/baked_assets/
 # download ZIPs (tools/package_release.py): built, never committed.
 /release/
 
-# The website as deployed (tools/build-site.mjs): site/ plus a copy of the built
-# game in play/. Rebuilt by `npm run site`, never committed.
+# The website lives in its own, private repository since 7 October 2026. These
+# stay ignored in case its build or a Netlify link is ever run in this folder
+# by mistake: neither belongs in the game's public history.
 /site-dist/
-
-# This folder's link to a Netlify site (`netlify link`, tools/deploy-site.mjs).
-# Per machine, never committed.
 /.netlify/
 
 # Secrets and per-machine settings never belong in the repository. Nothing of

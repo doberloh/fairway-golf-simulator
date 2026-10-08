@@ -6,11 +6,11 @@
 // camera beside where it lands, turning with the ball to show what it does
 // there. The cameras come from the plan, in the hole's own metres.
 //
-//   node tools/site-media/build-hooked.mjs
+//   node tools/capture/build-hooked.mjs
 //   node tools/landing-report/shotmaking-plan.mjs
 //   node tools/landing-report/shotmaking-clips.mjs [name...]
 import fs from 'node:fs';
-import {launch, openGame, assertUltra, HIDE_HUD, hourFor} from '../site-media/capture.mjs';
+import {launch, openGame, assertUltra, HIDE_HUD, hourFor} from '../capture/capture.mjs';
 
 const DIR = 'docs/reports/shotmaking';
 const plan = JSON.parse(fs.readFileSync(`${DIR}/plan.json`, 'utf8'));

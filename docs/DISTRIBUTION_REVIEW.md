@@ -480,8 +480,8 @@ claims and what it pulls in:
   ez-tree geometry already credited. The footer says "Created with CC0 assets
   and the help of Claude Code" and names Kenney, Quaternius and ez-tree.
 - **Physics claim**: "fitted to real launch monitors", with the GC3 figures and
-  SkyTrak named as the held-out check -- see RESEARCH.md *The website: what it
-  claims*. Not "calibrated", not "certified", and no device beyond those two
+  SkyTrak named as the held-out check -- see *What the site claims* in the
+  website repository's docs/RESEARCH.md (it moved there on 7 October 2026). Not "calibrated", not "certified", and no device beyond those two
   (and the planned R50) is named in connection with accuracy.
 - **Marks named** to describe compatibility: GSPro, rēlā, GC3, SkyTrak,
   Garmin. The footer carries the line this review asked for in September --
@@ -672,7 +672,7 @@ inside each pack: Kenney (3) say CC0, Quaternius (3) say CC0 / public domain.
 `tools/grow.mjs`; every file in it carries that tool's own "generated from
 scratch" header. ez-tree's output is MIT and credited. The website loads no
 outside font, script or stylesheet; its 60 pictures and 10 clips are captures
-of the game made by `tools/site-media/`. No photograph, texture, sound or font
+of the game made by `tools/capture/` (then `tools/site-media/`). No photograph, texture, sound or font
 from elsewhere ships.
 
 **Source.** Searched `src/`, `tools/` and `site/` for licence and copyright
@@ -734,3 +734,54 @@ not configured on Netlify and does not need to be.
 
 The repository itself is still private as this is written; the owner is making
 it public separately, and `tools/github-protect.mjs` runs as soon as it is.
+
+## Addendum, 7 October 2026: the website leaves this repository
+
+At the owner's request, so the game can go public under MIT while the website
+stays private and all rights reserved.
+
+**What moved.** `site/` (the pages and 70 pictures and clips in Git LFS),
+`netlify.toml`, `tools/build-site.mjs` and `tools/deploy-site.mjs` went to a new
+repository, `fairway-website`, beside this folder on the owner's machine, with
+their own history cut from this one's by `git filter-repo` (21 commits). The
+website's rules from AGENTS.md and its parts of INSTALLATION, the command
+sheet, TODO and RESEARCH went with them. Its demo is now the `Fairway.html`
+from this repository's newest release, checked against `RELEASE_SHA256.txt`,
+rather than a local build -- so the site provably serves the file people
+download. The capture tools stayed here as `tools/capture/`. The built page
+gained a 60-byte `fairway-versions` meta tag; it makes no request and changes
+nothing a player sees.
+
+**What the old history held.** Every pushed version since 1 October carries
+the website's pages and media, and the published release source zips v0.1 to
+v0.4 (`Fairway-source.zip`) carry `tools/build-site.mjs`,
+`tools/deploy-site.mjs` and the capture tools -- not the pages or media. None
+of it is secret: no credentials, and the Netlify link (`.netlify/`) was never
+committed. It is simply not meant to be open source.
+
+**The rewritten history.** A copy of this repository with `site/`,
+`netlify.toml` and the two site tools removed from every commit, branch and tag
+waits beside this folder for the owner's review. Nothing has been pushed.
+
+**What a force-push does not remove**, from GitHub's own documentation
+([Removing sensitive data from a repository](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)):
+after a rewrite and force-push, old commits stay reachable "directly via their
+SHA-1 hashes in cached views on GitHub" and through any pull request that
+references them, and only GitHub Support can clear those -- and "GitHub Support
+won't remove non-sensitive data", which this is. Git LFS objects are worse:
+"To remove Git LFS objects from a repository, delete and recreate the
+repository" ([Removing files from Git LFS](https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage)),
+so the website's pictures and clips would stay in this repository's LFS
+storage, counted against its quota, after any force-push.
+
+**So the clean route is a fresh repository, and it is the owner's call.**
+Rename the current `doberloh/fairway` on GitHub (it stays private, keeping the
+old history, releases and media as an archive), create a new, empty
+`doberloh/fairway`, push the rewritten history to it, make it public, run
+`node tools/github-protect.mjs` the same minute, and publish v0.5 as its first
+release. The Download buttons link by name to `doberloh/fairway`'s latest
+release, so they pick the new repository up with no change to the site, and
+serve GitHub's not-found page between the rename and v0.5. The alternative --
+force-push into the existing repository and delete releases v0.1 to v0.4 --
+leaves the old commits reachable by hash and the media in LFS storage once the
+repository is public.

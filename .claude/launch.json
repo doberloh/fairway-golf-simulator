@@ -22,20 +22,6 @@
         "--strictPort"
       ],
       "port": 4188
-    },
-    {
-      "name": "fairway-site",
-      "runtimeExecutable": "python",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "4190",
-        "--bind",
-        "127.0.0.1",
-        "--directory",
-        "site-dist"
-      ],
-      "port": 4190
     }
   ]
 }

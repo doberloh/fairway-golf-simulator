@@ -1,10 +1,13 @@
-// The website's feature screenshots, interface showing, into
-// site/media/features/<name>.jpg (2560x1440) and <name>-thumb.jpg (960x540),
+// Feature screenshots of the game, interface showing, as
+// <name>.jpg (2560x1440) and <name>-thumb.jpg (960x540),
 // rendered on Ultra at 3840x2160 (capture.mjs says why).
-// Needs the capture build first: node tools/site-media/build-hooked.mjs
-//   node tools/site-media/features.mjs [name...]
+// Needs the capture build first: node tools/capture/build-hooked.mjs
+//   node tools/capture/features.mjs [name...]
 import {launch, openGame, assertUltra, save} from './capture.mjs';
-const OUT = 'site/media/features';
+// Saves under bench/shots/media/features/ (not committed), or under $MEDIA_OUT/features/.
+// Pictures for the website are picked from there and copied into the
+// website's own repository by hand, under new names.
+const OUT = `${process.env.MEDIA_OUT || 'bench/shots/media'}/features`;
 const course = (p, c, hole = 0) => p.evaluate(async ([c, hole]) => { await window.lab.course(c); window.lab.hole(hole); }, [c, hole]).then(() => p.waitForTimeout(7000));
 const hour = (p, h, flood) => p.evaluate(([h, flood]) => { const v = window.__view; v.daylight.hour = h; v.daylight.rate = 0; if (flood) v.setFloodlights(true); }, [h, flood]);
 const SCENES = {

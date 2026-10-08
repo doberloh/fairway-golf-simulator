@@ -1,4 +1,4 @@
-// A build of the game for capturing the website's media: the real game, plus
+// A build of the game for capturing pictures and clips of it: the real game, plus
 // three handles on `window` the capture scripts drive it through --
 //   __view      the renderer (camera, clock, floodlights, aim line)
 //   __takeShot  a launch-monitor shot, as if one had arrived from the bridge
@@ -6,8 +6,8 @@
 // They are added while bundling, so src/ is never edited. (Editing src/main.js
 // and reverting it by hand is how real work was once lost here.)
 //
-//   node tools/site-media/build-hooked.mjs     -> bench/shots/dist-exp/index.html
-//   OUT=bench/shots/dist-before node tools/site-media/build-hooked.mjs   (another folder)
+//   node tools/capture/build-hooked.mjs     -> bench/shots/dist-exp/index.html
+//   OUT=bench/shots/dist-before node tools/capture/build-hooked.mjs   (another folder)
 import {build} from 'vite';
 
 const LINE = " view=new GolfView($('scene'),graphics.quality);";

@@ -403,8 +403,6 @@ is only as good as the ability to go back and check what it was taken from.
 - Bun LICENSE.md at bun-v1.4.2 -- https://github.com/oven-sh/bun/blob/bun-v1.4.2/LICENSE.md -- the notice reproduced verbatim in THIRD_PARTY_NOTICES.txt.
 - GNU LGPL 2.1 text -- https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt -- reproduced in THIRD_PARTY_NOTICES.txt.
 - rēlā documentation -- https://docs.rela.golf/ ; user guide https://docs.rela.golf/rela/user-guide/ ; installation https://docs.rela.golf/rela/installation/ -- Device / Search / Simulator / Settings names, Windows PC, vendor software first. Default port not stated. Checked again 6 October for which spin fields it sends a simulator (TotalSpin and SpinAxis, or BackSpin and SideSpin): not stated.
-- Netlify, build environment variables -- https://docs.netlify.com/build/configure-builds/environment-variables/ -- `GIT_LFS_ENABLED` (clone with `git lfs clone`) and `GIT_LFS_FETCH_INCLUDE`, both to be set in the Netlify UI, not `netlify.toml`. Used for the website's media in Git LFS (RESEARCH.md *The website*).
-- Netlify forum, "LFS files aren't downloaded during build" -- https://answers.netlify.com/t/lfs-files-arent-downloaded-during-build/21948 -- read and set aside: about Netlify Large Media, Netlify's own LFS service, which this project does not use.
 
 ## After the ball lands (2 October 2026)
 
@@ -457,3 +455,8 @@ is only as good as the ability to go back and check what it was taken from.
 - Inigo Quilez, "smooth minimum" -- https://iquilezles.org/articles/smin -- 404 to automated requests (redirect to http, then not found); its terms could not be read.
 - glsl-smooth-min -- https://github.com/glslify/glsl-smooth-min (poly.glsl, LICENSE.md) -- MIT, Copyright (c) 2014 stackgl contributors; poly.glsl is identical to the `smin` in ground.js. The licence relied on.
 - glsl-hash-blur, shadox, godotshaders "Rainier mood" -- found in the search for Hoskins's hash; they confirm how widely it is redistributed under MIT. Not used.
+
+## The website leaves this repository (7 October 2026)
+
+- GitHub Docs, "Removing sensitive data from a repository" -- https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository -- after a rewrite and force-push, old commits stay reachable by hash in cached views and through pull requests until Support clears them, and Support does not act on non-sensitive data. Why the rewritten history should go into a fresh repository (DISTRIBUTION_REVIEW, *The website leaves this repository*).
+- GitHub Docs, "Removing files from Git Large File Storage" -- https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage -- "To remove Git LFS objects from a repository, delete and recreate the repository": the website media would otherwise stay in this repository's LFS storage.

@@ -3,16 +3,16 @@
 // game's own canvas. Needs both capture builds:
 //
 //   git show main:src/physics.js > src/physics.js && git show main:src/clubs.js > src/clubs.js
-//   OUT=bench/shots/dist-before node tools/site-media/build-hooked.mjs
+//   OUT=bench/shots/dist-before node tools/capture/build-hooked.mjs
 //   git show HEAD:src/physics.js > src/physics.js && git show HEAD:src/clubs.js > src/clubs.js
-//   node tools/site-media/build-hooked.mjs
+//   node tools/capture/build-hooked.mjs
 //   node tools/landing-report/clips.mjs [scene...]
 //
 // The scenes and their numbers came from the searches written up in
 // docs/reports/BALL_LANDING_REPORT.md; each is one exact shot, not a lookalike.
 import fs from 'node:fs';
 import path from 'node:path';
-import {launch, openGame, HIDE_HUD} from '../site-media/capture.mjs';
+import {launch, openGame, HIDE_HUD} from '../capture/capture.mjs';
 import {customizeClubs, manualLaunch} from '../../src/clubs.js';
 
 const OUT = process.env.CLIP_OUT || 'docs/reports/ball-landing';

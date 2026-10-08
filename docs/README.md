@@ -11,7 +11,7 @@ the change that made it stale, not a follow-up.
 | --- | --- |
 | play, and find the controls | [PLAYING.md](PLAYING.md) |
 | get it running on a device | [INSTALLATION.md](INSTALLATION.md) |
-| build or deploy the website | [INSTALLATION.md](INSTALLATION.md), *The website* |
+| publish a release, or retake pictures and clips of the game | [INSTALLATION.md](INSTALLATION.md), *Publishing a release on GitHub* and *Pictures and clips of the game* |
 | find the command for something | [COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md) |
 | change the code | [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), then [../AGENTS.md](../AGENTS.md) |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
@@ -29,13 +29,14 @@ the change that made it stale, not a follow-up.
   launch monitor through rēlā, troubleshooting.
 - **[INSTALLATION.md](INSTALLATION.md)** — building from source, supported
   platforms and the ones that are merely untested, serving it yourself, the
-  bridge's details, and building and deploying the website (`site/`). Not
+  bridge's details, publishing a release, and capturing pictures and clips of
+  the game. (The website is kept in its own repository.) Not
   shipped in the player downloads.
 
 **For somebody changing the code**
 
 - **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
-  measurement, release and website command on one page.
+  measurement, release and capture command on one page.
 
 - **[PROJECT_HANDOFF.md](PROJECT_HANDOFF.md)** — the architecture with no
   conversation history assumed: modes, data flow, units, the generation
