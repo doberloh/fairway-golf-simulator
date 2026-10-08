@@ -147,8 +147,7 @@ live on the home screen like an app.
    folder holds the game (`index.html`) and, beside it, the home-screen icons
    and `manifest.webmanifest`. Upload the **whole folder**. Netlify Drop is the
    quickest: drag the folder onto its page and you get an `https://` address in
-   about a minute. Cloudflare Pages and, once the repository is public, GitHub
-   Pages work the same way. Anyone with the address can open it.
+   about a minute. Cloudflare Pages and GitHub Pages work the same way. Anyone with the address can open it.
 2. **Open that address in Safari on the phone.**
 3. **Tap Share, then Add to Home Screen.** The icon it adds opens Fairway full
    screen, without Safari's address bar, with the phone's status bar kept
@@ -336,8 +335,9 @@ write the notes as `docs/releases/<version>.md` and merge them to `main`, run
 (the GitHub CLI, signed in once with `gh auth login`). Only the owner decides
 that a release goes up, and names it (AGENTS.md, *Pushing to GitHub*).
 
-Three things the website depends on: a release only reaches visitors once the
-repository is public; GitHub's "latest" skips releases marked as pre-releases,
+Three things the website depends on: the repository stays public (it has been
+since 7 October 2026; a private repository's releases reach nobody but the
+owner); GitHub's "latest" skips releases marked as pre-releases,
 so a beta must not be marked as one or every Download button stays on the
 previous version; and each release has to use the same four platform zip
 names, because the buttons link to
