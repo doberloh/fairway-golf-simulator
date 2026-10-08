@@ -794,3 +794,17 @@ backup -- so every link to the old address had to change (the website's
 Download buttons and build, `tools/github-protect.mjs`, the docs), or it would
 have served the private backup's releases. The website's private repository is
 `doberloh/fairway-website`.
+
+## Addendum, 7 October 2026: v0.5, the first release of `fairway-golf-simulator`
+
+The rewritten history went up to `doberloh/fairway-golf-simulator` at the
+owner's request: `main`, after `site-kofi` was merged into it, and
+`site-kofi`; no other branches and no tags. The repository is still private.
+
+**v0.5** is published at the owner's request as "Fairway 0.5 (beta)", tag
+`v0.5`, not a pre-release, from the merge of `release-0.5` into `main`, with
+its notes in `docs/releases/v0.5.md` in the same commit. It is the same game as
+v0.4; the built file differs only by the `fairway-versions` meta tag, and the
+generator is unchanged (34), so saved rounds and course codes carry over. Its
+source zip is the first that carries no website tooling. Releases v0.1 to v0.4
+stay in the private `fairway-backup` and are not reachable from the website.
