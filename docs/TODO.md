@@ -243,15 +243,6 @@ validation.** That sequencing is the plan; the channels are details.
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **The GitHub half of taking the website out (7 October).** Done by the
-  owner: the old repository renamed `fairway-backup` (kept private, with
-  v0.1-v0.4), and two new private ones, `fairway-golf-simulator` for this and
-  `fairway-website`. Left: push the rewritten history there, and publish v0.5
-  as its first release -- until then the website's Download buttons have no
-  release to serve.
-  DISTRIBUTION_REVIEW, *The website leaves this repository*, sets out the
-  choice.
-
 - [ ] **There is still no PUBLIC remote, and that is now the last thing
   standing between this tree and a published project.** A private one exists
   since 7 October -- https://github.com/doberloh/fairway-golf-simulator,
@@ -800,6 +791,20 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## Release 0.5, the first from the new repository (7 October)
+
+- [x] **The rewritten history is on GitHub.** The owner renamed the original
+  repository `fairway-backup` (private, keeping v0.1-v0.4 and the website's
+  history) and created `fairway-golf-simulator` and `fairway-website`.
+  `main` and `site-kofi` went up, after `site-kofi` was merged; the 81
+  finished branches and the old tags stayed in the backup. Still private: the
+  owner makes it public, and `tools/github-protect.mjs` runs that minute.
+- [x] **v0.5 published**, "Fairway 0.5 (beta)", at the owner's request, from
+  the merge of `release-0.5` into `main`: the same game as 0.4 (the only
+  change to the built file is the `fairway-versions` tag), released so the new
+  repository has a release for the website's Download buttons and demo. Notes:
+  `docs/releases/v0.5.md`.
 
 ## The website leaves this repository (7 October)
 
