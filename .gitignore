@@ -22,7 +22,7 @@ RELEASE_SHA256.txt
 bench/shots/
 
 # Reports, studies and saved sources are made for the owner and stay on this
-# machine (AGENTS.md, *Reports made for the owner stay local*). They were
+# machine (AGENTS.md, *What stays local*). They were
 # removed from the repository and from its history on 3 October 2026. The docs
 # still name them as where to look locally; the tools that write them are
 # tracked and regenerate them.

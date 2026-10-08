@@ -252,6 +252,17 @@ GitHub repository, and stop shipping what nobody needs.
   changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
   not before, or every pull request waits for a check that never comes.
 
+- [ ] **A high-severity Dependabot alert on a build tool (7 October).**
+  `source-map-js` 1.2.1 can be made to hang by a crafted source map; 1.2.2
+  fixes it (alert 2 on the repository's Security tab). It reaches this project
+  only through the build tools -- `vite` 8.3.0 -> `postcss` 8.5.28 ->
+  `source-map-js` -- so nothing a player downloads carries it, and the build
+  never reads a source map from outside. Fix: update it in the lockfile (`npm
+  update source-map-js`, or a newer vite/postcss that requires it), then
+  `docs/DEPENDENCY_INVENTORY.json` and THIRD_PARTY_NOTICES.txt if the packager
+  asks, and `npm test` plus a build. A second alert, on `braces`, was closed
+  by GitHub itself: development-only, with no fix published.
+
 - [ ] **Fewer, smaller documents.** Asked for 1 October. **The first step is
   done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
   14 KB, and AGENTS.md says to search the long documents rather than read them**
@@ -772,6 +783,17 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 # Done
 
 ## Making the repository public
+
+- [x] **AGENTS.md trimmed from 33 KB to 14.5 KB (7 October).** At the owner's
+  request: it is loaded with every message, so it went from roughly 8,300
+  tokens to 3,600 on each one. Every rule stayed, each with one line of why;
+  the incidents behind them (dates, costs, what went wrong) moved to the new
+  `docs/RULES_HISTORY.md`, so nothing was lost. Two sections merged (*Reports
+  made for the owner stay local* into *What stays local*) and four were
+  retitled shorter; the one pointer to an old title, in `.gitignore`, was
+  updated. Deliberately NOT added while trimming: two rules from the saved
+  session notes (push `main` alone before a release; ask before a smoke run if
+  the owner may be gaming) -- a trim should not change what the rules say.
 
 - [x] **A short entry document, and searching instead of reading (7 October).**
   At the owner's request, after measuring what a session spent before doing

@@ -38,6 +38,7 @@ the change that made it stale, not a follow-up.
 - **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
   measurement, release and capture command on one page.
 
+- **[RULES_HISTORY.md](RULES_HISTORY.md)** — why each rule in AGENTS.md exists: the incidents behind them, with dates and costs. AGENTS.md keeps only the rules, because it is loaded with every message.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — read first: the product, where
   every file lives, units and coordinates, the generation pipeline in seven
   steps, and the traps, one line each with the PROJECT_HANDOFF section to
