@@ -181,6 +181,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
+- The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
 - The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler. [THE SPLASH LIVES]

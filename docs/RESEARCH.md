@@ -6347,10 +6347,69 @@ if the oaks caused the hitches, and they do not. If Haunted Hollow ever needs
 to be cheaper -- on a weak machine 7 M triangles matters more than half a
 millisecond here suggests -- the oaks are where the triangles are.
 
-**Giant Redwood hitches for real**, and did before any of this: four or five
-frames of 157-178 ms between about frames 180 and 250 of every fresh run.
-Recorded as its own open item.
+**Giant Redwood's hitch was real in the profiler and absent at normal frame
+pacing**: four or five frames of 157-178 ms between about frames 180 and 250 of
+every fresh run, explained in *The redwood hitch: an uncapped-profiler stall*
+below.
 
 The `--since` comparison found the other seven biomes 1.6 to 6.8 ms faster than
 `bench/profile-baseline.json`; the baseline was taken under different
 conditions and says nothing here. It was not re-saved.
+
+### The redwood hitch: an uncapped-profiler stall (9 October)
+
+Investigated at the owner's request, reported first; **only written up, nothing
+in the game changed**, by the owner's decision.
+
+**What it is.** A course opens with the camera holding high for about 2.7 s,
+then flying down to the tee. The instance cull (`src/instance-cull.js`)
+rebuilds the list of drawn instances every 4 m of camera travel, and on the
+redwood course (seed PROFILE, nine holes, High) one rebuild uploads about
+**83,000 instances, 6.7 MB**, across 238 buffers -- already only the visible
+range of each. During the descent that is every two to four frames. With the
+frame rate uncapped, the first rebuilds as the camera starts down collide with
+frames already queued for the graphics card, and Chrome's GPU process stalls
+for **170-195 ms** inside the driver. The page does not wait on its own call:
+it waits a frame or two later, on whatever call finds the command queue full
+(once a single 4x4 matrix upload took 181 ms).
+
+**Evidence** (capture build, High, 1600x900 at 2x, real GPU, a fresh browser
+per run, each slow frame's GL calls and per-call time recorded):
+
+| Test | 170-195 ms frame at camera height 115-117 m? |
+| --- | --- |
+| As normal, uncapped | yes, every run (and again when the descent was replayed in the same run) |
+| Redwood-forest models hidden | no |
+| Cull rebuilds frozen | no |
+| **Normal 60 fps pacing (vsync on)** | **no slow frame at all, 2 of 2 runs** |
+| 1600x900 pixels / 400x225 pixels | 124-129 ms / none |
+| Shadows off | yes |
+| God rays off | yes |
+| God rays drawn once toward the sun first | yes |
+| Floodlight warm-up off | yes |
+| The descent drawn once beforehand | yes |
+
+The graphics card's own time for the hitch frame's drawing was normal (about
+7 ms, timer query), the frame drew the usual 560 draws and 83,000 instances,
+and it compiled and created nothing. A Chrome trace put the time in the GPU
+process's command-buffer flush, with no named step inside it: driver work. The
+frames just before each hitch carried a 6.7 MB rebuild upload.
+
+**Hypotheses tested and rejected on the way**, so nobody repeats them: one-off
+driver preparation on first draw (pre-drawing the descent did not help, and the
+hitch recurs on a replay); the camera flying through the treetops (it is 83 m
+from the nearest crown); the god-rays occlusion pass; shadow maps; the
+floodlight warm-up.
+
+**Smaller findings.** The floodlight warm-up causes two frames of 40-90 ms a
+little later in the descent -- each creates one texture and checks three
+programs -- which also vanish at 60 fps pacing. It also adds about 2-3 s to a
+redwood course's loading (7-8 s with it, 3.6-5.7 s without); that is behind the
+loading screen, where the owner asked for that work to go.
+
+**What it means.** A player on this machine (RTX 4090) does not see it. **Not
+tested: a graphics card that cannot hold 60 fps on the redwood course**, which
+would queue frames the way the uncapped profiler does and could feel the same
+stall. If that is ever reported, the fix to try is spreading a rebuild's upload
+over several frames rather than sending all 238 buffers at once; it touches
+tree drawing, so it wants its own before-and-after measurement.
