@@ -671,7 +671,7 @@ so several of these play differently as well as look different.
 
 **Haunted Hollow follow-ups**
 
-- [ ] **Measure Haunted Hollow's frame cost.** The three gnarled dead oaks are 7.2k-8.2k vertices each, among the heaviest models shipped, and since the second pass there are about 400 giant props, 150 lantern faces and 18 transparent ghosts on nine holes. All of it draws only on this biome. `npm run profile --only biomes` (about a minute of full GPU load) -- ask the owner first.
+- [ ] **Haunted Hollow costs twice a parkland frame, and hitches.** Measured 9 October (RESEARCH, *Frame cost, measured*): High tier, real GPU, 7.4 ms GPU and 6.1 ms CPU a frame -- level with Giant Redwood, about twice Autumn -- with 18 M triangles against Autumn's 7 M, and a CPU p99 of 58 ms (Autumn 7.6). What carries it is not yet known: the gnarled oaks (7.2k-8.2k vertices each), about 400 giant props, 150 lantern faces or 18 transparent ghosts. Find out by switching each off in turn before changing anything.
 - [ ] **A glow round the lit lanterns.** An additive point-sprite halo drew a dark square behind every lit face, even with the mist patch kept off it (RESEARCH, *Second pass: full fantasy*). Find what in the frame does that before trying again; the lit face reads without it.
 - [ ] **Giant Redwood has no fog of its own.** Found while adding Haunted Hollow: `profileFor` falls back to Midwest, and the test that claimed every biome had a profile could not fail. The grove's "wet air" has been prairie haze since it was added. A look decision for the owner; `tests/mist.test.mjs` lists redwood in `BORROWS` until it is made.
 

@@ -6299,3 +6299,28 @@ so no saved round can hold it. A bump would put the "this course has changed"
 notice on every saved round of every biome, none of which changed -- an arbiter
 crying wolf. If the branch was ever played and a Haunted Hollow round saved
 locally, that one round would rebuild with the props.
+
+### Frame cost, measured (9 October)
+
+`node tools/profile.mjs --only biomes --since`, run at the owner's request on
+the second-pass build: High tier, player view, seed PROFILE, nine holes, the
+**real-GPU arm** (RTX 4090, ANGLE D3D11, vsync off). Medians unless stated.
+
+| Biome | CPU ms | CPU p99 | GPU ms | Draws | Triangles |
+| --- | --- | --- | --- | --- | --- |
+| Autumn (nearest parkland) | 2.70 | 7.6 | 3.52 | 458 | 7.0 M |
+| Giant Redwood (heaviest) | 6.00 | 20.0 | 7.12 | 567 | 75.6 M |
+| **Haunted Hollow** | **6.10** | **58.3** | **7.37** | 348 | 18.1 M |
+
+Haunted Hollow draws as heavily as the redwood grove: about twice a parkland
+biome on both processors, with fewer draws than Autumn but two and a half times
+its triangles. The CPU p99 of 58 ms (worst 82.5) is the figure to worry about --
+occasional hitches, not a steady cost. **What carries either is not measured**:
+candidates are the gnarled oaks, the ~400 giant props, 150 lantern faces and 18
+transparent ghosts with per-frame updates, and each wants switching off in turn.
+
+The `--since` column compared the other seven against `bench/profile-baseline.json`
+and found every one 1.6 to 6.8 ms *faster* than the stored baseline. Nothing here
+made them faster, so the baseline was taken under different conditions and says
+nothing about this change. Haunted Hollow has no baseline entry; the baseline
+was not re-saved.
