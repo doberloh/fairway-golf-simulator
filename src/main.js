@@ -32,7 +32,7 @@ import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js'
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
-import {relativeToPar,parText,parSide,parTint,holeScoreName} from './scoring.js';
+import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
@@ -766,7 +766,7 @@ function finishShot(){
  // never crossed the boundary line; the house is the edge, and it is where it
  // stopped.
  if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const event=round.takeShot(result,course.pin);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -809,6 +809,34 @@ function holeCard(event){
   +`<div class="hole-summary-detail"><strong>${escape(name||'')}</strong><span>Par ${course.par} · ${scoreText(event.puttingTotal)} ${event.puttingTotal===1?'putt':'putts'}</span></div>`
   +`<div class="hole-summary-par" data-side="${parSide(rel,1)}"${tint?` style="background:${tint}"`:''}>${parText(rel)}</div>`
   +`</div>`;
+}
+// THE HOLE-OUT BANNER. The moment a golfer's score for the hole is final, its
+// name lands in the middle of the screen -- "Birdie", "+5" -- and lifts away
+// again before the scorecard opens (HOLE_REVEAL_MS).
+//
+// It watches the CARD rather than the shot, because the card is the one thing
+// every format agrees on: stroke and match play write a golfer's score when
+// their ball drops or putts are awarded; a scramble writes the whole team's when
+// a teammate holes or the team picks a lie that gets automatic putts. So the
+// caller notes which seats were carded before the action, and whoever gained a
+// score since is announced. Replays never write a card; the range never has one.
+const cardedSeats=()=>round.cards.map(c=>Number.isFinite(c?.[round.hole]));
+let holeOutTimer=null;
+function announceHoleOut(before){
+ const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
+ if(!seats.length)return;
+ const seat=seats[0],score=round.cards[seat][round.hole],label=holeOutLabel(score,course.par);
+ if(!label)return;
+ // Who, only when there is more than one golfer to tell apart. A scramble
+ // score belongs to the team, so the team is named.
+ const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
+ const tint=parTint(label.rel,1),el=$('holeOut');
+ el.innerHTML=(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
+  +`<strong class="hole-out-name">${escape(label.name)}</strong>`
+  +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`;
+ // Restart the animation even when the banner is already up: hidden, reflow, shown.
+ el.hidden=true;void el.offsetWidth;el.hidden=false;
+ clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
 }
 function renderResult(event){
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
@@ -4027,7 +4055,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   else return;
   e.preventDefault();e.stopImmediatePropagation();
  },true);
- $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{round.chooseScramble(pickIndex);afterSelection();}catch(e){toast(e.message);}};
+ $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
  $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.

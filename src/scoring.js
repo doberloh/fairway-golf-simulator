@@ -57,3 +57,14 @@ export function holeScoreName(score, par) {
  if (!Number.isInteger(score) || !Number.isInteger(par)) return '';
  return NAMES[String(score - par)] || parText(score - par);
 }
+
+// The hole-out banner: what lands in the middle of the screen the moment a
+// golfer's score for the hole is final. The name when the score has one, and
+// past quadruple bogey just the number over par ("+5"), because nobody wants
+// "Quintuple bogey" written across the screen in large letters. A fractional
+// decimal-putting score has no name either, so it gets the number too.
+export function holeOutLabel(score, par) {
+ if (!Number.isFinite(score) || !Number.isFinite(par)) return null;
+ const rel = Math.round((score - par) * 100) / 100;
+ return {name: holeScoreName(score, par) || parText(rel), rel, side: parSide(rel, 1)};
+}

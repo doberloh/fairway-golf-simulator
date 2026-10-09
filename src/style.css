@@ -1188,3 +1188,18 @@ html,body{overscroll-behavior:none}
 .course-info h1{font-weight:650;letter-spacing:-1.2px}
 .sc-big strong,.hole-summary-score strong,.hole-summary-par,.profile-hcp strong,.profile-round-score strong,.live-score-par strong,.result-stats strong,.hole-info strong,.clock-read,.flight-nums,.profile-avatar{font-weight:600;font-variant-numeric:lining-nums tabular-nums}
 
+
+/* The hole-out banner: the score's name in the middle of the screen when a hole is finished. The same glass as the flight badge; it rises in, holds, and lifts away before the scorecard opens. */
+.hole-out{position:absolute;z-index:35;top:38%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:7px;padding:18px 34px 16px;max-width:calc(100% - 32px);border-radius:var(--panel-radius);background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15);pointer-events:none;text-align:center;animation:hole-out 2.7s cubic-bezier(.2,.8,.2,1) both}
+.hole-out[hidden]{display:none}
+.hole-out-who{display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-dim)}
+.hole-out-who i{width:8px;height:8px;border-radius:50%}
+.hole-out-name{font:600 44px var(--font-display);letter-spacing:-1.2px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-variant-numeric:lining-nums tabular-nums;animation:hole-out-name .5s .08s cubic-bezier(.3,1.5,.5,1) both}
+.hole-out-line{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.hole-out-line b{padding:3px 8px;border-radius:6px;font:600 12px var(--font-display);color:var(--ink);background:var(--field);border:1px solid var(--glass-line)}
+.hole-out-line b[data-side=over],.hole-out-line b[data-side=under]{border-color:transparent;color:#fff}
+@keyframes hole-out{0%{opacity:0;transform:translate(-50%,calc(-50% + 14px)) scale(.94)}12%{opacity:1;transform:translate(-50%,-50%) scale(1)}82%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,calc(-50% - 10px))}}
+@keyframes hole-out-name{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@media (max-width:600px){.hole-out{padding:14px 24px 13px}.hole-out-name{font-size:34px}}
+@media (prefers-reduced-motion:reduce){.hole-out{animation-name:hole-out-fade}.hole-out-name{animation:none}}
+@keyframes hole-out-fade{0%,100%{opacity:0}10%,85%{opacity:1}}

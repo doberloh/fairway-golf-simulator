@@ -187,6 +187,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - One thrown error while a panel wires itself kills every handler below it. [One thrown error in a panel]
 - `main.js` DOM paths are not covered by the tests; that is what `npm run smoke` is for. [`main.js` DOM paths]
 - Escape closes what is in front first. [Escape closes what is in front]
+- Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 
 **Saving and players**

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {relativeToPar, parText, parSide, parTint, holeScoreName, PAR_LIMIT} from '../src/scoring.js';
+import {relativeToPar, parText, parSide, parTint, holeScoreName, holeOutLabel, PAR_LIMIT} from '../src/scoring.js';
 
 const PARS = [4, 5, 3, 4, 4, 3, 5, 4, 4];
 const alpha = tint => Number(tint.match(/,([\d.]+)\)$/)[1]);
@@ -101,4 +101,17 @@ test('a fractional score has no name, because there is no such thing', () => {
  assert.equal(holeScoreName(6.4, 4), '');
  assert.equal(holeScoreName(undefined, 4), '');
  assert.equal(holeScoreName(4, undefined), '');
+});
+
+test('the hole-out banner names a score when it has a name, and numbers it past that', () => {
+ assert.deepEqual(holeOutLabel(3, 4), {name: 'Birdie', rel: -1, side: 'under'});
+ assert.deepEqual(holeOutLabel(4, 4), {name: 'Par', rel: 0, side: 'even'});
+ assert.equal(holeOutLabel(8, 4).name, 'Quadruple bogey');
+ assert.equal(holeOutLabel(9, 4).name, '+5');
+ assert.equal(holeOutLabel(1, 3).name, 'Hole in one');
+ assert.equal(holeOutLabel(1, 3).side, 'under');
+ // Decimal putting: no name, so the number, rounded like every other score.
+ assert.equal(holeOutLabel(4.5, 4).name, '+0.5');
+ assert.equal(holeOutLabel(3.5, 4).name, '-0.5');
+ assert.equal(holeOutLabel(undefined, 4), null);
 });

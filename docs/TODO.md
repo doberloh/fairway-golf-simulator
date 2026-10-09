@@ -781,6 +781,22 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 # Done
 
+## The hole-out banner
+
+- [x] **The score's name in the middle of the screen when a hole is finished
+  (8 October).** *Birdie*, *Par*, *Double bogey* ... *Quadruple bogey*, and past
+  that the number over par (*+5*); *Hole in one* outranks the arithmetic, and a
+  fractional decimal-putting score shows its number. Under it the strokes, par
+  and a to-par chip tinted like the score chips. The flight badge's glass,
+  rising in with a small overshoot on the name, lifting away at 2.7 s -- inside
+  the 3 s before the scorecard opens; reduced motion gets a plain fade. Works in
+  stroke, match, scramble (the team, after a holed ball or a lie with automatic
+  putts) and endless, because it watches the scorecard being written rather
+  than the shot (PROJECT_HANDOFF, *THE HOLE-OUT BANNER WATCHES THE CARD*).
+  **Rejected:** keying it on `event.complete` -- a scramble candidate awarded
+  putts reports complete before the team has chosen, and the team's choice
+  completes the hole without a shot. Label in `holeOutLabel` (scoring.js), tested.
+
 ## Making the repository public
 
 - [x] **A high-severity Dependabot alert on a build tool (7 October), fixed 8
