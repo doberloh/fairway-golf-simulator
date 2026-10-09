@@ -6300,27 +6300,57 @@ notice on every saved round of every biome, none of which changed -- an arbiter
 crying wolf. If the branch was ever played and a Haunted Hollow round saved
 locally, that one round would rebuild with the props.
 
-### Frame cost, measured (9 October)
+### Frame cost, measured (9 October) -- and the hitch that was not ours
 
-`node tools/profile.mjs --only biomes --since`, run at the owner's request on
-the second-pass build: High tier, player view, seed PROFILE, nine holes, the
-**real-GPU arm** (RTX 4090, ANGLE D3D11, vsync off). Medians unless stated.
+**The first reading was wrong.** `node tools/profile.mjs --only biomes --since`
+on the second-pass build (High tier, player view, seed PROFILE, nine holes,
+real-GPU arm: RTX 4090, ANGLE D3D11, vsync off) gave Haunted Hollow 6.1 ms CPU,
+7.4 ms GPU and a CPU p99 of 58 ms, level with Giant Redwood and twice Autumn.
+That was reported to the owner as "twice a parkland frame, with hitches". It
+was mostly interference from outside the game.
 
-| Biome | CPU ms | CPU p99 | GPU ms | Draws | Triangles |
+**How it was found.** The owner asked what caused the hitches and whether the
+gnarled oaks needed fewer polygons. The same measurement was repeated on the
+capture build (`window.__view`), with the profiler's own probe and GPU flags,
+switching one part of the scene off per case and recording when each frame
+over 25 ms happened:
+
+1. **In one browser, every case got worse the later it ran** -- Autumn included.
+   The first profile ran nine biomes in one browser with Haunted Hollow last;
+   the late cases (Island, Redwood, Haunted Hollow) had the large worst frames.
+2. **With a fresh browser per case, the hitches came in bursts at exactly
+   200 ms intervals** (5 Hz) through the whole sample -- 440, 635, 841,
+   1033 ms ... in one Autumn run, 126, 322, 535, 749 ms ... in one Haunted
+   Hollow run -- and struck about one run in four of either biome at random.
+   A run with the burst also reads 1-2 ms slower at the median. Nothing in the
+   game runs on a 200 ms timer (the only short one drives the loading bar and
+   stops), so it is something else on the machine. Not identified.
+3. **Clean runs, fresh browser each** (four rounds; the runs with the 200 ms
+   burst left out):
+
+| Case | CPU ms | GPU ms | Draws | Triangles | Frames > 25 ms |
 | --- | --- | --- | --- | --- | --- |
-| Autumn (nearest parkland) | 2.70 | 7.6 | 3.52 | 458 | 7.0 M |
-| Giant Redwood (heaviest) | 6.00 | 20.0 | 7.12 | 567 | 75.6 M |
-| **Haunted Hollow** | **6.10** | **58.3** | **7.37** | 348 | 18.1 M |
+| Autumn | 2.7-2.8 | 3.37-3.46 | 458 | 7.0 M | 0 |
+| Haunted Hollow | 2.8-2.9 | 4.09-4.21 | 341 | 17.8 M | 0 |
+| Haunted Hollow, gnarled oaks hidden | 2.6-2.7 | 3.58-3.71 | 329 | 10.5 M | 0 |
+| Giant Redwood | 5.3-5.6 | 7.02-7.23 | -- | -- | 4-5, every run |
 
-Haunted Hollow draws as heavily as the redwood grove: about twice a parkland
-biome on both processors, with fewer draws than Autumn but two and a half times
-its triangles. The CPU p99 of 58 ms (worst 82.5) is the figure to worry about --
-occasional hitches, not a steady cost. **What carries either is not measured**:
-candidates are the gnarled oaks, the ~400 giant props, 150 lantern faces and 18
-transparent ghosts with per-frame updates, and each wants switching off in turn.
+So Haunted Hollow costs about **0.7 ms more GPU** a frame than Autumn on this
+machine and the same CPU, and has **no hitch of its own**. The gnarled oaks
+are 7.3 M of its 17.8 M triangles and about 0.5 ms of that 0.7. The props,
+lanterns and ghosts share the rest; the per-part runs for them in a single
+browser were too contaminated to separate, and at 0.2 ms together there was
+no reason to chase them.
 
-The `--since` column compared the other seven against `bench/profile-baseline.json`
-and found every one 1.6 to 6.8 ms *faster* than the stored baseline. Nothing here
-made them faster, so the baseline was taken under different conditions and says
-nothing about this change. Haunted Hollow has no baseline entry; the baseline
-was not re-saved.
+**Decision: the oaks keep their polygons.** The owner asked for a reduction only
+if the oaks caused the hitches, and they do not. If Haunted Hollow ever needs
+to be cheaper -- on a weak machine 7 M triangles matters more than half a
+millisecond here suggests -- the oaks are where the triangles are.
+
+**Giant Redwood hitches for real**, and did before any of this: four or five
+frames of 157-178 ms between about frames 180 and 250 of every fresh run.
+Recorded as its own open item.
+
+The `--since` comparison found the other seven biomes 1.6 to 6.8 ms faster than
+`bench/profile-baseline.json`; the baseline was taken under different
+conditions and says nothing here. It was not re-saved.
