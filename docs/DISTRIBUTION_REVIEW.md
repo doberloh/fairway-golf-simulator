@@ -852,3 +852,15 @@ carry over and the website's sample course code stays valid. The built page
 still makes no network requests (the smoke run's network check passed), and
 nothing was added to what ships: no dependency, font or asset. The website was
 redeployed afterwards so its demo is this release's `Fairway.html`.
+
+## Addendum, 9 October 2026: Haunted Hollow
+
+A ninth biome on the `haunted-hollow-biome` branch, not released. It adds
+thirteen models from packs already credited in ATTRIBUTION.md (Quaternius
+MegaKit, Ultimate Stylized Nature and Ultimate Nature; Kenney Nature Kit) -- no
+new pack, no new licence, nothing fetched. The built page goes from 16.1 MB to
+**16.9 MB** (16,890,557 bytes; 7.0 MB gzipped), +762 KB of packed geometry,
+almost all of it three gnarled dead oaks. README.md and INSTALLATION.md carried
+15.8 MB, which was already stale before this change. Every existing model's
+geometry is byte-identical after the re-ingest. `npm run smoke` 24 of 24 on the
+built file.

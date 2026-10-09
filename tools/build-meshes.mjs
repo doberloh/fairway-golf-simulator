@@ -89,6 +89,20 @@ const PICK = {
  salal: ['grown:Salal_1', 'grown:Salal_2', 'grown:Salal_3', 'grown:Salal_4'],
  sorrel: ['grown:Sorrel_1', 'grown:Sorrel_2', 'grown:Sorrel_3', 'grown:Sorrel_4'],
  seedling: ['grown:Seedling_1', 'grown:Seedling_2', 'grown:Seedling_3', 'grown:Seedling_4'],
+ // HAUNTED HOLLOW. Three bare silhouettes, chosen in `npm run assets` rather
+ // than by file name: the MegaKit's gnarled dead oaks (heavy -- about 7.5k
+ // vertices each -- and worth it, they are the biome), the tall pale snags
+ // from the Ultimate Stylized pack, and the dead willows' forked bare limbs.
+ // Both Quaternius packs have a `DeadTree_N`, and the bare name is the
+ // model's key here, so the two sets must not share a number.
+ // TwistedTree was looked at and passed over: its foliage is a textured card
+ // sheet, which this ingest drops (see TEXTURED_FAMILIES).
+ gnarled: ['megakit:DeadTree_1', 'megakit:DeadTree_2', 'megakit:DeadTree_4'],
+ snag: ['ultimate-stylized:DeadTree_3', 'ultimate-stylized:DeadTree_6', 'ultimate-stylized:DeadTree_8'],
+ deadwillow: ['Willow_Dead_1', 'Willow_Dead_2', 'Willow_Dead_4'],
+ // The forest floor's Halloween: pumpkins and toadstools among the deadfall.
+ pumpkin: ['crop_pumpkin'],
+ toadstool: ['mushroom_redGroup', 'mushroom_redTall', 'mushroom_tanGroup'],
  house: ['building-type-a', 'building-type-c', 'building-type-e', 'building-type-g',
   'building-type-i', 'building-type-k', 'building-type-m', 'building-type-o',
   'building-type-q', 'building-type-s'],
@@ -98,6 +112,16 @@ const PICK = {
 // trunk geometry inside those models is dropped here rather than shipped and
 // skipped at draw time.
 const KEEP_ROLES = {conifercrown: new Set(['leaf'])};
+
+// Families whose material names mislead ROLE_OF. Kenney's pumpkin is
+// `leafsFall` (the body) and `grass` (the stem), so by name it is all leaf and
+// paints one colour; the toadstools are `colorRed`/`colorTan` caps on a
+// `_defaultMat` stalk, all accent. Named here per family, so ROLE_OF -- which
+// every shipped model already went through -- is untouched.
+const ROLE_OVERRIDE = {
+ pumpkin: {leafsFall: 'accent', grass: 'leaf'},
+ toadstool: {colorRed: 'accent', colorTan: 'accent', _defaultMat: 'bark'},
+};
 
 // Families whose texture the game actually ships, and therefore the only ones
 // whose texture coordinates are worth carrying. Houses have their atlas;
@@ -154,7 +178,10 @@ for (const [family, entries] of Object.entries(PICK)) {
   const {name, hit} = locate(entry);
   if (!hit) { missing.push(entry); continue; }
   if (models[name]) throw Error(`two PICK entries both end up called "${name}".`);
-  const byRole = hit.glb ? extract(hit.file) : extractObj(hit.file, TEXTURED_FAMILIES.has(family));
+  const override = ROLE_OVERRIDE[family];
+  if (override && !hit.glb) throw Error(`"${entry}": ROLE_OVERRIDE only reads GLB materials.`);
+  const byRole = hit.glb ? extract(hit.file, override ? m => override[m] ?? ROLE_OF(m) : ROLE_OF)
+   : extractObj(hit.file, TEXTURED_FAMILIES.has(family));
   const keep = KEEP_ROLES[family];
   if (keep) for (const role of [...byRole.keys()]) if (!keep.has(role)) byRole.delete(role);
   if (!byRole.size) throw Error(`"${entry}" has no ${[...(keep || [])].join('/')} part to keep.`);

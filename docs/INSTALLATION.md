@@ -103,7 +103,7 @@ Open **http://127.0.0.1:4173/**. Leave preview running while using that address;
 
 If PowerShell blocks `npm.ps1`, use **npm.cmd** in place of **npm**, or run the commands in Command Prompt. No execution-policy change is required for that workaround.
 
-Successful output is **dist/index.html**, approximately 15.8 MB -- most of it the generated redwood forest, which ships at full detail. Copy that file to another compatible device; it can be renamed `Fairway.html`. Distribute it with the included notices and documentation. The source ZIP does not contain installed dependencies or a prebuilt `dist` folder; use the portable ZIP if you only want to play.
+Successful output is **dist/index.html**, approximately 16.9 MB -- most of it the generated redwood forest, which ships at full detail. Copy that file to another compatible device; it can be renamed `Fairway.html`. Distribute it with the included notices and documentation. The source ZIP does not contain installed dependencies or a prebuilt `dist` folder; use the portable ZIP if you only want to play.
 
 ### Development and tests
 

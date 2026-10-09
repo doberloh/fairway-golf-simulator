@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mistAmount, SUNRISE, SUNSET} from '../src/daylight.js';
-import {profileFor, mistDensities, visibilityOf, SHEET_GAP, SHEET_BANK, bakeWaterField, WATER_FIELD_SIZE} from '../src/mist.js';
+import {profileFor, hasOwnProfile, mistDensities, visibilityOf, SHEET_GAP, SHEET_BANK, bakeWaterField, WATER_FIELD_SIZE} from '../src/mist.js';
 import {generateWorld, DEFAULT_COURSE} from '../src/course.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 
@@ -41,9 +41,15 @@ test('mist forms overnight, peaks at first light and burns off', () => {
 });
 
 test('every biome has a mist profile and the desert stays dry', () => {
+ // Redwood is the one biome on the Midwest fallback, found on 9 October when
+ // this assertion was made able to fail. Whether the grove should get fog of
+ // its own is a look decision for the owner (TODO.md); until then it is named
+ // here rather than hidden by a check that cannot say no.
+ const BORROWS = ['redwood'];
  for (const biome of BIOME_KEYS) {
   const p = profileFor(biome);
-  assert.ok(p, `${biome} has a profile`);
+  assert.equal(hasOwnProfile(biome), !BORROWS.includes(biome),
+   `${biome} ${hasOwnProfile(biome) ? 'has a profile but is listed as borrowing' : 'has no mist profile and silently takes the Midwest fog'}`);
   assert.ok(p.haze >= 0 && p.haze <= 1, `${biome} haze is in range`);
   assert.ok(p.sheet >= 0 && p.sheet <= 1, `${biome} sheet is in range`);
  }
@@ -65,7 +71,7 @@ test('the sheet is thick in banks and clear between them', () => {
  // Reference photographs of PNW courses at dawn show the opposite -- a fairway
  // you can see across running into a treeline you cannot -- so what matters is
  // that the fog is genuinely thick in a bank AND genuinely clear in a gap.
- const worst = ['pnw', 'mountain', 'autumn', 'links', 'midwest', 'island'];
+ const worst = ['pnw', 'mountain', 'autumn', 'links', 'midwest', 'island', 'haunted'];
 
  for (const biome of worst) {
   const d = mistDensities(profileFor(biome), 1, 1);

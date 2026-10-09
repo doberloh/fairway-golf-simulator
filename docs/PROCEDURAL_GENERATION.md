@@ -80,7 +80,7 @@ Trees leave room for each other where a biome asks them to (`crownShare`): two c
 A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
 
 
-A biome is one record in `src/biomes.js` holding 45 fields: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
+A biome is one record in `src/biomes.js`: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
 
 ## Large lakes and downhill streams
 

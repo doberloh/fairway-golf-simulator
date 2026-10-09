@@ -43,7 +43,8 @@ test('NO NAME IS A REAL GOLF DESTINATION', () => {
   'shinnecock', 'merion', 'oakmont', 'winged foot', 'whistling', 'kiawah',
   'sawgrass', 'torrey', 'riviera', 'medinah', 'olympic club', 'valhalla',
   'erin hills', 'chambers bay', 'streamsong', 'sand valley', 'cabot',
-  'turtle bay', 'we-ko-pa', 'ocotillo', 'sandwich', 'royal county'];
+  'turtle bay', 'we-ko-pa', 'ocotillo', 'sandwich', 'royal county',
+  'scarecrow', 'phantom lake'];
  const offenders = [];
  for (const [biome, [first, second]] of Object.entries(NAME_WORDS))
   for (const w of [...first, ...second])

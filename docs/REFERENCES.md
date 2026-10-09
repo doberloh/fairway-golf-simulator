@@ -460,3 +460,11 @@ is only as good as the ability to go back and check what it was taken from.
 
 - GitHub Docs, "Removing sensitive data from a repository" -- https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository -- after a rewrite and force-push, old commits stay reachable by hash in cached views and through pull requests until Support clears them, and Support does not act on non-sensitive data. Why the rewritten history should go into a fresh repository (DISTRIBUTION_REVIEW, *The website leaves this repository*).
 - GitHub Docs, "Removing files from Git Large File Storage" -- https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage -- "To remove Git LFS objects from a repository, delete and recreate the repository": the website media would otherwise stay in this repository's LFS storage.
+
+## Haunted Hollow course names (9 October 2026)
+
+Candidate words were searched together with "golf" before going into `src/course-names.js` (RESEARCH, *Haunted Hollow, the ninth biome*).
+
+- Golf Course Industry, "Gamble Sands' Scarecrow opens" -- https://www.golfcourseindustry.com/gamble-sands-scarecrow-new-course-open -- Scarecrow is a real course (David McLay Kidd, Gamble Sands, Washington), so the word was dropped and added to the denylist test.
+- Chronogolf, Phantom Lake Golf Club -- https://www.chronogolf.com/club/1685 -- a real nine-hole club, so Phantom was dropped too.
+- Searches for Gloaming, Lychgate, Wraith, Moonrise and Nightshade with "golf" returned no course of that name (only unrelated clubs and a disc-golf driver called the Wraith). Not used as sources; recorded so nobody repeats them.

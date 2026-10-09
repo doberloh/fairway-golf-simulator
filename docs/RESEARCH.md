@@ -6141,3 +6141,92 @@ still stretch is a real main-thread block inside generation -- the open
 **Rejected:** counting compiled programs for real progress. Three.js compiles
 them in parallel behind one promise; reaching into its program cache to count
 them would tie the bar to Three's internals for a cosmetic gain.
+
+## Haunted Hollow, the ninth biome (9 October)
+
+Picked by the owner from sixteen ideas (TODO.md, *New biome ideas*) as a
+Halloween update. Like Giant Redwood, the mood is almost entirely numbers the
+engine already reads; what is new is what grows, and nothing that grows is alive.
+
+### The look, and what had to change after looking
+
+| Field | Value | Why |
+| --- | --- | --- |
+| `sun` | 10 | The lowest of any biome (redwood 18, autumn 19). `daylight.js` treats it as the noon peak, lifted to 35 + 0.6 x 10 = **41 degrees**, so midday is still daylight and the default hour lands late in the afternoon. |
+| `sunColor` | `#ffc29a` | First tried `#ff9d5c`: at midday it turned the whole course desert-orange. |
+| `sky` | `#a4949a` | Mauve-grey. The fog takes its colour from it, as in the grove. |
+| mist profile | haze 1, sheet 1, water 1 | The heaviest, equal to Pacific Northwest. |
+| `rough` | `#57553e` | First tried `#6b6243`; under the warm key it read orange-tan, like the desert. |
+| `temperature`, `altitude` | 9 °C, 200 m | **Placed, not published** -- a late-October northern evening. Air density 1.221 kg/m³ against Midwest's 1.165 (22 °C, 230 m), **4.9% denser**, so the ball carries a little shorter. |
+| `canopy`, `farCanopy` | 9-22 m, 8-20 m | **Placed.** Dead hardwoods on the short side of the parkland default (13-29 m); a bare tree hides far less than a leafy one, so they are planted a little denser (`treeDensity` 3.2). |
+
+The first planting put **heather** under the trees. Its purple, plus the blossom
+`vegetation.js` scatters over every heather and gorse, read as bright pink blocks
+against dead grass -- cheerful, not haunted. It became `bramble`: a new ground
+plant in the bush family, painted `#4f4636`. The pale snags' bark started at
+`#a29b8f` and came out salmon-pink in the warm light; `#8a8984` is cooler.
+
+### What grows, and what was rejected
+
+Every model already sat in `vendor/` under packs ATTRIBUTION.md credits, and
+each was chosen in `npm run assets`, not by file name:
+
+| Species | Family | Models | Vertices each |
+| --- | --- | --- | --- |
+| `gnarled` | `gnarled` | MegaKit `DeadTree_1`, `_2`, `_4` | 7,249-8,157 |
+| `snag` | `snag` | Ultimate Stylized `DeadTree_3`, `_6`, `_8` | 1,607-2,662 |
+| `deadwillow` | `deadwillow` | Ultimate Nature `Willow_Dead_1`, `_2`, `_4` | 1,568-3,720 |
+| `deadoak` | `arid` (shared) | the desert's three `CommonTree_Dead` | already shipped |
+| `bramble` | `bush` (shared) | Kenney bushes | already shipped |
+
+On the floor (`deadfall` 420, against the grove's 520): pumpkins 30%, toadstools
+22%, stumps 24%, logs 24%. A pumpkin is drawn **30-70 cm** tall and a toadstool
+clump **25-55 cm** -- both **placed**. A real fly agaric is smaller, a cap up to
+about 20 cm; the clumps are oversized so they can be seen from a fairway.
+
+**Rejected: `TwistedTree_1`-`_5`** (MegaKit). Their silhouettes are good, but the
+foliage is a textured card sheet, and the ingest drops textures for everything
+except houses. Without the sheet they are bare quads.
+
+**The pumpkin needed a role override.** Kenney names its body `leafsFall` and
+its stem `grass`, so `ROLE_OF` made all of it leaf and painted it one colour. The
+toadstools are `colorRed`/`colorTan` caps on a `_defaultMat` stalk, all accent.
+`ROLE_OVERRIDE` in `tools/build-meshes.mjs` re-roles those two families only.
+
+### What it cost, and what it did not move
+
+- `src/asset-meshes.js` went from 14,280,006 to 15,042,626 bytes (**+762 KB**,
+  about 5% of the built page), almost all of it the three gnarled oaks. Thirteen
+  models were added, 131 to 144. Compared part by part, **all 238 existing parts
+  are byte-identical**.
+- `node tools/biome-fingerprint.mjs --check`: **all eight existing biomes
+  unchanged**, `haunted` new. No `GENERATOR_VERSION` or `SCHEMA_VERSION` bump: no
+  existing seed builds anything different, and a new option in an existing
+  choice is not a change of shape (Giant Redwood set the precedent).
+- **Frame cost is not measured.** The gnarled oaks are among the heaviest models
+  shipped, and they draw only on this biome. `npm run profile --only biomes`
+  (about a minute) is the check; it waits for the owner's go-ahead.
+
+### Course names
+
+Thirty first words and twenty second words of Halloween vocabulary. Per the
+rule in `src/course-names.js`, candidates were searched with "golf" (9 October).
+Two were dropped and joined the denylist test:
+
+- **Scarecrow** -- a David McLay Kidd course at Gamble Sands, Brewster,
+  Washington, opened to public play on 1 August 2025.
+  https://www.golfcourseindustry.com/gamble-sands-scarecrow-new-course-open
+- **Phantom** -- Phantom Lake Golf Club, a nine-hole course.
+  https://www.chronogolf.com/club/1685
+
+No course turned up for Gloaming, Lychgate, Wraith, Moonrise or Nightshade. The
+biome's title, **Gloaming Moor**, was among those searched.
+
+### A test that could not fail
+
+`tests/mist.test.mjs` asserted that "every biome has a mist profile" by calling
+`profileFor`, which falls back to Midwest's fog for any biome without one. It
+could never fail -- and **Giant Redwood has had no fog profile of its own since it
+was added**, so the grove's "wet air" is Midwest's prairie haze. The test now
+asks `hasOwnProfile` and names redwood as the one biome that borrows. Whether
+the grove should get its own fog is a look decision, left open in TODO.md.

@@ -197,7 +197,10 @@ export const FAMILY_OF = {
  // stay procedural -- spindly canes and a ground rosette are shapes these packs
  // simply do not contain, and a wrong silhouette is worse than a simple one.
  palo: 'arid', mesquite: 'arid',
- shrub: 'bush', gorse: 'bush', heather: 'bush', naupaka: 'bush', fern: 'bush',
+ // Haunted Hollow: everything is dead. `deadoak` shares the desert's dead
+ // hardwoods; the other three are families of their own.
+ gnarled: 'gnarled', snag: 'snag', deadwillow: 'deadwillow', deadoak: 'arid',
+ shrub: 'bush', gorse: 'bush', heather: 'bush', naupaka: 'bush', fern: 'bush', bramble: 'bush',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

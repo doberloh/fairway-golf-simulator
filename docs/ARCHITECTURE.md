@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of eight biomes, Cartoon art style only.
+landscape holding 9 or 18 holes, in one of nine biomes, Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -160,6 +160,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Outline harmonics are scaled at generation, never in the shader; keep the amplitude caps. [OUTLINE HARMONICS], [AMPLITUDE CAP]
 - Tees are re-sited after the land exists; face them after siting, and check blindness on terrain that includes the pads. [Tees are sited, not placed]
 - Never assume a canopy height; ask `canopyTop` (redwoods reach 186 m). [NEVER ASSUME A CANOPY HEIGHT]
+- A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 

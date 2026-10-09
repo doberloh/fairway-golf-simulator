@@ -43,6 +43,9 @@ const DEFAULTS = {
  // Fallen logs, stumps and mossy boulders on the forest floor, mostly
  // clustered around trunks. A count, and zero means a clean floor.
  deadfall: 0,
+ // What that floor is made of, as [family, share]. A family is a PICK entry in
+ // tools/build-meshes.mjs; vegetation.js knows how to size and colour each.
+ floor: [['log', .40], ['stump', .24], ['mossrock', .36]],
  // How much of their combined crown radius two trees may share before one of
  // them is moved elsewhere. Zero is off, which is where every biome but
  // redwood stands -- not because they would not benefit, but because their
@@ -148,6 +151,33 @@ const TRAITS = {
  autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},
+ // HAUNTED HOLLOW: THE REDWOOD TRICK AGAIN, WITH NOTHING ALIVE IN IT.
+ //
+ // A Halloween course. Like the grove, the mood is numbers the engine already
+ // reads: the sun at 10 degrees and orange, a dusky mauve sky that the fog
+ // takes its colour from, and the heaviest mist of any biome. What is new is
+ // only what grows -- every tree is dead: gnarled oaks, tall pale snags, bare
+ // willows and the desert's dead hardwoods -- with dark bramble under them
+ // and pumpkins and toadstools among the fallen timber.
+ //
+ // Trees are on the short side (9 to 22 m) and a little denser than parkland,
+ // because a bare tree hides far less than a leafy one and the silhouettes are
+ // the point. The gnarled oak leads the list, so it is the tree that stands in
+ // a fairway when a hole gets a feature tree.
+ haunted: {bank: '#4a4232', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
+  canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
+  waterTint: '#2f383a', waterMurk: .2, spray: '#7d6a4a', sunColor: '#ffc29a',
+  leafLitter: true,
+  scatter: {rocks: 260, grass: 70000, tufts: 1400, tallGrass: false,
+   rockScale: 1.2, bladeLength: .75, bladeWidth: .8, bladeTint: '#7a7048',
+   flowers: ['#d8732c', '#6e4a7a']},
+  deadfall: 420,
+  floor: [['pumpkin', .30], ['toadstool', .22], ['stump', .24], ['log', .24]],
+  // Bramble rather than heather under them: heather's purple and its blossom
+  // read as bright pink blocks against dead grass, which is cheerful, not
+  // haunted. Bramble is the bush family in a dark thorny brown.
+  plants: [['gnarled', .30], ['snag', .18], ['deadwillow', .16], ['deadoak', .12],
+   ['bramble', .24]]},
 };
 
 const PALETTES = {
@@ -158,7 +188,8 @@ const PALETTES = {
  midwest:{name:'Midwest',title:'Prairie Run',tag:'Parkland oaks beneath an endless sky.',rough:'#69783b',semi:'#50803d',fairway:'#599743',fringe:'#83a451',green:'#a0be6a',tree:'#46732f',sky:'#b8d7e9',sand:'#e8ddc3',water:'#41766a',rock:'#83846c',altitude:230,temperature:22,treeKind:'oak',sun:39},
  island:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
  redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
- autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19}
+ autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
+ haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#57553e',semi:'#4f6236',fairway:'#58723a',fringe:'#66803f',green:'#7d9a4c',tree:'#2e2622',sky:'#a4949a',sand:'#c9bfa6',water:'#262c30',rock:'#5f5b58',altitude:200,temperature:9,treeKind:'oak',sun:10}
 };
 
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged

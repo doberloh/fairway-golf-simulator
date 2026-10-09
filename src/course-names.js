@@ -115,6 +115,19 @@ export const NAME_WORDS = {
    'Glen', 'Stand', 'Lane', 'Bank', 'Coppice', 'Rise', 'Close', 'Crossing',
    'Meadows', 'Park', 'Reach', 'Fields'],
  ],
+ // Halloween words. Each was searched with "golf" (9 October 2026); Scarecrow
+ // and Phantom were dropped -- Scarecrow is a real course at Gamble Sands, and
+ // there is a Phantom Lake Golf Club.
+ haunted: [
+  ['Gloaming', 'Wraith', 'Spectre', 'Banshee', 'Cobweb', 'Bogle', 'Wisp',
+   'Lychgate', 'Crypt', 'Shroud', 'Cauldron', 'Gourd', 'Pumpkin', 'Hobgoblin',
+   'Bonfire', 'Samhain', 'Nightshade', 'Belladonna', 'Mandrake', 'Wolfsbane',
+   'Nightjar', 'Owlet', 'Rook', 'Gibbous', 'Moonrise', 'Hallow', 'Thornapple',
+   'Hexwood', 'Murkwater', 'Candlewick'],
+  ['Hollow', 'Moor', 'Barrow', 'Fen', 'Mire', 'Wood', 'Gate', 'Hill', 'Rise',
+   'Glen', 'Bog', 'Heath', 'Crossing', 'Lane', 'Bend', 'Down', 'Thicket',
+   'Marsh', 'Copse', 'Knoll'],
+ ],
 };
 // A biome the lists have not caught up with still gets a name. Deliberately
 // generic rather than clever: a wrong-sounding name is worse than a plain one.

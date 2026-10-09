@@ -11,7 +11,7 @@
 // ground cover rather than as a tree.
 export const GROUND_PLANTS = new Set([
  'fern', 'swordfern', 'salal', 'sorrel', 'gorse', 'heather', 'agave',
- 'naupaka', 'shrub',
+ 'naupaka', 'shrub', 'bramble',
 ]);
 
 // How wide a species' crown is, as a fraction of its own height. Only the

@@ -656,6 +656,49 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Browser timing and state-transition regression -- partly covered now.** `npm run smoke` drives the three-second cup reveal through to the scorecard and the next hole, a replay, a mulligan, and Enter skipping a flight. **Still manual:** replay across holes, multi-player completion, scramble selection, and cancellation during pending timers.
 
+## New biome ideas (9 October)
+
+Sixteen landscapes the owner and Claude drew up together, with what each would
+cost. Ordered cheapest first within each group. **Haunted Hollow was
+picked first** and built as a Halloween update (in `# Done` under this heading);
+everything else here is open. A biome is one record in `src/biomes.js` (PROJECT_HANDOFF *Adding a
+biome*), so "settings only" really means one record plus a course-name list and
+a mist profile. "Unused models" means the model is already in `vendor/` and goes
+in through `PICK` in `tools/build-meshes.mjs`; check it in `npm run assets`
+before choosing, because picking by file name has been wrong twice. Altitude and
+temperature are biome fields and feed the air density the ball flies through,
+so several of these play differently as well as look different.
+
+**Haunted Hollow follow-ups**
+
+- [ ] **Measure Haunted Hollow's frame cost.** The three gnarled dead oaks are 7.2k-8.2k vertices each, among the heaviest models shipped, and they draw only on this biome. `npm run profile --only biomes` (about a minute of full GPU load) -- ask the owner first.
+- [ ] **Giant Redwood has no fog of its own.** Found while adding Haunted Hollow: `profileFor` falls back to Midwest, and the test that claimed every biome had a profile could not fail. The grove's "wet air" has been prairie haze since it was added. A look decision for the owner; `tests/mist.test.mjs` lists redwood in `BORROWS` until it is made.
+- [ ] **Jack-o'-lanterns after dark.** The pumpkins are plain pumpkins. A carved face glowing at Dusk and Night would be the Halloween touch -- an emissive face on a share of them, lit only when the sun is down. New model work (Kenney's pumpkin has no face) and a material that brightens at night.
+
+**Settings only, no new assets**
+
+- [ ] **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
+- [ ] **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
+- [ ] **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
+- [ ] **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
+
+**Unused models already in vendor/**
+
+- [ ] **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
+- [ ] **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
+- [ ] **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
+- [ ] **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
+- [ ] **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
+
+**Some new building**
+
+- [ ] **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
+- [ ] **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
+- [ ] **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be grown the way the redwoods were (`tools/grow.mjs`). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
+- [ ] **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
+- [ ] **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
+- [ ] **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
+
 ## Priority 2: landscape and performance
 
 - [ ] **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
@@ -780,6 +823,10 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 
 # Done
+
+## New biome ideas (9 October)
+
+- [x] **Haunted Hollow, the ninth biome** -- a Halloween course where nothing is alive. Gnarled dead oaks (MegaKit `DeadTree`), tall pale snags (Ultimate Stylized `DeadTree`), dead willows and the desert's dead hardwoods over dark bramble; pumpkins and red toadstools among the logs and stumps on the floor; black water, the heaviest fog of any biome, a 10-degree orange sun under a mauve sky, 9 °C air. One record in `src/biomes.js`, plus a name list, a mist profile, four `FAMILY_OF` lines and the PICK entries. Two pieces of plumbing came with it: the forest floor's mix is the biome field `floor` (it was a constant), and `ROLE_OVERRIDE` in the mesh ingest re-roles models whose material names mislead (Kenney's pumpkin is "leafsFall" and "grass"). Three first tries were wrong on looking and were changed: heather read as pink blocks (now `bramble`), the rough read desert-orange, the pale snags read salmon. Fingerprint: all eight existing biomes unchanged, so no version bump; all 238 existing model parts byte-identical after the re-ingest; the page grew 762 KB. Course-name words searched with "golf": Scarecrow (Gamble Sands) and Phantom (Phantom Lake GC) dropped and denylisted. RESEARCH *Haunted Hollow, the ninth biome*.
 
 ## Release 0.5.1, a hotfix (9 October)
 

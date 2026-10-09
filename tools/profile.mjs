@@ -59,7 +59,7 @@ const PROBE = fs.readFileSync(path.join(ROOT, 'tools', 'profile-probe.js'), 'utf
 // fourteen footprints by four tiers by every slider is a sweep nobody runs
 // twice. Each case below is here for a stated reason, and a run that takes a
 // few minutes is a run that gets used.
-const BIOMES = ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn'];
+const BIOMES = ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'];
 const TIERS = ['low', 'medium', 'high', 'ultra'];
 
 function matrix() {

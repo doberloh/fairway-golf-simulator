@@ -9,7 +9,7 @@ vegetation and light. Ball flight is integrated from real launch numbers, and
 a launch monitor can drive it through `run_fairway_server`, the program in
 each platform's download -- nothing to install.
 
-The built file is about 15.8 MB (6.5 MB gzipped) and contains the renderer,
+The built file is about 16.9 MB (7.0 MB gzipped) and contains the renderer,
 the controls, the physics and every asset. It needs WebGL 2 and hardware
 acceleration, and nothing else.
 

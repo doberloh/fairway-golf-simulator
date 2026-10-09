@@ -554,9 +554,17 @@ Two things to keep in mind if you touch this:
 
 ### Adding a biome
 
-Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds all 45 fields, `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
+Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds every field (the count used to be written here and drifted; read the object), `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
 
-To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+
+**Three per-biome tables still live outside the record**, and Haunted Hollow (9 October) had to touch all three: the course-name word lists in `src/course-names.js` (a test fails if a biome has none, and every word is searched with "golf" first -- see the denylist test), the fog profile in `src/mist.js` `PROFILES` (**no test: a biome missing from it silently takes Midwest's fog**), and `tools/fixtures.mjs` / `tools/profile.mjs`, which list biomes by hand so a new one is not measured until it is added. The per-biome grass texture density in `textures.js` falls back to 1, which is fine.
+
+**The forest floor is a field now.** `deadfall` is how many pieces; `floor` is what they are, as `[family, share]` pairs drawn from PICK families -- the grove's logs, stumps and mossy boulders by default, Haunted Hollow's pumpkins and toadstools among its logs. `addDeadfall` in vegetation.js owns each family's size and colours, so a new floor family needs a line there too.
+
+**Bark colour is per species, not per biome**: the `barks` table in `addModelSpecies`. A dead tree has no leaves, so its bark is the whole identity -- the gnarled oak, the pale snag, the dead willow and `deadoak` each have one. `deadoak` deliberately shares the desert's `arid` family (its dead hardwoods) under a different species name, so it can take its own bark without touching the desert.
+
+**A model whose material names mislead the role classifier gets a `ROLE_OVERRIDE`** in `tools/build-meshes.mjs`, per family, rather than a change to `ROLE_OF`. Kenney names its pumpkin's body `leafsFall` and its stem `grass`, so by name it was all leaf and painted one colour; the toadstools are all `accent`. Changing `ROLE_OF` itself would re-role models every biome already ships. It reads GLB materials only. After any re-ingest, compare the old and new `src/asset-meshes.js` part by part: adding thirteen models left all 238 existing parts byte-identical.
 
 If the biome wants props no other biome uses, add the family to `PICK` in `tools/build-meshes.mjs` and rerun it -- the packs in `vendor/` hold far more than ships, so check there before going looking for assets. A PICK entry is a file name; three of the packs are Quaternius nature packs sharing 31 names, so an ambiguous one is an error and you disambiguate with `megakit:Pine_1`. `KEEP_ROLES` drops the parts of a model a family does not draw -- the conifer crowns keep their leaves and throw their trunks away. What a species IS, as opposed to which biome grows it, lives in `src/species.js`.
 

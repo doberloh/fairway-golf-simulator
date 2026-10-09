@@ -29,6 +29,8 @@ export const SHOTS = [
  {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 2, when: 'afternoon', cam: {hole: 2, along: 30, height: 5, look: 'pin', pitch: -3}},
  {name: 'autumn-afternoon', biome: 'autumn', seed: 'MAPLE', hole: 1, when: 'afternoon', cam: behind},
  {name: 'autumn-golden', biome: 'autumn', seed: 'MAPLE', hole: 2, when: 'golden', cam: tee(2)},
+ {name: 'haunted-hollow-afternoon', biome: 'haunted', seed: 'GLOAMING', hole: 1, when: 'afternoon', cam: behind},
+ {name: 'haunted-hollow-dusk', biome: 'haunted', seed: 'GLOAMING', hole: 2, hour: 19.45, cam: tee(2)},
  {name: 'night-links', biome: 'links', seed: 'DUNE', hole: 3, hour: 22, flood: true, cam: {...behind, height: 16}},
  {name: 'night-pacific-northwest', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, cam: tee(2)},
 ];
