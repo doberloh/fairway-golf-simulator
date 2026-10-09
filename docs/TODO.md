@@ -192,8 +192,15 @@ with the keyboard. "A golf simulator that generates infinite courses and runs
 from a single 15.8 MB HTML file, offline, no install" is a real story for that
 audience, and their attention is what buys credibility with the first one.
 
-**So the order is: developers now, simulator owners after hardware
-validation.** That sequencing is the plan; the channels are details.
+**~~So the order is: developers now, simulator owners after hardware
+validation.~~ Reversed 8 October 2026: open to everyone at once.** The owner
+chose to post for whoever wants to try it, simulator owners included, and to
+be flooded with feedback rather than ration first impressions. The posts say
+plainly that launch-monitor support is untested, which is what the sequencing
+was protecting, and that the game was built with Claude Code (316 of the
+first 327 commits carry its co-author line). The two-audience reasoning above
+is kept because it is still true -- it is the risk being accepted, not a
+mistake: a monitor owner whose first shot fails will say so publicly.
 
 - [ ] **Export the range's shot data.** The owner's copy for the website's
   practice panel said "view and export your shot data"; the game has no such
@@ -214,8 +221,9 @@ validation.** That sequencing is the plan; the channels are details.
   specific monitor. **Check which of those are actually alive first**; this
   list was written from general knowledge, not from looking.
 
-- [ ] **Validate against real hardware before approaching simulator owners.**
-  It is the first thing that audience checks and the weakest claim the project
+- [ ] **Validate against real hardware.** No longer the gate before
+  approaching simulator owners (see the 8 October reversal above), but still
+  the first thing that audience checks and the weakest claim the project
   makes: nothing has been tested against a physical launch monitor, and the
   extra fields the shot-data grid can display -- club speed, attack angle,
   path, face to target, closure rate, impact position -- are parsed but have
