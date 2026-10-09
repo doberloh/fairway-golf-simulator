@@ -422,7 +422,10 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* The hole marker pinned to the edge of the screen while putting: centred on
    its clamped point rather than hanging above it, and the badge turned to
    point at the cup it has been pushed away from. */
-.flag-label.edge{transform:translate(-50%,-50%)}.flag-label.edge>span{transform:rotate(var(--point,0deg));background:#37554fcc}.flag-label.edge>strong{text-shadow:0 1px 9px #264129}
+.flag-label.edge{transform:translate(-50%,-50%)}/* At the edge the marker points at the cup with a notch that orbits the ring; the flag inside stays upright. Rotating the whole circle turned the flag upside down whenever the cup was below or behind. */
+.flag-label>span{position:relative}
+.flag-label.edge>span{background:#37554fcc}
+.flag-label.edge>span::after{content:'';position:absolute;left:50%;top:50%;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #f6f9e4e0;transform:translate(-50%,-50%) rotate(var(--point,0deg)) translateY(-24px)}.flag-label.edge>strong{text-shadow:0 1px 9px #264129}
 
 /* Rise to the aim point, under its distance. Dimmer than the unit label above
    it so the distance stays the thing you read first. */

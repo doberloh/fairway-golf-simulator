@@ -1359,7 +1359,7 @@ Three things key off one question — is the ball on the putting surface — and
 
 **The pin comes out**, which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
 
-**The marker therefore names the hole**, and stops being a thing that floats over a flag and drifts off the edge. It clamps to the screen and turns to point at the cup.
+**The marker therefore names the hole**, and stops being a thing that floats over a flag and drifts off the edge. It clamps to the screen and points at the cup -- with a notch that orbits its ring, while the flag icon inside stays upright. It used to rotate the whole circle, which turned the flag upside down whenever the cup was below or behind the view (fixed 9 October).
 
 That needed a marker projection of its own. `project` reports whether a point is within the depth range and says nothing about the sides — and behind the camera it is worse than useless, because the perspective divide is by a negative w, so both axes flip and the marker lands on the *opposite* side from the thing it marks. `projectMarker` reads front-or-behind from camera space, mirrors the flip back, clamps, and reports the screen bearing.
 

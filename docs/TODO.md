@@ -796,6 +796,11 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
   **Rejected:** keying it on `event.complete` -- a scramble candidate awarded
   putts reports complete before the team has chosen, and the team's choice
   completes the hole without a shot. Label in `holeOutLabel` (scoring.js), tested.
+- [x] **The flag on the putting marker was upside down (9 October).** On the
+  green the pin marker clamps to the screen edge and points at the cup, and it
+  did so by rotating the whole circle -- flag icon included -- so with the cup
+  below or behind the view the flag hung upside down. Now only a small notch
+  on the ring turns (`--point`, style.css); the flag stays upright.
 
 ## Making the repository public
 
