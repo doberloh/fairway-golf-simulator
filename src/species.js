@@ -31,6 +31,19 @@ const CROWN_FRACTION = {redwood: .095, fir: .17, hemlock: .17, redcedar: .19};
 export const crownFraction = kind => CROWN_FRACTION[kind] || 0;
 export const crownRadius = tree => CROWN_FRACTION[tree.kind] ? CROWN_FRACTION[tree.kind] * tree.h : tree.r;
 
+// HAUNTED HOLLOW'S PROPS, and the model each one is drawn from.
+//
+// Generation decides a prop's model, because it has to know how wide the thing
+// is to collide with it, and the renderer must draw exactly that model. The
+// number is the model's widest half-extent as a fraction of its own height,
+// MEASURED off the ingested geometry (src/asset-meshes.js), not guessed: a
+// Kenney pumpkin is 0.69 as wide as it is tall, the red toadstool clump 0.65,
+// the single tall toadstool 0.29. The collision cylinder is that wide.
+export const PROP_MODELS = {
+ pumpkin: [['crop_pumpkin', .693]],
+ toadstool: [['mushroom_redGroup', .645], ['mushroom_redTall', .285], ['mushroom_tanGroup', .645]],
+};
+
 // Has no trunk worth colliding with. The ground plants, plus the ocotillo:
 // tall, but a handful of canes with gaps a ball goes straight through.
 export const NO_TRUNK = new Set([...GROUND_PLANTS, 'ocotillo']);

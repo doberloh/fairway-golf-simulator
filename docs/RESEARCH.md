@@ -6230,3 +6230,72 @@ could never fail -- and **Giant Redwood has had no fog profile of its own since 
 was added**, so the grove's "wet air" is Midwest's prairie haze. The test now
 asks `hasOwnProfile` and names redwood as the one biome that borrows. Whether
 the grove should get its own fog is a look decision, left open in TODO.md.
+
+### Second pass: full fantasy (9 October)
+
+The owner asked for four things: more and much bigger pumpkins and toadstools,
+solid; "haunted" turf colours, "full fantasy"; ghosts patrolling the course; and
+the glowing pumpkins. Everything below is **placed, not published**.
+
+**Giant props, solid.** Pumpkins and toadstools left the decorative forest
+floor and became generation output (`world.props`, course.js), because physics
+can only collide with what the world knows about -- the boulder lesson again.
+
+| | Before | Now |
+| --- | --- | --- |
+| Pumpkins on nine holes | about 126 | 235 (26 a hole asked) |
+| Toadstool clumps | about 92 | 162 (18 a hole asked) |
+| Pumpkin height | 0.3-0.7 m | 0.9-3.5 m (old size x 3 to 5) |
+| Toadstool height | 0.25-0.55 m | 0.75-2.75 m |
+| Collides | no | yes, a vertical cylinder |
+
+The size multiplier is 3 + 2u², so most props sit near three times and a few
+reach five, as asked. The cylinder is as wide as the model, measured off the
+ingested geometry: pumpkin 0.693 of its height, red and tan toadstool clumps
+0.645, the single tall toadstool 0.285 (`PROP_MODELS`, species.js). Measured
+seed GLOAMING: 150 of 235 pumpkins are lanterns (60% asked).
+
+**The collision test could not fail at first.** Rolled from 20 m short of
+each pumpkin, the ball died in the rough before arriving: 0 of 27 rolls went
+through with the pumpkins solid, and 0 of 27 with them hidden from physics.
+From 2 m short at 25 m/s it is 0 of 27 solid against 27 of 27 hidden, and the
+test now runs that control itself.
+
+**Purple turf, and why the first purple came out brown.** Rough `#3c2856`,
+semi `#553c7c`, fairway `#7f55b8`, fringe `#9270c6`, green `#86c24f`, sand
+`#b9b2a6`, water `#1f3d2e` tinted `#2f6b46`. The Cartoon ground lifts every
+rough 23% toward a fixed olive (`#b6bc65`, renderer.js), which suits grass and
+turned a greyish violet into mud-brown; it is the biome field `roughTint` now,
+`#6b5590` here. A first saturated set (rough `#4a3268`, fairway `#6a4d96`) had
+too little contrast once lifted -- the fairway vanished into the rough -- so the
+rough went darker and the fairway brighter. The 2D maps drew every biome's
+fairway and green in fixed greens, so a purple course had a green map: the
+biome field `mapTurf` now carries them.
+
+**Lanterns.** A face of eyes, nose and a two-toothed grin, laid on an ellipse
+just proud of the pumpkin's body (0.67 x 0.70 of its height; the body is 0.69
+wide between 0.15 and 0.65 up). Unlit, outside tone mapping: near-black by day,
+candle-orange as `solar.lamplight` rises -- from the sun at 10 degrees to 2
+degrees below the horizon, the same number the glow ball follows -- with a
+flicker between 76% and 100%. **Rejected: a halo of additive point sprites**
+round each face. It drew a dark square behind every lit face, and still did
+with the mist patch kept off it; compared side by side, the face alone reads
+well, so it was dropped rather than chased.
+
+**Ghosts.** A lathe-turned sheet ghost (dome head, flared skirt, six-wave hem,
+two stubby arms, black eyes and an O mouth) whose skirt ripples in the vertex
+shader. Two a hole -- 18 on nine holes -- each 2.3 to 4.0 m tall, hovering 2.2
+to 5.7 m up with a 0.45 m bob, at 1.8 to 4.2 m/s round an ellipse beside its
+hole; one in three swings wide across the fairway. They fade out between nine
+and three of their own heights from the camera rather than fill the screen, and
+glow faintly by day and fully after dark. Scenery only: the ball passes through.
+Arms first pointed straight ahead and read as two loose discs; they point out
+to the sides now.
+
+**No GENERATOR_VERSION bump, by decision.** The fingerprint check says Haunted
+Hollow's ground moved and asks for one. All eight released biomes are
+unchanged, and Haunted Hollow has never been in a release or a pushed branch,
+so no saved round can hold it. A bump would put the "this course has changed"
+notice on every saved round of every biome, none of which changed -- an arbiter
+crying wolf. If the branch was ever played and a Haunted Hollow round saved
+locally, that one round would rebuild with the props.

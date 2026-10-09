@@ -864,3 +864,7 @@ almost all of it three gnarled dead oaks. README.md and INSTALLATION.md carried
 15.8 MB, which was already stale before this change. Every existing model's
 geometry is byte-identical after the re-ingest. `npm run smoke` 24 of 24 on the
 built file.
+
+The same day's second pass (solid giant pumpkins and toadstools, lanterns,
+ghosts, purple turf) adds code only -- no models, no assets: 16,904,595 bytes
+(+14 KB), still 7.0 MB gzipped. Smoke 24 of 24.

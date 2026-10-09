@@ -46,6 +46,21 @@ const DEFAULTS = {
  // What that floor is made of, as [family, share]. A family is a PICK entry in
  // tools/build-meshes.mjs; vegetation.js knows how to size and colour each.
  floor: [['log', .40], ['stump', .24], ['mossrock', .36]],
+ // SOLID props the generator places, per hole: {pumpkin, toadstool, lanterns},
+ // the last being the share of pumpkins carved and lit. Empty means none, and
+ // a biome with none draws nothing from their random stream. See course.js.
+ props: {},
+ // Ghosts drifting over the course, per hole. Drawn and moved by haunts.js;
+ // they are not part of the course and nothing collides with them.
+ ghosts: 0,
+ // The Cartoon ground lifts every rough 23% toward this colour (renderer.js).
+ // An olive suits every grass there is; it turned Haunted Hollow's violet rough
+ // to mud, so a biome can say what its rough should lift toward.
+ roughTint: '#b6bc65',
+ // The 2D course and hole maps draw semi-rough, fairway and green in these,
+ // whatever the biome, so a map reads the same everywhere -- until a biome's
+ // turf stops being green at all.
+ mapTurf: {semi: '#a1b481', fairway: '#608449', green: '#b3cc86'},
  // How much of their combined crown radius two trees may share before one of
  // them is moved elsewhere. Zero is off, which is where every biome but
  // redwood stands -- not because they would not benefit, but because their
@@ -164,15 +179,25 @@ const TRAITS = {
  // because a bare tree hides far less than a leafy one and the silhouettes are
  // the point. The gnarled oak leads the list, so it is the tree that stands in
  // a fairway when a hole gets a feature tree.
- haunted: {bank: '#4a4232', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
+ //
+ // FULL FANTASY SINCE THE OWNER'S SECOND PASS. The turf is no longer dead
+ // grass: purple fairways leading to slime-green greens, violet rough, ash
+ // bunkers and green-black water. Pumpkins and toadstools are three to five
+ // times life size and solid (`props`), most pumpkins are carved lanterns that
+ // light up at dusk, and ghosts drift over the holes (`ghosts`).
+ haunted: {bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
   canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
-  waterTint: '#2f383a', waterMurk: .2, spray: '#7d6a4a', sunColor: '#ffc29a',
+  waterTint: '#2f6b46', waterMurk: .25, spray: '#6a5a7a', sunColor: '#ffc29a',
   leafLitter: true,
   scatter: {rocks: 260, grass: 70000, tufts: 1400, tallGrass: false,
-   rockScale: 1.2, bladeLength: .75, bladeWidth: .8, bladeTint: '#7a7048',
-   flowers: ['#d8732c', '#6e4a7a']},
-  deadfall: 420,
-  floor: [['pumpkin', .30], ['toadstool', .22], ['stump', .24], ['log', .24]],
+   rockScale: 1.2, bladeLength: .75, bladeWidth: .8, bladeTint: '#5a3f7a',
+   flowers: ['#e0812c', '#8fd14f']},
+  deadfall: 300,
+  floor: [['stump', .5], ['log', .5]],
+  props: {pumpkin: 26, toadstool: 18, lanterns: .6},
+  ghosts: 2,
+  roughTint: '#6b5590',
+  mapTurf: {semi: '#8f78b3', fairway: '#7f55b8', green: '#8fcb55'},
   // Bramble rather than heather under them: heather's purple and its blossom
   // read as bright pink blocks against dead grass, which is cheerful, not
   // haunted. Bramble is the bush family in a dark thorny brown.
@@ -189,7 +214,7 @@ const PALETTES = {
  island:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
  redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
  autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
- haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#57553e',semi:'#4f6236',fairway:'#58723a',fringe:'#66803f',green:'#7d9a4c',tree:'#2e2622',sky:'#a4949a',sand:'#c9bfa6',water:'#262c30',rock:'#5f5b58',altitude:200,temperature:9,treeKind:'oak',sun:10}
+ haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#3c2856',semi:'#553c7c',fairway:'#7f55b8',fringe:'#9270c6',green:'#86c24f',tree:'#2a2030',sky:'#a4949a',sand:'#b9b2a6',water:'#1f3d2e',rock:'#4f4a58',altitude:200,temperature:9,treeKind:'oak',sun:10}
 };
 
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged

@@ -315,7 +315,9 @@ export function addVegetation(view){
 // fallen log. Worth knowing before anyone makes them bigger.
 //
 // What it is made of is the biome's `floor`: the grove's logs, stumps and mossy
-// boulders, or Haunted Hollow's pumpkins and toadstools among its logs.
+// boulders, Haunted Hollow's logs and stumps. Haunted Hollow's pumpkins and
+// toadstools were here once; they are solid now, so generation places them and
+// haunts.js draws them.
 function addDeadfall(view) {
  const {world} = view, {deadfall: count, floor: mix} = biomeOf(world.settings.biome);
  if (!count) return;
@@ -332,8 +334,6 @@ function addDeadfall(view) {
  const damp = new T.Color('#5a4433'), cut = new T.Color('#9a8156');
  const moss = new T.Color('#4f6b3c'), stone = new T.Color(world.bio.rock || '#8a8577');
  const dirt = new T.Color(world.bio.rough || '#7e8a5a');
- const pumpkin = new T.Color('#dc8424'), stem = new T.Color('#4d5a2a');
- const red = new T.Color('#b5352b'), tan = new T.Color('#b39a72'), stalk = new T.Color('#ddd3bf');
  const entries = [];
  for (let i = 0; i < count * 4 && entries.length < count; i++) {
   let x, z;
@@ -360,12 +360,8 @@ function addDeadfall(view) {
   // log lying down that height is its THICKNESS and the length follows from
   // the model's own proportions -- which is why a log is scaled so much
   // smaller than a stump and still ends up the longer object.
-  // A pumpkin is 30 to 70 cm, a field pumpkin rather than a prize one; a
-  // toadstool clump 25 to 55 cm, enough to read from a fairway.
   const size = family === 'log' ? .5 + rng() * .55
              : family === 'stump' ? .7 + rng() * 1.0
-             : family === 'pumpkin' ? .3 + rng() * .4
-             : family === 'toadstool' ? .25 + rng() * .3
              : .5 + rng() * 1.25;
   // Settled into the ground rather than resting on top of it.
   dummy.position.set(x, world.height(x, z) - size * .1, z);
@@ -374,16 +370,11 @@ function addDeadfall(view) {
   dummy.updateMatrix();
   const green = moss.clone().offsetHSL((rng() - .5) * .04, (rng() - .5) * .12, (rng() - .5) * .12);
   const wood = damp.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .14);
-  // `accent` is the cut face on a log, the moss on a boulder, the body of a
-  // pumpkin and the cap of a toadstool, so it follows the family rather than
-  // being one colour for everything. A toadstool's stalk is its `bark`.
-  const accent = family === 'mossrock' ? green
-   : family === 'pumpkin' ? pumpkin.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .1, (rng() - .5) * .12)
-   : family === 'toadstool' ? (model.includes('Tan') ? tan : red).clone().offsetHSL(0, (rng() - .5) * .1, (rng() - .5) * .1)
-   : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12);
+  // `accent` is the cut face on a log and the moss on a boulder, so it follows
+  // the family rather than being one colour for everything.
+  const accent = family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12);
   entries.push({model, owner: null, matrix: dummy.matrix.clone(),
-   color: {bark: family === 'toadstool' ? stalk : wood, leaf: family === 'pumpkin' ? stem : green,
-    stone: stone.clone().multiplyScalar(.8 + rng() * .35), dirt, accent}});
+   color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35), dirt, accent}});
  }
  const materials = new Map();
  const materialFor = role => {

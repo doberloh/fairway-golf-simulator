@@ -80,6 +80,9 @@ function fingerprint(biome) {
  // and a change to where they sit went unnoticed -- which matters now that a
  // ball can stop against one.
  for (const r of w.rocks || []) h.update(`r${n(r.x)},${n(r.z)},${n(r.reach)};`);
+ // Haunted Hollow's solid pumpkins and toadstools. Empty everywhere else, so
+ // adding this line moved no other biome's hash.
+ for (const p of w.props || []) h.update(`P${p.model},${n(p.x)},${n(p.z)},${n(p.h)},${n(p.reach)},${p.lantern};`);
   for (const st of w.streams.streams) {
    h.update(`s${st.kind},${st.end},${st.points.length};`);
    for (const p of st.points) h.update(`${n(p.x)},${n(p.z)},${n(p.level)},${n(p.width)};`);
