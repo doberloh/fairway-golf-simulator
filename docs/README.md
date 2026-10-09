@@ -118,7 +118,7 @@ The list below is what exists locally.
   under what terms, and what was actually taken from it.
 - **[THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt)** — the notices that
   have to travel with a distribution. Also embedded in the built HTML.
-- **[releases/](releases/)** — the notes for every published release, one file each (`v0.1.md` …), word for word what GitHub shows. A release's notes are written here and merged before it is tagged. v0.1 to v0.4 were published from the original repository, now the owner's private `fairway-backup`; v0.5 is the first in this one.
+- **[releases/](releases/)** — the notes for every published release, one file each (`v0.1.md` …), word for word what GitHub shows. A release's notes are written here and merged before it is tagged. v0.1 to v0.4 were published from the original repository, now the owner's private `fairway-backup`; v0.5 is the first in this one; v0.5.1 followed it.
 - **[DISTRIBUTION_REVIEW.md](DISTRIBUTION_REVIEW.md)** — the dated provenance
   and licence audit, the commercial-use pass, and the release checks that are
   still open.

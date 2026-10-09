@@ -839,3 +839,16 @@ licence unchanged (BSD-3-Clause). `npm audit` still lists `braces` 3.0.3 (see
 *A Dependabot alert, left open* above): still build-time only, still no
 patched version, and the audit's suggested fix -- downgrading
 `vite-plugin-singlefile` to 0.9.0 -- is rejected.
+
+## Addendum, 9 October 2026: v0.5.1, a hotfix
+
+**v0.5.1** is published at the owner's request as "Fairway 0.5.1 (beta)", tag
+`v0.5.1`, not a pre-release, the same four zip names, from the merge of
+`hole-out-score-banner` into `main`, with its notes in
+`docs/releases/v0.5.1.md` in that commit. Two interface changes only: the
+hole-out banner and the putting marker's upright flag. Generator (34) and
+schema (9) are unchanged, so saved rounds, profiles and course codes from 0.5
+carry over and the website's sample course code stays valid. The built page
+still makes no network requests (the smoke run's network check passed), and
+nothing was added to what ships: no dependency, font or asset. The website was
+redeployed afterwards so its demo is this release's `Fairway.html`.

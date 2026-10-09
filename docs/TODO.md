@@ -781,6 +781,14 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 # Done
 
+## Release 0.5.1, a hotfix (9 October)
+
+- [x] **v0.5.1 published**, "Fairway 0.5.1 (beta)", at the owner's request,
+  from the merge of `hole-out-score-banner` into `main`: the hole-out banner
+  and the putting marker's upright flag, below. Generator and schema
+  unchanged. Notes: `docs/releases/v0.5.1.md`. The website was redeployed
+  after it so its demo runs 0.5.1.
+
 ## The hole-out banner
 
 - [x] **The score's name in the middle of the screen when a hole is finished
