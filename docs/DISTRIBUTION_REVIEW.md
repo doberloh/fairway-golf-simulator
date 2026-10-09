@@ -827,3 +827,15 @@ answers 404, because GitHub forwards it to the private `fairway-backup`.
 The website was then deployed live from its own repository, its demo the
 `Fairway.html` from v0.5, checked against `RELEASE_SHA256.txt`. Its no-index
 signals stay on until the owner says otherwise.
+
+## Addendum, 8 October 2026: `source-map-js` 1.2.2
+
+Dependabot alert 2 (`source-map-js` 1.2.1, high: a crafted source map can hang
+it) is fixed by moving the lockfile to 1.2.2, inside the range `postcss`
+already asks for; no other package moved. Build-time only, before and after:
+nothing a player downloads contained it, so v0.5's archives are unaffected.
+`DEPENDENCY_INVENTORY.json` matches the lockfile entry for entry again;
+licence unchanged (BSD-3-Clause). `npm audit` still lists `braces` 3.0.3 (see
+*A Dependabot alert, left open* above): still build-time only, still no
+patched version, and the audit's suggested fix -- downgrading
+`vite-plugin-singlefile` to 0.9.0 -- is rejected.

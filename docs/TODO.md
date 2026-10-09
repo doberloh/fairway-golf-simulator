@@ -262,17 +262,6 @@ GitHub repository, and stop shipping what nobody needs.
   changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
   not before, or every pull request waits for a check that never comes.
 
-- [ ] **A high-severity Dependabot alert on a build tool (7 October).**
-  `source-map-js` 1.2.1 can be made to hang by a crafted source map; 1.2.2
-  fixes it (alert 2 on the repository's Security tab). It reaches this project
-  only through the build tools -- `vite` 8.3.0 -> `postcss` 8.5.28 ->
-  `source-map-js` -- so nothing a player downloads carries it, and the build
-  never reads a source map from outside. Fix: update it in the lockfile (`npm
-  update source-map-js`, or a newer vite/postcss that requires it), then
-  `docs/DEPENDENCY_INVENTORY.json` and THIRD_PARTY_NOTICES.txt if the packager
-  asks, and `npm test` plus a build. A second alert, on `braces`, was closed
-  by GitHub itself: development-only, with no fix published.
-
 - [ ] **Fewer, smaller documents.** Asked for 1 October. **The first step is
   done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
   14 KB, and AGENTS.md says to search the long documents rather than read them**
@@ -793,6 +782,21 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 # Done
 
 ## Making the repository public
+
+- [x] **A high-severity Dependabot alert on a build tool (7 October), fixed 8
+  October.** `source-map-js` 1.2.1 can be made to hang by a crafted source map
+  (alert 2 on the repository's Security tab). It reached this project only
+  through the build tools -- `vite` 8.3.0 -> `postcss` 8.5.28 ->
+  `source-map-js` -- so nothing a player downloads carried it. `npm update
+  source-map-js` moved the lockfile to 1.2.2 within postcss's existing range;
+  vite and postcss are unchanged, and `docs/DEPENDENCY_INVENTORY.json` follows
+  (same licence, BSD-3-Clause, so THIRD_PARTY_NOTICES is untouched -- it names
+  only what ships). **Still open, and not fixable yet:** `npm audit` reports
+  `braces` 3.0.3 (via `vite-plugin-singlefile` -> `micromatch`), build-time
+  only; 3.0.3 is the newest published version. GitHub closed its own alert on
+  it; `npm audit fix --force` would "fix" it by downgrading the single-file
+  plugin to 0.9.0 -- **rejected**, that is the plugin the one-file build
+  depends on.
 
 - [x] **AGENTS.md trimmed from 33 KB to 14.5 KB (7 October).** At the owner's
   request: it is loaded with every message, so it went from roughly 8,300
