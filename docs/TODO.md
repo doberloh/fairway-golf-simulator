@@ -824,11 +824,11 @@ so several of these play differently as well as look different.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
+# Done
+
 ## Wasted drawing (9 October)
 
-- [ ] **Measure the wasted-drawing fixes, when the owner says the machine is free.** Pond photographs without shadow redraws and one pond a frame, shadow twins sharing colours, one-pass foam and rings -- all in, none measured after. Before: a refresh 0.4-1.2 s on a 16-body Midwest course on Ultra; a stall at each of 12 thresholds dragging the clock; 57 program switches a Redwood Ultra frame. Re-run the same: the clock drag on that course (Ultra and Medium), a refresh's cost, the program switches, a smoke run, and a look at the water at dusk. Branch `less-wasted-drawing`. RESEARCH, *Wasted drawing*.
-
-# Done
+- [x] **Less wasted drawing: pond photographs, shadow twins, shore foam** (owner's request, measured 10 October on an idle card). The pond reflections are no longer re-photographed with 48 identical shadow redraws, and when the sun moves they are retaken one pond a frame into their own textures; the shadow twins share their trees' colours, so the shared material stops switching program; the shore foam and two flat rings draw in one pass. Dragging the clock dawn to dusk on a 16-body course: 15 stalls of 67-117 ms on Ultra and a 1.4 s freeze on Medium before, no frame over 50 ms after, on both. three's program selection on Redwood Ultra from 0.5-1.2 ms a frame to under 0.05. Found on the way and fixed: the probes' render-target programs were never built behind the loading screen on any tier but Ultra (the 1.3 s Medium freeze), because the loading-time probes hid the planting; they now include it, which made no visible difference on the pond checked. RESEARCH, *Wasted drawing*.
 
 ## The studio froze when the camera turned to the sun (9 October)
 
