@@ -179,6 +179,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The toon ramp flattens lighting at midday; a shape cue must change colour, not the lighting normal. [THE TOON RAMP]
 - Every lit fragment shader gets at most 16 texture units, and the ground is the hungriest. [HOLE_ATLAS]
 - Shaders compile before play, under the loading cover, against the render target actually drawn into. [Shaders are compiled before play]
+- Rendering the scene a second time redraws every shadow map unless `shadowMap.autoUpdate` is off around it; the god rays and the pond probes switch it off. [A SECOND RENDER REDRAWS EVERY SHADOW MAP]
 - The god rays draw through their own override material and only with the sun in shot; the loading screen's frame warms them, and only solid things go in their mask. [THE GOD RAYS ARE WARMED]
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]

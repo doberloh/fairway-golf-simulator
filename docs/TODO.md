@@ -824,6 +824,10 @@ so several of these play differently as well as look different.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
+## Wasted drawing (9 October)
+
+- [ ] **Measure the wasted-drawing fixes, when the owner says the machine is free.** Pond photographs without shadow redraws and one pond a frame, shadow twins sharing colours, one-pass foam and rings -- all in, none measured after. Before: a refresh 0.4-1.2 s on a 16-body Midwest course on Ultra; a stall at each of 12 thresholds dragging the clock; 57 program switches a Redwood Ultra frame. Re-run the same: the clock drag on that course (Ultra and Medium), a refresh's cost, the program switches, a smoke run, and a look at the water at dusk. Branch `less-wasted-drawing`. RESEARCH, *Wasted drawing*.
+
 # Done
 
 ## The studio froze when the camera turned to the sun (9 October)
@@ -834,7 +838,7 @@ so several of these play differently as well as look different.
 
 ## The time slider hitched (9 October)
 
-- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches. Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
+- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches (it did, on Ultra; done the same day, *Wasted drawing*). Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
 
 ## New biome ideas (9 October)
 

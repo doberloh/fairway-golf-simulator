@@ -6491,6 +6491,10 @@ under 1 ms.
 | One pond's probe | 51-68 ms | 3.3-6.9 ms |
 | Sky capture of an EMPTY scene, fresh generator | 60 ms first, then 0.3 ms with a kept one | |
 
+(Low, one pond. **On a pond-heavy course on Ultra a threshold was still 0.4-1.2
+s** after this fix -- the photographs themselves, not their shaders. Found the
+same day: *Wasted drawing*, below.)
+
 Dragging from 6:00 to 20:00 crosses 14 thresholds, so it was 14 freezes of
 about 0.15 s each on this card at Low; a slower card or a higher tier only adds
 to it. A nine-hole Midwest course with seven ponds measured 81-102 ms for the
@@ -6511,6 +6515,8 @@ programs on every switch.
   and more state, to avoid a cost that is now 4-7 ms.
 - *Spreading the pond probes over several frames.* Not needed at the measured
   cost; it is the next step if a many-pond course still hitches on a weaker card.
+  **Overturned the same day:** a pond-heavy Ultra course did still hitch, on
+  this card; the ponds are now retaken one a frame (*Wasted drawing*).
 
 **Not established:** when this got worse. The code was the same in the initial
 commit; what a probe draws (planting, a probe per body) has grown since, but
@@ -6645,3 +6651,86 @@ cases, and these numbers are too noisy to defend.
 
 A sun-facing Ultra frame after the fix still shows the trees' shadows across
 the ground.
+
+## Wasted drawing: pond photographs, shadow twins, shore foam (9 October)
+
+**The owner's question:** after the god rays, is anything else drawing
+needlessly and costing frames? An audit of everything that draws the scene
+from somewhere other than the main camera, of what casts shadows, of which
+materials change every frame, and of one Ultra frame counted pass by pass
+(scratch tools, not committed). **Measured while the graphics card was also
+running something else at 95% load**, so the milliseconds below are inflated;
+counts are exact. The fixes are in; their before-and-after waits for the
+owner's go-ahead on an idle machine.
+
+**1. The pond photographs (every tier with reflections on, the default).**
+Every 6 degrees of sun, `refreshWaterEnvironment` re-photographed up to eight
+bodies of water: six renders of the WHOLE course per body (`cull.showAll`, so
+every tree, not the camera's share), and every one of those 48 renders also
+redrew every shadow map -- the god rays' mistake again (`autoUpdate`). On a
+nine-hole Midwest course with water at 100, three lakes, two rivers and three
+creeks (16 bodies, 8 probed), one refresh measured 690-1,190 ms with the
+redraws and 410-610 ms without, on Ultra; 48 shadow passes against none.
+Dragging the clock from 6:00 to 18:00 over six seconds on that course gave 12
+refreshes and a stall at each: 971 ms the first, about 100 ms the rest. So the
+earlier time-slider fix (*The time slider hitched*) removed the shader rebuild
+but not this; it had been measured on Low with one pond.
+
+Fixed in three parts (`renderer.js`):
+- **No shadow redraws inside a photograph** (`probeCapture`): `autoUpdate`
+  off around the captures. The sun's shadow cameras do not move between faces,
+  so the 48 redraws were identical. At build, when no frame has drawn the maps
+  yet, the first face draws them once (`fresh`).
+- **One pond a frame when the sun moves** (`queueWaterProbes`,
+  `stepWaterProbes`): the threshold queues the probed bodies, biggest first,
+  and each frame retakes one -- one `showAll` and six renders, not 48. A
+  threshold crossed mid-round (dragging) runs one more round after it rather
+  than restarting, so the last ponds are never starved. Build, a new tier and
+  switching reflections back on still take everything at once.
+- **Each pond is retaken into its own texture** (`fromCubemap(cube, into)`):
+  no new render target per retake, no `material.needsUpdate` on the water, and
+  bodies past the cap that borrow a probe follow by themselves.
+
+*Considered and not done:* re-photographing less often, or tinting the old
+photograph instead (the water model is signed off, TODO *Lighting and water
+fidelity*, and either would change how dusk looks on the water); leaving
+small ground cover out of the photographs (a reflection 128 pixels across
+cannot show it, but it would need measuring first); a face per frame instead
+of a pond (each step's `showAll` uploads every tree's instances and the next
+cull update uploads them back -- the redwood hitch's mechanism -- so 48 steps
+would be 96 uploads).
+
+**2. The shadow twins (High and Ultra).** The thinned copies of crowns that
+only shadow maps should draw were also in the picture, the god-ray mask and
+the probes, zeroing their own count. That costs little -- except that a twin
+had no instance colours and its tree did, and the two share a material, so
+three flipped the material's program twice per twin per pass: 57 program
+changes in one Redwood Ultra frame, each a full parameter rebuild. A
+sampling profile put three's program selection at 0.09 ms a frame from the
+tee and 0.40 ms facing the sun on Redwood Ultra, and 0.03-0.04 ms with each
+twin given its tree's colour buffer (`instance-cull.js`; shared, like the
+matrices -- a shadow ignores colour). An earlier run of the same measurement
+gave 0.55 ms from the tee; this machine's noise again. Small on this
+processor, several times larger on a slow one.
+
+*Considered and not done:* putting twins on a layer the main camera does not
+draw. Three's shadow pass tests objects against the MAIN camera's layers
+(`WebGLShadowMap`, `object.layers.test( camera.layers )`), so the twin would
+leave the shadow maps too.
+
+**3. The shore foam, and two flat rings.** Three draws a transparent
+double-sided material twice per frame, back faces then front, flipping its side
+and marking it changed each time; the pond shore foam was the only material in
+a still Redwood frame that changed every frame (+20 versions in 10 frames, per
+strip). It now draws once (`forceSinglePass`), as do the scramble ball-pick
+rings and the shot landing ring, the only other materials with the pattern --
+all flat, with nothing behind themselves to sort. No measurable difference;
+done because it was free.
+
+**Checked and fine:** soft ground shade is baked once per course
+(`occlusion.js`), not drawn; bloom draws only full-screen quads; only the god
+rays and the pond photographs draw the scene a second time; rough grass and
+flowers cast no shadows (trees, rocks and imported models do); in a still
+frame no material but the foam changed version.
+
+**After:** not yet measured -- waiting for the owner. Tests pass (668).
