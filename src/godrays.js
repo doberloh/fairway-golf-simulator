@@ -65,7 +65,13 @@ export function makeGodRays(view, scale = .25) {
  const quadCamera = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
  const sunPoint = new T.Vector3(), toSun = new T.Vector3(), forward = new T.Vector3();
 
- function render(renderer, scene, camera, sunDir, sunColor) {
+ // `warm`: run the whole pass whatever the sun is doing, drawing nothing. For
+ // the one frame drawn behind the loading screen (GolfView.ready), so the mask's
+ // black programs and the composite are built AND drawn there. Skipped while
+ // the sun is out of shot, they were built the first time a player turned to
+ // face it -- 8 s frozen in the owner's Chrome on Ultra, 9 October (RESEARCH,
+ // *The studio froze when the camera turned to the sun*).
+ function render(renderer, scene, camera, sunDir, sunColor, warm = false) {
   const size = renderer.getSize(new T.Vector2());
   const w = Math.max(2, Math.floor(size.x * scale)), h = Math.max(2, Math.floor(size.y * scale));
   if (target.width !== w || target.height !== h) target.setSize(w, h);
@@ -80,8 +86,8 @@ export function makeGodRays(view, scale = .25) {
   const sx = sunPoint.x * .5 + .5, sy = sunPoint.y * .5 + .5;
   const offScreen = Math.max(Math.abs(sx - .5), Math.abs(sy - .5));
   const strength = Math.max(0, facing) * (1 - T.MathUtils.smoothstep(offScreen, .5, 1.15));
-  material.uniforms.intensity.value = strength * view.quality.godRays;
-  if (material.uniforms.intensity.value <= 0) return;
+  material.uniforms.intensity.value = warm ? 0 : strength * view.quality.godRays;
+  if (material.uniforms.intensity.value <= 0 && !warm) return;
   material.uniforms.sunPos.value.set(sx, sy);
   material.uniforms.sunColor.value.copy(sunColor);
 
@@ -94,7 +100,31 @@ export function makeGodRays(view, scale = .25) {
   renderer.setRenderTarget(target);
   renderer.setClearColor(0xffffff, 1);
   renderer.clear(true, true, false);
-  renderer.render(scene, camera);
+  // ONLY SOLID THINGS GO IN THE MASK. Lines, points and sprites -- the aim line,
+  // tracers, markers -- block no sunlight, and each is a kind of object the
+  // black material needs a program of its own for: the aim line appears only
+  // once a round is in play, so its program was built the first time a player
+  // faced the sun, after the warm frame below had come and gone.
+  //
+  // Warming, everything solid is drawn, not only what this camera sees: the
+  // black material takes a program per KIND of object (instanced or not, with
+  // normals or not), and a kind behind the camera would still be built late.
+  const hidden = [], culled = [];
+  scene.traverseVisible(o => {
+   if (o.isLine || o.isPoints || o.isSprite || o.isLineSegments2) { o.visible = false; hidden.push(o); }
+   else if (warm && o.isMesh && o.frustumCulled) { o.frustumCulled = false; culled.push(o); }
+  });
+  // THE SHADOW MAPS ARE NOT DRAWN AGAIN. Every `render` redraws them while
+  // `autoUpdate` is on, and the frame's own render has just done so -- the mask
+  // is flat black and reads none of them. Left on, every frame with the sun in
+  // shot drew all the cascades twice.
+  const shadows = renderer.shadowMap, autoUpdate = shadows.autoUpdate, needsUpdate = shadows.needsUpdate;
+  shadows.autoUpdate = false; shadows.needsUpdate = false;
+  try { renderer.render(scene, camera); }
+  finally {
+   shadows.autoUpdate = autoUpdate; shadows.needsUpdate = needsUpdate;
+   for (const o of hidden) o.visible = true; for (const o of culled) o.frustumCulled = true;
+  }
   renderer.setRenderTarget(previousTarget);
   renderer.setClearColor(clear, clearAlpha);
   scene.overrideMaterial = null;

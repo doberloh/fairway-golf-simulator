@@ -826,6 +826,16 @@ so several of these play differently as well as look different.
 
 # Done
 
+## The studio froze when the camera turned to the sun (9 October)
+
+- [x] **The god-ray mask drew every shadow map a second time** (found while fixing the freeze below; owner asked to check it). Every `render` call redraws all shadow maps while `autoUpdate` is on, and the mask pass is one; it now switches that off for its own render. Facing the sun, a frame sends 35-36% fewer draws and 31-35% fewer triangles to the graphics card, on every run; the milliseconds saved were lost in this machine's run-to-run noise on an RTX 4090. A new profiler group, `sun`, faces the sun on High and Ultra -- no other case did, so none could see this. RESEARCH, *The god rays drew every shadow map twice*.
+
+- [x] **An 8-second freeze a moment after the loading screen, in Course studio on Ultra** (owner's report; found from the owner's own Chrome recording after nine scripted runs could not reproduce it -- their camera never moved). The god rays draw only with the sun in shot and through their own black override material, so the shader warm-up behind the loading screen never built their programs; the first time the player turned toward the sun, all of them were built in one frame, and that frame waited behind everything the browser was still compiling. The frame behind the loading screen now runs the god rays regardless (drawing nothing), across every solid object; lines, points and sprites are left out of the mask, which also removed the aim line's late program on Play rounds. Turning a full circle after loading now builds nothing on three courses; the loading screen's frame is 11-17 ms longer. `no-late-shaders` now turns the camera and counts every kind of shader; it fails on the old build. Not re-checked in the owner's Chrome. RESEARCH, *The studio froze when the camera turned to the sun*.
+
+## The time slider hitched (9 October)
+
+- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches. Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
+
 ## New biome ideas (9 October)
 
 - [x] **Haunted Hollow, the ninth biome** -- a Halloween course where nothing is alive. Gnarled dead oaks (MegaKit `DeadTree`), tall pale snags (Ultimate Stylized `DeadTree`), dead willows and the desert's dead hardwoods over dark bramble; pumpkins and red toadstools among the logs and stumps on the floor; black water, the heaviest fog of any biome, a 10-degree orange sun under a mauve sky, 9 °C air. One record in `src/biomes.js`, plus a name list, a mist profile, four `FAMILY_OF` lines and the PICK entries. Two pieces of plumbing came with it: the forest floor's mix is the biome field `floor` (it was a constant), and `ROLE_OVERRIDE` in the mesh ingest re-roles models whose material names mislead (Kenney's pumpkin is "leafsFall" and "grass"). Three first tries were wrong on looking and were changed: heather read as pink blocks (now `bramble`), the rough read desert-orange, the pale snags read salmon. Fingerprint: all eight existing biomes unchanged, so no version bump; all 238 existing model parts byte-identical after the re-ingest; the page grew 762 KB. Course-name words searched with "golf": Scarecrow (Gamble Sands) and Phantom (Phantom Lake GC) dropped and denylisted. RESEARCH *Haunted Hollow, the ninth biome*.
@@ -1196,7 +1206,8 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   on Ultra still has two or three frames of 40-50 ms in its first third of a
   second (graphics-card work while the grass ring fills, not a shader). A new
   smoke journey, `no-late-shaders`, fails if any lit shader is built after a
-  course appears; it fails on the old build. RESEARCH.md *B7: the hitch after
+  course appears; it fails on the old build. (Since 9 October it also turns
+  the camera a full circle and fails on a shader of any kind.) RESEARCH.md *B7: the hitch after
   a course appears*.
 
 - [x] **B1. The first frame paid for behind the loading screen.** Branch
