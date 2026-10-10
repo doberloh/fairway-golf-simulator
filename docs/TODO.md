@@ -826,6 +826,15 @@ so several of these play differently as well as look different.
 
 # Done
 
+## Release 0.6 (10 October)
+
+- [x] **v0.6 published**, "Fairway 0.6 (beta)", at the owner's request, from
+  the merge of `release-0.6` into `main`: Haunted Hollow, the smooth time
+  slider, no freeze facing the sun, the god rays' second shadow pass gone,
+  and the pond-probe, shadow-twin and foam fixes (below). Generator and
+  schema unchanged. Notes: `docs/releases/v0.6.md`. `floodlit-night` not run
+  for it, by the owner's decision.
+
 ## Wasted drawing (9 October)
 
 - [x] **Less wasted drawing: pond photographs, shadow twins, shore foam** (owner's request, measured 10 October on an idle card). The pond reflections are no longer re-photographed with 48 identical shadow redraws, and when the sun moves they are retaken one pond a frame into their own textures; the shadow twins share their trees' colours, so the shared material stops switching program; the shore foam and two flat rings draw in one pass. Dragging the clock dawn to dusk on a 16-body course: 15 stalls of 67-117 ms on Ultra and a 1.4 s freeze on Medium before, no frame over 50 ms after, on both. three's program selection on Redwood Ultra from 0.5-1.2 ms a frame to under 0.05. Found on the way and fixed: the probes' render-target programs were never built behind the loading screen on any tier but Ultra (the 1.3 s Medium freeze), because the loading-time probes hid the planting; they now include it, which made no visible difference on the pond checked. RESEARCH, *Wasted drawing*.
