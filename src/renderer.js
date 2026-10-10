@@ -723,9 +723,8 @@ export class GolfView{
    // TAKEN IN `ready`, NOT HERE, once the shaders are built: a probe renders
    // the scene, and rendering it now made the graphics card finish every
    // program on the spot -- a 0.8 s freeze of the page in the middle of the
-   // build. What the probe sees is kept exactly: everything added to the
-   // group after this point (the planting, homes, the ball) is hidden for the
-   // capture, as it simply did not exist yet when the probe was taken here.
+   // build. Taken there, it sees the planting and homes built after this
+   // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
@@ -923,6 +922,14 @@ export class GolfView{
   // probe hands its water an environment map, which changes that material's
   // program -- so the water is compiled once more before the first frame.
   if(this.probeDue!=null){
+   // THE PROBES DRAW INTO A RENDER TARGET, and a program built for the screen
+   // is not the one a render target needs (no tone mapping, linear colour).
+   // Ultra's bloom target made them the same; on every other tier the first
+   // probe retake after a load built twenty-odd programs on the spot, one after
+   // another -- 1.3 s frozen the first time the sun moved, Medium, 10 October
+   // (RESEARCH, *Wasted drawing*). So they are built here, in parallel, first.
+   try{if(this.renderer.compileAsync)await this.asProbe(()=>this.renderer.compileAsync(this.scene,this.camera));}
+   catch(e){console.warn('Fairway: probe warm-up skipped',e);}
    this.takeDueProbes();
    try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
    catch(e){console.warn('Fairway: water warm-up skipped',e);}
@@ -950,14 +957,38 @@ export class GolfView{
   return this.readyTimes;
  }
  // The probes `build` left for later (see the note where it sets `probeDue`).
+ //
+ // WITH THE PLANTING IN THEM. They used to hide everything built after the
+ // water (planting, homes, the ball), to match what they saw when they were
+ // taken mid-build -- so a course loaded with ponds that reflected no trees,
+ // until the sun's first 6-degree move retook them with the trees in. The
+ // reflections the water was signed off with show trees; now they do from the
+ // start, and the planting's probe programs are drawn here, behind the loading
+ // screen, rather than on that first retake.
  takeDueProbes(){
   if(this.probeDue==null||!this.group)return;
-  const later=this.group.children.slice(this.probeDue).filter(o=>o.visible);
   this.probeDue=null;
-  for(const o of later)o.visible=false;
-  try{this.refreshWaterEnvironment();}
-  finally{for(const o of later)o.visible=true;}
+  this.refreshWaterEnvironment();
   this.setReflections(this.waterReflectsCourse!==false);
+ }
+ // Run `fn` with the probes' render target bound, so a compile builds the
+ // programs a probe will draw with (see `ready`).
+ asProbe(fn){
+  const was=this.renderer.getRenderTarget();
+  this.renderer.setRenderTarget(this.probeTarget());
+  try{return fn();}
+  finally{this.renderer.setRenderTarget(was);}
+ }
+ // The cube every probe is photographed into, one for the course.
+ probeTarget(){
+  if(!this.waterCubeTarget){
+   // The tier's old planar-reflection size, repurposed: it is the one number
+   // in the tier that was ever about reflection resolution.
+   const px=Math.max(64,Math.min(256,Math.round((this.quality.reflection||512)/4)));
+   this.waterCubeTarget=new T.WebGLCubeRenderTarget(px,{type:T.HalfFloatType});
+   this.resources.push(this.waterCubeTarget);
+  }
+  return this.waterCubeTarget;
  }
  // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
  //
@@ -1348,14 +1379,7 @@ export class GolfView{
   const shadows=this.renderer.shadowMap,autoUpdate=shadows.autoUpdate,needsUpdate=shadows.needsUpdate;
   shadows.autoUpdate=false;shadows.needsUpdate=fresh;
   try{
-   if(!this.waterCubeTarget){
-    // The tier's old planar-reflection size, repurposed: it is the one number
-    // in the tier that was ever about reflection resolution.
-    const px=Math.max(64,Math.min(256,Math.round((this.quality.reflection||512)/4)));
-    this.waterCubeTarget=new T.WebGLCubeRenderTarget(px,{type:T.HalfFloatType});
-    this.resources.push(this.waterCubeTarget);
-   }
-   fn(new T.CubeCamera(1,20000,this.waterCubeTarget),this.pmremFor('water'));
+   fn(new T.CubeCamera(1,20000,this.probeTarget()),this.pmremFor('water'));
   }catch(e){console.warn('Fairway: water environment probe skipped',e);}
   finally{
    shadows.autoUpdate=autoUpdate;shadows.needsUpdate=needsUpdate;
