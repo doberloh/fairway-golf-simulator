@@ -5359,11 +5359,15 @@ matter:** the floodlit programs (about 36, warmed in the background so the
 lights switch without a stall, and not drawn until they are used); three
 shadow-depth programs in the first 50-70 ms (5-20 ms together); and a
 mist-tinted basic material and a sprite at the end of the arrival (2-3 ms).
-None is a lit program, which is the kind that costs 70 ms or more.
+None is a lit program, which is the kind that costs 70 ms or more. (Since 9
+October: a cheap program can still freeze the page for seconds if it is the
+first one waited for behind a queue -- *The studio froze when the camera turned
+to the sun*. The guard now counts every kind.)
 
 **The guard.** The `no-late-shaders` smoke journey switches to Ultra, plays
 Surprise me, and fails if any lit program is created after the loading overlay
-goes and then drawn. It failed on the build before this fix (three late
+goes and then drawn. (Since 9 October it also turns the camera a full circle
+and fails on a program of any kind.) It failed on the build before this fix (three late
 `MeshToonMaterial` programs at 3.0-3.4 s on a random course) and passed four
 times after on four different courses. GPU only.
 
@@ -6519,3 +6523,81 @@ gave 0.5 ms each minutes later. That is the machine, the same interference as
 TODO's *profiler can be fooled by something on the machine*, and was not acted
 on. The *Cost* note under *Night: a harvest moon* (a 58-68 ms first frame on a
 jump from afternoon to dusk) was this refresh; not re-measured as a jump.
+
+## The studio froze when the camera turned to the sun (9 October)
+
+**The owner's report:** on Ultra, through the bridge, growing an 18-hole
+course in Course studio locked the game up for a few seconds a moment after the
+loading screen went, every time.
+
+**Not reproduced by the harness first.** Nine scripted runs found nothing over
+0.27 s after the cover went: Midwest and Haunted Hollow nines on Medium, PNW
+eighteen on High, the studio on Ultra at 1280x720 and 2560x1440, at night,
+served through the bridge, and in a visible Chrome window. Every one had the
+same single 0.17-0.27 s frame just after the cover (the first grass tiles,
+about 0.12 s; the course map's first draw, about 0.07 s; first-draw program
+setup) and no late programs. **What every scripted run had in common was a
+camera that never moved.**
+
+**The owner's own Chrome performance recording** (trace, kept locally, not
+committed) showed it at once: a single animation frame of **8,023 ms**, 7,996
+ms of it inside `getProgramInfoLog` -- three waiting for the browser to finish
+building programs -- under `godRays.render`. The input events put it 0.08 s
+after a key press, with the owner dragging the view from 1.4 s before: they
+had turned the camera toward the sun. Chrome's GPU process then ran tasks of
+1.1-4.0 s for twelve more seconds. The same recording also showed two waits
+behind the cover: 0.7 s in the sky's first reflection capture during the build
+(`addSky`), and 3.2 s in `ready`'s first frame.
+
+**Why the god rays.** The pass draws only when the sun is in shot
+(`godrays.js`), and draws the scene through its own black override material
+into its own target. `compileAsync` compiles each object's OWN material, never
+an override, and the frame drawn behind the cover had the sun out of shot -- so
+the mask's programs, one per kind of object (instanced or not, with instance
+colours or not, with normals or not), and the composite shader were all first
+built and drawn the first time a player faced the sun. A scripted camera
+turning a full circle reproduced it: four `MeshBasicMaterial` programs and one
+`ShaderMaterial` built 4 s after the cover, as the sun came into view.
+
+**Why 8 s for five small programs.** Alone they are a few milliseconds each
+here. The likely reason, inferred and not measured: the browser builds
+programs one at a time in its GPU process, and the first one the page has to
+WAIT for (three's first use of a new program asks for its log) waits behind
+everything already queued -- including whatever the driver was still
+finishing from the warm-up behind the cover. The owner's GPU process was busy
+for seconds after the freeze, which fits. **So "unlit programs build in a few
+milliseconds" (B7's allowance, above) is true of a program alone, not of the
+wait it can cause.**
+
+**The fix, in `godrays.js`:**
+- **The frame drawn behind the cover runs the pass whatever the sun is doing**
+  (`render(..., warm)`, set from `view.readying`), with intensity 0 so the
+  composite discards every pixel and the picture is unchanged. On Windows a
+  program is only finished on its first real draw, so drawing it is the point.
+- **That warm frame draws every solid object, not only what the camera sees**
+  (frustum culling off for the mask only): a kind of object behind the camera
+  would otherwise still be built late.
+- **Lines, points and sprites are left out of the mask.** They block no sun,
+  and each is a kind the black material needs a program for. The one late
+  program left after the first two changes, on a Play round, was the black
+  material for a mesh with no normals: the aim line (`Line2`), which appears
+  only once a round is in play. A shot's tracer would have been the next.
+
+**Measured after** (scripted, headless, RTX 4090): turning a full circle after
+the cover builds nothing on a Midwest nine, a PNW eighteen or an 18-hole
+studio course, on Ultra. The warm frame behind the cover grows from 34 ms to
+45-51 ms (PNW eighteen, two runs each). Leaving lines out costs a walk of the
+visible scene each frame the sun is in shot: 529 objects, 0.012-0.014 ms. A
+sun-facing frame looks the same before and after. **Not re-measured in the
+owner's Chrome**, which is the only place the freeze was seen.
+
+**The guard.** `no-late-shaders` now turns the camera a full circle after the
+arrival and fails if a program of ANY kind is built after the cover. It failed
+on the build before this fix (the four black programs and the composite, at
+6.3 s) and passed after.
+
+**Seen and not acted on:** the 3.2 s first frame behind the cover and the
+0.7 s sky capture in the owner's recording are inside the loading wait, where
+the work is meant to land. The god-ray mask is drawn with `renderer.render`,
+which with `shadowMap.autoUpdate` on very likely draws every shadow map a
+second time each frame the sun is in shot -- not measured; TODO.

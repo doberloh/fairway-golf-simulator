@@ -824,7 +824,13 @@ so several of these play differently as well as look different.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
+- [ ] **The god-ray mask probably draws every shadow map a second time.** The mask is drawn with `renderer.render`, and with `shadowMap.autoUpdate` on, every `render` call redraws all shadow maps -- so each frame the sun is in shot on High and Ultra likely pays for the cascades twice, which may be much of the "god-ray pass is the cost" figure (PROJECT_HANDOFF, GPU cost by camera direction). Inferred from three's code, not measured. If a profile confirms it: switch `autoUpdate` off around the mask render. Needs the owner's go-ahead for a profile. RESEARCH, *The studio froze when the camera turned to the sun*.
+
 # Done
+
+## The studio froze when the camera turned to the sun (9 October)
+
+- [x] **An 8-second freeze a moment after the loading screen, in Course studio on Ultra** (owner's report; found from the owner's own Chrome recording after nine scripted runs could not reproduce it -- their camera never moved). The god rays draw only with the sun in shot and through their own black override material, so the shader warm-up behind the loading screen never built their programs; the first time the player turned toward the sun, all of them were built in one frame, and that frame waited behind everything the browser was still compiling. The frame behind the loading screen now runs the god rays regardless (drawing nothing), across every solid object; lines, points and sprites are left out of the mask, which also removed the aim line's late program on Play rounds. Turning a full circle after loading now builds nothing on three courses; the loading screen's frame is 11-17 ms longer. `no-late-shaders` now turns the camera and counts every kind of shader; it fails on the old build. Not re-checked in the owner's Chrome. RESEARCH, *The studio froze when the camera turned to the sun*.
 
 ## The time slider hitched (9 October)
 
@@ -1200,7 +1206,8 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   on Ultra still has two or three frames of 40-50 ms in its first third of a
   second (graphics-card work while the grass ring fills, not a shader). A new
   smoke journey, `no-late-shaders`, fails if any lit shader is built after a
-  course appears; it fails on the old build. RESEARCH.md *B7: the hitch after
+  course appears; it fails on the old build. (Since 9 October it also turns
+  the camera a full circle and fails on a shader of any kind.) RESEARCH.md *B7: the hitch after
   a course appears*.
 
 - [x] **B1. The first frame paid for behind the loading screen.** Branch

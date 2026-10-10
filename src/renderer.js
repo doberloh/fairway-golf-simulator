@@ -938,6 +938,9 @@ export class GolfView{
   }
   const t1=performance.now();
   // dt 0: nothing moves, nothing ages; the frame only exists to be drawn.
+  // `readying` also makes this frame run the god rays whatever the sun is doing
+  // (godrays.js, `warm`): their programs are not the scene's, so the compile
+  // above never sees them.
   try{this.render(0);}catch(e){console.warn('Fairway: first frame skipped',e);}
   finally{this.showStandIns(false);}
   // For the lab: how long each half took. The first is time the page stays
@@ -2265,7 +2268,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   }
   this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);
-  this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color);
+  this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
  project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);return{x:(v.x*.5+.5)*this.canvas.clientWidth,y:(-.5*v.y+.5)*this.canvas.clientHeight,visible:v.z<1&&v.z>-1};}
  // A MARKER THAT CANNOT LEAVE THE SCREEN. `project` answers where a point

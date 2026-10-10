@@ -707,8 +707,15 @@ const JOURNEYS = [
  // program must be built behind the loading screen, including those for things
  // that only appear later. Counted from the moment the overlay goes: a program
  // CREATED after that and then DRAWN is a miss. Created and never drawn is
- // allowed -- the floodlit set is warmed in the background on purpose -- and so
- // are shadow-depth and unlit programs, which build in a few milliseconds.
+ // allowed -- the floodlit set is warmed in the background on purpose.
+ //
+ // UNLIT PROGRAMS COUNT TOO, once the camera has turned round (9 October). They
+ // were allowed, on the grounds that they build in a few milliseconds -- and
+ // they do, alone. But the browser builds programs one at a time, and the first
+ // one the page has to wait for waits behind every other in the queue: the god
+ // rays' black mask, built the first time the camera faced the sun, froze the
+ // owner's Course studio for 8 s on Ultra. So the camera turns a full circle
+ // and nothing of any kind may be built.
  //
  // Ultra, because it has the most to warm. GPU only: Ultra on the software
  // rasteriser is minutes a frame, and what is checked is which programs exist,
@@ -716,7 +723,7 @@ const JOURNEYS = [
  // general check rather than the one PNW course the freeze was found on.
  {
   name: 'no-late-shaders',
-  what: 'an Ultra course builds every lit shader behind the loading screen, none after it appears',
+  what: 'an Ultra course builds every shader behind the loading screen, none after it appears, even turning to face the sun',
   gpuOnly: true,
   async prepare(page) {
    await page.addInitScript(() => {
@@ -724,7 +731,7 @@ const JOURNEYS = [
     const P = WebGL2RenderingContext.prototype, create = P.createProgram, use = P.useProgram;
     const src = new WeakMap(), parts = new WeakMap();
     let late = new WeakSet(), watching = false;
-    window.__lateLit = [];
+    window.__lateLit = []; window.__lateAny = [];
     const shaderSource = P.shaderSource, attach = P.attachShader;
     P.shaderSource = function (shader, text) { src.set(shader, text); return shaderSource.call(this, shader, text); };
     P.attachShader = function (program, shader) { (parts.get(program) || parts.set(program, []).get(program)).push(shader); return attach.call(this, program, shader); };
@@ -734,7 +741,9 @@ const JOURNEYS = [
       late.delete(program);
       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
-      if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push({type, after: Math.round(performance.now() - window.__shownAt)});
+      const at = {type: type || 'ShaderMaterial', after: Math.round(performance.now() - window.__shownAt)};
+      window.__lateAny.push(at);
+      if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(at);
      }
      return use.call(this, program);
     };
@@ -744,7 +753,7 @@ const JOURNEYS = [
      const overlay = document.getElementById('generating');
      if (!overlay) return;
      new MutationObserver(() => {
-      if (overlay.hidden && !watching) { watching = true; late = new WeakSet(); window.__lateLit = []; window.__shownAt = performance.now(); }
+      if (overlay.hidden && !watching) { watching = true; late = new WeakSet(); window.__lateLit = []; window.__lateAny = []; window.__shownAt = performance.now(); }
       else if (!overlay.hidden) watching = false;
      }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
     });
@@ -763,6 +772,16 @@ const JOURNEYS = [
     await t.page.waitForTimeout(5000);
     const late = await t.page.evaluate(() => window.__lateLit);
     if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+   });
+   await t.step('turning a full circle, toward the sun and away, builds no shader of any kind', async () => {
+    // From above the first fairway, looking up a little: the sun is in shot
+    // for part of the turn whatever the hour and the course's heading.
+    for (let yaw = 0; yaw < 360; yaw += 30) {
+     await t.page.evaluate(y => window.lab.camera({hole: 0, along: 60, height: 25, look: y, pitch: 25}), yaw);
+     await t.page.waitForTimeout(300);
+    }
+    const late = await t.page.evaluate(() => window.__lateAny);
+    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
    });
   },
  },
