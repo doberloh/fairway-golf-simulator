@@ -547,6 +547,10 @@ export function simulateShot(shot,course,options={}){
  const solids=[...(course.world?.trees||course.trees||[])];
  for(const r of course.world?.rocks||[])
   solids.push({x:r.x,z:r.z,y:r.y,h:Math.max(.2,r.top-r.y),radius:r.reach});
+ // Haunted Hollow's giant pumpkins and toadstools: the same cylinder, as wide
+ // as the model and as tall as it is drawn.
+ for(const p of course.world?.props||[])
+  solids.push({x:p.x,z:p.z,y:p.y,h:p.h,radius:p.reach});
  for(const q of options.poles||[])
   solids.push({x:q.x,z:q.z,y:q.y,h:q.height,radius:POLE_RADIUS});
  for(const source of solids){if(!(source.radius??trunkRadius(source)))continue;const tree=course.world?{...source,...course.toLocal(source)}:source,key=Math.floor(tree.x/cellSize)+','+Math.floor(tree.z/cellSize);if(!treeCells.has(key))treeCells.set(key,[]);treeCells.get(key).push(tree);}

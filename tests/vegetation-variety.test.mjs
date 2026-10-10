@@ -56,7 +56,7 @@ test('a stand of conifers draws on several models and varies each one',()=>{
 test('every biome builds its vegetation, models and procedural alike',()=>{
  // The desert is the case that matters here: its species split across imported
  // cacti, imported arid trees, and ocotillo and agave that stay procedural.
- for(const biome of ['pnw','mountain','desert','links','midwest','island','autumn']){
+ for(const biome of ['pnw','mountain','desert','links','midwest','island','autumn','haunted']){
   const world=generateWorld({seed:'BIOMES',biome,holes:9,trees:55,water:20});
   const view={world,style:'cartoon',group:new T.Group(),treeInstances:[],quality:{foliage:1,grass:1},resources:[]};
   assert.doesNotThrow(()=>addVegetation(view),`${biome} failed to build`);

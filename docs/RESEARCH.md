@@ -6141,3 +6141,317 @@ still stretch is a real main-thread block inside generation -- the open
 **Rejected:** counting compiled programs for real progress. Three.js compiles
 them in parallel behind one promise; reaching into its program cache to count
 them would tie the bar to Three's internals for a cosmetic gain.
+
+## Haunted Hollow, the ninth biome (9 October)
+
+Picked by the owner from sixteen ideas (TODO.md, *New biome ideas*) as a
+Halloween update. Like Giant Redwood, the mood is almost entirely numbers the
+engine already reads; what is new is what grows, and nothing that grows is alive.
+
+### The look, and what had to change after looking
+
+| Field | Value | Why |
+| --- | --- | --- |
+| `sun` | 10 | The lowest of any biome (redwood 18, autumn 19). `daylight.js` treats it as the noon peak, lifted to 35 + 0.6 x 10 = **41 degrees**, so midday is still daylight and the default hour lands late in the afternoon. |
+| `sunColor` | `#ffc29a` | First tried `#ff9d5c`: at midday it turned the whole course desert-orange. |
+| `sky` | `#a4949a` | Mauve-grey. The fog takes its colour from it, as in the grove. |
+| mist profile | haze 1, sheet 1, water 1 | The heaviest, equal to Pacific Northwest. |
+| `rough` | `#57553e` | First tried `#6b6243`; under the warm key it read orange-tan, like the desert. |
+| `temperature`, `altitude` | 9 °C, 200 m | **Placed, not published** -- a late-October northern evening. Air density 1.221 kg/m³ against Midwest's 1.165 (22 °C, 230 m), **4.9% denser**, so the ball carries a little shorter. |
+| `canopy`, `farCanopy` | 9-22 m, 8-20 m | **Placed.** Dead hardwoods on the short side of the parkland default (13-29 m); a bare tree hides far less than a leafy one, so they are planted a little denser (`treeDensity` 3.2). |
+
+The first planting put **heather** under the trees. Its purple, plus the blossom
+`vegetation.js` scatters over every heather and gorse, read as bright pink blocks
+against dead grass -- cheerful, not haunted. It became `bramble`: a new ground
+plant in the bush family, painted `#4f4636`. The pale snags' bark started at
+`#a29b8f` and came out salmon-pink in the warm light; `#8a8984` is cooler.
+
+### What grows, and what was rejected
+
+Every model already sat in `vendor/` under packs ATTRIBUTION.md credits, and
+each was chosen in `npm run assets`, not by file name:
+
+| Species | Family | Models | Vertices each |
+| --- | --- | --- | --- |
+| `gnarled` | `gnarled` | MegaKit `DeadTree_1`, `_2`, `_4` | 7,249-8,157 |
+| `snag` | `snag` | Ultimate Stylized `DeadTree_3`, `_6`, `_8` | 1,607-2,662 |
+| `deadwillow` | `deadwillow` | Ultimate Nature `Willow_Dead_1`, `_2`, `_4` | 1,568-3,720 |
+| `deadoak` | `arid` (shared) | the desert's three `CommonTree_Dead` | already shipped |
+| `bramble` | `bush` (shared) | Kenney bushes | already shipped |
+
+On the floor (`deadfall` 420, against the grove's 520): pumpkins 30%, toadstools
+22%, stumps 24%, logs 24%. A pumpkin is drawn **30-70 cm** tall and a toadstool
+clump **25-55 cm** -- both **placed**. A real fly agaric is smaller, a cap up to
+about 20 cm; the clumps are oversized so they can be seen from a fairway.
+
+**Rejected: `TwistedTree_1`-`_5`** (MegaKit). Their silhouettes are good, but the
+foliage is a textured card sheet, and the ingest drops textures for everything
+except houses. Without the sheet they are bare quads.
+
+**The pumpkin needed a role override.** Kenney names its body `leafsFall` and
+its stem `grass`, so `ROLE_OF` made all of it leaf and painted it one colour. The
+toadstools are `colorRed`/`colorTan` caps on a `_defaultMat` stalk, all accent.
+`ROLE_OVERRIDE` in `tools/build-meshes.mjs` re-roles those two families only.
+
+### What it cost, and what it did not move
+
+- `src/asset-meshes.js` went from 14,280,006 to 15,042,626 bytes (**+762 KB**,
+  about 5% of the built page), almost all of it the three gnarled oaks. Thirteen
+  models were added, 131 to 144. Compared part by part, **all 238 existing parts
+  are byte-identical**.
+- `node tools/biome-fingerprint.mjs --check`: **all eight existing biomes
+  unchanged**, `haunted` new. No `GENERATOR_VERSION` or `SCHEMA_VERSION` bump: no
+  existing seed builds anything different, and a new option in an existing
+  choice is not a change of shape (Giant Redwood set the precedent).
+- **Frame cost is not measured.** The gnarled oaks are among the heaviest models
+  shipped, and they draw only on this biome. `npm run profile --only biomes`
+  (about a minute) is the check; it waits for the owner's go-ahead.
+
+### Course names
+
+Thirty first words and twenty second words of Halloween vocabulary. Per the
+rule in `src/course-names.js`, candidates were searched with "golf" (9 October).
+Two were dropped and joined the denylist test:
+
+- **Scarecrow** -- a David McLay Kidd course at Gamble Sands, Brewster,
+  Washington, opened to public play on 1 August 2025.
+  https://www.golfcourseindustry.com/gamble-sands-scarecrow-new-course-open
+- **Phantom** -- Phantom Lake Golf Club, a nine-hole course.
+  https://www.chronogolf.com/club/1685
+
+No course turned up for Gloaming, Lychgate, Wraith, Moonrise or Nightshade. The
+biome's title, **Gloaming Moor**, was among those searched.
+
+### A test that could not fail
+
+`tests/mist.test.mjs` asserted that "every biome has a mist profile" by calling
+`profileFor`, which falls back to Midwest's fog for any biome without one. It
+could never fail -- and **Giant Redwood has had no fog profile of its own since it
+was added**, so the grove's "wet air" is Midwest's prairie haze. The test now
+asks `hasOwnProfile` and names redwood as the one biome that borrows. Whether
+the grove should get its own fog is a look decision, left open in TODO.md.
+
+### Second pass: full fantasy (9 October)
+
+The owner asked for four things: more and much bigger pumpkins and toadstools,
+solid; "haunted" turf colours, "full fantasy"; ghosts patrolling the course; and
+the glowing pumpkins. Everything below is **placed, not published**.
+
+**Giant props, solid.** Pumpkins and toadstools left the decorative forest
+floor and became generation output (`world.props`, course.js), because physics
+can only collide with what the world knows about -- the boulder lesson again.
+
+| | Before | Now |
+| --- | --- | --- |
+| Pumpkins on nine holes | about 126 | 235 (26 a hole asked) |
+| Toadstool clumps | about 92 | 162 (18 a hole asked) |
+| Pumpkin height | 0.3-0.7 m | 0.9-3.5 m (old size x 3 to 5) |
+| Toadstool height | 0.25-0.55 m | 0.75-2.75 m |
+| Collides | no | yes, a vertical cylinder |
+
+The size multiplier is 3 + 2u², so most props sit near three times and a few
+reach five, as asked. The cylinder is as wide as the model, measured off the
+ingested geometry: pumpkin 0.693 of its height, red and tan toadstool clumps
+0.645, the single tall toadstool 0.285 (`PROP_MODELS`, species.js). Measured
+seed GLOAMING: 150 of 235 pumpkins are lanterns (60% asked).
+
+**The collision test could not fail at first.** Rolled from 20 m short of
+each pumpkin, the ball died in the rough before arriving: 0 of 27 rolls went
+through with the pumpkins solid, and 0 of 27 with them hidden from physics.
+From 2 m short at 25 m/s it is 0 of 27 solid against 27 of 27 hidden, and the
+test now runs that control itself.
+
+**Purple turf, and why the first purple came out brown.** Rough `#3c2856`,
+semi `#553c7c`, fairway `#7f55b8`, fringe `#9270c6`, green `#86c24f`, sand
+`#b9b2a6`, water `#1f3d2e` tinted `#2f6b46`. The Cartoon ground lifts every
+rough 23% toward a fixed olive (`#b6bc65`, renderer.js), which suits grass and
+turned a greyish violet into mud-brown; it is the biome field `roughTint` now,
+`#6b5590` here. A first saturated set (rough `#4a3268`, fairway `#6a4d96`) had
+too little contrast once lifted -- the fairway vanished into the rough -- so the
+rough went darker and the fairway brighter. The 2D maps drew every biome's
+fairway and green in fixed greens, so a purple course had a green map: the
+biome field `mapTurf` now carries them.
+
+**Lanterns.** A face of eyes, nose and a two-toothed grin, laid on an ellipse
+just proud of the pumpkin's body (0.67 x 0.70 of its height; the body is 0.69
+wide between 0.15 and 0.65 up). Unlit, outside tone mapping: near-black by day,
+candle-orange as `solar.lamplight` rises -- from the sun at 10 degrees to 2
+degrees below the horizon, the same number the glow ball follows -- with a
+flicker between 76% and 100%. **Rejected: a halo of additive point sprites**
+round each face. It drew a dark square behind every lit face, and still did
+with the mist patch kept off it; compared side by side, the face alone reads
+well, so it was dropped rather than chased.
+
+**Ghosts.** A lathe-turned sheet ghost (dome head, flared skirt, six-wave hem,
+two stubby arms, black eyes and an O mouth) whose skirt ripples in the vertex
+shader. Two a hole -- 18 on nine holes -- each 2.3 to 4.0 m tall, hovering 2.2
+to 5.7 m up with a 0.45 m bob, at 1.8 to 4.2 m/s round an ellipse beside its
+hole; one in three swings wide across the fairway. They fade out between nine
+and three of their own heights from the camera rather than fill the screen, and
+glow faintly by day and fully after dark. Scenery only: the ball passes through.
+Arms first pointed straight ahead and read as two loose discs; they point out
+to the sides now.
+
+**No GENERATOR_VERSION bump, by decision.** The fingerprint check says Haunted
+Hollow's ground moved and asks for one. All eight released biomes are
+unchanged, and Haunted Hollow has never been in a release or a pushed branch,
+so no saved round can hold it. A bump would put the "this course has changed"
+notice on every saved round of every biome, none of which changed -- an arbiter
+crying wolf. If the branch was ever played and a Haunted Hollow round saved
+locally, that one round would rebuild with the props.
+
+### Frame cost, measured (9 October) -- and the hitch that was not ours
+
+**The first reading was wrong.** `node tools/profile.mjs --only biomes --since`
+on the second-pass build (High tier, player view, seed PROFILE, nine holes,
+real-GPU arm: RTX 4090, ANGLE D3D11, vsync off) gave Haunted Hollow 6.1 ms CPU,
+7.4 ms GPU and a CPU p99 of 58 ms, level with Giant Redwood and twice Autumn.
+That was reported to the owner as "twice a parkland frame, with hitches". It
+was mostly interference from outside the game.
+
+**How it was found.** The owner asked what caused the hitches and whether the
+gnarled oaks needed fewer polygons. The same measurement was repeated on the
+capture build (`window.__view`), with the profiler's own probe and GPU flags,
+switching one part of the scene off per case and recording when each frame
+over 25 ms happened:
+
+1. **In one browser, every case got worse the later it ran** -- Autumn included.
+   The first profile ran nine biomes in one browser with Haunted Hollow last;
+   the late cases (Island, Redwood, Haunted Hollow) had the large worst frames.
+2. **With a fresh browser per case, the hitches came in bursts at exactly
+   200 ms intervals** (5 Hz) through the whole sample -- 440, 635, 841,
+   1033 ms ... in one Autumn run, 126, 322, 535, 749 ms ... in one Haunted
+   Hollow run -- and struck about one run in four of either biome at random.
+   A run with the burst also reads 1-2 ms slower at the median. Nothing in the
+   game runs on a 200 ms timer (the only short one drives the loading bar and
+   stops), so it is something else on the machine. Not identified.
+3. **Clean runs, fresh browser each** (four rounds; the runs with the 200 ms
+   burst left out):
+
+| Case | CPU ms | GPU ms | Draws | Triangles | Frames > 25 ms |
+| --- | --- | --- | --- | --- | --- |
+| Autumn | 2.7-2.8 | 3.37-3.46 | 458 | 7.0 M | 0 |
+| Haunted Hollow | 2.8-2.9 | 4.09-4.21 | 341 | 17.8 M | 0 |
+| Haunted Hollow, gnarled oaks hidden | 2.6-2.7 | 3.58-3.71 | 329 | 10.5 M | 0 |
+| Giant Redwood | 5.3-5.6 | 7.02-7.23 | -- | -- | 4-5, every run |
+
+So Haunted Hollow costs about **0.7 ms more GPU** a frame than Autumn on this
+machine and the same CPU, and has **no hitch of its own**. The gnarled oaks
+are 7.3 M of its 17.8 M triangles and about 0.5 ms of that 0.7. The props,
+lanterns and ghosts share the rest; the per-part runs for them in a single
+browser were too contaminated to separate, and at 0.2 ms together there was
+no reason to chase them.
+
+**Decision: the oaks keep their polygons.** The owner asked for a reduction only
+if the oaks caused the hitches, and they do not. If Haunted Hollow ever needs
+to be cheaper -- on a weak machine 7 M triangles matters more than half a
+millisecond here suggests -- the oaks are where the triangles are.
+
+**Giant Redwood's hitch was real in the profiler and absent at normal frame
+pacing**: four or five frames of 157-178 ms between about frames 180 and 250 of
+every fresh run, explained in *The redwood hitch: an uncapped-profiler stall*
+below.
+
+The `--since` comparison found the other seven biomes 1.6 to 6.8 ms faster than
+`bench/profile-baseline.json`; the baseline was taken under different
+conditions and says nothing here. It was not re-saved.
+
+### The redwood hitch: an uncapped-profiler stall (9 October)
+
+Investigated at the owner's request, reported first; **only written up, nothing
+in the game changed**, by the owner's decision.
+
+**What it is.** A course opens with the camera holding high for about 2.7 s,
+then flying down to the tee. The instance cull (`src/instance-cull.js`)
+rebuilds the list of drawn instances every 4 m of camera travel, and on the
+redwood course (seed PROFILE, nine holes, High) one rebuild uploads about
+**83,000 instances, 6.7 MB**, across 238 buffers -- already only the visible
+range of each. During the descent that is every two to four frames. With the
+frame rate uncapped, the first rebuilds as the camera starts down collide with
+frames already queued for the graphics card, and Chrome's GPU process stalls
+for **170-195 ms** inside the driver. The page does not wait on its own call:
+it waits a frame or two later, on whatever call finds the command queue full
+(once a single 4x4 matrix upload took 181 ms).
+
+**Evidence** (capture build, High, 1600x900 at 2x, real GPU, a fresh browser
+per run, each slow frame's GL calls and per-call time recorded):
+
+| Test | 170-195 ms frame at camera height 115-117 m? |
+| --- | --- |
+| As normal, uncapped | yes, every run (and again when the descent was replayed in the same run) |
+| Redwood-forest models hidden | no |
+| Cull rebuilds frozen | no |
+| **Normal 60 fps pacing (vsync on)** | **no slow frame at all, 2 of 2 runs** |
+| 1600x900 pixels / 400x225 pixels | 124-129 ms / none |
+| Shadows off | yes |
+| God rays off | yes |
+| God rays drawn once toward the sun first | yes |
+| Floodlight warm-up off | yes |
+| The descent drawn once beforehand | yes |
+
+The graphics card's own time for the hitch frame's drawing was normal (about
+7 ms, timer query), the frame drew the usual 560 draws and 83,000 instances,
+and it compiled and created nothing. A Chrome trace put the time in the GPU
+process's command-buffer flush, with no named step inside it: driver work. The
+frames just before each hitch carried a 6.7 MB rebuild upload.
+
+**Hypotheses tested and rejected on the way**, so nobody repeats them: one-off
+driver preparation on first draw (pre-drawing the descent did not help, and the
+hitch recurs on a replay); the camera flying through the treetops (it is 83 m
+from the nearest crown); the god-rays occlusion pass; shadow maps; the
+floodlight warm-up.
+
+**Smaller findings.** The floodlight warm-up causes two frames of 40-90 ms a
+little later in the descent -- each creates one texture and checks three
+programs -- which also vanish at 60 fps pacing. It also adds about 2-3 s to a
+redwood course's loading (7-8 s with it, 3.6-5.7 s without); that is behind the
+loading screen, where the owner asked for that work to go.
+
+**What it means.** A player on this machine (RTX 4090) does not see it. **Not
+tested: a graphics card that cannot hold 60 fps on the redwood course**, which
+would queue frames the way the uncapped profiler does and could feel the same
+stall. If that is ever reported, the fix to try is spreading a rebuild's upload
+over several frames rather than sending all 238 buffers at once; it touches
+tree drawing, so it wants its own before-and-after measurement.
+
+### Night: a harvest moon, bats and will-o'-the-wisps (9 October)
+
+Asked for by the owner from a list of ideas; scenery only, so no generation
+changed (the fingerprint confirms every biome, Haunted Hollow included). Every
+number here is **placed, not published**.
+
+**Harvest moon.** A disc drawn into the sky shader, 2.3 degrees in radius --
+about nine times the real moon's 0.26 -- orange (`#ff8a2a`) on the horizon,
+paling to `#ffe2b0` by 30 degrees up, mottled with darker seas, a soft halo,
+hidden below the horizon and drawn before the clouds so cloud crosses it. It
+shows at a quarter strength by day and comes in fully with `solar.lamplight`,
+the same number the lanterns follow. On the moonlight's own arc it was still
+just below the horizon at Dusk (-1.1 degrees), which is wrong for a harvest
+moon, so the disc runs `MOON_LEAD` = 0.3 radians of phase (about 1.25 h) ahead:
+5.2 degrees up at Golden hour, 9.3 at Dusk, 22 by 9 pm. The first strength
+rule (by `dayness`) left it pale and faint against a bright dusk sky; following
+lamplight fixed that. Other biomes keep only the small pale disc their sun's
+disc becomes after dark, exactly as before.
+
+**Bats.** One flock a hole, 6-11 bats each -- 75 on nine holes -- circling one
+of the hole's tallest trees at 75-115% of its height, 7-21 m out, on circles
+whose radius and height breathe. Each is a body and two hinged, fingered wings
+beating at 9-14 a second, 2.6-4.4 m across: far bigger than any real bat
+(about 0.2 m for a pipistrelle, 1.5 m for the largest fruit bats), because from
+a tee 50-150 m away anything smaller is a speck. Out once lamplight passes
+0.05, growing in rather than popping on.
+
+**Will-o'-the-wisps.** Three a hole -- 27 on nine -- 70% of them over a pond
+near its bank where the hole has one, the rest in the lowest of eight spots in
+the rough beside the hole. A core 0.16-0.26 m across hovering 0.9-1.8 m up,
+drifting round a 1.2-4 m loop, each going out for about two seconds in a
+cycle of 9-23 s. Out once lamplight passes 0.2. **The glow was redone once:** a
+flat translucent sphere round the core read as a green target ring, so it is
+a shell whose opacity falls off toward its rim as seen from the camera. Not
+additive, because an additive sprite is what drew dark squares round the
+lanterns.
+
+**Cost.** No frame cost measured; it needs the owner's go-ahead for a profile.
+Switching the clock from afternoon to dusk costs one slow first frame of 58-68
+ms whether the bats and wisps are there or not (three runs each, normal 60 fps
+pacing): that frame is the existing work a clock jump does, not theirs.

@@ -51,7 +51,11 @@ function accessor(json, bin, index) {
 }
 
 // Pull every primitive out of a model, grouped by the role its material maps to.
-export function extract(file) {
+// `roleOf` is for a model whose material names say nothing useful: a Kenney
+// pumpkin calls its body `leafsFall` and its stem `grass`, so by name alone the
+// whole thing is leaf and paints one colour. The ingest passes a per-family
+// override for those; everything else takes ROLE_OF.
+export function extract(file, roleOf = ROLE_OF) {
  const {json, bin} = readGlb(file);
  const byRole = new Map();
  // Models are authored with a node transform, so bake it in rather than
@@ -63,7 +67,7 @@ export function extract(file) {
   const s = node?.scale || [1, 1, 1], t = node?.translation || [0, 0, 0];
   for (const prim of mesh.primitives) {
    const material = json.materials?.[prim.material]?.name || 'accent';
-   const role = ROLE_OF(material);
+   const role = roleOf(material);
    const position = accessor(json, bin, prim.attributes.POSITION);
    const normal = prim.attributes.NORMAL !== undefined ? accessor(json, bin, prim.attributes.NORMAL) : null;
    const index = prim.indices !== undefined ? accessor(json, bin, prim.indices) : null;

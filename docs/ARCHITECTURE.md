@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of eight biomes, Cartoon art style only.
+landscape holding 9 or 18 holes, in one of nine biomes, Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -91,6 +91,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras, flyovers, the simulator bay
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
+- `src/haunts.js` -- Haunted Hollow's giant pumpkins and toadstools (placed by course.js, solid), lantern faces, ghosts, bats and will-o'-the-wisps
 
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
@@ -160,6 +161,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Outline harmonics are scaled at generation, never in the shader; keep the amplitude caps. [OUTLINE HARMONICS], [AMPLITUDE CAP]
 - Tees are re-sited after the land exists; face them after siting, and check blindness on terrain that includes the pads. [Tees are sited, not placed]
 - Never assume a canopy height; ask `canopyTop` (redwoods reach 186 m). [NEVER ASSUME A CANOPY HEIGHT]
+- An InstancedMesh that moves must set `userData.noCull`, or the instance cull puts it back where it was built. [ANYTHING INSTANCED THAT MOVES]
+- A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 
@@ -178,6 +181,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Shaders compile before play, under the loading cover, against the render target actually drawn into. [Shaders are compiled before play]
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
+- Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
+- The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
 - The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler. [THE SPLASH LIVES]

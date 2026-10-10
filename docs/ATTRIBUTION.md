@@ -82,11 +82,11 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
 - Every source material is discarded. The packs colour surfaces with a
   `baseColorFactor` per material; each is classified by name into a role —
   bark, leaf, stone, dirt, accent — and the running game paints those roles from
-  the biome palette. That is what lets one imported pine serve all seven biomes
+  the biome palette. That is what lets one imported pine serve every biome
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 152 of the 733 available models are used. The rest are not shipped. A family may
+- 144 of the 938 models under `vendor/` are used (counted by `npm run assets`; this line said 152 of 733 until 9 October, which no longer matched). The rest are not shipped. A family may
   keep only part of a model: the redwood and fir crowns ship as leaf geometry with
   their trunks dropped, because the trunk under them is drawn rather than imported.
 - The **house models are the one exception to materials being discarded**: unlike
@@ -99,9 +99,14 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   and wall colour down a street.
 
 Kenney supplies the bulk. Quaternius is drawn on **only where Kenney has no
-counterpart** — five cacti and three dead trees for the desert biome, and for the
+counterpart** — five cacti and three dead trees for the desert biome, for the
 redwood forest floor seven mossy boulders, five leafy ground plants and four logs
-and stumps with moss on them. Its models carry several times the vertices, so
+and stumps with moss on them, and for Haunted Hollow nine dead trees: three gnarled
+oaks from the Stylized Nature MegaKit (`DeadTree_1`, `_2`, `_4`), three tall snags
+from Ultimate Stylized Nature (`DeadTree_3`, `_6`, `_8`) and three dead willows from
+the Ultimate Nature Pack (`Willow_Dead_1`, `_2`, `_4`). Its pumpkin
+(`crop_pumpkin`) and toadstools (`mushroom_redGroup`, `mushroom_redTall`,
+`mushroom_tanGroup`) are Kenney's Nature Kit. Its models carry several times the vertices, so
 taking coverage we already had cost about a megabyte of packed geometry for no
 visible gain, and was reverted.
 

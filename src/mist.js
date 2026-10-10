@@ -54,12 +54,19 @@ const PROFILES = {
  autumn: {haze: .75, sheet: .78, water: 1},
  // Warm and humid reads as haze, not as a cold sheet lying on the ground.
  island: {haze: .48, sheet: .22, water: .35},
+ // Haunted Hollow: the most of everything. Fog is most of what the biome is,
+ // and it pools in the hollows and over the black water.
+ haunted: {haze: 1, sheet: 1, water: 1},
  // Dry air. A little distance haze for depth and nothing on the ground at all --
  // pooled fog over a saguaro would read as a mistake, not as weather.
  desert: {haze: .26, sheet: 0, water: 0},
 };
 
 export const profileFor = biome => PROFILES[biome] || PROFILES.midwest;
+// Whether a biome has fog of its own. profileFor can never say no -- that is the
+// point of a fallback -- so a test asking it whether a profile exists could not
+// fail, and Giant Redwood went its whole life on Midwest's fog unnoticed.
+export const hasOwnProfile = biome => Object.hasOwn(PROFILES, biome);
 
 // Densities, derived from how far you should be able to SEE rather than picked
 // by eye.

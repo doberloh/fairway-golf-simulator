@@ -75,12 +75,14 @@ A hole may also be given a **specimen**: a feature tree or a cluster of stones s
 
 **Boulders are generation output, not decoration.** They used to be placed by the renderer from a stream the generator never saw, so the world did not know where they were and nothing could collide with one. They carry their reach and crown height now, and the renderer reads them.
 
+**Haunted Hollow's giant pumpkins and toadstools are generation output for the same reason.** They are solid, so the world has to know where they are. A biome asks for them per hole (`props`: 26 pumpkins and 18 toadstool clumps a hole for Haunted Hollow), drawn from a stream of their own so no other biome moves. Pumpkins grow in patches of three to seven round a centre; three quarters of the toadstools come up a few metres from a trunk. Each is three to five times life size -- 0.9 to 3.5 m for a pumpkin, 0.75 to 2.75 m for a clump, most near the small end -- and as wide as the model it will be drawn with. Siting follows the boulder rules (rough only, out of every tee shot and tee fan) plus room from the corridor, trunks, boulders, houses and each other. A share of pumpkins (60%) is marked to be carved as lanterns, and each is turned to face the nearest fairway.
+
 Trees leave room for each other where a biome asks them to (`crownShare`): two crowns may not share more than that fraction of their combined radii, and trunks may never intersect. It is on for the redwood grove and off everywhere else, since no other biome has a tree wide enough for it to matter. A plant entry may carry a height scale as its third number, which is how a biome gets a mid-storey under its canopy.
 
 A biome may also ask for **deadfall** -- fallen logs, stumps and mossy boulders on the forest floor. It is a count, and zero means a clean floor. Roughly three quarters of it is placed around an existing trunk rather than at a uniform random point, because timber falls where timber grows and an even scatter reads as litter on a lawn. It is decoration: nothing collides with it.
 
 
-A biome is one record in `src/biomes.js` holding 45 fields: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
+A biome is one record in `src/biomes.js`: its palette and light, the shape and strength of the hills between corridors, whether it has a sea and whether that sea is all round it or along one edge, its plant mix and tree density, how much rock and grass is scattered and how large, the colour of a stream bank and of what a shot throws up, and a handful of flags the ground shader reads by name. Defaults cover every field, so a biome states only what makes it different.
 
 ## Large lakes and downhill streams
 

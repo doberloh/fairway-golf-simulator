@@ -36,6 +36,7 @@ import {rangeTargets} from './range.js';
 const FLAGSTICK_HEIGHT=7*0.3048, FLAGSTICK_TOP_R=.007, FLAGSTICK_BASE_R=.009;
 import {toonRamp} from './textures.js';
 import * as T from 'three';
+import {addHaunts} from './haunts.js';
 import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starRotation,STAR_AXIS,mistAmount} from './daylight.js';
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
 import {addVegetation} from './vegetation.js';
@@ -312,6 +313,7 @@ function contactShadow(){
 // the ball, and how long a low sun may stretch it. Both are looks.
 const BALL_SHADOW_REACH=1.5,BALL_SHADOW_STRETCH=3;
 const GLOW_BALL=new T.Color('#b4ff72');
+const MOON_HIGH=new T.Color();
 
 // Radial falloff for the halo, built numerically rather than on a canvas so this
 // module never needs a DOM. Squared falloff reads as a glow; linear reads as a
@@ -646,7 +648,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -680,7 +682,7 @@ export class GolfView{
   if(this.quality.cascades&&!blue)this.makeCascades(sunDir,this.sun.color,this.sun.intensity);this.applyShadowSpan();add(this.sun.target);this.sunDir=sunDir;
   this.addSky(sunDir);
   this.addLandscape();
-  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color('#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
+  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
   const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
   this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
   // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
@@ -727,6 +729,8 @@ export class GolfView{
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
+  // Haunted Hollow's pumpkins, lanterns and ghosts; null on every other biome.
+  this.haunts=addHaunts(this);
   this.addFloodlights();
   if(world.holes[0]?.range)this.addRangeTargets();
   // Every mesh instanced across the course -- trees, deadfall, rocks, ground
@@ -1174,7 +1178,7 @@ export class GolfView{
  }
 
  addSky(sunDir){
-  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
@@ -1196,6 +1200,21 @@ export class GolfView{
  void main(){vec3 d=normalize(vSky);float h=max(d.y,0.);vec3 col=mix(horizon,top,pow(h,.55));float glow=pow(max(dot(d,sun),0.),64.);col+=glowColor*glow*.35;col=mix(col,discColor,smoothstep(.99955,.9998,dot(d,sun)));
   // Stars go in before the clouds, so a cloud drifting over puts them out.
   if(starness>.001){vec3 sd=spin(d,starAxis,starAngle);float sf=starLayer(sd,150.,.05,skyTime)+starLayer(sd,70.,.02,skyTime*.6)*1.7;col+=vec3(.82,.88,1.)*sf*starness*smoothstep(0.,.16,d.y);}
+  // A DRAWN MOON (a biome's moon field; amount 0 everywhere else): a disc on the
+  // moon's own arc, mottled with darker seas, a soft halo round it, hidden below
+  // the horizon. After the stars and before the clouds, so cloud crosses it.
+  if(moonAmount>.001){
+   float r=acos(clamp(dot(d,moonDir),-1.,1.))/moonRadius;
+   if(r<4.){
+    vec3 mu=normalize(cross(moonDir,vec3(0.,1.,0.))),mv=cross(mu,moonDir);
+    vec2 mp=vec2(dot(d,mu),dot(d,mv))/sin(moonRadius);
+    float seas=noise(mp*2.2+3.1)*.6+noise(mp*5.3+7.7)*.4;
+    vec3 face=moonColor*(1.-.3*smoothstep(.45,.72,seas))*(1.-.16*r*r);
+    float disc=1.-smoothstep(.94,1.,r),halo=exp(-max(r-1.,0.)*1.8)*(1.-disc);
+    float up=smoothstep(-.01,.025,d.y)*moonAmount;
+    col=mix(col,face,disc*up);col+=moonColor*halo*up*.28;
+   }
+  }
   vec2 q=d.xz/max(d.y+.14,.09)*2.8;float n=fbm(q+vec2(skyTime*.008,skyTime*.003));float clouds=smoothstep(.55-cloud*.18,.76-cloud*.16,n)*smoothstep(.02,.15,h);col=mix(col,cloudLight,clouds*.83*cloudAmount);gl_FragColor=vec4(col,1.);
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -2092,6 +2111,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    u.glowColor.value.copy(GLOW_DAY).lerp(GLOW_NIGHT,1-solar.dayness);
    u.discColor.value.copy(DISC_DAY).lerp(DISC_NIGHT,1-solar.dayness);
    u.starness.value=solar.starness;u.starAngle.value=starRotation(d.hour);
+   // The drawn moon: orange on the horizon, paling as it climbs, faint by day.
+   const moon=this.world.bio.moon;
+   if(moon){
+    u.moonDir.value.copy(solar.moonDiscDirection);u.moonRadius.value=moon.size*Math.PI/180;
+    u.moonColor.value.set(moon.low).lerp(MOON_HIGH.set(moon.high),T.MathUtils.smoothstep(solar.moonDiscElevation,3,30));
+    // Faint by day, full as the light goes -- the same lamplight the lanterns
+    // follow, so the moon is at its strongest by Dusk, not hours after it.
+    u.moonAmount.value=moon.day+(1-moon.day)*Math.min(1,solar.lamplight*1.5);
+   }else u.moonAmount.value=0;
   }
   this.updateGlowBall(solar,d);
   // Fog and background track the horizon, or the sky detaches from the land.
@@ -2171,6 +2199,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
+  // Haunted Hollow: ghosts on their rounds, lanterns lit by the same dusk.
+  this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and
@@ -2314,14 +2344,14 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   ctx.save();ctx.translate(bg.x,bg.y);ctx.scale(bg.sx,bg.sy);ctx.drawImage(world.mapBackground,0,0);ctx.restore();}
 
  for(const hole of full?world.holes:[course]){
-  ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,'#a1b481'],[0,'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
+  ctx.lineJoin='round';ctx.lineCap='round';for(const[margin,col]of[[hole.settings.semiRough,world.bio.mapTurf?.semi??'#a1b481'],[0,world.bio.mapTurf?.fairway??'#608449']]){ctx.beginPath();for(const side of [1,-1])for(let i=0;i<=100;i++){const mow=hole.mowStart??hole.fairwayStart,z=mow-margin+(hole.length+8-mow+2*margin)*(side===1?i/100:1-i/100),p=to(hole.center(z)+side*fairwayWidth(hole,z,margin,side),z,hole);side===1&&i===0?ctx.moveTo(...p):ctx.lineTo(...p);}ctx.closePath();ctx.fillStyle=col;ctx.fill();}
   for(const p of hole.ponds){ctx.fillStyle='#70a6aa';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
   for(const p of hole.bunkers){ctx.fillStyle='#efe0b9';ctx.beginPath();for(let i=0;i<64;i++){const v=ovalRadius(p,i/64*TAU),q=to(p.x+v.x,p.z+v.z,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();}
   for(const[name,t]of Object.entries(hole.tees)){const q=to(t.x,t.z,hole);ctx.fillStyle=TEE_COLORS[name];ctx.beginPath();ctx.arc(...q,full?1.8:3,0,TAU);ctx.fill();}
   // The disc is the green, so it is drawn around the green's centre; the number
   // that labels the hole goes with it.
   const centre=hole.green??hole.pin;
-  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle='#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
+  const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
  }
  if(aimPoint){const from=to(position.x,position.z),target=to(aimPoint.x,aimPoint.z);ctx.save();ctx.strokeStyle='#fff1ac';ctx.lineWidth=3.5;ctx.setLineDash([8,6]);ctx.lineDashOffset=-time*22;ctx.beginPath();ctx.moveTo(...from);ctx.lineTo(...target);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#294c39';ctx.lineWidth=2;ctx.fillStyle='#ffed9e';ctx.beginPath();ctx.arc(...target,5,0,TAU);ctx.fill();ctx.stroke();ctx.restore();}
  ctx.save();if(full){ctx.beginPath();ctx.rect(w/2-world.halfX*scale,h/2-world.halfZ*scale,world.halfX*2*scale,world.halfZ*2*scale);ctx.clip();}

@@ -110,8 +110,11 @@ function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
- const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a'};
- const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(kind==='aspen'?'#d5d2b5':'#6b5942');
+ const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636'};
+ // Bark is one brown unless a species says otherwise. The dead trees do: a
+ // haunted wood is told apart by its bark, since it has no leaves to do it.
+ const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45'};
+ const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const entries=[];
@@ -310,9 +313,13 @@ export function addVegetation(view){
 //
 // These are decoration and nothing collides with them -- a ball rolls through a
 // fallen log. Worth knowing before anyone makes them bigger.
-const DEADFALL = [['log', .40], ['stump', .24], ['mossrock', .36]];
+//
+// What it is made of is the biome's `floor`: the grove's logs, stumps and mossy
+// boulders, Haunted Hollow's logs and stumps. Haunted Hollow's pumpkins and
+// toadstools were here once; they are solid now, so generation places them and
+// haunts.js draws them.
 function addDeadfall(view) {
- const {world} = view, count = biomeOf(world.settings.biome).deadfall;
+ const {world} = view, {deadfall: count, floor: mix} = biomeOf(world.settings.biome);
  if (!count) return;
  // Its own group, the way the living rough has one: a named handle in the
  // scene is the difference between checking this from the console and
@@ -343,8 +350,8 @@ function addDeadfall(view) {
   if (blocksLaunch(launch, x, z, world.height(x, z), world.height(x, z) + 1.6)) continue;
   if (onShoreBank(world, x, z)) continue;
 
-  let r = rng(), family = DEADFALL[DEADFALL.length - 1][0];
-  for (const [k, f] of DEADFALL) { r -= f; if (r <= 0) { family = k; break; } }
+  let r = rng(), family = mix[mix.length - 1][0];
+  for (const [k, f] of mix) { r -= f; if (r <= 0) { family = k; break; } }
   const models = familyModels(family);
   if (!models.length) continue;
   const model = models[Math.floor(rng() * models.length)];
@@ -363,11 +370,11 @@ function addDeadfall(view) {
   dummy.updateMatrix();
   const green = moss.clone().offsetHSL((rng() - .5) * .04, (rng() - .5) * .12, (rng() - .5) * .12);
   const wood = damp.clone().offsetHSL((rng() - .5) * .03, (rng() - .5) * .10, (rng() - .5) * .14);
+  // `accent` is the cut face on a log and the moss on a boulder, so it follows
+  // the family rather than being one colour for everything.
+  const accent = family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12);
   entries.push({model, owner: null, matrix: dummy.matrix.clone(),
-   // `accent` is the cut face on a log and the whole plant on some models, so
-   // it follows the family rather than being one colour for everything.
-   color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35),
-    dirt, accent: family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12)}});
+   color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35), dirt, accent}});
  }
  const materials = new Map();
  const materialFor = role => {

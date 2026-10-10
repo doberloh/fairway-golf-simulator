@@ -30,7 +30,7 @@ function blockers(w, h, tee) {
  return out;
 }
 
-const CASES = ['pnw', 'redwood', 'midwest', 'mountain', 'links', 'autumn', 'desert', 'island'];
+const CASES = ['pnw', 'redwood', 'midwest', 'mountain', 'links', 'autumn', 'desert', 'island', 'haunted'];
 
 test('no tee shot has a trunk on the line the hole asks for', () => {
  // Measured at 4.5% of 648 before the launch corridor existed, the close ones
