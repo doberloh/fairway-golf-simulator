@@ -871,3 +871,27 @@ ghosts, purple turf) adds code only -- no models, no assets: 16,904,595 bytes
 
 The night additions (harvest moon, bats, will-o-the-wisps) are code only:
 16,910,622 bytes (+6 KB), still 7.0 MB gzipped. Smoke 24 of 24.
+
+## Addendum, 10 October 2026: v0.6
+
+**v0.6** is published at the owner's request as "Fairway 0.6 (beta)", tag
+`v0.6`, not a pre-release, the same four zip names, from the merge of
+`release-0.6` into `main`, with its notes in `docs/releases/v0.6.md` in that
+commit. It carries Haunted Hollow (the ninth biome, addendum above) and the
+night's performance work: the time slider (`smooth-time-slider`) and the pond
+probes, shadow twins and one-pass foam (`less-wasted-drawing`) -- RESEARCH,
+*The time slider hitched*, *The studio froze when the camera turned to the
+sun*, *The god rays drew every shadow map twice* and *Wasted drawing*.
+Generator (34) and schema (9) are unchanged since 0.5.1, so saved rounds,
+profiles and course codes carry over and the website's sample course code
+stays valid; the only settings change is a ninth value in the biome list.
+
+The built page is 16,912,638 bytes (7.0 MB gzipped), +2 KB on the night
+additions above: the performance work is code only, with nothing added to
+what ships -- no dependency, font or asset. The built page still makes no
+network requests (the smoke run's network check). Smoke: 23 of 24 journeys
+passed on the same code; **`floodlit-night` was not run** for this release,
+at the owner's decision (it is the Ultra floodlight journey held back on the
+development machine since 5 October). Nothing in the release changes how the
+floodlights are switched or warmed; the god-ray and probe changes do touch
+frames drawn while they are on.
