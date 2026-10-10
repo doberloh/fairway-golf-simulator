@@ -894,4 +894,6 @@ passed on the same code; **`floodlit-night` was not run** for this release,
 at the owner's decision (it is the Ultra floodlight journey held back on the
 development machine since 5 October). Nothing in the release changes how the
 floodlights are switched or warmed; the god-ray and probe changes do touch
-frames drawn while they are on.
+frames drawn while they are on. The website was redeployed after it (preview,
+then live, at the owner's word): its demo is this release's `Fairway.html`,
+byte for byte, and its four Download buttons serve the 0.6 zips.

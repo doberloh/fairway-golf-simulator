@@ -833,7 +833,8 @@ so several of these play differently as well as look different.
   slider, no freeze facing the sun, the god rays' second shadow pass gone,
   and the pond-probe, shadow-twin and foam fixes (below). Generator and
   schema unchanged. Notes: `docs/releases/v0.6.md`. `floodlit-night` not run
-  for it, by the owner's decision.
+  for it, by the owner's decision. The website was redeployed after it so
+  its demo runs 0.6.
 
 ## Wasted drawing (9 October)
 
