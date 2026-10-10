@@ -723,9 +723,8 @@ export class GolfView{
    // TAKEN IN `ready`, NOT HERE, once the shaders are built: a probe renders
    // the scene, and rendering it now made the graphics card finish every
    // program on the spot -- a 0.8 s freeze of the page in the middle of the
-   // build. What the probe sees is kept exactly: everything added to the
-   // group after this point (the planting, homes, the ball) is hidden for the
-   // capture, as it simply did not exist yet when the probe was taken here.
+   // build. Taken there, it sees the planting and homes built after this
+   // point too (it used to hide them; see `takeDueProbes`).
    this.probeDue=this.group.children.length;
    this.setReflections(this.waterReflectsCourse!==false);}
   addVegetation(this);addHomes(this);
@@ -923,6 +922,14 @@ export class GolfView{
   // probe hands its water an environment map, which changes that material's
   // program -- so the water is compiled once more before the first frame.
   if(this.probeDue!=null){
+   // THE PROBES DRAW INTO A RENDER TARGET, and a program built for the screen
+   // is not the one a render target needs (no tone mapping, linear colour).
+   // Ultra's bloom target made them the same; on every other tier the first
+   // probe retake after a load built twenty-odd programs on the spot, one after
+   // another -- 1.3 s frozen the first time the sun moved, Medium, 10 October
+   // (RESEARCH, *Wasted drawing*). So they are built here, in parallel, first.
+   try{if(this.renderer.compileAsync)await this.asProbe(()=>this.renderer.compileAsync(this.scene,this.camera));}
+   catch(e){console.warn('Fairway: probe warm-up skipped',e);}
    this.takeDueProbes();
    try{if(this.renderer.compileAsync)await this.asDrawn(()=>this.renderer.compileAsync(this.scene,this.camera));}
    catch(e){console.warn('Fairway: water warm-up skipped',e);}
@@ -950,14 +957,38 @@ export class GolfView{
   return this.readyTimes;
  }
  // The probes `build` left for later (see the note where it sets `probeDue`).
+ //
+ // WITH THE PLANTING IN THEM. They used to hide everything built after the
+ // water (planting, homes, the ball), to match what they saw when they were
+ // taken mid-build -- so a course loaded with ponds that reflected no trees,
+ // until the sun's first 6-degree move retook them with the trees in. The
+ // reflections the water was signed off with show trees; now they do from the
+ // start, and the planting's probe programs are drawn here, behind the loading
+ // screen, rather than on that first retake.
  takeDueProbes(){
   if(this.probeDue==null||!this.group)return;
-  const later=this.group.children.slice(this.probeDue).filter(o=>o.visible);
   this.probeDue=null;
-  for(const o of later)o.visible=false;
-  try{this.refreshWaterEnvironment();}
-  finally{for(const o of later)o.visible=true;}
+  this.refreshWaterEnvironment();
   this.setReflections(this.waterReflectsCourse!==false);
+ }
+ // Run `fn` with the probes' render target bound, so a compile builds the
+ // programs a probe will draw with (see `ready`).
+ asProbe(fn){
+  const was=this.renderer.getRenderTarget();
+  this.renderer.setRenderTarget(this.probeTarget());
+  try{return fn();}
+  finally{this.renderer.setRenderTarget(was);}
+ }
+ // The cube every probe is photographed into, one for the course.
+ probeTarget(){
+  if(!this.waterCubeTarget){
+   // The tier's old planar-reflection size, repurposed: it is the one number
+   // in the tier that was ever about reflection resolution.
+   const px=Math.max(64,Math.min(256,Math.round((this.quality.reflection||512)/4)));
+   this.waterCubeTarget=new T.WebGLCubeRenderTarget(px,{type:T.HalfFloatType});
+   this.resources.push(this.waterCubeTarget);
+  }
+  return this.waterCubeTarget;
  }
  // THE FLOODLIT SHADERS, COMPILED BEFORE ANYBODY ASKS FOR THEM.
  //
@@ -1082,7 +1113,12 @@ export class GolfView{
    const k=i*2,m=((i+1)%n)*2;idx.push(k,m,k+1,k+1,m,m+1);
   }
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
-  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,gradientMap:this.propRamp??=toonRamp(this)});
+  // ONE PASS (`forceSinglePass`). Three draws a transparent double-sided
+  // material twice, back faces then front, flipping its side and marking it
+  // changed for each -- two draws and two program checks per strip per frame.
+  // That exists for closed see-through shapes; a flat strip has nothing behind
+  // itself to sort, so once is the same picture.
+  const mat=new T.MeshToonMaterial({color:'#dde8e2',transparent:true,depthWrite:false,side:T.DoubleSide,forceSinglePass:true,gradientMap:this.propRamp??=toonRamp(this)});
   const time=this.waterTime??=({value:0});
   const pace={value:lake?.42:.3},grain={value:lake?.75:1};
   mat.onBeforeCompile=shader=>{
@@ -1237,12 +1273,17 @@ export class GolfView{
  // took its blur and GGX programs with it, so every 6 degrees of sun recompiled
  // both: 93 ms each time on an RTX 4090 (D3D11), against 0.3 ms with a kept
  // generator, and the time slider hitched at every threshold it crossed.
- refreshEnvironment(){
+ //
+ // `spread`: the moving sun's call (updateDaylight). The ponds are then retaken
+ // one a frame (queueWaterProbes) rather than all in this one -- see THE PONDS
+ // ARE RETAKEN ONE A FRAME below.
+ refreshEnvironment(spread=false){
   if(!this.envScene)return;
   const env=this.pmremFor('sky').fromScene(this.envScene,.04,.1,10000);
   this.environment?.dispose();this.environment=env;this.scene.environment=env.texture;
   this.envElevation=this.solar?this.solar.elevation:null;
-  this.refreshWaterEnvironment();
+  if(spread&&this.waterBodies?.some(b=>b.probeEnv))this.queueWaterProbes();
+  else this.refreshWaterEnvironment();
  }
  // One generator per job, for the life of the renderer (which is never torn
  // down). Not one shared: a generator sizes its working target and its blur
@@ -1280,46 +1321,28 @@ export class GolfView{
   // nothing. Off, the water shows the sky environment alone, and the probes are
   // taken the moment reflections come back on (setReflections).
   if(this.waterReflectsCourse===false){for(const b of this.waterBodies)if(b.mesh.material.envMap){b.mesh.material.envMap=null;b.mesh.material.needsUpdate=true;}return;}
-  // The water must not photograph itself: a probe that can see other water
-  // surfaces bakes them in, and one that can see its own is a feedback loop.
-  // A probe looks every way at once, so it gets the whole course, not the
-  // camera's share of it. The next frame's update puts the cull back.
-  this.cull?.showAll();
-  const shown=hideForProbe(this.waterBodies);
-  // The sky follows the camera, shrunk to fit its far plane (see the frame
-  // loop); a probe taken from a pond far from the camera would be outside it.
-  // Full size and centred for the probes, put back after.
-  const skyAt=this.sky?.position.clone(),skySize=this.sky?.scale.x;
-  if(this.sky){this.sky.position.set(0,0,0);this.sky.scale.setScalar(1);}
-  try{
-   if(!this.waterCubeTarget){
-    // The tier's old planar-reflection size, repurposed: it is the one number
-    // in the tier that was ever about reflection resolution.
-    const px=Math.max(64,Math.min(256,Math.round((this.quality.reflection||512)/4)));
-    this.waterCubeTarget=new T.WebGLCubeRenderTarget(px,{type:T.HalfFloatType});
-    this.resources.push(this.waterCubeTarget);
-   }
+  // Everything at once supersedes a retake still working through the ponds.
+  this.probeQueue=null;this.probeAgain=false;
+  // Fresh shadow maps for the first face: at build no frame has drawn them yet.
+  this.probeCapture(true,(cam,pmrem)=>{
    for(const env of this.waterEnvironments||[])env.dispose();
    this.waterEnvironments=[];
-   const pmrem=this.pmremFor('water');
-   const cam=new T.CubeCamera(1,20000,this.waterCubeTarget);
    // Biggest first, so the cap spends its probes on the bodies a player looks at.
    const order=this.waterBodies.map((b,i)=>({b,i,
     size:b.mesh.geometry.boundingSphere?.radius??(b.mesh.geometry.computeBoundingSphere(),b.mesh.geometry.boundingSphere?.radius??1)}))
     .sort((x,y)=>y.size-x.size);
    const probed=[];
    for(const {b} of order.slice(0,WATER_PROBE_CAP)){
-    cam.position.set(b.center?.x??0,b.level+4,b.center?.z??0);
-    cam.update(this.renderer,this.scene);
-    const env=pmrem.fromCubemap(this.waterCubeTarget.texture);
+    const env=this.takeProbe(cam,pmrem,b);
     this.waterEnvironments.push(env);
-    b.probe=env.texture;b.mesh.material.envMap=this.waterReflectsCourse===false?null:env.texture;
+    b.probeEnv=env;b.probe=env.texture;b.mesh.material.envMap=this.waterReflectsCourse===false?null:env.texture;
     b.mesh.material.needsUpdate=true;
     probed.push({b,env});
    }
    // Everything past the cap borrows the nearest probe rather than falling back
    // to the sky, which would put one pond in a different world from its neighbour.
    for(const {b} of order.slice(WATER_PROBE_CAP)){
+    b.probeEnv=null;
     let best=probed[0];
     for(const p of probed){
      const d=(q)=>Math.hypot((q.b.center?.x??0)-(b.center?.x??0),(q.b.center?.z??0)-(b.center?.z??0));
@@ -1329,11 +1352,72 @@ export class GolfView{
      b.mesh.material.envMap=this.waterReflectsCourse===false?null:best.env.texture;
      b.mesh.material.needsUpdate=true;}
    }
+  });
+ }
+ // ONE ROUND OF PROBE PHOTOGRAPHS, SET UP AND PUT BACK. Shared by the whole-
+ // course pass above and the one-pond-a-frame retake below.
+ //
+ // The water must not photograph itself: a probe that can see other water
+ // surfaces bakes them in, and one that can see its own is a feedback loop.
+ // A probe looks every way at once, so it gets the whole course, not the
+ // camera's share of it; the cull's next update puts it back.
+ //
+ // THE SHADOW MAPS ARE NOT REDRAWN FOR EVERY FACE. Every `render` redraws all
+ // of them while `autoUpdate` is on, so six faces a pond and eight ponds made
+ // 48 redraws of every cascade per refresh, all identical: the sun's shadow
+ // cameras do not move between faces. `fresh` lets the first face draw them
+ // once, for a build that has not drawn a frame yet; the retake uses the
+ // frame's own.
+ probeCapture(fresh,fn){
+  this.cull?.showAll();
+  const shown=hideForProbe(this.waterBodies);
+  // The sky follows the camera, shrunk to fit its far plane (see the frame
+  // loop); a probe taken from a pond far from the camera would be outside it.
+  // Full size and centred for the probes, put back after.
+  const skyAt=this.sky?.position.clone(),skySize=this.sky?.scale.x;
+  if(this.sky){this.sky.position.set(0,0,0);this.sky.scale.setScalar(1);}
+  const shadows=this.renderer.shadowMap,autoUpdate=shadows.autoUpdate,needsUpdate=shadows.needsUpdate;
+  shadows.autoUpdate=false;shadows.needsUpdate=fresh;
+  try{
+   fn(new T.CubeCamera(1,20000,this.probeTarget()),this.pmremFor('water'));
   }catch(e){console.warn('Fairway: water environment probe skipped',e);}
   finally{
+   shadows.autoUpdate=autoUpdate;shadows.needsUpdate=needsUpdate;
    restoreAfterProbe(shown);
    if(this.sky){this.sky.position.copy(skyAt);this.sky.scale.setScalar(skySize);}
   }
+ }
+ // One pond's photograph, convolved -- into `into` when it has one, so the
+ // water keeps the same texture and its material is not touched.
+ takeProbe(cam,pmrem,b,into=null){
+  cam.position.set(b.center?.x??0,b.level+4,b.center?.z??0);
+  cam.update(this.renderer,this.scene);
+  return pmrem.fromCubemap(this.waterCubeTarget.texture,into);
+ }
+ // THE PONDS ARE RETAKEN ONE A FRAME WHEN THE SUN MOVES. All of them in one
+ // frame -- six renders of the whole course per pond, up to eight ponds -- was
+ // a 0.4-1.2 s freeze every 6 degrees of sun on a pond-heavy Ultra course
+ // (measured with the graphics card shared, 9 October). Now the sun's threshold
+ // queues the probed ponds and each frame retakes one, biggest first, into the
+ // pond's own texture: no new texture, no material change, and the ponds that
+ // borrow it follow by themselves. A threshold crossed while a round is still
+ // going (dragging the clock) runs one more round after it rather than
+ // restarting, so every pond is reached. Build, a new tier and switching
+ // reflections on still take everything at once, behind the loading screen or
+ // on the player's own click.
+ queueWaterProbes(){
+  if(this.waterReflectsCourse===false||!this.waterBodies?.some(b=>b.probeEnv))return;
+  if(this.probeQueue){this.probeAgain=true;return;}
+  const envs=this.waterEnvironments||[];
+  this.probeQueue={bodies:this.waterBodies,
+   list:this.waterBodies.filter(b=>b.probeEnv).sort((x,y)=>envs.indexOf(x.probeEnv)-envs.indexOf(y.probeEnv))};
+ }
+ stepWaterProbes(){
+  const q=this.probeQueue;if(!q)return;
+  if(q.bodies!==this.waterBodies||this.retiring||this.waterReflectsCourse===false){this.probeQueue=null;this.probeAgain=false;return;}
+  const b=q.list.shift();
+  if(b?.probeEnv)this.probeCapture(false,(cam,pmrem)=>this.takeProbe(cam,pmrem,b,b.probeEnv));
+  if(!q.list.length){this.probeQueue=null;if(this.probeAgain){this.probeAgain=false;this.queueWaterProbes();}}
  }
  addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world),new T.MeshBasicMaterial());this.group.add(this.landscape);}
  addHoleDetails(h){
@@ -1969,7 +2053,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(!b){
     const group=new T.Group();
     const ball=new T.Mesh(new T.SphereGeometry(R*1.6,20,14),new T.MeshBasicMaterial({color:'#ffffff'}));
-    const ring=new T.Mesh(new T.RingGeometry(.52,.66,48),new T.MeshBasicMaterial({color:'#ffffff',side:T.DoubleSide,transparent:true,depthWrite:false}));
+    const ring=new T.Mesh(new T.RingGeometry(.52,.66,48),new T.MeshBasicMaterial({color:'#ffffff',side:T.DoubleSide,forceSinglePass:true,transparent:true,depthWrite:false}));
     ring.rotation.x=-Math.PI/2;
     // Depth-written beams would be occluded by a rise between you and the ball,
     // which is exactly when you most need to know where it is.
@@ -2183,7 +2267,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // this used to re-photograph every pond of the scene being thrown away --
   // measured at 1.6 s of the wait, on a nine-hole start. The new course takes
   // its own when it is built.
-  if(!this.retiring&&(this.envElevation===null||Math.abs(solar.elevation-this.envElevation)>(this.style==='cartoon'?6:3)))this.refreshEnvironment();
+  if(!this.retiring&&(this.envElevation===null||Math.abs(solar.elevation-this.envElevation)>(this.style==='cartoon'?6:3)))this.refreshEnvironment(true);
   d.elapsedSinceSave+=dt;
   // localStorage is synchronous; writing the hour every frame would be a stall
   // for a value nobody reads until the next launch.
@@ -2215,6 +2299,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
+  // One queued pond photograph a frame (stepWaterProbes), here so the cull's
+  // update further down puts back what the photograph had to show.
+  this.stepWaterProbes();
   // Haunted Hollow: ghosts on their rounds, lanterns lit by the same dusk.
   this.haunts?.update(dt,this.elapsed,this.solar,this.camera);
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;

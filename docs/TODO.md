@@ -826,6 +826,10 @@ so several of these play differently as well as look different.
 
 # Done
 
+## Wasted drawing (9 October)
+
+- [x] **Less wasted drawing: pond photographs, shadow twins, shore foam** (owner's request, measured 10 October on an idle card). The pond reflections are no longer re-photographed with 48 identical shadow redraws, and when the sun moves they are retaken one pond a frame into their own textures; the shadow twins share their trees' colours, so the shared material stops switching program; the shore foam and two flat rings draw in one pass. Dragging the clock dawn to dusk on a 16-body course: 15 stalls of 67-117 ms on Ultra and a 1.4 s freeze on Medium before, no frame over 50 ms after, on both. three's program selection on Redwood Ultra from 0.5-1.2 ms a frame to under 0.05. Found on the way and fixed: the probes' render-target programs were never built behind the loading screen on any tier but Ultra (the 1.3 s Medium freeze), because the loading-time probes hid the planting; they now include it, which made no visible difference on the pond checked. RESEARCH, *Wasted drawing*.
+
 ## The studio froze when the camera turned to the sun (9 October)
 
 - [x] **The god-ray mask drew every shadow map a second time** (found while fixing the freeze below; owner asked to check it). Every `render` call redraws all shadow maps while `autoUpdate` is on, and the mask pass is one; it now switches that off for its own render. Facing the sun, a frame sends 35-36% fewer draws and 31-35% fewer triangles to the graphics card, on every run; the milliseconds saved were lost in this machine's run-to-run noise on an RTX 4090. A new profiler group, `sun`, faces the sun on High and Ultra -- no other case did, so none could see this. RESEARCH, *The god rays drew every shadow map twice*.
@@ -834,7 +838,7 @@ so several of these play differently as well as look different.
 
 ## The time slider hitched (9 October)
 
-- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches. Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
+- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches (it did, on Ultra; done the same day, *Wasted drawing*). Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
 
 ## New biome ideas (9 October)
 

@@ -127,6 +127,13 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   if (thins && thinShadowsFrom !== Infinity && mesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = mesh.instanceMatrix;
+   // ITS COLOURS TOO, though a shadow ignores them. The twin shares the tree's
+   // material, and instance colours are part of which program that material
+   // needs: a twin without them flipped the program twice per twin in every
+   // pass that met it -- the picture, the god-ray mask, the water probes -- 57
+   // program checks a frame on Redwood Ultra, each a full parameter rebuild in
+   // three (RESEARCH, *Wasted drawing*). Shared, it is the same program.
+   if (mesh.instanceColor) twin.instanceColor = mesh.instanceColor;
    twin.castShadow = true; twin.receiveShadow = false; twin.frustumCulled = false;
    twin.userData.noCull = true; twin.name = 'shadow twin';
    // Kept out of the picture (and the god-ray mask, and the water probes):
