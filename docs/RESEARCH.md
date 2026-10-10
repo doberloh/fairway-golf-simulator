@@ -5174,7 +5174,9 @@ setting now chooses what each body's cubemap probe shows. Profiled: 3.80 ms on,
 3.78 ms off, identical draws -- no per-frame cost either way. What "off" did
 not save was the probe itself: a render of the whole course from each body,
 taken at build and every time the sun moves six degrees, measured at 40.7-66.3
-ms a time on PNW and Midwest nine-hole courses (four and five bodies). It was
+ms a time on PNW and Midwest nine-hole courses (four and five bodies) -- most
+of which, it turned out on 9 October, was a throwaway `PMREMGenerator`
+recompiling its shaders, not the renders (*The time slider hitched*). It was
 taken whether or not the water showed it. Off, `refreshWaterEnvironment` now
 returns at once (0 ms), and switching reflections back on takes the probes.
 
@@ -6454,4 +6456,66 @@ lanterns.
 **Cost.** No frame cost measured; it needs the owner's go-ahead for a profile.
 Switching the clock from afternoon to dusk costs one slow first frame of 58-68
 ms whether the bats and wisps are there or not (three runs each, normal 60 fps
-pacing): that frame is the existing work a clock jump does, not theirs.
+pacing): that frame is the existing work a clock jump does, not theirs. That
+work was the reflection refresh rebuilding its shaders, fixed the same day
+(*The time slider hitched*).
+
+## The time slider hitched: the reflections rebuilt their shaders (9 October)
+
+**The owner's report:** dragging the time-of-day slider was no longer smooth;
+the game hitched and locked up as the time changed.
+
+**What it was.** Every time the sun's height moves 6 degrees (3 off Cartoon),
+`updateDaylight` calls `refreshEnvironment`: the sky is captured into the
+reflection map props use, and every pond's probe is taken again
+(`refreshWaterEnvironment`). Both made a three.js `PMREMGenerator`, used it once
+and disposed it. Disposing a generator disposes its blur and GGX materials, and
+three deletes a shader program once no material uses it -- so the next refresh
+compiled both programs again. The GGX one loops over 256 samples (three
+0.186), and compiling it through ANGLE on Direct3D 11 is the cost. Nothing
+else in a moving sun costs anything: away from a threshold a slider step was
+under 1 ms.
+
+**Measured** on the development machine (RTX 4090, ANGLE/D3D11), Low graphics,
+960x600, every figure with `gl.finish()` either side:
+
+| | Before | After |
+| --- | --- | --- |
+| One threshold, menu hole with one pond | 127-161 ms (460 ms the first after loading) | 4-7 ms |
+| Sky capture alone, a generator made per call | 81-102 ms | -- |
+| Sky capture alone, one generator kept | -- | 0.2-0.5 ms |
+| One pond's probe | 51-68 ms | 3.3-6.9 ms |
+| Sky capture of an EMPTY scene, fresh generator | 60 ms first, then 0.3 ms with a kept one | |
+
+Dragging from 6:00 to 20:00 crosses 14 thresholds, so it was 14 freezes of
+about 0.15 s each on this card at Low; a slower card or a higher tier only adds
+to it. A nine-hole Midwest course with seven ponds measured 81-102 ms for the
+sky part and 77-91 ms for the ponds' part (one generator's rebuild plus seven
+cube renders) -- most of the second number was also the rebuild.
+
+**The fix:** `pmremFor(job)` keeps one generator for the sky and one for the
+water for the life of the renderer (it is never torn down). **Two, not one**:
+a generator sizes its working target and its blur and GGX programs to the cube
+it was last given (`_allocateTargets`: 3 x max(size, 112) by 4 x size), so
+the sky's 256 cube and the water's tier-sized cube (64-256, a quarter of the
+tier's `reflection`) alternating through one generator would rebuild both
+programs on every switch.
+
+**Rejected:**
+- *A bigger threshold.* Fewer freezes, each just as long.
+- *Refresh only when the slider is let go.* A stale reflection while dragging,
+  and more state, to avoid a cost that is now 4-7 ms.
+- *Spreading the pond probes over several frames.* Not needed at the measured
+  cost; it is the next step if a many-pond course still hitches on a weaker card.
+
+**Not established:** when this got worse. The code was the same in the initial
+commit; what a probe draws (planting, a probe per body) has grown since, but
+the shader rebuild was most of the cost all along. Not measured: Medium, High,
+Ultra, the seven-pond course after the fix, or a weaker card.
+
+**Noise met on the way.** Partway through, frames 17-34 ms long came and went
+whether or not the clock was moving -- interleaved still and moving frames
+gave 0.5 ms each minutes later. That is the machine, the same interference as
+TODO's *profiler can be fooled by something on the machine*, and was not acted
+on. The *Cost* note under *Night: a harvest moon* (a 58-68 ms first frame on a
+jump from afternoon to dusk) was this refresh; not re-measured as a jump.

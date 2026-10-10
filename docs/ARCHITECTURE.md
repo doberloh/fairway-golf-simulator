@@ -180,6 +180,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Every lit fragment shader gets at most 16 texture units, and the ground is the hungriest. [HOLE_ATLAS]
 - Shaders compile before play, under the loading cover, against the render target actually drawn into. [Shaders are compiled before play]
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
+- Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]

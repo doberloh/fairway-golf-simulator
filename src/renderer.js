@@ -1225,16 +1225,30 @@ export class GolfView{
   this.envScene=new T.Scene();this.envScene.add(sky.clone());this.refreshEnvironment();
  }
  // The one part of a moving sun that is not a uniform write: PMREM convolves a
- // cubemap, which is milliseconds, so it runs on an elevation threshold rather
- // than per frame. Cheap to be lazy about, because the turf and the trees are
- // MeshToonMaterial and toon materials never sample scene.environment -- the
- // map only reaches props, so staleness costs almost nothing on screen.
+ // cubemap, so it runs on an elevation threshold rather than per frame. Cheap
+ // to be lazy about, because the turf and the trees are MeshToonMaterial and
+ // toon materials never sample scene.environment -- the map only reaches props,
+ // so staleness costs almost nothing on screen.
+ //
+ // THE GENERATORS ARE KEPT (pmremFor). A generator made and disposed per refresh
+ // took its blur and GGX programs with it, so every 6 degrees of sun recompiled
+ // both: 93 ms each time on an RTX 4090 (D3D11), against 0.3 ms with a kept
+ // generator, and the time slider hitched at every threshold it crossed.
  refreshEnvironment(){
   if(!this.envScene)return;
-  const pmrem=new T.PMREMGenerator(this.renderer),env=pmrem.fromScene(this.envScene,.04,.1,10000);
-  this.environment?.dispose();this.environment=env;this.scene.environment=env.texture;pmrem.dispose();
+  const env=this.pmremFor('sky').fromScene(this.envScene,.04,.1,10000);
+  this.environment?.dispose();this.environment=env;this.scene.environment=env.texture;
   this.envElevation=this.solar?this.solar.elevation:null;
   this.refreshWaterEnvironment();
+ }
+ // One generator per job, for the life of the renderer (which is never torn
+ // down). Not one shared: a generator sizes its working target and its blur
+ // and GGX programs to the cube it was last given, so the sky (256) and the
+ // water probes (the tier's size) alternating through one would rebuild both
+ // programs on every switch -- the same recompile this exists to avoid.
+ pmremFor(job){
+  this.pmrems??={};
+  return this.pmrems[job]??=new T.PMREMGenerator(this.renderer);
  }
  // REFLECTIONS ON EVERY BODY, WITHOUT A REFLECTOR ON EVERY BODY.
  //
@@ -1284,7 +1298,7 @@ export class GolfView{
    }
    for(const env of this.waterEnvironments||[])env.dispose();
    this.waterEnvironments=[];
-   const pmrem=new T.PMREMGenerator(this.renderer);
+   const pmrem=this.pmremFor('water');
    const cam=new T.CubeCamera(1,20000,this.waterCubeTarget);
    // Biggest first, so the cap spends its probes on the bodies a player looks at.
    const order=this.waterBodies.map((b,i)=>({b,i,
@@ -1312,7 +1326,6 @@ export class GolfView{
      b.mesh.material.envMap=this.waterReflectsCourse===false?null:best.env.texture;
      b.mesh.material.needsUpdate=true;}
    }
-   pmrem.dispose();
   }catch(e){console.warn('Fairway: water environment probe skipped',e);}
   finally{
    restoreAfterProbe(shown);

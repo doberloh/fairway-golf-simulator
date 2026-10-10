@@ -826,6 +826,10 @@ so several of these play differently as well as look different.
 
 # Done
 
+## The time slider hitched (9 October)
+
+- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches. Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
+
 ## New biome ideas (9 October)
 
 - [x] **Haunted Hollow, the ninth biome** -- a Halloween course where nothing is alive. Gnarled dead oaks (MegaKit `DeadTree`), tall pale snags (Ultimate Stylized `DeadTree`), dead willows and the desert's dead hardwoods over dark bramble; pumpkins and red toadstools among the logs and stumps on the floor; black water, the heaviest fog of any biome, a 10-degree orange sun under a mauve sky, 9 °C air. One record in `src/biomes.js`, plus a name list, a mist profile, four `FAMILY_OF` lines and the PICK entries. Two pieces of plumbing came with it: the forest floor's mix is the biome field `floor` (it was a constant), and `ROLE_OVERRIDE` in the mesh ingest re-roles models whose material names mislead (Kenney's pumpkin is "leafsFall" and "grass"). Three first tries were wrong on looking and were changed: heather read as pink blocks (now `bramble`), the rough read desert-orange, the pale snags read salmon. Fingerprint: all eight existing biomes unchanged, so no version bump; all 238 existing model parts byte-identical after the re-ingest; the page grew 762 KB. Course-name words searched with "golf": Scarecrow (Gamble Sands) and Phantom (Phantom Lake GC) dropped and denylisted. RESEARCH *Haunted Hollow, the ninth biome*.
