@@ -214,7 +214,7 @@ it later.
 `npm run profile` is minutes of a machine at full load, and meaningless while
 anything else uses the GPU. **Ask first, quoting the cost**: about 10 minutes
 for a full sweep, about a minute for one group (`--only tiers`, `views`,
-`biomes`, `ablation`, `pixels`, `water` or `weak`).
+`biomes`, `ablation`, `pixels`, `water`, `sun` or `weak`).
 
 - **Ask whenever a change could move a frame:** `renderer.js`, `graphics.js`,
   `vegetation.js`, `textures.js`, shaders, materials; a render pass, post

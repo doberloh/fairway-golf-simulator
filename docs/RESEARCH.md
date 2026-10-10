@@ -6598,6 +6598,50 @@ on the build before this fix (the four black programs and the composite, at
 
 **Seen and not acted on:** the 3.2 s first frame behind the cover and the
 0.7 s sky capture in the owner's recording are inside the loading wait, where
-the work is meant to land. The god-ray mask is drawn with `renderer.render`,
-which with `shadowMap.autoUpdate` on very likely draws every shadow map a
-second time each frame the sun is in shot -- not measured; TODO.
+the work is meant to land. The god-ray mask was also found to draw every
+shadow map a second time each frame the sun is in shot -- fixed the same day,
+*The god rays drew every shadow map twice*.
+
+## The god rays drew every shadow map twice (9 October)
+
+**What it was.** The god-ray mask is drawn with `renderer.render`, and with
+`shadowMap.autoUpdate` on (it is, for the sun's cascades) every `render` call
+redraws all shadow maps. So each frame with the sun in shot drew the three
+cascades twice: once for the picture, once more inside the mask pass, which
+is flat black and reads none of them. Counted in the page (Ultra, Giant
+Redwood, facing the sun): 2 shadow-map passes a frame before, 1 after; the
+mask pass itself still runs once a frame.
+
+**The fix:** `godrays.js` switches `autoUpdate` (and `needsUpdate`) off for
+the mask render and puts both back after. Per-lamp floodlight shadows are not
+affected: the frame's own render, which runs first, is the one that redraws
+them.
+
+**A new profiler group, `sun`** (`node tools/profile.mjs --only sun`): High
+and Ultra, Giant Redwood and Midwest, the camera 3 m above the first fairway
+60 m from the tee, turned to the sun's bearing and tilted to 12 degrees under
+it (`lab.camera` now takes `look: 'sun'` and `pitch: 'sun'`). Every other
+case looks down the hole and usually has the sun out of shot, so it measured
+the god rays as free. Midday, as every profiled round starts.
+
+**Measured** (RTX 4090, GPU arm, two runs each side, the build without the
+fix run between the two runs with it):
+
+| case | draws before / after | triangles before / after | CPU ms median, before (2 runs) / after (2 runs) | GPU ms median, before / after |
+| --- | --- | --- | --- | --- |
+| High, Redwood | 968 / 619 | 54.9 M / 37.6 M | 6.10, 4.90 / 4.50, 6.50 | 6.05, 4.72 / 4.40, 6.66 |
+| High, Midwest | 522 / 337 | 13.1 M / 8.5 M | 5.00, 3.80 / 3.80, 3.40 | 3.65, 3.00 / 2.76, 2.25 |
+| Ultra, Redwood | 980 / 631 | 54.9 M / 37.6 M | 6.80, 8.10 / 4.50, 8.00 | 6.75, 8.21 / 4.37, 8.14 |
+| Ultra, Midwest | 526 / 341 | 13.1 M / 8.5 M | 4.90, 4.00 / 3.90, 3.50 | 4.34, 3.55 / 3.58, 3.42 |
+
+**The work is certain, the time is not.** Draws fall 35-36% and triangles
+31-35%, identically on every run. The milliseconds moved by up to 3 ms between
+runs of the same build -- more than the change -- so on this card the time
+saved is not separable from the machine's noise; Midwest is lower after in all
+four pairs, Redwood is not. On a card with less headroom than an RTX 4090, a
+third less geometry in a sun-facing frame should matter more; not measured.
+The baseline (`bench/profile-baseline.json`) was not re-saved: it has no `sun`
+cases, and these numbers are too noisy to defend.
+
+A sun-facing Ultra frame after the fix still shows the trees' shadows across
+the ground.

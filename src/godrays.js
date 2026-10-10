@@ -114,8 +114,17 @@ export function makeGodRays(view, scale = .25) {
    if (o.isLine || o.isPoints || o.isSprite || o.isLineSegments2) { o.visible = false; hidden.push(o); }
    else if (warm && o.isMesh && o.frustumCulled) { o.frustumCulled = false; culled.push(o); }
   });
+  // THE SHADOW MAPS ARE NOT DRAWN AGAIN. Every `render` redraws them while
+  // `autoUpdate` is on, and the frame's own render has just done so -- the mask
+  // is flat black and reads none of them. Left on, every frame with the sun in
+  // shot drew all the cascades twice.
+  const shadows = renderer.shadowMap, autoUpdate = shadows.autoUpdate, needsUpdate = shadows.needsUpdate;
+  shadows.autoUpdate = false; shadows.needsUpdate = false;
   try { renderer.render(scene, camera); }
-  finally { for (const o of hidden) o.visible = true; for (const o of culled) o.frustumCulled = true; }
+  finally {
+   shadows.autoUpdate = autoUpdate; shadows.needsUpdate = needsUpdate;
+   for (const o of hidden) o.visible = true; for (const o of culled) o.frustumCulled = true;
+  }
   renderer.setRenderTarget(previousTarget);
   renderer.setClearColor(clear, clearAlpha);
   scene.overrideMaterial = null;

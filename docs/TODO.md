@@ -824,11 +824,11 @@ so several of these play differently as well as look different.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
-- [ ] **The god-ray mask probably draws every shadow map a second time.** The mask is drawn with `renderer.render`, and with `shadowMap.autoUpdate` on, every `render` call redraws all shadow maps -- so each frame the sun is in shot on High and Ultra likely pays for the cascades twice, which may be much of the "god-ray pass is the cost" figure (PROJECT_HANDOFF, GPU cost by camera direction). Inferred from three's code, not measured. If a profile confirms it: switch `autoUpdate` off around the mask render. Needs the owner's go-ahead for a profile. RESEARCH, *The studio froze when the camera turned to the sun*.
-
 # Done
 
 ## The studio froze when the camera turned to the sun (9 October)
+
+- [x] **The god-ray mask drew every shadow map a second time** (found while fixing the freeze below; owner asked to check it). Every `render` call redraws all shadow maps while `autoUpdate` is on, and the mask pass is one; it now switches that off for its own render. Facing the sun, a frame sends 35-36% fewer draws and 31-35% fewer triangles to the graphics card, on every run; the milliseconds saved were lost in this machine's run-to-run noise on an RTX 4090. A new profiler group, `sun`, faces the sun on High and Ultra -- no other case did, so none could see this. RESEARCH, *The god rays drew every shadow map twice*.
 
 - [x] **An 8-second freeze a moment after the loading screen, in Course studio on Ultra** (owner's report; found from the owner's own Chrome recording after nine scripted runs could not reproduce it -- their camera never moved). The god rays draw only with the sun in shot and through their own black override material, so the shader warm-up behind the loading screen never built their programs; the first time the player turned toward the sun, all of them were built in one frame, and that frame waited behind everything the browser was still compiling. The frame behind the loading screen now runs the god rays regardless (drawing nothing), across every solid object; lines, points and sprites are left out of the mask, which also removed the aim line's late program on Play rounds. Turning a full circle after loading now builds nothing on three courses; the loading screen's frame is 11-17 ms longer. `no-late-shaders` now turns the camera and counts every kind of shader; it fails on the old build. Not re-checked in the owner's Chrome. RESEARCH, *The studio froze when the camera turned to the sun*.
 
