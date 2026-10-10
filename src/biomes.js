@@ -61,6 +61,15 @@ const DEFAULTS = {
  // whatever the biome, so a map reads the same everywhere -- until a biome's
  // turf stops being green at all.
  mapTurf: {semi: '#a1b481', fairway: '#608449', green: '#b3cc86'},
+ // A moon drawn into the sky: angular radius in degrees, its colour on the
+ // horizon and high up, and how strongly it shows by day. Null draws none, and
+ // the sky is exactly what it was; the small pale disc the sun's disc becomes
+ // after dark is separate and every biome keeps it.
+ moon: null,
+ // Haunted Hollow's night creatures, per hole: flocks of bats round the tall
+ // trees and will-o'-the-wisps over water and hollows. Both come out as the
+ // light goes (solar.lamplight) and are drawn by haunts.js.
+ bats: 0, wisps: 0,
  // How much of their combined crown radius two trees may share before one of
  // them is moved elsewhere. Zero is off, which is where every biome but
  // redwood stands -- not because they would not benefit, but because their
@@ -197,6 +206,10 @@ const TRAITS = {
   props: {pumpkin: 26, toadstool: 18, lanterns: .6},
   ghosts: 2,
   roughTint: '#6b5590',
+  // A HARVEST MOON: low, huge and orange as it rises opposite the setting sun,
+  // paling as it climbs. About nine times the real moon's half-degree across.
+  moon: {size: 2.3, low: '#ff8a2a', high: '#ffe2b0', day: .25},
+  bats: 1, wisps: 3,
   mapTurf: {semi: '#8f78b3', fairway: '#7f55b8', green: '#8fcb55'},
   // Bramble rather than heather under them: heather's purple and its blossom
   // read as bright pink blocks against dead grass, which is cheerful, not

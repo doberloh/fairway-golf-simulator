@@ -868,3 +868,6 @@ built file.
 The same day's second pass (solid giant pumpkins and toadstools, lanterns,
 ghosts, purple turf) adds code only -- no models, no assets: 16,904,595 bytes
 (+14 KB), still 7.0 MB gzipped. Smoke 24 of 24.
+
+The night additions (harvest moon, bats, will-o-the-wisps) are code only:
+16,910,622 bytes (+6 KB), still 7.0 MB gzipped. Smoke 24 of 24.

@@ -1,6 +1,6 @@
 // HAUNTED HOLLOW'S MOVING AND GLOWING PARTS.
 //
-// Three things, all drawn here and none of them decided here:
+// Five things, all drawn here and none of them decided here:
 //
 //   Props     the giant pumpkins and toadstools. Generation places them
 //             (course.js, `world.props`) because they are solid and physics
@@ -14,8 +14,13 @@
 //   Ghosts    sheet ghosts drifting round loops over the holes. Pure scenery,
 //             seeded from the course so the same course haunts the same way,
 //             and the ball passes straight through them -- they are ghosts.
+//   Bats      flocks round the tallest trees from dusk (`bats`).
+//   Wisps     will-o-the-wisps over the ponds and hollows after dark (`wisps`).
 //
-// Any biome with `props` or `ghosts` gets them; today that is Haunted Hollow.
+// Any biome with `props`, `ghosts`, `bats` or `wisps` gets them; today that is
+// Haunted Hollow. The night ones are drawn with no instances by day rather than
+// hidden, so their programs are built with everything else under the loading
+// screen instead of in the first frame after sunset.
 // Everything goes into view.group, so disposeCourse frees it with the course.
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -28,11 +33,13 @@ const FACE_DARK = new T.Color('#2a150a'), FACE_LIT = new T.Color('#ffb040');
 
 export function addHaunts(view) {
  const {world} = view, props = world.props || [], perHole = world.bio.ghosts || 0;
- if (!props.length && !perHole) return null;
+ if (!props.length && !perHole && !world.bio.bats && !world.bio.wisps) return null;
  const group = new T.Group(); group.name = 'Haunts'; view.group.add(group);
  drawProps(group, props);
  const lanterns = drawLanterns(group, props.filter(p => p.lantern));
  const ghosts = drawGhosts(group, world, perHole);
+ const bats = drawBats(group, world, world.bio.bats || 0);
+ const wisps = drawWisps(group, world, world.bio.wisps || 0);
  return {
   // `solar` is renderer.solar: lamplight runs 0 by day to 1 once the sun is
   // two degrees down, the same number the glow ball follows.
@@ -40,6 +47,8 @@ export function addHaunts(view) {
    const lamp = solar?.lamplight ?? 0;
    lanterns?.update(elapsed, lamp);
    ghosts?.update(dt, elapsed, lamp, camera);
+   bats?.update(dt, elapsed, lamp);
+   wisps?.update(dt, elapsed, lamp);
   },
  };
 }
@@ -233,6 +242,173 @@ function drawGhosts(group, world, perHole) {
     // A faint glow by day, a proper one after dark.
     g.material.emissiveIntensity = .15 + .85 * lamp;
    }
+  },
+ };
+}
+
+// BATS: flocks wheeling round the tallest dead trees, out from dusk. Each bat
+// is three instances -- a body and two wings hinged on it -- in three
+// InstancedMeshes, re-posed every frame on the processor: about seventy bats
+// on nine holes is two hundred small matrices a frame, which is nothing.
+//
+// Far bigger than life -- 2.6-4.4 m across the wings, against about 0.2 m for
+// a pipistrelle and 1.5 m for the largest fruit bats -- because they are seen
+// from a tee 50-150 m away, where anything smaller is a speck against the sky.
+// It is a fantasy biome.
+// Kept out of the instance cull (`noCull`): the cull trusts that an instance
+// stays where it was built, and a bat never does.
+function batShapes() {
+ const body = new T.SphereGeometry(1, 8, 6); body.scale(.06, .05, .14);
+ // One wing, from the shoulder at the origin out along +x: a leading edge,
+ // a fingered trailing edge, fanned from the shoulder.
+ const rim = [[0, .06], [.16, .1], [.34, .07], [.5, .01], [.42, -.04], [.36, -.1], [.27, -.05], [.19, -.11], [.11, -.05], [0, -.08]];
+ const pos = [];
+ for (let i = 0; i < rim.length - 1; i++) pos.push(0, 0, 0, rim[i][0], 0, rim[i][1], rim[i + 1][0], 0, rim[i + 1][1]);
+ const wing = new T.BufferGeometry(); wing.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); wing.computeVertexNormals();
+ return {body, wing};
+}
+
+function drawBats(group, world, perHole) {
+ const flocks = Math.round(perHole * world.holes.length);
+ if (!flocks) return null;
+ const rng = random(world.seed + ':bats'), shapes = batShapes();
+ const tall = world.trees.filter(t => t.h > 8).sort((a, b) => b.h - a.h);
+ const bats = [];
+ for (let f = 0; f < flocks; f++) {
+  // Round one of the tall trees by this hole, or anywhere tall if it has none.
+  const h = world.holes[f % world.holes.length];
+  const mine = tall.filter(t => t.hole === h.hole);
+  const pool = mine.length ? mine.slice(0, 12) : tall.slice(0, 40);
+  if (!pool.length) continue;
+  const tree = pool[Math.floor(rng() * pool.length)];
+  const n = 6 + Math.floor(rng() * 6), height = tree.y + tree.h * (.75 + rng() * .4);
+  for (let i = 0; i < n; i++) bats.push({
+   cx: tree.x, cz: tree.z, y: height + (rng() - .5) * 6, r: 7 + rng() * 14, angle: rng() * 6.28,
+   rate: (rng() < .5 ? -1 : 1) * (.5 + rng() * .5), flap: 9 + rng() * 5, phase: rng() * 6.28,
+   scale: 2.6 + rng() * 1.8, wobble: rng() * 6.28,
+  });
+ }
+ if (!bats.length) return null;
+ const material = new T.MeshBasicMaterial({color: '#17111c', side: T.DoubleSide});
+ const make = geometry => {
+  const m = new T.InstancedMesh(geometry, material, bats.length);
+  m.frustumCulled = false; m.userData.noCull = true; m.count = 0; m.name = 'Bats';
+  group.add(m); return m;
+ };
+ const body = make(shapes.body), left = make(shapes.wing), right = make(shapes.wing);
+ const o = new T.Object3D(), w = new T.Object3D(), m = new T.Matrix4(), flip = new T.Matrix4().makeScale(-1, 1, 1);
+ o.rotation.order = 'YXZ';
+ return {
+  update(dt, elapsed, lamp) {
+   // Out once the light starts to go; all of them, or none.
+   const out = lamp > .05;
+   body.count = left.count = right.count = out ? bats.length : 0;
+   if (!out) return;
+   bats.forEach((b, i) => {
+    b.angle += b.rate * dt;
+    // An erratic circle: the radius and height breathe at their own rates.
+    const r = b.r * (1 + .25 * Math.sin(elapsed * .7 + b.wobble));
+    o.position.set(b.cx + Math.cos(b.angle) * r, b.y + 1.5 * Math.sin(elapsed * 1.1 + b.phase) + .4 * Math.sin(elapsed * 5.3 + b.wobble), b.cz + Math.sin(b.angle) * r);
+    // Nose along the circle (the tangent), banked into the turn.
+    const tx = -Math.sin(b.angle) * Math.sign(b.rate), tz = Math.cos(b.angle) * Math.sign(b.rate);
+    o.rotation.set(.15 * Math.sin(elapsed * 2.3 + b.phase), Math.atan2(tx, tz), -.45 * Math.sign(b.rate));
+    // Grows in from nothing at dusk rather than popping on.
+    o.scale.setScalar(b.scale * Math.min(1, (lamp - .05) * 6));
+    o.updateMatrix();
+    body.setMatrixAt(i, o.matrix);
+    const beat = Math.sin(elapsed * b.flap + b.phase) * .85;
+    w.rotation.set(0, 0, beat); w.updateMatrix();
+    left.setMatrixAt(i, m.multiplyMatrices(o.matrix, w.matrix));
+    w.rotation.set(0, 0, -beat); w.updateMatrix();
+    right.setMatrixAt(i, m.multiplyMatrices(o.matrix, w.matrix).multiply(flip));
+   });
+   body.instanceMatrix.needsUpdate = left.instanceMatrix.needsUpdate = right.instanceMatrix.needsUpdate = true;
+  },
+ };
+}
+
+// WILL-O-THE-WISPS: small cold lights drifting over the ponds and settling in
+// the hollows after dark. A bright core with a faint shell round it, both
+// unlit and outside tone mapping so they read as light. The shell is ordinary
+// transparency, not additive: an additive sprite is what drew dark squares
+// round the lanterns (see drawLanterns).
+function drawWisps(group, world, perHole) {
+ const count = Math.round(perHole * world.holes.length);
+ if (!count) return null;
+ const rng = random(world.seed + ':wisps'), wisps = [];
+ const waters = [];
+ for (const h of world.holes) for (const p of h.ponds || []) waters.push({h, p});
+ for (let i = 0; i < count; i++) {
+  const h = world.holes[i % world.holes.length];
+  let x, z, base;
+  const mine = waters.filter(w => w.h === h);
+  if (mine.length && rng() < .7) {
+   // Out over the water near its bank.
+   const {p} = mine[Math.floor(rng() * mine.length)], a = rng() * 6.28, k = .55 + rng() * .4;
+   const at = h.toWorld({x: p.x + Math.cos(a) * p.rx * k, z: p.z + Math.sin(a) * p.rz * k});
+   x = at.x; z = at.z; base = Math.max(world.height(x, z), p.level ?? world.waterLevel);
+  } else {
+   // The lowest of a few spots in the rough beside the hole: a hollow.
+   let best = null;
+   for (let k = 0; k < 8; k++) {
+    const along = h.length * rng(), side = (rng() < .5 ? -1 : 1) * (h.width(along) + 10 + rng() * 40);
+    const at = h.toWorld({x: h.center(along) + side, z: along}), y = world.height(at.x, at.z);
+    if (world.surface(at.x, at.z) === 'rough' && (!best || y < best.y)) best = {x: at.x, z: at.z, y};
+   }
+   if (!best) continue;
+   x = best.x; z = best.z; base = best.y;
+  }
+  wisps.push({x, z, base: base + .9 + rng() * .9, r: 1.2 + rng() * 2.8, rate: (rng() < .5 ? -1 : 1) * (.25 + rng() * .35),
+   angle: rng() * 6.28, phase: rng() * 6.28, blink: 9 + rng() * 14, size: .16 + rng() * .1});
+ }
+ if (!wisps.length) return null;
+ const core = new T.MeshBasicMaterial({color: '#d8ffd0', toneMapped: false});
+ // The glow is a shell whose opacity falls away toward its rim as seen from the
+ // camera -- strongest straight through the middle, nothing at the edge -- so
+ // it reads as light round the core. A flat translucent sphere read as a green
+ // target ring. Its own small shader: no lighting, no fog chunks, so neither the
+ // cascades nor the mist patch touch it.
+ const shell = new T.ShaderMaterial({
+  transparent: true, depthWrite: false, toneMapped: false,
+  uniforms: {glow: {value: new T.Color('#7dffa8')}, strength: {value: .55}},
+  vertexShader: `varying vec3 vN, vV;
+   void main() {
+    vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.);
+    vN = normalize(normalMatrix * mat3(instanceMatrix) * normal); vV = normalize(-mv.xyz);
+    gl_Position = projectionMatrix * mv;
+   }`,
+  fragmentShader: `uniform vec3 glow; uniform float strength; varying vec3 vN, vV;
+   void main() {
+    float facing = max(dot(normalize(vN), normalize(vV)), 0.);
+    gl_FragColor = vec4(glow, pow(facing, 3.) * strength);
+   }`,
+ });
+ const make = (material, radius) => {
+  const m = new T.InstancedMesh(new T.SphereGeometry(radius, 12, 8), material, wisps.length);
+  m.frustumCulled = false; m.userData.noCull = true; m.count = 0; m.name = 'Wisps';
+  group.add(m); return m;
+ };
+ const cores = make(core, 1), shells = make(shell, 2.6);
+ const o = new T.Object3D(), lit = new T.Color('#d8ffd0'), dim = new T.Color('#0c1a10');
+ return {
+  update(dt, elapsed, lamp) {
+   const out = lamp > .2;
+   cores.count = shells.count = out ? wisps.length : 0;
+   if (!out) return;
+   wisps.forEach((w, i) => {
+    w.angle += w.rate * dt;
+    // Each one goes out now and then, for a second or two, at its own point
+    // in the cycle -- a light you cannot quite catch.
+    const cycle = (elapsed + w.phase * 3) % w.blink;
+    const on = T.MathUtils.smoothstep(cycle, 0, .8) * (1 - T.MathUtils.smoothstep(cycle, w.blink - 2, w.blink - 1.2));
+    const pulse = .8 + .2 * Math.sin(elapsed * 3.1 + w.phase);
+    o.position.set(w.x + Math.cos(w.angle) * w.r, w.base + .35 * Math.sin(elapsed * .9 + w.phase), w.z + Math.sin(w.angle * 1.3) * w.r * .7);
+    o.scale.setScalar(w.size * pulse * on * Math.min(1, (lamp - .2) * 4));
+    o.updateMatrix();
+    cores.setMatrixAt(i, o.matrix); shells.setMatrixAt(i, o.matrix);
+   });
+   cores.instanceMatrix.needsUpdate = shells.instanceMatrix.needsUpdate = true;
+   core.color.copy(dim).lerp(lit, Math.min(1, lamp * 1.3)).multiplyScalar(1 + lamp);
   },
  };
 }

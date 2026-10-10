@@ -83,6 +83,9 @@ const directionAt = (phase, elevation) => {
 
 const SUN_HIGH = new T.Color('#fff0d6'), SUN_WARM = new T.Color('#ffb168'), SUN_LOW = new T.Color('#ff7a42');
 const MOON = new T.Color('#b9cdf2');
+// How far ahead of the moonlight's arc a drawn moon runs, in phase (radians of
+// the night's half-turn; the night is ~10.5 h, so .3 is about 1.25 h).
+const MOON_LEAD = .3;
 // What the air is pulled toward, and how far. Returned as a tint rather than as
 // finished colours so the renderer keeps its own daytime palette as the base:
 // the biome sky, the fog and the hemisphere light all start somewhere different
@@ -174,6 +177,14 @@ export function solarState(hour, biomeSun) {
   // Crossfaded so twilight is not a switch. Drives stars and the heavier night
   // mist.
   starness: smoothstep(2, -6, elevation),
+  // Where a DRAWN moon sits (a biome's `moon`). Not the moonlight's own arc:
+  // that one only clears the horizon once the sun is down, and a harvest moon
+  // is the one hanging low and huge in the east while the sun sets. So the
+  // disc runs MOON_LEAD ahead -- about an hour and a quarter -- and is already
+  // some ten degrees up at sunset. The price: late at night the disc stands a
+  // little away from where the moonlight's shadows come from.
+  moonDiscDirection: directionAt(moonPhase + MOON_LEAD, Math.sin(moonPhase + MOON_LEAD) * peak * .8),
+  moonDiscElevation: Math.sin(moonPhase + MOON_LEAD) * peak * .8,
   // When artificial light is wanted. Comes up earlier than starness on purpose:
   // you reach for a light while there is still colour in the sky, well before
   // the first star shows.

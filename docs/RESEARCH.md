@@ -6413,3 +6413,45 @@ would queue frames the way the uncapped profiler does and could feel the same
 stall. If that is ever reported, the fix to try is spreading a rebuild's upload
 over several frames rather than sending all 238 buffers at once; it touches
 tree drawing, so it wants its own before-and-after measurement.
+
+### Night: a harvest moon, bats and will-o'-the-wisps (9 October)
+
+Asked for by the owner from a list of ideas; scenery only, so no generation
+changed (the fingerprint confirms every biome, Haunted Hollow included). Every
+number here is **placed, not published**.
+
+**Harvest moon.** A disc drawn into the sky shader, 2.3 degrees in radius --
+about nine times the real moon's 0.26 -- orange (`#ff8a2a`) on the horizon,
+paling to `#ffe2b0` by 30 degrees up, mottled with darker seas, a soft halo,
+hidden below the horizon and drawn before the clouds so cloud crosses it. It
+shows at a quarter strength by day and comes in fully with `solar.lamplight`,
+the same number the lanterns follow. On the moonlight's own arc it was still
+just below the horizon at Dusk (-1.1 degrees), which is wrong for a harvest
+moon, so the disc runs `MOON_LEAD` = 0.3 radians of phase (about 1.25 h) ahead:
+5.2 degrees up at Golden hour, 9.3 at Dusk, 22 by 9 pm. The first strength
+rule (by `dayness`) left it pale and faint against a bright dusk sky; following
+lamplight fixed that. Other biomes keep only the small pale disc their sun's
+disc becomes after dark, exactly as before.
+
+**Bats.** One flock a hole, 6-11 bats each -- 75 on nine holes -- circling one
+of the hole's tallest trees at 75-115% of its height, 7-21 m out, on circles
+whose radius and height breathe. Each is a body and two hinged, fingered wings
+beating at 9-14 a second, 2.6-4.4 m across: far bigger than any real bat
+(about 0.2 m for a pipistrelle, 1.5 m for the largest fruit bats), because from
+a tee 50-150 m away anything smaller is a speck. Out once lamplight passes
+0.05, growing in rather than popping on.
+
+**Will-o'-the-wisps.** Three a hole -- 27 on nine -- 70% of them over a pond
+near its bank where the hole has one, the rest in the lowest of eight spots in
+the rough beside the hole. A core 0.16-0.26 m across hovering 0.9-1.8 m up,
+drifting round a 1.2-4 m loop, each going out for about two seconds in a
+cycle of 9-23 s. Out once lamplight passes 0.2. **The glow was redone once:** a
+flat translucent sphere round the core read as a green target ring, so it is
+a shell whose opacity falls off toward its rim as seen from the camera. Not
+additive, because an additive sprite is what drew dark squares round the
+lanterns.
+
+**Cost.** No frame cost measured; it needs the owner's go-ahead for a profile.
+Switching the clock from afternoon to dusk costs one slow first frame of 58-68
+ms whether the bats and wisps are there or not (three runs each, normal 60 fps
+pacing): that frame is the existing work a clock jump does, not theirs.

@@ -313,6 +313,7 @@ function contactShadow(){
 // the ball, and how long a low sun may stretch it. Both are looks.
 const BALL_SHADOW_REACH=1.5,BALL_SHADOW_STRETCH=3;
 const GLOW_BALL=new T.Color('#b4ff72');
+const MOON_HIGH=new T.Color();
 
 // Radial falloff for the halo, built numerically rather than on a canvas so this
 // module never needs a DOM. Squared falloff reads as a glow; linear reads as a
@@ -1177,7 +1178,7 @@ export class GolfView{
  }
 
  addSky(sunDir){
-  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;
+  const bio=this.world.bio,blue=this.style==='blueprint',toon=this.style==='cartoon',material=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{top:{value:new T.Color(blue?'#0c2035':toon?'#64bcdf':bio.waterTint)},horizon:{value:new T.Color(blue?'#3c6176':bio.sky)},sun:{value:sunDir},skyTime:this.foliageTime,cloud:{value:bio.waterMurk},cloudAmount:{value:this.quality.clouds?0:1},cloudLight:{value:new T.Color(.97,.975,.96)},glowColor:{value:new T.Color(1,.72,.35)},discColor:{value:new T.Color(1,.96,.83)},starness:{value:0},starAngle:{value:0},starAxis:{value:new T.Vector3(...STAR_AXIS)},moonDir:{value:new T.Vector3(0,-1,0)},moonColor:{value:new T.Color()},moonRadius:{value:.04},moonAmount:{value:0}},vertexShader:'varying vec3 vSky;void main(){vSky=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec3 vSky;uniform vec3 top,horizon,sun,cloudLight,glowColor,discColor;uniform vec3 starAxis;uniform float cloud,cloudAmount,skyTime,starness,starAngle;uniform vec3 moonDir,moonColor;uniform float moonRadius,moonAmount;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}float fbm(vec2 p){float f=0.;float a=.5;for(int i=0;i<5;i++){f+=a*noise(p);p=p*2.03+3.1;a*=.5;}return f;}
  float hash3(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
  // Stars are cells on the sky dome, nearly all of them empty. Quantising the
@@ -1199,6 +1200,21 @@ export class GolfView{
  void main(){vec3 d=normalize(vSky);float h=max(d.y,0.);vec3 col=mix(horizon,top,pow(h,.55));float glow=pow(max(dot(d,sun),0.),64.);col+=glowColor*glow*.35;col=mix(col,discColor,smoothstep(.99955,.9998,dot(d,sun)));
   // Stars go in before the clouds, so a cloud drifting over puts them out.
   if(starness>.001){vec3 sd=spin(d,starAxis,starAngle);float sf=starLayer(sd,150.,.05,skyTime)+starLayer(sd,70.,.02,skyTime*.6)*1.7;col+=vec3(.82,.88,1.)*sf*starness*smoothstep(0.,.16,d.y);}
+  // A DRAWN MOON (a biome's moon field; amount 0 everywhere else): a disc on the
+  // moon's own arc, mottled with darker seas, a soft halo round it, hidden below
+  // the horizon. After the stars and before the clouds, so cloud crosses it.
+  if(moonAmount>.001){
+   float r=acos(clamp(dot(d,moonDir),-1.,1.))/moonRadius;
+   if(r<4.){
+    vec3 mu=normalize(cross(moonDir,vec3(0.,1.,0.))),mv=cross(mu,moonDir);
+    vec2 mp=vec2(dot(d,mu),dot(d,mv))/sin(moonRadius);
+    float seas=noise(mp*2.2+3.1)*.6+noise(mp*5.3+7.7)*.4;
+    vec3 face=moonColor*(1.-.3*smoothstep(.45,.72,seas))*(1.-.16*r*r);
+    float disc=1.-smoothstep(.94,1.,r),halo=exp(-max(r-1.,0.)*1.8)*(1.-disc);
+    float up=smoothstep(-.01,.025,d.y)*moonAmount;
+    col=mix(col,face,disc*up);col+=moonColor*halo*up*.28;
+   }
+  }
   vec2 q=d.xz/max(d.y+.14,.09)*2.8;float n=fbm(q+vec2(skyTime*.008,skyTime*.003));float clouds=smoothstep(.55-cloud*.18,.76-cloud*.16,n)*smoothstep(.02,.15,h);col=mix(col,cloudLight,clouds*.83*cloudAmount);gl_FragColor=vec4(col,1.);
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
@@ -2095,6 +2111,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    u.glowColor.value.copy(GLOW_DAY).lerp(GLOW_NIGHT,1-solar.dayness);
    u.discColor.value.copy(DISC_DAY).lerp(DISC_NIGHT,1-solar.dayness);
    u.starness.value=solar.starness;u.starAngle.value=starRotation(d.hour);
+   // The drawn moon: orange on the horizon, paling as it climbs, faint by day.
+   const moon=this.world.bio.moon;
+   if(moon){
+    u.moonDir.value.copy(solar.moonDiscDirection);u.moonRadius.value=moon.size*Math.PI/180;
+    u.moonColor.value.set(moon.low).lerp(MOON_HIGH.set(moon.high),T.MathUtils.smoothstep(solar.moonDiscElevation,3,30));
+    // Faint by day, full as the light goes -- the same lamplight the lanterns
+    // follow, so the moon is at its strongest by Dusk, not hours after it.
+    u.moonAmount.value=moon.day+(1-moon.day)*Math.min(1,solar.lamplight*1.5);
+   }else u.moonAmount.value=0;
   }
   this.updateGlowBall(solar,d);
   // Fog and background track the horizon, or the sky detaches from the land.
