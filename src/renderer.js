@@ -2098,6 +2098,12 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.wasFree=false;
   if(c.mode==='overview'){this.targetPos.set(-this.world.halfX*.4,Math.max(this.world.halfX/Math.min(1,this.camera.aspect),this.world.halfZ)*2.8,-this.world.halfZ*1.1);this.targetLook.set(0,0,40);}
   else if(c.mode==='green'){const q=h.worldPin;this.targetPos.set(q.x+28,h.height(h.pin.x,h.pin.z)+21,q.z+34);this.targetLook.set(q.x,h.height(h.pin.x,h.pin.z),q.z);}
+  // THE AIM POINT VIEW (G, 10 October 2026): the landing area, looked down on
+  // from short of it along the line from the ball, the way GSPro's F3 shows
+  // where a shot is going. Placed numbers: 34 m back, 22 m up. With no aim ring
+  // drawn (a putt by hand, a hole just finished) there is no point to look at,
+  // and it falls back to the view from the ball below.
+  else if(c.mode==='target'&&this.aimRing.visible){const a=this.aimRing.position,b=this.ball.position,dx=a.x-b.x,dz=a.z-b.z,l=Math.hypot(dx,dz)||1;this.targetPos.set(a.x-dx/l*34,a.y+22,a.z-dz/l*34);this.targetLook.set(a.x,a.y,a.z);}
   // THE RIG, not the raw config. In simulator mode the height, the setback and
   // the field of view come from the bay's measurements instead of the sliders,
   // and the lateral offset is forced to zero -- a golfer stands behind the ball,

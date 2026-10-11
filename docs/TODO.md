@@ -25,11 +25,6 @@ Asked for by the owner on 10 October, in this order, on the branch
 `shot-panel-and-monitor-mode`. Done so far is under the same heading in
 `# Done`.
 
-- [ ] **A "plays like" distance** beside the yards to the hole: wind, rise or
-  fall, altitude and temperature, worked out by the game's own ball model.
-- [ ] **Keyboard shortcuts**: H hides the interface, Tab lists every key, A
-  resets the aim, I and K change club, and one key steps the camera to the aim
-  point, the green and back.
 - [ ] **A TV-style follow camera** that shows the flight's shape before any
   cut; **the whole shot path framed after each shot**, smoothly, skippable and
   switchable; **a slower descent before each hole** that passes through trees.
@@ -897,6 +892,14 @@ so several of these play differently as well as look different.
   moving the aim fades it out and the aim point's in, and they swap back a
   second after the aim stops. Closes "The flag marker and the aim marker
   overlap on screen" (copied below under *Found by driving the built game*).
+- [x] **Plays like**, under the yards to the hole: the club in hand flown at full
+  swing in today's conditions to the hole's height, against the same strike on
+  the level in still air, and the distance scaled by the ratio. By geometry,
+  at the owner's request, after a first version that searched for the ball
+  speed landing at the hole (RESEARCH, *Plays like, by geometry*).
+- [x] **Keyboard shortcuts**: A resets the aim, I/K change club, H hides the
+  interface, Tab lists every key, G steps the camera to the aim point, the green
+  and back.
 - [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
   check read the first line of the grid, which a penalty replaces; the caption
   is in the panel's header now.

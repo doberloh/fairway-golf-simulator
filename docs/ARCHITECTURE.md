@@ -73,6 +73,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
 - `src/clubs.js` -- stock and custom clubs, manual flight profiles
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
+- `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 
 **Playing a round**
 - `src/game.js` -- round rules, teams, scores, undo, drops; `src/relief.js` -- penalty relief

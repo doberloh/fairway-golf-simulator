@@ -9,6 +9,7 @@ import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
 import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {aimTarget,localWind} from './shot-visuals.js';
+import {playsLike} from './plays-like.js';
 import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
 import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
@@ -494,14 +495,69 @@ function setUpTurn(){
  // bunker -- anywhere at all, so long as it was close.
  $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
  $('power').value=$('club').value==='putter'?clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100):100;
- const target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
+ defaultAim();
+ // The slope grid takes this shot's frame now, from the aim it starts with, and
+ // keeps it while the player aims (GolfView.setReadingHeading).
+ view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
+}
+// PLAYS LIKE, under the yards to the hole (plays-like.js): the club in hand at
+// full swing, flown in today's wind, altitude and temperature to the hole's
+// height, against the same strike on level ground in still air. Worked out
+// again only when something it depends on changes -- two flights, a few
+// milliseconds -- and not shown for a putt, where there is no flight to adjust.
+let playsLikeKey='',playsLikeYards=null;
+function drawPlaysLike(){
+ const el=$('playsLike');if(!el||!course?.pin)return;
+ const c=clubs[$('club').value],p=round.position,pin=course.pin;
+ if(!c||!p||c.code==='PT'||course.surface(p.x,p.z)==='green'){el.textContent='';return;}
+ const key=[p.x,p.z,pin.x,pin.z,$('club').value,c.speed,settings.wind,settings.windDirection,course.rotation,JSON.stringify(settings.flightProfile??null)].join();
+ if(key!==playsLikeKey){
+  playsLikeKey=key;
+  const m=playsLike({distance:Math.hypot(pin.x-p.x,pin.z-p.z),rise:course.height(pin.x,pin.z)-course.height(p.x,p.z),
+   bearing:Math.atan2(pin.x-p.x,pin.z-p.z),wind:localWind(settings,course.rotation),
+   altitude:course.bio.altitude,temperature:course.bio.temperature,launch:manualLaunch(c,1,1,settings.flightProfile)});
+  playsLikeYards=m==null?null:Math.round(m/YARD);
+ }
+ el.textContent=playsLikeYards==null?'':`PLAYS ${playsLikeYards}`;
+}
+// WHERE A TURN STARTS AIMING, and where A puts the aim back to: the middle of
+// the fairway at the club's stock carry, or the pin near the end of the hole.
+function defaultAim(){
+ const p=round.position,target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);
+ aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
  // A putt off an armed monitor starts aimed at the hole, the whole distance:
  // the putter's stock roll is a by-hand number and says nothing about a putt
  // the device will measure.
  if(armed&&$('club').value==='putter'){aim=Math.atan2(course.pin.x-p.x,course.pin.z-p.z)*180/Math.PI;aimRange=Math.max(.1,distance());}
- // The slope grid takes this shot's frame now, from the aim it starts with, and
- // keeps it while the player aims (GolfView.setReadingHeading).
- view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
+}
+// THE KEYBOARD SHORTCUTS added on 10 October 2026, after GSPro's (A resets the
+// aim, I and K change club, H hides the interface, Tab lists the keys, and a
+// key steps the camera to the landing area and the green -- GSPro's F3, which
+// here is G: F3 is the browser's Find).
+function resetAim(){
+ if(!canNudgeAim())return;
+ // By hand a putt's length is its power, so putting the aim back puts the
+ // power back to the hole's distance as well, as a new turn does.
+ if($('club').value==='putter'&&!armed)$('power').value=clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100);
+ defaultAim();touchAim();updateAim();view.setCamera(round.position,aim);updateHUD();
+}
+// G: from wherever the camera is, to the aim point, then the green, then back
+// to the ball.
+function stepTargetCamera(){
+ const m=view.config.mode;
+ cameraMode(m==='target'?'green':m==='green'?'player':'target');
+}
+// H hides everything drawn over the course -- for a picture, or a projector
+// bay that wants nothing but the hole -- and H or Escape brings it back.
+function toggleHud(on=!$('app').classList.contains('hud-hidden')){
+ $('app').classList.toggle('hud-hidden',on);
+ if(on)toast('Interface hidden. Press H to bring it back.');
+}
+// Tab lists every key, over the course; Tab or Escape puts it away.
+function toggleKeysHelp(on=$('keysHelp').hidden){
+ const box=$('keysHelp');if(!box)return;
+ box.hidden=!on;
+ if(on)$('keysUpDown').textContent=armed?'Aim point further / shorter':'Power';
 }
 function updateHUD(){
  const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
@@ -573,7 +629,7 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
  $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||!!round.relief||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
   // The light is driven by the DEVICE; which window shows is driven by `armed`,
@@ -4803,7 +4859,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Space')takeShot();if(e.code==='Enter')finishShot();if(e.code==='KeyQ')cycleClub(-1);if(e.code==='KeyE')cycleClub(1);if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();toggleKeysHelp();return;}if(e.code==='Space')takeShot();if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
