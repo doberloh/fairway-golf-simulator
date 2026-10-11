@@ -2093,7 +2093,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  hitEffects(p,aim,lie,speed){this.effects.hit(p,aim,lie,speed);}
  setCamera(p,aim,instant=false){
-  this.camFlight=null;this.trackingBall=false;const c=this.config,h=this.course;
+  this.camFlight=null;this.tv=null;this.trackingBall=false;const c=this.config,h=this.course;
   if(c.mode==='free'){if(!this.wasFree){this.targetPos.copy(this.camera.position);this.freeYaw=Math.atan2(this.look.x-this.camera.position.x,this.look.z-this.camera.position.z);this.freePitch=Math.asin(T.MathUtils.clamp((this.look.y-this.camera.position.y)/Math.max(.001,this.look.distanceTo(this.camera.position)),-1,1));this.wasFree=true;}this.updateFreeLook();return;}
   this.wasFree=false;
   if(c.mode==='overview'){this.targetPos.set(-this.world.halfX*.4,Math.max(this.world.halfX/Math.min(1,this.camera.aspect),this.world.halfZ)*2.8,-this.world.halfZ*1.1);this.targetLook.set(0,0,40);}
@@ -2136,7 +2136,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // left to the damping.
   if(!opts.hold&&eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
   this.camera.position.copy(eye);this.look.copy(look);this.camera.lookAt(look);
-  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0}),elapsed:0};
+  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0,arrival:!!opts.arrival}),elapsed:0};
  }
  // THE ARRIVAL. Cut to a pose above and behind the tee, hold there long enough
  // to read the hole, then fly down onto the ball.
@@ -2147,7 +2147,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // would be crossing a landscape that has already been replaced.
  arriveAtHole(p,aim,hold=ARRIVE_HOLD){
   if(!this.course||this.config.mode==='free')return this.flyCamera(p,aim);
-  this.flyCamera(p,aim,{from:holeEstablishingPose(this.course),hold});
+  this.flyCamera(p,aim,{from:holeEstablishingPose(this.course),hold,arrival:true});
  }
  cancelFlight(){this.camFlight=null;}
  updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}
@@ -2288,8 +2288,29 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // an arrival flight leaves the flight still driving the camera and the ball
  // tracking silently ignored for the rest of the path.
  follow(p,aim,putting=false){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
-  this.camFlight=null;
+  this.camFlight=null;this.tv=null;
   const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
+
+ // THE TELEVISION CAMERA (tv-camera.js). tvShot starts a shot from wherever
+ // the camera stands -- the player's view, which is the tee camera -- with the
+ // plan worked out at the strike; tvFollow runs every frame of the flight,
+ // turning the tee camera to keep the ball in frame and, at the plan's moment,
+ // CUTTING to the landing camera, which then follows the ball the same way.
+ // A cut is a cut: no flight between the two, as on television.
+ tvShot(plan){this.camFlight=null;this.tv={plan,cut:false,tee:this.camera.position.clone()};}
+ tvFollow(p,t){
+  const tv=this.tv;if(!tv)return;
+  const b=this.course.toWorld(p),ball=new T.Vector3(b.x,p.y,b.z);
+  if(!tv.cut&&tv.plan?.landEye&&t>=tv.plan.cutAt){tv.cut=true;const e=tv.plan.landEye;this.camera.position.set(e.x,e.y,e.z);this.look.copy(ball);}
+  const eye=tv.cut?tv.plan.landEye:tv.tee;
+  this.targetPos.set(eye.x,eye.y,eye.z);this.targetLook.copy(ball);this.trackingBall=true;
+ }
+ // The whole shot, once the ball has stopped: flown to, not cut to, and held.
+ tvReview(pose){
+  this.tv=null;this.trackingBall=false;
+  const to={eye:new T.Vector3(pose.eye.x,pose.eye.y,pose.eye.z),look:new T.Vector3(pose.look.x,pose.look.y,pose.look.z)};
+  this.camFlight={path:makeCameraFlight({eye:this.camera.position.clone(),look:this.look.clone()},to,this.world),elapsed:0};
+ }
 
  render(dt){
   // A course built without the loading screen's `ready` (none today, but the

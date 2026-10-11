@@ -25,10 +25,10 @@ Asked for by the owner on 10 October, in this order, on the branch
 `shot-panel-and-monitor-mode`. Done so far is under the same heading in
 `# Done`.
 
-- [ ] **A TV-style follow camera** that shows the flight's shape before any
-  cut; **the whole shot path framed after each shot**, smoothly, skippable and
-  switchable; **a slower descent before each hole** that passes through trees.
-  The hole intro stays on always (owner's call; no setting).
+- [ ] **Profile the slower descent through the trees.** It passes through
+  canopies now instead of over them, and `clearCameraTrees` does more work when
+  it does. Not profiled (AGENTS.md: ask first); about a minute for
+  `--only views`. Redwood is the biome to watch.
 
 ## Found by driving the built game
 
@@ -900,6 +900,15 @@ so several of these play differently as well as look different.
 - [x] **Keyboard shortcuts**: A resets the aim, I/K change club, H hides the
   interface, Tab lists every key, G steps the camera to the aim point, the green
   and back.
+- [x] **A full shot is filmed the television way.** The tee camera stays and
+  turns with the ball, so the climb and the curve show against the sky; past
+  the apex it cuts to a landing camera already standing beside where the ball
+  comes down. Chips keep one camera; putts keep theirs. **After the ball stops
+  the camera flies up to show the whole shot**, holds while the panel counts
+  down, and flies on to the next shot (Enter skips; a camera setting turns it
+  off). **The descent onto a new hole** takes 3.5-5.5 s instead of at most
+  2.6, and goes through trees rather than over them. The hole intro stays on
+  always, by the owner's call.
 - [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
   check read the first line of the grid, which a penalty replaces; the caption
   is in the panel's header now.

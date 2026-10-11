@@ -90,6 +90,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
 - `src/green-reading.js`, `src/green-map.js`, `src/course-map.js` -- reading a green, the maps
 - `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras, flyovers, the simulator bay
+- `src/tv-camera.js` -- a full shot filmed by a tee camera and a landing camera, and the whole-shot view after it
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
 - `src/haunts.js` -- Haunted Hollow's giant pumpkins and toadstools (placed by course.js, solid), lantern faces, ghosts, bats and will-o'-the-wisps

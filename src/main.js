@@ -7,7 +7,8 @@ import projectLicense from '../LICENSE?raw';
 import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
-import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
+import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
+import {planShotCamera,planReview} from './tv-camera.js';
 import {aimTarget,localWind} from './shot-visuals.js';
 import {playsLike} from './plays-like.js';
 import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
@@ -813,7 +814,7 @@ function takeShot(data=null){
   // floodlight group is hidden when the lights are down, and a ball stopping
   // dead against a mast nobody can see is worse than one flying through it.
   poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -823,7 +824,11 @@ function finishShot(){
   if(round.scrambleSelection)showPick();
   // And a replay watched while a ball waits for relief goes back to the choice.
   if(round.relief&&reliefList.length)showRelief();
-  return;}const result=flight.result;flight=null;drawPanelState();
+  return;}
+ // Leaving the whole-shot view, the camera FLIES on to the next shot rather than
+ // cutting there: the owner asked for the review to come and go smoothly.
+ const fromReview=flight.reviewed?{eye:view.camera.position.clone(),look:view.look.clone()}:null;
+ const result=flight.result;flight=null;drawPanelState();
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
  pushTrail(result.points);view.setTrail([]);view.setBall(result.end);
@@ -844,6 +849,7 @@ function finishShot(){
   viewShot=null;drawShotViews();refreshDispersion();drawDispersionLegend();
   view.setShotHistory?.(visibleTrails());
   setUpRangeTurn();
+  if(fromReview)view.flyCamera(round.position,aim,{from:fromReview});
   showRangeResult();
   view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
   save();sendPlayer();
@@ -864,7 +870,7 @@ function finishShot(){
  viewShot=null;drawShotViews();
  renderResult(event);
  if(round.holeComplete)showHoleCompletion();
- if(!round.holeComplete&&!round.scrambleSelection)setUpTurn();
+ if(!round.holeComplete&&!round.scrambleSelection){setUpTurn();if(fromReview)view.flyCamera(round.position,aim,{from:fromReview});}
  // The last teammate has hit and the team now has a choice. `setUpTurn` is
  // skipped above because nobody is up, so the picker is opened here instead.
  if(round.scrambleSelection)beginPick();
@@ -884,7 +890,7 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
- view.config.follow=true;view.setHole(worldHole(record.hole),true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
+ view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
@@ -2704,6 +2710,13 @@ function trailUpTo(pts,t,from){
  return pts.slice(0,i+1).concat([{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f,t}]);
 }
 const CAMERA_HOLD=1.5;
+// The television plan for a shot (tv-camera.js), made the moment it is struck:
+// when to cut and where the landing camera stands. A putt has none.
+function shotCameraPlan(result,hole){
+ if(!result||result.puttStroke||!view?.world||!hole)return null;
+ try{return planShotCamera({points:result.points,hang:result.hang,carry:result.carry,toWorld:q=>hole.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees});}
+ catch(e){console.warn('shot camera plan failed',e);return null;}
+}
 // Slow motion. Scales how fast the recorded flight is played back, not the
 // physics: the path is already computed at 240 Hz, so slowing it down samples
 // the same trajectory more finely rather than coarsening it. The camera's hold
@@ -3713,6 +3726,7 @@ function renderPanel(name,content){
   ${slider('cameraFov','Field of view',c.fov,30,90,'°')}`}
   <p class="note" id="bayNote"></p>
   <label class="check"><input id="cameraFollow" type="checkbox" ${c.follow?'checked':''}> Follow the ball in flight</label>
+  <label class="check"><input id="cameraReview" type="checkbox" ${c.review!==false?'checked':''}> Show the whole shot when the ball stops</label>
   <p class="note">A putt is followed with the camera pointed at the hole, so the cup stays still on screen while the ball rolls to it.</p>
   ${slider('freeSpeed','Free-flight speed',c.freeSpeed||45,5,180,' m/s')}
   <p class="note">Free flight: drag to look; W/A/S/D to move; R/F to rise or descend; Shift to move faster. Arrow keys look around. The on-screen controls work with touch.</p>
@@ -3738,7 +3752,7 @@ function renderPanel(name,content){
    }
   };
   const apply=()=>{
-   Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked});
+   Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked,review:$('cameraReview').checked});
    if(c.sim)Object.assign(c,{eyeHeight:Number($('eyeHeight').value),ballAhead:Number($('ballAhead').value),
     screenWidth:Number($('screenWidth').value)||c.screenWidth,screenHeight:Number($('screenHeight').value)||c.screenHeight,standFeet:Number($('standFeet').value),standSide:Number($('standSide').value)});
    else Object.assign(c,{height:Number($('cameraHeight').value),offset:Number($('cameraOffset').value),
@@ -5018,7 +5032,15 @@ function tick(now){
   const lift=flight.hop.step(dt*FLIGHT_PLAYBACK*timeScale,hopSpeed,course.surface(p.x,p.z),rolling&&flight.elapsed<flight.result.time);
   view.rollHopLift=lift;view.setBall(lift?{...p,y:p.y+lift}:p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
   if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
-  if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(SHOT_HOLD_SECONDS-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold)){finishShot();sendPlayer();}}}}
+  // THE CAMERA DURING A SHOT. A putt keeps its own follow camera; a full shot
+  // is filmed by the television pair (tv-camera.js) -- the tee camera turning
+  // with the ball, then the landing camera -- and once the ball stops, the
+  // camera flies up to show the whole shot, if the player has that on.
+  const tvOn=view.config.follow&&flight.tv&&!flight.result.puttStroke&&!['overview','free'].includes(view.config.mode);
+  if(flight.reviewing){}
+  else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
+  else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
