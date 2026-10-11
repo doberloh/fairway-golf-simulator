@@ -1567,7 +1567,7 @@ const JOURNEYS = [
  // and the journey checks what a player at the mat would see.
  {
   name: 'monitor',
-  what: 'a launch monitor through a pretend bridge: the state light, a measured shot, its numbers in the shot panel, and hitting by hand',
+  what: 'a launch monitor through a pretend bridge: the window that replaces the shot controls, aiming by key, a measured shot, its numbers, and disarming',
   context: {viewport: {width: 1366, height: 768}},
   async prepare(page) {
    this.acks = [];
@@ -1590,14 +1590,27 @@ const JOURNEYS = [
    await t.step('connect the bridge and arm the monitor', async () => {
     await t.page.getByRole('button', {name: 'Connect monitor'}).click();
     await t.press('Connect bridge');
-    await t.until(() => shown('#monState'), 'the monitor state in the shot panel', 5 * SLOW);
+    await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
     await t.page.getByLabel(/Arm monitor/).check();
     await t.key('Escape');
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
-   await t.step('armed: power, shape and the shot button go; the club and the aim stay', async () => {
-    for (const sel of ['#swing', '#power', '.shape-button']) if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of ['#club', '.aim-control']) if (!await shown(sel)) throw new Error(`${sel} is hidden with the monitor armed`);
+   await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
+    for (const sel of ['.bottom-area', '#swing', '#power', '.shape-button', '.aim-control', '#aimRange', '#monState'])
+     if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
+    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm'])
+     if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
+    if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
+   });
+   await t.step('armed, up and down move the aim point, and the pin label gives way while aiming', async () => {
+    const power = await t.page.inputValue('#power');
+    const {before, after} = await t.hold('ArrowUp', '#aimLabelDistance');
+    const n = v => parseFloat(String(v).replace(/[^0-9.]/g, ''));
+    if (!(n(after) > n(before))) throw new Error(`up moved the aim point from ${before} to ${after}`);
+    if (await t.page.inputValue('#power') !== power) throw new Error('up changed the power, which a monitor shot ignores');
+    const faded = sel => t.page.evaluate(q => document.querySelector(q).classList.contains('faded'), sel);
+    if (await faded('#aimLabel') || !await faded('#flagLabel')) throw new Error('while aiming, the aim label should show and the pin label give way');
+    await t.until(async () => (await faded('#aimLabel')) && !(await faded('#flagLabel')), 'the pin label to come back after aiming stops', 5 * SLOW);
    });
    await t.step('a measured shot flies, and the shot panel carries its numbers', async () => {
     bridge.send(JSON.stringify({type: 'shot', requestId: 'smoke-1', payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: 1, APIversion: '1',
@@ -1629,15 +1642,17 @@ const JOURNEYS = [
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
     if (!/\d/.test(await t.page.textContent('#shotResult [data-field=carry]'))) throw new Error('the shot numbers went when the next ball was teed');
    });
-   await t.step('no device: red, with Reconnect and Hit by hand', async () => {
+   await t.step('no device: red, with Reconnect', async () => {
     bridge.send(status('red'));
-    await t.until(async () => (await title()) === 'No monitor', 'the panel to say No monitor', 5 * SLOW);
-    for (const name of ['Reconnect', 'Hit by hand']) await t.page.getByRole('button', {name, exact: true}).waitFor({state: 'visible', timeout: 5000 * SLOW});
+    await t.until(async () => (await title()) === 'No monitor', 'the window to say No monitor', 5 * SLOW);
+    await t.page.getByRole('button', {name: 'Reconnect', exact: true}).waitFor({state: 'visible', timeout: 5000 * SLOW});
    });
-   await t.step('Hit by hand brings back power and the shot button', async () => {
-    await t.press('Hit by hand');
+   await t.step('the Armed switch in the window brings back the shot controls', async () => {
+    await t.page.click('#monArm');
     await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
     if (!await shown('#power')) throw new Error('the power slider did not come back');
+    if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
+    if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
     await t.shot();
    });
   },

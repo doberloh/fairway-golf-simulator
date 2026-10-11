@@ -275,3 +275,29 @@ test('a putt has no hang, so its carry is zero from the first frame', async () =
  assert.equal(live.result.carry, 0);
  assert.ok(live.result.total > 0);
 });
+
+// Playing by hand and playing off an armed monitor keep separate sets, so each
+// can be tuned without disturbing the other (10 October 2026).
+test('the hand set and the monitor set are kept apart', async () => {
+ const {MONITOR_FIELDS} = await import('../src/shot-data.js');
+ const store = new Map();
+ const was = globalThis.localStorage;
+ globalThis.localStorage = {getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v))};
+ try {
+  assert.ok(MONITOR_FIELDS.length <= MAX_FIELDS, 'the monitor standard set fits the panel');
+  assert.deepEqual(loadShotData('monitor').fields, MONITOR_FIELDS, 'never chosen: the monitor set');
+  assert.equal(hasCustomShotData('monitor'), false);
+  // Choosing a hand set: an unsaved monitor set follows it, as monitor mode
+  // showed a player's own choice before the two were split.
+  saveShotData({fields: ['carry', 'total']}, 'hand');
+  assert.deepEqual(loadShotData('monitor').fields, ['carry', 'total']);
+  // Once the monitor set is saved, each keeps its own.
+  saveShotData({fields: ['clubSpeed', 'smash', 'carry']}, 'monitor');
+  saveShotData({fields: ['apex']}, 'hand');
+  assert.deepEqual(loadShotData('monitor').fields, ['clubSpeed', 'smash', 'carry']);
+  assert.deepEqual(loadShotData('hand').fields, ['apex']);
+  assert.deepEqual(loadShotData().fields, ['apex'], 'the hand set is the default');
+ } finally {
+  globalThis.localStorage = was;
+ }
+});

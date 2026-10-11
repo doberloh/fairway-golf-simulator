@@ -25,16 +25,6 @@ Asked for by the owner on 10 October, in this order, on the branch
 `shot-panel-and-monitor-mode`. Done so far is under the same heading in
 `# Done`.
 
-- [ ] **Launch monitor mode gets its own window.** Armed, the standard shot
-  controls go and a window with only the club, the ball-status light and
-  Reconnect replaces them; the Armed switch is the way back, so Hit by hand
-  goes. Each mode keeps its own Shot data fields and panel places.
-- [ ] **Aim is unlocked for every club with a monitor armed**: up and down move
-  the aim point further and shorter (they move power, which a monitor shot
-  ignores), left and right turn. Keyboard play keeps its controls as they are.
-- [ ] **The aim and pin labels take turns**: aiming fades the pin's out, and a
-  moment after aiming stops the aim's fades out and the pin's back in. Closes
-  "The flag marker and the aim marker overlap on screen" below.
 - [ ] **A "plays like" distance** beside the yards to the hole: wind, rise or
   fall, altitude and temperature, worked out by the game's own ball model.
 - [ ] **Keyboard shortcuts**: H hides the interface, Tab lists every key, A
@@ -46,6 +36,16 @@ Asked for by the owner on 10 October, in this order, on the branch
   The hole intro stays on always (owner's call; no setting).
 
 ## Found by driving the built game
+
+- [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
+  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
+  taken during the layout work. The aim marker steps aside when the two POINTS
+  are within 8 m of each other on the ground; it never checks whether the two
+  LABELS overlap on screen, which from the tee they often do. Not changed:
+  separate from the layout, and it wants a look at which should give way.
+  **Fixed 10 October 2026** by making them take turns rather than giving way:
+  the pin's label at rest, the aim's while aiming and for a second after (*The
+  UI pass*, `# Done`).
 
 - [x] **A panel moved while it is folded away for a shot keeps the folded size.**
   While a ball is in the air the shot controls shrink out of the way; dragging
@@ -88,12 +88,6 @@ same heading in `# Done`.
   courses panel at 1920x1080; its name box cleared it in the one case looked
   at.
 
-- [ ] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
-  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
-  taken during the layout work. The aim marker steps aside when the two POINTS
-  are within 8 m of each other on the ground; it never checks whether the two
-  LABELS overlap on screen, which from the tee they often do. Not changed:
-  separate from the layout, and it wants a look at which should give way.
 
 - [ ] **Nobody has measured a real phone.** The layout is checked under
   emulation at a phone's size; the GPU is not. The low tier's known weakness on
@@ -887,6 +881,22 @@ so several of these play differently as well as look different.
 - [x] **Hang time shows time in the air.** The tile read the time to REST: a
   drive hanging 6.5 s showed 10.8. `simulateShot` returns `hang` now. Nothing
   measured in RESEARCH was affected; only the tile.
+- [x] **Launch monitor mode has its own window.** Armed, the shot controls go
+  and `#monitorPanel` takes their place with only the flashing ball light, the
+  Armed switch, the club (sent to the monitor) and Reconnect. Hit by hand is
+  gone: the switch is the way back, and connected-but-unarmed the controls
+  carry a slim strip with the same light and switch. The aim arrows and the
+  aim distance box went with the controls, reversing the 26 September call.
+  **Each mode keeps its own Shot data** (tiles, order, columns) and **the shot
+  panel its own place** per mode.
+- [x] **Aim is unlocked for every club with a monitor armed.** ↑/↓ walk the aim
+  point further or shorter, quickening as they are held; the aim pad steps a
+  yard, a foot inside twenty; the putter aims at a point like any club and a
+  putt starts aimed at the hole. By hand nothing changed.
+- [x] **The aim and pin labels take turns.** The pin's distance shows at rest;
+  moving the aim fades it out and the aim point's in, and they swap back a
+  second after the aim stops. Closes "The flag marker and the aim marker
+  overlap on screen" (copied below under *Found by driving the built game*).
 - [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
   check read the first line of the grid, which a penalty replaces; the caption
   is in the panel's header now.

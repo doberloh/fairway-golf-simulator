@@ -26,7 +26,7 @@ import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
 import {suggestCourseName} from './course-names.js';
-import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,hasCustomShotData,loadShotData,saveShotData,moveField,liveRecord,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
+import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,standardFields,moveField,liveRecord,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
@@ -57,7 +57,9 @@ let lastShot=null,priorShot=null,aimRange=null,aimPoint=null,lastMapFrame=0;
 // preference, so it lives beside graphics rather than in the course settings:
 // it belongs to the screen, not to the round, and travels with neither a
 // saved course nor a saved round.
-let shotPrefs=loadShotData();
+// The tiles in force (the hand set, or the monitor set while armed), and which
+// set the Shot data panel is editing -- null follows the one in force.
+let shotPrefs=loadShotData(),shotDataEditing=null;
 // Whether the ball is ON the green, kept from `updateHUD` so the render loop
 // does not re-derive a surface sixty times a second.
 let ballOnGreen=false;
@@ -493,6 +495,10 @@ function setUpTurn(){
  $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
  $('power').value=$('club').value==='putter'?clamp(launchForDistance(distance(),rollDeceleration('green',settings.turf))/clubs.putter.speed*100,.5,100):100;
  const target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
+ // A putt off an armed monitor starts aimed at the hole, the whole distance:
+ // the putter's stock roll is a by-hand number and says nothing about a putt
+ // the device will measure.
+ if(armed&&$('club').value==='putter'){aim=Math.atan2(course.pin.x-p.x,course.pin.z-p.z)*180/Math.PI;aimRange=Math.max(.1,distance());}
  // The slope grid takes this shot's frame now, from the aim it starts with, and
  // keeps it while the player aims (GolfView.setReadingHeading).
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
@@ -570,15 +576,16 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
  $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
  $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||!!round.relief||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Take your shot<small>or press <kbd>SPACE</kbd></small></span>';
  if($('shotControls')){
-  // The indicator is driven by the DEVICE; the stripped-down controls are driven
-  // by `armed`, which is the only state where the manual controls genuinely do
-  // nothing -- `takeShot` already refuses a swing while the monitor is armed.
-  // Keying the strip on mere connection would hide the swing button from someone
-  // who connected a monitor but has not armed it, leaving them unable to hit.
+  // The light is driven by the DEVICE; which window shows is driven by `armed`,
+  // which is the only state where the manual controls genuinely do nothing --
+  // `takeShot` already refuses a swing while the monitor is armed. Keying it on
+  // mere connection would take the shot button from someone who connected a
+  // monitor but has not armed it, leaving them unable to hit.
   const state=monitorState();
   $('shotControls').dataset.monitor=state;
-  $('shotControls').classList.toggle('monitor-mode',armed);
+  $('world').classList.toggle('monitor-armed',armed);
   drawMonitorState(state);
+  if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
   if($('bottomHints'))$('bottomHints').hidden=armed;
  }
  $('powerOutput').innerHTML=`${Math.round(Number($('power').value))}<span>%</span>`;$('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd stock carry`;$('shapeLabel').textContent=shape<-2?'Draw':shape>2?'Fade':'Straight';
@@ -607,7 +614,9 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
 // keeps a straight target line, which is what an aim line means for a ball that
 // is about to be in the air.
 function updateAim(syncRange=true){const c=clubs[$('club').value],power=Number($('power').value)/100;
- if(c.code==='PT'){
+ // A putt's length comes from its power -- by hand. Off an armed monitor the
+ // device decides the speed, so the putter aims at a point like any club.
+ if(c.code==='PT'&&!armed){
   const preview=rollPreview(course,round.position,aim,c.speed*power,{turf:settings.turf,seconds:20});
   aimPoint=preview.end;puttPreview=preview;
   const range=preview.distance;
@@ -620,7 +629,7 @@ function updateAim(syncRange=true){const c=clubs[$('club').value],power=Number($
  puttPreview=null;
  const range=aimRange??c.carry*YARD*power**1.65;aimPoint=aimTarget(round.position,aim,range);view.aimRing.visible=true;view.setAim(aim,range);$('aimOutput').textContent=aim.toFixed(1)+'°';if(syncRange!==false)$('aimRange').value=(range/YARD).toFixed(1);$('powerOutput').innerHTML=`${Math.round(power*100)}<span>%</span>`;}
 function powerChanged(){
- if($('club').value==='putter')aimRange=null;
+ if($('club').value==='putter'&&!armed)aimRange=null;
  updateAim();
 }
 function puttPowerFor(distance){
@@ -633,11 +642,12 @@ function puttPowerFor(distance){
  return clamp((lo+hi)/2*100,.5,100);
 }
 function setAimPoint(point){
+ touchAim();
  aimRange=Math.max(.05,Math.hypot(point.x-round.position.x,point.z-round.position.z));
  aim=Math.atan2(point.x-round.position.x,point.z-round.position.z)*180/Math.PI;
  // For a putt the distance is carried by the power, so clicking sets that
  // instead of a range the preview would ignore.
- if($('club').value==='putter'){$('power').value=puttPowerFor(aimRange);aimRange=null;}
+ if($('club').value==='putter'&&!armed){$('power').value=puttPowerFor(aimRange);aimRange=null;}
  updateAim();view.setCamera(round.position,aim);
 }
 
@@ -650,16 +660,40 @@ function setAimPoint(point){
 // the one number a putt's distance comes from -- so it moves that instead of
 // a target the roll preview would ignore.
 const AIM_TAP_DEGREES=.5,AIM_TAP_YARDS=1,PUTT_TAP_POWER=.5;
+// HELD UP OR DOWN WITH A MONITOR ARMED, the aim point walks further or shorter
+// -- by hand those keys are power, which a monitor shot ignores, so with one
+// armed they were doing nothing a player could see. The walk is a share of the
+// distance a second (15%, never under 2 yd/s) so a putt creeps and a drive
+// strides, and it quickens to four times that over a second and a half of
+// holding. Placed numbers, chosen to feel right, not measured from anything.
+let reachHeldFor=0;
+// When the aim was last moved by the player, for the two labels to take turns.
+// Only input moves it -- a new turn setting up its own aim does not -- so the
+// pin's distance is what a player sees on arriving at the ball. How long the
+// aim label stays after the last touch is placed, not measured.
+let aimTouchedAt=-Infinity;
+const AIM_LABEL_HOLD=1000;
+function touchAim(){aimTouchedAt=performance.now();}
+function walkReach(dir,dt){
+ reachHeldFor+=dt;
+ const c=clubs[$('club').value],yards=(aimRange??c.carry*YARD)/YARD;
+ const rate=Math.max(2,yards*.15)*(1+3*Math.min(1,reachHeldFor/1.5));
+ aimRange=clamp(yards+dir*rate*dt,.1,2000)*YARD;
+}
 function canNudgeAim(){return appMode==='play'&&!flight&&!dropState&&!round.holeComplete&&!round.scrambleSelection&&view.config.mode!=='free';}
 function nudgeAim(side,taps){
  if(!canNudgeAim())return;
- aim+=aimDelta(side,taps*AIM_TAP_DEGREES);updateAim();view.setCamera(round.position,aim);
+ aim+=aimDelta(side,taps*AIM_TAP_DEGREES);touchAim();updateAim();view.setCamera(round.position,aim);
 }
 function nudgeReach(dir,taps){
  if(!canNudgeAim())return;
- if($('club').value==='putter'){$('power').value=clamp(Number($('power').value)+dir*taps*PUTT_TAP_POWER,.5,100);updateAim();return;}
+ if($('club').value==='putter'&&!armed){$('power').value=clamp(Number($('power').value)+dir*taps*PUTT_TAP_POWER,.5,100);updateAim();return;}
  const c=clubs[$('club').value],current=aimRange??c.carry*YARD*(Number($('power').value)/100)**1.65;
- aimRange=clamp(current/YARD+dir*taps*AIM_TAP_YARDS,1,2000)*YARD;updateAim();
+ // Off a monitor a putt is aimed by distance too, so inside twenty yards the
+ // step is a foot rather than a yard, and the target may come right up to the
+ // ball. By hand the step and the one-yard floor are as they always were.
+ const fine=armed&&current<20*YARD,step=fine?1/3:AIM_TAP_YARDS;
+ aimRange=clamp(current/YARD+dir*taps*step,armed?.1:1,2000)*YARD;touchAim();updateAim();
 }
 // HOLD TO SWEEP. The press itself is one tap, so a quick tap is always exactly
 // one step. Held past a moment, it repeats at a rate that climbs from three
@@ -755,7 +789,7 @@ function finishShot(){
   view.setShotHistory?.(visibleTrails());
   setUpRangeTurn();
   showRangeResult();
-  view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
+  view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
   save();sendPlayer();
   return;
  }
@@ -764,7 +798,7 @@ function finishShot(){
  // never crossed the boundary line; the house is the edge, and it is where it
  // stopped.
  if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -1139,14 +1173,12 @@ function drawShotViews(){
 function cardRecord(){return flight?.record?liveRecord(flight.record,flight.elapsed):lastShot;}
 // IN MONITOR MODE THE GRID IS GROUPED: the ball (measured), the club (from
 // the monitor, and left out altogether when the device sends none of it --
-// most send ball data only), and the result (what the model did). A player
-// who has chosen their own fields in Shot data gets theirs, grouped; one who
-// has not gets the monitor set below rather than the eight a keyboard fills.
-const MONITOR_FIELDS=['ballSpeed','launch','direction','spin','spinAxis','sideSpin',
- 'clubSpeed','smash','attack','path','faceToTarget','loft',
- 'carry','total','offline','apex','hang','descent'];
+// most send ball data only), and the result (what the model did). The tiles
+// are the monitor's own set (shot-data.js, *TWO SETS*), chosen and ordered
+// apart from the hand set. Before 10 October monitor mode showed eighteen
+// fixed tiles unless the player had chosen their own, and then theirs.
 const GROUP_HEADS={ball:['Ball','measured'],club:['Club','from your monitor'],flight:['Result','simulated'],device:["Monitor's own",'as sent']};
-function panelFields(){return armed&&!hasCustomShotData()?MONITOR_FIELDS:shotPrefs.fields;}
+function panelFields(){return shotPrefs.fields;}
 // "Fit to width" (columns 0) lets the grid take as many tiles across as the
 // panel has room for, so resizing the panel reflows it; a number fixes it.
 const gridOpen=columns=>`<div class="shot-grid${columns?'':' fit'}"${columns?` style="--shot-cols:${columns}"`:''}>`;
@@ -1158,7 +1190,9 @@ function groupedGridHTML(record){
   const {cells}=shotGrid(record,{fields:mine,columns:shotPrefs.columns});
   if(group!=='ball'&&group!=='flight'&&cells.every(c=>c.blank))return '';
   const [title,note]=GROUP_HEADS[group];
-  return `<div class="shot-group"><div class="sg-head"><span>${title}</span><small>${note}</small></div>`
+  // Each group takes a share of the width in proportion to its tiles, so the
+  // ball's five are not squeezed onto two rows beside a result group of three.
+  return `<div class="shot-group" style="flex:${cells.length} 1 0"><div class="sg-head"><span>${title}</span><small>${note}</small></div>`
    +gridOpen(shotPrefs.columns)+cells.map(tile).join('')+`</div></div>`;
  }).join('')+`</div>`;
 }
@@ -1295,9 +1329,9 @@ function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;}
   for(const el of box()?.querySelectorAll('.tile-target,.tile-lifted')??[])el.classList.remove('tile-target','tile-lifted');
   if(!d.moved||ev.type==='pointercancel')return;
   const t=over(ev);if(!t||t.dataset.field===d.id)return;
-  // A monitor player who has never saved a choice is looking at the monitor
-  // set, not their own; reordering it makes it theirs.
-  shotPrefs=saveShotData({fields:moveField(panelFields(),d.id,t.dataset.field),columns:shotPrefs.columns});
+  // The order is saved for the way of playing in force: dragging tiles while
+  // a monitor is armed rearranges the monitor set and leaves the hand set be.
+  shotPrefs=saveShotData({fields:moveField(panelFields(),d.id,t.dataset.field),columns:shotPrefs.columns},playMode());
   refreshShotGrid();
  };
  window.addEventListener('pointerup',end);
@@ -1320,10 +1354,16 @@ function setUpRangeTurn(){
 
 function openPlaySettings(name,content){
  if(name==='shotdata'){
-  // WHAT THE CARD SHOWS, AND HOW MANY ACROSS. The list is built from the field
-  // registry rather than typed out here, so a field added in shot-data.js
+  // WHAT THE SHOT PANEL SHOWS, AND HOW MANY ACROSS. The list is built from the
+  // field registry rather than typed out here, so a field added in shot-data.js
   // appears in this panel without anyone remembering to add it twice.
-  const chosen=new Set(panelFields());
+  //
+  // TWO SETS: playing by hand and playing off an armed monitor are chosen
+  // separately (shot-data.js). The panel opens on the set in force and can be
+  // switched to edit the other; saving the other set leaves the screen alone.
+  const mode=shotDataEditing??playMode();
+  const prefs=mode===playMode()?shotPrefs:loadShotData(mode);
+  const chosen=new Set(prefs.fields);
   const group=g=>{
    const fields=SHOT_FIELDS.filter(f=>f.group===g.id);
    return `<div class="control-card"><h4 class="shot-field-group">${escape(g.label)}</h4>`
@@ -1331,33 +1371,39 @@ function openPlaySettings(name,content){
     +`</div>`;
   };
   content.innerHTML=`<p>Pick the numbers the shot panel shows: live while the ball flies, and kept until the next shot. Drag a tile on the panel onto another to change their order. The five the game actually plays from are ball speed, launch angle, launch direction, spin and spin axis; everything else is extra your launch monitor may send, or what our flight model made of the shot.</p>
-  <label class="field">Columns<select id="shotColumns">${COLUMN_CHOICES.map(c=>`<option value="${c}"${shotPrefs.columns===c?' selected':''}>${c?c+' across':'Fit to width'}</option>`).join('')}</select></label>
+  <label class="field">Numbers for<select id="shotMode"><option value="hand"${mode==='hand'?' selected':''}>Playing by hand</option><option value="monitor"${mode==='monitor'?' selected':''}>Launch monitor (armed)</option></select></label>
+  <p class="note">Each keeps its own tiles, order and columns, and the shot panel keeps its own place for each.${mode===playMode()?'':' You are editing the set that is not on screen right now.'}</p>
+  <label class="field">Columns<select id="shotColumns">${COLUMN_CHOICES.map(c=>`<option value="${c}"${prefs.columns===c?' selected':''}>${c?c+' across':'Fit to width'}</option>`).join('')}</select></label>
   <p class="note" id="shotFieldCount"></p>
   ${FIELD_GROUPS.map(group).join('')}
   <p class="research-label">Club numbers need a monitor that sends them; a keyboard shot leaves those tiles blank rather than filling them with zeros. Face to path is worked out from face and path, because no monitor sends it.</p>
   <button class="secondary" id="shotFieldsReset">Back to the standard set</button>`;
   const count=()=>{
    const n=content.querySelectorAll('input[data-field]:checked').length;
-   $('shotFieldCount').textContent=`${n} of ${MAX_FIELDS} tiles used.`+(n>=MAX_FIELDS?' That is the most the card holds.':'');
+   $('shotFieldCount').textContent=`${n} of ${MAX_FIELDS} tiles used.`+(n>=MAX_FIELDS?' That is the most the panel holds.':'');
    // Ticking a thirteenth would silently drop one on save, which reads as the
    // checkbox not working. Refused at the tick instead.
    for(const el of content.querySelectorAll('input[data-field]'))el.disabled=n>=MAX_FIELDS&&!el.checked;
   };
+  // Saves the set being edited; only the set in force reaches the screen.
+  const keep=next=>{const saved=saveShotData(next,mode);if(mode===playMode()){shotPrefs=saved;refreshShotGrid();}return saved;};
+  let current=prefs;
   const apply=()=>{
    // THE ORDER IS THE PLAYER'S: the tiles they already had keep the order they
    // dragged them into, and a newly ticked one joins the end. Ticking used to
    // put everything back in the registry's order, which once tiles could be
    // dragged would have undone the arrangement every time a box was ticked.
    const on=id=>content.querySelector(`input[data-field="${id}"]`)?.checked;
-   const fields=[...panelFields().filter(on),...SHOT_FIELDS.map(f=>f.id).filter(id=>on(id)&&!panelFields().includes(id))];
-   shotPrefs=saveShotData({fields,columns:Number($('shotColumns').value)});
-   count();refreshShotGrid();
+   const fields=[...current.fields.filter(on),...SHOT_FIELDS.map(f=>f.id).filter(id=>on(id)&&!current.fields.includes(id))];
+   current=keep({fields,columns:Number($('shotColumns').value)});
+   count();
   };
   for(const el of content.querySelectorAll('input[data-field]'))el.onchange=apply;
   $('shotColumns').onchange=apply;
+  $('shotMode').onchange=()=>{shotDataEditing=$('shotMode').value;renderPanel(name,content);};
   $('shotFieldsReset').onclick=()=>{
-   shotPrefs=saveShotData({fields:[...DEFAULT_FIELDS],columns:DEFAULT_COLUMNS});
-   refreshShotGrid();renderPanel(name,content);
+   keep({fields:standardFields(mode),columns:DEFAULT_COLUMNS});
+   renderPanel(name,content);
   };
   count();
  }else if(name==='bag'){
@@ -1977,7 +2023,7 @@ function setMode(mode){
  // a round started from the studio on the same world gets it back here, because
  // nothing else in play turns it on before the first shot.
  if(mode==='studio'&&view){view.aimLine.visible=false;view.aimRing.visible=false;}
- else if(was==='studio'&&mode==='play'&&view){view.aimLine.visible=true;view.aimRing.visible=$('club').value!=='putter';}
+ else if(was==='studio'&&mode==='play'&&view){view.aimLine.visible=true;view.aimRing.visible=armed||$('club').value!=='putter';}
  // Stamped on the shell too, so the menu can take the whole screen. Leaving the
  // top bar showing faintly through a lighter scrim put nav items on screen that
  // the menu does not accept clicks for.
@@ -2533,7 +2579,7 @@ function hudInsets(now){
  // phone the second, the panel, map and aim pad all at the foot. Treating the
  // phone's panel as a side panel pushed the markers into a sliver between it
  // and the map, and the cap below then let them sit on top of it anyway.
- for(const el of [...document.querySelectorAll('.bottom-area,.minimap,.view-tools,.aim-pad')]){
+ for(const el of [...document.querySelectorAll('.bottom-area,.monitor-panel,.shot-panel,.minimap,.view-tools,.aim-pad')]){
   if(!showing(el))continue;
   const r=el.getBoundingClientRect();
   if(r.height>sr.height*.6){
@@ -3963,26 +4009,48 @@ function download(name,data,type){const url=URL.createObjectURL(new Blob([data],
 const monitorState=()=>!monitorConnected?'off'
  :!monitorDevice?'red'
  :monitorDevice.ballDetected?'green':'amber';
-// THE MONITOR'S STATE, at the top of the shot panel whenever a bridge is
-// connected: what it is doing, in words as well as colour, and the switch
-// that arms it. Red offers the two ways out -- reconnect, or hit by hand.
+// THE MONITOR'S STATE, in words as well as colour, whenever a bridge is
+// connected.
+//
+// THE LAUNCH MONITOR WINDOW (10 October 2026, the owner's design). Armed, every
+// shot comes off the device, so the shot controls -- aim arrows, aim distance,
+// power, shape, the shot button, even the tee -- decide nothing, and they go.
+// In their place is a window of its own (#monitorPanel, "Launch monitor" in the
+// layout) holding only what a player at the mat still needs: the ball light,
+// the club the monitor is told about, Reconnect, and the Armed switch. The shot
+// numbers are in the shot panel; aiming is the keyboard, the mouse and the map.
+// It REPLACED a stripped-down version of the shot controls that kept the aim
+// arrows and the distance box and offered "Hit by hand" in red: the Armed switch
+// is the way back to the controls now, so Hit by hand went.
+//
+// Connected but NOT armed, the shot controls keep a slim strip at their top --
+// the light and the same switch -- because that is where a player who has
+// put the monitor down will look to pick it up again.
 const MONITOR_WORDS={
  red:['No monitor','The bridge is running, but no device is talking to it'],
  amber:['Finding ball','Tee up the next one'],
  green:['Ready','Ball on the mat — hit when you are ready'],
 };
+// Which way of playing is in force: it decides the shot panel's tiles and
+// where the shot panel sits, each saved separately (shot-data.js, layout.js).
+const playMode=()=>armed?'monitor':'hand';
 let gridArmed=false;
 function drawMonitorState(state){
- const box=$('monState');if(!box)return;
- // Arming switches the numbers between the plain grid and the grouped one.
- if(armed!==gridArmed){gridArmed=armed;refreshShotGrid();}
- box.hidden=state==='off';
+ const box=$('monState'),win=$('monitorPanel');if(!box||!win)return;
+ // Arming switches the shot panel to the monitor's own set of tiles, grouped,
+ // and to the place it was left in for monitor play.
+ if(armed!==gridArmed){gridArmed=armed;shotDataEditing=null;shotPrefs=loadShotData(playMode());layout?.setVariant(playMode());refreshShotGrid();}
+ box.hidden=state==='off'||armed;
+ win.hidden=!armed;
+ win.dataset.monitor=state;
  if(state!=='off'){
-  $('monTitle').textContent=MONITOR_WORDS[state][0];
-  $('monText').textContent=armed?MONITOR_WORDS[state][1]:'Armed is off: power and the shot button are yours';
+  const [title,text]=MONITOR_WORDS[state];
+  $('monTitle').textContent=title;$('monText').textContent=text;
+  $('monStateTitle').textContent=title;
+  $('monStateText').textContent='Armed is off: power and the shot button are yours';
  }
- $('monArm').checked=armed;$('monArm').disabled=!monitorConnected;
- $('clubSource').textContent=armed?'sent to your monitor':'';
+ for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armed;el.disabled=!monitorConnected;}
+ $('clubSource').textContent='';
 }
 // WHERE THE BRIDGE IS, remembered per device once a connection succeeds. With
 // nothing remembered: a page the bridge served itself -- plain http, which is
@@ -4531,7 +4599,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
- $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('power').oninput=powerChanged;$('club').onchange=()=>{updateAim();updateHUD();sendPlayer();};
+ $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('power').oninput=powerChanged;$('club').onchange=()=>{updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));
@@ -4599,15 +4667,19 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  $('camButton').onclick=e=>{e.stopPropagation();setCams(!$('world').classList.contains('cams-open'));};
  document.querySelector('.view-tools').addEventListener('click',e=>{if(e.target.closest('.tool'))setCams(false);});
  document.addEventListener('pointerdown',e=>{if($('world').classList.contains('cams-open')&&!e.target.closest('.view-tools,#camButton'))setCams(false);});
- // THE MONITOR, from the panel itself: arm it, reconnect it, or put it down
- // and hit by hand. The same switch as the one in Connect monitor.
- $('monArm').onchange=()=>{armed=$('monArm').checked&&monitorConnected;if($('armMonitor'))$('armMonitor').checked=armed;updateHUD();sendPlayer();};
+ // THE MONITOR, from the play screen: arm it or put it down -- the switch in
+ // the launch monitor window and the one on the shot controls' strip are the
+ // same switch as the one in Connect monitor -- and reconnect it.
+ for(const el of document.querySelectorAll('.mon-arm-input'))el.onchange=()=>{armed=el.checked&&monitorConnected;if($('armMonitor'))$('armMonitor').checked=armed;updateHUD();sendPlayer();};
+ // The window's club is the shot controls' club, shown in a second picker:
+ // one value (#club) that everything reads, and this one mirrors it.
+ $('monClub').innerHTML=$('club').innerHTML;
+ $('monClub').onchange=()=>{$('club').value=$('monClub').value;$('club').onchange();};
  $('monReconnect').onclick=()=>{
   const url=ws?.url||lastBridgeUrl;
   if(ws){const old=ws;ws=null;old.close();setConnection(false);}
   connectBridge(url);
  };
- $('monByHand').onclick=()=>{armed=false;if($('armMonitor'))$('armMonitor').checked=false;updateHUD();sendPlayer();toast('Monitor off. Power and the shot button are back.');};
  // ADD TO HOME SCREEN, SAID ONCE. iOS never offers it -- the option is in the
  // Share sheet, where nobody looks -- and it is the only way an iPhone plays
  // full screen. So a hosted copy opened in a browser on an iPhone or iPad says
@@ -4857,7 +4929,7 @@ function tick(now){
  if(pad){if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))takeShot();if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
  if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
- if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(turn||power){aim+=aimDelta(turn,dt*18);if(power){$('power').value=clamp(Number($('power').value)+power*dt*35,.5,100);if($('club').value==='putter')aimRange=null;}updateAim();view.setCamera(round.position,aim);}}
+ if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(turn||power){aim+=aimDelta(turn,dt*18);if(power){if(armed)walkReach(power,dt);else{$('power').value=clamp(Number($('power').value)+power*dt*35,.5,100);if($('club').value==='putter')aimRange=null;}}touchAim();updateAim();view.setCamera(round.position,aim);}}
  // Once per rendered frame, whether or not the aim block above ran: a tap is
  // owed to the next frame that can use it, not saved up behind an open panel.
  tapped.clear();
@@ -4939,11 +5011,21 @@ function tick(now){
   // Hidden when it would sit on top of the flag: within 8 m the two markers
   // overlap and you get one unreadable pile instead of two labels.
   const nearPin=a&&Math.hypot(a.x-pin.x,a.z-pin.z)<8;
-  // ON THE GREEN, the flag marker is the only number that matters. The aim
-  // marker would sit feet from it saying nearly the same thing, and the roll
-  // preview line already draws where the putt finishes.
-  const show=!!a&&worldLabels&&!nearPin&&!dropState&&!ballOnGreen;
+  // ON THE GREEN, by hand, the flag marker is the only number that matters.
+  // The aim marker would sit feet from it saying nearly the same thing, and
+  // the roll preview line already draws where the putt finishes. Off an armed
+  // monitor there is no roll preview -- the device decides the speed -- and the
+  // aim point is how far you mean to hit it, so it is shown there too.
+  const show=!!a&&worldLabels&&!nearPin&&!dropState&&(!ballOnGreen||armed);
   $('aimLabel').hidden=!show;
+  // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
+  // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"
+  // over "257 TO AIM POINT". Now the pin's distance is the one at rest; moving
+  // the aim fades it out and the aim point's in, and a moment after the aim
+  // stops the two change back. The stylesheet does the fading.
+  const aiming=show&&now-aimTouchedAt<AIM_LABEL_HOLD;
+  $('aimLabel').classList.toggle('faded',!aiming);
+  flagEl.classList.toggle('faded',aiming);
   if(show){
    const q=view.project({x:a.x,y:course.height(a.x,a.z)+3,z:a.z});
    $('aimLabel').style.left=q.x+'px';$('aimLabel').style.top=q.y+'px';

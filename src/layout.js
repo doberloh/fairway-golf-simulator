@@ -32,7 +32,10 @@ const sections = [
  // The shot's numbers, live while it flies and kept until the next one
  // (main.js, *THE SHOT PANEL*). Added 10 October 2026 with no change to KEY:
  // nobody has a saved position for it, so everyone starts from its default.
- ['.shot-panel', 'Shot data'],
+ ['.shot-panel', 'Shot data', 'first', 'per-mode'],
+ // The launch monitor's window, shown in place of the shot controls while a
+ // monitor is armed (main.js, *THE LAUNCH MONITOR WINDOW*).
+ ['.monitor-panel', 'Launch monitor'],
  ['.view-tools', 'Tools tray'],
  ['#exploreBar', 'Flight controls', 'last'],
 ];
@@ -54,7 +57,7 @@ export function createLayout(world) {
  let saved = {};
  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
  const entries = sections
-  .map(([selector, name, place]) => ({el: world.querySelector(selector), name, selector, last: place === 'last'}))
+  .map(([selector, name, place, modes]) => ({el: world.querySelector(selector), name, selector, last: place === 'last', perMode: modes === 'per-mode'}))
   .filter(e => e.el);
 
  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
@@ -82,9 +85,21 @@ export function createLayout(world) {
   });
   return r;
  }
+ // A PLACE PER WAY OF PLAYING, for the panels that want one. The shot panel can
+ // sit in one spot while you play by hand and another with a monitor armed --
+ // the owner asked for the two modes to be tuned separately. Playing by hand
+ // keeps the plain selector as its key, so places saved before the split are
+ // the hand places; the monitor's are stored as 'selector@monitor'.
+ let variant = 'hand';
+ const keyOf = e => e.perMode && variant !== 'hand' ? `${e.selector}@${variant}` : e.selector;
+ // Undoes a placement without touching anything else written on the element's
+ // style -- the shot panel carries --tiles there, which removing the whole
+ // style attribute used to sweep away with the position.
+ const PLACED = ['left', 'top', 'width', 'height', 'right', 'bottom', 'max-width'];
+ const unplace = e => { e.el.classList.remove('hud-custom'); for (const p of PLACED) e.el.style.removeProperty(p); };
  function store(e, r) {
   const {w, h} = area();
-  saved[e.selector] = {x: r.x / w, y: r.y / h, w: r.w / w, h: r.h / h};
+  saved[keyOf(e)] = {x: r.x / w, y: r.y / h, w: r.w / w, h: r.h / h};
   persist();
  }
 
@@ -200,7 +215,7 @@ export function createLayout(world) {
 
  function restore() {
   for (const e of entries) {
-   const r = saved[e.selector];
+   const r = saved[keyOf(e)];
    if (r && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(r[k]))) {
     const {w, h} = area();
     apply(e, {x: r.x * w, y: r.y * h, w: r.w * w, h: r.h * h});
@@ -209,10 +224,7 @@ export function createLayout(world) {
  }
  function reset() {
   saved = {}; persist();
-  for (const e of entries) {
-   e.el.classList.remove('hud-custom');
-   e.el.removeAttribute('style');
-  }
+  for (const e of entries) unplace(e);
   pads();
  }
  new ResizeObserver(restore).observe(world);
@@ -304,5 +316,13 @@ export function createLayout(world) {
  // state to report -- every panel drags and resizes whenever you like, so the
  // answer to "are we arranging?" was permanently yes and every caller asking it
  // has been removed.
- return {reset};
+ // Switching ways of playing puts each per-mode panel where it was left for
+ // that mode, or back at its default if it never was moved there.
+ function setVariant(v) {
+  if (v === variant) return;
+  variant = v;
+  for (const e of entries) if (e.perMode) unplace(e);
+  restore();
+ }
+ return {reset, setVariant};
 }

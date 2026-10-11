@@ -319,11 +319,11 @@ button.danger:hover{background:rgba(141,63,44,.1)}
    top of the club name. An inset shadow paints above the background and below the
    content, which is exactly what a tint is. The card's own drop shadow has to be
    restated in each rule, because box-shadow does not merge across declarations. */
-.shot-controls[data-monitor]{transition:box-shadow .3s}
+.shot-controls[data-monitor],.monitor-panel[data-monitor]{transition:box-shadow .3s}
 .shot-controls[data-monitor=off]{}
-.shot-controls[data-monitor=red]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(224,104,92,.5),inset 0 0 0 1px rgba(224,104,92,.5),inset 0 0 0 9999px rgba(160,52,44,.17)}
-.shot-controls[data-monitor=amber]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(232,182,80,.5),inset 0 0 0 1px rgba(232,182,80,.5),inset 0 0 0 9999px rgba(190,140,40,.17);animation:monitor-hunting 1.6s ease-in-out infinite}
-.shot-controls[data-monitor=green]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(126,214,142,.55),inset 0 0 0 1px rgba(126,214,142,.55),inset 0 0 0 9999px rgba(70,150,88,.19);animation:monitor-locked .7s ease-out 1}
+.shot-controls[data-monitor=red],.monitor-panel[data-monitor=red]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(224,104,92,.5),inset 0 0 0 1px rgba(224,104,92,.5),inset 0 0 0 9999px rgba(160,52,44,.17)}
+.shot-controls[data-monitor=amber],.monitor-panel[data-monitor=amber]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(232,182,80,.5),inset 0 0 0 1px rgba(232,182,80,.5),inset 0 0 0 9999px rgba(190,140,40,.17);animation:monitor-hunting 1.6s ease-in-out infinite}
+.shot-controls[data-monitor=green],.monitor-panel[data-monitor=green]{box-shadow:0 16px 46px rgba(4,10,7,.48),0 0 0 1px rgba(126,214,142,.55),inset 0 0 0 1px rgba(126,214,142,.55),inset 0 0 0 9999px rgba(70,150,88,.19);animation:monitor-locked .7s ease-out 1}
 /* Amber BREATHES because the device is still searching; green pulses ONCE and
    settles, because a light that keeps blinking while you stand over a shot is
    the opposite of helpful. */
@@ -344,7 +344,7 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .shot-controls[data-monitor=amber]::after{content:'FINDING BALL';color:rgba(242,204,128,.95)}
 .shot-controls[data-monitor=green]::after{content:'READY';color:rgba(154,232,168,.95)}
 @media(prefers-reduced-motion:reduce){
- .shot-controls[data-monitor]{animation:none!important}
+ .shot-controls[data-monitor],.monitor-panel[data-monitor],.mon-dot{animation:none!important}
 }
 
 /* Playing-from, beside in-the-bag. The tee was in the strip above the bar with
@@ -357,6 +357,8 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 /* The aim point, marked in the world like the flag. Deliberately quieter than
    the pin marker -- smaller type, no circle badge weight, and the aim line's own
    yellow -- because the flag is the target and this is only where you pointed. */
+.aim-label,.flag-label{transition:opacity .3s ease}
+.aim-label.faded,.flag-label.faded{opacity:0}
 .aim-label{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);pointer-events:none;z-index:3;color:#fff6d0;text-shadow:0 1px 9px rgba(38,65,41,.65)}
 .aim-label>span{border:1px dashed rgba(255,241,172,.75);background:rgba(90,78,40,.42);width:24px;height:24px;display:grid;place-items:center;border-radius:50%;margin-bottom:6px}
 .aim-label>span svg{width:13px;height:13px;stroke:#fff1ac}
@@ -741,24 +743,39 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 .shot-group .sg-head small{font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint)}
 
 /* ------------------------------------------------------- monitor mode */
-/* The club, the aim, and the numbers. Power, shape and the shot button decide
-   nothing when the monitor is armed -- the device measures the swing -- so
-   they go. Aim STAYS: it used to go too, on the reasoning that clicking the
-   course still aims, but it is the one thing a player with a monitor still
-   decides before every shot, and the owner's call on 26 September was to keep
-   it in front of them. */
-#world .shot-controls.monitor-mode .power-control,
-#world .shot-controls.monitor-mode .shape-button,
-#world .shot-controls.monitor-mode .tee-control,
-#world .shot-controls.monitor-mode #swing,
-#world .shot-controls.monitor-mode #clubHint{display:none}
-/* The whole panel carries the state light (the tint rules further up); the
-   words used to be a small label in its corner, and are the heading now. */
-#world .shot-controls[data-monitor]::after{content:none}
+/* THE LAUNCH MONITOR WINDOW (main.js, *THE LAUNCH MONITOR WINDOW*). Armed, the
+   shot controls go altogether and this takes their place: the light, the
+   Armed switch, the club and Reconnect. It replaced a stripped-down version of
+   the controls that kept the aim arrows and the distance box (the owner's call
+   of 26 September, reversed on 10 October: aiming with a monitor is the
+   keyboard, the mouse and the map, and the window holds nothing else). It is a
+   panel of its own, with its own saved place. */
+#world.monitor-armed .bottom-area{display:none!important}
+#world .monitor-panel{position:absolute;z-index:4;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;
+ padding:14px 16px 16px;border-radius:var(--panel-radius);background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);
+ box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15)}
+#world .monitor-panel[hidden]{display:none}
+#world .monitor-panel:not(.hud-custom){left:var(--edge-l);top:var(--edge-t);width:var(--panel-w)}
+.monitor-panel .mon-text{font-size:12px}
+.mon-club label{display:flex;align-items:baseline;gap:6px;font-size:8.5px;font-weight:650;letter-spacing:1.5px;color:var(--ink-faint)}
+.mon-club label em{font-style:normal;font-weight:500;letter-spacing:.2px;text-transform:none;color:var(--ink-faint);margin-left:auto}
+.mon-club .club-select{margin:6px 0 0}
+.mon-reconnect{display:flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 12px;font-size:12px}
+.mon-reconnect svg{width:14px;height:14px}
+/* Connected but not armed, the shot controls carry a slim strip with the same
+   light and switch at their top: the way back to the monitor. */
 #world .mon-state{display:flex;flex-direction:column;gap:5px;padding:12px 16px;border-radius:12px 12px 0 0}
 #world .mon-state[hidden]{display:none}
 .mon-head{display:flex;align-items:center;gap:9px}
-.mon-dot{width:11px;height:11px;border-radius:50%;background:var(--mon);box-shadow:0 0 10px var(--mon)}
+/* THE BALL LIGHT FLASHES: red quickly, because nothing will happen until it is
+   seen to; amber slowly, while the device hunts for a ball; green glows
+   steadily, because a light that keeps blinking while you stand over a shot is
+   the opposite of helpful. The owner asked for the colours to flash. */
+.mon-dot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--mon);box-shadow:0 0 10px var(--mon)}
+[data-monitor=red] .mon-dot{animation:mon-flash .6s steps(2,jump-none) infinite}
+[data-monitor=amber] .mon-dot{animation:mon-flash 1.2s ease-in-out infinite}
+[data-monitor=green] .mon-dot{box-shadow:0 0 14px 2px var(--mon)}
+@keyframes mon-flash{50%{opacity:.2;box-shadow:none}}
 .mon-head strong{font:700 14px var(--font-ui);letter-spacing:1.4px;text-transform:uppercase;color:var(--mon)}
 .mon-arm{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px!important;font-weight:500!important;letter-spacing:0!important;color:var(--ink-dim)!important;cursor:pointer}
 .mon-arm input{appearance:none;-webkit-appearance:none;width:32px;height:18px;border-radius:9px;margin:0;background:rgba(236,243,230,.25);position:relative;cursor:pointer;transition:background .15s}
@@ -767,13 +784,9 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 .mon-arm input:checked::after{transform:translateX(14px)}
 .mon-arm input:disabled{opacity:.4;cursor:default}
 .mon-text{font-size:11.5px;color:var(--ink-dim)}
-.mon-actions{display:none;gap:8px;margin-top:4px}
-.mon-actions button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;font-size:12px}
-.mon-actions button svg{width:14px;height:14px}
-.shot-controls[data-monitor=red] .mon-actions{display:flex}
-.shot-controls[data-monitor=red]{--mon:#e0685c}
-.shot-controls[data-monitor=amber]{--mon:#e8b650}
-.shot-controls[data-monitor=green]{--mon:#7ed68e}
+.shot-controls[data-monitor=red],.monitor-panel[data-monitor=red]{--mon:#e0685c}
+.shot-controls[data-monitor=amber],.monitor-panel[data-monitor=amber]{--mon:#e8b650}
+.shot-controls[data-monitor=green],.monitor-panel[data-monitor=green]{--mon:#7ed68e}
 
 
 /* ------------------------------------------------------- where it hides */
@@ -788,7 +801,8 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 #world.dropping .view-tools{display:none!important}
 #world.exploring .minimap:not(.hud-custom){bottom:calc(100% - var(--controls-top,100%) + var(--gap))}
 #world[data-mode="menu"] .cam-button,#world[data-mode="menu"] .aim-pad,#world[data-mode="studio"] .aim-pad,#world.exploring .aim-pad,#world.dropping .aim-pad,
-#world[data-mode="menu"] .shot-panel,#world[data-mode="studio"] .shot-panel,#world.exploring .shot-panel{display:none!important}
+#world[data-mode="menu"] .shot-panel,#world[data-mode="studio"] .shot-panel,#world.exploring .shot-panel,
+#world[data-mode="menu"] .monitor-panel,#world[data-mode="studio"] .monitor-panel,#world.exploring .monitor-panel{display:none!important}
 /* A bar that takes over the foot of the screen -- a drop, a scramble pick,
    free flight -- starts right of the panel rather than under it. */
 #world:not(.exploring) #dropBar:not(.hud-custom),#world:not(.exploring) #pickBar:not(.hud-custom){
@@ -843,6 +857,8 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 
  /* The panel: bottom-left, as tall as what is in it. */
  #world .bottom-area:not(.hud-custom){top:auto;bottom:var(--edge-b);width:var(--panel-w);max-height:calc(100% - var(--edge-t) - var(--edge-b))}
+ /* The launch monitor window takes the shot controls' corner on a phone. */
+ #world .monitor-panel:not(.hud-custom){top:auto;bottom:var(--edge-b);width:var(--panel-w);padding:10px 13px 12px;gap:8px}
  #world .shot-controls>*{padding:10px 13px}
  #world .tee-control,#world .aim-control,#world .shape-button{display:none!important}
  #world .club-select{margin:4px 0 2px}
@@ -1071,9 +1087,9 @@ html,body{overscroll-behavior:none}
    and those numbers live in the shot panel now. The class is `in-flight` on
    #world, set from the flight itself every frame.
    ========================================================================= */
-#world .bottom-area,#world .view-tools,#world .cam-button,#world .aim-pad,#world .course-info{
+#world .bottom-area,#world .monitor-panel,#world .view-tools,#world .cam-button,#world .aim-pad,#world .course-info{
  transition:opacity .2s ease,visibility 0s linear 0s}
-#world.in-flight .bottom-area,#world.in-flight .view-tools,#world.in-flight .cam-button,#world.in-flight .aim-pad,#world.in-flight .bottom-hints{
+#world.in-flight .bottom-area,#world.in-flight .monitor-panel,#world.in-flight .view-tools,#world.in-flight .cam-button,#world.in-flight .aim-pad,#world.in-flight .bottom-hints{
  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
 @container app (max-width:560px) or (max-height:500px){
  #world .sp-skip{min-height:44px}

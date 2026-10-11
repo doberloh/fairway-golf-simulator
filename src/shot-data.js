@@ -164,43 +164,72 @@ export const COLUMN_CHOICES = [0, 2, 3, 4, 6, 8];
 // More than this and the panel crowds the course on a laptop.
 export const MAX_FIELDS = 12;
 
-// v2 when the grid became the shot panel. A v1 record's FIELDS and their order
-// are kept -- they are the player's choice -- but its column count is not: it
-// was picked for a card down the side of the screen, and three across in a
-// panel along the bottom is a tall narrow block over the course.
-const KEY = 'fairway-shot-data-v2', OLD_KEY = 'fairway-shot-data-v1';
+// THE MONITOR'S STANDARD SET: the five it measures, the four club numbers most
+// worth reading when a device sends club data, and what the model made of it.
+// Twelve, the panel's limit. The club four drop out of sight on their own when a
+// device sends ball data only (main.js, groupedGridHTML), which most do.
+export const MONITOR_FIELDS =
+ ['ballSpeed', 'launch', 'direction', 'spin', 'spinAxis',
+  'clubSpeed', 'smash', 'path', 'faceToTarget',
+  'carry', 'total', 'offline'];
+
+// TWO SETS, ONE PER WAY OF PLAYING (10 October 2026). Playing by hand -- the
+// keyboard, touch, a controller -- and playing off an armed launch monitor are
+// tuned separately, at the owner's request: a monitor fills club numbers a hand
+// shot never has, and the player who switches between them wants each set as
+// they left it. `mode` is 'hand' or 'monitor'.
+//
+// v2 for 'hand' when the grid became the shot panel. A v1 record's FIELDS and
+// their order are kept -- they are the player's choice -- but its column count
+// is not: it was picked for a card down the side of the screen, and three
+// across in a panel along the bottom is a tall narrow block over the course.
+const KEY = {hand: 'fairway-shot-data-v2', monitor: 'fairway-shot-data-monitor-v1'};
+const OLD_KEY = 'fairway-shot-data-v1';
+const DEFAULTS = {hand: DEFAULT_FIELDS, monitor: MONITOR_FIELDS};
+const modeOf = m => m === 'monitor' ? 'monitor' : 'hand';
 
 // Unknown ids are DROPPED rather than rejected, so retiring a field later
 // leaves an old saved record still usable instead of resetting someone's whole
 // layout. Duplicates are dropped for the same reason.
-const clean = s => {
- const seen = new Set();
- const fields = (Array.isArray(s?.fields) ? s.fields : DEFAULT_FIELDS)
+const clean = (s, mode = 'hand') => {
+ const seen = new Set(), standard = DEFAULTS[modeOf(mode)];
+ const fields = (Array.isArray(s?.fields) ? s.fields : standard)
   .filter(id => BY_ID.has(id) && !seen.has(id) && seen.add(id))
   .slice(0, MAX_FIELDS);
  return {
-  fields: fields.length ? fields : [...DEFAULT_FIELDS],
+  fields: fields.length ? fields : [...standard],
   columns: COLUMN_CHOICES.includes(s?.columns) ? s.columns : DEFAULT_COLUMNS,
  };
 };
 
-export function loadShotData() {
- try {
-  const now = localStorage.getItem(KEY);
-  if (now != null) return clean(JSON.parse(now));
-  const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
-  return clean(old ? {fields: old.fields, columns: DEFAULT_COLUMNS} : null);
- } catch {
-  return clean(null);
- }
+const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
+function loadHand() {
+ const now = read(KEY.hand);
+ if (now) return clean(now, 'hand');
+ const old = read(OLD_KEY);
+ return clean(old ? {fields: old.fields, columns: DEFAULT_COLUMNS} : null, 'hand');
 }
 
-// Whether the player has ever saved a choice in Shot data. Launch-monitor mode
-// shows its own grouped set -- ball, club, result -- until they have, because
-// the default eight are what a keyboard shot can fill, not what a monitor does.
-export function hasCustomShotData() {
- try { return localStorage.getItem(KEY) != null || localStorage.getItem(OLD_KEY) != null; } catch { return false; }
+// A monitor set nobody has saved yet starts from the player's own hand set, if
+// they ever chose one -- which is what monitor mode showed before the two were
+// split, and a player who had picked their numbers should not lose them by
+// arming a device -- and from the monitor's standard set otherwise.
+export function loadShotData(mode = 'hand') {
+ if (modeOf(mode) === 'hand') return loadHand();
+ const now = read(KEY.monitor);
+ if (now) return clean(now, 'monitor');
+ return hasCustomShotData('hand') ? {...loadHand()} : clean(null, 'monitor');
 }
+
+// Whether the player has ever saved a choice for that way of playing.
+export function hasCustomShotData(mode = 'hand') {
+ try {
+  if (modeOf(mode) === 'monitor') return localStorage.getItem(KEY.monitor) != null;
+  return localStorage.getItem(KEY.hand) != null || localStorage.getItem(OLD_KEY) != null;
+ } catch { return false; }
+}
+
+export const standardFields = mode => [...DEFAULTS[modeOf(mode)]];
 
 // A TILE DRAGGED ONTO ANOTHER takes that tile's place, and everything between
 // shuffles along one -- the way a list reorders under a finger, rather than the
@@ -263,10 +292,10 @@ export function liveRecord(record, t) {
  }};
 }
 
-export function saveShotData(prefs) {
- const next = clean(prefs);
+export function saveShotData(prefs, mode = 'hand') {
+ const next = clean(prefs, mode);
  try {
-  localStorage.setItem(KEY, JSON.stringify(next));
+  localStorage.setItem(KEY[modeOf(mode)], JSON.stringify(next));
  } catch {}
  return next;
 }
