@@ -1224,3 +1224,31 @@ html,body{overscroll-behavior:none}
    markers. The toast stays, to say how to get it back, and so does the list
    of keys if it is asked for. */
 #app.hud-hidden .topbar,#app.hud-hidden #world>*:not(#scene):not(#toast):not(#keysHelp){visibility:hidden!important}
+
+/* THE SHOT PANEL'S TILES, after the owner played with it (11 October 2026): each
+   number in a box of its own, each section (ball, club, result) a box around
+   its tiles, and the numbers bold and sized off the width of the screen --
+   15 px on a phone up to 26 px on a big screen, sized so a laptop fits the
+   ball's five and the result's three on one row each. Placed sizes. */
+#world .shot-panel .shot-groups{gap:8px;margin-top:6px}
+#world .shot-panel .shot-group{padding:7px 9px 9px;border:1px solid var(--glass-line);border-radius:10px;background:rgba(0,0,0,.14)}
+#world .shot-panel .sg-head{margin-bottom:6px}
+#world .shot-panel .shot-grid{gap:6px;margin-top:0}
+/* A section keeps its tiles on one row, each as wide as its number needs; a
+   panel too narrow for every section puts a whole section on the next line
+   rather than one tile of it. A phone, too narrow for even one, wraps tiles. */
+#world .shot-panel .shot-grid.fit{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr)}
+#world .shot-panel .shot-groups>.shot-group{min-width:auto}
+@container app (max-width:560px) or (max-height:500px){
+ #world .shot-panel .shot-grid.fit{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+ #world .shot-panel .shot-groups>.shot-group{min-width:min(100%,180px);padding:5px 6px 6px}
+ #world .shot-panel .shot-grid>div{padding:3px 5px}
+ /* Open on a phone, the panel stops above the shot controls and scrolls
+    inside itself: boxed, it was tall enough to cover the club held sideways. */
+ #world .shot-panel:not(.hud-custom){max-height:calc(var(--controls-top,60%) - var(--edge-t) - var(--gap))}
+}
+#world .shot-panel .shot-grid>div{padding:5px 6px;border:1px solid var(--glass-line);border-radius:7px;background:rgba(255,255,255,.05)}
+#world .shot-panel .shot-grid strong{font-weight:700;font-size:clamp(15px,1.3cqw,26px);letter-spacing:-.3px;text-overflow:clip}
+#world .shot-panel .shot-grid strong small{font-weight:500;font-size:.55em}
+/* Bigger than a phone only: a phone sizes the panel to the top row instead. */
+@container app (min-width:561px) and (min-height:501px){#world .shot-panel:not(.hud-custom){width:calc(var(--tiles,8) * clamp(84px,8.4cqw,142px) + 60px)}}

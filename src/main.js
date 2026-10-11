@@ -1251,20 +1251,19 @@ function groupedGridHTML(record){
   if(!mine.length)return '';
   const {cells}=shotGrid(record,{fields:mine,columns:shotPrefs.columns});
   if(group!=='ball'&&group!=='flight'&&cells.every(c=>c.blank))return '';
-  const [title,note]=GROUP_HEADS[group];
+  const [title]=GROUP_HEADS[group];
   // Each group takes a share of the width in proportion to its tiles, so the
   // ball's five are not squeezed onto two rows beside a result group of three.
-  return `<div class="shot-group" style="flex:${cells.length} 1 0"><div class="sg-head"><span>${title}</span><small>${note}</small></div>`
+  // "measured" / "simulated" beside each heading went (owner: out of place).
+  return `<div class="shot-group" style="flex:${cells.length} 1 0"><div class="sg-head"><span>${title}</span></div>`
    +gridOpen(shotPrefs.columns)+cells.map(tile).join('')+`</div></div>`;
  }).join('')+`</div>`;
 }
 const tileInner=c=>`<strong>${c.value}${c.unit?`${c.unit.startsWith('°')?'':' '}<small>${c.unit}</small>`:''}</strong><span>${escape(c.label.toUpperCase())}</span>`;
 const tile=c=>`<div data-field="${c.id}"${c.blank?' class="blank"':''}>${tileInner(c)}</div>`;
-function gridHTML(record=cardRecord()){
- if(armed)return groupedGridHTML(record);
- const {columns,cells}=shotGrid(record,shotPrefs);
- return gridOpen(columns)+cells.map(tile).join('')+`</div>`;
-}
+// GROUPED IN EVERY MODE since 11 October 2026: the owner asked for the ball,
+// club and result numbers to be set off in sections of their own.
+function gridHTML(record=cardRecord()){return groupedGridHTML(record);}
 // What the shot was, in one line, above the grid. The numbers themselves are in
 // the grid, so this says which shot you are looking at rather than repeating it.
 function shotCaption(record=cardRecord()){
@@ -5094,14 +5093,18 @@ function tick(now){
   // the roll preview line already draws where the putt finishes. Off an armed
   // monitor there is no roll preview -- the device decides the speed -- and the
   // aim point is how far you mean to hit it, so it is shown there too.
-  const show=!!a&&worldLabels&&!nearPin&&!dropState&&(!ballOnGreen||armed);
+  // While the player is aiming the pin's label has faded out, so there is no
+  // pile for the 8 m rule to prevent; it applies only at rest. Without this the
+  // aim label vanished as the aim crossed the pin (owner, 11 October 2026).
+  const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
+  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState&&(!ballOnGreen||armed);
   $('aimLabel').hidden=!show;
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
   // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"
   // over "257 TO AIM POINT". Now the pin's distance is the one at rest; moving
   // the aim fades it out and the aim point's in, and a moment after the aim
   // stops the two change back. The stylesheet does the fading.
-  const aiming=show&&now-aimTouchedAt<AIM_LABEL_HOLD;
+  const aiming=show&&recent;
   $('aimLabel').classList.toggle('faded',!aiming);
   flagEl.classList.toggle('faded',aiming);
   if(show){

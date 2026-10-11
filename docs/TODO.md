@@ -909,6 +909,11 @@ so several of these play differently as well as look different.
   off). **The descent onto a new hole** takes 3.5-5.5 s instead of at most
   2.6, and goes through trees rather than over them. The hole intro stays on
   always, by the owner's call.
+- [x] **After the owner tried it (11 October):** the shot panel boxes every
+  number and every section, grouped in every mode, numbers bold and sized to
+  the screen, without the measured/simulated notes; the aim label no longer
+  vanishes crossing the pin while aiming; chips are followed from behind, and
+  the landing camera swings behind the ball for the roll-out.
 - [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
   check read the first line of the grid, which a penalty replaces; the caption
   is in the panel's header now.

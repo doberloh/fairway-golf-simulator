@@ -2302,7 +2302,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const tv=this.tv;if(!tv)return;
   const b=this.course.toWorld(p),ball=new T.Vector3(b.x,p.y,b.z);
   if(!tv.cut&&tv.plan?.landEye&&t>=tv.plan.cutAt){tv.cut=true;const e=tv.plan.landEye;this.camera.position.set(e.x,e.y,e.z);this.look.copy(ball);}
-  const eye=tv.cut?tv.plan.landEye:tv.tee;
+  // SWINGING IN BEHIND THE BALL (owner, 11 October 2026). A chip has no landing
+  // camera, and a camera that only turned left it sitting at the tee: it now
+  // eases in behind the ball over the first 0.8 s and follows it. A long shot's
+  // landing camera does the same over 2.2 s once the ball is down, so the
+  // roll-out is watched from behind, toward where it will finish. 12-14 m back
+  // and 4-5 m up; all placed.
+  const d=tv.plan?.dir,smooth=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v);};
+  const behind=(back,up)=>({x:ball.x-d.x*back,y:ball.y+up,z:ball.z-d.z*back});
+  const mix=(a,b,f)=>({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f});
+  const eye=!d?(tv.cut?tv.plan.landEye:tv.tee)
+   :!tv.plan.landEye?mix(tv.tee,behind(12,4),smooth(t/.8))
+   :tv.cut?mix(tv.plan.landEye,behind(14,5),smooth((t-tv.plan.hang)/2.2)):tv.tee;
   this.targetPos.set(eye.x,eye.y,eye.z);this.targetLook.copy(ball);this.trackingBall=true;
  }
  // The whole shot, once the ball has stopped: flown to, not cut to, and held.

@@ -81,8 +81,14 @@ function clearest(candidates, at, groundAt, trees) {
 // are the world's. Returns when to cut and where the landing camera stands, in
 // world coordinates, or no cut at all.
 export function planShotCamera({points, hang, carry, toWorld, groundAt, trees}) {
- const none = {cutAt: Infinity, landEye: null};
- if (!(hang > 0) || !(carry >= TV.minCarry) || !points?.length) return none;
+ if (!points?.length) return {cutAt: Infinity, landEye: null, dir: null};
+ // THE WAY THE SHOT GOES, across the ground in world coordinates, which both
+ // cameras swing in behind as the ball runs out (owner, after trying it): the
+ // whole shot for a short one, the descent for a long one.
+ const worldDir = (a, b) => { const p = toWorld(a), q = toWorld(b), l = Math.hypot(q.x - p.x, q.z - p.z); return l > 1e-6 ? {x: (q.x - p.x) / l, z: (q.z - p.z) / l} : null; };
+ const end = points[points.length - 1];
+ const none = {cutAt: Infinity, landEye: null, dir: worldDir(points[0], end), hang: hang || 0};
+ if (!(hang > 0) || !(carry >= TV.minCarry)) return none;
  let top = 0;
  for (let i = 1; i < points.length; i++) if (points[i].y > points[top].y) top = i;
  const apexT = points[top].t;
@@ -104,7 +110,7 @@ export function planShotCamera({points, hang, carry, toWorld, groundAt, trees}) 
   }
  const landW = toWorld(land), at = {x: landW.x, y: groundAt(landW.x, landW.z) + 1, z: landW.z};
  const landEye = clearest(candidates, at, groundAt, trees);
- return landEye ? {cutAt, landEye, landing: at} : none;
+ return landEye ? {cutAt, landEye, landing: at, hang, dir: worldDir(before, land) || none.dir} : none;
 }
 
 // THE REVIEW: one place to see the whole shot from, tee to rest. `fov` is the
