@@ -1234,13 +1234,14 @@ html,body{overscroll-behavior:none}
 #world .shot-panel .shot-group{padding:7px 9px 9px;border:1px solid var(--glass-line);border-radius:10px;background:rgba(0,0,0,.14)}
 #world .shot-panel .sg-head{margin-bottom:6px}
 #world .shot-panel .shot-grid{gap:6px;margin-top:0}
-/* A section keeps its tiles on one row, each as wide as its number needs; a
-   panel too narrow for every section puts a whole section on the next line
-   rather than one tile of it. A phone, too narrow for even one, wraps tiles. */
-#world .shot-panel .shot-grid.fit{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr)}
-#world .shot-panel .shot-groups>.shot-group{min-width:auto}
+/* Every section the same width, side by side, tiles wrapping inside each; on a
+   phone the sections stack, full width. */
+#world .shot-panel .shot-groups{display:grid;grid-template-columns:repeat(var(--groups,3),minmax(0,1fr))}
+#world .shot-panel .shot-groups>.shot-group{min-width:0}
+#world .shot-panel .shot-grid.fit{grid-template-columns:repeat(auto-fill,minmax(clamp(70px,6.15cqw,124px),1fr))}
 @container app (max-width:560px) or (max-height:500px){
- #world .shot-panel .shot-grid.fit{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+ #world .shot-panel .shot-groups{grid-template-columns:1fr}
+ #world .shot-panel .shot-grid.fit{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
  #world .shot-panel .shot-groups>.shot-group{min-width:min(100%,180px);padding:5px 6px 6px}
  #world .shot-panel .shot-grid>div{padding:3px 5px}
  /* Open on a phone, the panel stops above the shot controls and scrolls

@@ -1623,10 +1623,14 @@ const JOURNEYS = [
     const carry = await t.page.textContent('#shotResult [data-field=carry]');
     if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });
-   await t.step('the numbers are grouped, and the club group stays out without club data', async () => {
+   await t.step('the numbers are grouped, and a ticked club section shows dashes without club data', async () => {
     const heads = await t.page.$$eval('#shotResult .sg-head span', els => els.map(e => e.textContent));
     if (!heads.includes('Ball') || !heads.includes('Result')) throw new Error(`groups are ${JSON.stringify(heads)}`);
-    if (heads.includes('Club')) throw new Error('a Club group of blanks, from a shot with no club data');
+    // Since 11 October 2026 a ticked section always shows (the owner found it
+    // missing and took the tick for broken); without club data it shows dashes.
+    if (!heads.includes('Club')) throw new Error('the ticked Club section is missing');
+    const club = await t.page.textContent('#shotResult [data-field=clubSpeed]');
+    if (!/—/.test(club)) throw new Error(`club speed reads "${club}" from a shot that sent none`);
     // The caption names the device the shot came from -- it once printed the
     // bridge's status object instead, as "[object Object]". It is the panel's
     // header now, which a penalty message does not replace: when it was the

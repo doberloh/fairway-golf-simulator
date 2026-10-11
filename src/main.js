@@ -1246,16 +1246,22 @@ function panelFields(){return shotPrefs.fields;}
 const gridOpen=columns=>`<div class="shot-grid${columns?'':' fit'}"${columns?` style="--shot-cols:${columns}"`:''}>`;
 function groupedGridHTML(record){
  const fields=panelFields();
- return `<div class="shot-groups">`+['ball','club','flight','device'].map(group=>{
+ const shown=['ball','club','flight','device'].filter(g=>fields.some(id=>fieldById(id)?.group===g)).length;
+ // EVERY SECTION THE SAME SIZE (owner, 11 October 2026): equal columns, the
+ // tiles wrapping inside a section rather than the section growing.
+ return `<div class="shot-groups" style="--groups:${shown}">`+['ball','club','flight','device'].map(group=>{
   const mine=fields.filter(id=>fieldById(id)?.group===group);
   if(!mine.length)return '';
   const {cells}=shotGrid(record,{fields:mine,columns:shotPrefs.columns});
-  if(group!=='ball'&&group!=='flight'&&cells.every(c=>c.blank))return '';
+  // A section the player ticked shows even when every number in it is blank --
+  // club data without a monitor that sends it. It used to drop out, which read
+  // as the tick not working (owner, 11 October 2026); a dash says the device
+  // sent nothing.
   const [title]=GROUP_HEADS[group];
   // Each group takes a share of the width in proportion to its tiles, so the
   // ball's five are not squeezed onto two rows beside a result group of three.
   // "measured" / "simulated" beside each heading went (owner: out of place).
-  return `<div class="shot-group" style="flex:${cells.length} 1 0"><div class="sg-head"><span>${title}</span></div>`
+  return `<div class="shot-group"><div class="sg-head"><span>${title}</span></div>`
    +gridOpen(shotPrefs.columns)+cells.map(tile).join('')+`</div></div>`;
  }).join('')+`</div>`;
 }
@@ -1308,8 +1314,9 @@ function renderShotPanel(){
 // How many tiles wide the panel is by default: all of them in one row, or the
 // column count the player fixed. The stylesheet caps it to the space there is.
 function sizePanel(){
- const n=$('shotResult')?.querySelectorAll('[data-field]').length||0;
- $('shotPanel')?.style.setProperty('--tiles',String(Math.max(4,shotPrefs.columns||n)));
+ // Equal sections: as wide as the fullest section times how many there are.
+ const groups=[...($('shotResult')?.querySelectorAll('.shot-group')??[])],most=Math.max(1,...groups.map(g=>g.querySelectorAll('[data-field]').length));
+ $('shotPanel')?.style.setProperty('--tiles',String(Math.max(4,shotPrefs.columns||most*Math.max(1,groups.length))));
 }
 // Only the GRID, when the choice of tiles or their order changes: the panel may
 // be showing a hole-out or a penalty above it (renderResult), which a full
