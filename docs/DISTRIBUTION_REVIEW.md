@@ -920,3 +920,9 @@ the release code, **`floodlit-night` included** -- `npm run smoke` ran it on
 every pass of the UI work without trouble, which is worth knowing given it was
 held back for 0.6. The slower hole descent through the trees has not been
 profiled (TODO).
+
+The website was redeployed after the release (preview, then live, at the
+owner's word): `/play/` serves this release's `Fairway.html` byte for byte
+(sha256 `ad6cc7ff…`, checked on the live URL), the page still states
+generator 34 and schema 9, and its four Download buttons resolve to the
+v0.6.1 zips.
