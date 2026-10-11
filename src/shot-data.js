@@ -44,9 +44,9 @@ export const SHOT_FIELDS = [
  // model needs them whether a monitor supplied them or the swing did.
  {id: 'ballSpeed', group: 'ball', label: 'Ball speed', unit: 'mph',
   get: r => fixed(div(num(r?.shot?.speed), MPH), 1)},
- {id: 'launch', group: 'ball', label: 'Launch', unit: '°',
+ {id: 'launch', group: 'ball', label: 'Launch angle', unit: '°',
   get: r => fixed(num(r?.shot?.vla), 1)},
- {id: 'direction', group: 'ball', label: 'Direction', unit: '°',
+ {id: 'direction', group: 'ball', label: 'Launch direction', unit: '°',
   get: r => sided(num(r?.shot?.hla), 1, '°')},
  {id: 'spin', group: 'ball', label: 'Spin', unit: 'rpm',
   get: r => fixed(num(r?.shot?.spin), 0)},
