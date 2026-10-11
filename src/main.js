@@ -1233,43 +1233,86 @@ function drawShotViews(){
 // the owner asked for exactly that. Until then the panel showed the shot BEFORE
 // the one in the air, which is gone with the rule.
 function cardRecord(){return flight?.record?liveRecord(flight.record,flight.elapsed):lastShot;}
-// IN MONITOR MODE THE GRID IS GROUPED: the ball (measured), the club (from
-// the monitor, and left out altogether when the device sends none of it --
-// most send ball data only), and the result (what the model did). The tiles
-// are the monitor's own set (shot-data.js, *TWO SETS*), chosen and ordered
-// apart from the hand set. Before 10 October monitor mode showed eighteen
-// fixed tiles unless the player had chosen their own, and then theirs.
-const GROUP_HEADS={ball:['Ball','measured'],club:['Club','from your monitor'],flight:['Result','simulated'],device:["Monitor's own",'as sent']};
+// THE SHOT TILES (11 October 2026, the owner's call after trying a grid in
+// sections): every number ticked in Shot data is its own small box on the
+// course, dragged anywhere and left there -- the way GSPro places its data
+// tiles. The shot panel shrank to a slim bar for the shot's state, Skip, the
+// countdown and any penalty message, and its fold shows and hides the tiles.
+// Rejected on the way here: one panel of tiles (too big a block over the
+// course), and the same split into Ball / Club / Result sections, boxed and
+// equal-sized (the owner: "I don't like it").
+//
+// A tile nobody has moved sits in rows beside the bar -- above it when the bar
+// is in the lower half of the screen, below it otherwise -- so moving the bar
+// takes the unmoved tiles with it. A moved tile keeps its place as a fraction of
+// the playing area, separately for playing by hand and for an armed monitor
+// (fairway-shot-tiles-v1); Reset layout puts every tile back.
 function panelFields(){return shotPrefs.fields;}
-// "Fit to width" (columns 0) lets the grid take as many tiles across as the
-// panel has room for, so resizing the panel reflows it; a number fixes it.
-const gridOpen=columns=>`<div class="shot-grid${columns?'':' fit'}"${columns?` style="--shot-cols:${columns}"`:''}>`;
-function groupedGridHTML(record){
- const fields=panelFields();
- const shown=['ball','club','flight','device'].filter(g=>fields.some(id=>fieldById(id)?.group===g)).length;
- // EVERY SECTION THE SAME SIZE (owner, 11 October 2026): equal columns, the
- // tiles wrapping inside a section rather than the section growing.
- return `<div class="shot-groups" style="--groups:${shown}">`+['ball','club','flight','device'].map(group=>{
-  const mine=fields.filter(id=>fieldById(id)?.group===group);
-  if(!mine.length)return '';
-  const {cells}=shotGrid(record,{fields:mine,columns:shotPrefs.columns});
-  // A section the player ticked shows even when every number in it is blank --
-  // club data without a monitor that sends it. It used to drop out, which read
-  // as the tick not working (owner, 11 October 2026); a dash says the device
-  // sent nothing.
-  const [title]=GROUP_HEADS[group];
-  // Each group takes a share of the width in proportion to its tiles, so the
-  // ball's five are not squeezed onto two rows beside a result group of three.
-  // "measured" / "simulated" beside each heading went (owner: out of place).
-  return `<div class="shot-group"><div class="sg-head"><span>${title}</span></div>`
-   +gridOpen(shotPrefs.columns)+cells.map(tile).join('')+`</div></div>`;
- }).join('')+`</div>`;
-}
 const tileInner=c=>`<strong>${c.value}${c.unit?`${c.unit.startsWith('°')?'':' '}<small>${c.unit}</small>`:''}</strong><span>${escape(c.label.toUpperCase())}</span>`;
-const tile=c=>`<div data-field="${c.id}"${c.blank?' class="blank"':''}>${tileInner(c)}</div>`;
-// GROUPED IN EVERY MODE since 11 October 2026: the owner asked for the ball,
-// club and result numbers to be set off in sections of their own.
-function gridHTML(record=cardRecord()){return groupedGridHTML(record);}
+const TILE_KEY='fairway-shot-tiles-v1';
+let tilePlaces={};try{tilePlaces=JSON.parse(localStorage.getItem(TILE_KEY))||{};}catch{}
+const keepTilePlaces=()=>{try{localStorage.setItem(TILE_KEY,JSON.stringify(tilePlaces));}catch{}};
+function resetTilePlaces(){tilePlaces={};keepTilePlaces();placeTiles();}
+// The grid's old entry point: it draws the tiles and leaves nothing in the
+// bar, so the callers that build the bar's HTML around it keep working.
+function gridHTML(record=cardRecord()){drawTiles(record);return '';}
+function drawTiles(record){
+ const box=$('shotTiles');if(!box)return;
+ const cells=shotGrid(record,{fields:panelFields(),columns:0}).cells;
+ box.innerHTML=cells.map(c=>`<div class="shot-tile${c.blank?' blank':''}" data-field="${c.id}" title="Drag to move">${tileInner(c)}</div>`).join('');
+ placeTiles();
+}
+function placeTiles(){
+ const box=$('shotTiles'),w=$('world'),bar=$('shotPanel');if(!box||!w||!bar||!box.offsetParent)return;
+ const W=w.clientWidth,H=w.clientHeight,z=uiZoom(),wr=w.getBoundingClientRect(),br=bar.getBoundingClientRect();
+ const r={x:(br.left-wr.left)/z,y:(br.top-wr.top)/z,w:br.width/z,h:br.height/z};
+ const mine=tilePlaces[playMode()]||{},gap=6;
+ const free=[...box.children].filter(t=>{
+  const p=mine[t.dataset.field];
+  if(!p)return true;
+  t.style.left=Math.max(0,Math.min(W-t.offsetWidth,p.x*W))+'px';t.style.top=Math.max(0,Math.min(H-t.offsetHeight,p.y*H))+'px';
+  return false;
+ });
+ // Rows as wide as the bar's own room (its max-width, which is the gap between
+ // the shot controls and the map) or the screen, centred on the bar.
+ const room=Math.min(W-16,parseFloat(getComputedStyle(bar).maxWidth)||W-16);
+ const rows=[[]];let used=0;
+ for(const t of free){const tw=t.offsetWidth;if(rows.at(-1).length&&used+tw>room){rows.push([]);used=0;}rows.at(-1).push(t);used+=tw+gap;}
+ const above=r.y+r.h/2>H/2,rowH=Math.max(0,...free.map(t=>t.offsetHeight))+gap;
+ rows.forEach((row,i)=>{
+  const width=row.reduce((a,t)=>a+t.offsetWidth+gap,-gap);
+  let x=Math.max(8,Math.min(W-width-8,r.x+r.w/2-width/2));
+  const y=above?r.y-gap-rowH*(rows.length-i):r.y+r.h+gap+rowH*i;
+  for(const t of row){t.style.left=x+'px';t.style.top=Math.max(0,y)+'px';x+=t.offsetWidth+gap;}
+ });
+}
+// DRAGGING A TILE: anywhere on it, mouse or finger, kept within the playing
+// area. A press that never moves is not a drag and saves nothing.
+{
+ const box=$('shotTiles');
+ box?.addEventListener('pointerdown',ev=>{
+  const t=ev.target.closest('.shot-tile');if(!t||ev.button)return;
+  ev.preventDefault();
+  const w=$('world'),z=uiZoom(),sx=ev.clientX,sy=ev.clientY,ox=t.offsetLeft,oy=t.offsetTop;let moved=false;
+  const move=e=>{
+   if(!moved&&Math.hypot(e.clientX-sx,e.clientY-sy)<4)return;
+   moved=true;t.classList.add('dragging');
+   t.style.left=Math.max(0,Math.min(w.clientWidth-t.offsetWidth,ox+(e.clientX-sx)/z))+'px';
+   t.style.top=Math.max(0,Math.min(w.clientHeight-t.offsetHeight,oy+(e.clientY-sy)/z))+'px';
+  };
+  const up=()=>{
+   window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+   t.classList.remove('dragging');if(!moved)return;
+   (tilePlaces[playMode()]??={})[t.dataset.field]={x:t.offsetLeft/w.clientWidth,y:t.offsetTop/w.clientHeight};keepTilePlaces();
+  };
+  window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+ });
+ // The unmoved tiles follow the bar and the screen.
+ const again=()=>requestAnimationFrame(placeTiles);
+ new ResizeObserver(again).observe($('world'));
+ if($('shotPanel'))new MutationObserver(again).observe($('shotPanel'),{attributes:true,attributeFilter:['style','class']});
+ new MutationObserver(again).observe($('world'),{attributes:true,attributeFilter:['class']});
+}
 // What the shot was, in one line, above the grid. The numbers themselves are in
 // the grid, so this says which shot you are looking at rather than repeating it.
 function shotCaption(record=cardRecord()){
@@ -1314,17 +1357,13 @@ function renderShotPanel(){
 // How many tiles wide the panel is by default: all of them in one row, or the
 // column count the player fixed. The stylesheet caps it to the space there is.
 function sizePanel(){
- // Equal sections: as wide as the fullest section times how many there are.
- const groups=[...($('shotResult')?.querySelectorAll('.shot-group')??[])],most=Math.max(1,...groups.map(g=>g.querySelectorAll('[data-field]').length));
- $('shotPanel')?.style.setProperty('--tiles',String(Math.max(4,shotPrefs.columns||most*Math.max(1,groups.length))));
+ placeTiles();
 }
 // Only the GRID, when the choice of tiles or their order changes: the panel may
 // be showing a hole-out or a penalty above it (renderResult), which a full
 // redraw would replace with the plain caption.
 function refreshShotGrid(){
- const box=$('shotResult'),host=box?.querySelector('.shot-groups,.shot-grid');
- if(!host)return renderShotPanel();
- host.outerHTML=gridHTML();sizePanel();drawShotSummary();
+ drawTiles(cardRecord());drawShotSummary();
 }
 function showStandingResult(){renderShotPanel();}
 function showRangeResult(){renderShotPanel();}
@@ -1354,7 +1393,7 @@ function drawShotSummary(record=cardRecord()){
 // finger that was dragging it.
 function drawLiveTiles(){
  if(!flight?.record)return;
- const box=$('shotResult');if(!box)return;
+ const box=$('shotTiles');if(!box)return;
  const record=cardRecord();
  for(const el of box.querySelectorAll('[data-field]')){
   const f=fieldById(el.dataset.field);if(f?.group!=='flight')continue;
@@ -1368,43 +1407,6 @@ function drawLiveTiles(){
 // The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes in the
 // panel's header, which is on screen while the ball is up.
 function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;}
-// DRAG A TILE ONTO ANOTHER TO REORDER THEM, right on the panel -- the way GSPro
-// arranges its data tiles, and the owner's pick over a list in the settings.
-// Pointer events, so a finger works as well as a mouse; a press that never
-// moves is not a drag, so nothing changes under a tap. The order is saved with
-// the rest of Shot data and every view of the grid follows it.
-{
- let drag=null;
- const box=()=>$('shotResult');
- const over=ev=>document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('#shotResult [data-field]');
- window.addEventListener('pointerdown',ev=>{
-  if(ev.button)return;
-  const t=ev.target.closest?.('#shotResult [data-field]');if(!t)return;
-  drag={id:t.dataset.field,x:ev.clientX,y:ev.clientY,moved:false,el:t};
- });
- window.addEventListener('pointermove',ev=>{
-  if(!drag)return;
-  if(!drag.moved&&Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<6)return;
-  drag.moved=true;ev.preventDefault();
-  box()?.classList.add('tiles-dragging');drag.el.classList.add('tile-lifted');
-  for(const el of box()?.querySelectorAll('.tile-target')??[])el.classList.remove('tile-target');
-  const t=over(ev);if(t&&t!==drag.el)t.classList.add('tile-target');
- });
- const end=ev=>{
-  if(!drag)return;
-  const d=drag;drag=null;
-  box()?.classList.remove('tiles-dragging');
-  for(const el of box()?.querySelectorAll('.tile-target,.tile-lifted')??[])el.classList.remove('tile-target','tile-lifted');
-  if(!d.moved||ev.type==='pointercancel')return;
-  const t=over(ev);if(!t||t.dataset.field===d.id)return;
-  // The order is saved for the way of playing in force: dragging tiles while
-  // a monitor is armed rearranges the monitor set and leaves the hand set be.
-  shotPrefs=saveShotData({fields:moveField(panelFields(),d.id,t.dataset.field),columns:shotPrefs.columns},playMode());
-  refreshShotGrid();
- };
- window.addEventListener('pointerup',end);
- window.addEventListener('pointercancel',end);
-}
 // Back to the mat, with the club the player chose still in their hands.
 //
 // NOT setUpTurn: that picks a club from the distance to the pin and aims at the
@@ -1438,10 +1440,9 @@ function openPlaySettings(name,content){
     +fields.map(f=>`<label class="check"><input type="checkbox" data-field="${f.id}"${chosen.has(f.id)?' checked':''}> ${escape(f.label)}${f.unit?` <small>${escape(f.unit)}</small>`:''}</label>`).join('')
     +`</div>`;
   };
-  content.innerHTML=`<p>Pick the numbers the shot panel shows: live while the ball flies, and kept until the next shot. Drag a tile on the panel onto another to change their order. The five the game actually plays from are ball speed, launch angle, launch direction, spin and spin axis; everything else is extra your launch monitor may send, or what our flight model made of the shot.</p>
+  content.innerHTML=`<p>Pick the numbers the shot panel shows: live while the ball flies, and kept until the next shot. Each number is a tile of its own: drag it anywhere on the course and it stays there. The five the game actually plays from are ball speed, launch angle, launch direction, spin and spin axis; everything else is extra your launch monitor may send, or what our flight model made of the shot.</p>
   <label class="field">Numbers for<select id="shotMode"><option value="hand"${mode==='hand'?' selected':''}>Playing by hand</option><option value="monitor"${mode==='monitor'?' selected':''}>Launch monitor (armed)</option></select></label>
-  <p class="note">Each keeps its own tiles, order and columns, and the shot panel keeps its own place for each.${mode===playMode()?'':' You are editing the set that is not on screen right now.'}</p>
-  <label class="field">Columns<select id="shotColumns">${COLUMN_CHOICES.map(c=>`<option value="${c}"${prefs.columns===c?' selected':''}>${c?c+' across':'Fit to width'}</option>`).join('')}</select></label>
+  <p class="note">Each keeps its own tiles, and the tiles keep their own places for each.${mode===playMode()?'':' You are editing the set that is not on screen right now.'}</p>
   <p class="note" id="shotFieldCount"></p>
   ${FIELD_GROUPS.map(group).join('')}
   <p class="research-label">Club numbers need a monitor that sends them; a keyboard shot leaves those tiles blank rather than filling them with zeros. Face to path is worked out from face and path, because no monitor sends it.</p>
@@ -1463,11 +1464,10 @@ function openPlaySettings(name,content){
    // dragged would have undone the arrangement every time a box was ticked.
    const on=id=>content.querySelector(`input[data-field="${id}"]`)?.checked;
    const fields=[...current.fields.filter(on),...SHOT_FIELDS.map(f=>f.id).filter(id=>on(id)&&!current.fields.includes(id))];
-   current=keep({fields,columns:Number($('shotColumns').value)});
+   current=keep({fields,columns:current.columns});
    count();
   };
   for(const el of content.querySelectorAll('input[data-field]'))el.onchange=apply;
-  $('shotColumns').onchange=apply;
   $('shotMode').onchange=()=>{shotDataEditing=$('shotMode').value;renderPanel(name,content);};
   $('shotFieldsReset').onclick=()=>{
    keep({fields:standardFields(mode),columns:DEFAULT_COLUMNS});
@@ -4247,7 +4247,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   e.preventDefault();e.stopImmediatePropagation();
  },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
- $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
+ $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();resetTilePlaces();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={

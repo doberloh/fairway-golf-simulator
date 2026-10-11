@@ -691,7 +691,7 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  --slot-l:calc(var(--edge-l) + var(--panel-w) + var(--gap));
  --slot-w:calc(100% - var(--edge-l) - var(--panel-w) - var(--gap) - var(--edge-r) - var(--strip-w) - var(--map-w) - 3 * var(--gap));
  left:calc(var(--slot-l) + var(--slot-w) / 2);transform:translateX(-50%);
- width:calc(var(--tiles,8) * 86px + 34px);max-width:var(--slot-w);max-height:min(46%,calc(100% - var(--edge-t) - var(--edge-b)))}
+ width:max-content;max-width:var(--slot-w);max-height:min(46%,calc(100% - var(--edge-t) - var(--edge-b)))}
 #world .shot-panel.hud-custom{transform:none}
 .sp-head{display:flex;align-items:center;gap:10px;min-height:30px;min-width:0}
 .sp-label{font-size:9px;font-weight:650;letter-spacing:1.4px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1225,31 +1225,20 @@ html,body{overscroll-behavior:none}
    of keys if it is asked for. */
 #app.hud-hidden .topbar,#app.hud-hidden #world>*:not(#scene):not(#toast):not(#keysHelp){visibility:hidden!important}
 
-/* THE SHOT PANEL'S TILES, after the owner played with it (11 October 2026): each
-   number in a box of its own, each section (ball, club, result) a box around
-   its tiles, and the numbers bold and sized off the width of the screen --
-   15 px on a phone up to 26 px on a big screen, sized so a laptop fits the
-   ball's five and the result's three on one row each. Placed sizes. */
-#world .shot-panel .shot-groups{gap:8px;margin-top:6px}
-#world .shot-panel .shot-group{padding:7px 9px 9px;border:1px solid var(--glass-line);border-radius:10px;background:rgba(0,0,0,.14)}
-#world .shot-panel .sg-head{margin-bottom:6px}
-#world .shot-panel .shot-grid{gap:6px;margin-top:0}
-/* Every section the same width, side by side, tiles wrapping inside each; on a
-   phone the sections stack, full width. */
-#world .shot-panel .shot-groups{display:grid;grid-template-columns:repeat(var(--groups,3),minmax(0,1fr))}
-#world .shot-panel .shot-groups>.shot-group{min-width:0}
-#world .shot-panel .shot-grid.fit{grid-template-columns:repeat(auto-fill,minmax(clamp(70px,6.15cqw,124px),1fr))}
-@container app (max-width:560px) or (max-height:500px){
- #world .shot-panel .shot-groups{grid-template-columns:1fr}
- #world .shot-panel .shot-grid.fit{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
- #world .shot-panel .shot-groups>.shot-group{min-width:min(100%,180px);padding:5px 6px 6px}
- #world .shot-panel .shot-grid>div{padding:3px 5px}
- /* Open on a phone, the panel stops above the shot controls and scrolls
-    inside itself: boxed, it was tall enough to cover the club held sideways. */
- #world .shot-panel:not(.hud-custom){max-height:calc(var(--controls-top,60%) - var(--edge-t) - var(--gap))}
-}
-#world .shot-panel .shot-grid>div{padding:5px 6px;border:1px solid var(--glass-line);border-radius:7px;background:rgba(255,255,255,.05)}
-#world .shot-panel .shot-grid strong{font-weight:700;font-size:clamp(15px,1.3cqw,26px);letter-spacing:-.3px;text-overflow:clip}
-#world .shot-panel .shot-grid strong small{font-weight:500;font-size:.55em}
-/* Bigger than a phone only: a phone sizes the panel to the top row instead. */
-@container app (min-width:561px) and (min-height:501px){#world .shot-panel:not(.hud-custom){width:calc(var(--tiles,8) * clamp(84px,8.4cqw,142px) + 60px)}}
+/* THE SHOT TILES (main.js, *THE SHOT TILES*): one small box per number, each
+   placed on its own. The layer they sit in takes no pointer, so the course
+   under it still aims; the tiles take theirs to be dragged. Numbers bold and
+   sized off the screen width, 15 px on a phone to 24 px on a big screen. */
+#world .shot-tiles{position:absolute;inset:0;z-index:5;pointer-events:none}
+#world:not(.shot-open) .shot-tiles,#world[data-mode="menu"] .shot-tiles,#world[data-mode="studio"] .shot-tiles,#world.exploring .shot-tiles{display:none}
+.shot-tile{position:absolute;pointer-events:auto;cursor:grab;touch-action:none;user-select:none;box-sizing:border-box;min-width:clamp(64px,5.6cqw,104px);
+ padding:5px 9px 6px;border-radius:9px;background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);
+ box-shadow:var(--panel-shadow);backdrop-filter:blur(14px) saturate(1.15)}
+.shot-tile.dragging{cursor:grabbing;outline:2px dashed #eaa958;outline-offset:2px;z-index:1}
+.shot-tile strong{display:block;white-space:nowrap;font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25cqw,24px);line-height:1.15;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.shot-tile strong small{font-weight:500;font-size:.55em;color:var(--ink-dim)}
+.shot-tile span{display:block;margin-top:2px;font-size:8px;letter-spacing:.8px;white-space:nowrap;color:var(--ink-faint)}
+.shot-tile.blank strong{color:var(--ink-faint);opacity:.55}
+/* The bar has no grid any more: its header, and a penalty or hole-out note. */
+#world .shot-panel{padding-bottom:6px}
+#world .shot-panel .shot-result:empty{display:none}

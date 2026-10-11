@@ -98,19 +98,14 @@ On the range the map also carries **dispersion**: one ellipse per club, drawn fr
 stays there until you hit the next one, so you can look at a drive while you walk up to it rather
 than watching the numbers vanish the moment the ball stops. While a ball is in the air the panel is
 already showing it: the launch numbers at once, and carry and total counting up with the ball —
-a reading of where the ball has got to, never a forecast of where it will finish. Every number sits in a box of its own, in bold, sized to your screen, and the boxes are grouped in sections of equal size — **Ball**, **Club**, **Result** and the monitor's own distances, whichever you have ticked. A section you ticked always shows; numbers your monitor did not send are dashes. **Drag a tile onto
-another** on the panel to change their order; the order is kept.
+a reading of where the ball has got to, never a forecast of where it will finish. **Every number is a tile of its own** — a small box, the number in bold, sized to your screen — and you can drag each one anywhere on the course; it stays where you leave it, separately for playing by hand and with a monitor. Tiles you have not moved sit in a row beside the slim **Shot data** bar, which carries the shot's state, Skip and the countdown, and whose chevron hides or shows all the tiles. **Reset layout** in Tools puts every tile back. A number you ticked always shows; one your monitor did not send is a dash.
 
 The panel starts with the eight numbers every shot has: ball speed, launch angle, launch direction,
 spin, spin axis, carry, total and apex. Beyond those, anything your launch monitor sends can go on
 it — club speed, smash factor, attack angle, club path, face to target, dynamic loft, lie, closure
 rate, where on the face you hit it, the backspin and sidespin split, and the monitor's own carry
 and total alongside ours. There is also face to path, which no monitor sends because it is face
-minus path, worked out for you. Tick up to twelve of them. **Columns** is *Fit to width* to begin
-with — as many across as the panel has room for, so widening it puts them in fewer rows — or a fixed
-two, three, four, six or eight. **Hang time** is the time the ball is in the air, to where it first
-lands; before 10 October it showed the time until the ball stopped rolling, which for a drive was
-about four seconds too long.
+minus path, worked out for you. Tick up to twelve of them. 
 
 Numbers that need a monitor show a dash without one rather than a zero, and the monitor's distances
 are labelled as the monitor's, because they will not agree with ours and you should be able to see

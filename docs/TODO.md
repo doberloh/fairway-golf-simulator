@@ -914,6 +914,7 @@ so several of these play differently as well as look different.
   the screen, without the measured/simulated notes; the aim label no longer
   vanishes crossing the pin while aiming; chips are followed from behind, and
   the landing camera swings behind the ball for the roll-out.
+- [x] **Shot numbers are tiles of their own** (owner, 11 October, after not liking the boxed sections): each a small draggable box, placed per mode, unmoved ones in a row beside the slim Shot data bar. Columns and drag-to-reorder went.
 - [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
   check read the first line of the grid, which a penalty replaces; the caption
   is in the panel's header now.

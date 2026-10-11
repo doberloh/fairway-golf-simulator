@@ -1377,7 +1377,7 @@ const JOURNEYS = [
     await t.inPlay();
    });
    await t.step('the shot panel is folded on a phone, and one tap opens and closes it', async () => {
-    const visible = () => t.page.evaluate(() => !!document.getElementById('shotResult')?.offsetHeight);
+    const visible = () => t.page.evaluate(() => !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight);
     if (await visible()) throw new Error('the shot numbers show before anything was tapped');
     await tap('#shotToggle');
     await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
@@ -1620,16 +1620,15 @@ const JOURNEYS = [
     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
     if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
     if (!await shown('#shotPanel')) throw new Error('the shot panel is not showing');
-    const carry = await t.page.textContent('#shotResult [data-field=carry]');
+    const carry = await t.page.textContent('#shotTiles [data-field=carry]');
     if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });
-   await t.step('the numbers are grouped, and a ticked club section shows dashes without club data', async () => {
-    const heads = await t.page.$$eval('#shotResult .sg-head span', els => els.map(e => e.textContent));
-    if (!heads.includes('Ball') || !heads.includes('Result')) throw new Error(`groups are ${JSON.stringify(heads)}`);
-    // Since 11 October 2026 a ticked section always shows (the owner found it
-    // missing and took the tick for broken); without club data it shows dashes.
-    if (!heads.includes('Club')) throw new Error('the ticked Club section is missing');
-    const club = await t.page.textContent('#shotResult [data-field=clubSpeed]');
+   await t.step('every ticked number is a tile of its own, and club tiles show dashes without club data', async () => {
+    const tiles = await t.page.$$eval('#shotTiles .shot-tile', els => els.map(e => e.dataset.field));
+    if (!tiles.includes('ballSpeed') || !tiles.includes('carry')) throw new Error(`tiles are ${JSON.stringify(tiles)}`);
+    // A ticked number always shows (the owner found club numbers missing and
+    // took the tick for broken); without club data it is a dash.
+    const club = await t.page.textContent('#shotTiles [data-field=clubSpeed]');
     if (!/—/.test(club)) throw new Error(`club speed reads "${club}" from a shot that sent none`);
     // The caption names the device the shot came from -- it once printed the
     // bridge's status object instead, as "[object Object]". It is the panel's
@@ -1644,7 +1643,7 @@ const JOURNEYS = [
     await t.until(async () => (await title()) === 'Finding ball', 'the panel to say Finding ball', 5 * SLOW);
     bridge.send(status('green'));
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
-    if (!/\d/.test(await t.page.textContent('#shotResult [data-field=carry]'))) throw new Error('the shot numbers went when the next ball was teed');
+    if (!/\d/.test(await t.page.textContent('#shotTiles [data-field=carry]'))) throw new Error('the shot numbers went when the next ball was teed');
    });
    await t.step('no device: red, with Reconnect', async () => {
     bridge.send(status('red'));
