@@ -509,7 +509,7 @@ export function simulateShot(shot,course,options={}){
  let p=[shot.origin.x,course.height(shot.origin.x,shot.origin.z)+R+(shot.height||0),shot.origin.z];
  const start=[...p],rho=airDensity(options.altitude||0,options.temperature??18),wind=options.wind||[0,0,0];
  const axis=-shot.spinAxis*rad; const wdir=[-Math.cos(yaw)*Math.cos(axis),Math.sin(axis),Math.sin(yaw)*Math.cos(axis)];
- let spin=shot.spin*Math.PI/30,rolling=shot.vla<2&&!(shot.height>0),carry=null,apex=0,landingSpeed=0,descentAngle=0,bounces=0;
+ let spin=shot.spin*Math.PI/30,rolling=shot.vla<2&&!(shot.height>0),carry=null,hang=null,apex=0,landingSpeed=0,descentAngle=0,bounces=0;
  // The velocity the ball's contact point would need for it to be rolling. The
  // gap between this and the centre's velocity is the slip, and while there is
  // any the ball is sliding, not rolling.
@@ -598,7 +598,7 @@ export function simulateShot(shot,course,options={}){
    // the impact, or finding a later and smaller hop, and this project has made
    // both of those mistakes. The bounce reads it from the same velocity.
    if(carry===null){
-    carry=hypot(p[0]-start[0],p[2]-start[2]);landingSpeed=hypot(...v);
+    carry=hypot(p[0]-start[0],p[2]-start[2]);hang=t;landingSpeed=hypot(...v);
     descentAngle=Math.atan2(-v[1],hypot(v[0],v[2]))/rad;
    }
    p[1]=ground;
@@ -1131,7 +1131,7 @@ export function simulateShot(shot,course,options={}){
   t+=duration;
  }
  points.push({x:p[0],y:p[1],z:p[2],t});
- return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,onGreen:course.surface(p[0],p[2])==='green'};
+ return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,hang:hang??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,onGreen:course.surface(p[0],p[2])==='green'};
 }
 // What the DEVICE says about itself, from a status frame. `parseLaunchMessage`
 // returns null for these and the readiness never reached the browser, so the

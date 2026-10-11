@@ -29,6 +29,10 @@ const sections = [
  ['.weather', 'Weather', 'last'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
+ // The shot's numbers, live while it flies and kept until the next one
+ // (main.js, *THE SHOT PANEL*). Added 10 October 2026 with no change to KEY:
+ // nobody has a saved position for it, so everyone starts from its default.
+ ['.shot-panel', 'Shot data'],
  ['.view-tools', 'Tools tray'],
  ['#exploreBar', 'Flight controls', 'last'],
 ];

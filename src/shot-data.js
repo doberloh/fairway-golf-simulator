@@ -107,8 +107,12 @@ export const SHOT_FIELDS = [
   get: r => fixed(div(num(r?.result?.apex), FOOT), 0)},
  {id: 'offline', group: 'flight', label: 'Offline', unit: 'yd',
   get: r => sided(div(offline(r), YARD), 1, 'yd')},
+ // THE BALL'S TIME IN THE AIR, to its first touchdown. This read `time` until
+ // 10 October 2026, which is when the ball STOPPED -- a drive that hangs 6.5 s
+ // and rolls for four more showed 10.8. A record saved before `hang` existed
+ // shows a dash rather than that number.
  {id: 'hang', group: 'flight', label: 'Hang time', unit: 's',
-  get: r => fixed(num(r?.result?.time), 1)},
+  get: r => fixed(num(r?.result?.hang), 1)},
  {id: 'descent', group: 'flight', label: 'Descent', unit: '°',
   get: r => fixed(num(r?.result?.descentAngle), 1)},
  {id: 'landing', group: 'flight', label: 'Landing speed', unit: 'mph',
@@ -150,12 +154,21 @@ export const fieldById = id => BY_ID.get(id) ?? null;
 // They are one tick away in the panel the moment a device is plugged in.
 export const DEFAULT_FIELDS =
  ['ballSpeed', 'launch', 'direction', 'spin', 'spinAxis', 'carry', 'total', 'apex'];
-export const DEFAULT_COLUMNS = 3;
-export const COLUMN_CHOICES = [2, 3, 4];
-// More than this and the card is taller than the screen on a laptop.
+// 0 IS "FIT TO WIDTH": as many tiles across as the shot panel has room for, so
+// dragging its corner wider lays the same tiles out in fewer rows. It is the
+// default since the numbers moved to their own panel along the bottom of the
+// course (10 October 2026); a fixed count is still there for anyone who wants
+// the grid to keep its shape whatever the panel's size.
+export const DEFAULT_COLUMNS = 0;
+export const COLUMN_CHOICES = [0, 2, 3, 4, 6, 8];
+// More than this and the panel crowds the course on a laptop.
 export const MAX_FIELDS = 12;
 
-const KEY = 'fairway-shot-data-v1';
+// v2 when the grid became the shot panel. A v1 record's FIELDS and their order
+// are kept -- they are the player's choice -- but its column count is not: it
+// was picked for a card down the side of the screen, and three across in a
+// panel along the bottom is a tall narrow block over the course.
+const KEY = 'fairway-shot-data-v2', OLD_KEY = 'fairway-shot-data-v1';
 
 // Unknown ids are DROPPED rather than rejected, so retiring a field later
 // leaves an old saved record still usable instead of resetting someone's whole
@@ -173,7 +186,10 @@ const clean = s => {
 
 export function loadShotData() {
  try {
-  return clean(JSON.parse(localStorage.getItem(KEY) || 'null'));
+  const now = localStorage.getItem(KEY);
+  if (now != null) return clean(JSON.parse(now));
+  const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
+  return clean(old ? {fields: old.fields, columns: DEFAULT_COLUMNS} : null);
  } catch {
   return clean(null);
  }
@@ -183,7 +199,68 @@ export function loadShotData() {
 // shows its own grouped set -- ball, club, result -- until they have, because
 // the default eight are what a keyboard shot can fill, not what a monitor does.
 export function hasCustomShotData() {
- try { return localStorage.getItem(KEY) != null; } catch { return false; }
+ try { return localStorage.getItem(KEY) != null || localStorage.getItem(OLD_KEY) != null; } catch { return false; }
+}
+
+// A TILE DRAGGED ONTO ANOTHER takes that tile's place, and everything between
+// shuffles along one -- the way a list reorders under a finger, rather than the
+// two swapping, which moves a tile nobody touched. Unknown ids leave the list
+// as it was, so a stale drag can never lose a field.
+export function moveField(fields, id, onto) {
+ const from = fields.indexOf(id), to = fields.indexOf(onto);
+ if (from < 0 || to < 0 || from === to) return [...fields];
+ const next = [...fields];
+ next.splice(from, 1);
+ next.splice(to, 0, id);
+ return next;
+}
+
+// THE SHOT AS IT STANDS PART WAY THROUGH ITS FLIGHT, for the panel's live
+// tiles. Everything the strike fixed -- the five, the club -- is the record's
+// own. What the flight decides is read at time `t` off the flight itself:
+//
+//   carry  the ground covered so far while the ball is up, frozen at the first
+//          touchdown, where it equals the model's carry exactly (physics.js
+//          measures it at that instant, the same way)
+//   total  the ground covered so far, all the way to rest
+//   apex   the highest it has been so far
+//   hang   the seconds it has been up, frozen at touchdown
+//   offline where it is now, across the aim line
+//
+// Descent and landing speed exist only at touchdown, so before it they are
+// blank -- a dash, not a guess. Past the last point the record is returned
+// as it is: the finished numbers ARE the live ones by then.
+//
+// Counting up gives nothing away. The rule since 26 September was that carry
+// and total never show while the ball flies, because the whole flight is
+// simulated at the strike and printing its result spoils the shot. A number
+// that climbs with the ball is a reading, not a prediction.
+export function liveRecord(record, t) {
+ const r = record?.result, pts = r?.points, o = record?.shot?.origin;
+ if (!r || !o || !Array.isArray(pts) || pts.length < 2) return record;
+ const last = pts[pts.length - 1];
+ if (!(t < last.t)) return record;
+ let i = 0;
+ while (i < pts.length - 2 && pts[i + 1].t <= t) i++;
+ const a = pts[i], b = pts[i + 1], f = Math.max(0, Math.min(1, (t - a.t) / ((b.t - a.t) || 1)));
+ const p = {x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f};
+ const along = Math.hypot(p.x - o.x, p.z - o.z);
+ // A putt, or anything else that never left the ground, has no hang: it is
+ // "landed" from the start, its carry is the model's (zero) and only the
+ // total counts.
+ const up = r.hang > 0 && t < r.hang;
+ let apex = 0;
+ for (let k = 1; k <= i; k++) apex = Math.max(apex, pts[k].y - pts[0].y);
+ apex = Math.min(r.apex ?? apex, Math.max(apex, p.y - pts[0].y));
+ return {...record, live: true, result: {...r,
+  carry: up ? along : r.carry,
+  total: along,
+  apex,
+  hang: up ? t : r.hang,
+  descentAngle: up ? null : r.descentAngle,
+  landingSpeed: up ? null : r.landingSpeed,
+  end: p,
+ }};
 }
 
 export function saveShotData(prefs) {

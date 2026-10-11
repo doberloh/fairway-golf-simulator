@@ -26,7 +26,7 @@ import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
 import {suggestCourseName} from './course-names.js';
-import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,hasCustomShotData,loadShotData,saveShotData,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
+import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,hasCustomShotData,loadShotData,saveShotData,moveField,liveRecord,COLUMN_CHOICES,MAX_FIELDS,DEFAULT_FIELDS,DEFAULT_COLUMNS} from './shot-data.js';
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
@@ -552,8 +552,7 @@ function updateHUD(){
  // the same button becomes the way into that golfer's shot data.
  if($('scoreNavLabel'))$('scoreNavLabel').textContent=practice?'Shot data':'Scorecard';
  // THE LINE IN THE SHOT PANEL says only that the hole or the round is over.
- // It was the live readout while a ball was up, until the live numbers went
- // (see drawFlightBar); between shots the score chip says whose shot it is.
+ // Between shots the score chip says whose shot it is.
  if(!flight)$('playerTurn').textContent=round.finished?'Round complete':round.holeComplete?'Hole complete':'';
  drawScoreChips();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
@@ -724,21 +723,20 @@ function takeShot(data=null){
   // floodlight group is hidden when the lights are down, and a ball stopping
   // dead against a mast nobody can see is worse than one flying through it.
   poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
- hideShotCard();latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;$('flightBadge').hidden=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
- if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();$('flightBadge').hidden=true;$('flightLabel').textContent='BALL IN FLIGHT';updateExplorer();updateHUD();
+ if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
   // A replay watched while a scramble team is choosing its ball goes back to the
   // choice -- the camera behind the candidate on show, no aim line -- rather than
   // the ordinary play view the lines above restore.
   if(round.scrambleSelection)showPick();
   // And a replay watched while a ball waits for relief goes back to the choice.
   if(round.relief&&reliefList.length)showRelief();
-  return;}const result=flight.result;flight=null;$('flightBadge').hidden=true;
+  return;}const result=flight.result;flight=null;drawPanelState();
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
  pushTrail(result.points);view.setTrail([]);view.setBall(result.end);
- showShotCard(lastShot);
  // THE LAB RECORDS TOO. It shares the range's player card, its Shot data chip
  // and its shot list, and a chip that offers a list and then shows an empty one
  // is worse than no chip. It does NOT take the early return below: the lab
@@ -796,7 +794,7 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
- view.config.follow=true;view.setHole(worldHole(record.hole),true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;$('flightBadge').hidden=false;updateExplorer();updateHUD();
+ view.config.follow=true;view.setHole(worldHole(record.hole),true);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
@@ -840,13 +838,13 @@ function announceHoleOut(before){
 }
 function renderResult(event){
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
- let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:escape(shotCaption())}</p>`+gridHTML();
+ let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:''}</p>`.replace('<p></p>','')+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
  // the bar at the foot of the screen steps between them. A duplicate list here
  // would be a second way to answer the same question, and the worse one.
  if(round.scrambleSelection)html+='<p>Every ball the team hit is on the course. Step through them below and take the one you want.</p>';
  if(round.holeComplete)html+=`<button class="continue" id="continueRound">${round.finished?'View final scorecard':'Continue to hole '+(round.hole+2)} →</button>`;
- $('shotResult').innerHTML=html;$('shotResult').hidden=false;
+ $('shotResult').innerHTML=html;sizePanel();
 
  if($('continueRound'))$('continueRound').onclick=()=>{if(round.finished)openPanel('score');else advanceHole();};
 }
@@ -942,7 +940,6 @@ function arriveAtHole(){
  else view.flyCamera(round.position,aim);
 }
 function advanceHole(){
- hideShotCard();
  cancelAdvance();endHoleSummary();
  // Growing the next hole is real work that can fail, and this is reached from a
  // timer as often as from a button -- an unhandled rejection here would leave
@@ -1112,31 +1109,34 @@ function drawShotViews(){
   caption.textContent=`${record.label??'Last shot'} · carry ${(r.carry/YARD).toFixed(1)} yd · total ${(r.total/YARD).toFixed(1)} yd · apex ${Math.round(r.apex*3.28084)} ft`;
  }
 }
-// THE GRID, AND WHY IT IS DRAWN FROM A RECORD RATHER THAN FROM THE SCREEN.
+// THE SHOT PANEL, AND WHY IT IS DRAWN FROM A RECORD RATHER THAN FROM THE SCREEN.
 //
-// Every state of the card renders the SAME function from the SAME record: the
-// shot just played, the shot played ten minutes ago, a replay, a range session.
-// The card used to hold three different fixed stat blocks that each decided for
-// themselves what a shot was worth showing, which is why the launch numbers were
-// visible for the two seconds of a flight and then gone.
+// One panel carries the shot's numbers, along the bottom of the course by
+// default, moved and resized like any other (layout.js). It REPLACED three
+// things on 10 October 2026, at the owner's request: the flight bar (a pill
+// showing ball speed, launch and spin beside Skip while the ball flew), the
+// big-numbers card a monitor shot got after it landed, and the "Last shot" fold
+// at the foot of the shot controls. Three readouts that each decided for
+// themselves what a shot was worth showing became one, showing the tiles the
+// player ticks in Shot data, in the order they dragged them into.
 //
-// `record` is a lastShot-shaped object or null. Null is a real state -- nothing
-// has been hit yet -- and renders the configured tiles with dashes in them, so
-// the card has the shape it will keep instead of appearing from nowhere.
-// WHAT THE GRID IS DESCRIBING, WHICH IS NOT ALWAYS THE LAST SHOT RECORDED.
+// Every state renders the SAME function from the SAME record: the shot in the
+// air, the shot just played, the shot played ten minutes ago, a replay, a range
+// session. `record` is a lastShot-shaped object or null. Null is a real state
+// -- nothing has been hit yet -- and renders the configured tiles with dashes in
+// them, so the panel has the shape it will keep instead of appearing from
+// nowhere.
 //
-// `takeShot` writes lastShot before the ball has left the club, and the ENTIRE
-// flight is simulated in that same instant -- so drawing the grid from lastShot
-// during a flight puts the carry, the total and the apex on screen while the
-// ball is still climbing. That gives away the one thing the flight is there to
-// show, and it is the kind of bug that only appears on screen: every number in
-// it is correct.
-//
-// So a live flight keeps the shot BEFORE it, which is the last one there are
-// finished numbers for. A REPLAY is the opposite case -- you already know how
-// that shot ended, and watching it again while the card describes some earlier
-// shot would be the confusing half of the same mistake.
-function cardRecord(){return flight&&!flight.replay?priorShot:lastShot;}
+// WHILE A BALL FLIES the record is the flight's own, read at the flight's clock
+// (`liveRecord`, shot-data.js): everything the strike fixed shows at once, and
+// carry and total COUNT UP with the ball -- carry freezing where it lands, total
+// running on through the roll. This reverses the rule of 26 September, which
+// kept carry and total off the screen until the ball stopped, because the whole
+// flight is simulated at the strike and printing its result gave the ending
+// away. A number that climbs with the ball is a reading, not a prediction, and
+// the owner asked for exactly that. Until then the panel showed the shot BEFORE
+// the one in the air, which is gone with the rule.
+function cardRecord(){return flight?.record?liveRecord(flight.record,flight.elapsed):lastShot;}
 // IN MONITOR MODE THE GRID IS GROUPED: the ball (measured), the club (from
 // the monitor, and left out altogether when the device sends none of it --
 // most send ball data only), and the result (what the model did). A player
@@ -1146,29 +1146,31 @@ const MONITOR_FIELDS=['ballSpeed','launch','direction','spin','spinAxis','sideSp
  'clubSpeed','smash','attack','path','faceToTarget','loft',
  'carry','total','offline','apex','hang','descent'];
 const GROUP_HEADS={ball:['Ball','measured'],club:['Club','from your monitor'],flight:['Result','simulated'],device:["Monitor's own",'as sent']};
+function panelFields(){return armed&&!hasCustomShotData()?MONITOR_FIELDS:shotPrefs.fields;}
+// "Fit to width" (columns 0) lets the grid take as many tiles across as the
+// panel has room for, so resizing the panel reflows it; a number fixes it.
+const gridOpen=columns=>`<div class="shot-grid${columns?'':' fit'}"${columns?` style="--shot-cols:${columns}"`:''}>`;
 function groupedGridHTML(record){
- const fields=hasCustomShotData()?shotPrefs.fields:MONITOR_FIELDS;
- return ['ball','club','flight','device'].map(group=>{
+ const fields=panelFields();
+ return `<div class="shot-groups">`+['ball','club','flight','device'].map(group=>{
   const mine=fields.filter(id=>fieldById(id)?.group===group);
   if(!mine.length)return '';
-  const {cells}=shotGrid(record,{fields:mine,columns:3});
+  const {cells}=shotGrid(record,{fields:mine,columns:shotPrefs.columns});
   if(group!=='ball'&&group!=='flight'&&cells.every(c=>c.blank))return '';
   const [title,note]=GROUP_HEADS[group];
   return `<div class="shot-group"><div class="sg-head"><span>${title}</span><small>${note}</small></div>`
-   +`<div class="shot-grid" style="--shot-cols:3">`+cells.map(tile).join('')+`</div></div>`;
- }).join('');
+   +gridOpen(shotPrefs.columns)+cells.map(tile).join('')+`</div></div>`;
+ }).join('')+`</div>`;
 }
-const tile=c=>`<div${c.blank?' class="blank"':''}><strong>${c.value}${c.unit?`${c.unit.startsWith('°')?'':' '}<small>${c.unit}</small>`:''}</strong><span>${escape(c.label.toUpperCase())}</span></div>`;
+const tileInner=c=>`<strong>${c.value}${c.unit?`${c.unit.startsWith('°')?'':' '}<small>${c.unit}</small>`:''}</strong><span>${escape(c.label.toUpperCase())}</span>`;
+const tile=c=>`<div data-field="${c.id}"${c.blank?' class="blank"':''}>${tileInner(c)}</div>`;
 function gridHTML(record=cardRecord()){
  if(armed)return groupedGridHTML(record);
  const {columns,cells}=shotGrid(record,shotPrefs);
- return `<div class="shot-grid" style="--shot-cols:${columns}">`
-  +cells.map(tile).join('')
-  +`</div>`;
+ return gridOpen(columns)+cells.map(tile).join('')+`</div>`;
 }
-// What the shot was, in one line, for the paragraph above the grid. The numbers
-// themselves are in the grid now, so this says which shot you are looking at
-// rather than repeating it.
+// What the shot was, in one line, above the grid. The numbers themselves are in
+// the grid, so this says which shot you are looking at rather than repeating it.
 function shotCaption(record=cardRecord()){
  if(!record)return 'Nothing hit yet. Your numbers stay here between shots once you do.';
  const bits=[escape(record.player??'')];
@@ -1179,40 +1181,127 @@ function shotCaption(record=cardRecord()){
  if(record.typed&&record.shot?.device)bits.push(escape(record.shot.device));
  return bits.filter(Boolean).join(' · ');
 }
-// Redraws the tiles without disturbing anything else on the card. Called when
-// the configuration changes, which can happen while a result is on screen.
-function refreshShotGrid(){
- const box=$('shotResult');if(!box)return;
- box.querySelectorAll('.shot-group').forEach((g,i)=>{if(i)g.remove();});
- const host=box.querySelector('.shot-group')||box.querySelector('.shot-grid');
- if(host)host.outerHTML=gridHTML();
- drawShotSummary();
-}
-// The folded line: carry and total, from the same record the grid describes.
-function drawShotSummary(){
- const el=$('shotSummary');if(!el)return;
- const record=rangeMode?null:cardRecord();
- const pick=id=>shotGrid(record??lastShot,{fields:[id],columns:2}).cells[0];
- const carry=pick('carry'),total=pick('total');
- el.innerHTML=carry.blank?'<small>Nothing hit yet</small>':`${carry.value}<small> carry</small> · ${total.value}<small> total</small>`;
-}
-function showRangeResult(){
- $('shotResult').hidden=false;
+// The range's line says where the session stands rather than whose shot it was.
+// Between shots only: while a ball flies it is that shot's caption like
+// anywhere else.
+function rangeCaption(){
  const s=rangeShots.at(-1);
- if(!s){
-  $('shotResult').innerHTML=`<h3>Shot information</h3><p>Ready when you are. Every shot stays on the field behind you.</p>`;
-  return;
- }
+ if(!s)return 'Ready when you are. Every shot stays on the field behind you.';
  const n=rangeShots.length;
  const mean=k=>rangeShots.reduce((a,b)=>a+b[k],0)/n;
  // Dispersion as a standard deviation, not as a min-to-max spread: one shank
  // should not be allowed to describe a session.
  const spread=Math.sqrt(rangeShots.reduce((a,b)=>a+(b.offline-mean('offline'))**2,0)/n);
- $('shotResult').innerHTML=`<h3>Shot information</h3>`
-  +`<p>${escape(s.club)} · shot ${n} of the session`
-  +(n>1?` · average carry ${Math.round(mean('carry')/YARD)} yd · offline spread ±${(spread/YARD).toFixed(1)} yd`:'')+`</p>`
-  +gridHTML();
- drawShotSummary();
+ return `${escape(s.club)} · shot ${n} of the session`
+  +(n>1?` · average carry ${Math.round(mean('carry')/YARD)} yd · offline spread ±${(spread/YARD).toFixed(1)} yd`:'');
+}
+// THE WHOLE PANEL, redrawn. Every caller that used to rebuild its own version --
+// standing, live, the range, a change in Shot data -- comes here.
+function renderShotPanel(){
+ const box=$('shotResult');if(!box)return;
+ const record=cardRecord();
+ const lead=rangeMode&&!flight?rangeCaption():shotCaption(record);
+ // The caption -- whose shot, which club, or where the range session stands --
+ // rides in the header beside the label rather than on a line of its own: the
+ // panel sits over the course, and every line it spends is course hidden.
+ $('shotCaption').innerHTML=lead;
+ box.innerHTML=gridHTML(record);
+ sizePanel();
+ drawShotSummary(record);
+ drawPanelState();
+}
+// How many tiles wide the panel is by default: all of them in one row, or the
+// column count the player fixed. The stylesheet caps it to the space there is.
+function sizePanel(){
+ const n=$('shotResult')?.querySelectorAll('[data-field]').length||0;
+ $('shotPanel')?.style.setProperty('--tiles',String(Math.max(4,shotPrefs.columns||n)));
+}
+// Only the GRID, when the choice of tiles or their order changes: the panel may
+// be showing a hole-out or a penalty above it (renderResult), which a full
+// redraw would replace with the plain caption.
+function refreshShotGrid(){
+ const box=$('shotResult'),host=box?.querySelector('.shot-groups,.shot-grid');
+ if(!host)return renderShotPanel();
+ host.outerHTML=gridHTML();sizePanel();drawShotSummary();
+}
+function showStandingResult(){renderShotPanel();}
+function showRangeResult(){renderShotPanel();}
+function showLiveResult(){renderShotPanel();}
+// The header: what the panel is showing, and Skip while there is something to
+// skip. The countdown at the end of a flight -- "Final lie · playing on in 3s"
+// -- is written over the label by `liveLine` and stays until the flight ends.
+function drawPanelState(){
+ const panel=$('shotPanel');if(!panel)return;
+ const flying=!!flight;
+ panel.classList.toggle('flying',flying);
+ $('skipFlight').hidden=!flying;
+ if(!flying){$('flightLabel').textContent='LAST SHOT';return;}
+ if(flight.replay||flight.endHold)return;
+ $('flightLabel').textContent=flight.result?.puttStroke?'BALL ROLLING':'BALL IN FLIGHT';
+}
+// The folded line: carry and total, from the same record the grid describes.
+function drawShotSummary(record=cardRecord()){
+ const el=$('shotSummary');if(!el)return;
+ const pick=id=>shotGrid(record,{fields:[id],columns:2}).cells[0];
+ const carry=pick('carry'),total=pick('total');
+ el.innerHTML=carry.blank?'<small>Nothing hit yet</small>':`${carry.value}<small> carry</small> · ${total.value}<small> total</small>`;
+}
+// EVERY FRAME OF A FLIGHT, the tiles that change are rewritten in place -- the
+// result group only, and only when what they print has changed. Rebuilding the
+// whole grid sixty times a second would also tear a tile out from under a
+// finger that was dragging it.
+function drawLiveTiles(){
+ if(!flight?.record)return;
+ const box=$('shotResult');if(!box)return;
+ const record=cardRecord();
+ for(const el of box.querySelectorAll('[data-field]')){
+  const f=fieldById(el.dataset.field);if(f?.group!=='flight')continue;
+  const c=shotGrid(record,{fields:[f.id],columns:2}).cells[0];
+  const html=tileInner(c);
+  if(el.dataset.shown===html)continue;
+  el.dataset.shown=html;el.innerHTML=html;el.classList.toggle('blank',c.blank);
+ }
+ drawShotSummary(record);
+}
+// The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes in the
+// panel's header, which is on screen while the ball is up.
+function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;}
+// DRAG A TILE ONTO ANOTHER TO REORDER THEM, right on the panel -- the way GSPro
+// arranges its data tiles, and the owner's pick over a list in the settings.
+// Pointer events, so a finger works as well as a mouse; a press that never
+// moves is not a drag, so nothing changes under a tap. The order is saved with
+// the rest of Shot data and every view of the grid follows it.
+{
+ let drag=null;
+ const box=()=>$('shotResult');
+ const over=ev=>document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('#shotResult [data-field]');
+ window.addEventListener('pointerdown',ev=>{
+  if(ev.button)return;
+  const t=ev.target.closest?.('#shotResult [data-field]');if(!t)return;
+  drag={id:t.dataset.field,x:ev.clientX,y:ev.clientY,moved:false,el:t};
+ });
+ window.addEventListener('pointermove',ev=>{
+  if(!drag)return;
+  if(!drag.moved&&Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<6)return;
+  drag.moved=true;ev.preventDefault();
+  box()?.classList.add('tiles-dragging');drag.el.classList.add('tile-lifted');
+  for(const el of box()?.querySelectorAll('.tile-target')??[])el.classList.remove('tile-target');
+  const t=over(ev);if(t&&t!==drag.el)t.classList.add('tile-target');
+ });
+ const end=ev=>{
+  if(!drag)return;
+  const d=drag;drag=null;
+  box()?.classList.remove('tiles-dragging');
+  for(const el of box()?.querySelectorAll('.tile-target,.tile-lifted')??[])el.classList.remove('tile-target','tile-lifted');
+  if(!d.moved||ev.type==='pointercancel')return;
+  const t=over(ev);if(!t||t.dataset.field===d.id)return;
+  // A monitor player who has never saved a choice is looking at the monitor
+  // set, not their own; reordering it makes it theirs.
+  shotPrefs=saveShotData({fields:moveField(panelFields(),d.id,t.dataset.field),columns:shotPrefs.columns});
+  refreshShotGrid();
+ };
+ window.addEventListener('pointerup',end);
+ window.addEventListener('pointercancel',end);
 }
 // Back to the mat, with the club the player chose still in their hands.
 //
@@ -1228,55 +1317,21 @@ function setUpRangeTurn(){
  aimRange=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();
 }
-// BETWEEN SHOTS, WHICH IS MOST OF THE TIME. The numbers from the last shot stay
-// exactly where they were until the next one replaces them.
-function showStandingResult(){$('shotResult').hidden=false;$('shotResult').innerHTML=`<h3>Shot information</h3><p>${escape(shotCaption())}</p>`+gridHTML();drawShotSummary();}
-// WHILE THE BALL IS UP, the ticking numbers go on the small line under the
-// player's name and the grid is left alone. It used to be the other way round:
-// the live tiles REPLACED the grid, so the shot you had just hit erased the shot
-// you hit before it, and the moment the ball settled the live numbers were gone
-// too. Nothing about a ball in the air belongs in a panel of finished numbers.
-function showLiveResult(){
- $('shotResult').hidden=false;
- // The grid keeps showing the PREVIOUS shot until this one lands, because it is
- // the only shot there are finished numbers for.
- $('shotResult').innerHTML=`<h3>Shot information</h3><p>${escape(shotCaption())}</p>`+gridHTML();
- drawShotSummary();
- $('flightLabel').textContent='BALL IN FLIGHT';$('flightBadge').classList.remove('holding');
-}
-// THE FLIGHT BAR: what was fixed the moment the ball was struck -- the club,
-// ball speed, launch and spin -- beside Skip, along the bottom of the screen
-// while everything else steps aside. It REPLACED a live readout that ticked
-// the ball's speed, spin, distance and height through the flight: the owner's
-// call, 26 September, was that the numbers worth a glance mid-flight are the
-// ones that do not change. Carry and total stay off it, as they always stayed
-// off the grid, because they are where the ball is going.
-function drawFlightBar(){
- const record=flight?.record;if(!record)return;
- const putt=!!flight.result?.puttStroke;
- if(!flight.replay)$('flightLabel').textContent=putt?'BALL ROLLING':'BALL IN FLIGHT';
- const cell=id=>shotGrid(record,{fields:[id],columns:2}).cells[0];
- const nums=(putt?['ballSpeed']:['ballSpeed','launch','spin']).map(cell).filter(c=>!c.blank);
- $('flightNums').innerHTML=[record.club?`<b>${escape(record.club)}</b>`:'',...nums.map(c=>`<span>${c.value}${c.unit?`<small>${c.unit.startsWith('°')?'':' '}${escape(c.unit)}</small>`:''}</span>`)].filter(Boolean).join('<i>·</i>');
-}
-// The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes on the
-// flight bar, which is the one thing on screen while a ball is up.
-function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;$('flightBadge')?.classList.add('holding');}
 
 function openPlaySettings(name,content){
  if(name==='shotdata'){
   // WHAT THE CARD SHOWS, AND HOW MANY ACROSS. The list is built from the field
   // registry rather than typed out here, so a field added in shot-data.js
   // appears in this panel without anyone remembering to add it twice.
-  const chosen=new Set(shotPrefs.fields);
+  const chosen=new Set(panelFields());
   const group=g=>{
    const fields=SHOT_FIELDS.filter(f=>f.group===g.id);
    return `<div class="control-card"><h4 class="shot-field-group">${escape(g.label)}</h4>`
     +fields.map(f=>`<label class="check"><input type="checkbox" data-field="${f.id}"${chosen.has(f.id)?' checked':''}> ${escape(f.label)}${f.unit?` <small>${escape(f.unit)}</small>`:''}</label>`).join('')
     +`</div>`;
   };
-  content.innerHTML=`<p>Pick the numbers the course card keeps between shots. The five the game actually plays from are ball speed, launch, direction, spin and spin axis; everything else is extra your launch monitor may send, or what our flight model made of the shot.</p>
-  <label class="field">Columns<select id="shotColumns">${COLUMN_CHOICES.map(c=>`<option value="${c}"${shotPrefs.columns===c?' selected':''}>${c} across</option>`).join('')}</select></label>
+  content.innerHTML=`<p>Pick the numbers the shot panel shows: live while the ball flies, and kept until the next shot. Drag a tile on the panel onto another to change their order. The five the game actually plays from are ball speed, launch angle, launch direction, spin and spin axis; everything else is extra your launch monitor may send, or what our flight model made of the shot.</p>
+  <label class="field">Columns<select id="shotColumns">${COLUMN_CHOICES.map(c=>`<option value="${c}"${shotPrefs.columns===c?' selected':''}>${c?c+' across':'Fit to width'}</option>`).join('')}</select></label>
   <p class="note" id="shotFieldCount"></p>
   ${FIELD_GROUPS.map(group).join('')}
   <p class="research-label">Club numbers need a monitor that sends them; a keyboard shot leaves those tiles blank rather than filling them with zeros. Face to path is worked out from face and path, because no monitor sends it.</p>
@@ -1289,10 +1344,12 @@ function openPlaySettings(name,content){
    for(const el of content.querySelectorAll('input[data-field]'))el.disabled=n>=MAX_FIELDS&&!el.checked;
   };
   const apply=()=>{
-   // The ORDER is the registry's, not the order they were ticked. A grid that
-   // rearranged itself as you tried fields on would make comparing two shots
-   // harder, which is the one thing the grid is for.
-   const fields=SHOT_FIELDS.filter(f=>content.querySelector(`input[data-field="${f.id}"]`)?.checked).map(f=>f.id);
+   // THE ORDER IS THE PLAYER'S: the tiles they already had keep the order they
+   // dragged them into, and a newly ticked one joins the end. Ticking used to
+   // put everything back in the registry's order, which once tiles could be
+   // dragged would have undone the arrangement every time a box was ticked.
+   const on=id=>content.querySelector(`input[data-field="${id}"]`)?.checked;
+   const fields=[...panelFields().filter(on),...SHOT_FIELDS.map(f=>f.id).filter(id=>on(id)&&!panelFields().includes(id))];
    shotPrefs=saveShotData({fields,columns:Number($('shotColumns').value)});
    count();refreshShotGrid();
   };
@@ -2615,7 +2672,6 @@ function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el
  if(out)out.textContent=el.value+(el.dataset.unit??'');
 }));}
 function openPanel(name){
- hideShotCard();
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
 }
@@ -3915,7 +3971,7 @@ const MONITOR_WORDS={
  amber:['Finding ball','Tee up the next one'],
  green:['Ready','Ball on the mat — hit when you are ready'],
 };
-let shotCardWait=false,gridArmed=false;
+let gridArmed=false;
 function drawMonitorState(state){
  const box=$('monState');if(!box)return;
  // Arming switches the numbers between the plain grid and the grouped one.
@@ -3927,24 +3983,7 @@ function drawMonitorState(state){
  }
  $('monArm').checked=armed;$('monArm').disabled=!monitorConnected;
  $('clubSource').textContent=armed?'sent to your monitor':'';
- // The big numbers stay until the monitor sees the NEXT ball: amber once the
- // ball has gone, then green when a new one is teed. A device that never
- // reports a ball leaves them up until the next shot, which is fine.
- if(!$('shotCard').hidden){
-  if(state!=='green')shotCardWait=true;
-  else if(shotCardWait)hideShotCard();
- }
 }
-function showShotCard(record=lastShot){
- if(!record?.typed||!monitorConnected)return;
- const cell=id=>shotGrid(record,{fields:[id],columns:2}).cells[0];
- const big=['carry','total','offline'].map(cell),small=['ballSpeed','launch','spin'].map(cell);
- $('shotCardBig').innerHTML=big.map(c=>`<div><span>${escape(c.label.toUpperCase())}</span><strong>${c.value}<small>${escape(c.unit||'')}</small></strong></div>`).join('');
- $('shotCardSmall').innerHTML=small.map(c=>`<dt>${escape(c.label)}</dt><dd>${c.value}${c.unit?` ${escape(c.unit)}`:''}</dd>`).join('');
- shotCardWait=monitorState()!=='green';
- $('shotCard').hidden=false;
-}
-function hideShotCard(){if($('shotCard'))$('shotCard').hidden=true;shotCardWait=false;}
 // WHERE THE BRIDGE IS, remembered per device once a connection succeeds. With
 // nothing remembered: a page the bridge served itself -- plain http, which is
 // how a phone on the home network plays with a monitor -- came from the bridge,
@@ -4523,20 +4562,24 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // It refuses for the same reasons a save refuses, in the same sentence: an
  // endless run is one hole at a time and `holes: 1` is not a value a course can
  // hold, so a code for it would be refused by the importer rather than here.
- // THE LAST SHOT FOLDS TO ONE LINE -- carry and total -- at the foot of the
- // shot panel, and a tap opens the grid. Remembered per device. A big screen
- // and launch-monitor mode show the grid whatever this says (the stylesheet
- // decides that), because there is room for it and, with a monitor, the
- // numbers are the point. It replaced the course card's "Shot details" fold.
+ // THE SHOT PANEL FOLDS TO ONE LINE -- carry and total -- with the chevron in
+ // its header, and opens again the same way. Remembered per device. Never
+ // chosen, it starts OPEN on anything bigger than a phone, where the panel sits
+ // along the bottom with room to spare, and FOLDED on a phone, where the grid
+ // would cover the course. v2 since the numbers left the shot controls (10
+ // October 2026): v1 remembered the old fold, which was folded by default and
+ // decided something else.
  {
-  const toggle=$('shotToggle'),KEY='fairway-shot-open-v1';
-  const setOpen=open=>{
+  const toggle=$('shotToggle'),KEY='fairway-shot-open-v2';
+  const setOpen=(open,keep=true)=>{
    $('world').classList.toggle('shot-open',open);
    toggle.setAttribute('aria-expanded',String(open));
-   try{localStorage.setItem(KEY,open?'1':'0');}catch{}
+   toggle.setAttribute('aria-label',open?'Fold the shot numbers':'Open the shot numbers');
+   if(keep)try{localStorage.setItem(KEY,open?'1':'0');}catch{}
   };
-  let open=false;try{open=localStorage.getItem(KEY)==='1';}catch{}
-  setOpen(open);
+  let saved=null;try{saved=localStorage.getItem(KEY);}catch{}
+  const w=$('world'),phone=w.clientWidth<=560||w.clientHeight<=500;
+  setOpen(saved==null?!phone:saved==='1',false);
   toggle.onclick=()=>setOpen(!$('world').classList.contains('shot-open'));
  }
  // THE SCORE CHIPS open the scorecard, or on a practice ground pick who hits.
@@ -4824,12 +4867,13 @@ function tick(now){
  if(aimViewOpen&&(flight||panel||tour||appMode==='menu'))setAimView(false);
  // A BALL IN THE AIR CLEARS THE SCREEN: the shot panel, the cameras, the aim
  // pad and the like step aside until it settles, leaving the top bar, the
- // wind, the map and the flight bar. Every frame, for the same reason as the
+ // wind, the map and the shot panel. Every frame, for the same reason as the
  // line above -- a flight starts and ends several ways.
- if($('world').classList.contains('in-flight')!==!!flight){
-  $('world').classList.toggle('in-flight',!!flight);
-  if(flight)drawFlightBar();
- }
+ if($('world').classList.contains('in-flight')!==!!flight)$('world').classList.toggle('in-flight',!!flight);
+ // The panel's carry and total count up with the ball, so they are drawn every
+ // frame of a flight, not once at its start the way the flight bar's fixed
+ // numbers were.
+ if(flight)drawLiveTiles();
  // While the scorecard is up, the hole is on screen behind it: every tracer of
  // it, from a slow orbit that keeps tee and green in the same frame.
  if(summaryCamera&&!flight){holeSummary+=dt;view.summaryOrbit(holeSummary);}

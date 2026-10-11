@@ -3595,6 +3595,8 @@ The last column is the sanity check — what a ball reaching the same apex would
 
 **Left alone deliberately.** The remaining 0.3 s against tour average would have to come out of lift, and lift was then fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%) -- figures superseded by the 6 October refit (*The flight refitted against three launch monitors*). The driver's real gap is carry — 261 against a sourced 275 — and chasing that risks the descent angle the whole bounce model depends on.
 
+**The number on screen was a different one, until 10 October 2026.** Everything above is strike to first touchdown, measured from the flight's points. The *Hang time* tile in Shot data read `result.time`, which is when the ball stops: the driver above, hanging 6.5 s, showed 10.8 s on its tile -- about four seconds of roll added. Nothing in the model or in any fit was affected; the tile was wrong. `simulateShot` now returns `hang`, set at the same instant as `carry`, and the tile reads that. (Measured on flat fairway, 155 mph, 12.5°, 2,700 rpm: hang 6.54 s, at rest 10.82 s.)
+
 ## A home-screen icon on a password-protected host
 
 Not a physics question, but it took outside sources to answer, and two of them

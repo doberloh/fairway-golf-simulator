@@ -83,7 +83,7 @@ The simulation proper. Metres, seconds, kilograms and radians throughout.
 | src/firmness.js | Turf firmness, kept as a separate axis from green speed. Speed is what a ball does once it is rolling; firmness is what happens the moment it lands |
 | src/clubs.js | Stock/custom clubs, distance calibration and manual flight profiles |
 | src/dispersion.js | Groups recorded shots by the club that hit them and reports a centre and a standard distance. A read of what was hit, never a model of what might be |
-| src/shot-data.js | WHAT A SHOT IS WORTH SHOWING, IN ONE LIST. The five numbers the model runs on, plus every extra a launch monitor may send. A missing reading renders as a dash, never as a zero |
+| src/shot-data.js | WHAT A SHOT IS WORTH SHOWING, IN ONE LIST. The five numbers the model runs on, plus every extra a launch monitor may send. A missing reading renders as a dash, never as a zero. Also `liveRecord` (the shot part way through its flight, for the shot panel's live tiles) and `moveField` (a dragged tile's new order) |
 | src/shot-views.js | Reduces a trajectory to down-the-line and across-the-line numbers and draws the 2D side and plan plots |
 
 ### Playing a round
@@ -710,7 +710,11 @@ the website's build**, which refuses a game without it.
 
 **PLAY AND COURSE STUDIO ARE WAYS IN, so `syncNav` hides them from the top-bar menu once you are in one.** Offering "Play" to somebody already playing means starting a different round from what looks like a settings menu, and "Course studio" mid-round is a guarded exit dressed as a nav item. Main menu stays, and is where both of them live.
 
-**THE CARD IS DRAWN FROM A RECORD, AND THE RECORD DURING A FLIGHT IS THE PREVIOUS SHOT.** Every state of the shot readout -- just played, played ten minutes ago, a replay, a range session -- renders one function (`gridHTML`) from one record. It used to be three separate fixed stat blocks that each decided for themselves what a shot was worth showing, which is why the launch numbers existed for the two seconds of a flight and then vanished. The record it draws is `cardRecord()`, NOT `lastShot`: `takeShot` writes lastShot before the ball has left the club and the entire flight is simulated in that same instant, so drawing from lastShot puts the carry, total and apex on screen while the ball is still climbing. That is a bug that only appears on screen, because every number in it is correct. A live flight therefore keeps `priorShot`; a REPLAY uses lastShot, because you already know how that shot ended. Anywhere lastShot is cleared, priorShot must be cleared too, or a new round opens showing the last shot of the previous one.
+**THE SHOT PANEL IS DRAWN FROM A RECORD, AND DURING A FLIGHT THAT RECORD IS READ AT THE FLIGHT'S CLOCK.** Every state of the shot readout -- in the air, just played, played ten minutes ago, a replay, a range session -- renders one function (`renderShotPanel`, through `gridHTML`) from one record into one panel (`#shotPanel`, 10 October 2026). It used to be three separate fixed stat blocks that each decided for themselves what a shot was worth showing, and until 10 October three readouts as well: the flight bar, the monitor's big-numbers card and the last-shot fold. The record is `cardRecord()`, NOT `lastShot`: `takeShot` writes lastShot before the ball has left the club and the entire flight is simulated in that same instant, so drawing the finished record during a flight puts the carry, total and apex on screen while the ball is still climbing -- a bug that only appears on screen, because every number in it is correct. Until 10 October a live flight therefore showed `priorShot`. Now it shows `liveRecord(flight.record, flight.elapsed)` (shot-data.js): the strike's numbers as they are, and carry, total, apex, hang and offline as far as the ball has got, with descent and landing speed blank until touchdown. Carry freezes at the first touchdown, where it equals the model's carry exactly because physics.js measures both the same way at that instant. The owner asked for numbers that count up with the ball; that reverses the 26 September rule that carry and total never show in flight, and is not a return of the bug, because a number that climbs with the ball reads where it is, not where it will finish. `drawLiveTiles` rewrites only the result tiles, every frame, and only when their text changes. `priorShot` is kept for the mulligan and the replay chain; anywhere lastShot is cleared, priorShot is still cleared too.
+
+**`refreshShotGrid` REPLACES THE GRID ONLY.** `renderResult` writes a hole-out, a penalty or conceded putts above the grid, and a Continue button with it. Changing the tiles (Shot data, a dragged tile, arming the monitor) must not wipe those, so it swaps the `.shot-grid`/`.shot-groups` element in place; `renderShotPanel` redraws the lot and is for the panel's own states. The caption (whose shot, which club, the range session) lives in the header (`#shotCaption`), out of reach of `renderResult` -- as the first line of the grid it was replaced by "In a penalty area" whenever a shot found water, which made the `monitor` smoke journey fail on whichever random courses put its shot in a pond.
+
+**HANG TIME IS `result.hang`, THE TIME TO FIRST TOUCHDOWN.** The tile read `result.time`, which is when the ball STOPPED: a drive that hangs 6.5 s and rolls for four more showed 10.8 s. `simulateShot` now returns `hang` beside `carry`, set at the same instant. RESEARCH's hang figures were never affected -- `tools/flight-fit.mjs` and every study measured strike to touchdown from the points -- only the number on screen was wrong. A record saved before `hang` existed shows a dash.
 
 **NOTHING A LAUNCH MONITOR SENDS BEYOND THE FIVE MAY REJECT A SHOT.** `parseLaunchMessage` validates ball speed, launch, direction, spin and axis hard, because a bad one means the model cannot run and playing the shot would be inventing it. `readExtras` beside it is the opposite case by design: club speed, attack angle, path, face, the spin split and the device's own distances reach a readout and nothing else, so there is no `throw` and no range check anywhere in it. A device sending a string where a number belongs, or a `ClubData` that is not an object, must not be able to stop a real ball being played. Extras are normalised to SI at that boundary like the five; angles stay in degrees, spins in rpm, face impact in millimetres.
 
@@ -718,7 +722,7 @@ the website's build**, which refuses a game without it.
 
 **A BLANK IS NOT A ZERO.** A field the device never sent renders a dash and stays in place, dimmed. A zero is a reading -- "your club path was dead straight" -- and printing one for a number nobody measured is the kind of lie that gets acted on. The tile stays rather than disappearing because a tile that comes and goes as a monitor warms up moves every other tile with it. The DEFAULT set is exactly the eight fields a keyboard shot can fill, for the same reason: a player with no monitor must not open the game to a grid of dashes.
 
-**The shot readout lives at the foot of the shot panel, and Copy course code in the Tools window.** `#shotResult` has moved twice: a floating glass panel, then a section of the course card, and since the play screen was redrawn in September the `.last-shot` section of the shot panel -- folded to carry and total by `#shotToggle`, opened to the grid. It is never a panel of its own (a panel inside a panel reads as a mistake) and has no grip of its own. When the shot panel runs out of height, **only the numbers scroll**: the club, the power and the shot button keep their height. The panel used to scroll as a whole, and held sideways on a phone with the numbers open that scrolled the three controls a turn needs out of sight.
+**The shot readout is its own panel, and Copy course code is in the Tools window.** `#shotResult` has moved three times: a floating glass panel, then a section of the course card, then (September) the `.last-shot` section at the foot of the shot controls, and since 10 October 2026 the shot panel (`#shotPanel`), a HUD panel of its own registered with layout.js as "Shot data" -- title bar, grip, resize corner, saved place. The September rule was that it is never a panel of its own, because a panel inside a panel reads as a mistake; that held while it sat INSIDE the controls. The owner asked for it to be movable and resizable on its own, and for the in-flight bar to become it, which only a separate panel can be. `#shotToggle` folds it to carry and total (`shot-open` on `#world`, saved under `fairway-shot-open-v2`; never chosen, open on a big screen and folded on a phone). Its tiles scroll inside it when it runs out of height; the controls no longer share a scroller with the numbers, so the old "only the numbers scroll" rule has nothing left to protect.
 
 **One panel chrome, named once.** The HUD grew its panels before the tool windows existed and the two drifted: radius 9, 10 and 12 across six panels and two different drop shadows, so a popup beside the map read as a different kind of object rather than the same kind in a different place. `--panel-radius` and `--panel-shadow` are the single definition; nine shadow declarations and six radii collapsed onto them.
 
@@ -774,8 +778,10 @@ changing does not shift its neighbours. Rejected: bundling a webfont (Barlow,
 Inter and three others were mocked up) -- the owner chose the logo's font, and
 the logo was never a bundled font. **The shot controls are a panel down the
 left** (`.bottom-area`, still, so the drag registry and every rule keyed on it
-kept working), only as tall as what is in it, with the shot button inside it
-and the last shot at its foot. On the right: the wind at the top, the camera
+kept working), only as tall as what is in it, with the shot button inside it.
+The shot's numbers are their own panel (`#shotPanel`), along the bottom of the course between the
+controls and the map, centred in that gap and as wide as its tiles in one row (`--tiles`, set by
+`sizePanel`), capped to the gap. On the right: the wind at the top, the camera
 strip down the edge, the map at the foot. `.course-info` survives for free
 flight, where it names the course, and is hidden everywhere else in play.
 
@@ -786,8 +792,12 @@ phone the two of them covered most of the course, and the card needed its own
 
 **On a phone** (below 560 px wide OR below 500 px tall, both ways up) the top
 bar is the menu button, the hole, the chip of whoever is up with a count of the
-others, the clock's gear and a **Tools** button (`#barTools`); the shot panel is
-the club, the power and the shot button, with the last shot folded ABOVE them;
+others, the clock's gear and a **Tools** button (`#barTools`); the shot controls are
+the club, the power and the shot button; the shot panel runs along the top
+beside the wind (and, held sideways, beside the camera button too), folded to
+carry and total until it is tapped open -- the foot of a phone has 16 px between
+the controls and the map, and the top has room now the course card is not shown
+in play;
 the camera strip folds behind `#camButton` (class `cams-open` on `#world`,
 closed by picking a camera, tapping elsewhere or Escape); the map sits in the
 bottom-right corner with the aim pad under it. The tee picker, the aim arrows
@@ -841,22 +851,22 @@ and stayed there. New tool windows also open fitted to the screen now
 **A ball in the air clears the screen** (`in-flight` on `#world`, set from
 `flight` every frame, so a shot, a replay, a skip and a settle all agree). The
 camera strip, the camera button, the aim pad and the keyboard hints fade over
-0.2 s -- a placed number, quick enough not to feel like a delay; on a phone the
-whole shot panel fades, and bigger than a phone the panel's children other
-than `.last-shot` are dropped so the panel folds to its numbers. The top bar,
-the wind and the map stay. **The map follows the ball**: during a flight it is
+0.2 s -- a placed number, quick enough not to feel like a delay -- and so do the
+shot controls, at every size since 10 October (bigger than a phone they used to
+fold to their last-shot numbers, which live in the shot panel now). The top bar,
+the wind, the map and the shot panel stay. **The map follows the ball**: during a flight it is
 redrawn every 60 ms, framed on `flight.origin` -- not `round.position`, which
 `round.takeShot` has already moved, and which the map's fit is built around,
 so the map would reframe mid-flight -- and `drawFlightOnMap` draws the line so
-far and the ball over it. **The live readout is gone**, by the owner's call:
-the ticking speed, spin, distance and height were replaced by the flight bar
-(`#flightBadge`, bottom centre at every size), which `drawFlightBar` fills once
-per flight with what was fixed at the strike -- club, ball speed, launch and
-spin; ball speed alone for a putt, labelled *Ball rolling* -- from the record
-the flight carries (`flight.record`, which a replay sets too). `liveLine` now
-writes the end-of-flight countdown into the bar's label; on a phone, where the
-label is hidden for room, the countdown takes the numbers' place
-(`.holding`).
+far and the ball over it. **The flight lives in the shot panel.** History: on 26 September the owner
+replaced a live readout (ticking speed, spin, distance and height) with a flight
+bar (`#flightBadge`) carrying only what was fixed at the strike; on 10 October
+the owner asked for the opposite -- every number at the strike and carry and
+total counting up -- in one panel that also keeps them afterwards, and the bar
+went. The panel's header says *Ball in flight* or *Ball rolling*, or the
+replay's name, with Skip beside it and a pulsing dot; `liveLine` writes the
+end-of-flight countdown over that label. The tiles come from the record the
+flight carries (`flight.record`, which a replay sets too).
 
 **Markers keep clear of panels by their SHAPE.** `hudInsets` treats a panel
 running most of the height as a side to keep beside (the laptop's shot panel
@@ -876,13 +886,15 @@ it only ever holds text).
 sizes -- desktop, four laptops, an iPad both ways up, a phone both ways up --
 and at each asks the browser what is under every control on the menu and the
 play screen, whether the page can scroll, and how much of the course shows,
-with the last shot folded and open. `phone-portrait` and `phone-landscape` play
+with the shot panel folded and open. `phone-portrait` and `phone-landscape` play
 a hole by touch alone. `monitor` plays with a pretend launch monitor -- see the
 next section. Measured when the redraw landed: every control reachable at
 every size, no page scrolls, and the course visible, folded, on 63% to 75% of a
 laptop, tablet or desktop screen (39% to 65% with the old bottom bar and
 course card), 60% of a phone held sideways (was 36%) and 65% upright (was
-45%). Opened, the last shot costs at most 6 points, and 12 on a phone upright. The browser
+45%). Opened, the last shot costs at most 6 points, and 12 on a phone upright. Re-measured with the shot panel
+along the bottom (10 October 2026): folded 53% (1280x720) to 74% (1920x1080), open 50% to 72%;
+a phone held sideways 56% folded and 44% open, upright 65% and 54%. The browser
 only EMULATES a phone -- a real iPhone's Safari, its safe-area insets (zero in
 emulation) and a real phone's GPU are still checked by hand.
 
@@ -968,8 +980,9 @@ copy. **Launch-monitor mode is checked without a monitor.** The `monitor` journe
 answers the game's WebSocket itself with Playwright's `routeWebSocket`, sending
 what `bridge/server.mjs` sends -- status messages for red, amber and green, and
 a shot message -- and checks the panel's words, which controls go and stay,
-that the shot is ACKed as accepted, the grouped numbers, that the big numbers
-wait for the next ball, and Hit by hand. **The route has to exist before the
+that the shot is ACKed as accepted, the grouped numbers in the shot panel and
+the device named in its caption, that the numbers stay while the next ball is
+found and teed, and Hit by hand. **The route has to exist before the
 page loads**: Playwright patches the page's WebSocket as the document starts,
 so a route added after load never sees the connection and the game reports
 `ERR_CONNECTION_REFUSED`. Journeys may declare `prepare(page)` for that; it
@@ -1438,7 +1451,7 @@ CAUTION when editing the mode-hiding rules: they are long selector LISTS where t
 
 **Red, amber, green, or nothing.** `monitorState()` is off with no bridge (a player who never uses a monitor should not see a permanently red light), red for bridge-but-no-device, amber for device-but-no-ball, green for ball detected. The colour outlines the whole shot panel, and the word heads it (`#monState`), because that is what you are already looking at; the top bar repeats it. Amber BREATHES because the device is still searching; green pulses once and settles, because a light that keeps blinking while you stand over a shot is the opposite of helpful. Each state also carries words -- *No monitor* / *Finding ball* / *Ready*, with a line saying what to do -- since a colour alone is not a message and roughly one man in twelve cannot separate the red from the green. Red offers **Reconnect** (close and reopen the bridge at the address last used) and **Hit by hand** (disarm, which brings power and the shot button back).
 
-**The stripped panel keys on `armed`, not on connection.** With a monitor armed, ball speed, launch, direction, spin and axis all come off the device, so the power slider, shot-shape picker and swing button decide nothing, and `takeShot` already refuses a manual swing. Keying it on mere connection would hide the swing button from someone who connected a monitor but never armed it, leaving them unable to hit at all. **The aim controls stay.** They used to go too, on the reasoning that clicking the course still aims; the owner's call on 26 September was that aim is the one thing a player with a monitor still decides before every shot, so it stays in front of them. Armed, the numbers are always open and GROUPED (`groupedGridHTML`): Ball (measured), Club (from the monitor, dropped entirely when every club field is blank -- most devices send ball data only) and Result (simulated). A player who has saved their own Shot data fields (`hasCustomShotData`) gets theirs, grouped; otherwise the monitor set of eighteen. **The big numbers** (`#shotCard`: carry, total, offline, then ball speed, launch, spin) come up when a monitor shot settles and stay until the monitor reports amber and then green -- the next ball teed -- or until the next shot, a panel or the next hole. A device that never reports a ball leaves them up until the next shot, which is fine; a timer was rejected because it runs out while you are still looking. The class goes on `#shotControls` itself, so it follows every mode that shows that bar — verified in play and on the range.
+**The stripped panel keys on `armed`, not on connection.** With a monitor armed, ball speed, launch, direction, spin and axis all come off the device, so the power slider, shot-shape picker and swing button decide nothing, and `takeShot` already refuses a manual swing. Keying it on mere connection would hide the swing button from someone who connected a monitor but never armed it, leaving them unable to hit at all. **The aim controls stay.** They used to go too, on the reasoning that clicking the course still aims; the owner's call on 26 September was that aim is the one thing a player with a monitor still decides before every shot, so it stays in front of them. Armed, the shot panel's numbers are GROUPED (`groupedGridHTML`), the groups side by side: Ball (measured), Club (from the monitor, dropped entirely when every club field is blank -- most devices send ball data only) and Result (simulated). A player who has saved their own Shot data fields (`hasCustomShotData`) gets theirs, grouped; otherwise the monitor set of eighteen. **The big numbers card** (`#shotCard`) that came up when a monitor shot settled and waited for the next ball to be teed went on 10 October 2026: the shot panel shows the same numbers, live during the flight and kept until the next shot, for every shot rather than only a monitor's. A timer had been rejected for it because it runs out while you are still looking; the panel has no timer either. The class goes on `#shotControls` itself, so it follows every mode that shows that bar — verified in play and on the range.
 
 **Every response carries the Player block, not just the 201.** GSPro does this, and a real connector's log showed why it matters: it parses a Player out of each reply and was printing its own empty defaults — `"Player":{"Handed":"","Club":"","DistanceToTarget":0}` — on every heartbeat, because the bridge sent only `Code` and `Message`. A connector that tracks club changes from the response stream rather than only from the 201 would never see one.
 
