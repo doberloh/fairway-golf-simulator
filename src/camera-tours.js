@@ -125,13 +125,22 @@ export function canopyTop(trees, x, z) {
  return top;
 }
 
-export function makeCameraFlight(from, to, world, {hold = 0} = {}) {
+// THE DESCENT ONTO A NEW HOLE goes slower and straight through the trees (10
+// October 2026, the owner's call). It ran at cruise speed, capped at 2.6 s, and
+// arced up over every canopy on the way -- quick and fussy where the owner's
+// word was "slow it down". Now it takes 3.5 to 5.5 s, and a tree in its way is
+// passed through rather than climbed over: the one the camera is inside is
+// hidden (vegetation.js, clearCameraTrees), as it always was for any camera.
+// The ground is still cleared. All three numbers are placed.
+const ARRIVE_SPEED = 40, ARRIVE_MIN = 3.5, ARRIVE_MAX = 5.5;
+export function makeCameraFlight(from, to, world, {hold = 0, arrival = false} = {}) {
  const dx = to.eye.x - from.eye.x, dy = to.eye.y - from.eye.y, dz = to.eye.z - from.eye.z;
  const span = Math.hypot(dx, dy, dz);
  // `hold` sits on the opening pose before the move starts, for an arrival that
  // shows you the hole first. It is part of the duration, so a caller that waits
  // for `done` waits for the whole thing rather than only the travel.
- const travel = Math.min(FLIGHT_MAX, Math.max(FLIGHT_MIN, span / FLIGHT_SPEED));
+ const travel = arrival ? Math.min(ARRIVE_MAX, Math.max(ARRIVE_MIN, span / ARRIVE_SPEED))
+  : Math.min(FLIGHT_MAX, Math.max(FLIGHT_MIN, span / FLIGHT_SPEED));
  const duration = hold + travel;
  const terrain = world?.height ? (x, z) => world.height(x, z) : () => 0;
  const at = t => ({x: from.eye.x + dx * t, z: from.eye.z + dz * t});
@@ -145,7 +154,7 @@ export function makeCameraFlight(from, to, world, {hold = 0} = {}) {
  const PAD = 26;
  const near = (world?.trees || []).filter(t =>
   t.x > lo.x - PAD && t.x < hi.x + PAD && t.z > lo.z - PAD && t.z < hi.z + PAD);
- const canopy = (x, z) => canopyTop(near, x, z);
+ const canopy = arrival ? () => -Infinity : (x, z) => canopyTop(near, x, z);
  // The obstacle floor tapers to nothing at both ends. Without that, a flight
  // leaving a player camera -- which sits just off the turf by design -- would be
  // told it is metres too low and start by rocketing upward.

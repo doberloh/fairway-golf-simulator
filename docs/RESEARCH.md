@@ -3595,6 +3595,8 @@ The last column is the sanity check — what a ball reaching the same apex would
 
 **Left alone deliberately.** The remaining 0.3 s against tour average would have to come out of lift, and lift was then fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%) -- figures superseded by the 6 October refit (*The flight refitted against three launch monitors*). The driver's real gap is carry — 261 against a sourced 275 — and chasing that risks the descent angle the whole bounce model depends on.
 
+**The number on screen was a different one, until 10 October 2026.** Everything above is strike to first touchdown, measured from the flight's points. The *Hang time* tile in Shot data read `result.time`, which is when the ball stops: the driver above, hanging 6.5 s, showed 10.8 s on its tile -- about four seconds of roll added. Nothing in the model or in any fit was affected; the tile was wrong. `simulateShot` now returns `hang`, set at the same instant as `carry`, and the tile reads that. (Measured on flat fairway, 155 mph, 12.5°, 2,700 rpm: hang 6.54 s, at rest 10.82 s.)
+
 ## A home-screen icon on a password-protected host
 
 Not a physics question, but it took outside sources to answer, and two of them
@@ -6785,3 +6787,60 @@ the shadows out first.
 
 Tests pass (668); 23 of 23 smoke journeys (all but `floodlit-night`, which is
 held back on this machine at the owner's request).
+
+## Plays like, by geometry (10 October 2026)
+
+**What it is.** Under the yards to the hole the flag marker says what the shot
+plays like: the distance it would be on level ground, in still air, at sea
+level, at the model's default 18 °C -- the conditions the bag's stock carries
+are calibrated in. Asked for by the owner, after Garmin's *PlaysLike*, which
+its watch manuals describe as an adjustment for elevation change, wind speed,
+wind direction and air density, shown as the adjusted distance to the green
+([Garmin Approach G80 manual, *Viewing PlaysLike Distance*](https://www8.garmin.com/manuals/webhelp/approachg80/EN-US/GUID-5076AB95-3393-49CE-9FBE-29A25DDA0B32.html)).
+Nothing numeric was taken from Garmin: it is the idea, not the arithmetic.
+
+**How, and the rejected way first.** `src/plays-like.js`. The first version
+SEARCHED FOR POWER: scale the club's ball speed until, in today's conditions,
+the shot landed at the hole, then report that shot's carry on the level. The
+owner asked for geometry instead, and the power search had a flaw of its own:
+it flies a softer or harder version of the swing with the same launch and spin,
+which no real swing produces. It also took 5 to 17 flights a time.
+
+The geometric version flies the club in hand **once at full swing in today's
+conditions**, over made-up open ground (two metres of tee, then a drop 120 m
+deep, so the ball is never stopped and passes through any hole height), and
+finds where the falling ball passes through **the hole's height**, measured
+along the line to the hole. It flies the same strike **once in still air at
+sea level** and finds where it falls back through the height it started at.
+The hole's distance is scaled by the ratio of the two. Two flights, 5-10 ms in
+Node. The made-up ground and its 2 m / 120 m are placed numbers; anywhere the
+ball cannot be stopped would do. A hole higher than the ball can climb has no
+crossing and gets no number; a putt gets none either.
+
+**What it gives**, at each club's own stock distance (yards), on the model as
+it stands:
+
+| club, distance | level calm | 30 ft up | 30 ft down | 10 mph into | 10 mph helping | 1,600 m | 5 °C |
+|---|---|---|---|---|---|---|---|
+| 7 iron, 155 | 155.0 | 167.2 | 145.9 | 171.3 | 145.7 | 144.1 | 158.3 |
+| driver, 250 | 250.0 | 264.6 | 238.8 | 268.9 | 237.0 | 235.6 | 254.5 |
+| PW, 100 | 100.0 | 113.2 | 91.3 | 112.5 | 92.9 | 94.4 | 101.6 |
+
+The rejected power search, 7 iron at 160 yd, for comparison: 168.6 up, 151.4
+down, 183.2 into, 149.5 helping, 148.1 at 1,600 m, 164.2 at 5 °C. Into the wind
+it read 12 yd longer than the geometry does, because a harder swing in that
+search also flew higher into the headwind.
+
+**Not checked against anything outside the game.** The familiar rules of
+thumb (so many feet of rise to the yard, a percent per mph) are not sourced
+here and were not used; the point of the feature is that it agrees with the
+ball the game flies. Every number in the table is the model's.
+
+**The keys that came with it**, from GSPro's shortcut list as two community
+guides give it ([The Course Control, *GSPro Keyboard Shortcuts*](https://thecoursecontrol.com/guides/gspro-keyboard-shortcuts/);
+[Launch House, *Aiming in GSPro*](https://www.launchhouse.golf/learn/gspro-aiming-guide/)):
+A resets the aim, I and K change club, H hides the HUD, Tab shows the
+shortcuts, F3 steps the camera to the aim point and the green. The guides
+disagree on some keys (J, Q/W) and are one to six years old; only those five
+were taken. F3 became G here because F3 is the browser's Find. GSPro's
+rangefinder (R) was offered and the owner turned it down.

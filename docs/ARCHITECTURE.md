@@ -73,6 +73,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
 - `src/clubs.js` -- stock and custom clubs, manual flight profiles
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
+- `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 
 **Playing a round**
 - `src/game.js` -- round rules, teams, scores, undo, drops; `src/relief.js` -- penalty relief
@@ -89,6 +90,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
 - `src/green-reading.js`, `src/green-map.js`, `src/course-map.js` -- reading a green, the maps
 - `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras, flyovers, the simulator bay
+- `src/tv-camera.js` -- a full shot filmed by a tee camera and a landing camera, and the whole-shot view after it
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
 - `src/haunts.js` -- Haunted Hollow's giant pumpkins and toadstools (placed by course.js, solid), lantern faces, ghosts, bats and will-o'-the-wisps
@@ -197,6 +199,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
+- The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]

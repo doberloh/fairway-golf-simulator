@@ -496,11 +496,10 @@ const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status',
  : {type: 'status', deviceConnected: true, device: {ready: true, ballDetected: state === 'green'}});
 
 // A BALL IN THE AIR CLEARS THE SCREEN. Checked while a flight is running: the
-// shot panel's controls, the camera strip and the aim pad have stepped aside
-// (a phone loses the whole panel; bigger screens keep its shot numbers), the
-// map and the wind are still there, the flight bar carries the numbers fixed
-// at the strike and a Skip that can be pressed, and there is no ticking live
-// readout anywhere. `phone` says which of the two rules applies.
+// shot controls, the camera strip and the aim pad have stepped aside at every
+// size, the map and the wind are still there, and the shot panel says a ball
+// is up and carries a Skip that can be pressed. `phone` is kept for callers;
+// since the shot panel (10 October 2026) the rule is the same at every size.
 // The panels FADE, over a fifth of a second, so a check made the instant the
 // ball leaves catches them half-way; it is retried until it passes or two
 // seconds are up, and only the last failure is reported.
@@ -517,8 +516,11 @@ async function flightScreenOnce(t, phone) {
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
    panel: gone('.bottom-area'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
-   numbers: gone('#lastShot'), map: gone('#map'), wind: gone('.weather'),
-   bar: document.getElementById('flightNums')?.textContent || '', live: !!document.getElementById('liveShotSpeed'),
+   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
+   // The panel's header, where Skip and the flight's state live; its tiles
+   // may be folded away on a phone, the header never is.
+   head: document.querySelector('#shotPanel .sp-head')?.textContent || '',
+   live: !!document.getElementById('liveShotSpeed'),
   };
  });
  const bad = [];
@@ -526,12 +528,14 @@ async function flightScreenOnce(t, phone) {
  if (!state.club || !state.swing) bad.push('the club or the shot button is still showing');
  if (!state.strip) bad.push('the camera strip is still showing');
  if (!state.pad) bad.push('the aim pad is still showing');
- if (phone && !state.panel) bad.push('the shot panel is still showing on a phone');
- if (!phone && state.numbers) bad.push('the shot numbers went on a big screen, where they should stay');
+ // Since 10 October 2026 the shot controls go at every size: the numbers they
+ // used to keep through a flight are in the shot panel.
+ if (!state.panel) bad.push('the shot controls are still showing');
+ if (state.numbers) bad.push('the shot panel went, and it carries the flight');
  if (state.map) bad.push('the map went, and it should follow the ball');
  if (state.wind) bad.push('the wind went');
- if (!/mph/.test(state.bar)) bad.push(`the flight bar reads "${state.bar}"`);
- if (state.live) bad.push('a live readout is still ticking');
+ if (!/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
+ if (state.live) bad.push('an old live readout is back');
  if (bad.length) throw new Error(bad.join('; '));
  const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
@@ -1276,13 +1280,14 @@ const JOURNEYS = [
    for (const [w, h] of this.sizes) {
     await t.page.setViewportSize({width: w, height: h});
     const phone = w <= 560 || h <= 500;
-    // The last shot folds to one line at every size, and folded is the
-    // default. Open, it is checked too: an open grid is the tallest the
-    // shot panel gets, and on a phone the one state that can crowd the map.
+    // The shot panel folds to one line at every size: folded by default on a
+    // phone, open on anything bigger. Both are checked: an open grid is the
+    // most of the course the panel covers, and on a phone the one state that
+    // can crowd the map.
     await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('shot-open')) document.getElementById('shotToggle').click(); });
-    await check(`${w}x${h} last shot folded`);
+    await check(`${w}x${h} shot panel folded`);
     await t.page.click('#shotToggle');
-    await check(`${w}x${h} last shot open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
+    await check(`${w}x${h} shot panel open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
     await t.page.click('#shotToggle');
    }
    await t.step('every control reachable, no scrolling, the course visible, at every size', async () => {
@@ -1371,8 +1376,8 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
-   await t.step('the last shot is folded, and one tap opens and closes it', async () => {
-    const visible = () => t.page.evaluate(() => !!document.getElementById('shotResult')?.offsetHeight);
+   await t.step('the shot panel is folded on a phone, and one tap opens and closes it', async () => {
+    const visible = () => t.page.evaluate(() => !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight);
     if (await visible()) throw new Error('the shot numbers show before anything was tapped');
     await tap('#shotToggle');
     await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
@@ -1562,7 +1567,7 @@ const JOURNEYS = [
  // and the journey checks what a player at the mat would see.
  {
   name: 'monitor',
-  what: 'a launch monitor through a pretend bridge: the state light, a measured shot, the big numbers, and hitting by hand',
+  what: 'a launch monitor through a pretend bridge: the window that replaces the shot controls, aiming by key, a measured shot, its numbers, and disarming',
   context: {viewport: {width: 1366, height: 768}},
   async prepare(page) {
    this.acks = [];
@@ -1585,51 +1590,72 @@ const JOURNEYS = [
    await t.step('connect the bridge and arm the monitor', async () => {
     await t.page.getByRole('button', {name: 'Connect monitor'}).click();
     await t.press('Connect bridge');
-    await t.until(() => shown('#monState'), 'the monitor state in the shot panel', 5 * SLOW);
+    await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
     await t.page.getByLabel(/Arm monitor/).check();
     await t.key('Escape');
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
-   await t.step('armed: power, shape and the shot button go; the club and the aim stay', async () => {
-    for (const sel of ['#swing', '#power', '.shape-button']) if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of ['#club', '.aim-control']) if (!await shown(sel)) throw new Error(`${sel} is hidden with the monitor armed`);
+   await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
+    for (const sel of ['.bottom-area', '#swing', '#power', '.shape-button', '.aim-control', '#aimRange', '#monState'])
+     if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
+    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm'])
+     if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
+    if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
    });
-   await t.step('a measured shot flies, and the big numbers come up when it lands', async () => {
+   await t.step('armed, up and down move the aim point, and the pin label gives way while aiming', async () => {
+    const power = await t.page.inputValue('#power');
+    const {before, after} = await t.hold('ArrowUp', '#aimLabelDistance');
+    const n = v => parseFloat(String(v).replace(/[^0-9.]/g, ''));
+    if (!(n(after) > n(before))) throw new Error(`up moved the aim point from ${before} to ${after}`);
+    if (await t.page.inputValue('#power') !== power) throw new Error('up changed the power, which a monitor shot ignores');
+    const faded = sel => t.page.evaluate(q => document.querySelector(q).classList.contains('faded'), sel);
+    if (await faded('#aimLabel') || !await faded('#flagLabel')) throw new Error('while aiming, the aim label should show and the pin label give way');
+    await t.until(async () => (await faded('#aimLabel')) && !(await faded('#flagLabel')), 'the pin label to come back after aiming stops', 5 * SLOW);
+   });
+   await t.step('a measured shot flies, and the shot panel carries its numbers', async () => {
     bridge.send(JSON.stringify({type: 'shot', requestId: 'smoke-1', payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: 1, APIversion: '1',
      BallData: {Speed: 147.5, VLA: 14.3, HLA: 2.3, TotalSpin: 3250, SpinAxis: -13.2}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}}));
     await t.until(() => t.inFlight(), 'the monitor shot to start', 5 * SLOW);
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
     if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
-    await t.until(() => shown('#shotCard'), 'the big numbers', 5 * SLOW);
-    const card = await t.page.textContent('#shotCard');
-    if (!/CARRY/.test(card) || !/TOTAL/.test(card)) throw new Error(`the card reads "${card}"`);
+    if (!await shown('#shotPanel')) throw new Error('the shot panel is not showing');
+    const carry = await t.page.textContent('#shotTiles [data-field=carry]');
+    if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });
-   await t.step('the numbers are grouped, and the club group stays out without club data', async () => {
-    const heads = await t.page.$$eval('#shotResult .sg-head span', els => els.map(e => e.textContent));
-    if (!heads.includes('Ball') || !heads.includes('Result')) throw new Error(`groups are ${JSON.stringify(heads)}`);
-    if (heads.includes('Club')) throw new Error('a Club group of blanks, from a shot with no club data');
+   await t.step('every ticked number is a tile of its own, and club tiles show dashes without club data', async () => {
+    const tiles = await t.page.$$eval('#shotTiles .shot-tile', els => els.map(e => e.dataset.field));
+    if (!tiles.includes('ballSpeed') || !tiles.includes('carry')) throw new Error(`tiles are ${JSON.stringify(tiles)}`);
+    // A ticked number always shows (the owner found club numbers missing and
+    // took the tick for broken); without club data it is a dash.
+    const club = await t.page.textContent('#shotTiles [data-field=clubSpeed]');
+    if (!/—/.test(club)) throw new Error(`club speed reads "${club}" from a shot that sent none`);
     // The caption names the device the shot came from -- it once printed the
-    // bridge's status object instead, as "[object Object]".
-    const caption = await t.page.textContent('#shotResult p');
+    // bridge's status object instead, as "[object Object]". It is the panel's
+    // header now, which a penalty message does not replace: when it was the
+    // first line of the grid, a random course putting this shot in water
+    // failed this step (10 October 2026).
+    const caption = await t.page.textContent('#shotCaption');
     if (!/Smoke/.test(caption) || /object/i.test(caption)) throw new Error(`the caption reads "${caption}"`);
    });
-   await t.step('the big numbers stay until the monitor sees the next ball', async () => {
+   await t.step('the numbers stay while the monitor finds and tees the next ball', async () => {
     bridge.send(status('amber'));
     await t.until(async () => (await title()) === 'Finding ball', 'the panel to say Finding ball', 5 * SLOW);
-    if (!await shown('#shotCard')) throw new Error('the big numbers went before the next ball was teed');
     bridge.send(status('green'));
-    await t.until(async () => !(await shown('#shotCard')), 'the big numbers to go when the next ball is teed', 5 * SLOW);
+    await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
+    if (!/\d/.test(await t.page.textContent('#shotTiles [data-field=carry]'))) throw new Error('the shot numbers went when the next ball was teed');
    });
-   await t.step('no device: red, with Reconnect and Hit by hand', async () => {
+   await t.step('no device: red, with Reconnect', async () => {
     bridge.send(status('red'));
-    await t.until(async () => (await title()) === 'No monitor', 'the panel to say No monitor', 5 * SLOW);
-    for (const name of ['Reconnect', 'Hit by hand']) await t.page.getByRole('button', {name, exact: true}).waitFor({state: 'visible', timeout: 5000 * SLOW});
+    await t.until(async () => (await title()) === 'No monitor', 'the window to say No monitor', 5 * SLOW);
+    await t.page.getByRole('button', {name: 'Reconnect', exact: true}).waitFor({state: 'visible', timeout: 5000 * SLOW});
    });
-   await t.step('Hit by hand brings back power and the shot button', async () => {
-    await t.press('Hit by hand');
+   await t.step('the Armed switch in the window brings back the shot controls', async () => {
+    await t.page.click('#monArm');
     await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
     if (!await shown('#power')) throw new Error('the power slider did not come back');
+    if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
+    if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
     await t.shot();
    });
   },

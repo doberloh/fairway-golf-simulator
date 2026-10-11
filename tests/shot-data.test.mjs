@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SHOT_FIELDS, FIELD_GROUPS, fieldById, shotGrid, saveShotData, loadShotData,
- DEFAULT_FIELDS, DEFAULT_COLUMNS, COLUMN_CHOICES, MAX_FIELDS} from '../src/shot-data.js';
+ DEFAULT_FIELDS, DEFAULT_COLUMNS, COLUMN_CHOICES, MAX_FIELDS, moveField, liveRecord, hasCustomShotData} from '../src/shot-data.js';
 import {parseLaunchMessage, MPH, YARD} from '../src/physics.js';
 
 // A shot as the game records it: what was hit, and what the model made of it.
@@ -199,4 +199,105 @@ test("the monitor's own distances are labelled as the monitor's", () => {
  const cells = shotGrid(r, {fields: ['carry', 'deviceCarry']}).cells;
  assert.ok(/monitor/i.test(cells[1].label), 'the device figure must say so');
  assert.ok(!/monitor/i.test(cells[0].label), 'ours must not');
+});
+
+test('a dragged tile takes the place it was dropped on, and nothing is lost', () => {
+ const f = ['a', 'b', 'c', 'd'];
+ assert.deepEqual(moveField(f, 'a', 'c'), ['b', 'c', 'a', 'd']);
+ assert.deepEqual(moveField(f, 'd', 'b'), ['a', 'd', 'b', 'c']);
+ assert.deepEqual(moveField(f, 'a', 'a'), f);
+ assert.deepEqual(moveField(f, 'zz', 'a'), f, 'a stale drag leaves the list alone');
+ assert.notEqual(moveField(f, 'a', 'c'), f, 'a copy, never the list it was given');
+});
+
+test('the order the player chose is the order saved', () => {
+ assert.deepEqual(saveShotData({fields: ['total', 'ballSpeed', 'carry']}).fields, ['total', 'ballSpeed', 'carry']);
+});
+
+test('a card saved before the shot panel keeps its tiles but fits the new width', () => {
+ const store = new Map([['fairway-shot-data-v1', JSON.stringify({fields: ['carry', 'spin', 'apex'], columns: 3})]]);
+ const was = globalThis.localStorage;
+ globalThis.localStorage = {getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v))};
+ try {
+  const prefs = loadShotData();
+  assert.deepEqual(prefs.fields, ['carry', 'spin', 'apex']);
+  assert.equal(prefs.columns, DEFAULT_COLUMNS);
+  assert.ok(hasCustomShotData(), 'a v1 choice is still a choice');
+ } finally {
+  globalThis.localStorage = was;
+ }
+});
+
+// A real flight, simulated, so the live readings are checked against the
+// model's own finished numbers rather than against numbers made up here.
+test('the live tiles count up to exactly the finished shot', async () => {
+ const {simulateShot} = await import('../src/physics.js');
+ const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 2000, minZ: -2000, maxZ: 2000}, trees: []};
+ const shot = {origin: {x: 0, z: 0}, aim: 0, speed: 155 * MPH, vla: 12.5, hla: 0, spin: 2700, spinAxis: 0};
+ const r = {shot, aim: 0, result: simulateShot(shot, flat)};
+ const res = r.result;
+ assert.ok(res.hang > 3 && res.hang < res.time, `hang ${res.hang} against ${res.time} to rest`);
+ const cell = (rec, id) => shotGrid(rec, {fields: [id]}).cells[0];
+ // Part way up: carry and total are the same ground, both short of the carry;
+ // the landing figures do not exist yet.
+ const mid = liveRecord(r, res.hang / 2);
+ assert.ok(mid.result.carry > 0 && mid.result.carry < res.carry);
+ assert.equal(mid.result.carry, mid.result.total);
+ assert.equal(cell(mid, 'descent').blank, true);
+ assert.equal(cell(mid, 'landing').blank, true);
+ assert.ok(Math.abs(mid.result.hang - res.hang / 2) < 1e-9);
+ // Climbing: the carry never goes backwards.
+ let prev = 0;
+ for (let t = 0; t < res.hang; t += .05) {
+  const c = liveRecord(r, t).result.carry;
+  assert.ok(c >= prev - 1e-9, `carry fell at ${t.toFixed(2)} s`);
+  prev = c;
+ }
+ // Rolling out: carry frozen at the model's, total still running.
+ const roll = liveRecord(r, (res.hang + res.time) / 2);
+ assert.equal(roll.result.carry, res.carry);
+ assert.ok(roll.result.total > res.carry - 1e-6 && roll.result.total <= res.total + 1e-6);
+ assert.equal(cell(roll, 'descent').blank, false);
+ // Past the end it is the finished record, untouched.
+ assert.equal(liveRecord(r, res.time + 1), r);
+ // And just before touchdown the carry is within a stride of the model's.
+ assert.ok(res.carry - liveRecord(r, res.hang - .01).result.carry < 1);
+ // The apex never reads higher than the model's.
+ for (let t = 0; t < res.time; t += .25) assert.ok(liveRecord(r, t).result.apex <= res.apex + 1e-9);
+});
+
+test('a putt has no hang, so its carry is zero from the first frame', async () => {
+ const {simulateShot} = await import('../src/physics.js');
+ const flat = {height: () => 0, surface: () => 'green', bounds: {x: 2000, minZ: -2000, maxZ: 2000}, trees: []};
+ const shot = {origin: {x: 0, z: 0}, aim: 0, speed: 2.5, vla: 0, hla: 0, spin: 0, spinAxis: 0};
+ const r = {shot, aim: 0, result: simulateShot(shot, flat)};
+ const live = liveRecord(r, r.result.time / 2);
+ assert.equal(live.result.carry, 0);
+ assert.ok(live.result.total > 0);
+});
+
+// Playing by hand and playing off an armed monitor keep separate sets, so each
+// can be tuned without disturbing the other (10 October 2026).
+test('the hand set and the monitor set are kept apart', async () => {
+ const {MONITOR_FIELDS} = await import('../src/shot-data.js');
+ const store = new Map();
+ const was = globalThis.localStorage;
+ globalThis.localStorage = {getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v))};
+ try {
+  assert.ok(MONITOR_FIELDS.length <= MAX_FIELDS, 'the monitor standard set fits the panel');
+  assert.deepEqual(loadShotData('monitor').fields, MONITOR_FIELDS, 'never chosen: the monitor set');
+  assert.equal(hasCustomShotData('monitor'), false);
+  // Choosing a hand set: an unsaved monitor set follows it, as monitor mode
+  // showed a player's own choice before the two were split.
+  saveShotData({fields: ['carry', 'total']}, 'hand');
+  assert.deepEqual(loadShotData('monitor').fields, ['carry', 'total']);
+  // Once the monitor set is saved, each keeps its own.
+  saveShotData({fields: ['clubSpeed', 'smash', 'carry']}, 'monitor');
+  saveShotData({fields: ['apex']}, 'hand');
+  assert.deepEqual(loadShotData('monitor').fields, ['clubSpeed', 'smash', 'carry']);
+  assert.deepEqual(loadShotData('hand').fields, ['apex']);
+  assert.deepEqual(loadShotData().fields, ['apex'], 'the hand set is the default');
+ } finally {
+  globalThis.localStorage = was;
+ }
 });

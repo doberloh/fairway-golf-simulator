@@ -15,6 +15,8 @@ export const DEFAULT_CAMERA = {
  // The broadcast rig: high and well back, which is what reads on a laptop.
  height: 9, offset: 0, distance: 23, fov: 53,
  follow: true, freeSpeed: 45,
+ // After a full shot stops, fly up to show the whole of it (tv-camera.js).
+ review: true,
  // The simulator rig. Off by default -- most people are not standing in a bay,
  // and switching somebody's field of view to a measurement of a screen they do
  // not have would be worse than a look they did not choose.
@@ -49,6 +51,7 @@ export function validateCamera(raw = {}) {
  }
  if (MODES.includes(raw.mode)) out.mode = raw.mode;
  if (typeof raw.follow === 'boolean') out.follow = raw.follow;
+ if (typeof raw.review === 'boolean') out.review = raw.review;
  if (typeof raw.sim === 'boolean') out.sim = raw.sim;
  return out;
 }

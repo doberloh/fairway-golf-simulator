@@ -19,14 +19,39 @@ back; live work nested inside the archive is the thing this split exists to
 prevent.
 
 
+## The UI pass (10 October 2026)
+
+Asked for by the owner on 10 October, in this order, on the branch
+`shot-panel-and-monitor-mode`. Done so far is under the same heading in
+`# Done`.
+
+- [ ] **Profile the slower descent through the trees.** It passes through
+  canopies now instead of over them, and `clearCameraTrees` does more work when
+  it does. Not profiled (AGENTS.md: ask first); about a minute for
+  `--only views`. Redwood is the biome to watch.
+
 ## Found by driving the built game
 
-- [ ] **A panel moved while it is folded away for a shot keeps the folded size.**
+- [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
+  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
+  taken during the layout work. The aim marker steps aside when the two POINTS
+  are within 8 m of each other on the ground; it never checks whether the two
+  LABELS overlap on screen, which from the tee they often do. Not changed:
+  separate from the layout, and it wants a look at which should give way.
+  **Fixed 10 October 2026** by making them take turns rather than giving way:
+  the pin's label at rest, the aim's while aiming and for a second after (*The
+  UI pass*, `# Done`).
+
+- [x] **A panel moved while it is folded away for a shot keeps the folded size.**
   While a ball is in the air the shot controls shrink out of the way; dragging
   the panel in that moment stores the shrunken height (119 px instead of 674
   in a test), and it stays that way until resized by hand. Older than the title
-  bar: moving a panel always stores its current size. Found 6 October, not yet
-  fixed.
+  bar: moving a panel always stores its current size. Found 6 October.
+  **No longer possible, 10 October 2026:** the shot controls no longer fold to
+  their numbers in flight -- the numbers moved to the shot panel -- so they are
+  hidden and take no pointer while a ball is up, and there is nothing folded to
+  grab. The shot panel itself never changes size for a flight.
+
 
 
 
@@ -42,6 +67,14 @@ What `tools/smoke.mjs` turned up on its first full runs, and what building it
 turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
 
+- [ ] **`phone-portrait` fails when its random course puts a shot in water.**
+  Seen once in four runs on 10 October 2026: the relief bar covered the club,
+  the power and the aim pad when the reachability check ran, and it reported
+  eleven unreachable controls. Three re-runs passed. The harness, not the game:
+  the bar is meant to cover them while relief is chosen. The journey wants a
+  fixed seed or to take relief before checking. (`monitor` had the same kind of
+  flake, fixed under *The UI pass* in `# Done`.)
+
 - [ ] **The studio and the tool windows have not been swept for layout.**
   `hud-reachable` covers the main menu and the play screen at nine sizes, and
   every menu panel and tab is opened on a phone both ways up. The studio bar,
@@ -50,12 +83,6 @@ same heading in `# Done`.
   courses panel at 1920x1080; its name box cleared it in the one case looked
   at.
 
-- [ ] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
-  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
-  taken during the layout work. The aim marker steps aside when the two POINTS
-  are within 8 m of each other on the ground; it never checks whether the two
-  LABELS overlap on screen, which from the tee they often do. Not changed:
-  separate from the layout, and it wants a look at which should give way.
 
 - [ ] **Nobody has measured a real phone.** The layout is checked under
   emulation at a phone's size; the GPU is not. The low tier's known weakness on
@@ -825,6 +852,72 @@ so several of these play differently as well as look different.
 
 
 # Done
+
+## The UI pass (10 October 2026)
+
+- [x] **The scorecard's hole row says Hole**, not Player. **Launch angle** and
+  **Launch direction** replace the tiles' Launch and Direction, and the range
+  shot list's column says LAUNCH ANGLE. **The course studio draws no aim line**
+  off the first tee; a round started from the studio gets it back.
+- [x] **One shot panel** (`#shotPanel`) replaced the flight bar, the monitor's
+  big-numbers card and the last-shot fold at the foot of the shot controls. It
+  shows the tiles ticked in Shot data, in the order the player drags them into
+  on the panel itself; every number the strike decided appears at once, carry
+  and total count up as the ball flies (carry freezing at the first touchdown,
+  total running through the roll), hang ticks, and descent and landing speed
+  arrive at touchdown. Skip and the countdown are in its header. It moves and
+  resizes like any panel; its default is centred along the bottom between the
+  controls and the map, as wide as its tiles in one row, capped to the gap. On a
+  phone it runs along the top beside the wind, folded to carry and total. The
+  shot controls now step aside in flight at every size. Columns gained *Fit to
+  width*, the new default; a saved v1 choice keeps its tiles and their order.
+  Reverses the 26 September rule that carry and total stay hidden in flight, at
+  the owner's request -- the numbers count up, so nothing is given away early.
+- [x] **Hang time shows time in the air.** The tile read the time to REST: a
+  drive hanging 6.5 s showed 10.8. `simulateShot` returns `hang` now. Nothing
+  measured in RESEARCH was affected; only the tile.
+- [x] **Launch monitor mode has its own window.** Armed, the shot controls go
+  and `#monitorPanel` takes their place with only the flashing ball light, the
+  Armed switch, the club (sent to the monitor) and Reconnect. Hit by hand is
+  gone: the switch is the way back, and connected-but-unarmed the controls
+  carry a slim strip with the same light and switch. The aim arrows and the
+  aim distance box went with the controls, reversing the 26 September call.
+  **Each mode keeps its own Shot data** (tiles, order, columns) and **the shot
+  panel its own place** per mode.
+- [x] **Aim is unlocked for every club with a monitor armed.** ↑/↓ walk the aim
+  point further or shorter, quickening as they are held; the aim pad steps a
+  yard, a foot inside twenty; the putter aims at a point like any club and a
+  putt starts aimed at the hole. By hand nothing changed.
+- [x] **The aim and pin labels take turns.** The pin's distance shows at rest;
+  moving the aim fades it out and the aim point's in, and they swap back a
+  second after the aim stops. Closes "The flag marker and the aim marker
+  overlap on screen" (copied below under *Found by driving the built game*).
+- [x] **Plays like**, under the yards to the hole: the club in hand flown at full
+  swing in today's conditions to the hole's height, against the same strike on
+  the level in still air, and the distance scaled by the ratio. By geometry,
+  at the owner's request, after a first version that searched for the ball
+  speed landing at the hole (RESEARCH, *Plays like, by geometry*).
+- [x] **Keyboard shortcuts**: A resets the aim, I/K change club, H hides the
+  interface, Tab lists every key, G steps the camera to the aim point, the green
+  and back.
+- [x] **A full shot is filmed the television way.** The tee camera stays and
+  turns with the ball, so the climb and the curve show against the sky; past
+  the apex it cuts to a landing camera already standing beside where the ball
+  comes down. Chips keep one camera; putts keep theirs. **After the ball stops
+  the camera flies up to show the whole shot**, holds while the panel counts
+  down, and flies on to the next shot (Enter skips; a camera setting turns it
+  off). **The descent onto a new hole** takes 3.5-5.5 s instead of at most
+  2.6, and goes through trees rather than over them. The hole intro stays on
+  always, by the owner's call.
+- [x] **After the owner tried it (11 October):** the shot panel boxes every
+  number and every section, grouped in every mode, numbers bold and sized to
+  the screen, without the measured/simulated notes; the aim label no longer
+  vanishes crossing the pin while aiming; chips are followed from behind, and
+  the landing camera swings behind the ball for the roll-out.
+- [x] **Shot numbers are tiles of their own** (owner, 11 October, after not liking the boxed sections): each a small draggable box, placed per mode, unmoved ones in a row beside the slim Shot data bar. Columns and drag-to-reorder went.
+- [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
+  check read the first line of the grid, which a penalty replaces; the caption
+  is in the panel's header now.
 
 ## Release 0.6 (10 October)
 

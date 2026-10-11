@@ -468,3 +468,16 @@ Candidate words were searched together with "golf" before going into `src/course
 - Golf Course Industry, "Gamble Sands' Scarecrow opens" -- https://www.golfcourseindustry.com/gamble-sands-scarecrow-new-course-open -- Scarecrow is a real course (David McLay Kidd, Gamble Sands, Washington), so the word was dropped and added to the denylist test.
 - Chronogolf, Phantom Lake Golf Club -- https://www.chronogolf.com/club/1685 -- a real nine-hole club, so Phantom was dropped too.
 - Searches for Gloaming, Lychgate, Wraith, Moonrise and Nightshade with "golf" returned no course of that name (only unrelated clubs and a disc-golf driver called the Wraith). Not used as sources; recorded so nobody repeats them.
+
+## The UI pass (10 October 2026)
+
+What other simulators show and how they lay it out, read before the shot panel, the launch monitor window, plays like and the keyboard shortcuts (RESEARCH, *Plays like, by geometry*; PROJECT_HANDOFF, *THE SHOT PANEL*).
+
+- GSPro Knowledge Base, *In Game User Interface* -- https://gspro.gitbook.io/gspro-knowledge-base/in-game-information/in-game-user-interface -- where the HUD puts the distance to pin, elevation, wind, data tiles, the minimap and the club selector.
+- GSPro Help, *Data Tiles* -- https://gspro.document360.io/docs/data-tiles -- up to 12 tiles in a match and 24 in practice, dragged to reorder, units per tile. Read through a search summary; the page refused a direct fetch.
+- GSPro Help, *Visual Settings* -- https://gspro.document360.io/docs/visual-settings-new-settings -- a follow camera with a slider for how soon it leaves the tee, and a hole-intro fly-to that can be switched off. Read through a search summary.
+- The Course Control, *GSPro Keyboard Shortcuts* -- https://thecoursecontrol.com/guides/gspro-keyboard-shortcuts/ -- A, I/K, H, Tab, F3, R and the rest; community, and in places in disagreement with other guides.
+- Launch House, *Aiming in GSPro* -- https://www.launchhouse.golf/learn/gspro-aiming-guide/ -- the aim circle with its distance, arrow keys nudging it, A to reset.
+- Golf Simulator Forum, *Favorite preferred camera settings?* (Foresight) -- https://golfsimulatorforum.com/forum/foresight-sports/297076-favorite-preferred-camera-settings -- players' preference for a chase camera that keeps the tracer and then shows the ball finishing; and a complaint about waiting for a post-shot bird's-eye tracer. Anecdote, kept as such.
+- Golf Simulator Forum, *TGC cool camera idea* -- https://golfsimulatorforum.com/forum/golf-simulator-brands-and-types/the-golf-club/14650-tgc-cool-camera-idea -- a tee camera that tilts with the climb, handing to a follow camera for the landing. A feature request, not a shipped behaviour.
+- Garmin, *Viewing PlaysLike Distance* (Approach G80 manual) -- https://www8.garmin.com/manuals/webhelp/approachg80/EN-US/GUID-5076AB95-3393-49CE-9FBE-29A25DDA0B32.html -- plays-like as elevation, wind and air density folded into one distance. The idea only; no numbers taken.

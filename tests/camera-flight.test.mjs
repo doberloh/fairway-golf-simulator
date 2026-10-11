@@ -201,3 +201,20 @@ test('the arrival pose looks down the hole, not away from it', () => {
   }
  }
 });
+
+// THE DESCENT ONTO A NEW HOLE (10 October 2026): slower, and through the trees
+// rather than over them -- the owner's call. The ground is still cleared.
+test('the arrival is slower than a camera move and does not climb over trees', () => {
+ const trees = [{x: 0, z: 0, y: 0, h: 30, r: 4}];
+ const world = {height: () => 0, trees};
+ const from = pose(0, 60, -200, 0, 0, 0), to = pose(0, 3, 200, 0, 0, 0);
+ const plain = makeCameraFlight(from, to, world), arrival = makeCameraFlight(from, to, world, {arrival: true});
+ assert.ok(arrival.travel > plain.travel, `${arrival.travel} against ${plain.travel}`);
+ assert.ok(arrival.travel >= 3.5 && arrival.travel <= 5.5);
+ // Over the tree, the plain move climbs above its crown; the arrival does not.
+ const over = f => { let y = Infinity; for (let s = 0; s <= f.duration; s += .01) { const q = f.pose(s); if (Math.abs(q.eye.z) < 2) y = Math.min(y, q.eye.y); } return y; };
+ assert.ok(over(plain) > 30, 'the plain move clears the crown');
+ assert.ok(over(arrival) < over(plain), 'the arrival goes through it');
+ // And the ground is still cleared all the way down.
+ for (let s = 0; s <= arrival.duration; s += .05) assert.ok(arrival.pose(s).eye.y > 0);
+});
