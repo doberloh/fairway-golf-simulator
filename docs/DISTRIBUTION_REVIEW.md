@@ -897,3 +897,26 @@ floodlights are switched or warmed; the god-ray and probe changes do touch
 frames drawn while they are on. The website was redeployed after it (preview,
 then live, at the owner's word): its demo is this release's `Fairway.html`,
 byte for byte, and its four Download buttons serve the 0.6 zips.
+
+## Addendum, 11 October 2026: v0.6.1
+
+**v0.6.1** is published at the owner's request as "Fairway 0.6.1 (beta)", tag
+`v0.6.1`, not a pre-release, the same four zip names, from the merge of
+`release-0.6.1` into `main`, with its notes in `docs/releases/v0.6.1.md` in
+that commit. It carries the UI pass of 10-11 October (`shot-panel-and-monitor-mode`):
+the shot tiles and their bar, the launch monitor window, unlocked aim with a
+monitor, plays like, the new keys and the television cameras -- TODO, *The UI
+pass*; RESEARCH, *Plays like, by geometry*. Generator (34) and schema (9) are
+unchanged since 0.6, so saved rounds, profiles and course codes carry over and
+the website's sample course code stays valid. Device preferences gained keys of
+their own (`fairway-shot-data-v2`, `fairway-shot-data-monitor-v1`,
+`fairway-shot-tiles-v1`, `fairway-shot-open-v2`); a v1 Shot data choice keeps
+its fields.
+
+The built page is 16,927,602 bytes (7.0 MB gzipped), +15 KB on 0.6: code and
+markup only, no dependency, font or asset added. The built page still makes no
+network requests (the smoke run's network check). Smoke: 24 of 24 journeys on
+the release code, **`floodlit-night` included** -- `npm run smoke` ran it on
+every pass of the UI work without trouble, which is worth knowing given it was
+held back for 0.6. The slower hole descent through the trees has not been
+profiled (TODO).

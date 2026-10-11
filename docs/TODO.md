@@ -853,6 +853,14 @@ so several of these play differently as well as look different.
 
 # Done
 
+## Release 0.6.1 (11 October)
+
+- [x] **v0.6.1 published**, "Fairway 0.6.1 (beta)", at the owner's request, from
+  the merge of `release-0.6.1` into `main`: the UI pass (shot tiles, launch
+  monitor window, plays like, keys, television cameras). Generator and schema
+  unchanged. Notes: `docs/releases/v0.6.1.md`. The website is redeployed after
+  it so its demo runs 0.6.1.
+
 ## The UI pass (10 October 2026)
 
 - [x] **The scorecard's hole row says Hole**, not Player. **Launch angle** and
