@@ -189,6 +189,8 @@ was a judgement with no source and is withdrawn. Testing chips at 3,800 rpm once
 produced 173 rpm per mph and made the model look badly wrong when the input was
 the problem.
 
+**A club's full-swing launch and spin** come from its kind, `CLUB_KINDS` in `clubs.js` (stock eight unchanged; eleven more placed between them on 12 October 2026 -- RESEARCH.md *The bag belongs to the player*). They change apex, descent and roll, never carry: the ball speed is solved to the carry the golfer typed.
+
 **Keyboard, touch and controller spin** is `spinForPower` in `clubs.js`: spin in
 proportion to power for chips (the same spin per mph as the full shot), the square
 root of power for pitches and full swings, blended between 30% and 70% power.

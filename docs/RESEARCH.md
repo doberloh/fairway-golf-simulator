@@ -6844,3 +6844,73 @@ shortcuts, F3 steps the camera to the aim point and the green. The guides
 disagree on some keys (J, Q/W) and are one to six years old; only those five
 were taken. F3 became G here because F3 is the browser's Find. GSPro's
 rangefinder (R) was offered and the owner turned it down.
+
+## The bag belongs to the player (12 October 2026)
+
+The owner's request: each golfer builds their own bag -- their own clubs, named
+by them, with their own distances -- saved with their profile and editable in a
+round as well as from the profile, instead of the eight fixed clubs in
+`clubs.js`. Built in `clubs.js` (`CLUB_KINDS`, `validateBag`, `bagClubs`),
+`profile.js` (`bag` on a profile, `setProfileBag`, `adoptDistances`) and
+`main.js` (*THE BAG IS THE GOLFER'S*, `renderBag`).
+
+**A club is a name, a kind and a carry.** The kind decides launch angle, spin
+and the code a launch monitor is told; the carry is what the player types, and
+`bagClubs` solves the ball speed that carries it on level ground in still air
+(the same 19-step bisection the old `customizeClubs` ran). So **a kind can move
+apex, descent and roll but never the yardage**, and choosing the "wrong" kind
+for a club costs shape, not distance. The eight stock kinds keep their exact
+launch and spin, and the stock bag solves to the same ball speeds as before
+(`tests/bag.test.mjs` compares them to the old function).
+
+**The eleven added kinds are placed, not published.** No source was fitted.
+Irons and wedges between two stock clubs take the halfway launch and spin (6
+iron 18.5° / 5,650 rpm between the 5 and 7; 8 iron 22.5° / 7,250; gap wedge
+32.5° / 8,750). Woods, hybrids and long irons sit between the 3 wood (14°,
+3,500 rpm) and the 5 iron (17°, 4,800), irons spinning a little more than woods
+at the same launch: 5 wood 15° / 4,000, 7 wood 16° / 4,400, 3-5 hybrids 15-17°
+/ 4,300-4,900, 3 iron 14.5° / 4,300, 4 iron 15.5° / 4,550. The lob wedge carries
+the sand wedge's trend one step on: 38° / 8,200. Anyone fitting these against
+measured data (Trackman's amateur tables, the owner's R50 sessions) should
+replace them; the stock eight are the ones the flight model was refitted
+around (*Ball flight, after the GC3 session*).
+
+Every kind at its default carry, flown by the model over flat fairway in still
+air at 18 °C (scratch run, 12 October): apex rises gently through the woods
+(97-102 ft) and irons (91-98 ft) and falls through the wedges (80 ft PW to 39 ft
+LW); descent steepens from 40° (driver) to 51° (9 iron, PW); roll falls from
+21.9 yd (driver) through 13.8 (5 iron), 8.5 (7 iron) and 3.4 (9 iron) to about
+1.2-1.5 yd for every wedge. No kind breaks the ordering of its neighbours, and
+every one carried its typed distance to 0.1 yd.
+
+**Fourteen clubs at most**, from the Rules of Golf (Rule 4.1b), which also
+keeps the editor and the club picker a sensible size. A bag needs exactly one
+putter (whose id is always `putter`, because the game asks "is this the
+putter?" by id in a dozen places) and at least one other club. Names must
+differ, ignoring case, because a name is what the picker, the shot list and the
+dispersion legend show -- two clubs of one KIND are fine (a 50° and a 54° both
+as wedges). Carry 10-400 yd; putter roll 1-100 yd, the old limits.
+
+**Launch-monitor club codes: a dead end, recorded so nobody repeats it.** The
+game sends the club to the bridge as GSPro's `Player.Club`. [GSPro's Open
+Connect v1 page](https://gsprogolf.com/GSProConnectV1.html) shows only one
+value, `"Club": "DR"`, in a sample response, and says the player block is
+"typically used for Launch monitors that need to switch between full strike
+clubs and putting". A web search on 12 October found no published list. The
+stock clubs already sent `DR`, `3W`, `5I`, `7I`, `9I`, `PW`, `SW`, `PT`; the
+added kinds follow that pattern (`5W`, `7W`, `3H`-`5H`, `3I`, `4I`, `6I`, `8I`,
+`GW`, `LW`) rather than guessing another format. `PT` is the one that changes
+what a device does.
+
+**Rejected: keeping a round's own copy of the bag.** The old rule was that a
+round resumes under the bag it was saved with, because the bag was one setting
+for the whole device and could change between sessions. Now the bag is the
+golfer's, so a round uses each golfer's bag as it is now, and a bag travels in
+the profile and its backup file. A round from another device whose golfers are
+not here plays the distances it carried (`clubYardages`, still in `PLAY_KEYS`
+for that reason), or the stock bag.
+
+**The old distances convert once.** They lived in the round slot's settings;
+at startup, if they are there, every golfer without a bag gets them as a bag
+(`adoptDistances`), and they are deleted from the settings. A golfer who
+already built a bag keeps it.

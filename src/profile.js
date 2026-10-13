@@ -23,6 +23,7 @@
 // the profile's id, and each seat's shots and card go to that profile. A player
 // with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
+import {validateBag, stockBag} from './clubs.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
@@ -114,7 +115,12 @@ export function normaliseProfile(d) {
  // before this existed has none, which reads the same as an empty list -- so,
  // like a new counter, it needs no migration.
  const removed = Array.isArray(d.removed) ? d.removed.filter(x => typeof x === 'string' && x.length <= 40).slice(-MAX_REMOVED) : [];
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed};
+ // The golfer's own bag (12 October 2026). Absent -- every record from before
+ // then, and every new golfer -- reads as the stock bag, so like a new counter it
+ // needs no migration. One that no longer validates is dropped, not the profile.
+ let bag = null;
+ if (Array.isArray(d.bag)) try { bag = validateBag(d.bag); } catch {}
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {})};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile
@@ -176,6 +182,24 @@ export function renameProfile(store, id, name) {
  const other = profileByName(store, n);
  if (other && other !== p) throw Error(`There is already a player called ${other.name}.`);
  p.name = n; storeProfiles(store); return p;
+}
+// A golfer's bag, checked before it is kept. Null puts them back on the stock bag.
+export function setProfileBag(store, id, bag) {
+ const p = findProfile(store, id);
+ if (!p) throw Error('That player is no longer on this device.');
+ if (bag == null) delete p.bag; else p.bag = validateBag(bag);
+ storeProfiles(store); return p;
+}
+// ONCE, when the bag became the golfer's: the distances that used to be one set
+// for the whole device become the bag of every golfer who has none yet. A
+// golfer who already has a bag keeps it. Distances that no longer validate are
+// ignored -- those golfers stay on the stock bag. Returns how many changed.
+export function adoptDistances(store, yardages) {
+ let bag;
+ try { bag = validateBag(stockBag(yardages)); } catch { return 0; }
+ let n = 0;
+ for (const p of store?.profiles ?? []) if (!p.bag) { p.bag = bag.map(c => ({...c})); n++; }
+ return n;
 }
 export function setMainProfile(store, id) { if (findProfile(store, id)) { store.main = id; storeProfiles(store); } return store; }
 // Everyone but main can be removed; main has to be handed to someone else first.

@@ -22,8 +22,8 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME} from './profile.js';
-import {CLUBS,customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT} from './clubs.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances} from './profile.js';
+import {customizeClubs,manualLaunch,validateFlight,DEFAULT_FLIGHT,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
@@ -389,9 +389,42 @@ const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),
 // showed the saved yardages. One helper, called everywhere settings arrive from
 // storage.
 function applyPlaySettings(){
- clubs=customizeClubs(settings.clubYardages);
+ syncClubs();
  settings.flightProfile=validateFlight(settings.flightProfile);
  turfConfig(settings.turf);
+}
+// THE BAG IS THE GOLFER'S (12 October 2026). Each profile keeps its own clubs --
+// names, kinds and carries the player chose -- and `clubs` is always the bag of
+// whoever is up, so it is re-read every turn (`setUpTurn`) and after every edit.
+// A golfer with no bag yet plays the stock one. A player with no profile on this
+// device (a round from another device) plays the distances the round carried,
+// the old device-wide `clubYardages`, or stock. It REPLACES the rule that a
+// round resumes under the bag it was saved with: the bag now belongs to the
+// golfer and travels in their profile and its backup file, not in the round.
+function bagFor(player){
+ const p=profileOf(player);
+ if(p)return p.bag??stockBag();
+ return stockBag(settings.clubYardages);
+}
+let clubPicker='';
+function syncClubs(){
+ let next;try{next=bagClubs(bagFor(round?.player));}catch{next=bagClubs(stockBag());}
+ clubs=next;
+ // The picker is rebuilt only when the clubs in it change, so a turn passing
+ // between golfers with the same bag leaves the chosen club alone.
+ const key=JSON.stringify(Object.entries(clubs).map(([id,c])=>[id,c.label]));
+ if(key===clubPicker)return;
+ clubPicker=key;
+ const was=$('club').value,options=Object.entries(clubs).map(([id,c])=>`<option value="${id}">${escape(c.label)}</option>`).join('');
+ $('club').innerHTML=options;$('monClub').innerHTML=options;
+ $('club').value=clubs[was]?was:Object.keys(clubs)[0];$('monClub').value=$('club').value;
+}
+// ONCE: the distances that used to be one set for the whole device become the
+// bag of every golfer who has none yet, then stop being a setting. They lived in
+// the round slot's settings, which is what `settings` holds at boot.
+function adoptDeviceBag(){
+ if(!settings.clubYardages||!profiles)return;
+ adoptDistances(profiles,settings.clubYardages);storeProfiles(profiles);delete settings.clubYardages;
 }
 // Every persisted or exported round carries both versions. The schema version
 // drives silent migration; the generator version is what tells a later build
@@ -488,6 +521,7 @@ function setUpTurn(){
  if(round.scrambleSelection){beginPick();return;}
  endPick();
  aimRange=null;const p=round.position;shape=0;launchAdjust=0;spinAdjust=0;
+ syncClubs();
  const d=distance()/YARD;
  // PUTTER ONLY ON THE PUTTING SURFACE. `localSurface` returns 'green'
  // exactly when `greenDistance <= 0`, so this IS the strict "touching the
@@ -645,7 +679,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
   if($('bottomHints'))$('bottomHints').hidden=armed;
  }
- $('powerOutput').innerHTML=`${Math.round(Number($('power').value))}<span>%</span>`;$('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd stock carry`;$('shapeLabel').textContent=shape<-2?'Draw':shape>2?'Fade':'Straight';
+ $('powerOutput').innerHTML=`${Math.round(Number($('power').value))}<span>%</span>`;$('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;$('shapeLabel').textContent=shape<-2?'Draw':shape>2?'Fade':'Straight';
  redrawMap();const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
   // Says why when it is off. "Nothing to take back yet" on a fresh tee is a
   // different answer from "finish the shot first", and a dimmed button with no
@@ -814,7 +848,7 @@ function takeShot(data=null){
   // floodlight group is hidden when the lights are down, and a ball stopping
   // dead against a mast nobody can see is worse than one flying through it.
   poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -842,7 +876,7 @@ function finishShot(){
  // The range never touches the round. No stroke is recorded, no hole can
  // complete, and nothing advances -- the ball goes back to the mat and the
  // tracers stay on the field so a session reads as a session.
- const before={seat:round.active,stroke:round.stroke,driver:lastShot?.club==='Driver',lie:course.surface(lastShot.shot.origin.x,lastShot.shot.origin.z)};
+ const before={seat:round.active,stroke:round.stroke,driver:lastShot?.kind==='driver',lie:course.surface(lastShot.shot.origin.x,lastShot.shot.origin.z)};
  if(rangeMode){
   recordRangeShot(result);recordProfileShot(result,before);
   // The panel follows play unless a row has been pinned from the shot list.
@@ -1420,6 +1454,60 @@ function setUpRangeTurn(){
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();
 }
 
+// THE BAG PANEL edits one golfer's bag: whoever is up in a round (any golfer in
+// the group can be picked), or the profile it was opened from. Rows are edited
+// in place and checked together on Save, because a bag is valid or not as a
+// whole -- one putter, distinct names, at most fourteen clubs.
+let bagOwner=null,bagReturn=null;
+const bagClubsSafe=p=>{try{return Object.values(bagClubs(p.bag??stockBag()));}catch{return Object.values(bagClubs(stockBag()));}};
+function renderBag(content){
+ const group=appMode==='play'&&round&&!menuBackdrop?round.players.map(profileOf).filter(Boolean):[];
+ const owner=findProfile(profiles,bagOwner)||profileOf(round?.player)||group[0]||mainProfile(profiles);
+ if(!owner){content.innerHTML='<p class="note">Name a player first: a bag belongs to a golfer\'s profile.</p>';return;}
+ bagOwner=owner.id;
+ const bag=owner.bag??stockBag();
+ const kindOptions=(sel,putter)=>Object.entries(CLUB_KINDS).filter(([k])=>putter?k==='putter':k!=='putter').map(([k,c])=>`<option value="${k}"${k===sel?' selected':''}>${c.label}</option>`).join('');
+ const row=c=>`<div class="bag-row" data-id="${escape(c.id)}"><input class="bag-name" aria-label="Club name" maxlength="${MAX_CLUB_NAME}" value="${escape(c.name)}"><select class="bag-kind" aria-label="Kind of club"${c.kind==='putter'?' disabled':''}>${kindOptions(c.kind,c.kind==='putter')}</select><input class="bag-carry" type="number" aria-label="${c.kind==='putter'?'Roll':'Carry'} in yards" min="${c.kind==='putter'?1:10}" max="${c.kind==='putter'?100:400}" step="1" value="${c.carry}"><button class="small-icon bag-remove" aria-label="Take ${escape(c.name)} out of the bag" title="Take it out"${c.kind==='putter'?' disabled':''}><i data-lucide="x"></i></button></div>`;
+ const sorted=[...bag].sort((x,y)=>x.kind==='putter'?1:y.kind==='putter'?-1:y.carry-x.carry);
+ content.innerHTML='<div class="bag-editor">'+(group.length>1?`<label class="field">Whose bag<select id="bagOwner">${group.map(p=>`<option value="${p.id}"${p.id===owner.id?' selected':''}>${escape(p.name)}</option>`).join('')}</select></label>`:`<p class="bag-owner">${escape(owner.name)}'s bag</p>`)
+  +`<p class="note">Name each club, choose what kind it is, and set its full-swing carry. The kind sets how it launches and spins; your carry sets how far. The putter's number is its full-power roll on a level Stimp 10 green. Up to ${MAX_BAG} clubs. Distances are for level ground in still air; slope, wind, lie and your flight profile still move the shot.</p>`
+  +`<div class="bag-head"><span>Club</span><span>Kind</span><span>Yards</span><span></span></div><div class="bag-list" id="bagList">${sorted.map(row).join('')}</div>`
+  +`<button class="secondary" id="bagAdd"><i data-lucide="plus"></i> Add a club</button>`
+  +`<p class="field-error" id="playError"></p><button class="primary" id="saveBag">Save bag</button><button class="secondary" id="resetBag">Restore the stock bag</button></div>`;
+ icon();
+ // Opened from the profile page the sheet keeps that page's scroll; start at the top.
+ for(const el of [content,content.parentElement])if(el)el.scrollTop=0;
+ const list=$('bagList');
+ const rows=()=>[...list.querySelectorAll('.bag-row')];
+ const read=()=>rows().map(r=>({id:r.dataset.id,name:r.querySelector('.bag-name').value,kind:r.querySelector('.bag-kind').value,carry:Number(r.querySelector('.bag-carry').value)}));
+ const wire=r=>{
+  const kind=r.querySelector('.bag-kind'),name=r.querySelector('.bag-name'),carry=r.querySelector('.bag-carry');
+  let was=kind.value;
+  // A club still wearing its kind's name and distance follows a change of kind;
+  // one the player has named or measured keeps what they typed.
+  kind.onchange=()=>{const from=CLUB_KINDS[was],to=CLUB_KINDS[kind.value];
+   if(name.value.trim()===from.label)name.value=to.label;
+   if(Number(carry.value)===from.carry)carry.value=to.carry;was=kind.value;};
+  r.querySelector('.bag-remove').onclick=()=>{r.remove();count();};
+ };
+ const count=()=>{$('bagAdd').disabled=rows().length>=MAX_BAG;};
+ rows().forEach(wire);count();
+ $('bagAdd').onclick=()=>{
+  const have=new Set(read().map(c=>c.kind)),names=new Set(read().map(c=>c.name.trim().toLowerCase()));
+  const kind=Object.keys(CLUB_KINDS).find(k=>k!=='putter'&&!have.has(k))??'iron7';
+  let name=CLUB_KINDS[kind].label,n=2;while(names.has(name.toLowerCase()))name=`${CLUB_KINDS[kind].label} ${n++}`;
+  const holder=document.createElement('div');holder.innerHTML=row({id:'',name,kind,carry:CLUB_KINDS[kind].carry});
+  const r=holder.firstElementChild,putter=rows().find(x=>x.dataset.id==='putter');
+  list.insertBefore(r,putter??null);icon();wire(r);count();r.querySelector('.bag-name').focus();r.querySelector('.bag-name').select();
+ };
+ if($('bagOwner'))$('bagOwner').onchange=()=>{bagOwner=$('bagOwner').value;renderBag(content);};
+ $('saveBag').onclick=()=>{try{
+  setProfileBag(profiles,owner.id,read());syncClubs();updateHUD();updateAim();sendPlayer();
+  toast(`${owner.name}'s bag is saved.`);
+  if(bagReturn==='profile'){bagReturn=null;viewingProfile=owner.id;openPanel('profile');}else renderBag(content);
+ }catch(e){$('playError').textContent=e.message;}};
+ $('resetBag').onclick=()=>{list.innerHTML=stockBag().map(row).join('');icon();rows().forEach(wire);count();};
+}
 function openPlaySettings(name,content){
  if(name==='shotdata'){
   // WHAT THE SHOT PANEL SHOWS, AND HOW MANY ACROSS. The list is built from the
@@ -1473,9 +1561,7 @@ function openPlaySettings(name,content){
   };
   count();
  }else if(name==='bag'){
-  content.innerHTML=`<p>Set your full-swing carry for each club. The putter uses full-power roll distance on a level Stimp 10 green. Distances are calibrated on level ground in still air at sea level; slope, wind, lie and your flight profile still affect the shot.</p><div class="bag-grid">${Object.entries(clubs).map(([id,c])=>`<label class="field">${c.label}${id==='putter'?' · roll':' · carry'} (yd)<input type="number" id="yard-${id}" min="${id==='putter'?1:10}" max="${id==='putter'?100:400}" step="1" value="${c.carry}"></label>`).join('')}</div><p class="field-error" id="playError"></p><button class="primary" id="saveBag">Save distances</button><button class="secondary" id="resetBag">Restore stock distances</button>`;
-  $('saveBag').onclick=()=>{try{const yardages=Object.fromEntries(Object.keys(clubs).map(id=>[id,Number($('yard-'+id).value)]));const next=customizeClubs(yardages);settings.clubYardages=yardages;clubs=next;save();updateHUD();updateAim();closePanel();toast('Your club distances are saved.');}catch(e){$('playError').textContent=e.message;}};
-  $('resetBag').onclick=()=>{for(const[id,c]of Object.entries(CLUBS))$('yard-'+id).value=c.carry;};
+  renderBag(content);
  }else if(name==='flight'){
   // Turf only. The ball-flight half of this panel moved to Shot shape, where the
   // per-shot shape controls already lived -- how the ball leaves the club and how
@@ -2804,6 +2890,8 @@ function openTool(name){
  // would arrive smeared. Opening a tool means the sheet has finished.
  closePanel();
  keys.clear();
+ // The bag tool opens on whoever is up; the profile page names its own golfer.
+ if(name==='bag'){bagOwner=null;bagReturn=null;}
  popups.open(name,{title:panelTitle(name),...POPUP_SIZE[name],render:body=>renderPanel(name,body)});
 }
 // The tools box is the old utility bar, rehoused. Its buttons are *moved* into
@@ -2841,7 +2929,7 @@ function openSheet(name){stopTour();
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','bag','flight','putting','shot','range','lab','views','shotdata']);
 const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:300,height:260},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Your distances',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',shotdata:'Shot data'};
+const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -2953,6 +3041,7 @@ function renderProfile(content){
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))
   +tile('Putts per hole',avg(s.puttsPerHole),'Putts struck plus putts awarded, per hole.')+tile('Fairways hit',pct(s.fairways),'Tee shots on par 4s and 5s that finished on the fairway.')+tile('Greens in regulation',pct(s.greens),'On the green in par minus two strokes or fewer.')
   +tile('Best 9',best(s.best9),s.best9?s.best9.r.course?.name:'')+tile('Best 18',best(s.best18),s.best18?s.best18.r.course?.name:'')+`</div></div>`
+  +`<h3>Bag</h3><div class="profile-bag">${bagClubsSafe(profile).map(c=>`<span>${escape(c.label)} <b>${c.carry}</b></span>`).join('')}</div><div class="profile-actions"><button class="secondary" id="profileBag"><i data-lucide="briefcase"></i> Edit ${escape(profile.name)}'s bag</button></div>`
   +`<h3>Round history</h3>${s.history.length?`<div class="course-list">${s.history.map(profileCard).join('')}</div>`:'<p class="note">No rounds yet. Finish a hole and the round shows up here, with a button to play the same course again.</p>'}`
   +`<h3>Back up &amp; move</h3><p class="note">Players live in this browser on this device, and the game opened from the download, from the server and on a phone each keep their own. A backup file holds everyone; restoring it adds to the players already here and never removes any.</p>`
   +`<div class="profile-actions profile-backup"><button class="secondary" id="profilesExport"><i data-lucide="download"></i> Save a backup file</button><button class="secondary" id="profilesImport"><i data-lucide="upload"></i> Restore from a backup</button></div><p class="field-error" id="backupError"></p>`
@@ -2971,6 +3060,7 @@ function renderProfile(content){
   removeRound(profile,id);storeProfiles(profiles);profileSynced='';updateMenuProfile();openPanel('profile');
   toast(`Round removed from ${profile.name}'s history. Its scores no longer count toward the sim handicap.`);
  });
+ if($('profileBag'))$('profileBag').onclick=()=>{bagOwner=profile.id;bagReturn='profile';openSheet('bag');};
  if($('profileRename'))$('profileRename').onclick=()=>{renamingProfile=true;openPanel('profile');};
  if($('profileNameCancel'))$('profileNameCancel').onclick=()=>{renamingProfile=false;openPanel('profile');};
  if($('profileMakeMain'))$('profileMakeMain').onclick=()=>{setMainProfile(profiles,profile.id);useMainProfile();updateMenuProfile();openPanel('profile');toast(`${profile.name} is the main profile now.`);};
@@ -4768,7 +4858,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  for(const el of document.querySelectorAll('.mon-arm-input'))el.onchange=()=>{armed=el.checked&&monitorConnected;if($('armMonitor'))$('armMonitor').checked=armed;updateHUD();sendPlayer();};
  // The window's club is the shot controls' club, shown in a second picker:
  // one value (#club) that everything reads, and this one mirrors it.
- $('monClub').innerHTML=$('club').innerHTML;
+ syncClubs();
  $('monClub').onchange=()=>{$('club').value=$('monClub').value;$('club').onchange();};
  $('monReconnect').onclick=()=>{
   const url=ws?.url||lastBridgeUrl;
@@ -5162,7 +5252,7 @@ try{
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.
  try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
- clubs=customizeClubs(settings.clubYardages);settings.flightProfile=validateFlight(settings.flightProfile);
+ adoptDeviceBag();syncClubs();settings.flightProfile=validateFlight(settings.flightProfile);
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
  openMenu();

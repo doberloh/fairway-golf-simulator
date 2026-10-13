@@ -853,6 +853,20 @@ so several of these play differently as well as look different.
 
 # Done
 
+## The player's own bag (12 October 2026)
+
+From the owner's checklist, on the branch `player-bags-and-tee-views`.
+
+- [x] **Each golfer builds their own bag.** Up to 14 clubs, each named by the
+  player, of one of 19 kinds (the stock eight plus 5 and 7 woods, 3-5
+  hybrids, 3, 4, 6 and 8 irons, gap and lob wedges -- the added kinds' launch
+  and spin are placed, not measured), with a carry the ball speed is solved
+  to. Saved in the profile and its backup; edited from *My bag* in play
+  (whoever is up, or any golfer in the group) and from the profile page. The
+  club picker follows whoever is up. The old device-wide distances become
+  every golfer's bag once. Longest drive now asks the club's kind, not its
+  label. `tests/bag.test.mjs` and the `bag` smoke journey.
+
 ## Shot views and the studio bar (12 October 2026)
 
 From the owner's checklist, on the branch `shot-views-and-studio-bar`.
