@@ -6914,3 +6914,34 @@ for that reason), or the stock bag.
 at startup, if they are there, every golfer without a bag gets them as a bag
 (`adoptDistances`), and they are deleted from the settings. A golfer who
 already built a bag keeps it.
+
+## Nothing stands in what a tee sees (12 October 2026)
+
+The owner: bushes and houses sit in front of tees and block the view.
+Measured with `node tools/bench.mjs teeclear --set trees=65 --set homes=true`
+(12 standard-tier courses, three biomes by four seeds), counting with the new
+`blocksView` against the finished world: **232 bushes** (of 5,223) and **4
+houses** (of 120) had their tops above the line from a golfer's eye (1.6 m,
+`TEE_EYE`) to the ground at the tee's target, inside the tee's forward wedge
+(10 m either side at the tee, widening 9° each side -- the tee fan's own
+numbers). All of them were in Pacific Northwest, Mountain and Links, the three
+biomes the standard tier plants.
+
+**Why it happened.** Planting refused trees by the shot test (`blocksLaunch`,
+whether the BALL meets them) and the tee fan (anywhere in front, whatever the
+height) -- but skipped both for bushes. The shot test alone would not have
+helped: twenty metres out the nominal drive is already about ten metres up, so
+a bush or a house passes it. Houses were checked only against a 28 m circle
+round each tee.
+
+**After** (`blocksView` in planting and house siting, GENERATOR_VERSION 35):
+both counts zero, held as `teeclear` invariants. Bushes 5,223 -> 5,127 (-1.8%);
+houses 120 -> 112, more than the 4 that blocked, because a candidate house is
+judged at the tallest a house is built (11 m) before its own height is drawn.
+Every other bench figure at the full tier (171 of them, 40 courses) was
+identical before and after, compared commit against commit; the saved baseline
+predates the ninth biome and could not isolate the change.
+
+**Placed, not published:** the 1.6 m eye height is the existing `TEE_EYE`;
+sighting to the ground at the target rather than to a point above it is a
+choice -- the line any player looks along to see where the ball lands.

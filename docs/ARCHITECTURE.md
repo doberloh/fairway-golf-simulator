@@ -158,6 +158,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - `generateWorld` must stay synchronous; only `generateWorldSteps` yields, and only between rows, or fingerprints move. [GENERATION YIELDS]
 - `prepareWorld` and `loadCourse` must compute the same cache key (`settleSettings`), or a different course appears than the one chosen. [MUST KEY ON THE SAME THING]
 - `endlessSettings` must stay idempotent: the menu backdrop is hole one of a real endless run. [Application modes]
+- Trees are refused anywhere in the tee fan; bushes and houses only where they rise into the eye line (`blocksView`). [THE VIEW TEST IS FOR WHAT CAN BE LOWER]
 - The fingerprint hashes an explicit list; anything new that generation decides and a player can see must join it. [THE FINGERPRINT HASHES]
 - `nearest().d` is signed and is not the mown edge; use ramps, not steps. [IS SIGNED]
 - Outline harmonics are scaled at generation, never in the shader; keep the amplitude caps. [OUTLINE HARMONICS], [AMPLITUDE CAP]

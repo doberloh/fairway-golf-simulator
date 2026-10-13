@@ -565,8 +565,9 @@ export function launchCorridors(holes,groundAt){
    // The carry is the distance to that target, not a constant: a par three is
    // played to the green, and a shot that stops at the green must not be
    // credited with clearing ground beyond it.
+   // `aimY` is the ground at the target, which the view test sights to.
    out.push({x:from.x,z:from.z,dx:dx/len,dz:dz/len,carry:len,
-    groundY:groundAt?groundAt(from.x,from.z):0});
+    groundY:groundAt?groundAt(from.x,from.z):0,aimY:groundAt?groundAt(to.x,to.z):0});
   }
  }
  return out;
@@ -594,6 +595,30 @@ export function blocksLaunch(corridors,x,z,baseY,topY,pad=0,within=Infinity){
   const s=along/c.carry;
   const y=c.groundY+4*(c.carry*LAUNCH.apexShare)*s*(1-s);
   if(y>=baseY&&y<=topY)return true;
+ }
+ return false;
+}
+// WOULD SOMETHING STANDING HERE HIDE THE LANDING AREA FROM A TEE?
+//
+// `blocksLaunch` asks whether the BALL meets a thing, and near a tee the ball
+// is already ten metres up, so a bush or a house fifteen metres out passes it
+// while standing squarely in what the golfer sees. The tee fan answers the view
+// question for trees by refusing them outright, whatever their height. That is
+// too blunt for things often lower than the eye -- ankle-high cover in front
+// of a tee is wanted -- so this asks the real question: inside a tee's forward
+// view (the fan's own wedge, per tee), does the top rise above the line from
+// the golfer's eye to the ground at the target? `pad` is the body's
+// half-width, so a thing is judged by its edge rather than its centre.
+// Added 12 October 2026 for bushes and houses (the owner: "bushes and houses
+// sit in front of tees and block the view").
+export function blocksView(corridors,x,z,topY,pad=0){
+ for(const c of corridors){
+  const lx=x-c.x,lz=z-c.z,along=lx*c.dx+lz*c.dz;
+  if(along<0||along>c.carry)continue;
+  const off=Math.abs(lx*c.dz-lz*c.dx);
+  if(off>FAN_NEAR+along*Math.tan(FAN_ANGLE)+pad)continue;
+  const eye=c.groundY+TEE_EYE,s=along/c.carry;
+  if(topY>eye+((c.aimY??c.groundY)-eye)*s)return true;
  }
  return false;
 }
@@ -1819,10 +1844,12 @@ export function* generateWorldSteps(settings={},options={}){
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  yield phaseAt(4);
- const homes=generateHomes(s,holes,height,surface,random);
+ // The tees are sited by now, so their corridors are final; built before the
+ // houses because a house may not stand in what a tee sees either.
+ const launch=launchCorridors(holes,height);
+ const homes=generateHomes(s,holes,height,surface,random,(x,z,top,pad)=>blocksView(launch,x,z,top,pad));
  const trees=[];
  // The plant mix is the biome's own; `pick` only turns weights into a draw.
- const launch=launchCorridors(holes,height);
  const fans=teeFans(holes);
  const guards=greenApproaches(holes),closeness=(s.greenTrees??0)/100;
  // How far this point is from the nearest tee. The launch corridors already
@@ -1910,6 +1937,11 @@ export function* generateWorldSteps(settings={},options={}){
   // tees with its centre just outside it. Measured across 35 planted courses,
   // 154 trunks were over that line.
   if(!small&&(blocksLaunch(launch,x,z,tree.y,tree.y+h,trunkGirth(tree)+1.2)||inTeeFan(fans,x,z,trunkGirth(tree))))continue;
+  // A bush is under the ball but can still stand in the golfer's eye line. It
+  // was exempt from both tests above, and 232 of them stood in a tee's view on
+  // 12 planted courses (12 October 2026). Low cover still grows in front of a
+  // tee; only cover whose top rises above the sightline is refused.
+  if(small&&blocksView(launch,x,z,tree.y+h,r))continue;
   if(!small&&CROWN_SHARE&&!roomFor(tree))continue;
   if(!small){const key=cellKey(x,z);if(!placed.has(key))placed.set(key,[]);placed.get(key).push(tree);}
   trees.push(tree);

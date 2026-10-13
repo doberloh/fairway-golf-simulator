@@ -154,7 +154,15 @@ export const SCHEMA_VERSION=9;
 //     35 of 682 bunkers across the 35 full-tier courses; they are dropped, not
 //     moved. Nothing else measured moved: every other bench figure is the same
 //     with and without the change.
-export const GENERATOR_VERSION=34;
+// 35: nothing may stand in what a tee sees. Bushes were exempt from every tee
+//     rule and houses were kept only 28 m from a tee in a circle, so both could
+//     stand between the golfer and the landing area (the owner's report).
+//     Planting refuses a bush, and siting a house, whose top rises above the
+//     line from the eye to the target inside a tee's forward wedge
+//     (course.js, blocksView). On 12 planted courses with houses: 232 bushes and
+//     4 houses had stood in a tee's view; the bush count fell 2% and houses
+//     120 -> 112.
+export const GENERATOR_VERSION=35;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

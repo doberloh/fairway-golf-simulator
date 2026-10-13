@@ -7,7 +7,9 @@ import {biomeOf} from './biomes.js';
 // porch, garage, fence and garden from the same seeded stream, so a street reads
 // as built over time rather than stamped.
 const FORMS=['gable','hip','saltbox','lshape'];
-export function generateHomes(s,holes,height,surface,random){if(!s.homes)return[];const rng=random(s.seed+':homes'),homes=[];
+// `viewBlocked(x, z, top, pad)` is the generator's tee-view test (course.js,
+// blocksView), passed in rather than imported because course.js imports this.
+export function generateHomes(s,holes,height,surface,random,viewBlocked=null){if(!s.homes)return[];const rng=random(s.seed+':homes'),homes=[];
  for(const h of holes)for(let z=45;z<h.length-42;z+=45)for(const side of [-1,1]){if(rng()*100>s.homeDensity)continue;const p=h.toWorld({x:h.center(z)+side*(h.width(z)+s.semiRough+s.homeSetback+13),z:z+(rng()-.5)*12}),target=h.toWorld({x:h.center(z),z}),rotation=Math.atan2(target.x-p.x,target.z-p.z),c=Math.cos(rotation),sn=Math.sin(rotation),width=16+rng()*9,depth=13+rng()*6,corners=[[-width/2-4,-depth/2-4],[-width/2-4,depth/2+4],[width/2+4,-depth/2-4],[width/2+4,depth/2+4],[0,0]].map(([x,z])=>({x:p.x+x*c+z*sn,z:p.z-x*sn+z*c}));
   if(corners.some(q=>surface(q.x,q.z)!=='rough')||holes.some(other=>{const q=other.toLocal(p);return Math.hypot(q.x-(other.green??other.pin).x,q.z-(other.green??other.pin).z)<other.greenSize*other.greenAspect+30||Object.values(other.tees).some(t=>Math.hypot(q.x-t.x,q.z-t.z)<28);})||homes.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<42))continue;
   const levels=corners.map(q=>height(q.x,q.z));// Scaled with the footprint, not raised arbitrarily. The probe box grew from
@@ -18,6 +20,12 @@ export function generateHomes(s,holes,height,surface,random){if(!s.homes)return[
   if(Math.max(...levels)-Math.min(...levels)>4.2)continue;
   // A foundation deep enough to meet the lowest corner, so nothing floats on a slope.
   const base=Math.max(...levels),footing=base-Math.min(...levels)+.45;
+  // NOT IN WHAT A TEE SEES. The 28 m circle round each tee keeps a house off
+  // the pad, not out of the view: a house 40-120 m out, inside the tee's
+  // forward wedge, could stand between the golfer and the landing area. Judged
+  // at the tallest a house is built (11 m) and half the footprint's diagonal,
+  // because the house's own height is drawn only once it is accepted.
+  if(viewBlocked&&viewBlocked(p.x,p.z,base+11,Math.hypot(width,depth)/2))continue;
   homes.push({...p,y:base,footing,rotation,width,depth,height:7+rng()*4,shade:rng(),hole:h.hole,
    form:FORMS[Math.floor(rng()*FORMS.length)],porch:rng()<.55,garage:rng()<.5,fence:rng()<.45,garden:rng()<.7,
    roofPitch:.8+rng()*.9,trim:rng(),wing:.42+rng()*.22});

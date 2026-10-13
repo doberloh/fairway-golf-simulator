@@ -156,3 +156,32 @@ test('trees encroach on a tee instead of standing back from it in a ring', () =>
    `${biome}: tee surrounds average ${(mean * 100).toFixed(0)}% (${show}) -- that is a thicket, not a frame`);
  }
 });
+
+// THE VIEW FROM THE TEE (12 October 2026). A bush is under the ball and a house
+// is off the line, so neither ever met `blocksLaunch` -- but both stood between
+// the golfer and the landing area. `blocksView` asks whether the top rises above
+// the line from the eye to the ground at the target, inside the tee's forward
+// wedge.
+test('the view test refuses what rises into the eye line, and nothing else', async () => {
+ const {blocksView, TEE_EYE} = await import('../src/course.js');
+ const tee = [{x: 0, z: 0, dx: 0, dz: 1, carry: 200, groundY: 0, aimY: 0}];
+ assert.ok(blocksView(tee, 0, 20, 3), 'a 3 m bush 20 m out on the line hides the fairway');
+ assert.ok(!blocksView(tee, 0, 20, 1), 'knee-high cover in front of a tee stays');
+ assert.ok(!blocksView(tee, 30, 20, 3), 'well beside the view it is not in the way');
+ assert.ok(blocksView(tee, 14, 20, 3, 2), 'judged by its edge: a wide body just outside still counts');
+ assert.ok(!blocksView(tee, 0, -15, 9), 'behind the tee is never in the view');
+ assert.ok(!blocksView([{...tee[0], aimY: 40}], 0, 100, TEE_EYE + 10), 'uphill, the eye line climbs over it');
+});
+
+test('no bush or house stands in the view from any tee', async () => {
+ const {blocksView} = await import('../src/course.js');
+ const {GROUND_PLANTS} = await import('../src/species.js');
+ const bad = [];
+ for (const biome of ['pnw', 'mountain', 'links']) {
+  const w = world({holes: 9, biome, seed: 'view-' + biome, trees: 65, homes: true, homeDensity: 70});
+  const corr = launchCorridors(w.holes, w.height);
+  for (const t of w.trees) if (GROUND_PLANTS.has(t.kind) && blocksView(corr, t.x, t.z, t.y + t.h, t.r)) bad.push(`${biome} ${t.kind} ${t.h.toFixed(1)} m`);
+  for (const h of w.homes) if (blocksView(corr, h.x, h.z, h.y + h.height, Math.hypot(h.width, h.depth) / 2)) bad.push(`${biome} house`);
+ }
+ assert.deepEqual(bad, [], `in the view from a tee:\n  ${bad.join('\n  ')}`);
+});
