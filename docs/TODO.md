@@ -19,28 +19,6 @@ back; live work nested inside the archive is the thing this split exists to
 prevent.
 
 
-## Spin-back rework (13 October 2026)
-
-Asked for by the owner on 13 October, on the branch `backspin-rework`: the
-come-back is far too strong. Researched and planned; **the owner reads the
-plan before any physics changes**. RESEARCH.md, *Spin-back reined in*; the
-local report with clips is `docs/reports/backspin/`
-(`tools/landing-report/spin-plan.mjs`, `spin-clips.mjs`, `spin-page.mjs`).
-
-- [ ] **Bring the come-back down to the owner's targets.** Today a full wedge
-  at 10,000 rpm comes back 5.4 yd on a Normal green and 10.6 on Soft, about
-  three times a tour player's maximum. Plan: slow bounces after the landing
-  take spin off like a rigid ball, and a per-firmness table of how much spin
-  the landing takes off. Waiting on the owner's choice between two measured
-  candidates -- **keep-hop** (the first bounce still goes forward; a 7 iron
-  runs about 3 yd further) and **hold-iron** (the 7 iron stays; a wedge's
-  first bounce goes nearly straight up) -- and on the target table.
-- [ ] **The first hop off a green is too high.** A full wedge hops 3 ft for
-  0.85 s; Titleist's slow motion (about 13 turns in the air before the second
-  bounce) implies inches. Lowering it alone makes irons run further (measured,
-  RESEARCH.md), so it is its own job, after the come-back.
-
-
 ## The UI pass (10 October 2026)
 
 Asked for by the owner on 10 October, in this order, on the branch
@@ -872,6 +850,29 @@ so several of these play differently as well as look different.
 
 
 # Done
+
+## Spin-back rework (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `backspin-rework`.
+RESEARCH.md, *Spin-back reined in* (with *Built*); reports in
+`docs/reports/backspin/` (the plan and both candidates) and
+`docs/reports/backspin-final/` (before and after).
+
+- [x] **Bring the come-back down to the owner's targets.** A full wedge at
+  12,000 rpm came back 18.2 / 14.2 / 10.3 / 6.0 yd from Soft to Burnt and now
+  comes back 4.4 / 3.2 / 1.4 / 0.5; 8,500 rpm checks on every green; 10,000
+  starts. The owner chose keep-hop over hold-iron, a 4 yd ceiling and Soft
+  spinning back most. Built as `SPIN_BY_FIRMNESS` (replacing `spinScale`) and
+  `LANDING_SPIN` (slow bounces near rigid) in physics.js, fitted with
+  `tools/green-fit.mjs`, held by `tests/spin-back.test.mjs`. Cost: a tour 7 iron
+  runs 10.8 yd on a Normal green (was 6.9) and a 50 yd pitch 9.6 (6.2).
+- [x] **The first hop off a green is too high.** A full wedge hopped 3 ft on
+  Normal; Haake's measured bounce on a green was half the model's height. The
+  green's tilt fell by a third and restitution by a seventh, and the whole green
+  was refitted with it: about 1.9 ft now, still forward. A green now bounces
+  below a fairway, which is fitted to measured tee turf; the ladder test says
+  why. Fairway, tee, semi, rough and sand are unchanged to the hundredth.
+
 
 ## Nothing stands in what a tee sees (12 October 2026)
 

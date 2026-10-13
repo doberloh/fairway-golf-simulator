@@ -47,7 +47,8 @@ smoke test and the profiler drive; `npm ci` does not.
 | `node tools/landing-report/charts.mjs` / `clips.mjs` | Redraws the ball-landing report's charts and before/after clips (clips need two capture builds; see the file) |
 | `node tools/landing-report/approach-plan.mjs` then `approach-clips.mjs`, `approach-page.mjs` | Plans, films and pages the fifteen chipping and approach clips (needs the capture build: `node tools/capture/build-hooked.mjs`) |
 | `node tools/landing-report/shotmaking-plan.mjs` then `shotmaking-clips.mjs`, `shotmaking-page.mjs` | The same for the six shot-making clips; the plan prints what each shot did before anything is filmed |
-| `node tools/landing-report/spin-plan.mjs` then `spin-clips.mjs`, `spin-page.mjs` | The spin-back report: a wedge across launch spin and green firmness on a flat green, measured and filmed for each version of the physics named in `SPIN_BUILDS` (see the file); about 20 s of High-tier rendering per clip |
+| `node tools/green-fit.mjs` / `--fit` | Scores how a ball lands on a green against its targets (come-back by spin and firmness, Haake's green bounce, 7 iron, chips, pitches) / searches the green's constants, one worker per core; prints the values to copy into physics.js |
+| `node tools/landing-report/spin-plan.mjs` then `spin-clips.mjs`, `spin-page.mjs` | The spin-back report: a wedge across launch spin and green firmness on a flat green, measured and filmed for each version of the physics named in `SPIN_BUILDS`, rows picked with `SPIN_ROWS` (wedge, steep, 7 iron, pitch, driver into a fairway), output folder `SPIN_OUT` (see the file); about 20 s of High-tier rendering per clip |
 
 ## Launch-monitor bridge (from source)
 

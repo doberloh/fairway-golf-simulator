@@ -21,7 +21,8 @@ const picked = plan.shots.filter(s => !want.length || want.includes(s.id) || wan
 // Where the camera stands, per row: metres to the side of the ball's line, and
 // how far along from the pitch mark the middle of the frame sits (negative is
 // back toward the golfer, where a ball that comes back goes).
-const FRAME = {wedge: {side: 9, centre: -1.2, fov: 36}, steep: {side: 9, centre: -1.2, fov: 36}, iron7: {side: 16, centre: 5, fov: 36}};
+const FRAME = {wedge: {side: 9, centre: -1.2, fov: 36}, steep: {side: 9, centre: -1.2, fov: 36}, iron7: {side: 16, centre: 5, fov: 36},
+ pitch: {side: 11, centre: 3, fov: 36}, driver: {side: 26, centre: 10, fov: 40}};
 const YARD = 0.9144, MPH = 0.44704;
 const b = await launch();
 for (const build of plan.builds.filter(x => !only || x.label === only)) {
@@ -31,7 +32,10 @@ for (const build of plan.builds.filter(x => !only || x.label === only)) {
  await p.addStyleTag({content: HIDE_HUD});
  let green = null;
  for (const s of picked) {
-  if (green !== s.carryYd) { await p.evaluate(y => window.lab.greenAt(y), s.carryYd); green = s.carryYd; await p.waitForTimeout(800); }
+  // The green stands where the ball lands, or, for a shot into the fairway,
+  // as far down the range as it goes, out of the way.
+  const at = s.surface === 'fairway' ? 350 : s.carryYd;
+  if (green !== at) { await p.evaluate(y => window.lab.greenAt(y), at); green = at; await p.waitForTimeout(800); }
   const m = s.by[build.label];
   // Put the ball down beside the flag's line and aim straight down the range.
   const setup = await p.evaluate(([s, beside, stimp]) => {

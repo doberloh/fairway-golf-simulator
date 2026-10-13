@@ -24,7 +24,7 @@ const table = label => {
  return `<table class="back">
   <thead><tr><th>${esc(label)}</th>${plan.firmness.map(f => `<th>${f}</th>`).join('')}</tr></thead>
   <tbody>${spins.map(spin => line(`Wedge ${rpm(spin)}`, plan.firmness.map(f => wedge.find(s => s.spin === spin && s.firmness === f)))).join('')}
-  ${[...new Set(extra.map(s => s.row))].map(row => { const r = extra.filter(s => s.row === row); return line(`${row === 'steep' ? 'Steep wedge' : '7 iron'} ${rpm(r[0].spin)}`, plan.firmness.map(f => r.find(s => s.firmness === f))); }).join('')}
+  ${[...new Set(extra.map(s => s.row))].map(row => { const r = extra.filter(s => s.row === row); return line(`${r[0].short ?? row} ${rpm(r[0].spin)}`, plan.firmness.map(f => r.find(s => s.firmness === f) ?? r[0])); }).join('')}
   </tbody></table>`;
 };
 const cell = s => labels.map(label => {
@@ -36,14 +36,14 @@ const cell = s => labels.map(label => {
 }).join('');
 const groups = [];
 for (const row of plan.rows) for (const spin of [...new Set(plan.shots.filter(s => s.row === row.id).map(s => s.spin))]) {
- const shots = plan.firmness.map(f => plan.shots.find(s => s.row === row.id && s.spin === spin && s.firmness === f));
+ const shots = plan.firmness.map(f => plan.shots.find(s => s.row === row.id && s.spin === spin && s.firmness === f)).filter(Boolean);
  const a = shots[0];
  groups.push(`
  <section>
   <h2>${esc(row.title)} · ${rpm(spin)} rpm</h2>
-  <p class="note">${a.mph} mph ball speed, ${a.vla}° launch, lands at ${a.by[labels[0]].descent}° with about ${rpm(a.by[labels[0]].landingRpm)} rpm left. <button class="play">Play all twelve together</button></p>
+  <p class="note">${a.mph} mph ball speed, ${a.vla}° launch, lands at ${a.by[labels[0]].descent}° with about ${rpm(a.by[labels[0]].landingRpm)} rpm left. <button class="play">Play these together</button></p>
   <div class="grid">${shots.map(s => `
-   <div class="col"><h3>${s.firmness}</h3>${cell(s)}</div>`).join('')}
+   <div class="col"><h3>${s.surface === 'fairway' ? 'Fairway' : s.firmness}</h3>${cell(s)}</div>`).join('')}
   </div>
  </section>`);
 }

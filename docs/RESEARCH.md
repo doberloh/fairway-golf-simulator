@@ -7093,3 +7093,81 @@ revisited in the first-hop job.
   moved 1.61-2.5).
 - **Much more friction** (x1.3 and up): the come-back vanishes (12,000 Normal
   0.1-0.8) and so does the first hop (0.1-0.2 yd).
+
+### Built (13 October 2026): the owner's choices, a lower first hop, refitted
+
+The owner chose **keep-hop**, asked for **about 4 yd of come-back at 12,000 rpm
+at most** (Soft), kept **Soft spinning back most** ("how many sims treat it"),
+and asked for the **first hop to come down** ("way too high"), refitted back to
+the targets after it. Built in physics.js as `SPIN_BY_FIRMNESS` (spin taken at
+the landing, a multiplier on the surface's `spin`; replaces `spinScale` and
+`SPIN_SCRUB` in firmness.js) and `LANDING_SPIN` (below `slowBounce` m/s into the
+turf the transfer rises linearly to the rigid 2.5 at rest; greens and collars
+only), fitted with `tools/green-fit.mjs`.
+
+**The first hop, measured.** Haake's impact on a green (above) run through the
+model: it left at 3.88 m/s up and 3.73 forward on a Normal green (a 2.5 ft hop)
+against Haake's 2.78 up and 4.28 forward (about 1.3 ft) -- **the model's hop was
+twice the measured one**. The fairway, fitted to measured tee turf
+(arXiv:2302.02758 / Biber et al., Sports Engineering 2023, 693 bounces on a
+well-maintained teeing area and 330 on artificial turf; no green in either
+campaign), gives 3.43 up for the same impact. Fitting a tee-turf model to that
+dataset gives roughly a 2.4 ft hop for a 52 degree wedge landing; a measured green
+is lower. So the green now bounces BELOW a fairway, which the ground half of
+ploughing already said (a watered sand rootzone against native soil). Haake's
+point is held as a band, 3.6-4.6 forward and 2.5-3.1 up: one bounce, on one of
+his two kinds of green.
+
+**The fit**, pattern search over the green's `cor`, `tilt`, `mu`, `spin`,
+`PLOUGH_BY_FIRMNESS` (one value), the Soft/Firm/Burnt multipliers and
+`slowBounce`, against: the owner's come-back table with 12,000 rpm on Soft at
+3.6-4.2 yd and the rest scaled down; a steep wedge; the 7 iron allowed about 3 yd
+more than before (the keep-hop cost the owner accepted); an 8,500 rpm wedge's
+first hop at least 0.4 yd forward (weighted hard: the owner's priority over the
+7 iron); Haake's band; two chips and four pitches near their old run-outs.
+
+| | was | now |
+|---|---|---|
+| green cor / tilt / mu / spin | 0.1491 / 0.1333 / 0.377 / 1.61 | 0.1294 / 0.0883 / 0.4273 / 1.8914 |
+| fringe (same ratios) | 0.1403 / 0.122 / 0.399 / 1.7 | 0.1218 / 0.0808 / 0.4522 / 1.9971 |
+| PLOUGH_BY_FIRMNESS | 0.394 | 0.6824 |
+| spin by firmness S / N / F / B | spinScale: 0.85 / 1 / 1.12 / 1.25 | 0.9423 / 1 / 1.1217 / 1.2475 |
+| slow-bounce speed | -- | 8.15 m/s |
+
+Flat green, Stimp 10. Yards back from the furthest point (wedge solved to 100 yd
+at 31 degrees, landing at 52):
+
+| launch spin | Soft | Normal | Firm | Burnt |
+|---|---|---|---|---|
+| 8,500 | 0 | 0 | 0 | 0 |
+| 10,000 | 0.6 | 0.3 | 0 | 0 |
+| 11,000 | 1.8 | 1.3 | 0.4 | 0 |
+| 12,000 | 4.4 | 3.2 | 1.4 | 0.5 |
+| steep (56 deg) 10,000 | 1.2 | 1.4 | 0.7 | 0.3 |
+
+- **First hop** (8,500 rpm wedge): 1.4 / 1.9 / 2.2 / 2.4 ft from Soft to Burnt,
+  was 2.2 / 3.0 / 3.4 / 3.7; it goes forward 0.3 / 0.8 / 1.2 / 2.0 yd.
+- **Costs**: a tour 7 iron (115.9 mph, 16.3 deg, 7,000 rpm) finishes 9.0 / 10.8 /
+  13.7 / 16.2 yd past its mark, was 3.8 / 6.9 / 9.7 / 12.9; a 50 yd pitch (6,500
+  rpm) 7.9 / 9.6 / 12.2 / 14.5, was 4.7 / 6.2 / 8.5 / 11.4; chips +0.3-1.2 yd.
+  The stock keyboard 7 iron now runs further on a Normal green (10.3 yd) than on
+  a fairway (8.5).
+- **Steep Normal (1.4) sits slightly above steep Soft (1.2)**: the ladder holds
+  at every full-wedge spin, not quite at 56 degrees. Left: inside 0.2 yd.
+- A shot with an implausible 182 rpm per mph (55 mph, 10,000 rpm) still comes
+  back 4.9 yd on Soft; real inputs do not reach it.
+
+**Rejected on the way.** The first fit, without pitches, put `slowBounce` at
+16.4 m/s and ran a 50 yd pitch 12.5 yd (6.2 before): every pitch lands at 8-15
+m/s into the turf, so it was charged the near-rigid transfer meant for the small
+hops. With pitches in the targets it settled at 8.15, below a 50 yd pitch's 10.6
+and a full wedge's 17. Two earlier fits that weighted Haake's forward speed as a
+point and the 7 iron at its old 6-7.5 yd flattened the wedge's first hop to
+nothing (0.07 yd forward) -- the same three-way trade as before, decided the
+owner's way.
+
+**Every other surface is unchanged to the hundredth** (driver, 3 wood, 5, 7 and 9
+irons, pitching wedge, a chip and a 50 yd pitch onto fairway, tee, semi, rough and
+sand, compared with main): a driver into a fairway still releases 23.4 yd from a
+3.70 ft hop. That hop is the fairway's fit to the measured tee turf and was left.
+Into the collar the driver runs 23.3 (was 25.9) and hops 2.46 ft (4.21).

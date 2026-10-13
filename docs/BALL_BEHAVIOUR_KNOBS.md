@@ -74,7 +74,8 @@ ignore it entirely — use their roll percentages instead.
 | knob | moves | effect across Soft → Burnt |
 |---|---|---|
 | `BOUNCE_BY_FIRMNESS` | `cor` | **hop height** grows with firmness |
-| `spinScale` (`SPIN_SCRUB`) | `spin` | **firmer scrubs more spin off**; soft cushions and lets it survive |
+| `SPIN_BY_FIRMNESS` | `spin` at the landing | **firmer takes more spin off**, so Soft spins back most and Burnt almost never. **This is the come-back dial** |
+| `LANDING_SPIN.slowBounce` | `spin` on later bounces | below this impact speed (8.15 m/s into the turf) the transfer rises toward the rigid 2.5, so the small hops after a landing cannot turn spin into backward speed. Raise it and pitches start running; lower it and the come-back grows |
 | `PLOUGH_BY_FIRMNESS` | `plough` | flat across firmness on a green — see below |
 | `gripScale` | `mu` | weak; friction takes spin and speed together and cannot express firmness cleanly |
 
@@ -85,7 +86,7 @@ this model had backwards for a long time. The television backspin everyone
 pictures happens on *receptive* greens, not the baked ones players complain they
 cannot hold.
 
-The mechanism is `spinScale`: a ball skids across hard tight turf and the surface
+The mechanism is `SPIN_BY_FIRMNESS`: a ball skids across hard tight turf and the surface
 takes the spin off it, while a soft green closes round the ball and cushions the
 contact so the spin survives to walk it home. **Backspin the ball still has when
 it settles is the only thing that can bring it back.**
@@ -93,6 +94,18 @@ it settles is the only thing that can bring it back.**
 **Ploughing is flat across firmness on a green**, and the fit put it there rather
 than being told to. A putting surface is tight, sand-based and shallow-marking;
 how firm it is barely changes how far a ball sinks.
+
+**How far a ball comes back, and the first hop** (13 October 2026; RESEARCH.md,
+*Spin-back reined in*). Flat green, Stimp 10, a full wedge landing at 52 degrees:
+8,500 rpm checks on every green; 10,000 starts (0.3 yd on Normal); 12,000 comes
+back 4.4 / 3.2 / 1.4 / 0.5 yd from Soft to Burnt. A steeper landing comes back
+sooner. The wedge hops about 2 ft on Normal and still goes forward first. To
+move any of this, change the targets in `tools/green-fit.mjs` and refit: the
+green's `cor`, `tilt`, `mu`, `spin`, `PLOUGH_BY_FIRMNESS`, `SPIN_BY_FIRMNESS`
+and `slowBounce` are fitted together, and moving one by hand undoes the others.
+**The trade inside it:** less come-back, a 7 iron that stops, and a forward first
+hop pull against each other; the owner chose the hop, so a tour 7 iron runs
+about 10 yd on a Normal green and a 50 yd pitch about 10.
 
 ---
 
@@ -163,14 +176,14 @@ driver and meaningless for a wedge, because a wedge lands on a **green**.
 | surface | fitted against | anchor |
 |---|---|---|
 | fairway | driver, 3 wood, 5 iron layup | published totals — 21 / 19 / 15 yd |
-| green | 56 wedge, pitching wedge, 9 iron, 7 iron | tour backspin 15–20 **feet** max |
+| green | full wedge across spin and firmness, steep wedge, 7 iron, pitches, chips (`tools/green-fit.mjs`) | the owner's come-back table inside tour backspin 15–20 **feet** max; Haake's measured green bounce |
 
-**The green no longer meets its anchor** (measured 13 October): since the flight
-refit delivers more spin, a 10,000 rpm wedge comes back 5.4 yd on Normal and
-10.6 on Soft, and 12,000 rpm 14-18 yd. A rework is planned, not built (TODO,
-*Spin-back rework*; RESEARCH.md, *Spin-back reined in*): the knobs it would move
-are the green's `spin` by firmness (`spinScale`) and the spin transfer of slow
-bounces after the landing.
+Since 13 October 2026 the green is fitted to the owner's come-back table, which
+sits inside that 15-20 ft (12,000 rpm on Soft: 4.4 yd), and to the one measured
+bounce on a real green (Haake: 18.6 m/s at 44.4 deg leaves at 2.78 m/s up, 4.28
+forward), with `tools/green-fit.mjs`. **A green now bounces lower than a
+fairway**: the fairway is fitted to measured tee turf, native soil, and a green
+is a watered sand rootzone.
 
 Other fixed points, none of them chosen by us:
 

@@ -91,8 +91,12 @@ The list below is what exists locally.
   1920x1080 with posters, each with its numbers and where they come from
   (`tools/landing-report/shotmaking-*.mjs`).
 - **[reports/backspin/](reports/backspin/index.html)** — how far a wedge comes
-  back across launch spin and green firmness on a flat green, today against two
-  candidate fixes, with the plan and its research (`tools/landing-report/spin-*.mjs`).
+  back across launch spin and green firmness on a flat green, the game before the
+  rework against two candidate fixes, with the plan and its research (`tools/landing-report/spin-*.mjs`).
+- **[reports/backspin-final/](reports/backspin-final/index.html)** — the rework as
+  built, before against after: a wedge at 8,500-12,000 rpm on all four
+  firmnesses, a steep wedge, a 7 iron, a 50 yd pitch and a driver into a
+  fairway, with the turf check.
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).
