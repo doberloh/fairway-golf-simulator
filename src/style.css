@@ -68,11 +68,17 @@
 .menu-note{margin:0;font-size:11px;line-height:1.6;opacity:.6;max-width:430px;text-align:center}
 
 /* Studio: a working bar in place of the shot controls. */
-.studio-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;z-index:22;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:16px;max-width:calc(100% - 32px);background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);box-shadow:0 16px 46px rgba(4,10,7,.48),inset 0 1px 0 var(--glass-top);backdrop-filter:blur(18px) saturate(1.15);}
+.studio-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--panel-lift,0px));transition:bottom .22s ease-out;z-index:22;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:16px;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);box-shadow:0 16px 46px rgba(4,10,7,.48),inset 0 1px 0 var(--glass-top);backdrop-filter:blur(18px) saturate(1.15);}
 .studio-bar>div{display:flex;flex-direction:column;gap:2px;margin-right:4px}
 .studio-bar strong{font-size:.94rem}
 .studio-bar small{font-size:.74rem;opacity:.68;max-width:340px}
 .studio-bar small.dirty{color:#9a6033;font-weight:600;opacity:1}
+/* Lifted above an open panel by main.js (*THE STUDIO BAR RIDES ABOVE*); where the
+   room above the panel is too short for it, the caption goes and the buttons keep
+   only their icons. The words stay in the DOM, so each keeps its accessible name. */
+.studio-bar.compact{padding:6px 10px;gap:6px}.studio-bar.compact>div{display:none}
+.studio-bar.compact button:has(svg){font-size:0;gap:0}.studio-bar.compact button svg{width:16px;height:16px}
+@media(prefers-reduced-motion:reduce){.studio-bar{transition:none}}
 #world[data-mode="studio"] .bottom-area,#world[data-mode="studio"] #shotResult,#world[data-mode="studio"] .flag-label,#world[data-mode="studio"] .aim-label,#world[data-mode="studio"] #exploreBar,#world[data-mode="studio"] .hole-info,#world[data-mode="studio"] #dropBar{display:none!important}
 #world[data-mode="studio"] ~ * #scoreNav,body:has(#world[data-mode="studio"]) #scoreNav{display:none}
 /* No panel blurs the scene any more, in either mode. The studio goes further and

@@ -1193,11 +1193,9 @@ function drawShotViews(){
   if(caption)caption.textContent='Nothing hit yet.';
   return;
  }
- // Height above the TURF, which on a course is not height above sea level. The
- // course is asked for the ground under each sample rather than the flat plane
- // a range would let us get away with.
- const profile=shotProfile(record.result.points,record.shot.origin,record.aim??0,
-  (x,z)=>view.course?.height(x,z)??0);
+ // Height above where the ball was struck, as if the ground were flat
+ // (shot-views.js, shotProfile) -- never the turf under each sample.
+ const profile=shotProfile(record.result.points,record.shot.origin,record.aim??0);
  drawSideView(side,profile);
  drawPlanView(plan,profile);
  if(caption){
@@ -3283,7 +3281,7 @@ function renderPanel(name,content){
    }).join('');
    return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
   };
-  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar below to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
+  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar above to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   // Past a field's `warn.above` (the green slope slider, past 75%): red while
   // dragging, then a bubble saying why, and a toast once, when the slider is
@@ -4192,6 +4190,27 @@ function bind(){
  $('studioRegenerate').onclick=()=>regenerateStudio();
  $('studioSave').onclick=()=>openPanel('library');
  $('studioExit').onclick=()=>returnToMenu();
+ // THE STUDIO BAR RIDES ABOVE AN OPEN PANEL. Both are pinned to the bottom of
+ // the course, the bar one layer up, so until 12 October 2026 any panel opened
+ // in the studio -- Settings, Save course, the menu's own -- had its lowest
+ // rows and buttons under the bar. Hiding the bar was rejected: Regenerate is
+ // the button the Settings panel tells you to press, and it has to be in reach
+ // while the sliders are. So the bar is lifted by the panel's height. Where the
+ // space left above the panel cannot hold the bar (a phone on its side), the
+ // bar drops its caption and button words (`compact`) rather than leaving the
+ // screen. Written a frame later, not inside the observer, for the reason
+ // layout.js gives (*Written a frame LATER*).
+ {
+  let pending=0;
+  const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');if(bar.hidden)return;
+   const by=d.hidden?0:d.offsetHeight;
+   bar.style.setProperty('--panel-lift',by+'px');
+   bar.classList.remove('compact');
+   if(by&&$('world').clientHeight-by-bar.offsetHeight<26)bar.classList.add('compact');};
+  const soon=()=>{if(!pending)pending=requestAnimationFrame(lift);};
+  const watch=new ResizeObserver(soon);
+  for(const id of ['world','drawer','studioBar'])watch.observe($(id));
+ }
  // Straight into the studio rather than dropping the user on the menu to click
  // again. The worlds stay separate because enterStudio grows its own.
  const toStudio=()=>{closeMenuDrop();if(appMode==='studio'){closePanel();return;}
