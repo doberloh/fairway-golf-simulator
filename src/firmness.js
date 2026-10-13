@@ -107,22 +107,10 @@ export const tiltScale = depth => firmnessValue(depth) / NORMAL_FIRMNESS;
 // belongs on ploughing, which takes forward speed WITHOUT taking the spin that
 // brings a ball home; friction takes both at once and cannot express it.
 export const gripScale = depth => (firmnessValue(depth) / NORMAL_FIRMNESS) ** .35;
-// SPIN SCRUBBING. How much of the tangential impulse is turned into spin change
-// rather than just slowing the ball -- and therefore how much backspin the ball
-// still has when it settles, which is the only thing that can bring it home.
-//
-// FIRMER SCRUBS MORE. A ball skids across hard, tight turf and the surface takes
-// the spin off it; a soft green closes round the ball and cushions the contact,
-// so the spin survives. That is the mechanism behind the thing every coaching
-// source says and this model used to have backwards: a soft, receptive green
-// grips a spinning ball and checks it, while a firm one is harder to hold
-// because the ball bounces and runs.
-//
-// Fitted against a full 56 degree wedge -- 10,000 rpm, which is an ordinary tour
-// number for that club, where the 10,400 rpm 7 iron this was previously tuned
-// against is a shot nobody hits.
-export const SPIN_SCRUB = 0.558;
-export const spinScale = depth => (NORMAL_FIRMNESS / firmnessValue(depth)) ** SPIN_SCRUB;
+// SPIN TAKEN AT THE LANDING used to live here as `spinScale`, a power law in
+// the depth. It is a table now, `SPIN_BY_FIRMNESS` in physics.js, beside the
+// bounce and ploughing tables it is fitted with (RESEARCH.md, *Spin-back reined
+// in*).
 
 // FIRMNESS IS A GREENS MEASUREMENT, so it moves greens and their collars and
 // nothing else.
