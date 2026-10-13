@@ -170,7 +170,10 @@ and repainted from the biome palette. Verified this pass rather than assumed:
   (Georgia / Times New Roman, Inter / system sans). No `@font-face` anywhere, so
   no font binary is distributed and naming a face in a CSS stack distributes
   nothing.
-- **No audio of any kind** exists in the project.
+- **No audio ships.** No sound file of any kind exists in the project. The
+  sounds being designed for the game (`tools/sound-lab/`, 13 October 2026) are
+  synthesised in the browser by code, so even when they ship they add code,
+  not recordings, and nothing to license.
 - **Zero runtime network requests**: no remote `<link>`, `<script>`, `fetch`,
   `Image()` or CSS `@import` in the built file. The http URLs inside it are text
   in the credits panel.

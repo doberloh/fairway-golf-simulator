@@ -849,6 +849,33 @@ so several of these play differently as well as look different.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
+## Sounds (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `sounds`: ambience that
+does not loop, a sound per club, a landing per turf, trees and rocks; CC0 and
+credited if any asset is used. Everything is synthesised (RESEARCH, *Sound:
+the synthesised soundscape*), so nothing needs crediting. Built so far: the
+synthesiser, `tools/sound-lab/synth.js`, and the local listening report,
+`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`).
+
+- [ ] **The owner listens and sends notes** from the report's "Copy my notes".
+  Expect a few rounds: every number marked PLACED in RESEARCH is a guess
+  waiting on the owner's ears. Nothing goes into the game before this.
+- [ ] **Decide strike sounds under a launch monitor.** The golfer already hears
+  the real strike, and a game sound lands after the monitor's delay like an
+  echo. Proposed: keyboard shots only, plus one setting for monitor shots.
+- [ ] **The extras**: the ball dropping into the cup is in the report unasked;
+  rolling on a green, the flagstick, a house and a crowd are offered. Owner
+  to say which.
+- [ ] **Then into the game**: synth.js to `src/` unchanged; strikes from the
+  shot, landings from contact events (surface and speed), trees and rocks from
+  the collision index, ambience from the biome, wind, temperature and time of
+  day; a volume control and mute in settings (a SCHEMA_VERSION question if it
+  joins a saved settings object); the browser only allows sound after a click,
+  so start the audio on the first input. Then `npm run smoke`, PLAYING.md,
+  DISTRIBUTION_REVIEW (no audio ships today) and ARCHITECTURE.
+
+
 # Done
 
 ## Spin-back rework (13 October 2026)

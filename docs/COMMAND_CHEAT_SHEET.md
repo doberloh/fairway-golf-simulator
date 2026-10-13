@@ -83,6 +83,13 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | `node tools/capture/features.mjs [name…]` | Retakes the feature screenshots |
 | `node tools/capture/clips.mjs [name…]` | Re-records the background clips |
 
+## Sounds
+
+| Command | What it does |
+| --- | --- |
+| `node tools/sound-lab/build.mjs` | Writes the listening report, `docs/reports/sounds/index.html` (local): every sound with takes, sliders and a notes box; opens straight from the file |
+| `node tools/sound-lab/check.mjs [--seconds 60]` | Renders every sound offline in a headless browser and prints peak and average level, length and event counts; fails on a silent, broken or NaN sound |
+
 ## Art assets (rarely needed)
 
 | Command | What it does |

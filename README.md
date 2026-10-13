@@ -108,7 +108,7 @@ checked by hand.
 | --- | --- |
 | `src/` | The game. Generation, physics, rendering, interface — one module per concern, no framework |
 | `tests/` | Regression suites for the Node test runner. `npm test` |
-| `tools/` | Measurement, asset ingest, profiling, release packaging, and capturing pictures and clips of the game (`tools/capture/`) |
+| `tools/` | Measurement, asset ingest, profiling, release packaging, capturing pictures and clips of the game (`tools/capture/`), and the synthesised sounds being designed for it (`tools/sound-lab/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |

@@ -7171,3 +7171,81 @@ irons, pitching wedge, a chip and a 50 yd pitch onto fairway, tee, semi, rough a
 sand, compared with main): a driver into a fairway still releases 23.4 yd from a
 3.70 ft hop. That hop is the fairway's fit to the measured tee turf and was left.
 Into the collar the driver runs 23.3 (was 25.9) and hops 2.46 ft (4.21).
+
+## Sound: the synthesised soundscape (13 October 2026)
+
+The owner asked for sounds: ambience that does not sound like a file on
+repeat (birds, aircraft, wind, water), a sound for the driver, a wood, an
+iron, the putter and a chip, a landing for each turf, and hits on trees and
+rocks. Any asset had to be CC0 with proper credit, and synthesis was allowed.
+Nothing goes into the game until the owner has listened and the sounds have
+been iterated: the listening report is `docs/reports/sounds/index.html`
+(local), built by `node tools/sound-lab/build.mjs` from
+`tools/sound-lab/synth.js`.
+
+### Why synthesis rather than recordings
+
+**Everything is synthesised; no recording is used.** Three reasons, in order:
+
+- **It cannot loop.** A recording is a fixed length, and a long one still comes
+  round again. Here the ambience is a set of random processes: a gust model over
+  noise, individual birds that arrive, sing in bouts and leave, a stream made of
+  separate bubbles, planes flown along a computed path. Strikes and landings
+  re-detune their tones on every play, so even a repeated shot is not the same
+  sample twice.
+- **Each sound follows the game.** Head speed, landing speed, distance from the
+  camera, the biome's temperature and the course's wind all change the sound,
+  which a sample can only approximate with pitch-shifting.
+- **Nothing to license, and nothing large to ship.** The owner's rule (CC0 and
+  credited) is met trivially, and the single-file build grows by code, not
+  audio files.
+
+**Rejected for now: CC0 recordings** (Kenney's packs, Freesound's CC0 filter).
+They stay the fallback for any one sound that synthesis cannot get right after
+the owner's notes; each would need its credit in ATTRIBUTION.md and the owner's
+go-ahead before anything is downloaded.
+
+### What each sound is built from, and the numbers behind it
+
+| Sound | Built from | Anchored to |
+|---|---|---|
+| Driver | Damped tones at 3.35-8.3 kHz (take A, strongest 4.15 kHz, decay time-constants 12-50 ms), a 4 ms crack, the ball's tick at 1.5 kHz, a 220 Hz thump | Titanium driver strike centred near 4.5 kHz, about 120 dB peak, under 0.2 s long (Park et al. 2018). Patents on club-head sound put the head's loudest peak in 3-5 kHz and the ball's sound near 1.5 kHz. The individual modes are PLACED |
+| Fairway wood | Tones 3.9-7.4 kHz, shorter, plus a sole brush | PLACED: smaller head, higher and shorter than the driver |
+| Iron | Tones 2.6-6.8 kHz with 3-8 ms decays, a crack, then the divot: a 95 Hz thump, grass tearing (band noise 1.8 to 0.9 kHz over 110 ms), clods landing 0.2-0.6 s later | PLACED. A solid head rings far shorter than a hollow one (the hollow-head modal survey, Hocknell et al. 1998, is where the distinction is drawn) |
+| Chip | A brush of grass 30 ms before contact, a soft click (1.8-5 kHz), a brush after | PLACED |
+| Putter | Putter tones below 2 kHz (1.35, 1.15 or 0.9 kHz by take), ball tones at 2.5-3.7 kHz | Barrass, Roberts and Jones (2006): in a putt, the 0-2 kHz band follows the putter and where it was struck; the 2-4 kHz peaks follow the ball's compression; the "sharpest" balls had the higher peak. A putter patent measured about 1.4 kHz |
+| Turf landings | A thump whose pitch falls (105-220 Hz, firmer is higher and shorter), the ball's 1.5 kHz tick (louder on firm ground), noise for grass | PLACED by surface: green, fringe, tee, fairway, semi, rough, sand, water -- the eight surfaces `localSurface` returns |
+| Water | A slap, a sheet of spray, a rising "plunk" (300 to 660 Hz) as the cavity closes, then 24-36 bubbles of 1-9 mm radius and drops falling back | Minnaert: a bubble of radius r rings at about 3.26/r Hz (1 mm, 3.26 kHz). Bubbles as the building block of liquid sound, with a rising pitch near the surface: van den Doel (2005). How far the pitch rises (1.05-1.6x) is PLACED: the paper's own figure could not be confirmed (the PDF did not extract) |
+| Trees, rocks | Wooden tones 260-2,900 Hz (oak, pine, palm); a canopy is leaf ticks, twigs and a swish, then the ball dropping 8 m to the turf; rock is tones at 1.3-7.6 kHz with a hard crack | PLACED |
+| Wind | Low rumble, two narrow whistles and a leaf rustle shaped by what grows in the biome, all driven by a gust process (relaxation 0.15/s, spread about 35% of the mean, plus a faster flutter at 1.5/s) | PLACED. Level follows the game's wind in mph |
+| Birds | Songbirds: notes following pitch contours at 2.6-6.5 kHz, a song kept per individual for life, sung in bouts of 1-4 songs 2.5-8 s apart. Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened | Songbirds mostly 1-8 kHz (All About Birds). Mourning dove: one recorded bird at 390 Hz with the second note near 650 Hz (fssbirding sonogram); used as 380-420 Hz with a 1.6x second note. Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
+| Crickets (night) | Pulsed tones at 2.8-4.6 kHz, 3-4 pulses a chirp | Dolbear (1897): chirps per minute = 4 x (temperature F) - 160, for the snowy tree cricket, from each biome's own temperature. The law holds from about 55 F (13 C); below that the lab's crickets are silent, so Mountain (11 C) and Haunted Hollow (9 C) have none. The carrier pitch is PLACED |
+| Cicadas | Band noise near 5-6 kHz pulsed at 160-260 Hz, swelling over 8-18 s; only at 24 C and above | PLACED |
+| Planes | A jet: broadband rumble (low-pass 900 Hz), 1.5-4 km up at 110-190 m/s. A small propeller plane: an 75-95 Hz buzz with harmonics, 250-700 m up at 45-65 m/s | Geometry, not ear: sound arrives r/c late, so the loudest moment comes after the plane is overhead; a propeller's pitch falls by Doppler; and the ground reflection, with an ear 1.6 m up, is a copy delayed by 2 x 1.6 x sin(elevation) / 343 s, up to about 9 ms overhead, which sweeps a comb through the noise -- the falling "whoosh" of a passing jet (windytan 2025; SFU comb-filter handbook). A little jitter on that delay stands in for turbulence, which DAGA 2021 found removes the "unnatural flanging" of a clean model |
+| Distance | Level falls as 1/distance (1 at 10 m); treble falls with distance | PLACED: a low-pass reaching about 8 kHz at 100 m, 2 kHz at 1 km and 850 Hz at 3 km, the shape of ISO 9613-1 air absorption at 20 C and 70% humidity rather than its figures |
+| Strike loudness | Level as (head speed / 100 mph)^0.8; brightness as (speed / the club's default)^0.35 | PLACED so a 4 mph putt is about 20 dB under a 100 mph drive and still audible |
+
+### Measured levels (tools/sound-lab/check.mjs, limiter off)
+
+Peaks at the default settings, 13 October 2026: driver -1.7 to -2.8 dB,
+fairway wood -4 to -5, iron -6, chip -13 to -22, putter -23 to -27; turf
+landings at 12 m about -16 to -24 dB; water -13 to -16; trunk and rock -12 to
+-18. A 30-60 s ambience averages -33 to -44 dB with peaks near -15 to -27; a jet
+alone peaks at about -22 dB and a propeller plane -21. **The first pass was 7 dB
+over full scale on the driver** (the golfer was placed 4 m from the listener,
+which doubles the level twice over) and the limiter had hidden it; check.mjs
+turns the limiter off for that reason. **Lake lapping first measured -66 dB**,
+which nobody would hear, and was raised about 17 dB; the links surf about 6 dB.
+
+**A bug worth remembering:** the wind slider's mph was also being read as a
+mix multiplier, so 8 mph played as 64. The gust readout said 121 mph. The wind
+is now one number with one meaning (`windMph`), outside the mix.
+
+### Open, for the owner
+
+- **With a launch monitor the golfer hears the real strike**; a game strike
+  sound lands after the monitor's delay and sounds like an echo. Proposed:
+  strike sounds for keyboard shots only, one setting to turn them on for
+  monitor shots. Not decided.
+- Every PLACED number above is waiting on the owner's ears, which is what the
+  report's takes, sliders and notes are for.

@@ -107,6 +107,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
 - `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
+- `tools/sound-lab/` -- every sound, synthesised live (no recordings), and the owner's listening report; not in the game yet
 - `tools/github-protect.mjs` -- the repository's GitHub protections
 - `tests/*.test.mjs` -- the regression suites; `bench/*.json` -- saved baselines
 
