@@ -851,6 +851,29 @@ so several of these play differently as well as look different.
 
 # Done
 
+## Spin-back rework (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `backspin-rework`.
+RESEARCH.md, *Spin-back reined in* (with *Built*); reports in
+`docs/reports/backspin/` (the plan and both candidates) and
+`docs/reports/backspin-final/` (before and after).
+
+- [x] **Bring the come-back down to the owner's targets.** A full wedge at
+  12,000 rpm came back 18.2 / 14.2 / 10.3 / 6.0 yd from Soft to Burnt and now
+  comes back 4.4 / 3.2 / 1.4 / 0.5; 8,500 rpm checks on every green; 10,000
+  starts. The owner chose keep-hop over hold-iron, a 4 yd ceiling and Soft
+  spinning back most. Built as `SPIN_BY_FIRMNESS` (replacing `spinScale`) and
+  `LANDING_SPIN` (slow bounces near rigid) in physics.js, fitted with
+  `tools/green-fit.mjs`, held by `tests/spin-back.test.mjs`. Cost: a tour 7 iron
+  runs 10.8 yd on a Normal green (was 6.9) and a 50 yd pitch 9.6 (6.2).
+- [x] **The first hop off a green is too high.** A full wedge hopped 3 ft on
+  Normal; Haake's measured bounce on a green was half the model's height. The
+  green's tilt fell by a third and restitution by a seventh, and the whole green
+  was refitted with it: about 1.9 ft now, still forward. A green now bounces
+  below a fairway, which is fitted to measured tee turf; the ladder test says
+  why. Fairway, tee, semi, rough and sand are unchanged to the hundredth.
+
+
 ## Nothing stands in what a tee sees (12 October 2026)
 
 From the owner's checklist ("bushes and houses sit in front of tees and block

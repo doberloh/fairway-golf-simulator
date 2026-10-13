@@ -183,8 +183,10 @@ test('steeper and spinnier means less rollout, which is the whole test', () => {
  }
  for (const descent of [35, 45, 55]) assert.ok(run(descent, 9000) < run(descent, 0));
  // Enough spin off a steep descent walks the ball back behind its pitch mark, and
- // reporting that as a positive number would hide the check entirely.
- assert.ok(run(55, 9000) < 0, `steep and spinny should zip back, got ${run(55, 9000)} ft`);
+ // reporting that as a positive number would hide the check entirely. 11,000 rpm
+ // at landing since the come-back was reined in (13 October 2026): 9,000 now
+ // checks dead, 0.2 ft past its mark, which is the point of that change.
+ assert.ok(run(55, 11000) < 0, `steep and spinny should zip back, got ${run(55, 11000)} ft`);
 });
 
 test('jitter is seeded, bounded and centred', () => {

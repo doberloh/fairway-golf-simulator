@@ -356,7 +356,9 @@ the previous version in their browser.
 `tools/capture/` takes the screenshots and clips used to show the game off --
 the website's gallery, feature pictures and background clips among them.
 `node tools/capture/build-hooked.mjs` builds the game with three capture handles
-added while bundling (src/ is not edited), into `bench/shots/dist-exp/`. Then
+added while bundling (src/ is not edited), into `bench/shots/dist-exp/`
+(`OUT` names another folder; `SWAP="src/<file>=<path>"` builds it with another
+version of a source file, for a before/after). Then
 `tools/capture/gallery.mjs`, `clips.mjs` and `features.mjs` retake the gallery,
 the background clips and the feature screenshots, each by name or all at once,
 into `bench/shots/media/` (not committed; set `MEDIA_OUT` to save elsewhere).

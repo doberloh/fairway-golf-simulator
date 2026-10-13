@@ -140,8 +140,11 @@ test('firmer ground bounces higher and runs further, on a green and its collar',
   for (const row of ladder)
    assert.ok(Math.abs(row.carry - ladder[0].carry) < .01, `${surface}: firmness changed the carry`);
   // And it has to be worth having: the ends of the ladder must differ by
-  // something a player would notice, not by a yard.
-  assert.ok(ladder[3].rollout > ladder[0].rollout * 2.5,
+  // something a player would notice, not by a yard. Held as a difference since
+  // 13 October 2026: Soft now runs further than it did (keep-hop, RESEARCH.md
+  // *Spin-back reined in*), so a ratio fell to 1.8 while the yards between the
+  // ends (7.0 on a green, 5.1 on its collar) stayed plain to see.
+  assert.ok(ladder[3].rollout - ladder[0].rollout > 4,
    `${surface}: Burnt to Soft is only ${ladder[0].rollout.toFixed(1)}-${ladder[3].rollout.toFixed(1)} yd`);
  }
 });
@@ -253,21 +256,34 @@ test('firmness matters more to a long club than a wedge', () => {
   `a wedge spread ${spread('wedge').toFixed(1)} yd against a 5-iron's ${spread('iron5').toFixed(1)}`);
 });
 
-test('the bounce ladder is ordered by mowing height, and a green is not a fairway', () => {
+test('the bounce ladder is ordered by mowing height, and a green bounces lowest of the mown turf', () => {
  // Green, fringe, fairway and tee used to share one restitution, so a ball
  // bounced off a green EXACTLY as it did off a fairway -- identical to four
  // decimal places across a 756-shot sweep. They are four times apart in mowing
  // height, so the only defensible ordering is how much canopy there is to absorb
  // the impact: more grass, less bounce.
- const order = ['sand', 'rough', 'semi', 'fairway', 'fringe', 'green'];
+ //
+ // EXCEPT A GREEN, WHICH IS MEASURED LOWER THAN A FAIRWAY (13 October 2026).
+ // The green used to give the liveliest bounce of all, an assumption from its
+ // shaved canopy; a full wedge hopped 3 ft. Haake's filmed bounce on a real green
+ // (18.6 m/s at 44.4 degrees, leaving at 2.78 m/s up) is about half the height
+ // the model gave, while the fairway is fitted to measured TEE turf
+ // (arXiv:2302.02758) -- native soil, where a green is a watered sand rootzone
+ // kept receptive. The ground half of ploughing already said so. The green and
+ // its collar now bounce below a fairway.
+ const order = ['sand', 'rough', 'semi', 'fairway'];
  const hops = order.map(surface => land('iron7', 'Normal', surface).firstHop);
  for (let i = 1; i < hops.length; i++)
   assert.ok(hops[i] > hops[i - 1],
    `${order[i]} bounced ${(hops[i] / .3048).toFixed(2)} ft against ${order[i - 1]}'s ${(hops[i - 1] / .3048).toFixed(2)}`);
- // The specific pair that was wrong, stated on its own so it cannot silently
- // collapse back into one bucket.
- assert.ok(contactOf('green').cor > contactOf('fairway').cor, 'a green and a fairway share a restitution again');
- assert.ok(contactOf('fringe').cor > contactOf('fairway').cor, 'a fringe is mown tighter than a fairway');
+ const green = land('iron7', 'Normal', 'green').firstHop, fringe = land('iron7', 'Normal', 'fringe').firstHop;
+ assert.ok(green < hops[3] && fringe < hops[3], 'a green or its collar bounced higher than a fairway');
+ // The green stays above semi-rough. Its collar may not (1.95 ft against 2.10):
+ // it sits on the green's soft rootzone where semi sits on native soil.
+ assert.ok(green > hops[2], 'a green bounced lower than semi-rough');
+ assert.ok(fringe < green, 'a collar bounced higher than its own green');
+ assert.ok(contactOf('green').cor < contactOf('fairway').cor, 'a green bounces livelier than a fairway again');
+ assert.ok(contactOf('fringe').cor < contactOf('green').cor, 'a fringe bounces livelier than its green');
  assert.equal(contactOf('tee').cor, contactOf('fairway').cor, 'a tee is mown like a fairway');
 
  // The green end of the ladder is the anchored end: every published figure in
@@ -286,10 +302,11 @@ test('the bounce ladder is ordered by mowing height, and a green is not a fairwa
  // by contact.js. Those figures are the anchor now, and the test below checks
  // them rather than checking a constant.
  assert.deepEqual(contactOf('fairway'), contactOf('tee'), 'fairway and tee are mown alike');
- // Restitution and tilt read DOWN THE MOWING HEIGHT: a shaved green gives the
- // liveliest bounce, deep grass smothers it.
+ // Restitution and tilt read DOWN THE MOWING HEIGHT off the green: deep grass
+ // smothers a bounce. The green and its collar sit apart (above).
  for (const key of ['cor', 'tilt']) {
-  const ladder = ['green', 'fringe', 'fairway', 'semi', 'rough', 'sand'].map(s => contactOf(s)[key]);
+  assert.ok(contactOf('fringe')[key] < contactOf('green')[key], `${key}: the collar outbounces its green`);
+  const ladder = ['fairway', 'semi', 'rough', 'sand'].map(s => contactOf(s)[key]);
   for (let i = 1; i < ladder.length; i++)
    assert.ok(ladder[i] < ladder[i - 1], `${key} is out of canopy order: ${ladder.join(', ')}`);
  }
@@ -322,8 +339,6 @@ test('the bounce ladder is ordered by mowing height, and a green is not a fairwa
  // And the two orders really are different, or the split would be pointless.
  assert.ok(contactOf('fairway').plough < contactOf('green').plough,
   'a fairway must be firmer ground than a green');
- assert.ok(contactOf('fairway').cor < contactOf('green').cor,
-  'but a green must still give the livelier bounce');
 
  // An unlisted surface must not silently become a different surface.
  assert.deepEqual(contactOf('something-that-does-not-exist'), contactOf('green'));
@@ -428,8 +443,14 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // arrives a little quicker, a little shallower and with more spin (ARRIVAL), so
  // it hops about 0.2 ft higher and runs 0.1-0.9 yd further. No bounce parameter
  // moved, and the ladder still rises the whole way.
+ // Re-pinned 13 October 2026, and this time the bounce DID move: the green was
+ // refitted against Haake's measured green bounce and the owner's come-back
+ // table (RESEARCH.md, *Spin-back reined in*; tools/green-fit.mjs). The hop fell
+ // by about 40% (3.58 -> 2.25 ft on Normal) and the run-out rose 6.5 -> 10.3 yd
+ // -- the cost the owner chose over a wedge whose first bounce goes straight up.
+ // Both still rise monotonically from Soft to Burnt.
  const WANT = {
-  Soft: [2.69, 3.5], Normal: [3.58, 6.5], Firm: [4.00, 9.2], Burnt: [4.39, 12.3],
+  Soft: [1.64, 9.0], Normal: [2.25, 10.3], Firm: [2.53, 13.3], Burnt: [2.80, 15.9],
  };
  for (const [firmness, [hop, roll]] of Object.entries(WANT)) {
   const got = drop(firmness, 'green');
@@ -456,7 +477,15 @@ test('the compliant bounce reproduces the figures the measured fit produced', ()
  // keeping backspin rather than by digging.
  // Re-pinned again 6 October with the flight refit (ARRIVAL): every surface
  // hops 0.02-0.21 ft higher and runs up to 0.5 yd further; every order holds.
- const LADDER = {green: [3.58, 6.5], fringe: [3.11, 6.1], fairway: [2.76, 8.5],
+ // Green and fringe re-pinned 13 October 2026 with WANT above; every other
+ // surface is untouched by that change, to the hundredth. TWO OF THE ORDERS
+ // ABOVE NO LONGER HOLD, deliberately: the green no longer hops highest (it is
+ // measured lower than a fairway; see the ladder test), and this 7 iron no longer
+ // stops soonest on a green -- it runs 10.3 yd there against a fairway's 8.5,
+ // because a green now takes more of its spin at the landing and then rolls
+ // faster. That is the keep-hop cost the owner chose (RESEARCH.md, *Spin-back
+ // reined in*).
+ const LADDER = {green: [2.25, 10.3], fringe: [1.95, 8.2], fairway: [2.76, 8.5],
   semi: [2.10, 2.2], rough: [1.42, 1.3], sand: [0.45, 0.3]};
  for (const [surface, [hop, roll]] of Object.entries(LADDER)) {
   const got = drop('Normal', surface);

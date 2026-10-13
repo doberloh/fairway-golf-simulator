@@ -105,6 +105,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
+- `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
 - `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
 - `tools/github-protect.mjs` -- the repository's GitHub protections
 - `tests/*.test.mjs` -- the regression suites; `bench/*.json` -- saved baselines
@@ -172,6 +173,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 **Physics**
 - Check apex, descent and hang time, not only carry, whenever the aerodynamics move. [CHECK APEX]
 - The firmness tests pin a 7-iron's arrival; a flight refit means re-deriving them. [THE FIRMNESS TESTS]
+- The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
 - Everything solid is a vertical cylinder in one collision index; do not add a second routine. [EVERYTHING SOLID]
 - The simulator never invents ball data. [The simulator never invents ball data]
 

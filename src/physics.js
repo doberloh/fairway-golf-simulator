@@ -1,5 +1,5 @@
 import {rollDeceleration,rollDecelerationAt,slideFriction} from './turf.js';
-import {bounceScale,tiltScale,gripScale,spinScale,firmnessApplies,firmnessValue,NORMAL_FIRMNESS} from './firmness.js';
+import {bounceScale,tiltScale,gripScale,firmnessApplies,firmnessValue,NORMAL_FIRMNESS} from './firmness.js';
 import {CUP_RADIUS as CUP_R,CUP_DEPTH} from './cup.js';
 import {bounce as compliantBounce,dampingFor} from './contact.js';
 import {NO_TRUNK} from './species.js';
@@ -135,9 +135,22 @@ const ploughOf=s=>+(GROUND[s]+CANOPY[s]).toFixed(4);
 // green: friction is the largest single term taking forward speed off a bounce,
 // and at the old values a hard-spun iron kept almost none of it, so its first
 // hop went nowhere.
+//
+// THE GREEN AND ITS COLLAR WERE REFITTED 13 October 2026 (tools/green-fit.mjs;
+// RESEARCH.md, *Spin-back reined in*), against the owner's come-back table and
+// the one measured bounce on a real green: Haake's ball, 18.6 m/s at 44.4
+// degrees with 4,622 rpm of backspin, left at 2.78 m/s up and 4.28 forward. The
+// model sent it out at 3.88 up -- a hop twice the height -- so the green's tilt
+// fell by a third and its restitution by a seventh, and it now bounces BELOW a
+// fairway (fitted to measured tee turf): a watered sand rootzone, not native
+// soil. Friction rose 13% and ploughing (PLOUGH_BY_FIRMNESS) by three quarters to
+// hold the run-out, and the spin transfer moved with SPIN_BY_FIRMNESS. The
+// collar moved by the same ratios: it is the green's own rootzone. Was:
+// green cor 0.1491, tilt 0.1333, mu 0.377, spin 1.61; fringe 0.1403, 0.122,
+// 0.399, 1.7; PLOUGH_BY_FIRMNESS 0.394.
 const CONTACT={
- green:  {cor:0.1491,tilt:0.1333,mu:0.377,plough:ploughOf('green'),spin:1.61},
- fringe:  {cor:0.1403,tilt:0.122,mu:0.399,plough:ploughOf('fringe'),spin:1.7},
+ green:  {cor:0.1294,tilt:0.0883,mu:0.4273,plough:ploughOf('green'),spin:1.8914},
+ fringe:  {cor:0.1218,tilt:0.0808,mu:0.4522,plough:ploughOf('fringe'),spin:1.9971},
  fairway:{cor:0.1305,tilt:0.1192,mu:0.418,plough:ploughOf('fairway'),spin:2.5},
  tee:  {cor:0.1305,tilt:0.1192,mu:0.418,plough:ploughOf('tee'),spin:2.5},
  semi:  {cor:0.1074,tilt:0.1105,mu:0.456,plough:ploughOf('semi'),spin:2.15},
@@ -189,7 +202,7 @@ export const WALL=0, CRATER_RELIEF=1;
 // the surface value at every firmness -- effectively a shallow pitch mark and
 // nothing more, which is what a tight, sand-based putting surface actually gives
 // you. Firmness expresses itself through SPIN SCRUBBING instead (see
-// `spinScale`), because that is what decides whether the ball still has backspin
+// `SPIN_BY_FIRMNESS`), because that is what decides whether the ball still has backspin
 // to walk home on.
 //
 // Burnt is the exception and drops away hard: baked ground neither digs nor
@@ -198,7 +211,7 @@ export const WALL=0, CRATER_RELIEF=1;
 // FIRMNESS NO LONGER ACTS THROUGH PLOUGHING AT ALL on a green, and the fit put
 // it there rather than being told to. A putting surface is tight, sand-based and
 // shallow-marking; how firm it is barely changes how far a ball sinks. What it
-// does change is how much the surface SCRUBS THE SPIN OFF -- see `spinScale` --
+// does change is how much the surface SCRUBS THE SPIN OFF -- see `SPIN_BY_FIRMNESS` --
 // and that is what decides whether the ball still has backspin to walk home on.
 //
 // Fitted against every club that actually lands on a green (56 degree wedge,
@@ -206,7 +219,9 @@ export const WALL=0, CRATER_RELIEF=1;
 // the wedge alone put ploughing near 0.075 and looked excellent on that shot
 // while leaving a 7 iron running 12.3 yd on a Normal green, which is a green
 // that does not hold.
-export const PLOUGH_BY_FIRMNESS={Soft:0.394,Normal:0.394,Firm:0.394,Burnt:0.394};
+// 0.394 until 13 October 2026; 0.6824 since the green was refitted with a lower
+// first hop (see above CONTACT), which otherwise ran a 7 iron further still.
+export const PLOUGH_BY_FIRMNESS={Soft:0.6824,Normal:0.6824,Firm:0.6824,Burnt:0.6824};
 // Restitution by firmness, replacing `bounceScale` for this bounce. The old
 // curve went as sqrt(normal/depth) because it multiplied an instantaneous
 // restitution; here it is fitted directly.
@@ -225,6 +240,45 @@ const onFirmnessScale=(table,depth)=>{
 };
 export const ploughScale=depth=>onFirmnessScale(PLOUGH_BY_FIRMNESS,depth);
 export const compliantBounceScale=depth=>onFirmnessScale(BOUNCE_BY_FIRMNESS,depth);
+// HOW MUCH SPIN THE LANDING TAKES OFF, by firmness: a multiplier on the
+// surface's `spin` column, which is the Normal value. The spin a ball keeps
+// through its landing is the only thing that can bring it back, so this table
+// IS the come-back ladder: Soft takes least and spins back most, Burnt takes
+// nearly all of it (the owner's ladder, 13 October 2026; it is how simulators
+// treat firmness). The one measured study points the other way -- Haake's balls
+// kept their backspin on drained, firmer greens -- and that is recorded in
+// RESEARCH.md, *Spin-back reined in*, as a choice made for the game.
+//
+// It replaces `spinScale` in firmness.js, a power law in the instrument's depth
+// that was fitted against one wedge and left a full wedge coming back 5.4 yd on a
+// Normal green at 10,000 rpm and 18 yd on Soft at 12,000 -- three times a tour
+// player's 15-20 ft. Fitted with tools/green-fit.mjs against the owner's target
+// table, not against a published one: no come-back distances are published.
+export const SPIN_BY_FIRMNESS={Soft:0.9423,Normal:1.0,Firm:1.1217,Burnt:1.2475};
+// SMALL, SLOW BOUNCES TAKE SPIN OFF LIKE A HARD BALL. A green's spin transfer is
+// below the rigid 5/2 because at full impact speed the cover squashes and the
+// contact patch spreads, so its parts slip in different directions and the net
+// torque falls short of force x radius. That is true of a 17 m/s landing and
+// not of the 2-4 m/s hops after it, which were charged the same reduced
+// transfer -- and that is where a spun ball's backward speed was being made:
+// after a hop the ball reaches rolling at (gain x forward - R x backspin) /
+// (gain + 1), so a low gain on the little bounces hands more of the spin
+// straight to backward travel (a 10,000 rpm wedge left its second contact at
+// -2.05 m/s on 1.61 against -1.63 on 2.5). The transfer now runs smoothly from
+// the landing value at `slowBounce` m/s into the turf, and above, to rigid
+// (`rigid`, 5/2: a force at the contact point changes its velocity 7/2 times as
+// fast as the centre's) at rest. Fitted to 8.15 m/s: below a full wedge's 17 and a 50 yd pitch's 10.6, so a
+// landing keeps its own transfer and the hops after it are the ones that change
+// (a first fit put it at 16.4 and ran a 50 yd pitch 12.5 yd against 6.2).
+// Greens and their collars only -- the surfaces firmness acts on.
+// An object so tools/green-fit.mjs can move it.
+export const LANDING_SPIN={rigid:2.5,slowBounce:8.15};
+export function landingSpinGain(spin,firm,normalSpeed){
+ if(spin===undefined||firm===null)return spin;
+ const {rigid,slowBounce}=LANDING_SPIN;
+ const landing=Math.min(rigid,spin*onFirmnessScale(SPIN_BY_FIRMNESS,firm));
+ return rigid-(rigid-landing)*Math.min(1,Math.abs(normalSpeed)/slowBounce);
+}
 export const elasticGain=normalSpeed=>1+(ELASTIC_GAIN-1)*Math.exp(-Math.abs(normalSpeed)/PLASTIC_SPEED);
 // The rim is one surface, and the ball meets it in one of two ways.
 //
@@ -670,7 +724,7 @@ export function simulateShot(shot,course,options={}){
     const tuning=(options.compliant&&options.compliant!==true)?options.compliant:{};
     const out=compliantBounce({vx:tS,vy:vn,spin:back,radius:R},{
      friction:mu,
-     spinGain:contact.spin===undefined?undefined:contact.spin*(firm===null?1:spinScale(firm)),
+     spinGain:landingSpinGain(contact.spin,firm,incomingNormal),
      plough:contact.plough*(firm===null?1:ploughScale(firm))*(options.ploughScale??1),
      wall:options.wall??WALL,craterRelief:options.craterRelief??CRATER_RELIEF,
      normalDamping:tuning.normalDamping??dampingCache(cor,mu),

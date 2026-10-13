@@ -6945,3 +6945,229 @@ predates the ninth biome and could not isolate the change.
 **Placed, not published:** the 1.6 m eye height is the existing `TEE_EYE`;
 sighting to the ground at the target rather than to a point above it is a
 choice -- the line any player looks along to see where the ball lands.
+
+## Spin-back reined in: research and a plan (13 October 2026)
+
+The owner: the zip-back is insane and must come down massively. An 8,500 rpm
+wedge should check on a normal green and not come back; zip-back should start
+around 10,000 rpm unless the descent is very steep; Burnt almost impossible,
+Firm a small amount, Normal a balance, Soft the most. This entry is the
+research and the measured plan; **nothing in the physics has changed yet** --
+the owner reads the plan first (TODO, *Spin-back rework*). The report with clips
+is local, `docs/reports/backspin/` (`tools/landing-report/spin-*.mjs`).
+
+### What the ball does today
+
+Flat green, Stimp 10, a full wedge solved to a 100 yd carry at 31 degrees
+launch (83-87 mph; lands at about 52 degrees). Yards the ball rolls back from
+the furthest point it reached:
+
+| launch spin | landing spin | Soft | Normal | Firm | Burnt |
+|---|---|---|---|---|---|
+| 7,000 | 6,273 | 0.3 | 0 | 0 | 0 |
+| 8,500 | 7,608 | 3.7 | 1.2 | 0.4 | 0 |
+| 10,000 | 8,940 | 10.6 | 5.4 | 2.5 | 1.0 |
+| 11,000 | 9,828 | 14.7 | 10.0 | 5.8 | 2.5 |
+| 12,000 | 10,718 | 18.2 | 14.2 | 10.3 | 6.0 |
+
+A steeper wedge (70 yd, 42 degrees launch, 56 degree descent) at 10,000 rpm
+comes back 13.3 / 9.4 / 6.5 / 4.0. The stock keyboard wedges (8,200-9,000 rpm)
+come back 6.9-9.6 yd on Soft and 2.5-5.3 on Normal. Against the one published
+distance -- a tour player's maximum of 15-20 ft, 5-6.7 yd (*Re-anchored to
+reality*) -- that is two to three times too far. The 2 October fit said a
+10,000 rpm wedge came back 2.2 yd on Normal; the flight refit of 6 October
+delivers more spin to the green (*spinTau*). It checked one shot -- a tour
+pitching wedge on Soft, 2.4 -> 4.6 yd back, accepted -- and not the
+higher-spin wedges, which is where the come-back grew most.
+
+### Where the come-back is made
+
+Traced, a 10,000 rpm wedge on Normal: it leaves the first bounce at **1.03 m/s
+forward still carrying 3,119 rpm** (35% of its landing spin), hops 0.92 m high
+for 0.85 s, the second bounce reverses it to -1.25 m/s, it skids up to -2.09
+m/s and then rolls back on the Stimp 10 green for four seconds. Final: 4.1 yd
+behind its pitch mark.
+
+What sets the backward speed is a conserved quantity: while friction acts at
+the contact, `gain x forward - R x backspin` does not change, so a ball that
+reaches rolling ends at `(gain x v - R w) / (gain + 1)`. Two things hand it too
+much: the landing's spin gain on a green (1.61, scaled by firmness to 1.37 Soft
+... 2.02 Burnt) leaves too much spin, and **the small slow bounces after it use
+the same reduced gain** -- which `SPIN_GAIN` justifies by the cover squashing
+and the patch spreading at full impact speed, and which is not true at 4 m/s.
+At gain 2.5 the same ball would leave its second contact at -1.63 m/s; at 1.61
+it leaves at -2.05, and the roll-back distance goes as the square.
+
+### What the sources say
+
+- **No measured table of spin-back distance against spin and firmness exists**
+  that could be found (journals, Trackman, coaching sites, simulator forums).
+  The tour maximum of 15-20 ft stays the only distance anchor.
+- **Haake** (Science and Golf II, 1994; 721 filmed impacts on 18 courses): two
+  kinds of green. On one the ball left with topspin; on the other it kept
+  backspin if its landing backspin was large enough -- quoted second-hand as
+  about **350 rad/s (3,340 rpm)**. Backspin was retained on greens that were
+  **freely drained with little Poa annua**. One of his impacts, quoted in a
+  modelling paper: **18.6 m/s at 44.4 degrees with 484 rad/s (4,622 rpm)
+  left at 5.1 m/s, 33.0 degrees, with 145 rad/s of topspin** -- no come-back.
+  The two figures are second-hand and flagged so.
+- **Biber, Champneys and Szalai** (arXiv:2208.11685, already the basis of
+  contact.js), on bounce data: balls landing with large backspin slip all
+  through the contact and leave with reduced backspin; the rest leave with a
+  little topspin; almost none leave rolling.
+- **Roh and Lee** (via the summary above): a backward bounce needs a
+  near-vertical impact or a large spin compared with the landing speed. The
+  owner's "unless the descent angle is very steep" is this.
+- **Proc. IMechE Part P 239(3), 479 (2025)** (DOI 10.1177/17543371221150289),
+  abstract only: stopping distance falls with more backspin and steeper
+  incidence, until excess spin or steepness makes the ball come back; green
+  firmness needs more data.
+- **Titleist slow motion** (already recorded): first bounce forward, about 13
+  backward revolutions in the air, reversal from the second bounce. Thirteen
+  turns at any spin that can still bring a ball back is a fraction of a second:
+  **a first hop of inches**. The model's is 0.92 m (3 ft) and 0.85 s -- about 44
+  turns at its retained spin. A separate defect, recorded, not fixed here.
+- **Firmness disagrees between sources.** Coaching sources (Caddie HQ, already
+  recorded) say a soft receptive green grips and spins back; Haake's retaining
+  greens were the drained, firmer ones, and golfers on forums (golfmonthly,
+  thesandtrap) say soft wet greens swallow the ball while dry hard ones spin it
+  back. **The owner's ladder (Soft most) is followed as a game choice**, and is
+  written down as one.
+- Spin rates: Trackman tour 9 iron 8,793 rpm, 7 iron 7,124 (Trackman spin-rate
+  blog); full 50-60 degree wedges 9,000-12,000 (SkyTrak). Simulator forums
+  (The Golf Club, Garmin R50) complain of too little spin-back, never give a
+  number; read and set aside.
+
+### The targets (placed, from the owner's description)
+
+Same wedge, flat, Stimp 10, yards back: 7,000 -- 0 everywhere. 8,500 -- Soft
+0-0.3, others 0. 10,000 -- Soft 1-1.5, Normal up to 0.5, Firm 0-0.2, Burnt 0.
+11,000 -- 2.5-3 / 1.5-2 / up to 1 / up to 0.3. 12,000 -- 5-6 (the tour maximum)
+/ 3-4 / up to 2 / up to 0.5. Steep 10,000 -- about 2 / 1 / 0.5 / up to 0.5. And:
+the first bounce goes forward; a 7,000 rpm 7 iron stops about where it does
+(6.9 yd past its mark on Normal). **Every number here is placed, not
+published**, except the 5-6 yd ceiling.
+
+### Two candidates, measured
+
+Both: the green's spin gain moves smoothly from its landing value to the rigid
+2.5 as the impact's normal speed falls from 15 m/s to 0, and the landing value
+becomes a table by firmness on the same inch scale as `BOUNCE_BY_FIRMNESS`.
+
+- **keep-hop**: landing gain Soft 1.75, Normal 1.95, Firm 2.15, Burnt 2.45;
+  green friction x1.1; ploughing unchanged.
+- **hold-iron**: landing gain 1.8 / 2.1 / 2.35 / 2.5; friction unchanged;
+  `PLOUGH_BY_FIRMNESS` 0.394 x 2.4 / 2.2 / 2.0 / 1.6.
+
+| | today | keep-hop | hold-iron |
+|---|---|---|---|
+| wedge 8,500 Normal, back | 1.2 | 0 | 0.1 |
+| wedge 10,000 S/N/F/B, back | 10.6/5.4/2.5/1.0 | 1.2/0.5/0.1/0 | 1.4/0.6/0.1/0.1 |
+| wedge 12,000 S/N/F/B, back | 18.2/14.2/10.3/6.0 | 5.0/3.7/2.2/0.7 | 6.1/3.5/2.0/1.3 |
+| steep 10,000 S/N/F/B, back | 13.3/9.4/6.5/4.0 | 1.7/1.3/0.9/0.4 | 1.9/1.0/0.5/0.7 |
+| wedge 8,500 Normal, first hop forward | 1.0 yd | 0.5 | 0 |
+| 7 iron 7,000 S/N/F/B, finish past mark | 3.8/6.9/9.7/12.9 | 7.3/10.2/13.1/16.5 | 3.3/6.5/10.0/14.0 |
+| 56 deg chip (22 mph, 36 deg, 1,150 rpm) Normal, roll | 9.9 | 12.7 | 10.8 |
+
+**The trade is structural.** In this model less come-back, a 7 iron that stops
+and a forward first hop cannot all be had: more spin taken at the landing
+leaves more forward speed (the 7 iron runs), and whatever takes that speed back
+-- ploughing or friction -- also takes the first hop's. About 150 combinations
+of landing gain (1.5-2.5), ploughing (x0.8-2.2) and friction (x1.0-2.0) were
+run on Normal; none met all three. Recommended: keep-hop, with the 7 iron
+revisited in the first-hop job.
+
+### Rejected, with the numbers
+
+- **Landing gain alone** (no friction or ploughing change): Normal 10,000 back
+  0.4 at gain 2.0 but the 7 iron runs 12.0 yd (gain 2.2: 14.1).
+- **The slow-bounce rule alone**: Normal 10,000 back 5.1 -> 2.5, 12,000 14.2 ->
+  10.1; the 7 iron +0.6 yd. Half the job.
+- **Speed-dependent roll resistance on the green** (`ROLL_SPEED_GAIN`, which
+  only acts above the Stimpmeter's 1.83 m/s, where a 7 iron rolls and a wedge
+  coming back does not): k = 1, 2, 4, 6 moved the 7 iron 12.0 -> 11.8 -> 11.5
+  -> 11.2 yd at gain 2.0. Its release is the bounces, not the roll.
+- **A lower first hop** (`corScale`, `tiltScale` 0.3-0.5, toward the footage):
+  the 7 iron runs further, 12-20 yd, because speed that no longer goes up goes
+  forward; the come-back became erratic (Normal 12,000: 0.0 to 12.6 yd as gain
+  moved 1.61-2.5).
+- **Much more friction** (x1.3 and up): the come-back vanishes (12,000 Normal
+  0.1-0.8) and so does the first hop (0.1-0.2 yd).
+
+### Built (13 October 2026): the owner's choices, a lower first hop, refitted
+
+The owner chose **keep-hop**, asked for **about 4 yd of come-back at 12,000 rpm
+at most** (Soft), kept **Soft spinning back most** ("how many sims treat it"),
+and asked for the **first hop to come down** ("way too high"), refitted back to
+the targets after it. Built in physics.js as `SPIN_BY_FIRMNESS` (spin taken at
+the landing, a multiplier on the surface's `spin`; replaces `spinScale` and
+`SPIN_SCRUB` in firmness.js) and `LANDING_SPIN` (below `slowBounce` m/s into the
+turf the transfer rises linearly to the rigid 2.5 at rest; greens and collars
+only), fitted with `tools/green-fit.mjs`.
+
+**The first hop, measured.** Haake's impact on a green (above) run through the
+model: it left at 3.88 m/s up and 3.73 forward on a Normal green (a 2.5 ft hop)
+against Haake's 2.78 up and 4.28 forward (about 1.3 ft) -- **the model's hop was
+twice the measured one**. The fairway, fitted to measured tee turf
+(arXiv:2302.02758 / Biber et al., Sports Engineering 2023, 693 bounces on a
+well-maintained teeing area and 330 on artificial turf; no green in either
+campaign), gives 3.43 up for the same impact. Fitting a tee-turf model to that
+dataset gives roughly a 2.4 ft hop for a 52 degree wedge landing; a measured green
+is lower. So the green now bounces BELOW a fairway, which the ground half of
+ploughing already said (a watered sand rootzone against native soil). Haake's
+point is held as a band, 3.6-4.6 forward and 2.5-3.1 up: one bounce, on one of
+his two kinds of green.
+
+**The fit**, pattern search over the green's `cor`, `tilt`, `mu`, `spin`,
+`PLOUGH_BY_FIRMNESS` (one value), the Soft/Firm/Burnt multipliers and
+`slowBounce`, against: the owner's come-back table with 12,000 rpm on Soft at
+3.6-4.2 yd and the rest scaled down; a steep wedge; the 7 iron allowed about 3 yd
+more than before (the keep-hop cost the owner accepted); an 8,500 rpm wedge's
+first hop at least 0.4 yd forward (weighted hard: the owner's priority over the
+7 iron); Haake's band; two chips and four pitches near their old run-outs.
+
+| | was | now |
+|---|---|---|
+| green cor / tilt / mu / spin | 0.1491 / 0.1333 / 0.377 / 1.61 | 0.1294 / 0.0883 / 0.4273 / 1.8914 |
+| fringe (same ratios) | 0.1403 / 0.122 / 0.399 / 1.7 | 0.1218 / 0.0808 / 0.4522 / 1.9971 |
+| PLOUGH_BY_FIRMNESS | 0.394 | 0.6824 |
+| spin by firmness S / N / F / B | spinScale: 0.85 / 1 / 1.12 / 1.25 | 0.9423 / 1 / 1.1217 / 1.2475 |
+| slow-bounce speed | -- | 8.15 m/s |
+
+Flat green, Stimp 10. Yards back from the furthest point (wedge solved to 100 yd
+at 31 degrees, landing at 52):
+
+| launch spin | Soft | Normal | Firm | Burnt |
+|---|---|---|---|---|
+| 8,500 | 0 | 0 | 0 | 0 |
+| 10,000 | 0.6 | 0.3 | 0 | 0 |
+| 11,000 | 1.8 | 1.3 | 0.4 | 0 |
+| 12,000 | 4.4 | 3.2 | 1.4 | 0.5 |
+| steep (56 deg) 10,000 | 1.2 | 1.4 | 0.7 | 0.3 |
+
+- **First hop** (8,500 rpm wedge): 1.4 / 1.9 / 2.2 / 2.4 ft from Soft to Burnt,
+  was 2.2 / 3.0 / 3.4 / 3.7; it goes forward 0.3 / 0.8 / 1.2 / 2.0 yd.
+- **Costs**: a tour 7 iron (115.9 mph, 16.3 deg, 7,000 rpm) finishes 9.0 / 10.8 /
+  13.7 / 16.2 yd past its mark, was 3.8 / 6.9 / 9.7 / 12.9; a 50 yd pitch (6,500
+  rpm) 7.9 / 9.6 / 12.2 / 14.5, was 4.7 / 6.2 / 8.5 / 11.4; chips +0.3-1.2 yd.
+  The stock keyboard 7 iron now runs further on a Normal green (10.3 yd) than on
+  a fairway (8.5).
+- **Steep Normal (1.4) sits slightly above steep Soft (1.2)**: the ladder holds
+  at every full-wedge spin, not quite at 56 degrees. Left: inside 0.2 yd.
+- A shot with an implausible 182 rpm per mph (55 mph, 10,000 rpm) still comes
+  back 4.9 yd on Soft; real inputs do not reach it.
+
+**Rejected on the way.** The first fit, without pitches, put `slowBounce` at
+16.4 m/s and ran a 50 yd pitch 12.5 yd (6.2 before): every pitch lands at 8-15
+m/s into the turf, so it was charged the near-rigid transfer meant for the small
+hops. With pitches in the targets it settled at 8.15, below a 50 yd pitch's 10.6
+and a full wedge's 17. Two earlier fits that weighted Haake's forward speed as a
+point and the 7 iron at its old 6-7.5 yd flattened the wedge's first hop to
+nothing (0.07 yd forward) -- the same three-way trade as before, decided the
+owner's way.
+
+**Every other surface is unchanged to the hundredth** (driver, 3 wood, 5, 7 and 9
+irons, pitching wedge, a chip and a 50 yd pitch onto fairway, tee, semi, rough and
+sand, compared with main): a driver into a fairway still releases 23.4 yd from a
+3.70 ft hop. That hop is the fairway's fit to the measured tee turf and was left.
+Into the collar the driver runs 23.3 (was 25.9) and hops 2.46 ft (4.21).
