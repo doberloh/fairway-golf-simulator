@@ -19,6 +19,28 @@ back; live work nested inside the archive is the thing this split exists to
 prevent.
 
 
+## Spin-back rework (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `backspin-rework`: the
+come-back is far too strong. Researched and planned; **the owner reads the
+plan before any physics changes**. RESEARCH.md, *Spin-back reined in*; the
+local report with clips is `docs/reports/backspin/`
+(`tools/landing-report/spin-plan.mjs`, `spin-clips.mjs`, `spin-page.mjs`).
+
+- [ ] **Bring the come-back down to the owner's targets.** Today a full wedge
+  at 10,000 rpm comes back 5.4 yd on a Normal green and 10.6 on Soft, about
+  three times a tour player's maximum. Plan: slow bounces after the landing
+  take spin off like a rigid ball, and a per-firmness table of how much spin
+  the landing takes off. Waiting on the owner's choice between two measured
+  candidates -- **keep-hop** (the first bounce still goes forward; a 7 iron
+  runs about 3 yd further) and **hold-iron** (the 7 iron stays; a wedge's
+  first bounce goes nearly straight up) -- and on the target table.
+- [ ] **The first hop off a green is too high.** A full wedge hops 3 ft for
+  0.85 s; Titleist's slow motion (about 13 turns in the air before the second
+  bounce) implies inches. Lowering it alone makes irons run further (measured,
+  RESEARCH.md), so it is its own job, after the come-back.
+
+
 ## The UI pass (10 October 2026)
 
 Asked for by the owner on 10 October, in this order, on the branch

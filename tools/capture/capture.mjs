@@ -37,14 +37,15 @@ export function hourFor(biome, when) {
 export const launch = () => chromium.launch({args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required']});
 
 // The game, opened to its main menu on Ultra with automatic resolution off, so
-// it can never quietly draw fewer pixels to keep the frame rate up.
-export async function openGame(browser, {width = 1920, height = 1080, density = 2, game = GAME} = {}) {
+// it can never quietly draw fewer pixels to keep the frame rate up. `quality`
+// picks a lighter tier for clips that study the ball rather than the scenery.
+export async function openGame(browser, {width = 1920, height = 1080, density = 2, game = GAME, quality = 'ultra'} = {}) {
  if (!fs.existsSync(game)) throw Error(`No capture build at ${game}. Run: node tools/capture/build-hooked.mjs`);
  const page = await (await browser.newContext({viewport: {width, height}, deviceScaleFactor: density})).newPage();
  page.errors = [];
  page.on('pageerror', e => page.errors.push(e.message));
  page.on('console', m => m.type() === 'error' && page.errors.push(m.text().slice(0, 160)));
- await page.addInitScript(() => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'ultra', autoResolution: false, frameCap: 0, textSize: 100})));
+ await page.addInitScript(q => localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: q, autoResolution: false, frameCap: 0, textSize: 100})), quality);
  // A named player, or the first-visit welcome sits over every picture.
  await page.addInitScript(() => { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'pfair', profiles: [{id: 'pfair', name: 'Fairway', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); });
  await page.goto(pathToFileURL(game).href);

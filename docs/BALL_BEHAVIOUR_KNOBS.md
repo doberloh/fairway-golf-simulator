@@ -165,6 +165,13 @@ driver and meaningless for a wedge, because a wedge lands on a **green**.
 | fairway | driver, 3 wood, 5 iron layup | published totals — 21 / 19 / 15 yd |
 | green | 56 wedge, pitching wedge, 9 iron, 7 iron | tour backspin 15–20 **feet** max |
 
+**The green no longer meets its anchor** (measured 13 October): since the flight
+refit delivers more spin, a 10,000 rpm wedge comes back 5.4 yd on Normal and
+10.6 on Soft, and 12,000 rpm 14-18 yd. A rework is planned, not built (TODO,
+*Spin-back rework*; RESEARCH.md, *Spin-back reined in*): the knobs it would move
+are the green's `spin` by firmness (`spinScale`) and the spin transfer of slow
+bounces after the landing.
+
 Other fixed points, none of them chosen by us:
 
 - The first bounce goes **forward**; reversal begins at the **second**. Titleist
