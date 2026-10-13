@@ -18,7 +18,7 @@
 //   - Haake's measured bounce on a green: 18.6 m/s at 44.4 degrees with 484
 //     rad/s of backspin leaving at 5.1 m/s, 33.0 degrees (4.28 forward, 2.78 up),
 //     held as a band because it is one bounce on one green;
-//   - two chips rolling about as they did.
+//   - two chips and four pitches rolling about as they did.
 // The search moves the green's restitution, tilt, friction, spin transfer and
 // ploughing, the spin-by-firmness table and the slow-bounce speed, in one
 // worker per core. It changes nothing on disk: copy the result into physics.js.
@@ -48,13 +48,18 @@ FIRMS.forEach((f, i) => CASES.push({id: `steep 10000 ${f}`, kind: 'shot', mph: 7
 FIRMS.forEach((f, i) => CASES.push({id: `7 iron 7000 ${f}`, kind: 'shot', mph: 115.92, vla: 16.3, spin: 7000, firmness: f, release: IRON[i], hop: 0.5}));
 CASES.push({id: 'chip 56 deg', kind: 'shot', mph: 22, vla: 36, spin: 1150, firmness: 'Normal', release: [8.9, 13.0]});
 CASES.push({id: 'chip PW', kind: 'shot', mph: 25, vla: 21, spin: 1000, firmness: 'Normal', release: [16.0, 21.0]});
+// Pitches land gently (8-15 m/s into the turf), which is where the slow-bounce
+// rule acts; held near what they ran before it (30 yd 9.0, 53 yd 6.2, 70 yd
+// 3.5, 80 yd 0.4), after a first fit without them ran a 50 yd pitch 12.5 yd.
+for (const [mph, vla, spin, release] of [[40, 30, 4500, [7, 11]], [55, 28, 6500, [4.5, 8]], [65, 30, 7500, [2.5, 5.5]], [72, 32, 8500, [0, 2.5]]])
+ CASES.push({id: `pitch ${mph} mph ${spin}`, kind: 'shot', mph, vla, spin, firmness: 'Normal', release});
 CASES.push({id: 'tour PW 9300', kind: 'shot', mph: 102, vla: 24, spin: 9300, firmness: 'Normal', back: [0, 0.3]});
 CASES.push({id: 'Haake green bounce', kind: 'haake', firmness: 'Normal'});
 
 // The constants searched, with their bounds.
 const PARAMS = [
  ['cor', 0.06, 0.2], ['tilt', 0.0, 0.16], ['mu', 0.3, 0.7], ['spin', 1.5, 2.5], ['plough', 0.2, 2.0],
- ['soft', 0.7, 1.1], ['firm', 1.0, 1.3], ['burnt', 1.05, 1.6], ['slow', 5, 25],
+ ['soft', 0.7, 1.1], ['firm', 1.0, 1.3], ['burnt', 1.05, 1.6], ['slow', 3, 25],
 ];
 
 async function worker() {
