@@ -71,7 +71,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/physics.js` -- flight and contact, cup capture, monitor shot normalisation; `AERO`, `CONTACT`
 - `src/contact.js` -- the bounce as something that takes time; `src/cup.js` -- the analytic capture reference
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
-- `src/clubs.js` -- stock and custom clubs, manual flight profiles
+- `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable, manual flight profiles
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
 - `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 
@@ -158,6 +158,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - `generateWorld` must stay synchronous; only `generateWorldSteps` yields, and only between rows, or fingerprints move. [GENERATION YIELDS]
 - `prepareWorld` and `loadCourse` must compute the same cache key (`settleSettings`), or a different course appears than the one chosen. [MUST KEY ON THE SAME THING]
 - `endlessSettings` must stay idempotent: the menu backdrop is hole one of a real endless run. [Application modes]
+- Trees are refused anywhere in the tee fan; bushes and houses only where they rise into the eye line (`blocksView`). [THE VIEW TEST IS FOR WHAT CAN BE LOWER]
 - The fingerprint hashes an explicit list; anything new that generation decides and a player can see must join it. [THE FINGERPRINT HASHES]
 - `nearest().d` is signed and is not the mown edge; use ramps, not steps. [IS SIGNED]
 - Outline harmonics are scaled at generation, never in the shader; keep the amplitude caps. [OUTLINE HARMONICS], [AMPLITUDE CAP]
@@ -204,6 +205,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]
+- The bag is the golfer's, re-read every turn; the putter's id is always `putter`. [THE BAG IS THE GOLFER'S]
 - Players are matched by seat, not list position; colours are by seat. [Removing a golfer], [A colour per golfer]
 - A ball in trouble waits in the round until relief is taken. [Penalty relief]
 

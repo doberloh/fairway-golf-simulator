@@ -223,7 +223,8 @@ class Trip {
    await (await bar.isVisible() ? bar : this.page.locator('#toolsButton')).click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
-  await this.page.click(`#${id}`);
+  // An id, or a selector for a tray button that has none (`[data-panel="bag"]`).
+  await this.page.click(id.startsWith('[') ? id : `#${id}`);
  }
 
  // Put the tray away, the way a tidy player does when finished with it.
@@ -985,6 +986,100 @@ const JOURNEYS = [
   },
  },
 
+ // THE PLAYER'S OWN BAG (12 October 2026, main.js *THE BAG IS THE GOLFER'S*).
+ // Edited from the profile, refused when it cannot be played, played in a
+ // round longest first, and a second golfer's bag beside the first -- with
+ // the club picker following whoever is up.
+ {
+  name: 'bag',
+  what: "each golfer's own bag: named clubs and added kinds, saved in the profile, played in a round, and switched with the golfer who is up",
+  async run(t) {
+   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'));
+   const named = (s, n) => s?.profiles.find(p => p.name === n);
+   const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
+   const picker = () => t.page.evaluate(() => [...document.getElementById('club').options].map(o => o.textContent));
+   const rows = () => t.page.locator('#bagList .bag-row');
+   await menuReady(t);
+   await t.step("My profile → Edit Smoke's bag", async () => {
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    await t.press("Edit Smoke's bag");
+    await t.until(() => t.page.locator('#bagList').isVisible().catch(() => false), 'the bag editor', 5 * SLOW);
+    if (await rows().count() !== 8) throw new Error(`a new golfer's bag has ${await rows().count()} clubs, not the stock eight`);
+   });
+   await t.step('rename the driver and add a club, which follows a change of kind', async () => {
+    await rows().first().locator('.bag-name').fill('Big Dog');
+    await t.press('Add a club');
+    // Added just above the putter, as the first kind the bag does not hold.
+    const added = rows().nth(-2);
+    if (await added.locator('.bag-name').inputValue() !== '5 Wood') throw new Error(`the new club is called "${await added.locator('.bag-name').inputValue()}"`);
+    await added.locator('.bag-kind').selectOption('gap');
+    const name = await added.locator('.bag-name').inputValue(), yards = await added.locator('.bag-carry').inputValue();
+    if (name !== 'Gap wedge' || yards !== '85') throw new Error(`a fresh club changed to a gap wedge reads "${name}", ${yards} yd`);
+   });
+   await t.step('a bag with two clubs of one name is refused, and nothing is saved', async () => {
+    await rows().nth(-2).locator('.bag-name').fill('big dog');
+    await t.press('Save bag');
+    const why = await t.page.textContent('#playError');
+    if (!/Two clubs are called/.test(why || '')) throw new Error(`the duplicate was answered with "${why}"`);
+    if (named(await stored(), 'Smoke').bag) throw new Error('a refused bag was stored');
+   });
+   await t.step('saved, it is in the profile and back on the profile page', async () => {
+    await rows().nth(-2).locator('.bag-name').fill('Gap wedge');
+    await t.press('Save bag');
+    await t.until(() => t.page.locator('.profile-bag').isVisible().catch(() => false), 'the profile page', 5 * SLOW);
+    const bag = named(await stored(), 'Smoke').bag?.map(c => `${c.name} ${c.carry}`);
+    if (!bag?.includes('Big Dog 250') || !bag.includes('Gap wedge 85') || bag.length !== 9) throw new Error(`stored bag: ${JSON.stringify(bag)}`);
+    if (!(await t.page.textContent('.profile-bag')).includes('Big Dog')) throw new Error('the profile page does not show the new bag');
+    await t.closeDrawer();
+   });
+   await t.step('a round plays the bag, longest first and the putter last', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+    const want = ['Big Dog', '3 Wood', '5 Iron', '7 Iron', '9 Iron', 'Pitching wedge', 'Gap wedge', 'Sand wedge', 'Putter'];
+    const got = await picker();
+    if (got.join() !== want.join()) throw new Error(`the club picker reads ${got.join(', ')}`);
+   });
+   await t.step('a second golfer joins, and their bag is edited in the round', async () => {
+    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
+    await t.press('Your group');
+    await t.press('Add player');
+    await t.page.fill('#name1', 'Second');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    await t.tool('[data-panel="bag"]');
+    await t.until(() => t.page.locator('#bagOwner').isVisible().catch(() => false), 'the bag window with a choice of golfer', 5 * SLOW);
+    const owners = await t.page.locator('#bagOwner option').allTextContents();
+    if (owners.join() !== 'Smoke,Second') throw new Error(`whose bag offers ${owners.join(', ')}`);
+    if (await t.page.locator('#bagOwner').inputValue() !== named(await stored(), 'Smoke').id) throw new Error('the bag window did not open on the golfer who is up');
+    await t.page.locator('#bagOwner').selectOption({label: 'Second'});
+    await t.until(async () => (await rows().first().locator('.bag-name').inputValue()) === 'Driver', "Second's stock bag", 5 * SLOW);
+    await rows().first().locator('.bag-name').fill('Hammer');
+    await t.press('Save bag');
+    await t.until(async () => named(await stored(), 'Second')?.bag?.[0]?.name === 'Hammer', "Second's bag to be stored", 5 * SLOW);
+    if ((await picker())[0] !== 'Big Dog') throw new Error("saving Second's bag changed the clubs of the golfer who is up");
+    await t.page.getByRole('button', {name: 'Close Bag', exact: true}).click();
+    await t.closeTools();
+   });
+   await t.step("when Second is up, the picker is Second's bag", async () => {
+    await t.shot();
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; ; putt++) {
+     await t.shot();
+     if ((await saved())?.done?.[0]) break;
+     if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
+    }
+    await t.until(async () => (await picker())[0] === 'Hammer', "Second's clubs in the picker", 5 * SLOW);
+   });
+  },
+ },
  {
   name: 'relief',
   what: 'water and out of bounds offer the relief the Rules allow, through a reload, under both out-of-bounds rules; a player backup saves and restores',

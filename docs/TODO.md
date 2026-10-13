@@ -673,8 +673,6 @@ Updated September 15, 2026. These are future tasks, not claims of implemented be
 
 - [ ] **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
 
-- [ ] **Trees near tees.** The remaining piece of the owner's request. Replace the blanket 22 m circle round the back tee with two rules: a small clearance to swing in, and nothing inside the shot line from any tee. Trees are placed before tees are sited, so the pass has to run afterwards and remove any tree that ended up in a line. `sightline` in course.js already answers the shot-line question.
-
 - [ ] **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
 
 - [ ] **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
@@ -852,6 +850,40 @@ so several of these play differently as well as look different.
 
 
 # Done
+
+## Nothing stands in what a tee sees (12 October 2026)
+
+From the owner's checklist ("bushes and houses sit in front of tees and block
+the view"), on the branch `player-bags-and-tee-views`. GENERATOR_VERSION 35.
+
+- [x] **Bushes and houses are kept out of the view from the tee.** Bushes
+  were exempt from every tee rule and houses kept only 28 m from a tee in a
+  circle; 232 bushes and 4 houses stood in a tee's view on 12 planted courses.
+  `blocksView` refuses either where its top rises above the line from the
+  golfer's eye to the landing area, inside a tee's forward wedge; low cover
+  still grows there. Bushes fell 2%, houses 120 to 112; nothing else measured
+  moved (171 bench figures at the full tier, before and after). `teeclear`
+  holds both as invariants; `tests/tee-corridor.test.mjs` covers the
+  geometry and three planted courses.
+- [x] **Closed: "Trees near tees".** Its two rules already held -- the
+  launch corridor keeps every tee's shot line clear and the tee fan keeps
+  trees out of the view, both built from the tees as finally sited, and
+  `teeclear` reads zero for trees. The 22 m circle it describes survives
+  only in the per-hole tree list, which nothing draws.
+
+## The player's own bag (12 October 2026)
+
+From the owner's checklist, on the branch `player-bags-and-tee-views`.
+
+- [x] **Each golfer builds their own bag.** Up to 14 clubs, each named by the
+  player, of one of 19 kinds (the stock eight plus 5 and 7 woods, 3-5
+  hybrids, 3, 4, 6 and 8 irons, gap and lob wedges -- the added kinds' launch
+  and spin are placed, not measured), with a carry the ball speed is solved
+  to. Saved in the profile and its backup; edited from *My bag* in play
+  (whoever is up, or any golfer in the group) and from the profile page. The
+  club picker follows whoever is up. The old device-wide distances become
+  every golfer's bag once. Longest drive now asks the club's kind, not its
+  label. `tests/bag.test.mjs` and the `bag` smoke journey.
 
 ## Shot views and the studio bar (12 October 2026)
 

@@ -56,6 +56,10 @@ test('a ball rolled into a giant pumpkin does not pass through it', () => {
   for (const h of w.holes) {
    const mine = solid.filter(p => p.kind === 'pumpkin').map(p => ({...p, ...h.toLocal(p)}))
     .filter(p => p.reach > 1 && p.z > 30 && p.z < h.length && Math.abs(p.x) < 200)
+    // A roll that starts in a pond or a bunker never gets going, pumpkin or no
+    // pumpkin, and the control below would blame the course for it. Two on
+    // hole 7 began in water once the seeded draws moved (GENERATOR_VERSION 35).
+    .filter(p => !['water', 'sand'].includes(h.surface(p.x, p.z - p.reach - 2)))
     .sort((a, b) => b.reach - a.reach).slice(0, 3);
    for (const p of mine) {
     const end = simulateShot({origin: {x: p.x, z: p.z - p.reach - 2}, aim: 0, hla: 0, vla: 0, spin: 0, spinAxis: 0, speed: 25}, h, {wind: [0, 0, 0]});

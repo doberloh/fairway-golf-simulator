@@ -1,15 +1,15 @@
 {
- "generator": 34,
+ "generator": 35,
  "biomes": {
-  "pnw": "7480366ac1531d3e",
-  "desert": "ceb4f525658a9920",
-  "mountain": "30c8429c801e41cb",
-  "links": "18b94f5b5072d582",
-  "midwest": "3a97bd2f76f1d65d",
-  "island": "ab137708a8ed57f5",
-  "redwood": "4f27b41e33595037",
-  "autumn": "3ed2355b1a894fd8",
-  "haunted": "fdff3b4411e72180"
+  "pnw": "22cc875f857013fe",
+  "desert": "7819c5e2cb9871a9",
+  "mountain": "2acc640978bde9e9",
+  "links": "754121bac247b104",
+  "midwest": "11a1e4c7c7abd4d8",
+  "island": "ffb2545d5700997d",
+  "redwood": "f798164a930816e3",
+  "autumn": "dc9a29777210dc9b",
+  "haunted": "f176dbe2b40b3ea2"
  },
  "records": {
   "pnw": "74d48fc1b5bd40de",

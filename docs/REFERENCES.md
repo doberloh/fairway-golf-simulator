@@ -481,3 +481,8 @@ What other simulators show and how they lay it out, read before the shot panel, 
 - Golf Simulator Forum, *Favorite preferred camera settings?* (Foresight) -- https://golfsimulatorforum.com/forum/foresight-sports/297076-favorite-preferred-camera-settings -- players' preference for a chase camera that keeps the tracer and then shows the ball finishing; and a complaint about waiting for a post-shot bird's-eye tracer. Anecdote, kept as such.
 - Golf Simulator Forum, *TGC cool camera idea* -- https://golfsimulatorforum.com/forum/golf-simulator-brands-and-types/the-golf-club/14650-tgc-cool-camera-idea -- a tee camera that tilts with the climb, handing to a follow camera for the landing. A feature request, not a shipped behaviour.
 - Garmin, *Viewing PlaysLike Distance* (Approach G80 manual) -- https://www8.garmin.com/manuals/webhelp/approachg80/EN-US/GUID-5076AB95-3393-49CE-9FBE-29A25DDA0B32.html -- plays-like as elevation, wind and air density folded into one distance. The idea only; no numbers taken.
+
+## The player's own bag (12 October 2026)
+
+- R&A, Rules of Golf, Rule 4 -- https://www.randa.org/rog/the-rules-of-golf/rule-4 -- 4.1b: no more than 14 clubs; taken as the bag's limit.
+- GSPro, *Open Connect API v1* -- https://gsprogolf.com/GSProConnectV1.html -- fetched 12 October 2026: the only `Player.Club` value shown is "DR"; no list of codes. The added kinds' codes follow the pattern the stock clubs already sent.

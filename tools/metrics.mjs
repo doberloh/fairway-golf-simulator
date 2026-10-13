@@ -22,7 +22,7 @@ import {GROUND_PLANTS} from '../src/species.js';
 // `fairwayWidth`, `ovalRadius`, `sightline` and the rest come from the module
 // under test, and a metric's job is only to sample and count.
 import {ovalRadius, fairwayWidth, sightline, localSurface, teePad, teeBox,
- launchCorridors, blocksLaunch, teeFans, inTeeFan,
+ launchCorridors, blocksLaunch, teeFans, inTeeFan, blocksView,
  TEE_PAD, TEE_APRON, TEE_APRON_SCALE, TEE_ROUND, TEE_EYE} from '../src/course.js';
 
 const DEG = 180 / Math.PI;
@@ -245,7 +245,7 @@ export const METRICS = {
  // Rocks are counted on the standard fixtures because `scatter.rocks` does not
  // depend on the trees setting. Trees need `--set trees=65`.
  teeclear: {
-  describe: 'trees and rocks standing in a tee shot or in the view from the tees',
+  describe: 'trees, rocks, bushes and houses standing in a tee shot or in the view from the tees',
   run(w) {
    const launch = launchCorridors(w.holes, (x, z) => w.height(x, z));
    const fans = teeFans(w.holes);
@@ -265,6 +265,24 @@ export const METRICS = {
     // never `scale`, which is neither.
     if (blocksLaunch(launch, r.x, r.z, r.y, r.top, r.reach)) {counts.rocks++; invariants.rockInATeeShot++;}
     else if (inTeeFan(fans, r.x, r.z, r.reach)) invariants.rockInTheTeeView++;
+   }
+   // BUSHES AND HOUSES IN THE VIEW (12 October 2026). Neither can be hit by a
+   // tee shot -- a bush is under the ball, a house is off the line -- but both
+   // stood in what the golfer sees. `blocksView` is the generator's own test:
+   // the top above the line from the eye to the target, inside a tee's forward
+   // view. A house is judged by its built height and half its footprint's
+   // diagonal, the generator by the tallest a house can be, so the generator
+   // is the stricter of the two and this must read zero.
+   counts.bushesChecked = 0; counts.housesChecked = 0;
+   invariants.bushInTheTeeView = 0; invariants.houseInTheTeeView = 0;
+   for (const t of w.trees || []) {
+    if (!GROUND_PLANTS.has(t.kind)) continue;
+    counts.bushesChecked++;
+    if (blocksView(launch, t.x, t.z, t.y + t.h, t.r)) invariants.bushInTheTeeView++;
+   }
+   for (const h of w.homes || []) {
+    counts.housesChecked++;
+    if (blocksView(launch, h.x, h.z, h.y + h.height, Math.hypot(h.width, h.depth) / 2)) invariants.houseInTheTeeView++;
    }
    for (const t of w.trees || []) {
     // Ground cover has no trunk and cannot block anything; a feature tree is
