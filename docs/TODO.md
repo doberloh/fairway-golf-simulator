@@ -75,13 +75,13 @@ same heading in `# Done`.
   fixed seed or to take relief before checking. (`monitor` had the same kind of
   flake, fixed under *The UI pass* in `# Done`.)
 
-- [ ] **The studio and the tool windows have not been swept for layout.**
+- [ ] **The floating tool windows during play have not been swept for layout.**
   `hud-reachable` covers the main menu and the play screen at nine sizes, and
-  every menu panel and tab is opened on a phone both ways up. The studio bar,
-  and the floating tool windows during play, are not checked for overlap the
-  same way. The studio bar visibly sits over the lower edge of the Saved
-  courses panel at 1920x1080; its name box cleared it in the one case looked
-  at.
+  every menu panel and tab is opened on a phone both ways up. The tool windows
+  opened from the tray during play are not checked for overlap the same way.
+  (The studio half of this entry is done: the studio bar now rides above an
+  open panel and the `studio` smoke journey checks it at five sizes -- see
+  *Shot views and the studio bar* in `# Done`.)
 
 
 - [ ] **Nobody has measured a real phone.** The layout is checked under
@@ -852,6 +852,27 @@ so several of these play differently as well as look different.
 
 
 # Done
+
+## Shot views and the studio bar (12 October 2026)
+
+From the owner's checklist, on the branch `shot-views-and-studio-bar`.
+
+- [x] **Shot views read flat, and right is right.** The height plot measures
+  from where the ball was struck, as if the ground were flat, instead of
+  clearance above the turf under each sample -- which bent a smooth flight
+  over every bump and labelled an apex different from the shot's APEX. The
+  plot's apex is now the readout's, checked against the physics over rolling
+  ground. The top-down plot drew right of the aim UP the canvas, so every
+  slice looked like a hook beside a label saying R; it now draws right down
+  (the ball runs left to right), checked by reading the drawing calls. The
+  distance label moved between the finish and the aim line, off the curve.
+- [x] **The studio bar rides above an open panel.** It sat over the bottom
+  of every panel opened in the studio. It is lifted by the panel's height,
+  folds to icons where the room above is too short (a phone on its side), and
+  no longer stacks one button per row on a phone held upright. Hiding it was
+  rejected: Regenerate has to be in reach beside the sliders. The Settings
+  panel's text says "the bar above". The `studio` smoke journey checks it at
+  1920x1080, 1366x768, 1280x720, 844x390 and 390x844.
 
 ## Release 0.6.1 (11 October)
 
@@ -2527,7 +2548,7 @@ project has ever had were taken by hand, with a probe temporarily pasted into
 
 - [x] **FIXED -- the bench lost two capabilities in the lab-mode removal, both silent.** (1) `setRangeGreen` only had the cheap slide path; `labGreenAt`'s contoured-green rebuild went with the lab. Moving a sloped green would have put the cup on flat ground with the contours left behind, and nothing would have complained. (2) `enterRange` ignored `difficulty`, `seed` and `stimp`, so `lab.green({difficulty:35})` built a flat green and reported 0% slope. Both restored; `lab.greenAt` now throws instead of no-opping when the range is not open, because a measurement that quietly did not move the green gets blamed on the physics. `tests/range.test.mjs` asserts the contoured rule directly.
 
-- [x] **Range slice 5: 2D side and top-down shot views.** A `Shot views` tool popup -- opened from the tool box, drawing nothing until it is -- with height against distance and the ground track across the aim line. New `src/shot-views.js` holds the arithmetic and the drawing; `viewShot` follows the last shot until a `View` button on a shot-list row pins one, and the next shot clears the pin. Height is clearance above the turf rather than above sea level, and offline is measured against the line you AIMED down, checked against `offlineOf` by a test that compares the two functions to each other rather than to a worked example that could share a sign error.
+- [x] **Range slice 5: 2D side and top-down shot views.** A `Shot views` tool popup -- opened from the tool box, drawing nothing until it is -- with height against distance and the ground track across the aim line. New `src/shot-views.js` holds the arithmetic and the drawing; `viewShot` follows the last shot until a `View` button on a shot-list row pins one, and the next shot clears the pin. Height was clearance above the turf rather than above sea level (reversed 12 October 2026: it is now height above the strike, as if flat -- *Shot views and the studio bar*), and offline is measured against the line you AIMED down, checked against `offlineOf` by a test that compares the two functions to each other rather than to a worked example that could share a sign error.
   - Two real bugs the tests caught before the browser did: a four-yard putt got no gridlines at all (fixed step larger than the whole shot), and a dead straight shot would have been drawn as a slice (cross-axis span near zero with no floor).
 
 - [x] **The map pans and zooms, in every mode including studio.** Wheel to zoom about the pointer, drag to pan, double-click to reset; the title shows the factor whenever the map is not showing the whole thing. `mapLayout` gained a `nav` that scales and shifts the fitted frame rather than replacing it, so zoom 1 is exactly the old map. The state lives on the canvas as `canvas.mapNav` beside `canvas.mapTransform` instead of being threaded through `drawMap` -- five call sites draw this map and an argument is how one of them ends up without it. That is also why studio, free flight and the menu backdrop needed no per-mode code.

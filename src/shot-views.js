@@ -16,18 +16,23 @@
 // would be drawing a miss that did not happen. `off` matches `offlineOf` in
 // range.js exactly -- positive is right of the aim -- so the plot and the OFFLINE
 // column in the shot list can never tell different stories.
-export function shotProfile(points, origin, aimDegrees = 0, groundAt = null) {
+export function shotProfile(points, origin, aimDegrees = 0) {
  const a = aimDegrees * Math.PI / 180, sin = Math.sin(a), cos = Math.cos(a);
+ // Height above the spot the ball was struck from, as though the ground were
+ // flat at that level -- the same reference physics.js measures `apex` from, so
+ // the plot's apex label and the APEX readout are one number. Until 12 October
+ // 2026 it was clearance above the turf under each sample, which bent the curve
+ // over every hump and hollow the ball flew across: a smooth flight read as a
+ // lumpy one, and the apex it labelled was not the apex the shot reported. Not
+ // clamped at zero: a ball that finishes below the tee is drawn below the line.
+ const base = points[0]?.y ?? 0;
  return points.map(p => {
   const dx = p.x - origin.x, dz = p.z - origin.z;
   return {
    along: dx * sin + dz * cos,
    // The golfer's right is local -x (physics.js, simulateShot).
    off: dz * sin - dx * cos,
-   // Height above the turf under the ball, not above sea level. On a range they
-   // are the same number; on a course they are not, and the one that means
-   // anything is the clearance.
-   height: Math.max(0, p.y - (groundAt ? groundAt(p.x, p.z) : 0)),
+   height: p.y - base,
    t: p.t ?? 0,
   };
  });
@@ -153,20 +158,34 @@ export function drawSideView(canvas, profile) {
 
 // The ground track, aim line down the middle. Left of the line is L and right is
 // R, which is the convention the shot list already reports offline in.
+//
+// The ball travels left to right across the plot, so the golfer's right is DOWN
+// the canvas -- a map of the shot from above, turned so the shot runs along it.
+// `frame` draws larger values higher, so the track is plotted as -off. Until 12
+// October 2026 it plotted +off and drew every slice as a hook: the number beside
+// it said R while the line bent toward the golfer's left.
+const planValue = p => -p.off;
 export function drawPlanView(canvas, profile) {
  const ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
  if (!profile.length) { ctx.clearRect(0, 0, w, h); return; }
  const b = profileBounds(profile, {symmetric: true});
  const map = frame(ctx, w, h, {...b, ticks: distanceTicks(b.alongMax), label: 'OFFLINE', zero: true});
- trace(ctx, profile, map, p => p.off, '#9fd0ff');
+ trace(ctx, profile, map, planValue, '#9fd0ff');
 
  const last = profile[profile.length - 1];
  if (Math.abs(last.off) > 0.3) {
   ctx.fillStyle = 'rgba(159,208,255,.85)';
   ctx.font = '9px ui-monospace,Menlo,monospace';
   ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  // Between the finish and the aim line, which is the one place the track never
+  // runs: it arrives at the finish from further along and nearer the line, so a
+  // label just above or below the dot sat on the incoming curve, and one on the
+  // far side ran into the distance numbers. At least 12 px off the dot.
+  const end = map.py(planValue(last)), aimY = map.py(0), toward = Math.sign(aimY - end) || -1;
   ctx.fillText(`${(Math.abs(last.off) / YARD).toFixed(1)} ${last.off >= 0 ? 'R' : 'L'}`,
-   w - 10, map.py(last.off) - 5);
+   w - 10, end + toward * Math.max(12, Math.abs(aimY - end) / 2));
+  ctx.textBaseline = 'alphabetic';
  }
- endPoint(ctx, profile, map, p => p.off);
+ endPoint(ctx, profile, map, planValue);
 }

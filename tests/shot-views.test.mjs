@@ -3,8 +3,10 @@
 // be silently wrong. A plot with the axes swapped looks like a plot.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {shotProfile, profileBounds, distanceTicks} from '../src/shot-views.js';
+import {shotProfile, profileBounds, distanceTicks, drawPlanView} from '../src/shot-views.js';
 import {offlineOf} from '../src/range.js';
+import {simulateShot} from '../src/physics.js';
+import {customizeClubs, manualLaunch} from '../src/clubs.js';
 
 const YARD = 0.9144;
 const at = (x, y, z, t = 0) => ({x, y, z, t});
@@ -42,14 +44,57 @@ test('right of the aim is positive, which is what the R/L label depends on', () 
  assert.ok(left.off < 0, 'a ball left of the aim must read negative');
 });
 
-test('height is clearance above the turf, not above sea level', () => {
- // A 20 m hill under the whole flight: the plot must not show it as 20 m of air.
+test('height is measured as if the ground were flat at the strike', () => {
+ // A hill under the middle of the flight must not dent the curve: the owner's
+ // complaint of 11 October 2026 was a height plot that followed the terrain.
  const points = [at(0, 20, 0), at(0, 45, 60), at(0, 20, 120)];
- const flat = shotProfile(points, {x: 0, z: 0}, 0, () => 20);
- assert.deepEqual(flat.map(p => Math.round(p.height)), [0, 25, 0]);
- // And never negative: a ball settled a millimetre into the turf is on it.
- const [buried] = shotProfile([at(0, 19.99, 0)], {x: 0, z: 0}, 0, () => 20);
- assert.equal(buried.height, 0, 'a ball below the sampled ground is drawn on it, not under it');
+ assert.deepEqual(shotProfile(points, {x: 0, z: 0}, 0).map(p => Math.round(p.height)), [0, 25, 0]);
+ // A ball that finishes below the tee is drawn below the line, not on it.
+ const [, , below] = shotProfile([at(0, 20, 0), at(0, 40, 60), at(0, 12, 140)], {x: 0, z: 0}, 0);
+ assert.equal(below.height, -8);
+});
+
+test('the plotted apex is the APEX the shot reports, over rolling ground', () => {
+ // Checked against the physics rather than a worked example: the old turf
+ // reference labelled a different apex from the readout on any course.
+ const ground = {height: (x, z) => 4 * Math.sin(z / 9) + 2 * Math.cos(x / 5),
+  surface: () => 'fairway', pin: {x: 9e9, z: 9e9}, trees: [], homes: [],
+  bounds: {x: 1e6, minZ: -1e6, maxZ: 1e6}};
+ const clubs = customizeClubs();
+ for (const club of ['driver', 'iron7', 'wedge']) {
+  const shot = {...manualLaunch(clubs[club], 1, 1), origin: {x: 0, z: 0}, aim: 0};
+  const r = simulateShot(shot, ground, {});
+  const top = Math.max(...shotProfile(r.points, shot.origin, 0).map(p => p.height));
+  // The profile sees every fourth step, so it can fall a hair short of the
+  // physics' own running maximum, never past it.
+  assert.ok(top <= r.apex + 1e-9 && r.apex - top < 0.1,
+   `${club}: plot apex ${top.toFixed(2)} m, readout ${r.apex.toFixed(2)} m`);
+ }
+});
+
+test('the plan view draws a ball that finished right BELOW the aim line', () => {
+ // The ball runs left to right across the plot, so the golfer's right is down
+ // the canvas. Until 12 October 2026 it was drawn up, and every slice looked
+ // like a hook beside a label saying R.
+ const calls = [];
+ const ctx = new Proxy({}, {
+  get: (_, k) => (...a) => calls.push([k, ...a]),
+  set: () => true,
+ });
+ const canvas = {width: 300, height: 120, getContext: () => ctx};
+ const ends = {};
+ for (const [name, x] of [['right', -15], ['left', 15]]) {
+  calls.length = 0;
+  drawPlanView(canvas, shotProfile([at(0, 0, 0), at(x / 2, 0, 80), at(x, 0, 160)], {x: 0, z: 0}, 0));
+  // The aim line is the first horizontal line drawn across the full width;
+  // the finish is the white dot (`arc`).
+  const aim = calls.findIndex(c => c[0] === 'lineTo' && c[1] === canvas.width - 8);
+  const aimY = calls[aim][2];
+  const dot = calls.find(c => c[0] === 'arc');
+  ends[name] = dot[2] - aimY;
+ }
+ assert.ok(ends.right > 0, `a ball right of the aim plotted ${ends.right.toFixed(1)} px from the line (want below, +)`);
+ assert.ok(ends.left < 0, `a ball left of the aim plotted ${ends.left.toFixed(1)} px from the line (want above, -)`);
 });
 
 test('a dead straight shot is not drawn as a slice', () => {
