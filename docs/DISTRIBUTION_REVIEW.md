@@ -965,3 +965,12 @@ owner, about to play games on the same machine, asked for light testing for
 the release. So the release was checked by `npm test` (718 of 718), a build,
 a hand check in the browser at laptop and phone sizes, and a hand check of the
 bridge against a pretend device. TODO keeps the smoke run open.
+
+The website was redeployed after the release (preview, then live, at the
+owner's word): `/play/` serves this release's `Fairway.html` byte for byte
+(sha256 `56ecf161…`, checked on the live URL), the page states generator 35
+and schema 9 (the tag the site's build writes its sample course code from),
+and its four Download buttons resolve to the v0.7 zips.
+The packaged Windows server was also run from its unzipped download before
+publishing: it served the page and passed 4I, GW, 3H, LW and DR to a pretend
+device without dropping the browser.
