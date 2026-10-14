@@ -7558,10 +7558,37 @@ clop against a bank, a sandy wash), all built from a handful of filtered-noise
 puffs and bubbles per wave -- the same family as round 4's pond, which is what
 the owner heard in them.
 
+### Round 7: rivers and creeks signed off, ponds as lapping bubbles (13 October 2026)
+
+**Signed off**: the mountain stream for rivers (pitch 0.61, brightness 1.65,
+texture 0.15) and the babbling creek for creeks (pitch 1.23, brightness 0.4,
+body 0.55, texture 0.15, level 0.65) -- the owner's sliders, now each recipe's
+`base`; `WATER_FOR` maps a kind of water to its sound. Discarded: the slow
+river and the trickle. **No frogs** at ponds (the owner); the frog layer is
+removed.
+
+**Ponds as lapping bubbles.** The owner's diagnosis of round 6's ponds: they
+needed "lapping sounds using the bubbles from the rivers and creeks instead of
+the more white noise ... I think that is what we are missing." So the four new
+options are made only of bubbles (and, on the pebble shore, pebble clicks), no
+noise at all. All PLACED:
+
+| Option | One wave |
+|---|---|
+| A. A bubbly lap | Every 1.8-3.6 s, 120-260 bubbles (radius median 3 mm, about 1.1 kHz) spread over 0.45-0.8 s, quick to build and slower to die, then 20-50 small high bubbles over 0.4 s as the water drains back |
+| B. A slap and a gurgle | Every 0.9-1.8 s, 30-70 bubbles in 80 ms (median 2.2 mm), then two to four big gloops (5-9 mm, 360-650 Hz), then a trickle of small ones |
+| C. A breathing shore | A continuous bubbling, 40 a second at rest, swelling to about 560 a second at each wave's crest (a smooth bump every 2-3.2 s, each its own height): a creek slowed down and breathing |
+| D. A pebble shore, in bubbles | Every 0.8-1.7 s, 40-90 bubbles as the wavelet lands, then 8-25 pebble clicks (2-5 kHz) as it runs back, and a fizz |
+
+Wind makes every wave bigger (0.5 + wind/16) and quicker (period x 1.2 -
+wind/40), and sizes ride a slow set of about 25 s. Measured offline over 30 s
+at 20 m in 8 mph of wind, all four average -54 to -56 dB, today's pond -56,
+the creeks -42 to -47. Each costs about 1-2 ms of main thread per second of
+sound; the creeks 9-13 ms.
+
 ### Open, for the owner
 
-The water (round 6): one pond-and-lake option and one river-and-creek option,
-frogs or not. Everything else is decided (round 4). Decided along the way: the
+The pond-and-lake water (round 7). Everything else is decided (round 4). Decided along the way: the
 driver (take C, main ring near 5.4 kHz), no club sounds under a launch
 monitor, no crowd, no ball rolling, no CC0 recordings, one material for every
 house.
