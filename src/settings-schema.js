@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=9;
+export const SCHEMA_VERSION=10;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -328,9 +328,14 @@ const MIGRATIONS={
  // had none of them, so it keeps none rather than taking the defaults; its
  // greens still change shape (GENERATOR_VERSION 33), which the player is told.
  8:s=>({...s,raisedGreens:0,sunkenGreens:0,falseFronts:0}),
+ // 9 -> 10: the ball-flight profile (speed, launch, spin and axis biases, with
+ // its high/low/draw/fade presets) is gone. The Swing Meter replaced it on 14
+ // October 2026 with a curve, a height and a spin dial chosen shot by shot
+ // (swing-meter.js); a saved bias has nothing left to apply to.
+ 9:s=>{const {flightProfile,...rest}=s;return rest;},
 };
 
-// Play-scope keys (turf, flight profile, club yardages, art style) ride along in
+// Play-scope keys (turf, club yardages, art style) ride along in
 // the same object and are validated by their own modules, so they are preserved
 // rather than dropped.
 
@@ -345,7 +350,7 @@ const MIGRATIONS={
 // `style` is deliberately NOT here. Endless forces cartoon and the range has its
 // own look; an art direction the mode chose is not something to carry across, so
 // the two callers that do preserve it say so themselves.
-export const PLAY_KEYS=['clubYardages','flightProfile','turf'];
+export const PLAY_KEYS=['clubYardages','turf'];
 export const playScope=s=>Object.fromEntries(PLAY_KEYS.filter(k=>s?.[k]!==undefined).map(k=>[k,s[k]]));
 export function migrateSettings(settings={},from=1){
  let s={...settings};

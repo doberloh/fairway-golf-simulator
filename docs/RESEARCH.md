@@ -7692,3 +7692,117 @@ drawn exactly to size from anywhere, as before 13 October. The growth numbers
 above are unchanged and apply only with the switch on; the range's distance
 boards are not under it. No record saved before the switch has the key, so
 every player starts with it off.
+
+## The Swing Meter (14 October 2026)
+
+The owner asked for keyboard play to become a game's three-tap meter (Hot
+Shots Golf, PGA 2K): tap to start, tap to set the distance, tap at the strike
+line for accuracy. It replaced the power slider, the Shot shape sliders and the
+ball-flight profile (`src/swing-meter.js`; PROJECT_HANDOFF *The Swing Meter
+replaced the shot-shape sliders*). The spec was agreed over four rounds with the
+owner and lives as a local report.
+
+**Nothing on the meter is published; every number below is PLACED** -- chosen to
+feel right and to be tuned by playing. The console games publish no timings and
+none were taken from them; the three-tap structure is all that was borrowed.
+
+| What | Value | Note |
+| --- | --- | --- |
+| Marker, start to full (`rise`) | Easy 1.5 s, Normal 1.15 s, Hard 0.9 s | x0.9 driver, x0.92 3 wood, x1.1 wedges, x1.15 putter |
+| Strike zone half-width | Easy 0.10, Normal 0.065, Hard 0.04 bar lengths | the bar from start to full is 1 |
+| Perfect band half-width | Easy 0.03, Normal 0.015, Hard 0.008 | |
+| Overswing | 0.12 bar lengths, worth +5% carry | the owner's 5% (Q1) |
+| Zone narrowing | rough x0.8, sand x0.7, each spin step x0.85, Flop x0.8, overswing down to x0.5 | under 40% of the bar x1.5 |
+| A miss at the zone's edge | 1.25 deg start line, 5 deg spin axis | growing linearly to 4x outside the zone; a swing that runs out is -7 deg, -25 deg axis at 75% speed |
+| Draw / Fade | -8 / +8 deg spin axis | start line turned the other way by the bend, found by flying it once |
+| Low / High | -4 / +4 deg launch | |
+| Bump & run / Flop (wedges within 60 yd) | 55% of launch on 50% spin / +10 deg launch | the 55% puts a 7-iron-like chip at Trackman's 6-14 deg chip launches (TODO *a lower launch for keyboard chips*) |
+| Spin dial | -1: x0.75; +1, +2, +3: x1.1, x1.2, x1.3 | |
+| Putting bar | a quarter, half or all of the putter's roll | added in building, not in the spec |
+
+**Early goes right, late goes left, for every golfer** (the owner's rule, third
+round): the meter has no handedness.
+
+**The bar is in yards, and it is honest to within a yard and a half.** Half the
+bar is half the club's full carry, solved by bisection against the ball model
+on level ground in still air (`speedForCarry`, 18 halvings, cached per quarter
+yard). Checked by test for the driver, 7 iron and pitching wedge: a full clean
+swing carries the bag yardage, half the bar half of it, both within 1.5 yd. The
+solve flies at 1/120 s steps for speed; the shot itself at the default 1/240,
+which is where the yard and a half comes from. In play: a perfect full driver
+from rough (90% ball speed) carried 224 yd against a 250 yd bag on a 57 F
+night; a perfect high fade with a 125 yd 9 iron carried 118 into a hole that
+played eight yards uphill.
+
+### With no spin added, nothing spins back
+
+The owner's rule (second and third rounds): a ball must not zip back unless the
+golfer added spin, and there is no named "spin back" shot. Swept 14 October
+2026 with every club kind in `CLUB_KINDS` at its stock carry, every height (and
+Bump & run and Flop for the wedges), the spin dial at -1 to +3, 30%, 50%, 75%,
+100% and full overswing of the bar, all four firmness presets, landing on level
+ground and into 2% rises and falls.
+
+- **At the club's own spin (dial 0), before any adjustment:** 7 come-backs, all
+  on Soft into a 2% rise, none over half a yard -- the lob wedge at Normal
+  height (0.42-0.50 yd at full swing and overswing), the lob wedge High (0.10),
+  and the pitching wedge at overswing (0.11). Fixed by carrying 85% of the lob
+  wedge's stock spin and 95% of the pitching wedge's on the meter (`KIND_SPIN`),
+  and 85% at High and 80% at Flop (`HEIGHT_SPIN`). **After: zero.**
+- **With spin added:** 453 of the combinations come back, up to about 12 yd (a
+  sand wedge at +3, 11,250 rpm, overswung onto a soft green into a 2% rise).
+  That is the golfer's choice and is left to the physics.
+- **Short chips (10-30% of the bar)** with the sand wedge, pitching wedge and 9
+  iron, level and 2%, Soft and Normal: none come back.
+- **Steeper slopes are not the rule's business.** Into an 8% rise the same
+  sweep found pitching and gap wedges finishing up to 84 yd behind the landing
+  -- rolling down the hill by gravity, with or without spin. A chip in play
+  that carried 14 yd and finished 12 was the green's slope, not spin.
+
+`tests/swing-meter.test.mjs` re-sweeps the corner where a come-back was ever
+found (8 iron to lob wedge, every height, full swing and overswing, Soft, level
+and a 2% rise) in under a second; the full sweep took a minute and is not a
+test.
+
+### The lie costs ball speed, for every golfer
+
+The keyboard has always taken ball speed off for the lie: semi-rough 96%,
+rough 90%, sand 72%. These were placed when the keyboard controls were written
+and are not from a source. On 14 October 2026 the owner extended the rule to
+launch-monitor shots, softened sand to **80%** for everyone, and asked for a
+switch to turn the monitor half off.
+
+**How it is applied to a monitor shot:** the measured ball speed is multiplied
+by the lie's share; launch, direction, spin and axis are untouched. Chosen
+because it is literally the Swing Meter's calculation (so a mixed group plays
+one rule), because carry follows ball speed closely (about a yard per mph for
+an iron, so 10% off speed is close to 10% off carry), and because it changes
+one measured number rather than several. The measured number is shown and
+recorded as sent, with the penalty beside it in red.
+
+Compared and not followed:
+
+- **GSPro**, as its users describe it in a Golf Simulator Forum thread (no
+  official documentation found): a penalty that depends on vertical launch
+  angle, low shots losing far more -- figures quoted there of about 60% for a 3
+  wood and 10% for a pitching wedge from rough, semi-rough about 5%, rough
+  about 8% speed and 15% spin; a 6 iron from 170 yd in rough 10-15%; a
+  greenside wedge mainly a spin penalty. Unattributed in the thread and not
+  checkable. Rejected: it would make monitor shots follow a different rule from
+  the Swing Meter, and it has no source to check against. GSPro also has an
+  off switch, which is where the owner's switch came from.
+- **The Golf Club 2019**, from a forum-compiled table: about 7% distance lost
+  from light rough, rough and fairway sand, 13% from heavy rough. Recorded as a
+  comparison: our rough (10%) sits between; our sand (20%) is harsher. The
+  owner chose 80% sand knowing TGC's figure.
+- **Cutting spin as well (a "flyer").** A single-golfer GolfWRX Trackman test
+  saw a 7 iron leave a thick lie at about 1,300 rpm, carrying 87 yd off 87 mph
+  of club speed, while a down-grain lie gave 115 mph of ball speed against 121
+  from the fairway. Rejected for now: a flyer can carry *further* than the
+  fairway shot, which works against a penalty, and it would be a second hidden
+  change to a measured number.
+- **Taking the loss off the carry instead of the ball speed.** Rejected: the
+  game would have to solve a speed for that carry anyway, and speed is the
+  number the rule is stated in and the number shown in red.
+
+Sources in REFERENCES.md *The Swing Meter*.

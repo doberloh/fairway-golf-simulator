@@ -79,7 +79,7 @@ test('incoming rolling balls bounce off trunks and can be struck away afterward'
  // Worth flagging honestly: this is the low-speed regime, where the model has
  // no validation data at all, so 1.46 is defensible rather than confirmed.
  assert(next.total>1.2,`stuck at the trunk: ${next.total.toFixed(2)} m`);});
-test('editable carry calibrates launch speed; flight profiles change height and curve',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);const normal=simulateShot({...shot,...manualLaunch(clubs.driver,1,1)},c),high=simulateShot({...shot,...manualLaunch(clubs.driver,1,1,{launch:6,axis:20})},c);assert(high.apex>normal.apex);assert(high.end.x<0,'a +20 axis profile fades to the right of the golfer, local -x');assert.throws(()=>customizeClubs({driver:-2}));});
+test('editable carry calibrates launch speed',()=>{const clubs=customizeClubs({driver:210,iron7:140,putter:20}),c={...flat,surface:()=> 'fairway'};for(const id of ['driver','iron7']){const r=simulateShot({...shot,...manualLaunch(clubs[id],1,1)},c);assert(Math.abs(r.carry/YARD-clubs[id].carry)<.2);}const putt=simulateShot({...shot,...manualLaunch(clubs.putter,1,1)},flat);assert(Math.abs(putt.total/YARD-20)<.2);assert.throws(()=>customizeClubs({driver:-2}));});
 test('elevation changes playing surfaces substantially and widths vary procedurally',()=>{
  // Raised and punchbowl greens lift or drop the end of the corridor on their own,
  // whatever the elevation; this is about the elevation setting, so they are off.
@@ -172,43 +172,6 @@ test('the back tee is never below the one in front, and a flat course keeps flat
 
 test('decimal score totals remain exact for ties and exports',()=>{assert.equal(sumScores([2.11,2.22,3.1]),7.43);assert.equal(sumScores([1.11,1.11,1.11]),3.33);});
 
-test('spin has a per-shot adjustment, in rpm, and it is a delta', () => {
- // Launch angle and spin axis each had a per-shot adjustment and spin had none,
- // so a shot could be flighted down or shaped but never deliberately spun.
- //
- // The UNIT is the point. The flight profile's spin control is a percentage
- // because it scales every club at once and stock spin runs 2700 rpm on a driver
- // to 9000 on a wedge -- one absolute number cannot serve both. A single shot is
- // one known club, so there the honest unit is the one a launch monitor reports.
- const clubs = customizeClubs();
- const stock = manualLaunch(clubs.iron7, 1, 1).spin;
- assert.equal(manualLaunch(clubs.iron7, 1, 1, {}, 0, 0, 0).spin, stock,
-  'a zero adjustment must not change the shot');
- // A delta, not a multiplier or an absolute: +1000 rpm means +1000 rpm.
- for (const d of [-2000, -500, 750, 2500])
-  assert.ok(Math.abs(manualLaunch(clubs.iron7, 1, 1, {}, 0, 0, d).spin - (stock + d)) < 1e-9,
-   `${d} rpm did not move the shot by ${d} rpm`);
- // Being a delta is what lets it survive a change of club, which an absolute
- // could not: the same adjustment means the same thing on every club.
- for (const id of ['driver', 'wood', 'iron5', 'iron9', 'wedge']) {
-  const base = manualLaunch(clubs[id], 1, 1).spin;
-  assert.ok(Math.abs(manualLaunch(clubs[id], 1, 1, {}, 0, 0, 500).spin - (base + 500)) < 1e-9,
-   `${id} did not take the adjustment`);
- }
- // Spin cannot go negative. A driver spins 2700, so the bottom of the slider
- // would otherwise drive it through zero and reverse the ball's rotation.
- assert.ok(manualLaunch(clubs.driver, 1, 1, {}, 0, 0, -2500).spin >= 0, 'spin went negative');
- assert.ok(manualLaunch(clubs.driver, 1, 1, {}, 0, 0, -9999).spin === 0, 'spin went negative');
- // And a putter still has none of it.
- assert.equal(manualLaunch(clubs.putter, 1, 1, {}, 0, 0, 2500).spin, 0);
-});
-
-test('the profile scales spin and the per-shot adjustment is added after', () => {
- // Two different jobs: the profile says what kind of player you are across the
- // bag, the adjustment says what you are doing with this one ball.
- const clubs = customizeClubs();
- const half = manualLaunch(clubs.iron7, 1, 1, {spin: 50}).spin;
- assert.ok(Math.abs(half - clubs.iron7.spin * .5) < 1e-9, 'the profile is not a percentage any more');
- assert.ok(Math.abs(manualLaunch(clubs.iron7, 1, 1, {spin: 50}, 0, 0, 400).spin - (half + 400)) < 1e-9,
-  'the per-shot delta should be added to the scaled spin, not scaled by it');
-});
+// The per-shot spin adjustment and the ball-flight profile were removed on 14
+// October 2026; the Swing Meter's spin dial replaced both, and
+// tests/swing-meter.test.mjs covers it.

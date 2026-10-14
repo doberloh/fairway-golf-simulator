@@ -18,6 +18,34 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+## The Swing Meter, XP and levels (14 October 2026)
+
+The owner's journey on the branch `swing-meter`: keyboard, mouse, touch and
+controller play becomes a game's three-tap meter, then mixed monitor and meter
+groups, then XP, levels and rewards. The agreed spec and the phase checklist are
+local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
+`docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
+`# Done`.
+
+- [ ] **Phase 2: the target marker.** A mark on the bar showing the swing that
+  lands the ball in the aim circle, found by flying the ball; wind included on
+  Easy only, slope and lie always; out of reach in red; changing club moves the
+  circle unless it was placed by hand.
+- [ ] **Phase 3: mixed groups.** Each golfer plays with the Swing Meter or a
+  launch monitor (hidden until a bridge has connected); the monitor window
+  steps aside and refuses shots on a Swing Meter golfer's turn; handedness in
+  the profile, sent to the device on a monitor golfer's turn; a bridge that
+  drops offers the Swing Meter.
+- [ ] **Phase 4: XP and levels**, one system for monitor and meter golfers.
+- [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
+  finished, and as the profile picture) and titles.**
+- [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
+- [ ] **Phase 7: course of the week, achievements, challenges.**
+- [ ] **Run the smoke journeys on the Swing Meter**, with the owner's go-ahead:
+  `tools/smoke.mjs` was updated for it (three Space taps, the Swing button and
+  two taps on a phone, S/W/X, Escape cancelling, the monitor window hiding the
+  meter) but not run.
+
 ## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
 
 - [ ] **Run the smoke journeys on this layout.** A software-renderer run
@@ -69,13 +97,6 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 
 
-
-- [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
-  The keyboard keeps a club's full-swing launch at any power, so there is no
-  keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
-  1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
-  for the 7 iron to the pitching wedge would add one. A feel decision as much as
-  a physics one. Report plan item 3.
 
 
 What `tools/smoke.mjs` turned up on its first full runs, and what building it
@@ -787,8 +808,6 @@ so several of these play differently as well as look different.
 
 - [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
 
-- [ ] **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
-
 - [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
 
 - [ ] **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
@@ -865,6 +884,42 @@ so several of these play differently as well as look different.
 Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
+
+## The Swing Meter, XP and levels (14 October 2026)
+
+- [x] **Phase 1: the Swing Meter** (`src/swing-meter.js`). Three taps -- start,
+  distance, strike -- judged on each input's own timestamp, never on a frame.
+  The bar is in yards of carry for the club in hand, solved against the ball
+  model; overswing worth up to 5%; Easy, Normal and Hard per golfer, kept in
+  the profile; early goes right and late goes left for everyone. Curve (S),
+  height (W) and a spin dial (X) replace the Shot shape sliders, and with no
+  spin added a ball never spins back (swept; the pitching and lob wedges and the
+  High and Flop heights carry a little less spin to hold it). Putts are two
+  taps (three on Hard) on a bar that zooms to the putt, aimed at a length by
+  the circle, with the read line showing the break for that length -- all of it
+  on Easy and Normal, the first third on Hard, and the panel saying why. The
+  lie is shown before every shot for every way of playing, and costs ball
+  speed by one table for everyone: semi-rough 96%, rough 90%, sand 80% (was
+  72%). A launch monitor's measured ball speed now takes the same share, shown
+  as sent with the penalty beside it in red, unless the round switches it off
+  in Format & tees. The power slider and the ball-flight profile are gone
+  (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
+  simulator never invents ball data* was rewritten for the lie rule.
+  RESEARCH.md *The Swing Meter*.
+- [x] Closed by Phase 1, from *Found by driving the built game*:
+  **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
+    The keyboard keeps a club's full-swing launch at any power, so there is no
+    keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
+    1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
+    for the 7 iron to the pitching wedge would add one. A feel decision as much as
+    a physics one. Report plan item 3.
+  **Resolved:** Bump & run, the Swing Meter's Low height near the green with a
+  wedge, leaves at 55% of the club's launch on half its spin.
+- [x] Closed by Phase 1, from *Still open from the putting and cup update*:
+  **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+  **Superseded:** there is no power to start at. The Swing Meter's bar is in
+  yards, so half the bar is half the carry, and the golfer stops it where the
+  chip needs; Phase 2's target marker will show where.
 
 ## Release 0.7 (14 October)
 

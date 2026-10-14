@@ -162,7 +162,11 @@ extrapolation, which is what `ROLL_SPEED_GAIN` exists to correct.
   means: positive starts the ball right and curves it right (a fade), negative
   left (a draw). Until 5 October the game flew both mirrored.
 - **Contact duration.** See above — structurally cannot matter.
-- **Dispersion.** Not modelled. The simulator never invents ball data.
+- **Dispersion.** Not modelled. The simulator never invents ball data. The
+  Swing Meter's misses are the golfer's own timing, and the lie's ball-speed
+  penalty on a monitor shot is a stated round rule shown beside the measured
+  number, not a model of the strike (PROJECT_HANDOFF *The simulator never
+  invents ball data*).
 
 ---
 
@@ -216,7 +220,29 @@ proportion to power for chips (the same spin per mph as the full shot), the squa
 root of power for pitches and full swings, blended between 30% and 70% power.
 The square root alone gave a 10% wedge 337 rpm per mph and spun chips back behind
 their marks. Anchored on Trackman: chips 1,500-3,000 rpm, a 50 yard wedge about
-6,500.
+6,500. Since 14 October 2026 "power" here is the Swing Meter's ball speed as a
+share of the club's full-swing speed.
+
+## The Swing Meter — `src/swing-meter.js`
+
+How a keyboard, mouse, touch or controller golfer strikes the ball (since 14
+October 2026; it replaced the power slider, the per-shot shape sliders and the
+ball-flight profile). It decides only the five launch numbers; nothing after
+impact. Every number here is **placed**, chosen by feel, and RESEARCH.md *The
+Swing Meter* says so.
+
+| Knob | What it changes |
+|---|---|
+| `DIFFICULTIES` | per golfer: how fast the marker runs (`rise`, seconds from start to full), the strike zone and perfect band half-widths, and how much of a putt's read is drawn (`putRead`) |
+| `OVERSWING`, `OVERSWING_CARRY` | how far past full the bar runs, and what that is worth (+5% carry, the only way past the bag) |
+| `strikeZone` | what narrows the zone: rough (×0.8), sand (×0.7), each step of added spin (×0.85), Flop (×0.8), overswing (down to half); under 40% of the bar it widens (×1.5) |
+| `strikeEffect` | what a miss does: at the zone's edge 1.25° off line and 5° of spin axis, growing to four times that. **Early is right, late is left**, for everyone |
+| `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |
+| `shapedLaunch` heights | Low −4°, High +4° launch; near the green a wedge's Bump & run is 55% of its launch on half its spin, Flop +10° |
+| `SPIN_SCALE` | the spin dial: −1 is 75% of the club's spin, +1 to +3 add a tenth each |
+| `HEIGHT_SPIN`, `KIND_SPIN` | **the guard that a ball with no spin added never comes back**: High and Flop carry less of the club's spin, and the pitching and lob wedges carry 95% and 85% on the meter. Found by sweeping, not chosen; `tests/swing-meter.test.mjs` sweeps the corner where a come-back was ever found. Raising any of these can break that rule |
+| `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 80% (72% until 14 October 2026). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
+| `PUTT_RANGES` | how far the putting bar zooms: a quarter, half or all of the putter's roll |
 
 **Sand takes the spin.** A ball landing in a bunker keeps no spin past that
 contact (`physics.js`, after the bounce), so in sand only gravity moves it back.

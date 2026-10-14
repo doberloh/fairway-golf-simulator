@@ -29,6 +29,9 @@ const sections = [
  ['.weather', 'Weather', 'last'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
+ // The Swing Meter's bar (14 October 2026), shown while a Swing Meter shot is
+ // waiting to be hit.
+ ['.swing-meter', 'Swing Meter'],
  // The shot panel ('.shot-panel', "Shot data") was a panel here from 10 to 13
  // October 2026, the only one placed per way of playing ('per-mode', which
  // nothing uses now). It became a line inside the window you play from

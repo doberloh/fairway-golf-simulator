@@ -120,7 +120,11 @@ export function normaliseProfile(d) {
  // needs no migration. One that no longer validates is dropped, not the profile.
  let bag = null;
  if (Array.isArray(d.bag)) try { bag = validateBag(d.bag); } catch {}
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {})};
+ // The Swing Meter's difficulty (14 October 2026), the golfer's own so a group
+ // can play on different settings. Absent reads as Normal, so like the bag it
+ // needs no migration; anything unrecognised is dropped.
+ const meter = METER_DIFFICULTIES.includes(d.meter?.difficulty) ? {difficulty: d.meter.difficulty} : null;
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {})};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile
@@ -184,6 +188,19 @@ export function renameProfile(store, id, name) {
  p.name = n; storeProfiles(store); return p;
 }
 // A golfer's bag, checked before it is kept. Null puts them back on the stock bag.
+// The Swing Meter difficulties a profile may hold; swing-meter.js has what each
+// one does. Listed here rather than imported so the profile store does not load
+// the ball model.
+export const METER_DIFFICULTIES = ['easy', 'normal', 'hard'];
+export const meterDifficulty = p => p?.meter?.difficulty || 'normal';
+export function setProfileMeter(store, id, difficulty) {
+ if (!METER_DIFFICULTIES.includes(difficulty)) throw Error('Choose Easy, Normal or Hard.');
+ const p = findProfile(store, id);
+ if (!p) return null;
+ p.meter = {...(p.meter || {}), difficulty};
+ storeProfiles(store);
+ return p;
+}
 export function setProfileBag(store, id, bag) {
  const p = findProfile(store, id);
  if (!p) throw Error('That player is no longer on this device.');

@@ -2004,14 +2004,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // 21 mm), which is what puts the ball ON the line instead of hanging off it,
  // and still stands clear of the surface. For reference the putting rings sit
  // at 25 mm and the lie scatter at 35 mm, so nothing here z-fights.
- setAimPath(points,distance){
+ //
+ // `lift` is 100 mm for a full shot drawn curved (the Swing Meter's draw and
+ // fade, main.js `shapeTrack`), for the same reason the straight aim line is.
+ setAimPath(points,distance,lift=.015){
   if(points.length<2)return;
   // Same line, so it writes the same way: two writers replacing and rewriting the
   // one geometry would undo each other's buffer every time the club changed.
   const flat=this.aimScratch(points.length);
   points.forEach((q,i)=>{
    const v=this.course.toWorld(q),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.015;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+lift;flat[at+2]=v.z;
   });
   this.writeLine(this.aimLine,flat,points.length);
   const last=(points.length-1)*3;

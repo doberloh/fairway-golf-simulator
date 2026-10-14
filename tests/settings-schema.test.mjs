@@ -211,13 +211,11 @@ test('play-scope keys are not schema fields, which is exactly why they get lost'
 });
 
 test('play scope carries the golfer across a settings object rebuilt from scratch',()=>{
- const mine={...DEFAULT_COURSE,seed:'MINE',clubYardages:{driver:225},
-  flightProfile:{speed:104,spin:96,launch:1,axis:0},turf:{stimp:12}};
+ const mine={...DEFAULT_COURSE,seed:'MINE',clubYardages:{driver:225},turf:{stimp:12}};
  // What an endless hole does: grow fresh ground, keep the golfer.
  const grown={...DEFAULT_COURSE,seed:'GROWN',...playScope(mine)};
  assert.equal(grown.seed,'GROWN','the ground is the new hole’s');
  assert.equal(grown.clubYardages.driver,225,'the bag is the player’s');
- assert.equal(grown.flightProfile.speed,104);
  assert.equal(grown.turf.stimp,12);
 });
 
@@ -236,4 +234,19 @@ test('migration keeps the golfer too',()=>{
  const out=migrateSettings({seed:'OLD',clubYardages:{driver:225},turf:{stimp:9}},1);
  assert.equal(out.clubYardages.driver,225);
  assert.equal(out.turf.stimp,9);
+});
+
+// The Swing Meter replaced the ball-flight profile (14 October 2026). A save
+// from schema 9 still carries one; it loads, without it, and everything else
+// the golfer had comes through.
+test('a schema 9 save loads without its ball-flight profile',()=>{
+ const old={...DEFAULT_COURSE,seed:'OLD',clubYardages:{driver:240},turf:{stimp:11},
+  flightProfile:{speed:104,spin:96,launch:1,axis:-15}};
+ const now=migrateSettings(old,9);
+ assert.equal(now.flightProfile,undefined,'the profile is dropped');
+ assert.equal(now.seed,'OLD');
+ assert.equal(now.clubYardages.driver,240);
+ assert.equal(now.turf.stimp,11);
+ assert.doesNotThrow(()=>validateSettings(now));
+ assert.ok(!PLAY_KEYS.includes('flightProfile'),'nothing carries a flight profile across any more');
 });

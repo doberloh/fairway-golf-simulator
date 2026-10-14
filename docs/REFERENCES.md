@@ -547,3 +547,15 @@ What sets how far a spun ball comes back on a green, read for RESEARCH.md *Spin-
   - T. A. Jenssen, W. B. Preston, green frog advertisement call, Copeia 1983 -- https://www.faculty.biol.vt.edu/jenssen/pdfMS/1983_coepia_rana_clamitans.pdf -- via search: energy at 200-500 and 1,300-1,500 Hz in large males, 500-1,000 Hz in small; dominant frequency falls with body size.
   - USGS acoustic monitoring data summary (spring peeper) -- https://data.usgs.gov/datacatalog/data/USGS:5b3e4054e4b060350a0ef7e3 -- via search: most of a call's energy at 2,900-3,200 Hz. Popular pages giving 1.8 kHz, 10 kHz or 180-220 Hz were set aside as conflicting with it; no measured bullfrog figure was found.
   - Filtered-noise water synthesis (via search: an MIT 21M.380 quiz solution; aatishb.com's ocean sketch) -- the standard way to make waves; it is what rounds 4 and 5 used, and what round 6 moved away from.
+
+## The Swing Meter (14 October 2026)
+
+Read for RESEARCH.md *The Swing Meter*. The meter's own timings are placed; the
+console games (Hot Shots Golf, PGA 2K) lent only the three-tap structure, and no
+numbers were taken from them.
+
+- Golf Simulator Forum, "rough, sand, heavy rough shot percentages" (GSPro) -- https://golfsimulatorforum.com/forum/golf-simulator-brands-and-types/gspro/412402-rough-sand-heavy-rough-shot-percentages -- through a search summary: a launch-angle-dependent penalty (3 wood about 60%, pitching wedge about 10% from rough), semi-rough about 5%, rough about 8% speed and 15% spin; unattributed in the thread. Compared, not followed.
+- Golf Simulator Forum, "TGC penalty system explained" (The Golf Club 2019) -- https://golfsimulatorforum.com/forum/golf-simulator-brands-and-types/the-golf-club/19924-tgc-penalty-system-explained -- through a search summary: about 7% distance from light rough, rough and fairway sand, 13% from heavy rough; community-compiled. Compared, not followed.
+- GolfWRX, "Hitting shots from the rough at TPC Scottsdale" -- https://www.golfwrx.com/277599/hitting-shots-from-the-rough-at-tpc-scottsdale/ -- through a search summary: one golfer on Trackman, a thick lie leaving a 7 iron at about 1,300 rpm and 87 yd carry from 87 mph of club speed; a down-grain lie 115 mph of ball speed against 121 from the fairway. The basis for rejecting a flyer spin cut for now.
+- MyGolfSpy, "What is a flier lie in golf" -- https://mygolfspy.com/news-opinion/instruction/what-is-a-flier-lie-in-golf-and-how-do-you-play-it/ -- through a search summary: grass between face and ball can cut spin and send a shot further, or slow the club and come up short. Background.
+- USGA, "Rough penalty: elite player testing (Trackman and face tape)", R22-11 -- https://usga.org/content/dam/usga/pdf/Equipment/R22-11%20Qualitative%20Insights%20-%20,%20Trackman%20and%20Face%20Tape-Rough%20Penalty%20Elite%20Player%20Testing.pdf -- found, not read; about tee-shot rough rather than approach lies.

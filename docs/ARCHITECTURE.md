@@ -71,7 +71,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/physics.js` -- flight and contact, cup capture, monitor shot normalisation; `AERO`, `CONTACT`
 - `src/contact.js` -- the bounce as something that takes time; `src/cup.js` -- the analytic capture reference
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
-- `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable, manual flight profiles
+- `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable
+- `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, curve / height / spin, and the lie table every golfer plays under
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
 - `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 
@@ -178,7 +179,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
 - Everything solid is a vertical cylinder in one collision index; do not add a second routine. [EVERYTHING SOLID]
 - A house's rotation is a world angle: in a hole's frame subtract the hole's. The flagstick is solid only while it stands in the hole. [A HOUSE'S ROTATION IS A WORLD ANGLE], [THE FLAGSTICK IS SOLID]
-- The simulator never invents ball data. [The simulator never invents ball data]
+- The simulator never invents ball data; the one thing applied on top is the round's stated lie rule, shown beside the measured number. [The simulator never invents ball data]
+- With no spin added, a Swing Meter ball never spins back; the club's own spin is set below the come-back point by sweeping. [With no spin added, nothing spins back]
 
 **Shaders and drawing**
 - The ground shader is a chain of `.replace()` anchors; every link is load-bearing, and `tests/ground-shader-structure.test.mjs` checks it. Never script a shader edit whose replacement you have not printed. [THE GROUND SHADER IS A CHAIN]
@@ -203,6 +205,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Build a slider with `slider()`, never by hand. [BUILD A SLIDER]
 - One thrown error while a panel wires itself kills every handler below it. [One thrown error in a panel]
 - `main.js` DOM paths are not covered by the tests; that is what `npm run smoke` is for. [`main.js` DOM paths]
+- A Swing Meter tap is judged on its own timestamp, never on a frame; the frame loop only draws the marker. [A Swing Meter tap is judged on its own time]
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]

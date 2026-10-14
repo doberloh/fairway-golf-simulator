@@ -76,8 +76,9 @@ against every physical launch monitor.
 
 Double-click **Fairway.html**. It is the whole game in one file and needs no
 server, no network and no account. Mouse, keyboard, touch and game
-controllers all work — but the launch monitor is what Fairway is built
-around. **PLAYING.md** has every control and setting.
+controllers all work, through the **Swing Meter**: three taps to start the
+swing, set the distance and strike -- but the launch monitor is what Fairway
+is built around. **PLAYING.md** has every control and setting.
 
 ## When something does not work
 

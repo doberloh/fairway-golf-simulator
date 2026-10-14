@@ -6,7 +6,11 @@ export class Round{
  static defaultPlayer={name:'Alex',team:'A',hand:'RH'};
  // The out-of-bounds rule a new round starts with; main.js keeps it as a preference.
  static defaultOutOfBounds='stroke';
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds}={}){
+ // Whether the lie costs a launch-monitor shot ball speed, as it costs a Swing
+ // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
+ // keeps the choice as a preference, like the out-of-bounds rule.
+ static defaultMonitorLie=true;
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -17,6 +21,7 @@ export class Round{
   // Out of bounds is stroke and distance under the Rules of Golf; 'e5' adds the
   // two-stroke drop of Model Local Rule E-5 (relief.js).
   if(!['stroke','e5'].includes(outOfBounds))throw Error('Invalid out-of-bounds rule.');this.outOfBounds=outOfBounds;
+  if(typeof monitorLie!=='boolean')throw Error('Invalid lie rule.');this.monitorLie=monitorLie;
   // WHICH ROUND THIS IS, for the player's history. It rides through every save,
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.
