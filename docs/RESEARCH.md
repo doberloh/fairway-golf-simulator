@@ -7200,10 +7200,10 @@ been iterated: the listening report is `docs/reports/sounds/index.html`
   credited) is met trivially, and the single-file build grows by code, not
   audio files.
 
-**Rejected for now: CC0 recordings** (Kenney's packs, Freesound's CC0 filter).
-They stay the fallback for any one sound that synthesis cannot get right after
-the owner's notes; each would need its credit in ATTRIBUTION.md and the owner's
-go-ahead before anything is downloaded.
+**CC0 recordings were not used for round 1**, and are now offered beside the
+synthesis for comparison (round 2, below, at the owner's request): the report
+streams Freesound's previews of 41 checked CC0 recordings; nothing is
+downloaded. Any one chosen would be credited in ATTRIBUTION.md.
 
 ### What each sound is built from, and the numbers behind it
 
@@ -7211,23 +7211,27 @@ go-ahead before anything is downloaded.
 |---|---|---|
 | Driver | Damped tones at 3.35-8.3 kHz (take A, strongest 4.15 kHz, decay time-constants 12-50 ms), a 4 ms crack, the ball's tick at 1.5 kHz, a 220 Hz thump | Titanium driver strike centred near 4.5 kHz, about 120 dB peak, under 0.2 s long (Park et al. 2018). Patents on club-head sound put the head's loudest peak in 3-5 kHz and the ball's sound near 1.5 kHz. The individual modes are PLACED |
 | Fairway wood | Tones 3.9-7.4 kHz, shorter, plus a sole brush | PLACED: smaller head, higher and shorter than the driver |
-| Iron | Tones 2.6-6.8 kHz with 3-8 ms decays, a crack, then the divot: a 95 Hz thump, grass tearing (band noise 1.8 to 0.9 kHz over 110 ms), clods landing 0.2-0.6 s later | PLACED. A solid head rings far shorter than a hollow one (the hollow-head modal survey, Hocknell et al. 1998, is where the distinction is drawn) |
+| Swing whoosh | Noise darkened below 2.5 kHz through a narrow band (Q 6) whose centre climbs from 0.45x to 1x into the strike and falls to 0.55x after it, over a wide band at 0.6x; centre 150 Hz + 14 Hz per m/s of head speed (about 780 Hz at 100 mph) | PLACED. Round 1 was one wide band (Q 1.6) of white noise at 250 + 22 Hz per m/s; the owner heard it as hiss |
+| Iron | No metal ring (round 2, from the owner: an iron is a crack and the ball, not metal): a 2.5 ms crack above 2 kHz, a 7 ms band at 3.6 kHz, the ball's tones at 1.7, 2.9 and 4.3 kHz damped within 2 ms; then the divot: a 95 Hz thump, grass tearing (band noise 1.8 to 0.9 kHz over 110 ms), clods landing 0.2-0.6 s later | PLACED. Round 1's ringing head (tones 2.6-6.8 kHz, 3-8 ms) is kept only as take C, the owner's round-1 setting |
 | Chip | A brush of grass 30 ms before contact, a soft click (1.8-5 kHz), a brush after | PLACED |
 | Putter | Putter tones below 2 kHz (1.35, 1.15 or 0.9 kHz by take), ball tones at 2.5-3.7 kHz | Barrass, Roberts and Jones (2006): in a putt, the 0-2 kHz band follows the putter and where it was struck; the 2-4 kHz peaks follow the ball's compression; the "sharpest" balls had the higher peak. A putter patent measured about 1.4 kHz |
 | Turf landings | A thump whose pitch falls (105-220 Hz, firmer is higher and shorter), the ball's 1.5 kHz tick (louder on firm ground), noise for grass | PLACED by surface: green, fringe, tee, fairway, semi, rough, sand, water -- the eight surfaces `localSurface` returns |
 | Water | A slap, a sheet of spray, a rising "plunk" (300 to 660 Hz) as the cavity closes, then 24-36 bubbles of 1-9 mm radius and drops falling back | Minnaert: a bubble of radius r rings at about 3.26/r Hz (1 mm, 3.26 kHz). Bubbles as the building block of liquid sound, with a rising pitch near the surface: van den Doel (2005). How far the pitch rises (1.05-1.6x) is PLACED: the paper's own figure could not be confirmed (the PDF did not extract) |
-| Trees, rocks | Wooden tones 260-2,900 Hz (oak, pine, palm); a canopy is leaf ticks, twigs and a swish, then the ball dropping 8 m to the turf; rock is tones at 1.3-7.6 kHz with a hard crack | PLACED |
+| Trees, rocks | Trunk (round 2, from the owner: "like hitting a solid pine board"): a 2 ms crack, a 6 ms band at 3.2 kHz, wooden tones 620-4,200 Hz dying in 2.5-12 ms. A canopy is leaf ticks, twigs and a swish, then the ball dropping 8 m to the turf; rock is tones at 1.3-7.6 kHz with a hard crack | PLACED. Round 1's hollow trunks (260-2,900 Hz, up to 40 ms) survive only as the palm take |
+| Cup | The ball drops about 0.1 m (1.4 m/s) onto the plastic floor: a 4 ms "tok" near 1.7 kHz, a short hollow tone near 640 Hz and its 3x partial, then up to five bounces shrinking by a restitution of 0.45 (0.13 s, 0.06, 0.03...), now and then a click off the wall. A flagstick is a dull fibreglass knock with a ferrule chatter | Hole 4.25 in (108 mm) across, at least 4 in (101.6 mm) deep; liners are moulded plastic with drain holes, some aluminium (USGA rule as summarised; liner patents US7959516, WO2008147581). The 640 Hz is a quarter wave of the 0.1 m tube with the open-end correction (0.6 x radius). The restitution is PLACED. Round 1 rang 640 Hz for 30 ms and the owner heard nothing like a cup |
 | Wind | Low rumble, two narrow whistles and a leaf rustle shaped by what grows in the biome, all driven by a gust process (relaxation 0.15/s, spread about 35% of the mean, plus a faster flutter at 1.5/s) | PLACED. Level follows the game's wind in mph |
-| Birds | Songbirds: notes following pitch contours at 2.6-6.5 kHz, a song kept per individual for life, sung in bouts of 1-4 songs 2.5-8 s apart. Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened | Songbirds mostly 1-8 kHz (All About Birds). Mourning dove: one recorded bird at 390 Hz with the second note near 650 Hz (fssbirding sonogram); used as 380-420 Hz with a 1.6x second note. Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
-| Crickets (night) | Pulsed tones at 2.8-4.6 kHz, 3-4 pulses a chirp | Dolbear (1897): chirps per minute = 4 x (temperature F) - 160, for the snowy tree cricket, from each biome's own temperature. The law holds from about 55 F (13 C); below that the lab's crickets are silent, so Mountain (11 C) and Haunted Hollow (9 C) have none. The carrier pitch is PLACED |
+| Birds | Songbirds: notes following pitch contours at 2.6-6.5 kHz, a song kept per individual for life. **One bird at a time** (owner, round 2): a song starts only when the last has ended plus 0.6 s, a bird that comes due meanwhile is dropped, bouts of 1-3 songs 4-10 s apart; about one bird every 25 s by day (round 1: one every 8 s, bouts overlapping). Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened; geese honk one at a time too. The skylark was removed (owner: annoying, too long and not what one sounds like) | Songbirds mostly 1-8 kHz (All About Birds). Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
+| Mourning dove (round 2) | "cooOOoo-wooo-woo-woooo": one 0.85 s slurred element climbing from the base to about 1.6x and back, then coos of 0.62, 0.42 and 0.8 s at the base, 3.4 s in all; base 370-410 Hz; a near-pure tone (3% octave), 60-80 ms onsets, a breath of band noise at 5% | One recorded bird: 390 Hz, the high note 650 Hz (fssbirding sonogram, Maine 2014). The phrase as Wikipedia gives it. The closed-bill coo radiates through an inflated oesophagus that filters out the harmonics, leaving a nearly pure tone (Fletcher et al., ring dove; ring dove coo about 600 Hz, 1.5 s). Timings PLACED. Round 1 sang two short rising notes and three coos as separate whistles, and the owner heard "close but not quite right" |
+| Crickets (round 2) | A chorus of 4-6 tree crickets chirping together: 8 pulses grouped 2+3+3 (pulses 12 ms, the last of each group 15-16 ms) at a 19 ms pulse period, each pulse sagging 2.5% in pitch with a faint octave; members within about 12 ms of a leader that changes every 20 chirps. At 18 C and up, 1-2 field crickets over them: 3 pulses (sometimes 2 or 4) of 18 ms at a 30 ms period, 4.5-5 kHz, 1.2-2.5 chirps a second on their own clocks | Chirp rate: Dolbear (1897), chirps per minute = 4 x (temperature F) - 160, holding from about 55 F (13 C), so Mountain (11 C) and Haunted Hollow (9 C) are silent. 8 pulses, the last of each group longer: snowy tree cricket (NPR, Symes; Orthoptera Species File). The 2,3,3 grouping and about 52 pulses a second: Riley's tree cricket (2.7 kHz at 25 C). Carrier 3,000 Hz at 15 C rising to 4,600 at 32 C: O. nigricornis, borrowed for the chorus as 3,000 + 94 Hz per degree. Synchrony: Walker (1969), Science 166:891. Field crickets: 2-3 pulses at a 30.2 ms period, 5.0 kHz (the Steppengrille); G. bimaculatus 5 kHz. Round 1 was 3-4 pulses at 2.8-4.6 kHz with every cricket on its own clock |
 | Cicadas | Band noise near 5-6 kHz pulsed at 160-260 Hz, swelling over 8-18 s; only at 24 C and above | PLACED |
 | Planes | A jet: broadband rumble (low-pass 900 Hz), 1.5-4 km up at 110-190 m/s. A small propeller plane: an 75-95 Hz buzz with harmonics, 250-700 m up at 45-65 m/s | Geometry, not ear: sound arrives r/c late, so the loudest moment comes after the plane is overhead; a propeller's pitch falls by Doppler; and the ground reflection, with an ear 1.6 m up, is a copy delayed by 2 x 1.6 x sin(elevation) / 343 s, up to about 9 ms overhead, which sweeps a comb through the noise -- the falling "whoosh" of a passing jet (windytan 2025; SFU comb-filter handbook). A little jitter on that delay stands in for turbulence, which DAGA 2021 found removes the "unnatural flanging" of a clean model |
+| Water by distance (round 2) | Every water sound goes through one gain: full within 25 m of water, falling as 25/distance, times (1 - (d/300)^2), silent from 300 m; water events are not scheduled at all when silent | PLACED. The owner: water only when the ball is close to it |
 | Distance | Level falls as 1/distance (1 at 10 m); treble falls with distance | PLACED: a low-pass reaching about 8 kHz at 100 m, 2 kHz at 1 km and 850 Hz at 3 km, the shape of ISO 9613-1 air absorption at 20 C and 70% humidity rather than its figures |
 | Strike loudness | Level as (head speed / 100 mph)^0.8; brightness as (speed / the club's default)^0.35 | PLACED so a 4 mph putt is about 20 dB under a 100 mph drive and still audible |
 
 ### Measured levels (tools/sound-lab/check.mjs, limiter off)
 
-Peaks at the default settings, 13 October 2026: driver -1.7 to -2.8 dB,
+Round 1 peaks at the default settings, 13 October 2026: driver -1.7 to -2.8 dB,
 fairway wood -4 to -5, iron -6, chip -13 to -22, putter -23 to -27; turf
 landings at 12 m about -16 to -24 dB; water -13 to -16; trunk and rock -12 to
 -18. A 30-60 s ambience averages -33 to -44 dB with peaks near -15 to -27; a jet
@@ -7241,7 +7245,81 @@ which nobody would hear, and was raised about 17 dB; the links surf about 6 dB.
 mix multiplier, so 8 mph played as 64. The gust readout said 121 mph. The wind
 is now one number with one meaning (`windMph`), outside the mix.
 
+### Round 2: the owner's first notes (13 October 2026)
+
+The owner listened to round 1 and sent notes and slider settings (kept in
+the conversation, not committed). In short: the swing whoosh sounded like
+white noise; the driver wanted "a higher pitch around 3500 Hz"; the wood was
+"pretty decent"; irons needed to be "much more cracky" with no metal in them;
+the chip and putter were good; the trunk should crack like a solid pine
+board; the cup sounded nothing like a cup; birds came too often and should
+never overlap; the skylark was annoying and wrong; the dove and crickets were
+close but not right; water should be heard only near water; and CC0
+recordings should be looked at too.
+
+**How round 2 is laid out.** The owner's sliders are baked into the takes (a
+take carries `base` knobs; the report's sliders multiply on top, so 100%
+means "as the take is"). Take A is the owner's round-1 setting wherever they
+tuned a sound. On the turf sounds B moves every slider they touched half as
+far again (each multiplier raised to the power 1.5) and C goes half way back
+(power 0.5): their moves were the same on every turf -- shorter, more of the
+ball's tick, less thump, more grass, darker -- so B is the likeliest next
+step. The report's saved state moved to a new key (v2), because applying the
+old sliders on top of takes that already contain them would double them.
+Sliders the owner pinned at an end now reach further (length down to 20%,
+crack and texture up to 400%).
+
+**The driver contradiction is asked, not resolved.** The note said "around
+3500 Hz"; the Pitch slider went to its top, which moved the main ring from
+4.15 kHz to 6.6 kHz. Take A is the slider and take B the note (main ring at
+3.5 kHz, same crack and short ring). The published centre for a titanium
+driver is near 4.5 kHz, between the two.
+
+**Semi-rough and rough had no ball tick**, so the Crack slider the owner
+raised on both did nothing. A light tick was added to each, so take A now
+does what the slider asked for.
+
+**Research for the dove, the crickets and the cup** is in the table above.
+Two things looked up and not used: Bessey's 1897 refit of Dolbear's law
+(the difference is inaudible), and "300-600 Hz from a Berkeley study" for the
+mourning dove, repeated on several pages with no traceable source.
+
+**CC0 recordings: what exists.** Freesound was searched with its CC0 filter
+(`license:"Creative Commons 0"`, sorted by downloads) for golf strikes,
+swings, putts, the cup, splashes, wood and rock hits, golf-course ambience,
+birds, the mourning dove, crickets, wind, streams, surf and planes. 41 were
+kept, each licence read on its own page on 13 October 2026, and listed in
+`tools/sound-lab/cc0-candidates.json` with author, length and preview link.
+The report plays the previews beside the synthesis. What was found:
+
+- **Golf**: real CC0 driver strikes exist (Scottrex05, Jarryd28, a series of
+  16 short drives by zolopher, inbeeld at 2 m), a few putts, and two
+  recordings of a ball into a hole (inbeeld, Scottrex05). **No CC0 iron or
+  chip recording that could be trusted**: the only "iron" hit, yukon456's
+  chip_9, says it was cut from a PGA TOUR YouTube video, so it was very
+  likely not the uploader's to release, and it was set aside.
+- **Nothing for a ball hitting a tree or a rock**: the nearest are a knock
+  on a wooden door and a hatchet on a rock.
+- **Ambience recordings are plentiful but work against the brief.** They are
+  fixed lengths (a 2-minute track repeats every 2 minutes), each adds about
+  2 MB to the single-file game, and they carry whatever else was there --
+  traffic, people, birds from the wrong continent. Recorded one-shots
+  (strikes, putts, the cup) are the case where recordings could win: tens of
+  kilobytes each, and three or four rotating takes with a little random
+  pitch hide the repeat.
+- Searches with several words often returned nothing on Freesound's CC0
+  filter; single words ("golf", "dove", "creek", "airplane") did better.
+
+**Water near the ball.** Every water sound now runs through one gain set from
+the distance to the nearest water (table above). The report has a "Distance
+to water" slider. In the game that distance comes from the ball (or the
+camera) and the course's water bodies; see TODO, *Sounds*.
+
 ### Open, for the owner
+
+- **Driver pitch**: the owner's note asked for "around 3500 Hz" while the
+  Pitch slider went to its top (main ring 6.6 kHz). Take A is the slider,
+  take B the note. Not decided.
 
 - **With a launch monitor the golfer hears the real strike**; a game strike
   sound lands after the monitor's delay and sounds like an echo. Proposed:

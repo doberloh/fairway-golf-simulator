@@ -1,0 +1,68 @@
+{
+ "checked": "2026-10-13",
+ "note": "CC0 (public domain) recordings on freesound.org that could stand in for a synthesised sound. Each licence was read on the sound's own page on the date above. Nothing here is downloaded or shipped; the report streams Freesound's preview. If one is chosen it is credited in docs/ATTRIBUTION.md (title, author, link) even though CC0 does not require it.",
+ "groups": [
+  {"id": "strikes", "label": "Club strikes", "items": [
+   {"id": 593483, "user": "Scottrex05", "title": "Driver hitting golf ball", "secs": 1.5, "mp3": "https://cdn.freesound.org/previews/593/593483_12595642-lq.mp3", "about": "A driver strike, Zoom H6."},
+   {"id": 655867, "user": "Jarryd28", "title": "Golf ball getting hit", "secs": 3.5, "mp3": "https://cdn.freesound.org/previews/655/655867_13727631-lq.mp3", "about": "Driver off a tee."},
+   {"id": 75203, "user": "zolopher", "title": "Golf 1", "secs": 0.4, "mp3": "https://cdn.freesound.org/previews/75/75203_482913-lq.mp3", "about": "One of a series of 16 short drives by the same author, so several takes could rotate."},
+   {"id": 75212, "user": "zolopher", "title": "Golf 3", "secs": 0.7, "mp3": "https://cdn.freesound.org/previews/75/75212_482913-lq.mp3", "about": "Same series."},
+   {"id": 402994, "user": "Mikes-MultiMedia", "title": "golf club hit series", "secs": 9.8, "mp3": "https://cdn.freesound.org/previews/402/402994_5632532-lq.mp3", "about": "Several hits in a row, Zoom H1."},
+   {"id": 622414, "user": "fluctuating_frequency", "title": "golf ball hits", "secs": 2.7, "mp3": "https://cdn.freesound.org/previews/622/622414_2911101-lq.mp3", "about": "Some golf ball hits."},
+   {"id": 21877, "user": "inbeeld", "title": "golf_hitting_ball", "secs": 2.1, "mp3": "https://cdn.freesound.org/previews/21/21877_119168-lq.mp3", "about": "Hard strike, about 2 m away."},
+   {"id": 94720, "user": "mr101986", "title": "golfball hit", "secs": 5.7, "mp3": "https://cdn.freesound.org/previews/94/94720_1123351-lq.mp3", "about": "Hitting a golf ball."}
+  ]},
+  {"id": "swing", "label": "Swing whoosh", "items": [
+   {"id": 540142, "user": "aidansamuel", "title": "Golf Swing Swoosh", "secs": 0.7, "mp3": "https://cdn.freesound.org/previews/540/540142_10965608-lq.mp3", "about": "A club swung outdoors, Zoom H6."},
+   {"id": 638884, "user": "jcampbe8", "title": "Golf Swing", "secs": 3.9, "mp3": "https://cdn.freesound.org/previews/638/638884_14077723-lq.mp3", "about": "A golf swing."},
+   {"id": 352719, "user": "Dalesome", "title": "Woosh (stick swung in the air)", "secs": 0.6, "mp3": "https://cdn.freesound.org/previews/352/352719_6513636-lq.mp3", "about": "A thin stick, not a club."}
+  ]},
+  {"id": "putt", "label": "Putts and the cup", "items": [
+   {"id": 119451, "user": "lmbubec", "title": "Golf Ball Putt", "secs": 1.8, "mp3": "https://cdn.freesound.org/previews/119/119451_1990688-lq.mp3", "about": "Metal putter tapping a ball."},
+   {"id": 408260, "user": "170129", "title": "putt", "secs": 15.5, "mp3": "https://cdn.freesound.org/previews/408/408260_7906405-lq.mp3", "about": "Putting a ball, Zoom H6."},
+   {"id": 21878, "user": "inbeeld", "title": "golf_putting", "secs": 2.0, "mp3": "https://cdn.freesound.org/previews/21/21878_119168-lq.mp3", "about": "Ball goes into the hole, 1 m away."},
+   {"id": 593482, "user": "Scottrex05", "title": "Golf ball in hole", "secs": 11.0, "mp3": "https://cdn.freesound.org/previews/593/593482_12595642-lq.mp3", "about": "A ball going into a hole, Zoom H6."},
+   {"id": 512505, "user": "pfranzen", "title": "Minigolf putt, right into the hole!", "secs": 2.5, "mp3": "https://cdn.freesound.org/previews/512/512505_3482490-lq.mp3", "about": "Minigolf, mixed from other public-domain sounds."}
+  ]},
+  {"id": "hits", "label": "Water, wood and rock", "items": [
+   {"id": 398032, "user": "swordofkings128", "title": "Splash", "secs": 1.3, "mp3": "https://cdn.freesound.org/previews/398/398032_7586736-lq.mp3", "about": "A hand into a pool, probably."},
+   {"id": 9508, "user": "petenice", "title": "SPLASH", "secs": 2.0, "mp3": "https://cdn.freesound.org/previews/9/9508_26137-lq.mp3", "about": "A rock falling into water."},
+   {"id": 629987, "user": "Flem0527", "title": "Knocking on Wood Door (1)", "secs": 0.7, "mp3": "https://cdn.freesound.org/previews/629/629987_12715066-lq.mp3", "about": "A door, not a tree: nearest CC0 wood knock found."},
+   {"id": 431019, "user": "CamoMano", "title": "Stone hit", "secs": 0.4, "mp3": "https://cdn.freesound.org/previews/431/431019_5635287-lq.mp3", "about": "A hatchet on a rock, not a ball."}
+  ]},
+  {"id": "course", "label": "Whole golf-course ambience", "items": [
+   {"id": 655874, "user": "KALeigh0218", "title": "Golf course ambience", "secs": 150.6, "mp3": "https://cdn.freesound.org/previews/655/655874_13723562-lq.mp3", "about": "From a porch on a golf estate."},
+   {"id": 764816, "user": "Charisma_Vigoureux_241085", "title": "Golf Course Ambience", "secs": 123.7, "mp3": "https://cdn.freesound.org/previews/764/764816_16539149-lq.mp3", "about": "Golf course ambience."},
+   {"id": 593481, "user": "Scottrex05", "title": "Golf course ambiance night time", "secs": 182.0, "mp3": "https://cdn.freesound.org/previews/593/593481_12595642-lq.mp3", "about": "Night, near water, lots of animals."},
+   {"id": 812214, "user": "treytatum3", "title": "Summer golf course at night", "secs": 539.4, "mp3": "https://cdn.freesound.org/previews/812/812214_5076546-lq.mp3", "about": "Alabama: crickets, frogs, insects -- and distant traffic."}
+  ]},
+  {"id": "birds", "label": "Birds", "items": [
+   {"id": 456930, "user": "nathankwright", "title": "mourning_dove _2017-06-06", "secs": 73.7, "mp3": "https://cdn.freesound.org/previews/456/456930_5948823-lq.mp3", "about": "A mourning dove cooing, a few refrains. Worth hearing against the lab's dove."},
+   {"id": 50658, "user": "fauxpress", "title": "morning_doves_raw", "secs": 80.7, "mp3": "https://cdn.freesound.org/previews/50/50658_317797-lq.mp3", "about": "Two mourning doves, one near, one far."},
+   {"id": 616946, "user": "TRP", "title": "Mourning Dove, calls, urban", "secs": 164.6, "mp3": "https://cdn.freesound.org/previews/616/616946_97550-lq.mp3", "about": "Toronto rooftop, city behind it."},
+   {"id": 345851, "user": "hargissssound", "title": "Spring Birds Raw (New Jersey)", "secs": 150.8, "mp3": "https://cdn.freesound.org/previews/345/345851_387219-lq.mp3", "about": "A warbler, a sparrow and some geese."},
+   {"id": 385280, "user": "bajko", "title": "sfx_amb_forest_spring_afternoon-01", "secs": 137.2, "mp3": "https://cdn.freesound.org/previews/385/385280_2341984-lq.mp3", "about": "A busy spring forest, Slovakia."},
+   {"id": 288899, "user": "petebuchwald", "title": "Rocky Mountain Outdoors: wind and birds", "secs": 89.7, "mp3": "https://cdn.freesound.org/previews/288/288899_2367139-lq.mp3", "about": "Wind in pines and birds."}
+  ]},
+  {"id": "night", "label": "Crickets", "items": [
+   {"id": 333221, "user": "hdfreema", "title": "Night Crickets Back Porch", "secs": 220.1, "mp3": "https://cdn.freesound.org/previews/333/333221_2098408-lq.mp3", "about": "Summer night facing woods. Worth hearing against the lab's crickets."},
+   {"id": 129678, "user": "FreethinkerAnon", "title": "crickets", "secs": 15.6, "mp3": "https://cdn.freesound.org/previews/129/129678_2362707-lq.mp3", "about": "Chirping crickets."},
+   {"id": 198369, "user": "kvgarlic", "title": "Early AM Crickets and Katydids, August", "secs": 84.2, "mp3": "https://cdn.freesound.org/previews/198/198369_1050391-lq.mp3", "about": "Midwest late-summer insect chorus."}
+  ]},
+  {"id": "weather", "label": "Wind and water", "items": [
+   {"id": 457318, "user": "Stek59", "title": "Autumn wind and dry leaves", "secs": 42.9, "mp3": "https://cdn.freesound.org/previews/457/457318_9065275-lq.mp3", "about": "Leaves blowing over a pavement."},
+   {"id": 150174, "user": "deleted_user_229898", "title": "wind in the trees", "secs": 120.6, "mp3": "https://cdn.freesound.org/previews/150/150174_229898-lq.mp3", "about": "Wind in trees, birds. Author's account deleted; credit by sound number."},
+   {"id": 433589, "user": "jackthemurray", "title": "Stream River Water Up Close", "secs": 68.9, "mp3": "https://cdn.freesound.org/previews/433/433589_5618682-lq.mp3", "about": "A soft stream."},
+   {"id": 446019, "user": "BurghRecords", "title": "Gentle Stream Natural Stream Sound", "secs": 63.7, "mp3": "https://cdn.freesound.org/previews/446/446019_7241289-lq.mp3", "about": "A gentle stream, Scottish borders."},
+   {"id": 426074, "user": "chris_dagorne", "title": "11ft waves breaking on sandy beach in the distance", "secs": 62.4, "mp3": "https://cdn.freesound.org/previews/426/426074_3380363-lq.mp3", "about": "Distant surf from a clifftop, no wind noise."},
+   {"id": 518637, "user": "jackmichaelking", "title": "Gentle ocean waves birdsong and gull", "secs": 115.1, "mp3": "https://cdn.freesound.org/previews/518/518637_6089496-lq.mp3", "about": "Calm waves, a little birdsong, distant gulls."}
+  ]},
+  {"id": "planes", "label": "Planes", "items": [
+   {"id": 383068, "user": "Kinoton", "title": "Airplane Flyby while Landing", "secs": 105.8, "mp3": "https://cdn.freesound.org/previews/383/383068_2247456-lq.mp3", "about": "An airliner at about 2,100 m, a long pass."},
+   {"id": 262755, "user": "bigpickle51", "title": "Stereo Jet Landing Sample 2", "secs": 34.5, "mp3": "https://cdn.freesound.org/previews/262/262755_1986349-lq.mp3", "about": "A jet landing: closer and louder than a course would hear."}
+  ]}
+ ],
+ "rejected": [
+  {"id": 618276, "user": "yukon456", "title": "chip_9", "why": "Marked CC0, but its description says it was cut from a PGA TOUR YouTube video, so it was very likely not the uploader's to give away."}
+ ]
+}

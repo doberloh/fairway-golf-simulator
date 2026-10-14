@@ -6,7 +6,8 @@
 // would: a take that is silent, one that throws, one far louder than its
 // neighbours, NaN in the output, or an ambience that is all wind. The limiter
 // is switched off for the render so the raw peaks show. Exits non-zero on a
-// silent, broken or NaN sound.
+// silent, broken or NaN sound, and if any two bird songs overlap (the
+// owner's rule since round 2: one bird at a time).
 import {chromium} from 'playwright';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {dirname,join} from 'node:path';
@@ -31,8 +32,9 @@ const rows=await tab.evaluate(async secs=>{
  for(const [id,C]of Object.entries(L.IMPACTS))for(const take of Object.keys(C.takes)){
   const [b]=await render(3,lab=>L.impact(lab,id,{take,speed:15.6,at:0}));out.push(stats(b,`impact ${id} ${take}`));}
  for(const name of Object.keys(L.SCENES))for(const night of [false,true]){
-  const ev=[];const [b]=await render(secs,(lab)=>{const a=L.createAmbience(lab,{onEvent:e=>ev.push(e.text)});a.start(name,{live:false});a.set({night});a.schedule(secs);return a;});
-  out.push(stats(b,`ambience ${name}${night?' night':''}`,{events:ev.length}));}
+  const ev=[],songs=[];const [b]=await render(secs,(lab)=>{const a=L.createAmbience(lab,{onEvent:e=>ev.push(e.text),onSong:s=>songs.push(s)});a.start(name,{live:false});a.set({night});a.schedule(secs);return a;});
+  songs.sort((x,y)=>x.t-y.t);let overlap=0;for(let i=1;i<songs.length;i++)if(songs[i].t<songs[i-1].end)overlap++;
+  out.push(stats(b,`ambience ${name}${night?' night':''}`,{events:ev.length,songs:songs.length,overlap}));}
  const [b]=await render(150,lab=>{const a=L.createAmbience(lab);a.start('midwest',{live:false});a.set({birds:0,water:0,insects:0,wind:0});a.trigger('jet');a.schedule(150);});
  out.push(stats(b,'jet flyover alone'));
  const [p]=await render(90,lab=>{const a=L.createAmbience(lab);a.start('midwest',{live:false});a.set({birds:0,water:0,insects:0,wind:0});a.trigger('prop');a.schedule(90);});
@@ -41,9 +43,9 @@ const rows=await tab.evaluate(async secs=>{
 },secs);
 await browser.close();
 const f=(v,w=7)=>(Number.isFinite(v)?v.toFixed(1):String(v)).padStart(w);
-console.log('sound'.padEnd(34)+'   peak dB    rms dB   length s  zero-x Hz  events');
+console.log('sound'.padEnd(34)+'   peak dB    rms dB   length s  zero-x Hz  events  songs');
 let bad=0;
-for(const r of rows){const flag=r.nan||r.peak<-60?'  <-- BROKEN':r.peak>0?'  <-- over full scale before the limiter':'';if(r.nan||r.peak<-60)bad++;
- console.log(r.name.padEnd(34)+f(r.peak,10)+f(r.rms,10)+f(r.len,11)+f(r.bright,11)+(r.events!=null?String(r.events).padStart(8):'')+flag);}
+for(const r of rows){const flag=r.overlap?`  <-- ${r.overlap} BIRDS OVERLAPPED`:r.nan||r.peak<-60?'  <-- BROKEN':r.peak>0?'  <-- over full scale before the limiter':'';if(r.nan||r.peak<-60||r.overlap)bad++;
+ console.log(r.name.padEnd(34)+f(r.peak,10)+f(r.rms,10)+f(r.len,11)+f(r.bright,11)+(r.events!=null?String(r.events).padStart(8)+String(r.songs).padStart(7):'')+flag);}
 if(errors.length){console.log('\nPage errors:\n'+errors.join('\n'));bad++;}
 process.exit(bad?1:0);

@@ -157,32 +157,50 @@ function bubble(lab,dest,t,radius,amp,rise=R(1.05,1.6)){
  const f=clamp(3.26/radius,150,lab.ctx.sampleRate*.4),tau=.006*Math.sqrt(1000/f);
  return ring(lab,dest,t,[[f,tau,1,rise]],{amp,spread:0});
 }
-// Swing noise: band-passed air rising to the strike and falling through the
-// follow-through. Centre frequency and level climb with head speed (PLACED:
-// 250 Hz + 22 Hz per m/s; level as speed^2.5).
+// Swing noise. Round 1's was one wide band of white noise and the owner heard
+// hiss ("too white noise sounding; in reality it's a whooshing sound"). A club
+// is a "vwoosh": darker air through a narrow resonance whose pitch climbs into
+// the strike and falls after it, over a soft wide band underneath. PLACED:
+// centre 150 Hz + 14 Hz per m/s (about 780 Hz at 100 mph); level as
+// speed^2.5; the narrow band's gain makes up the energy its width removes.
 function whoosh(lab,dest,t,v,amp){
- const {ctx}=lab,pre=.34,post=.32,start=t-pre,fc=250+22*v,s=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain();
- s.buffer=lab.NOISE;bp.type='bandpass';bp.Q.value=1.6;
- bp.frequency.setValueAtTime(fc*.4,start);bp.frequency.exponentialRampToValueAtTime(fc,t);bp.frequency.exponentialRampToValueAtTime(fc*.45,t+post);
+ const {ctx}=lab,pre=.26,post=.2,start=t-pre,end=t+post,fc=150+14*v;
+ const s=ctx.createBufferSource(),dark=ctx.createBiquadFilter(),tone=ctx.createBiquadFilter(),wide=ctx.createBiquadFilter(),gt=ctx.createGain(),gw=ctx.createGain(),g=ctx.createGain();
+ s.buffer=lab.NOISE;dark.type='lowpass';dark.frequency.value=2500;dark.Q.value=.5;
+ tone.type='bandpass';tone.Q.value=6;wide.type='bandpass';wide.Q.value=.9;gt.gain.value=2.2;gw.gain.value=.5;
+ for(const [p,k]of [[tone.frequency,1],[wide.frequency,.6]]){p.setValueAtTime(fc*.45*k,start);p.exponentialRampToValueAtTime(fc*k,t);p.exponentialRampToValueAtTime(fc*.55*k,end);}
  const n=96,curve=new Float32Array(n),a=amp*Math.pow(v/45,2.5);
- for(let i=0;i<n;i++){const x=start+(pre+post)*i/(n-1)-t;curve[i]=a*(x<0?Math.pow(1+x/pre,3):Math.exp(-x/.075)*(1-x/post));}
+ for(let i=0;i<n;i++){const x=(pre+post)*i/(n-1)-pre;curve[i]=a*(x<0?Math.pow(1+x/pre,4):Math.exp(-x/.05)*(1-x/post));}
  curve[n-1]=0;
  g.gain.setValueCurveAtTime(curve,start,pre+post);
- s.connect(bp);bp.connect(g);g.connect(dest);s.start(start,R(0,8));s.stop(t+post+.02);lab.track([s,bp,g],t+post+.1);
+ s.connect(dark);dark.connect(tone);tone.connect(gt);gt.connect(g);dark.connect(wide);wide.connect(gw);gw.connect(g);g.connect(dest);
+ s.start(start,R(0,8));s.stop(end+.02);lab.track([s,dark,tone,wide,gt,gw,g],end+.1);
 }
 
 // The knobs every sound offers in the report. Each recipe uses some of them;
 // the report shows only those a sound lists.
 export const KNOBS={
- level:{label:'Loudness',min:0,max:2,step:.05,def:1},
- pitch:{label:'Pitch',min:.6,max:1.6,step:.01,def:1},
- length:{label:'Ring / length',min:.4,max:2.5,step:.05,def:1},
- bright:{label:'Brightness',min:.4,max:2,step:.05,def:1},
- click:{label:'Crack (contact)',min:0,max:2.5,step:.05,def:1},
+ level:{label:'Loudness',min:0,max:2.5,step:.05,def:1},
+ pitch:{label:'Pitch',min:.5,max:2,step:.01,def:1},
+ length:{label:'Ring / length',min:.2,max:3,step:.05,def:1},
+ bright:{label:'Brightness',min:.3,max:2.5,step:.05,def:1},
+ click:{label:'Crack (contact)',min:0,max:4,step:.05,def:1},
  body:{label:'Thump (body)',min:0,max:2.5,step:.05,def:1},
- texture:{label:'Texture (grass, sand, water, leaves)',min:0,max:2.5,step:.05,def:1},
+ texture:{label:'Texture (grass, sand, water, leaves)',min:0,max:4,step:.05,def:1},
  whoosh:{label:'Swing whoosh',min:0,max:2.5,step:.05,def:1},
 };
+// A take can carry `base` knobs: settings baked into it (round 2 bakes the
+// owner's round-1 sliders into take A). The report's sliders multiply on top,
+// so 100% on a slider always means "as the take is".
+export const mergeKnobs=(base={},user={})=>{const o={...base};for(const [n,v]of Object.entries(user))o[n]=(o[n]??1)*v;return o;};
+const knobClamp=(n,v)=>clamp(v,KNOBS[n].min,KNOBS[n].max);
+// Round 2's B and C for a sound the owner tuned: B carries every slider the
+// owner moved half as far again in the same direction, C goes half way back.
+const further=(b,e)=>Object.fromEntries(Object.entries(b).map(([n,v])=>[n,+knobClamp(n,Math.pow(v,e)).toFixed(3)]));
+function rounds(play,base,names={}){return {
+ A:{name:names.A||'Round 1: your settings',play,base},
+ B:{name:names.B||'A step further the way you moved it',play,base:further(base,1.5)},
+ C:{name:names.C||'Half way back',play,base:further(base,.5)}};}
 // A recipe gets these helpers, with its knobs already applied.
 function kit(lab,dest,t0,a,k){
  const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...k};
@@ -209,97 +227,89 @@ const divot=(x,size=1)=>{
  x.crackle(.012,{dur:.12,rate:450,f:3200,q:.6,amp:.16*size,role:'texture'});
  x.crackle(.22,{dur:.4,rate:22,f:900,q:.7,amp:.12*size,tick:.007,fade:false,role:'texture'});
 };
+// Round 1 recipes, kept by name: round 2 bakes the owner's sliders into them.
+const driverTi=modes=>x=>{
+ x.hiss(0,{type:'highpass',f:2500,dur:.004,attack:.0003,amp:.7,role:'click',fixed:true});
+ x.ring(0,[[BALL,.004,.45]]);
+ x.ring(0,modes,{amp:.5});
+ x.thump(0,220,.012,.35);};
+const DRIVER_TI=[[3350,.035,.45],[4150,.05,1],[4480,.045,.75],[5600,.03,.45],[6900,.02,.3],[8300,.012,.18]];
+const hybrid=x=>{
+ x.hiss(0,{type:'highpass',f:2500,dur:.004,attack:.0003,amp:.85,role:'click',fixed:true});
+ x.ring(0,[[BALL,.004,.55]]);
+ x.ring(0,[[3200,.012,.8],[4100,.016,1],[5300,.01,.5]],{amp:.45});
+ x.thump(0,170,.012,.4);
+ x.hiss(.006,{type:'bandpass',f:2000,q:.6,dur:.08,attack:.004,amp:.32,role:'texture'});};
+const woodTee=x=>{
+ x.hiss(0,{type:'highpass',f:2800,dur:.004,attack:.0003,amp:.75,role:'click',fixed:true});
+ x.ring(0,[[BALL,.004,.5]]);
+ x.ring(0,[[3900,.022,.7],[4700,.034,1],[5900,.022,.6],[7400,.014,.3]],{amp:.45});
+ x.thump(0,190,.012,.35);};
+const ironClean=x=>{
+ x.hiss(0,{type:'bandpass',f:4200,q:.5,dur:.003,attack:.0002,amp:1.1,role:'click',fixed:true});
+ x.ring(0,[[BALL,.005,.6]]);
+ x.ring(0,[[2600,.008,.6],[3500,.007,1],[4800,.005,.7],[6800,.003,.4]],{amp:.5});
+ divot(x,.3);};
+// Round 2's iron, from the owner: "much more cracky... there isn't really any
+// metal sound at all to an iron... it's a lot of ball noise". So no ringing
+// head at all: a hard, very short crack (the ball compressing on a solid
+// face) and the ball's own tones, damped within two or three milliseconds.
+const ironCrack=x=>{
+ x.hiss(0,{type:'highpass',f:2000,dur:.0025,attack:.0002,amp:1.3,role:'click',fixed:true});
+ x.hiss(0,{type:'bandpass',f:3600,q:.9,dur:.007,attack:.0003,amp:.8,role:'click'});
+ x.ring(0,[[1700,.002,.6],[2900,.0018,.55],[4300,.0014,.4]],{amp:.5});};
+const chipClean=x=>{
+ x.hiss(-.03,{type:'bandpass',f:3200,q:.8,dur:.05,attack:.015,amp:.14,role:'texture'});
+ x.hiss(0,{type:'bandpass',f:4800,q:.6,dur:.0025,attack:.0002,amp:.75,role:'click',fixed:true});
+ x.ring(0,[[1800,.004,.6],[3300,.005,1],[5000,.003,.5]],{amp:.45});
+ x.hiss(.004,{type:'bandpass',f:2400,q:.7,dur:.06,attack:.004,amp:.12,role:'texture'});};
+const putterInsert=x=>{
+ x.hiss(0,{type:'bandpass',f:3000,q:.5,dur:.002,attack:.0003,amp:.15,role:'click',fixed:true});
+ x.ring(0,[[1150,.004,1],[2500,.003,.5],[3400,.002,.2]],{amp:.5});};
 export const STRIKES={
  driver:{label:'Driver',speed:[60,125,100],gain:.42,whoosh:.5,knobs:['level','pitch','length','bright','click','body','whoosh'],
   note:'Titanium head off a tee. Published: a titanium driver strike centres near 4-4.5 kHz and lasts under 0.2 s.',
   takes:{
-   A:{name:'Modern titanium: a bright "ting"',play:x=>{
-    x.hiss(0,{type:'highpass',f:2500,dur:.004,attack:.0003,amp:.7,role:'click',fixed:true});
-    x.ring(0,[[BALL,.004,.45]]);
-    x.ring(0,[[3350,.035,.45],[4150,.05,1],[4480,.045,.75],[5600,.03,.45],[6900,.02,.3],[8300,.012,.18]],{amp:.5});
-    x.thump(0,220,.012,.35);}},
-   B:{name:'Deeper "crack"',play:x=>{
-    x.hiss(0,{type:'highpass',f:1800,dur:.005,attack:.0003,amp:.9,role:'click',fixed:true});
-    x.hiss(0,{type:'bandpass',f:1300,q:.8,dur:.012,attack:.0005,amp:.45,role:'click'});
-    x.ring(0,[[BALL,.004,.55]]);
-    x.ring(0,[[2450,.02,.7],[3100,.03,1],[3750,.025,.7],[5200,.015,.35],[6600,.008,.2]],{amp:.5});
-    x.thump(0,170,.014,.5);}},
-   C:{name:'Old persimmon wood: a "thock"',play:x=>{
-    x.hiss(0,{type:'bandpass',f:2200,q:.6,dur:.006,attack:.0004,amp:.6,role:'click',fixed:true});
-    x.ring(0,[[BALL,.003,.4]]);
-    x.ring(0,[[880,.012,.75],[1520,.015,1],[2300,.01,.6],[3400,.006,.3]],{amp:.55});
-    x.thump(0,140,.016,.55);}},
+   A:{name:'Round 1: your settings (ring now centred near 6.6 kHz)',play:driverTi(DRIVER_TI),base:{pitch:1.6,body:.2,click:2.5,whoosh:.4,length:.5}},
+   // The owner's note asked for "a higher pitch around 3500 Hz" while the
+   // pitch slider went to its top, which puts the main ring at 6.6 kHz. B is
+   // the note taken literally; the owner picks.
+   B:{name:'Your note taken literally: main ring at 3.5 kHz, same crack',play:driverTi(DRIVER_TI.map(([f,...r])=>[f*3500/4150,...r])),base:{body:.2,click:2.5,whoosh:.4,length:.5}},
+   C:{name:'Crack first: even shorter ring, more crack',play:driverTi(DRIVER_TI),base:{pitch:1.6,body:.15,click:3.5,whoosh:.4,length:.35}},
   }},
  wood:{label:'Fairway wood',speed:[55,115,90],gain:.4,whoosh:.45,knobs:['level','pitch','length','bright','click','body','texture','whoosh'],
   note:'Smaller steel or titanium head, swept off the turf: higher and shorter than the driver, with the brush of the sole.',
   takes:{
-   A:{name:'Steel fairway wood off the deck',play:x=>{
-    x.hiss(0,{type:'highpass',f:2800,dur:.004,attack:.0003,amp:.75,role:'click',fixed:true});
-    x.ring(0,[[BALL,.004,.5]]);
-    x.ring(0,[[3900,.02,.7],[4700,.03,1],[5900,.02,.6],[7400,.012,.3]],{amp:.45});
-    x.thump(0,190,.012,.35);
-    x.thump(.004,110,.02,.25);
-    x.hiss(.006,{type:'bandpass',f:2200,q:.6,dur:.09,attack:.004,amp:.3,role:'texture'});}},
-   B:{name:'Hybrid: muted, a shorter "click"',play:x=>{
-    x.hiss(0,{type:'highpass',f:2500,dur:.004,attack:.0003,amp:.85,role:'click',fixed:true});
-    x.ring(0,[[BALL,.004,.55]]);
-    x.ring(0,[[3200,.012,.8],[4100,.016,1],[5300,.01,.5]],{amp:.45});
-    x.thump(0,170,.012,.4);
-    x.hiss(.006,{type:'bandpass',f:2000,q:.6,dur:.08,attack:.004,amp:.32,role:'texture'});}},
-   C:{name:'Off a tee (no turf)',play:x=>{
-    x.hiss(0,{type:'highpass',f:2800,dur:.004,attack:.0003,amp:.75,role:'click',fixed:true});
-    x.ring(0,[[BALL,.004,.5]]);
-    x.ring(0,[[3900,.022,.7],[4700,.034,1],[5900,.022,.6],[7400,.014,.3]],{amp:.45});
-    x.thump(0,190,.012,.35);}},
+   A:{name:'Round 1: your settings (hybrid, ring near 5.2 kHz)',play:hybrid,base:{length:.4,pitch:1.27,click:2.5,texture:1.85,whoosh:.35}},
+   B:{name:'Same, main ring at 3.5 kHz (your driver note)',play:hybrid,base:{length:.4,pitch:.85,click:2.5,texture:1.85,whoosh:.35}},
+   C:{name:'Your settings, off a tee (no turf)',play:woodTee,base:{length:.4,pitch:1.27,click:2.5,whoosh:.35}},
   }},
  iron:{label:'Iron',speed:[50,105,80],gain:.45,whoosh:.4,knobs:['level','pitch','length','bright','click','body','texture','whoosh'],
-  note:'A solid steel head: a crisp "click" that dies fast, then the divot -- a thump, the tear of grass and clods landing.',
+  note:'Round 2: no metal ring at all -- a hard crack and the ball, then the divot.',
   takes:{
-   A:{name:'Forged blade, ball then turf',play:x=>{
-    x.hiss(0,{type:'bandpass',f:4200,q:.5,dur:.003,attack:.0002,amp:1.1,role:'click',fixed:true});
-    x.ring(0,[[BALL,.005,.6]]);
-    x.ring(0,[[2600,.008,.6],[3500,.007,1],[4800,.005,.7],[6800,.003,.4]],{amp:.5});
-    divot(x,1);}},
-   B:{name:'Cavity back: a touch more ring',play:x=>{
-    x.hiss(0,{type:'bandpass',f:4500,q:.5,dur:.003,attack:.0002,amp:.9,role:'click',fixed:true});
-    x.ring(0,[[BALL,.005,.55]]);
-    x.ring(0,[[3100,.012,.7],[4300,.016,1],[5600,.01,.6],[7200,.006,.3]],{amp:.45});
-    divot(x,1);}},
-   C:{name:'Picked clean, hardly a divot',play:x=>{
-    x.hiss(0,{type:'bandpass',f:4200,q:.5,dur:.003,attack:.0002,amp:1.1,role:'click',fixed:true});
-    x.ring(0,[[BALL,.005,.6]]);
-    x.ring(0,[[2600,.008,.6],[3500,.007,1],[4800,.005,.7],[6800,.003,.4]],{amp:.5});
-    divot(x,.3);}},
+   A:{name:'Crack, no metal, a small divot',play:x=>{ironCrack(x);divot(x,.35);}},
+   B:{name:'Crack, no metal, a full divot',play:x=>{ironCrack(x);divot(x,1);}},
+   C:{name:'Round 1: your settings (picked clean)',play:ironClean,base:{body:.15,length:.4,pitch:1.35,click:1.55}},
   }},
  chip:{label:'Chip (wedge)',speed:[12,45,28],gain:.55,whoosh:.25,knobs:['level','pitch','length','bright','click','texture','whoosh'],
   note:'A short swing: the leading edge brushes the grass just before the ball, a soft click, then a little brush after.',
   takes:{
-   A:{name:'Clean chip off the fairway',play:x=>{
-    x.hiss(-.03,{type:'bandpass',f:3200,q:.8,dur:.05,attack:.015,amp:.14,role:'texture'});
-    x.hiss(0,{type:'bandpass',f:4800,q:.6,dur:.0025,attack:.0002,amp:.75,role:'click',fixed:true});
-    x.ring(0,[[1800,.004,.6],[3300,.005,1],[5000,.003,.5]],{amp:.45});
-    x.hiss(.004,{type:'bandpass',f:2400,q:.7,dur:.06,attack:.004,amp:.12,role:'texture'});}},
-   B:{name:'Out of the rough: grassy, muffled',play:x=>{
+   A:{name:'Round 1: your settings (clean chip)',play:chipClean,base:{length:.4,pitch:.94}},
+   B:{name:'Out of the rough: grassy, muffled',base:{length:.4},play:x=>{
     x.hiss(-.09,{type:'bandpass',f:2600,q:.6,dur:.14,attack:.05,amp:.3,role:'texture'});
     x.crackle(-.07,{dur:.2,rate:700,f:4200,q:.6,amp:.16,role:'texture'});
     x.hiss(0,{type:'bandpass',f:3200,q:.6,dur:.003,attack:.0003,amp:.45,role:'click',fixed:true});
     x.ring(0,[[1700,.003,.6],[3100,.004,1]],{amp:.3});
     x.hiss(.004,{type:'bandpass',f:2000,q:.6,dur:.14,attack:.01,amp:.25,role:'texture'});}},
-   C:{name:'Bump-and-run with a mid iron',play:x=>{
-    x.hiss(0,{type:'bandpass',f:4200,q:.5,dur:.003,attack:.0002,amp:.95,role:'click',fixed:true});
-    x.ring(0,[[BALL,.004,.5]]);
-    x.ring(0,[[2600,.007,.6],[3500,.006,1],[4800,.004,.6]],{amp:.45});
-    x.hiss(.004,{type:'bandpass',f:2600,q:.7,dur:.05,attack:.004,amp:.1,role:'texture'});}},
+   C:{name:'Bump-and-run with a mid iron (round 2 crack)',play:x=>{ironCrack(x);x.hiss(.004,{type:'bandpass',f:2600,q:.7,dur:.05,attack:.004,amp:.1,role:'texture'});}},
   }},
- putter:{label:'Putter',speed:[1,10,4],gain:1.1,whoosh:0,knobs:['level','pitch','length','bright','click'],
+ putter:{label:'Putter',speed:[1,10,6],gain:1.1,whoosh:0,knobs:['level','pitch','length','bright','click'],
   note:'Published: in a putt the 2-4 kHz band follows the ball and below 2 kHz follows the putter and where it was struck.',
   takes:{
-   A:{name:'Milled steel blade: a clean "tock" with a hint of ring',play:x=>{
+   A:{name:'Round 1: your settings (soft insert)',play:putterInsert,base:{length:.65,click:2.05}},
+   B:{name:'Milled steel blade: a clean "tock" with a hint of ring',play:x=>{
     x.hiss(0,{type:'bandpass',f:5000,q:.5,dur:.002,attack:.0002,amp:.3,role:'click',fixed:true});
     x.ring(0,[[1350,.006,.8],[2900,.006,1],[3700,.004,.6],[6100,.012,.12]],{amp:.5});}},
-   B:{name:'Soft face insert: duller',play:x=>{
-    x.hiss(0,{type:'bandpass',f:3000,q:.5,dur:.002,attack:.0003,amp:.15,role:'click',fixed:true});
-    x.ring(0,[[1150,.004,1],[2500,.003,.5],[3400,.002,.2]],{amp:.5});}},
    C:{name:'Heavy mallet: lower "tock"',play:x=>{
     x.hiss(0,{type:'bandpass',f:4000,q:.5,dur:.002,attack:.0002,amp:.2,role:'click',fixed:true});
     x.ring(0,[[900,.006,.9],[2100,.005,.7],[3300,.003,.4]],{amp:.55});}},
@@ -313,7 +323,7 @@ export function strike(lab,club,{take='A',speed,knobs={},pan=0,dist=10,at}={}){
  // Louder and brighter the harder it is hit. PLACED: level as speed^0.8, so a
  // putt is quiet but still audible; brightness as speed^0.35 at the club's own
  // default speed.
- const a=C.gain*Math.pow(mph/100,.8),k={...knobs,bright:(knobs.bright??1)*Math.pow(mph/C.speed[2],.35)};
+ const a=C.gain*Math.pow(mph/100,.8),k=mergeKnobs(T.base,knobs);k.bright=(k.bright??1)*Math.pow(mph/C.speed[2],.35);
  const dest=place(lab,{pan,dist,wet:.08,until:t+3});
  const x=kit(lab,dest,t,a,k);
  if(C.whoosh)x.whoosh(0,mph*MPH,C.whoosh);
@@ -330,63 +340,92 @@ const ballTick=(x,l=.25)=>x.ring(0,[[BALL,.0025,l]],{role:'click'});
 const grass=(x,dt,dur,amp,f=3000)=>{x.hiss(dt,{type:'bandpass',f,q:.7,dur,attack:.004,amp,role:'texture'});x.crackle(dt,{dur:dur*.9,rate:500,f:f*1.5,q:.6,amp:amp*.4,role:'texture'});};
 const twig=(x,dt,amp)=>x.ring(dt,[[R(2200,3600),.003,1],[R(4200,6200),.002,.5]],{amp,role:'click'});
 const T_KNOBS=['level','pitch','length','bright','click','body','texture'];
+// Round 2: each turf's take A is the owner's round-1 pick with their sliders
+// baked in; B moves every slider they touched half as far again, C half way
+// back. Their direction was the same on every turf -- shorter, more of the
+// ball's tick, less thump, more grass, darker -- so B is the likeliest next
+// step. Semi and rough had no ball tick for the Crack slider to move (the
+// owner raised it anyway), so a light one was added.
+const greenRx=x=>{x.thump(0,150,.018,.9,.62);ballTick(x);x.hiss(0,{type:'lowpass',f:1800,q:.5,dur:.03,attack:.0015,amp:.35,role:'texture'});};
+const fringeRx=x=>{x.thump(0,145,.019,.85,.62);ballTick(x,.2);grass(x,0,.05,.25,3500);};
+const fairwayRx=x=>{x.thump(0,130,.022,.9,.6);ballTick(x,.2);grass(x,0,.06,.3);};
+const teeRx=x=>{x.thump(0,165,.017,.85,.65);ballTick(x,.32);grass(x,0,.05,.26,3300);};
+const semiRx=x=>{x.thump(0,110,.022,.55,.58);ballTick(x,.12);grass(x,0,.12,.36,2300);};
+const roughRx=x=>{x.thump(0,105,.02,.35,.6);ballTick(x,.1);x.hiss(0,{type:'bandpass',f:2200,q:.5,dur:.2,attack:.01,amp:.35,role:'texture'});x.crackle(0,{dur:.22,rate:900,f:3800,q:.6,amp:.25,role:'texture'});};
+const sandRx=x=>{x.thump(0,80,.025,.45,.6);x.hiss(0,{type:'lowpass',f:1300,q:.4,dur:.09,attack:.003,amp:.7,role:'texture'});x.crackle(0,{dur:.12,rate:700,f:5000,q:.7,amp:.35,role:'texture'});x.crackle(.12,{dur:.35,rate:120,f:3500,amp:.08,tick:.003,role:'texture'});};
+// A solid pine board, for the owner's trunk note ("more cracky, like hitting
+// a solid pine board"): a hard crack, then short, bright wooden tones -- a
+// board's modes sit higher and die faster than a hollow trunk's. PLACED.
+const board=(x,m=1,d=1)=>{
+ x.hiss(0,{type:'highpass',f:2000,dur:.002,attack:.0002,amp:1.2,role:'click',fixed:true});
+ x.hiss(0,{type:'bandpass',f:3200,q:1,dur:.006,attack:.0003,amp:.6,role:'click'});
+ x.ring(0,[[BALL,.0025,.5]]);
+ x.ring(0,[[620,.012,1],[1150,.009,.7],[1900,.006,.5],[2800,.004,.35],[4200,.0025,.2]],{amp:.55,pitch:m,decay:d});};
+const palm=x=>{x.ring(0,[[BALL,.003,.35]]);x.ring(0,[[260,.014,1],[520,.012,.5],[900,.008,.3]],{amp:.6});x.crackle(0,{dur:.09,rate:500,f:2500,amp:.22,role:'texture'});x.crackle(.15,{dur:.5,rate:60,f:1800,q:.6,amp:.1,tick:.008,role:'texture'});};
+// The cup, redone after research (RESEARCH, round 2). A hole is 4.25 in
+// across and at least 4 in deep, lined with a moulded plastic cup that has
+// drain holes in its floor. Round 1 rang a 640 Hz tone for 30 ms, which is a
+// bell, not a cup. Now: the ball falls about 0.1 m (1.4 m/s) onto the plastic
+// floor -- a dull "tok" that dies in a few milliseconds -- and bounces with
+// shrinking hops (PLACED restitution 0.45: 0.13 s, 0.06, 0.03...), the
+// "clunk-clunk-k-k" rattle; the tube colours each hit with a short hollow
+// resonance near 640 Hz (a quarter wave of 0.1 m plus the open-end
+// correction), and now and then the ball clicks off the wall.
+function cupDrop(x,{metal=false,dt0=0}={}){
+ const e=.45,v0=1.4;let t=dt0,v=v0;
+ for(let i=0;i<6&&v>.12;i++){
+  const a=Math.pow(v/v0,1.2);
+  x.hiss(t,{type:'bandpass',f:metal?3400:1700,q:.8,dur:.004,attack:.0003,amp:.9*a,role:'click',fixed:true});
+  x.ring(t,metal?[[1650,.03,.8],[3900,.018,.6],[6200,.01,.35],[640,.008,.5]]:[[640,.007,.7],[1920,.004,.35],[2700,.002,.4],[BALL,.0015,.3]],{amp:.6*a});
+  if(Math.random()<.4)x.hiss(t+R(.01,.04),{type:'bandpass',f:metal?4000:2400,q:1,dur:.002,attack:.0002,amp:.35*a,role:'click',fixed:true});
+  v*=e;t+=2*v/9.81;
+ }
+}
 export const IMPACTS={
- green:{label:'Green',group:'turf',bounce:.35,knobs:T_KNOBS,note:'Short, tight turf on firm ground: a soft "thup".',takes:{
-  A:{name:'Receptive green',play:x=>{x.thump(0,150,.018,.9,.62);ballTick(x);x.hiss(0,{type:'lowpass',f:1800,q:.5,dur:.03,attack:.0015,amp:.35,role:'texture'});}},
-  B:{name:'Firm, baked green',play:x=>{x.thump(0,210,.012,.8,.7);ballTick(x,.45);x.hiss(0,{type:'lowpass',f:2600,q:.5,dur:.025,attack:.001,amp:.3,role:'texture'});}},
-  C:{name:'Soft, wet green',play:x=>{x.thump(0,115,.022,.9,.55);ballTick(x,.12);x.hiss(.002,{type:'bandpass',f:650,q:1.2,dur:.07,attack:.006,amp:.32,role:'texture'});x.crackle(.004,{dur:.08,rate:300,f:2500,amp:.08,role:'texture'});}},
- }},
- fringe:{label:'Fringe',group:'turf',bounce:.35,knobs:T_KNOBS,note:'Green-firm ground, a little more grass.',takes:{
-  A:{name:'Fringe',play:x=>{x.thump(0,145,.019,.85,.62);ballTick(x,.2);grass(x,0,.05,.25,3500);}},
-  B:{name:'Firm fringe',play:x=>{x.thump(0,200,.013,.8,.7);ballTick(x,.35);grass(x,0,.04,.2,3800);}},
-  C:{name:'Soft fringe',play:x=>{x.thump(0,120,.022,.85,.55);ballTick(x,.12);grass(x,0,.06,.28,3000);}},
- }},
- fairway:{label:'Fairway',group:'turf',bounce:.4,knobs:T_KNOBS,note:'A thud and a quick brush of mown grass.',takes:{
-  A:{name:'Fairway',play:x=>{x.thump(0,130,.022,.9,.6);ballTick(x,.2);grass(x,0,.06,.3);}},
-  B:{name:'Firm summer fairway',play:x=>{x.thump(0,185,.015,.85,.68);ballTick(x,.38);grass(x,0,.05,.25,3400);}},
-  C:{name:'Soft, dewy fairway',play:x=>{x.thump(0,105,.026,.9,.55);ballTick(x,.1);grass(x,0,.07,.3,2600);x.hiss(.003,{type:'bandpass',f:700,q:1.1,dur:.06,attack:.006,amp:.22,role:'texture'});}},
- }},
- tee:{label:'Tee box',group:'turf',bounce:.42,knobs:T_KNOBS,note:'Fairway grass on a firmer, levelled pad.',takes:{
-  A:{name:'Tee box',play:x=>{x.thump(0,165,.017,.85,.65);ballTick(x,.32);grass(x,0,.05,.26,3300);}},
-  B:{name:'Worn, hard tee',play:x=>{x.thump(0,220,.011,.8,.72);ballTick(x,.5);grass(x,0,.035,.18,3600);x.crackle(.002,{dur:.05,rate:200,f:2500,amp:.12,role:'texture'});}},
-  C:{name:'Lush tee',play:x=>{x.thump(0,135,.02,.85,.6);ballTick(x,.18);grass(x,0,.07,.32,2900);}},
- }},
- semi:{label:'Semi-rough',group:'turf',bounce:.28,knobs:T_KNOBS,note:'Longer grass takes the edge off the thud.',takes:{
-  A:{name:'Semi-rough',play:x=>{x.thump(0,120,.02,.6,.6);grass(x,0,.1,.32,2600);x.crackle(0,{dur:.12,rate:600,f:4200,q:.6,amp:.2,role:'texture'});}},
-  B:{name:'Dry semi',play:x=>{x.thump(0,135,.017,.6,.62);grass(x,0,.09,.28,3400);x.crackle(0,{dur:.13,rate:700,f:5000,q:.7,amp:.26,role:'texture'});}},
-  C:{name:'Lush semi',play:x=>{x.thump(0,110,.022,.55,.58);grass(x,0,.12,.36,2300);}},
- }},
- rough:{label:'Rough',group:'turf',bounce:.18,knobs:T_KNOBS,note:'Mostly grass: a muffled landing in a rustle.',takes:{
-  A:{name:'Parkland rough',play:x=>{x.thump(0,105,.02,.35,.6);x.hiss(0,{type:'bandpass',f:2200,q:.5,dur:.2,attack:.01,amp:.35,role:'texture'});x.crackle(0,{dur:.22,rate:900,f:3800,q:.6,amp:.25,role:'texture'});}},
-  B:{name:'Deep links fescue: dry and wiry',play:x=>{x.thump(0,110,.018,.22,.6);x.hiss(0,{type:'bandpass',f:3400,q:.6,dur:.26,attack:.015,amp:.3,role:'texture'});x.crackle(0,{dur:.35,rate:700,f:5000,q:.7,amp:.36,tick:.0015,role:'texture'});}},
-  C:{name:'Wet rough',play:x=>{x.thump(0,95,.022,.35,.55);x.hiss(0,{type:'lowpass',f:1500,q:.5,dur:.16,attack:.01,amp:.38,role:'texture'});x.crackle(.004,{dur:.15,rate:350,f:2400,amp:.14,role:'texture'});}},
- }},
- sand:{label:'Bunker',group:'turf',bounce:.05,knobs:T_KNOBS,note:'A "pfff" into sand with a crunch of grit and a little spray falling back.',takes:{
-  A:{name:'Soft bunker sand',play:x=>{x.thump(0,80,.025,.45,.6);x.hiss(0,{type:'lowpass',f:1300,q:.4,dur:.09,attack:.003,amp:.7,role:'texture'});x.crackle(0,{dur:.12,rate:700,f:5000,q:.7,amp:.35,role:'texture'});x.crackle(.12,{dur:.35,rate:120,f:3500,amp:.08,tick:.003,role:'texture'});}},
-  B:{name:'Firm, wet sand',play:x=>{x.thump(0,95,.02,.7,.62);x.hiss(0,{type:'lowpass',f:900,q:.4,dur:.06,attack:.002,amp:.5,role:'texture'});x.crackle(0,{dur:.08,rate:400,f:4200,amp:.2,role:'texture'});}},
-  C:{name:'Desert waste area: coarse grit',play:x=>{x.thump(0,100,.015,.5,.62);x.hiss(0,{type:'lowpass',f:1800,q:.4,dur:.06,attack:.002,amp:.4,role:'texture'});x.crackle(0,{dur:.15,rate:300,f:2500,q:1,amp:.45,tick:.003,role:'texture'});for(let i=0;i<3;i++)x.ring(R(0,.06),[[R(2800,4200),.003,.3]],{role:'click'});}},
- }},
+ green:{label:'Green',group:'turf',bounce:.35,knobs:T_KNOBS,note:'Short, tight turf on firm ground: a soft "thup".',
+  takes:rounds(greenRx,{length:.4,texture:1.75,body:.65,bright:.6,click:2.3})},
+ fringe:{label:'Fringe',group:'turf',bounce:.35,knobs:T_KNOBS,note:'Green-firm ground, a little more grass.',
+  takes:rounds(fringeRx,{length:.4,texture:1.55,bright:.65,click:2.5,body:.45})},
+ fairway:{label:'Fairway',group:'turf',bounce:.4,knobs:T_KNOBS,note:'A thud and a quick brush of mown grass.',
+  takes:rounds(fairwayRx,{length:.4,level:1.1,bright:.65,click:1.95,body:.4,texture:1.4})},
+ tee:{label:'Tee box',group:'turf',bounce:.42,knobs:T_KNOBS,note:'Fairway grass on a firmer, levelled pad.',
+  takes:rounds(teeRx,{pitch:.73,length:.4,bright:.7,click:1.95,texture:1.65,body:.75})},
+ semi:{label:'Semi-rough',group:'turf',bounce:.28,knobs:T_KNOBS,note:'Longer grass takes the edge off the thud.',
+  takes:rounds(semiRx,{length:1.25,click:1.75,texture:1.4,body:.2},{A:'Round 1: your settings (lush semi)'})},
+ rough:{label:'Rough',group:'turf',bounce:.18,knobs:T_KNOBS,note:'Mostly grass: a muffled landing in a rustle.',
+  takes:rounds(roughRx,{length:1.65,click:1.85,pitch:.88,body:.2})},
+ sand:{label:'Bunker',group:'turf',bounce:.05,knobs:['level','pitch','length','bright','body','texture'],note:'A "pfff" into sand with a crunch of grit and a little spray falling back.',
+  takes:rounds(sandRx,{length:2.25,body:.4})},
  water:{label:'Water',group:'water',bounce:0,knobs:['level','pitch','length','bright','texture','body'],note:'A slap, a sheet of spray, the "plunk" of the cavity closing, and the bubbles that follow.',takes:{
-  A:{name:'Pond, shallow entry',play:x=>water(x,1)}, B:{name:'Steep plunge: a deep "ploonk"',play:x=>water(x,2)}, C:{name:'Skips, then sinks',play:x=>water(x,3)},
+  A:{name:'Round 1: your settings (skips, then sinks)',play:x=>water(x,3),base:{length:.55,pitch:.7,body:.3}},
+  B:{name:'Your settings, straight in',play:x=>water(x,1),base:{length:.55,pitch:.7,body:.3}},
+  C:{name:'Your settings, a steep plunge',play:x=>water(x,2),base:{length:.55,pitch:.7,body:.3}},
  }},
- trunk:{label:'Tree trunk',group:'solid',knobs:['level','pitch','length','bright','click','texture'],note:'Hollow wooden "tok" of the trunk, the crack of bark.',takes:{
-  A:{name:'Oak or broadleaf trunk',play:x=>{x.ring(0,[[BALL,.003,.5]]);x.hiss(0,{type:'bandpass',f:3000,q:.7,dur:.012,attack:.0003,amp:.35,role:'click'});x.ring(0,[[420,.03,1],[780,.022,.65],[1150,.016,.45],[1900,.009,.3],[2900,.005,.2]],{amp:.55});x.crackle(.05,{dur:.25,rate:120,f:3000,amp:.06,role:'texture'});}},
-  B:{name:'Pine or spruce: higher, more resonant',play:x=>{x.ring(0,[[BALL,.003,.5]]);x.hiss(0,{type:'bandpass',f:3600,q:.7,dur:.01,attack:.0003,amp:.45,role:'click'});x.ring(0,[[560,.04,1],[1040,.03,.6],[1650,.02,.45],[2500,.012,.3]],{amp:.5});}},
-  C:{name:'Palm: fibrous and dull',play:x=>{x.ring(0,[[BALL,.003,.35]]);x.ring(0,[[260,.014,1],[520,.012,.5],[900,.008,.3]],{amp:.6});x.crackle(0,{dur:.09,rate:500,f:2500,amp:.22,role:'texture'});x.crackle(.15,{dur:.5,rate:60,f:1800,q:.6,amp:.1,tick:.008,role:'texture'});}},
+ trunk:{label:'Tree trunk',group:'solid',knobs:['level','pitch','length','bright','click','texture'],note:'Round 2: cracky, like a solid pine board.',takes:{
+  A:{name:'Solid pine board: a hard crack',play:x=>board(x)},
+  B:{name:'Thicker beam: lower, a touch longer',play:x=>board(x,.72,1.3)},
+  C:{name:'Round 1: your pick (palm)',play:palm},
  }},
  canopy:{label:'Leaves and branches',group:'solid',knobs:['level','pitch','length','bright','click','texture'],note:'Through the canopy: leaf slaps, twigs, the branch swaying -- then the ball drops to the ground.',takes:{
-  A:{name:'Broadleaf canopy',play:x=>canopy(x,{f:3200,rate:350,tick:.003,twigs:2,swish:1500})},
-  B:{name:'Conifer needles: finer',play:x=>canopy(x,{f:5500,rate:700,tick:.0015,twigs:4,swish:2500,dur:.35})},
-  C:{name:'Dry autumn leaves: crisp',play:x=>canopy(x,{f:4000,rate:500,tick:.0015,twigs:2,swish:1800,dur:.6,amp:.55,q:.9})},
+  A:{name:'Round 1: your pick (dry autumn leaves)',play:x=>canopy(x,{f:4000,rate:500,tick:.0015,twigs:2,swish:1800,dur:.6,amp:.55,q:.9})},
+  B:{name:'Broadleaf canopy',play:x=>canopy(x,{f:3200,rate:350,tick:.003,twigs:2,swish:1500})},
+  C:{name:'Conifer needles: finer',play:x=>canopy(x,{f:5500,rate:700,tick:.0015,twigs:4,swish:2500,dur:.35})},
  }},
  rock:{label:'Rock',group:'solid',knobs:['level','pitch','length','bright','click','texture'],note:'A sharp "clack": ball and stone are both hard.',takes:{
-  A:{name:'Granite boulder',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:1,role:'click',fixed:true});x.ring(0,[[BALL,.004,.7]]);x.ring(0,[[2100,.006,.6],[3400,.008,1],[5200,.005,.55],[7600,.003,.35]],{amp:.45});}},
-  B:{name:'Sandstone: duller, gritty',play:x=>{x.hiss(0,{type:'highpass',f:2200,dur:.003,attack:.0003,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.003,.6]]);x.ring(0,[[1300,.004,.7],[2300,.005,1],[3600,.003,.5]],{amp:.45});x.crackle(.002,{dur:.05,rate:400,f:4000,amp:.2,role:'texture'});}},
-  C:{name:'Glancing ricochet',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.004,.6],[3400,.006,.6]],{amp:.6});x.crackle(.004,{dur:.12,rate:160,f:3000,amp:.25,role:'texture'});x.ring(.09,[[BALL,.003,.4],[3600,.005,.5]],{amp:.3});}},
+  A:{name:'Round 1: your pick (glancing ricochet)',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.004,.6],[3400,.006,.6]],{amp:.6});x.crackle(.004,{dur:.12,rate:160,f:3000,amp:.25,role:'texture'});x.ring(.09,[[BALL,.003,.4],[3600,.005,.5]],{amp:.3});}},
+  B:{name:'Granite boulder',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:1,role:'click',fixed:true});x.ring(0,[[BALL,.004,.7]]);x.ring(0,[[2100,.006,.6],[3400,.008,1],[5200,.005,.55],[7600,.003,.35]],{amp:.45});}},
+  C:{name:'Sandstone: duller, gritty',play:x=>{x.hiss(0,{type:'highpass',f:2200,dur:.003,attack:.0003,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.003,.6]]);x.ring(0,[[1300,.004,.7],[2300,.005,1],[3600,.003,.5]],{amp:.45});x.crackle(.002,{dur:.05,rate:400,f:4000,amp:.2,role:'texture'});}},
  }},
- cup:{label:'Into the cup (extra)',group:'extra',knobs:['level','pitch','length','bright','click'],note:'Not asked for -- the ball dropping into a plastic cup. Say if it is wanted.',takes:{
-  A:{name:'Drops in',play:x=>{const c=[[640,.03,1],[1350,.02,.45],[2250,.012,.35],[BALL,.003,.3]];x.ring(0,c,{amp:.55});for(const [dt,a]of [[.07,.4],[.12,.2],[.155,.1]])x.ring(dt,c,{amp:.55*a});}},
-  B:{name:'Off the flagstick, then in',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:.6,role:'click',fixed:true});x.ring(0,[[1180,.22,.6],[3100,.12,.4],[5400,.06,.25],[8100,.03,.15]],{amp:.4});const c=[[640,.03,1],[1350,.02,.45],[2250,.012,.35]];x.ring(.14,c,{amp:.5});x.ring(.21,c,{amp:.2});}},
+ cup:{label:'Into the cup (extra)',group:'extra',knobs:['level','pitch','length','bright','click'],note:'Round 2, researched: a dull plastic "tok" and a rattle of shrinking bounces, coloured by the hollow tube.',takes:{
+  A:{name:'Plastic cup: drops in and rattles',play:x=>cupDrop(x)},
+  B:{name:'Off the flagstick, then in',play:x=>{
+   // A flagstick is fibreglass, not a bell: a dull knock, and its metal
+   // ferrule chatters in the cup's socket.
+   x.hiss(0,{type:'bandpass',f:1800,q:.8,dur:.004,attack:.0003,amp:.7,role:'click',fixed:true});
+   x.ring(0,[[420,.02,1],[1150,.01,.5],[2400,.004,.3]],{amp:.45});
+   x.ring(.012,[[3100,.006,.5],[4700,.004,.3]],{amp:.25});
+   cupDrop(x,{dt0:.16});}},
+  C:{name:'Older aluminium cup: brighter clank',play:x=>cupDrop(x,{metal:true})},
  }},
 };
 function water(x,kind){
@@ -416,7 +455,7 @@ function canopy(x,{f,rate,tick,twigs,swish,dur=.5,amp=.45,q=.5}){
 export function impact(lab,what,{take='A',speed=15,knobs={},pan=0,dist=12,at}={}){
  const I=IMPACTS[what],T=I.takes[take]||I.takes.A,t=(at??lab.ctx.currentTime)+.03;
  // PLACED: level as speed^1.1 with 20 m/s as 1; brightness as speed^0.3.
- const a=.8*Math.pow(Math.max(speed,.3)/20,1.1),k={...knobs,bright:(knobs.bright??1)*Math.pow(Math.max(speed,.3)/15,.3)};
+ const a=.8*Math.pow(Math.max(speed,.3)/20,1.1),k=mergeKnobs(T.base,knobs);k.bright=(k.bright??1)*Math.pow(Math.max(speed,.3)/15,.3);
  const dest=place(lab,{pan,dist,wet:.1,until:t+3});
  T.play(kit(lab,dest,t,a,k));
  lab.sweep();
@@ -437,7 +476,7 @@ export function bounces(lab,what,{speed=18,angle=40,...o}={}){
 // species; water, planes and insects are per-minute-ish weights.
 export const SCENES={
  midwest:{label:'Midwest: Prairie Run',tempC:22,wind:8,trees:'broad',birds:{songbird:5,whistler:2,trill:2,dove:2,crow:1,woodpecker:.5},water:{lake:.6},planes:{jet:1,prop:.6},insects:{cicada:.5},howl:1,verb:.12},
- links:{label:'Links: North Sea Links',tempC:14,wind:16,trees:'grass',birds:{skylark:3,gull:2,songbird:1,crow:.5},water:{surf:1},planes:{jet:.6,prop:.3},insects:{},howl:1.6,verb:.05},
+ links:{label:'Links: North Sea Links',tempC:14,wind:16,trees:'grass',birds:{gull:2,songbird:1,crow:.5},water:{surf:1},planes:{jet:.6,prop:.3},insects:{},howl:1.6,verb:.05},
  desert:{label:'Desert: Vermilion Basin',tempC:31,wind:9,trees:'sparse',birds:{wren:2,dove:2,songbird:1,raven:.6},water:{lake:.3},planes:{jet:1},insects:{cicada:1.5},howl:1.2,verb:.06},
  mountain:{label:'Mountain: Alpine Reserve',tempC:11,wind:12,trees:'conifer',birds:{songbird:2,whistler:2,raven:1,woodpecker:.5},water:{stream:1},planes:{jet:.5,prop:.6},insects:{},howl:1.3,verb:.15},
  pnw:{label:'Pacific Northwest: Sitka Bluff',tempC:16,wind:7,trees:'conifer',birds:{whistler:2,songbird:3,raven:1,woodpecker:1},water:{stream:.7},planes:{jet:.7,prop:.4},insects:{},howl:1,verb:.2},
@@ -466,11 +505,24 @@ const BIRD={
    note(lab,d,t,{dur:.3,contour:[b.hi,b.hi*.99],amp:.3,attack:.02,release:.05});note(lab,d,t+.38,{dur:.34,contour:[b.lo,b.lo*.985],amp:.28,attack:.02,release:.06});return .75;}},
  trill:{dist:[20,90],make(){return {f:R(4000,6000),rate:R(12,20),n:R(10,24)|0};},
   sing(lab,d,t,b){const n=Math.round(b.n*J(1,.15));let x=t;for(let i=0;i<n;i++){note(lab,d,x,{dur:.03,contour:[b.f,b.f*.6],amp:.28,attack:.003,release:.01});x+=1/b.rate;}return x-t;}},
- dove:{dist:[25,90],make(){return {f:R(380,420)};},
-  // Mourning dove: "coo-OOO-oo-oo-oo"; one recorded bird sang 390 Hz with
-  // the second note near 650 Hz.
-  sing(lab,d,t,b){const f=b.f*J(1,.02);note(lab,d,t,{dur:.32,contour:[f*1.1,f*1.6],amp:.35,attack:.06,release:.06});note(lab,d,t+.4,{dur:.55,contour:[f*1.65,f*1.5,f*1.2],amp:.4,attack:.04,release:.12});
-   let x=t+1.15;for(let i=0;i<3;i++){note(lab,d,x,{dur:.38,contour:[f,f*1.02,f*.97],amp:.33,attack:.06,release:.1});x+=.55;}return x-t;}},
+ dove:{dist:[25,90],make(){return {f:R(370,410),hi:R(1.55,1.7)};},
+  // Mourning dove, redone in round 2 after research: "cooOOoo-wooo-woo-woooo".
+  // One slurred opening element climbs to the high note and falls back (650
+  // Hz against 390 in the one measured song: about 1.65x), then three steady
+  // low coos, the last the longest -- about 3.4 s in all (timings PLACED).
+  // The coo is made with the bill shut through an inflated throat, which
+  // filters the harmonics away (Fletcher et al., on the ring dove): a
+  // near-pure tone with soft onsets and a breath of air -- round 1's notes
+  // were four separate short whistles.
+  sing(lab,d,t,b){
+   const f=b.f*J(1,.015),hi=f*b.hi;
+   const el=(x,dur,c,a,att=.07,rel=.12)=>{note(lab,d,x,{dur,contour:c,amp:a,attack:att,release:rel,harm:.03});
+    hiss(lab,d,x,{type:'bandpass',f:c[c.length>>1],q:8,attack:att,hold:Math.max(0,dur-att-rel),dur:rel*2,amp:a*.05});};
+   el(t,.85,[f*.95,f*1.02,hi*.98,hi,hi*.97,f*1.15,f*1.02],.38,.06,.18);
+   el(t+1.15,.62,[f*.97,f,f,f*.98,f*.96],.36);
+   el(t+1.95,.42,[f*.97,f,f*.98],.33);
+   el(t+2.55,.8,[f*.97,f,f,f*.99,f*.95],.34,.07,.2);
+   return 3.4;}},
  crow:{dist:[40,160],make(){return {f:R(520,680),n:[2,3,3,4,5]};},
   sing(lab,d,t,b){const n=pick(b.n);let x=t;for(let i=0;i<n;i++){const f=b.f*J(1,.04);rasp(lab,d,x,{dur:R(.25,.38),contour:[f*.95,f*1.05,f*.85],amp:.32,formants:[[1400,2.5,1],[2700,3,.5]],rough:R(60,80),depth:.7,breath:.25});x+=R(.42,.6);}return x-t;}},
  raven:{dist:[50,200],make(){return {f:R(260,340)};},
@@ -482,9 +534,6 @@ const BIRD={
   sing(lab,d,t,b){const f=b.f;const seq=[[0,.3,1],[.55,.16,.9],[.75,.45,1.05],[1.45,.35,1],[2.0,.35,.97]];for(const [dt,dur,m]of seq)note(lab,d,t+dt,{dur,contour:[f*m*.97,f*m,f*m*.96],amp:.4,attack:.06,release:.1});return 2.4;}},
  woodpecker:{dist:[40,150],make(){return {rate:R(15,22),n:R(14,24)|0,f:R(900,1300)};},
   sing(lab,d,t,b){let x=t;for(let i=0;i<b.n;i++){ring(lab,d,x,[[b.f,.006,1],[b.f*2.1,.004,.5]],{amp:.4*(1-.4*i/b.n)});x+=1/(b.rate*(1-.2*i/b.n));}return x-t;}},
- skylark:{dist:[60,160],make(){return {lo:R(2800,3400),hi:R(5200,6200)};},
-  // A long, high, unbroken warble from somewhere overhead.
-  sing(lab,d,t,b){const len=R(8,20);let x=t;while(x<t+len){const dur=R(.03,.07),a=R(b.lo,b.hi),c=R(b.lo,b.hi);note(lab,d,x,{dur,contour:[a,(a+c)/2*J(1,.1),c],amp:.22*R(.6,1),harm:.1});x+=dur+R(.008,.035);}return len;}},
  geese:{dist:[90,220],make(){return {};},
   // A skein passing over: many honks, crossing from one side to the other.
   flock:true},
@@ -496,22 +545,62 @@ function contourSyl(base){
 }
 function phrase(n,len){const p=[];let i=0;while(p.length<len){const s=Math.random()<.6?i%n:Math.random()*n|0,r=1+(Math.random()*3|0);for(let j=0;j<r;j++)p.push(s);i++;}return p.slice(0,len);}
 
+// ---- night insects, round 2 (RESEARCH, round 2: the owner heard round 1 as
+// "really close but not quite right").
+//
+// Tree crickets, after the snowy tree cricket: a chirp is 8 pulses grouped
+// 2+3+3, the last of each group longer, at about 52 pulses a second (the 2,3,3
+// grouping and the rate are measured on Riley's tree cricket; the 8 pulses on
+// the snowy). The carrier rises with temperature: 3.0 kHz at 15 C to 4.6 kHz
+// at 32 C in Oecanthus nigricornis, borrowed for the whole chorus. They chirp
+// TOGETHER -- Walker (1969): neighbouring snowy tree crickets synchronise,
+// leader and follower changing places -- at Dolbear's rate.
+//
+// Field crickets on warm nights (18 C and up), over the top: 3 pulses (2-4)
+// at a 30 ms period near 4.5-5 kHz, each on its own irregular clock.
+const TREE_PULSES=[[0,12],[19,15],[57,12],[76,12],[95,16],[133,12],[152,12],[171,16]];
+export const treeCricketHz=c=>clamp(3000+94*(c-15),2500,4800);
+function chirp(lab,dest,t,f,pulses,amp){
+ const {ctx}=lab,o=ctx.createOscillator(),h=ctx.createOscillator(),hg=ctx.createGain(),g=ctx.createGain();
+ hg.gain.value=.06;g.gain.setValueAtTime(0,t);
+ // Each pulse is one closing stroke of the wings: a tone that sags a little
+ // as the stroke slows, with a faint second harmonic.
+ for(const [s,l]of pulses){const x=t+s/1000,e=x+l/1000;
+  g.gain.setValueAtTime(0,x);g.gain.linearRampToValueAtTime(amp,x+.003);g.gain.setValueAtTime(amp,e-.004);g.gain.linearRampToValueAtTime(0,e);
+  o.frequency.setValueAtTime(f*1.01,x);o.frequency.linearRampToValueAtTime(f*.985,e);h.frequency.setValueAtTime(2*f*1.01,x);h.frequency.linearRampToValueAtTime(2*f*.985,e);}
+ const last=pulses[pulses.length-1],end=t+(last[0]+last[1])/1000+.01;
+ o.connect(g);h.connect(hg);hg.connect(g);g.connect(dest);o.start(t);h.start(t);o.stop(end);h.stop(end);lab.track([o,h,hg,g],end+.1);
+}
+
 // ---- the ambience engine. Everything is scheduled ahead of the audio clock
 // by schedule(until): live, a timer calls it every 200 ms looking 1.5 s ahead;
 // offline, one call schedules a whole render.
-export function createAmbience(lab,{onEvent=()=>{}}={}){
+// onSong, if given, hears every bird song as {sp, t, end}: check.mjs uses it
+// to prove no two ever overlap.
+export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
  const {ctx}=lab,bus=ctx.createGain();bus.gain.value=0;bus.connect(lab.master);
+ // Water is heard only near water (owner, round 2). Every water sound runs
+ // through this one gain, set from the distance to the nearest water: full
+ // within 25 m, falling as 1/distance, gone by 300 m (PLACED). In the game the
+ // distance comes from the ball (or camera) and the course's water bodies.
+ const waterBus=ctx.createGain();waterBus.gain.value=0;waterBus.connect(bus);
+ let waterDist=40;
+ const proximity=d=>d>=300?0:Math.min(1,25/Math.max(d,25))*(1-Math.pow(d/300,2));
  // The wind is set in mph (windMph), not through the mix: one number, one meaning.
  const mix={birds:1,water:1,planes:1,insects:1};
- let S=null,night=false,windMph=null,cursor=0,running=false,layers=[],streams=[],queue=[],birds=[],crickets=[],gust=0,flutter=0,started=0;
+ let S=null,night=false,windMph=null,cursor=0,running=false,layers=[],streams=[],queue=[],birds=[],gust=0,flutter=0,started=0;
+ // One bird at a time (owner, round 2): a song starts only after the last one
+ // has ended, so no two birds -- and no bird with itself -- ever overlap.
+ let birdUntil=0;
+ let chorus=null,fields=[];
  const verbSend=ctx.createGain();verbSend.gain.value=0;bus.connect(verbSend);verbSend.connect(lab.verbIn);
  const log=(t,text)=>onEvent({t:t-started,text});
  const at=(t,fn)=>{queue.push([t,fn]);};
- const loop=(type,f,q,gain,pan=0,extra)=>{
+ const loop=(type,f,q,gain,pan=0,extra,to=bus)=>{
   const s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain(),p=ctx.createStereoPanner();
   s.buffer=lab.NOISE;s.loop=true;fl.type=type;fl.frequency.value=f;fl.Q.value=q;g.gain.value=gain;p.pan.value=pan;
   let n=fl;if(extra){const e=ctx.createBiquadFilter();e.type=extra[0];e.frequency.value=extra[1];e.Q.value=.5;fl.connect(e);n=e;}
-  s.connect(fl);n.connect(g);g.connect(p);p.connect(bus);s.start(ctx.currentTime,R(0,11));
+  s.connect(fl);n.connect(g);g.connect(p);p.connect(to);s.start(ctx.currentTime,R(0,11));
   const L={s,fl,g,p};layers.push(L);return L;};
  const windNow=()=>windMph??S.wind;
  const leafOn=()=>!['grass','sparse','bare'].includes(S.trees);
@@ -524,12 +613,13 @@ export function createAmbience(lab,{onEvent=()=>{}}={}){
   const leaf={broad:['highpass',1500,['lowpass',6500]],conifer:['highpass',2500,['lowpass',9500]],palm:['highpass',1200,['lowpass',5000]],dry:['highpass',2200,['lowpass',8000]],grass:['highpass',3500,['lowpass',9000]],sparse:['highpass',3000,['lowpass',8000]],bare:['highpass',2600,['lowpass',7000]]}[S.trees];
   W.leafL=loop(leaf[0],leaf[1],.5,0,-.55,leaf[2]);W.leafR=loop(leaf[0],leaf[1]*1.15,.5,0,.5,leaf[2]);
   layers.W=W;
-  // Water beds.
+  // Water beds, all through the water bus.
   const w=S.water;
-  if(w.stream){layers.stream=loop('bandpass',1100,.4,0,.35);layers.streamBus=place(lab,{pan:.35,dist:22,wet:.05,to:bus});}
-  if(w.surf){layers.surf=loop('lowpass',350,.6,0,-.3);}
-  if(w.lake)layers.lakeBus=place(lab,{pan:-.4,dist:30,wet:.05,to:bus});
+  if(w.stream){layers.stream=loop('bandpass',1100,.4,0,.35,null,waterBus);layers.streamBus=place(lab,{pan:.35,dist:22,wet:.05,to:waterBus});}
+  if(w.surf){layers.surf=loop('lowpass',350,.6,0,-.3,null,waterBus);}
+  if(w.lake)layers.lakeBus=place(lab,{pan:-.4,dist:30,wet:.05,to:waterBus});
   verbSend.gain.value=S.verb;
+  waterBus.gain.setTargetAtTime(proximity(waterDist),ctx.currentTime,.3);
  }
  function windStep(t,dt){
   // Ornstein-Uhlenbeck gusts: wander about the set wind with gusts lasting
@@ -549,44 +639,57 @@ export function createAmbience(lab,{onEvent=()=>{}}={}){
   if(layers.stream)layers.stream.g.gain.setTargetAtTime(.012*S.water.stream*mix.water,t,.5);
   if(layers.surf)layers.surf.g.gain.setTargetAtTime(.07*S.water.surf*mix.water,t,.5);
  }
+ // A bird's songs go through here. If another song is still going, this one
+ // waits for it; a bout continues only after its own song has ended.
+ function birdSong(t,b,left,first){
+  if(t<birdUntil+.6){at(birdUntil+R(1,3),tt=>birdSong(tt,b,left,first));return;}
+  const d=place(lab,{pan:b.pan*J(1,.05),dist:b.dist,wet:.15,to:bus,until:t+30});
+  birdUntil=t+BIRD[b.sp].sing(lab,d,t,b.song);onSong({sp:b.sp,t,end:birdUntil});
+  if(first)log(t,`${first}${left>0?`, ${left+1} songs`:''}`);
+  if(left>0)at(birdUntil+R(4,10),tt=>birdSong(tt,b,left-1));
+ }
  // Each stream is a Poisson process. A rate of zero parks it at the cursor so
  // it starts from "now" when turned up.
  const stream=(name,rate,fire)=>streams.push({name,rate,fire,next:0});
  function makeStreams(){
   streams=[];
-  stream('bird',()=>night||S.dusk?(S.birds.owl||1)*.02*mix.birds:.13*mix.birds,t=>{
+  // About one bird every 25 s by day at the default mix (round 1 was one
+  // every 8 s and the owner found it too busy). A bird that comes due while
+  // another is singing is dropped, not queued, so birds never pile up.
+  stream('bird',()=>night||S.dusk?(S.birds.owl||1)*.02*mix.birds:.04*mix.birds,t=>{
+   if(t<birdUntil+1)return;
    const sp=night?pickWeighted({owl:2}):pickWeighted(S.dusk?S.birds:Object.fromEntries(Object.entries(S.birds).filter(([k])=>k!=='owl')));
    if(!sp)return;
    if(BIRD[sp].flock){geese(t);return;}
    let b=birds.find(b=>b.sp===sp&&Math.random()<.7);
    const pop=3+Math.round(2*mix.birds);
    if(!b||Math.random()<.15){b={sp,song:BIRD[sp].make(),pan:R(-.95,.95),dist:R(...BIRD[sp].dist)};birds.push(b);if(birds.length>pop)birds.shift();}
-   // A bout: the same bird sings a few times, seconds apart.
-   const n=sp==='skylark'?1:1+(Math.random()*4|0);let x=t;
-   for(let i=0;i<n;i++){const xx=x;at(xx,()=>{const d=place(lab,{pan:b.pan*J(1,.05),dist:b.dist,wet:.15,to:bus,until:xx+25});BIRD[sp].sing(lab,d,xx,b.song);});x+=R(2.5,8);}
-   log(t,`${sp} ${side(b.pan)}, ${b.dist|0} m${n>1?`, ${n} songs`:''}`);
+   // A bout: the same bird sings once to three times, seconds apart.
+   birdSong(t,b,Math.random()*3|0,`${sp} ${side(b.pan)}, ${b.dist|0} m`);
   });
   stream('leaves',()=>leafOn()&&windNow()>0?3:0,t=>{
    const g=gust/12,type=S.trees;if(g<.15)return;
    const f={broad:3000,conifer:5200,palm:2000,dry:4500}[type],rate={broad:220,conifer:350,palm:60,dry:300}[type]*g;
    crackle(lab,place(lab,{pan:R(-.8,.8),dist:R(8,25),wet:.1,to:bus,until:t+2}),t,{dur:R(.2,.6),rate,f,q:.6,amp:.06*Math.min(g,2),tick:type==='palm'?.006:.002,fade:false});
   });
-  stream('stream',()=>S.water.stream?55*S.water.stream*mix.water:0,t=>{
+  // Water events are only scheduled while water can be heard.
+  const near=()=>proximity(waterDist)>0;
+  stream('stream',()=>S.water.stream&&near()?55*S.water.stream*mix.water:0,t=>{
    // Babble: bubbles of 0.6-6 mm radius (about 540 Hz to 5.4 kHz).
    bubble(lab,layers.streamBus,t,Math.exp(R(Math.log(.0008),Math.log(.006))),.05*Math.exp(gauss()*.5));
   });
-  stream('lap',()=>S.water.lake?.45*S.water.lake*mix.water:0,t=>{
+  stream('lap',()=>S.water.lake&&near()?.45*S.water.lake*mix.water:0,t=>{
    hiss(lab,layers.lakeBus,t,{type:'lowpass',f:500,f2:1400,q:.5,attack:R(.05,.12),dur:R(.18,.35),amp:R(.12,.3)});
    for(let i=0;i<(Math.random()*3|0);i++)bubble(lab,layers.lakeBus,t+R(.05,.3),R(.001,.003),.1);
   });
-  stream('surf',()=>S.water.surf?S.water.surf*mix.water/10:0,t=>wave(t));
+  stream('surf',()=>S.water.surf&&near()?S.water.surf*mix.water/10:0,t=>wave(t));
   stream('plane',()=>{const p=S.planes,w=(p.jet||0)+(p.prop||0);return night?w*mix.planes/600:w*mix.planes/240;},t=>flyover(t,pickWeighted(S.planes)));
   stream('cicada',()=>!night&&S.insects.cicada&&S.tempC>=24?S.insects.cicada*mix.insects/60:0,t=>cicada(t));
  }
  function side(p){return p<-.33?'left':p>.33?'right':'ahead';}
  function wave(t){
   // A swell builds, breaks and washes out; 8-16 s apart on average.
-  const d=R(90,200),dest=place(lab,{pan:R(-.6,.2),dist:d,wet:.1,to:bus,until:t+12}),build=R(1.2,2.6),fall=R(3,5),peak=R(.25,.5);
+  const d=R(90,200),dest=place(lab,{pan:R(-.6,.2),dist:d,wet:.1,to:waterBus,until:t+12}),build=R(1.2,2.6),fall=R(3,5),peak=R(.25,.5);
   const s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=lab.NOISE;fl.type='lowpass';
   fl.frequency.setValueAtTime(250,t);fl.frequency.exponentialRampToValueAtTime(R(1600,2600),t+build);fl.frequency.exponentialRampToValueAtTime(500,t+build+fall);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak*.4,t+build*.8);g.gain.linearRampToValueAtTime(peak,t+build);g.gain.setTargetAtTime(0,t+build,fall/3);
@@ -595,9 +698,14 @@ export function createAmbience(lab,{onEvent=()=>{}}={}){
   crackle(lab,dest,t+build+.1,{dur:fall*.8,rate:700,f:5000,q:.5,amp:peak*.25,tick:.002});
  }
  function geese(t){
-  const dur=R(12,20),dir=Math.random()<.5?-1:1,n=R(18,34)|0,base=R(380,460);
-  for(let i=0;i<n;i++){const u=Math.random(),x=t+u*dur,f=base*R(.9,1.15),near=1-Math.abs(u-.5)*2;
-   at(x,()=>rasp(lab,place(lab,{pan:dir*(u*1.8-.9),dist:220-120*near,wet:.12,to:bus,until:x+2}),x,{dur:R(.14,.24),contour:[f*.9,f*1.1,f],amp:.4,formants:[[1000,3,1],[2400,4,.5]],rough:R(25,40),depth:.4,breath:.15,attack:.01,release:.04}));}
+  // A skein passing over. Round 2: one bird at a time applies here too, so
+  // the honks come one after another, never on top of each other.
+  if(t<birdUntil+.6){at(birdUntil+R(1,3),geese);return;}
+  const dur=R(12,20),dir=Math.random()<.5?-1:1,base=R(380,460);let x=t;
+  while(x<t+dur){const u=(x-t)/dur,f=base*R(.9,1.15),near=1-Math.abs(u-.5)*2,h=R(.14,.24),xx=x;
+   at(xx,()=>rasp(lab,place(lab,{pan:dir*(u*1.8-.9),dist:220-120*near,wet:.12,to:bus,until:xx+2}),xx,{dur:h,contour:[f*.9,f*1.1,f],amp:.4,formants:[[1000,3,1],[2400,4,.5]],rough:R(25,40),depth:.4,breath:.15,attack:.01,release:.04}));
+   x+=h+R(.12,.7);}
+  birdUntil=x;onSong({sp:'geese',t,end:x});
   log(t,`geese passing over, ${dir<0?'right to left':'left to right'}`);
  }
  function cicada(t){
@@ -607,7 +715,7 @@ export function createAmbience(lab,{onEvent=()=>{}}={}){
   am.gain.value=.5;lfo.type='square';lfo.frequency.value=R(160,260);ld.gain.value=.5;lfo.connect(ld);ld.connect(am.gain);
   const peak=R(.05,.1);env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(peak,t+len*.35);env.gain.setValueAtTime(peak,t+len*.7);env.gain.linearRampToValueAtTime(0,t+len);
   s.connect(bp);bp.connect(am);am.connect(env);env.connect(d);s.start(t,R(0,8));s.stop(t+len+.05);lfo.start(t);lfo.stop(t+len+.05);lab.track([s,bp,am,env,lfo,ld],t+len+.2);
-  log(t,`cicada ${side(0)} (${len|0} s swell)`);
+  log(t,`cicada (${len|0} s swell)`);
  }
  function flyover(t,kind){
   // A plane passes: geometry first, then sound. Positions are computed at
@@ -632,54 +740,67 @@ export function createAmbience(lab,{onEvent=()=>{}}={}){
   src.connect(air);src.connect(refl);refl.connect(rlp);rlp.connect(rg);rg.connect(air);air.connect(dest);dest.connect(p);p.connect(bus);
   if(jet){const s=ctx.createBufferSource(),f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter();s.buffer=lab.NOISE;s.loop=true;f1.type='lowpass';f1.frequency.value=900;f1.Q.value=.4;f2.type='highshelf';f2.frequency.value=2000;f2.gain.value=-6;s.connect(f1);f1.connect(f2);f2.connect(src);s.start(t0,R(0,11));s.stop(t0+T+.1);nodes.push(s,f1,f2);}
   else{const f0=R(75,95),mk=(type,m,l)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueCurveAtTime(dop.map(d=>d*f0*m),t0,T);g.gain.value=l;o.connect(g);g.connect(src);o.start(t0);o.stop(t0+T+.1);nodes.push(o,g);};
-   const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1400;lp.Q.value=.7;
    mk('sawtooth',1,.5);mk('square',.5,.25);mk('sawtooth',2.02,.12);
-   const s=ctx.createBufferSource(),nf=ctx.createBiquadFilter(),ng=ctx.createGain();s.buffer=lab.NOISE;s.loop=true;nf.type='bandpass';nf.frequency.value=600;nf.Q.value=.6;ng.gain.value=.4;s.connect(nf);nf.connect(ng);ng.connect(src);s.start(t0,R(0,11));s.stop(t0+T+.1);nodes.push(s,nf,ng,lp);}
+   const s=ctx.createBufferSource(),nf=ctx.createBiquadFilter(),ng=ctx.createGain();s.buffer=lab.NOISE;s.loop=true;nf.type='bandpass';nf.frequency.value=600;nf.Q.value=.6;ng.gain.value=.4;s.connect(nf);nf.connect(ng);ng.connect(src);s.start(t0,R(0,11));s.stop(t0+T+.1);nodes.push(s,nf,ng);}
   lab.track(nodes,t0+T+.5);
   log(t,`${jet?'jet':'small prop plane'} ${off<0?'to the left':'to the right'}, ${Math.round(H)} m up, ${Math.round(T)} s`);
  }
  function scheduleCrickets(until){
-  const on=night&&mix.insects>0,rate=dolbear(S.tempC)/60;
-  if(!on||rate<=0){crickets.length=0;return;}
-  const want=Math.round(3+3*mix.insects);
-  while(crickets.length<want)crickets.push({f:R(2800,4600),rate:rate*J(1,.06),next:Math.max(cursor,ctx.currentTime)+R(0,2),d:null,pan:R(-.9,.9),dist:R(6,40),pulses:3+(Math.random()*2|0)});
-  crickets.length=want;
-  for(const c of crickets){c.d=c.d||place(lab,{pan:c.pan,dist:c.dist,wet:.08,to:bus});
-   while(c.next<until){const o=ctx.createOscillator(),g=ctx.createGain(),t=c.next;o.frequency.value=c.f;g.gain.setValueAtTime(0,t);
-    for(let k=0;k<c.pulses;k++){const x=t+k*.033;g.gain.setValueAtTime(0,x);g.gain.linearRampToValueAtTime(.06,x+.004);g.gain.setValueAtTime(.06,x+.014);g.gain.linearRampToValueAtTime(0,x+.018);}
-    o.connect(g);g.connect(c.d);o.start(t);o.stop(t+c.pulses*.033+.02);lab.track([o,g],t+.3);
-    // Chirps drift a little; a cricket now and then pauses.
-    c.next+=1/c.rate*J(1,.04)+(Math.random()<.02?R(1,5):0);}}
+  const rate=dolbear(S.tempC)/60,on=night&&mix.insects>0&&rate>0;
+  if(!on){chorus=null;fields=[];return;}
+  const from=Math.max(cursor,ctx.currentTime);
+  if(!chorus){
+   const n=Math.round(3+3*mix.insects),f=treeCricketHz(S.tempC);
+   chorus={next:from+R(.2,1),n:0,members:Array.from({length:n},()=>({f:f*J(1,.025),lag:0,d:place(lab,{pan:R(-.9,.9),dist:R(8,45),wet:.08,to:bus})}))};
+   fields=S.tempC>=18?Array.from({length:mix.insects>1.2?2:1},()=>({f:R(4500,5000),rate:R(1.2,2.5),next:from+R(0,3),d:place(lab,{pan:R(-.8,.8),dist:R(5,25),wet:.06,to:bus})})):[];
+  }
+  while(chorus.next<until){
+   // Every ~20 chirps the order shuffles: a new leader, the rest within a few
+   // tens of milliseconds of it.
+   if(chorus.n++%20===0)for(const m of chorus.members)m.lag=clamp(gauss()*.012,-.025,.025);
+   for(const m of chorus.members)if(Math.random()<.95)chirp(lab,m.d,chorus.next+.03+m.lag+gauss()*.003,m.f,TREE_PULSES,.045);
+   chorus.next+=1/rate*J(1,.03);
+  }
+  for(const c of fields)while(c.next<until){
+   const n=Math.random()<.7?3:Math.random()<.5?2:4;
+   chirp(lab,c.d,c.next,c.f*J(1,.01),Array.from({length:n},(_,k)=>[k*30,18]),.06);
+   c.next+=1/c.rate*J(1,.15)+(Math.random()<.03?R(2,8):0);
+  }
  }
  function schedule(until){
   if(!running)return;
   if(cursor<ctx.currentTime)cursor=ctx.currentTime;
   for(;cursor<until;cursor+=.25)windStep(cursor,.25);
   for(const s of streams){const r=s.rate();if(r<=0){s.next=until;continue;}if(s.next<ctx.currentTime)s.next=ctx.currentTime+wait(r);while(s.next<until){s.fire(s.next);s.next+=wait(r);}}
-  queue.sort((a,b)=>a[0]-b[0]);while(queue.length&&queue[0][0]<until){const [t,f]=queue.shift();f(t);}
+  // Items can queue more items (the next song of a bout), so re-sort each time.
+  for(;;){queue.sort((a,b)=>a[0]-b[0]);if(!queue.length||queue[0][0]>=until)break;const [t,f]=queue.shift();f(t);}
   scheduleCrickets(until);
   lab.sweep();
  }
  let timer=null;
  const api={bus,mix,
   get scene(){return S;},
-  start(sceneName,{live=true}={}){api.stop(true);S=SCENES[sceneName];running=true;gust=windNow();flutter=0;birds=[];crickets=[];queue=[];
+  start(sceneName,{live=true}={}){api.stop(true);S=SCENES[sceneName];running=true;gust=windNow();flutter=0;birds=[];queue=[];birdUntil=0;chorus=null;fields=[];
    started=cursor=ctx.currentTime;build();makeStreams();
    bus.gain.cancelScheduledValues(ctx.currentTime);bus.gain.setValueAtTime(0,ctx.currentTime);bus.gain.linearRampToValueAtTime(1,ctx.currentTime+2);
    if(live){timer=setInterval(()=>schedule(ctx.currentTime+1.5),200);schedule(ctx.currentTime+1.5);}},
-  stop(quick){running=false;clearInterval(timer);timer=null;const now=ctx.currentTime,old=layers.slice(),oldBus=[layers.streamBus,layers.lakeBus];
+  stop(quick){running=false;clearInterval(timer);timer=null;const now=ctx.currentTime,old=layers.slice(),oldBus=[layers.streamBus,layers.lakeBus,...(chorus?.members||[]).map(m=>m.d),...fields.map(c=>c.d)];
    bus.gain.cancelScheduledValues(now);bus.gain.setValueAtTime(bus.gain.value,now);bus.gain.linearRampToValueAtTime(0,now+(quick?.05:1));
    for(const L of old){try{L.s.stop(now+(quick?.06:1.1));}catch{}}
-   for(const c of crickets)c.d=null;crickets=[];layers=[];
+   chorus=null;fields=[];layers=[];
    lab.track(old.flatMap(L=>[L.s,L.fl,L.g,L.p]).concat(oldBus.filter(Boolean)),now+1.3);},
   // Offline renders schedule everything up front.
   schedule,
-  set(o){if('night'in o)night=o.night;if('wind'in o)windMph=o.wind;for(const k of Object.keys(mix))if(k in o)mix[k]=o[k];},
+  set(o){if('night'in o)night=o.night;if('wind'in o)windMph=o.wind;
+   if('waterDist'in o){waterDist=o.waterDist;waterBus.gain.setTargetAtTime(proximity(waterDist),ctx.currentTime,.5);}
+   for(const k of Object.keys(mix))if(k in o)mix[k]=o[k];
+   if(('insects'in o||'night'in o)&&chorus){lab.track(chorus.members.map(m=>m.d).concat(fields.map(c=>c.d)),ctx.currentTime+2);chorus=null;fields=[];}},
   get night(){return night;},
   get wind(){return windMph??S?.wind;},
   get gust(){return gust;},
-  trigger(kind){const t=ctx.currentTime+.1;if(kind==='jet'||kind==='prop')flyover(t,kind);else if(kind==='geese')geese(t);else if(kind==='wave'&&S?.water.surf)wave(t);else if(kind==='cicada')cicada(t);
-   else if(BIRD[kind]){const b={sp:kind,song:BIRD[kind].make(),pan:R(-.8,.8),dist:R(...BIRD[kind].dist)};BIRD[kind].sing(lab,place(lab,{pan:b.pan,dist:b.dist,wet:.15,to:bus,until:t+25}),t,b.song);log(t,`${kind} ${side(b.pan)}, ${b.dist|0} m (on request)`);}},
+  get waterLevel(){return proximity(waterDist);},
+  trigger(kind){const t=ctx.currentTime+.3;if(kind==='jet'||kind==='prop')flyover(t,kind);else if(kind==='geese')at(t,geese);else if(kind==='wave'&&S?.water.surf)wave(t);else if(kind==='cicada')cicada(t);
+   else if(BIRD[kind]){const b={sp:kind,song:BIRD[kind].make(),pan:R(-.8,.8),dist:R(...BIRD[kind].dist)};at(t,tt=>birdSong(tt,b,0,`${kind} ${side(b.pan)}, ${b.dist|0} m (on request)`));}},
  };
  return api;
 }

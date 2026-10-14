@@ -51,6 +51,20 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <div class="note"><p><b>Every sound on this page is made live by the browser.</b> There are no recordings, so there is nothing to license or attribute, and the game file barely grows. Each play is new: strikes vary a little every time, and the background sounds are random processes (gusts, birds, bubbles, passing planes) rather than a loop. Leave a scene running for ten minutes and nothing will come round again.</p>
 <p>Use headphones or decent speakers; a laptop speaker loses the low thumps. For each sound, pick the take (A, B or C) that is closest, nudge the sliders under <i>Adjust</i>, and type a note. <b>Copy my notes</b> (bottom right) gathers every change and note into one block to paste back to me. Your settings stay in this browser between visits.</p></div>
 
+<div class="note q"><p><b>Round 2.</b> Your round-1 sliders are now built into the sounds, so every slider starts at 100% again (100% means "as you left it"); your old notes are kept with me. Where you tuned a sound, <b>take A is your setting</b>. On the turf sounds, B carries every slider you moved half as far again in the same direction, and C goes half way back. What changed from your notes:</p>
+<ul>
+<li><b>Swing whoosh</b>: no longer white noise; a darker "vwoosh" through a narrow band that rises into the strike and falls after it.</li>
+<li><b>Driver</b>: your note asked for "a higher pitch around 3500 Hz", but your Pitch slider at its top put the main ring near 6,600 Hz. A is your sliders, B is your note taken literally (ring at 3,500 Hz), C is crack-first. Tell me which you meant.</li>
+<li><b>Iron</b>: rebuilt with no metal ring at all, just a hard crack and the ball's own sound, then the divot.</li>
+<li><b>Tree trunk</b>: a hard crack, like a solid pine board.</li>
+<li><b>Cup</b>: redone after research. It is a plastic liner at least 4 inches deep, so now you hear a dull "tok" and a rattle of shrinking bounces. Round 1 was a bell.</li>
+<li><b>Birds</b>: never more than one at a time, and about a third as often. The skylark is gone.</li>
+<li><b>Dove</b> and <b>crickets</b>: rebuilt from research (section 7).</li>
+<li><b>Water</b>: heard only near water. Try the new <i>Distance to water</i> slider.</li>
+<li><b>Sliders</b> you pushed to their ends now reach further.</li>
+<li><b>CC0 recordings</b> to compare are in section 6.</li>
+</ul></div>
+
 <div class="bar">
  <button class="act" id="unlock">Start sound</button>
  <label class="sl" style="min-width:200px"><span>Master volume</span><span id="mvv">80%</span><input id="mv" type="range" min="0" max="1.2" step=".01" value=".8"></label>
@@ -62,11 +76,12 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <div class="amb">
  <div class="card">
   <div class="row"><select id="scene"></select><button class="act" id="ambPlay">Play</button><button class="sec" id="ambStop">Stop</button><label><input type="checkbox" id="night"> Night</label></div>
-  <div class="row muted" style="font-size:13px"><span>Playing for <b id="elapsed">0:00</b></span><span>Gust now: <b id="gustNow">-</b></span></div>
+  <label><b>Your notes on the ambience</b><textarea data-note="ambience" placeholder="Which scene, what to change -- type as you listen"></textarea></label>
+  <div class="row muted" style="font-size:13px"><span>Playing for <b id="elapsed">0:00</b></span><span>Gust now: <b id="gustNow">-</b></span><span>Water heard at: <b id="waterNow">-</b></span></div>
   <label class="sl"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="30" step="1"></label>
+  <label class="sl"><span>Distance to water (in the game: from the ball)</span><span id="waterv"></span><input id="waterDist" type="range" min="0" max="350" step="5"></label>
   <div id="mixes"></div>
-  <div><small>Bring one in now:</small><div class="row" id="triggers"></div></div>
-  <textarea data-note="ambience" placeholder="Notes on the ambience (which scene, what to change)"></textarea>
+  <div><small>Bring one in now (it waits its turn if a bird is singing):</small><div class="row" id="triggers"></div></div>
  </div>
  <div class="card"><h3>What you are hearing</h3><small>Each event as it starts. Wind, water and leaves run underneath all the time.</small><ul id="log"></ul></div>
 </div>
@@ -85,21 +100,30 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <h2>5. Extras (not asked for)</h2>
 <div class="grid" id="extra"></div>
 
-<h2>6. Questions for you</h2>
-<div class="note q"><p><b>With a launch monitor, you already hear your real strike.</b> If the game plays a club sound too, it lands a fraction of a second later, once the monitor has sent the shot. That will sound like an echo. My suggestion: club sounds only for keyboard shots, and one setting to turn them on for monitor shots. Landings, trees and ambience would play in both modes.</p></div>
-<div class="note q"><p><b>Should any sound be a recording instead?</b> If a synthesised sound will not come right after a round of notes, I can try a CC0 (public domain) recording for that one slot instead. It would get the proper credit in ATTRIBUTION.md and add a few kilobytes to the game. I would ask before downloading anything.</p></div>
-<div class="note q"><p><b>The extras.</b> I added the ball dropping into the cup because it is the most golf sound there is. Also possible: the ball rolling on a green, a flagstick hit on its own, a ball hitting a house, and a soft crowd reaction. Say which, if any.</p></div>
+<h2>6. CC0 recordings to compare</h2>
+<div class="note"><p>Public-domain (CC0) recordings on Freesound that could replace a synthesised sound. I checked each licence on the sound's own page on <span id="cc0date"></span>. Pressing play streams Freesound's preview (lower quality than the real file); nothing is downloaded into the project. If you pick one, it gets credited in ATTRIBUTION.md by title, author and link, even though CC0 does not require it.</p>
+<p><b>What recordings would cost.</b> One-off sounds (strikes, putts, the cup, splashes) are small: a few tens of kilobytes each, and rotating three or four takes with a slight random pitch change hides the repeat. Long background recordings are the opposite of what you asked for. A 2-minute track loops audibly every 2 minutes, adds about 2 MB to the single-file game per track, and carries whatever else was there: traffic, people, the wrong birds. The likely best mix is <b>recorded strikes and cup where they beat the synth, synthesised ambience</b>.</p></div>
+<div id="cc0"></div>
 
-<h2>7. How each sound is made</h2>
+<h2>7. Questions for you</h2>
+<div class="note q"><p><b>Driver pitch:</b> which did you mean, a ring near 3,500 Hz (take B) or your slider setting near 6,600 Hz (take A)?</p></div>
+<div class="note q"><p><b>With a launch monitor, you already hear your real strike.</b> If the game plays a club sound too, it lands a fraction of a second later, once the monitor has sent the shot. That will sound like an echo. My suggestion: club sounds only for keyboard shots, and one setting to turn them on for monitor shots. Landings, trees and ambience would play in both modes.</p></div>
+<div class="note q"><p><b>The extras.</b> The cup drop is redone. Also possible: the ball rolling on a green, a flagstick hit on its own, a ball hitting a house, and a soft crowd reaction. Say which, if any.</p></div>
+
+<h2>8. How each sound is made</h2>
 <table><thead><tr><th>Sound</th><th>Made from</th><th>Where the numbers come from</th></tr></thead><tbody>
 <tr><td>Driver</td><td>Ringing tones (the head's vibrations), a short crack, the ball's own tick and a low thump</td><td>Published: a titanium driver strike centres near 4-4.5 kHz and lasts under 0.2 s; the ball rings near 1.5 kHz. The exact set of tones is set by ear.</td></tr>
-<tr><td>Irons, wedges</td><td>Shorter, damped tones plus the divot (thump, tearing grass, clods)</td><td>Set by ear: a solid head rings far shorter than a hollow one.</td></tr>
+<tr><td>Swing</td><td>Darker noise through a narrow band whose pitch rises into the strike and falls after</td><td>Set by ear (round 2: round 1's wide band sounded like hiss).</td></tr>
+<tr><td>Irons, wedges</td><td>A hard, very short crack and the ball's own sound, then the divot (thump, tearing grass, clods); no metal ring</td><td>From your round-1 note; set by ear.</td></tr>
+<tr><td>Tree trunk</td><td>A hard crack and short, bright wooden tones, like a pine board</td><td>From your round-1 note; set by ear.</td></tr>
+<tr><td>Cup</td><td>A dull plastic "tok", then a rattle of shrinking bounces, coloured by the hollow tube</td><td>Hole 4.25 in across and at least 4 in deep, with a moulded plastic liner (USGA, liner patents). The ball drops about 0.1 m. The tube's hollow note is near 640 Hz, worked out from its depth.</td></tr>
 <tr><td>Putter</td><td>Short tones split into putter (below 2 kHz) and ball (2-4 kHz)</td><td>Published: Barrass, Roberts and Jones (2006).</td></tr>
 <tr><td>Turf landings</td><td>A falling-pitch thump, the ball's tick, filtered noise for grass</td><td>Set by ear.</td></tr>
 <tr><td>Water</td><td>Slap, spray, a rising "plunk", then dozens of bubbles</td><td>Bubble pitch from bubble size (Minnaert); the rising pitch from van den Doel (2005).</td></tr>
 <tr><td>Wind</td><td>Filtered noise moved by a random gust process</td><td>Set by ear; follows the game's wind speed.</td></tr>
-<tr><td>Birds</td><td>Whistled tones that follow pitch contours; harsh calls through voice-like filters</td><td>Songbirds between 1 and 8 kHz (Cornell's All About Birds); one recorded mourning dove at 390 and 650 Hz.</td></tr>
-<tr><td>Crickets</td><td>Pulsed tones</td><td>Chirp rate from temperature (Dolbear's law), using each biome's temperature. Silent below 13 C.</td></tr>
+<tr><td>Birds</td><td>Whistled tones that follow pitch contours; harsh calls through voice-like filters. One bird at a time</td><td>Songbirds between 1 and 8 kHz (Cornell's All About Birds).</td></tr>
+<tr><td>Dove (round 2)</td><td>"cooOOoo-wooo-woo-woooo": one slurred opening that climbs to the high note and falls back, then three steady low coos, the last the longest. Nearly pure tone, soft onsets, a breath of air</td><td>One measured song: 390 Hz with the high note at 650 Hz. Doves coo with the bill shut through an inflated throat, which filters out the harmonics (Fletcher et al., ring dove). The timings are set by ear.</td></tr>
+<tr><td>Crickets (round 2)</td><td>A chorus of tree crickets chirping together: 8 pulses per chirp in groups of 2, 3 and 3, the last of each group longer. On warm nights (18 C and up), a field cricket or two on top: 3-pulse chirps near 4.5-5 kHz, each on its own clock</td><td>Chirp rate from temperature (Dolbear's law); pitch rises with temperature, about 3.0 kHz at 15 C to 4.6 kHz at 32 C. Snowy tree crickets synchronise with their neighbours (Walker, 1969). Silent below 13 C.</td></tr>
 <tr><td>Planes</td><td>Rumble (jet) or engine buzz (propeller), moved along a real flight path</td><td>Distance, travel time, Doppler and the ground reflection that makes a passing jet "whoosh".</td></tr>
 </tbody></table>
 <p class="muted">Sources and figures are recorded in docs/RESEARCH.md, <i>Sound: the synthesised soundscape</i>.</p>
@@ -112,10 +136,13 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 /*SYNTH*/
 
 // tools/sound-lab/check.mjs renders every sound offline through this.
-window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,STRIKES,IMPACTS,SCENES,KNOBS,dolbear,airCutoff};
+window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,STRIKES,IMPACTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz};
+const CC0=/*CC0*/null;
 
 // ------------------------------------------------------------ the page
-const KEY='fairway-sound-lab-v1';
+// v2 for round 2: round 1's sliders are baked into the takes, so applying
+// them again on top would double them.
+const KEY='fairway-sound-lab-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
@@ -144,7 +171,8 @@ function drawSpec(){
 
 // ---- ambience
 const sceneSel=$('#scene');for(const [k,s]of Object.entries(SCENES))sceneSel.append(el('option',{value:k},s.label));
-const A=saved.ambience||(saved.ambience={scene:'midwest',mix:{birds:1,water:1,planes:1,insects:1},wind:null,night:false});
+const A=saved.ambience||(saved.ambience={scene:'midwest',mix:{birds:1,water:1,planes:1,insects:1},wind:null,night:false,waterDist:40});
+if(A.waterDist==null)A.waterDist=40;
 sceneSel.value=A.scene;$('#night').checked=!!A.night;
 const MIX_LABEL={birds:'Birds',water:'Water',planes:'Planes (how often)',insects:'Insects'};
 for(const k of Object.keys(MIX_LABEL)){const v=A.mix[k]??1,inp=el('input',{type:'range',min:0,max:2.5,step:.05,value:v}),out=el('span',{},fmtMix(v));
@@ -155,18 +183,21 @@ function windDefault(){return SCENES[sceneSel.value].wind;}
 function syncWind(){const w=A.wind??windDefault();$('#wind').value=w;$('#windv').textContent=`${w} mph${A.wind==null?' (biome default)':''}`;}
 syncWind();
 $('#wind').oninput=e=>{A.wind=+e.target.value;save();syncWind();applyAmb();};
+function syncWater(){$('#waterDist').value=A.waterDist;$('#waterv').textContent=A.waterDist>=300?`${A.waterDist} m (out of earshot)`:`${A.waterDist} m`;}
+syncWater();
+$('#waterDist').oninput=e=>{A.waterDist=+e.target.value;save();syncWater();applyAmb();};
 sceneSel.onchange=()=>{A.scene=sceneSel.value;A.wind=null;save();syncWind();buildTriggers();if(amb&&amb.scene)startAmb();};
 $('#night').onchange=e=>{A.night=e.target.checked;save();applyAmb();};
-function applyAmb(){if(!amb)return;amb.set({...A.mix,wind:A.wind??windDefault(),night:A.night});}
+function applyAmb(){if(!amb)return;amb.set({...A.mix,wind:A.wind??windDefault(),night:A.night,waterDist:A.waterDist});}
 let t0=0,tick=null;
 function startAmb(){ensure();applyAmb();amb.start(sceneSel.value);applyAmb();t0=ctx.currentTime;$('#log').innerHTML='';clearInterval(tick);
- tick=setInterval(()=>{const s=ctx.currentTime-t0;$('#elapsed').textContent=`${s/60|0}:${String(s%60|0).padStart(2,'0')}`;$('#gustNow').textContent=`${amb.gust.toFixed(0)} mph`;},500);}
+ tick=setInterval(()=>{const s=ctx.currentTime-t0;$('#elapsed').textContent=`${s/60|0}:${String(s%60|0).padStart(2,'0')}`;$('#gustNow').textContent=`${amb.gust.toFixed(0)} mph`;$('#waterNow').textContent=`${Math.round(amb.waterLevel*100)}%`;},500);}
 $('#ambPlay').onclick=startAmb;
 $('#ambStop').onclick=()=>{if(amb)amb.stop();clearInterval(tick);};
 function logEvent({t,text}){const li=el('li',{},el('time',{},`${t/60|0}:${String(t%60|0).padStart(2,'0')}`),text);const L=$('#log');
  // Events are scheduled up to 1.5 s ahead; show them when they start.
  setTimeout(()=>{L.prepend(li);while(L.children.length>60)L.lastChild.remove();},Math.max(0,(t+t0-ctx.currentTime)*1000));}
-const TRIG={jet:'Jet overhead',prop:'Small plane',geese:'Geese',wave:'Wave',cicada:'Cicada',songbird:'Songbird',whistler:'Whistler',trill:'Trill',dove:'Dove',crow:'Crow',raven:'Raven',gull:'Gull',skylark:'Skylark',woodpecker:'Woodpecker',owl:'Owl',wren:'Desert wren'};
+const TRIG={jet:'Jet overhead',prop:'Small plane',geese:'Geese',wave:'Wave',cicada:'Cicada',songbird:'Songbird',whistler:'Whistler',trill:'Trill',dove:'Dove',crow:'Crow',raven:'Raven',gull:'Gull',woodpecker:'Woodpecker',owl:'Owl',wren:'Desert wren'};
 function buildTriggers(){const r=$('#triggers');r.innerHTML='';const S=SCENES[sceneSel.value];
  const keys=['jet','prop',...Object.keys(S.birds).filter(k=>k in TRIG),...(S.water.surf?['wave']:[]),...(S.insects.cicada?['cicada']:[]),'owl'].filter((k,i,a)=>a.indexOf(k)===i);
  for(const k of keys)r.append(el('button',{class:'sec',onclick:()=>{ensure();if(!amb.scene)startAmb();amb.trigger(k);}},TRIG[k]));}
@@ -202,6 +233,15 @@ function card(kind,id,def,host){
 for(const [id,def]of Object.entries(STRIKES))card('strikes',id,def,$('#strikes'));
 for(const [id,def]of Object.entries(IMPACTS))card('impacts',id,def,$('#'+({turf:'turf',water:'turf',solid:'solid',extra:'extra'}[def.group])));
 document.querySelectorAll('textarea[data-note]').forEach(t=>{t.value=saved.notes?.[t.dataset.note]||'';t.oninput=()=>{(saved.notes||(saved.notes={}))[t.dataset.note]=t.value;save();};});
+
+// ---- CC0 recordings
+$('#cc0date').textContent=CC0.checked;
+for(const g of CC0.groups){const box=el('div',{class:'card',style:'margin-bottom:12px'},el('h3',{},g.label));
+ for(const it of g.items){const url=`https://freesound.org/people/${it.user}/sounds/${it.id}/`;
+  box.append(el('div',{},el('div',{},el('a',{href:url,target:'_blank',rel:'noopener'},it.title),` by ${it.user}, ${it.secs<10?it.secs.toFixed(1):Math.round(it.secs)} s. `,el('small',{},it.about)),el('audio',{controls:'',preload:'none',src:it.mp3,style:'width:100%;height:32px'})));}
+ const ta=el('textarea',{placeholder:'Notes: would any of these beat the lab sound?'});ta.value=saved.cc0?.[g.id]||'';ta.oninput=()=>{(saved.cc0||(saved.cc0={}))[g.id]=ta.value;save();};box.append(ta);
+ $('#cc0').append(box);}
+$('#cc0').append(el('p',{class:'muted'},'Set aside: ',...CC0.rejected.map(r=>`"${r.title}" by ${r.user}: ${r.why}`)));
 
 // ---- feedback
 $('#copy').onclick=async()=>{

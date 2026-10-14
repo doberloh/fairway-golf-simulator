@@ -99,8 +99,9 @@ The list below is what exists locally.
   fairway, with the turf check.
 - **[reports/sounds/](reports/sounds/index.html)** — every sound designed for
   the game, playable: ambience per biome, each club, each surface, trees and
-  rocks, with takes to choose between, sliders and notes to send back
-  (`tools/sound-lab/build.mjs`). Synthesised, not recorded; not in the game yet.
+  rocks, with takes to choose between, sliders and notes to send back, and
+  checked CC0 recordings to compare (`tools/sound-lab/build.mjs`). Synthesised,
+  not recorded; not in the game yet.
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

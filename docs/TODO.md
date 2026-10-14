@@ -856,11 +856,22 @@ does not loop, a sound per club, a landing per turf, trees and rocks; CC0 and
 credited if any asset is used. Everything is synthesised (RESEARCH, *Sound:
 the synthesised soundscape*), so nothing needs crediting. Built so far: the
 synthesiser, `tools/sound-lab/synth.js`, and the local listening report,
-`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`).
+`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`). Round 1
+was heard and answered the same day; round 2 (RESEARCH, *Round 2*) bakes the
+owner's sliders into take A and reworks the whoosh, iron, trunk, cup, dove,
+crickets and bird timing.
 
-- [ ] **The owner listens and sends notes** from the report's "Copy my notes".
-  Expect a few rounds: every number marked PLACED in RESEARCH is a guess
-  waiting on the owner's ears. Nothing goes into the game before this.
+- [ ] **The owner listens to round 2 and sends notes** from "Copy my notes".
+  Every number marked PLACED in RESEARCH is still a guess waiting on the
+  owner's ears. Nothing goes into the game before this.
+- [ ] **Driver pitch**: the note said "around 3500 Hz", the slider said 6.6
+  kHz. Take A is the slider, B the note; the owner picks.
+- [ ] **CC0 recordings or synthesis, per sound.** 41 checked CC0 recordings are
+  in the report to compare (`tools/sound-lab/cc0-candidates.json`). Recorded
+  one-shots (strikes, putts, the cup) are where they could win; ambience
+  recordings loop and add about 2 MB each. Any one chosen: download it with
+  the owner's go-ahead, credit it in ATTRIBUTION.md and THIRD_PARTY_NOTICES,
+  and say in DISTRIBUTION_REVIEW that audio now ships.
 - [ ] **Decide strike sounds under a launch monitor.** The golfer already hears
   the real strike, and a game sound lands after the monitor's delay like an
   echo. Proposed: keyboard shots only, plus one setting for monitor shots.
@@ -870,7 +881,13 @@ synthesiser, `tools/sound-lab/synth.js`, and the local listening report,
 - [ ] **Then into the game**: synth.js to `src/` unchanged; strikes from the
   shot, landings from contact events (surface and speed), trees and rocks from
   the collision index, ambience from the biome, wind, temperature and time of
-  day; a volume control and mute in settings (a SCHEMA_VERSION question if it
+  day; **water only near water** (owner, round 2): each frame or shot, the
+  distance from the ball (or the camera while it flies) to the nearest pond,
+  lake, river, creek or -- on Links and Island -- the sea, from the course's
+  water bodies (`src/water-bodies.js`, `src/lakes.js`, `src/streams.js`),
+  fed to the ambience's `set({waterDist})`; which kind of water is nearest
+  should pick the sound (babble for a creek, lapping for a pond, surf for the
+  sea) rather than the biome's fixed mix; a volume control and mute in settings (a SCHEMA_VERSION question if it
   joins a saved settings object); the browser only allows sound after a click,
   so start the audio on the first input. Then `npm run smoke`, PLAYING.md,
   DISTRIBUTION_REVIEW (no audio ships today) and ARCHITECTURE.
