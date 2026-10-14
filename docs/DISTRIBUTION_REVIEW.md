@@ -929,3 +929,39 @@ owner's word): `/play/` serves this release's `Fairway.html` byte for byte
 (sha256 `ad6cc7ff…`, checked on the live URL), the page still states
 generator 34 and schema 9, and its four Download buttons resolve to the
 v0.6.1 zips.
+
+## Addendum, 14 October 2026: v0.7
+
+**v0.7** is published at the owner's request as "Fairway 0.7 (beta)", tag
+`v0.7`, not a pre-release, the same four zip names, from the merge of
+`release-0.7` into `main`, with its notes in `docs/releases/v0.7.md` in
+that commit. It carries five journeys since 0.6.1: shot views and the studio
+bar; each golfer's own bag and nothing standing in a tee's view; the spin-back
+rework; every sound, synthesised; and the shot line in the play window with
+the tiles along the bottom (TODO, `# Done`, each under its own heading).
+**`GENERATOR_VERSION` is 35** (bushes and houses out of the tees' view), so a
+round saved in 0.6.x opens with the version notice; course codes still load,
+on the new ground, and the website's sample course code is written from the
+page's own `fairway-versions` tag (`generator=35 schema=9`). Schema (9) is
+unchanged. Device preferences gained `fairway-sound-v1` and
+`fairway-shot-data-phone-v1`; a golfer's bag lives in the profile store.
+
+**The bridge changed with it**: it now accepts every club code a bag can send
+(all nineteen kinds, read from `CLUB_KINDS`) and no longer closes the browser's
+connection over one it does not know. Under 0.6.1's server a bag with a 4 iron,
+a hybrid or a gap wedge would have dropped the connection when that club was
+picked; anyone playing with a monitor should take this release's server with
+its game.
+
+The built page is 16,998,607 bytes (7.0 MB gzipped), +71 KB on 0.6.1: code and
+markup only -- the sounds are synthesised at run time, so no audio file,
+dependency, font or asset was added. **Smoke on the release code: not run.**
+The last full run, 26 of 26 journeys on an idle card, was on `main` at
+`cdd10bd` (the sounds merge), which includes the network check that the page
+makes no requests. The final journey (`shot-data-layout`) changed the
+interface only and adds no network code, but a software-renderer smoke run on
+it crashed the owner's computer part-way through on 13 October, and the
+owner, about to play games on the same machine, asked for light testing for
+the release. So the release was checked by `npm test` (718 of 718), a build,
+a hand check in the browser at laptop and phone sizes, and a hand check of the
+bridge against a pretend device. TODO keeps the smoke run open.
