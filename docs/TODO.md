@@ -593,10 +593,6 @@ outside a corridor", which near the tee is right beside the tee box. There IS a
 hole-local origin while the tees sit 11 to 85 m away from it -- and that list is
 dead anyway (see below), so the bubble never protected anything.
 
-- [ ] **The flagstick still does not collide.** Left out of this slice
-  deliberately: it is a different question from obstructions, and real golf
-  hits the pin. Wants its own decision, including whether the pin is in or out.
-
 - [ ] **The per-hole tree list is dead code.** `h.trees` is built in
   `generateCourse` for every hole and nothing reads it once a world exists:
   physics takes `course.world?.trees` first, and the renderer, vegetation and
@@ -848,6 +844,10 @@ so several of these play differently as well as look different.
 
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
+
+## Sounds (13 October 2026)
+
+Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
 
@@ -2909,6 +2909,14 @@ engineering provenance pass, not legal advice.
 
 ## Obstructions in the shot path
 
+- [x] **The flagstick collides (13 October 2026).** Was: "The flagstick still
+  does not collide... wants its own decision, including whether the pin is in
+  or out." The owner decided: solid while it stands in the hole, out of play
+  whenever the game pulls it (for a putt, and with the ball on the green). It
+  is the same cylinder as a trunk, at its regulated base radius, from the cup
+  floor to 7 ft (RESEARCH, *Flagsticks and houses*); strikes count as
+  `flagHits`; `tests/solid-colliders.test.mjs`.
+
 - [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
   **0 of 648 blocked, from 4.5%.** Tree counts unchanged. Two wrong turns on the
   way, both recorded below. Was: A wedge from
@@ -4189,3 +4197,53 @@ engineering provenance pass, not legal advice.
   `bridge-bundle` journey running the built bundle as its own process with a
   pretend connector sending a real shot, and a unit test for the address
   choice; the Windows script run by hand. Not yet run: the macOS scripts.
+
+## Flagsticks and houses (13 October 2026)
+
+- [x] **Houses collide where they are drawn.** Asked for as "give them
+  colliders"; they had one, turned by the hole's angle and 2.6 m too tall, so
+  on a test course a third of each footprint disagreed with the drawing and 96
+  of 100 shots skimming a wall hit it. Fixed in simulateShot, with a test that
+  fails on the old code; `tests/homes.test.mjs` had the same frame mistake and
+  was corrected (RESEARCH, *Flagsticks and houses*).
+- [x] **The flagstick collides** (see *Obstructions in the shot path*).
+- [x] **Flagsticks stay visible from a distance.** Past the point where the
+  stick would stand under 36 px on screen it and its flag grow to hold that
+  size (up to 10x), the pole never under 2 px; to scale up close; drawing only
+  (renderer.js, `FLAG_MIN_PX`). Looked at in the game from a 374 yd tee.
+  Owner to judge the size; the numbers are placed.
+
+## Sounds (13 October 2026)
+
+- [x] **Every sound, synthesised and signed off by the owner** over four
+  rounds of the local listening report (`tools/sound-lab`, `docs/reports/
+  sounds/`): strikes for driver, woods, irons, chips and putter; a landing per
+  surface; trunk, canopy, rock, flagstick, house (brick for all), the cup;
+  score stings on a marimba; and an ambience per biome that never loops -- wind
+  gusts, one bird at a time, crickets and cicadas by temperature, water only
+  near water, the odd plane. Nothing recorded, nothing to credit; CC0
+  recordings were compared and turned down (RESEARCH, *Sound*).
+- [x] **Wired into the game** (`src/sound.js`, `src/audio.js`): the strike on
+  keyboard shots only (no club sound with a launch monitor, the owner's call),
+  every contact as the ball reaches it from simulateShot's new `contacts`,
+  the canopy, the cup, the score sting with the hole-out banner, and the
+  ambience following biome, wind, temperature, night and the ball's distance
+  to water. A **Sound** window (main menu and in-round menu) with an off
+  switch and three volumes, kept on the device. Tested by
+  `tests/sound.test.mjs` and a `sound` smoke journey.
+- [x] **Decided, not built**: no crowd reactions, no ball-rolling sound.
+- [x] **Water by kind** (13 October). Was: "the nearest water should choose its
+  sound" and "the owner picks the pond-and-lake option". The owner signed off
+  the bubbly lap for ponds and lakes, the mountain stream for rivers and the
+  babbling creek for creeks (`WATER_FOR`), with no frogs, after four rounds
+  (RESEARCH, *Round 5* to *Round 8*). The game finds the nearest water's kind
+  (`waterKindAt`) and plays its sound from its side, the sea keeping its surf.
+  The creek's rendering stays on the main thread (RESEARCH, *Round 8*, says why).
+- [x] **The smoke suite on an idle card.** Was: `floodlit-night` and
+  `text-size` failed while another program held the card at 74%. All 26
+  journeys passed with the card idle.
+- [x] **The swing no longer plays backwards** (the owner, 13 October). The
+  strike was started 0.43 s in the past to give the whoosh room; Web Audio
+  moves a late sound to now whole, so the whoosh came after the crack. It now
+  has a 0.1 s lead and nothing is scheduled in the past (RESEARCH, *Round 5*).
+  This also closed "the first shot of a fresh page plays late".

@@ -74,6 +74,8 @@ that vary with Reynolds number and spin, spin axis, spin decay, wind-relative
 velocity, temperature and altitude. The bounce and the roll read the surface
 underneath the ball, and putting runs on a Stimp-anchored rolling model.
 
+Every sound is synthesised as you play -- strikes, every surface the ball meets, the cup, a score phrase, and a course ambience that never loops -- with no recordings shipped; with a launch monitor there is no club sound, because you hear your own.
+
 Tree trunks are solid and foliage is not, so a ball can be behind a tree
 without being stopped by a leaf; a trunk contact resolves the overlap and
 reflects only incoming motion, which means a close lie is always playable.
@@ -108,7 +110,7 @@ checked by hand.
 | --- | --- |
 | `src/` | The game. Generation, physics, rendering, interface — one module per concern, no framework |
 | `tests/` | Regression suites for the Node test runner. `npm test` |
-| `tools/` | Measurement, asset ingest, profiling, release packaging, and capturing pictures and clips of the game (`tools/capture/`) |
+| `tools/` | Measurement, asset ingest, profiling, release packaging, capturing pictures and clips of the game (`tools/capture/`), and the synthesised sounds being designed for it (`tools/sound-lab/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | The CC0 model packs the tree, plant and house geometry is ingested from. The baked and generated tree models (`vendor/baked_assets/`) are kept locally and not committed; what ships from them is already in `src/asset-meshes.js` |

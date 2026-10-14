@@ -81,6 +81,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
+- `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
 **Drawing it**
 - `src/renderer.js` -- the three.js scene, ball, cup, flag, cameras, maps
@@ -107,6 +108,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
 - `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
+- `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
 - `tools/github-protect.mjs` -- the repository's GitHub protections
 - `tests/*.test.mjs` -- the regression suites; `bench/*.json` -- saved baselines
 
@@ -175,6 +177,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The firmness tests pin a 7-iron's arrival; a flight refit means re-deriving them. [THE FIRMNESS TESTS]
 - The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
 - Everything solid is a vertical cylinder in one collision index; do not add a second routine. [EVERYTHING SOLID]
+- A house's rotation is a world angle: in a hole's frame subtract the hole's. The flagstick is solid only while it stands in the hole. [A HOUSE'S ROTATION IS A WORLD ANGLE], [THE FLAGSTICK IS SOLID]
 - The simulator never invents ball data. [The simulator never invents ball data]
 
 **Shaders and drawing**
@@ -190,6 +193,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
+- Flagsticks are drawn larger with distance so they never vanish; drawing only, the ball hits the real stick. [FLAGSTICKS STAY VISIBLE FROM ANYWHERE]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
@@ -210,6 +214,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The bag is the golfer's, re-read every turn; the putter's id is always `putter`. [THE BAG IS THE GOLFER'S]
 - Players are matched by seat, not list position; colours are by seat. [Removing a golfer], [A colour per golfer]
 - A ball in trouble waits in the round until relief is taken. [Penalty relief]
+- No club sound with a launch monitor; nothing audible before the first input; one bird at a time; never schedule a sound in the past -- Web Audio plays it whole, late. [WHEN THE GAME MAKES A SOUND]
 
 **Packaging and the outside world**
 - The built page makes no network requests, by design and by test; the manifest is linked by script, only over http(s). [A hosted copy installs]

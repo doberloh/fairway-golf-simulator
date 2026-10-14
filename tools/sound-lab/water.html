@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Water Sounds</title>
+<style>
+:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}}
+:root[data-theme="dark"]{--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:19px;margin:26px 0 4px}h3{font-size:16px;margin:0}
+.muted{color:var(--muted)}small{color:var(--muted)}
+.note{border-left:3px solid var(--accent);padding:4px 10px;background:var(--panel);border-radius:0 8px 8px 0;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.act{border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button.sec{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 10px;font:14px system-ui,sans-serif;cursor:pointer}
+label.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px}
+label.sl input{grid-column:1/3;width:100%;accent-color:var(--accent)}
+label.sl span:last-of-type{color:var(--muted);font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px system-ui,sans-serif}
+#tools{position:fixed;right:16px;bottom:16px;display:flex;gap:8px;z-index:5}
+#out{position:fixed;inset:auto 16px 64px 16px;max-width:640px;margin-left:auto;z-index:6;display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#out textarea{min-height:160px;font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>Water sounds</h1>
+<p class="muted">Built <span id="built"></span> on branch <code>sounds</code>. Round 6: ponds and lakes, and separately rivers and creeks. The sea is not part of this.</p>
+<div class="note"><p><b>Round 8: all the water is signed off and in the game.</b> The bubbly lap for ponds and lakes, the mountain stream for rivers, the babbling creek for creeks, each with your sliders built in. In a round the game plays whichever is nearest the ball, louder the nearer it is, from the side it is on; the sea keeps its surf.</p>
+<p>Each card plays continuously; one at a time. <b>Distance</b> is how far the ball is from the water. <b>Wind</b> moves the pond's waves, <b>Flow</b> the rivers.</p></div>
+<div class="row"><button class="act" id="start">Start sound</button>
+<label class="sl" style="min-width:200px"><span>Distance from the water</span><span id="distv"></span><input id="dist" type="range" min="3" max="120" step="1" value="20"></label>
+<label class="sl" style="min-width:160px"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="25" step="1" value="8"></label>
+<label class="sl" style="min-width:160px"><span>Flow</span><span id="flowv"></span><input id="flow" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+</div>
+<h2>Ponds and lakes (signed off)</h2><div class="grid" id="pond"></div>
+<h2>Rivers and creeks (signed off)</h2><div class="grid" id="river"></div>
+</main>
+<div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
+<div id="tools"><button class="act" id="copy">Copy my notes</button></div>
+<script type="module">
+/*SYNTH*/
+
+// v4: round 8 built the owner's pond sliders in too.
+const KEY='fairway-water-lab-v4';
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
+const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
+$('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
+saved.knobs??={};saved.notes??={};
+let ctx=null,lab=null,player=null,timer=null,playing=null;
+const dist=()=>+$('#dist').value,wind=()=>+$('#wind').value,flow=()=>+$('#flow').value,opts=()=>({wind:wind(),flow:flow()});
+const syncReadouts=()=>{$('#distv').textContent=`${dist()} m`;$('#windv').textContent=`${wind()} mph`;$('#flowv').textContent=`${Math.round(flow()*100)}%`;};
+$('#dist').value=saved.dist??20;$('#wind').value=saved.wind??8;$('#flow').value=saved.flow??1;syncReadouts();
+function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#start').textContent='Sound on';}if(ctx.state==='suspended')ctx.resume();}
+$('#start').onclick=ensure;
+function play(style){
+ ensure();stop();playing=style;
+ player=waterPlayer(lab,{style,dist:dist(),knobs:saved.knobs[style]||{},opts:opts()});
+ player.schedule(ctx.currentTime+1.5);timer=setInterval(()=>player.schedule(ctx.currentTime+1.5),200);
+ document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.style===style));
+}
+function stop(){clearInterval(timer);timer=null;player?.stop();player=null;playing=null;document.querySelectorAll('.card').forEach(c=>c.classList.remove('on'));}
+$('#dist').oninput=()=>{syncReadouts();saved.dist=dist();save();player?.set({dist:dist()});};
+$('#wind').oninput=()=>{syncReadouts();saved.wind=wind();save();player?.set({wind:wind(),opts:opts()});};
+$('#flow').oninput=()=>{syncReadouts();saved.flow=flow();save();player?.set({opts:opts()});};
+const KN=['level','pitch','bright','body','texture'];
+const LIST=Object.entries(WATERS).map(([id,w])=>[id,w,w.group]);
+for(const [style,L,group] of LIST){
+ const k=saved.knobs[style]||(saved.knobs[style]={});
+ const c=el('div',{class:'card','data-style':style});
+ c.append(el('h3',{},L.name));
+ c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>play(style)},'Play'),el('button',{class:'sec',onclick:stop},'Stop')));
+ const adj=el('details',{},el('summary',{},'Adjust'));
+ for(const n of KN){const d=KNOBS[n],inp=el('input',{type:'range',min:d.min,max:d.max,step:d.step,value:k[n]??d.def}),out=el('span',{},`${Math.round((k[n]??d.def)*100)}%`);
+  inp.oninput=()=>{const v=+inp.value;if(v===d.def)delete k[n];else k[n]=v;out.textContent=`${Math.round(v*100)}%`;save();if(playing===style)player.set({knobs:k});};
+  adj.append(el('label',{class:'sl'},el('span',{},d.label),out,inp));}
+ c.append(adj);
+ const ta=el('textarea',{placeholder:'Notes'});ta.value=saved.notes[style]||'';ta.oninput=()=>{saved.notes[style]=ta.value;save();};c.append(ta);
+ $('#'+group).append(c);
+}
+$('#copy').onclick=async()=>{
+ const knobs=Object.fromEntries(Object.entries(saved.knobs).filter(([,v])=>Object.keys(v).length));
+ const notes=Object.fromEntries(Object.entries(saved.notes).filter(([,v])=>v));
+ const text='Water lab notes\n'+JSON.stringify({playingNow:playing,dist:dist(),...opts(),knobs,notes},null,1);
+ $('#outText').value=text;$('#out').style.display='block';
+ try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}
+};
+$('#outClose').onclick=()=>$('#out').style.display='none';
+</script>
+</body>
+</html>

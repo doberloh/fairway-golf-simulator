@@ -7171,3 +7171,505 @@ irons, pitching wedge, a chip and a 50 yd pitch onto fairway, tee, semi, rough a
 sand, compared with main): a driver into a fairway still releases 23.4 yd from a
 3.70 ft hop. That hop is the fairway's fit to the measured tee turf and was left.
 Into the collar the driver runs 23.3 (was 25.9) and hops 2.46 ft (4.21).
+
+## Sound: the synthesised soundscape (13 October 2026)
+
+The owner asked for sounds: ambience that does not sound like a file on
+repeat (birds, aircraft, wind, water), a sound for the driver, a wood, an
+iron, the putter and a chip, a landing for each turf, and hits on trees and
+rocks. Any asset had to be CC0 with proper credit, and synthesis was allowed.
+Nothing goes into the game until the owner has listened and the sounds have
+been iterated: the listening report is `docs/reports/sounds/index.html`
+(local), built by `node tools/sound-lab/build.mjs` from the synthesiser,
+first `tools/sound-lab/synth.js` and, once the sounds went into the game,
+`src/sound.js`.
+
+### Why synthesis rather than recordings
+
+**Everything is synthesised; no recording is used.** Three reasons, in order:
+
+- **It cannot loop.** A recording is a fixed length, and a long one still comes
+  round again. Here the ambience is a set of random processes: a gust model over
+  noise, individual birds that arrive, sing in bouts and leave, a stream made of
+  separate bubbles, planes flown along a computed path. Strikes and landings
+  re-detune their tones on every play, so even a repeated shot is not the same
+  sample twice.
+- **Each sound follows the game.** Head speed, landing speed, distance from the
+  camera, the biome's temperature and the course's wind all change the sound,
+  which a sample can only approximate with pitch-shifting.
+- **Nothing to license, and nothing large to ship.** The owner's rule (CC0 and
+  credited) is met trivially, and the single-file build grows by code, not
+  audio files.
+
+**CC0 recordings were not used for round 1**, and are now offered beside the
+synthesis for comparison (round 2, below, at the owner's request): the report
+streams Freesound's previews of 41 checked CC0 recordings; nothing is
+downloaded. Any one chosen would be credited in ATTRIBUTION.md.
+
+### What each sound is built from, and the numbers behind it
+
+| Sound | Built from | Anchored to |
+|---|---|---|
+| Driver | Damped tones at 3.35-8.3 kHz (take A, strongest 4.15 kHz, decay time-constants 12-50 ms), a 4 ms crack, the ball's tick at 1.5 kHz, a 220 Hz thump | Titanium driver strike centred near 4.5 kHz, about 120 dB peak, under 0.2 s long (Park et al. 2018). Patents on club-head sound put the head's loudest peak in 3-5 kHz and the ball's sound near 1.5 kHz. The individual modes are PLACED |
+| Fairway wood | Tones 3.9-7.4 kHz, shorter, plus a sole brush | PLACED: smaller head, higher and shorter than the driver |
+| Swing whoosh | Noise darkened below 2.5 kHz through a narrow band (Q 6) whose centre climbs from 0.45x to 1x into the strike and falls to 0.55x after it, over a wide band at 0.6x; centre 150 Hz + 14 Hz per m/s of head speed (about 780 Hz at 100 mph) | PLACED. Round 1 was one wide band (Q 1.6) of white noise at 250 + 22 Hz per m/s; the owner heard it as hiss |
+| Iron | No metal ring (round 2, from the owner: an iron is a crack and the ball, not metal): a 2.5 ms crack above 2 kHz, a 7 ms band at 3.6 kHz, the ball's tones at 1.7, 2.9 and 4.3 kHz damped within 2 ms; then the divot: a 95 Hz thump, grass tearing (band noise 1.8 to 0.9 kHz over 110 ms), clods landing 0.2-0.6 s later | PLACED. Round 1's ringing head (tones 2.6-6.8 kHz, 3-8 ms) is kept only as take C, the owner's round-1 setting |
+| Chip | A brush of grass 30 ms before contact, a soft click (1.8-5 kHz), a brush after | PLACED |
+| Putter | Putter tones below 2 kHz (1.35, 1.15 or 0.9 kHz by take), ball tones at 2.5-3.7 kHz | Barrass, Roberts and Jones (2006): in a putt, the 0-2 kHz band follows the putter and where it was struck; the 2-4 kHz peaks follow the ball's compression; the "sharpest" balls had the higher peak. A putter patent measured about 1.4 kHz |
+| Turf landings | A thump whose pitch falls (105-220 Hz, firmer is higher and shorter), the ball's 1.5 kHz tick (louder on firm ground), noise for grass | PLACED by surface: green, fringe, tee, fairway, semi, rough, sand, water -- the eight surfaces `localSurface` returns |
+| Water | A slap, a sheet of spray, a rising "plunk" (300 to 660 Hz) as the cavity closes, then 24-36 bubbles of 1-9 mm radius and drops falling back | Minnaert: a bubble of radius r rings at about 3.26/r Hz (1 mm, 3.26 kHz). Bubbles as the building block of liquid sound, with a rising pitch near the surface: van den Doel (2005). How far the pitch rises (1.05-1.6x) is PLACED: the paper's own figure could not be confirmed (the PDF did not extract) |
+| Trees, rocks | Trunk (round 2, from the owner: "like hitting a solid pine board"): a 2 ms crack, a 6 ms band at 3.2 kHz, wooden tones 620-4,200 Hz dying in 2.5-12 ms. A canopy is leaf ticks, twigs and a swish, then the ball dropping 8 m to the turf; rock is tones at 1.3-7.6 kHz with a hard crack | PLACED. Round 1's hollow trunks (260-2,900 Hz, up to 40 ms) survive only as the palm take |
+| Cup | The ball drops about 0.1 m (1.4 m/s) onto the plastic floor: a 4 ms "tok" near 1.7 kHz, a short hollow tone near 640 Hz and its 3x partial, then up to five bounces shrinking by a restitution of 0.45 (0.13 s, 0.06, 0.03...), now and then a click off the wall. A flagstick is a dull fibreglass knock with a ferrule chatter | Hole 4.25 in (108 mm) across, at least 4 in (101.6 mm) deep; liners are moulded plastic with drain holes, some aluminium (USGA rule as summarised; liner patents US7959516, WO2008147581). The 640 Hz is a quarter wave of the 0.1 m tube with the open-end correction (0.6 x radius). The restitution is PLACED. Round 1 rang 640 Hz for 30 ms and the owner heard nothing like a cup |
+| Wind | Low rumble, two narrow whistles and a leaf rustle shaped by what grows in the biome, all driven by a gust process (relaxation 0.15/s, spread about 35% of the mean, plus a faster flutter at 1.5/s) | PLACED. Level follows the game's wind in mph |
+| Birds | Songbirds (round 3, measured): notes of 30-100 ms, 50-160 ms apart, 2-8 to a song, from a base of 3.4-5.2 kHz, a song kept per individual for life, bouts of 1-3 songs 3-8 s apart. **One bird at a time** (owner, round 2): a song starts only when the last has ended plus 0.6 s, a bird that comes due meanwhile is dropped, bouts of 1-3 songs 4-10 s apart; about one bird every 25 s by day (round 1: one every 8 s, bouts overlapping). Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened; geese honk one at a time too. The skylark was removed (owner: annoying, too long and not what one sounds like) | Songbirds mostly 1-8 kHz (All About Birds). Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
+| Mourning dove (round 3) | "cooOOoo-wooo-woo-woooo": an opening of 0.9-1.2 s climbing from the base to 1.18-1.26x and back, then coos of 0.75-0.9, 0.45-0.55 and 0.65-0.8 s, 0.25-0.35 s apart, about 4.1 s in all; base 455-520 Hz; bouts of 3-5 songs 5-9 s apart; a near-pure tone (3% octave), 60-80 ms onsets, a breath of band noise at 5% | Measured on three CC0 recordings (round 3, below): base 474 and 517 Hz, the opening rising to about 1.2-1.25x, songs 4.1-4.4 s, 4.4-8.8 s apart. The phrase as Wikipedia gives it. The closed-bill coo radiates through an inflated oesophagus that filters out the harmonics (Fletcher et al., ring dove). Round 2 used one published sonogram (390 Hz, 650 Hz high note) and sang 370-410 Hz with a 1.6x leap in 3.4 s |
+| Crickets (round 2) | A chorus of 4-6 tree crickets chirping together: 8 pulses grouped 2+3+3 (pulses 12 ms, the last of each group 15-16 ms) at a 19 ms pulse period, each pulse sagging 2.5% in pitch with a faint octave; members within about 12 ms of a leader that changes every 20 chirps. At 18 C and up, 1-2 field crickets over them: 3 pulses (sometimes 2 or 4) of 18 ms at a 30 ms period, 4.5-5 kHz, 1.2-2.5 chirps a second on their own clocks | Chirp rate: Dolbear (1897), chirps per minute = 4 x (temperature F) - 160, holding from about 55 F (13 C), so Mountain (11 C) and Haunted Hollow (9 C) are silent. 8 pulses, the last of each group longer: snowy tree cricket (NPR, Symes; Orthoptera Species File). The 2,3,3 grouping and about 52 pulses a second: Riley's tree cricket (2.7 kHz at 25 C). Carrier 3,000 Hz at 15 C rising to 4,600 at 32 C: O. nigricornis, borrowed for the chorus as 3,000 + 94 Hz per degree. Synchrony: Walker (1969), Science 166:891. Field crickets: 2-3 pulses at a 30.2 ms period, 5.0 kHz (the Steppengrille); G. bimaculatus 5 kHz. Round 1 was 3-4 pulses at 2.8-4.6 kHz with every cricket on its own clock |
+| Cicadas | Band noise near 5-6 kHz pulsed at 160-260 Hz, swelling over 8-18 s; only at 24 C and above | PLACED |
+| Planes | A jet: broadband rumble (low-pass 900 Hz), 1.5-4 km up at 110-190 m/s. A small propeller plane: an 75-95 Hz buzz with harmonics, 250-700 m up at 45-65 m/s | Geometry, not ear: sound arrives r/c late, so the loudest moment comes after the plane is overhead; a propeller's pitch falls by Doppler; and the ground reflection, with an ear 1.6 m up, is a copy delayed by 2 x 1.6 x sin(elevation) / 343 s, up to about 9 ms overhead, which sweeps a comb through the noise -- the falling "whoosh" of a passing jet (windytan 2025; SFU comb-filter handbook). A little jitter on that delay stands in for turbulence, which DAGA 2021 found removes the "unnatural flanging" of a clean model |
+| Water by distance (round 2) | Every water sound goes through one gain: full within 25 m of water, falling as 25/distance, times (1 - (d/300)^2), silent from 300 m; water events are not scheduled at all when silent | PLACED. The owner: water only when the ball is close to it |
+| Distance | Level falls as 1/distance (1 at 10 m); treble falls with distance | PLACED: a low-pass reaching about 8 kHz at 100 m, 2 kHz at 1 km and 850 Hz at 3 km, the shape of ISO 9613-1 air absorption at 20 C and 70% humidity rather than its figures |
+| Strike loudness | Level as (head speed / 100 mph)^0.8; brightness as (speed / the club's default)^0.35 | PLACED so a 4 mph putt is about 20 dB under a 100 mph drive and still audible |
+
+### Measured levels (tools/sound-lab/check.mjs, limiter off)
+
+Round 1 peaks at the default settings, 13 October 2026: driver -1.7 to -2.8 dB,
+fairway wood -4 to -5, iron -6, chip -13 to -22, putter -23 to -27; turf
+landings at 12 m about -16 to -24 dB; water -13 to -16; trunk and rock -12 to
+-18. A 30-60 s ambience averages -33 to -44 dB with peaks near -15 to -27; a jet
+alone peaks at about -22 dB and a propeller plane -21. **The first pass was 7 dB
+over full scale on the driver** (the golfer was placed 4 m from the listener,
+which doubles the level twice over) and the limiter had hidden it; check.mjs
+turns the limiter off for that reason. **Lake lapping first measured -66 dB**,
+which nobody would hear, and was raised about 17 dB; the links surf about 6 dB.
+
+**A bug worth remembering:** the wind slider's mph was also being read as a
+mix multiplier, so 8 mph played as 64. The gust readout said 121 mph. The wind
+is now one number with one meaning (`windMph`), outside the mix.
+
+### Round 2: the owner's first notes (13 October 2026)
+
+The owner listened to round 1 and sent notes and slider settings (kept in
+the conversation, not committed). In short: the swing whoosh sounded like
+white noise; the driver wanted "a higher pitch around 3500 Hz"; the wood was
+"pretty decent"; irons needed to be "much more cracky" with no metal in them;
+the chip and putter were good; the trunk should crack like a solid pine
+board; the cup sounded nothing like a cup; birds came too often and should
+never overlap; the skylark was annoying and wrong; the dove and crickets were
+close but not right; water should be heard only near water; and CC0
+recordings should be looked at too.
+
+**How round 2 is laid out.** The owner's sliders are baked into the takes (a
+take carries `base` knobs; the report's sliders multiply on top, so 100%
+means "as the take is"). Take A is the owner's round-1 setting wherever they
+tuned a sound. On the turf sounds B moves every slider they touched half as
+far again (each multiplier raised to the power 1.5) and C goes half way back
+(power 0.5): their moves were the same on every turf -- shorter, more of the
+ball's tick, less thump, more grass, darker -- so B is the likeliest next
+step. The report's saved state moved to a new key (v2), because applying the
+old sliders on top of takes that already contain them would double them.
+Sliders the owner pinned at an end now reach further (length down to 20%,
+crack and texture up to 400%).
+
+**The driver contradiction is asked, not resolved.** The note said "around
+3500 Hz"; the Pitch slider went to its top, which moved the main ring from
+4.15 kHz to 6.6 kHz. Take A is the slider and take B the note (main ring at
+3.5 kHz, same crack and short ring). The published centre for a titanium
+driver is near 4.5 kHz, between the two.
+
+**Semi-rough and rough had no ball tick**, so the Crack slider the owner
+raised on both did nothing. A light tick was added to each, so take A now
+does what the slider asked for.
+
+**Research for the dove, the crickets and the cup** is in the table above.
+Two things looked up and not used: Bessey's 1897 refit of Dolbear's law
+(the difference is inaudible), and "300-600 Hz from a Berkeley study" for the
+mourning dove, repeated on several pages with no traceable source.
+
+**CC0 recordings: what exists.** Freesound was searched with its CC0 filter
+(`license:"Creative Commons 0"`, sorted by downloads) for golf strikes,
+swings, putts, the cup, splashes, wood and rock hits, golf-course ambience,
+birds, the mourning dove, crickets, wind, streams, surf and planes. 41 were
+kept, each licence read on its own page on 13 October 2026, and listed in
+`tools/sound-lab/cc0-candidates.json` with author, length and preview link.
+The report plays the previews beside the synthesis. What was found:
+
+- **Golf**: real CC0 driver strikes exist (Scottrex05, Jarryd28, a series of
+  16 short drives by zolopher, inbeeld at 2 m), a few putts, and two
+  recordings of a ball into a hole (inbeeld, Scottrex05). **No CC0 iron or
+  chip recording that could be trusted**: the only "iron" hit, yukon456's
+  chip_9, says it was cut from a PGA TOUR YouTube video, so it was very
+  likely not the uploader's to release, and it was set aside.
+- **Nothing for a ball hitting a tree or a rock**: the nearest are a knock
+  on a wooden door and a hatchet on a rock.
+- **Ambience recordings are plentiful but work against the brief.** They are
+  fixed lengths (a 2-minute track repeats every 2 minutes), each adds about
+  2 MB to the single-file game, and they carry whatever else was there --
+  traffic, people, birds from the wrong continent. Recorded one-shots
+  (strikes, putts, the cup) are the case where recordings could win: tens of
+  kilobytes each, and three or four rotating takes with a little random
+  pitch hide the repeat.
+- Searches with several words often returned nothing on Freesound's CC0
+  filter; single words ("golf", "dove", "creek", "airplane") did better.
+
+**Water near the ball.** Every water sound now runs through one gain set from
+the distance to the nearest water (table above). The report has a "Distance
+to water" slider. In the game that distance comes from the ball (or the
+camera) and the course's water bodies; see TODO, *Sounds*.
+
+### Round 3: signed off, the birds measured, three new sounds (13 October 2026)
+
+The owner: "I think I'm happy with the sounds with the settings in my copy."
+Every club, every landing, the trees, the rock and the cup are now `FINAL` in
+synth.js (now src/sound.js) -- the chosen take with the owner's sliders folded in, the only take
+left, so 100% on every slider is exactly what they heard. Their final picks:
+driver C (pitch 0.81 on top of C's 1.6, so the main ring sits near 5.4 kHz --
+between the round-2 question's 3.5 and 6.6 kHz, and nearer the published
+4-4.5 kHz centre than either), crack 4x on C's 3.5x, body 1.9x; wood B; iron B
+(the crack with a full divot) with pitch 1.47 and crack 2.95; chip B (out of
+the rough); putter B (milled blade); green B, rough B, semi A, sand A, trunk
+A (the pine board, crack 4x, length 0.2), rock C, cup A (pitch 0.67, length
+1.55). **The driver as signed off peaks +13.5 dB before the limiter**: the
+limiter shapes it into what the owner heard, so the game keeps the limiter
+(TODO, *Sounds*). The trunk's Texture slider (2.65) moves nothing: the board
+has no texture part. Both are kept as set, because that is what was heard.
+
+**Water became a splash.** "I don't like that it's bubbly. It needs to be more
+of a splash sound." The new recipe is a slap, a broad band of noise falling
+from 1.4 to 0.7 kHz over about 0.18 s, a sheet of hiss above 2.5 kHz, the
+spray falling back as a patter for half a second and bigger drops after, a
+short low plunk at 140 Hz, and three faint bubbles where round 2 had 36
+plus a dozen drops. PLACED.
+
+**Decided**: in launch-monitor mode no club sounds, every other sound plays;
+no crowd reactions; no ball-rolling sound; no CC0 recordings ("CC0 is gonna be
+a bust"). The candidate list (`tools/sound-lab/cc0-candidates.json`) is kept as
+the record of the search; the report no longer shows it.
+
+**The birds, measured against the CC0 recordings** (the owner: "maybe listen
+to these and adjust our bird sounds accordingly"). Each preview was decoded in
+the browser and nothing was saved. An FFT of 2,048 samples at 44.1 kHz with a
+512-sample hop; a frame counts as sound when its energy in the bird's band
+stands 12-14 dB above the recording's 30th-percentile frame; frames closer
+than 12-40 ms join into one note, and notes closer than 0.5-1.2 s into one
+song. The previews are low-quality MP3 and the songbird recordings are
+choruses of several birds, so the songbird figures are distributions across
+a chorus rather than one bird's song -- good for the scale of things, not for
+any one species.
+
+| Recording | Notes | Songs | What it says |
+|---|---|---|---|
+| Mourning dove, nathankwright (74 s) | 23 | 6 | Base 474 Hz; the opening element 1.15-1.2 s rising to 560-580 Hz (about 1.2x); then coos of about 0.85, 0.5 and 0.67 s, 0.13-0.37 s apart (median 0.30); a song 4.1-4.2 s; 6.7-8.8 s of silence between songs; 4.9 songs a minute |
+| Mourning dove, TRP (165 s, urban) | 95 | 15 | Base 517 Hz, high note 646 Hz (1.25x); the opening about 0.6-0.75 s (a short note, a quick rise, a falling high note); three coos of 0.37-0.57 s about 0.4-0.5 s apart; a song 4.4 s; 4.4-6.9 s between songs |
+| Mourning dove, fauxpress (81 s) | 8 | 8 | Only the openings stood clear of the noise: 1.4 s at 474 Hz, falling to 452 |
+| Spring birds, New Jersey (151 s) | 101 | 34 | Notes 46-93 ms (median 58); 54-212 ms apart (median 77); 3.4-5.9 kHz (10th-90th percentile, median 4.8); sweeps median 0.67 kHz, 90th 3.4 kHz; 1-4 notes a song (median 2), songs 0.2-0.7 s |
+| Forest, spring afternoon (137 s) | 137 | 28 | Notes 46-70 ms; 64-135 ms apart; 3.4-4.5 kHz; sweeps 0.9-1.6 kHz; 2-7 notes a song (median 4), songs 0.2-1.2 s |
+| Rocky Mountains, wind and birds (90 s) | 75 | 32 | Notes 35-70 ms; 62-224 ms apart; 3.9-6.2 kHz; mostly single calls |
+
+What changed: **the dove** now sings at 455-520 Hz (was 370-410), rises only
+1.18-1.26x on its opening (was 1.55-1.7x -- the round-2 figure came from one
+published sonogram, 390/650 Hz, and three recordings outvote it), opens for
+0.9-1.2 s, then three coos of 0.75-0.9, 0.45-0.55 and 0.65-0.8 s, 0.25-0.35 s
+apart: about 4.1 s in all (was 3.4). A dove sings bouts of 3-5 songs 5-9 s
+apart, as the recordings do. **The songbirds** now sing notes of 30-100 ms
+(was 40-140), 50-160 ms apart (was 20-80), 2-8 to a song (was 5-12), from a
+base of 3.4-5.2 kHz (was 2.6-5.0), with sweeps up to about 1.3x either way; a
+songbird's bout is 1-3 songs 3-8 s apart. How often any bird sings is the
+owner's round-2 rule and did not change: one at a time, about one every 25 s.
+
+**Score stings** (new): one per score -- hole in one, albatross or better,
+eagle, birdie, par, bogey, double bogey, triple or worse, matching scoring.js's
+names (`scoreSting`) -- in three instruments: a marimba (partials at 1x, 4x
+and 9.9x), bells (1x, 2.76x, 5.4x, with a slow beat) and a soft electric piano
+(1x and a detuned 1.004x, 2x, 3x, a 7.1x tine). Good scores climb an arpeggio
+in C major and finish on a chord; par is a settling fourth; bogeys fall a
+third, double bogey a minor triad, worse a soft chromatic droop. **Level 0.14**:
+at 0.32 the hole-in-one peaked 5 dB over full scale and every sting averaged
+louder than a drive. PLACED throughout.
+
+**The flagstick** (new): a dull fibreglass knock (420, 1,150 and 2,400 Hz,
+damped within 20 ms), the metal ferrule chattering in the cup's socket four
+times over 0.2 s, the flag snapping; a low hit near the cup rattles more, a
+glancing one is a tick and the flag. **The house** (new): siding (a hollow
+clack, tones 190-1,350 Hz), brick or stone (a hard thwack), a roof (a thunk,
+then nine ticks of the ball rattling down the shingles) and a window (a glassy
+tink; it does not break). PLACED.
+
+### Round 4: everything signed off, and the sounds in the game (13 October 2026)
+
+The owner's last picks: the marimba for every score sting, the ace, albatross
+and eagle at pitch 0.8 and the ace's mallet at 2.15x; water take A (the
+splash) at texture 3.4, body 1.95, pitch 0.83, length 1.65 over its round-2
+sliders; the cup's length 0.95 on top of round 3's; the flagstick A at length
+0.4, crack 3.95, pitch 0.76; and **one material for every house, brick**, at
+pitch 0.66, length 0.3, crack 0.25, texture 1.95 (its Thump slider, 2.05,
+moves nothing: the brick take has no thump). All folded into `FINAL`; every
+sound the game can play now has exactly one take (`tests/sound.test.mjs`).
+
+**How the game plays them** (`src/audio.js`; `src/sound.js` is the
+synthesiser, moved from the lab unchanged, and the report now inlines it):
+
+- **The strike** at the moment of the shot, keyboard shots only -- none from a
+  launch monitor, the owner's rule. Which strike: driver, woods and hybrids,
+  irons and wedges, putter; an iron or wedge whose head speed is under 55 mph
+  is a chip (PLACED). Head speed is ball speed over a smash factor of about
+  1.48 for a driver, 1.45 a wood, 1.4 a hybrid, 1.33 an iron, 1.2 a wedge,
+  1.6 a putter (typical figures, PLACED; only loudness and brightness follow
+  it). **The whoosh has a tenth of a second** (round 5, below): the lab plays
+  the impact 0.45 s after the whoosh begins, but the game fires the ball the
+  instant the key goes down, so in the game the whoosh rises over the last
+  0.1 s into the crack and the follow-through carries on after it; the crack
+  lands 0.1 s after the ball leaves. Delaying the ball to make room for a
+  longer swing was rejected: it changes how a shot feels to play.
+- **Every contact** -- each turf bounce, a trunk, a rock, a flagstick, a house,
+  the water -- is recorded by simulateShot with its time, what was hit and the
+  speed into it (`contacts`; the flight itself does not read it), and plays as
+  the drawn ball reaches that moment. Its distance and side are measured from
+  the camera, so a landing seen from the tee is quieter and duller than one
+  the landing camera watches. A contact under 0.8 m/s is skipped (PLACED). A
+  frame that jumps more than half a second (a skip) plays nothing. Rocks and
+  a lit floodlight mast use the rock, Haunted Hollow's props the trunk.
+- **The canopy is not a collider** -- the physics stops at trunks -- but a ball
+  flying through leaves still rustles: once per tree whose crown the flight
+  passes through, between 45% and 100% of the tree's height, within its crown
+  radius (`canopyContacts`, PLACED band).
+- **The cup** as the ball drops; **the score sting** as the hole-out banner
+  lands, by the same names scoring.js uses (a decimal-putting score plays the
+  nearest whole score's sting).
+- **The ambience** follows the course: its biome, its wind in mph, the
+  course's own temperature (crickets and cicadas), night when the sun is more
+  than 4 degrees below the horizon (PLACED), and **water by distance from the
+  ball** -- or the camera when no ball is in play -- found from the world's own
+  surface query on rings of 8 to 300 m (0.2-0.4 ms a query, once a second).
+  What kind of water it sounds like still comes from the biome's mix, not the
+  nearest body (TODO).
+- **A Sound window** (main menu and the in-round menu): on/off, volume, shots
+  and landings, and the course around you, kept on the device in its own
+  store (`fairway-sound-v1`), not in a course or a round. Nothing is made until
+  the player's first click, tap or key (the browser's rule); the audio is
+  suspended while the page is hidden.
+
+**Cost, measured.** The ambience's scheduling takes 0.2-1.3 ms of the main
+thread per second of sound (offline renders of five scenes, day and night) --
+about a twentieth of a millisecond per frame; the audio itself runs on the
+browser's audio thread. The two sound modules add about 52 KB to the built
+page once minified (17.0 MB in all).
+
+**The smoke run that day.** 24 of 26 journeys passed, including a new `sound`
+journey. `floodlit-night` (a 0.93 s freeze turning the floodlights on) and
+`text-size` (the course drawn at 1224 px of 1920) failed while another
+program held the graphics card at 74% (`nvidia-smi`); both are frame-timing
+checks, both passed in the run before the sound was wired in, and the sound's
+main-thread cost above is two orders too small to cause either. Re-run on an
+idle card before merging (TODO).
+
+### Round 5: the swing ran backwards, and water as lapping waves (13 October 2026)
+
+**The swing played in reverse** (the owner: "the ball is hit and then I hear
+the whoosh"). Round 4 started each game strike 0.43 s in the past so its
+0.45 s whoosh could run ahead of the ball, on the belief that the missed part
+would simply go unheard. It does not work that way: a sound started late is
+moved to now WHOLE (a buffer source starting in the past starts now from its
+beginning, and an automation curve that began in the past runs from now), so
+the full whoosh played after a crack that landed on time. The game strike now
+has a 0.1 s lead: rendered offline, the first sound is at 60 ms, rising, and
+the crack peaks at 100 ms, for driver, wood and iron alike. A side effect:
+the first shot of a fresh page is on time too, because nothing is scheduled
+before the audio clock's zero any more.
+
+**Inland water as small lapping waves** (the owner: the pond, lake, river and
+creek sounds "more like a small lapping wave"). Four options on a page of
+their own, `docs/reports/sounds/water.html` (local), each played
+continuously by `lapPlayer` (turned down in round 6, below, and removed): A, a gentle lap -- the wave washing in (noise
+opening from 350 to 1,100 Hz), a slap against the bank (700 Hz), the draw
+back (1,400 falling to 450 Hz) and a few gurgles, every 2.2-4 s; B, quicker
+ripples with plips and plops (bubbles of 3-9 mm), every 1-2.2 s; C, a hollow
+clop against a wooden bank or boat (170-230 Hz), every 1.6-3.2 s; D, tiny
+waves on sand, a wash and a fizz, every 2.5-5 s. Every lap varies in size,
+grows with the wind (size 0.6 + wind/20, period x 1.15 - wind/60) and rises
+and falls in sets over 18-35 s. All PLACED. Measured offline over 30 s at 20 m
+in 8 mph of wind, each averages -55 to -57 dB, the pond today -56.5, so the
+choice is about character, not loudness. The owner turned all four down.
+
+### Round 6: ponds apart from rivers, from research (13 October 2026)
+
+The owner turned down all four round-5 lapping styles ("I'm not liking any of
+these"), asked what a pond really sounds like at the shore, and split the
+water in two: ponds and lakes, rivers and creeks, "radically different" from
+what was there.
+
+**What a pond sounds like at the shore.** No study of a small pond's lapping
+heard in air was found. What was found:
+- **The water itself is nearly silent.** Ponds are loud UNDERWATER -- water
+  boatmen, beetles, fish, frogs and popping plants; insects dominate at night,
+  peaking 02:00-04:00 and 20:00-00:00, plants by day (Bristol, Freshwater
+  Biology, 2023) -- but that is hydrophone sound and does not reach a listener
+  on the bank. In air a calm pond is heard through what is around it: wind in
+  the reeds, a fish or frog surfacing, frogs calling.
+- **Wave sound needs breaking water.** Surf studies tie airborne wave sound to
+  falling water and collapsing air (50-315 Hz rising 5-20 dB as a wave breaks,
+  for waves over 1 m; Nova Scotia field study) and to pulsating air pockets
+  under plunging waves (laboratory). Gentle lapping entrains little air, so a
+  lake's sound at the edge is small slaps where wavelets meet stones and the
+  backwash rattling gravel -- an inference from those studies, recorded as one.
+- **Frogs.** Green frog advertisement calls: energy at 200-500 Hz and
+  1,300-1,500 Hz in large males, 500-1,000 Hz in small ones (Jenssen and
+  Preston, Copeia 1983). Spring peeper calls: most energy at 2,900-3,200 Hz
+  (USGS acoustic monitoring summary). No measured bullfrog figure was found, so
+  there is no bullfrog.
+
+**What a brook sounds like.** It is bubbles: a hydrophone recording of a
+babbling brook is a series of exponentially decaying sinusoids, about nine
+bubbles in the clip shown, big bubbles low, small high (University of
+Southampton, ISVR). Their simulations are the useful number: **50 bubbles a
+second with no noise are separate pings and "do not sound like realistic rain
+or a babbling brook"; 2,500 a second with noise added "sounds a lot more like
+rain or a babbling brook"**. Round 4's creek was 55 bubbles a second, which is
+why it never sounded like one.
+
+**How they are built now.** Sample by sample: each option writes thousands of
+tiny events a second (bubbles as decaying sines that rise as they surface,
+pebble and reed clicks, noise bursts for slaps and splashes, filtered noise
+beds) into pieces of audio a fifth of a second long, queued back to back on the
+audio clock, so nothing ever repeats and no Web Audio node is made per event
+(`WATERS`, `waterPlayer` in sound.js). The options:
+
+| | Option | What is in it (all PLACED) |
+|---|---|---|
+| Pond | A. A still pond | Reed blades ticking (2.5-7 kHz, under 1.2 ms) at about 220 a second scaled by gusting wind, a faint reed hiss, a plish every five seconds or so, a fish or frog surfacing about every 40 s (a 5-8 mm bubble, a splash, drops after) |
+| Pond | B. A lake shore | Wind wavelets every 0.7-1.6 s (quicker and bigger with wind): a slap against a stone, a few bubbles, then the backwash -- 8-25 pebble clicks at 2-5 kHz over a third of a second and a gravel hiss |
+| Pond | C. Under a wooden dock | Hollow glugs, 120-350 Hz with falling pitch, in ones to threes, as wavelets squeeze air under the boards; the dock knocked now and then |
+| Pond, any | Frogs | By day a green frog's plucked "gunk" every 12-40 s (220-320 Hz with partials at 1.3-1.5 kHz and about 2.2x); at night 4-7 spring peepers at 2.9-3.2 kHz, about one rising peep a second each |
+| River | A. A babbling creek | About 1,800 bubbles a second (radius median 1.6 mm, about 2 kHz, log-normal), riffle gulps of 15-40 bigger bubbles three times a second, a soft rush (400-3,500 Hz), the whole surging on a random walk |
+| River | B. A mountain stream | About 2,600 smaller bubbles a second (median 1.1 mm, about 3 kHz), white-water splashes, a louder broadband rush (200-7,000 Hz) and a low rumble under 150 Hz |
+| River | C. A slow, deep river | A low noise bed whose corner sways 270-630 Hz like eddies, a big gloop (4-16 mm bubbles, 200-800 Hz) about twice a second, a soft wash on the bank every six seconds |
+| River | D. A trickle into a pool | Drops at about four a second (a click and a rising bubble each, sometimes in pairs) over a thin thread of 250 tiny bubbles a second |
+
+Measured offline over 30 s at 20 m in 8 mph of wind: the ponds average -52 to
+-58 dB (today's pond -56), the creeks -42 to -40 (today's creek -45), the slow
+river and the trickle -53 and -56. The peeper chorus at night lifts a pond to
+about -45 to -48: real peepers are loud, and Frogs turns them off. **Cost**: the
+ponds, the slow river and the trickle take about 1 ms of main thread per
+second of sound; the two dense creeks about 11-12 ms (around 1%), rendered in
+2-3 ms slices every fifth of a second. If a creek is chosen, moving its
+rendering to an AudioWorklet would take it off the main thread entirely.
+
+Rejected this round: round 5's four lapping styles (a gentle lap, ripples, a
+clop against a bank, a sandy wash), all built from a handful of filtered-noise
+puffs and bubbles per wave -- the same family as round 4's pond, which is what
+the owner heard in them.
+
+### Round 7: rivers and creeks signed off, ponds as lapping bubbles (13 October 2026)
+
+**Signed off**: the mountain stream for rivers (pitch 0.61, brightness 1.65,
+texture 0.15) and the babbling creek for creeks (pitch 1.23, brightness 0.4,
+body 0.55, texture 0.15, level 0.65) -- the owner's sliders, now each recipe's
+`base`; `WATER_FOR` maps a kind of water to its sound. Discarded: the slow
+river and the trickle. **No frogs** at ponds (the owner); the frog layer is
+removed.
+
+**Ponds as lapping bubbles.** The owner's diagnosis of round 6's ponds: they
+needed "lapping sounds using the bubbles from the rivers and creeks instead of
+the more white noise ... I think that is what we are missing." So the four new
+options are made only of bubbles (and, on the pebble shore, pebble clicks), no
+noise at all. All PLACED:
+
+| Option | One wave |
+|---|---|
+| A. A bubbly lap | Every 1.8-3.6 s, 120-260 bubbles (radius median 3 mm, about 1.1 kHz) spread over 0.45-0.8 s, quick to build and slower to die, then 20-50 small high bubbles over 0.4 s as the water drains back |
+| B. A slap and a gurgle | Every 0.9-1.8 s, 30-70 bubbles in 80 ms (median 2.2 mm), then two to four big gloops (5-9 mm, 360-650 Hz), then a trickle of small ones |
+| C. A breathing shore | A continuous bubbling, 40 a second at rest, swelling to about 560 a second at each wave's crest (a smooth bump every 2-3.2 s, each its own height): a creek slowed down and breathing |
+| D. A pebble shore, in bubbles | Every 0.8-1.7 s, 40-90 bubbles as the wavelet lands, then 8-25 pebble clicks (2-5 kHz) as it runs back, and a fizz |
+
+Wind makes every wave bigger (0.5 + wind/16) and quicker (period x 1.2 -
+wind/40), and sizes ride a slow set of about 25 s. Measured offline over 30 s
+at 20 m in 8 mph of wind, all four average -54 to -56 dB, today's pond -56,
+the creeks -42 to -47. Each costs about 1-2 ms of main thread per second of
+sound; the creeks 9-13 ms.
+
+### Round 8: the pond signed off, and every water in the game (13 October 2026)
+
+**Signed off**: the bubbly lap (round 7's A) for ponds and lakes, with the
+owner's sliders as its `base` (texture 2.55, body 1.3, brightness 0.95, pitch
+0.71). With the mountain stream for rivers and the babbling creek for creeks,
+`WATER_FOR` is complete. The other pond options, round 6's three and the
+round-4 pond and creek they were compared against are removed.
+
+**How the game plays them.** About once a second the game finds the nearest
+water to the ball (or the camera with no ball in play) and asks what kind it
+is (`waterKindAt`): a river or a creek if a stream is there (the stream says
+which), the sea if the ground there is below sea level on a coast and not a
+lake, otherwise a pond or a lake. The ambience plays that kind's sound,
+cross-fading over 1.5 s when the kind changes; the sea keeps its surf and an
+inland sound is never played for it. The nearest water also sets how loud
+(full within 25 m, gone by 300 m, as before) and which side: its bearing from
+the camera pans the sound, gliding rather than jumping. Checked on generated
+courses: a point on each river and creek was classified as its own kind; an
+island's holes all heard the sea; a links course heard ponds and, at three
+spots, the sea.
+
+**Kept on the main thread, not moved to an AudioWorklet** (the plan in round
+6). A worklet needs the grain code as its own unminified source; the game is
+minified at build, so the worklet would need a second copy of the recipes kept
+in step with this one, and the Node tests and the report would need it too.
+What it would save: the creek's 9-13 ms of main thread per second of sound,
+now made a fifth of a second at a time (2-3 ms each) and never more than 0.6 s
+ahead, so it never arrives as one burst. The full smoke suite ran green with it
+(below). Revisit if a frame budget ever says otherwise.
+
+**The smoke failures of round 4 were the busy card.** With the graphics card
+idle (0% by `nvidia-smi`), all 26 journeys passed, `floodlit-night` and
+`text-size` included.
+
+### Open, for the owner
+
+Nothing. Every sound is decided and in the game. Decided along the way: the
+driver (take C, main ring near 5.4 kHz), no club sounds under a launch
+monitor, no crowd, no ball rolling, no frogs, no CC0 recordings, one material
+for every house, and water by kind.
+
+## Flagsticks and houses: solid where they are drawn, and flags you can find (13 October 2026)
+
+The owner asked for colliders on the flagstick and houses, and for flagsticks
+that can be seen from a distance.
+
+**Houses were already solid, but in the wrong place.** simulateShot works in
+the hole's frame and moved each house's centre into it with `toLocal`, but
+kept `rotation`, which is a world angle; the box test then turned every house
+by its hole's own angle. Measured on the `HOMES-QA` course (nine holes, 57
+houses): on a grid of 1 m points around each house, **32.8% of the points
+inside either the drawn house or its collider were inside only one of them**,
+**60% on the worst house**, and only holes running due north were right. The
+box also stood **2.6 m above every roof** -- a relic of the hand-built houses,
+whose roof sat on top of `height`; the imported models are fitted to `height`
+roof and all. Against the old code, **96 of 100** level shots passing 0.6 m
+outside a long wall struck it, and **50 of 50** balls clearing a roof by 0.8 m
+hit the air above it. Fixed: in the hole's frame a house is turned by its own
+rotation less the hole's, and the box ends at the drawn top
+(`tests/solid-colliders.test.mjs`). `tests/homes.test.mjs` had made the same
+frame mistake in its own "inside" check, so it agreed with the old physics; it
+was corrected too.
+
+**The flagstick is solid while it stands in the hole.** A vertical cylinder
+at its regulated base radius (9 mm; the rule allows 9.5 mm from 76 mm above the
+surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to 7 ft
+above the green, in the same swept-cylinder test as a trunk, so a ball comes
+off it the way it comes off a tree (the normal component reversed at 0.3 of
+its speed). The game pulls the stick for a putt and when the ball is on the
+green, and the collider follows: `flagsticks.current` is false exactly then.
+Every other hole's stick always stands. A strike counts as `flagHits`, not a
+tree. Not modelled: the stick's flex (a fibreglass pole gives a little more
+than a trunk) and a ball wedged between stick and cup wall, which the Rules
+call holed if any part is below the surface.
+
+**Flagsticks stay findable.** Drawn to size, the stick is 18 mm across: from
+250 yd (229 m) with the default 50-degree view on a 1,080-line screen that is
+about 0.09 px wide and 11 px tall, the flag about 2.4 x 1.7 px. Beyond the
+distance where the stick would be shorter than 36 px on screen, stick and flag
+grow together to hold that angular size, up to 10x; the cloth may grow up to
+1.8x more so it stays at least 14 px wide; and the pole is thickened so it is
+never under 2 px. Close up -- inside about 70 m at that screen size -- they are
+exactly to size. Drawing only: the ball hits the real stick. All four numbers
+are PLACED by eye and live beside each other in renderer.js (`FLAG_MIN_PX`).
+Rejected: an outline or glow (a second pass for one object, and a cartoon
+outline nowhere else in the scene), and leaving it to the flag label (the
+label marks the spot but is not the flag, and it hides when you aim).

@@ -21,19 +21,22 @@ import {groundGeometry,groundMaterial,HOLE_ATLAS} from './ground.js';
 import {uiZoom} from './ui-scale.js';
 import {rangeTargets} from './range.js';
 
-// A flagstick, to the dimensions that are actually specified.
+// The flagstick's dimensions live in physics.js beside the collider that uses
+// them (FLAGSTICK_HEIGHT and the two radii), so what is drawn is what is hit.
 //
-// HEIGHT IS NOT REGULATED. The Equipment Rules govern the flagstick's DIAMETER
-// and say nothing at all about how tall it is -- which is the opposite of what
-// everyone assumes, this author included. Seven feet is near-universal
-// convention rather than a rule, and this is exactly seven feet because there is
-// no reason to be a rounded 2.13 m and miss it by 3.6 mm.
-//
-// The diameters below are the regulated ones and both pass: 14 mm at the top
-// against a 50.8 mm limit, and 18 mm where it meets the green against the 19 mm
-// limit that applies from 76 mm above the surface to 76 mm below. One millimetre
-// of margin on that second one, so do not thicken the base without checking it.
-const FLAGSTICK_HEIGHT=7*0.3048, FLAGSTICK_TOP_R=.007, FLAGSTICK_BASE_R=.009;
+// FLAGSTICKS STAY VISIBLE FROM ANYWHERE (the owner, 13 October 2026: "work on
+// the visibility of the flagsticks from a distance"). Drawn to size, a 7 ft
+// stick 18 mm across is under a tenth of a pixel wide from 250 yd on a
+// 1080-line screen and its flag about three pixels -- it simply vanishes, and
+// it is the one thing a golfer most needs to find. So once the stick would
+// stand shorter than FLAG_MIN_PX on screen, stick and flag grow together to
+// hold that ANGULAR size (up to FLAG_MAX_SCALE), the cloth may grow a little
+// more so it stays at least FLAG_CLOTH_PX wide, and the pole is thickened on
+// top of that so it never drops below POLE_MIN_PX. Close up -- a chip, a pitch,
+// anything from the green -- they are exactly to size. Drawing only: the ball
+// collides with the real stick. The range's target boards make the same
+// angular-size choice (addRangeTargets). PLACED by eye.
+const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
 import * as T from 'three';
 import {addHaunts} from './haunts.js';
@@ -42,7 +45,7 @@ import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APR
 import {addVegetation} from './vegetation.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall} from './camera.js';
-import {R,CUP_RADIUS,YARD,clamp} from './physics.js';
+import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
@@ -1423,7 +1426,7 @@ export class GolfView{
  addHoleDetails(h){
   const group=this.group,blue=this.style==='blueprint',p=h.worldPin,y=h.height(h.pin.x,h.pin.z),white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;this.flagsticks[h.hole]=assembly;
+  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;this.flagsticks[h.hole]=assembly;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
   // Kept so the range's green can be moved without rebuilding the world. Every
   // one of these was positioned in WORLD coordinates above, and the flagstick's
@@ -1509,6 +1512,8 @@ export class GolfView{
    const p=h.toWorld(h.pin),y=h.height(h.pin.x,h.pin.z);
    props.pole.position.set(p.x,y+1.065,p.z);
    props.flag.position.set(p.x+.24,y+1.95,p.z);
+   // holdFlagsticks places the stick from its base every frame.
+   if(this.flagsticks[h.hole])this.flagsticks[h.hole].userData.base={x:p.x,y,z:p.z};
    props.cup.position.set(p.x,y-.0575,p.z);
    props.liner.position.set(p.x,y-.0254-.0448,p.z);
    props.floor.position.set(p.x,y-.115,p.z);
@@ -1822,6 +1827,21 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   material.onBeforeCompile=sh=>sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>',
    '#include <clipping_planes_fragment>'+String.fromCharCode(10)+'if(length(gl_PointCoord-vec2(.5))>.5)discard;');
   this.scatter=new T.Points(geometry,material);this.scatter.renderOrder=4;this.group.add(this.scatter);
+ }
+ // See FLAG_MIN_PX. A few multiplies per hole per frame; nothing is rebuilt.
+ holdFlagsticks(){
+  const cam=this.camera,px=Math.max(1,this.canvas.clientHeight)/(2*Math.tan(cam.fov*Math.PI/360));
+  for(const a of this.flagsticks||[]){
+   const b=a?.userData.base;if(!b||!a.visible)continue;
+   const d=Math.max(1,Math.hypot(cam.position.x-b.x,cam.position.y-b.y-1,cam.position.z-b.z)),perMetre=px/d;
+   const s=clamp(FLAG_MIN_PX/(FLAGSTICK_HEIGHT*perMetre),1,FLAG_MAX_SCALE);
+   const cloth=Math.max(s,Math.min(FLAG_CLOTH_PX/(.48*perMetre),s*1.8));
+   const thick=Math.max(s,POLE_MIN_PX/(2*FLAGSTICK_BASE_R*perMetre));
+   const {pole,cloth:f}=a.userData;
+   pole.scale.set(thick,s,thick);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s/2,b.z);
+   // The cloth's top stays at the top of the stick, its edge against the pole.
+   f.scale.setScalar(cloth);f.position.set(b.x+.24*cloth+FLAGSTICK_TOP_R*(thick-1),b.y+FLAGSTICK_HEIGHT*s-.165*cloth,b.z);
+  }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
  // THE PIN IS PULLED ONCE YOU ARE PUTTING, which is what happens on a real
@@ -2353,7 +2373,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // only, so neither move changes what it looks like.
   {const far=Math.max(1500,this.scene.fog.far*1.05);
    if(Math.abs(this.camera.far-far)>1){this.camera.far=far;this.camera.updateProjectionMatrix();}
-   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
+   if(this.sky){this.sky.position.copy(this.camera.position);this.sky.scale.setScalar(Math.min(1,far*.9/7500));}}this.updateGrass?.();this.elapsed+=dt;this.effects?.update(dt,this.elapsed);for(const flag of this.flagsticks||[])flag.position.y=T.MathUtils.damp(flag.position.y,flag.userData.lift?3:0,14,dt);this.holdFlagsticks();this.updateGreenGrid();this.updateFloodlights(this.ball?.position);this.foliageTime.value=this.elapsed;this.breeze.value=.55+(this.world.settings.wind||0)*.07;{const wa=(this.world.settings.windDirection||0)*Math.PI/180;this.windVec.value.set(Math.sin(wa),Math.cos(wa));}for(const flag of this.flags||[]){const p=flag.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(this.elapsed*3.2+p.getX(i)*5)*.15*(p.getX(i)+.7));p.needsUpdate=true;}if(this.camFlight){
   // A flight drives the camera outright. The damping below is a spring toward
   // a target; running both would fight the path and round off its ends.
   this.camFlight.elapsed+=dt;

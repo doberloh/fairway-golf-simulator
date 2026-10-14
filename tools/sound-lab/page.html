@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fairway Sound Lab</title>
+<style>
+:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6;--warn:#9a5b12;--spec:#0f1a14}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29;--warn:#e0a35a;--spec:#0a100c}}
+:root[data-theme="dark"]{--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29;--warn:#e0a35a;--spec:#0a100c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
+h1{font-size:26px;margin:8px 0 4px}h2{font-size:20px;margin:36px 0 6px}h3{font-size:16px;margin:0}
+p{margin:6px 0}.muted{color:var(--muted)}small{color:var(--muted)}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+canvas#spec{width:100%;height:96px;display:block;background:var(--spec);border-radius:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.takes{display:flex;flex-direction:column;gap:4px}
+.take{display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 8px;cursor:pointer;font:inherit}
+.take b{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--line);text-align:center;line-height:20px;font-size:12px;flex:none}
+.take.on{border-color:var(--accent)}.take.on b{background:var(--accent);color:var(--accent-ink)}
+button.act{border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button.sec{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 10px;font:14px system-ui,sans-serif;cursor:pointer}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+label.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px}
+label.sl input{grid-column:1/3;width:100%;accent-color:var(--accent)}
+label.sl span:last-of-type{color:var(--muted);font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+details[open] summary{margin-bottom:6px}
+textarea{width:100%;min-height:44px;resize:vertical;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px system-ui,sans-serif}
+.amb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.amb{grid-template-columns:1fr}.bar{position:static}canvas#spec{height:64px}}
+#log{list-style:none;margin:0;padding:0;font-size:13px;max-height:280px;overflow:auto}
+#log li{padding:3px 0;border-bottom:1px dashed var(--line)}#log time{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:8px}
+select{font:inherit;padding:5px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);max-width:100%}
+.note{border-left:3px solid var(--accent);padding:4px 10px;background:var(--panel);border-radius:0 8px 8px 0}
+.q{border-left-color:var(--warn)}
+#copied{position:fixed;right:16px;bottom:16px;z-index:9;display:flex;gap:8px}
+#out{position:fixed;inset:auto 16px 64px 16px;max-width:700px;margin-left:auto;z-index:9;display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#out textarea{min-height:200px;font-family:ui-monospace,Consolas,monospace}
+table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<main>
+<h1>Fairway Sound Lab</h1>
+<p class="muted">Built <span id="built"></span> on branch <code>sounds</code>. Nothing here is in the game yet.</p>
+
+<div class="note"><p><b>Every sound on this page is made live by the browser.</b> There are no recordings, so there is nothing to license or attribute, and the game file barely grows. Each play is new: strikes vary a little every time, and the background sounds are random processes (gusts, birds, bubbles, passing planes) rather than a loop. Leave a scene running for ten minutes and nothing will come round again.</p>
+<p>Use headphones or decent speakers; a laptop speaker loses the low thumps. For each sound, pick the take (A, B or C) that is closest, nudge the sliders under <i>Adjust</i>, and type a note. <b>Copy my notes</b> (bottom right) gathers every change and note into one block to paste back to me. Your settings stay in this browser between visits.</p></div>
+
+<div class="note q"><p><b>Round 4: every sound is signed off and playing in the game.</b> Each sound has one take, exactly as you set it: the marimba for every score, water A, the flagstick A, brick for every house. This page now plays the game's own sound file, so what you hear here is what the game plays. In a round, the <b>Sound</b> window (main menu, or the menu in a round) has the volumes and an off switch.</p></div>
+
+<div class="bar">
+ <button class="act" id="unlock">Start sound</button>
+ <label class="sl" style="min-width:200px"><span>Master volume</span><span id="mvv">80%</span><input id="mv" type="range" min="0" max="1.2" step=".01" value=".8"></label>
+ <div style="flex:1;min-width:260px"><canvas id="spec" width="1000" height="96"></canvas><small>What is playing, low notes at the bottom, high at the top (100 Hz to 12 kHz).</small></div>
+</div>
+
+<h2>1. Ambience</h2>
+<p class="muted">One scene per biome. Wind gusts on its own timescale; birds arrive, sing a few times and leave; planes pass every few minutes. Use the buttons to bring something in now instead of waiting.</p>
+<div class="amb">
+ <div class="card">
+  <div class="row"><select id="scene"></select><button class="act" id="ambPlay">Play</button><button class="sec" id="ambStop">Stop</button><label><input type="checkbox" id="night"> Night</label></div>
+  <label><b>Your notes on the ambience</b><textarea data-note="ambience" placeholder="Which scene, what to change -- type as you listen"></textarea></label>
+  <div class="row muted" style="font-size:13px"><span>Playing for <b id="elapsed">0:00</b></span><span>Gust now: <b id="gustNow">-</b></span><span>Water heard at: <b id="waterNow">-</b></span></div>
+  <label class="sl"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="30" step="1"></label>
+  <label class="sl"><span>Distance to water (in the game: from the ball)</span><span id="waterv"></span><input id="waterDist" type="range" min="0" max="350" step="5"></label>
+  <div id="mixes"></div>
+  <div><small>Bring one in now (it waits its turn if a bird is singing):</small><div class="row" id="triggers"></div></div>
+ </div>
+ <div class="card"><h3>What you are hearing</h3><small>Each event as it starts. Wind, water and leaves run underneath all the time.</small><ul id="log"></ul></div>
+</div>
+
+<h2>2. The swing</h2>
+<p class="muted">Each plays the whoosh rising into the strike. Head speed changes loudness, brightness and the whoosh. <b>Play 3</b> shows that no two strikes are the same.</p>
+<div class="grid" id="strikes"></div>
+
+<h2>3. Landing on each surface</h2>
+<p class="muted">The eight surfaces a ball can land on in the game. <b>Bounces</b> plays a landing and the hops after it. <b>Distance</b> is how far the camera is from the ball: far landings are quieter and duller.</p>
+<div class="grid" id="turf"></div>
+
+<h2>4. Trees and rocks</h2>
+<div class="grid" id="solid"></div>
+
+<h2>5. Score stings</h2>
+<p class="muted">One per score, played as the hole-out banner lands. Signed off on the marimba; the buttons below still play the whole set in each instrument, for the record.</p>
+<div class="row" id="scoreAll" style="margin-bottom:10px"></div>
+<div class="grid" id="scores"></div>
+<h3 style="margin-top:20px">The cup</h3>
+<div class="grid" id="extra"></div>
+
+<h2>6. Also done this round, in the game</h2>
+<div class="note"><p><b>The flagstick is solid while it is in the hole.</b> A ball that hits it bounces off, the same way a ball bounces off a tree. It is out of the way whenever the game pulls it: on the green, and whenever the putter is in hand.</p>
+<p><b>Houses were solid already, but in the wrong place.</b> On any hole that does not run due north, each house's solid box was turned by that hole's angle, and it stood 2.6 m above every roof. On a test course of 57 houses, a third of each house's footprint disagreed with the drawing. Now it matches, and balls skimming past a wall or over a roof go by.</p>
+<p><b>Flagsticks stay visible from a distance.</b> Past the point where the stick would shrink to a few pixels, the stick and its flag grow on screen so they keep a findable size, and the pole is never thinner than about two pixels. Close up they are exactly to size, and the ball always hits the real-sized stick.</p></div>
+
+<h2>7. Questions for you</h2>
+<div class="note"><p>None open. Everything here is decided.</p></div>
+
+<h2>8. How each sound is made</h2>
+<table><thead><tr><th>Sound</th><th>Made from</th><th>Where the numbers come from</th></tr></thead><tbody>
+<tr><td>Driver</td><td>Ringing tones (the head's vibrations), a short crack, the ball's own tick and a low thump</td><td>Published: a titanium driver strike centres near 4-4.5 kHz and lasts under 0.2 s; the ball rings near 1.5 kHz. The exact set of tones is set by ear.</td></tr>
+<tr><td>Swing</td><td>Darker noise through a narrow band whose pitch rises into the strike and falls after</td><td>Set by ear (round 2: round 1's wide band sounded like hiss).</td></tr>
+<tr><td>Irons, wedges</td><td>A hard, very short crack and the ball's own sound, then the divot (thump, tearing grass, clods); no metal ring</td><td>From your round-1 note; set by ear.</td></tr>
+<tr><td>Tree trunk</td><td>A hard crack and short, bright wooden tones, like a pine board</td><td>From your round-1 note; set by ear.</td></tr>
+<tr><td>Flagstick, house</td><td>The stick: a dull fibreglass knock, the metal fitting rattling in the cup, the flag snapping. A house: four materials (siding, brick, a roof with the ball rattling down, a window tink)</td><td>Set by ear.</td></tr>
+<tr><td>Score stings</td><td>Short phrases on a synthesised marimba, bells or electric piano: better scores climb and brighten, par settles, bogeys fall softly</td><td>Set by ear. No crowd, by your call.</td></tr>
+<tr><td>Cup</td><td>A dull plastic "tok", then a rattle of shrinking bounces, coloured by the hollow tube</td><td>Hole 4.25 in across and at least 4 in deep, with a moulded plastic liner (USGA, liner patents). The ball drops about 0.1 m. The tube's hollow note is near 640 Hz, worked out from its depth.</td></tr>
+<tr><td>Putter</td><td>Short tones split into putter (below 2 kHz) and ball (2-4 kHz)</td><td>Published: Barrass, Roberts and Jones (2006).</td></tr>
+<tr><td>Turf landings</td><td>A falling-pitch thump, the ball's tick, filtered noise for grass</td><td>Set by ear.</td></tr>
+<tr><td>Water</td><td>Slap, spray, a rising "plunk", then dozens of bubbles</td><td>Bubble pitch from bubble size (Minnaert); the rising pitch from van den Doel (2005).</td></tr>
+<tr><td>Wind</td><td>Filtered noise moved by a random gust process</td><td>Set by ear; follows the game's wind speed.</td></tr>
+<tr><td>Birds</td><td>Whistled tones that follow pitch contours; harsh calls through voice-like filters. One bird at a time</td><td>Songbirds between 1 and 8 kHz (Cornell's All About Birds).</td></tr>
+<tr><td>Dove (round 2)</td><td>"cooOOoo-wooo-woo-woooo": one slurred opening that climbs to the high note and falls back, then three steady low coos, the last the longest. Nearly pure tone, soft onsets, a breath of air</td><td>One measured song: 390 Hz with the high note at 650 Hz. Doves coo with the bill shut through an inflated throat, which filters out the harmonics (Fletcher et al., ring dove). The timings are set by ear.</td></tr>
+<tr><td>Crickets (round 2)</td><td>A chorus of tree crickets chirping together: 8 pulses per chirp in groups of 2, 3 and 3, the last of each group longer. On warm nights (18 C and up), a field cricket or two on top: 3-pulse chirps near 4.5-5 kHz, each on its own clock</td><td>Chirp rate from temperature (Dolbear's law); pitch rises with temperature, about 3.0 kHz at 15 C to 4.6 kHz at 32 C. Snowy tree crickets synchronise with their neighbours (Walker, 1969). Silent below 13 C.</td></tr>
+<tr><td>Planes</td><td>Rumble (jet) or engine buzz (propeller), moved along a real flight path</td><td>Distance, travel time, Doppler and the ground reflection that makes a passing jet "whoosh".</td></tr>
+</tbody></table>
+<p class="muted">Sources and figures are recorded in docs/RESEARCH.md, <i>Sound: the synthesised soundscape</i>.</p>
+</main>
+
+<div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
+<div id="copied"><button class="sec" id="resetAll">Reset everything</button><button class="act" id="copy">Copy my notes</button></div>
+
+<script type="module">
+/*SYNTH*/
+
+// tools/sound-lab/check.mjs renders every sound offline through this.
+window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,score,waterPlayer,WATERS,WATER_FOR,STRIKES,IMPACTS,SCORES,INSTRUMENTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz};
+
+// ------------------------------------------------------------ the page
+// v2, v3, v4 for rounds 2-4: each time the owner's sliders are baked into the
+// takes, so applying them again on top would double them.
+const KEY='fairway-sound-lab-v4';
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
+const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
+$('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
+
+let ctx=null,lab=null,amb=null,an=null;
+function ensure(){
+ if(!ctx){ctx=new AudioContext({latencyHint:'interactive'});lab=createSoundLab(ctx);lab.master.gain.value=+$('#mv').value;
+  an=ctx.createAnalyser();an.fftSize=4096;an.smoothingTimeConstant=0;lab.out.connect(an);
+  amb=createAmbience(lab,{onEvent:logEvent});applyAmb();drawSpec();$('#unlock').textContent='Sound on';}
+ if(ctx.state==='suspended')ctx.resume();
+}
+$('#unlock').onclick=ensure;
+$('#mv').oninput=e=>{$('#mvv').textContent=Math.round(e.target.value*100)+'%';if(lab)lab.master.gain.setTargetAtTime(+e.target.value,ctx.currentTime,.05);};
+
+// Scrolling spectrogram, log frequency 100 Hz - 12 kHz.
+function drawSpec(){
+ const c=$('#spec'),g=c.getContext('2d'),buf=new Float32Array(an.frequencyBinCount),W=c.width,H=c.height,css=getComputedStyle(document.documentElement);
+ const lo=Math.log(100),hi=Math.log(12000),bin=f=>Math.round(f/(ctx.sampleRate/2)*buf.length);
+ const step=()=>{an.getFloatFrequencyData(buf);g.drawImage(c,-2,0);g.fillStyle=css.getPropertyValue('--spec');g.fillRect(W-2,0,2,H);
+  for(let y=0;y<H;y++){const f0=Math.exp(lo+(hi-lo)*(1-(y+1)/H)),f1=Math.exp(lo+(hi-lo)*(1-y/H));let m=-140;for(let b=bin(f0);b<=Math.max(bin(f0),bin(f1));b++)m=Math.max(m,buf[b]);
+   const v=Math.max(0,Math.min(1,(m+100)/70));if(v>0){g.fillStyle=`hsla(${140-v*110},80%,${25+v*45}%,${v})`;g.fillRect(W-2,y,2,1);}}
+  requestAnimationFrame(step);};
+ step();
+}
+
+// ---- ambience
+const sceneSel=$('#scene');for(const [k,s]of Object.entries(SCENES))sceneSel.append(el('option',{value:k},s.label));
+const A=saved.ambience||(saved.ambience={scene:'midwest',mix:{birds:1,water:1,planes:1,insects:1},wind:null,night:false,waterDist:40});
+if(A.waterDist==null)A.waterDist=40;
+sceneSel.value=A.scene;$('#night').checked=!!A.night;
+const MIX_LABEL={birds:'Birds',water:'Water',planes:'Planes (how often)',insects:'Insects'};
+for(const k of Object.keys(MIX_LABEL)){const v=A.mix[k]??1,inp=el('input',{type:'range',min:0,max:2.5,step:.05,value:v}),out=el('span',{},fmtMix(v));
+ inp.oninput=()=>{A.mix[k]=+inp.value;out.textContent=fmtMix(+inp.value);save();applyAmb();};
+ $('#mixes').append(el('label',{class:'sl'},el('span',{},MIX_LABEL[k]),out,inp));}
+function fmtMix(v){return v===0?'off':Math.round(v*100)+'%';}
+function windDefault(){return SCENES[sceneSel.value].wind;}
+function syncWind(){const w=A.wind??windDefault();$('#wind').value=w;$('#windv').textContent=`${w} mph${A.wind==null?' (biome default)':''}`;}
+syncWind();
+$('#wind').oninput=e=>{A.wind=+e.target.value;save();syncWind();applyAmb();};
+function syncWater(){$('#waterDist').value=A.waterDist;$('#waterv').textContent=A.waterDist>=300?`${A.waterDist} m (out of earshot)`:`${A.waterDist} m`;}
+syncWater();
+$('#waterDist').oninput=e=>{A.waterDist=+e.target.value;save();syncWater();applyAmb();};
+sceneSel.onchange=()=>{A.scene=sceneSel.value;A.wind=null;save();syncWind();buildTriggers();if(amb&&amb.scene)startAmb();};
+$('#night').onchange=e=>{A.night=e.target.checked;save();applyAmb();};
+function applyAmb(){if(!amb)return;amb.set({...A.mix,wind:A.wind??windDefault(),night:A.night,waterDist:A.waterDist});}
+let t0=0,tick=null;
+function startAmb(){ensure();applyAmb();amb.start(sceneSel.value);applyAmb();t0=ctx.currentTime;$('#log').innerHTML='';clearInterval(tick);
+ tick=setInterval(()=>{const s=ctx.currentTime-t0;$('#elapsed').textContent=`${s/60|0}:${String(s%60|0).padStart(2,'0')}`;$('#gustNow').textContent=`${amb.gust.toFixed(0)} mph`;$('#waterNow').textContent=`${Math.round(amb.waterLevel*100)}%`;},500);}
+$('#ambPlay').onclick=startAmb;
+$('#ambStop').onclick=()=>{if(amb)amb.stop();clearInterval(tick);};
+function logEvent({t,text}){const li=el('li',{},el('time',{},`${t/60|0}:${String(t%60|0).padStart(2,'0')}`),text);const L=$('#log');
+ // Events are scheduled up to 1.5 s ahead; show them when they start.
+ setTimeout(()=>{L.prepend(li);while(L.children.length>60)L.lastChild.remove();},Math.max(0,(t+t0-ctx.currentTime)*1000));}
+const TRIG={jet:'Jet overhead',prop:'Small plane',geese:'Geese',wave:'Wave',cicada:'Cicada',songbird:'Songbird',whistler:'Whistler',trill:'Trill',dove:'Dove',crow:'Crow',raven:'Raven',gull:'Gull',woodpecker:'Woodpecker',owl:'Owl',wren:'Desert wren'};
+function buildTriggers(){const r=$('#triggers');r.innerHTML='';const S=SCENES[sceneSel.value];
+ const keys=['jet','prop',...Object.keys(S.birds).filter(k=>k in TRIG),...(S.water.surf?['wave']:[]),...(S.insects.cicada?['cicada']:[]),'owl'].filter((k,i,a)=>a.indexOf(k)===i);
+ for(const k of keys)r.append(el('button',{class:'sec',onclick:()=>{ensure();if(!amb.scene)startAmb();amb.trigger(k);}},TRIG[k]));}
+buildTriggers();
+
+// ---- sound cards
+const mph=v=>v*0.44704;
+function card(kind,id,def,host){
+ const S=saved[kind]||(saved[kind]={}),st=S[id]||(S[id]={take:'A',knobs:{}});
+ const isStrike=kind==='strikes';
+ const c=el('div',{class:'card'});
+ c.append(el('h3',{},def.label),el('small',{},def.note));
+ const takes=el('div',{class:'takes'});
+ const play=(n=1)=>{ensure();for(let i=0;i<n;i++)setTimeout(()=>fire(),i*(isStrike?1100:700));};
+ const isScore=kind==='scores';
+ const fire=()=>isScore?score(lab,id,{take:st.take,knobs:st.knobs}):isStrike?strike(lab,id,{take:st.take,speed:st.speed??def.speed[2],knobs:st.knobs}):impact(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});
+ for(const [k,t]of Object.entries(def.takes)){const b=el('button',{class:'take'+(st.take===k?' on':''),onclick:()=>{st.take=k;save();takes.querySelectorAll('.take').forEach(x=>x.classList.toggle('on',x===b));play();}},el('b',{},k),t.name);takes.append(b);}
+ c.append(takes);
+ const slider=(label,min,max,step,get,set,fmt)=>{const inp=el('input',{type:'range',min,max,step,value:get()}),out=el('span',{},fmt(get()));inp.oninput=()=>{set(+inp.value);out.textContent=fmt(+inp.value);save();};return el('label',{class:'sl'},el('span',{},label),out,inp);};
+ if(isStrike)c.append(slider('Head speed',def.speed[0],def.speed[1],1,()=>st.speed??def.speed[2],v=>st.speed=v,v=>`${v} mph`));
+ else if(!isScore&&def.group!=='extra'){c.append(slider(def.group==='solid'?'Ball speed':'Landing speed',4,90,1,()=>st.speed??35,v=>st.speed=v,v=>`${v} mph`));
+  c.append(slider('Distance from camera',3,150,1,()=>st.dist??12,v=>st.dist=v,v=>`${v} m`));}
+ const row=el('div',{class:'row'},el('button',{class:'act',onclick:()=>play()},'Play'),el('button',{class:'sec',onclick:()=>play(3)},'Play 3'));
+ if(def.bounce)row.append(el('button',{class:'sec',onclick:()=>{ensure();bounces(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});}},'Bounces'));
+ c.append(row);
+ const adj=el('details',{},el('summary',{},'Adjust'));
+ for(const k of def.knobs){const d=KNOBS[k];adj.append(slider(d.label,d.min,d.max,d.step,()=>st.knobs[k]??d.def,v=>{if(v===d.def)delete st.knobs[k];else st.knobs[k]=v;},v=>`${Math.round(v*100)}%`));}
+ adj.append(el('button',{class:'sec',onclick:()=>{st.knobs={};delete st.speed;delete st.dist;save();c.replaceWith(card(kind,id,def,null));}},'Reset this sound'));
+ c.append(adj);
+ const ta=el('textarea',{placeholder:'Notes (e.g. "B, but less tinny")'});ta.value=st.note||'';ta.oninput=()=>{st.note=ta.value;save();};c.append(ta);
+ if(host)host.append(c);
+ return c;
+}
+for(const [id,def]of Object.entries(STRIKES))card('strikes',id,def,$('#strikes'));
+for(const [id,def]of Object.entries(SCORES))card('scores',id,def,$('#scores'));
+for(const [k,ins]of Object.entries(INSTRUMENTS))$('#scoreAll').append(el('button',{class:'sec',onclick:()=>{ensure();Object.keys(SCORES).forEach((id,i)=>setTimeout(()=>score(lab,id,{take:k,knobs:saved.scores?.[id]?.knobs||{}}),i*2600));}},`All scores: ${ins.name.split(':')[0]}`));
+for(const [id,def]of Object.entries(IMPACTS))card('impacts',id,def,$('#'+({turf:'turf',water:'turf',solid:'solid',extra:'extra'}[def.group])));
+document.querySelectorAll('textarea[data-note]').forEach(t=>{t.value=saved.notes?.[t.dataset.note]||'';t.oninput=()=>{(saved.notes||(saved.notes={}))[t.dataset.note]=t.value;save();};});
+
+// ---- feedback
+$('#copy').onclick=async()=>{
+ const strip=o=>JSON.parse(JSON.stringify(o,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0?undefined:v));
+ // Only what was changed: a sound still on take A with nothing moved is left out.
+ const changed=JSON.parse(JSON.stringify(saved));
+ for(const kind of ['strikes','impacts','scores'])for(const [id,st]of Object.entries(changed[kind]||{}))if(st.take==='A'&&Object.keys(st).length===2&&!Object.keys(st.knobs||{}).length)delete changed[kind][id];
+ const text='Sound lab notes\n'+JSON.stringify(strip(changed),null,1);
+ $('#outText').value=text;$('#out').style.display='block';
+ try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}
+};
+$('#outClose').onclick=()=>$('#out').style.display='none';
+$('#resetAll').onclick=()=>{if(confirm('Clear every take, slider and note on this page?')){try{localStorage.removeItem(KEY);}catch{}location.reload();}};
+</script>
+</body>
+</html>

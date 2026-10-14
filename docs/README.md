@@ -97,6 +97,13 @@ The list below is what exists locally.
   built, before against after: a wedge at 8,500-12,000 rpm on all four
   firmnesses, a steep wedge, a 7 iron, a 50 yd pitch and a driver into a
   fairway, with the turf check.
+- **[reports/sounds/](reports/sounds/index.html)** — every sound designed for
+  the game, playable: ambience per biome, each club, each surface, trees and
+  rocks, the flagstick and houses, and the score stings, with takes to choose
+  between, sliders and notes to send back (`tools/sound-lab/build.mjs`).
+  Synthesised, not recorded; all signed off (round 4) and in the game. Beside
+  it, `water.html`: the water options, ponds and lakes apart from rivers and
+  creeks, all signed off and in the game (round 8).
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

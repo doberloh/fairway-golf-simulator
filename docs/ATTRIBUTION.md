@@ -58,7 +58,7 @@ besides the house atlases:
 Nature's `PineTree_Leaves.png`, sitting beside the generated models that use
 it. Same pack, same CC0 licence, copied so the folder is self-contained.
 
-**Verified 25 September 2026 against the built file**: the only imported images that ship are four Kenney house atlases at 12 KB each. No leaf sprite ships -- `broadleaf` appears in the build as a species family name, not as a file -- and no texturecan asset is present anywhere in the tree. No fonts and no audio ship.
+**Verified 25 September 2026 against the built file**: the only imported images that ship are four Kenney house atlases at 12 KB each. No leaf sprite ships -- `broadleaf` appears in the build as a species family name, not as a file -- and no texturecan asset is present anywhere in the tree. No fonts and no audio files ship. The game's sounds (13 October 2026) are synthesised by its own code (`src/sound.js`), so there is no sound asset to credit.
 
 **No bark images are taken.** Trunks are painted: the generated models state a
 bark colour and the game paints every surface from the biome palette anyway, so
