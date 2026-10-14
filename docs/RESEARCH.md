@@ -7759,6 +7759,26 @@ ground and into 2% rises and falls.
   -- rolling down the hill by gravity, with or without spin. A chip in play
   that carried 14 yd and finished 12 was the green's slope, not spin.
 
+### The target marker
+
+The blue mark on the bar (Phase 2, 14 October 2026) is the stop that lands the
+ball in the aim circle. It is `playsLike` -- the circle's distance scaled by how
+much shorter or longer a full swing of this club and shape reaches the circle's
+height in today's air than level ground in still air -- then the bar share for
+that level carry, with the lie's lost ball speed made up by solving the speed
+before the lie. Checked by test: on level ground in still air the marker is the
+circle's share of the carry within 2%, and stopping the meter on it carries
+within 2 yd of 60, 100 and 140 yd with a 7 iron; uphill and rough ask for more,
+downhill for less. In play: a circle at 150 yd with a 5 iron on Hard (so no wind
+allowance, 11 mph blowing) carried 151.
+
+**Wind only on Easy** is the owner's call (spec Q7). **Altitude and temperature
+are always in** -- an assumption made in building, recorded here so it can be
+reversed: they are the air, not something a golfer reads, and the spec named
+only the wind as the skill to leave to the golfer. It approximates a partial
+swing by the full swing's ratio, as `playsLike` does (RESEARCH *Plays like, by
+geometry*); the test above bounds what that costs on level ground.
+
 `tests/swing-meter.test.mjs` re-sweeps the corner where a come-back was ever
 found (8 iron to lob wedge, every height, full swing and overswing, Soft, level
 and a 2% rise) in under a second; the full sweep took a minute and is not a

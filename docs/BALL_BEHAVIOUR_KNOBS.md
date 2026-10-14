@@ -243,6 +243,7 @@ Swing Meter* says so.
 | `HEIGHT_SPIN`, `KIND_SPIN` | **the guard that a ball with no spin added never comes back**: High and Flop carry less of the club's spin, and the pitching and lob wedges carry 95% and 85% on the meter. Found by sweeping, not chosen; `tests/swing-meter.test.mjs` sweeps the corner where a come-back was ever found. Raising any of these can break that rule |
 | `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 80% (72% until 14 October 2026). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
 | `PUTT_RANGES` | how far the putting bar zooms: a quarter, half or all of the putter's roll |
+| `targetShare` | the blue target marker: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the bar share for that carry with the lie's lost speed made up |
 
 **Sand takes the spin.** A ball landing in a bunker keeps no spin past that
 contact (`physics.js`, after the bounce), so in sand only gravity moves it back.

@@ -27,10 +27,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Phase 2: the target marker.** A mark on the bar showing the swing that
-  lands the ball in the aim circle, found by flying the ball; wind included on
-  Easy only, slope and lie always; out of reach in red; changing club moves the
-  circle unless it was placed by hand.
 - [ ] **Phase 3: mixed groups.** Each golfer plays with the Swing Meter or a
   launch monitor (hidden until a bridge has connected); the monitor window
   steps aside and refuses shots on a Swing Meter golfer's turn; handedness in
@@ -906,6 +902,14 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
   simulator never invents ball data* was rewritten for the lie rule.
   RESEARCH.md *The Swing Meter*.
+- [x] **Phase 2: the target marker.** A blue mark on the bar where to stop for
+  the ball to land in the aim circle, found by flying the ball (`targetShare`,
+  through `playsLike`): slope, lie and air always, wind only on Easy; out of
+  reach, the full line in red with *Out of reach: take more club*; for a putt,
+  the length its read line was solved for. Changing club moves a circle nobody
+  placed to the new club's carry; a placed one stays and the marker moves.
+  Worked out at most ten times a second while aiming. RESEARCH.md *The Swing
+  Meter*, *The target marker*.
 - [x] Closed by Phase 1, from *Found by driving the built game*:
   **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
     The keyboard keeps a club's full-swing launch at any power, so there is no
@@ -919,7 +923,7 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
   **Superseded:** there is no power to start at. The Swing Meter's bar is in
   yards, so half the bar is half the carry, and the golfer stops it where the
-  chip needs; Phase 2's target marker will show where.
+  chip needs, and Phase 2's target marker shows where.
 
 ## Release 0.7 (14 October)
 

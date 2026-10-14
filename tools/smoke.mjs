@@ -673,6 +673,8 @@ const JOURNEYS = [
     const full = await t.page.textContent('#smTicks .full');
     if (!/\d+\s*yd/.test(full)) throw new Error(`the bar's full line reads "${full}"`);
     if (!/LIE/.test(await t.page.textContent('#lieReadout'))) throw new Error('the lie readout is empty');
+    // Phase 2: the target marker is on the bar, inside it.
+    await t.until(() => t.page.evaluate(() => { const m = document.getElementById('smTarget'); return !m.hidden && parseFloat(m.style.left) > 0; }), 'the target marker on the bar', 5 * SLOW);
     for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinLabel']]) {
      const before = await t.page.textContent(label);
      await t.key(code);

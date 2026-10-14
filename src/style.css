@@ -1326,6 +1326,13 @@ html,body{overscroll-behavior:none}
 .sm-ticks span.over{width:auto;border-left:0;background:rgba(240,150,90,.22)}
 .sm-power{width:0;border-left:2px dashed #f0c674}
 .sm-power[hidden],.sm-target[hidden]{display:none}
+/* The target: where to stop for the ball to land in the circle (Phase 2). A
+   pale blue line with a notch above the bar, red when out of reach. */
+.sm-target{width:0;border-left:3px solid #8fd3ff;margin-left:-1.5px;top:-7px!important;bottom:-3px!important;filter:drop-shadow(0 0 3px rgba(143,211,255,.7))}
+.sm-target::before{content:"";position:absolute;top:-6px;left:-6.5px;border:5px solid transparent;border-top:6px solid #8fd3ff}
+.sm-target.out{border-left-color:#ff8f80;filter:drop-shadow(0 0 3px rgba(255,143,128,.7))}
+.sm-target.out::before{border-top-color:#ff8f80}
+.sm-out{color:#ff8f80;font-weight:600}
 .sm-marker{width:4px;margin-left:-2px;top:-5px!important;bottom:-5px!important;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 0 10px rgba(255,255,255,.6)}
 .swing-meter[data-stage=ready] .sm-marker{opacity:.55}
 .swing-catcher{position:absolute;inset:0;z-index:30;background:transparent;touch-action:none;cursor:pointer}

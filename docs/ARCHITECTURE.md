@@ -72,7 +72,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/contact.js` -- the bounce as something that takes time; `src/cup.js` -- the analytic capture reference
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
 - `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable
-- `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, curve / height / spin, and the lie table every golfer plays under
+- `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, the target marker, curve / height / spin, and the lie table every golfer plays under
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
 - `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 

@@ -14,7 +14,7 @@ import {playsLike} from './plays-like.js';
 import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
 import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './course-plan.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
-import {turfConfig,rollDeceleration,launchForDistance} from './turf.js';
+import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
 import './style.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
@@ -526,7 +526,7 @@ function setUpTurn(){
  endRelief();
  if(round.scrambleSelection){beginPick();return;}
  endPick();
- aimRange=null;const p=round.position;shotShape={...DEFAULT_SHAPE};cancelSwing();
+ aimRange=null;const p=round.position;shotShape={...DEFAULT_SHAPE};cancelSwing();rangePlaced=aimTurned=false;
  syncClubs();
  const d=distance()/YARD;
  // PUTTER ONLY ON THE PUTTING SURFACE. `localSurface` returns 'green'
@@ -577,7 +577,7 @@ function defaultAim(){
 // here is G: F3 is the browser's Find).
 function resetAim(){
  if(!canNudgeAim())return;
- defaultAim();touchAim();updateAim();view.setCamera(round.position,aim);updateHUD();
+ defaultAim();rangePlaced=aimTurned=false;touchAim();updateAim();view.setCamera(round.position,aim);updateHUD();
 }
 // G: from wherever the camera is, to the aim point, then the green, then back
 // to the ball.
@@ -854,6 +854,7 @@ function drawMeter(t,last=null){
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
  if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
  else if(flashing)hint.textContent=meterFlash.text;
+ else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
  box.classList.toggle('perfect',!!(flashing&&meterFlash.perfect));
  box.dataset.stage=swing?(swing.power==null?'power':'strike'):'ready';
@@ -884,7 +885,38 @@ function drawMeterScale(){
   if(accuracy)placeZone(zonesFor(ctx,1));
   $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}`;
  }
+ drawTarget();
  drawMeter(performance.now());
+}
+// THE TARGET MARKER (Phase 2): the stop on the bar that lands the ball in the
+// aim circle (swing-meter.js `targetShare`; for a putt, the length the read line
+// was solved for, on a flat green). Sweeping the aim asks for it every frame
+// and a full shot's answer is two flights and a bisection, so while the aim is
+// moving it is worked out at most ten times a second, and once more when it
+// stops. Out of reach, it sits on the full line in red.
+let targetKey='',targetAt=0,targetTimer=0;
+function drawTarget(force=false){
+ const el=$('smTarget'),box=$('swingMeter');if(!el||!box||box.hidden||!course)return;
+ const ctx=swing?.ctx||swingContext(),c=ctx.club;if(!c)return;
+ const putt=c.code==='PT',range=aimRange??(putt?distance():c.carry*YARD);
+ const key=[round.position.x,round.position.z,aim.toFixed(2),range.toFixed(2),c.label,c.speed,JSON.stringify(ctx.shape),ctx.short,ctx.lie,ctx.difficulty,ctx.puttRange??0,settings.wind,settings.windDirection,settings.turf.stimp].join();
+ if(key===targetKey)return;
+ const now=performance.now();
+ if(!force&&now-targetAt<100){clearTimeout(targetTimer);targetTimer=setTimeout(()=>drawTarget(true),110);return;}
+ targetAt=now;targetKey=key;
+ let t=null;
+ if(putt){
+  const f=lieFactor(ctx.lie),flat=struckDistance(puttLineSpeed(range),rollDeceleration('green',settings.turf));
+  const share=flat/(ctx.puttRange*f*f);t=share>1?{share:1,out:true}:{share,out:false};
+ }else{
+  const p=round.position,pt=aimTarget(p,aim,range);
+  t=targetShare({...ctx,metres:range,rise:course.height(pt.x,pt.z)-course.height(p.x,p.z),bearing:aim*Math.PI/180,
+   wind:localWind(settings,course.rotation),altitude:course.bio.altitude,temperature:course.bio.temperature});
+ }
+ el.hidden=!t;if(!t)return;
+ el.style.left=barX(t.share)+'%';el.classList.toggle('out',t.out);
+ el.title=t.out?'Out of reach: take more club':'Stop here to land in the circle';
+ box.classList.toggle('out-of-reach',t.out);
 }
 // THE SHOT'S SHAPE: curve and height are separate choices (the owner's, 14
 // October 2026), and the spin dial adds spin a step at a time. All three reset
@@ -950,7 +982,7 @@ function bindSwingInput(){
  addEventListener('resize',()=>drawMeter(performance.now()));
 }
 function setAimPoint(point){
- touchAim();
+ touchAim();rangePlaced=aimTurned=true;
  aimRange=Math.max(.05,Math.hypot(point.x-round.position.x,point.z-round.position.z));
  aim=Math.atan2(point.x-round.position.x,point.z-round.position.z)*180/Math.PI;
  updateAim();view.setCamera(round.position,aim);
@@ -976,10 +1008,15 @@ let reachHeldFor=0;
 // pin's distance is what a player sees on arriving at the ball. How long the
 // aim label stays after the last touch is placed, not measured.
 let aimTouchedAt=-Infinity;
+// WHETHER THE GOLFER HAS PLACED THE CIRCLE this turn: its distance (a click,
+// ↑ ↓, the pad, the distance box) or its direction (← →). Changing club moves
+// a circle nobody placed to the new club's carry down the fairway; one placed by
+// hand stays, and the target marker moves instead (spec 4).
+let rangePlaced=false,aimTurned=false;
 const AIM_LABEL_HOLD=1000;
 function touchAim(){aimTouchedAt=performance.now();}
 function walkReach(dir,dt){
- reachHeldFor+=dt;
+ reachHeldFor+=dt;rangePlaced=true;
  const c=clubs[$('club').value],yards=(aimRange??c.carry*YARD)/YARD;
  const rate=Math.max(2,yards*.15)*(1+3*Math.min(1,reachHeldFor/1.5));
  aimRange=clamp(yards+dir*rate*dt,.1,2000)*YARD;
@@ -987,14 +1024,14 @@ function walkReach(dir,dt){
 function canNudgeAim(){return appMode==='play'&&!flight&&!dropState&&!round.holeComplete&&!round.scrambleSelection&&view.config.mode!=='free';}
 function nudgeAim(side,taps){
  if(!canNudgeAim())return;
- aim+=aimDelta(side,taps*AIM_TAP_DEGREES);touchAim();updateAim();view.setCamera(round.position,aim);
+ aim+=aimDelta(side,taps*AIM_TAP_DEGREES);touchAim();aimTurned=true;updateAim();view.setCamera(round.position,aim);
 }
 function nudgeReach(dir,taps){
  if(!canNudgeAim())return;
  const c=clubs[$('club').value],current=aimRange??c.carry*YARD;
  // Inside twenty yards the step is a foot rather than a yard, and the target may
  // come right up to the ball: every putt is aimed by distance now.
- const fine=current<20*YARD,step=fine?1/3:AIM_TAP_YARDS;
+ rangePlaced=true;const fine=current<20*YARD,step=fine?1/3:AIM_TAP_YARDS;
  aimRange=clamp(current/YARD+dir*taps*step,.1,2000)*YARD;touchAim();updateAim();
 }
 // HOLD TO SWEEP. The press itself is one tap, so a quick tap is always exactly
@@ -4607,7 +4644,15 @@ function connectBridge(url){
  ws.onmessage=e=>{let msg;try{msg=JSON.parse(e.data);if(msg.type==='status'){monitorDevice=msg.deviceConnected?(msg.device??{ready:false,ballDetected:false}):null;updateHUD();if(panel==='monitor')$('monitorStatus').textContent=msg.deviceConnected?'Launch-monitor connector connected.':'Bridge connected; waiting for a device connector.';return;}if(msg.type==='shot'){const d=parseLaunchMessage(msg.payload),key=d?.device+':'+d?.id;let accepted=false,reason='Monitor is not armed.';if(!d)reason='No ball data.';else if(seenShots.has(key))reason='Duplicate shot.';else if(armed){accepted=takeShot(d);reason=accepted?'Shot accepted.':'Simulator busy; retry after current shot or hole.';if(accepted){seenShots.add(key);if(seenShots.size>1000)seenShots.delete(seenShots.values().next().value);}}socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted,reason}));if(!accepted)toast(reason);sendPlayer();}}catch(error){if(msg?.requestId)socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted:false,reason:error.message}));toast('Invalid monitor message: '+error.message);}};
  }catch(e){toast(e.message);ws=null;}
 }
-function cycleClub(delta){if(swing)return;const list=Object.keys(clubs);$('club').value=list[(list.indexOf($('club').value)+delta+list.length)%list.length];updateAim();updateHUD();sendPlayer();}
+function followClub(){
+ if(rangePlaced||!course||appMode!=='play'||flight)return;
+ const c=clubs[$('club').value];if(!c)return;
+ if(!aimTurned){defaultAim();return;}
+ // Turned but not moved: keep the line, take the new club's carry along it
+ // (or the pin's distance, for the putter and anything that reaches it).
+ aimRange=c.code==='PT'?Math.max(.1,distance()):Math.min(c.carry*YARD,Math.max(1,distance()));
+}
+function cycleClub(delta){if(swing)return;const list=Object.keys(clubs);$('club').value=list[(list.indexOf($('club').value)+delta+list.length)%list.length];followClub();updateAim();updateHUD();sendPlayer();}
 function startTour(){if(flight||dropState)return;cancelAdvance();closePanel();tour={path:makeHoleTour(course),elapsed:0,camera:{...view.config},orbit:false,puttingRings:view.puttingRings?.visible};if(view.puttingRings)view.puttingRings.visible=false;Object.assign(view.config,{mode:'free',greenGrid:false,greenFlow:false,greenHeat:false});view.setGreenReading();view.aimLine.visible=view.aimRing.visible=false;view.wasFree=true;updateExplorer();toast('Hole flyover · Escape or the flyover button returns to your ball.');}
 function stopTour(){if(!tour)return;const camera=tour.camera;if(view.puttingRings)view.puttingRings.visible=tour.puttingRings;tour=null;Object.assign(view.config,camera);view.config.mode=playCameraMode('player',course,round.position);view.setGreenReading();view.setBall(round.position);view.flyCamera(round.position,aim);updateAim();updateExplorer();}
 function cameraMode(mode){if(flight)return;stopTour();view.config.mode=playCameraMode(mode,course,round.position);view.flyCamera(round.position,aim);updateExplorer();save();}
@@ -5153,7 +5198,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
- $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('club').onchange=()=>{updateAim();updateHUD();sendPlayer();};
+ $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();rangePlaced=true;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));
@@ -5483,7 +5528,7 @@ function tick(now){
  if(pad){if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
  if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
- if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
+ if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
  // THE SWING METER moves on the clock, not on frames (swing-meter.js); this only
  // draws where it is and lets the clock finish a swing nobody tapped.
  if(swing){meterAdvance(swing,now);if(swing.done)releaseSwing();else drawMeter(now);}

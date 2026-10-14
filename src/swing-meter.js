@@ -27,6 +27,7 @@
 import {simulateShot, YARD, R, clamp} from './physics.js';
 import {spinForPower} from './clubs.js';
 import {launchForDistance, rollDeceleration, struckDistance} from './turf.js';
+import {playsLike} from './plays-like.js';
 
 // THE LIE, as a share of ball speed kept. One table for every golfer: the Swing
 // Meter takes it off the swing, and (unless the round switches it off) a launch
@@ -277,6 +278,37 @@ export function puttRange(putter, turf, aimMetres) {
  return full;
 }
 export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.speed * 1.2, launchForDistance(metres, rollDeceleration('green', turf))); }
+
+// THE TARGET MARKER (Phase 2): where on the bar to stop for the ball to come
+// down in the aim circle. Found by flying the ball, not by a rule of thumb: the
+// circle's distance is turned into the carry it plays like on level ground in
+// still air by `playsLike` (the club and shape at a full swing, flown to the
+// circle's height in today's air and against a level reference), then the bar
+// share for that carry is read off the same ball model the bar is drawn from,
+// with the lie's lost speed made up.
+//
+// WHAT IT ALLOWS FOR (the owner's call, 14 October 2026): the slope and the lie
+// always; the WIND only on Easy -- on Normal and Hard judging the wind is the
+// golfer's job, and the wind dial is on screen. Altitude and temperature are
+// always in: they are the air, not something a golfer reads.
+//
+// Returns {share, out}: `share` in bar lengths (0 to 1; the overswing zone is
+// never suggested), `out` when even a full swing falls short, or the circle is
+// above where this shot can climb.
+export function targetShare({club, shape, short = false, lie, difficulty, metres, rise = 0, bearing = 0, wind = [0, 0, 0], altitude = 0, temperature}) {
+ if (!club || club.code === 'PT' || !(metres > 0)) return null;
+ const launch = shapedLaunch(club, shape, {short});
+ const full = fullCarry(club, launch);
+ const level = playsLike({distance: metres, rise, bearing, wind: difficultyOf(difficulty).wind ? wind : [0, 0, 0], altitude, temperature,
+  launch: {speed: club.speed, vla: launch.vla, spin: launch.spin, spinAxis: 0}});
+ if (level == null) return {share: 1, out: true};
+ const f = lieFactor(lie);
+ // The carry the bar must ask for: on a clean lie the level carry itself; from
+ // the rough, the carry of the speed that the lie will cut down to the right one.
+ const asked = f < 1 ? carryAtSpeed(club, launch, Math.min(club.speed * 1.3, speedForCarry(club, launch, level) / f)) : level;
+ const share = asked / full;
+ return share > 1 + 1e-6 ? {share: 1, out: true} : {share: Math.max(0, share), out: false};
+}
 
 // THE WHOLE STRIKE: a finished swing, the club, the shot chosen and the lie,
 // into the numbers the ball leaves with. `lie` is the surface the ball sits on;

@@ -231,3 +231,35 @@ test('the putting bar zooms to the putt, and the putter is unchanged', async () 
  const roll = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out.shot}, {...flat, surface: () => 'green'}, {turf});
  assert.ok(Math.abs(roll.total - full / 8) < .25, `rolled ${roll.total.toFixed(2)} m, not ${(full / 8).toFixed(2)}`);
 });
+
+// PHASE 2, THE TARGET MARKER: the stop on the bar that lands the ball in the
+// circle. Slope and lie always; wind only on Easy (the owner's call).
+test('the target marker: level ground and still air is the circle\'s share of the carry', async () => {
+ const {targetShare} = await import('../src/swing-meter.js');
+ const c = clubs.iron7;
+ for (const yards of [60, 100, 140]) {
+  const t = targetShare({club: c, shape: {}, lie: 'fairway', difficulty: 'normal', metres: yards * YARD});
+  assert.ok(!t.out && Math.abs(t.share - yards / c.carry) < .02, `${yards} yd: ${t.share.toFixed(3)} not ${(yards / c.carry).toFixed(3)}`);
+  // And stopping the meter there carries about that far.
+  const sw = startSwing(0, {difficulty: 'normal', club: c});tap(sw, sw.rise * t.share);tap(sw, sw.rise * t.share * 2);
+  const r = fly(swingLaunch(sw, ctx('iron7')).shot);
+  assert.ok(Math.abs(r.carry / YARD - yards) < 2, `${yards} yd target carried ${(r.carry / YARD).toFixed(1)}`);
+ }
+});
+
+test('the target marker allows for slope and lie always, and wind only on Easy', async () => {
+ const {targetShare} = await import('../src/swing-meter.js');
+ const base = {club: clubs.iron7, shape: {}, lie: 'fairway', difficulty: 'normal', metres: 130 * YARD};
+ const flat = targetShare(base).share;
+ assert.ok(targetShare({...base, rise: 10}).share > flat + .02, 'uphill asks for more');
+ assert.ok(targetShare({...base, rise: -10}).share < flat - .02, 'downhill asks for less');
+ assert.ok(targetShare({...base, lie: 'rough'}).share > flat + .05, 'rough asks for more');
+ const into = [0, 0, -8];   // 8 m/s straight into the golfer, aim down +z
+ assert.equal(targetShare({...base, wind: into}).share, flat, 'Normal leaves the wind to the golfer');
+ assert.equal(targetShare({...base, difficulty: 'hard', wind: into}).share, flat, 'so does Hard');
+ assert.ok(targetShare({...base, difficulty: 'easy', wind: into}).share > flat + .05, 'Easy allows for it');
+ // Out of reach: the full line, flagged, never the overswing zone.
+ const far = targetShare({...base, metres: 200 * YARD});
+ assert.deepEqual(far, {share: 1, out: true});
+ assert.equal(targetShare({...base, club: clubs.putter}), null, 'a putt is worked out from its read line instead');
+});
