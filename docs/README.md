@@ -103,7 +103,7 @@ The list below is what exists locally.
   between, sliders and notes to send back (`tools/sound-lab/build.mjs`).
   Synthesised, not recorded; all signed off (round 4) and in the game. Beside
   it, `water.html`: the water options, ponds and lakes apart from rivers and
-  creeks (rivers and creeks signed off in round 7; ponds as lapping bubbles).
+  creeks, all signed off and in the game (round 8).
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

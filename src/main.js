@@ -986,8 +986,10 @@ function updateSoundScene(){
  const w=view.world,h=view.course,cam=view.camera.position;
  const ball=flight?.at??(appMode==='play'&&round?.position?round.position:null);
  const at=ball&&h?h.toWorld(ball):{x:cam.x,z:cam.z};
+ // The nearest water says how loud, which sound, and from which side.
+ const water=nearestWater(w,at.x,at.z),e=view.camera.matrixWorld.elements,dx=water.x-cam.x,dz=water.z-cam.z,d=Math.hypot(dx,dz);
  gameAudio.setScene({biome:w.settings?.biome,wind:Number(w.settings?.wind)||0,tempC:h?.bio?.temperature??w.bio?.temperature,
-  night:!!view.solar&&view.solar.elevation<-4,waterDist:nearestWater(w,at.x,at.z)});
+  night:!!view.solar&&view.solar.elevation<-4,waterDist:water.dist,waterKind:water.kind,waterPan:d>1?clamp((dx*e[0]+dz*e[2])/d,-1,1):0});
 }
 let holeOutTimer=null;
 function announceHoleOut(before){

@@ -34,15 +34,14 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <main>
 <h1>Water sounds</h1>
 <p class="muted">Built <span id="built"></span> on branch <code>sounds</code>. Round 6: ponds and lakes, and separately rivers and creeks. The sea is not part of this.</p>
-<div class="note"><p><b>Round 7.</b> Rivers and creeks are signed off: the mountain stream for rivers, the babbling creek for creeks, each with your sliders built in (they are at the bottom, to hear beside the ponds). No frogs. For ponds and lakes, your idea: <b>lapping made of bubbles, like the creeks, with no white noise at all.</b> Each wave is a swell of bubbles that builds and dies away, and the water running back is a fizz of smaller ones. Four ways to do it, A to D; round 6's three are below them for comparison, and today's pond last.</p>
-<p>Each card plays continuously; one at a time. <b>Distance</b> is how far the ball is from the water. <b>Wind</b> makes the waves bigger and quicker. <b>Flow</b> moves the rivers.</p></div>
+<div class="note"><p><b>Round 8: all the water is signed off and in the game.</b> The bubbly lap for ponds and lakes, the mountain stream for rivers, the babbling creek for creeks, each with your sliders built in. In a round the game plays whichever is nearest the ball, louder the nearer it is, from the side it is on; the sea keeps its surf.</p>
+<p>Each card plays continuously; one at a time. <b>Distance</b> is how far the ball is from the water. <b>Wind</b> moves the pond's waves, <b>Flow</b> the rivers.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button>
 <label class="sl" style="min-width:200px"><span>Distance from the water</span><span id="distv"></span><input id="dist" type="range" min="3" max="120" step="1" value="20"></label>
 <label class="sl" style="min-width:160px"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="25" step="1" value="8"></label>
 <label class="sl" style="min-width:160px"><span>Flow</span><span id="flowv"></span><input id="flow" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
 </div>
-<h2>Ponds and lakes</h2><div class="grid" id="pond"></div>
-<h3 style="margin-top:18px">For comparison</h3><div class="grid" id="older"></div>
+<h2>Ponds and lakes (signed off)</h2><div class="grid" id="pond"></div>
 <h2>Rivers and creeks (signed off)</h2><div class="grid" id="river"></div>
 </main>
 <div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
@@ -50,8 +49,8 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <script type="module">
 /*SYNTH*/
 
-// v3: round 7 built the owner's river and creek sliders in.
-const KEY='fairway-water-lab-v3';
+// v4: round 8 built the owner's pond sliders in too.
+const KEY='fairway-water-lab-v4';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
@@ -65,7 +64,7 @@ function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#st
 $('#start').onclick=ensure;
 function play(style){
  ensure();stop();playing=style;
- player=WATERS[style]?waterPlayer(lab,{style,dist:dist(),knobs:saved.knobs[style]||{},opts:opts()}):lapPlayer(lab,{style,dist:dist(),wind:wind(),knobs:saved.knobs[style]||{}});
+ player=waterPlayer(lab,{style,dist:dist(),knobs:saved.knobs[style]||{},opts:opts()});
  player.schedule(ctx.currentTime+1.5);timer=setInterval(()=>player.schedule(ctx.currentTime+1.5),200);
  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.style===style));
 }
@@ -74,12 +73,11 @@ $('#dist').oninput=()=>{syncReadouts();saved.dist=dist();save();player?.set({dis
 $('#wind').oninput=()=>{syncReadouts();saved.wind=wind();save();player?.set({wind:wind(),opts:opts()});};
 $('#flow').oninput=()=>{syncReadouts();saved.flow=flow();save();player?.set({opts:opts()});};
 const KN=['level','pitch','bright','body','texture'];
-const LIST=[...Object.entries(WATERS).map(([id,w])=>[id,w,w.old?'older':w.group]),['now',{name:LAPS.now.name},'older']];
-let letter=0;
+const LIST=Object.entries(WATERS).map(([id,w])=>[id,w,w.group]);
 for(const [style,L,group] of LIST){
  const k=saved.knobs[style]||(saved.knobs[style]={});
  const c=el('div',{class:'card','data-style':style});
- c.append(el('h3',{},group==='pond'?`${'ABCD'[letter++]}. ${L.name}`:L.name));
+ c.append(el('h3',{},L.name));
  c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>play(style)},'Play'),el('button',{class:'sec',onclick:stop},'Stop')));
  const adj=el('details',{},el('summary',{},'Adjust'));
  for(const n of KN){const d=KNOBS[n],inp=el('input',{type:'range',min:d.min,max:d.max,step:d.step,value:k[n]??d.def}),out=el('span',{},`${Math.round((k[n]??d.def)*100)}%`);

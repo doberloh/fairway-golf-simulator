@@ -74,7 +74,7 @@ export function place(lab,{pan=0,dist=10,wet=.12,to=lab.fx,until}={}){
  g.gain.value=clamp(10/Math.max(dist,1),0,2);
  air.type='lowpass';air.frequency.value=airCutoff(dist);air.Q.value=.5;
  p.pan.value=clamp(pan,-1,1);
- g.connect(air);air.connect(p);p.connect(to);
+ g.connect(air);air.connect(p);p.connect(to);g.air=air;g.panner=p;
  const nodes=[g,air,p];
  if(wet>0){const s=ctx.createGain();s.gain.value=wet*clamp(dist/30,.4,2);p.connect(s);s.connect(lab.verbIn);nodes.push(s);}
  if(until)lab.track(nodes,until);
@@ -690,43 +690,6 @@ function contourSyl(base){
 }
 function phrase(n,len){const p=[];let i=0;while(p.length<len){const s=Math.random()<.6?i%n:Math.random()*n|0,r=1+(Math.random()*3|0);for(let j=0;j<r;j++)p.push(s);i++;}return p.slice(0,len);}
 
-// ---- inland water as it plays today (round 4), kept to compare against.
-// Round 5 offered four lapping styles here (a gentle lap, ripples, a clop
-// against a bank, a sandy wash); the owner turned all four down, and round 6
-// (below) starts again from research.
-export const LAPS={
- // What plays today, to compare against (levels doubled to undo the player's
- // 0.5, so they sound as they do in the game).
- now:{name:'Now: the pond as it is in the game',period:[.4,4.4],lap(x){
-  x.hiss(0,{type:'lowpass',f:500,f2:1400,q:.5,attack:R(.05,.12),dur:R(.18,.35),amp:R(.24,.6),role:'texture'});
-  for(let i=0;i<(Math.random()*3|0);i++)x.bubble(R(.05,.3),R(.001,.003),.2);}},
- creek:{name:'Now: the river or creek as it is in the game (its babble)',period:[.008,.028],lap(x){
-  x.bubble(0,Math.exp(R(Math.log(.0008),Math.log(.006))),.1*Math.exp(gauss()*.5));}},
-};
-// Plays one style continuously. Live, call schedule() ahead of the clock (the
-// report does it on a timer, the ambience from its own scheduler); offline,
-// once for the whole render. Wind in mph makes the laps bigger and quicker
-// (PLACED: size 0.6 + wind/20, period x 1.15 - wind/60).
-export function lapPlayer(lab,{style='now',to=lab.master,pan=-.3,dist=25,knobs={},wind=8}={}){
- let st=style,k=knobs,w=wind,next=lab.ctx.currentTime+.2,dest=null;
- const phase=R(0,Math.PI*2),setPeriod=R(18,35);
- const aim=()=>{dest=place(lab,{pan,dist,wet:.08,to});};aim();
- return {
-  schedule(until){
-   const L=LAPS[st];if(!L)return;
-   if(next<lab.ctx.currentTime)next=lab.ctx.currentTime+.05;
-   while(next<until){
-    const size=clamp(.6+w/20,.5,1.6)*(.75+.25*Math.sin(next/setPeriod*Math.PI*2+phase))*R(.6,1.15);
-    L.lap(kit(lab,dest,next,.5*(L.gain||1),k),size);
-    next+=R(...L.period)*clamp(1.15-w/60,.7,1.2);
-   }
-   lab.sweep();
-  },
-  set(o){if('style'in o)st=o.style;if('knobs'in o)k=o.knobs;if('wind'in o)w=o.wind;if('dist'in o||'pan'in o){if('dist'in o)dist=o.dist;if('pan'in o)pan=o.pan;try{dest.disconnect();}catch{}aim();}},
-  stop(){try{dest.disconnect();}catch{}},
- };
-}
-
 // ---- water, round 6: ponds and lakes apart from rivers and creeks (13
 // October 2026). The owner turned down every lapping style ("make these sounds
 // radically different") and asked for research into what a pond sounds like
@@ -831,78 +794,13 @@ export const WATERS={
  // are missing." So every sound in these four is a bubble (or, on the pebble
  // shore, a pebble): a lap is a swell of bubbles that rises and dies away, and
  // the water draining back is a fizz of smaller ones. No noise beds. PLACED.
- lapSwell:{group:'pond',name:'A bubbly lap: each wave a swell of a couple of hundred bubbles, then a fizz as it drains back',
+ // SIGNED OFF (the owner, round 8): this one for ponds and lakes.
+ lapSwell:{group:'pond',final:'pond',base:{texture:2.55,body:1.3,bright:.95,pitch:.71},name:'Ponds and lakes: the bubbly lap (signed off)',
   spawn(st,idx,P){lapEach(st,idx,P,{period:[1.8,3.6]},(s,size,p)=>{
    const k=st.k,sr=st.sr,D=R(.45,.8)*size;
    for(let i=0,n=Math.round(R(120,260)*size);i<n;i++){const r=clamp(logn(.003,.45),.0012,.009),f=MINN(r)*k.pitch;
     grainRing(st,s+Math.round(swellAt(Math.random())*D*sr),f,btau(f),.015*Math.pow(r/.003,.7)*logn(1,.4)*size*k.body,R(1,1.4),p+R(-.3,.3));}
    drainFizz(st,s+Math.round(D*sr),R(20,50)*size,.4,.006*size);});}},
- lapGurgle:{group:'pond',name:'A slap and a gurgle: a quick burst of bubbles as the wavelet hits, a few big gloops, a trickle back',
-  spawn(st,idx,P){lapEach(st,idx,P,{period:[.9,1.8]},(s,size,p)=>{
-   const k=st.k,sr=st.sr;
-   for(let i=0,n=Math.round(R(30,70)*size);i<n;i++){const r=clamp(logn(.0022,.4),.0008,.007),f=MINN(r)*k.pitch;grainRing(st,s+Math.round(R(0,.08)*sr),f,btau(f),.02*size*k.body,R(1,1.4),p+R(-.2,.2));}
-   const g=s+Math.round(R(.1,.25)*sr);
-   for(let i=0,n=2+(Math.random()*3|0);i<n;i++){const f=MINN(R(.005,.009))*k.pitch;grainRing(st,g+Math.round(R(0,.12)*sr),f,btau(f)*1.5,.05*size*k.body,R(1.2,1.6),p+R(-.15,.15));}
-   drainFizz(st,g+Math.round(.15*sr),R(15,40)*size,.35,.006*size);});}},
- lapPulse:{group:'pond',name:'A breathing shore: a slow, steady bubbling that swells with every wave, like a creek at rest',
-  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr,w=windSize(o);
-   // The wave: a smooth bump every 2-3.2 s, each its own height.
-   st.ph??=0;st.wave??=R(.6,1.2);st.len??=R(2,3.2);
-   for(let i=0;i<P;i+=Math.round(sr*.02)){
-    st.ph+=.02/(st.len*windPeriod(o));if(st.ph>=1){st.ph-=1;st.wave=R(.5,1.25);st.len=R(2,3.2);}
-    const crest=Math.pow(Math.sin(Math.PI*st.ph),4)*st.wave*w,rate=40+520*crest;
-    for(const s of events(rate,Math.round(sr*.02),sr)){const r=clamp(logn(.0035,.4),.0012,.01),f=MINN(r)*k.pitch;
-     grainRing(st,idx+i+s,f,btau(f),.007*Math.pow(r/.0035,.7)*logn(1,.4)*k.body,R(1,1.4),R(-.7,.7));}}}},
- lapStones:{group:'pond',name:'A pebble shore, in bubbles: a burst as each wavelet lands, pebbles knocking as it runs back',
-  spawn(st,idx,P){lapEach(st,idx,P,{period:[.8,1.7]},(s,size,p)=>{
-   const k=st.k,sr=st.sr;
-   for(let i=0,n=Math.round(R(40,90)*size);i<n;i++){const r=clamp(logn(.0025,.45),.0008,.008),f=MINN(r)*k.pitch;grainRing(st,s+Math.round(swellAt(Math.random())*.14*sr),f,btau(f),.023*size*k.body,R(1,1.4),p+R(-.25,.25));}
-   const back=s+Math.round(R(.2,.35)*sr);
-   for(let i=0,n=Math.round((8+Math.random()*17)*size);i<n;i++)grainRing(st,back+Math.round(R(0,.35)*sr),R(2000,5000)*k.pitch*Math.sqrt(k.bright),R(.0008,.002),R(.02,.05)*size*k.texture,1,p+R(-.3,.3));
-   drainFizz(st,back,R(20,45)*size,.35,.005*size);});}},
- // ---------------------------------------------------------- ponds and lakes
- // Round 6's three, kept to compare. The still pond carries the sliders the
- // owner had on it.
- pondStill:{group:'pond',old:true,base:{texture:1.25,body:1.2},name:'Round 6: a still pond, reeds and a plish',
-  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr,w=Math.pow(Math.max(0,o.wind)/10,1.2);
-   st.gust=walk(st.gust||0,dt,.25,.5);const g=Math.max(0,w*(1+st.gust));
-   // Reed blades ticking against each other: tiny, high, many in a gust.
-   for(const s of events(220*g,P,sr))grainRing(st,idx+s,R(2500,7000)*k.pitch*Math.sqrt(k.bright),R(.0004,.0012),.004*k.texture*R(.3,1),1,R(-.9,.9));
-   bed(st,st.L,st.Rr,P,{lp:8000*k.bright,hp:2500,level:.005*g*k.texture});
-   // A plish where a ripple meets the edge.
-   for(const s of events(.18,P,sr)){for(let i=0;i<2;i++)grainRing(st,idx+s+Math.round(R(0,.04)*sr),MINN(R(.001,.003))*k.pitch,btau(1500),.03,R(1.05,1.4),R(-.4,.4));
-    grainNoise(st,idx+s,{dur:.03,lp:3000*k.bright,hp:900,amp:.03*k.texture,pan:R(-.4,.4)});}
-   // A fish rising, or a frog dropping in.
-   for(const s of events(1/40,P,sr)){const p=R(-.7,.7);grainRing(st,idx+s,MINN(R(.005,.008))*k.pitch,btau(500)*1.4,.07*k.body,R(1.3,1.8),p);
-    grainNoise(st,idx+s,{dur:.06,lp:2500*k.bright,hp:300,amp:.05*k.texture,pan:p});
-    for(let i=0;i<3;i++)grainRing(st,idx+s+Math.round(R(.15,.6)*sr),MINN(R(.0008,.002))*k.pitch,btau(2500),.012,R(1.1,1.5),p+R(-.1,.1));}
-  }},
- pondPebbles:{group:'pond',old:true,name:'Round 6: a lake shore, slaps and pebbles',
-  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr;st.set=(st.set||0)+dt;
-   const wf=clamp(.5+o.wind/16,.4,1.8),period=clamp(1.3-o.wind/40,.6,1.4);
-   st.next??=0;st.next-=dt;
-   while(st.next<=0){const off=Math.max(0,Math.round((dt+st.next)*sr)),s=idx+Math.min(P-1,off),size=wf*R(.6,1.2)*(.8+.2*Math.sin(st.set/25*Math.PI*2)),p=R(-.6,.6);
-    // The slap: the wavelet's face against a stone.
-    grainNoise(st,s,{dur:.05,attack:.004,lp:2200*k.bright,hp:300,amp:.12*size*k.texture,pan:p});
-    for(let i=0,n=3+(Math.random()*6|0);i<n;i++)grainRing(st,s+Math.round(R(0,.08)*sr),MINN(R(.002,.006))*k.pitch,btau(900),.04*size,R(1.05,1.4),p+R(-.2,.2));
-    // The backwash: pebbles knocked over each other, and the gravel hiss.
-    const back=s+Math.round(R(.2,.35)*sr);
-    for(let i=0,n=Math.round((8+Math.random()*17)*size);i<n;i++)grainRing(st,back+Math.round(R(0,.35)*sr),R(2000,5000)*k.pitch*Math.sqrt(k.bright),R(.0008,.002),R(.02,.06)*size,1,p+R(-.3,.3));
-    grainNoise(st,back,{dur:.3,attack:.05,lp:6000*k.bright,hp:1500,amp:.024*size*k.texture,pan:p});
-    st.next+=R(.7,1.6)*period;}
-  }},
- pondDock:{group:'pond',old:true,name:'Round 6: under a wooden dock, glugs',
-  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr,wf=clamp(.5+o.wind/16,.4,1.8);
-   for(const s of events(.65*clamp(.6+o.wind/20,.5,1.6),P,sr)){const p=R(-.5,.5);let t=s;
-    for(let i=0,n=1+(Math.random()*3|0);i<n;i++){
-     // An air pocket squeezed by the wavelet: a low ring whose pitch drops.
-     grainRing(st,idx+t,R(120,350)*k.pitch,R(.02,.05),.08*wf*k.body*R(.6,1),R(.8,.9),p);
-     grainNoise(st,idx+t,{dur:.15,attack:.01,lp:900*k.bright,hp:150,amp:.03*wf*k.texture,pan:p});
-     t+=Math.round(R(.09,.22)*sr);}
-    // Now and then the dock itself takes a knock.
-    if(Math.random()<.1){grainRing(st,idx+t,R(170,200)*k.pitch,.03,.04*k.body,1,p);grainRing(st,idx+t,R(400,440)*k.pitch,.02,.02*k.body,1,p);}
-   }
-  }},
  // ---------------------------------------------------------- rivers and creeks
  // SIGNED OFF (the owner, round 7): this one for creeks, this one for rivers,
  // each with the owner's sliders as its `base`.
@@ -946,7 +844,10 @@ export function waterPlayer(lab,{style,to=lab.master,pan=-.3,dist=20,knobs={},op
    lab.sweep();
   },
   set(o){if('style'in o){recipe=WATERS[o.style];st.grains=[];st.next=null;}if('knobs'in o)st.k=knobsFor(o.knobs);if('opts'in o)Object.assign(st.o,o.opts);
-   if('dist'in o||'pan'in o){if('dist'in o)dist=o.dist;if('pan'in o)pan=o.pan;const old=dest;dest=place(lab,{pan,dist,wet:.1,to});setTimeout(()=>{try{old.disconnect();}catch{}},400);}},
+   // Turned and set back without a rebuild: the panner and the air filter
+   // glide, so a sound that follows the camera does not click.
+   if('pan'in o){pan=o.pan;dest.panner.pan.setTargetAtTime(clamp(pan,-1,1),ctx.currentTime,.4);}
+   if('dist'in o){dist=o.dist;dest.gain.setTargetAtTime(clamp(10/Math.max(dist,1),0,2),ctx.currentTime,.4);dest.air.frequency.setTargetAtTime(airCutoff(dist),ctx.currentTime,.4);}},
   stop(){try{dest.disconnect();}catch{}},
  };
 }
@@ -993,7 +894,20 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
  // within 25 m, falling as 1/distance, gone by 300 m (PLACED). In the game the
  // distance comes from the ball (or camera) and the course's water bodies.
  const waterBus=ctx.createGain();waterBus.gain.value=0;waterBus.connect(bus);
- let waterDist=40;
+ let waterDist=40,waterKind=null,waterPan=-.3,inland=null;
+ // INLAND WATER IS WHATEVER IS NEAREST (round 8): the signed-off sound for a
+ // pond or lake, a river or a creek (WATER_FOR), chosen by the kind of water
+ // nearest the listener and cross-faded over 1.5 s when that changes. The sea
+ // keeps its surf. Without a kind (the lab), the biome's own mix decides.
+ function inlandFor(kind){
+  const style=WATER_FOR[kind];if(inland?.kind===kind)return;
+  if(inland){const old=inland;old.gain.gain.setTargetAtTime(0,ctx.currentTime,.5);setTimeout(()=>{old.player.stop();try{old.gain.disconnect();}catch{}},2500);inland=null;}
+  if(!style)return;
+  const gain=ctx.createGain();gain.gain.value=0;gain.connect(waterBus);gain.gain.setTargetAtTime(mix.water,ctx.currentTime,.5);
+  inland={kind,gain,player:waterPlayer(lab,{style,to:gain,pan:waterPan,dist:20,opts:{wind:windNow(),flow:1}})};
+ }
+ const seaHere=()=>S.water.surf&&(waterKind?waterKind==='sea':true);
+ const inlandKind=()=>waterKind?(waterKind==='sea'?null:waterKind):S.water.stream?'creek':S.water.lake?'pond':null;
  const proximity=d=>d>=300?0:Math.min(1,25/Math.max(d,25))*(1-Math.pow(d/300,2));
  // The wind is set in mph (windMph), not through the mix: one number, one meaning.
  const mix={birds:1,water:1,planes:1,insects:1};
@@ -1023,10 +937,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
   W.leafL=loop(leaf[0],leaf[1],.5,0,-.55,leaf[2]);W.leafR=loop(leaf[0],leaf[1]*1.15,.5,0,.5,leaf[2]);
   layers.W=W;
   // Water beds, all through the water bus.
-  const w=S.water;
-  if(w.stream){layers.stream=loop('bandpass',1100,.4,0,.35,null,waterBus);layers.streamBus=place(lab,{pan:.35,dist:22,wet:.05,to:waterBus});}
-  if(w.surf){layers.surf=loop('lowpass',350,.6,0,-.3,null,waterBus);}
-  if(w.lake)layers.lakeBus=place(lab,{pan:-.4,dist:30,wet:.05,to:waterBus});
+  if(S.water.surf){layers.surf=loop('lowpass',350,.6,0,-.3,null,waterBus);}
   verbSend.gain.value=S.verb;
   waterBus.gain.setTargetAtTime(proximity(waterDist),ctx.currentTime,.3);
  }
@@ -1045,8 +956,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
   const leafAmt={broad:1,conifer:.9,palm:.8,dry:1,grass:.45,sparse:.25,bare:.3}[S.trees];
   const la=.022*leafAmt*Math.pow(g/12,1.5);
   W.leafL.g.gain.setTargetAtTime(la*(1+.5*flutter),t,.2);W.leafR.g.gain.setTargetAtTime(la*(1-.5*flutter),t,.2);
-  if(layers.stream)layers.stream.g.gain.setTargetAtTime(.012*S.water.stream*mix.water,t,.5);
-  if(layers.surf)layers.surf.g.gain.setTargetAtTime(.07*S.water.surf*mix.water,t,.5);
+  if(layers.surf)layers.surf.g.gain.setTargetAtTime(seaHere()?.07*S.water.surf*mix.water:0,t,.5);
  }
  // A bird's songs go through here. If another song is still going, this one
  // waits for it; a bout continues only after its own song has ended.
@@ -1085,15 +995,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
   });
   // Water events are only scheduled while water can be heard.
   const near=()=>proximity(waterDist)>0;
-  stream('stream',()=>S.water.stream&&near()?55*S.water.stream*mix.water:0,t=>{
-   // Babble: bubbles of 0.6-6 mm radius (about 540 Hz to 5.4 kHz).
-   bubble(lab,layers.streamBus,t,Math.exp(R(Math.log(.0008),Math.log(.006))),.05*Math.exp(gauss()*.5));
-  });
-  stream('lap',()=>S.water.lake&&near()?.45*S.water.lake*mix.water:0,t=>{
-   hiss(lab,layers.lakeBus,t,{type:'lowpass',f:500,f2:1400,q:.5,attack:R(.05,.12),dur:R(.18,.35),amp:R(.12,.3)});
-   for(let i=0;i<(Math.random()*3|0);i++)bubble(lab,layers.lakeBus,t+R(.05,.3),R(.001,.003),.1);
-  });
-  stream('surf',()=>S.water.surf&&near()?S.water.surf*mix.water/10:0,t=>wave(t));
+  stream('surf',()=>seaHere()&&near()?S.water.surf*mix.water/10:0,t=>wave(t));
   stream('plane',()=>{const p=S.planes,w=(p.jet||0)+(p.prop||0);return night?w*mix.planes/600:w*mix.planes/240;},t=>flyover(t,pickWeighted(S.planes)));
   stream('cicada',()=>!night&&S.insects.cicada&&temp()>=24?S.insects.cicada*mix.insects/60:0,t=>cicada(t));
  }
@@ -1186,6 +1088,9 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
   // Items can queue more items (the next song of a bout), so re-sort each time.
   for(;;){queue.sort((a,b)=>a[0]-b[0]);if(!queue.length||queue[0][0]>=until)break;const [t,f]=queue.shift();f(t);}
   scheduleCrickets(until);
+  const kind=proximity(waterDist)>0?inlandKind():null;
+  if(kind)inlandFor(kind);else if(inland)inlandFor(null);
+  if(inland){inland.player.set({opts:{wind:windNow(),flow:1}});inland.player.schedule(Math.min(until,ctx.currentTime+.6));}
   lab.sweep();
  }
  let timer=null;
@@ -1195,7 +1100,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
    started=cursor=ctx.currentTime;build();makeStreams();
    bus.gain.cancelScheduledValues(ctx.currentTime);bus.gain.setValueAtTime(0,ctx.currentTime);bus.gain.linearRampToValueAtTime(1,ctx.currentTime+2);
    if(live){timer=setInterval(()=>schedule(ctx.currentTime+1.5),200);schedule(ctx.currentTime+1.5);}},
-  stop(quick){running=false;clearInterval(timer);timer=null;const now=ctx.currentTime,old=layers.slice(),oldBus=[layers.streamBus,layers.lakeBus,...(chorus?.members||[]).map(m=>m.d),...fields.map(c=>c.d)];
+  stop(quick){running=false;clearInterval(timer);timer=null;if(inland){inland.player.stop();try{inland.gain.disconnect();}catch{}inland=null;}const now=ctx.currentTime,old=layers.slice(),oldBus=[...(chorus?.members||[]).map(m=>m.d),...fields.map(c=>c.d)];
    bus.gain.cancelScheduledValues(now);bus.gain.setValueAtTime(bus.gain.value,now);bus.gain.linearRampToValueAtTime(0,now+(quick?.05:1));
    for(const L of old){try{L.s.stop(now+(quick?.06:1.1));}catch{}}
    chorus=null;fields=[];layers=[];
@@ -1204,6 +1109,9 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
   schedule,
   set(o){if('night'in o)night=o.night;if('wind'in o)windMph=o.wind;if('tempC'in o)tempOverride=o.tempC;
    if('waterDist'in o){waterDist=o.waterDist;waterBus.gain.setTargetAtTime(proximity(waterDist),ctx.currentTime,.5);}
+   if('waterKind'in o)waterKind=o.waterKind;
+   if('waterPan'in o){waterPan=o.waterPan;inland?.player.set({pan:waterPan});}
+   if('water'in o&&inland)inland.gain.gain.setTargetAtTime(o.water,ctx.currentTime,.3);
    for(const k of Object.keys(mix))if(k in o)mix[k]=o[k];
    if(('insects'in o||'night'in o)&&chorus){lab.track(chorus.members.map(m=>m.d).concat(fields.map(c=>c.d)),ctx.currentTime+2);chorus=null;fields=[];}},
   get night(){return night;},

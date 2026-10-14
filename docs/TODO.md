@@ -847,28 +847,7 @@ so several of these play differently as well as look different.
 
 ## Sounds (13 October 2026)
 
-Built and in the game (see `# Done`, same heading). What is left:
-
-- [ ] **Re-run the smoke suite on an idle graphics card.** On 13 October the
-  `floodlit-night` and `text-size` journeys failed (a 0.93 s freeze, the course
-  drawn at 1224 of 1920 px) while another program held the card at 74%; both
-  passed in the run before the sound was wired in, and the sound's main-thread
-  cost is about a twentieth of a millisecond a frame (RESEARCH, *Round 4*).
-  Confirm green before merging.
-- [ ] **The nearest water should choose its sound.** The ambience hears water
-  by distance from the ball, but what it sounds like still comes from the
-  biome's fixed mix: a creek on a Midwest course laps like a pond. Which body
-  is nearest (`world.streams`, `lakeOwner`, ponds, the sea) could pick babble,
-  lapping or surf.
-- [ ] **The water: the owner picks the pond-and-lake option** from
-  `docs/reports/sounds/water.html` (round 7: lapping made of bubbles, A-D).
-  Rivers and creeks are signed off (`WATER_FOR`: the mountain stream for
-  rivers, the babbling creek for creeks); no frogs. Then the ambience plays
-  them through the water bus with `waterPlayer`, choosing by which kind of
-  water is nearest -- pond or lake, river, creek; the sea keeps its surf --
-  which also settles the item above. The two creek sounds cost 9-13 ms of
-  main thread per second of sound; moving their rendering to an AudioWorklet
-  would take that off the main thread.
+Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
 
@@ -4253,6 +4232,16 @@ engineering provenance pass, not legal advice.
   switch and three volumes, kept on the device. Tested by
   `tests/sound.test.mjs` and a `sound` smoke journey.
 - [x] **Decided, not built**: no crowd reactions, no ball-rolling sound.
+- [x] **Water by kind** (13 October). Was: "the nearest water should choose its
+  sound" and "the owner picks the pond-and-lake option". The owner signed off
+  the bubbly lap for ponds and lakes, the mountain stream for rivers and the
+  babbling creek for creeks (`WATER_FOR`), with no frogs, after four rounds
+  (RESEARCH, *Round 5* to *Round 8*). The game finds the nearest water's kind
+  (`waterKindAt`) and plays its sound from its side, the sea keeping its surf.
+  The creek's rendering stays on the main thread (RESEARCH, *Round 8*, says why).
+- [x] **The smoke suite on an idle card.** Was: `floodlit-night` and
+  `text-size` failed while another program held the card at 74%. All 26
+  journeys passed with the card idle.
 - [x] **The swing no longer plays backwards** (the owner, 13 October). The
   strike was started 0.43 s in the past to give the whoosh room; Web Audio
   moves a late sound to now whole, so the whoosh came after the crack. It now

@@ -6,7 +6,8 @@
 //    and a game strike arriving after the monitor's delay would sound like an
 //    echo. Every other sound plays in both modes.
 //  - No crowd, no ball-rolling sound.
-//  - Water is heard only near water.
+//  - Water is heard only near water, and each kind sounds like itself: a pond
+//    or lake, a river, a creek (sound.js, WATER_FOR); the sea keeps its surf.
 //  - Never more than one bird at a time (sound.js keeps that).
 //
 // A browser only lets a page make sound after the player has clicked, tapped
@@ -105,8 +106,8 @@ export function createGameAudio(){
   // The course's mood: biome, wind (mph), temperature (C), night, and the
   // distance from the ball to the nearest water (m). Cheap to call often:
   // only a change of biome restarts anything.
-  setScene({biome,wind,tempC,night,waterDist}){
-   sceneState={wind,tempC,night,waterDist};
+  setScene({biome,wind,tempC,night,waterDist,waterKind=null,waterPan=0}){
+   sceneState={wind,tempC,night,waterDist,waterKind,waterPan};
    const next=SCENES[biome]?biome:'midwest';
    if(next!==scene){scene=next;if(amb)startScene();return;}
    if(amb)amb.set(sceneState);
@@ -138,14 +139,24 @@ export function createGameAudio(){
  };
 }
 
-// The distance from (x, z) to the nearest water, from the world's own surface
-// query: rings of points at growing radii, so the first ring that touches
-// water gives the answer to within its spacing. Beyond 300 m the ambience
-// hears no water at all, so the search stops there.
+// What kind of water is at a point (round 8), because each kind has its own
+// sound: a river or a creek (the stream there says which), the sea (on a
+// coast, ground below sea level that is not a lake), or else a pond or a lake.
+export function waterKindAt(world,x,z){
+ const st=world.streams?.at?.(x,z);
+ if(st&&st.edge<=0)return st.kind==='river'?'river':'creek';
+ if(world.bio?.sea&&Number.isFinite(world.waterLevel)&&world.height?.(x,z)<world.waterLevel&&!world.lakeOwner?.(x,z))return 'sea';
+ return 'pond';
+}
+// The nearest water to (x, z): how far, where, and what kind, from the
+// world's own surface query on rings of points at growing radii, so the first
+// ring that touches water gives the answer to within its spacing. Beyond
+// 300 m the ambience hears no water at all, so the search stops there.
 const RINGS=[8,16,30,50,80,120,170,230,300];
 export function nearestWater(world,x,z){
- if(world.surface(x,z)==='water')return 0;
+ if(world.surface(x,z)==='water')return {dist:0,x,z,kind:waterKindAt(world,x,z)};
  for(const r of RINGS){const n=Math.max(12,Math.round(r/6));
-  for(let i=0;i<n;i++){const a=i/n*Math.PI*2;if(world.surface(x+Math.sin(a)*r,z+Math.cos(a)*r)==='water')return r;}}
- return 1000;
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,qx=x+Math.sin(a)*r,qz=z+Math.cos(a)*r;
+   if(world.surface(qx,qz)==='water')return {dist:r,x:qx,z:qz,kind:waterKindAt(world,qx,qz)};}}
+ return {dist:1000,x,z,kind:null};
 }

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld} from '../src/course.js';
 import {simulateShot} from '../src/physics.js';
-import {scoreSting,STRIKES,IMPACTS,SCORES,FINAL} from '../src/sound.js';
-import {strikeFor,headSpeedMph,canopyContacts,nearestWater,loadSound,DEFAULT_SOUND} from '../src/audio.js';
+import {scoreSting,STRIKES,IMPACTS,SCORES,FINAL,WATERS,WATER_FOR} from '../src/sound.js';
+import {strikeFor,headSpeedMph,canopyContacts,nearestWater,waterKindAt,loadSound,DEFAULT_SOUND} from '../src/audio.js';
 import {holeScoreName} from '../src/scoring.js';
 
 // The sounds themselves are judged by ear (tools/sound-lab); what a test can
@@ -73,10 +73,21 @@ test('a ball through a crown rustles once per tree',()=>{
 
 test('water is found near water and not far from it',()=>{
  const flat={surface:(x,z)=>x>100?'water':'rough'};
- assert.equal(nearestWater(flat,150,0),0);
- assert(nearestWater(flat,90,0)<=16);
- assert(nearestWater(flat,40,0)<=80&&nearestWater(flat,40,0)>=50);
- assert.equal(nearestWater(flat,-400,0),1000);
+ assert.equal(nearestWater(flat,150,0).dist,0);
+ assert(nearestWater(flat,90,0).dist<=16);
+ const mid=nearestWater(flat,40,0);assert(mid.dist<=80&&mid.dist>=50);assert(mid.x>100,'the point found is in the water');
+ assert.equal(nearestWater(flat,-400,0).dist,1000);assert.equal(nearestWater(flat,-400,0).kind,null);
+});
+
+test('every kind of water has its signed-off sound, and is told apart',()=>{
+ for(const kind of ['pond','river','creek'])assert(WATERS[WATER_FOR[kind]]?.final===kind,`no signed-off sound for ${kind}`);
+ for(const [id,w] of Object.entries(WATERS))assert(w.final,`${id} is an option nobody signed off`);
+ const world=(stream,sea)=>({streams:{at:()=>stream},bio:{sea},waterLevel:0,height:()=>-1,lakeOwner:()=>null});
+ assert.equal(waterKindAt(world({kind:'river',edge:-1}),0,0),'river');
+ assert.equal(waterKindAt(world({kind:'creek',edge:-1}),0,0),'creek');
+ assert.equal(waterKindAt(world(null,true),0,0),'sea');
+ assert.equal(waterKindAt(world(null,false),0,0),'pond');
+ assert.equal(waterKindAt({...world(null,true),lakeOwner:()=>({})},0,0),'pond','a lake on a coast is still a lake');
 });
 
 test('sound settings fall back to the defaults without storage',()=>{

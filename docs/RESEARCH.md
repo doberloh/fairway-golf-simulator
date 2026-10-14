@@ -7586,12 +7586,46 @@ at 20 m in 8 mph of wind, all four average -54 to -56 dB, today's pond -56,
 the creeks -42 to -47. Each costs about 1-2 ms of main thread per second of
 sound; the creeks 9-13 ms.
 
+### Round 8: the pond signed off, and every water in the game (13 October 2026)
+
+**Signed off**: the bubbly lap (round 7's A) for ponds and lakes, with the
+owner's sliders as its `base` (texture 2.55, body 1.3, brightness 0.95, pitch
+0.71). With the mountain stream for rivers and the babbling creek for creeks,
+`WATER_FOR` is complete. The other pond options, round 6's three and the
+round-4 pond and creek they were compared against are removed.
+
+**How the game plays them.** About once a second the game finds the nearest
+water to the ball (or the camera with no ball in play) and asks what kind it
+is (`waterKindAt`): a river or a creek if a stream is there (the stream says
+which), the sea if the ground there is below sea level on a coast and not a
+lake, otherwise a pond or a lake. The ambience plays that kind's sound,
+cross-fading over 1.5 s when the kind changes; the sea keeps its surf and an
+inland sound is never played for it. The nearest water also sets how loud
+(full within 25 m, gone by 300 m, as before) and which side: its bearing from
+the camera pans the sound, gliding rather than jumping. Checked on generated
+courses: a point on each river and creek was classified as its own kind; an
+island's holes all heard the sea; a links course heard ponds and, at three
+spots, the sea.
+
+**Kept on the main thread, not moved to an AudioWorklet** (the plan in round
+6). A worklet needs the grain code as its own unminified source; the game is
+minified at build, so the worklet would need a second copy of the recipes kept
+in step with this one, and the Node tests and the report would need it too.
+What it would save: the creek's 9-13 ms of main thread per second of sound,
+now made a fifth of a second at a time (2-3 ms each) and never more than 0.6 s
+ahead, so it never arrives as one burst. The full smoke suite ran green with it
+(below). Revisit if a frame budget ever says otherwise.
+
+**The smoke failures of round 4 were the busy card.** With the graphics card
+idle (0% by `nvidia-smi`), all 26 journeys passed, `floodlit-night` and
+`text-size` included.
+
 ### Open, for the owner
 
-The pond-and-lake water (round 7). Everything else is decided (round 4). Decided along the way: the
+Nothing. Every sound is decided and in the game. Decided along the way: the
 driver (take C, main ring near 5.4 kHz), no club sounds under a launch
-monitor, no crowd, no ball rolling, no CC0 recordings, one material for every
-house.
+monitor, no crowd, no ball rolling, no frogs, no CC0 recordings, one material
+for every house, and water by kind.
 
 ## Flagsticks and houses: solid where they are drawn, and flags you can find (13 October 2026)
 
