@@ -27,11 +27,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Phase 3: mixed groups.** Each golfer plays with the Swing Meter or a
-  launch monitor (hidden until a bridge has connected); the monitor window
-  steps aside and refuses shots on a Swing Meter golfer's turn; handedness in
-  the profile, sent to the device on a monitor golfer's turn; a bridge that
-  drops offers the Swing Meter.
 - [ ] **Phase 4: XP and levels**, one system for monitor and meter golfers.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
   finished, and as the profile picture) and titles.**
@@ -896,6 +891,15 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     picked takes. `check.mjs` renders every take: all between -10 and -17 dB
     peak. **None plays in the game** until signed off; then fold the choices into
     a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] **Phase 3: mixed groups.** Each golfer plays with the launch monitor (the
+  default: whenever it is armed, as before) or the Swing Meter, chosen in the
+  group editor once a bridge has connected, with their hand; both saved to the
+  profile and carried through a group change mid-round. `armed` is per turn
+  (`syncArmed` from the Armed switch `armSwitch` and `playsWith`): a Swing
+  Meter golfer gets the meter with the monitor waiting on its strip, and a
+  monitor ball on their turn is refused; the window and strip say who is up;
+  the device is told the golfer's hand; a dropped bridge says so and the meter
+  comes up. Smoke journey `mixed-group`; tests/mixed-groups.test.mjs.
 - [x] **Phase 2, round 5: short shots and putts** (the owner, 14 October 2026:
   "the bar starts in the wrong place and just moves too fast"). The marker
   starts from the far left of the bar and runs up to the strike line; a short

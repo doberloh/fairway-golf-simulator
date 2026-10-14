@@ -21,8 +21,8 @@ import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour} from './daylight.js';
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
-import {Round} from './game.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty} from './profile.js';
+import {Round,playsWith} from './game.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
@@ -275,7 +275,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 // Both round rules a group sets and the next round starts with, written together
 // so changing one never forgets the other.
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
-let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
+let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -517,7 +517,21 @@ function updateExplorer(){
 }
 
 function distance(){return Math.hypot(round.position.x-course.pin.x,round.position.z-course.pin.z);}
+// MIXED GROUPS (Phase 3, 14 October 2026): the Armed switch is the golfer's
+// choice for the DEVICE (`armSwitch`); `armed` -- what everything else reads --
+// is whether THIS turn plays off the monitor: switched on, connected, and the
+// golfer up plays with the monitor (game.js `playsWith`). A golfer set to the
+// Swing Meter gets the meter on their turn, with the monitor window down to its
+// strip, and a ball hit into the monitor then is refused as unarmed. With no
+// golfer set to the meter, `armed` is the switch, exactly as before.
+function syncArmed(){
+ const was=armed;
+ armed=armSwitch&&monitorConnected&&playsWith(round?.player)!=='meter';
+ if(was!==armed&&armed)cancelSwing();
+ return was!==armed;
+}
 function setUpTurn(){
+ syncArmed();
  // A TEAM SELECTION IS NOT A TURN. Nobody is up until a ball has been chosen, so
  // setting a club, a power and an aim line for `round.position` here would offer
  // a shot from a lie the team may be about to abandon. This is also the path a
@@ -598,6 +612,7 @@ function toggleKeysHelp(on=$('keysHelp').hidden){
  if(on)$('keysUpDown').textContent='Aim point further / shorter';
 }
 function updateHUD(){
+ syncArmed();
  const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
   // Reading is off on a practice ground: the bench green is dead flat, so the
@@ -1826,6 +1841,7 @@ function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;}
 // your club, and the whole point is to hit the same club until you are happy
 // with it.
 function setUpRangeTurn(){
+ syncArmed();
  const tee=course.tees[round.tee]||Object.values(course.tees)[0];
  round.positions[round.active]={x:tee.x,z:tee.z};round.teePlaced=true;
  const p=round.position;shotShape={...DEFAULT_SHAPE};cancelSwing();
@@ -2927,6 +2943,10 @@ function syncNav(){
 // The draft is held here rather than scraped out of the DOM at commit time,
 // because a count dropdown and a list of rows can disagree and this cannot.
 let groupDraft=null;
+// "PLAYS WITH" AND THE HAND are only asked once a launch monitor has ever
+// connected on this device (spec Q14): until then everyone is on the Swing
+// Meter and the hand is something only a monitor is told.
+const bridgeSeen=()=>{if(monitorConnected)return true;try{return !!localStorage.getItem(BRIDGE_KEY);}catch{return false;}};
 function groupEditor(hostId,start,onChange){
  const host=$(hostId);if(!host)return null;
  // `seat` is the id this golfer already holds in the round. It rides through the
@@ -2938,7 +2958,7 @@ function groupEditor(hostId,start,onChange){
  // applied (`readDraft`). A golfer from a save older than profiles is matched by
  // name, and becomes a new player if nobody on this device has that name.
  const draft=start.map(p=>{const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
-  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||'RH',seat:p.id};});
+  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',seat:p.id};});
  groupDraft=draft;
  const NEW='__new';
  const paint=()=>{
@@ -2949,7 +2969,7 @@ function groupEditor(hostId,start,onChange){
   // The dot is shown where the group is BUILT, not only where it is scored:
   // otherwise the first time anyone sees a golfer's colour is a tracer over a
   // fairway, with nothing on screen tying it to a name.
-  host.innerHTML=draft.map((p,i)=>`<div class="player-row">`
+  host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
    +`<span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>`
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)}</option>`).join('')
@@ -2957,7 +2977,8 @@ function groupEditor(hostId,start,onChange){
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
    +`</div>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
-   +`<select id="hand${i}" aria-label="Player ${i+1} handedness"><option ${p.hand==='RH'?'selected':''}>RH</option><option ${p.hand==='LH'?'selected':''}>LH</option></select>`
+   +(bridgeSeen()?`<select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select>`
+    +`<select id="hand${i}" aria-label="Player ${i+1} handedness"><option ${p.hand==='RH'?'selected':''}>RH</option><option ${p.hand==='LH'?'selected':''}>LH</option></select>`:'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
    // had no remove button at all, so the only way to drop the first name was to
@@ -2971,13 +2992,14 @@ function groupEditor(hostId,start,onChange){
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
-    if(v===NEW){p.profile=null;p.name='';}else{p.profile=v;p.name=findProfile(profiles,v)?.name??'';}
+    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';}
     paint();onChange?.();
     if(v===NEW)$('name'+i)?.focus();
    };
    if($('name'+i))$('name'+i).oninput=e=>{p.name=e.target.value;};
    $('team'+i).onchange=e=>{p.team=e.target.value;onChange?.();};
-   $('hand'+i).onchange=e=>{p.hand=e.target.value;};
+   if($('hand'+i))$('hand'+i).onchange=e=>{p.hand=e.target.value;};
+   if($('input'+i))$('input'+i).onchange=e=>{p.input=e.target.value;};
   });
   host.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{
    draft.splice(Number(b.dataset.drop),1);paint();onChange?.();});
@@ -2986,7 +3008,7 @@ function groupEditor(hostId,start,onChange){
   // player when everyone on the device is already playing.
   if(add)add.onclick=()=>{
    const used=new Set(draft.map(q=>q.profile)),free=everyone.find(q=>!used.has(q.id));
-   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:'RH',seat:undefined});
+   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:free?.hand||'RH',input:free?.input||'monitor',seat:undefined});
    paint();onChange?.();
    if(!free)$('name'+(draft.length-1))?.focus();};
  };
@@ -3009,7 +3031,9 @@ function readDraft(){
  return rows.map(r=>{
   let prof=r.prof;
   if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
-  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,seat:r.seat};
+  // Remembered for the next group this golfer joins.
+  setProfilePlay(profiles,prof.id,{hand:r.hand,input:r.input});
+  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',seat:r.seat};
  });
 }
 const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next player tees off. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.'};
@@ -4353,8 +4377,8 @@ function renderPanel(name,content){
 
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
-  content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armed?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Validate & play sample shot</button>`;
-  $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armed=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armed=$('armMonitor').checked;updateHUD();sendPlayer();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
+  content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Validate & play sample shot</button>`;
+  $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
   content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><div class="help-shortcuts"><kbd>Click</kbd><span>Aim at a point on the course or map</span><kbd>← / →</kbd><span>Fine tune your aim</span><kbd>↑ / ↓</kbd><span>Aim further or shorter</span><kbd>Space</kbd><span>Swing: start, set the distance, strike</span><kbd>S / W / X</kbd><span>Curve, height and spin</span><kbd>Q / E</kbd><span>Change club</span><kbd>C</kbd><span>Toggle overview camera</span><kbd>Enter</kbd><span>Finish the shot animation</span><kbd>Escape</kbd><span>Close a panel</span></div><h3>Explore the course</h3><p>Press V or the bird icon for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
   // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
@@ -4619,11 +4643,16 @@ function drawMonitorState(state){
  win.dataset.monitor=state;
  if(state!=='off'){
   const [title,text]=MONITOR_WORDS[state];
-  $('monTitle').textContent=title;$('monText').textContent=text;
+  // In a group, whose turn it is, so the golfer at the mat knows whether to hit
+  // or to wait for someone on the Swing Meter.
+  const who=round.players.length>1?`${round.player.name} is up · `:'';
+  $('monTitle').textContent=title;$('monText').textContent=who+text;
   $('monStateTitle').textContent=title;
-  $('monStateText').textContent='Armed is off: power and the shot button are yours';
+  $('monStateText').textContent=armSwitch&&playsWith(round.player)==='meter'
+   ?`${round.player.name} is on the Swing Meter: the monitor waits for the next monitor golfer`
+   :'Armed is off: the Swing Meter is yours';
  }
- for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armed;el.disabled=!monitorConnected;}
+ for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armSwitch;el.disabled=!monitorConnected;}
  $('clubSource').textContent='';
 }
 // WHERE THE BRIDGE IS, remembered per device once a connection succeeds. With
@@ -4638,7 +4667,12 @@ function defaultBridgeUrl(){
  return location.protocol==='http:'&&location.host?`ws://${location.host}`:'ws://127.0.0.1:1922';
 }
 let lastBridgeUrl=defaultBridgeUrl();
-function setConnection(connected){monitorConnected=connected;if(!connected)monitorDevice=null;$('connectionDot').classList.toggle('connected',connected);$('connectionLabel').textContent=connected?'Bridge connected':'Connect monitor';if(!connected)armed=false;updateHUD();}
+function setConnection(connected){monitorConnected=connected;if(!connected)monitorDevice=null;$('connectionDot').classList.toggle('connected',connected);$('connectionLabel').textContent=connected?'Bridge connected':'Connect monitor';
+ // THE BRIDGE DROPPED with a monitor golfer up: the switch goes off, the Swing
+ // Meter comes up, and they are told so rather than left waiting for a ball the
+ // game can no longer hear (spec 5).
+ if(!connected){if(armed&&appMode==='play')toast('The launch monitor disconnected. Play this shot on the Swing Meter, or reconnect.');armSwitch=false;}
+ updateHUD();}
 function sendPlayer(){if(ws?.readyState===1)ws.send(JSON.stringify({type:'player',Player:{Handed:round.player.hand,Club:clubs[$('club').value].code},ready:armed&&!flight&&!round.holeComplete&&!round.scrambleSelection}));}
 const seenShots=new Set();
 function connectBridge(url){
@@ -5273,7 +5307,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // THE MONITOR, from the play screen: arm it or put it down -- the switch in
  // the launch monitor window and the one on the shot controls' strip are the
  // same switch as the one in Connect monitor -- and reconnect it.
- for(const el of document.querySelectorAll('.mon-arm-input'))el.onchange=()=>{armed=el.checked&&monitorConnected;if($('armMonitor'))$('armMonitor').checked=armed;updateHUD();sendPlayer();};
+ for(const el of document.querySelectorAll('.mon-arm-input'))el.onchange=()=>{armSwitch=el.checked&&monitorConnected;if($('armMonitor'))$('armMonitor').checked=armSwitch;updateHUD();sendPlayer();};
  // The window's club is the shot controls' club, shown in a second picker:
  // one value (#club) that everything reads, and this one mirrors it.
  syncClubs();

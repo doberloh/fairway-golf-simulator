@@ -205,6 +205,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Build a slider with `slider()`, never by hand. [BUILD A SLIDER]
 - One thrown error while a panel wires itself kills every handler below it. [One thrown error in a panel]
 - `main.js` DOM paths are not covered by the tests; that is what `npm run smoke` is for. [`main.js` DOM paths]
+- `armed` is worked out per turn from the Armed switch (`armSwitch`) and how the golfer up plays; never set it directly. [`armed` is per turn]
 - A Swing Meter tap is judged on its own timestamp, never on a frame; the frame loop only draws the marker. [A Swing Meter tap is judged on its own time]
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]

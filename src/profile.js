@@ -124,7 +124,13 @@ export function normaliseProfile(d) {
  // can play on different settings. Absent reads as Normal, so like the bag it
  // needs no migration; anything unrecognised is dropped.
  const meter = METER_DIFFICULTIES.includes(d.meter?.difficulty) ? {difficulty: d.meter.difficulty} : null;
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {})};
+ // How this golfer plays and which hand they swing with (Phase 3, 14 October
+ // 2026): remembered for the next group. Absent reads as the launch monitor
+ // when armed and right-handed, which is how everyone played before.
+ const play = {};
+ if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
+ if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile
@@ -198,6 +204,15 @@ export function setProfileMeter(store, id, difficulty) {
  const p = findProfile(store, id);
  if (!p) return null;
  p.meter = {...(p.meter || {}), difficulty};
+ storeProfiles(store);
+ return p;
+}
+// A golfer's hand and way of playing, saved when a group is started or changed.
+export function setProfilePlay(store, id, {hand, input} = {}) {
+ const p = findProfile(store, id);
+ if (!p) return null;
+ if (['RH', 'LH'].includes(hand)) p.hand = hand;
+ if (['monitor', 'meter'].includes(input)) p.input = input;
  storeProfiles(store);
  return p;
 }

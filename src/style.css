@@ -422,7 +422,10 @@ button.danger:hover{background:rgba(141,63,44,.1)}
    onto a second grid row -- `.drop-spacer` exists to hold its place on the first
    golfer's row, which only makes sense if it is on the row at all. Leftover
    `flex` rules on both are inert in a grid. */
-.player-row{grid-template-columns:auto 1fr 85px 60px auto;align-items:center}
+.player-row{grid-template-columns:auto 1fr 85px auto;align-items:center}
+/* With a launch monitor ever connected the row also asks how the golfer plays
+   and which hand they swing with (Phase 3, mixed groups). */
+.player-row.play{grid-template-columns:auto 1fr 85px 118px 60px auto}
 
 /* Choosing the team's ball in a scramble. The same bar the sim drop uses, so a
    mode that takes over the bottom of the screen looks the same both times. */

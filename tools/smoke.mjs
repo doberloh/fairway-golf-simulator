@@ -1935,6 +1935,97 @@ const JOURNEYS = [
  // The phone's top bar has no room for "Connect monitor", so the ways in are
  // the main menu and the Tools window -- the first cut hid the button with no
  // way in at all, which the owner found on an iPhone.
+ // A MIXED GROUP (Phase 3, 14 October 2026): one golfer on the launch monitor,
+ // one on the Swing Meter, the monitor armed throughout. Stroke play keeps a
+ // golfer on the hole until they hole out, so rather than playing a hole out
+ // this switches the golfer who is up between the two ways of playing, mid-
+ // round, through the group editor -- which is how a player changes it.
+ {
+  name: 'mixed-group',
+  what: 'a monitor golfer and a Swing Meter golfer in one group: the meter on a meter golfer\'s turn with the monitor waiting, a monitor ball refused then, and the monitor back the moment the golfer switches',
+  context: {viewport: {width: 1366, height: 768}},
+  async prepare(page) {
+   this.acks = [];this.players = [];
+   await page.routeWebSocket('ws://127.0.0.1:1922/', ws => {
+    this.bridge = ws;
+    ws.onMessage(m => { try { const d = JSON.parse(m); if (d.type === 'ack') this.acks.push(d); if (d.type === 'player') this.players.push(d); } catch {} });
+    ws.send(monitorStatus('green'));
+   });
+  },
+  async run(t) {
+   const shown = sel => t.page.evaluate(s => { const e = document.querySelector(s); return !!e && !e.closest('[hidden]') && e.offsetParent !== null; }, sel);
+   const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
+    BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
+   const groupPanel = async () => {
+    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
+    await t.press('Your group');
+   };
+   await menuReady(t);
+   await t.step('connect and arm from the main menu', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).click();
+    await t.press('Connect bridge');
+    await t.until(async () => (await t.page.textContent('#connectionLabel')) === 'Bridge connected', 'the bridge to connect', 5 * SLOW);
+    await t.page.getByLabel(/Arm monitor/).check();
+    await t.key('Escape');
+   });
+   await t.step('a group of two: the first golfer on the Swing Meter, left-handed; the second on the monitor', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Your group');
+    await t.press('Add player');
+    await t.page.fill('#name1', 'Second');
+    // The "plays with" and hand choices are there: a bridge has connected.
+    if (!await shown('#input0') || !await shown('#hand0')) throw new Error('the group editor does not ask how each golfer plays');
+    await t.page.selectOption('#input0', 'meter');
+    await t.page.selectOption('#hand0', 'LH');
+    await t.page.selectOption('#input1', 'monitor');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.step('on the Swing Meter golfer\'s turn: the meter is up and the monitor waits on its strip', async () => {
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter', 5 * SLOW);
+    if (await shown('#monitorPanel')) throw new Error('the launch monitor window is up on a Swing Meter turn');
+    if (!await shown('#monState')) throw new Error('the monitor strip is missing');
+    const text = await t.page.textContent('#monStateText');
+    if (!/Swing Meter/.test(text)) throw new Error(`the strip says "${text}"`);
+    if (!await t.page.isChecked('#monArmHand')) throw new Error('Armed went off; it should stay on for the monitor golfer');
+   });
+   await t.step('a ball hit into the monitor then is refused', async () => {
+    this.bridge.send(shot(1));
+    await t.until(() => this.acks.some(a => a.requestId === 'mixed-1'), 'the bridge to hear back', 5 * SLOW);
+    if (this.acks.find(a => a.requestId === 'mixed-1').accepted) throw new Error('a monitor shot was played on a Swing Meter golfer\'s turn');
+    if (await t.inFlight()) throw new Error('a ball is in the air');
+   });
+   await t.step('switched to the monitor mid-round: the window is back, the device is told the hand, and a shot plays', async () => {
+    await groupPanel();
+    await t.page.selectOption('#input0', 'monitor');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    await t.until(() => shown('#monitorPanel'), 'the launch monitor window', 5 * SLOW);
+    if (await shown('#swingMeter')) throw new Error('the Swing Meter stayed up');
+    await t.until(() => this.players.some(p => p.Player?.Handed === 'LH' && p.ready), 'the device to be told this golfer is left-handed and ready', 5 * SLOW);
+    this.bridge.send(shot(2));
+    await t.until(() => t.inFlight(), 'the monitor shot to fly', 5 * SLOW);
+    if (!this.acks.find(a => a.requestId === 'mixed-2')?.accepted) throw new Error('the monitor shot was not accepted');
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
+   });
+   await t.step('and back to the Swing Meter: the meter returns and swings', async () => {
+    await groupPanel();
+    await t.page.selectOption('#input0', 'meter');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter', 5 * SLOW);
+    await t.shot();
+   });
+   await t.step('the golfers\' choices are remembered in their profiles', async () => {
+    const store = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'));
+    const first = store?.profiles?.find(p => p.id === store.main), second = store?.profiles?.find(p => p.name === 'Second');
+    if (first?.input !== 'meter' || first?.hand !== 'LH') throw new Error(`the first golfer's profile reads ${JSON.stringify({input: first?.input, hand: first?.hand})}`);
+    if (second?.input !== 'monitor') throw new Error(`the second golfer's profile reads ${JSON.stringify({input: second?.input})}`);
+   });
+  },
+ },
  {
   name: 'monitor-phone',
   what: 'a phone reaches the launch monitor from the menu and Tools, with the bridge address filled in and remembered',

@@ -1,4 +1,11 @@
 import {puttingConfig,awardedPutts} from './putting.js';
+// HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
+// the default, and every golfer from before this -- plays off the launch
+// monitor whenever it is armed, which is exactly how a round played before;
+// 'meter' always plays on the Swing Meter, armed or not, and a ball hit into the
+// monitor on their turn is refused as if it were unarmed.
+export const INPUTS=['monitor','meter'];
+export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -99,7 +106,10 @@ export class Round{
   // `profile` is which player profile this golfer is: it rides through so a
   // golfer who stays keeps counting to the same profile, and one who joins
   // counts to theirs from their first shot.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),id:i}));
+  // `input` is how this golfer plays (playsWith, below): it rides through a
+  // group change mid-round, so switching a golfer to the Swing Meter or back
+  // to the monitor is just applying the group again.
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,
