@@ -27,15 +27,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Owner: tune the Swing Meter's sounds** (round 1, 14 October 2026). Built
-  in `src/sound.js` (`METER_VOICES`, `meterVoice`, `METER_EVENTS`,
-  `meterEvent`): a voice that follows the marker, and a sound for the distance
-  set, overswing, a perfect strike, a strike in the zone, a miss and a swing
-  that ran out, three takes each. Report: `node tools/sound-lab/build.mjs`, then
-  `docs/reports/sounds/meter.html` (local), with a practice meter that plays the
-  picked takes. `check.mjs` renders every take: all between -10 and -17 dB
-  peak. **None plays in the game** until signed off; then fold the choices into
-  a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
 - [ ] **Phase 3: mixed groups.** Each golfer plays with the Swing Meter or a
   launch monitor (hidden until a bridge has connected); the monitor window
   steps aside and refuses shots on a Swing Meter golfer's turn; handedness in
@@ -896,6 +887,23 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
   simulator never invents ball data* was rewritten for the lie rule.
   RESEARCH.md *The Swing Meter*.
+- [x] Closed by round 4: **Owner: tune the Swing Meter's sounds** (round 1, 14 October 2026). Built
+    in `src/sound.js` (`METER_VOICES`, `meterVoice`, `METER_EVENTS`,
+    `meterEvent`): a voice that follows the marker, and a sound for the distance
+    set, overswing, a perfect strike, a strike in the zone, a miss and a swing
+    that ran out, three takes each. Report: `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/meter.html` (local), with a practice meter that plays the
+    picked takes. `check.mjs` renders every take: all between -10 and -17 dB
+    peak. **None plays in the game** until signed off; then fold the choices into
+    a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] **Phase 2, round 4 (the owner's notes, 14 October 2026).** Overswing
+  crawls at a quarter speed with the meter flashing, and holds at its end until
+  the second tap. Colours swapped: the strike zone is yellow, the perfect band
+  green. **The Swing Meter's sounds signed off and in the game** (round 1, the
+  owner's picks: voice C air, power B click, overswing A buzz, perfect A
+  marimba, zone A wood block, miss A thunk, duff B falling whistle, with their
+  sliders; `METER_FINAL`), on the Swing Meter only; tests/sound.test.mjs holds
+  them to one signed-off take each.
 - [x] **Phase 2, round 3 (the owner's notes, 14 October 2026).** The bar keeps
   the struck swing -- the distance stop and the strike -- until the next swing.
   No putt preview for any way of playing: a straight line to the aim, the break

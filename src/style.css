@@ -1324,11 +1324,21 @@ html,body{overscroll-behavior:none}
 .sm-hint{color:var(--ink-dim);white-space:nowrap}
 .sm-hint kbd{font-size:9px}
 .sm-esc{color:var(--ink-faint);margin-left:6px}
-.swing-meter.perfect .sm-hint{color:#f0c674;font-weight:700}
+.swing-meter.perfect .sm-hint{color:#7ee39a;font-weight:700}
 .sm-bar{position:relative;height:24px;border-radius:7px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.14));border:1px solid var(--glass-line);cursor:pointer}
 .sm-bar>*{position:absolute;top:0;bottom:0}
-.sm-zone{background:rgba(120,200,140,.38);border-left:1px solid rgba(160,230,175,.7);border-right:1px solid rgba(160,230,175,.7)}
-.sm-perfect{background:rgba(240,198,116,.85)}
+/* The owner's colours (14 October 2026): the strike zone is YELLOW -- an OK
+   strike -- and the perfect band inside it GREEN. They were the other way round. */
+.sm-zone{background:rgba(240,198,116,.4);border-left:1px solid rgba(250,215,140,.8);border-right:1px solid rgba(250,215,140,.8)}
+.sm-perfect{background:rgba(110,214,135,.95)}
+/* OVERSWING FLASHES until the second tap (the owner's call): the bar's border
+   and the overswing zone pulse orange while the marker crawls through it and
+   holds at its end. A steady glow instead for anyone who asked for less motion. */
+.swing-meter.over .sm-bar{animation:sm-over-flash .36s steps(2,jump-none) infinite}
+.swing-meter.over .sm-ticks span.over{background:rgba(240,150,90,.55)}
+.swing-meter.over .sm-hint{color:#ffb27a;font-weight:700}
+@keyframes sm-over-flash{0%{border-color:#ff9a5a;box-shadow:0 0 0 2px rgba(255,154,90,.65),0 0 18px rgba(255,154,90,.5)}100%{border-color:var(--glass-line);box-shadow:none}}
+@media (prefers-reduced-motion:reduce){.swing-meter.over .sm-bar{animation:none;border-color:#ff9a5a;box-shadow:0 0 0 2px rgba(255,154,90,.6)}}
 .sm-hatch{background:repeating-linear-gradient(135deg,rgba(255,120,100,.5) 0 4px,transparent 4px 8px)}
 .sm-hatch[hidden],.sm-zone[hidden],.sm-perfect[hidden]{display:none}
 .sm-ticks{left:0;right:0}

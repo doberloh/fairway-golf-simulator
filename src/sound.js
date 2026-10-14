@@ -1130,8 +1130,8 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
 // a perfect strike, a strike in the green zone, a miss, a swing that ran out
 // and going into overswing. Every one is a take to choose between in the
 // meter report (tools/sound-lab/meter.html, built beside the others). NOTHING
-// HERE PLAYS IN THE GAME YET: audio.js calls none of it until the owner signs
-// the takes off, the way every other sound went in. All PLACED by ear.
+// The owner signed them off on 14 October 2026 (round 1, `METER_FINAL` below)
+// and audio.js plays them from then. All PLACED by ear.
 //
 // The voice is continuous and follows the marker: `meterVoice` gives
 // {start, set(position, stage), stop}, position in bar lengths (0 the strike
@@ -1139,36 +1139,37 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
 // coming back. Every change is scheduled from now, never in the past.
 const meterPitch=p=>220*Math.pow(2,clamp(p,-.3,1.2)*1.4);
 export const METER_VOICES={
- A:{name:'A rising tone: a soft sine that climbs with the marker and falls as it comes back'},
- B:{name:'Ticks: a tick each sixteenth of the bar, higher the further up'},
- C:{name:'Air: a whoosh whose pitch and level follow the marker'},
+ A:{name:'A rising tone: a soft sine that climbs with the marker and falls as it comes back',kind:'tone'},
+ B:{name:'Ticks: a tick each sixteenth of the bar, higher the further up',kind:'ticks'},
+ C:{name:'Air: a whoosh whose pitch and level follow the marker',kind:'air'},
 };
 export function meterVoice(lab,{take='A',knobs={}}={}){
- const {ctx}=lab,K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...knobs};
+ const T=METER_VOICES[take]||METER_VOICES.A,kind=T.kind;
+ const {ctx}=lab,K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...mergeKnobs(T.base,knobs)};
  const dest=place(lab,{dist:6,wet:.06});
  let nodes=[],lastTick=null,on=false,osc=null,g=null,fl=null;
  const level=.05*K.level;
  const api={
   start(){
    if(on)return;on=true;const t=ctx.currentTime;
-   if(take==='A'){osc=ctx.createOscillator();const o2=ctx.createOscillator(),g2=ctx.createGain();g=ctx.createGain();
+   if(kind==='tone'){osc=ctx.createOscillator();const o2=ctx.createOscillator(),g2=ctx.createGain();g=ctx.createGain();
     osc.type='sine';o2.type='triangle';g2.gain.value=.25*K.bright;
     osc.frequency.value=meterPitch(0)*K.pitch;o2.frequency.value=meterPitch(0)*K.pitch*2;osc.o2=o2;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level,t+.04);
     osc.connect(g);o2.connect(g2);g2.connect(g);g.connect(dest);osc.start(t);o2.start(t);nodes=[osc,o2,g2,g];}
-   else if(take==='C'){const s=ctx.createBufferSource();fl=ctx.createBiquadFilter();g=ctx.createGain();
+   else if(kind==='air'){const s=ctx.createBufferSource();fl=ctx.createBiquadFilter();g=ctx.createGain();
     s.buffer=lab.NOISE;s.loop=true;fl.type='bandpass';fl.Q.value=4;fl.frequency.value=meterPitch(0)*2*K.pitch*Math.sqrt(K.bright);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level*2.2,t+.05);
     s.connect(fl);fl.connect(g);g.connect(dest);s.start(t,R(0,8));osc=s;nodes=[s,fl,g];}
   },
   set(p,stage='power'){
    if(!on)return;const t=ctx.currentTime,f=meterPitch(p)*K.pitch;
-   if(take==='A'){osc.frequency.setTargetAtTime(f,t,.012);osc.o2.frequency.setTargetAtTime(f*2,t,.012);
+   if(kind==='tone'){osc.frequency.setTargetAtTime(f,t,.012);osc.o2.frequency.setTargetAtTime(f*2,t,.012);
     // Overswing: a quick wobble, so the top of the bar feels like a strain.
     g.gain.setTargetAtTime(level*(p>1?1+.35*Math.sin(t*60):1),t,.01);}
-   else if(take==='B'){const b=Math.floor(p*16);if(b!==lastTick){lastTick=b;
+   else if(kind==='ticks'){const b=Math.floor(p*16);if(b!==lastTick){lastTick=b;
     ring(lab,dest,t+.005,[[f*4,.006*K.length,1],[f*8,.003*K.length,.4]],{amp:level*3,bright:K.bright,spread:.01});}}
-   else if(take==='C'){fl.frequency.setTargetAtTime(f*2*Math.sqrt(K.bright),t,.015);g.gain.setTargetAtTime(level*(1.2+1.6*clamp(p,0,1.2))*(stage==='strike'?.8:1),t,.02);}
+   else if(kind==='air'){fl.frequency.setTargetAtTime(f*2*Math.sqrt(K.bright),t,.015);g.gain.setTargetAtTime(level*(1.2+1.6*clamp(p,0,1.2))*(stage==='strike'?.8:1),t,.02);}
   },
   stop(){
    if(!on)return;on=false;const t=ctx.currentTime;
@@ -1216,6 +1217,26 @@ export const METER_EVENTS={
  }},
 };
 for(const e of Object.values(METER_EVENTS))e.knobs=['level','pitch','length','bright'];
+// THE OWNER'S PICKS (14 October 2026, round 1: "Swing Meter sound notes"), the
+// take and their sliders, folded in so each is the only take left and 100% on
+// every slider is what they heard. The voice's Ring / length slider (85%) moves
+// nothing on the air take, which has no ring; kept as set.
+export const METER_FINAL={
+ voice:['C',{bright:.9,pitch:.63,length:.85}],
+ power:['B',{pitch:.66,length:.55,bright:1.8}],
+ overswing:['A',{pitch:.95,length:1.05,bright:.8}],
+ perfect:['A',{length:.3}],
+ zone:['A',{length:.35,pitch:.66}],
+ miss:['A',{length:.95,level:.65}],
+ duff:['B',{pitch:.55,length:1.3,bright:2.1}],
+};
+{const [take,base]=METER_FINAL.voice,t=METER_VOICES[take];
+ for(const k of Object.keys(METER_VOICES))delete METER_VOICES[k];
+ METER_VOICES.A={name:`Signed off (was ${take}: ${t.name})`,kind:t.kind,base,final:true};}
+for(const [id,[take,base]] of Object.entries(METER_FINAL)){
+ if(id==='voice')continue;const E=METER_EVENTS[id],t=E.takes[take];
+ E.takes={A:{name:`Signed off (was ${take}: ${t.name})`,play:t.play,base}};E.final=true;
+}
 export function meterEvent(lab,id,{take='A',knobs={},at}={}){
  const E=METER_EVENTS[id],T=E.takes[take]||E.takes.A,t=(at??lab.ctx.currentTime)+.01;
  const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...mergeKnobs(T.base,knobs)};

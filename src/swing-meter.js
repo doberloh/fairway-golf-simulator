@@ -164,21 +164,33 @@ export function startSwing(t, {difficulty, club = null, putt = false, accuracy =
  const pace = putt ? 1.15 : ({driver: .9, wood: .92, wood5: .94, wood7: .95}[club?.kind] ?? (SHORT_GAME_KINDS.has(club?.kind) ? 1.1 : 1));
  return {start: t, rise: d.rise * pace * 1000, power: null, powerAt: null, accuracy, done: false, error: null};
 }
+// OVERSWING IS SLOW, AND WAITS (the owner's call, 14 October 2026). Past the
+// full line the marker runs at a quarter of its speed, the meter flashes, and at
+// the end of the overswing zone it stops and holds there, still flashing, until
+// the second tap -- it no longer goes off on its own. Slower means the depth is
+// the golfer's to choose; the strike zone still narrows the deeper it is.
+// Coming back from overswing runs at the normal speed. PLACED.
+export const OVERSWING_SLOW = 4;
+function riseAt(sw, t) {
+ const e = (t - sw.start) / sw.rise;
+ return e <= 1 ? Math.max(0, e) : Math.min(1 + OVERSWING, 1 + (e - 1) / OVERSWING_SLOW);
+}
+// Is the marker in the overswing zone, still climbing or holding at its end?
+export const inOverswing = (sw, t) => sw.power == null && riseAt(sw, t) > 1;
 // Where the marker is at time t, in bar lengths.
 export function markerAt(sw, t) {
- if (sw.power == null) return clamp((t - sw.start) / sw.rise, 0, 1 + OVERSWING);
+ if (sw.power == null) return riseAt(sw, t);
  return Math.max(MISS_AT, sw.power - (t - sw.powerAt) / sw.rise);
 }
-// Anything owed by the clock alone: the marker reaching the end of overswing
-// sets the power there; running out past the strike zone is a miss.
+// Anything owed by the clock alone: running out past the strike zone is a
+// miss. (Until 14 October 2026 the end of overswing set the power on its own.)
 export function advance(sw, t) {
  if (sw.done) return sw;
- if (sw.power == null && t - sw.start >= sw.rise * (1 + OVERSWING)) setPower(sw, sw.start + sw.rise * (1 + OVERSWING));
  if (sw.power != null && !sw.done && markerAt(sw, t) <= MISS_AT) { sw.done = true; sw.error = MISS_AT; sw.duff = true; }
  return sw;
 }
 function setPower(sw, t) {
- sw.power = clamp((t - sw.start) / sw.rise, 0, 1 + OVERSWING);sw.powerAt = t;
+ sw.power = riseAt(sw, t);sw.powerAt = t;
  if (!sw.accuracy) { sw.done = true; sw.error = 0; }
 }
 // A tap. Returns which tap it was: 'power' or 'strike' (or null if over).

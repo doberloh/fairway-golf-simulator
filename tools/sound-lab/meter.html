@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Swing Meter Sounds</title>
 <style>
-:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6;--zone:rgba(70,160,95,.35);--gold:#d6a43a;--over:rgba(230,140,80,.3)}
+:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6;--zone:rgba(230,180,70,.4);--gold:#4fb46e;--over:rgba(230,140,80,.3)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}}
 :root[data-theme="dark"]{--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}
 *{box-sizing:border-box}
@@ -64,7 +64,8 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <script type="module">
 /*SYNTH*/
 
-const KEY='fairway-meter-lab-v1';
+// v2: round 1 signed off, the owner's sliders built in -- start clean so they are not applied twice.
+const KEY='fairway-meter-lab-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const c of kids)e.append(c);return e;};
@@ -121,16 +122,17 @@ band('zone',-ZONE,ZONE);band('perfect',-PERFECT,PERFECT);band('over',1,1+OVER);
 $('#line').style.left=X(0)+'%';$('#full').style.left=X(1)+'%';$('#marker').style.left=X(0)+'%';
 let sw=null,voice=null,raf=0;
 const say=t=>$('#said').textContent=t;
-function pos(t){return sw.power==null?Math.min((t-sw.start)/RISE,1+OVER):Math.max(MISS,sw.power-(t-sw.powerAt)/RISE);}
+// Overswing crawls at a quarter speed and holds at its end for the tap, as in the game.
+const rise=t=>{const e=(t-sw.start)/RISE;return e<=1?e:Math.min(1+OVER,1+(e-1)/4);};
+function pos(t){return sw.power==null?rise(t):Math.max(MISS,sw.power-(t-sw.powerAt)/RISE);}
 function frame(now){
  if(!sw)return;
  const p=pos(now);$('#marker').style.left=X(p)+'%';voice?.set(p,sw.power==null?'power':'strike');
  if(sw.power==null&&!sw.over&&p>1){sw.over=true;play('overswing');}
- if(sw.power==null&&p>=1+OVER){setPower(sw.start+RISE*(1+OVER));}
  if(sw.power!=null&&p<=MISS){finish(MISS,true);return;}
  raf=requestAnimationFrame(frame);
 }
-function setPower(t){sw.power=Math.min((t-sw.start)/RISE,1+OVER);sw.powerAt=t;$('#power').hidden=false;$('#power').style.left=X(sw.power)+'%';play('power');say('Now strike on the white line.');}
+function setPower(t){sw.power=rise(t);sw.powerAt=t;$('#power').hidden=false;$('#power').style.left=X(sw.power)+'%';play('power');say('Now strike on the white line.');}
 function finish(e,duff){
  cancelAnimationFrame(raf);voice?.stop();voice=null;
  $('#marker').style.left=X(e)+'%';

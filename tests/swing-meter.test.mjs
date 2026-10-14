@@ -66,11 +66,25 @@ test('overswing is worth up to 5% more carry, and nothing further', () => {
  assert.ok(over.carry / YARD > c.carry * 1.03 && over.carry / YARD < c.carry * 1.07);
 });
 
-test('no second tap: the swing goes off at the end of overswing', () => {
+// The owner's call (14 October 2026): past the full line the marker slows to a
+// quarter speed, and at the end of overswing it holds, flashing, for the tap.
+test('overswing: a quarter of the speed, then it holds at the end until the second tap', async () => {
+ const {OVERSWING_SLOW, inOverswing} = await import('../src/swing-meter.js');
+ assert.equal(OVERSWING_SLOW, 4);
  const sw = startSwing(0, {difficulty: 'normal', club: clubs.iron7});
- advance(sw, sw.rise * (1 + OVERSWING) + 1);
+ assert.ok(!inOverswing(sw, sw.rise * .99));
+ assert.ok(Math.abs(markerAt(sw, sw.rise * 1.2) - (1 + .2 / OVERSWING_SLOW)) < 1e-9, 'slow past the full line');
+ assert.ok(inOverswing(sw, sw.rise * 1.2));
+ // Long after the zone would have run out at full speed, it is still holding.
+ const later = sw.rise * (1 + OVERSWING * OVERSWING_SLOW) + 5000;
+ advance(sw, later);
+ assert.equal(sw.power, null, 'no tap, no distance: it waits');
+ assert.equal(markerAt(sw, later), 1 + OVERSWING, 'held at the end of overswing');
+ tap(sw, later);
  assert.equal(sw.power, 1 + OVERSWING);
  assert.equal(sw.done, false, 'still waiting for the strike');
+ // And it comes back at the normal speed.
+ assert.ok(Math.abs(markerAt(sw, later + sw.rise * .5) - (1 + OVERSWING - .5)) < 1e-9);
 });
 
 test('no third tap: the marker runs out and it is the worst miss there is', () => {

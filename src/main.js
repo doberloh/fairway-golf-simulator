@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
@@ -768,10 +768,12 @@ function meterPress(t=performance.now()){
   swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt});
   swing.ctx=ctx;meterFlash=null;lastSwing=null;$('smResult').hidden=true;
   $('swingCatcher').hidden=false;$('world').classList.add('swinging');
+  gameAudio?.meterStart();
   drawShapeControls();drawMeterScale();drawMeter(t);
   return true;
  }
- meterTap(swing,t);
+ const which=meterTap(swing,t);
+ if(which==='power')gameAudio?.meterSound('power');
  if(swing.done)releaseSwing();else drawMeter(t);
  return true;
 }
@@ -788,6 +790,8 @@ function releaseSwing(){
  const sw=swing;swing=null;$('swingCatcher').hidden=true;$('world').classList.remove('swinging');
  lastSwing={...sw,player:round.player?.name,hole:round.hole};
  const out=swingLaunch(sw,sw.ctx);
+ gameAudio?.meterStop();
+ if(sw.accuracy)gameAudio?.meterSound(sw.duff?'duff':out.strike.perfect?'perfect':out.strike.miss<=1?'zone':'miss');
  meterFlash={text:strikeWords(out.strike,sw.ctx.club.code==='PT'),perfect:out.strike.perfect,until:performance.now()+1800};
  drawMeter(performance.now(),sw);
  takeShot(null,out);
@@ -796,7 +800,7 @@ function releaseSwing(){
 // changing under it: no stroke, nothing struck.
 function cancelSwing(say=false){
  if(!swing)return;
- swing=null;$('swingCatcher').hidden=true;$('world').classList.remove('swinging');
+ swing=null;$('swingCatcher').hidden=true;$('world').classList.remove('swinging');gameAudio?.meterStop();
  if(say)toast('Swing cancelled. No stroke counted.');
  drawShapeControls();drawMeter(performance.now());
 }
@@ -826,7 +830,10 @@ function drawMeter(t,last=null){
  $('smPower').hidden=!sw||sw.power==null;
  if(sw&&sw.power!=null){$('smPower').style.left=barX(sw.power)+'%';if(sw.accuracy)placeZone(zonesFor(sw.ctx,sw.power));}
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
- if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
+ const over=!!swing&&inOverswing(swing,t);
+ box.classList.toggle('over',over);
+ if(over)hint.textContent='Overswing! Tap to set it';
+ else if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
  else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
@@ -5520,7 +5527,7 @@ function tick(now){
  if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
  // THE SWING METER moves on the clock, not on frames (swing-meter.js); this only
  // draws where it is and lets the clock finish a swing nobody tapped.
- if(swing){meterAdvance(swing,now);if(swing.done)releaseSwing();else drawMeter(now);}
+ if(swing){meterAdvance(swing,now);if(swing.done)releaseSwing();else{drawMeter(now);gameAudio?.meterMove(markerAt(swing,now),swing.power==null?'power':'strike');if(!swing.overSounded&&inOverswing(swing,now)){swing.overSounded=true;gameAudio?.meterSound('overswing');}}}
  // Once per rendered frame, whether or not the aim block above ran: a tap is
  // owed to the next frame that can use it, not saved up behind an open panel.
  tapped.clear();

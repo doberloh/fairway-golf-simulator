@@ -93,3 +93,16 @@ test('every kind of water has its signed-off sound, and is told apart',()=>{
 test('sound settings fall back to the defaults without storage',()=>{
  assert.deepEqual(loadSound(),DEFAULT_SOUND);
 });
+
+// THE SWING METER'S SOUNDS (signed off 14 October 2026, round 1): the game plays
+// them, so each must be the one take the owner chose, with their sliders in.
+test('every Swing Meter sound is signed off, one take each', async () => {
+ const {METER_EVENTS, METER_VOICES, METER_FINAL} = await import('../src/sound.js');
+ assert.deepEqual(Object.keys(METER_VOICES), ['A'], 'the voice has one take');
+ assert.ok(METER_VOICES.A.final && METER_VOICES.A.kind === 'air', 'the voice is the signed-off air take');
+ for (const id of ['power', 'overswing', 'perfect', 'zone', 'miss', 'duff']) {
+  assert.ok(METER_EVENTS[id]?.final, `${id} was never signed off`);
+  assert.deepEqual(Object.keys(METER_EVENTS[id].takes), ['A'], `${id} has more than one take`);
+  assert.deepEqual(METER_EVENTS[id].takes.A.base, METER_FINAL[id][1], `${id} lost the owner's sliders`);
+ }
+});

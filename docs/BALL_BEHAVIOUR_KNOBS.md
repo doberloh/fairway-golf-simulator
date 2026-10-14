@@ -234,7 +234,7 @@ Swing Meter* says so.
 | Knob | What it changes |
 |---|---|
 | `DIFFICULTIES` | per golfer: how fast the marker runs (`rise`, seconds from start to full), the strike zone and perfect band half-widths, and whether the target allows for the wind (`wind`, Easy only) |
-| `OVERSWING`, `OVERSWING_CARRY` | how far past full the bar runs, and what that is worth (+5% carry, the only way past the bag) |
+| `OVERSWING`, `OVERSWING_CARRY`, `OVERSWING_SLOW` | how far past full the bar runs, what that is worth (+5% carry, the only way past the bag), and how slowly the marker crawls through it (a quarter speed) before holding at its end for the tap |
 | `strikeZone` | what narrows the zone: rough (×0.8), sand (×0.7), each step of added spin (×0.85), Flop (×0.8), overswing (down to half); under 40% of the bar it widens (×1.5) |
 | `strikeEffect` | what a miss does: at the zone's edge 1.25° off line and 5° of spin axis, growing to four times that. **Early is right, late is left**, for everyone |
 | `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |

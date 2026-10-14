@@ -7711,7 +7711,7 @@ none were taken from them; the three-tap structure is all that was borrowed.
 | Marker, start to full (`rise`) | Easy 1.5 s, Normal 1.15 s, Hard 0.9 s | x0.9 driver, x0.92 3 wood, x1.1 wedges, x1.15 putter |
 | Strike zone half-width | Easy 0.10, Normal 0.065, Hard 0.04 bar lengths | the bar from start to full is 1 |
 | Perfect band half-width | Easy 0.03, Normal 0.015, Hard 0.008 | |
-| Overswing | 0.12 bar lengths, worth +5% carry | the owner's 5% (Q1) |
+| Overswing | 0.12 bar lengths, worth +5% carry; the marker crawls through it at a quarter speed and holds at its end for the tap | the owner's 5% (Q1); the slow, flashing, holding overswing is the owner's call of 14 October 2026 -- it used to go off by itself at the end |
 | Zone narrowing | rough x0.8, sand x0.7, each spin step x0.85, Flop x0.8, overswing down to x0.5 | under 40% of the bar x1.5 |
 | A miss at the zone's edge | 1.25 deg start line, 5 deg spin axis | growing linearly to 4x outside the zone; a swing that runs out is -7 deg, -25 deg axis at 75% speed |
 | Draw / Fade | -8 / +8 deg spin axis | start line turned the other way by the bend, found by flying it once |
@@ -7778,6 +7778,20 @@ reversed: they are the air, not something a golfer reads, and the spec named
 only the wind as the skill to leave to the golfer. It approximates a partial
 swing by the full swing's ratio, as `playsLike` does (RESEARCH *Plays like, by
 geometry*); the test above bounds what that costs on level ground.
+
+### The Swing Meter's sounds
+
+Synthesised like every other sound (no recordings), PLACED by ear, and chosen
+by the owner in one round on 14 October 2026 from three takes each
+(`METER_FINAL` in sound.js): the voice an air whoosh whose band-pass centre
+follows the marker (220 Hz x 2^(1.4 x position), times the owner's 0.63 pitch,
+doubled for the noise band), a soft click for the distance, a sawtooth buzz
+for overswing, a four-note marimba run for a perfect strike, a wood block for
+the yellow zone, a low thunk for a miss and a falling whistle for a swing that
+ran out. Offline renders (`tools/sound-lab/check.mjs`) put the one-shots at -15
+to -19 dB peak and the voice at -32 dB peak, under the strikes and landings.
+The first takes of the perfect strike came out 5 dB over full scale before
+the limiter and were brought down about 20 dB before the owner heard them.
 
 `tests/swing-meter.test.mjs` re-sweeps the corner where a come-back was ever
 found (8 iron to lob wedge, every height, full swing and overswing, Soft, level
