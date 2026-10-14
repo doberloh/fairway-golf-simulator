@@ -570,7 +570,12 @@ async function flightScreenOnce(t, phone) {
   const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
-   panel: gone('#shapeControl') && gone('#bottomHints') && gone('#swingMeter'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
+   panel: gone('#shapeControl') && gone('#bottomHints'),
+   // On the Swing Meter the meter stays up through the flight with carry,
+   // total and apex, and the floating tiles are gone (14 October 2026).
+   meterMode: document.getElementById('world').classList.contains('meter-mode'),
+   meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
+   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
    numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
@@ -592,6 +597,8 @@ async function flightScreenOnce(t, phone) {
  if (state.wind) bad.push('the wind went');
  if (!/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
+ if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
+ if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
  const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
@@ -1525,11 +1532,15 @@ const JOURNEYS = [
     // phone, open on anything bigger. Both are checked: an open grid is the
     // most of the course the panel covers, and on a phone the one state that
     // can crowd the map.
+    // On the Swing Meter there are no tiles and no fold (14 October 2026), so
+    // the open state is only checked where the fold is on screen.
     await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('shot-open')) document.getElementById('shotToggle').click(); });
     await check(`${w}x${h} shot panel folded`);
-    await t.page.click('#shotToggle');
-    await check(`${w}x${h} shot panel open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
-    await t.page.click('#shotToggle');
+    if (await t.page.isVisible('#shotToggle')) {
+     await t.page.click('#shotToggle');
+     await check(`${w}x${h} shot panel open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
+     await t.page.click('#shotToggle');
+    }
    }
    await t.step('every control reachable, no scrolling, the course visible, at every size', async () => {
     if (problems.length) throw new Error(`layout problems at ${problems.join(', ')}`);
@@ -1617,18 +1628,13 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
-   // Since 13 October 2026 the tiles START SHOWN on a phone as everywhere else,
-   // and the chevron on the shot line folds them (PLAYING.md, *The play
-   // screen*). This step still expected them folded and was first run against
-   // the new layout on 14 October, when it failed on a game doing what the docs
-   // say; the harness was wrong, not the game.
-   await t.step('the shot numbers show on a phone, and one tap folds them and one brings them back', async () => {
-    const visible = () => t.page.evaluate(() => !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight);
-    if (!(await visible())) throw new Error('the shot numbers are folded before anything was tapped');
-    await tap('#shotToggle');
-    await t.until(async () => !(await visible()), 'the shot numbers to fold away', 5 * SLOW);
-    await tap('#shotToggle');
-    await t.until(visible, 'the shot numbers to come back', 5 * SLOW);
+   // On the Swing Meter the floating number tiles and their fold are gone: the
+   // meter carries carry, total and apex itself (14 October 2026), checked in
+   // flight by flightClearsTheScreen. Before that, from 13 October, the tiles
+   // started shown on a phone; before that, folded.
+   await t.step('on the Swing Meter the number tiles and their fold are gone', async () => {
+    const shown = await t.page.evaluate(() => ({tiles: !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight, fold: !!document.getElementById('shotToggle')?.offsetParent}));
+    if (shown.tiles || shown.fold) throw new Error(`still showing: ${JSON.stringify(shown)}`);
    });
    await t.step('aim by tapping the course', async () => {
     const before = await t.page.textContent('#aimOutput');

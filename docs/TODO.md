@@ -919,7 +919,10 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   the length its read line was solved for. Changing club moves a circle nobody
   placed to the new club's carry; a placed one stays and the marker moves.
   Worked out at most ten times a second while aiming. RESEARCH.md *The Swing
-  Meter*, *The target marker*.
+  Meter*, *The target marker*. **Added at the owner's request the same day:**
+  on the Swing Meter the floating number tiles are gone and the meter shows
+  carry, total and apex, counting up through the flight and kept until the
+  next swing; armed, the tiles are as before.
 - [x] Closed by Phase 1, from *Found by driving the built game*:
   **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
     The keyboard keeps a club's full-swing launch at any power, so there is no

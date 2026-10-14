@@ -1305,7 +1305,20 @@ html,body{overscroll-behavior:none}
 /* The bar. Default place: centred above the row of number tiles. */
 .swing-meter{position:absolute;z-index:8;padding:9px 16px 12px;border-radius:var(--panel-radius);background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15);user-select:none;-webkit-user-select:none;touch-action:none}
 .swing-meter:not(.hud-custom){left:50%;transform:translateX(-50%);bottom:104px;width:min(560px,44%)}
-.swing-meter[hidden],#world.in-flight .swing-meter{display:none}
+.swing-meter[hidden]{display:none}
+/* On the Swing Meter the floating number tiles, their fold and the line's
+   carry/total summary go: the meter carries carry, total and apex itself. */
+#world.meter-mode .shot-tiles,#world.meter-mode #shotToggle,#world.meter-mode .sp-summary{display:none}
+/* In flight the bar stays, still, under its three numbers; nothing on it takes a tap. */
+#world.in-flight .swing-meter{pointer-events:none}
+#world.in-flight .swing-meter .hud-grip,#world.in-flight .swing-meter .hud-size{visibility:hidden}
+.sm-result{display:flex;justify-content:space-around;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--glass-line)}
+.sm-result[hidden]{display:none}
+.sm-result>span{display:flex;flex-direction:column;align-items:center;min-width:0}
+.sm-result strong{font-family:var(--font-display,inherit);font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sm-result strong small{font-size:11px;font-weight:500;color:var(--ink-dim);margin-left:2px}
+.sm-result>span>span{font-size:9px;letter-spacing:.8px;color:var(--ink-faint)}
+.sm-result .tile-note{display:block;font-size:9.5px;font-weight:600;font-style:normal;color:#ff8f80;text-align:center}
 .sm-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:20px;font-size:11px}
 .sm-title{font-size:9.5px;letter-spacing:.8px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-hint{color:var(--ink-dim);white-space:nowrap}

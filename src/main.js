@@ -678,6 +678,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   const state=monitorState();
   $('shotControls').dataset.monitor=state;
   $('world').classList.toggle('monitor-armed',armed);
+  $('world').classList.toggle('meter-mode',meterMode());
   drawMonitorState(state);
   if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
   if($('bottomHints'))$('bottomHints').hidden=armed;
@@ -802,7 +803,7 @@ function meterPress(t=performance.now()){
   closePanel();setAimView(false);
   const ctx=swingContext(),putt=ctx.club.code==='PT';
   swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt||puttAccuracy(ctx.difficulty)});
-  swing.ctx=ctx;meterFlash=null;
+  swing.ctx=ctx;meterFlash=null;$('smResult').hidden=true;
   $('swingCatcher').hidden=false;$('world').classList.add('swinging');
   drawShapeControls();drawMeterScale();drawMeter(t);
   return true;
@@ -853,7 +854,7 @@ function drawMeter(t,last=null){
  if(sw&&sw.power!=null){$('smPower').style.left=barX(sw.power)+'%';if(sw.accuracy)placeZone(zonesFor(sw.ctx,sw.power));}
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
  if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
- else if(flashing)hint.textContent=meterFlash.text;
+ else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
  box.classList.toggle('perfect',!!(flashing&&meterFlash.perfect));
@@ -864,7 +865,7 @@ function drawMeter(t,last=null){
 // Redrawn only when one of those changes.
 function drawMeterScale(){
  const box=$('swingMeter');if(!box||!course||!clubs[$('club').value])return;
- const show=appMode==='play'&&!armed&&!flight&&!round.finished&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!dropState;
+ const show=appMode==='play'&&!armed&&(!flight||meterFlight())&&!round.finished&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!dropState;
  if(box.hidden===show)box.hidden=!show;
  if(!show)return;
  const ctx=swing?.ctx||swingContext(),c=ctx.club,putt=c.code==='PT';
@@ -886,7 +887,24 @@ function drawMeterScale(){
   $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}`;
  }
  drawTarget();
+ drawMeterResult();
  drawMeter(performance.now());
+}
+// THE SWING METER CARRIES ITS OWN THREE NUMBERS (the owner's call, 14 October
+// 2026): on the Swing Meter the floating number tiles are gone, and once the
+// strike is made the meter stays up through the flight with carry, total and
+// apex counting up as the ball goes, then keeps them until the next swing
+// starts. Only for the golfer who hit it: the next golfer up, or a new hole,
+// starts on a clean meter. With a launch monitor armed -- or for a typed or lab shot -- the tiles
+// do the job as before (`meterMode`).
+const meterFlight=()=>!!flight&&!flight.replay&&!!flight.record&&!flight.record.typed;
+const meterMode=()=>!armed&&!cardRecord()?.typed;
+function drawMeterResult(record=cardRecord()){
+ const box=$('smResult');if(!box)return;
+ const mine=!!record&&!record.typed&&!swing&&(flight?meterFlight():record.player===round.player?.name&&record.hole===round.hole);
+ box.hidden=!mine;if(!mine)return;
+ const cells=shotGrid(record,{fields:['carry','total','apex'],columns:0}).cells;
+ for(const c of cells){const el=box.querySelector(`[data-field=${c.id}]`);if(!el)continue;const html=tileInner(c);if(el.dataset.shown!==html){el.dataset.shown=html;el.innerHTML=html;}}
 }
 // THE TARGET MARKER (Phase 2): the stop on the bar that lands the ball in the
 // aim circle (swing-meter.js `targetShare`; for a putt, the length the read line
@@ -1814,6 +1832,7 @@ function drawLiveTiles(){
   el.dataset.shown=html;el.innerHTML=html;el.classList.toggle('blank',c.blank);
  }
  drawShotSummary(record);
+ drawMeterResult(record);
 }
 // The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes in the
 // panel's header, which is on screen while the ball is up.
