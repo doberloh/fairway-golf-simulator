@@ -29,10 +29,10 @@ const sections = [
  ['.weather', 'Weather', 'last'],
  ['.minimap', 'Course map'],
  ['.bottom-area', 'Shot controls'],
- // The shot's numbers, live while it flies and kept until the next one
- // (main.js, *THE SHOT PANEL*). Added 10 October 2026 with no change to KEY:
- // nobody has a saved position for it, so everyone starts from its default.
- ['.shot-panel', 'Shot data', 'first', 'per-mode'],
+ // The shot panel ('.shot-panel', "Shot data") was a panel here from 10 to 13
+ // October 2026, the only one placed per way of playing ('per-mode', which
+ // nothing uses now). It became a line inside the window you play from
+ // (main.js, *THE SHOT PANEL*); a position saved for it is simply never read.
  // The launch monitor's window, shown in place of the shot controls while a
  // monitor is armed (main.js, *THE LAUNCH MONITOR WINDOW*).
  ['.monitor-panel', 'Launch monitor'],

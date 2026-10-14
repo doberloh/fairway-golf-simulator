@@ -691,25 +691,25 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 @container app (max-height:699px){#world .bottom-hints{display:none}}
 #world .club-control label em{font-style:normal;font-weight:500;letter-spacing:.2px;text-transform:none;color:var(--ink-faint);margin-left:auto}
 
-/* THE SHOT PANEL (main.js, *THE SHOT PANEL*): the shot's numbers, live while
-   the ball flies and kept until the next one, in the tiles ticked in Shot data.
-   Its default place is the foot of the course, centred in the gap between the
-   shot controls and the map, which it is worked out from so it never sits
-   under either. Its default WIDTH is its tiles in one row (`--tiles`, set by
-   main.js), capped to that gap; past the cap the tiles wrap to a second row.
-   Moved or resized, it is the player's (layout.js) and keeps no transform. */
-#world .shot-panel{position:absolute;z-index:5;display:flex;flex-direction:column;box-sizing:border-box;min-height:0;
- padding:6px 16px 12px;border-radius:var(--panel-radius);background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);
- box-shadow:var(--panel-shadow);backdrop-filter:blur(16px) saturate(1.15)}
-#world .shot-panel:not(.hud-custom){bottom:var(--edge-b);
- --slot-l:calc(var(--edge-l) + var(--panel-w) + var(--gap));
- --slot-w:calc(100% - var(--edge-l) - var(--panel-w) - var(--gap) - var(--edge-r) - var(--strip-w) - var(--map-w) - 3 * var(--gap));
- left:calc(var(--slot-l) + var(--slot-w) / 2);transform:translateX(-50%);
- width:max-content;max-width:var(--slot-w);max-height:min(46%,calc(100% - var(--edge-t) - var(--edge-b)))}
-#world .shot-panel.hud-custom{transform:none}
-.sp-head{display:flex;align-items:center;gap:10px;min-height:30px;min-width:0}
+/* THE SHOT LINE (main.js, *THE SHOT PANEL*): which shot the tiles describe,
+   Skip while a ball is up, the end-of-flight countdown, a penalty or hole-out
+   note, and the fold that shows and hides the tiles. A section of the window
+   the player plays from since 13 October 2026 -- the shot controls, or the
+   launch monitor's window while it is armed -- where it had been a window of
+   its own along the foot of the course. The caption takes a line of its own
+   under the header: the window is too narrow to hold it beside the label. */
+#world .shot-panel{display:flex;flex-direction:column;box-sizing:border-box;min-height:0;min-width:0;color:var(--ink)}
+#world .shot-controls>.shot-panel{padding-top:5px;padding-bottom:7px}
+#world .monitor-panel>.shot-panel{padding:4px 0 6px;border-top:1px solid rgba(236,243,230,.12);border-bottom:1px solid rgba(236,243,230,.12)}
+.sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:0 10px;min-height:30px;min-width:0}
 .sp-label{font-size:9px;font-weight:650;letter-spacing:1.4px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-caption{flex:0 1 auto;min-width:0;font-size:10.5px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-caption{order:9;flex:1 1 100%;min-width:0;font-size:10.5px;line-height:1.35;color:var(--ink-dim);
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.sp-caption:empty{display:none}
+/* The label gives way first, so Skip and the fold stay on the header's line
+   in a window a quarter of a laptop's width; Skip is one word there. */
+#world .shot-panel .sp-label{flex:1 1 0}
+#world .shot-panel .skip-long{display:none}
 #world:not(.shot-open) .sp-caption{display:none}
 .sp-summary{font:15px var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .sp-summary small{font:10px var(--font-ui);color:var(--ink-dim)}
@@ -827,7 +827,8 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
 /* =========================================================================
    PHONES: narrower than 560 px, or shorter than 500 px -- a phone either way
    up. The top bar keeps the hole and the player who is up; the panel is the
-   club, the power and the shot button, with the last shot folded above them;
+   club, the power and the shot button under the last shot's line; three shot
+   tiles run across the top of the screen;
    the cameras fold behind one button; the aim pad sits under the map.
    ========================================================================= */
 @container app (max-width:560px) or (max-height:500px){
@@ -886,16 +887,16 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  /* A drop or a scramble pick takes the whole foot of a phone: between the
     panel and the map there is 16 px, which is where the laptop rule put it. */
  #world:not(.exploring) #dropBar:not(.hud-custom),#world:not(.exploring) #pickBar:not(.hud-custom){left:var(--edge-l);right:var(--edge-r)}
- /* THE SHOT PANEL ON A PHONE runs along the top, beside the wind, folded to
-    its carry and total until tapped open. The foot of a phone is the shot
-    controls on one side and the map on the other, with 16 px between them --
-    no room for a panel; the top has it, now the course card is not shown in
-    play. While the ball flies the controls go and it stays where it is. */
- #world .shot-panel:not(.hud-custom){top:var(--edge-t);bottom:auto;left:var(--edge-l);transform:none;
-  width:auto;max-width:none;right:calc(var(--edge-r) + var(--weather-w,120px) + var(--gap));max-height:calc(60% - var(--edge-t))}
- #world .shot-panel{padding:6px 12px 8px}
+ /* THE SHOT LINE ON A PHONE is in the shot controls like anywhere else; the
+    TILES take the top of the screen, three across beside the wind (main.js,
+    placeTiles, which reads `--phone` to know this block is in force). */
+ #world{--phone:1}
  #world .shot-panel .sp-label{display:none}
- #world .shot-panel .shot-grid.fit{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
+ /* With the label gone the caption has the header's line to itself, beside
+    Skip and the fold, rather than a line of its own under an empty one. */
+ #world .shot-panel .sp-caption{order:0;flex:1 1 0;-webkit-line-clamp:1}
+ #world .shot-controls>.shot-panel{padding-top:3px;padding-bottom:5px}
+ #world .monitor-panel>.shot-panel{padding:2px 0 4px}
 }
 /* Upright, the bar is two short lines of hole; the panel is narrow. */
 @container app (max-width:560px) and (min-height:501px){
@@ -916,9 +917,6 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  #world .minimap:not(.hud-custom) #map{height:auto;flex:1 1 auto;min-height:40px}
  #world .minimap .map-footer{display:none}
  .cam-button{top:var(--edge-t);right:calc(var(--edge-r) + var(--weather-w,96px) + var(--gap))}
- /* Held sideways the camera button sits beside the wind, so the shot panel
-    along the top stops short of both. */
- #world .shot-panel:not(.hud-custom){right:calc(var(--edge-r) + var(--weather-w,96px) + 44px + 2 * var(--gap))}
  #world .view-tools:not(.hud-custom){top:calc(var(--edge-t) + 50px);right:calc(var(--edge-r) + var(--weather-w,96px) + var(--gap))}
  #world .shot-controls>*{padding:8px 12px}
  #world .shot-controls>.swing-button{margin:8px;padding:12px 10px}
@@ -1100,13 +1098,27 @@ html,body{overscroll-behavior:none}
    follows the ball -- and the shot panel, counting the shot up live with Skip
    in its header. Since 10 October 2026 the shot controls go entirely at every
    size: on a big screen they used to fold to their last-shot numbers instead,
-   and those numbers live in the shot panel now. The class is `in-flight` on
-   #world, set from the flight itself every frame.
+   and those numbers live in the shot panel now. Since 13 October the shot
+   panel is a line inside the play window, so the window stays through a
+   flight holding that line alone. The class is `in-flight` on #world, set
+   from the flight itself every frame.
    ========================================================================= */
-#world .bottom-area,#world .monitor-panel,#world .view-tools,#world .cam-button,#world .aim-pad,#world .course-info{
+#world .view-tools,#world .cam-button,#world .aim-pad,#world .course-info{
  transition:opacity .2s ease,visibility 0s linear 0s}
-#world.in-flight .bottom-area,#world.in-flight .monitor-panel,#world.in-flight .view-tools,#world.in-flight .cam-button,#world.in-flight .aim-pad,#world.in-flight .bottom-hints{
+#world.in-flight .view-tools,#world.in-flight .cam-button,#world.in-flight .aim-pad{
  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility 0s linear .2s}
+/* The play window stays, shrunk to the shot line (13 October 2026): the line
+   is Skip and the live dot, and it moved into the window from a bar of its own
+   (main.js, *THE SHOT PANEL*). Everything else in the window goes at once --
+   a fade would leave the window at full height until it finished. */
+#world.in-flight .shot-controls>:not(.shot-panel),#world.in-flight .monitor-panel>:not(.shot-panel),#world.in-flight .bottom-hints{display:none!important}
+/* Its handles go with the rest: moving a panel saves its size as it is, and a
+   window dragged while shrunk would keep the shrunken height (TODO.md, *A
+   panel moved while it is folded away*). */
+#world.in-flight .bottom-area .hud-grip,#world.in-flight .bottom-area .hud-size,#world.in-flight .bottom-area .hud-move,
+#world.in-flight .monitor-panel .hud-grip,#world.in-flight .monitor-panel .hud-size,#world.in-flight .monitor-panel .hud-move{visibility:hidden;pointer-events:none}
+#world.in-flight .shot-controls>.shot-panel{border-bottom:0}
+#world.in-flight .monitor-panel>.shot-panel{border:0;padding:0}
 @container app (max-width:560px) or (max-height:500px){
  #world .sp-skip{min-height:44px}
  #world .sp-skip kbd,#world .sp-skip .skip-long{display:none}
@@ -1253,6 +1265,11 @@ html,body{overscroll-behavior:none}
 .shot-tile strong small{font-weight:500;font-size:.55em;color:var(--ink-dim)}
 .shot-tile span{display:block;margin-top:2px;font-size:8px;letter-spacing:.8px;white-space:nowrap;color:var(--ink-faint)}
 .shot-tile.blank strong{color:var(--ink-faint);opacity:.55}
-/* The bar has no grid any more: its header, and a penalty or hole-out note. */
-#world .shot-panel{padding-bottom:6px}
+/* A PHONE'S TILES share the top of the screen three ways (main.js sets their
+   width and the class), so they are trimmed to fit rather than sized by what
+   they hold. */
+.shot-tile.phone{min-width:0;padding:4px 7px 5px;overflow:hidden}
+.shot-tile.phone strong{font-size:16px;overflow:hidden;text-overflow:ellipsis}
+.shot-tile.phone span{font-size:7.5px;overflow:hidden;text-overflow:ellipsis}
+/* The line has no grid any more: its header, and a penalty or hole-out note. */
 #world .shot-panel .shot-result:empty{display:none}

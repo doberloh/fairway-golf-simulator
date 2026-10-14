@@ -173,20 +173,32 @@ export const MONITOR_FIELDS =
   'clubSpeed', 'smash', 'path', 'faceToTarget',
   'carry', 'total', 'offline'];
 
+// THE PHONE'S SET (13 October 2026, the owner's call): three tiles across the
+// top of a phone, carry, total and backspin unless the player picks others.
+// Three is all a phone's width holds at a readable size, so the phone has its
+// own set rather than the first three of a set chosen for a big screen -- whose
+// first three are ball speed, launch and direction, the wrong three for a
+// glance between shots. One set on a phone whether a monitor is armed or not.
+export const PHONE_FIELDS = ['carry', 'total', 'backSpin'];
+export const PHONE_MAX_FIELDS = 3;
+
 // TWO SETS, ONE PER WAY OF PLAYING (10 October 2026). Playing by hand -- the
 // keyboard, touch, a controller -- and playing off an armed launch monitor are
 // tuned separately, at the owner's request: a monitor fills club numbers a hand
 // shot never has, and the player who switches between them wants each set as
-// they left it. `mode` is 'hand' or 'monitor'.
+// they left it. `mode` is 'hand' or 'monitor' -- or 'phone', the third set
+// above, which a phone uses for both.
 //
 // v2 for 'hand' when the grid became the shot panel. A v1 record's FIELDS and
 // their order are kept -- they are the player's choice -- but its column count
 // is not: it was picked for a card down the side of the screen, and three
 // across in a panel along the bottom is a tall narrow block over the course.
-const KEY = {hand: 'fairway-shot-data-v2', monitor: 'fairway-shot-data-monitor-v1'};
+const KEY = {hand: 'fairway-shot-data-v2', monitor: 'fairway-shot-data-monitor-v1', phone: 'fairway-shot-data-phone-v1'};
 const OLD_KEY = 'fairway-shot-data-v1';
-const DEFAULTS = {hand: DEFAULT_FIELDS, monitor: MONITOR_FIELDS};
-const modeOf = m => m === 'monitor' ? 'monitor' : 'hand';
+const DEFAULTS = {hand: DEFAULT_FIELDS, monitor: MONITOR_FIELDS, phone: PHONE_FIELDS};
+const modeOf = m => m === 'monitor' || m === 'phone' ? m : 'hand';
+// How many tiles a set may hold.
+export const maxFields = mode => modeOf(mode) === 'phone' ? PHONE_MAX_FIELDS : MAX_FIELDS;
 
 // Unknown ids are DROPPED rather than rejected, so retiring a field later
 // leaves an old saved record still usable instead of resetting someone's whole
@@ -195,7 +207,7 @@ const clean = (s, mode = 'hand') => {
  const seen = new Set(), standard = DEFAULTS[modeOf(mode)];
  const fields = (Array.isArray(s?.fields) ? s.fields : standard)
   .filter(id => BY_ID.has(id) && !seen.has(id) && seen.add(id))
-  .slice(0, MAX_FIELDS);
+  .slice(0, maxFields(mode));
  return {
   fields: fields.length ? fields : [...standard],
   columns: COLUMN_CHOICES.includes(s?.columns) ? s.columns : DEFAULT_COLUMNS,
@@ -216,6 +228,7 @@ function loadHand() {
 // arming a device -- and from the monitor's standard set otherwise.
 export function loadShotData(mode = 'hand') {
  if (modeOf(mode) === 'hand') return loadHand();
+ if (modeOf(mode) === 'phone') return clean(read(KEY.phone), 'phone');
  const now = read(KEY.monitor);
  if (now) return clean(now, 'monitor');
  return hasCustomShotData('hand') ? {...loadHand()} : clean(null, 'monitor');
@@ -224,7 +237,7 @@ export function loadShotData(mode = 'hand') {
 // Whether the player has ever saved a choice for that way of playing.
 export function hasCustomShotData(mode = 'hand') {
  try {
-  if (modeOf(mode) === 'monitor') return localStorage.getItem(KEY.monitor) != null;
+  if (modeOf(mode) !== 'hand') return localStorage.getItem(KEY[modeOf(mode)]) != null;
   return localStorage.getItem(KEY.hand) != null || localStorage.getItem(OLD_KEY) != null;
  } catch { return false; }
 }

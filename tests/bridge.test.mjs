@@ -252,3 +252,31 @@ test('listening on every address, the bridge prints a link for this computer and
  assert.deepEqual(addressLines('127.0.0.1', 1922, lan), []);
 });
 
+
+// Picking a 4 iron with the bridge connected closed the browser's connection:
+// the bridge knew only the eight stock clubs' codes and treated any other as a
+// bad message. Every club a bag can hold must pass through to the device, and
+// even a code it does not know must not cost the connection.
+test('every club in a bag reaches the device, and an unknown one keeps the connection', async () => {
+ const {CLUB_KINDS} = await import('../src/clubs.js');
+ const b = await createBridge({tcpPort: 0, httpPort: 0, onLog: () => {}});
+ let ws, tcp;
+ try {
+  ws = new WebSocket(`ws://127.0.0.1:${b.httpPort}`, {origin: 'http://localhost:5173'}); await once(ws, 'open');
+  let closed = false; ws.on('close', () => { closed = true; });
+  tcp = net.connect(b.tcpPort, '127.0.0.1'); await once(tcp, 'connect');
+  let received = ''; tcp.setEncoding('utf8'); tcp.on('data', d => received += d);
+  const wait = async fn => { for (let i = 0; i < 100; i++) { if (fn()) return; await new Promise(r => setTimeout(r, 10)); } assert.fail('Timed out waiting for bridge'); };
+  for (const {code} of Object.values(CLUB_KINDS)) {
+   received = '';
+   ws.send(JSON.stringify({type: 'player', Player: {Handed: 'RH', Club: code}, ready: false}));
+   await wait(() => received.includes(`"Club":"${code}"`));
+  }
+  received = '';
+  ws.send(JSON.stringify({type: 'player', Player: {Handed: 'RH', Club: 'ZZ'}, ready: true}));
+  await wait(() => received.includes('"Code":202'));
+  assert.ok(!received.includes('ZZ'), 'an unknown code is not passed on');
+  assert.ok(received.includes('"Club":"PT"'), 'the last good club is kept');
+  assert.equal(closed, false, 'the browser keeps its connection');
+ } finally { tcp?.destroy(); ws?.terminate(); await b.close(); }
+});

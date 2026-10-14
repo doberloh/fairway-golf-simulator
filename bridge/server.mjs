@@ -6,6 +6,12 @@ import os from 'node:os';
 import path from 'node:path';
 import {WebSocketServer,WebSocket} from 'ws';
 import {parseLaunchMessage,readDeviceStatus,MPH} from '../src/physics.js';
+import {CLUB_KINDS} from '../src/clubs.js';
+// EVERY CODE THE GAME CAN SEND, read from the clubs it can put in a bag. This was
+// a typed list of the eight stock clubs until 13 October 2026; once bags held
+// any of nineteen kinds, picking a 4 iron or a gap wedge sent a code the list
+// lacked, and the bridge hung up on the browser -- monitor or no monitor.
+export const CLUB_CODES=new Set(Object.values(CLUB_KINDS).map(k=>k.code));
 
 // TCP does not preserve JSON boundaries: accept fragments and concatenated objects.
 export class JsonFramer{
@@ -223,8 +229,12 @@ export async function createBridge({tcpPort=1921,httpPort=1922,host='127.0.0.1',
  wss.on('connection',client=>{
   browser=client;ready=false;log('browser connected');notify();
   client.on('message',buffer=>{try{const d=JSON.parse(buffer.toString());if(d.type==='player'){
-   if(!['RH','LH'].includes(d.Player?.Handed)||!['DR','3W','5I','7I','9I','PW','SW','PT'].includes(d.Player?.Club))throw Error('Invalid player data.');
-   player=d.Player;ready=d.ready===true;
+   // A player block the bridge cannot pass on keeps the last good one rather
+   // than closing the browser's connection: a club is not worth losing the
+   // monitor over, and the armed flag beside it is still good.
+   if(['RH','LH'].includes(d.Player?.Handed)&&CLUB_CODES.has(d.Player?.Club))player={Handed:d.Player.Handed,Club:d.Player.Club};
+   else log('!! unknown player block, kept the last one:',brief(d.Player));
+   ready=d.ready===true;
    log(`browser: ${player.Handed} ${player.Club}, armed ${ready}`);
    for(const socket of sockets){sendPlayer(socket);if(ready)respond(socket,202,'Ready');}notify();
   }else if(d.type==='ack'){

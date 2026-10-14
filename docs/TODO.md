@@ -18,6 +18,15 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
+## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
+
+- [ ] **Run the smoke journeys on `shot-data-layout` before it is released.**
+  A software-renderer run (`node tools/smoke.mjs --software`) crashed the
+  owner's computer part-way through on 13 October (only `boot` had passed), so
+  `hud-reachable`, `phone-portrait`, `phone-landscape`, `monitor` and the rest
+  are unrun on this layout. Only with the owner's go-ahead, and a few journeys
+  at a time (`--only`). The finished work is under the same heading in `# Done`.
+
 
 ## The UI pass (10 October 2026)
 
@@ -51,6 +60,10 @@ Asked for by the owner on 10 October, in this order, on the branch
   their numbers in flight -- the numbers moved to the shot panel -- so they are
   hidden and take no pointer while a ball is up, and there is nothing folded to
   grab. The shot panel itself never changes size for a flight.
+  **Possible again from 13 October 2026, and closed off:** the shot controls
+  (and the launch monitor window) now shrink to the shot line in flight
+  instead of going, so their drag and resize handles are hidden and take no
+  pointer while a ball is up (style.css, beside the in-flight rule).
 
 
 
@@ -851,6 +864,32 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
 
+## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `shot-data-layout`, before
+the next release. PROJECT_HANDOFF *THE SHOT TILES REPLACED THE GRID*, *back
+inside the play window* and *passes on every club a bag can hold*.
+
+- [x] **The shot data bar moves into the shot controls / launch monitor window.**
+  `#shotPanel` is a section near the top of the window you play from;
+  `drawMonitorState` moves it into the monitor window when armed. In flight the
+  window shrinks to that line (Skip, live dot, countdown) rather than going.
+- [x] **Tiles along the bottom on a big screen.** A row of equal-width tiles
+  centred between the play window and the map, extra rows above. A column down
+  the left was built first the same day and dropped at the owner's word.
+- [x] **Three tiles across the top of a phone, carry / total / backspin by
+  default.** A third Shot data set (`phone`, at most three), chosen in the
+  Shot data window; the fold now starts open on a phone too.
+- [x] **Switching clubs with the bridge connected dropped the connection.** The
+  bridge accepted only the eight stock clubs' codes and closed the browser's
+  socket on any other (4 iron, hybrids, gap wedge...), with or without a
+  device. It now takes its codes from `CLUB_KINDS` and ignores, rather than
+  disconnects on, a code it does not know. Unit test, plus a hand check against
+  the real bridge and a pretend device: every club reached the device and a
+  shot played.
+- [x] **The folded carry-and-total line showed a mid-flight number** after
+  some shots ("16 carry" beside a 219 yd carry tile). Found on the way;
+  `gridHTML` now redraws it with the tiles.
 ## Spin-back rework (13 October 2026)
 
 Asked for by the owner on 13 October, on the branch `backspin-rework`.

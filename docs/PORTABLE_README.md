@@ -62,7 +62,7 @@ with the connector software that already drives GSPro. The quickest route is
 5. **Get playing:** in Fairway, choose **Launch monitor** on the main menu,
    **Connect bridge**, and tick **Arm monitor for live shots**. Hit a ball.
 
-The game's shot panel says **Ready** in green when a ball is on the mat,
+The game's launch monitor window says **Ready** in green when a ball is on the mat,
 **Finding ball** while the monitor looks for one, and **No monitor** when the
 server is running but no device is talking to it.
 
