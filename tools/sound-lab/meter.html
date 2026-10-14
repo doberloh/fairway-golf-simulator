@@ -119,11 +119,12 @@ for(const [id,E] of Object.entries(METER_EVENTS))card(id,E.label,E.note,E.takes,
 const RISE=1150,ZONE=.065,PERFECT=.015,OVER=.12,MISS=-.3,SPAN=1+OVER-MISS,X=s=>(s-MISS)/SPAN*100;
 const band=(id,a,b)=>{const e=$('#'+id);e.style.left=X(a)+'%';e.style.width=(X(b)-X(a))+'%';};
 band('zone',-ZONE,ZONE);band('perfect',-PERFECT,PERFECT);band('over',1,1+OVER);
-$('#line').style.left=X(0)+'%';$('#full').style.left=X(1)+'%';$('#marker').style.left=X(0)+'%';
+$('#line').style.left=X(0)+'%';$('#full').style.left=X(1)+'%';$('#marker').style.left=X(MISS)+'%';
 let sw=null,voice=null,raf=0;
 const say=t=>$('#said').textContent=t;
 // Overswing crawls at a quarter speed and holds at its end for the tap, as in the game.
-const rise=t=>{const e=(t-sw.start)/RISE;return e<=1?e:Math.min(1+OVER,1+(e-1)/4);};
+// It starts from the far left of the bar, as in the game.
+const rise=t=>{const e=(t-sw.start)/RISE+MISS;return e<=1?Math.max(MISS,e):Math.min(1+OVER,1+(e-1)/4);};
 function pos(t){return sw.power==null?rise(t):Math.max(MISS,sw.power-(t-sw.powerAt)/RISE);}
 function frame(now){
  if(!sw)return;
@@ -146,7 +147,7 @@ function finish(e,duff){
 function press(t){
  ensure();
  if(!sw){sw={start:t,power:null,over:false};$('#power').hidden=true;voice=meterVoice(lab,{take:takeOf('voice'),knobs:knobsOf('voice')});voice.start();say('Set the distance.');raf=requestAnimationFrame(frame);return;}
- if(sw.power==null){setPower(t);return;}
+ if(sw.power==null){if(rise(t)<=0)return;setPower(t);return;}
  finish(pos(t),false);
 }
 addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||e.target.tagName==='TEXTAREA')return;e.preventDefault();press(e.timeStamp);});

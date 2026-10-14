@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
@@ -756,16 +756,19 @@ const isShortGame=()=>shortGame(clubs[$('club').value],distance()/YARD);
 // The range is played off the mat, which no lie table touches.
 const currentLie=()=>rangeMode?'tee':course.surface(round.position.x,round.position.z);
 let meterFlash=null,meterScaleKey='';
-function swingContext(){const c=clubs[$('club').value];return {club:c,shape:{...shotShape},short:isShortGame(),lie:currentLie(),difficulty:golferDifficulty(),turf:settings.turf,
- // A putt's bar zooms to the putt the circle asks for (swing-meter.js).
- ...(c?.code==='PT'?{puttRange:puttRange(c,settings.turf,aimRange??distance())}:{})};}
+function swingContext(){const c=clubs[$('club').value],short=isShortGame(),putt=c?.code==='PT';
+ // The bar zooms to the shot the circle asks for (swing-meter.js): a putt to a
+ // share of the putter's roll, a short full shot to a half or quarter swing.
+ const zoom=!c||putt?1:swingZoom(fullCarry(c,shapedLaunch(c,shotShape,{short})),aimRange??c.carry*YARD);
+ return {club:c,shape:{...shotShape},short,lie:currentLie(),difficulty:golferDifficulty(),turf:settings.turf,zoom,
+  ...(putt?{puttRange:puttRange(c,settings.turf,aimRange??distance())}:{})};}
 function canSwing(){return appMode==='play'&&!tour&&!flight&&!dropState&&view.config.mode!=='free'&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!round.finished&&$('versionNotice').hidden&&!armed;}
 function meterPress(t=performance.now()){
  if(!swing){
   if(!canSwing())return false;
   closePanel();setAimView(false);
   const ctx=swingContext(),putt=ctx.club.code==='PT';
-  swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt});
+  swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt,zoom:putt?ctx.puttRange/puttFullRoll(ctx.club,settings.turf):ctx.zoom});
   swing.ctx=ctx;meterFlash=null;lastSwing=null;$('smResult').hidden=true;
   $('swingCatcher').hidden=false;$('world').classList.add('swinging');
   gameAudio?.meterStart();
@@ -816,7 +819,8 @@ function strikeWords(fx,putt){
 const METER_SPAN=1+OVERSWING-MISS_AT,barX=s=>(s-MISS_AT)/METER_SPAN*100;
 function zonesFor(ctx,power){
  const l=shapedLaunch(ctx.club,ctx.shape,{short:ctx.short});
- return strikeZone({difficulty:ctx.difficulty,shape:l.zone,lie:ctx.lie,putt:ctx.club.code==='PT',power});
+ const putt=ctx.club.code==='PT';
+ return strikeZone({difficulty:ctx.difficulty,shape:l.zone,lie:ctx.lie,putt,power,share:putt?power:power*(ctx.zoom??1)});
 }
 function placeZone(z){
  for(const [id,half] of [['smZone',z.zone],['smPerfect',z.perfect]]){const el=$(id);el.style.left=barX(-half)+'%';el.style.width=(2*half/METER_SPAN*100)+'%';}
@@ -850,21 +854,24 @@ function drawMeterScale(){
  if(!show)return;
  const ctx=swing?.ctx||swingContext(),c=ctx.club,putt=c.code==='PT';
  const l=shapedLaunch(c,ctx.shape,{short:ctx.short});
- const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.firmness,ctx.puttRange??0,shownSwing()?'held':''].join();
+ const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.firmness,ctx.puttRange??0,ctx.zoom,shownSwing()?'held':''].join();
  if(key!==meterScaleKey){
   meterScaleKey=key;
-  const full=putt?ctx.puttRange:fullCarry(c,l);
+  const full=putt?ctx.puttRange:fullCarry(c,l)*ctx.zoom;
   const [unit,per]=putt&&full<20*YARD?['ft',1/.3048]:['yd',1/YARD];
   $('smTicks').innerHTML=[.25,.5,.75,1].map(s=>`<span style="left:${barX(s)}%"${s===1?' class="full"':''}><b>${Math.round(full*s*per)}</b>${s===1?`<small>${unit}</small>`:''}</span>`).join('')
    +`<span class="strike" style="left:${barX(0)}%"></span><span class="over" style="left:${barX(1)}%;width:${barX(1+OVERSWING)-barX(1)}%"></span>`;
   // The hatched end of the bar is what the lie takes off a full swing.
   const f=lieFactor(ctx.lie),hatch=$('smHatch');
-  if(f<1){const reach=putt?f*f:carryAtSpeed(c,l,c.speed*f)/full;hatch.hidden=false;hatch.style.left=barX(reach)+'%';hatch.style.width=(barX(1)-barX(reach))+'%';}
+  // In a zoomed bar the lie's cut may lie past the full line: nothing to hatch.
+  const reach=f<1?(putt?f*f*puttFullRoll(c,settings.turf)/full:carryAtSpeed(c,l,c.speed*f)/full):1;
+  if(reach<1){hatch.hidden=false;hatch.style.left=barX(reach)+'%';hatch.style.width=(barX(1)-barX(reach))+'%';}
   else hatch.hidden=true;
   const accuracy=!putt;
   $('smZone').hidden=$('smPerfect').hidden=!accuracy;
   if(accuracy)placeZone(shownSwing()?.accuracy?zonesFor(shownSwing().ctx,shownSwing().power):zonesFor(ctx,1));
-  $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}`;
+  const zoomed=putt?'':ctx.zoom===.25?' · quarter swing':ctx.zoom===.5?' · half swing':'';
+  $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}${zoomed}`;
  }
  drawTarget();
  drawMeterResult();
@@ -911,6 +918,8 @@ function drawTarget(force=false){
   const p=round.position,pt=aimTarget(p,aim,range);
   t=targetShare({...ctx,metres:range,rise:course.height(pt.x,pt.z)-course.height(p.x,p.z),bearing:aim*Math.PI/180,
    wind:localWind(settings,course.rotation),altitude:course.bio.altitude,temperature:course.bio.temperature});
+  // On the zoomed bar: the share of the full swing over the zoom.
+  if(t&&ctx.zoom<1){const s=t.share/ctx.zoom;t=t.out?t:s>1?{share:1,out:true}:{share:s,out:false};}
  }
  el.hidden=!t;if(!t)return;
  el.style.left=barX(t.share)+'%';el.classList.toggle('out',t.out);

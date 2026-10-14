@@ -290,9 +290,9 @@ class Trip {
  // on its own time -- three back to back would be a swing of nothing.
  async swing() {
   await this.key('Space');
-  await this.page.waitForTimeout(650);
+  await this.page.waitForTimeout(800);
   await this.key('Space');
-  await this.page.waitForTimeout(650);
+  await this.page.waitForTimeout(300);
   await this.key('Space');
  }
 
@@ -1654,11 +1654,13 @@ const JOURNEYS = [
     // The Swing button starts the meter; mid-swing the whole screen is the tap
     // target, so the next two taps land anywhere.
     // A putt is two taps, so the third is only made while a swing still waits.
+    // The marker starts from the far left (14 October 2026), so the distance tap
+    // waits for it to pass the strike line and the strike comes on its way back.
     await tap('#swing');
-    await t.page.waitForTimeout(650);
+    await t.page.waitForTimeout(800);
     await tap('#swingCatcher');
-    await t.page.waitForTimeout(650);
-    if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await tap('#swingCatcher');
+    await t.page.waitForTimeout(300);
+    if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await t.page.tap('#swingCatcher', {timeout: 2000}).catch(() => {});
     await t.until(() => t.inFlight(), 'the Swing button and two taps to start a shot', 5 * SLOW);
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});

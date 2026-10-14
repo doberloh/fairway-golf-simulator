@@ -139,13 +139,13 @@ export function shapedLaunch(club, shape, {short = false} = {}) {
 // HOW WIDE THE STRIKE ZONE IS for this swing, in bar lengths. Everything that
 // narrows or widens it, in one place, so the meter draws exactly what judges.
 const LIE_ZONE = {rough: .8, sand: .7};
-export function strikeZone({difficulty, shape = 1, lie, putt = false, power = 1}) {
+export function strikeZone({difficulty, shape = 1, lie, putt = false, power = 1, share = power}) {
  const d = difficultyOf(difficulty);
  let k = shape * (LIE_ZONE[lie] ?? 1);
  if (putt) k *= 2;
  else {
   if (power > 1) k *= 1 - .5 * clamp((power - 1) / OVERSWING, 0, 1);
-  else if (power < SHORT_SHOT) k *= 1.5;
+  else if (share < SHORT_SHOT) k *= 1.5;
  }
  return {zone: d.zone * k, perfect: Math.min(d.perfect * k, d.zone * k * .5)};
 }
@@ -153,15 +153,29 @@ export function strikeZone({difficulty, shape = 1, lie, putt = false, power = 1}
 // start, and stop at the length. Hard had a third, accuracy tap until then.
 export const puttAccuracy = () => false;
 
+// THE BAR ZOOMS FOR A SHORT SHOT, as it already did for a putt (the owner's
+// call, 14 October 2026). When the circle is well inside the club's carry the
+// full line becomes a half or a quarter swing -- the shortest that holds the
+// shot with a quarter to spare -- so a 30 yd chip with a 100 yd wedge is three
+// fifths of a quarter-swing bar instead of a sliver of a full one. The ticks
+// relabel; overswing is still 5% more, of the zoomed swing. Placed.
+export const SWING_RANGES = [.25, .5, 1];
+export function swingZoom(fullMetres, aimMetres) {
+ for (const k of SWING_RANGES) if (aimMetres * 1.25 <= fullMetres * k) return k;
+ return 1;
+}
 // The share of the club's carry a stop on the bar is worth.
 export const carryShare = power => power <= 1 ? Math.max(0, power) : 1 + OVERSWING_CARRY * clamp((power - 1) / OVERSWING, 0, 1);
 
 // A SWING IN PROGRESS. Times are milliseconds on the input's own clock
 // (`event.timeStamp`, which shares `performance.now()`'s origin).
-export function startSwing(t, {difficulty, club = null, putt = false, accuracy = !putt}) {
+export function startSwing(t, {difficulty, club = null, putt = false, accuracy = !putt, zoom = 1}) {
  const d = difficultyOf(difficulty);
- // Woods run the marker a little faster, wedges a little slower. Placed.
- const pace = putt ? 1.15 : ({driver: .9, wood: .92, wood5: .94, wood7: .95}[club?.kind] ?? (SHORT_GAME_KINDS.has(club?.kind) ? 1.1 : 1));
+ // Woods run the marker a little faster, wedges a little slower. A bar zoomed
+ // to a half swing runs 12% slower and to a quarter 25% slower (putts too), so
+ // a short shot is both a bigger target and a slower one. Placed.
+ const pace = (putt ? 1.15 : ({driver: .9, wood: .92, wood5: .94, wood7: .95}[club?.kind] ?? (SHORT_GAME_KINDS.has(club?.kind) ? 1.1 : 1)))
+  * (zoom <= .25 ? 1.25 : zoom < 1 ? 1.12 : 1);
  return {start: t, rise: d.rise * pace * 1000, power: null, powerAt: null, accuracy, done: false, error: null};
 }
 // OVERSWING IS SLOW, AND WAITS (the owner's call, 14 October 2026). Past the
@@ -171,9 +185,16 @@ export function startSwing(t, {difficulty, club = null, putt = false, accuracy =
 // the golfer's to choose; the strike zone still narrows the deeper it is.
 // Coming back from overswing runs at the normal speed. PLACED.
 export const OVERSWING_SLOW = 4;
+// THE SWEEP STARTS FROM THE FAR LEFT (the owner's call, 14 October 2026). The
+// marker used to start on the strike line, a fifth of the way along the bar, so
+// a short shot's stop was a sliver from where it began. It now starts at the
+// bar's left edge and runs up to the strike line first -- a run-up the length
+// of the miss area (`RUN_UP` bar lengths, 0.35 s at Normal) -- and a tap during
+// the run-up is ignored rather than taken as a swing of nothing.
+export const RUN_UP = -MISS_AT;
 function riseAt(sw, t) {
- const e = (t - sw.start) / sw.rise;
- return e <= 1 ? Math.max(0, e) : Math.min(1 + OVERSWING, 1 + (e - 1) / OVERSWING_SLOW);
+ const e = (t - sw.start) / sw.rise - RUN_UP;
+ return e <= 1 ? Math.max(MISS_AT, e) : Math.min(1 + OVERSWING, 1 + (e - 1) / OVERSWING_SLOW);
 }
 // Is the marker in the overswing zone, still climbing or holding at its end?
 export const inOverswing = (sw, t) => sw.power == null && riseAt(sw, t) > 1;
@@ -197,7 +218,7 @@ function setPower(sw, t) {
 export function tap(sw, t) {
  advance(sw, t);
  if (sw.done) return null;
- if (sw.power == null) { setPower(sw, t); return 'power'; }
+ if (sw.power == null) { if (riseAt(sw, t) <= 0) return null; setPower(sw, t); return 'power'; }
  sw.error = markerAt(sw, t);sw.done = true;
  return 'strike';
 }
@@ -333,11 +354,11 @@ export function targetShare({club, shape, short = false, lie, difficulty, metres
 // THE WHOLE STRIKE: a finished swing, the club, the shot chosen and the lie,
 // into the numbers the ball leaves with. `lie` is the surface the ball sits on;
 // its speed share is taken off the speed the bar asked for.
-export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, turf, puttRange: range = null}) {
+export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, turf, puttRange: range = null, zoom = 1}) {
  const putt = club.code === 'PT';
  const launch = shapedLaunch(club, shape, {short});
- const power = sw.power ?? 0, share = carryShare(power);
- const zones = strikeZone({difficulty, shape: launch.zone, lie, putt, power});
+ const power = sw.power ?? 0, share = (putt ? 1 : zoom) * carryShare(power);
+ const zones = strikeZone({difficulty, shape: launch.zone, lie, putt, power, share: putt ? power : zoom * power});
  const fx = strikeEffect(sw.error ?? 0, zones, {putt, duff: !!sw.duff});
  const factor = lieFactor(lie);
  if (putt) {

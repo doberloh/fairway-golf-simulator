@@ -896,6 +896,11 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     picked takes. `check.mjs` renders every take: all between -10 and -17 dB
     peak. **None plays in the game** until signed off; then fold the choices into
     a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] **Phase 2, round 5: short shots and putts** (the owner, 14 October 2026:
+  "the bar starts in the wrong place and just moves too fast"). The marker
+  starts from the far left of the bar and runs up to the strike line; a short
+  full shot's bar zooms to a half or quarter swing; zoomed bars (putts too) run
+  12-25% slower; the chip's wider strike zone follows the share of the club.
 - [x] **Phase 2, round 4 (the owner's notes, 14 October 2026).** Overswing
   crawls at a quarter speed with the meter flashing, and holds at its end until
   the second tap. Colours swapped: the strike zone is yellow, the perfect band
