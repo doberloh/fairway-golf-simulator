@@ -860,11 +860,15 @@ Built and in the game (see `# Done`, same heading). What is left:
   biome's fixed mix: a creek on a Midwest course laps like a pond. Which body
   is nearest (`world.streams`, `lakeOwner`, ponds, the sea) could pick babble,
   lapping or surf.
-- [ ] **Inland water as lapping waves: the owner picks a style** from
-  `docs/reports/sounds/water.html` (`LAPS` in sound.js, A-D). Then the
-  ambience plays it (`lapPlayer`, through the water bus) for ponds, lakes,
-  rivers and creeks in place of round 4's pond puffs and creek babble; the sea
-  keeps its surf. That also settles the item above for inland water.
+- [ ] **The water: the owner picks one pond-and-lake and one river-and-creek
+  option** from `docs/reports/sounds/water.html` (round 6, `WATERS` in
+  sound.js; round 5's lapping styles were turned down and removed). Then the
+  ambience plays them through the water bus with `waterPlayer` -- the pond
+  option for ponds and lakes, the river option for rivers and creeks, chosen by
+  which kind of water is nearest (which also settles the item above), the sea
+  keeping its surf -- with the frogs if wanted (day and night from the sun).
+  A dense creek costs about 11-12 ms of main thread per second of sound;
+  moving its rendering to an AudioWorklet would take that off the main thread.
 
 # Done
 

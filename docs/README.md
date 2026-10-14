@@ -102,7 +102,8 @@ The list below is what exists locally.
   rocks, the flagstick and houses, and the score stings, with takes to choose
   between, sliders and notes to send back (`tools/sound-lab/build.mjs`).
   Synthesised, not recorded; all signed off (round 4) and in the game. Beside
-  it, `water.html`: the lapping-water options for ponds, lakes and creeks.
+  it, `water.html`: the water options, ponds and lakes apart from rivers and
+  creeks, built from research (round 6).
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

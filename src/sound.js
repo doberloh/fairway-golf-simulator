@@ -690,34 +690,11 @@ function contourSyl(base){
 }
 function phrase(n,len){const p=[];let i=0;while(p.length<len){const s=Math.random()<.6?i%n:Math.random()*n|0,r=1+(Math.random()*3|0);for(let j=0;j<r;j++)p.push(s);i++;}return p.slice(0,len);}
 
-// ---- inland water as small lapping waves (round 5 options, 13 October 2026).
-// The owner: the pond, lake, river and creek sounds should be "more like a
-// small lapping wave than what we have now" (round 4 was a few low-passed
-// puffs for a pond and a stream of bubbles for a creek). Each style is one
-// lap -- the wave arriving, meeting the bank, drawing back -- played over and
-// over by lapPlayer at its own uneven rhythm, bigger in more wind and rising
-// and falling in sets over half a minute, so it never settles into a beat.
-// Small wind waves on a pond or a lake shore come every one to four seconds.
-// Everything here is PLACED by ear; the owner chooses.
+// ---- inland water as it plays today (round 4), kept to compare against.
+// Round 5 offered four lapping styles here (a gentle lap, ripples, a clop
+// against a bank, a sandy wash); the owner turned all four down, and round 6
+// (below) starts again from research.
 export const LAPS={
- A:{name:'Gentle lap: in, against the bank, and back',period:[2.2,4],gain:1.4,lap(x,s){
-  x.hiss(0,{type:'lowpass',f:350,f2:1100,q:.6,attack:.1+.25*s,dur:.25,amp:.35*s,role:'texture'});
-  x.hiss(.12+.3*s,{type:'bandpass',f:700,q:1.2,attack:.008,dur:.07,amp:.28*s,role:'body'});
-  x.hiss(.14+.38*s,{type:'bandpass',f:1400,f2:450,q:.7,attack:.06,dur:.55,amp:.16*s,role:'texture'});
-  for(let i=0,n=2+(Math.random()*3|0);i<n;i++)x.bubble(.35+R(0,.6),Math.exp(R(Math.log(.0025),Math.log(.007))),R(.05,.15)*s,R(1,1.25));}},
- B:{name:'Ripples at the edge: quicker and smaller, a plip and a plop',period:[1,2.2],lap(x,s){
-  x.hiss(0,{type:'lowpass',f:500,f2:900,q:.6,attack:.12,dur:.15,amp:.2*s,role:'texture'});
-  x.hiss(.1,{type:'bandpass',f:900,q:1,attack:.005,dur:.04,amp:.15*s,role:'body'});
-  for(let i=0,n=2+(Math.random()*3|0);i<n;i++)x.bubble(.08+R(0,.4),Math.exp(R(Math.log(.003),Math.log(.009))),R(.15,.3)*s,R(1,1.3));}},
- C:{name:'Against a wooden bank or a boat: a hollow clop',period:[1.6,3.2],gain:.75,lap(x,s){
-  x.hiss(0,{type:'lowpass',f:400,f2:1000,q:.6,attack:.2,dur:.2,amp:.25*s,role:'texture'});
-  x.ring(.2,[[R(170,230),.03,1,.9],[R(420,520),.015,.4]],{amp:.4*s,role:'body'});
-  x.hiss(.2,{type:'bandpass',f:1200,q:1,attack:.003,dur:.03,amp:.15*s,role:'texture'});
-  x.crackle(.28,{dur:.4,rate:120,f:2500,amp:.06*s,role:'texture'});}},
- D:{name:'Tiny waves on a sandy shore: a wash and a fizz',period:[2.5,5],gain:1.6,lap(x,s){
-  x.hiss(0,{type:'lowpass',f:300,f2:1600,q:.6,attack:.35,dur:.3,amp:.3*s,role:'texture'});
-  x.crackle(.35,{dur:.9,rate:900,f:5000,q:.5,amp:.1*s,tick:.0015,role:'texture'});
-  x.hiss(.45,{type:'bandpass',f:1200,f2:500,q:.7,attack:.08,dur:.6,amp:.12*s,role:'texture'});}},
  // What plays today, to compare against (levels doubled to undo the player's
  // 0.5, so they sound as they do in the game).
  now:{name:'Now: the pond as it is in the game',period:[.4,4.4],lap(x){
@@ -730,7 +707,7 @@ export const LAPS={
 // report does it on a timer, the ambience from its own scheduler); offline,
 // once for the whole render. Wind in mph makes the laps bigger and quicker
 // (PLACED: size 0.6 + wind/20, period x 1.15 - wind/60).
-export function lapPlayer(lab,{style='A',to=lab.master,pan=-.3,dist=25,knobs={},wind=8}={}){
+export function lapPlayer(lab,{style='now',to=lab.master,pan=-.3,dist=25,knobs={},wind=8}={}){
  let st=style,k=knobs,w=wind,next=lab.ctx.currentTime+.2,dest=null;
  const phase=R(0,Math.PI*2),setPeriod=R(18,35);
  const aim=()=>{dest=place(lab,{pan,dist,wet:.08,to});};aim();
@@ -740,14 +717,207 @@ export function lapPlayer(lab,{style='A',to=lab.master,pan=-.3,dist=25,knobs={},
    if(next<lab.ctx.currentTime)next=lab.ctx.currentTime+.05;
    while(next<until){
     const size=clamp(.6+w/20,.5,1.6)*(.75+.25*Math.sin(next/setPeriod*Math.PI*2+phase))*R(.6,1.15);
-    // `gain` evens the styles out: measured offline at 20 m in 8 mph of wind,
-    // they average within about 2 dB of each other and of the pond today.
     L.lap(kit(lab,dest,next,.5*(L.gain||1),k),size);
     next+=R(...L.period)*clamp(1.15-w/60,.7,1.2);
    }
    lab.sweep();
   },
   set(o){if('style'in o)st=o.style;if('knobs'in o)k=o.knobs;if('wind'in o)w=o.wind;if('dist'in o||'pan'in o){if('dist'in o)dist=o.dist;if('pan'in o)pan=o.pan;try{dest.disconnect();}catch{}aim();}},
+  stop(){try{dest.disconnect();}catch{}},
+ };
+}
+
+// ---- water, round 6: ponds and lakes apart from rivers and creeks (13
+// October 2026). The owner turned down every lapping style ("make these sounds
+// radically different") and asked for research into what a pond sounds like
+// at the shore. What it found (RESEARCH, *Round 6*):
+//  - Still pond water makes almost no sound in air. The underwater pond is busy
+//    (insects, popping plants -- Bristol, 2023) but that stays underwater; at
+//    the edge you hear the reeds, a fish or frog surfacing, a frog calling, and
+//    on a bigger lake wind wavelets slapping the stones, the backwash rolling
+//    the pebbles.
+//  - A brook is thousands of bubbles a second over a hiss. Southampton's
+//    simulations: 50 bubbles a second are separate pings and "do not sound
+//    like ... a babbling brook"; 2,500 a second with noise "sounds a lot more
+//    like rain or a babbling brook". Round 4's creek was 55 a second.
+// So these are built SAMPLE BY SAMPLE rather than from a few dozen Web Audio
+// nodes: thousands of tiny events a second (bubbles, pebble clicks, reed
+// ticks, splashes) written into short pieces of audio, a fifth of a second
+// each, queued back to back on the audio clock -- new every time, never a loop.
+
+// Grains. Every one is written straight into the piece's samples; a grain that
+// runs past the end of a piece carries on into the next.
+const eqPan=p=>{const a=(clamp(p,-1,1)+1)*Math.PI/4;return [Math.cos(a),Math.sin(a)];};
+// A bubble, or anything that rings and dies: a sine whose pitch moves from f
+// to f*rise over its life, decaying with time-constant tau. Rotated as a
+// phasor (four multiplies a sample), its step refreshed every 32 samples.
+function grainRing(st,s,f,tau,amp,rise,pan){
+ const sr=st.sr,N=Math.min(Math.round(tau*6*sr),sr);if(f>sr*.45||amp<1e-5)return;
+ const [gl,gr]=eqPan(pan);st.grains.push({k:0,s,n:0,N,x:1,y:0,d:Math.exp(-1/(tau*sr)),e:amp,f,df:f*(rise-1)/N,gl,gr});
+}
+// A burst of filtered noise: an attack, then an exponential tail. lp and hp
+// are one-pole corners in Hz.
+function grainNoise(st,s,{dur,attack=.003,lp=3000,hp=200,amp,pan=0}){
+ const sr=st.sr,[gl,gr]=eqPan(pan),A=Math.max(1,Math.round(attack*sr));
+ st.grains.push({k:1,s,n:0,N:Math.round((attack+dur*1.6)*sr),A,e:0,peak:amp,d:Math.exp(-4/(dur*sr)),
+  a1:1-Math.exp(-2*Math.PI*Math.min(lp,sr*.45)/sr),a2:1-Math.exp(-2*Math.PI*hp/sr),l:0,h:0,gl,gr});
+}
+function renderGrains(st,L,Rr,idx,P){
+ const keep=[];
+ for(const g of st.grains){
+  const from=Math.max(0,g.s-idx),to=Math.min(P,g.s+g.N-idx);
+  if(g.k===0){let {x,y,e,f}=g;const two=2*Math.PI/st.sr;let c=Math.cos(f*two),sn=Math.sin(f*two);
+   for(let i=from;i<to;i++){const v=y*e;L[i]+=v*g.gl;Rr[i]+=v*g.gr;const nx=x*c-y*sn;y=x*sn+y*c;x=nx;e*=g.d;
+    if(((g.n+=1)&31)===0){f+=g.df*32;c=Math.cos(f*two);sn=Math.sin(f*two);}}
+   Object.assign(g,{x,y,e,f});
+  }else{let {e,l,h,n}=g;
+   for(let i=from;i<to;i++){const w=Math.random()*2-1;l+=g.a1*(w-l);h+=g.a2*(l-h);
+    e=n<g.A?g.peak*(n+1)/g.A:e*g.d;n++;const v=(l-h)*e;L[i]+=v*g.gl;Rr[i]+=v*g.gr;}
+   Object.assign(g,{e,l,h,n});
+  }
+  if(g.s+g.N>idx+P)keep.push(g);
+ }
+ st.grains=keep;
+}
+// A Poisson process inside one piece: the sample offsets of its events.
+function events(rate,P,sr){const out=[];if(rate<=0)return out;let t=wait(rate)*sr;while(t<P){out.push(Math.floor(t));t+=wait(rate)*sr;}return out;}
+// A slow random walk, for surges and gusts: Ornstein-Uhlenbeck, mean 0.
+const walk=(v,dt,relax,spread)=>v+relax*(0-v)*dt+spread*Math.sqrt(2*relax*dt)*gauss();
+// A continuous noise bed, filtered by two one-poles, its level eased across
+// the piece from where it was to `level`.
+function bed(st,L,Rr,P,{lp,hp,level,key='bed'}){
+ const b=st[key]??={l:0,h:0,l2:0,h2:0,lev:0},sr=st.sr,a1=1-Math.exp(-2*Math.PI*Math.min(lp,sr*.45)/sr),a2=1-Math.exp(-2*Math.PI*hp/sr);
+ for(let i=0;i<P;i++){const lev=b.lev+(level-b.lev)*i/P;
+  b.l+=a1*(Math.random()*2-1-b.l);b.h+=a2*(b.l-b.h);b.l2+=a1*(Math.random()*2-1-b.l2);b.h2+=a2*(b.l2-b.h2);
+  L[i]+=(b.l-b.h)*lev;Rr[i]+=(b.l2-b.h2)*lev;}
+ b.lev=level;
+}
+const logn=(median,spread)=>median*Math.exp(gauss()*spread);
+const MINN=r=>3.26/r;   // Minnaert, Hz from a radius in metres
+// Bubble decay: smaller rings shorter (PLACED, as before).
+const btau=f=>.006*Math.sqrt(1000/f);
+
+// The knobs these recipes read: level, pitch (every ring), bright (the
+// noise corners and the clicks), texture (beds and hiss), body (the low
+// things -- glugs, plops, rumble).
+const WK=k=>({level:1,pitch:1,bright:1,texture:1,body:1,...k});
+
+export const WATERS={
+ // ---------------------------------------------------------- ponds and lakes
+ pondStill:{group:'pond',name:'A still pond: the water barely speaks -- reeds in the wind, a plish, a fish now and then',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr,w=Math.pow(Math.max(0,o.wind)/10,1.2);
+   st.gust=walk(st.gust||0,dt,.25,.5);const g=Math.max(0,w*(1+st.gust));
+   // Reed blades ticking against each other: tiny, high, many in a gust.
+   for(const s of events(220*g,P,sr))grainRing(st,idx+s,R(2500,7000)*k.pitch*Math.sqrt(k.bright),R(.0004,.0012),.004*k.texture*R(.3,1),1,R(-.9,.9));
+   bed(st,st.L,st.Rr,P,{lp:8000*k.bright,hp:2500,level:.005*g*k.texture});
+   // A plish where a ripple meets the edge.
+   for(const s of events(.18,P,sr)){for(let i=0;i<2;i++)grainRing(st,idx+s+Math.round(R(0,.04)*sr),MINN(R(.001,.003))*k.pitch,btau(1500),.03,R(1.05,1.4),R(-.4,.4));
+    grainNoise(st,idx+s,{dur:.03,lp:3000*k.bright,hp:900,amp:.03*k.texture,pan:R(-.4,.4)});}
+   // A fish rising, or a frog dropping in.
+   for(const s of events(1/40,P,sr)){const p=R(-.7,.7);grainRing(st,idx+s,MINN(R(.005,.008))*k.pitch,btau(500)*1.4,.07*k.body,R(1.3,1.8),p);
+    grainNoise(st,idx+s,{dur:.06,lp:2500*k.bright,hp:300,amp:.05*k.texture,pan:p});
+    for(let i=0;i<3;i++)grainRing(st,idx+s+Math.round(R(.15,.6)*sr),MINN(R(.0008,.002))*k.pitch,btau(2500),.012,R(1.1,1.5),p+R(-.1,.1));}
+  }},
+ pondPebbles:{group:'pond',name:'A lake shore: small wind wavelets slapping the stones, the backwash rolling the pebbles',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr;st.set=(st.set||0)+dt;
+   const wf=clamp(.5+o.wind/16,.4,1.8),period=clamp(1.3-o.wind/40,.6,1.4);
+   st.next??=0;st.next-=dt;
+   while(st.next<=0){const off=Math.max(0,Math.round((dt+st.next)*sr)),s=idx+Math.min(P-1,off),size=wf*R(.6,1.2)*(.8+.2*Math.sin(st.set/25*Math.PI*2)),p=R(-.6,.6);
+    // The slap: the wavelet's face against a stone.
+    grainNoise(st,s,{dur:.05,attack:.004,lp:2200*k.bright,hp:300,amp:.12*size*k.texture,pan:p});
+    for(let i=0,n=3+(Math.random()*6|0);i<n;i++)grainRing(st,s+Math.round(R(0,.08)*sr),MINN(R(.002,.006))*k.pitch,btau(900),.04*size,R(1.05,1.4),p+R(-.2,.2));
+    // The backwash: pebbles knocked over each other, and the gravel hiss.
+    const back=s+Math.round(R(.2,.35)*sr);
+    for(let i=0,n=Math.round((8+Math.random()*17)*size);i<n;i++)grainRing(st,back+Math.round(R(0,.35)*sr),R(2000,5000)*k.pitch*Math.sqrt(k.bright),R(.0008,.002),R(.02,.06)*size,1,p+R(-.3,.3));
+    grainNoise(st,back,{dur:.3,attack:.05,lp:6000*k.bright,hp:1500,amp:.024*size*k.texture,pan:p});
+    st.next+=R(.7,1.6)*period;}
+  }},
+ pondDock:{group:'pond',name:'Under a wooden dock: hollow glugs as wavelets trap air under the boards',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr,wf=clamp(.5+o.wind/16,.4,1.8);
+   for(const s of events(.65*clamp(.6+o.wind/20,.5,1.6),P,sr)){const p=R(-.5,.5);let t=s;
+    for(let i=0,n=1+(Math.random()*3|0);i<n;i++){
+     // An air pocket squeezed by the wavelet: a low ring whose pitch drops.
+     grainRing(st,idx+t,R(120,350)*k.pitch,R(.02,.05),.08*wf*k.body*R(.6,1),R(.8,.9),p);
+     grainNoise(st,idx+t,{dur:.15,attack:.01,lp:900*k.bright,hp:150,amp:.03*wf*k.texture,pan:p});
+     t+=Math.round(R(.09,.22)*sr);}
+    // Now and then the dock itself takes a knock.
+    if(Math.random()<.1){grainRing(st,idx+t,R(170,200)*k.pitch,.03,.04*k.body,1,p);grainRing(st,idx+t,R(400,440)*k.pitch,.02,.02*k.body,1,p);}
+   }
+  }},
+ // ---------------------------------------------------------- rivers and creeks
+ creekBabble:{group:'river',name:'A babbling creek: about two thousand bubbles a second over a soft rush, surging',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr;st.surge=walk(st.surge||0,dt,.3,.35);const m=Math.exp(st.surge*.5)*o.flow;
+   for(const s of events(1800*m,P,sr)){const r=clamp(logn(.0016,.55),.0004,.008),f=MINN(r)*k.pitch;grainRing(st,idx+s,f,btau(f),.0085*Math.pow(r/.0016,.7)*logn(1,.4),R(1,1.5),R(-.8,.8));}
+   // A riffle gulps: a quick cluster of bigger bubbles.
+   for(const s of events(3*m,P,sr)){const p=R(-.6,.6);for(let i=0,n=15+(Math.random()*25|0);i<n;i++){const r=clamp(logn(.004,.4),.001,.012),f=MINN(r)*k.pitch;grainRing(st,idx+s+Math.round(R(0,.1)*sr),f,btau(f),.018*k.body,R(1,1.4),p+R(-.15,.15));}}
+   bed(st,st.L,st.Rr,P,{lp:3500*k.bright,hp:400,level:.014*m*k.texture});
+  }},
+ creekMountain:{group:'river',name:'A mountain stream over rocks: white water, brighter and louder, the low knock of the flow',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr;st.surge=walk(st.surge||0,dt,.4,.3);const m=Math.exp(st.surge*.5)*o.flow;
+   for(const s of events(2600*m,P,sr)){const r=clamp(logn(.0011,.5),.0003,.006),f=MINN(r)*k.pitch;grainRing(st,idx+s,f,btau(f),.008*Math.pow(r/.0011,.7)*logn(1,.4),R(1,1.6),R(-.9,.9));}
+   for(const s of events(4*m,P,sr))grainNoise(st,idx+s,{dur:R(.05,.15),attack:.004,lp:4000*k.bright,hp:800,amp:.05*k.texture,pan:R(-.8,.8)});
+   bed(st,st.L,st.Rr,P,{lp:7000*k.bright,hp:200,level:.048*m*k.texture});
+   bed(st,st.L,st.Rr,P,{lp:150,hp:30,level:.12*m*k.body,key:'rumble'});
+  }},
+ riverSlow:{group:'river',name:'A slow, deep river: a low swirl of eddies and the odd big gloop',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr,dt=P/sr;st.eddy=(st.eddy||0)+dt;st.surge=walk(st.surge||0,dt,.15,.4);const m=Math.exp(st.surge*.4)*o.flow;
+   for(const s of events(1.8*m,P,sr)){const r=clamp(logn(.007,.35),.004,.016),f=MINN(r)*k.pitch;grainRing(st,idx+s,f,btau(f)*1.5,.05*k.body*logn(1,.3),R(1.1,1.6),R(-.6,.6));}
+   // Eddies: the flow's low noise, its corner swaying.
+   bed(st,st.L,st.Rr,P,{lp:(450+180*Math.sin(st.eddy/7*Math.PI*2))*k.bright,hp:60,level:.035*m*k.texture});
+   for(const s of events(1/6,P,sr))grainNoise(st,idx+s,{dur:.5,attack:.2,lp:900*k.bright,hp:120,amp:.03*k.texture,pan:R(-.5,.5)});
+  }},
+ creekTrickle:{group:'river',name:'A trickle into a pool: clear plinks of drops, a fine thread of water',
+  spawn(st,idx,P){const k=st.k,o=st.o,sr=st.sr;
+   for(const s of events(4*o.flow,P,sr)){const p=R(-.4,.4),n=Math.random()<.3?2:1;
+    for(let j=0;j<n;j++){const t=idx+s+j*Math.round(R(.03,.09)*sr);
+     grainRing(st,t,R(2500,5000)*k.pitch*Math.sqrt(k.bright),.0015,.03,1,p);
+     grainRing(st,t+Math.round(R(.005,.015)*sr),MINN(R(.0008,.0025))*k.pitch,btau(2000),.05*k.body,R(1.3,2),p);}}
+   for(const s of events(250*o.flow,P,sr)){const f=MINN(R(.0005,.0012))*k.pitch;grainRing(st,idx+s,f,btau(f),.004*k.texture,R(1,1.3),R(-.3,.3));}
+  }},
+};
+// Frogs at a pond, as their own layer (round 6), on any pond option: by day a
+// green frog's "gunk" now and then -- a plucked, banjo-like note, its energy
+// in two bands, 200-500 Hz and 1,300-1,500 Hz (Jenssen and Preston, Copeia
+// 1983); at night a chorus of spring peepers, rising "peeps" with their energy
+// at 2,900-3,200 Hz (USGS monitoring summary), each about once a second.
+// Timings PLACED.
+function frogEvents(lab,dest,t0,t1,st){
+ if(st.o.night){
+  st.peepers??=Array.from({length:4+(Math.random()*4|0)},()=>({f:R(2900,3200),next:t0+R(0,2),pan:R(-.9,.9),dist:R(10,40)}));
+  for(const p of st.peepers){p.d??=place(lab,{pan:p.pan,dist:p.dist,wet:.1,to:dest});
+   while(p.next<t1){note(lab,p.d,p.next,{dur:R(.1,.16),contour:[p.f*.9,p.f*.98,p.f],amp:.05,attack:.01,release:.03});p.next+=R(.8,1.5)+(Math.random()<.05?R(2,6):0);}}
+ }else{
+  st.gunk??=t0+R(3,12);
+  while(st.gunk<t1){const d=place(lab,{pan:R(-.9,.9),dist:R(15,50),wet:.12,to:dest,until:st.gunk+2});
+   for(let i=0,n=Math.random()<.6?1:2;i<n;i++){const t=st.gunk+i*R(.4,.8),lo=R(220,320);
+    ring(lab,d,t,[[lo,.06,1,.93],[R(1300,1500),.03,.45,.97],[lo*2.2,.03,.3,.95]],{amp:.3});}
+   st.gunk+=R(12,40);}
+ }
+}
+// Plays one water continuously. `opts`: wind (mph), flow (1 = normal), night,
+// frogs; knobs as WK. Live, call schedule() ahead of the clock on a timer;
+// offline, once.
+export function waterPlayer(lab,{style,to=lab.master,pan=-.3,dist=20,knobs={},opts={}}={}){
+ const {ctx}=lab,sr=ctx.sampleRate,P=Math.round(.2*sr);
+ let dest=place(lab,{pan,dist,wet:.1,to}),t0=ctx.currentTime+.1,k0=0,idx=Math.round(t0*sr),st=null;
+ const fresh=()=>{st={sr,grains:[],k:WK(knobs),o:{wind:8,flow:1,night:false,frogs:true,...opts}};};fresh();
+ let recipe=WATERS[style];
+ return {
+  schedule(until){
+   if(t0+k0*P/sr<ctx.currentTime){t0=ctx.currentTime+.05;k0=0;}
+   for(let at=t0+k0*P/sr;at<until;at=t0+(++k0)*P/sr){
+    const L=new Float32Array(P),Rr=new Float32Array(P);st.L=L;st.Rr=Rr;
+    recipe?.spawn(st,idx,P);renderGrains(st,L,Rr,idx,P);
+    const lev=st.k.level;if(lev!==1)for(let i=0;i<P;i++){L[i]*=lev;Rr[i]*=lev;}
+    const b=ctx.createBuffer(2,P,sr);b.copyToChannel(L,0);b.copyToChannel(Rr,1);
+    const s=ctx.createBufferSource();s.buffer=b;s.connect(dest);s.start(at);lab.track([s],at+.5);
+    if(recipe?.group==='pond'&&st.o.frogs)frogEvents(lab,dest,at,at+P/sr,st);
+    idx+=P;
+   }
+   lab.sweep();
+  },
+  set(o){if('style'in o){recipe=WATERS[o.style];st.grains=[];}if('knobs'in o)st.k=WK(o.knobs);if('opts'in o){if(o.opts.night!==st.o.night)st.peepers=null;Object.assign(st.o,o.opts);}
+   if('dist'in o||'pan'in o){if('dist'in o)dist=o.dist;if('pan'in o)pan=o.pan;const old=dest;dest=place(lab,{pan,dist,wet:.1,to});setTimeout(()=>{try{old.disconnect();}catch{}},400);st.peepers=null;}},
   stop(){try{dest.disconnect();}catch{}},
  };
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lapping Water</title>
+<title>Water Sounds</title>
 <style>
 :root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}}
@@ -11,7 +11,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:980px;margin:0 auto;padding:16px 16px 110px}
-h1{font-size:24px;margin:8px 0 4px}h3{font-size:16px;margin:0}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:19px;margin:26px 0 4px}h3{font-size:16px;margin:0}
 .muted{color:var(--muted)}small{color:var(--muted)}
 .note{border-left:3px solid var(--accent);padding:4px 10px;background:var(--panel);border-radius:0 8px 8px 0;margin:10px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:12px}
@@ -32,46 +32,53 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 </head>
 <body>
 <main>
-<h1>Lapping water</h1>
-<p class="muted">Built <span id="built"></span> on branch <code>sounds</code>. Options for the pond, lake, river and creek sound. The sea is not part of this.</p>
-<div class="note"><p>Each card plays its water continuously: small waves arriving at the bank and drawing back, on an uneven rhythm that rises and falls in sets over half a minute. Only one plays at a time. <b>Distance</b> is how far the ball is from the water in the game, and <b>Wind</b> makes the waves bigger and quicker. The last two cards are what plays in the game today, for comparison. Pick one, nudge it under <i>Adjust</i> if you like, and press <b>Copy my notes</b>.</p>
-<p>Also fixed since your last note: <b>the swing no longer plays backwards.</b> The whoosh now rises into the crack and carries on through the follow-through.</p></div>
+<h1>Water sounds</h1>
+<p class="muted">Built <span id="built"></span> on branch <code>sounds</code>. Round 6: ponds and lakes, and separately rivers and creeks. The sea is not part of this.</p>
+<div class="note"><p><b>What the research said.</b> A calm pond is nearly silent water. What you hear at the edge is the life and the wind around it: reeds ticking in a gust, a fish or a frog surfacing, a frog calling; on a bigger lake, wind wavelets slapping the stones and the backwash rolling the pebbles. A creek is the opposite: thousands of tiny bubbles a second over a hiss. A study that simulated it found 50 bubbles a second sound like separate pings, not a brook. Ours played 55, which is why it never sounded right. These are built sample by sample instead, so the creeks are about two thousand bubbles a second and nothing ever repeats.</p>
+<p>Each card plays continuously; one at a time. <b>Distance</b> is how far the ball is from the water. <b>Wind</b> moves the reeds and the wavelets, <b>Flow</b> the rivers. <b>Frogs</b> adds a green frog's occasional twang by day and a chorus of spring peepers at <b>Night</b>, on any pond. The last card in each group is what plays in the game today.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button>
-<label class="sl" style="min-width:220px"><span>Distance from the water</span><span id="distv"></span><input id="dist" type="range" min="3" max="120" step="1" value="20"></label>
-<label class="sl" style="min-width:220px"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="25" step="1" value="8"></label></div>
-<div class="grid" id="cards"></div>
+<label class="sl" style="min-width:200px"><span>Distance from the water</span><span id="distv"></span><input id="dist" type="range" min="3" max="120" step="1" value="20"></label>
+<label class="sl" style="min-width:160px"><span>Wind</span><span id="windv"></span><input id="wind" type="range" min="0" max="25" step="1" value="8"></label>
+<label class="sl" style="min-width:160px"><span>Flow</span><span id="flowv"></span><input id="flow" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+<label><input type="checkbox" id="frogs" checked> Frogs</label><label><input type="checkbox" id="night"> Night</label></div>
+<h2>Ponds and lakes</h2><div class="grid" id="pond"></div>
+<h2>Rivers and creeks</h2><div class="grid" id="river"></div>
 </main>
 <div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
 <div id="tools"><button class="act" id="copy">Copy my notes</button></div>
 <script type="module">
 /*SYNTH*/
 
-const KEY='fairway-water-lab-v1';
+const KEY='fairway-water-lab-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
 $('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
 saved.knobs??={};saved.notes??={};
 let ctx=null,lab=null,player=null,timer=null,playing=null;
-const dist=()=>+$('#dist').value,wind=()=>+$('#wind').value;
-const syncReadouts=()=>{$('#distv').textContent=`${dist()} m`;$('#windv').textContent=`${wind()} mph`;};
-$('#dist').value=saved.dist??20;$('#wind').value=saved.wind??8;syncReadouts();
+const dist=()=>+$('#dist').value,wind=()=>+$('#wind').value,flow=()=>+$('#flow').value,opts=()=>({wind:wind(),flow:flow(),frogs:$('#frogs').checked,night:$('#night').checked});
+const syncReadouts=()=>{$('#distv').textContent=`${dist()} m`;$('#windv').textContent=`${wind()} mph`;$('#flowv').textContent=`${Math.round(flow()*100)}%`;};
+$('#dist').value=saved.dist??20;$('#wind').value=saved.wind??8;$('#flow').value=saved.flow??1;$('#frogs').checked=saved.frogs??true;$('#night').checked=!!saved.night;syncReadouts();
 function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#start').textContent='Sound on';}if(ctx.state==='suspended')ctx.resume();}
 $('#start').onclick=ensure;
 function play(style){
  ensure();stop();playing=style;
- player=lapPlayer(lab,{style,dist:dist(),wind:wind(),knobs:saved.knobs[style]||{}});
+ player=WATERS[style]?waterPlayer(lab,{style,dist:dist(),knobs:saved.knobs[style]||{},opts:opts()}):lapPlayer(lab,{style,dist:dist(),wind:wind(),knobs:saved.knobs[style]||{}});
  player.schedule(ctx.currentTime+1.5);timer=setInterval(()=>player.schedule(ctx.currentTime+1.5),200);
  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.style===style));
 }
 function stop(){clearInterval(timer);timer=null;player?.stop();player=null;playing=null;document.querySelectorAll('.card').forEach(c=>c.classList.remove('on'));}
 $('#dist').oninput=()=>{syncReadouts();saved.dist=dist();save();player?.set({dist:dist()});};
-$('#wind').oninput=()=>{syncReadouts();saved.wind=wind();save();player?.set({wind:wind()});};
-const KN=['level','pitch','length','bright','body','texture'];
-for(const [style,L] of Object.entries(LAPS)){
+$('#wind').oninput=()=>{syncReadouts();saved.wind=wind();save();player?.set({wind:wind(),opts:opts()});};
+$('#flow').oninput=()=>{syncReadouts();saved.flow=flow();save();player?.set({opts:opts()});};
+for(const id of ['frogs','night'])$('#'+id).onchange=()=>{saved[id]=$('#'+id).checked;save();player?.set({opts:opts()});};
+const KN=['level','pitch','bright','body','texture'];
+const LIST=[...Object.entries(WATERS).map(([id,w])=>[id,w,w.group]),['now',{name:LAPS.now.name},'pond'],['creek',{name:LAPS.creek.name},'river']];
+const letters={pond:0,river:0};
+for(const [style,L,group] of LIST){
  const k=saved.knobs[style]||(saved.knobs[style]={});
  const c=el('div',{class:'card','data-style':style});
- c.append(el('h3',{},`${style.length===1?style+'. ':''}${L.name}`));
+ const today=!WATERS[style];c.append(el('h3',{},today?L.name:`${'ABCD'[letters[group]++]}. ${L.name}`));
  c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>play(style)},'Play'),el('button',{class:'sec',onclick:stop},'Stop')));
  const adj=el('details',{},el('summary',{},'Adjust'));
  for(const n of KN){const d=KNOBS[n],inp=el('input',{type:'range',min:d.min,max:d.max,step:d.step,value:k[n]??d.def}),out=el('span',{},`${Math.round((k[n]??d.def)*100)}%`);
@@ -79,12 +86,12 @@ for(const [style,L] of Object.entries(LAPS)){
   adj.append(el('label',{class:'sl'},el('span',{},d.label),out,inp));}
  c.append(adj);
  const ta=el('textarea',{placeholder:'Notes'});ta.value=saved.notes[style]||'';ta.oninput=()=>{saved.notes[style]=ta.value;save();};c.append(ta);
- $('#cards').append(c);
+ $('#'+group).append(c);
 }
 $('#copy').onclick=async()=>{
  const knobs=Object.fromEntries(Object.entries(saved.knobs).filter(([,v])=>Object.keys(v).length));
  const notes=Object.fromEntries(Object.entries(saved.notes).filter(([,v])=>v));
- const text='Water lab notes\n'+JSON.stringify({playingNow:playing,dist:dist(),wind:wind(),knobs,notes},null,1);
+ const text='Water lab notes\n'+JSON.stringify({playingNow:playing,dist:dist(),...opts(),knobs,notes},null,1);
  $('#outText').value=text;$('#out').style.display='block';
  try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}
 };

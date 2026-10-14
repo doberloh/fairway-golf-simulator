@@ -7479,7 +7479,7 @@ before the audio clock's zero any more.
 **Inland water as small lapping waves** (the owner: the pond, lake, river and
 creek sounds "more like a small lapping wave"). Four options on a page of
 their own, `docs/reports/sounds/water.html` (local), each played
-continuously by `lapPlayer`: A, a gentle lap -- the wave washing in (noise
+continuously by `lapPlayer` (turned down in round 6, below, and removed): A, a gentle lap -- the wave washing in (noise
 opening from 350 to 1,100 Hz), a slap against the bank (700 Hz), the draw
 back (1,400 falling to 450 Hz) and a few gurgles, every 2.2-4 s; B, quicker
 ripples with plips and plops (bubbles of 3-9 mm), every 1-2.2 s; C, a hollow
@@ -7488,17 +7488,83 @@ waves on sand, a wash and a fizz, every 2.5-5 s. Every lap varies in size,
 grows with the wind (size 0.6 + wind/20, period x 1.15 - wind/60) and rises
 and falls in sets over 18-35 s. All PLACED. Measured offline over 30 s at 20 m
 in 8 mph of wind, each averages -55 to -57 dB, the pond today -56.5, so the
-choice is about character, not loudness. Not yet in the game: the owner picks
-first.
+choice is about character, not loudness. The owner turned all four down.
+
+### Round 6: ponds apart from rivers, from research (13 October 2026)
+
+The owner turned down all four round-5 lapping styles ("I'm not liking any of
+these"), asked what a pond really sounds like at the shore, and split the
+water in two: ponds and lakes, rivers and creeks, "radically different" from
+what was there.
+
+**What a pond sounds like at the shore.** No study of a small pond's lapping
+heard in air was found. What was found:
+- **The water itself is nearly silent.** Ponds are loud UNDERWATER -- water
+  boatmen, beetles, fish, frogs and popping plants; insects dominate at night,
+  peaking 02:00-04:00 and 20:00-00:00, plants by day (Bristol, Freshwater
+  Biology, 2023) -- but that is hydrophone sound and does not reach a listener
+  on the bank. In air a calm pond is heard through what is around it: wind in
+  the reeds, a fish or frog surfacing, frogs calling.
+- **Wave sound needs breaking water.** Surf studies tie airborne wave sound to
+  falling water and collapsing air (50-315 Hz rising 5-20 dB as a wave breaks,
+  for waves over 1 m; Nova Scotia field study) and to pulsating air pockets
+  under plunging waves (laboratory). Gentle lapping entrains little air, so a
+  lake's sound at the edge is small slaps where wavelets meet stones and the
+  backwash rattling gravel -- an inference from those studies, recorded as one.
+- **Frogs.** Green frog advertisement calls: energy at 200-500 Hz and
+  1,300-1,500 Hz in large males, 500-1,000 Hz in small ones (Jenssen and
+  Preston, Copeia 1983). Spring peeper calls: most energy at 2,900-3,200 Hz
+  (USGS acoustic monitoring summary). No measured bullfrog figure was found, so
+  there is no bullfrog.
+
+**What a brook sounds like.** It is bubbles: a hydrophone recording of a
+babbling brook is a series of exponentially decaying sinusoids, about nine
+bubbles in the clip shown, big bubbles low, small high (University of
+Southampton, ISVR). Their simulations are the useful number: **50 bubbles a
+second with no noise are separate pings and "do not sound like realistic rain
+or a babbling brook"; 2,500 a second with noise added "sounds a lot more like
+rain or a babbling brook"**. Round 4's creek was 55 bubbles a second, which is
+why it never sounded like one.
+
+**How they are built now.** Sample by sample: each option writes thousands of
+tiny events a second (bubbles as decaying sines that rise as they surface,
+pebble and reed clicks, noise bursts for slaps and splashes, filtered noise
+beds) into pieces of audio a fifth of a second long, queued back to back on the
+audio clock, so nothing ever repeats and no Web Audio node is made per event
+(`WATERS`, `waterPlayer` in sound.js). The options:
+
+| | Option | What is in it (all PLACED) |
+|---|---|---|
+| Pond | A. A still pond | Reed blades ticking (2.5-7 kHz, under 1.2 ms) at about 220 a second scaled by gusting wind, a faint reed hiss, a plish every five seconds or so, a fish or frog surfacing about every 40 s (a 5-8 mm bubble, a splash, drops after) |
+| Pond | B. A lake shore | Wind wavelets every 0.7-1.6 s (quicker and bigger with wind): a slap against a stone, a few bubbles, then the backwash -- 8-25 pebble clicks at 2-5 kHz over a third of a second and a gravel hiss |
+| Pond | C. Under a wooden dock | Hollow glugs, 120-350 Hz with falling pitch, in ones to threes, as wavelets squeeze air under the boards; the dock knocked now and then |
+| Pond, any | Frogs | By day a green frog's plucked "gunk" every 12-40 s (220-320 Hz with partials at 1.3-1.5 kHz and about 2.2x); at night 4-7 spring peepers at 2.9-3.2 kHz, about one rising peep a second each |
+| River | A. A babbling creek | About 1,800 bubbles a second (radius median 1.6 mm, about 2 kHz, log-normal), riffle gulps of 15-40 bigger bubbles three times a second, a soft rush (400-3,500 Hz), the whole surging on a random walk |
+| River | B. A mountain stream | About 2,600 smaller bubbles a second (median 1.1 mm, about 3 kHz), white-water splashes, a louder broadband rush (200-7,000 Hz) and a low rumble under 150 Hz |
+| River | C. A slow, deep river | A low noise bed whose corner sways 270-630 Hz like eddies, a big gloop (4-16 mm bubbles, 200-800 Hz) about twice a second, a soft wash on the bank every six seconds |
+| River | D. A trickle into a pool | Drops at about four a second (a click and a rising bubble each, sometimes in pairs) over a thin thread of 250 tiny bubbles a second |
+
+Measured offline over 30 s at 20 m in 8 mph of wind: the ponds average -52 to
+-58 dB (today's pond -56), the creeks -42 to -40 (today's creek -45), the slow
+river and the trickle -53 and -56. The peeper chorus at night lifts a pond to
+about -45 to -48: real peepers are loud, and Frogs turns them off. **Cost**: the
+ponds, the slow river and the trickle take about 1 ms of main thread per
+second of sound; the two dense creeks about 11-12 ms (around 1%), rendered in
+2-3 ms slices every fifth of a second. If a creek is chosen, moving its
+rendering to an AudioWorklet would take it off the main thread entirely.
+
+Rejected this round: round 5's four lapping styles (a gentle lap, ripples, a
+clop against a bank, a sandy wash), all built from a handful of filtered-noise
+puffs and bubbles per wave -- the same family as round 4's pond, which is what
+the owner heard in them.
 
 ### Open, for the owner
 
-The lapping-water style (round 5). Everything else is decided (round 4). Decided along the way: the driver
-(take C, main ring near 5.4 kHz), no club sounds under a launch monitor, no
-crowd, no ball rolling, no CC0 recordings, one material for every house.
-
-- Every PLACED number above is waiting on the owner's ears, which is what the
-  report's takes, sliders and notes are for.
+The water (round 6): one pond-and-lake option and one river-and-creek option,
+frogs or not. Everything else is decided (round 4). Decided along the way: the
+driver (take C, main ring near 5.4 kHz), no club sounds under a launch
+monitor, no crowd, no ball rolling, no CC0 recordings, one material for every
+house.
 
 ## Flagsticks and houses: solid where they are drawn, and flags you can find (13 October 2026)
 
