@@ -321,6 +321,13 @@ const clean = g => ({
  // On by default: they cost nothing per frame, and a floodlit course whose
  // lights throw no shadows looks unfinished.
  floodlightShadows: bool(g?.floodlightShadows, true),
+ // Flagsticks drawn larger with distance so they never vanish (renderer.js,
+ // FLAGSTICKS STAY VISIBLE FROM ANYWHERE). OFF by default (the owner, 14
+ // October 2026, the day after it shipped always on): flagsticks are drawn
+ // exactly to size unless the player asks for the help. No record saved before
+ // the switch carries the key, so everyone starts off. Drawing only: the ball
+ // hits the real stick either way.
+ distantFlags: bool(g?.distantFlags, false),
  greenDefinition: greenValue(g, 'greenDefinition', GREEN_READ.definition),
  greenBands: greenValue(g, 'greenBands', GREEN_READ.bands),
  // LOOKS (U items in TODO): taste, not performance, so they stay on at every

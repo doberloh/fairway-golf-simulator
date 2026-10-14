@@ -3821,6 +3821,8 @@ function renderPanel(name,content){
   ${slider('gfxTextSize','Text size',currentTextSize(),TEXT_SIZE.min,TEXT_SIZE.max,'%',TEXT_SIZE.step)}
   <label class="check"><input id="gfxTextAuto" type="checkbox" ${graphics.textSize==='auto'?'checked':''}> Size text automatically</label>
   <p class="note">Everything on screen, larger or smaller: panels, numbers, menus. For a projector or a screen you stand back from. The course itself is drawn the same either way. <span id="gfxTextNote"></span></p>
+  <label class="check"><input id="gfxDistantFlags" type="checkbox" ${graphics.distantFlags?'checked':''}> Larger flags far away</label>
+  <p class="note">Drawn to size, a flagstick is thinner than a pixel from a long way out and simply disappears. On, the stick and its flag grow with distance so you can always find the hole; from a chip or on the green they are exactly to size. Off, they are to size from everywhere. Only the picture changes: the ball hits the real flagstick either way.</p>
   <h3>Reading the ground</h3>
   <p>Ways of showing the shape of the land beyond what the sun and its shadows give you. None of them costs a measurable frame, so they are taste rather than performance.</p>
   <label class="check"><input id="gfxRelief" type="checkbox" ${graphics.relief?'checked':''}> Ground shading</label>
@@ -3889,6 +3891,7 @@ function renderPanel(name,content){
     graphics=saveGraphics({...graphics,[key]:Number(e.target.value)});
     view.setGroundCues(graphics);
    };
+  $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -5384,7 +5387,7 @@ try{
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
- view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);
+ view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);view.setDistantFlags(graphics.distantFlags);
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.
