@@ -501,6 +501,9 @@ const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status',
 // size, the map and the wind are still there, and the shot panel says a ball
 // is up and carries a Skip that can be pressed. `phone` is kept for callers;
 // since the shot panel (10 October 2026) the rule is the same at every size.
+// Since 13 October the shot panel is a line in the play window, so the window
+// stays through a flight with that line alone in it: what must go is
+// everything else in it -- club, power, the shot button, the keyboard hints.
 // The panels FADE, over a fifth of a second, so a check made the instant the
 // ball leaves catches them half-way; it is retried until it passes or two
 // seconds are up, and only the last failure is reported.
@@ -516,7 +519,7 @@ async function flightScreenOnce(t, phone) {
   const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
-   panel: gone('.bottom-area'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
+   panel: gone('#power') && gone('#bottomHints'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
    numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
@@ -530,7 +533,8 @@ async function flightScreenOnce(t, phone) {
  if (!state.strip) bad.push('the camera strip is still showing');
  if (!state.pad) bad.push('the aim pad is still showing');
  // Since 10 October 2026 the shot controls go at every size: the numbers they
- // used to keep through a flight are in the shot panel.
+ // used to keep through a flight are in the shot panel, whose line is all that
+ // is left of the window (13 October 2026).
  if (!state.panel) bad.push('the shot controls are still showing');
  if (state.numbers) bad.push('the shot panel went, and it carries the flight');
  if (state.map) bad.push('the map went, and it should follow the ball');

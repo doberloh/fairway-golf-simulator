@@ -6902,6 +6902,17 @@ added kinds follow that pattern (`5W`, `7W`, `3H`-`5H`, `3I`, `4I`, `6I`, `8I`,
 `GW`, `LW`) rather than guessing another format. `PT` is the one that changes
 what a device does.
 
+**The bridge was never told about the added codes (found 13 October 2026).** It
+checked `Player.Club` against a typed list of the eight stock codes and closed
+the browser's connection on anything else, so the eleven codes above cut the
+game off from the bridge the moment one was picked -- monitor or no monitor.
+Nothing outside the game was ever asked about them. The bridge now reads its
+list from `CLUB_KINDS` (all nineteen codes), and an unknown code is ignored
+rather than fatal (PROJECT_HANDOFF, *passes on every club a bag can hold*).
+Whether a given connector makes anything of `4I` or `GW` is still unknown --
+no hardware has been tested here -- but at worst it ignores them, as it would
+any club field it does not use.
+
 **Rejected: keeping a round's own copy of the bag.** The old rule was that a
 round resumes under the bag it was saved with, because the bag was one setting
 for the whole device and could change between sessions. Now the bag is the

@@ -208,6 +208,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
+- The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]
+- The bridge's accepted club codes come from `CLUB_KINDS`; a typed list once dropped the connection on any non-stock club. [passes on every club a bag can hold]
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]

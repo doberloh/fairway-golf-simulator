@@ -301,3 +301,29 @@ test('the hand set and the monitor set are kept apart', async () => {
   globalThis.localStorage = was;
  }
 });
+
+// A phone shows three tiles across its top, from a set of its own (13 October
+// 2026): carry, total and backspin until the player picks others, never more
+// than three, and untouched by the sets chosen for a bigger screen.
+test('the phone keeps its own set of at most three', async () => {
+ const {PHONE_FIELDS, PHONE_MAX_FIELDS, maxFields} = await import('../src/shot-data.js');
+ const store = new Map();
+ const was = globalThis.localStorage;
+ globalThis.localStorage = {getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v))};
+ try {
+  assert.deepEqual(PHONE_FIELDS, ['carry', 'total', 'backSpin']);
+  assert.equal(PHONE_MAX_FIELDS, 3);
+  assert.equal(maxFields('phone'), 3);
+  assert.equal(maxFields('hand'), MAX_FIELDS);
+  assert.deepEqual(loadShotData('phone').fields, PHONE_FIELDS, 'never chosen: carry, total, backspin');
+  assert.ok(PHONE_FIELDS.every(id => fieldById(id)), 'every default is a real field');
+  saveShotData({fields: ['apex']}, 'hand');
+  assert.deepEqual(loadShotData('phone').fields, PHONE_FIELDS, 'a hand choice does not reach the phone');
+  assert.deepEqual(saveShotData({fields: ['spin', 'carry', 'total', 'apex', 'offline']}, 'phone').fields, ['spin', 'carry', 'total'], 'cut to three');
+  assert.deepEqual(loadShotData('phone').fields, ['spin', 'carry', 'total']);
+  assert.ok(hasCustomShotData('phone'));
+  assert.deepEqual(loadShotData('hand').fields, ['apex'], 'and the phone does not reach the hand set');
+ } finally {
+  globalThis.localStorage = was;
+ }
+});
