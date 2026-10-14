@@ -214,7 +214,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The bag is the golfer's, re-read every turn; the putter's id is always `putter`. [THE BAG IS THE GOLFER'S]
 - Players are matched by seat, not list position; colours are by seat. [Removing a golfer], [A colour per golfer]
 - A ball in trouble waits in the round until relief is taken. [Penalty relief]
-- No club sound with a launch monitor; nothing audible before the first input; one bird at a time; an audio time is never negative. [WHEN THE GAME MAKES A SOUND]
+- No club sound with a launch monitor; nothing audible before the first input; one bird at a time; never schedule a sound in the past -- Web Audio plays it whole, late. [WHEN THE GAME MAKES A SOUND]
 
 **Packaging and the outside world**
 - The built page makes no network requests, by design and by test; the manifest is linked by script, only over http(s). [A hosted copy installs]

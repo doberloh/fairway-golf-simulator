@@ -7414,13 +7414,12 @@ synthesiser, moved from the lab unchanged, and the report now inlines it):
   is a chip (PLACED). Head speed is ball speed over a smash factor of about
   1.48 for a driver, 1.45 a wood, 1.4 a hybrid, 1.33 an iron, 1.2 a wedge,
   1.6 a putter (typical figures, PLACED; only loudness and brightness follow
-  it). **The whoosh cannot lead the ball**: the lab plays the impact 0.45 s
-  after the whoosh begins, the game fires the ball the instant the key goes
-  down, so the strike is started 0.43 s in the past and the first part of the
-  whoosh goes unheard. Delaying the ball to make room for it was rejected: it
-  changes how a shot feels to play. **Never before zero**: the very first shot
-  of a fresh page has an audio clock near zero, and a negative start time
-  throws -- the smoke run's `no-swallowed-errors` journey caught exactly that.
+  it). **The whoosh has a tenth of a second** (round 5, below): the lab plays
+  the impact 0.45 s after the whoosh begins, but the game fires the ball the
+  instant the key goes down, so in the game the whoosh rises over the last
+  0.1 s into the crack and the follow-through carries on after it; the crack
+  lands 0.1 s after the ball leaves. Delaying the ball to make room for a
+  longer swing was rejected: it changes how a shot feels to play.
 - **Every contact** -- each turf bounce, a trunk, a rock, a flagstick, a house,
   the water -- is recorded by simulateShot with its time, what was hit and the
   speed into it (`contacts`; the flight itself does not read it), and plays as
@@ -7463,9 +7462,38 @@ checks, both passed in the run before the sound was wired in, and the sound's
 main-thread cost above is two orders too small to cause either. Re-run on an
 idle card before merging (TODO).
 
+### Round 5: the swing ran backwards, and water as lapping waves (13 October 2026)
+
+**The swing played in reverse** (the owner: "the ball is hit and then I hear
+the whoosh"). Round 4 started each game strike 0.43 s in the past so its
+0.45 s whoosh could run ahead of the ball, on the belief that the missed part
+would simply go unheard. It does not work that way: a sound started late is
+moved to now WHOLE (a buffer source starting in the past starts now from its
+beginning, and an automation curve that began in the past runs from now), so
+the full whoosh played after a crack that landed on time. The game strike now
+has a 0.1 s lead: rendered offline, the first sound is at 60 ms, rising, and
+the crack peaks at 100 ms, for driver, wood and iron alike. A side effect:
+the first shot of a fresh page is on time too, because nothing is scheduled
+before the audio clock's zero any more.
+
+**Inland water as small lapping waves** (the owner: the pond, lake, river and
+creek sounds "more like a small lapping wave"). Four options on a page of
+their own, `docs/reports/sounds/water.html` (local), each played
+continuously by `lapPlayer`: A, a gentle lap -- the wave washing in (noise
+opening from 350 to 1,100 Hz), a slap against the bank (700 Hz), the draw
+back (1,400 falling to 450 Hz) and a few gurgles, every 2.2-4 s; B, quicker
+ripples with plips and plops (bubbles of 3-9 mm), every 1-2.2 s; C, a hollow
+clop against a wooden bank or boat (170-230 Hz), every 1.6-3.2 s; D, tiny
+waves on sand, a wash and a fizz, every 2.5-5 s. Every lap varies in size,
+grows with the wind (size 0.6 + wind/20, period x 1.15 - wind/60) and rises
+and falls in sets over 18-35 s. All PLACED. Measured offline over 30 s at 20 m
+in 8 mph of wind, each averages -55 to -57 dB, the pond today -56.5, so the
+choice is about character, not loudness. Not yet in the game: the owner picks
+first.
+
 ### Open, for the owner
 
-Nothing. Every sound is decided (round 4). Decided along the way: the driver
+The lapping-water style (round 5). Everything else is decided (round 4). Decided along the way: the driver
 (take C, main ring near 5.4 kHz), no club sounds under a launch monitor, no
 crowd, no ball rolling, no CC0 recordings, one material for every house.
 

@@ -116,13 +116,15 @@ export function createGameAudio(){
   strike({kind,ballMs,monitor}){
    if(!ok()||monitor)return;
    const mph=headSpeedMph(kind,ballMs),id=strikeFor(kind,mph),[lo,hi]=STRIKES[id].speed;
-   // The impact lands about 0.45 s after the call so the whoosh can rise to it;
-   // the game fires the ball at once, so start it that much early and let the
-   // whoosh's first part go unheard rather than delay the ball.
-   // Never before zero: the audio clock starts at 0 when sound is first
-   // allowed, and a negative time throws (the smoke run caught exactly that
-   // on the first shot of a fresh page).
-   strike(lab,id,{speed:Math.min(hi,Math.max(lo,mph)),at:Math.max(0,ctx.currentTime-.43)});
+   // THE WHOOSH COMES FIRST. The ball is away the instant the key goes down,
+   // so there is no time for the lab's 0.45 s swing. Starting it that much in
+   // the past did not work: Web Audio moves a late sound to NOW whole rather
+   // than skipping its start, so the whoosh played after the crack and the
+   // swing sounded backwards (the owner, 13 October 2026). Now the whoosh rises
+   // over the last tenth of a second and the crack lands 0.1 s after the ball
+   // leaves -- about what sound takes to cross 34 m -- with the follow-through
+   // after it. PLACED.
+   strike(lab,id,{speed:Math.min(hi,Math.max(lo,mph)),lead:.1});
   },
   // One contact from simulateShot (or canopyContacts) heard from `dist`
   // metres, `pan` -1..1 across the screen.

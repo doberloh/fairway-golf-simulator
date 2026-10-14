@@ -1,4 +1,5 @@
-// Builds the sound listening report: docs/reports/sounds/index.html.
+// Builds the sound listening report, docs/reports/sounds/index.html, and the
+// small lapping-water page beside it, water.html.
 //
 //   node tools/sound-lab/build.mjs
 //
@@ -24,3 +25,9 @@ const outDir=join(root,'docs','reports','sounds');
 mkdirSync(outDir,{recursive:true});
 writeFileSync(join(outDir,'index.html'),page);
 console.log(`wrote ${join('docs','reports','sounds','index.html')} (${(page.length/1024).toFixed(0)} KB)`);
+// The small water page (round 5): the lapping-water options alone.
+const water=readFileSync(join(here,'water.html'),'utf8')
+ .replace('/*SYNTH*/',()=>synth)
+ .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">\n<meta name="built" content="${built}">`);
+writeFileSync(join(outDir,'water.html'),water);
+console.log(`wrote ${join('docs','reports','sounds','water.html')} (${(water.length/1024).toFixed(0)} KB)`);

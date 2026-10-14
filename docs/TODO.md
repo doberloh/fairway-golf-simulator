@@ -860,10 +860,11 @@ Built and in the game (see `# Done`, same heading). What is left:
   biome's fixed mix: a creek on a Midwest course laps like a pond. Which body
   is nearest (`world.streams`, `lakeOwner`, ponds, the sea) could pick babble,
   lapping or surf.
-- [ ] **The first shot of a fresh page.** If the very first thing a player
-  does is hit (so the audio starts with that key press), its strike plays
-  about half a second late, because the whoosh's lead cannot start before the
-  audio clock does. Every later shot is on time.
+- [ ] **Inland water as lapping waves: the owner picks a style** from
+  `docs/reports/sounds/water.html` (`LAPS` in sound.js, A-D). Then the
+  ambience plays it (`lapPlayer`, through the water bus) for ponds, lakes,
+  rivers and creeks in place of round 4's pond puffs and creek babble; the sea
+  keeps its surf. That also settles the item above for inland water.
 
 # Done
 
@@ -4248,3 +4249,8 @@ engineering provenance pass, not legal advice.
   switch and three volumes, kept on the device. Tested by
   `tests/sound.test.mjs` and a `sound` smoke journey.
 - [x] **Decided, not built**: no crowd reactions, no ball-rolling sound.
+- [x] **The swing no longer plays backwards** (the owner, 13 October). The
+  strike was started 0.43 s in the past to give the whoosh room; Web Audio
+  moves a late sound to now whole, so the whoosh came after the crack. It now
+  has a 0.1 s lead and nothing is scheduled in the past (RESEARCH, *Round 5*).
+  This also closed "the first shot of a fresh page plays late".

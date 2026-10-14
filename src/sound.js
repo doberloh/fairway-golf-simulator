@@ -169,8 +169,10 @@ function bubble(lab,dest,t,radius,amp,rise=R(1.05,1.6)){
 // the strike and falls after it, over a soft wide band underneath. PLACED:
 // centre 150 Hz + 14 Hz per m/s (about 780 Hz at 100 mph); level as
 // speed^2.5; the narrow band's gain makes up the energy its width removes.
-function whoosh(lab,dest,t,v,amp){
- const {ctx}=lab,pre=.26,post=.2,start=t-pre,end=t+post,fc=150+14*v;
+// `pre` is how long it rises into the strike: 0.26 s in the lab, shorter in
+// the game, where the ball is already away (audio.js).
+function whoosh(lab,dest,t,v,amp,pre=.26){
+ const {ctx}=lab,post=.2,start=t-pre,end=t+post,fc=150+14*v;
  const s=ctx.createBufferSource(),dark=ctx.createBiquadFilter(),tone=ctx.createBiquadFilter(),wide=ctx.createBiquadFilter(),gt=ctx.createGain(),gw=ctx.createGain(),g=ctx.createGain();
  s.buffer=lab.NOISE;dark.type='lowpass';dark.frequency.value=2500;dark.Q.value=.5;
  tone.type='bandpass';tone.Q.value=6;wide.type='bandpass';wide.Q.value=.9;gt.gain.value=2.2;gw.gain.value=.5;
@@ -217,7 +219,7 @@ function kit(lab,dest,t0,a,k){
   crackle:(dt,o)=>crackle(lab,dest,t0+dt,{...o,f:shift(o.f),dur:o.dur*(o.fixed?1:K.length),amp:a*K.level*role(o.role)*(o.amp??1)}),
   thump:(dt,hz,tau,lvl,glide=.65)=>ring(lab,dest,t0+dt,[[hz,tau,lvl,glide]],{amp:a*K.level*K.body,pitch:Math.sqrt(K.pitch),decay:K.length,spread:.06}),
   bubble:(dt,r,lvl,rise)=>bubble(lab,dest,t0+dt,r/K.pitch,a*K.level*K.texture*lvl,rise),
-  whoosh:(dt,v,lvl)=>K.whoosh>0&&whoosh(lab,dest,t0+dt,v,lvl*K.level*K.whoosh),
+  whoosh:(dt,v,lvl,pre)=>K.whoosh>0&&whoosh(lab,dest,t0+dt,v,lvl*K.level*K.whoosh,pre),
  };
 }
 // The ball's own ring under a hard strike sits near 1.5 kHz (patent survey in
@@ -322,17 +324,19 @@ export const STRIKES={
   }},
 };
 // Play one strike. `speed` is head speed in mph; the impact lands `lead`
-// seconds after the call so the whoosh can rise to it.
-export function strike(lab,club,{take='A',speed,knobs={},pan=0,dist=10,at}={}){
+// seconds after the call so the whoosh can rise to it -- never scheduled in
+// the past: Web Audio does not play the missed part of a sound started late,
+// it moves the whole sound to now, which put the whoosh AFTER the crack.
+export function strike(lab,club,{take='A',speed,knobs={},pan=0,dist=10,at,lead=.45}={}){
  const C=STRIKES[club],T=C.takes[take]||C.takes.A,mph=speed??C.speed[2];
- const t=(at??lab.ctx.currentTime)+.45;
+ const t=(at??lab.ctx.currentTime)+lead;
  // Louder and brighter the harder it is hit. PLACED: level as speed^0.8, so a
  // putt is quiet but still audible; brightness as speed^0.35 at the club's own
  // default speed.
  const a=C.gain*Math.pow(mph/100,.8),k=mergeKnobs(T.base,knobs);k.bright=(k.bright??1)*Math.pow(mph/C.speed[2],.35);
  const dest=place(lab,{pan,dist,wet:.08,until:t+3});
  const x=kit(lab,dest,t,a,k);
- if(C.whoosh)x.whoosh(0,mph*MPH,C.whoosh);
+ if(C.whoosh)x.whoosh(0,mph*MPH,C.whoosh,Math.min(.26,lead-.01));
  T.play(x);
  lab.sweep();
  return t;
@@ -685,6 +689,68 @@ function contourSyl(base){
  return {c,dur,gap:R(.05,.16),harm:Math.random()<.4?R(.05,.2):0};
 }
 function phrase(n,len){const p=[];let i=0;while(p.length<len){const s=Math.random()<.6?i%n:Math.random()*n|0,r=1+(Math.random()*3|0);for(let j=0;j<r;j++)p.push(s);i++;}return p.slice(0,len);}
+
+// ---- inland water as small lapping waves (round 5 options, 13 October 2026).
+// The owner: the pond, lake, river and creek sounds should be "more like a
+// small lapping wave than what we have now" (round 4 was a few low-passed
+// puffs for a pond and a stream of bubbles for a creek). Each style is one
+// lap -- the wave arriving, meeting the bank, drawing back -- played over and
+// over by lapPlayer at its own uneven rhythm, bigger in more wind and rising
+// and falling in sets over half a minute, so it never settles into a beat.
+// Small wind waves on a pond or a lake shore come every one to four seconds.
+// Everything here is PLACED by ear; the owner chooses.
+export const LAPS={
+ A:{name:'Gentle lap: in, against the bank, and back',period:[2.2,4],gain:1.4,lap(x,s){
+  x.hiss(0,{type:'lowpass',f:350,f2:1100,q:.6,attack:.1+.25*s,dur:.25,amp:.35*s,role:'texture'});
+  x.hiss(.12+.3*s,{type:'bandpass',f:700,q:1.2,attack:.008,dur:.07,amp:.28*s,role:'body'});
+  x.hiss(.14+.38*s,{type:'bandpass',f:1400,f2:450,q:.7,attack:.06,dur:.55,amp:.16*s,role:'texture'});
+  for(let i=0,n=2+(Math.random()*3|0);i<n;i++)x.bubble(.35+R(0,.6),Math.exp(R(Math.log(.0025),Math.log(.007))),R(.05,.15)*s,R(1,1.25));}},
+ B:{name:'Ripples at the edge: quicker and smaller, a plip and a plop',period:[1,2.2],lap(x,s){
+  x.hiss(0,{type:'lowpass',f:500,f2:900,q:.6,attack:.12,dur:.15,amp:.2*s,role:'texture'});
+  x.hiss(.1,{type:'bandpass',f:900,q:1,attack:.005,dur:.04,amp:.15*s,role:'body'});
+  for(let i=0,n=2+(Math.random()*3|0);i<n;i++)x.bubble(.08+R(0,.4),Math.exp(R(Math.log(.003),Math.log(.009))),R(.15,.3)*s,R(1,1.3));}},
+ C:{name:'Against a wooden bank or a boat: a hollow clop',period:[1.6,3.2],gain:.75,lap(x,s){
+  x.hiss(0,{type:'lowpass',f:400,f2:1000,q:.6,attack:.2,dur:.2,amp:.25*s,role:'texture'});
+  x.ring(.2,[[R(170,230),.03,1,.9],[R(420,520),.015,.4]],{amp:.4*s,role:'body'});
+  x.hiss(.2,{type:'bandpass',f:1200,q:1,attack:.003,dur:.03,amp:.15*s,role:'texture'});
+  x.crackle(.28,{dur:.4,rate:120,f:2500,amp:.06*s,role:'texture'});}},
+ D:{name:'Tiny waves on a sandy shore: a wash and a fizz',period:[2.5,5],gain:1.6,lap(x,s){
+  x.hiss(0,{type:'lowpass',f:300,f2:1600,q:.6,attack:.35,dur:.3,amp:.3*s,role:'texture'});
+  x.crackle(.35,{dur:.9,rate:900,f:5000,q:.5,amp:.1*s,tick:.0015,role:'texture'});
+  x.hiss(.45,{type:'bandpass',f:1200,f2:500,q:.7,attack:.08,dur:.6,amp:.12*s,role:'texture'});}},
+ // What plays today, to compare against (levels doubled to undo the player's
+ // 0.5, so they sound as they do in the game).
+ now:{name:'Now: the pond as it is in the game',period:[.4,4.4],lap(x){
+  x.hiss(0,{type:'lowpass',f:500,f2:1400,q:.5,attack:R(.05,.12),dur:R(.18,.35),amp:R(.24,.6),role:'texture'});
+  for(let i=0;i<(Math.random()*3|0);i++)x.bubble(R(.05,.3),R(.001,.003),.2);}},
+ creek:{name:'Now: the river or creek as it is in the game (its babble)',period:[.008,.028],lap(x){
+  x.bubble(0,Math.exp(R(Math.log(.0008),Math.log(.006))),.1*Math.exp(gauss()*.5));}},
+};
+// Plays one style continuously. Live, call schedule() ahead of the clock (the
+// report does it on a timer, the ambience from its own scheduler); offline,
+// once for the whole render. Wind in mph makes the laps bigger and quicker
+// (PLACED: size 0.6 + wind/20, period x 1.15 - wind/60).
+export function lapPlayer(lab,{style='A',to=lab.master,pan=-.3,dist=25,knobs={},wind=8}={}){
+ let st=style,k=knobs,w=wind,next=lab.ctx.currentTime+.2,dest=null;
+ const phase=R(0,Math.PI*2),setPeriod=R(18,35);
+ const aim=()=>{dest=place(lab,{pan,dist,wet:.08,to});};aim();
+ return {
+  schedule(until){
+   const L=LAPS[st];if(!L)return;
+   if(next<lab.ctx.currentTime)next=lab.ctx.currentTime+.05;
+   while(next<until){
+    const size=clamp(.6+w/20,.5,1.6)*(.75+.25*Math.sin(next/setPeriod*Math.PI*2+phase))*R(.6,1.15);
+    // `gain` evens the styles out: measured offline at 20 m in 8 mph of wind,
+    // they average within about 2 dB of each other and of the pond today.
+    L.lap(kit(lab,dest,next,.5*(L.gain||1),k),size);
+    next+=R(...L.period)*clamp(1.15-w/60,.7,1.2);
+   }
+   lab.sweep();
+  },
+  set(o){if('style'in o)st=o.style;if('knobs'in o)k=o.knobs;if('wind'in o)w=o.wind;if('dist'in o||'pan'in o){if('dist'in o)dist=o.dist;if('pan'in o)pan=o.pan;try{dest.disconnect();}catch{}aim();}},
+  stop(){try{dest.disconnect();}catch{}},
+ };
+}
 
 // ---- night insects, round 2 (RESEARCH, round 2: the owner heard round 1 as
 // "really close but not quite right").
