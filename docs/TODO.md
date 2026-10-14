@@ -847,54 +847,23 @@ so several of these play differently as well as look different.
 
 ## Sounds (13 October 2026)
 
-Asked for by the owner on 13 October, on the branch `sounds`: ambience that
-does not loop, a sound per club, a landing per turf, trees and rocks; CC0 and
-credited if any asset is used. Everything is synthesised (RESEARCH, *Sound:
-the synthesised soundscape*), so nothing needs crediting. The synthesiser is
-`tools/sound-lab/synth.js`; the local listening report is
-`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`). Three
-rounds the same day: round 1 heard and answered, round 2 reworked, round 3
-**signed off** every club, landing, tree, rock and the cup at the owner's
-settings (`FINAL` in synth.js) and added water as a splash, the flagstick, the
-house and the score stings. CC0 recordings were compared and turned down.
+Built and in the game (see `# Done`, same heading). What is left:
 
-Decided by the owner, 13 October: **in launch-monitor mode no club sounds**
-(the golfer hears the real strike), every other sound plays; **no crowd
-reactions**; **no ball-rolling sound**.
-
-- [ ] **The owner picks from round 3**: the score-sting instrument (marimba,
-  bells or electric piano, one for all), water A or B, and one house material
-  or several by house style.
-- [ ] **Then into the game**: synth.js to `src/` unchanged, playing the signed-
-  off take of each sound.
-  - **Strikes** from the shot, keyboard shots only (the owner's call above);
-    the whoosh needs the impact scheduled about 0.45 s after it starts.
-  - **Landings** from contact events (surface and speed), **trees, rocks,
-    flagsticks and houses** from the collision index. simulateShot counts
-    `treeHits`, `homeHits` and `flagHits` today but reports no times or
-    speeds; each contact needs recording with its time, what was hit and the
-    speed into it, so the flight can play it at the right moment. Rocks and
-    props count as trees today.
-  - **The cup** when a ball is holed; **a score sting** when a hole is finished
-    (`scoreSting(strokes, par)` maps a score to its sting, matching
-    scoring.js's names).
-  - **Ambience** from the biome, wind, temperature and time of day; **water
-    only near water** (owner, round 2): each frame or shot, the distance from
-    the ball (or the camera while it flies) to the nearest pond, lake, river,
-    creek or -- on Links and Island -- the sea, from the course's water
-    bodies (`src/water-bodies.js`, `src/lakes.js`, `src/streams.js`), fed to
-    the ambience's `set({waterDist})`; which kind of water is nearest should
-    pick the sound (babble for a creek, lapping for a pond, surf for the sea)
-    rather than the biome's fixed mix.
-  - A volume control and mute in settings (a SCHEMA_VERSION question if it
-    joins a saved settings object); the browser only allows sound after a
-    click, so start the audio on the first input. **The driver as signed off
-    peaks 13 dB over full scale before the limiter** and is shaped by it into
-    what the owner heard: keep the limiter in the game's chain, or bake its
-    effect in.
-  - Then `npm run smoke`, PLAYING.md, DISTRIBUTION_REVIEW (no audio ships
-    today) and ARCHITECTURE.
-
+- [ ] **Re-run the smoke suite on an idle graphics card.** On 13 October the
+  `floodlit-night` and `text-size` journeys failed (a 0.93 s freeze, the course
+  drawn at 1224 of 1920 px) while another program held the card at 74%; both
+  passed in the run before the sound was wired in, and the sound's main-thread
+  cost is about a twentieth of a millisecond a frame (RESEARCH, *Round 4*).
+  Confirm green before merging.
+- [ ] **The nearest water should choose its sound.** The ambience hears water
+  by distance from the ball, but what it sounds like still comes from the
+  biome's fixed mix: a creek on a Midwest course laps like a pond. Which body
+  is nearest (`world.streams`, `lakeOwner`, ponds, the sea) could pick babble,
+  lapping or surf.
+- [ ] **The first shot of a fresh page.** If the very first thing a player
+  does is hit (so the audio starts with that key press), its strike plays
+  about half a second late, because the whoosh's lead cannot start before the
+  audio clock does. Every later shot is on time.
 
 # Done
 
@@ -4259,3 +4228,23 @@ engineering provenance pass, not legal advice.
   size (up to 10x), the pole never under 2 px; to scale up close; drawing only
   (renderer.js, `FLAG_MIN_PX`). Looked at in the game from a 374 yd tee.
   Owner to judge the size; the numbers are placed.
+
+## Sounds (13 October 2026)
+
+- [x] **Every sound, synthesised and signed off by the owner** over four
+  rounds of the local listening report (`tools/sound-lab`, `docs/reports/
+  sounds/`): strikes for driver, woods, irons, chips and putter; a landing per
+  surface; trunk, canopy, rock, flagstick, house (brick for all), the cup;
+  score stings on a marimba; and an ambience per biome that never loops -- wind
+  gusts, one bird at a time, crickets and cicadas by temperature, water only
+  near water, the odd plane. Nothing recorded, nothing to credit; CC0
+  recordings were compared and turned down (RESEARCH, *Sound*).
+- [x] **Wired into the game** (`src/sound.js`, `src/audio.js`): the strike on
+  keyboard shots only (no club sound with a launch monitor, the owner's call),
+  every contact as the ball reaches it from simulateShot's new `contacts`,
+  the canopy, the cup, the score sting with the hole-out banner, and the
+  ambience following biome, wind, temperature, night and the ball's distance
+  to water. A **Sound** window (main menu and in-round menu) with an off
+  switch and three volumes, kept on the device. Tested by
+  `tests/sound.test.mjs` and a `sound` smoke journey.
+- [x] **Decided, not built**: no crowd reactions, no ball-rolling sound.

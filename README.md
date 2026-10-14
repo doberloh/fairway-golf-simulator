@@ -74,6 +74,8 @@ that vary with Reynolds number and spin, spin axis, spin decay, wind-relative
 velocity, temperature and altitude. The bounce and the roll read the surface
 underneath the ball, and putting runs on a Stimp-anchored rolling model.
 
+Every sound is synthesised as you play -- strikes, every surface the ball meets, the cup, a score phrase, and a course ambience that never loops -- with no recordings shipped; with a launch monitor there is no club sound, because you hear your own.
+
 Tree trunks are solid and foliage is not, so a ball can be behind a tree
 without being stopped by a leaf; a trunk contact resolves the overlap and
 reflects only incoming motion, which means a close lie is always playable.

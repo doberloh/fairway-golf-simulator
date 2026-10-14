@@ -170,10 +170,10 @@ and repainted from the biome palette. Verified this pass rather than assumed:
   (Georgia / Times New Roman, Inter / system sans). No `@font-face` anywhere, so
   no font binary is distributed and naming a face in a CSS stack distributes
   nothing.
-- **No audio ships.** No sound file of any kind exists in the project. The
-  sounds being designed for the game (`tools/sound-lab/`, 13 October 2026) are
-  synthesised in the browser by code, so even when they ship they add code,
-  not recordings, and nothing to license.
+- **No audio files ship.** The game has sound from 13 October 2026, but every
+  sound is synthesised in the browser by its own code (`src/sound.js`,
+  `src/audio.js`): no recording, no asset, nothing to license. About 52 KB of
+  the built page once minified. It makes no network request.
 - **Zero runtime network requests**: no remote `<link>`, `<script>`, `fetch`,
   `Image()` or CSS `@import` in the built file. The http URLs inside it are text
   in the credits panel.

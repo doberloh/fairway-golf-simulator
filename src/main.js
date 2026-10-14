@@ -50,6 +50,7 @@ import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validat
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
+import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {randomSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -851,7 +852,7 @@ function takeShot(data=null){
   // This hole's flagstick is in unless the ball is on the green (setPinOut) or
   // the putter is in hand (liftFlag): exactly when it is drawn standing.
   flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -927,7 +928,7 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
- view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
+ view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);gameAudio?.strike({kind:record.kind,ballMs:record.shot.speed,monitor:!!record.typed});view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
@@ -952,12 +953,49 @@ function holeCard(event){
 // caller notes which seats were carded before the action, and whoever gained a
 // score since is announced. Replays never write a card; the range never has one.
 const cardedSeats=()=>round.cards.map(c=>Number.isFinite(c?.[round.hole]));
+// SOUND (audio.js says when, sound.js says what). A shot's contacts come from
+// simulateShot, plus the canopies it flew through and the cup if it dropped,
+// sorted once per result and kept off the record's enumerable fields so a
+// saved shot does not carry them.
+let gameAudio=null,lastSoundScene=0;
+function soundsOf(r,h){
+ if(r._sounds)return r._sounds;
+ const list=[...(r.contacts||[]),...canopyContacts(r.points||[],view.world?.trees||[],q=>h.toWorld(q))];
+ if(r.holed)list.push({t:r.time,what:'cup',speed:1,...r.end});
+ list.sort((a,b)=>a.t-b.t);
+ Object.defineProperty(r,'_sounds',{value:list});
+ return list;
+}
+// Where a sound is, heard from the camera: how far, and how far across.
+function heardFrom(c){
+ const w=view.course.toWorld(c),cam=view.camera,e=cam.matrixWorld.elements,dx=w.x-cam.position.x,dy=(c.y??cam.position.y)-cam.position.y,dz=w.z-cam.position.z,d=Math.hypot(dx,dy,dz)||1;
+ return {dist:Math.max(3,d),pan:clamp((dx*e[0]+dy*e[1]+dz*e[2])/d,-1,1)};
+}
+// THE FLIGHT'S SOUNDS play as the drawn ball reaches each contact. A jump of
+// more than half a second -- a skip, a stalled frame -- plays nothing: every
+// bounce at once is worse than silence.
+function playFlightSounds(f,from){
+ if(!gameAudio)return;const list=soundsOf(f.result,view.course);
+ if(f.elapsed-from>.5){f.heard=list.findIndex(c=>c.t>f.elapsed);if(f.heard<0)f.heard=list.length;return;}
+ f.heard??=0;
+ while(f.heard<list.length&&list[f.heard].t<=f.elapsed){const c=list[f.heard++];if(c.t>=from-.05)gameAudio.contact(c,heardFrom(c));}
+}
+// The place: biome, wind, temperature, night, and how near the ball is to
+// water -- the ball when there is one in play, the camera otherwise.
+function updateSoundScene(){
+ const w=view.world,h=view.course,cam=view.camera.position;
+ const ball=flight?.at??(appMode==='play'&&round?.position?round.position:null);
+ const at=ball&&h?h.toWorld(ball):{x:cam.x,z:cam.z};
+ gameAudio.setScene({biome:w.settings?.biome,wind:Number(w.settings?.wind)||0,tempC:h?.bio?.temperature??w.bio?.temperature,
+  night:!!view.solar&&view.solar.elevation<-4,waterDist:nearestWater(w,at.x,at.z)});
+}
 let holeOutTimer=null;
 function announceHoleOut(before){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
  if(!seats.length)return;
  const seat=seats[0],score=round.cards[seat][round.hole],label=holeOutLabel(score,course.par);
  if(!label)return;
+ gameAudio?.score(score,course.par);
  // Who, only when there is more than one golfer to tell apart. A scramble
  // score belongs to the team, so the team is named.
  const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
@@ -2930,9 +2968,9 @@ function openSheet(name){stopTour();
 // so the course stays visible behind them and several can be up at once. The
 // rest -- setting up a round, the scorecard, the studio -- are once-a-round
 // forms, and a wide sheet that takes the whole screen is right for those.
-const TOOL_PANELS=new Set(['camera','graphics','bag','flight','putting','shot','range','lab','views','shotdata']);
-const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:300,height:260},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',shotdata:'Shot data'};
+const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
+const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:300,height:260},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
+const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Shot shape',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -3685,6 +3723,20 @@ function renderPanel(name,content){
    // holds it, so picking it again fires no change event and nothing happens.
    finally{$('importFile').value='';}
   };
+ }else if(name==='sound'){
+  // Kept on this device (audio.js, its own store), like the graphics: not part
+  // of a course or a round, so nothing saved changes shape.
+  const p=gameAudio?.prefs??{on:true,master:80,effects:100,ambience:70};
+  content.innerHTML=`<p>Every sound in Fairway is made as you play, never a recording, so nothing repeats.</p>
+  <label class="check"><input id="sndOn" type="checkbox" ${p.on?'checked':''}> Sound on</label>
+  ${slider('sndMaster','Volume',p.master,0,100,'%',5)}
+  ${slider('sndEffects','Shots, landings and scores',p.effects,0,100,'%',5)}
+  ${slider('sndAmbience','The course around you',p.ambience,0,100,'%',5)}
+  <p class="note">Wind, birds, insects at night, water when your ball is near it, the odd plane overhead.</p>
+  <p class="note">With a launch monitor armed there is no club sound: you hear your own strike. Everything else plays.</p>`;
+  $('sndOn').onchange=()=>gameAudio?.setPrefs({on:$('sndOn').checked});
+  for(const [id,key] of [['sndMaster','master'],['sndEffects','effects'],['sndAmbience','ambience']])
+   $(id).addEventListener('input',()=>gameAudio?.setPrefs({[key]:Number($(id).value)}));
  }else if(name==='graphics'){
   content.innerHTML=`<p>These stay on this device and never travel with a course, so the same course looks the way each machine can afford on every screen it is opened on.</p>
   <label class="field">Quality${QUALITY.map(q=>'').join('')}<select id="gfxQuality">${QUALITY.map(q=>`<option value="${q}">${QUALITY_LABELS[q]}</option>`).join('')}</select></label>
@@ -4279,6 +4331,7 @@ function bind(){
  $('menuCamera').onclick=()=>openPanel('camera');
  $('menuMonitor').onclick=()=>openPanel('monitor');
  $('menuGraphics').onclick=()=>openPanel('graphics');
+ $('menuSound').onclick=()=>openPanel('sound');
  $('studioSettings').onclick=()=>panel==='course'?closePanel():openPanel('course');
  $('studioRegenerate').onclick=()=>regenerateStudio();
  $('studioSave').onclick=()=>openPanel('library');
@@ -4312,7 +4365,7 @@ function bind(){
  const toPlay=()=>{closeMenuDrop();if(appMode==='studio')return returnToMenu();if(appMode==='play'){closePanel();return;}returnToMenu();};
  $('dropStudio').onclick=toStudio;$('dropPlay').onclick=toPlay;
  $('dropMenu').onclick=()=>{closeMenuDrop();returnToMenu();};
- for(const [id,name] of [['dropLibrary','library'],['dropGraphics','graphics'],['dropHelp','help']])
+ for(const [id,name] of [['dropLibrary','library'],['dropGraphics','graphics'],['dropSound','sound'],['dropHelp','help']])
   $(id).onclick=()=>{closeMenuDrop();openPanel(name);};
  $('menuNav').onclick=e=>{e.stopPropagation();toggleMenuDrop();};
  document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&!e.target.closest('.sim-time'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=closePanel;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};$('swing').onclick=()=>takeShot();$('skipFlight').onclick=finishShot;
@@ -5108,6 +5161,7 @@ function tick(now){
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
  diagnosticFrames.sample(now-lastTick);
+ if(gameAudio&&view?.world&&now-lastSoundScene>1000){lastSoundScene=now;updateSoundScene();}
  autoResolutionFrame(now,now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
@@ -5140,7 +5194,7 @@ function tick(now){
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
  if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);$('flightAltitude').textContent='Hole flyover · Circling the hole';drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
- if(flight){flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
+ if(flight){const heardFrom=flight.elapsed;flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;playFlightSounds(flight,heardFrom);const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
   // The drawn ball skips a little while it rolls (roll-hop.js); `p` itself, which
   // the trail and the camera use, is the simulated position, untouched.
   flight.hop??=createRollHop(seedFor(flight.result));
@@ -5248,6 +5302,7 @@ try{
  // Text size first: the view measures its canvas as it is built.
  applyUiScale();addEventListener('resize',applyUiScale);
  view=new GolfView($('scene'),graphics.quality);
+ gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
  view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);

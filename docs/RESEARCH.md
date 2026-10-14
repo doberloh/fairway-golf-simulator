@@ -7180,8 +7180,9 @@ iron, the putter and a chip, a landing for each turf, and hits on trees and
 rocks. Any asset had to be CC0 with proper credit, and synthesis was allowed.
 Nothing goes into the game until the owner has listened and the sounds have
 been iterated: the listening report is `docs/reports/sounds/index.html`
-(local), built by `node tools/sound-lab/build.mjs` from
-`tools/sound-lab/synth.js`.
+(local), built by `node tools/sound-lab/build.mjs` from the synthesiser,
+first `tools/sound-lab/synth.js` and, once the sounds went into the game,
+`src/sound.js`.
 
 ### Why synthesis rather than recordings
 
@@ -7319,7 +7320,7 @@ camera) and the course's water bodies; see TODO, *Sounds*.
 
 The owner: "I think I'm happy with the sounds with the settings in my copy."
 Every club, every landing, the trees, the rock and the cup are now `FINAL` in
-synth.js -- the chosen take with the owner's sliders folded in, the only take
+synth.js (now src/sound.js) -- the chosen take with the owner's sliders folded in, the only take
 left, so 100% on every slider is exactly what they heard. Their final picks:
 driver C (pitch 0.81 on top of C's 1.6, so the main ring sits near 5.4 kHz --
 between the round-2 question's 3.5 and 6.6 kHz, and nearer the published
@@ -7393,11 +7394,80 @@ clack, tones 190-1,350 Hz), brick or stone (a hard thwack), a roof (a thunk,
 then nine ticks of the ball rattling down the shingles) and a window (a glassy
 tink; it does not break). PLACED.
 
+### Round 4: everything signed off, and the sounds in the game (13 October 2026)
+
+The owner's last picks: the marimba for every score sting, the ace, albatross
+and eagle at pitch 0.8 and the ace's mallet at 2.15x; water take A (the
+splash) at texture 3.4, body 1.95, pitch 0.83, length 1.65 over its round-2
+sliders; the cup's length 0.95 on top of round 3's; the flagstick A at length
+0.4, crack 3.95, pitch 0.76; and **one material for every house, brick**, at
+pitch 0.66, length 0.3, crack 0.25, texture 1.95 (its Thump slider, 2.05,
+moves nothing: the brick take has no thump). All folded into `FINAL`; every
+sound the game can play now has exactly one take (`tests/sound.test.mjs`).
+
+**How the game plays them** (`src/audio.js`; `src/sound.js` is the
+synthesiser, moved from the lab unchanged, and the report now inlines it):
+
+- **The strike** at the moment of the shot, keyboard shots only -- none from a
+  launch monitor, the owner's rule. Which strike: driver, woods and hybrids,
+  irons and wedges, putter; an iron or wedge whose head speed is under 55 mph
+  is a chip (PLACED). Head speed is ball speed over a smash factor of about
+  1.48 for a driver, 1.45 a wood, 1.4 a hybrid, 1.33 an iron, 1.2 a wedge,
+  1.6 a putter (typical figures, PLACED; only loudness and brightness follow
+  it). **The whoosh cannot lead the ball**: the lab plays the impact 0.45 s
+  after the whoosh begins, the game fires the ball the instant the key goes
+  down, so the strike is started 0.43 s in the past and the first part of the
+  whoosh goes unheard. Delaying the ball to make room for it was rejected: it
+  changes how a shot feels to play. **Never before zero**: the very first shot
+  of a fresh page has an audio clock near zero, and a negative start time
+  throws -- the smoke run's `no-swallowed-errors` journey caught exactly that.
+- **Every contact** -- each turf bounce, a trunk, a rock, a flagstick, a house,
+  the water -- is recorded by simulateShot with its time, what was hit and the
+  speed into it (`contacts`; the flight itself does not read it), and plays as
+  the drawn ball reaches that moment. Its distance and side are measured from
+  the camera, so a landing seen from the tee is quieter and duller than one
+  the landing camera watches. A contact under 0.8 m/s is skipped (PLACED). A
+  frame that jumps more than half a second (a skip) plays nothing. Rocks and
+  a lit floodlight mast use the rock, Haunted Hollow's props the trunk.
+- **The canopy is not a collider** -- the physics stops at trunks -- but a ball
+  flying through leaves still rustles: once per tree whose crown the flight
+  passes through, between 45% and 100% of the tree's height, within its crown
+  radius (`canopyContacts`, PLACED band).
+- **The cup** as the ball drops; **the score sting** as the hole-out banner
+  lands, by the same names scoring.js uses (a decimal-putting score plays the
+  nearest whole score's sting).
+- **The ambience** follows the course: its biome, its wind in mph, the
+  course's own temperature (crickets and cicadas), night when the sun is more
+  than 4 degrees below the horizon (PLACED), and **water by distance from the
+  ball** -- or the camera when no ball is in play -- found from the world's own
+  surface query on rings of 8 to 300 m (0.2-0.4 ms a query, once a second).
+  What kind of water it sounds like still comes from the biome's mix, not the
+  nearest body (TODO).
+- **A Sound window** (main menu and the in-round menu): on/off, volume, shots
+  and landings, and the course around you, kept on the device in its own
+  store (`fairway-sound-v1`), not in a course or a round. Nothing is made until
+  the player's first click, tap or key (the browser's rule); the audio is
+  suspended while the page is hidden.
+
+**Cost, measured.** The ambience's scheduling takes 0.2-1.3 ms of the main
+thread per second of sound (offline renders of five scenes, day and night) --
+about a twentieth of a millisecond per frame; the audio itself runs on the
+browser's audio thread. The two sound modules add about 52 KB to the built
+page once minified (17.0 MB in all).
+
+**The smoke run that day.** 24 of 26 journeys passed, including a new `sound`
+journey. `floodlit-night` (a 0.93 s freeze turning the floodlights on) and
+`text-size` (the course drawn at 1224 px of 1920) failed while another
+program held the graphics card at 74% (`nvidia-smi`); both are frame-timing
+checks, both passed in the run before the sound was wired in, and the sound's
+main-thread cost above is two orders too small to cause either. Re-run on an
+idle card before merging (TODO).
+
 ### Open, for the owner
 
-- The score-sting instrument, water A or B, and the house material (round 3's
-  report). Decided: the driver (take C, main ring near 5.4 kHz), no club sounds
-  under a launch monitor, no crowd, no ball rolling, no CC0 recordings.
+Nothing. Every sound is decided (round 4). Decided along the way: the driver
+(take C, main ring near 5.4 kHz), no club sounds under a launch monitor, no
+crowd, no ball rolling, no CC0 recordings, one material for every house.
 
 - Every PLACED number above is waiting on the owner's ears, which is what the
   report's takes, sliders and notes are for.

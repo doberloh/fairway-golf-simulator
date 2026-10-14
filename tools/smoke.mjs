@@ -1285,6 +1285,34 @@ const JOURNEYS = [
  },
 
  {
+  name: 'sound',
+  what: 'the Sound window turns the sound down and off and keeps the choice, and shots still fly and land with sound playing',
+  async run(t) {
+   await menuReady(t);
+   await t.step('Sound → its window, from the menu', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Sound', exact: true}).click();
+    await t.until(async () => !!(await t.panelShowing('Sound')), 'the sound window', 5 * SLOW);
+   });
+   await t.step('the volume and the switch are kept', async () => {
+    await t.page.locator('#sndMaster').evaluate(el => { el.value = '40'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+    const box = t.page.getByRole('checkbox', {name: 'Sound on'});
+    await box.setChecked(false);
+    await box.setChecked(true);
+    const kept = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-sound-v1') || '{}'));
+    if (kept.master !== 40 || kept.on !== true) throw new Error(`the sound settings were not kept: ${JSON.stringify(kept)}`);
+    await t.closePanel('Sound');
+   });
+   await t.step('Driving range, with sound: shots fly and land', async () => {
+    await fromMenu(t, 'Driving range');
+    await t.press('Open the driving range');
+    await t.inPlay(120 * SLOW);
+    await t.shot();
+    await t.shot();
+   });
+  },
+ },
+
+ {
   name: 'studio',
   what: 'Course studio grows a landscape and saves it as a course',
   async run(t) {

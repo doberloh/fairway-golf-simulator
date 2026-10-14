@@ -51,14 +51,7 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <div class="note"><p><b>Every sound on this page is made live by the browser.</b> There are no recordings, so there is nothing to license or attribute, and the game file barely grows. Each play is new: strikes vary a little every time, and the background sounds are random processes (gusts, birds, bubbles, passing planes) rather than a loop. Leave a scene running for ten minutes and nothing will come round again.</p>
 <p>Use headphones or decent speakers; a laptop speaker loses the low thumps. For each sound, pick the take (A, B or C) that is closest, nudge the sliders under <i>Adjust</i>, and type a note. <b>Copy my notes</b> (bottom right) gathers every change and note into one block to paste back to me. Your settings stay in this browser between visits.</p></div>
 
-<div class="note q"><p><b>Round 3, the final one.</b> Everything you signed off is now built in exactly as you set it: each of those sounds has a single take, and 100% on every slider is what you heard. Your round-2 notes are kept with me. New this round:</p>
-<ul>
-<li><b>Water</b>: a splash, not bubbles. Take A uses your round-2 sliders. C is the old bubbly one for comparison.</li>
-<li><b>Flagstick</b> and <b>house</b> hits (section 4). The flagstick is now solid in the game while it stands in the hole. Houses were already solid, but their solid box was turned the wrong way on most holes (section 6).</li>
-<li><b>Score stings</b> for every score from hole in one to triple bogey and worse (section 5), in three instruments. Pick one instrument for all of them.</li>
-<li><b>Birds</b> adjusted after measuring the CC0 recordings. The dove is higher (about 470-520 Hz), its leap smaller, its song longer (about 4 s), and it repeats every 5-9 s. Songbird songs are shorter, higher and sparser.</li>
-<li>No CC0 section, as you decided. Your choice on the launch monitor is recorded: in launch-monitor mode no club sounds, everything else plays.</li>
-</ul></div>
+<div class="note q"><p><b>Round 4: every sound is signed off and playing in the game.</b> Each sound has one take, exactly as you set it: the marimba for every score, water A, the flagstick A, brick for every house. This page now plays the game's own sound file, so what you hear here is what the game plays. In a round, the <b>Sound</b> window (main menu, or the menu in a round) has the volumes and an off switch.</p></div>
 
 <div class="bar">
  <button class="act" id="unlock">Start sound</button>
@@ -93,7 +86,7 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <div class="grid" id="solid"></div>
 
 <h2>5. Score stings</h2>
-<p class="muted">One per score, played when a hole is finished. Each card's A, B and C are the three instruments. Pick one instrument for the whole set; the buttons below play every score in order with one instrument.</p>
+<p class="muted">One per score, played as the hole-out banner lands. Signed off on the marimba; the buttons below still play the whole set in each instrument, for the record.</p>
 <div class="row" id="scoreAll" style="margin-bottom:10px"></div>
 <div class="grid" id="scores"></div>
 <h3 style="margin-top:20px">The cup</h3>
@@ -105,9 +98,7 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <p><b>Flagsticks stay visible from a distance.</b> Past the point where the stick would shrink to a few pixels, the stick and its flag grow on screen so they keep a findable size, and the pole is never thinner than about two pixels. Close up they are exactly to size, and the ball always hits the real-sized stick.</p></div>
 
 <h2>7. Questions for you</h2>
-<div class="note q"><p><b>Score stings:</b> which instrument (marimba, bells or electric piano)?</p></div>
-<div class="note q"><p><b>House:</b> one material for every house, or a different one per house style?</p></div>
-<div class="note q"><p><b>Water:</b> A or B?</p></div>
+<div class="note"><p>None open. Everything here is decided.</p></div>
 
 <h2>8. How each sound is made</h2>
 <table><thead><tr><th>Sound</th><th>Made from</th><th>Where the numbers come from</th></tr></thead><tbody>
@@ -140,9 +131,9 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,score,STRIKES,IMPACTS,SCORES,INSTRUMENTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz};
 
 // ------------------------------------------------------------ the page
-// v2 for round 2, v3 for round 3: each time the owner's sliders are baked
-// into the takes, so applying them again on top would double them.
-const KEY='fairway-sound-lab-v3';
+// v2, v3, v4 for rounds 2-4: each time the owner's sliders are baked into the
+// takes, so applying them again on top would double them.
+const KEY='fairway-sound-lab-v4';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};

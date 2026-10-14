@@ -101,7 +101,7 @@ The list below is what exists locally.
   the game, playable: ambience per biome, each club, each surface, trees and
   rocks, the flagstick and houses, and the score stings, with takes to choose
   between, sliders and notes to send back (`tools/sound-lab/build.mjs`).
-  Synthesised, not recorded; signed off in round 3; not in the game yet.
+  Synthesised, not recorded; all signed off (round 4) and in the game.
 - **[reports/chipping/](reports/chipping/index.html)** — fifteen chipping and
   approach clips at 10 to 100 yards, low, stock and high, each with its launch
   numbers, carry and roll (`tools/landing-report/approach-*.mjs`).

@@ -3,17 +3,19 @@
 //   node tools/sound-lab/build.mjs
 //
 // The report is one self-contained page (it opens from the file, no server)
-// with tools/sound-lab/synth.js inlined, so what the owner hears is exactly
-// the code that would move into the game. (cc0-candidates.json beside it is
-// the record of the CC0 search, which the owner turned down in round 3; the
-// report no longer shows it.) Like every report it is local and git-ignored;
-// this script and the files beside it are what is tracked.
+// with src/sound.js inlined, so what the owner hears is exactly what the game
+// plays. (cc0-candidates.json beside it is the record of the CC0 search, which
+// the owner turned down in round 3; the report no longer shows it.) Like every
+// report it is local and git-ignored; this script and the files beside it are
+// what is tracked.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
 
 const here=dirname(fileURLToPath(import.meta.url)),root=join(here,'..','..');
-const synth=readFileSync(join(here,'synth.js'),'utf8').replace(/^export /gm,'');
+// The game's own sound module, not a copy: src/sound.js is what plays in the
+// game, so the report plays exactly that.
+const synth=readFileSync(join(root,'src','sound.js'),'utf8').replace(/^export /gm,'');
 const built=new Date().toISOString().slice(0,16).replace('T',' ');
 const page=readFileSync(join(here,'page.html'),'utf8')
  .replace('/*SYNTH*/',()=>synth)

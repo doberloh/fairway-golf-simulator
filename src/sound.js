@@ -1,14 +1,17 @@
-// FAIRWAY SOUND LAB: every sound is synthesised live with the Web Audio API.
+// FAIRWAY'S SOUNDS: every one is synthesised live with the Web Audio API.
 //
 // No recordings ship, so there is nothing to license or attribute, nothing
-// adds to the single-file build, and no two plays are the same sample: every
-// strike re-rolls its modes a little, and the ambience is a set of random
-// processes (gusts, birds, bubbles, planes) rather than a file on repeat.
+// adds to the single-file build but this code, and no two plays are the same
+// sample: every strike re-rolls its modes a little, and the ambience is a set
+// of random processes (gusts, birds, bubbles, planes) rather than a file on
+// repeat.
 //
-// This module is written to move into src/ unchanged once the owner approves
-// the sounds: it touches no DOM, takes an AudioContext (live or offline) and
-// returns plain functions. tools/sound-lab/build.mjs inlines it into the
-// listening report, docs/reports/sounds/index.html (local, never committed).
+// What a sound IS lives here; WHEN the game plays one lives in audio.js. This
+// file touches no DOM and takes an AudioContext (live or offline), so the
+// owner's listening report (tools/sound-lab/build.mjs inlines this very file
+// into docs/reports/sounds/index.html, local) plays exactly what the game does.
+// Every sound was chosen by the owner over four rounds on 13 October 2026;
+// `FINAL` folds their settings in.
 //
 // Numbers with a published source are noted in RESEARCH.md, "Sound: the
 // synthesised soundscape"; everything else here is PLACED by ear and says so.
@@ -50,7 +53,10 @@ export function createSoundLab(ctx,out=ctx.destination){
  master.connect(lim);lim.connect(out);
  const verb=ctx.createConvolver();verb.buffer=outdoorTail(ctx,1.6);
  const verbIn=ctx.createGain();verbIn.gain.value=.5;verbIn.connect(verb);verb.connect(master);
- const lab={ctx,master,out:lim,verbIn,NOISE:whiteNoise(ctx,12),trash:[],
+ // Effects (strikes, landings, scores) and the ambience have their own
+ // volumes in the game, so each has its own gain into the master.
+ const fx=ctx.createGain();fx.connect(master);
+ const lab={ctx,master,fx,out:lim,verbIn,NOISE:whiteNoise(ctx,12),trash:[],
   // Nodes are disconnected once their sound is over, so an hour of ambience
   // does not leave thousands of finished nodes hanging off the graph.
   track(nodes,until){this.trash.push([nodes,until]);},
@@ -63,7 +69,7 @@ export function createSoundLab(ctx,out=ctx.destination){
 // Where a sound is. pan -1 (left) .. 1 (right); distance in metres; level is
 // 1 at 10 m and falls as 1/distance; air takes the treble; a little of it goes
 // to the outdoor tail, more the further away it is. Returns the node to feed.
-export function place(lab,{pan=0,dist=10,wet=.12,to=lab.master,until}={}){
+export function place(lab,{pan=0,dist=10,wet=.12,to=lab.fx,until}={}){
  const {ctx}=lab,g=ctx.createGain(),air=ctx.createBiquadFilter(),p=ctx.createStereoPanner();
  g.gain.value=clamp(10/Math.max(dist,1),0,2);
  air.type='lowpass';air.frequency.value=airCutoff(dist);air.Q.value=.5;
@@ -510,8 +516,19 @@ export const FINAL={
   iron:['B',{body:.25,click:2.95,pitch:1.47,level:1.25,whoosh:1.35}],chip:['B',{click:2.25}],putter:['B',{length:.4,click:2.25}]},
  impacts:{green:['B'],fringe:['A'],fairway:['A'],tee:['A'],semi:['A',{texture:.7,length:.6}],rough:['B'],
   sand:['A',{bright:.95,body:1.05,texture:3.2,length:.4,pitch:.7}],trunk:['A',{click:4,length:.2,pitch:.75,texture:2.65}],
-  canopy:['A'],rock:['C',{length:.4}],cup:['A',{pitch:.67,length:1.55,click:1.95}]},
+  canopy:['A'],rock:['C',{length:.4}],cup:['A',{pitch:.67,length:1.55,click:1.95}],
+  // Round 4 (the owner, 13 October 2026): water, the flagstick and the house
+  // signed off; one material, brick, for every house. The cup's length was
+  // nudged once more on top of round 3's. The house's Thump slider (2.05)
+  // moves nothing: the brick take has no thump. Kept, as heard.
+  water:['A',{texture:3.4,body:1.95,pitch:.83,length:1.65}],flagstick:['A',{length:.4,click:3.95,pitch:.76}],
+  house:['B',{pitch:.66,length:.3,click:.25,body:2.05,texture:1.95}]},
+ // The score stings: the marimba (A) for every score, the top three a little
+ // lower, and the ace with more mallet.
+ scores:{ace:['A',{click:2.15,pitch:.8}],albatross:['A',{pitch:.8}],eagle:['A',{pitch:.8}],birdie:['A'],par:['A'],bogey:['A'],double:['A'],worse:['A']},
 };
+// The cup was signed off in round 3 and touched again in round 4: fold both.
+FINAL.impacts.cup[1]={...FINAL.impacts.cup[1],length:1.55*.95};
 for(const [group,table] of [[STRIKES,FINAL.strikes],[IMPACTS,FINAL.impacts]])
  for(const [id,[take,knobs={}]] of Object.entries(table)){
   const t=group[id].takes[take];
@@ -544,11 +561,23 @@ export const SCORES={
  double:{label:'Double bogey',notes:()=>[[0,75,.5],[.2,72,.45],[.42,68,.4]]},
  worse:{label:'Triple bogey or worse',notes:()=>[[0,72,.45],[.2,71,.4],[.4,70,.38],[.62,69,.36]]},
 };
-for(const s of Object.values(SCORES)){s.note='';s.knobs=['level','pitch','length','bright','click'];s.takes=Object.fromEntries(Object.entries(INSTRUMENTS).map(([k,v])=>[k,{name:v.name}]));}
-// Which score name (scoring.js, scoreName) plays which sting.
-export const scoreSting=(strokes,par)=>strokes===1?'ace':strokes-par<=-3?'albatross':strokes-par===-2?'eagle':strokes-par===-1?'birdie':strokes===par?'par':strokes-par===1?'bogey':strokes-par===2?'double':'worse';
+for(const s of Object.values(SCORES)){s.note='';s.knobs=['level','pitch','length','bright','click'];s.takes=Object.fromEntries(Object.entries(INSTRUMENTS).map(([k,v])=>[k,{name:v.name,instrument:k}]));}
+for(const [id,[take,knobs={}]] of Object.entries(FINAL.scores)){
+ const t=SCORES[id].takes[take];
+ SCORES[id].takes={A:{name:`Signed off (${t.name})`,instrument:take,base:knobs}};SCORES[id].final=true;
+}
+// Which sting a finished hole plays: the same names as scoring.js's
+// holeScoreName. A decimal-putting score has no name; it plays the nearest
+// whole score's sting rather than falling through to "worse".
+export const scoreSting=(strokes,par)=>{
+ if(strokes===1)return 'ace';
+ const d=Math.round(strokes-par);
+ return d<=-3?'albatross':d===-2?'eagle':d===-1?'birdie':d===0?'par':d===1?'bogey':d===2?'double':'worse';
+};
 export function score(lab,name,{take='A',knobs={},at}={}){
- const I=INSTRUMENTS[take]||INSTRUMENTS.A,t=(at??lab.ctx.currentTime)+.05;
+ const T=SCORES[name].takes[take]||SCORES[name].takes.A;
+ const I=INSTRUMENTS[T.instrument||take]||INSTRUMENTS.A,t=(at??lab.ctx.currentTime)+.05;
+ knobs=mergeKnobs(T.base,knobs);
  const dest=place(lab,{dist:10,wet:.35,until:t+5});
  // Level 0.14: at 0.32 the hole-in-one peaked 5 dB over full scale and every
  // sting averaged louder than a drive (check.mjs, 13 October 2026).
@@ -689,8 +718,11 @@ function chirp(lab,dest,t,f,pulses,amp){
 // offline, one call schedules a whole render.
 // onSong, if given, hears every bird song as {sp, t, end}: check.mjs uses it
 // to prove no two ever overlap.
-export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
- const {ctx}=lab,bus=ctx.createGain();bus.gain.value=0;bus.connect(lab.master);
+export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}={}){
+ const {ctx}=lab,bus=ctx.createGain();bus.gain.value=0;bus.connect(to);
+ // The course's own temperature, when the game knows it, rather than the
+ // biome's (set({tempC})): crickets and cicadas follow it.
+ let tempOverride=null;const temp=()=>tempOverride??S.tempC;
  // Water is heard only near water (owner, round 2). Every water sound runs
  // through this one gain, set from the distance to the nearest water: full
  // within 25 m, falling as 1/distance, gone by 300 m (PLACED). In the game the
@@ -798,7 +830,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
   });
   stream('surf',()=>S.water.surf&&near()?S.water.surf*mix.water/10:0,t=>wave(t));
   stream('plane',()=>{const p=S.planes,w=(p.jet||0)+(p.prop||0);return night?w*mix.planes/600:w*mix.planes/240;},t=>flyover(t,pickWeighted(S.planes)));
-  stream('cicada',()=>!night&&S.insects.cicada&&S.tempC>=24?S.insects.cicada*mix.insects/60:0,t=>cicada(t));
+  stream('cicada',()=>!night&&S.insects.cicada&&temp()>=24?S.insects.cicada*mix.insects/60:0,t=>cicada(t));
  }
  function side(p){return p<-.33?'left':p>.33?'right':'ahead';}
  function wave(t){
@@ -860,13 +892,13 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
   log(t,`${jet?'jet':'small prop plane'} ${off<0?'to the left':'to the right'}, ${Math.round(H)} m up, ${Math.round(T)} s`);
  }
  function scheduleCrickets(until){
-  const rate=dolbear(S.tempC)/60,on=night&&mix.insects>0&&rate>0;
+  const rate=dolbear(temp())/60,on=night&&mix.insects>0&&rate>0;
   if(!on){chorus=null;fields=[];return;}
   const from=Math.max(cursor,ctx.currentTime);
   if(!chorus){
-   const n=Math.round(3+3*mix.insects),f=treeCricketHz(S.tempC);
+   const n=Math.round(3+3*mix.insects),f=treeCricketHz(temp());
    chorus={next:from+R(.2,1),n:0,members:Array.from({length:n},()=>({f:f*J(1,.025),lag:0,d:place(lab,{pan:R(-.9,.9),dist:R(8,45),wet:.08,to:bus})}))};
-   fields=S.tempC>=18?Array.from({length:mix.insects>1.2?2:1},()=>({f:R(4500,5000),rate:R(1.2,2.5),next:from+R(0,3),d:place(lab,{pan:R(-.8,.8),dist:R(5,25),wet:.06,to:bus})})):[];
+   fields=temp()>=18?Array.from({length:mix.insects>1.2?2:1},()=>({f:R(4500,5000),rate:R(1.2,2.5),next:from+R(0,3),d:place(lab,{pan:R(-.8,.8),dist:R(5,25),wet:.06,to:bus})})):[];
   }
   while(chorus.next<until){
    // Every ~20 chirps the order shuffles: a new leader, the rest within a few
@@ -905,7 +937,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
    lab.track(old.flatMap(L=>[L.s,L.fl,L.g,L.p]).concat(oldBus.filter(Boolean)),now+1.3);},
   // Offline renders schedule everything up front.
   schedule,
-  set(o){if('night'in o)night=o.night;if('wind'in o)windMph=o.wind;
+  set(o){if('night'in o)night=o.night;if('wind'in o)windMph=o.wind;if('tempC'in o)tempOverride=o.tempC;
    if('waterDist'in o){waterDist=o.waterDist;waterBus.gain.setTargetAtTime(proximity(waterDist),ctx.currentTime,.5);}
    for(const k of Object.keys(mix))if(k in o)mix[k]=o[k];
    if(('insects'in o||'night'in o)&&chorus){lab.track(chorus.members.map(m=>m.d).concat(fields.map(c=>c.d)),ctx.currentTime+2);chorus=null;fields=[];}},

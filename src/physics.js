@@ -595,6 +595,12 @@ export function simulateShot(shot,course,options={}){
  // Counted for the player's profile, and for nothing else: a strike is a
  // reflection of a ball moving INTO a trunk or a wall, not a frame spent touching one.
  let treeHits=0,homeHits=0,flagHits=0;
+ // EVERY CONTACT, FOR THE SOUND (13 October 2026). When it happened, what the
+ // ball met and how fast it was going into it -- the turf of each bounce, a
+ // trunk, a rock, a flagstick, a house, the water -- with where, so audio.js
+ // can play each one as the drawn ball reaches it. Recorded, never read here:
+ // nothing in the flight depends on it.
+ const contacts=[],touch=(what,speed)=>contacts.push({t,what,speed,x:p[0],y:p[1],z:p[2]});
  // The rim is cut turf, so it costs the ball what this green's turf costs it.
  const rimMu=rimResistance(options.turf);
  // A small spatial index includes neighboring holes without testing every trunk
@@ -614,13 +620,13 @@ export function simulateShot(shot,course,options={}){
  // vertical cylinders, so there is no second collision routine to keep honest.
  const solids=[...(course.world?.trees||course.trees||[])];
  for(const r of course.world?.rocks||[])
-  solids.push({x:r.x,z:r.z,y:r.y,h:Math.max(.2,r.top-r.y),radius:r.reach});
+  solids.push({x:r.x,z:r.z,y:r.y,h:Math.max(.2,r.top-r.y),radius:r.reach,solid:'rock'});
  // Haunted Hollow's giant pumpkins and toadstools: the same cylinder, as wide
  // as the model and as tall as it is drawn.
  for(const p of course.world?.props||[])
-  solids.push({x:p.x,z:p.z,y:p.y,h:p.h,radius:p.reach});
+  solids.push({x:p.x,z:p.z,y:p.y,h:p.h,radius:p.reach,solid:'prop'});
  for(const q of options.poles||[])
-  solids.push({x:q.x,z:q.z,y:q.y,h:q.height,radius:POLE_RADIUS});
+  solids.push({x:q.x,z:q.z,y:q.y,h:q.height,radius:POLE_RADIUS,solid:'pole'});
  // THE FLAGSTICK IS SOLID WHILE IT STANDS IN THE HOLE (the owner, 13 October
  // 2026). It used to be scenery and a ball flew straight through it. It is the
  // same cylinder as everything else, at its base radius, standing on the cup
@@ -692,6 +698,7 @@ export function simulateShot(shot,course,options={}){
     descentAngle=Math.atan2(-v[1],hypot(v[0],v[2]))/rad;
    }
    p[1]=ground;
+   touch(surface,hypot(...v));
    if(surface==='water'){hazard='Water';break;}
    const e=.1,n=[-(course.height(p[0]+e,p[2])-course.height(p[0]-e,p[2]))/(2*e),1,-(course.height(p[0],p[2]+e)-course.height(p[0],p[2]-e))/(2*e)];
    const nl=hypot(...n);for(let i=0;i<3;i++)n[i]/=nl;
@@ -822,7 +829,7 @@ export function simulateShot(shot,course,options={}){
    if(rebound<.65){rolling=true;const settleCross=cross(nextOmega,groundNormal),settleSlip=v.map((a,i)=>a-rebound*groundNormal[i]-R*settleCross[i]);v=v.map((a,i)=>a-rebound*groundNormal[i]-settleSlip[i]/3.5);v[1]=0;w=[R*settleCross[0],R*settleCross[2]];}
 
   }
-  if(rolling&&surface==='water'){hazard='Water';break;}
+  if(rolling&&surface==='water'){touch('water',hypot(...v));hazard='Water';break;}
   if(outOfBounds(course,p[0],p[2])){hazard='Out of bounds';break;}
   // Resolve penetration as well as swept contact. Reflect only incoming velocity;
   // an escaping ball must never be flipped back into the same trunk each tick.
@@ -831,7 +838,7 @@ export function simulateShot(shot,course,options={}){
    const dx=p[0]-old[0],dz=p[2]-old[2],ox=old[0]-tree.x,oz=old[2]-tree.z,A=dx*dx+dz*dz,B=2*(ox*dx+oz*dz),C=ox*ox+oz*oz-radius*radius,disc=B*B-4*A*C;
    let u=C<0?0:A>1e-12&&disc>=0?(-B-Math.sqrt(disc))/(2*A):-1;if(u<0||u>1)continue;
    let nx=old[0]+u*dx-tree.x,nz=old[2]+u*dz-tree.z,n=hypot(nx,nz);if(n<1e-8){nx=-v[0];nz=-v[2];n=hypot(nx,nz)||1;if(n===1&&nx===0&&nz===0)nx=1;}nx/=n;nz/=n;
-   const incoming=v[0]*nx+v[2]*nz;if(incoming<0){v[0]-=1.3*incoming*nx;v[2]-=1.3*incoming*nz;w=[v[0],v[2]];if(tree.flagstick)flagHits++;else treeHits++;}
+   const incoming=v[0]*nx+v[2]*nz;if(incoming<0){touch(tree.flagstick?'flagstick':tree.solid||'trunk',-incoming);v[0]-=1.3*incoming*nx;v[2]-=1.3*incoming*nz;w=[v[0],v[2]];if(tree.flagstick)flagHits++;else treeHits++;}
    p[0]=tree.x+nx*(radius+.003)+v[0]*dt*(1-u);p[2]=tree.z+nz*(radius+.003)+v[2]*dt*(1-u);if(rolling)p[1]=course.height(p[0],p[2])+R;break;
   }
   // Resolve the deepest overlap with a house and push the ball back out along
@@ -854,7 +861,7 @@ export function simulateShot(shot,course,options={}){
    const wx=nx*c+nz*s,wz=-nx*s+nz*c;
    p[0]+=wx*push;p[1]+=ny*push;p[2]+=wz*push;
    const incoming=v[0]*wx+v[1]*ny+v[2]*wz;
-   if(incoming<0){const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];homeHits++;}
+   if(incoming<0){touch('house',-incoming);const bounce=1.34;v[0]-=bounce*incoming*wx;v[1]-=bounce*incoming*ny;v[2]-=bounce*incoming*wz;v[0]*=.72;v[2]*=.72;w=[v[0],v[2]];homeHits++;}
    if(ny>0&&rolling)p[1]=Math.max(p[1],top);
    if(course.residentialOB){hazard='Out of bounds';}
    break;
@@ -1225,7 +1232,7 @@ export function simulateShot(shot,course,options={}){
   t+=duration;
  }
  points.push({x:p[0],y:p[1],z:p[2],t});
- return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,hang:hang??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,flagHits,onGreen:course.surface(p[0],p[2])==='green'};
+ return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,hang:hang??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,flagHits,contacts,onGreen:course.surface(p[0],p[2])==='green'};
 }
 // What the DEVICE says about itself, from a status frame. `parseLaunchMessage`
 // returns null for these and the readiness never reached the browser, so the
