@@ -51,18 +51,13 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <div class="note"><p><b>Every sound on this page is made live by the browser.</b> There are no recordings, so there is nothing to license or attribute, and the game file barely grows. Each play is new: strikes vary a little every time, and the background sounds are random processes (gusts, birds, bubbles, passing planes) rather than a loop. Leave a scene running for ten minutes and nothing will come round again.</p>
 <p>Use headphones or decent speakers; a laptop speaker loses the low thumps. For each sound, pick the take (A, B or C) that is closest, nudge the sliders under <i>Adjust</i>, and type a note. <b>Copy my notes</b> (bottom right) gathers every change and note into one block to paste back to me. Your settings stay in this browser between visits.</p></div>
 
-<div class="note q"><p><b>Round 2.</b> Your round-1 sliders are now built into the sounds, so every slider starts at 100% again (100% means "as you left it"); your old notes are kept with me. Where you tuned a sound, <b>take A is your setting</b>. On the turf sounds, B carries every slider you moved half as far again in the same direction, and C goes half way back. What changed from your notes:</p>
+<div class="note q"><p><b>Round 3, the final one.</b> Everything you signed off is now built in exactly as you set it: each of those sounds has a single take, and 100% on every slider is what you heard. Your round-2 notes are kept with me. New this round:</p>
 <ul>
-<li><b>Swing whoosh</b>: no longer white noise; a darker "vwoosh" through a narrow band that rises into the strike and falls after it.</li>
-<li><b>Driver</b>: your note asked for "a higher pitch around 3500 Hz", but your Pitch slider at its top put the main ring near 6,600 Hz. A is your sliders, B is your note taken literally (ring at 3,500 Hz), C is crack-first. Tell me which you meant.</li>
-<li><b>Iron</b>: rebuilt with no metal ring at all, just a hard crack and the ball's own sound, then the divot.</li>
-<li><b>Tree trunk</b>: a hard crack, like a solid pine board.</li>
-<li><b>Cup</b>: redone after research. It is a plastic liner at least 4 inches deep, so now you hear a dull "tok" and a rattle of shrinking bounces. Round 1 was a bell.</li>
-<li><b>Birds</b>: never more than one at a time, and about a third as often. The skylark is gone.</li>
-<li><b>Dove</b> and <b>crickets</b>: rebuilt from research (section 7).</li>
-<li><b>Water</b>: heard only near water. Try the new <i>Distance to water</i> slider.</li>
-<li><b>Sliders</b> you pushed to their ends now reach further.</li>
-<li><b>CC0 recordings</b> to compare are in section 6.</li>
+<li><b>Water</b>: a splash, not bubbles. Take A uses your round-2 sliders. C is the old bubbly one for comparison.</li>
+<li><b>Flagstick</b> and <b>house</b> hits (section 4). The flagstick is now solid in the game while it stands in the hole. Houses were already solid, but their solid box was turned the wrong way on most holes (section 6).</li>
+<li><b>Score stings</b> for every score from hole in one to triple bogey and worse (section 5), in three instruments. Pick one instrument for all of them.</li>
+<li><b>Birds</b> adjusted after measuring the CC0 recordings. The dove is higher (about 470-520 Hz), its leap smaller, its song longer (about 4 s), and it repeats every 5-9 s. Songbird songs are shorter, higher and sparser.</li>
+<li>No CC0 section, as you decided. Your choice on the launch monitor is recorded: in launch-monitor mode no club sounds, everything else plays.</li>
 </ul></div>
 
 <div class="bar">
@@ -97,18 +92,22 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <h2>4. Trees and rocks</h2>
 <div class="grid" id="solid"></div>
 
-<h2>5. Extras (not asked for)</h2>
+<h2>5. Score stings</h2>
+<p class="muted">One per score, played when a hole is finished. Each card's A, B and C are the three instruments. Pick one instrument for the whole set; the buttons below play every score in order with one instrument.</p>
+<div class="row" id="scoreAll" style="margin-bottom:10px"></div>
+<div class="grid" id="scores"></div>
+<h3 style="margin-top:20px">The cup</h3>
 <div class="grid" id="extra"></div>
 
-<h2>6. CC0 recordings to compare</h2>
-<div class="note"><p>Public-domain (CC0) recordings on Freesound that could replace a synthesised sound. I checked each licence on the sound's own page on <span id="cc0date"></span>. Pressing play streams Freesound's preview (lower quality than the real file); nothing is downloaded into the project. If you pick one, it gets credited in ATTRIBUTION.md by title, author and link, even though CC0 does not require it.</p>
-<p><b>What recordings would cost.</b> One-off sounds (strikes, putts, the cup, splashes) are small: a few tens of kilobytes each, and rotating three or four takes with a slight random pitch change hides the repeat. Long background recordings are the opposite of what you asked for. A 2-minute track loops audibly every 2 minutes, adds about 2 MB to the single-file game per track, and carries whatever else was there: traffic, people, the wrong birds. The likely best mix is <b>recorded strikes and cup where they beat the synth, synthesised ambience</b>.</p></div>
-<div id="cc0"></div>
+<h2>6. Also done this round, in the game</h2>
+<div class="note"><p><b>The flagstick is solid while it is in the hole.</b> A ball that hits it bounces off, the same way a ball bounces off a tree. It is out of the way whenever the game pulls it: on the green, and whenever the putter is in hand.</p>
+<p><b>Houses were solid already, but in the wrong place.</b> On any hole that does not run due north, each house's solid box was turned by that hole's angle, and it stood 2.6 m above every roof. On a test course of 57 houses, a third of each house's footprint disagreed with the drawing. Now it matches, and balls skimming past a wall or over a roof go by.</p>
+<p><b>Flagsticks stay visible from a distance.</b> Past the point where the stick would shrink to a few pixels, the stick and its flag grow on screen so they keep a findable size, and the pole is never thinner than about two pixels. Close up they are exactly to size, and the ball always hits the real-sized stick.</p></div>
 
 <h2>7. Questions for you</h2>
-<div class="note q"><p><b>Driver pitch:</b> which did you mean, a ring near 3,500 Hz (take B) or your slider setting near 6,600 Hz (take A)?</p></div>
-<div class="note q"><p><b>With a launch monitor, you already hear your real strike.</b> If the game plays a club sound too, it lands a fraction of a second later, once the monitor has sent the shot. That will sound like an echo. My suggestion: club sounds only for keyboard shots, and one setting to turn them on for monitor shots. Landings, trees and ambience would play in both modes.</p></div>
-<div class="note q"><p><b>The extras.</b> The cup drop is redone. Also possible: the ball rolling on a green, a flagstick hit on its own, a ball hitting a house, and a soft crowd reaction. Say which, if any.</p></div>
+<div class="note q"><p><b>Score stings:</b> which instrument (marimba, bells or electric piano)?</p></div>
+<div class="note q"><p><b>House:</b> one material for every house, or a different one per house style?</p></div>
+<div class="note q"><p><b>Water:</b> A or B?</p></div>
 
 <h2>8. How each sound is made</h2>
 <table><thead><tr><th>Sound</th><th>Made from</th><th>Where the numbers come from</th></tr></thead><tbody>
@@ -116,6 +115,8 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <tr><td>Swing</td><td>Darker noise through a narrow band whose pitch rises into the strike and falls after</td><td>Set by ear (round 2: round 1's wide band sounded like hiss).</td></tr>
 <tr><td>Irons, wedges</td><td>A hard, very short crack and the ball's own sound, then the divot (thump, tearing grass, clods); no metal ring</td><td>From your round-1 note; set by ear.</td></tr>
 <tr><td>Tree trunk</td><td>A hard crack and short, bright wooden tones, like a pine board</td><td>From your round-1 note; set by ear.</td></tr>
+<tr><td>Flagstick, house</td><td>The stick: a dull fibreglass knock, the metal fitting rattling in the cup, the flag snapping. A house: four materials (siding, brick, a roof with the ball rattling down, a window tink)</td><td>Set by ear.</td></tr>
+<tr><td>Score stings</td><td>Short phrases on a synthesised marimba, bells or electric piano: better scores climb and brighten, par settles, bogeys fall softly</td><td>Set by ear. No crowd, by your call.</td></tr>
 <tr><td>Cup</td><td>A dull plastic "tok", then a rattle of shrinking bounces, coloured by the hollow tube</td><td>Hole 4.25 in across and at least 4 in deep, with a moulded plastic liner (USGA, liner patents). The ball drops about 0.1 m. The tube's hollow note is near 640 Hz, worked out from its depth.</td></tr>
 <tr><td>Putter</td><td>Short tones split into putter (below 2 kHz) and ball (2-4 kHz)</td><td>Published: Barrass, Roberts and Jones (2006).</td></tr>
 <tr><td>Turf landings</td><td>A falling-pitch thump, the ball's tick, filtered noise for grass</td><td>Set by ear.</td></tr>
@@ -136,13 +137,12 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 /*SYNTH*/
 
 // tools/sound-lab/check.mjs renders every sound offline through this.
-window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,STRIKES,IMPACTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz};
-const CC0=/*CC0*/null;
+window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,score,STRIKES,IMPACTS,SCORES,INSTRUMENTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz};
 
 // ------------------------------------------------------------ the page
-// v2 for round 2: round 1's sliders are baked into the takes, so applying
-// them again on top would double them.
-const KEY='fairway-sound-lab-v2';
+// v2 for round 2, v3 for round 3: each time the owner's sliders are baked
+// into the takes, so applying them again on top would double them.
+const KEY='fairway-sound-lab-v3';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const k of kids)e.append(k);return e;};
@@ -212,12 +212,13 @@ function card(kind,id,def,host){
  c.append(el('h3',{},def.label),el('small',{},def.note));
  const takes=el('div',{class:'takes'});
  const play=(n=1)=>{ensure();for(let i=0;i<n;i++)setTimeout(()=>fire(),i*(isStrike?1100:700));};
- const fire=()=>isStrike?strike(lab,id,{take:st.take,speed:st.speed??def.speed[2],knobs:st.knobs}):impact(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});
+ const isScore=kind==='scores';
+ const fire=()=>isScore?score(lab,id,{take:st.take,knobs:st.knobs}):isStrike?strike(lab,id,{take:st.take,speed:st.speed??def.speed[2],knobs:st.knobs}):impact(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});
  for(const [k,t]of Object.entries(def.takes)){const b=el('button',{class:'take'+(st.take===k?' on':''),onclick:()=>{st.take=k;save();takes.querySelectorAll('.take').forEach(x=>x.classList.toggle('on',x===b));play();}},el('b',{},k),t.name);takes.append(b);}
  c.append(takes);
  const slider=(label,min,max,step,get,set,fmt)=>{const inp=el('input',{type:'range',min,max,step,value:get()}),out=el('span',{},fmt(get()));inp.oninput=()=>{set(+inp.value);out.textContent=fmt(+inp.value);save();};return el('label',{class:'sl'},el('span',{},label),out,inp);};
  if(isStrike)c.append(slider('Head speed',def.speed[0],def.speed[1],1,()=>st.speed??def.speed[2],v=>st.speed=v,v=>`${v} mph`));
- else if(def.group!=='extra'){c.append(slider(def.group==='solid'?'Ball speed':'Landing speed',4,90,1,()=>st.speed??35,v=>st.speed=v,v=>`${v} mph`));
+ else if(!isScore&&def.group!=='extra'){c.append(slider(def.group==='solid'?'Ball speed':'Landing speed',4,90,1,()=>st.speed??35,v=>st.speed=v,v=>`${v} mph`));
   c.append(slider('Distance from camera',3,150,1,()=>st.dist??12,v=>st.dist=v,v=>`${v} m`));}
  const row=el('div',{class:'row'},el('button',{class:'act',onclick:()=>play()},'Play'),el('button',{class:'sec',onclick:()=>play(3)},'Play 3'));
  if(def.bounce)row.append(el('button',{class:'sec',onclick:()=>{ensure();bounces(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});}},'Bounces'));
@@ -231,24 +232,17 @@ function card(kind,id,def,host){
  return c;
 }
 for(const [id,def]of Object.entries(STRIKES))card('strikes',id,def,$('#strikes'));
+for(const [id,def]of Object.entries(SCORES))card('scores',id,def,$('#scores'));
+for(const [k,ins]of Object.entries(INSTRUMENTS))$('#scoreAll').append(el('button',{class:'sec',onclick:()=>{ensure();Object.keys(SCORES).forEach((id,i)=>setTimeout(()=>score(lab,id,{take:k,knobs:saved.scores?.[id]?.knobs||{}}),i*2600));}},`All scores: ${ins.name.split(':')[0]}`));
 for(const [id,def]of Object.entries(IMPACTS))card('impacts',id,def,$('#'+({turf:'turf',water:'turf',solid:'solid',extra:'extra'}[def.group])));
 document.querySelectorAll('textarea[data-note]').forEach(t=>{t.value=saved.notes?.[t.dataset.note]||'';t.oninput=()=>{(saved.notes||(saved.notes={}))[t.dataset.note]=t.value;save();};});
-
-// ---- CC0 recordings
-$('#cc0date').textContent=CC0.checked;
-for(const g of CC0.groups){const box=el('div',{class:'card',style:'margin-bottom:12px'},el('h3',{},g.label));
- for(const it of g.items){const url=`https://freesound.org/people/${it.user}/sounds/${it.id}/`;
-  box.append(el('div',{},el('div',{},el('a',{href:url,target:'_blank',rel:'noopener'},it.title),` by ${it.user}, ${it.secs<10?it.secs.toFixed(1):Math.round(it.secs)} s. `,el('small',{},it.about)),el('audio',{controls:'',preload:'none',src:it.mp3,style:'width:100%;height:32px'})));}
- const ta=el('textarea',{placeholder:'Notes: would any of these beat the lab sound?'});ta.value=saved.cc0?.[g.id]||'';ta.oninput=()=>{(saved.cc0||(saved.cc0={}))[g.id]=ta.value;save();};box.append(ta);
- $('#cc0').append(box);}
-$('#cc0').append(el('p',{class:'muted'},'Set aside: ',...CC0.rejected.map(r=>`"${r.title}" by ${r.user}: ${r.why}`)));
 
 // ---- feedback
 $('#copy').onclick=async()=>{
  const strip=o=>JSON.parse(JSON.stringify(o,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0?undefined:v));
  // Only what was changed: a sound still on take A with nothing moved is left out.
  const changed=JSON.parse(JSON.stringify(saved));
- for(const kind of ['strikes','impacts'])for(const [id,st]of Object.entries(changed[kind]||{}))if(st.take==='A'&&Object.keys(st).length===2&&!Object.keys(st.knobs||{}).length)delete changed[kind][id];
+ for(const kind of ['strikes','impacts','scores'])for(const [id,st]of Object.entries(changed[kind]||{}))if(st.take==='A'&&Object.keys(st).length===2&&!Object.keys(st.knobs||{}).length)delete changed[kind][id];
  const text='Sound lab notes\n'+JSON.stringify(strip(changed),null,1);
  $('#outText').value=text;$('#out').style.display='block';
  try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}

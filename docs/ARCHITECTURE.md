@@ -176,6 +176,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The firmness tests pin a 7-iron's arrival; a flight refit means re-deriving them. [THE FIRMNESS TESTS]
 - The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
 - Everything solid is a vertical cylinder in one collision index; do not add a second routine. [EVERYTHING SOLID]
+- A house's rotation is a world angle: in a hole's frame subtract the hole's. The flagstick is solid only while it stands in the hole. [A HOUSE'S ROTATION IS A WORLD ANGLE], [THE FLAGSTICK IS SOLID]
 - The simulator never invents ball data. [The simulator never invents ball data]
 
 **Shaders and drawing**
@@ -191,6 +192,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
+- Flagsticks are drawn larger with distance so they never vanish; drawing only, the ball hits the real stick. [FLAGSTICKS STAY VISIBLE FROM ANYWHERE]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**

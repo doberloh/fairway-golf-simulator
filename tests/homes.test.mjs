@@ -19,7 +19,11 @@ test('houses are solid: a ball cannot finish inside one',()=>{
  for(const home of w.homes.slice(0,12)){
   const h=w.nearest(home.x,home.z).h,r=shotInto(w,home);
   const local=h.toLocal({x:home.x,z:home.z});
-  const c=Math.cos(home.rotation),s=Math.sin(home.rotation);
+  // In the hole's frame a house is turned by its own rotation less the
+  // hole's. This check once used the world angle, as simulateShot did, and
+  // the two agreed with each other while both disagreed with the drawing
+  // (13 October 2026; tests/solid-colliders.test.mjs).
+  const c=Math.cos(home.rotation-h.rotation),s=Math.sin(home.rotation-h.rotation);
   const dx=r.end.x-local.x,dz=r.end.z-local.z;
   const lx=dx*c-dz*s,lz=dx*s+dz*c;
   const inside=Math.abs(lx)<home.width/2-.05&&Math.abs(lz)<home.depth/2-.05&&r.end.y<home.y+home.height;

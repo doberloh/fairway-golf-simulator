@@ -416,7 +416,7 @@ export const IMPACTS={
   B:{name:'Granite boulder',play:x=>{x.hiss(0,{type:'highpass',f:3000,dur:.002,attack:.0002,amp:1,role:'click',fixed:true});x.ring(0,[[BALL,.004,.7]]);x.ring(0,[[2100,.006,.6],[3400,.008,1],[5200,.005,.55],[7600,.003,.35]],{amp:.45});}},
   C:{name:'Sandstone: duller, gritty',play:x=>{x.hiss(0,{type:'highpass',f:2200,dur:.003,attack:.0003,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.003,.6]]);x.ring(0,[[1300,.004,.7],[2300,.005,1],[3600,.003,.5]],{amp:.45});x.crackle(.002,{dur:.05,rate:400,f:4000,amp:.2,role:'texture'});}},
  }},
- cup:{label:'Into the cup (extra)',group:'extra',knobs:['level','pitch','length','bright','click'],note:'Round 2, researched: a dull plastic "tok" and a rattle of shrinking bounces, coloured by the hollow tube.',takes:{
+ cup:{label:'Into the cup',group:'extra',knobs:['level','pitch','length','bright','click'],note:'Round 2, researched: a dull plastic "tok" and a rattle of shrinking bounces, coloured by the hollow tube.',takes:{
   A:{name:'Plastic cup: drops in and rattles',play:x=>cupDrop(x)},
   B:{name:'Off the flagstick, then in',play:x=>{
    // A flagstick is fibreglass, not a bell: a dull knock, and its metal
@@ -451,6 +451,117 @@ function canopy(x,{f,rate,tick,twigs,swish,dur=.5,amp=.45,q=.5}){
  // Then it falls about 8 m to the turf below.
  const fall=R(1.1,1.4);x.thump(fall,135,.02,.35,.6);x.hiss(fall,{type:'bandpass',f:3000,q:.7,dur:.05,attack:.004,amp:.12,role:'texture'});
 }
+// ---------------------------------------------------------------- round 3
+// Water, round 3. The owner on round 2's pick: "I don't like that it's
+// bubbly. It needs to be more of a splash sound." The splash carries it now --
+// a slap, a broad sheet of water thrown up, the spray pattering back, bigger
+// drops after -- with the cavity's plunk kept short and low and only a few
+// faint bubbles behind it.
+function splash(x,big=1){
+ x.hiss(0,{type:'highpass',f:1200,dur:.014,attack:.0004,amp:.7,role:'texture'});
+ x.hiss(.003,{type:'bandpass',f:1400,f2:700,q:.5,dur:.18*big,attack:.006,amp:.6,role:'texture'});
+ x.hiss(.006,{type:'highpass',f:2500,dur:.3*big,attack:.02,amp:.35,role:'texture'});
+ x.crackle(.05,{dur:.55*big,rate:520,f:3000,q:.5,amp:.32,tick:.003,role:'texture'});
+ x.crackle(.25,{dur:.6*big,rate:160,f:1800,q:.6,amp:.14,tick:.006,role:'texture'});
+ x.thump(.03,140,.03,.6,.7);
+ for(let i=0;i<3;i++)x.bubble(.1+R(0,.35),Math.exp(R(Math.log(.002),Math.log(.006))),R(.02,.06),R(1,1.2));
+}
+const WATER_BASE={length:.55,pitch:.7,body:.3};
+IMPACTS.water.note='Round 3: a splash, not bubbles -- slap, a sheet of water, the spray falling back.';
+IMPACTS.water.takes={
+ A:{name:'Splash, hardly a bubble (your round-2 sliders)',play:x=>splash(x),base:WATER_BASE},
+ B:{name:'A bigger splash, more spray',play:x=>splash(x,1.6),base:WATER_BASE},
+ C:{name:'Round 2 pick, for comparison (bubbly)',play:x=>water(x,2),base:WATER_BASE},
+};
+// The flagstick, round 3 (it is solid now: physics.js, FLAGSTICK_*). A
+// fibreglass stick knocks rather than rings; the stick sways and its metal
+// ferrule chatters in the cup's socket, and the flag snaps. PLACED.
+function stick(x,{low=false,glance=false}={}){
+ x.hiss(0,{type:'bandpass',f:1800,q:.8,dur:.004,attack:.0003,amp:glance?.4:.7,role:'click',fixed:true});
+ x.ring(0,[[BALL,.0025,.4]]);
+ if(!glance)x.ring(0,[[420,.02,low?.5:1],[1150,.01,.5],[2400,.004,.3]],{amp:.45});
+ else x.ring(0,[[1150,.006,.5]],{amp:.4});
+ const n=glance?2:4;
+ for(const [dt,a]of [[.03,1],[.075,.6],[.13,.35],[.2,.2]].slice(0,n))x.ring(dt*(low?.7:1),[[3100,.005,.6],[4700,.003,.35]],{amp:.22*a*(low?1.8:1),role:'click'});
+ x.hiss(.02,{type:'bandpass',f:900,q:.7,dur:.07,attack:.01,amp:glance?.22:.14,role:'texture'});
+}
+IMPACTS.flagstick={label:'Flagstick',group:'solid',knobs:['level','pitch','length','bright','click','texture'],note:'New in round 3. The stick in the hole is solid now.',takes:{
+ A:{name:'Fibreglass stick: a knock, the ferrule rattling',play:x=>stick(x)},
+ B:{name:'Low, near the cup: more rattle',play:x=>stick(x,{low:true})},
+ C:{name:'Glancing off: a tick and the flag',play:x=>stick(x,{glance:true})},
+}};
+// A house, round 3. Four materials; which to use could follow the house's
+// model in the game, so the owner may keep more than one. PLACED.
+IMPACTS.house={label:'House',group:'solid',knobs:['level','pitch','length','bright','click','body','texture'],note:'New in round 3. Pick one, or keep several for different houses.',takes:{
+ A:{name:'Siding: a hollow clack',play:x=>{x.hiss(0,{type:'bandpass',f:2400,q:.7,dur:.005,attack:.0003,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.003,.5]]);x.ring(0,[[190,.03,.8,.9],[410,.018,1],[760,.012,.6],[1350,.007,.4]],{amp:.5});x.thump(0,95,.03,.5);}},
+ B:{name:'Brick or stone wall: a hard thwack',play:x=>{x.hiss(0,{type:'highpass',f:2500,dur:.0025,attack:.0002,amp:1.1,role:'click',fixed:true});x.ring(0,[[BALL,.004,.7]]);x.ring(0,[[1500,.004,.6],[2600,.004,.8],[4100,.003,.4]],{amp:.45});x.crackle(.002,{dur:.05,rate:300,f:4000,amp:.12,role:'texture'});}},
+ C:{name:'Roof: a thunk, then the ball rattling down the shingles',play:x=>{x.hiss(0,{type:'bandpass',f:1500,q:.7,dur:.006,attack:.0004,amp:.7,role:'click',fixed:true});x.ring(0,[[150,.03,.8,.85],[330,.02,.7],[700,.01,.4]],{amp:.5});let t=.12,a=.6;for(let i=0;i<9;i++){x.ring(t,[[R(1800,2600),.003,1],[R(3500,4500),.002,.5]],{amp:.18*a,role:'click'});x.crackle(t,{dur:.04,rate:600,f:3500,amp:.06*a,role:'texture'});t+=R(.05,.11);a*=.9;}x.hiss(t+.05,{type:'bandpass',f:800,q:.6,dur:.05,attack:.004,amp:.12,role:'texture'});}},
+ D:{name:'Window: a sharp glassy tink (it does not break)',play:x=>{x.hiss(0,{type:'highpass',f:3500,dur:.002,attack:.0002,amp:.8,role:'click',fixed:true});x.ring(0,[[BALL,.003,.5]]);x.ring(0,[[2200,.03,.6],[3700,.025,.8],[5900,.018,.5],[8300,.012,.3]],{amp:.35});x.ring(0,[[310,.02,.4]],{amp:.4});}},
+}};
+
+// THE OWNER SIGNED THESE OFF (13 October 2026: "happy with the sounds with
+// the settings in my copy"). Each is the take they chose with their sliders
+// folded in, and it is the only take left, so 100% on every slider is exactly
+// what they heard. A sound missing from a list was left on take A at 100%.
+// Two of their sliders moved nothing (texture on the trunk, which has no
+// texture part); kept as they set them, because that is what they heard.
+export const FINAL={
+ strikes:{driver:['C',{whoosh:1.7,pitch:.81,click:4,body:1.9,bright:1.7,length:.6}],wood:['B',{length:.65,click:2.9,whoosh:1.65}],
+  iron:['B',{body:.25,click:2.95,pitch:1.47,level:1.25,whoosh:1.35}],chip:['B',{click:2.25}],putter:['B',{length:.4,click:2.25}]},
+ impacts:{green:['B'],fringe:['A'],fairway:['A'],tee:['A'],semi:['A',{texture:.7,length:.6}],rough:['B'],
+  sand:['A',{bright:.95,body:1.05,texture:3.2,length:.4,pitch:.7}],trunk:['A',{click:4,length:.2,pitch:.75,texture:2.65}],
+  canopy:['A'],rock:['C',{length:.4}],cup:['A',{pitch:.67,length:1.55,click:1.95}]},
+};
+for(const [group,table] of [[STRIKES,FINAL.strikes],[IMPACTS,FINAL.impacts]])
+ for(const [id,[take,knobs={}]] of Object.entries(table)){
+  const t=group[id].takes[take];
+  group[id].takes={A:{name:`Signed off (was ${take}: ${t.name})`,play:t.play,base:mergeKnobs(t.base,knobs)}};
+  group[id].final=true;
+ }
+
+// ---------------------------------------------------------------- scores
+// A short musical sting when a hole is finished (round 3), one per score and
+// three instruments to choose between -- one instrument for all of them, so
+// the set sounds like one game. Good scores rise and brighten, par settles,
+// bogeys fall and soften; nothing mocks. No crowd (the owner). Notes are MIDI
+// numbers in C major, times in seconds, velocities 0-1. PLACED.
+const midi=n=>440*Math.pow(2,(n-69)/12);
+export const INSTRUMENTS={
+ A:{name:'Marimba: wooden and warm',modes:f=>[[f,.22,1],[4*f,.05,.32],[9.9*f,.012,.1]],mallet:.25},
+ B:{name:'Bells: bright and glassy',modes:f=>[[f,.75,1],[2.76*f,.28,.28],[5.4*f,.1,.12],[f*1.002,.75,.4]],mallet:.12},
+ C:{name:'Soft electric piano',modes:f=>[[f,.6,1],[f*1.004,.6,.6],[2*f,.3,.35],[3*f,.12,.12],[7.1*f,.025,.15]],mallet:.06},
+};
+const arp=(notes,step,vel=.8,t0=0)=>notes.map((n,i)=>[t0+i*step,n,vel]);
+const chord=(notes,t,vel)=>notes.map(n=>[t,n,vel]);
+const sparkle=(n,t0,t1)=>Array.from({length:n},()=>[R(t0,t1),pick([96,98,100,103,105,108]),R(.2,.4)]);
+export const SCORES={
+ ace:{label:'Hole in one',notes:()=>[...arp([72,76,79,84,88,91],.07),...chord([84,88,91,96],.5,1),...sparkle(5,.8,1.8)]},
+ albatross:{label:'Albatross or better',notes:()=>[...arp([72,76,79,84,88],.08),...chord([84,88,91],.46,.9),...sparkle(2,.8,1.3)]},
+ eagle:{label:'Eagle',notes:()=>[...arp([67,72,76,79,84],.09),...chord([76,79,84],.5,.75)]},
+ birdie:{label:'Birdie',notes:()=>[[0,72,.7],[.11,76,.75],[.22,79,.9],[.38,84,.55]]},
+ par:{label:'Par',notes:()=>[[0,67,.6],[.16,72,.75],[.16,76,.3]]},
+ bogey:{label:'Bogey',notes:()=>[[0,76,.55],[.2,72,.5]]},
+ double:{label:'Double bogey',notes:()=>[[0,75,.5],[.2,72,.45],[.42,68,.4]]},
+ worse:{label:'Triple bogey or worse',notes:()=>[[0,72,.45],[.2,71,.4],[.4,70,.38],[.62,69,.36]]},
+};
+for(const s of Object.values(SCORES)){s.note='';s.knobs=['level','pitch','length','bright','click'];s.takes=Object.fromEntries(Object.entries(INSTRUMENTS).map(([k,v])=>[k,{name:v.name}]));}
+// Which score name (scoring.js, scoreName) plays which sting.
+export const scoreSting=(strokes,par)=>strokes===1?'ace':strokes-par<=-3?'albatross':strokes-par===-2?'eagle':strokes-par===-1?'birdie':strokes===par?'par':strokes-par===1?'bogey':strokes-par===2?'double':'worse';
+export function score(lab,name,{take='A',knobs={},at}={}){
+ const I=INSTRUMENTS[take]||INSTRUMENTS.A,t=(at??lab.ctx.currentTime)+.05;
+ const dest=place(lab,{dist:10,wet:.35,until:t+5});
+ // Level 0.14: at 0.32 the hole-in-one peaked 5 dB over full scale and every
+ // sting averaged louder than a drive (check.mjs, 13 October 2026).
+ const x=kit(lab,dest,t,.14,knobs);
+ for(const [dt,n,vel] of SCORES[name].notes()){
+  const f=midi(n);
+  x.ring(dt,I.modes(f),{amp:vel});
+  x.hiss(dt,{type:'bandpass',f:Math.min(f*3,9000),q:1,dur:.006,attack:.0005,amp:I.mallet*vel,role:'click',fixed:true});
+ }
+ lab.sweep();
+ return t;
+}
+
 // Play one impact. `speed` is the ball's speed into the surface, m/s.
 export function impact(lab,what,{take='A',speed=15,knobs={},pan=0,dist=12,at}={}){
  const I=IMPACTS[what],T=I.takes[take]||I.takes.A,t=(at??lab.ctx.currentTime)+.03;
@@ -493,7 +604,11 @@ export const dolbear=c=>{const f=c*9/5+32;return f<55?0:4*f-160;};
 // ---- birds. Each individual keeps its own song for life, as real birds do;
 // the population turns over, so new voices keep arriving.
 const BIRD={
- songbird:{dist:[20,110],make(){const base=R(2600,5000),syl=Array.from({length:2+R(0,3)|0},()=>contourSyl(base));return {base,syl,phrase:phrase(syl.length,R(5,12)|0),tempo:R(.85,1.15)};},
+ // Round 3: shorter, higher and sparser, after measuring three CC0 spring
+ // recordings (RESEARCH, round 3): notes about 50 ms (35-90), 55-220 ms apart,
+ // 2-4 to a song (up to about 8), mostly 3.4-6.2 kHz, sweeping 0.5-3 kHz.
+ // Round 1 sang 40-140 ms notes 20-80 ms apart in phrases of 5-12, from 2 kHz.
+ songbird:{dist:[20,110],bout:[1,3],gap:[3,8],make(){const base=R(3400,5200),syl=Array.from({length:2+R(0,3)|0},()=>contourSyl(base));return {base,syl,phrase:phrase(syl.length,R(2,8)|0),tempo:R(.9,1.1)};},
   sing(lab,d,t,b){let x=t;const p=J(1,.03),n=Math.random()<.3?Math.ceil(b.phrase.length*R(.5,.9)):b.phrase.length;
    for(let i=0;i<n;i++){const s=b.syl[b.phrase[i]];note(lab,d,x,{dur:s.dur*b.tempo,contour:s.c.map(v=>v*p),amp:.35*R(.75,1),harm:s.harm});x+=(s.dur+s.gap)*b.tempo;}return x-t;}},
  wren:{dist:[20,90],make(){const base=R(1800,2600);return {base,rate:R(5,8),n:R(5,9)|0};},
@@ -505,24 +620,21 @@ const BIRD={
    note(lab,d,t,{dur:.3,contour:[b.hi,b.hi*.99],amp:.3,attack:.02,release:.05});note(lab,d,t+.38,{dur:.34,contour:[b.lo,b.lo*.985],amp:.28,attack:.02,release:.06});return .75;}},
  trill:{dist:[20,90],make(){return {f:R(4000,6000),rate:R(12,20),n:R(10,24)|0};},
   sing(lab,d,t,b){const n=Math.round(b.n*J(1,.15));let x=t;for(let i=0;i<n;i++){note(lab,d,x,{dur:.03,contour:[b.f,b.f*.6],amp:.28,attack:.003,release:.01});x+=1/b.rate;}return x-t;}},
- dove:{dist:[25,90],make(){return {f:R(370,410),hi:R(1.55,1.7)};},
-  // Mourning dove, redone in round 2 after research: "cooOOoo-wooo-woo-woooo".
-  // One slurred opening element climbs to the high note and falls back (650
-  // Hz against 390 in the one measured song: about 1.65x), then three steady
-  // low coos, the last the longest -- about 3.4 s in all (timings PLACED).
-  // The coo is made with the bill shut through an inflated throat, which
-  // filters the harmonics away (Fletcher et al., on the ring dove): a
-  // near-pure tone with soft onsets and a breath of air -- round 1's notes
-  // were four separate short whistles.
+ dove:{dist:[25,90],bout:[3,5],gap:[5,9],make(){return {f:R(455,520),hi:R(1.18,1.26),open:R(.9,1.2)};},
+  // Mourning dove, round 3, measured against three CC0 recordings (RESEARCH,
+  // round 3): base 474 and 517 Hz, the opening rises only to about 1.2-1.25x
+  // (560-646 Hz), and the song is 4.1-4.4 s -- an opening of 0.6-1.2 s, then
+  // coos of about 0.85, 0.5 and 0.7 s, 0.3 s apart, repeated every 5-9 s.
+  // Round 2 sang 370-410 Hz with a 1.6x leap (from one published sonogram,
+  // 390/650 Hz) and a 3.4 s song. Still a near-pure tone with soft onsets.
   sing(lab,d,t,b){
    const f=b.f*J(1,.015),hi=f*b.hi;
    const el=(x,dur,c,a,att=.07,rel=.12)=>{note(lab,d,x,{dur,contour:c,amp:a,attack:att,release:rel,harm:.03});
     hiss(lab,d,x,{type:'bandpass',f:c[c.length>>1],q:8,attack:att,hold:Math.max(0,dur-att-rel),dur:rel*2,amp:a*.05});};
-   el(t,.85,[f*.95,f*1.02,hi*.98,hi,hi*.97,f*1.15,f*1.02],.38,.06,.18);
-   el(t+1.15,.62,[f*.97,f,f,f*.98,f*.96],.36);
-   el(t+1.95,.42,[f*.97,f,f*.98],.33);
-   el(t+2.55,.8,[f*.97,f,f,f*.99,f*.95],.34,.07,.2);
-   return 3.4;}},
+   let x=t;
+   el(x,b.open,[f*.98,f,f*1.05,hi*.98,hi,hi*.97,f*1.12,f*1.02],.38,.06,.2);x+=b.open+R(.25,.35);
+   for(const [dur,a] of [[R(.75,.9),.36],[R(.45,.55),.33],[R(.65,.8),.34]]){el(x,dur,[f*.97,f,f,f*.99,f*.96],a);x+=dur+R(.25,.35);}
+   return x-t;}},
  crow:{dist:[40,160],make(){return {f:R(520,680),n:[2,3,3,4,5]};},
   sing(lab,d,t,b){const n=pick(b.n);let x=t;for(let i=0;i<n;i++){const f=b.f*J(1,.04);rasp(lab,d,x,{dur:R(.25,.38),contour:[f*.95,f*1.05,f*.85],amp:.32,formants:[[1400,2.5,1],[2700,3,.5]],rough:R(60,80),depth:.7,breath:.25});x+=R(.42,.6);}return x-t;}},
  raven:{dist:[50,200],make(){return {f:R(260,340)};},
@@ -539,9 +651,9 @@ const BIRD={
   flock:true},
 };
 function contourSyl(base){
- const f=base*R(.75,1.3),k=pick(['up','down','chevron','flat','trill']),dur=R(.04,.14);
- const c=k==='up'?[f*.8,f,f*1.25]:k==='down'?[f*1.25,f,f*.75]:k==='chevron'?[f*.85,f*1.2,f*.9]:k==='trill'?Array.from({length:9},(_,i)=>f*(i%2?1.08:.94)):[f,f*1.02,f];
- return {c,dur,gap:R(.02,.08),harm:Math.random()<.4?R(.05,.2):0};
+ const f=base*R(.8,1.25),k=pick(['up','down','chevron','flat','trill']),dur=R(.03,.1);
+ const c=k==='up'?[f*.75,f,f*1.3]:k==='down'?[f*1.3,f,f*.7]:k==='chevron'?[f*.85,f*1.2,f*.9]:k==='trill'?Array.from({length:9},(_,i)=>f*(i%2?1.08:.94)):[f,f*1.02,f];
+ return {c,dur,gap:R(.05,.16),harm:Math.random()<.4?R(.05,.2):0};
 }
 function phrase(n,len){const p=[];let i=0;while(p.length<len){const s=Math.random()<.6?i%n:Math.random()*n|0,r=1+(Math.random()*3|0);for(let j=0;j<r;j++)p.push(s);i++;}return p.slice(0,len);}
 
@@ -646,7 +758,7 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
   const d=place(lab,{pan:b.pan*J(1,.05),dist:b.dist,wet:.15,to:bus,until:t+30});
   birdUntil=t+BIRD[b.sp].sing(lab,d,t,b.song);onSong({sp:b.sp,t,end:birdUntil});
   if(first)log(t,`${first}${left>0?`, ${left+1} songs`:''}`);
-  if(left>0)at(birdUntil+R(4,10),tt=>birdSong(tt,b,left-1));
+  if(left>0)at(birdUntil+R(...(BIRD[b.sp].gap||[4,10])),tt=>birdSong(tt,b,left-1));
  }
  // Each stream is a Poisson process. A rate of zero parks it at the cursor so
  // it starts from "now" when turned up.
@@ -664,8 +776,10 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{}}={}){
    let b=birds.find(b=>b.sp===sp&&Math.random()<.7);
    const pop=3+Math.round(2*mix.birds);
    if(!b||Math.random()<.15){b={sp,song:BIRD[sp].make(),pan:R(-.95,.95),dist:R(...BIRD[sp].dist)};birds.push(b);if(birds.length>pop)birds.shift();}
-   // A bout: the same bird sings once to three times, seconds apart.
-   birdSong(t,b,Math.random()*3|0,`${sp} ${side(b.pan)}, ${b.dist|0} m`);
+   // A bout: the same bird sings a few times, seconds apart (most once to
+   // three times; a dove three to five, as the recordings do).
+   const [lo,hi]=BIRD[sp].bout||[1,3];
+   birdSong(t,b,lo-1+(Math.random()*(hi-lo+1)|0),`${sp} ${side(b.pan)}, ${b.dist|0} m`);
   });
   stream('leaves',()=>leafOn()&&windNow()>0?3:0,t=>{
    const g=gust/12,type=S.trees;if(g<.15)return;

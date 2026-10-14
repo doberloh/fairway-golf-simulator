@@ -7220,8 +7220,8 @@ downloaded. Any one chosen would be credited in ATTRIBUTION.md.
 | Trees, rocks | Trunk (round 2, from the owner: "like hitting a solid pine board"): a 2 ms crack, a 6 ms band at 3.2 kHz, wooden tones 620-4,200 Hz dying in 2.5-12 ms. A canopy is leaf ticks, twigs and a swish, then the ball dropping 8 m to the turf; rock is tones at 1.3-7.6 kHz with a hard crack | PLACED. Round 1's hollow trunks (260-2,900 Hz, up to 40 ms) survive only as the palm take |
 | Cup | The ball drops about 0.1 m (1.4 m/s) onto the plastic floor: a 4 ms "tok" near 1.7 kHz, a short hollow tone near 640 Hz and its 3x partial, then up to five bounces shrinking by a restitution of 0.45 (0.13 s, 0.06, 0.03...), now and then a click off the wall. A flagstick is a dull fibreglass knock with a ferrule chatter | Hole 4.25 in (108 mm) across, at least 4 in (101.6 mm) deep; liners are moulded plastic with drain holes, some aluminium (USGA rule as summarised; liner patents US7959516, WO2008147581). The 640 Hz is a quarter wave of the 0.1 m tube with the open-end correction (0.6 x radius). The restitution is PLACED. Round 1 rang 640 Hz for 30 ms and the owner heard nothing like a cup |
 | Wind | Low rumble, two narrow whistles and a leaf rustle shaped by what grows in the biome, all driven by a gust process (relaxation 0.15/s, spread about 35% of the mean, plus a faster flutter at 1.5/s) | PLACED. Level follows the game's wind in mph |
-| Birds | Songbirds: notes following pitch contours at 2.6-6.5 kHz, a song kept per individual for life. **One bird at a time** (owner, round 2): a song starts only when the last has ended plus 0.6 s, a bird that comes due meanwhile is dropped, bouts of 1-3 songs 4-10 s apart; about one bird every 25 s by day (round 1: one every 8 s, bouts overlapping). Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened; geese honk one at a time too. The skylark was removed (owner: annoying, too long and not what one sounds like) | Songbirds mostly 1-8 kHz (All About Birds). Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
-| Mourning dove (round 2) | "cooOOoo-wooo-woo-woooo": one 0.85 s slurred element climbing from the base to about 1.6x and back, then coos of 0.62, 0.42 and 0.8 s at the base, 3.4 s in all; base 370-410 Hz; a near-pure tone (3% octave), 60-80 ms onsets, a breath of band noise at 5% | One recorded bird: 390 Hz, the high note 650 Hz (fssbirding sonogram, Maine 2014). The phrase as Wikipedia gives it. The closed-bill coo radiates through an inflated oesophagus that filters out the harmonics, leaving a nearly pure tone (Fletcher et al., ring dove; ring dove coo about 600 Hz, 1.5 s). Timings PLACED. Round 1 sang two short rising notes and three coos as separate whistles, and the owner heard "close but not quite right" |
+| Birds | Songbirds (round 3, measured): notes of 30-100 ms, 50-160 ms apart, 2-8 to a song, from a base of 3.4-5.2 kHz, a song kept per individual for life, bouts of 1-3 songs 3-8 s apart. **One bird at a time** (owner, round 2): a song starts only when the last has ended plus 0.6 s, a bird that comes due meanwhile is dropped, bouts of 1-3 songs 4-10 s apart; about one bird every 25 s by day (round 1: one every 8 s, bouts overlapping). Calls (crow, raven, gull, goose, desert wren): a sawtooth through voice-like filters, roughened; geese honk one at a time too. The skylark was removed (owner: annoying, too long and not what one sounds like) | Songbirds mostly 1-8 kHz (All About Birds). Black-capped chickadee "fee-bee" placed at about 3.9 then 3.4 kHz |
+| Mourning dove (round 3) | "cooOOoo-wooo-woo-woooo": an opening of 0.9-1.2 s climbing from the base to 1.18-1.26x and back, then coos of 0.75-0.9, 0.45-0.55 and 0.65-0.8 s, 0.25-0.35 s apart, about 4.1 s in all; base 455-520 Hz; bouts of 3-5 songs 5-9 s apart; a near-pure tone (3% octave), 60-80 ms onsets, a breath of band noise at 5% | Measured on three CC0 recordings (round 3, below): base 474 and 517 Hz, the opening rising to about 1.2-1.25x, songs 4.1-4.4 s, 4.4-8.8 s apart. The phrase as Wikipedia gives it. The closed-bill coo radiates through an inflated oesophagus that filters out the harmonics (Fletcher et al., ring dove). Round 2 used one published sonogram (390 Hz, 650 Hz high note) and sang 370-410 Hz with a 1.6x leap in 3.4 s |
 | Crickets (round 2) | A chorus of 4-6 tree crickets chirping together: 8 pulses grouped 2+3+3 (pulses 12 ms, the last of each group 15-16 ms) at a 19 ms pulse period, each pulse sagging 2.5% in pitch with a faint octave; members within about 12 ms of a leader that changes every 20 chirps. At 18 C and up, 1-2 field crickets over them: 3 pulses (sometimes 2 or 4) of 18 ms at a 30 ms period, 4.5-5 kHz, 1.2-2.5 chirps a second on their own clocks | Chirp rate: Dolbear (1897), chirps per minute = 4 x (temperature F) - 160, holding from about 55 F (13 C), so Mountain (11 C) and Haunted Hollow (9 C) are silent. 8 pulses, the last of each group longer: snowy tree cricket (NPR, Symes; Orthoptera Species File). The 2,3,3 grouping and about 52 pulses a second: Riley's tree cricket (2.7 kHz at 25 C). Carrier 3,000 Hz at 15 C rising to 4,600 at 32 C: O. nigricornis, borrowed for the chorus as 3,000 + 94 Hz per degree. Synchrony: Walker (1969), Science 166:891. Field crickets: 2-3 pulses at a 30.2 ms period, 5.0 kHz (the Steppengrille); G. bimaculatus 5 kHz. Round 1 was 3-4 pulses at 2.8-4.6 kHz with every cricket on its own clock |
 | Cicadas | Band noise near 5-6 kHz pulsed at 160-260 Hz, swelling over 8-18 s; only at 24 C and above | PLACED |
 | Planes | A jet: broadband rumble (low-pass 900 Hz), 1.5-4 km up at 110-190 m/s. A small propeller plane: an 75-95 Hz buzz with harmonics, 250-700 m up at 45-65 m/s | Geometry, not ear: sound arrives r/c late, so the loudest moment comes after the plane is overhead; a propeller's pitch falls by Doppler; and the ground reflection, with an ear 1.6 m up, is a copy delayed by 2 x 1.6 x sin(elevation) / 343 s, up to about 9 ms overhead, which sweeps a comb through the noise -- the falling "whoosh" of a passing jet (windytan 2025; SFU comb-filter handbook). A little jitter on that delay stands in for turbulence, which DAGA 2021 found removes the "unnatural flanging" of a clean model |
@@ -7315,15 +7315,136 @@ the distance to the nearest water (table above). The report has a "Distance
 to water" slider. In the game that distance comes from the ball (or the
 camera) and the course's water bodies; see TODO, *Sounds*.
 
+### Round 3: signed off, the birds measured, three new sounds (13 October 2026)
+
+The owner: "I think I'm happy with the sounds with the settings in my copy."
+Every club, every landing, the trees, the rock and the cup are now `FINAL` in
+synth.js -- the chosen take with the owner's sliders folded in, the only take
+left, so 100% on every slider is exactly what they heard. Their final picks:
+driver C (pitch 0.81 on top of C's 1.6, so the main ring sits near 5.4 kHz --
+between the round-2 question's 3.5 and 6.6 kHz, and nearer the published
+4-4.5 kHz centre than either), crack 4x on C's 3.5x, body 1.9x; wood B; iron B
+(the crack with a full divot) with pitch 1.47 and crack 2.95; chip B (out of
+the rough); putter B (milled blade); green B, rough B, semi A, sand A, trunk
+A (the pine board, crack 4x, length 0.2), rock C, cup A (pitch 0.67, length
+1.55). **The driver as signed off peaks +13.5 dB before the limiter**: the
+limiter shapes it into what the owner heard, so the game keeps the limiter
+(TODO, *Sounds*). The trunk's Texture slider (2.65) moves nothing: the board
+has no texture part. Both are kept as set, because that is what was heard.
+
+**Water became a splash.** "I don't like that it's bubbly. It needs to be more
+of a splash sound." The new recipe is a slap, a broad band of noise falling
+from 1.4 to 0.7 kHz over about 0.18 s, a sheet of hiss above 2.5 kHz, the
+spray falling back as a patter for half a second and bigger drops after, a
+short low plunk at 140 Hz, and three faint bubbles where round 2 had 36
+plus a dozen drops. PLACED.
+
+**Decided**: in launch-monitor mode no club sounds, every other sound plays;
+no crowd reactions; no ball-rolling sound; no CC0 recordings ("CC0 is gonna be
+a bust"). The candidate list (`tools/sound-lab/cc0-candidates.json`) is kept as
+the record of the search; the report no longer shows it.
+
+**The birds, measured against the CC0 recordings** (the owner: "maybe listen
+to these and adjust our bird sounds accordingly"). Each preview was decoded in
+the browser and nothing was saved. An FFT of 2,048 samples at 44.1 kHz with a
+512-sample hop; a frame counts as sound when its energy in the bird's band
+stands 12-14 dB above the recording's 30th-percentile frame; frames closer
+than 12-40 ms join into one note, and notes closer than 0.5-1.2 s into one
+song. The previews are low-quality MP3 and the songbird recordings are
+choruses of several birds, so the songbird figures are distributions across
+a chorus rather than one bird's song -- good for the scale of things, not for
+any one species.
+
+| Recording | Notes | Songs | What it says |
+|---|---|---|---|
+| Mourning dove, nathankwright (74 s) | 23 | 6 | Base 474 Hz; the opening element 1.15-1.2 s rising to 560-580 Hz (about 1.2x); then coos of about 0.85, 0.5 and 0.67 s, 0.13-0.37 s apart (median 0.30); a song 4.1-4.2 s; 6.7-8.8 s of silence between songs; 4.9 songs a minute |
+| Mourning dove, TRP (165 s, urban) | 95 | 15 | Base 517 Hz, high note 646 Hz (1.25x); the opening about 0.6-0.75 s (a short note, a quick rise, a falling high note); three coos of 0.37-0.57 s about 0.4-0.5 s apart; a song 4.4 s; 4.4-6.9 s between songs |
+| Mourning dove, fauxpress (81 s) | 8 | 8 | Only the openings stood clear of the noise: 1.4 s at 474 Hz, falling to 452 |
+| Spring birds, New Jersey (151 s) | 101 | 34 | Notes 46-93 ms (median 58); 54-212 ms apart (median 77); 3.4-5.9 kHz (10th-90th percentile, median 4.8); sweeps median 0.67 kHz, 90th 3.4 kHz; 1-4 notes a song (median 2), songs 0.2-0.7 s |
+| Forest, spring afternoon (137 s) | 137 | 28 | Notes 46-70 ms; 64-135 ms apart; 3.4-4.5 kHz; sweeps 0.9-1.6 kHz; 2-7 notes a song (median 4), songs 0.2-1.2 s |
+| Rocky Mountains, wind and birds (90 s) | 75 | 32 | Notes 35-70 ms; 62-224 ms apart; 3.9-6.2 kHz; mostly single calls |
+
+What changed: **the dove** now sings at 455-520 Hz (was 370-410), rises only
+1.18-1.26x on its opening (was 1.55-1.7x -- the round-2 figure came from one
+published sonogram, 390/650 Hz, and three recordings outvote it), opens for
+0.9-1.2 s, then three coos of 0.75-0.9, 0.45-0.55 and 0.65-0.8 s, 0.25-0.35 s
+apart: about 4.1 s in all (was 3.4). A dove sings bouts of 3-5 songs 5-9 s
+apart, as the recordings do. **The songbirds** now sing notes of 30-100 ms
+(was 40-140), 50-160 ms apart (was 20-80), 2-8 to a song (was 5-12), from a
+base of 3.4-5.2 kHz (was 2.6-5.0), with sweeps up to about 1.3x either way; a
+songbird's bout is 1-3 songs 3-8 s apart. How often any bird sings is the
+owner's round-2 rule and did not change: one at a time, about one every 25 s.
+
+**Score stings** (new): one per score -- hole in one, albatross or better,
+eagle, birdie, par, bogey, double bogey, triple or worse, matching scoring.js's
+names (`scoreSting`) -- in three instruments: a marimba (partials at 1x, 4x
+and 9.9x), bells (1x, 2.76x, 5.4x, with a slow beat) and a soft electric piano
+(1x and a detuned 1.004x, 2x, 3x, a 7.1x tine). Good scores climb an arpeggio
+in C major and finish on a chord; par is a settling fourth; bogeys fall a
+third, double bogey a minor triad, worse a soft chromatic droop. **Level 0.14**:
+at 0.32 the hole-in-one peaked 5 dB over full scale and every sting averaged
+louder than a drive. PLACED throughout.
+
+**The flagstick** (new): a dull fibreglass knock (420, 1,150 and 2,400 Hz,
+damped within 20 ms), the metal ferrule chattering in the cup's socket four
+times over 0.2 s, the flag snapping; a low hit near the cup rattles more, a
+glancing one is a tick and the flag. **The house** (new): siding (a hollow
+clack, tones 190-1,350 Hz), brick or stone (a hard thwack), a roof (a thunk,
+then nine ticks of the ball rattling down the shingles) and a window (a glassy
+tink; it does not break). PLACED.
+
 ### Open, for the owner
 
-- **Driver pitch**: the owner's note asked for "around 3500 Hz" while the
-  Pitch slider went to its top (main ring 6.6 kHz). Take A is the slider,
-  take B the note. Not decided.
+- The score-sting instrument, water A or B, and the house material (round 3's
+  report). Decided: the driver (take C, main ring near 5.4 kHz), no club sounds
+  under a launch monitor, no crowd, no ball rolling, no CC0 recordings.
 
-- **With a launch monitor the golfer hears the real strike**; a game strike
-  sound lands after the monitor's delay and sounds like an echo. Proposed:
-  strike sounds for keyboard shots only, one setting to turn them on for
-  monitor shots. Not decided.
 - Every PLACED number above is waiting on the owner's ears, which is what the
   report's takes, sliders and notes are for.
+
+## Flagsticks and houses: solid where they are drawn, and flags you can find (13 October 2026)
+
+The owner asked for colliders on the flagstick and houses, and for flagsticks
+that can be seen from a distance.
+
+**Houses were already solid, but in the wrong place.** simulateShot works in
+the hole's frame and moved each house's centre into it with `toLocal`, but
+kept `rotation`, which is a world angle; the box test then turned every house
+by its hole's own angle. Measured on the `HOMES-QA` course (nine holes, 57
+houses): on a grid of 1 m points around each house, **32.8% of the points
+inside either the drawn house or its collider were inside only one of them**,
+**60% on the worst house**, and only holes running due north were right. The
+box also stood **2.6 m above every roof** -- a relic of the hand-built houses,
+whose roof sat on top of `height`; the imported models are fitted to `height`
+roof and all. Against the old code, **96 of 100** level shots passing 0.6 m
+outside a long wall struck it, and **50 of 50** balls clearing a roof by 0.8 m
+hit the air above it. Fixed: in the hole's frame a house is turned by its own
+rotation less the hole's, and the box ends at the drawn top
+(`tests/solid-colliders.test.mjs`). `tests/homes.test.mjs` had made the same
+frame mistake in its own "inside" check, so it agreed with the old physics; it
+was corrected too.
+
+**The flagstick is solid while it stands in the hole.** A vertical cylinder
+at its regulated base radius (9 mm; the rule allows 9.5 mm from 76 mm above the
+surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to 7 ft
+above the green, in the same swept-cylinder test as a trunk, so a ball comes
+off it the way it comes off a tree (the normal component reversed at 0.3 of
+its speed). The game pulls the stick for a putt and when the ball is on the
+green, and the collider follows: `flagsticks.current` is false exactly then.
+Every other hole's stick always stands. A strike counts as `flagHits`, not a
+tree. Not modelled: the stick's flex (a fibreglass pole gives a little more
+than a trunk) and a ball wedged between stick and cup wall, which the Rules
+call holed if any part is below the surface.
+
+**Flagsticks stay findable.** Drawn to size, the stick is 18 mm across: from
+250 yd (229 m) with the default 50-degree view on a 1,080-line screen that is
+about 0.09 px wide and 11 px tall, the flag about 2.4 x 1.7 px. Beyond the
+distance where the stick would be shorter than 36 px on screen, stick and flag
+grow together to hold that angular size, up to 10x; the cloth may grow up to
+1.8x more so it stays at least 14 px wide; and the pole is thickened so it is
+never under 2 px. Close up -- inside about 70 m at that screen size -- they are
+exactly to size. Drawing only: the ball hits the real stick. All four numbers
+are PLACED by eye and live beside each other in renderer.js (`FLAG_MIN_PX`).
+Rejected: an outline or glow (a second pass for one object, and a cartoon
+outline nowhere else in the scene), and leaving it to the flag label (the
+label marks the spot but is not the flag, and it hides when you aim).

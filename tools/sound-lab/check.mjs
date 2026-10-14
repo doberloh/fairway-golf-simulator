@@ -31,6 +31,8 @@ const rows=await tab.evaluate(async secs=>{
   const [b]=await render(2,lab=>L.strike(lab,id,{take,at:0}));out.push(stats(b,`strike ${id} ${take}`));}
  for(const [id,C]of Object.entries(L.IMPACTS))for(const take of Object.keys(C.takes)){
   const [b]=await render(3,lab=>L.impact(lab,id,{take,speed:15.6,at:0}));out.push(stats(b,`impact ${id} ${take}`));}
+ for(const [id,S]of Object.entries(L.SCORES))for(const take of Object.keys(S.takes)){
+  const [b]=await render(4,lab=>L.score(lab,id,{take,at:0}));out.push(stats(b,`score ${id} ${take}`));}
  for(const name of Object.keys(L.SCENES))for(const night of [false,true]){
   const ev=[],songs=[];const [b]=await render(secs,(lab)=>{const a=L.createAmbience(lab,{onEvent:e=>ev.push(e.text),onSong:s=>songs.push(s)});a.start(name,{live:false});a.set({night});a.schedule(secs);return a;});
   songs.sort((x,y)=>x.t-y.t);let overlap=0;for(let i=1;i<songs.length;i++)if(songs[i].t<songs[i-1].end)overlap++;

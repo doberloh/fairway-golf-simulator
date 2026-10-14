@@ -847,7 +847,10 @@ function takeShot(data=null){
   // Only when they are actually standing lit on the course. The whole
   // floodlight group is hidden when the lights are down, and a ball stopping
   // dead against a mast nobody can see is worse than one flying through it.
-  poles:view.floodlit?view.poles:null});result.puttStroke=lie==='green';
+  poles:view.floodlit?view.poles:null,
+  // This hole's flagstick is in unless the ball is on the green (setPinOut) or
+  // the putter is in hand (liftFlag): exactly when it is drawn standing.
+  flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
  latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){

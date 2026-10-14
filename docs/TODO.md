@@ -593,10 +593,6 @@ outside a corridor", which near the tee is right beside the tee box. There IS a
 hole-local origin while the tees sit 11 to 85 m away from it -- and that list is
 dead anyway (see below), so the bubble never protected anything.
 
-- [ ] **The flagstick still does not collide.** Left out of this slice
-  deliberately: it is a different question from obstructions, and real golf
-  hits the pin. Wants its own decision, including whether the pin is in or out.
-
 - [ ] **The per-hole tree list is dead code.** `h.trees` is built in
   `generateCourse` for every hole and nothing reads it once a world exists:
   physics takes `course.world?.trees` first, and the renderer, vegetation and
@@ -854,43 +850,50 @@ so several of these play differently as well as look different.
 Asked for by the owner on 13 October, on the branch `sounds`: ambience that
 does not loop, a sound per club, a landing per turf, trees and rocks; CC0 and
 credited if any asset is used. Everything is synthesised (RESEARCH, *Sound:
-the synthesised soundscape*), so nothing needs crediting. Built so far: the
-synthesiser, `tools/sound-lab/synth.js`, and the local listening report,
-`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`). Round 1
-was heard and answered the same day; round 2 (RESEARCH, *Round 2*) bakes the
-owner's sliders into take A and reworks the whoosh, iron, trunk, cup, dove,
-crickets and bird timing.
+the synthesised soundscape*), so nothing needs crediting. The synthesiser is
+`tools/sound-lab/synth.js`; the local listening report is
+`docs/reports/sounds/index.html` (`node tools/sound-lab/build.mjs`). Three
+rounds the same day: round 1 heard and answered, round 2 reworked, round 3
+**signed off** every club, landing, tree, rock and the cup at the owner's
+settings (`FINAL` in synth.js) and added water as a splash, the flagstick, the
+house and the score stings. CC0 recordings were compared and turned down.
 
-- [ ] **The owner listens to round 2 and sends notes** from "Copy my notes".
-  Every number marked PLACED in RESEARCH is still a guess waiting on the
-  owner's ears. Nothing goes into the game before this.
-- [ ] **Driver pitch**: the note said "around 3500 Hz", the slider said 6.6
-  kHz. Take A is the slider, B the note; the owner picks.
-- [ ] **CC0 recordings or synthesis, per sound.** 41 checked CC0 recordings are
-  in the report to compare (`tools/sound-lab/cc0-candidates.json`). Recorded
-  one-shots (strikes, putts, the cup) are where they could win; ambience
-  recordings loop and add about 2 MB each. Any one chosen: download it with
-  the owner's go-ahead, credit it in ATTRIBUTION.md and THIRD_PARTY_NOTICES,
-  and say in DISTRIBUTION_REVIEW that audio now ships.
-- [ ] **Decide strike sounds under a launch monitor.** The golfer already hears
-  the real strike, and a game sound lands after the monitor's delay like an
-  echo. Proposed: keyboard shots only, plus one setting for monitor shots.
-- [ ] **The extras**: the ball dropping into the cup is in the report unasked;
-  rolling on a green, the flagstick, a house and a crowd are offered. Owner
-  to say which.
-- [ ] **Then into the game**: synth.js to `src/` unchanged; strikes from the
-  shot, landings from contact events (surface and speed), trees and rocks from
-  the collision index, ambience from the biome, wind, temperature and time of
-  day; **water only near water** (owner, round 2): each frame or shot, the
-  distance from the ball (or the camera while it flies) to the nearest pond,
-  lake, river, creek or -- on Links and Island -- the sea, from the course's
-  water bodies (`src/water-bodies.js`, `src/lakes.js`, `src/streams.js`),
-  fed to the ambience's `set({waterDist})`; which kind of water is nearest
-  should pick the sound (babble for a creek, lapping for a pond, surf for the
-  sea) rather than the biome's fixed mix; a volume control and mute in settings (a SCHEMA_VERSION question if it
-  joins a saved settings object); the browser only allows sound after a click,
-  so start the audio on the first input. Then `npm run smoke`, PLAYING.md,
-  DISTRIBUTION_REVIEW (no audio ships today) and ARCHITECTURE.
+Decided by the owner, 13 October: **in launch-monitor mode no club sounds**
+(the golfer hears the real strike), every other sound plays; **no crowd
+reactions**; **no ball-rolling sound**.
+
+- [ ] **The owner picks from round 3**: the score-sting instrument (marimba,
+  bells or electric piano, one for all), water A or B, and one house material
+  or several by house style.
+- [ ] **Then into the game**: synth.js to `src/` unchanged, playing the signed-
+  off take of each sound.
+  - **Strikes** from the shot, keyboard shots only (the owner's call above);
+    the whoosh needs the impact scheduled about 0.45 s after it starts.
+  - **Landings** from contact events (surface and speed), **trees, rocks,
+    flagsticks and houses** from the collision index. simulateShot counts
+    `treeHits`, `homeHits` and `flagHits` today but reports no times or
+    speeds; each contact needs recording with its time, what was hit and the
+    speed into it, so the flight can play it at the right moment. Rocks and
+    props count as trees today.
+  - **The cup** when a ball is holed; **a score sting** when a hole is finished
+    (`scoreSting(strokes, par)` maps a score to its sting, matching
+    scoring.js's names).
+  - **Ambience** from the biome, wind, temperature and time of day; **water
+    only near water** (owner, round 2): each frame or shot, the distance from
+    the ball (or the camera while it flies) to the nearest pond, lake, river,
+    creek or -- on Links and Island -- the sea, from the course's water
+    bodies (`src/water-bodies.js`, `src/lakes.js`, `src/streams.js`), fed to
+    the ambience's `set({waterDist})`; which kind of water is nearest should
+    pick the sound (babble for a creek, lapping for a pond, surf for the sea)
+    rather than the biome's fixed mix.
+  - A volume control and mute in settings (a SCHEMA_VERSION question if it
+    joins a saved settings object); the browser only allows sound after a
+    click, so start the audio on the first input. **The driver as signed off
+    peaks 13 dB over full scale before the limiter** and is shaped by it into
+    what the owner heard: keep the limiter in the game's chain, or bake its
+    effect in.
+  - Then `npm run smoke`, PLAYING.md, DISTRIBUTION_REVIEW (no audio ships
+    today) and ARCHITECTURE.
 
 
 # Done
@@ -2953,6 +2956,14 @@ engineering provenance pass, not legal advice.
 
 ## Obstructions in the shot path
 
+- [x] **The flagstick collides (13 October 2026).** Was: "The flagstick still
+  does not collide... wants its own decision, including whether the pin is in
+  or out." The owner decided: solid while it stands in the hole, out of play
+  whenever the game pulls it (for a putt, and with the ball on the green). It
+  is the same cylinder as a trunk, at its regulated base radius, from the cup
+  floor to 7 ft (RESEARCH, *Flagsticks and houses*); strikes count as
+  `flagHits`; `tests/solid-colliders.test.mjs`.
+
 - [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
   **0 of 648 blocked, from 4.5%.** Tree counts unchanged. Two wrong turns on the
   way, both recorded below. Was: A wedge from
@@ -4233,3 +4244,18 @@ engineering provenance pass, not legal advice.
   `bridge-bundle` journey running the built bundle as its own process with a
   pretend connector sending a real shot, and a unit test for the address
   choice; the Windows script run by hand. Not yet run: the macOS scripts.
+
+## Flagsticks and houses (13 October 2026)
+
+- [x] **Houses collide where they are drawn.** Asked for as "give them
+  colliders"; they had one, turned by the hole's angle and 2.6 m too tall, so
+  on a test course a third of each footprint disagreed with the drawing and 96
+  of 100 shots skimming a wall hit it. Fixed in simulateShot, with a test that
+  fails on the old code; `tests/homes.test.mjs` had the same frame mistake and
+  was corrected (RESEARCH, *Flagsticks and houses*).
+- [x] **The flagstick collides** (see *Obstructions in the shot path*).
+- [x] **Flagsticks stay visible from a distance.** Past the point where the
+  stick would stand under 36 px on screen it and its flag grow to hold that
+  size (up to 10x), the pole never under 2 px; to scale up close; drawing only
+  (renderer.js, `FLAG_MIN_PX`). Looked at in the game from a 374 yd tee.
+  Owner to judge the size; the numbers are placed.
