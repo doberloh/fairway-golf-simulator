@@ -1291,6 +1291,8 @@ html,body{overscroll-behavior:none}
 #world .spin-dial button:disabled,#world button.shape-pick:disabled{opacity:.45}
 #world .shape-control.spun .spin-dial strong{color:#f0c674}
 #world .shape-control.putt{display:none}
+/* The phone's spin button; the desktop keeps the - / + dial. */
+#world .shape-pick.spin-cycle{display:none}
 .lie-readout{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 7px;font-size:11.5px;color:var(--ink-dim);padding:2px 16px 8px}
 .lie-readout>span{font-size:8.5px;letter-spacing:.8px;color:var(--ink-faint)}
 .lie-readout.penalty{color:#ff8f80}
@@ -1348,15 +1350,22 @@ html,body{overscroll-behavior:none}
     whole screen takes the taps, so its exact place is about being seen. */
  .swing-meter:not(.hud-custom){left:var(--edge-l);right:var(--edge-r);width:auto;transform:none;bottom:auto;top:calc(var(--weather-bottom,52px) + var(--gap) + 62px);padding:7px 12px 10px}
  .sm-head{margin-bottom:18px}
- #world .shape-control{grid-template-columns:1fr 1fr;gap:5px}
- #world .shape-control .spin-dial{grid-column:span 2}
- #world .shape-pick{padding:5px 7px}
+ /* Thumb-sized: every picker is a button at least 46 px tall, and spin is one
+    button that steps round (smoke: every control a round needs is a thumb wide). */
+ #world .shape-control{grid-template-columns:1fr 1fr 1fr;gap:5px}
+ #world .shape-control .spin-dial{display:none}
+ #world .shape-pick.spin-cycle{display:flex}
+ #world .shape-pick{padding:5px 7px;min-height:46px;justify-content:center}
+ #world .shape-pick strong{font-size:12px}
  #world .shape-pick small kbd{display:none}
  .lie-readout{padding:0 13px 6px;font-size:10.5px}
 }
 /* Held sideways there is no room above the controls: the bar takes the foot of
    the screen between the shot controls and the map and pad. */
 @container app (max-height:500px){
+ /* Held sideways the panel has the least height: the club's carry is on the
+    bar's full line already, so its line under the club goes. */
+ #world #clubHint{display:none}
  .swing-meter:not(.hud-custom){top:auto;bottom:var(--edge-b);left:calc(var(--edge-l) + var(--panel-w) + var(--gap));right:calc(var(--edge-r) + var(--map-w) + var(--gap))}
  .sm-head{margin-bottom:16px}
 }

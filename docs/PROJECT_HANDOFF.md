@@ -814,7 +814,10 @@ the camera strip folds behind `#camButton` (class `cams-open` on `#world`,
 closed by picking a camera, tapping elsewhere or Escape); the map sits in the
 bottom-right corner with the aim pad under it. The tee picker, the aim arrows
 and the Swing Meter button leave the phone's panel; the curve, height and spin
-pickers stay, two to a row.
+pickers stay as one row of 46 px buttons, spin a single button that steps round
+like X (the desktop's - / + pair is under a thumb's width), and held sideways
+`#clubHint` goes so the Swing button keeps its height -- `npm run smoke`'s
+*every control a round needs is a thumb wide* caught both on 14 October 2026.
 
 **The safe area is read, not assumed.** The viewport asks for
 `viewport-fit=cover`, so on an iPhone the page runs edge to edge instead of

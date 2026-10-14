@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round} from './game.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {createPopups} from './popups.js';
@@ -926,10 +926,11 @@ function drawShapeControls(){
  const putt=c.code==='PT',short=isShortGame(),locked=putt||!!swing||!!flight;
  $('curveLabel').textContent=curveName(shotShape.curve);
  $('heightLabel').textContent=heightName(shotShape.height,short);
- $('spinLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
+ $('spinLabel').textContent=$('spinCycleLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
+ $('pickSpin').setAttribute('aria-label',`Spin: ${spinName(shotShape.spin)}. Tap to change`);
  $('pickCurve').setAttribute('aria-label',`Curve: ${curveName(shotShape.curve)}. Press S to change`);
  $('pickHeight').setAttribute('aria-label',`Height: ${heightName(shotShape.height,short)}. Press W to change`);
- $('pickCurve').disabled=$('pickHeight').disabled=locked;
+ $('pickCurve').disabled=$('pickHeight').disabled=$('pickSpin').disabled=locked;
  $('spinDown').disabled=locked||shotShape.spin<=SPIN_STEPS[0];
  $('spinUp').disabled=locked||shotShape.spin>=SPIN_STEPS.at(-1);
  $('shapeControl').classList.toggle('putt',putt);
@@ -975,6 +976,9 @@ function bindSwingInput(){
  $('swingCatcher').addEventListener('pointerdown',press);
  $('pickCurve').onclick=()=>stepShape('curve',1);
  $('pickHeight').onclick=()=>stepShape('height',1);
+ // On a phone the dial is one button that steps round, like X: a pair of
+ // small - and + buttons is under a thumb's width.
+ $('pickSpin').onclick=()=>stepShape('spin',1);
  $('spinUp').onclick=()=>stepShape('spin',1,false);
  $('spinDown').onclick=()=>stepShape('spin',-1,false);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelSwing();});

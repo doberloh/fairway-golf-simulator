@@ -37,22 +37,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
   finished, and as the profile picture) and titles.**
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
 - [ ] **Phase 7: course of the week, achievements, challenges.**
-- [ ] **Run the smoke journeys on the Swing Meter**, with the owner's go-ahead:
-  `tools/smoke.mjs` was updated for it (three Space taps, the Swing button and
-  two taps on a phone, S/W/X, Escape cancelling, the monitor window hiding the
-  meter) but not run.
-
-## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
-
-- [ ] **Run the smoke journeys on this layout.** A software-renderer run
-  (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
-  through on 13 October (only `boot` had passed), and 0.7 went out on 14
-  October with light testing at the owner's request, so `hud-reachable`,
-  `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
-  shot line and the new tile places. Only with the owner's go-ahead, on an idle
-  card, a few journeys at a time (`--only`). The finished work is under the
-  same heading in `# Done`.
-
 
 ## The UI pass (10 October 2026)
 
@@ -902,6 +886,32 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
   simulator never invents ball data* was rewritten for the lie rule.
   RESEARCH.md *The Swing Meter*.
+- [x] **The smoke journeys, on the Swing Meter and the 13 October layout: 26 of
+  26 pass** (14 October 2026, the owner's go-ahead, hardware GPU, the full set
+  in about 4 minutes 40 seconds). Getting there found, in order:
+  - **Stale harness: the phone journeys expected the shot numbers to start
+    folded.** Since 13 October they start shown, as PLAYING.md says; the step
+    was first run against that layout here. Fixed in the harness.
+  - **A real game fault: the Swing Meter's pickers were under a thumb's width
+    on a phone** (42 px tall), and held sideways the taller panel squeezed the
+    Swing button to 30 px. Fixed in the game: on a phone the three pickers are
+    one row of 46 px buttons, spin is one button that steps round like X, and
+    held sideways the club's carry line goes (the bar's full line shows it).
+  - **Stale harness: putting out with three taps at fixed gaps.** A putt is two
+    taps, so the third waited 30 s for a layer already gone; and with no power
+    preset to the hole any more, fixed gaps hole a two-yard putt only by luck --
+    `profile` and `bag` passed one run and failed the next. Putting out now
+    stops the meter on the blue target marker (`tapOnTarget`, `t.putt()`).
+  Closes, from *Shot line in the play window, tiles placed afresh, the bridge's
+  clubs*:
+  **Run the smoke journeys on this layout.** A software-renderer run
+    (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
+    through on 13 October (only `boot` had passed), and 0.7 went out on 14
+    October with light testing at the owner's request, so `hud-reachable`,
+    `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
+    shot line and the new tile places. Only with the owner's go-ahead, on an idle
+    card, a few journeys at a time (`--only`). The finished work is under the
+    same heading in `# Done`.
 - [x] **Phase 2: the target marker.** A blue mark on the bar where to stop for
   the ball to land in the aim circle, found by flying the ball (`targetShare`,
   through `playsLike`): slope, lie and air always, wind only on Easy; out of

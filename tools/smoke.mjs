@@ -300,6 +300,19 @@ class Trip {
  // Enter to skip the flight. It checks the shot actually STARTED -- the game
  // refuses a shot silently in several states, and a harness that assumed every
  // swing was a shot would report a round it never played.
+ // A PUTT, the way a player putts one: Space starts the stroke and it stops on
+ // the blue target marker (`tapOnTarget`). Three Space taps at fixed gaps hole a
+ // two-yard putt only by luck, which is how `profile` and `bag` passed one run
+ // and failed the next (14 October 2026).
+ async putt() {
+  await this.until(async () => !(await this.inFlight()), 'the previous shot to finish', 30 * SLOW);
+  await this.key('Space');
+  await tapOnTarget(this);
+  await this.until(() => this.inFlight(), 'the putt to start', 5 * SLOW);
+  await this.key('Enter');
+  await this.until(async () => !(await this.inFlight()), 'Enter to finish the putt', 30 * SLOW);
+ }
+
  async shot() {
   await this.until(async () => !(await this.inFlight()), 'the previous shot to finish', 30 * SLOW);
   await this.swing();
@@ -496,7 +509,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #pickCurve, #pickHeight, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -518,6 +531,33 @@ const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status',
 // The panels FADE, over a fifth of a second, so a check made the instant the
 // ball leaves catches them half-way; it is retried until it passes or two
 // seconds are up, and only the last failure is reported.
+// A SWING THAT STOPS ON THE TARGET MARKER, the way a player aims one: the meter
+// is started by the caller, then this waits, frame by frame inside the page,
+// for the marker to reach the blue target and taps the screen there, and taps
+// again as it comes back over the strike line (if the swing has a third tap).
+// Used where the harness needs the ball to go where it is aimed -- putting out
+// -- which three taps at fixed gaps cannot do since the Swing Meter replaced
+// a power that was set to the hole for you (14 October 2026).
+async function tapOnTarget(t) {
+ await t.page.evaluate(() => new Promise((resolve, reject) => {
+  const meter = document.getElementById('swingMeter'), marker = document.getElementById('smMarker');
+  const target = document.getElementById('smTarget'), catcher = document.getElementById('swingCatcher');
+  const goal = target && !target.hidden ? parseFloat(target.style.left) : 70;
+  const line = parseFloat(document.querySelector('#smTicks .strike')?.style.left ?? '21');
+  const tap = () => catcher.dispatchEvent(new PointerEvent('pointerdown', {button: 0, bubbles: true, isPrimary: true}));
+  const until = performance.now() + 10000;
+  const step = () => {
+   if (performance.now() > until) return reject(new Error('the meter never reached the target'));
+   const stage = meter.dataset.stage, x = parseFloat(marker.style.left);
+   if (stage === 'ready') return resolve();
+   if (stage === 'power' && x >= goal) tap();
+   else if (stage === 'strike' && x <= line) { tap(); return resolve(); }
+   requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+ }));
+}
+
 async function flightClearsTheScreen(t, phone) {
  const until = Date.now() + 2000 * SLOW;
  for (;;) {
@@ -720,7 +760,7 @@ const JOURNEYS = [
    });
    await t.step('putt out', async () => {
     for (let putt = 1; putt <= 6; putt++) {
-     await t.shot();
+     await t.putt();
      // The hole reveal holds for three seconds of WALL time, then the card opens.
      const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false);
      if (done) return;
@@ -977,7 +1017,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
     await t.closeTools();
     for (let putt = 1; ; putt++) {
-     await t.shot();
+     await t.putt();
      if ((await saved())?.done?.[0]) break;
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
@@ -1114,7 +1154,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
     await t.closeTools();
     for (let putt = 1; ; putt++) {
-     await t.shot();
+     await t.putt();
      if ((await saved())?.done?.[0]) break;
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
@@ -1577,13 +1617,18 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
-   await t.step('the shot panel is folded on a phone, and one tap opens and closes it', async () => {
+   // Since 13 October 2026 the tiles START SHOWN on a phone as everywhere else,
+   // and the chevron on the shot line folds them (PLAYING.md, *The play
+   // screen*). This step still expected them folded and was first run against
+   // the new layout on 14 October, when it failed on a game doing what the docs
+   // say; the harness was wrong, not the game.
+   await t.step('the shot numbers show on a phone, and one tap folds them and one brings them back', async () => {
     const visible = () => t.page.evaluate(() => !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight);
-    if (await visible()) throw new Error('the shot numbers show before anything was tapped');
-    await tap('#shotToggle');
-    await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
+    if (!(await visible())) throw new Error('the shot numbers are folded before anything was tapped');
     await tap('#shotToggle');
     await t.until(async () => !(await visible()), 'the shot numbers to fold away', 5 * SLOW);
+    await tap('#shotToggle');
+    await t.until(visible, 'the shot numbers to come back', 5 * SLOW);
    });
    await t.step('aim by tapping the course', async () => {
     const before = await t.page.textContent('#aimOutput');
@@ -1599,11 +1644,12 @@ const JOURNEYS = [
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
     // The Swing button starts the meter; mid-swing the whole screen is the tap
     // target, so the next two taps land anywhere.
+    // A putt is two taps, so the third is only made while a swing still waits.
     await tap('#swing');
     await t.page.waitForTimeout(650);
     await tap('#swingCatcher');
     await t.page.waitForTimeout(650);
-    await tap('#swingCatcher');
+    if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await tap('#swingCatcher');
     await t.until(() => t.inFlight(), 'the Swing button and two taps to start a shot', 5 * SLOW);
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});
@@ -1625,7 +1671,11 @@ const JOURNEYS = [
    });
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
-     await swing();
+     await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
+     await tap('#swing');
+     await tapOnTarget(t);
+     await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
+     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
      if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false)) return;
     }
     throw new Error('six putts from two yards and the ball never dropped');
