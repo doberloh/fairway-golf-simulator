@@ -35,7 +35,10 @@ import {rangeTargets} from './range.js';
 // top of that so it never drops below POLE_MIN_PX. Close up -- a chip, a pitch,
 // anything from the green -- they are exactly to size. Drawing only: the ball
 // collides with the real stick. The range's target boards make the same
-// angular-size choice (addRangeTargets). PLACED by eye.
+// angular-size choice (addRangeTargets). PLACED by eye. All of this happens
+// only when the player turns on "Larger flags far away" (graphics.distantFlags,
+// OFF by default since 14 October 2026); the range boards are not under that
+// switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
 import {toonRamp} from './textures.js';
 import * as T from 'three';
@@ -1828,15 +1831,20 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    '#include <clipping_planes_fragment>'+String.fromCharCode(10)+'if(length(gl_PointCoord-vec2(.5))>.5)discard;');
   this.scatter=new T.Points(geometry,material);this.scatter.renderOrder=4;this.group.add(this.scatter);
  }
+ // The player's switch (graphics.distantFlags, OFF by default). Off, every
+ // flagstick is drawn exactly to size from anywhere -- the stick is then lost
+ // at long range, which is the player's choice to make. Read every frame, so
+ // it takes effect on the next one.
+ setDistantFlags(on){this.distantFlags=!!on;}
  // See FLAG_MIN_PX. A few multiplies per hole per frame; nothing is rebuilt.
  holdFlagsticks(){
-  const cam=this.camera,px=Math.max(1,this.canvas.clientHeight)/(2*Math.tan(cam.fov*Math.PI/360));
+  const cam=this.camera,px=Math.max(1,this.canvas.clientHeight)/(2*Math.tan(cam.fov*Math.PI/360)),grow=this.distantFlags===true;
   for(const a of this.flagsticks||[]){
    const b=a?.userData.base;if(!b||!a.visible)continue;
    const d=Math.max(1,Math.hypot(cam.position.x-b.x,cam.position.y-b.y-1,cam.position.z-b.z)),perMetre=px/d;
-   const s=clamp(FLAG_MIN_PX/(FLAGSTICK_HEIGHT*perMetre),1,FLAG_MAX_SCALE);
-   const cloth=Math.max(s,Math.min(FLAG_CLOTH_PX/(.48*perMetre),s*1.8));
-   const thick=Math.max(s,POLE_MIN_PX/(2*FLAGSTICK_BASE_R*perMetre));
+   const s=grow?clamp(FLAG_MIN_PX/(FLAGSTICK_HEIGHT*perMetre),1,FLAG_MAX_SCALE):1;
+   const cloth=grow?Math.max(s,Math.min(FLAG_CLOTH_PX/(.48*perMetre),s*1.8)):1;
+   const thick=grow?Math.max(s,POLE_MIN_PX/(2*FLAGSTICK_BASE_R*perMetre)):1;
    const {pole,cloth:f}=a.userData;
    pole.scale.set(thick,s,thick);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s/2,b.z);
    // The cloth's top stays at the top of the stick, its edge against the pole.

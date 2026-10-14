@@ -4263,6 +4263,11 @@ engineering provenance pass, not legal advice.
   size (up to 10x), the pole never under 2 px; to scale up close; drawing only
   (renderer.js, `FLAG_MIN_PX`). Looked at in the game from a 374 yd tee.
   Owner to judge the size; the numbers are placed.
+- [x] **A switch for it, off by default (14 October).** "Larger flags far
+  away" in Graphics, below Text size (`graphics.distantFlags`, default
+  false; `tests/distant-flags.test.mjs`). Off, every flagstick is to size
+  from anywhere. Checked in the game at 107 yd: off, the flag is lost against
+  the green at night; on, it shows.
 
 ## Sounds (13 October 2026)
 

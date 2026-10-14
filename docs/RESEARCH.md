@@ -7684,3 +7684,11 @@ are PLACED by eye and live beside each other in renderer.js (`FLAG_MIN_PX`).
 Rejected: an outline or glow (a second pass for one object, and a cartoon
 outline nowhere else in the scene), and leaving it to the flag label (the
 label marks the spot but is not the flag, and it hides when you aim).
+
+**A switch, off by default (14 October 2026).** The day after it shipped
+always on, the owner asked for a toggle and for it to default to off: "Larger
+flags far away" in Graphics (`graphics.distantFlags`). Off, every flagstick is
+drawn exactly to size from anywhere, as before 13 October. The growth numbers
+above are unchanged and apply only with the switch on; the range's distance
+boards are not under it. No record saved before the switch has the key, so
+every player starts with it off.
