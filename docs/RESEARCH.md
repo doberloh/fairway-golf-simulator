@@ -7718,7 +7718,7 @@ none were taken from them; the three-tap structure is all that was borrowed.
 | Low / High | -4 / +4 deg launch | |
 | Bump & run / Flop (wedges within 60 yd) | 55% of launch on 50% spin / +10 deg launch | the 55% puts a 7-iron-like chip at Trackman's 6-14 deg chip launches (TODO *a lower launch for keyboard chips*) |
 | Spin dial | -1: x0.75; +1, +2, +3: x1.1, x1.2, x1.3 | |
-| Putting bar | a quarter, half or all of the putter's roll | added in building, not in the spec |
+| Putting bar | a quarter of the putter's roll up to six times it | the zoom was added in building; the reach past the putter's roll is the owner's call (14 October 2026): the widest green a course grows is about 80 yd across (green size 14-21 m radius, aspect up to 1.33, outline harmonics), and at Stimp 6 the putter's own 30 yd (Stimp 10) roll is about 18 yd, so six times holds 80 yd with the bar's quarter to spare. Tested: an 80 yd putt at Stimp 6 rolls within 2 m of 80 yd |
 
 **Early goes right, late goes left, for every golfer** (the owner's rule, third
 round): the meter has no handedness.

@@ -27,6 +27,15 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
+- [ ] **Owner: tune the Swing Meter's sounds** (round 1, 14 October 2026). Built
+  in `src/sound.js` (`METER_VOICES`, `meterVoice`, `METER_EVENTS`,
+  `meterEvent`): a voice that follows the marker, and a sound for the distance
+  set, overswing, a perfect strike, a strike in the zone, a miss and a swing
+  that ran out, three takes each. Report: `node tools/sound-lab/build.mjs`, then
+  `docs/reports/sounds/meter.html` (local), with a practice meter that plays the
+  picked takes. `check.mjs` renders every take: all between -10 and -17 dB
+  peak. **None plays in the game** until signed off; then fold the choices into
+  a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
 - [ ] **Phase 3: mixed groups.** Each golfer plays with the Swing Meter or a
   launch monitor (hidden until a bridge has connected); the monitor window
   steps aside and refuses shots on a Swing Meter golfer's turn; handedness in
@@ -877,7 +886,8 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   High and Flop heights carry a little less spin to hold it). Putts are two
   taps (three on Hard) on a bar that zooms to the putt, aimed at a length by
   the circle, with the read line showing the break for that length -- all of it
-  on Easy and Normal, the first third on Hard, and the panel saying why. The
+  on Easy and Normal, the first third on Hard, and the panel saying why (all
+  three replaced later the same day: see *Phase 2, round 3* below). The
   lie is shown before every shot for every way of playing, and costs ball
   speed by one table for everyone: semi-rough 96%, rough 90%, sand 80% (was
   72%). A launch monitor's measured ball speed now takes the same share, shown
@@ -886,6 +896,13 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
   simulator never invents ball data* was rewritten for the lie rule.
   RESEARCH.md *The Swing Meter*.
+- [x] **Phase 2, round 3 (the owner's notes, 14 October 2026).** The bar keeps
+  the struck swing -- the distance stop and the strike -- until the next swing.
+  No putt preview for any way of playing: a straight line to the aim, the break
+  read from the green, the putt target on a flat green, and the aim point shown
+  on the green for everyone. Putts are two taps on every difficulty. The putting
+  bar reaches from a quarter of the putter's roll to six times it, so a putt
+  can cross any green (80 yd at Stimp 6 is tested).
 - [x] **The smoke journeys, on the Swing Meter and the 13 October layout: 26 of
   26 pass** (14 October 2026, the owner's go-ahead, hardware GPU, the full set
   in about 4 minutes 40 seconds). Getting there found, in order:
@@ -916,7 +933,7 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   the ball to land in the aim circle, found by flying the ball (`targetShare`,
   through `playsLike`): slope, lie and air always, wind only on Easy; out of
   reach, the full line in red with *Out of reach: take more club*; for a putt,
-  the length its read line was solved for. Changing club moves a circle nobody
+  the circle's length on a flat green. Changing club moves a circle nobody
   placed to the new club's carry; a placed one stays and the marker moves.
   Worked out at most ten times a second while aiming. RESEARCH.md *The Swing
   Meter*, *The target marker*. **Added at the owner's request the same day:**

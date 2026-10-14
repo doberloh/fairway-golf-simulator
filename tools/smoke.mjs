@@ -751,6 +751,9 @@ const JOURNEYS = [
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
     if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
+    // The bar keeps the swing that was struck: the distance stop stays on it
+    // after the ball lands, until the next swing (14 October 2026).
+    if (!await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter forgot where the distance was set');
    });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball

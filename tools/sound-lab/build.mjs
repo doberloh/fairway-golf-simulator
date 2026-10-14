@@ -31,3 +31,11 @@ const water=readFileSync(join(here,'water.html'),'utf8')
  .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">\n<meta name="built" content="${built}">`);
 writeFileSync(join(outDir,'water.html'),water);
 console.log(`wrote ${join('docs','reports','sounds','water.html')} (${(water.length/1024).toFixed(0)} KB)`);
+// The Swing Meter's sounds (14 October 2026): their own small page, with a
+// practice meter that plays the takes the owner has picked.
+const meter=readFileSync(join(here,'meter.html'),'utf8')
+ .replace('/*SYNTH*/',()=>synth)
+ .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">
+<meta name="built" content="${built}">`);
+writeFileSync(join(outDir,'meter.html'),meter);
+console.log(`wrote ${join('docs','reports','sounds','meter.html')} (${(meter.length/1024).toFixed(0)} KB)`);

@@ -171,7 +171,7 @@ test('with the club\'s own spin, nothing spins back', () => {
  }
 });
 
-test('a putt: two taps, the bar in roll on a flat green at today\'s Stimp, no accuracy tap but on Hard', () => {
+test('a putt: two taps on every difficulty, the bar in roll on a flat green at today\'s Stimp', async () => {
  const p = clubs.putter;
  const full = puttFullRoll(p, turf);
  assert.ok(Math.abs(full / YARD - p.carry) < .5, 'full is the putter\'s own roll at Stimp 10');
@@ -182,7 +182,8 @@ test('a putt: two taps, the bar in roll on a flat green at today\'s Stimp, no ac
  assert.equal(out.shot.hla, 0);
  const roll = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out.shot}, {...flat, surface: () => 'green'}, {turf});
  assert.ok(Math.abs(roll.total - full / 2) < .4, `half the bar rolled ${roll.total.toFixed(2)} m, not ${(full / 2).toFixed(2)}`);
- assert.ok(DIFFICULTIES.hard.putRead < 1 && DIFFICULTIES.normal.putRead === 1, 'only Hard shortens the read');
+ const {puttAccuracy} = await import('../src/swing-meter.js');
+ for (const d of Object.keys(DIFFICULTIES)) assert.equal(puttAccuracy(d), false, `${d} has no accuracy tap on a putt`);
 });
 
 // THE OWNER'S RULE FOR MONITOR SHOTS (14 October 2026): the lie costs a monitor
@@ -220,10 +221,20 @@ test('a monitor shot from the rough flies at 90% of its measured ball speed, and
 test('the putting bar zooms to the putt, and the putter is unchanged', async () => {
  const {puttRange, PUTT_RANGES} = await import('../src/swing-meter.js');
  const p = clubs.putter, full = puttFullRoll(p, turf);
- assert.deepEqual(PUTT_RANGES, [.25, .5, 1]);
+ assert.deepEqual(PUTT_RANGES, [.25, .5, 1, 1.5, 2, 3, 4, 6]);
  assert.equal(puttRange(p, turf, 3 * YARD), full / 4, 'a nine-foot putt gets the shortest bar');
  assert.equal(puttRange(p, turf, full * .35), full / 2);
- assert.equal(puttRange(p, turf, full * .9), full, 'a long one gets the whole roll');
+ assert.equal(puttRange(p, turf, full * .75), full, 'a long one gets the whole roll');
+ assert.equal(puttRange(p, turf, full * .9), full * 1.5, 'and one past it reaches on beyond the putter roll');
+ // ACROSS ANY GREEN: 80 yd, the widest a course grows, on the slowest Stimp.
+ const slow = turfConfig({stimp: 6}), across = 80 * YARD;
+ const range80 = puttRange(p, slow, across);
+ assert.ok(range80 >= across * 1.25, 'an 80 yd putt at Stimp 6 fits on the bar');
+ const sw80 = startSwing(0, {difficulty: 'normal', club: p, putt: true, accuracy: false});
+ tap(sw80, sw80.rise * across / range80);
+ const out80 = swingLaunch(sw80, {...ctx('putter'), turf: slow, puttRange: range80});
+ const r80 = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out80.shot}, {...flat, surface: () => 'green'}, {turf: slow});
+ assert.ok(Math.abs(r80.total - across) < 2, `the 80 yd putt rolled ${(r80.total / YARD).toFixed(1)} yd`);
  // Half of a quarter bar rolls an eighth of the putter's full roll.
  const sw = startSwing(0, {difficulty: 'normal', club: p, putt: true, accuracy: false});
  tap(sw, sw.rise * .5);

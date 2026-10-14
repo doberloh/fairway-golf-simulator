@@ -214,7 +214,7 @@ Playing with the keyboard, the mouse, a touch screen or a controller, you swing 
 
 1. **Tap to start.** The marker leaves the strike line and runs up the bar.
 2. **Tap to set the distance.** The bar is marked in **yards of carry** for the club in your hands -- its full line is your bag's yardage for that club -- so to carry 60 of your 100-yard wedge, stop the marker at 60. Past the full line is a short orange **overswing** zone worth up to 5% more carry, at the price of a much smaller strike zone. If you never tap, the swing goes off at the end of it.
-3. **Tap on the strike line.** The marker comes back; tap it inside the green **strike zone** and the ball goes where you aimed. **Early pushes the ball right, late pulls it left** -- for everyone, whichever way you swing -- and the further off the line, the bigger the miss. The narrow gold band in the middle is a **perfect strike**. Let the marker run past the zone and it is a bad miss.
+3. **Tap on the strike line.** The marker comes back; tap it inside the green **strike zone** and the ball goes where you aimed. **Early pushes the ball right, late pulls it left** -- for everyone, whichever way you swing -- and the further off the line, the bigger the miss. The narrow gold band in the middle is a **perfect strike**. Let the marker run past the zone and it is a bad miss. **The bar keeps your swing**: where you set the distance (the dashed gold line) and where you struck stay on it through the flight and after, until your next swing.
 
 **Space** taps it, so does **A / Cross** on a controller, and a click or touch on **Swing** or on the bar starts it; once a swing has started, **a tap anywhere on the screen** counts. **Escape** cancels a swing before the distance is set, with no stroke. A tap counts the moment it happens, however fast or slow the screen is drawing.
 
@@ -222,7 +222,7 @@ Playing with the keyboard, the mouse, a touch screen or a controller, you swing 
 
 **The blue marker on the bar is where to stop** for the ball to come down in your aim circle. The game works it out by flying the ball: it allows for the slope up or down to the circle, the lie, and the air (altitude and temperature) -- and **on Easy, the wind too**. On Normal and Hard the wind is yours to judge from the wind dial. If even a full swing falls short, the marker sits on the full line in red and the meter says *Out of reach: take more club*; it never points into the overswing zone. **Changing club moves the circle** to that club's carry down the fairway, unless you have placed it yourself this turn (clicked, moved it with ↑ ↓ or the pad, or typed a distance), in which case the circle stays and the marker moves. Turned the line with ← → but left the distance alone? The new club's carry is taken along your line.
 
-**A putt is two taps**: start, then stop at the length you want. The bar is in feet or yards of roll on a flat green at today's green speed, and it zooms to the putt -- a quarter, a half or all of your putter's roll -- so a short putt gets a bar you can actually stop on. The aim circle sets the length you are trying to hit, and **the read line shows the break for that length**, not for your stroke: reading is shown, striking it is up to you. On Hard there is a third tap for accuracy and the read shows only the first third of the break -- read the rest from the green. The panel says which you are seeing and why.
+**A putt is two taps** on every difficulty: start, then stop at the length you want. The bar is in feet or yards of roll on a flat green at today's green speed, and it zooms to the putt -- a quarter or a half of your putter's roll for a short one, so you get a bar you can actually stop on, and on past the putter's full roll for a long one, far enough to putt across any green on the slowest green speed. **There is no putt preview**: the line runs straight from the ball to where you aim, for every way of playing, and the break is yours to read from the green -- the grid, the flow and the heat map on the course map. The aim circle sets the length you are trying to hit, and the blue marker is that length on a flat green; the slope is yours to allow for.
 
 **Shape the shot before you swing.** Beside the club are three choices, which reset every shot:
 
@@ -234,11 +234,11 @@ Playing with the keyboard, the mouse, a touch screen or a controller, you swing 
 
 **Difficulty is your own.** Open **Swing Meter** in the shot controls (or the tools tray) to set it for whoever is up; it is kept in that golfer's profile, so a group can play on different settings.
 
-| | Marker | Strike zone | On the green |
+| | Marker | Strike zone | Wind |
 | --- | --- | --- | --- |
-| **Easy** | slow | wide | the whole read |
-| **Normal** | steady | medium | the whole read |
-| **Hard** | fast | narrow | the first third of the read, and an accuracy tap |
+| **Easy** | slow | wide | the blue marker allows for the wind |
+| **Normal** | steady | medium | you judge the wind |
+| **Hard** | fast | narrow | you judge the wind |
 
 The Swing Meter replaced the power slider, the Shot shape sliders and the ball-flight profile in October 2026. Your bag decides how far each club goes; nothing else does.
 
@@ -394,7 +394,7 @@ A browser page cannot listen for a launch monitor itself, so the download carrie
 
 The panel also validates and plays sample JSON independently of hardware. This sample is a real physics input, not evidence of a connected device. Bridge connectivity and device connectivity are reported separately. Incoming shots are rejected while unarmed, during flight, or while a hole/lie selection needs attention. There is no silent shot queue. The bridge sends the monitor a success only after the browser accepts the shot. Club/handedness messages use code 201; the community ready extension uses 202. Duplicate device/shot-number pairs are rejected within each browser connection.
 
-Two markers float in the world rather than in a bar: the **flag** shows yards to the pin — with what the shot **plays like** under it — and the **aim point** shows how far away the spot you are aiming at is. **They take turns**, because side by side they often sat on top of each other: the flag's is the one on screen, and while you move the aim it fades out and the aim point's fades in, swapping back about a second after you stop. The aim marker also steps aside at rest when the spot is within a few yards of the flag (never while you are aiming, when the flag's label has faded anyway), and by hand it is not used on the green — there the distance to the pin is the number that matters, and the putt preview line already shows where the ball finishes. With a monitor armed it is used on the green too, since a monitor putt has no preview line.
+Two markers float in the world rather than in a bar: the **flag** shows yards to the pin — with what the shot **plays like** under it — and the **aim point** shows how far away the spot you are aiming at is. **They take turns**, because side by side they often sat on top of each other: the flag's is the one on screen, and while you move the aim it fades out and the aim point's fades in, swapping back about a second after you stop. The aim marker also steps aside at rest when the spot is within a few yards of the flag (never while you are aiming, when the flag's label has faded anyway). On the green it shows too, for everyone: with no putt preview, the aim point is how far you mean to hit the putt.
 
 **Plays like** is the distance the shot to the hole would be on level ground in still air at sea level: "333 yards to hole, plays 322" means hit it as if it were 322. It is worked out by the game's own ball model, not a rule of thumb: the club in your hands, at a full swing, is flown once in today's wind, altitude and temperature to the hole's height, and once in still air on the level, and the hole's distance is scaled by how much farther or shorter the first one gets there. So it changes with the club you pick, uses your ball-flight settings, and agrees with how the ball will actually fly. Uphill, into the wind, in cold air it plays longer; downhill, downwind, up a mountain it plays shorter. It is not shown for a putt.
 

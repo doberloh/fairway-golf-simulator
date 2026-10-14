@@ -709,58 +709,21 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
 // keeps a straight target line, which is what an aim line means for a ball that
 // is about to be in the air.
 function updateAim(syncRange=true){const c=clubs[$('club').value];
- // A PUTT IS AIMED AT A LENGTH, by the circle, however it is struck: the read
- // line shows the break for the length the circle asks for, not the result of
- // the swing -- reading is shown, striking it is the golfer's. On Hard only the
- // first third of the line is drawn (swing-meter.js DIFFICULTIES.putRead). A
- // putt off an armed monitor is aimed the same way and the device decides it.
- if(c.code==='PT'&&!armed){
-  const range=aimRange??distance();
-  const preview=rollPreview(course,round.position,aim,puttLineSpeed(range),{turf:settings.turf,seconds:20});
-  aimPoint=preview.end;puttPreview=preview;
-  view.aimRing.visible=true;view.setAimPath(pathShare(preview.points,difficultyOf(golferDifficulty()).putRead),preview.distance);
-  $('aimOutput').textContent=aim.toFixed(1)+'°';
-  if(syncRange!==false)$('aimRange').value=(range/YARD).toFixed(1);
-  drawLie();drawMeterScale();
-  return;
- }
+ // NO PUTT PREVIEW (the owner's call, 14 October 2026). A putt used to draw the
+ // path the ball would roll, break and all, which read the green for you. Now a
+ // putt is a straight line to where you aim, for every way of playing, and the
+ // break is read from the green -- the grid, the flow and the heat map. The
+ // circle is the putt's length: the Swing Meter's bar and its target are drawn
+ // from it on a flat green, and a monitor measures the stroke.
  puttPreview=null;
- const range=aimRange??c.carry*YARD;aimPoint=aimTarget(round.position,aim,range);view.aimRing.visible=true;
+ const putt=c.code==='PT',range=aimRange??(putt?Math.max(.1,distance()):c.carry*YARD);aimPoint=aimTarget(round.position,aim,range);view.aimRing.visible=true;
  // A curved shape is drawn curved, so a draw is seen to bend before it is hit.
  const track=armed?null:shapeTrack(c,range);
- if(track)view.setAimPath(track,range,.1);else view.setAim(aim,range);
+ // A putt's line lies on the green, 15 mm up, like the preview line did.
+ if(track)view.setAimPath(track,range,.1);else view.setAim(aim,range,putt?.015:.1);
  $('aimOutput').textContent=aim.toFixed(1)+'°';if(syncRange!==false)$('aimRange').value=(range/YARD).toFixed(1);
+ if(putt)drawLie();
  drawMeterScale();
-}
-// The first `share` of a path by distance along it, not by sample count: a
-// putt's samples bunch up where it slows, so a third of them is well short of
-// a third of the line.
-function pathShare(points,share){
- if(share>=1||points.length<3)return points;
- let total=0;for(let i=1;i<points.length;i++)total+=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);
- const out=[points[0]];let run=0;
- for(let i=1;i<points.length;i++){run+=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);out.push(points[i]);if(run>=total*share)break;}
- return out.length<2?points.slice(0,2):out;
-}
-// The putter speed whose roll, along this line on this green, reaches `distance`.
-// Kept for the last question asked: the aim sweeping sideways asks it again for
-// every frame, and the answer only changes when the line does.
-//
-// SIXTEEN ROLL PREVIEWS ARE ABOUT 5.5 MS, a third of a frame, and sweeping the aim
-// asks every frame. While only the aim is turning the last answer is reused and
-// re-solved at most ten times a second -- the speed for a length barely moves
-// as the line turns, and the line itself is redrawn every frame regardless.
-let puttSpeedKey='',puttSpeedValue=0,puttSpeedBase='',puttSpeedAt=0,puttSpeedTimer=0;
-function puttLineSpeed(distance){
- const c=clubs.putter,base=[round.position.x,round.position.z,distance.toFixed(3),settings.turf.stimp,settings.turf.firmness].join(),key=base+':'+aim.toFixed(3);
- if(key===puttSpeedKey)return puttSpeedValue;
- const now=performance.now();
- // The line the sweep stops on is solved properly a moment later.
- if(base===puttSpeedBase&&now-puttSpeedAt<100){clearTimeout(puttSpeedTimer);puttSpeedTimer=setTimeout(()=>{if(!flight&&!swing&&clubs[$('club').value]?.code==='PT')updateAim(false);},120);return puttSpeedValue;}
- puttSpeedBase=base;puttSpeedAt=now;
- let lo=0,hi=c.speed*1.2;
- for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(rollPreview(course,round.position,aim,mid,{turf:settings.turf,seconds:20}).distance<distance)lo=mid;else hi=mid;}
- puttSpeedKey=key;return puttSpeedValue=(lo+hi)/2;
 }
 // THE SHAPE ON THE COURSE. The club's full swing with this shape is flown once on
 // level ground (swing-meter.js `previewTrack`), started off line by as much as it
@@ -802,8 +765,8 @@ function meterPress(t=performance.now()){
   if(!canSwing())return false;
   closePanel();setAimView(false);
   const ctx=swingContext(),putt=ctx.club.code==='PT';
-  swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt||puttAccuracy(ctx.difficulty)});
-  swing.ctx=ctx;meterFlash=null;$('smResult').hidden=true;
+  swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt});
+  swing.ctx=ctx;meterFlash=null;lastSwing=null;$('smResult').hidden=true;
   $('swingCatcher').hidden=false;$('world').classList.add('swinging');
   drawShapeControls();drawMeterScale();drawMeter(t);
   return true;
@@ -812,8 +775,18 @@ function meterPress(t=performance.now()){
  if(swing.done)releaseSwing();else drawMeter(t);
  return true;
 }
+// THE STRUCK SWING STAYS ON THE BAR (the owner's call, 14 October 2026): where
+// the distance was set and where the strike came, frozen, through the flight and
+// after it, until that golfer's next swing -- like the three numbers beside it.
+// The next golfer up, or a new hole, gets a clean bar.
+let lastSwing=null;
+const shownSwing=()=>!swing&&lastSwing&&lastSwing.player===round.player?.name&&lastSwing.hole===round.hole?lastSwing:null;
+// Where a finished swing's marker stopped: the strike, or for a putt (two taps)
+// the distance.
+const frozenAt=sw=>sw.accuracy?sw.error:sw.power;
 function releaseSwing(){
  const sw=swing;swing=null;$('swingCatcher').hidden=true;$('world').classList.remove('swinging');
+ lastSwing={...sw,player:round.player?.name,hole:round.hole};
  const out=swingLaunch(sw,sw.ctx);
  meterFlash={text:strikeWords(out.strike,sw.ctx.club.code==='PT'),perfect:out.strike.perfect,until:performance.now()+1800};
  drawMeter(performance.now(),sw);
@@ -848,8 +821,8 @@ function placeZone(z){
 // words above the bar. Cheap; the frame loop calls it while a swing runs.
 function drawMeter(t,last=null){
  const box=$('swingMeter');if(!box||box.hidden)return;
- const sw=swing||last;
- $('smMarker').style.left=barX(sw?markerAt(sw,t):0)+'%';
+ const sw=swing||last||shownSwing();
+ $('smMarker').style.left=barX(!sw?0:sw.done?frozenAt(sw):markerAt(sw,t))+'%';
  $('smPower').hidden=!sw||sw.power==null;
  if(sw&&sw.power!=null){$('smPower').style.left=barX(sw.power)+'%';if(sw.accuracy)placeZone(zonesFor(sw.ctx,sw.power));}
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
@@ -870,7 +843,7 @@ function drawMeterScale(){
  if(!show)return;
  const ctx=swing?.ctx||swingContext(),c=ctx.club,putt=c.code==='PT';
  const l=shapedLaunch(c,ctx.shape,{short:ctx.short});
- const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.firmness,ctx.puttRange??0].join();
+ const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.firmness,ctx.puttRange??0,shownSwing()?'held':''].join();
  if(key!==meterScaleKey){
   meterScaleKey=key;
   const full=putt?ctx.puttRange:fullCarry(c,l);
@@ -881,9 +854,9 @@ function drawMeterScale(){
   const f=lieFactor(ctx.lie),hatch=$('smHatch');
   if(f<1){const reach=putt?f*f:carryAtSpeed(c,l,c.speed*f)/full;hatch.hidden=false;hatch.style.left=barX(reach)+'%';hatch.style.width=(barX(1)-barX(reach))+'%';}
   else hatch.hidden=true;
-  const accuracy=!putt||puttAccuracy(ctx.difficulty);
+  const accuracy=!putt;
   $('smZone').hidden=$('smPerfect').hidden=!accuracy;
-  if(accuracy)placeZone(zonesFor(ctx,1));
+  if(accuracy)placeZone(shownSwing()?.accuracy?zonesFor(shownSwing().ctx,shownSwing().power):zonesFor(ctx,1));
   $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}`;
  }
  drawTarget();
@@ -924,8 +897,9 @@ function drawTarget(force=false){
  targetAt=now;targetKey=key;
  let t=null;
  if(putt){
-  const f=lieFactor(ctx.lie),flat=struckDistance(puttLineSpeed(range),rollDeceleration('green',settings.turf));
-  const share=flat/(ctx.puttRange*f*f);t=share>1?{share:1,out:true}:{share,out:false};
+  // On a flat green: the slope is the golfer's to read, so the marker does
+  // not read it for them (the putt preview went the same day).
+  const f=lieFactor(ctx.lie),share=range/(ctx.puttRange*f*f);t=share>1?{share:1,out:true}:{share,out:false};
  }else{
   const p=round.position,pt=aimTarget(p,aim,range);
   t=targetShare({...ctx,metres:range,rise:course.height(pt.x,pt.z)-course.height(p.x,p.z),bearing:aim*Math.PI/180,
@@ -967,22 +941,14 @@ function stepShape(which,dir,wrap=true){
 // THE LIE, before every shot and for every way of playing (the owner's rule):
 // the surface the ball sits on and what it costs. In the shot controls for the
 // Swing Meter, and in the monitor window -- where it says when the round has the
-// monitor penalty switched off. On the green with the putter it also says how
-// much of the read this golfer's difficulty shows, and why.
-let readNoteShown=null;
+// monitor penalty switched off.
 function drawLie(){
  if(!course||!round)return;
  const lie=currentLie(),f=rangeMode?1:lieFactor(lie);
  const name=rangeMode?'Mat':lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
- const c=clubs[$('club').value],d=golferDifficulty(),putt=c?.code==='PT'&&!armed;
- const read=putt?`<small class="read-note">${escape(DIFFICULTIES[d].label)}: ${DIFFICULTIES[d].putRead<1?'the read shows the first third of the break. Read the rest from the green.':'the read shows the whole break.'}</small>`:'';
  const meter=$('lieReadout');
- if(meter){
-  meter.innerHTML=`<span>LIE</span> ${escape(cost)}${read}`;meter.classList.toggle('penalty',f<1);
-  // The first putt on a new difficulty pulses the note once, so it is seen.
-  if(putt&&readNoteShown!==d){readNoteShown=d;meter.classList.remove('pulse');void meter.offsetWidth;meter.classList.add('pulse');}
- }
+ if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
  const mon=$('monLie');
  if(mon){const off=f<1&&!round.monitorLie;mon.innerHTML=`<span>LIE</span> ${escape(off?`${name} · no penalty (switched off)`:cost)}`;mon.classList.toggle('penalty',f<1&&!off);}
 }
@@ -4348,12 +4314,12 @@ function renderPanel(name,content){
   // shot's shape, spin and lie do, because none of it is a slider any more.
   const prof=profileOf(round.player),cur=meterDifficulty(prof);
   const notes={
-   easy:'A slow marker and a wide strike zone. On the green the read shows the whole break.',
-   normal:'A steady marker and a medium strike zone. On the green the read shows the whole break.',
-   hard:'A fast marker and a narrow strike zone. On the green the read shows only the first third of the break: read the rest from the green yourself.',
+   easy:'A slow marker and a wide strike zone. The blue target allows for the wind.',
+   normal:'A steady marker and a medium strike zone. You judge the wind.',
+   hard:'A fast marker and a narrow strike zone. You judge the wind.',
   };
   const rows=Object.entries(DIFFICULTIES).map(([k,d])=>`<label class="meter-choice${k===cur?' on':''}"><input type="radio" name="meterDifficulty" value="${k}" ${k===cur?'checked':''} ${prof?'':'disabled'}><strong>${d.label}</strong><small>${notes[k]}</small></label>`).join('');
-  content.innerHTML=`<p>Three taps. The first starts the swing; the second stops the marker at the distance you want, and the bar is marked in yards of carry for the club in your hands; the third, back on the strike line, decides how straight it goes. <strong>Early pushes the ball right, late pulls it left.</strong> A putt is two taps, with a third on Hard. Escape cancels a swing before the distance is set.</p><h3>Difficulty${prof?` for ${escape(prof.name)}`:''}</h3><div class="meter-choices">${rows}</div>${prof?'':'<p class="note">This golfer has no profile, so the meter plays on Normal.</p>'}<h3>Shot shape and spin</h3><p class="note">Curve (<kbd>S</kbd>) and height (<kbd>W</kbd>) are chosen separately. Near the green with a wedge, Low becomes Bump &amp; run and High becomes Flop. The spin dial (<kbd>X</kbd> for more, <kbd>Shift</kbd>+<kbd>X</kbd> for less) adds spin a step at a time, and each step narrows the strike zone. With no spin added, the ball never spins back.</p><h3>The lie</h3><p class="note">Semi-rough costs 4% of ball speed, rough 10% and sand 20%. The hatched end of the bar is what the lie takes off a full swing, and the strike zone narrows in rough and sand. Launch-monitor shots lose the same ball speed, unless the round's <em>Format &amp; tees</em> switches that off.</p><button class="secondary" id="applyShot">Back to the fairway</button>`;
+  content.innerHTML=`<p>Three taps. The first starts the swing; the second stops the marker at the distance you want, and the bar is marked in yards of carry for the club in your hands; the third, back on the strike line, decides how straight it goes. <strong>Early pushes the ball right, late pulls it left.</strong> A putt is two taps, on every difficulty: the line is straight to where you aim, and the break is yours to read from the green. Escape cancels a swing before the distance is set.</p><h3>Difficulty${prof?` for ${escape(prof.name)}`:''}</h3><div class="meter-choices">${rows}</div>${prof?'':'<p class="note">This golfer has no profile, so the meter plays on Normal.</p>'}<h3>Shot shape and spin</h3><p class="note">Curve (<kbd>S</kbd>) and height (<kbd>W</kbd>) are chosen separately. Near the green with a wedge, Low becomes Bump &amp; run and High becomes Flop. The spin dial (<kbd>X</kbd> for more, <kbd>Shift</kbd>+<kbd>X</kbd> for less) adds spin a step at a time, and each step narrows the strike zone. With no spin added, the ball never spins back.</p><h3>The lie</h3><p class="note">Semi-rough costs 4% of ball speed, rough 10% and sand 20%. The hatched end of the bar is what the lie takes off a full swing, and the strike zone narrows in rough and sand. Launch-monitor shots lose the same ball speed, unless the round's <em>Format &amp; tees</em> switches that off.</p><button class="secondary" id="applyShot">Back to the fairway</button>`;
   content.querySelectorAll('input[name=meterDifficulty]').forEach(r=>r.onchange=()=>{try{setProfileMeter(profiles,prof.id,r.value);}catch(e){toast(e.message);return;}meterScaleKey='';updateAim();updateHUD();openPanel('shot');});
   $('applyShot').onclick=()=>closePanel();
  }else if(name==='score'){
@@ -5644,16 +5610,15 @@ function tick(now){
   // Hidden when it would sit on top of the flag: within 8 m the two markers
   // overlap and you get one unreadable pile instead of two labels.
   const nearPin=a&&Math.hypot(a.x-pin.x,a.z-pin.z)<8;
-  // ON THE GREEN, by hand, the flag marker is the only number that matters.
-  // The aim marker would sit feet from it saying nearly the same thing, and
-  // the roll preview line already draws where the putt finishes. Off an armed
-  // monitor there is no roll preview -- the device decides the speed -- and the
-  // aim point is how far you mean to hit it, so it is shown there too.
+  // ON THE GREEN it is shown for every golfer: since the putt preview went (14
+  // October 2026) the aim point is how far you mean to hit the putt, as it
+  // always was off a monitor. (By hand it used to be hidden there, because the
+  // roll preview drew where the putt finished.)
   // While the player is aiming the pin's label has faded out, so there is no
   // pile for the 8 m rule to prevent; it applies only at rest. Without this the
   // aim label vanished as the aim crossed the pin (owner, 11 October 2026).
   const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
-  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState&&(!ballOnGreen||armed);
+  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState;
   $('aimLabel').hidden=!show;
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
   // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"

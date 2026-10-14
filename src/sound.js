@@ -1123,3 +1123,104 @@ export function createAmbience(lab,{onEvent=()=>{},onSong=()=>{},to=lab.master}=
  };
  return api;
 }
+
+// ---------------------------------------------------------------- the swing meter
+// The Swing Meter's sounds (round 1 of their own, 14 October 2026). The owner
+// asked for a sound as the meter builds and as it comes back, and one each for
+// a perfect strike, a strike in the green zone, a miss, a swing that ran out
+// and going into overswing. Every one is a take to choose between in the
+// meter report (tools/sound-lab/meter.html, built beside the others). NOTHING
+// HERE PLAYS IN THE GAME YET: audio.js calls none of it until the owner signs
+// the takes off, the way every other sound went in. All PLACED by ear.
+//
+// The voice is continuous and follows the marker: `meterVoice` gives
+// {start, set(position, stage), stop}, position in bar lengths (0 the strike
+// line, 1 full, a little past it overswing), stage 'power' rising or 'strike'
+// coming back. Every change is scheduled from now, never in the past.
+const meterPitch=p=>220*Math.pow(2,clamp(p,-.3,1.2)*1.4);
+export const METER_VOICES={
+ A:{name:'A rising tone: a soft sine that climbs with the marker and falls as it comes back'},
+ B:{name:'Ticks: a tick each sixteenth of the bar, higher the further up'},
+ C:{name:'Air: a whoosh whose pitch and level follow the marker'},
+};
+export function meterVoice(lab,{take='A',knobs={}}={}){
+ const {ctx}=lab,K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...knobs};
+ const dest=place(lab,{dist:6,wet:.06});
+ let nodes=[],lastTick=null,on=false,osc=null,g=null,fl=null;
+ const level=.05*K.level;
+ const api={
+  start(){
+   if(on)return;on=true;const t=ctx.currentTime;
+   if(take==='A'){osc=ctx.createOscillator();const o2=ctx.createOscillator(),g2=ctx.createGain();g=ctx.createGain();
+    osc.type='sine';o2.type='triangle';g2.gain.value=.25*K.bright;
+    osc.frequency.value=meterPitch(0)*K.pitch;o2.frequency.value=meterPitch(0)*K.pitch*2;osc.o2=o2;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level,t+.04);
+    osc.connect(g);o2.connect(g2);g2.connect(g);g.connect(dest);osc.start(t);o2.start(t);nodes=[osc,o2,g2,g];}
+   else if(take==='C'){const s=ctx.createBufferSource();fl=ctx.createBiquadFilter();g=ctx.createGain();
+    s.buffer=lab.NOISE;s.loop=true;fl.type='bandpass';fl.Q.value=4;fl.frequency.value=meterPitch(0)*2*K.pitch*Math.sqrt(K.bright);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level*2.2,t+.05);
+    s.connect(fl);fl.connect(g);g.connect(dest);s.start(t,R(0,8));osc=s;nodes=[s,fl,g];}
+  },
+  set(p,stage='power'){
+   if(!on)return;const t=ctx.currentTime,f=meterPitch(p)*K.pitch;
+   if(take==='A'){osc.frequency.setTargetAtTime(f,t,.012);osc.o2.frequency.setTargetAtTime(f*2,t,.012);
+    // Overswing: a quick wobble, so the top of the bar feels like a strain.
+    g.gain.setTargetAtTime(level*(p>1?1+.35*Math.sin(t*60):1),t,.01);}
+   else if(take==='B'){const b=Math.floor(p*16);if(b!==lastTick){lastTick=b;
+    ring(lab,dest,t+.005,[[f*4,.006*K.length,1],[f*8,.003*K.length,.4]],{amp:level*3,bright:K.bright,spread:.01});}}
+   else if(take==='C'){fl.frequency.setTargetAtTime(f*2*Math.sqrt(K.bright),t,.015);g.gain.setTargetAtTime(level*(1.2+1.6*clamp(p,0,1.2))*(stage==='strike'?.8:1),t,.02);}
+  },
+  stop(){
+   if(!on)return;on=false;const t=ctx.currentTime;
+   if(g){g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+.05);}
+   for(const n of nodes)if(n.stop)try{n.stop(t+.08);}catch{}
+   lab.track(nodes,t+.2);nodes=[];
+  },
+ };
+ return api;
+}
+// One-shot sounds. Each `play(x, at, K, lab, dest)` gets the kit with its
+// knobs applied (level, pitch, length, brightness).
+const chime=(x,notes,step,amp=.6,tau=.35)=>notes.forEach((n,i)=>x.ring(i*step,[[midi(n),tau,1],[midi(n)*4,tau*.25,.25],[midi(n)*9.9,tau*.06,.08]],{amp}));
+const sung=(lab,dest,t,K,{contour,dur,amp=.3,wave='sine',harm=0,vib=0,vibHz=0})=>note(lab,dest,t,{dur:dur*K.length,contour:contour.map(f=>f*K.pitch),amp:amp*K.level,wave,harm:harm*K.bright,vib,vibHz});
+export const METER_EVENTS={
+ power:{label:'Distance set (the second tap)',note:'Played the moment the marker stops and turns for home.',takes:{
+  A:{name:'Wood tick',play:x=>{x.ring(0,[[1800,.012,1],[3700,.006,.45]],{amp:.55});x.hiss(0,{type:'highpass',f:3000,dur:.003,attack:.0003,amp:.25,fixed:true});}},
+  B:{name:'Soft click',play:x=>{x.hiss(0,{type:'bandpass',f:2600,q:1.2,dur:.012,attack:.0005,amp:1.1});x.ring(0,[[900,.008,.6]],{amp:.9});}},
+  C:{name:'Little chirp up',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[880,1180,1320],dur:.07,amp:.22,harm:.3})},
+ }},
+ overswing:{label:'Into the overswing zone',note:'Played once as the marker passes the full line.',takes:{
+  A:{name:'Warning buzz',play:(x,t,K,lab,dest)=>{for(const dt of [0,.09])sung(lab,dest,t+dt,K,{contour:[330,320],dur:.06,amp:.12,wave:'sawtooth'});}},
+  B:{name:'Rising strain',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[520,560,640,760],dur:.22,amp:.16,wave:'triangle',vib:.03,vibHz:18})},
+  C:{name:'Double beep',play:(x,t,K,lab,dest)=>{sung(lab,dest,t,K,{contour:[1320],dur:.05,amp:.18});sung(lab,dest,t+.08,K,{contour:[1320],dur:.05,amp:.18});}},
+ }},
+ perfect:{label:'Perfect strike',note:'The tap lands in the gold band.',takes:{
+  A:{name:'Bright marimba run',play:x=>{chime(x,[84,88,91,96],.045,.055);x.hiss(.14,{type:'highpass',f:7000,dur:.18,attack:.01,amp:.02});}},
+  B:{name:'Bell ding',play:x=>x.ring(0,[[1568,.9,1],[1568*2.76,.3,.28],[1568*5.4,.1,.12],[1568*1.002,.9,.4]],{amp:.12})},
+  C:{name:'Pure ping with a sparkle',play:x=>{x.ring(0,[[2093,.6,1],[4186,.15,.2]],{amp:.12});for(const dt of [.05,.11,.16])x.ring(dt,[[midi(pick([100,103,105,108])),.12,1]],{amp:.04});}},
+ }},
+ zone:{label:'In the green zone (good, not perfect)',note:'A clean strike that is a touch early or late.',takes:{
+  A:{name:'Wood block',play:x=>x.ring(0,[[1100,.06,1],[2900,.02,.35]],{amp:.5})},
+  B:{name:'Soft pluck',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[880,870],dur:.16,amp:.22,harm:.2})},
+  C:{name:'Muted ding',play:x=>x.ring(0,[[1047,.18,1],[1047*2.76,.05,.2]],{amp:.35})},
+ }},
+ miss:{label:'Outside the zone (a miss)',note:'The tap comes outside the green zone: early or late enough to push or pull the ball.',takes:{
+  A:{name:'Dull thunk',play:x=>{x.thump(0,150,.05,.9,.7);x.ring(0,[[420,.04,.4]],{amp:.3});}},
+  B:{name:'Low buzz',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[180,170],dur:.18,amp:.14,wave:'sawtooth'})},
+  C:{name:'Flat blip down',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[520,360],dur:.14,amp:.2,wave:'triangle'})},
+ }},
+ duff:{label:'Missed entirely (the swing ran out)',note:'No third tap: the marker runs past the zone.',takes:{
+  A:{name:'Womp womp',play:(x,t,K,lab,dest)=>{sung(lab,dest,t,K,{contour:[392,370],dur:.22,amp:.18,wave:'triangle'});sung(lab,dest,t+.26,K,{contour:[330,260],dur:.4,amp:.18,wave:'triangle',vib:.02,vibHz:6});}},
+  B:{name:'Falling whistle',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[1400,900,500,300],dur:.45,amp:.16})},
+  C:{name:'Deflating air',play:x=>x.hiss(0,{type:'bandpass',f:1800,f2:250,q:2,dur:.4,attack:.02,amp:.9})},
+ }},
+};
+for(const e of Object.values(METER_EVENTS))e.knobs=['level','pitch','length','bright'];
+export function meterEvent(lab,id,{take='A',knobs={},at}={}){
+ const E=METER_EVENTS[id],T=E.takes[take]||E.takes.A,t=(at??lab.ctx.currentTime)+.01;
+ const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...mergeKnobs(T.base,knobs)};
+ const dest=place(lab,{dist:6,wet:.1,until:t+3});
+ T.play(kit(lab,dest,t,1,K),t,K,lab,dest);
+ lab.sweep();
+ return t;
+}

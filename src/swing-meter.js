@@ -55,11 +55,12 @@ export function monitorLie(data, surface, {on = true, range = false} = {}) {
 // Per golfer, kept in the profile. `rise` is the seconds the marker takes from
 // the start line to the full line; it comes back at the same pace. `zone` and
 // `perfect` are HALF-widths of the strike zone and the perfect band, in lengths
-// of the bar (the bar from start to full is 1).
+// of the bar (the bar from start to full is 1). (A `putRead` share of the putt
+// preview drawn per difficulty went with the preview, 14 October 2026.)
 export const DIFFICULTIES = {
- easy: {label: 'Easy', rise: 1.5, zone: .1, perfect: .03, wind: true, putRead: 1},
- normal: {label: 'Normal', rise: 1.15, zone: .065, perfect: .015, wind: false, putRead: 1},
- hard: {label: 'Hard', rise: .9, zone: .04, perfect: .008, wind: false, putRead: 1 / 3},
+ easy: {label: 'Easy', rise: 1.5, zone: .1, perfect: .03, wind: true},
+ normal: {label: 'Normal', rise: 1.15, zone: .065, perfect: .015, wind: false},
+ hard: {label: 'Hard', rise: .9, zone: .04, perfect: .008, wind: false},
 };
 export const DEFAULT_DIFFICULTY = 'normal';
 export const difficultyOf = id => DIFFICULTIES[id] || DIFFICULTIES[DEFAULT_DIFFICULTY];
@@ -148,8 +149,9 @@ export function strikeZone({difficulty, shape = 1, lie, putt = false, power = 1}
  }
  return {zone: d.zone * k, perfect: Math.min(d.perfect * k, d.zone * k * .5)};
 }
-// A putt has no accuracy tap except on Hard.
-export const puttAccuracy = difficulty => difficulty === 'hard';
+// A PUTT IS TWO TAPS on every difficulty (the owner's call, 14 October 2026):
+// start, and stop at the length. Hard had a third, accuracy tap until then.
+export const puttAccuracy = () => false;
 
 // The share of the club's carry a stop on the bar is worth.
 export const carryShare = power => power <= 1 ? Math.max(0, power) : 1 + OVERSWING_CARRY * clamp((power - 1) / OVERSWING, 0, 1);
@@ -271,13 +273,19 @@ export function puttFullRoll(putter, turf) { return struckDistance(putter.speed,
 // putt with a quarter to spare. The putter itself is unchanged: its full stroke
 // still rolls the bag's distance, and the label on the full line says how far
 // this bar reaches. Added in building, not in the spec; placed.
-export const PUTT_RANGES = [.25, .5, 1];
+//
+// AND IT REACHES ACROSS ANY GREEN (the owner's call, 14 October 2026). Past the
+// putter's full roll it goes on in steps to six times it: the widest green a
+// course grows is about 80 yd across, and on the slowest Stimp (6) the putter's
+// own roll is about 18 yd, so six times holds that with room to spare. On the
+// green, and only for a putt, the bar is not held to the bag.
+export const PUTT_RANGES = [.25, .5, 1, 1.5, 2, 3, 4, 6];
 export function puttRange(putter, turf, aimMetres) {
  const full = puttFullRoll(putter, turf);
  for (const k of PUTT_RANGES) if (aimMetres * 1.25 <= full * k) return full * k;
- return full;
+ return full * PUTT_RANGES.at(-1);
 }
-export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.speed * 1.2, launchForDistance(metres, rollDeceleration('green', turf))); }
+export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.speed * 3, launchForDistance(metres, rollDeceleration('green', turf))); }
 
 // THE TARGET MARKER (Phase 2): where on the bar to stop for the ball to come
 // down in the aim circle. Found by flying the ball, not by a rule of thumb: the

@@ -41,6 +41,15 @@ const rows=await tab.evaluate(async secs=>{
  out.push(stats(b,'jet flyover alone'));
  const [p]=await render(90,lab=>{const a=L.createAmbience(lab);a.start('midwest',{live:false});a.set({birds:0,water:0,insects:0,wind:0});a.trigger('prop');a.schedule(90);});
  out.push(stats(p,'prop flyover alone'));
+ // The Swing Meter's sounds (14 October 2026): every moment's takes, and each
+ // voice through one swing up to 85% and back, driven on the render's clock.
+ for(const [id,E]of Object.entries(L.METER_EVENTS))for(const take of Object.keys(E.takes)){
+  const [b]=await render(2,lab=>L.meterEvent(lab,id,{take,at:0}));out.push(stats(b,`meter ${id} ${take}`));}
+ for(const take of Object.keys(L.METER_VOICES)){
+  const [b]=await render(3,(lab,ctx)=>{const v=L.meterVoice(lab,{take});v.start();
+   for(let i=0;i<=120;i++){const t=i/60,p=t<.98?t/1.15:.85-(t-.98)/1.15;ctx.suspend(t).then(()=>{v.set(p,t<.98?'power':'strike');ctx.resume();});}
+   ctx.suspend(2.1).then(()=>{v.stop();ctx.resume();});});
+  out.push(stats(b,`meter voice ${take}`));}
  return out;
 },secs);
 await browser.close();

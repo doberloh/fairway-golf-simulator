@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swing Meter Sounds</title>
+<style>
+:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6;--zone:rgba(70,160,95,.35);--gold:#d6a43a;--over:rgba(230,140,80,.3)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}}
+:root[data-theme="dark"]{--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:19px;margin:26px 0 4px}h3{font-size:16px;margin:0}
+.muted{color:var(--muted)}small{color:var(--muted)}
+.note{border-left:3px solid var(--accent);padding:4px 10px;background:var(--panel);border-radius:0 8px 8px 0;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.act{border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button.sec{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 10px;font:14px system-ui,sans-serif;cursor:pointer}
+.takes{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.takes label{display:flex;gap:6px;align-items:flex-start;cursor:pointer}
+label.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px}
+label.sl input{grid-column:1/3;width:100%;accent-color:var(--accent)}
+label.sl span:last-of-type{color:var(--muted);font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px system-ui,sans-serif}
+#practice{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+#bar{position:relative;height:30px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(90deg,var(--chip),var(--bg));cursor:pointer;margin:22px 0 8px;touch-action:none;user-select:none}
+#bar>*{position:absolute;top:0;bottom:0}
+#zone{background:var(--zone)}#perfect{background:var(--gold)}#over{background:var(--over)}
+#line,#full{width:2px;background:var(--ink)}
+#marker{width:4px;margin-left:-2px;top:-6px;bottom:-6px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 1px var(--bg)}
+#power{width:0;border-left:2px dashed var(--gold)}
+#said{font-weight:600;min-height:1.5em}
+#tools{position:fixed;right:16px;bottom:16px;display:flex;gap:8px;z-index:5}
+#out{position:fixed;inset:auto 16px 64px 16px;max-width:640px;margin-left:auto;z-index:6;display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#out textarea{min-height:160px;font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>Swing Meter sounds</h1>
+<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1. None of these play in the game yet.</p>
+<div class="note"><p><b>What this is.</b> Sounds for the Swing Meter: a voice that follows the marker as it climbs and comes back, and one sound for each thing a swing can do. Every one has three takes to choose between, plus sliders. Pick a take on each card, nudge the sliders if you like, and write anything in the notes box.</p>
+<p><b>Try them together</b> in the practice meter just below: it uses whichever takes you have picked. Space, a click or a tap on the bar: start, set the distance, strike on the white line. It judges like the game on Normal.</p>
+<p>When you are done, press <b>Copy my notes</b> and paste it back to me. Everything you set is kept in this browser if you come back.</p></div>
+<div class="row"><button class="act" id="start">Start sound</button></div>
+
+<section id="practice">
+<h2 style="margin-top:0">Practice meter</h2>
+<div id="bar" aria-label="Practice meter"><div id="over"></div><div id="zone"></div><div id="perfect"></div><div id="line"></div><div id="full"></div><div id="power" hidden></div><div id="marker"></div></div>
+<div class="row"><span id="said" class="muted">Press Space or tap the bar to start.</span></div>
+</section>
+
+<h2>The voice while the marker moves</h2>
+<div class="grid" id="voice"></div>
+<h2>The swing's moments</h2>
+<div class="grid" id="events"></div>
+</main>
+<div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
+<div id="tools"><button class="act" id="copy">Copy my notes</button></div>
+<script type="module">
+/*SYNTH*/
+
+const KEY='fairway-meter-lab-v1';
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
+const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const c of kids)e.append(c);return e;};
+$('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
+saved.take??={};saved.knobs??={};saved.notes??={};
+let ctx=null,lab=null;
+function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#start').textContent='Sound on';}if(ctx.state==='suspended')ctx.resume();}
+$('#start').onclick=ensure;
+const KN=['level','pitch','length','bright'];
+const takeOf=id=>saved.take[id]||'A',knobsOf=id=>saved.knobs[id]||(saved.knobs[id]={});
+const play=id=>{ensure();meterEvent(lab,id,{take:takeOf(id),knobs:knobsOf(id)});};
+
+function card(id,title,note,takes,onPlay,box){
+ const c=el('div',{class:'card'});
+ c.append(el('h3',{},title));if(note)c.append(el('small',{},note));
+ const list=el('div',{class:'takes'});
+ for(const [k,t] of Object.entries(takes)){
+  const r=el('input',{type:'radio',name:'take-'+id,value:k});if(takeOf(id)===k)r.checked=true;
+  r.onchange=()=>{saved.take[id]=k;save();onPlay();};
+  list.append(el('label',{},r,el('span',{},`${k}: ${t.name}`)));
+ }
+ c.append(list);
+ c.append(el('div',{class:'row'},el('button',{class:'act',onclick:onPlay},'Play')));
+ const adj=el('details',{},el('summary',{},'Adjust'));const k=knobsOf(id);
+ for(const n of KN){const d=KNOBS[n],inp=el('input',{type:'range',min:d.min,max:d.max,step:d.step,value:k[n]??d.def}),out=el('span',{},`${Math.round((k[n]??d.def)*100)}%`);
+  inp.oninput=()=>{const v=+inp.value;if(v===d.def)delete k[n];else k[n]=v;out.textContent=`${Math.round(v*100)}%`;save();};
+  adj.append(el('label',{class:'sl'},el('span',{},d.label),out,inp));}
+ c.append(adj);
+ const ta=el('textarea',{placeholder:'Notes'});ta.value=saved.notes[id]||'';ta.oninput=()=>{saved.notes[id]=ta.value;save();};c.append(ta);
+ box.append(c);
+}
+
+// THE VOICE: "Play" runs one demonstration swing -- up to 85%, back down to the line.
+let demo=null;
+function demoVoice(){
+ ensure();if(demo)return;
+ const v=meterVoice(lab,{take:takeOf('voice'),knobs:knobsOf('voice')});v.start();
+ const t0=performance.now(),rise=1150,top=.85;
+ const step=now=>{const e=now-t0;let p,stage='power';
+  if(e<rise*top)p=e/rise;else{p=top-(e-rise*top)/rise;stage='strike';}
+  if(p<-.05){v.stop();demo=null;return;}
+  v.set(p,stage);demo=requestAnimationFrame(step);};
+ demo=requestAnimationFrame(step);
+}
+card('voice','The voice','Follows the marker: up as it climbs, down as it comes back. Play runs one swing.',METER_VOICES,demoVoice,$('#voice'));
+for(const [id,E] of Object.entries(METER_EVENTS))card(id,E.label,E.note,E.takes,()=>play(id),$('#events'));
+
+// THE PRACTICE METER: the game's three taps, judged like Normal (placed numbers
+// copied from swing-meter.js: 1.15 s rise, zone 0.065, perfect 0.015, overswing
+// 0.12, the marker running out 0.3 past the line).
+const RISE=1150,ZONE=.065,PERFECT=.015,OVER=.12,MISS=-.3,SPAN=1+OVER-MISS,X=s=>(s-MISS)/SPAN*100;
+const band=(id,a,b)=>{const e=$('#'+id);e.style.left=X(a)+'%';e.style.width=(X(b)-X(a))+'%';};
+band('zone',-ZONE,ZONE);band('perfect',-PERFECT,PERFECT);band('over',1,1+OVER);
+$('#line').style.left=X(0)+'%';$('#full').style.left=X(1)+'%';$('#marker').style.left=X(0)+'%';
+let sw=null,voice=null,raf=0;
+const say=t=>$('#said').textContent=t;
+function pos(t){return sw.power==null?Math.min((t-sw.start)/RISE,1+OVER):Math.max(MISS,sw.power-(t-sw.powerAt)/RISE);}
+function frame(now){
+ if(!sw)return;
+ const p=pos(now);$('#marker').style.left=X(p)+'%';voice?.set(p,sw.power==null?'power':'strike');
+ if(sw.power==null&&!sw.over&&p>1){sw.over=true;play('overswing');}
+ if(sw.power==null&&p>=1+OVER){setPower(sw.start+RISE*(1+OVER));}
+ if(sw.power!=null&&p<=MISS){finish(MISS,true);return;}
+ raf=requestAnimationFrame(frame);
+}
+function setPower(t){sw.power=Math.min((t-sw.start)/RISE,1+OVER);sw.powerAt=t;$('#power').hidden=false;$('#power').style.left=X(sw.power)+'%';play('power');say('Now strike on the white line.');}
+function finish(e,duff){
+ cancelAnimationFrame(raf);voice?.stop();voice=null;
+ $('#marker').style.left=X(e)+'%';
+ const a=Math.abs(e);
+ if(duff){play('duff');say('Missed entirely: the swing ran out.');}
+ else if(a<=PERFECT){play('perfect');say('Perfect strike.');}
+ else if(a<=ZONE){play('zone');say(e>0?'In the zone, a touch early (right).':'In the zone, a touch late (left).');}
+ else{play('miss');say(e>0?'Early: pushed right.':'Late: pulled left.');}
+ sw=null;
+}
+function press(t){
+ ensure();
+ if(!sw){sw={start:t,power:null,over:false};$('#power').hidden=true;voice=meterVoice(lab,{take:takeOf('voice'),knobs:knobsOf('voice')});voice.start();say('Set the distance.');raf=requestAnimationFrame(frame);return;}
+ if(sw.power==null){setPower(t);return;}
+ finish(pos(t),false);
+}
+addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||e.target.tagName==='TEXTAREA')return;e.preventDefault();press(e.timeStamp);});
+$('#bar').addEventListener('pointerdown',e=>{e.preventDefault();press(e.timeStamp);});
+
+$('#copy').onclick=async()=>{
+ const knobs=Object.fromEntries(Object.entries(saved.knobs).filter(([,v])=>Object.keys(v).length));
+ const notes=Object.fromEntries(Object.entries(saved.notes).filter(([,v])=>v));
+ const take=Object.fromEntries(['voice',...Object.keys(METER_EVENTS)].map(id=>[id,takeOf(id)]));
+ const text='Swing Meter sound notes\n'+JSON.stringify({take,knobs,notes},null,1);
+ $('#outText').value=text;$('#out').style.display='block';
+ try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}
+};
+$('#outClose').onclick=()=>$('#out').style.display='none';
+</script>
+</body>
+</html>

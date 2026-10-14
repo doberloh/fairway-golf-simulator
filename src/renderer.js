@@ -1979,12 +1979,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   line.geometry.instanceCount=segments;
   return segments;
  }
- setAim(degrees,distance){
+ // `lift` is 15 mm for a putt (main.js), which lies on the green like the
+ // putt preview line it replaced; a full shot's line clears the ground at 100.
+ setAim(degrees,distance,lift=.10){
   const start=this.localBall||this.course.tee,steps=Math.max(60,Math.ceil(distance/.75));
   const flat=this.aimScratch(steps+1);
   for(let i=0;i<=steps;i++){
    const p=aimTarget(start,degrees,distance*i/steps),v=this.course.toWorld(p),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(p.x,p.z)+.10;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(p.x,p.z)+lift;flat[at+2]=v.z;
   }
   this.writeLine(this.aimLine,flat,steps+1);
   this.aimRing.position.set(flat[steps*3],flat[steps*3+1],flat[steps*3+2]);
