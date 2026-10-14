@@ -20,12 +20,14 @@ prevent.
 
 ## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
 
-- [ ] **Run the smoke journeys on `shot-data-layout` before it is released.**
-  A software-renderer run (`node tools/smoke.mjs --software`) crashed the
-  owner's computer part-way through on 13 October (only `boot` had passed), so
-  `hud-reachable`, `phone-portrait`, `phone-landscape`, `monitor` and the rest
-  are unrun on this layout. Only with the owner's go-ahead, and a few journeys
-  at a time (`--only`). The finished work is under the same heading in `# Done`.
+- [ ] **Run the smoke journeys on this layout.** A software-renderer run
+  (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
+  through on 13 October (only `boot` had passed), and 0.7 went out on 14
+  October with light testing at the owner's request, so `hud-reachable`,
+  `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
+  shot line and the new tile places. Only with the owner's go-ahead, on an idle
+  card, a few journeys at a time (`--only`). The finished work is under the
+  same heading in `# Done`.
 
 
 ## The UI pass (10 October 2026)
@@ -863,6 +865,16 @@ so several of these play differently as well as look different.
 Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
+
+## Release 0.7 (14 October)
+
+- [x] **v0.7 published**, "Fairway 0.7 (beta)", at the owner's request, from
+  the merge of `release-0.7` into `main`: sound, each golfer's own bag, the
+  spin-back rework, clearer tee views, shot views and the studio bar, and the
+  shot line and tiles rearranged, with the bridge taking every club.
+  Generator 35, schema 9. Notes: `docs/releases/v0.7.md`. Smoke not run on the
+  release code (DISTRIBUTION_REVIEW, *v0.7*); the website is redeployed after
+  it so its demo runs 0.7.
 
 ## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
 
