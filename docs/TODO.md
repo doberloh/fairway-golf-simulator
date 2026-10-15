@@ -49,6 +49,19 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
+- [ ] **A new build stutters on its first visit, then never again** (the owner,
+  15 October 2026, loading the `swing-meter` build and clicking round the
+  menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
+  graphics programs between visits, keyed by their source; a build that
+  changes any must rebuild them once, and each trip to the main menu grows a
+  fresh showcase hole that can need more. Not this branch's code: the ball
+  pictures cost about 75 ms the first time the Ball tab opens (measured), a
+  hitch rather than repeated freezes. Worth a look before a release, since
+  every player meets it once per version: warm the menu backdrop's programs
+  behind the loading screen, or the next backdrop's before the menu shows it.
+  Measure first, with a Chrome recording of a first visit after clearing the
+  site's cache.
+
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
   taken during the layout work. The aim marker steps aside when the two POINTS
