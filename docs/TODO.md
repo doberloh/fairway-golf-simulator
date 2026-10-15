@@ -900,6 +900,12 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     tests/sound.test.mjs as for the meter sounds.
     **Done:** the owner picked gain E, fill D and level-up C with their sliders
     (`XP_FINAL`), and they play in the game.
+- [x] **The scorecard covered the XP popup, and the screen sat still before it**
+    (the owner, 14 October 2026). The card now waits for the popup and any
+    level-up banner; a holed ball holds 1.2 s instead of 3; the popup comes
+    1.6 s into the banner. Measured: no stalled frame before the popup, the
+    "freeze" was six seconds of still picture (RESEARCH *The pause before the
+    XP popup*). The level-up banner now lets taps through.
 - [x] Closed: **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
     Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
     for every score; report `node tools/sound-lab/build.mjs`, then

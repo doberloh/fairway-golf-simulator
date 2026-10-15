@@ -48,7 +48,7 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <h1>XP sounds</h1>
 <p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1 signed off: each is the take you chose with your sliders built in, and they play in the game.</p>
 <div class="note"><p><b>What this is.</b> Whenever a golfer earns XP a popup comes up with what earned it and their level bar filling. Three sounds go with it: <b>the gain</b> as it comes up, <b>the fill</b> under the bar, and <b>a new level</b> when the bar runs over the top. Each has three takes and sliders.</p>
-<p>Try them together with the demo just below, which plays the popup the way the game does with the takes you have picked. <b>The order is the game's:</b> the hole's own score sting first (the marimba you already chose), and the popup only once that has finished; then the gain, a beat, the bar filling; and on a level-up the bar stops at the top, the level-up sound plays by itself, and only then does the bar fill on. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
+<p>Try them together with the demo just below, which plays the popup the way the game does with the takes you have picked. <b>The order is the game's:</b> the hole's own score sting first (the chiptune jingle you chose), and the popup only once that has finished; then the gain, a beat, the bar filling; and on a level-up the bar stops at the top, the level-up sound plays by itself, and only then does the bar fill on. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button></div>
 
 <h2>Demo</h2>
@@ -101,13 +101,13 @@ for(const [id,E] of Object.entries(XP_SOUNDS)){
 // and its banner first (2.7 s), then the gain, the fill 0.65 s later over 0.7
 // s, and on a level-up a pause at the top, the level-up sound alone for 1.4 s,
 // and the fill on into the new level.
-const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700,HOLE_OUT=2700;
+const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700,XP_AFTER_STING=1600;
 let busy=false;
 const says=t=>$('#demoSays').textContent=t;
 function demo(items,fromLevel,fromPct,toPct,levels,sting){
  if(busy)return;busy=true;ensure();
  if(sting){const c=CHIP_FINAL[sting];if(c)chipSting(lab,sting,{take:c[0],knobs:c[1]});else score(lab,sting);says(`The hole-out sting (${SCORES[sting].label}) and its banner first...`);}
- setTimeout(()=>popup(items,fromLevel,fromPct,toPct,levels),sting?HOLE_OUT:0);
+ setTimeout(()=>popup(items,fromLevel,fromPct,toPct,levels),sting?XP_AFTER_STING:0);
 }
 function popup(items,fromLevel,fromPct,toPct,levels){
  says('The XP popup.');

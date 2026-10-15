@@ -3,7 +3,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {generateWorld,generateCourse,DEFAULT_COURSE,random,ovalRadius} from '../src/course.js';
 import {FOOTPRINTS,footprintCurve,footprintIcon} from '../src/footprints.js';
 import {routeHoles} from '../src/routing.js';
-import {replayFinished,shotSettled,SHOT_HOLD_SECONDS,HOLE_REVEAL_MS,shotDistance} from '../src/presentation.js';
+import {replayFinished,shotSettled,SHOT_HOLD_SECONDS,HOLED_HOLD_SECONDS,HOLE_REVEAL_MS,shotDistance} from '../src/presentation.js';
 let world;const getWorld=()=>world??=generateWorld({seed:'TFLCsss',biome:'links',holes:9,homes:true,homeDensity:100,rivers:1,creeks:1,trees:20,elevation:75});
 test('fourteen footprint options have distinct valid previews and seeded routings',()=>{assert.equal(Object.keys(FOOTPRINTS).length,14);const signatures=new Set();for(const footprint of Object.keys(FOOTPRINTS)){const values=Array.from({length:65},(_,i)=>footprintCurve(footprint,i/64));assert(values.flat().every(Number.isFinite));signatures.add(JSON.stringify(values));assert(footprintIcon(footprint).includes('<polyline'));const s={...DEFAULT_COURSE,seed:'LAYOUT-QA',footprint},holes=Array.from({length:9},(_,i)=>generateCourse(s,i));const bounds=routeHoles(holes,s,random);assert(Number.isFinite(bounds.halfX)&&Number.isFinite(bounds.halfZ));assert(holes.every(h=>Number.isFinite(h.worldPin.x)));}assert.equal(signatures.size,14);});
 test('lake levels sit below outer banks and shoreline meshes share their contact profile',()=>{const w=getWorld();let count=0;for(const h of w.holes)for(const p of h.ponds){count++;assert(p.shoreWidth>=14);for(let i=0;i<64;i++){const q=ovalRadius(p,i*Math.PI/32),scale=1+p.shoreWidth/Math.hypot(q.x,q.z),x=p.x+q.x*scale,z=p.z+q.z*scale;assert(h.height(x,z)>=p.level-.45,'water must not be perched above its surrounding bank');}}assert(count>0);});
@@ -61,6 +61,11 @@ test('green surroundings stay within their measured envelope',()=>{
 });
 test('replay end hold and hole reveal both last three seconds, and live distance is horizontal displacement',()=>{assert.equal(HOLE_REVEAL_MS,3000);assert.equal(replayFinished(5,5,2.999),false);assert.equal(replayFinished(4,5,4),false);assert.equal(replayFinished(5,5,3),true);assert.equal(shotDistance({x:0,z:0},{x:3,y:100,z:4}),5);});
 
+test('a holed ball holds a short beat, not the three seconds a lie gets',()=>{
+ assert.ok(HOLED_HOLD_SECONDS>=.8&&HOLED_HOLD_SECONDS<=1.5,`${HOLED_HOLD_SECONDS} s on an empty cup`);
+ assert.equal(shotSettled(5,5,HOLED_HOLD_SECONDS-.01,HOLED_HOLD_SECONDS),false);
+ assert.equal(shotSettled(5,5,HOLED_HOLD_SECONDS,HOLED_HOLD_SECONDS),true);
+});
 test('the camera holds on the ball for three seconds after it stops, and not before',()=>{
  assert.equal(SHOT_HOLD_SECONDS,3);
  // Still flying: the hold has not started, however long it claims to have run.

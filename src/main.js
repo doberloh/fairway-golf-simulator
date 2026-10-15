@@ -7,7 +7,7 @@ import projectLicense from '../LICENSE?raw';
 import thirdPartyNotices from '../docs/THIRD_PARTY_NOTICES.txt?raw';
 import {fairwayAim,makeHoleTour} from './camera-tours.js';
 import {FOOTPRINTS,footprintIcon} from './footprints.js';
-import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
+import {REPLAY_HOLD_SECONDS,SHOT_HOLD_SECONDS,HOLED_HOLD_SECONDS,REVIEW_HOLD_SECONDS,HOLE_REVEAL_MS,replayFinished,shotSettled,shotDistance} from './presentation.js';
 import {planShotCamera,planReview} from './tv-camera.js';
 import {aimTarget,localWind} from './shot-visuals.js';
 import {playsLike} from './plays-like.js';
@@ -398,17 +398,25 @@ function queueXpGain(prof,items,before,mult=1){
  if(!xpTimer)xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},120);
 }
 // THE POPUP'S TIMING (the owner, 14 October 2026): its sounds one at a time,
-// never on top of each other or of the hole's own. It waits for the hole-out
-// banner -- and the score sting with it -- to finish; then the gain; a beat;
+// never on top of each other or of the hole's own. It waits for the hole's
+// score sting to finish -- XP_AFTER_STING after the hole-out banner comes up,
+// not the banner's whole stay, which left the screen still for nearly three
+// seconds (the owner's second look, same day) -- then the gain; a beat;
 // the fill; and on a level-up the bar stops at the top, the level-up sound plays
 // on its own, and only after it does the bar fill on into the new level.
 // PLACED: XP_FILL_AT after the gain, XP_FILL_MS a fill, XP_LEVEL_AT after a
 // fill reaches the top, XP_LEVEL_HOLD for the level-up sound to finish, and
-// XP_LINGER after the last fill. tools/sound-lab/xp.html's demo copies them.
-const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700;
+// XP_LINGER after the last fill; XP_AFTER_STING covers the longest chiptune
+// sting (about 1.05 s at the owner's length) with a gap after it.
+// tools/sound-lab/xp.html's demo copies them.
+const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700,XP_AFTER_STING=1600;
+// Whether the popup, or the level-up banner after it, still has something to
+// show: the scorecard waits for both (showHoleCompletion).
+const xpBusy=()=>!!(xpQueue.length||levelUps.length||($('xpGain')&&!$('xpGain').hidden)||($('levelUp')&&!$('levelUp').hidden));
 function showXpGain(){
  if(xpTimer||!xpQueue.length)return;
- if($('holeOut')&&!$('holeOut').hidden){xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},300);return;}
+ const sting=XP_AFTER_STING-(performance.now()-holeOutAt);
+ if($('holeOut')&&!$('holeOut').hidden&&sting>0){xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},sting);return;}
  const g=xpQueue.shift(),el=$('xpGain');if(!el)return;g.shown=true;
  const from=levelOf(g.before),to=levelOf(g.after),pct=l=>Math.round(l.into/l.need*100);
  const multNote=g.mult!==1?`<li class="xp-mult"><span>${g.mult>1?'Hard':'Easy'} ×${g.mult}</span></li>`:'';
@@ -1394,13 +1402,13 @@ function updateSoundScene(){
  gameAudio.setScene({biome:w.settings?.biome,wind:Number(w.settings?.wind)||0,tempC:h?.bio?.temperature??w.bio?.temperature,
   night:!!view.solar&&view.solar.elevation<-4,waterDist:water.dist,waterKind:water.kind,waterPan:d>1?clamp((dx*e[0]+dz*e[2])/d,-1,1):0});
 }
-let holeOutTimer=null;
+let holeOutTimer=null,holeOutAt=-1e9;
 function announceHoleOut(before){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
  if(!seats.length)return;
  const seat=seats[0],score=round.cards[seat][round.hole],label=holeOutLabel(score,course.par);
  if(!label)return;
- gameAudio?.score(score,course.par);
+ gameAudio?.score(score,course.par);holeOutAt=performance.now();
  // Who, only when there is more than one golfer to tell apart. A scramble
  // score belongs to the team, so the team is named.
  const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
@@ -1544,16 +1552,27 @@ async function growNextEndless(){
  // starting it behind a full-screen scrim spends it on nothing.
  arriveAtHole();
 }
+// THE SCORECARD WAITS FOR THE XP (the owner, 14 October 2026). It opened
+// HOLE_REVEAL_MS after the hole-out, while the popup was still filling its
+// bar, and blurred it out. Now HOLE_REVEAL_MS is the least it waits: while the
+// popup or a level-up banner is up or queued it looks again every
+// SCORECARD_RECHECK_MS, and opens SCORECARD_AFTER_XP_MS after they clear. PLACED.
+const SCORECARD_RECHECK_MS=200,SCORECARD_AFTER_XP_MS=400;
 function showHoleCompletion(){
  // The lab is a bench, not a round. Holing out there is the result being
  // examined, so nothing sweeps it away: no scorecard, no countdown, no next hole.
  startHoleSummary();
- cancelAdvance();completionTimer=setTimeout(()=>{completionTimer=null;if(!round.holeComplete||flight)return;openPanel('score');if(round.finished)return;
+ let waited=false;
+ const open=()=>{completionTimer=null;if(!round.holeComplete||flight)return;
+  if(xpBusy()){waited=true;completionTimer=setTimeout(open,SCORECARD_RECHECK_MS);return;}
+  if(waited){waited=false;completionTimer=setTimeout(open,SCORECARD_AFTER_XP_MS);return;}
+  openPanel('score');if(round.finished)return;
  let seconds=8;const label=$('autoAdvanceLabel');if(label)label.textContent=`Next hole in ${seconds} seconds`;
  advanceCountdown=setInterval(()=>{seconds--;if($('autoAdvanceLabel'))$('autoAdvanceLabel').textContent=`Next hole in ${Math.max(0,seconds)} seconds`;},1000);
  advanceTimer=setTimeout(advanceHole,8000);
  if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};
- },HOLE_REVEAL_MS);
+ };
+ cancelAdvance();completionTimer=setTimeout(open,HOLE_REVEAL_MS);
 }
 // A range session: every shot hit since the range was opened.
 //
@@ -5749,7 +5768,7 @@ function tick(now){
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and

@@ -7825,6 +7825,21 @@ marimba they replace peaked at about -7 dB for a hole in one, -17 for a birdie
 and -21 for a bogey, so the best scores are now quieter and the worst slightly
 louder; the owner chose them by ear at these levels.
 
+### The pause before the XP popup (measured 14 October 2026)
+
+The owner saw the game "freeze a bit" before the XP came up after holing out.
+A frame probe in the built game (every frame over 34 ms, and when the banner,
+the popup and the scorecard came and went), on this machine's GPU at Low and
+again at Ultra, found **no stalled frame before the popup**: the only one was a
+single 50 ms frame just after the scorecard opened. What it did find was the
+time: the camera held on the empty cup for 3 s (`SHOT_HOLD_SECONDS`, meant for
+looking at a lie), the banner 2.7 s, then the popup -- nearly six seconds of a
+still picture -- and the scorecard 0.17 s after the popup, over it. Now: 1.2 s
+on the cup (`HOLED_HOLD_SECONDS`), the popup 1.6 s into the banner, the card
+about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
+popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
+away from the popup. All three hold lengths are PLACED.
+
 ### The Swing Meter's sounds
 
 Synthesised like every other sound (no recordings), PLACED by ear, and chosen

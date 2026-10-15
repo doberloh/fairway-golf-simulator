@@ -774,11 +774,15 @@ const JOURNEYS = [
      await t.putt();
      // The XP popup comes up as the hole is paid (14 October 2026): caught here,
      // while it is on screen, and pictured for a look.
-     if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 3000}).then(() => true, () => false))
+     if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 6000}).then(() => true, () => false))
       await t.page.locator('#xpGain').screenshot({path: 'bench/shots/smoke/xp-popup.png'}).catch(() => {});
-     // The hole reveal holds for three seconds of WALL time, then the card opens.
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false);
-     if (done) return;
+     // The hole reveal holds for three seconds of WALL time at least, and the
+     // card waits for the XP popup to finish (14 October 2026).
+     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false);
+     if (done) {
+      if (await t.page.evaluate(() => !document.getElementById('xpGain').hidden)) throw new Error('the scorecard opened over the XP popup');
+      return;
+     }
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
