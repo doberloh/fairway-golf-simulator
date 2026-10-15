@@ -46,7 +46,7 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <body>
 <main>
 <h1>XP sounds</h1>
-<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1, with three more takes each (D, E, F). None of these play in the game yet; the popup itself is in the game, silent.</p>
+<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1 signed off: each is the take you chose with your sliders built in, and they play in the game.</p>
 <div class="note"><p><b>What this is.</b> Whenever a golfer earns XP a popup comes up with what earned it and their level bar filling. Three sounds go with it: <b>the gain</b> as it comes up, <b>the fill</b> under the bar, and <b>a new level</b> when the bar runs over the top. Each has three takes and sliders.</p>
 <p>Try them together with the demo just below, which plays the popup the way the game does with the takes you have picked. <b>The order is the game's:</b> the hole's own score sting first (the marimba you already chose), and the popup only once that has finished; then the gain, a beat, the bar filling; and on a level-up the bar stops at the top, the level-up sound plays by itself, and only then does the bar fill on. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button></div>
@@ -63,7 +63,8 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <script type="module">
 /*SYNTH*/
 
-const KEY='fairway-xp-lab-v1';
+// v2: round 1 signed off, the owner's sliders built in -- start clean so they are not applied twice.
+const KEY='fairway-xp-lab-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const c of kids)e.append(c);return e;};

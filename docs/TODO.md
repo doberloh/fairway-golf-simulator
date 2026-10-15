@@ -27,14 +27,13 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Six
-  takes each (three more added on the owner's ask) for the gain, the bar filling and a new level, in `src/sound.js`
-  (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
-  `docs/reports/sounds/xp.html` (local), with a demo of the popup that plays
-  the hole-out sting first and spaces the sounds as the game does. All render
-  between -12 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
-  which is silent until `XP_FINAL` holds the picks; then extend
-  tests/sound.test.mjs as for the meter sounds.
+- [ ] **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
+  Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
+  for every score; report `node tools/sound-lab/build.mjs`, then
+  `docs/reports/sounds/stings.html` (local), with the current marimba beside
+  each to compare. `gameAudio.score` already plays a score's chiptune sting
+  once it is in `CHIP_FINAL`; until then the marimba. On sign-off: fold the
+  picks in, retire the marimba takes from play, extend tests/sound.test.mjs.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
   finished, and as the profile picture) and titles.**
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
@@ -898,6 +897,16 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     picked takes. `check.mjs` renders every take: all between -10 and -17 dB
     peak. **None plays in the game** until signed off; then fold the choices into
     a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] Closed: **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Six
+    takes each (three more added on the owner's ask) for the gain, the bar filling and a new level, in `src/sound.js`
+    (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/xp.html` (local), with a demo of the popup that plays
+    the hole-out sting first and spaces the sounds as the game does. All render
+    between -12 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
+    which is silent until `XP_FINAL` holds the picks; then extend
+    tests/sound.test.mjs as for the meter sounds.
+    **Done:** the owner picked gain E, fill D and level-up C with their sliders
+    (`XP_FINAL`), and they play in the game.
 - [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
   and meter golfers: hole, score, fairway and green, on the number, chip-ins,
   long putts, personal bests, rounds, wins and the daily first round, with the

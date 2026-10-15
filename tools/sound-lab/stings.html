@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hole-out Stings</title>
+<style>
+:root{--bg:#f6f5f0;--panel:#fffefa;--ink:#1d2320;--muted:#5d6762;--line:#dcdcd2;--accent:#2f7a4f;--accent-ink:#fff;--chip:#eceee6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}}
+:root[data-theme="dark"]{--bg:#141816;--panel:#1c211e;--ink:#e6ebe7;--muted:#9aa59f;--line:#2f3732;--accent:#5cba84;--accent-ink:#0d1410;--chip:#262d29}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:19px;margin:26px 0 4px}h3{font-size:16px;margin:0}
+.muted{color:var(--muted)}small{color:var(--muted)}
+.note{border-left:3px solid var(--accent);padding:4px 10px;background:var(--panel);border-radius:0 8px 8px 0;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.act{border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button.sec{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 10px;font:14px system-ui,sans-serif;cursor:pointer}
+.takes{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.takes label{display:flex;gap:6px;align-items:flex-start;cursor:pointer}
+label.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:13px}
+label.sl input{grid-column:1/3;width:100%;accent-color:var(--accent)}
+label.sl span:last-of-type{color:var(--muted);font-variant-numeric:tabular-nums}
+select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px}
+textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px;font:13px system-ui,sans-serif}
+#tools{position:fixed;right:16px;bottom:16px;display:flex;gap:8px;z-index:5}
+#out{position:fixed;inset:auto 16px 64px 16px;max-width:640px;margin-left:auto;z-index:6;display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#out textarea{min-height:160px;font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>Hole-out stings, chiptune</h1>
+<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1. The game still plays the marimba stings until you pick.</p>
+<div class="note"><p><b>What this is.</b> The short tune when a hole is finished -- one for each score from a hole in one to a triple bogey or worse -- reworked as chiptune, the old game-console sound: square and thin pulse waves, a triangle bass, a noise drum, quick and dry. Four takes. A, B and C play the tunes you already know on chip voices; D is new, bouncier game jingles.</p>
+<p><b>Pick one take for all of them</b> at the top, so the set sounds like one game, and nudge the sliders. If one score wants a different take, change it on its card. <b>Current</b> on each card plays the marimba you have now, to compare. <b>Play them all</b> runs from the worst to the best. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
+<div class="row"><button class="act" id="start">Start sound</button><button class="act" id="all">Play them all</button><button class="sec" id="allCurrent">All, current marimba</button></div>
+
+<h2>The take for every sting</h2>
+<div class="card" id="global"></div>
+<h2>Each score</h2>
+<div class="grid" id="cards"></div>
+</main>
+<div id="out"><p><b>Paste this back to me.</b> It is already on your clipboard if the browser allowed it.</p><textarea id="outText" readonly></textarea><div class="row"><button class="sec" id="outClose">Close</button></div></div>
+<div id="tools"><button class="act" id="copy">Copy my notes</button></div>
+<script type="module">
+/*SYNTH*/
+
+const KEY='fairway-stings-lab-v1';
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
+const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const c of kids)e.append(c);return e;};
+$('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
+saved.all??='A';saved.over??={};saved.knobs??={};saved.notes??={};
+let ctx=null,lab=null;
+function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#start').textContent='Sound on';}if(ctx.state==='suspended')ctx.resume();}
+$('#start').onclick=ensure;
+const ORDER=['worse','double','bogey','par','birdie','eagle','albatross','ace'];
+const takeFor=id=>saved.over[id]||saved.all;
+const playChip=(id,at)=>{ensure();chipSting(lab,id,{take:takeFor(id),knobs:saved.knobs,at});};
+const playCurrent=(id,at)=>{ensure();score(lab,id,{at});};
+
+// The take for all, and the sliders, shared by every sting.
+{const g=$('#global'),list=el('div',{class:'takes'});
+ for(const [k,t] of Object.entries(CHIP_TAKES)){const r=el('input',{type:'radio',name:'take-all',value:k});if(saved.all===k)r.checked=true;
+  r.onchange=()=>{saved.all=k;save();playChip('birdie');};list.append(el('label',{},r,el('span',{},`${k}: ${t.name}`)));}
+ g.append(list);
+ for(const n of ['level','pitch','length','bright']){const d=KNOBS[n],k=saved.knobs,inp=el('input',{type:'range',min:d.min,max:d.max,step:d.step,value:k[n]??d.def}),out=el('span',{},`${Math.round((k[n]??d.def)*100)}%`);
+  inp.oninput=()=>{const v=+inp.value;if(v===d.def)delete k[n];else k[n]=v;out.textContent=`${Math.round(v*100)}%`;save();};
+  g.append(el('label',{class:'sl'},el('span',{},d.label),out,inp));}
+}
+for(const id of [...ORDER].reverse()){
+ const c=el('div',{class:'card'});
+ c.append(el('h3',{},SCORES[id].label));
+ const sel=el('select',{'aria-label':`Take for ${SCORES[id].label}`});
+ sel.append(el('option',{value:''},'The take for all'));
+ for(const k of Object.keys(CHIP_TAKES))sel.append(el('option',{value:k},`Take ${k}`));
+ sel.value=saved.over[id]||'';
+ sel.onchange=()=>{if(sel.value)saved.over[id]=sel.value;else delete saved.over[id];save();playChip(id);};
+ c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>playChip(id)},'Play'),el('button',{class:'sec',onclick:()=>playCurrent(id)},'Current'),sel));
+ const ta=el('textarea',{placeholder:'Notes'});ta.value=saved.notes[id]||'';ta.oninput=()=>{saved.notes[id]=ta.value;save();};c.append(ta);
+ $('#cards').append(c);
+}
+$('#all').onclick=()=>{ensure();ORDER.forEach((id,i)=>playChip(id,ctx.currentTime+i*1.9));};
+$('#allCurrent').onclick=()=>{ensure();ORDER.forEach((id,i)=>playCurrent(id,ctx.currentTime+i*2.2));};
+
+$('#copy').onclick=async()=>{
+ const notes=Object.fromEntries(Object.entries(saved.notes).filter(([,v])=>v));
+ const text='Hole-out sting notes\n'+JSON.stringify({take:{all:saved.all,overrides:saved.over},knobs:saved.knobs,notes},null,1);
+ $('#outText').value=text;$('#out').style.display='block';
+ try{await navigator.clipboard.writeText(text);}catch{$('#outText').select();}
+};
+$('#outClose').onclick=()=>$('#out').style.display='none';
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@
 // or pressed a key, so nothing is created until then (`unlock`); before it,
 // every call here is a quiet no-op. The context is suspended while the page is
 // hidden, so a game left in a background tab costs nothing.
-import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL} from './sound.js';
+import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL,chipSting,CHIP_FINAL} from './sound.js';
 import {crownRadius} from './species.js';
 
 const KEY='fairway-sound-v1';
@@ -138,7 +138,9 @@ export function createGameAudio(){
    impact(lab,what,{speed:c.speed??2,dist,pan});
   },
   // A hole finished: the sting for that score.
-  score(strokes,par){if(ok())score(lab,scoreSting(strokes,par));},
+  // A score with a signed-off chiptune sting (sound.js CHIP_FINAL) plays that;
+  // every other plays the signed-off marimba, as before.
+  score(strokes,par){if(!ok())return;const name=scoreSting(strokes,par),chip=CHIP_FINAL[name];if(chip)chipSting(lab,name,{take:chip[0],knobs:chip[1]});else score(lab,name);},
   // THE SWING METER. The voice starts with the first tap, follows the marker
   // (`meterMove`, every frame, position in bar lengths) and stops with the
   // swing; `meterSound` plays one moment: 'power', 'overswing', 'perfect',

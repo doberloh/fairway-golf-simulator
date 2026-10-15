@@ -7800,6 +7800,24 @@ the round itself) pays about 500 to 650 XP, so about a level a round at first,
 one every three or four rounds by level 30, and roughly 140 eighteen-hole rounds
 to level 50. Not yet checked against real play.
 
+### The XP popup's sounds, and chiptune stings
+
+Synthesised, PLACED by ear. The XP popup's three sounds were chosen by the owner
+on 14 October 2026 from six takes each (`XP_FINAL`): the gain a quick
+three-note triangle pluck (C5-E5-G5, pitched down an octave by their 0.5 pitch
+slider), the fill a low sine glide (300 to 600 Hz before the same halving), a
+new level a rising two-note triangle swell. Renders at -12 to -17 dB peak.
+They play one at a time and never with the hole-out sting (PROJECT_HANDOFF
+*The XP popup reports what award paid*).
+
+The hole-out stings, reworked as chiptune on the owner's ask the same day,
+are four takes awaiting their pick (`CHIP_TAKES`, `chipSting`): the known
+tunes on a square wave, on a 25% pulse over a triangle bass, on a triangle with
+a 12.5% pulse echo and a noise drum, and new game jingles. Pulse waves are
+built from their Fourier series (40 harmonics). Levelled against the current
+marimba stings: a hole in one about -7 dB peak, a birdie about -17, a bogey
+about -21, louder for better scores as the marimba is.
+
 ### The Swing Meter's sounds
 
 Synthesised like every other sound (no recordings), PLACED by ear, and chosen

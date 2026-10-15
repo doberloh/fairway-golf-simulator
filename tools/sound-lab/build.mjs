@@ -47,3 +47,11 @@ const xp=readFileSync(join(here,'xp.html'),'utf8')
 <meta name="built" content="${built}">`);
 writeFileSync(join(outDir,'xp.html'),xp);
 console.log(`wrote ${join('docs','reports','sounds','xp.html')} (${(xp.length/1024).toFixed(0)} KB)`);
+// The hole-out stings as chiptune (14 October 2026): their own page, with the
+// current marimba beside each to compare.
+const stings=readFileSync(join(here,'stings.html'),'utf8')
+ .replace('/*SYNTH*/',()=>synth)
+ .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">
+<meta name="built" content="${built}">`);
+writeFileSync(join(outDir,'stings.html'),stings);
+console.log(`wrote ${join('docs','reports','sounds','stings.html')} (${(stings.length/1024).toFixed(0)} KB)`);

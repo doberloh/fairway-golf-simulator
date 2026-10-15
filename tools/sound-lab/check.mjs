@@ -53,6 +53,9 @@ const rows=await tab.evaluate(async secs=>{
  // The XP popup's sounds (14 October 2026), every take.
  for(const [id,E]of Object.entries(L.XP_SOUNDS))for(const take of Object.keys(E.takes)){
   const [b]=await render(3,lab=>L.xpSound(lab,id,{take,at:0}));out.push(stats(b,`xp ${id} ${take}`));}
+ // The hole-out stings as chiptune (14 October 2026): every take of every score.
+ for(const id of Object.keys(L.SCORES))for(const take of Object.keys(L.CHIP_TAKES)){
+  const [b]=await render(3,lab=>L.chipSting(lab,id,{take,at:0}));out.push(stats(b,`chip ${id} ${take}`));}
  return out;
 },secs);
 await browser.close();

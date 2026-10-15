@@ -106,3 +106,13 @@ test('every Swing Meter sound is signed off, one take each', async () => {
   assert.deepEqual(METER_EVENTS[id].takes.A.base, METER_FINAL[id][1], `${id} lost the owner's sliders`);
  }
 });
+
+// THE XP POPUP'S SOUNDS (signed off 14 October 2026): one take each, the owner's sliders in.
+test('every XP sound is signed off, one take each', async () => {
+ const {XP_SOUNDS, XP_FINAL} = await import('../src/sound.js');
+ for (const id of ['gain', 'fill', 'levelUp']) {
+  assert.ok(XP_SOUNDS[id]?.final, `${id} was never signed off`);
+  assert.deepEqual(Object.keys(XP_SOUNDS[id].takes), ['A'], `${id} has more than one take`);
+  assert.deepEqual(XP_SOUNDS[id].takes.A.base, XP_FINAL[id][1], `${id} lost the owner's sliders`);
+ }
+});

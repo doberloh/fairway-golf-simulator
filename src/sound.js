@@ -1250,8 +1250,8 @@ export function meterEvent(lab,id,{take='A',knobs={},at}={}){
 // The XP popup's sounds (round 1 of their own, 14 October 2026): the gain as
 // the popup comes up, the level bar filling, and the bar running over into a
 // new level. Three takes each for the owner to choose in the XP report
-// (tools/sound-lab/xp.html). NOT PLAYED IN THE GAME until signed off: the game's
-// xpSound (audio.js) checks XP_FINAL and stays quiet while it is empty. PLACED by ear.
+// (tools/sound-lab/xp.html). Signed off by the owner the same day (XP_FINAL,
+// below); the game plays them from then. PLACED by ear.
 export const XP_SOUNDS={
  gain:{label:'XP gained (the popup comes up)',note:'Short and bright: it plays after nearly every hole.',takes:{
   A:{name:'Two-coin chime',play:x=>{x.ring(0,[[midi(83),.18,1],[midi(83)*2.76,.05,.2]],{amp:.13});x.ring(.07,[[midi(88),.28,1],[midi(88)*2.76,.07,.2]],{amp:.14});}},
@@ -1279,8 +1279,18 @@ export const XP_SOUNDS={
  }},
 };
 for(const e of Object.values(XP_SOUNDS))e.knobs=['level','pitch','length','bright'];
-// Filled in when the owner signs the takes off; empty, the game plays none.
-export const XP_FINAL={};
+// THE OWNER'S PICKS (14 October 2026, round 1: "XP sound notes ... my approved
+// choices"): the take and their sliders, folded in so each is the only take
+// left and 100% on every slider is what they heard. Empty, the game played none.
+export const XP_FINAL={
+ gain:['E',{pitch:.5,length:.75,bright:2.1}],
+ fill:['D',{bright:.5,pitch:.5,length:.55}],
+ levelUp:['C',{length:1.1,bright:1.35,pitch:.5}],
+};
+for(const [id,[take,base]] of Object.entries(XP_FINAL)){
+ const E=XP_SOUNDS[id],t=E.takes[take];
+ E.takes={A:{name:`Signed off (was ${take}: ${t.name})`,play:t.play,base}};E.final=true;
+}
 export function xpSound(lab,id,{take='A',knobs={},at}={}){
  const E=XP_SOUNDS[id];if(!E)return;
  const T=E.takes[take]||E.takes.A,t=(at??lab.ctx.currentTime)+.01;
@@ -1289,4 +1299,91 @@ export function xpSound(lab,id,{take='A',knobs={},at}={}){
  T.play(kit(lab,dest,t,1,K),t,K,lab,dest);
  lab.sweep();
  return t;
+}
+
+// ---------------------------------------------------------------- chiptune stings
+// The hole-out stings, reworked as chiptune (the owner asked, 14 October 2026,
+// for them "more chiptune style", like the XP sounds they had just chosen --
+// a triangle pluck, a sine glide, a triangle swell). An old game console's
+// voices: square and thinner pulse waves, a triangle, and a burst of noise for
+// a drum; quick arpeggios, dry, no ring. Four takes, the same four for every
+// score so the set sounds like one game, and the owner picks in the stings
+// report (tools/sound-lab/stings.html). UNTIL THEN the signed-off marimba
+// stings above play: audio.js uses these only for a score in CHIP_FINAL.
+// PLACED by ear.
+const pulseCache=new WeakMap();
+// A pulse wave of a given duty from its Fourier series: 50% is the square,
+// 25% and 12.5% the thinner, buzzier voices old consoles had.
+function pulseWave(ctx,duty){
+ let m=pulseCache.get(ctx);if(!m)pulseCache.set(ctx,m=new Map());
+ if(!m.has(duty)){const N=40,re=new Float32Array(N),im=new Float32Array(N);
+  for(let n=1;n<N;n++)re[n]=2*Math.sin(n*Math.PI*duty)/(n*Math.PI);
+  m.set(duty,ctx.createPeriodicWave(re,im));}
+ return m.get(duty);
+}
+// One chip note: an instant attack, a held body and a short fall, with an
+// optional pitch slide and vibrato.
+function chip(lab,dest,t,{f,dur,wave='square',duty=.5,amp=.08,slide=1,vib=0,vibHz=6}){
+ const {ctx}=lab,o=ctx.createOscillator(),g=ctx.createGain(),end=t+dur,nodes=[o,g];
+ if(wave==='pulse')o.setPeriodicWave(pulseWave(ctx,duty));else o.type=wave;
+ o.frequency.setValueAtTime(f,t);if(slide!==1)o.frequency.exponentialRampToValueAtTime(f*slide,end);
+ if(vib){const l=ctx.createOscillator(),d=ctx.createGain();l.frequency.value=vibHz;d.gain.value=f*vib;l.connect(d);d.connect(o.frequency);l.start(t);l.stop(end+.02);nodes.push(l,d);}
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.004);g.gain.setValueAtTime(amp,t+dur*.55);
+ g.gain.linearRampToValueAtTime(amp*.5,Math.max(t+.01,end-.02));g.gain.linearRampToValueAtTime(0,end);
+ o.connect(g);g.connect(dest);o.start(t);o.stop(end+.02);lab.track(nodes,end+.1);
+ return end;
+}
+const chipDrum=(lab,dest,t,amp,f=5000)=>hiss(lab,dest,t,{type:'highpass',f,dur:.05,attack:.001,amp});
+// Each melody as [time, midi, length], with simultaneous notes for chords.
+// The marimba stings' own notes are given lengths from the gap to the next
+// onset, so the first three takes play the tunes the owner already knows.
+function withLengths(notes,last=.32){
+ const times=[...new Set(notes.map(n=>n[0]))].sort((a,b)=>a-b);
+ return notes.map(([t,n,v])=>{const next=times.find(x=>x>t);return [t,n,next!=null?Math.max(.05,(next-t)*.9):last,v??.8];});
+}
+// TAKE D's OWN TUNES: shorter, bouncier, the way a game says well done or
+// never mind. Lead, bass and drum hits; times in seconds.
+const JINGLES={
+ ace:{lead:[[0,72,.06],[.06,76,.06],[.12,79,.06],[.18,84,.06],[.24,88,.06],[.3,91,.06],[.36,96,.5],[.36,91,.5],[.9,96,.06],[.96,100,.5]],bass:[[0,48,.3],[.36,60,.5],[.9,60,.5]],drum:[0,.36,.9]},
+ albatross:{lead:[[0,72,.07],[.07,76,.07],[.14,79,.07],[.21,84,.07],[.28,88,.5],[.28,84,.5],[.84,91,.4]],bass:[[0,48,.28],[.28,60,.5],[.84,55,.4]],drum:[0,.28,.84]},
+ eagle:{lead:[[0,67,.08],[.08,72,.08],[.16,76,.08],[.24,79,.12],[.4,76,.08],[.48,79,.4]],bass:[[0,48,.24],[.24,55,.2],[.48,48,.4]],drum:[0,.24,.48]},
+ birdie:{lead:[[0,76,.09],[.1,79,.09],[.2,84,.32]],bass:[[0,48,.18],[.2,60,.3]],drum:[0,.2]},
+ par:{lead:[[0,67,.11],[.13,72,.3]],bass:[[0,48,.12],[.13,48,.3]],drum:[.13]},
+ bogey:{lead:[[0,72,.13],[.16,67,.32]],bass:[[0,48,.14],[.16,43,.3]],drum:[]},
+ double:{lead:[[0,72,.12],[.15,68,.12],[.3,65,.36]],bass:[[0,48,.14],[.3,41,.36]],drum:[]},
+ worse:{lead:[[0,67,.2],[.24,66,.2],[.48,65,.2],[.72,64,.6]],bass:[[0,43,.2],[.72,40,.6]],drum:[],vibLast:.02},
+};
+export const CHIP_TAKES={
+ A:{name:'Square lead: the tunes you know, on a square wave'},
+ B:{name:'Thin pulse and triangle bass: the tunes you know, a buzzier lead with a bass under it'},
+ C:{name:'Triangle with a pulse echo and a drum: the tunes you know, softer'},
+ D:{name:'Game jingles: new, bouncier tunes with bass and drum'},
+};
+// Filled in when the owner signs a take off; empty, the marimba stings play.
+export const CHIP_FINAL={};
+export function chipSting(lab,name,{take='A',knobs={},at}={}){
+ const t0=(at??lab.ctx.currentTime)+.05,{ctx}=lab;
+ const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...knobs};
+ const out=place(lab,{dist:10,wet:.04,until:t0+4});
+ // Brightness is a low-pass over the whole sting: chip voices are all edge.
+ const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=clamp(2600*Math.pow(K.bright,1.6),400,16000);lp.Q.value=.5;lp.connect(out);lab.track([lp],t0+4);
+ const f=n=>midi(n)*K.pitch,L=d=>d*K.length,A=a=>a*K.level;
+ if(take==='D'){
+  const J=JINGLES[name]||JINGLES.par,last=J.lead.at(-1);
+  for(const [t,n,d] of J.lead)chip(lab,lp,t0+t,{f:f(n),dur:L(d),wave:'square',amp:A(.06),vib:J.vibLast&&t===last[0]?J.vibLast:0});
+  for(const [t,n,d] of J.bass)chip(lab,lp,t0+t,{f:f(n),dur:L(d),wave:'triangle',amp:A(.13)});
+  for(const t of J.drum)chipDrum(lab,lp,t0+t,A(.07));
+ }else{
+  const notes=withLengths(SCORES[name].notes());
+  const firsts=new Map();for(const [t,n] of notes)if(!firsts.has(t)||n<firsts.get(t))firsts.set(t,n);
+  for(const [t,n,d,v] of notes){
+   if(take==='A')chip(lab,lp,t0+t,{f:f(n),dur:L(d),wave:'square',amp:A(.155*v)});
+   else if(take==='B')chip(lab,lp,t0+t,{f:f(n),dur:L(d),wave:'pulse',duty:.25,amp:A(.085*v)});
+   else{chip(lab,lp,t0+t,{f:f(n),dur:L(d),wave:'triangle',amp:A(.2*v)});chip(lab,lp,t0+t+.07,{f:f(n),dur:L(d)*.8,wave:'pulse',duty:.125,amp:A(.03*v)});}
+  }
+  if(take==='B')for(const [t,n] of firsts)chip(lab,lp,t0+t,{f:f(n-12),dur:L(.16),wave:'triangle',amp:A(.12)});
+  if(take==='C'){const times=[...firsts.keys()];chipDrum(lab,lp,t0+times[0],A(.06));chipDrum(lab,lp,t0+times.at(-1),A(.06));}
+ }
+ lab.sweep();
+ return t0;
 }
