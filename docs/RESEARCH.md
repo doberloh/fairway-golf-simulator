@@ -7840,6 +7840,19 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Course of the week and achievements (14 October 2026)
+
+No outside source. The XP amounts, thresholds and names are the agreed spec's
+placeholders (8.2, 8.3), kept as written: course of the week 150 XP for the
+first finished round a week and 50 for beating that week's best; achievements
+50-300 XP. Two definitions were PLACED here: an up-and-down from sand is the
+hole finished within one stroke of the last shot from sand (so a holed bunker
+shot counts, and a fairway bunker 150 yards out counts if the next shot holes);
+*Beat the Index* compares strokes over par with the sim handicap index scaled by
+holes played over 18. Weeks are ISO weeks in the player's local time, so the
+course turns over at their midnight Sunday to Monday, not at one moment
+everywhere.
+
 ### Rewards: tracer styles and ball finishes (14 October 2026)
 
 No outside source: the reward table is the agreed spec's (7.1), names as its

@@ -25,6 +25,8 @@
 import {simHandicap} from './handicap.js';
 import {validateBag, stockBag} from './clubs.js';
 import {WEARABLE, reward, isUnlocked} from './rewards.js';
+import {normaliseProgress, normaliseEarned} from './achievements.js';
+import {normaliseWeekly} from './weekly.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
@@ -48,6 +50,10 @@ export const COUNTERS = [
  {key: 'trees', label: 'Trees hit', help: 'Every trunk the ball struck, counted per hit.'},
  {key: 'houses', label: 'Houses hit', help: 'Every time a ball struck a house.'},
  {key: 'chipIns', label: 'Chip-ins', help: 'Holed from off the green, tee shots aside.'},
+ // Phase 7: the two counts achievements wait on. New keys read as zero, so,
+ // like any new counter, no migration.
+ {key: 'sandSaves', label: 'Sand saves', help: 'Up and down from a bunker: the hole finished within one stroke of the last shot from sand.'},
+ {key: 'onNumber', label: 'On the number', help: 'Shots on a course that came down within 5% of the aim distance of where you aimed.'},
  {key: 'lipOuts', label: 'Lip-outs', help: 'Balls that caught the cup and stayed out.'},
  {key: 'mulligans', label: 'Mulligans', help: 'Shots taken back.'},
  {key: 'distance', label: 'Ball travel', unit: 'mi', scale: 1 / 1760, help: 'How far all your balls have travelled, in miles.'},
@@ -152,6 +158,14 @@ export function normaliseProfile(d) {
  const worn = {};
  for (const kind of WEARABLE) if (typeof d.worn?.[kind] === 'string' && (d.worn[kind] === '' && kind === 'title' || reward(kind, d.worn[kind]))) worn[kind] = d.worn[kind];
  if (Object.keys(worn).length) extra.worn = worn;
+ // ACHIEVEMENTS (Phase 7): which are earned and when, and what they count
+ // across rounds (achievements.js). Absent reads as none, so no migration.
+ const earned = normaliseEarned(d.achievements);
+ if (Object.keys(earned).length) extra.achievements = earned;
+ if (d.progress) extra.progress = normaliseProgress(d.progress);
+ // The course of the week's bests, by week and generator (weekly.js).
+ const weekly = normaliseWeekly(d.weekly);
+ if (Object.keys(weekly).length) extra.weekly = weekly;
  return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
@@ -226,7 +240,7 @@ export function setProfileWorn(store, id, kind, item, level) {
  const p = findProfile(store, id);
  if (!p) return null;
  if (!WEARABLE.includes(kind)) throw Error('That cannot be worn.');
- if (!(kind === 'title' && item === '') && !isUnlocked(kind, item, level)) throw Error('Not earned yet.');
+ if (!(kind === 'title' && item === '') && !isUnlocked(kind, item, level, p.achievements)) throw Error('Not earned yet.');
  p.worn = {...(p.worn || {}), [kind]: item};
  storeProfiles(store);
  return p;
@@ -330,6 +344,8 @@ export function tallyShot(p, f, meta = null, now = Date.now()) {
   const h = holeRecord(entryFor(p, meta, now), f.hole.index);
   h.par = f.hole.par; h.yards = f.hole.yards;
   if (f.teeShot && f.hole.par >= 4) h.fairway = !f.hazard && f.rest === 'fairway';
+  // Which strokes were played from sand, for the up-and-down count (Phase 7).
+  if (f.lie === 'sand' && Number.isInteger(f.stroke)) h.sand = [...new Set([...(h.sand || []), f.stroke])].slice(-12);
   if (!f.hazard && (f.rest === 'green' || f.holed) && f.strokes <= f.hole.par - 2) h.gir = true;
   else if (f.teeShot) h.gir = false;
  }

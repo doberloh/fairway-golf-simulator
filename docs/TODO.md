@@ -31,11 +31,15 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
   GPU runs crashed it while they gamed, 14 October 2026). Smoke
   `phone-portrait`, `phone-landscape`, `hud-reachable` with the look picker;
   pictures of Lightning, Ribbon, Fire, Starfall, Rainbow in flight, the
-  end-of-hole lines, the level-up unlock list, titles on the scorecard; and a
+  end-of-hole lines, the level-up unlock list, titles on the scorecard; the
+  main menu with its new Course of the week tile, on a phone too; a played
+  course-of-the-week round and an achievement popping; and a
   graphics profile for the tracer and glint changes (the owner: save profiles
   for the end of all the phases).
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
-- [ ] **Phase 7: course of the week, achievements, challenges.**
+- [ ] **Phase 7, the rest: challenges** (closest to the pin L3, long drive L6,
+  up and down L12, skins L18). Course of the week and achievements are in
+  `# Done`.
 
 ## The UI pass (10 October 2026)
 
@@ -921,6 +925,14 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done:** the owner chose take D, the game jingles, for every score, at
     length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
     game, and tests/sound.test.mjs holds every score to it.
+- [x] **Phase 7 (part): course of the week and achievements** (`src/weekly.js`,
+  `src/achievements.js`). The week's course from the ISO week and the
+  generator version, rotating landscapes, eighteen holes at the defaults, a menu
+  tile and a setup panel, weekly bests on the profile, 150 / 50 XP. The
+  thirteen achievements with their XP and nine titles (worn from My profile),
+  an Achievements list with progress, and two new counters, **Sand saves** and
+  **On the number**. tests/achievements, tests/weekly, profile round trips. Not
+  yet played through in the game (the owner tests at the end).
 - [x] **Phase 5: tracer styles, ball finishes and titles** (`src/rewards.js`,
   `src/ball-finishes.js`). One reward table by level (the spec's 7.1); what a
   golfer wears saved on the profile (`worn`), shown only once earned. Sixteen

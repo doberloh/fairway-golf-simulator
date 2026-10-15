@@ -24,7 +24,9 @@ import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
-import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE} from './rewards.js';
+import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES} from './rewards.js';
+import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
+import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
@@ -360,6 +362,21 @@ function syncProfile(){
    if(award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0)>0)items.push({label:round.mode==='match'?'Won the match':'Won the scramble',xp:XP.win});
    if(dailyXp(r.prof)>0)items.push({label:'First round today',xp:XP.daily});
   }
+  // ACHIEVEMENTS (Phase 7, achievements.js): the hole's -- a birdie, an ace, an
+  // up-and-down from sand -- and, once the round is over, the round's.
+  const earned=[],prog=(r.prof.progress||=blankProgress());
+  if(Number.isFinite(r.score)){
+   earned.push(...holeAchievements({score:r.score,par:course.par}));
+   if(sandSave(h.sand,r.score)&&markOnce(prog,`${round.uid}:h${round.hole}:sand`))r.prof.counters.sandSaves=(r.prof.counters.sandSaves||0)+1;
+  }
+  if(round.finished&&!round.endless&&markOnce(prog,`${round.uid}:done`)){
+   prog.rounds++;if(settings.biome&&!prog.biomes.includes(settings.biome))prog.biomes.push(settings.biome);
+   const card=r.prof.rounds.find(e=>e.id===round.uid)?.card||[];
+   earned.push(...roundAchievements({holes:card.map(c=>c&&{par:c.par,score:c.score,fairway:c.fairway}),index:profileSummary(r.prof).handicap.index,floodlit:!!view.daylight?.floodlights,biome:settings.biome}));
+   weeklyRoundDone(r.prof,r.seat,items);
+  }
+  earned.push(...countedAchievements(r.prof));
+  payAchievements(r.prof,earned,items);
   queueXpGain(r.prof,items,before,mult);
  }
  for(const r of rows){const now=levelOf(r.prof.xp).level;if(now>was.get(r.prof.id))queueLevelUp(r.prof,now,was.get(r.prof.id));}
@@ -370,10 +387,32 @@ function syncProfile(){
 // and the starting look if not. Someone with no profile -- the menu's showcase
 // hole -- wears the starting look.
 function looksOf(prof){
- const level=prof?levelOf(prof.xp).level:1,w=prof?.worn;
- return {level,ball:wornItem(w,'ball',level),tracer:wornItem(w,'tracer',level),title:wornItem(w,'title',level)};
+ const level=prof?levelOf(prof.xp).level:1,w=prof?.worn,e=prof?.achievements;
+ return {level,ball:wornItem(w,'ball',level),tracer:wornItem(w,'tracer',level),title:wornItem(w,'title',level,e)};
 }
 const seatLooks=seat=>looksOf(profileOf(round?.players?.[seat]));
+// Pay newly earned achievements through the ledger (one key each, so never
+// twice) and name them in the XP popup; a toast says when one brings a title.
+// THE COURSE OF THE WEEK, FINISHED (Phase 7, weekly.js): the golfer's gross
+// score for the eighteen -- their team's in a scramble -- recorded for the
+// week; 150 XP for the first finished round of the week, 50 for beating their
+// best that week; and the week counted for the Streak achievement.
+function weeklyRoundDone(prof,seat,items){
+ if(!round.weekly)return;
+ const team=round.players[seat]?.team,card=round.mode==='scramble'?round.teamCards[team]:round.cards[seat];
+ if(!card||card.filter(Number.isFinite).length<round.holes)return;
+ const score=Math.round(sumScores(card)),got=recordWeekly(prof,round.weekly,score);
+ if(got.first&&award(prof,`${round.weekly}:first`,WEEKLY_XP.first)>0)items.push({label:'Course of the week',xp:WEEKLY_XP.first});
+ if(got.better&&award(prof,`${round.uid}:weekbest`,WEEKLY_XP.best)>0)items.push({label:'Best this week',xp:WEEKLY_XP.best});
+ const prog=(prof.progress||=blankProgress()),w=weekIndex();if(!prog.weeks.includes(w))prog.weeks.push(w);
+}
+function payAchievements(prof,ids,items){
+ for(const id of earn(prof,ids)){
+  const a=achievement(id);
+  if(award(prof,`ach:${id}`,a.xp)>0)items.push({label:`Achievement: ${a.name}`,xp:a.xp});
+  if(a.title)toast(`${prof.name} earned ${a.name}, and the title “${a.title}”. Wear it from My profile.`);
+ }
+}
 const titleName=id=>id?reward('title',id)?.name||'':'';
 // THE BALL AS A PICTURE: the finish drawn face on (ball-finishes.js
 // ballPixels, the rule the 3D ball is painted from), as an image, kept per
@@ -487,7 +526,7 @@ function recordProfileShot(result,before){
  const pin=course?.pin,rest=result.hazard||!course?null:course.surface(result.end.x,result.end.z);
  tallyShot(prof,{range,lie:before.lie,rest,hazard:result.hazard||null,holed:!!result.holed&&!result.hazard,lipped:!!result.lipped,
   trees:result.treeHits||0,houses:result.homeHits||0,yards:(result.total||0)/YARD,airtime:result.time,mph:shot?(shot.lie?.measured?shot.lie.before:shot.speed)/MPH:NaN,
-  teeShot:before.stroke===1,driver:before.driver,
+  teeShot:before.stroke===1,driver:before.driver,stroke:before.stroke,
   puttFeet:before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:NaN,
   strokes:before.stroke+(result.hazard?1:0),hole:meta?holeFacts():null},meta);
  // XP FOR THE SHOT (Phase 4), kept under its stroke so a mulligan takes it back.
@@ -502,7 +541,10 @@ function recordProfileShot(result,before){
  else{
   const prefix=`${round.uid}:h${round.hole}:`,stroke=before.stroke,mult=xpMult(before.seat),items=[];
   const bests=['longestDrive','longestPutt','ballSpeed'].filter(k=>(prof.bests[k]||0)>(bestsBefore[k]||0)).length;
-  if(on&&!hasOnNumber(prof,prefix,stroke)&&award(prof,`${prefix}s${stroke}:number`,withMult(XP.onNumber,mult),{stroke})>0)items.push({label:'On the number',xp:XP.onNumber});
+  if(on&&!hasOnNumber(prof,prefix,stroke)&&award(prof,`${prefix}s${stroke}:number`,withMult(XP.onNumber,mult),{stroke})>0){
+   items.push({label:'On the number',xp:XP.onNumber});
+   prof.counters.onNumber=(prof.counters.onNumber||0)+1;payAchievements(prof,countedAchievements(prof),items);
+  }
   const holed=!!result.holed&&!result.hazard,puttFeet=before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:0;
   const parts=shotXpParts({holed,fromGreen:before.lie==='green',teeShot:stroke===1,puttFeet,bests});
   if(award(prof,`${prefix}s${stroke}:shot`,withMult(sumParts(parts),mult),{stroke})>0)items.push(...parts);
@@ -3001,7 +3043,7 @@ let rangeSetup=false;
 // Endless gets one too. It has no course to choose -- every hole is grown from
 // the run's own seed -- so this panel is the round half only: format, tees,
 // putting and who is playing.
-let endlessSetup=false;
+let endlessSetup=false,weeklySetup=false;
 function openStudioSetup(){
  // Leave the range behind BEFORE the panel renders. The studio grows
  // landscapes and a range is not one, and the panel has to show the course's
@@ -3360,7 +3402,7 @@ function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
 }
-function closePanel(){if((rangeSetup||endlessSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
+function closePanel(){if((rangeSetup||endlessSetup||weeklySetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
 // to feel like a pause. Putts are excluded: one is over before the hold would be.
@@ -3537,6 +3579,7 @@ const PANEL_TITLES={profile:'My profile',course:'Course studio',round:'Your next
 const panelTitle=name=>name!=='round'?PANEL_TITLES[name]
  :(rangeSetup||rangeMode)?'Driving range'
  :endlessSetup?'Endless run'
+ :weeklySetup?'Course of the week'
  :PANEL_TITLES.round;
 
 // Builds one panel's controls into whichever host is showing it. Nothing in
@@ -3623,10 +3666,19 @@ function lookPicker(profile){
   return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${r.kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
  let body;
  if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,`<i class="tracer-swatch${TRACERS[r.id].colours==='seat'?' seat':''}${TRACERS[r.id].dash?' dash':''}" style="background:${TRACER_SWATCH(r.id)}"></i>`)).join('')}</div><p class="research-label">Your own shots fly in your tracer. At the end of a hole every line goes back to its golfer's colour and keeps its shape.</p>`;
- else if(lookTab==='title'){const titles=rewardsOf('title');
-  body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option>${titles.map(r=>`<option value="${r.id}" ${r.level>lv?'disabled':''} ${look.title===r.id?'selected':''}>${escape(r.name)}${r.level>lv?` (level ${r.level})`:''}</option>`).join('')}</select></label>`;}
+ else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
+  const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
+  body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`level ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
  else body=`<div class="look-grid balls">${rewardsOf('ball').map(r=>item(r,`<img class="ball-avatar" src="${ballPicture(r.id)}" alt="">`)).join('')}</div>`;
  return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${WEARABLE.map(tab).join('')}</div>${body}`;
+}
+// THE ACHIEVEMENTS (Phase 7): every one, earned or not, with what it takes,
+// its XP, its title, and how far along a counted one is.
+function achievementList(profile){
+ const e=profile.achievements||{};
+ const row=a=>{const at=e[a.id],p=progressOf(a,profile);
+  return `<li class="achievement${at?' earned':''}"><b>${escape(a.name)}</b><span>${escape(a.how)}${a.title?` Title: <i>${escape(a.title)}</i>.`:''}</span><small>${at?`Earned ${profileWhen(at)}`:p?`${Math.min(p[0],p[1])} of ${p[1]}`:''} · ${a.xp} XP</small>${!at&&p?`<i class="level-bar"><b style="width:${Math.round(Math.min(1,p[0]/p[1])*100)}%"></b></i>`:''}</li>`;};
+ return `<h3>Achievements <small>${Object.keys(e).length} of ${ACHIEVEMENTS.length}</small></h3><ul class="achievement-list">${ACHIEVEMENTS.map(row).join('')}</ul>`;
 }
 function renderProfile(content){
  if(!profiles){content.innerHTML='<p>Nobody has signed the card yet.</p><button class="primary" id="profileStart">Enter your name</button>';$('profileStart').onclick=()=>{closePanel();showWelcome();};return;}
@@ -3658,7 +3710,7 @@ function renderProfile(content){
  content.innerHTML=`<div class="profile">${strip}`
   +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
   +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
-  +lookPicker(profile)
+  +lookPicker(profile)+achievementList(profile)
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))
@@ -3719,7 +3771,14 @@ function followRename(profile,from){
  if(groupDraft)for(const p of groupDraft)if(p.profile===profile.id)p.name=profile.name;
  useMainProfile();profileSynced='';updateMenuProfile();
 }
+// The tile says which week, which landscape, and the main golfer's best on it.
+function updateMenuWeekly(){
+ const el=$('menuWeeklyNote');if(!el)return;
+ const w=isoWeek(),s=weeklySettings(),best=mainProfile(profiles)?.weekly?.[weekKey()];
+ el.textContent=`Week ${w.week} · ${BIOMES[s.biome]?.name||s.biome}${best?` · your best ${best}`:''}`;
+}
 function updateMenuProfile(){
+ updateMenuWeekly();
  const note=$('menuProfileNote'),m=mainProfile(profiles);if(!note)return;
  if(!m){note.textContent='Stats, rounds, handicap';return;}
  const h=profileSummary(m).handicap,others=profiles.profiles.length-1;
@@ -4100,7 +4159,28 @@ function renderPanel(name,content){
   $('randomSeed').onclick=()=>{$('seed').value=['WANDER','HORIZON','WILDFLOWER','SOLSTICE'][Math.floor(Math.random()*4)]+'-'+Math.floor(Math.random()*9999);markStudioDirty();previewPlan();};
   document.querySelectorAll('[data-footprint]').forEach(b=>b.onclick=()=>{$('footprint').value=b.dataset.footprint;$('footprint').dispatchEvent(new Event('change'));markStudioDirty();});
   $('footprint').onchange=()=>document.querySelectorAll('[data-footprint]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.footprint===$('footprint').value)));
-}else if(name==='round'&&endlessSetup){
+}else if(name==='round'&&weeklySetup){
+  // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
+  // just the group and the format, and what it is.
+  const s=weeklySettings(),w=isoWeek(),me=mainProfile(profiles),best=me?.weekly?.[weekKey()],ever=bestEverWeekly(me);
+  content.innerHTML=`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
+   +(me?`<p class="note">${escape(me.name)}: best this week ${best??'—'} · best on any week's course ${ever??'—'}. The first round you finish each week earns ${WEEKLY_XP.first} XP, and beating your best that week ${WEEKLY_XP.best} more.</p>`:'')
+   +`<h3>Format &amp; tees</h3>${formatFields({match:true})}`
+   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
+   +`<p class="field-error" id="roundError"></p>`
+   +`<button class="primary" data-panel-action id="weeklyGo">Play the course of the week <i data-lucide="arrow-right"></i></button>`;
+  const formatNote=wireFormatFields();
+  groupEditor('playerRows',round.players,formatNote);
+  $('weeklyGo').onclick=async()=>{
+   if(flight){toast('Finish the current shot first.');return;}
+   let group;
+   try{group={...readGroup(),weekly:weekKey()};new Round({...group,holes:18});}catch(e){$('roundError').textContent=e.message;return;}
+   weeklySetup=false;closePanel();
+   const name=`${suggestCourseName(s)} · Week ${w.week}`;
+   await startRoundOn(s,group,name);
+   toast(`The course of the week: ${name}.`);
+  };
+ }else if(name==='round'&&endlessSetup){
   // NO COURSE PICKER. Endless grows each hole as you finish the last one, so a
   // course to play would be a course it immediately throws away. What is left is
   // exactly the round half of the round panel, built from the same helpers.
@@ -5462,7 +5542,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null,ready:view.readyTimes??null};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
- };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
+ };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}weeklySetup=true;openPanel('round');};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
  $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();rangePlaced=true;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));

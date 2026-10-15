@@ -14,6 +14,8 @@
 // The tracers' and the finishes' looks live with what draws them: tracer styles
 // in TRACERS here (data the renderer reads), ball finishes in ball-finishes.js.
 
+import {ACHIEVEMENTS} from './achievements.js';
+
 export const MAX_UNLOCK_LEVEL = 50;
 
 // [level, kind, id, name]. Level 1 holds the starting look of each kind.
@@ -80,17 +82,22 @@ export const DEFAULT_WORN = {ball: 'classic', tracer: 'classic', title: ''};
 export const KIND_NAMES = {badge: 'badge', tracer: 'tracer', ball: 'ball finish', flourish: 'flourish', title: 'title', skin: 'meter skin', challenge: 'challenge'};
 
 export const rewardsOf = kind => REWARDS.filter(r => r.kind === kind);
-export const reward = (kind, id) => REWARDS.find(r => r.kind === kind && r.id === id) || null;
+// TITLES FROM ACHIEVEMENTS (Phase 7, spec 7.5 and 8.3): earned with the
+// achievement, not by level. Their ids start `ach-` so they never meet a level
+// title's.
+export const ACHIEVEMENT_TITLES = ACHIEVEMENTS.filter(a => a.title).map(a => ({level: null, kind: 'title', id: 'ach-' + a.id, name: a.title, achievement: a.id}));
+export const reward = (kind, id) => REWARDS.find(r => r.kind === kind && r.id === id) || (kind === 'title' && ACHIEVEMENT_TITLES.find(r => r.id === id)) || null;
 // Everything a level brings, in the table's order.
 export const unlocksAt = level => REWARDS.filter(r => r.level === level);
-export const isUnlocked = (kind, id, level) => { const r = reward(kind, id); return !!r && r.level <= level; };
+// `earned` is the golfer's achievements, for the titles they bring.
+export const isUnlocked = (kind, id, level, earned = {}) => { const r = reward(kind, id); return !!r && (r.achievement ? !!earned?.[r.achievement] : r.level <= level); };
 // What a golfer of this level has on: their choice when it is earned, the
 // starting look when it is not -- a mulligan can take back the XP that earned
 // it, and the choice is kept for when it is earned again.
-export function wornItem(worn, kind, level) {
+export function wornItem(worn, kind, level, earned = {}) {
  const id = worn?.[kind];
  if (kind === 'title' && !id) return '';
- return id && isUnlocked(kind, id, level) ? id : DEFAULT_WORN[kind];
+ return id && isUnlocked(kind, id, level, earned) ? id : DEFAULT_WORN[kind];
 }
 
 // TRACER STYLES (spec 7.4). Shape and effect belong to the style; colour too,

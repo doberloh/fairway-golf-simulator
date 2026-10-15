@@ -306,3 +306,20 @@ test('a golfer wears an earned finish, tracer and title, and they are kept', asy
  const odd = normalise({version: PROFILE_VERSION, main: 'x', profiles: [{id: 'x', name: 'Odd', worn: {ball: 'plaid', tracer: 'comet', title: 7}}]});
  assert.deepEqual(odd.profiles[0].worn, {tracer: 'comet'});
 });
+
+// PHASE 7: achievements, their progress, the weekly bests and the sand strokes
+// survive a reload.
+test('achievements, progress, weekly bests and sand strokes are kept', () => {
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Sam');
+ profile.achievements = {ace: 5};
+ profile.progress = {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']};
+ profile.weekly = {'WEEK-2026-42@g35': 78};
+ tallyShot(profile, {lie: 'sand', stroke: 3, hole: {index: 0, par: 4, yards: 380}, strokes: 3}, meta());
+ storeProfiles(store);
+ const back = findProfile(loadProfiles(), profile.id);
+ assert.deepEqual(back.achievements, {ace: 5});
+ assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']});
+ assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
+ assert.deepEqual(back.rounds[0].card[0].sand, [3]);
+});
