@@ -2011,7 +2011,7 @@ A free variable in `main.js` ships. `node --check` parses it happily, the bundle
 
 This has already bitten once: `practice` was computed inside `updateHUD` and then used in `drawLiveScore`, which is a different function. Everything passed; the page threw.
 
-**So when editing `main.js`, check the scope by hand, then run `npm run smoke`.** `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them.
+**So when editing `main.js`, check the scope by hand, then ask to run `npm run smoke`** (it uses the graphics card; AGENTS.md *Nothing runs on the graphics card unless the owner asks*). `updateHUD` and `drawLiveScore` both render parts of the same card and read like one function, which is exactly why a value drifted between them.
 
 `npm run smoke` is the answer to "load the built page and click things", done the same way every time: it opens the built file in a real browser, walks the main paths a player takes, and fails on any uncaught error or `console.error`. Its first full run found a `ReferenceError` in the renderer that had been throwing sixty times a second on every green for six days. **What it does NOT walk is still only checked by hand**: multi-player rounds, scramble selection, match play, the lab, the launch-monitor panel with a live bridge, a round saved and continued, and every tool window during play. Say which of those a change touches, and check it.
 

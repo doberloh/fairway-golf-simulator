@@ -45,7 +45,7 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | `npm run dev` | The game at http://127.0.0.1:5173 |
 | `npm test` | Every regression suite (Node test runner); must pass before committing |
 | `npm run build` | `dist/index.html`, the single-file game, plus the bridge bundle |
-| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change |
+| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
 | `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first |
