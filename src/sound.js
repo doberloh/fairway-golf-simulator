@@ -1308,9 +1308,10 @@ export function xpSound(lab,id,{take='A',knobs={},at}={}){
 // voices: square and thinner pulse waves, a triangle, and a burst of noise for
 // a drum; quick arpeggios, dry, no ring. Four takes, the same four for every
 // score so the set sounds like one game, and the owner picks in the stings
-// report (tools/sound-lab/stings.html). UNTIL THEN the signed-off marimba
-// stings above play: audio.js uses these only for a score in CHIP_FINAL.
-// PLACED by ear.
+// report (tools/sound-lab/stings.html). The owner chose take D, the game
+// jingles, for every score on 14 October 2026 (CHIP_FINAL, below); from then
+// the game plays these and the marimba stings above are kept only for the
+// report's comparison. PLACED by ear.
 const pulseCache=new WeakMap();
 // A pulse wave of a given duty from its Fourier series: 50% is the square,
 // 25% and 12.5% the thinner, buzzier voices old consoles had.
@@ -1359,8 +1360,11 @@ export const CHIP_TAKES={
  C:{name:'Triangle with a pulse echo and a drum: the tunes you know, softer'},
  D:{name:'Game jingles: new, bouncier tunes with bass and drum'},
 };
-// Filled in when the owner signs a take off; empty, the marimba stings play.
-export const CHIP_FINAL={};
+// THE OWNER'S PICK (14 October 2026, "Hole-out sting notes"): take D for every
+// score, with their sliders -- length 70%, pitch 63%, brightness 120%. A score
+// missing from here would play the marimba; none is.
+const CHIP_PICK=['D',{length:.7,pitch:.63,bright:1.2}];
+export const CHIP_FINAL=Object.fromEntries(Object.keys(SCORES).map(id=>[id,CHIP_PICK]));
 export function chipSting(lab,name,{take='A',knobs={},at}={}){
  const t0=(at??lab.ctx.currentTime)+.05,{ctx}=lab;
  const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...knobs};

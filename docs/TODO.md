@@ -27,13 +27,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
-  Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
-  for every score; report `node tools/sound-lab/build.mjs`, then
-  `docs/reports/sounds/stings.html` (local), with the current marimba beside
-  each to compare. `gameAudio.score` already plays a score's chiptune sting
-  once it is in `CHIP_FINAL`; until then the marimba. On sign-off: fold the
-  picks in, retire the marimba takes from play, extend tests/sound.test.mjs.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
   finished, and as the profile picture) and titles.**
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
@@ -907,6 +900,16 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     tests/sound.test.mjs as for the meter sounds.
     **Done:** the owner picked gain E, fill D and level-up C with their sliders
     (`XP_FINAL`), and they play in the game.
+- [x] Closed: **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
+    Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
+    for every score; report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/stings.html` (local), with the current marimba beside
+    each to compare. `gameAudio.score` already plays a score's chiptune sting
+    once it is in `CHIP_FINAL`; until then the marimba. On sign-off: fold the
+    picks in, retire the marimba takes from play, extend tests/sound.test.mjs.
+    **Done:** the owner chose take D, the game jingles, for every score, at
+    length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
+    game, and tests/sound.test.mjs holds every score to it.
 - [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
   and meter golfers: hole, score, fairway and green, on the number, chip-ins,
   long putts, personal bests, rounds, wins and the daily first round, with the

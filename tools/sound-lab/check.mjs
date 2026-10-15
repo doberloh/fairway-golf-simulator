@@ -56,6 +56,8 @@ const rows=await tab.evaluate(async secs=>{
  // The hole-out stings as chiptune (14 October 2026): every take of every score.
  for(const id of Object.keys(L.SCORES))for(const take of Object.keys(L.CHIP_TAKES)){
   const [b]=await render(3,lab=>L.chipSting(lab,id,{take,at:0}));out.push(stats(b,`chip ${id} ${take}`));}
+ // The signed-off sting as the game plays it (CHIP_FINAL, 14 October 2026).
+ for(const [id,[take,knobs]] of Object.entries(L.CHIP_FINAL)){const [b]=await render(3,lab=>L.chipSting(lab,id,{take,knobs,at:0}));out.push(stats(b,`final ${id}`));}
  return out;
 },secs);
 await browser.close();

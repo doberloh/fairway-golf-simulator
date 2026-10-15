@@ -34,7 +34,7 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <body>
 <main>
 <h1>Hole-out stings, chiptune</h1>
-<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1. The game still plays the marimba stings until you pick.</p>
+<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1 signed off: take D, the game jingles, with your sliders, for every score; it plays in the game. The takes and sliders here start from it.</p>
 <div class="note"><p><b>What this is.</b> The short tune when a hole is finished -- one for each score from a hole in one to a triple bogey or worse -- reworked as chiptune, the old game-console sound: square and thin pulse waves, a triangle bass, a noise drum, quick and dry. Four takes. A, B and C play the tunes you already know on chip voices; D is new, bouncier game jingles.</p>
 <p><b>Pick one take for all of them</b> at the top, so the set sounds like one game, and nudge the sliders. If one score wants a different take, change it on its card. <b>Current</b> on each card plays the marimba you have now, to compare. <b>Play them all</b> runs from the worst to the best. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button><button class="act" id="all">Play them all</button><button class="sec" id="allCurrent">All, current marimba</button></div>
@@ -49,12 +49,14 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <script type="module">
 /*SYNTH*/
 
-const KEY='fairway-stings-lab-v1';
+// v2: round 1 signed off (take D, length 0.7, pitch 0.63, brightness 1.2) --
+// the page starts from it rather than from the old saved choices.
+const KEY='fairway-stings-lab-v2';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch{saved={};}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}};
 const $=s=>document.querySelector(s),el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const c of kids)e.append(c);return e;};
 $('#built').textContent=document.querySelector('meta[name=built]')?.content||'';
-saved.all??='A';saved.over??={};saved.knobs??={};saved.notes??={};
+saved.all??=CHIP_FINAL.ace?.[0]||'A';saved.over??={};saved.knobs??={...(CHIP_FINAL.ace?.[1]||{})};saved.notes??={};
 let ctx=null,lab=null;
 function ensure(){if(!ctx){ctx=new AudioContext();lab=createSoundLab(ctx);$('#start').textContent='Sound on';}if(ctx.state==='suspended')ctx.resume();}
 $('#start').onclick=ensure;

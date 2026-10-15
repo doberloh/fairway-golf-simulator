@@ -116,3 +116,14 @@ test('every XP sound is signed off, one take each', async () => {
   assert.deepEqual(XP_SOUNDS[id].takes.A.base, XP_FINAL[id][1], `${id} lost the owner's sliders`);
  }
 });
+
+// THE HOLE-OUT STINGS ARE CHIPTUNE (signed off 14 October 2026): every score
+// plays the owner's take, D, with their sliders.
+test('every hole-out sting is the signed-off chiptune jingle', async () => {
+ const {CHIP_FINAL, SCORES} = await import('../src/sound.js');
+ for (const id of Object.keys(SCORES)) {
+  assert.ok(CHIP_FINAL[id], `${id} would still play the marimba`);
+  assert.equal(CHIP_FINAL[id][0], 'D', `${id} is not the take the owner chose`);
+  assert.deepEqual(CHIP_FINAL[id][1], {length: .7, pitch: .63, bright: 1.2}, `${id} lost the owner's sliders`);
+ }
+});

@@ -7811,12 +7811,19 @@ They play one at a time and never with the hole-out sting (PROJECT_HANDOFF
 *The XP popup reports what award paid*).
 
 The hole-out stings, reworked as chiptune on the owner's ask the same day,
-are four takes awaiting their pick (`CHIP_TAKES`, `chipSting`): the known
-tunes on a square wave, on a 25% pulse over a triangle bass, on a triangle with
-a 12.5% pulse echo and a noise drum, and new game jingles. Pulse waves are
-built from their Fourier series (40 harmonics). Levelled against the current
-marimba stings: a hole in one about -7 dB peak, a birdie about -17, a bogey
-about -21, louder for better scores as the marimba is.
+were four takes (`CHIP_TAKES`, `chipSting`): the known tunes on a square
+wave, on a 25% pulse over a triangle bass, on a triangle with a 12.5% pulse
+echo and a noise drum, and new game jingles. **The owner chose take D, the game
+jingles, for every score** (`CHIP_FINAL`), at length 0.7, pitch 0.63 and
+brightness 1.2: a square lead, a triangle bass and a noise drum, the whole
+pitched down by about eight semitones and shortened to 70%, its low-pass at
+about 3,500 Hz. They replace the marimba stings in play (which stay in the
+code for comparison). Pulse waves are built from their Fourier series (40
+harmonics). As played they peak at -15 dB for a hole in one or albatross and
+about -18 dB for the rest (`tools/sound-lab/check.mjs`, its "final" rows). The
+marimba they replace peaked at about -7 dB for a hole in one, -17 for a birdie
+and -21 for a bogey, so the best scores are now quieter and the worst slightly
+louder; the owner chose them by ear at these levels.
 
 ### The Swing Meter's sounds
 
