@@ -1072,6 +1072,14 @@ const JOURNEYS = [
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
    });
+   // THE TURN FLASH (15 October 2026): the turn has passed to the newcomer, so
+   // their name comes up in the middle of the screen, with their circle.
+   await t.step('the turn passing to the newcomer flashes their name', async () => {
+    await t.until(() => t.page.evaluate(() => { const f = document.getElementById('turnFlash'); return !f.hidden && /Newcomer/.test(f.textContent) && !!f.querySelector('.chip-ball, .chip-dot'); }), 'the turn flash naming the newcomer', 10 * SLOW);
+    await t.page.locator('#turnFlash').screenshot({path: 'bench/shots/smoke/turn-flash.png'}).catch(() => {});
+    // And the top-bar chip carries the circle with the level on it.
+    if (!await t.page.evaluate(() => !!document.querySelector('.score-chip .chip-ball .chip-level'))) throw new Error('no ball circle with the level in the score chip');
+   });
    await t.step("the newcomer's tee shot goes to the newcomer", async () => {
     await t.shot();
     const s = await stored(), n = named(s, 'Newcomer');
@@ -2190,18 +2198,18 @@ const JOURNEYS = [
  // open is known.
  {
   name: 'challenge',
-  what: 'Challenges: the locked ones say their level, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
+  what: 'Challenges: all four open, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
   async prepare(page) {
-   // Level 7: closest (3) and long drive (6) open, up and down (12) and skins (18) not.
+   // A golfer at level 7. Every challenge is open from the start (15 October 2026).
    await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Challenges → the four, two open at level 7', async () => {
+   await t.step('Challenges → the four, all open', async () => {
     await fromMenu(t, 'Challenges');
     await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 4), 'the four challenges', 10 * SLOW);
     const locked = await t.page.evaluate(() => [...document.querySelectorAll('.challenge-pick .look-item.locked')].map(b => b.textContent));
-    if (locked.length !== 2 || !locked.every(x => /Level (12|18)/.test(x))) throw new Error(`locked: ${JSON.stringify(locked)}`);
+    if (locked.length) throw new Error(`locked: ${JSON.stringify(locked)}`);
    });
    await t.step('closest to the pin on the course of the week starts on a par 3, with the bar', async () => {
     await t.page.click('[data-challenge="closest"]');

@@ -921,6 +921,7 @@ function setUpTurn(){
  // The slope grid takes this shot's frame now, from the aim it starts with, and
  // keeps it while the player aims (GolfView.setReadingHeading).
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
+ flashTurn();
 }
 // PLAYS LIKE, under the yards to the hole (plays-like.js): the club in hand at
 // full swing, flown in today's wind, altitude and temperature to the hole's
@@ -3459,7 +3460,9 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // `match` is false for endless: a match ends when the lead exceeds the holes
 // remaining and an endless run has no last hole, so `Round` rejects the
 // combination outright. Offering it and then throwing would be a worse answer.
-const formatFields=({match=true}={})=>`<label class="field">Format<select id="roundMode"><option value="stroke">Stroke play</option><option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
+// `strokeOnly`: the course of the week, whose bests are strokes for the
+// eighteen, so its format is fixed (the owner, 15 October 2026).
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -3665,6 +3668,40 @@ function toPar(index=round.active){
 const levelBadge=prof=>{if(!prof)return '';const lv=levelOf(prof.xp).level,f=FRAMES[highestBadge(lv)];
  return `<i class="level-badge" title="Level ${lv} · ${escape(badgeName(lv))}" style="background:linear-gradient(135deg,${f.from},${f.to});color:${f.ink}">${lv}</i>`;};
 const chipLevel=p=>rangeMode?'':levelBadge(profileOf(p));
+// THE GOLFER'S CIRCLE (the owner, 15 October 2026): their ball in their frame,
+// their level on top of it, and their seat colour as a dot on its edge -- the
+// colour still ties the chip to their tracer and their scorecard row. A golfer
+// with no profile keeps the plain coloured initial.
+function golferMark(i){
+ const p=round.players[i],prof=profileOf(p);
+ if(!prof)return `<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(p?.name?.[0]?.toUpperCase()||'P')}</span>`;
+ const l=looksOf(prof);
+ return `<span class="chip-ball" title="Level ${l.level} · ${escape(badgeName(l.level))}">${framedPicture(l.ball,l.frame,'chip')}<i class="chip-level">${l.level}</i><i class="chip-seat" style="background:${playerColour(i)}"></i></span>`;
+}
+// THE TURN FLASH (the owner, 15 October 2026): who is up, in the middle of the
+// screen, with what their chip in the top bar says -- their circle, name,
+// score against par and which shot. In a group, every time the turn passes;
+// playing alone, at the start of each hole (a flash before every shot of a
+// solo round would only be in the way -- PLACED). Not on the range, behind the
+// menu, or while a team chooses its ball or a golfer their relief.
+let lastTurn='';
+function flashTurn(tries=0){
+ const el=$('turnFlash');if(!el||menuBackdrop||rangeMode)return;
+ // A round's first turn is set up behind the loading screen: wait for it to
+ // go (up to about 15 s) rather than flash where nobody can see.
+ if(appMode!=='play'||$('generating')?.hidden===false){if(tries<50)setTimeout(()=>flashTurn(tries+1),300);return;}
+ if(round.holeComplete||round.scrambleSelection||round.relief)return;
+ // The same golfer playing on (after a drop, a replay, or honours giving
+ // them the next shot too) is not a new turn.
+ const i=round.active,key=round.players.length>1?`${round.uid}:${round.hole}:${i}`:`${round.uid}:${round.hole}`;
+ if(key===lastTurn)return;
+ lastTurn=key;
+ const p=round.player,{rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played);
+ const shot=round.mode==='scramble'?round.stroke:(round.strokes?.[i]||0)+1;
+ el.innerHTML=`<small>${round.players.length>1?'UP NOW':`HOLE ${round.hole+1}`}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong>${`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`}<span>Shot ${scoreText(shot)}</span></div>`;
+ el.hidden=true;void el.offsetWidth;el.hidden=false;
+ clearTimeout(flashTurn.timer);flashTurn.timer=setTimeout(()=>{el.hidden=true;},1900);
+}
 function drawScoreChips(){
  const host=$('scoreChips');if(!host)return;
  const others=round.players.length-1;
@@ -3685,8 +3722,8 @@ function drawScoreChips(){
   const label=rangeMode?(up?`${p.name}, hitting. Open ${p.name}'s shots`:`Hand the mat to ${p.name}`)
    :`${p.name}, ${score==='E'?'even par':score}. Open the scorecard`;
   return `<button class="score-chip${up?' up':''}" data-player="${i}" aria-label="${escape(label)}">`
-   +`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(p.name[0]?.toUpperCase()||'P')}</span>`
-   +`<span class="chip-name">${escape(p.name)}</span>${chipLevel(p)}${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
+   +golferMark(i)
+   +`<span class="chip-name">${escape(p.name)}</span>${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
    +(up&&others>0?`<span class="chip-more">+${others}</span>`:'')+`</button>`;
  }).join('');
 }
@@ -3968,13 +4005,13 @@ function followRename(profile,from){
 function updateMenuChallenges(){
  const el=$('menuChallengesNote');if(!el)return;
  const lv=levelOf(mainProfile(profiles)?.xp||0).level,open=CHALLENGES.filter(c=>c.level<=lv).length;
- el.textContent=open?`${open} of ${CHALLENGES.length} open`:`The first opens at level ${CHALLENGES[0].level}`;
+ el.textContent=open===CHALLENGES.length?'Closest, long drive, up and down, skins':open?`${open} of ${CHALLENGES.length} open`:`The first opens at level ${CHALLENGES[0].level}`;
 }
 function updateMenuWeekly(){
  updateMenuChallenges();
  const el=$('menuWeeklyNote');if(!el)return;
  const w=isoWeek(),s=weeklySettings(),best=mainProfile(profiles)?.weekly?.[weekKey()];
- el.textContent=`Week ${w.week} · ${BIOMES[s.biome]?.name||s.biome}${best?` · your best ${best}`:''}`;
+ el.textContent=`Week ${w.week} · ${BIOMES[s.biome]?.name||s.biome} · stroke play${best?` · your best ${best}`:''}`;
 }
 function updateMenuProfile(){
  updateMenuWeekly();
@@ -4365,9 +4402,9 @@ function renderPanel(name,content){
   // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
   // just the group and the format, and what it is.
   const s=weeklySettings(),w=isoWeek(),me=mainProfile(profiles),best=me?.weekly?.[weekKey()],ever=bestEverWeekly(me);
-  content.innerHTML=`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
+  content.innerHTML=`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
    +(me?`<p class="note">${escape(me.name)}: best this week ${best??'—'} · best on any week's course ${ever??'—'}. The first round you finish each week earns ${WEEKLY_XP.first} XP, and beating your best that week ${WEEKLY_XP.best} more.</p>`:'')
-   +`<h3>Format &amp; tees</h3>${formatFields({match:true})}`
+   +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
    +`<p class="field-error" id="roundError"></p>`
    +`<button class="primary" data-panel-action id="weeklyGo">Play the course of the week <i data-lucide="arrow-right"></i></button>`;
@@ -4376,7 +4413,7 @@ function renderPanel(name,content){
   $('weeklyGo').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    let group;
-   try{group={...readGroup(),weekly:weekKey()};new Round({...group,holes:18});}catch(e){$('roundError').textContent=e.message;return;}
+   try{group={...readGroup(),mode:'stroke',weekly:weekKey()};new Round({...group,holes:18});}catch(e){$('roundError').textContent=e.message;return;}
    weeklySetup=false;closePanel();
    const name=`${suggestCourseName(s)} · Week ${w.week}`;
    await startRoundOn(s,group,name);

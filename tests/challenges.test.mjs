@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import {CHALLENGES, challenge, pickHole, closestFeet, driveYards, upDownSpots, isUpAndDown, skins, recordChallenge, normaliseRecords, feetText} from '../src/challenges.js';
 import {rewardsOf} from '../src/rewards.js';
 
-test('four challenges, opened at the levels the reward table names', () => {
- assert.deepEqual(CHALLENGES.map(c => [c.id, c.level]), [['closest', 3], ['long', 6], ['updown', 12], ['skins', 18]]);
+// ALL OPEN FROM THE START (the owner, 15 October 2026), and the reward table
+// agrees, so no level-up banner announces one.
+test('four challenges, all open at level 1, as the reward table says', () => {
+ assert.deepEqual(CHALLENGES.map(c => [c.id, c.level]), [['closest', 1], ['long', 1], ['updown', 1], ['skins', 1]]);
  const table = Object.fromEntries(rewardsOf('challenge').map(r => [r.id, r.level]));
- assert.equal(table.closest, 3); assert.equal(table['long-drive'], 6); assert.equal(table['up-and-down'], 12); assert.equal(table.skins, 18);
+ assert.equal(table.closest, 1); assert.equal(table['long-drive'], 1); assert.equal(table['up-and-down'], 1); assert.equal(table.skins, 1);
 });
 
 test('each challenge finds its hole, or says there is none', () => {

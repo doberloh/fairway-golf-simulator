@@ -948,6 +948,15 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done (14 October 2026):** it hit `phone-landscape` the same way; both
     phone journeys now take relief before the check, as a golfer about to hit
     sees the screen.
+- [x] **The owner's round of 15 October 2026 on the journey.** The top-bar
+  chip's circle is the golfer's ball in their frame with the level over it (the
+  seat colour a dot on its edge); whose turn it is flashes up in the middle of
+  the screen with the chip's details (a group on every change of golfer, alone
+  at each hole's start); the course of the week is stroke play only, said on
+  the tile and the panel; every challenge is open from the start. The group
+  editor's name box spans its row again (two lines when a monitor is in play).
+  Checked on a static page with the real stylesheet; smoke has a turn-flash
+  check in `profile`, not yet run.
 - [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
   (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
   Eleven badges with frames round the picture (the newest worn unless one is
@@ -959,8 +968,9 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   long drive and up and down as practice games on a hole of the course of the
   week or a saved course (no card, no history, no mulligans), a bar over the
   course, a results card, records on My profile and their XP; a skins game as a
-  stroke round with skins over the card and on the scorecard. Opened by the main
-  profile's level from a Challenges tile. tests/challenges.
+  stroke round with skins over the card and on the scorecard. From a Challenges
+  tile, all four open from the start (at first by the main profile's level:
+  changed by the owner on 15 October 2026). tests/challenges.
 - [x] **Phase 7 (part): course of the week and achievements** (`src/weekly.js`,
   `src/achievements.js`). The week's course from the ISO week and the
   generator version, rotating landscapes, eighteen holes at the defaults, a menu

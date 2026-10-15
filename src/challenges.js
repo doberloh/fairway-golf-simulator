@@ -1,12 +1,12 @@
 // CHALLENGES (Phase 7, 14 October 2026; the agreed spec, 8.1).
 //
-// Four, each opened by a level (the reward table lists them too):
-//   closest  L3   five balls at a par 3; how near the pin each finishes
-//   long     L6   six drives down a fairway; the longest that stays on it
-//   updown   L12  five drops at seeded spots round a green; strokes to hole out
-//   skins    L18  nine holes, two to four golfers, a skin a hole, ties carry
-// They play on existing courses -- the course of the week or a saved one; the
-// level only opens them. The first three are a practice game like the range:
+// Four, all open from the start (the owner, 15 October 2026: "no reason not
+// to" -- the spec had them opened at levels 3, 6, 12 and 18):
+//   closest   five balls at a par 3; how near the pin each finishes
+//   long      six drives down a fairway; the longest that stays on it
+//   updown    five drops at seeded spots round a green; strokes to hole out
+//   skins     nine holes, two to four golfers, a skin a hole, ties carry
+// They play on existing courses -- the course of the week or a saved one. The first three are a practice game like the range:
 // no card, no round history, no handicap, no hole XP, only their own XP and
 // records. Skins is an ordinary stroke round with skins counted over it, so
 // the four round formats stay as they were (spec: "a challenge, not a new
@@ -16,10 +16,10 @@
 // runs the turns. Amounts are the spec's; definitions marked PLACED are not.
 
 export const CHALLENGES = [
- {id: 'closest', name: 'Closest to the pin', level: 3, balls: 5, how: 'Five balls at a par 3. Each one inside 20 feet earns 10 XP; a new best, 50.'},
- {id: 'long', name: 'Long drive', level: 6, balls: 6, how: 'Six drives down a fairway. The longest that stays on the fairway counts; a new best earns 50 XP.'},
- {id: 'updown', name: 'Up and down', level: 12, balls: 5, how: 'Five drops round a green. Hole out from each; every one in two strokes or fewer earns 20 XP.'},
- {id: 'skins', name: 'Skins game', level: 18, how: 'Nine holes for two to four golfers. The lowest score alone wins the hole\'s skin; a tie carries it on. 30 XP a skin.'},
+ {id: 'closest', name: 'Closest to the pin', level: 1, balls: 5, how: 'Five balls at a par 3. Each one inside 20 feet earns 10 XP; a new best, 50.'},
+ {id: 'long', name: 'Long drive', level: 1, balls: 6, how: 'Six drives down a fairway. The longest that stays on the fairway counts; a new best earns 50 XP.'},
+ {id: 'updown', name: 'Up and down', level: 1, balls: 5, how: 'Five drops round a green. Hole out from each; every one in two strokes or fewer earns 20 XP.'},
+ {id: 'skins', name: 'Skins game', level: 1, how: 'Nine holes for two to four golfers. The lowest score alone wins the hole\'s skin; a tie carries it on. 30 XP a skin.'},
 ];
 export const challenge = id => CHALLENGES.find(c => c.id === id) || null;
 export const CHALLENGE_XP = {closeBall: 10, closeFeet: 20, best: 50, upDown: 20, skin: 30};
