@@ -1474,3 +1474,13 @@ html,body{overscroll-behavior:none}
 .achievement.earned b::before{content:"★ ";color:#d9c27a}
 .achievement .level-bar{margin-top:3px}
 h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
+
+/* CHALLENGES (Phase 7): the bar over the course, the picker and the results. */
+.challenge-bar{position:absolute;z-index:33;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid rgba(217,194,122,.55);color:var(--ink);font-size:12px;box-shadow:var(--panel-shadow);backdrop-filter:blur(12px);pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.challenge-bar b{color:#d9c27a;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+.challenge-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.challenge-pick .look-item b{font-size:12px}
+.challenge-results{list-style:none;padding:0;margin:0 0 12px;display:flex;flex-direction:column;gap:6px}
+.challenge-results li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--field);font-size:12.5px}
+.challenge-results li span:last-child{margin-left:auto;color:var(--ink-dim)}
+.challenge-results em{color:#d9c27a;font-style:normal}

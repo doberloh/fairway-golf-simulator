@@ -17,7 +17,7 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly=''}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',challenge=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -32,6 +32,10 @@ export class Round{
   // THE COURSE OF THE WEEK this round is on (weekly.js weekKey), or ''. It rides
   // through saves like the rest, so a week's round resumed still counts for it.
   if(typeof weekly!=='string'||(weekly&&!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(weekly)))throw Error('Invalid course of the week.');this.weekly=weekly;
+  // A SKINS GAME (Phase 7, challenges.js) is a stroke round with skins counted
+  // over its card; this says so, through saves. The other challenges are not
+  // rounds and never get here.
+  if(!['','skins'].includes(challenge)||(challenge==='skins'&&(mode!=='stroke'||players.length<2)))throw Error('A skins game is stroke play for two to four golfers.');this.challenge=challenge;
   // WHICH ROUND THIS IS, for the player's history. It rides through every save,
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.

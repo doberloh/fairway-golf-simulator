@@ -27,6 +27,7 @@ import {validateBag, stockBag} from './clubs.js';
 import {WEARABLE, reward, isUnlocked} from './rewards.js';
 import {normaliseProgress, normaliseEarned} from './achievements.js';
 import {normaliseWeekly} from './weekly.js';
+import {normaliseRecords} from './challenges.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
@@ -166,6 +167,9 @@ export function normaliseProfile(d) {
  // The course of the week's bests, by week and generator (weekly.js).
  const weekly = normaliseWeekly(d.weekly);
  if (Object.keys(weekly).length) extra.weekly = weekly;
+ // The challenges' records (challenges.js).
+ const records = normaliseRecords(d.challenges);
+ if (Object.keys(records).length) extra.challenges = records;
  return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two

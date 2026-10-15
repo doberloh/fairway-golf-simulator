@@ -7840,6 +7840,19 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Challenges (14 October 2026)
+
+No outside source; the XP is the spec's (8.1): 10 a ball inside 20 feet and 50
+a new best for closest to the pin, 50 a new best for the long drive, 20 an
+up-and-down, 30 a skin. PLACED here: the holes (the first par 3; the longest
+par 5, or par 4 without one; the first par 4); a long drive is "in play" only
+on the fairway itself, as in a long-drive grid, not the first cut; up-and-down
+drops are 3 to 18 yards off the green's edge on fringe, cut, fairway or sand,
+spread round the green, seeded by course and hole; a drop is picked up after
+eight strokes and water or out of bounds is two strokes from the drop; the
+up-and-down record is the most of five, fewest strokes breaking a tie; skins
+left carried after the last hole are unclaimed.
+
 ### Course of the week and achievements (14 October 2026)
 
 No outside source. The XP amounts, thresholds and names are the agreed spec's

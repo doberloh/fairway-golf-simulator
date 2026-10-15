@@ -33,13 +33,11 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
   pictures of Lightning, Ribbon, Fire, Starfall, Rainbow in flight, the
   end-of-hole lines, the level-up unlock list, titles on the scorecard; the
   main menu with its new Course of the week tile, on a phone too; a played
-  course-of-the-week round and an achievement popping; and a
+  course-of-the-week round and an achievement popping; each challenge played
+  through, solo and in a group, with its results card and Play it again; and a
   graphics profile for the tracer and glint changes (the owner: save profiles
   for the end of all the phases).
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
-- [ ] **Phase 7, the rest: challenges** (closest to the pin L3, long drive L6,
-  up and down L12, skins L18). Course of the week and achievements are in
-  `# Done`.
 
 ## The UI pass (10 October 2026)
 
@@ -925,6 +923,12 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done:** the owner chose take D, the game jingles, for every score, at
     length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
     game, and tests/sound.test.mjs holds every score to it.
+- [x] **Phase 7: challenges** (`src/challenges.js`). Closest to the pin,
+  long drive and up and down as practice games on a hole of the course of the
+  week or a saved course (no card, no history, no mulligans), a bar over the
+  course, a results card, records on My profile and their XP; a skins game as a
+  stroke round with skins over the card and on the scorecard. Opened by the main
+  profile's level from a Challenges tile. tests/challenges.
 - [x] **Phase 7 (part): course of the week and achievements** (`src/weekly.js`,
   `src/achievements.js`). The week's course from the ISO week and the
   generator version, rotating landscapes, eighteen holes at the defaults, a menu
