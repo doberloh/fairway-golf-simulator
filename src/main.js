@@ -3695,6 +3695,10 @@ function flashTurn(tries=0){
  // them the next shot too) is not a new turn.
  const i=round.active,key=round.players.length>1?`${round.uid}:${round.hole}:${i}`:`${round.uid}:${round.hole}`;
  if(key===lastTurn)return;
+ // After someone holes out, the turn passes while their hole-out banner (or a
+ // level-up) is still up: wait for it, then name who is up -- the two used to
+ // sit on top of each other (smoke, 15 October 2026).
+ if(!$('holeOut')?.hidden||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),300);return;}
  lastTurn=key;
  const p=round.player,{rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played);
  const shot=round.mode==='scramble'?round.stroke:(round.strokes?.[i]||0)+1;

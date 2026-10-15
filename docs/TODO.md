@@ -955,8 +955,10 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   at each hole's start); the course of the week is stroke play only, said on
   the tile and the panel; every challenge is open from the start. The group
   editor's name box spans its row again (two lines when a monitor is in play).
-  Checked on a static page with the real stylesheet; smoke has a turn-flash
-  check in `profile`, not yet run.
+  Smoke (15 October, the owner's go-ahead): the eight affected journeys
+  green, with two fixes found there -- the flash now waits for the hole-out
+  banner it used to land on, and a flourish's particles follow the cup (one
+  run in eight drew nothing when the burst began with the cup off screen).
 - [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
   (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
   Eleven badges with frames round the picture (the newest worn unless one is

@@ -804,8 +804,9 @@ const JOURNEYS = [
     const p = await t.page.evaluate(() => { const s = JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'); return s?.profiles?.find(q => q.id === s.main); });
     if (!(p?.xp >= 10)) throw new Error(`the main golfer has ${p?.xp} XP after a finished hole`);
     if (!(await t.page.evaluate(() => Number(document.getElementById('xpGain')?.dataset.shown) || 0) > 0)) throw new Error('the XP popup never came up');
-    const chip = await t.page.evaluate(() => document.querySelector('.score-chip')?.outerHTML || '(no chip)');
-    if (!/class="level-badge"[^>]*>[0-9]+</.test(chip)) throw new Error(`no level on the score chip: ${chip.slice(0, 300)}`);
+    // The level sits on the golfer's circle (15 October 2026), not beside the name.
+    const level = await t.page.evaluate(() => document.querySelector('.score-chip .chip-level')?.textContent || '');
+    if (!/^[0-9]+$/.test(level)) throw new Error(`no level on the score chip's circle (read "${level}")`);
    });
    await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());
@@ -2334,7 +2335,7 @@ const JOURNEYS = [
       await t.page.waitForTimeout(700);
       const drawn = await t.page.evaluate(() => { const c = document.getElementById('flourish'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) n += d[i] > 0; return n; });
       await t.page.screenshot({path: 'bench/shots/smoke/flourish.png'}).catch(() => {});
-      if (drawn < 50) throw new Error(`the flourish drew ${drawn} pixels`);
+      if (drawn < 50) throw new Error(`the flourish drew ${drawn} pixels (${await t.page.evaluate(() => { const c = document.getElementById('flourish'); return `cup at ${c.dataset.at} on ${c.dataset.size}, ${c.dataset.parts} particles alive`; })})`);
       return;
      }
      if (await t.page.evaluate(() => !document.getElementById('holeOut').hidden)) throw new Error('holed out with no flourish');

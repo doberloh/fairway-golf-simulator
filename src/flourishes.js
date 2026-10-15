@@ -9,8 +9,9 @@
 // plays -- B7) and frame cost to profile; a flat overlay is neither, costs a
 // few hundred canvas draws a frame for three or four seconds, and stops
 // completely when it is done. It is anchored at the cup: `origin()` is asked
-// every frame where the cup is on screen, so the burst follows it as the
-// camera pulls back into the hole summary. Considered and rejected: three.js
+// every frame where the cup is on screen and every particle is drawn
+// relative to it, so the whole burst follows the cup as the camera pulls back
+// into the hole summary. Considered and rejected: three.js
 // Points at the green, for the reasons above.
 //
 // Skipped entirely for a player who asks for reduced motion.
@@ -105,6 +106,7 @@ function lantern() {
 // the canvas's CSS pixels, or null when it is off screen (the burst then stays
 // where it last was). Returns a stop function. One at a time: a new one ends
 // the last.
+const ZERO = {x: 0, y: 0};
 let running = null;
 export function playFlourish(canvas, id, origin) {
  const fx = EFFECTS[id];
@@ -122,15 +124,23 @@ export function playFlourish(canvas, id, origin) {
   start ??= now; const t = (now - start) / 1000, dt = Math.min(.05, last == null ? 0 : (now - last) / 1000); last = now;
   const at = origin(); if (at) o = at;
   fit(); ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-  fx.spawn(ps, o, t, t === 0 || !state.started, state); state.started = true;
+  // EVERY PARTICLE LIVES RELATIVE TO THE CUP: spawned about a zero origin and
+  // drawn shifted to wherever the cup is this frame, so the whole burst moves
+  // with it as the camera pulls back. Spawned at the cup's first screen place
+  // and left there, a burst that began with the cup off screen flew up out of
+  // view and drew nothing (smoke, 15 October 2026).
+  fx.spawn(ps, ZERO, t, t === 0 || !state.started, state); state.started = true;
   for (let i = ps.length - 1; i >= 0; i--) {
    const p = ps[i]; p.age = (p.age || 0) + dt;
    if (p.age > p.life) { ps.splice(i, 1); continue; }
    p.vx *= Math.max(0, 1 - p.drag * dt); p.vy = p.vy * Math.max(0, 1 - p.drag * dt) + p.g * dt;
    p.x += p.vx * dt; p.y += p.vy * dt; if (p.spin) p.rot += p.spin * dt;
-   p.draw(ctx, p, Math.min(1, (p.life - p.age) / .6));
+   ctx.save(); ctx.translate(o.x, o.y); p.draw(ctx, p, Math.min(1, (p.life - p.age) / .6)); ctx.restore();
   }
   ctx.globalAlpha = 1;
+  // What it is doing, for a test to read: where the cup is, and how many
+  // particles are alive.
+  canvas.dataset.at = `${Math.round(o.x)},${Math.round(o.y)}`; canvas.dataset.parts = ps.length; canvas.dataset.size = `${canvas.clientWidth}x${canvas.clientHeight}`;
   if (t < fx.life || ps.length) requestAnimationFrame(frame); else stop();
  };
  requestAnimationFrame(frame);
