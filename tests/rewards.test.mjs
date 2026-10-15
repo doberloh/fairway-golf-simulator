@@ -8,8 +8,13 @@ import {FINISH_IDS, finishColour, finishTexels, ballPixels, finishAverage, finis
 test('the reward table holds the spec\'s counts, all by level 50', () => {
  const count = k => rewardsOf(k).length;
  assert.equal(count('badge'), 11);
- assert.equal(count('tracer'), 15);
- assert.equal(count('ball'), 16);
+ // Phase 5's fifteen and sixteen, plus eight plain colours each from the start
+ // (15 October 2026); frames a list of their own: the eleven badges', nine
+ // plain colours and thirteen animated.
+ assert.equal(count('tracer'), 23);
+ assert.equal(count('ball'), 24);
+ assert.equal(count('frame'), 33);
+ assert.equal(rewardsOf('frame').filter(r => r.level === 1).length, 10);
  assert.equal(count('flourish'), 7);
  assert.equal(count('title'), 10);
  assert.equal(count('skin'), 10);
@@ -22,7 +27,7 @@ test('the reward table holds the spec\'s counts, all by level 50', () => {
   const ids = rewardsOf(k).map(r => r.id);
   assert.equal(new Set(ids).size, ids.length, `${k} ids repeat`);
  }
- for (const k of ['badge', 'tracer', 'ball', 'skin']) assert.ok(rewardsOf(k).some(r => r.level === 1), `${k} has no starting look`);
+ for (const k of ['badge', 'frame', 'tracer', 'ball', 'skin']) assert.ok(rewardsOf(k).some(r => r.level === 1), `${k} has no starting look`);
  assert.deepEqual(unlocksAt(51), []);
  assert.ok(unlocksAt(50).length >= 6, 'level 50 brings the rainbow set');
 });
@@ -45,10 +50,12 @@ test('a golfer wears what they have earned, and the starting look otherwise', ()
  assert.deepEqual(WEARABLE, ['ball', 'tracer', 'title', 'frame', 'skin']);
 });
 
-test('the summary keeps a tracer\'s shape and drops its colour', () => {
- assert.deepEqual(summaryStyle('dashed'), {dash: TRACERS.dashed.dash});
- assert.deepEqual(summaryStyle('lightning'), {jag: TRACERS.lightning.jag});
- assert.deepEqual(summaryStyle('sunset'), {});
+test('the summary keeps a tracer\'s colours and shape', () => {
+ // The summary keeps the golfer's colours too (15 October 2026).
+ assert.deepEqual(summaryStyle('dashed'), {colours: TRACERS.dashed.colours, dash: TRACERS.dashed.dash});
+ assert.deepEqual(summaryStyle('lightning'), {colours: TRACERS.lightning.colours, jag: TRACERS.lightning.jag});
+ assert.deepEqual(summaryStyle('sunset'), {colours: TRACERS.sunset.colours});
+ for (const [id, st] of Object.entries(TRACERS)) assert.ok(Array.isArray(st.colours) && st.colours.length, id + ' has no colours of its own');
  assert.equal(tracerStyle('nonsense'), TRACERS.classic);
  assert.deepEqual(stopColour(['#000000', '#ffffff'], .5).map(v => +v.toFixed(3)), [.5, .5, .5]);
  assert.deepEqual(stopColour(['#ff0000', '#0000ff'], 2), [0, 0, 1]);
@@ -88,7 +95,8 @@ test('the finishes look different from each other', () => {
 import {FRAMES, highestBadge, badgeName, METER_SKINS, flourishFor} from '../src/rewards.js';
 
 test('every badge has a frame, the newest is worn unless one is chosen, and Master counts on', () => {
- assert.deepEqual(Object.keys(FRAMES).sort(), rewardsOf('badge').map(r => r.id).sort());
+ assert.deepEqual(Object.keys(FRAMES).sort(), rewardsOf('frame').map(r => r.id).sort());
+ for (const r of rewardsOf('badge')) assert.ok(rewardsOf('frame').some(q => q.id === r.id && q.level === r.level), r.id + ' brings no frame');
  assert.equal(highestBadge(1), 'rookie');
  assert.equal(highestBadge(14), 'club-regular');
  assert.equal(highestBadge(60), 'fairway-master');

@@ -1559,3 +1559,45 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 @keyframes turn-flash{0%{opacity:0;transform:translate(-50%,-50%) scale(.92)}12%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.turn-flash{animation:turn-fade 1.9s linear both}}
 @keyframes turn-fade{0%,100%{opacity:0}10%,80%{opacity:1}}
+
+/* LOCKED, NOT GREY (the owner, 15 October 2026): what is not earned yet keeps
+   its colours, with a padlock in the corner and the level under it. */
+.look-item.locked{opacity:1;position:relative;cursor:default}
+.look-item.locked .ball-avatar{filter:none}
+.look-item.locked small{color:#e6cf8a}
+.look-item{position:relative}
+.look-lock{position:absolute;top:5px;right:5px;width:15px;height:15px;fill:#e6cf8a;stroke:#e6cf8a;stroke-width:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+/* ANIMATED FRAMES (15 October 2026): the ring turns, and flames flicker,
+   sparkle twinkles, water and leaves drift. Three colours each (rewards.js
+   FRAMES). Still for reduced motion. */
+.ball-avatar.framed[data-anim]{animation:frame-turn var(--spin,6s) linear infinite}
+.ball-avatar.framed[data-anim=spin]{background:conic-gradient(from var(--frame-turn),var(--f1),var(--f2),var(--f3),var(--f1));--spin:5s}
+.ball-avatar.framed[data-anim=flames]{background:repeating-conic-gradient(from var(--frame-turn),var(--f1) 0deg 9deg,var(--f2) 9deg 18deg,var(--f3) 18deg 22deg,var(--f2) 22deg 30deg);animation:frame-turn 2.2s linear infinite,frame-flicker .32s steps(2) infinite alternate;box-shadow:0 0 6px var(--f2)}
+.ball-avatar.framed[data-anim=sparkle]{background:repeating-conic-gradient(from var(--frame-turn),var(--f1) 0deg 13deg,var(--f3) 13deg 15deg,var(--f2) 15deg 28deg,var(--f3) 28deg 29deg,var(--f1) 29deg 40deg);animation:frame-turn 7s linear infinite,frame-twinkle 1.4s ease-in-out infinite}
+.ball-avatar.framed[data-anim=water]{background:repeating-conic-gradient(from var(--frame-turn),var(--f1) 0deg 16deg,var(--f2) 16deg 30deg,var(--f3) 30deg 34deg,var(--f2) 34deg 45deg);--spin:9s}
+.ball-avatar.framed[data-anim=leaves]{background:repeating-conic-gradient(from var(--frame-turn),var(--f1) 0deg 10deg,var(--f2) 10deg 22deg,var(--f3) 22deg 27deg,var(--f2) 27deg 36deg);--spin:14s}
+@keyframes frame-flicker{from{filter:brightness(1)}to{filter:brightness(1.35) saturate(1.2)}}
+@keyframes frame-twinkle{0%,100%{filter:brightness(1)}50%{filter:brightness(1.45)}}
+@media (prefers-reduced-motion:reduce){.ball-avatar.framed[data-anim]{animation:none}}
+/* TRACER PREVIEWS: a small flight arc per tracer, moving as it does. */
+.tracer-preview{display:block;width:100%;height:30px;margin:4px 0 2px;overflow:visible}
+.tp-dash{animation:tp-dash 1s linear infinite}
+.tp-flicker{animation:tp-flicker .5s steps(3) infinite alternate}
+.tp-twinkle{animation:tp-twinkle 1.2s ease-in-out infinite}
+.tp-twinkle.tp-fall{animation:tp-fall 1.6s linear infinite}
+@keyframes tp-dash{to{stroke-dashoffset:-20}}
+@keyframes tp-flicker{from{opacity:1}to{opacity:.55}}
+@keyframes tp-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
+@keyframes tp-fall{from{transform:translateY(-2px);opacity:1}to{transform:translateY(9px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tp-dash,.tp-flicker,.tp-twinkle{animation:none}}
+/* THE FLOURISHES TAB: what each is and when it plays; tap one to watch it on
+   the strip above. */
+.flourish-preview{display:block;width:100%;height:190px;margin-bottom:8px;border-radius:9px;background:radial-gradient(ellipse at 50% 100%,rgba(86,140,101,.35),rgba(8,16,11,.5))}
+.look-grid.flourishes{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.look-grid.flourishes .look-item{align-items:flex-start;text-align:left;gap:3px}
+.look-grid.flourishes .look-item b{font-size:12px}
+.look-grid.flourishes .look-item span{color:var(--ink-dim);font-size:11px}
+.look-grid.flourishes .look-item.on{border-color:var(--glass-line);box-shadow:none;background:var(--field)}
+.look-grid.flourishes .look-item.on small{color:#9fe0a8}
+.flourish-preview[hidden]{display:block!important}
+.look-item .ball-avatar.framed{padding:5px}

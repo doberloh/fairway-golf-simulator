@@ -948,6 +948,14 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done (14 October 2026):** it hit `phone-landscape` the same way; both
     phone journeys now take relief before the check, as a golfer about to hit
     sees the screen.
+- [x] **More looks, and the golfer's own tracer everywhere** (the owner, 15
+  October 2026). Eight solid balls, eight plain tracers and nine plain frames
+  from the start; frames a reward of their own, with thirteen animated ones
+  (flames, sparkle, water, leaves, ice, aurora, galaxy) at higher levels;
+  locked items in full colour with a padlock; tracers previewed as a moving
+  flight and frames animating in the picker; a Flourishes tab saying what each
+  is, when it plays and its level, with a preview. The seat colour no longer
+  overrides anyone's tracer -- live or in the end-of-hole summary.
 - [x] **The owner's round of 15 October 2026 on the journey.** The top-bar
   chip's circle is the golfer's ball in their frame with the level over it (the
   seat colour a dot on its edge); whose turn it is flashes up in the middle of

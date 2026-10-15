@@ -1128,6 +1128,8 @@ const JOURNEYS = [
     const view = await t.page.evaluate(() => ({on: document.querySelector('.look-item.on')?.textContent, locked: document.querySelectorAll('.look-item.locked').length, open: [...document.querySelectorAll('.look-item:not(.on):not(.locked)')].map(b => b.dataset.wear)}));
     if (!/Classic/.test(view.on || '')) throw new Error(`a new golfer wears "${view.on}", not Classic`);
     if (view.locked < 10) throw new Error(`only ${view.locked} tracers are locked for a new golfer`);
+    // Locked, not grey (15 October 2026): a padlock, and the colours at full strength.
+    if (!await t.page.evaluate(() => { const l = document.querySelector('.look-item.locked'); return !!l?.querySelector('.look-lock') && getComputedStyle(l).opacity === '1'; })) throw new Error('a locked tracer is greyed out or has no padlock');
     if (view.open.length) {
      await t.page.click(`[data-wear="${view.open[0]}"]`);
      await t.until(async () => main(await stored())?.worn?.tracer === view.open[0].split(':')[1], 'the tracer to be saved', 5 * SLOW);
@@ -2305,6 +2307,18 @@ const JOURNEYS = [
      await t.until(async () => (await stored()).worn?.[key] === val, `the ${key} to be saved`, 10 * SLOW);
     });
    }
+   // 15 OCTOBER 2026: frames that move, and flourishes you can watch.
+   await t.step('an animated frame moves, and the Flourishes tab plays one', async () => {
+    await t.page.click('[data-look-tab="frame"]');
+    const anim = await t.page.evaluate(() => getComputedStyle(document.querySelector('.look-item img.framed[data-anim="flames"]')).animationName);
+    if (!/frame-turn/.test(anim)) throw new Error(`the Flames frame does not move (animation "${anim}")`);
+    await t.page.click('[data-look-tab="flourish"]');
+    await t.page.click('[data-flourish-preview="fireworks-eagle"]');
+    await t.page.waitForTimeout(700);
+    const drawn = await t.page.evaluate(() => { const c = document.getElementById('flourishPreview'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) n += d[i] > 0; return n; });
+    await t.page.locator('#drawerContent').screenshot({path: 'bench/shots/smoke/look-flourish.png'}).catch(() => {});
+    if (drawn < 30) throw new Error(`the flourish preview drew ${drawn} pixels`);
+   });
    await t.step('the title list holds the earned achievement title', async () => {
     await t.page.click('[data-look-tab="title"]');
     await t.page.selectOption('#wearTitle', 'ach-ace');

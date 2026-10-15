@@ -7840,6 +7840,16 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Plain colours and animated frames (15 October 2026)
+
+No outside source; the owner's ask. PLACED: the solid ball colours (red
+#d93a3a, orange #f08a2b, yellow #f5d33a, green #3fae55, blue #3a7fd9, purple
+#8457d9, pink #ec6fb2, black #26282b), the plain tracers and frames, the colours
+the old seat-coloured tracers now carry (Classic amber #ffe9a2, Comet gold,
+Dashed white, Ribbon pale blue, Starfall lilac), and the thirteen animated
+frames' levels (7 to 47) and movements: flames turn in 2.2 s and flicker every
+0.32 s, sparkle 7 s with a 1.4 s twinkle, water 9 s, leaves 14 s, aurora 5 s.
+
 ### Profile after Phases 5-7 (14 October 2026, late)
 
 Run by the owner's leave, on this machine's RTX 4090 with the card idle (2-13%

@@ -23,6 +23,12 @@ export const MAX_UNLOCK_LEVEL = 50;
 const ROWS = [
  [1, 'badge', 'rookie', 'Rookie'], [1, 'tracer', 'classic', 'Classic'], [1, 'ball', 'classic', 'Classic white'],
  [1, 'skin', 'classic', 'Classic'], [1, 'challenge', 'course-of-the-week', 'Course of the week'], [1, 'challenge', 'achievements', 'Achievements'],
+ // THE OWNER'S ROUND OF 15 OCTOBER 2026: plain colours from the start -- eight
+ // balls, eight tracers, nine frames -- and frames a list of their own, with
+ // animated ones higher up (below the table).
+ ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black'].map(c => [1, 'ball', 'solid-' + c, c[0].toUpperCase() + c.slice(1)]),
+ ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'white'].map(c => [1, 'tracer', c, c[0].toUpperCase() + c.slice(1)]),
+ ...['white', 'black', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'].map(c => [1, 'frame', 'plain-' + c, c[0].toUpperCase() + c.slice(1)]),
  // Every challenge open from the start (the owner, 15 October 2026); the spec
  // had them at levels 3, 6, 12 and 18.
  [1, 'challenge', 'closest', 'Closest to the pin'], [1, 'challenge', 'long-drive', 'Long drive'], [1, 'challenge', 'up-and-down', 'Up and down'], [1, 'challenge', 'skins', 'Skins game'],
@@ -77,16 +83,26 @@ const ROWS = [
  [50, 'badge', 'fairway-master', 'Fairway Master'], [50, 'tracer', 'rainbow', 'Rainbow'], [50, 'ball', 'rainbow', 'Rainbow'],
  [50, 'flourish', 'gold-confetti', 'Gold confetti on every hole-out'], [50, 'title', 'fairway-master', 'Fairway Master'], [50, 'skin', 'champion', 'Champion'],
 ];
-export const REWARDS = ROWS.map(([level, kind, id, name]) => ({level, kind, id, name}));
-export const KINDS = ['badge', 'tracer', 'ball', 'flourish', 'title', 'skin', 'challenge'];
+// ANIMATED FRAMES (the owner, 15 October 2026: "different color flames and
+// sparkles, water, leaves"), spread over the higher levels. PLACED.
+const ANIMATED_FRAMES = [
+ [7, 'sparkle-silver', 'Silver sparkle'], [9, 'water', 'Water'], [13, 'leaves', 'Spring leaves'],
+ [16, 'flames', 'Flames'], [19, 'sparkle-gold', 'Gold sparkle'], [21, 'leaves-autumn', 'Autumn leaves'],
+ [24, 'flames-blue', 'Blue flames'], [26, 'ice', 'Ice'], [29, 'flames-green', 'Green flames'],
+ [32, 'deep-water', 'Deep water'], [38, 'flames-purple', 'Purple flames'], [42, 'aurora', 'Aurora'], [47, 'galaxy', 'Galaxy'],
+];
+// Each badge still brings its frame, as a frame of the same id at its level.
+const BADGE_FRAMES = ROWS.filter(r => r[1] === 'badge').map(([level, , id, name]) => [level, 'frame', id, name]);
+export const REWARDS = [...ROWS, ...BADGE_FRAMES, ...ANIMATED_FRAMES.map(([level, id, name]) => [level, 'frame', id, name])]
+ .sort((a, b) => a[0] - b[0]).map(([level, kind, id, name]) => ({level, kind, id, name}));
+export const KINDS = ['badge', 'frame', 'tracer', 'ball', 'flourish', 'title', 'skin', 'challenge'];
 // What a golfer can choose and wear in this version. Titles may be none.
 export const WEARABLE = ['ball', 'tracer', 'title', 'frame', 'skin'];
-// A frame is a badge's: the reward table lists badges, and wearing one means
-// its frame round the picture. An empty frame is "my newest badge's".
-export const REWARD_KIND = {frame: 'badge'};
+// A frame is its own reward (15 October 2026; it was a badge's until then).
+// An empty frame is "my newest badge's".
 export const DEFAULT_WORN = {ball: 'classic', tracer: 'classic', title: '', frame: '', skin: 'classic'};
 // How each kind is named on its own, in the level-up banner's list.
-export const KIND_NAMES = {badge: 'badge', tracer: 'tracer', ball: 'ball finish', flourish: 'flourish', title: 'title', skin: 'meter skin', challenge: 'challenge'};
+export const KIND_NAMES = {badge: 'badge', frame: 'frame', tracer: 'tracer', ball: 'ball finish', flourish: 'flourish', title: 'title', skin: 'meter skin', challenge: 'challenge'};
 
 export const rewardsOf = kind => REWARDS.filter(r => r.kind === kind);
 // TITLES FROM ACHIEVEMENTS (Phase 7, spec 7.5 and 8.3): earned with the
@@ -104,7 +120,7 @@ export const isUnlocked = (kind, id, level, earned = {}) => { const r = reward(k
 export function wornItem(worn, kind, level, earned = {}) {
  const id = worn?.[kind];
  if (kind === 'title' && !id) return '';
- if (kind === 'frame') return id && isUnlocked('badge', id, level) ? id : highestBadge(level);
+ if (kind === 'frame') return id && isUnlocked('frame', id, level) ? id : highestBadge(level);
  return id && isUnlocked(kind, id, level, earned) ? id : DEFAULT_WORN[kind];
 }
 
@@ -113,8 +129,10 @@ export function wornItem(worn, kind, level, earned = {}) {
 // back to its golfer's seat colour and keeps its shape (`summaryStyle`), so the
 // summary still shows whose line is whose.
 //
-// colours: 'seat' (the golfer's tracer colour), or stops along the line from
-//   the tee (0) to the ball (1); `shift` moves the stops along with time.
+// colours: stops along the line from the tee (0) to the ball (1); `shift`
+//   moves the stops along with time. The golfer's own choice everywhere -- the
+//   seat colour no longer stands in for it, live or in the summary (the
+//   owner, 15 October 2026).
 // width: the live line's width in pixels (the summary's is 3, as before).
 // opacity, dash [on, off] in metres, head (a wider line over the last part:
 //   `{share, width}`), core (a thin bright line inside a wide one: `{width,
@@ -122,28 +140,31 @@ export function wornItem(worn, kind, level, earned = {}) {
 //   metres a second), jag (a lightning zigzag, metres), flicker (0-1).
 // All PLACED by eye, 14 October 2026.
 export const TRACERS = {
- classic: {colours: 'seat', width: 4.5},
+ classic: {colours: ['#ffe9a2'], width: 4.5},
+ red: {colours: ['#ff5a5a'], width: 4.5}, orange: {colours: ['#ff9f43'], width: 4.5}, yellow: {colours: ['#ffe14d'], width: 4.5},
+ green: {colours: ['#5ee07a'], width: 4.5}, blue: {colours: ['#4dabff'], width: 4.5}, purple: {colours: ['#a77bff'], width: 4.5},
+ pink: {colours: ['#ff7ac8'], width: 4.5}, white: {colours: ['#ffffff'], width: 4.5},
  sky: {colours: ['#9fdcff', '#5fb4ff'], width: 4.5},
- comet: {colours: 'seat', width: 3.5, head: {share: .14, width: 10}},
+ comet: {colours: ['#ffd36b'], width: 3.5, head: {share: .14, width: 10}},
  sunset: {colours: ['#ffd36b', '#ff8a4c', '#e2557c', '#9b5bd6'], width: 4.5},
- dashed: {colours: 'seat', width: 4.5, dash: [2.4, 1.6]},
- sparkle: {colours: 'seat', width: 3.5, sparkle: {count: 36, colour: '#fff6c8', fall: 0}},
- ribbon: {colours: 'seat', width: 11, opacity: .42, core: {width: 2.5, colour: '#ffffff'}},
+ dashed: {colours: ['#ffffff'], width: 4.5, dash: [2.4, 1.6]},
+ sparkle: {colours: ['#ffe9a2'], width: 3.5, sparkle: {count: 36, colour: '#fff6c8', fall: 0}},
+ ribbon: {colours: ['#9fe0ff'], width: 11, opacity: .42, core: {width: 2.5, colour: '#ffffff'}},
  ice: {colours: ['#ffffff', '#c9f3ff', '#7fd8f5'], width: 5, core: {width: 2, colour: '#ffffff'}},
  fire: {colours: ['#fff1a8', '#ffb23d', '#ff6a1f', '#c8261a'], width: 5.5, flicker: .25, head: {share: .1, width: 9}},
  lightning: {colours: ['#e9f4ff', '#a9ccff'], width: 3, jag: .9, flicker: .45, core: {width: 1.5, colour: '#ffffff'}},
  aurora: {colours: ['#5cf2b0', '#3fd6d6', '#7d7cf2', '#c46ef0'], width: 6, opacity: .8, shift: .12},
- starfall: {colours: 'seat', width: 3.5, sparkle: {count: 48, colour: '#fff9e0', fall: 1.6}},
+ starfall: {colours: ['#e6e0ff'], width: 3.5, sparkle: {count: 48, colour: '#fff9e0', fall: 1.6}},
  ghost: {colours: ['#e8fff4', '#bfe8d6'], width: 6, opacity: .38, flicker: .2},
- 'comet-sparkle': {colours: 'seat', width: 3.5, head: {share: .14, width: 10}, sparkle: {count: 40, colour: '#fff6c8', fall: .6}},
+ 'comet-sparkle': {colours: ['#ffd36b'], width: 3.5, head: {share: .14, width: 10}, sparkle: {count: 40, colour: '#fff6c8', fall: .6}},
  rainbow: {colours: ['#ff4d4d', '#ffa64d', '#ffe74d', '#5ee05e', '#4dc3ff', '#7a6cff', '#d36cff'], width: 5.5, shift: .25},
 };
 export const tracerStyle = id => TRACERS[id] || TRACERS.classic;
-// The summary keeps the shape (dash, the lightning's zigzag) and drops the
-// colour and everything that moves.
+// The summary keeps the colours and the shape (dash, the lightning's zigzag)
+// and drops everything that moves.
 export function summaryStyle(id) {
  const s = tracerStyle(id);
- return {...(s.dash ? {dash: s.dash} : {}), ...(s.jag ? {jag: s.jag} : {})};
+ return {colours: s.colours, ...(s.dash ? {dash: s.dash} : {}), ...(s.jag ? {jag: s.jag} : {})};
 }
 // A colour on a line of stops, t from 0 (the tee) to 1 (the ball); `shift`
 // slides the stops along with time and wraps.
@@ -174,6 +195,25 @@ export const FRAMES = {
  'hall-of-fame': {from: '#086b45', to: '#46e6a8', ink: '#05291b'},
  legend: {from: '#121218', to: '#64647c', ink: '#ffffff'},
  'fairway-master': {from: '#ff4d4d', to: '#4dc3ff', ink: '#1b1b1b', rainbow: true},
+ // Plain colours (15 October 2026): one colour all round.
+ 'plain-white': {solid: '#f4f6f2'}, 'plain-black': {solid: '#1a1c1e'}, 'plain-red': {solid: '#e5484d'},
+ 'plain-orange': {solid: '#f08c2e'}, 'plain-yellow': {solid: '#f5d13b'}, 'plain-green': {solid: '#3fbf63'},
+ 'plain-blue': {solid: '#3b8fe8'}, 'plain-purple': {solid: '#8e63e8'}, 'plain-pink': {solid: '#ec6fb7'},
+ // Animated (15 October 2026): `anim` names the movement (style.css), three
+ // colours feed it.
+ 'sparkle-silver': {anim: 'sparkle', colours: ['#9aa4ad', '#e6ebef', '#ffffff']},
+ water: {anim: 'water', colours: ['#1e6fb5', '#5fc3ff', '#d8f6ff']},
+ leaves: {anim: 'leaves', colours: ['#2f7a2a', '#7cc94a', '#d8f08a']},
+ flames: {anim: 'flames', colours: ['#c8261a', '#ff7a1f', '#ffe066']},
+ 'sparkle-gold': {anim: 'sparkle', colours: ['#b8901e', '#ffd86b', '#fff6c8']},
+ 'leaves-autumn': {anim: 'leaves', colours: ['#9c3b14', '#e0782a', '#f2c14e']},
+ 'flames-blue': {anim: 'flames', colours: ['#1a3fd1', '#3fa0ff', '#d6f4ff']},
+ ice: {anim: 'sparkle', colours: ['#7fc8e8', '#cfefff', '#ffffff']},
+ 'flames-green': {anim: 'flames', colours: ['#137a2b', '#3fe06a', '#e2ffb0']},
+ 'deep-water': {anim: 'water', colours: ['#0b2a5c', '#1f5fb0', '#63c2ff']},
+ 'flames-purple': {anim: 'flames', colours: ['#4b138e', '#a14dff', '#f0c6ff']},
+ aurora: {anim: 'spin', colours: ['#3ff2a8', '#3fb7d6', '#a46ef0']},
+ galaxy: {anim: 'sparkle', colours: ['#1a0f3d', '#4b2a8e', '#c6b8ff']},
 };
 // The highest badge a level has earned.
 export function highestBadge(level) {

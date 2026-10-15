@@ -53,8 +53,12 @@ function dimple(u, v) {
  return 1 - .07 * (1 - smooth(.25, .5, d));
 }
 
+// SOLID COLOURS from the start (the owner, 15 October 2026), dimpled like
+// every finish. PLACED.
+const SOLID = {red: '#d93a3a', orange: '#f08a2b', yellow: '#f5d33a', green: '#3fae55', blue: '#3a7fd9', purple: '#8457d9', pink: '#ec6fb2', black: '#26282b'};
 const FINISH_RULES = {
  classic: () => WHITE,
+ ...Object.fromEntries(Object.entries(SOLID).map(([k, v]) => ['solid-' + k, () => C(v)])),
  'red-stripe': ({v}) => { const d = Math.abs(v - .5); return d < .05 ? C('#d62f2f') : d < .065 ? WHITE : d < .08 ? C('#1f3d8f') : WHITE; },
  smiley: ({p}) => {
   // The face looks out along +z: two eyes, a smile, on yellow.

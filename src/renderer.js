@@ -2102,6 +2102,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // setTracer before the shot: its colours along the line, a head, a core, a
  // dash, a zigzag, a flicker and glints. Drawn every frame of a flight anyway,
  // so a moving colour or a flicker costs nothing extra.
+ // `seat` is kept for a style that asks for it; none does since 15 October 2026.
  setTracer(id,seat){this.tracer={id,style:tracerStyle(id),seat:linear(hexRgb(seat||'#ffe9a2'))};}
  setTrail(points){
   const kept=points.length>1?trimToBall(points):[];
@@ -2182,13 +2183,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    }
    // Lines are POOLED and reused across holes and players, so the colour is set
    // every time rather than only when one is created -- otherwise trail 2 keeps
-   // whoever hit trail 2 on the previous hole. In the golfer's seat colour,
-   // with their tracer style's shape (spec 7.4): a dash stays a dash and a
-   // zigzag a zigzag, held still.
-   const shape=summaryStyle(trail?.style),c=linear(hexRgb(trail?.colour||SHOT_LINE_COLOR));
+   // whoever hit trail 2 on the previous hole. In the golfer's own tracer --
+   // its colours and its shape, held still: a dash stays a dash and a zigzag a
+   // zigzag. (It was the seat colour, per spec 7.4, until the owner asked for
+   // the golfer's choice everywhere, 15 October 2026.)
+   const shape=summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
    let world=kept.map(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];});
    if(shape.jag)world=jagged(world,shape.jag,i+1);
-   const cols=new Float32Array(world.length*3);for(let k=0;k<world.length;k++)cols.set(c,k*3);
+   const cols=new Float32Array(world.length*3);for(let k=0;k<world.length;k++)cols.set(linear(stopColour(stops,k/Math.max(1,world.length-1))),k*3);
    writeStyled(line,world,cols,shape.dash);
   });
  }

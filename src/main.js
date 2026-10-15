@@ -443,7 +443,12 @@ function ballPicture(id,size=96){
 }
 // THE FRAME (Phase 6): a ring of the badge's metal round the picture -- the
 // image's own padding over a background of it. Fairway Master's moves.
-const frameAttr=id=>{const f=FRAMES[id]||FRAMES.rookie;return ` style="--frame:conic-gradient(from 210deg,${f.from},${f.to},${f.from},${f.to},${f.from})"${f.rainbow?' data-rainbow':''}`;};
+// A plain colour is one colour all round; an animated frame hands its three
+// colours to the movement style.css names by `data-anim` (15 October 2026).
+const frameAttr=id=>{const f=FRAMES[id]||FRAMES.rookie;
+ if(f.solid)return ` style="--frame:${f.solid}"`;
+ if(f.anim)return ` style="--f1:${f.colours[0]};--f2:${f.colours[1]};--f3:${f.colours[2]}" data-anim="${f.anim}"`;
+ return ` style="--frame:conic-gradient(from 210deg,${f.from},${f.to},${f.from},${f.to},${f.from})"${f.rainbow?' data-rainbow':''}`;};
 const framedPicture=(ball,frame,cls='')=>`<img class="ball-avatar framed${cls?' '+cls:''}" src="${ballPicture(ball)}" alt="" aria-hidden="true"${frameAttr(frame)}>`;
 const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ball,l.frame,cls);};
 // THE CHALLENGES IN PLAY (Phase 7; challenges.js for the rules).
@@ -675,7 +680,7 @@ const levelUps=[];let levelUpTimer=null;
 // It names what the new level brought (rewards.js unlocksAt) -- every level
 // crossed, when one gain crosses several -- with the golfer's ball and title.
 function queueLevelUp(prof,level,from=level-1){
- const got=[];for(let l=from+1;l<=level;l++)got.push(...unlocksAt(l));
+ const got=[];for(let l=from+1;l<=level;l++)got.push(...unlocksAt(l).filter(r=>!(r.kind==='frame'&&reward('badge',r.id))));
  const look=looksOf(prof);
  levelUps.push({name:prof.name,level,ball:look.ball,frame:look.frame,title:titleName(look.title),got});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
 function showLevelUp(){
@@ -1022,10 +1027,10 @@ function updateHUD(){
  $('holeDistance').innerHTML=practice
   ? `${Math.round(rangeGreenYards(settings))}`
   : `${Math.round(course.tees[round.tee]?.yards??course.routeLength/YARD)}`;
- // THE GOLFER'S OWN COLOUR, on the two chips that say who is up. It is the same
- // colour their tracer is drawn in and the same dot beside their scorecard row,
- // which is the whole point: the line over the fairway and the name on the card
- // have to be recognisably the same person.
+ // THE GOLFER'S OWN COLOUR, on the two chips that say who is up: the same dot
+ // as beside their scorecard row, so the chip and the name on the card are
+ // recognisably the same person. (It was their tracer's colour too until 15
+ // October 2026, when tracers became each golfer's own choice everywhere.)
  drawChallengeBar();
  // Their ball finish on the ball and their tracer style on the next shot.
  {const look=seatLooks(round.active);view.setBallFinish?.(look.ball);view.setTracer?.(look.tracer,playerTracer(round.active));applyMeterSkin(look.skin);}
@@ -3670,7 +3675,7 @@ const levelBadge=prof=>{if(!prof)return '';const lv=levelOf(prof.xp).level,f=FRA
 const chipLevel=p=>rangeMode?'':levelBadge(profileOf(p));
 // THE GOLFER'S CIRCLE (the owner, 15 October 2026): their ball in their frame,
 // their level on top of it, and their seat colour as a dot on its edge -- the
-// colour still ties the chip to their tracer and their scorecard row. A golfer
+// colour still ties the chip to their scorecard row. A golfer
 // with no profile keeps the plain coloured initial.
 function golferMark(i){
  const p=round.players[i],prof=profileOf(p);
@@ -3889,21 +3894,48 @@ function profileCard(r){
 // table, the ones earned to put on and the rest shown with the level that
 // brings them. One kind at a time, on tabs.
 let lookTab='ball';
-const TRACER_SWATCH=id=>{const st=TRACERS[id],c=Array.isArray(st.colours)?st.colours:['#f3e3b0'];
- return st.dash?`repeating-linear-gradient(90deg,${c[0]} 0 10px,transparent 10px 16px)`:c.length>1?`linear-gradient(90deg,${c.join(',')})`:c[0];};
+// A TRACER, SHOWN AS IT FLIES (the owner, 15 October 2026): a small flight
+// arc in its colours, with its head, core, dash, zigzag and glints, moving the
+// way the real one does -- colours running, dashes marching, flicker, glints
+// twinkling or falling. CSS for the movement, one SMIL transform for the
+// running colours (left out when the player asks for reduced motion).
+const FLIGHT='M3 27 Q48 -10 97 17',JAGGED='M3 27 L13 17 L19 20 L29 9 L37 12 L47 4 L57 8 L66 5 L76 11 L86 10 L97 17';
+const onArc=t=>({x:(1-t)*(1-t)*3+2*(1-t)*t*48+t*t*97,y:(1-t)*(1-t)*27+2*(1-t)*t*-10+t*t*17});
+function tracerPreview(id){
+ const st=TRACERS[id]||TRACERS.classic,cols=st.colours,g='tp-'+id,d=st.jag?JAGGED:FLIGHT,w=Math.max(1.6,Math.min(5,st.width*.45));
+ const still=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const ring=st.shift?[...cols,cols[0]]:cols;
+ const stops=ring.map((c,i,a)=>`<stop offset="${a.length>1?(i/(a.length-1)).toFixed(3):0}" stop-color="${c}"/>`).join('');
+ const move=st.shift&&!still?`<animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1 0" dur="${(.75/st.shift).toFixed(1)}s" repeatCount="indefinite"/>`:'';
+ const cls=[st.dash?'tp-dash':'',st.flicker?'tp-flicker':''].join(' ').trim();
+ let svg=`<defs><linearGradient id="${g}" x1="0" x2="1" spreadMethod="repeat">${stops}${move}</linearGradient></defs>`
+  +`<path d="${d}" stroke="url(#${g})" stroke-width="${w.toFixed(1)}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${st.opacity??1}"${st.dash?' stroke-dasharray="6 4"':''}${cls?` class="${cls}"`:''}/>`;
+ if(st.head)svg+=`<path d="${d}" pathLength="100" stroke="url(#${g})" stroke-width="${(w*2.3).toFixed(1)}" stroke-dasharray="0 84 16 0" fill="none" stroke-linecap="round"${st.flicker?' class="tp-flicker"':''}/>`;
+ if(st.core)svg+=`<path d="${d}" stroke="${st.core.colour}" stroke-width="${Math.max(.8,st.core.width*.4).toFixed(1)}" fill="none" stroke-linecap="round"${st.flicker?' class="tp-flicker"':''}/>`;
+ if(st.sparkle)svg+=[.5,.6,.68,.76,.83,.9].map((t,k)=>{const p=onArc(t);return `<circle cx="${p.x.toFixed(1)}" cy="${(p.y+(k%2?2:-2)).toFixed(1)}" r="1.3" fill="${st.sparkle.colour}" class="tp-twinkle${st.sparkle.fall?' tp-fall':''}" style="animation-delay:${(k*.2).toFixed(1)}s"/>`;}).join('');
+ svg+='<circle cx="97" cy="17" r="2.4" fill="#fbfaf2"/>';
+ return `<svg class="tracer-preview" viewBox="0 0 100 30" aria-hidden="true">${svg}</svg>`;
+}
+// THE FLOURISHES, AND WHEN EACH PLAYS (the owner asked where to find them, 15
+// October 2026). Visual only; once earned they play by themselves, the rarest
+// that fits the hole.
+const FLOURISH_WHEN={'confetti-birdie':'When you make a birdie','fireworks-eagle':'When you make an eagle or better','streamers-par-save':'When you save par after missing the green','ring-chip-in':'When you chip in','lantern-ace':'When you make a hole in one','fireworks-birdie':'Fireworks for every birdie','gold-confetti':'Every time you hole out'};
+// A small padlock on what is not earned yet; its colours still show.
+const LOCK='<svg class="look-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg>';
 function lookPicker(profile){
- const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter'})[k]}</button>`;
+ const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter',flourish:'Flourishes'})[k]}</button>`;
  const item=(r,inner,kind=r.kind)=>{const has=r.level<=lv,on=look[kind]===r.id;
-  return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
+  return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${has?'':LOCK}${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
  let body;
- if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,`<i class="tracer-swatch${TRACERS[r.id].colours==='seat'?' seat':''}${TRACERS[r.id].dash?' dash':''}" style="background:${TRACER_SWATCH(r.id)}"></i>`)).join('')}</div><p class="research-label">Your own shots fly in your tracer. At the end of a hole every line goes back to its golfer's colour and keeps its shape.</p>`;
- else if(lookTab==='frame')body=`<div class="look-grid balls">${rewardsOf('badge').map(r=>item(r,framedPicture(look.ball,r.id),'frame')).join('')}</div><p class="research-label">Each badge brings a frame for your picture. Unless you choose one, you wear your newest.</p>`;
+ if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,tracerPreview(r.id))).join('')}</div><p class="research-label">Your shots fly in your tracer, and at the end of a hole your lines are drawn in it too.</p>`;
+ else if(lookTab==='frame')body=`<div class="look-grid balls">${rewardsOf('frame').map(r=>item(r,framedPicture(look.ball,r.id))).join('')}</div><p class="research-label">Plain colours from the start, a frame with every badge, and moving ones further up. Until you choose one, you wear your newest badge's.</p>`;
+ else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
  else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
   const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
   body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`level ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
  else body=`<div class="look-grid balls">${rewardsOf('ball').map(r=>item(r,`<img class="ball-avatar" src="${ballPicture(r.id)}" alt="">`)).join('')}</div>`;
- return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${WEARABLE.map(tab).join('')}</div>${body}`;
+ return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${[...WEARABLE,'flourish'].map(tab).join('')}</div>${body}`;
 }
 // THE ACHIEVEMENTS (Phase 7): every one, earned or not, with what it takes,
 // its XP, its title, and how far along a counted one is.
@@ -3969,6 +4001,7 @@ function renderProfile(content){
  });
  if($('wearTitle'))$('wearTitle').onchange=e=>{try{setProfileWorn(profiles,profile.id,'title',e.target.value,levelOf(profile.xp).level);}catch(err){fail(err);return;}if(course&&round)updateHUD();openPanel('profile');};
  content.querySelectorAll('[data-look-tab]').forEach(b=>b.onclick=()=>{lookTab=b.dataset.lookTab;openPanel('profile');});
+ content.querySelectorAll('[data-flourish-preview]').forEach(b=>b.onclick=()=>{const c=$('flourishPreview');if(c){c.hidden=false;playFlourish(c,b.dataset.flourishPreview,()=>({x:c.clientWidth/2,y:c.clientHeight-18}));}});
  content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
  // Two presses, like removing a player: a round's scores cannot be put back.
  content.querySelectorAll('[data-remove-round]').forEach(b=>b.onclick=()=>{
