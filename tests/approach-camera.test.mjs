@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {approachCloseness, trackCloseness, followBearing, flightCameraPose, followPose} from '../src/camera.js';
+import {approachCloseness, trackCloseness, followBearing, flightCameraPose, followPose, puttAimPose, PUTT_RIG, PUTT_LOOK_SHARE} from '../src/camera.js';
 
 // A flat hole with the cup at the origin; toWorld is identity so the numbers
 // below are the ones the renderer would actually use.
@@ -187,31 +187,45 @@ test('a putt still closes in on the cup from its new angle', () => {
  assert.ok(reach(near) < reach(far), 'the approach close-in has to survive the side view');
 });
 
-// The putt follow: the same camera, pointed at the hole.
-test('a putt is followed with the camera looking at the cup, not at the ball', () => {
- // The cup drifting around the frame during the one roll you are watching to see
- // whether it drops is the thing this removes. The EYE is unchanged -- there is
- // one camera for every shot, and only the look is pinned.
+// The putt follow: the same camera, looking between the ball and the cup (the
+// owner, 15 October 2026: pinned on the cup, a putt that ran wide or long
+// rolled out of the frame).
+test('a putt is followed looking between the ball and the cup, so both stay in view', () => {
  const ball = at(3, -6);
  const plain = flightCameraPose(hole, ball, 0, false);
  const putt = followPose(hole, ball, 0, true);
  assert.deepEqual(putt.eye, plain.eye, 'the rig must not change for a putt');
  const cup = hole.toWorld(hole.pin);
- assert.ok(Math.hypot(putt.target.x - cup.x, putt.target.z - cup.z) < 1e-9,
-  `looked at ${JSON.stringify(putt.target)} instead of the cup`);
+ const mid = {x: (ball.x + cup.x) * PUTT_LOOK_SHARE, z: (ball.z + cup.z) * PUTT_LOOK_SHARE};
+ assert.ok(Math.hypot(putt.target.x - mid.x, putt.target.z - mid.z) < 1e-9, 'not halfway between ball and cup');
 });
 
-test('the cup stays still while the ball runs at it', () => {
- // The whole point of a fixed target: the hole does not move on screen as the
- // camera trails the ball in.
- const targets = [at(0, -9), at(0, -5), at(0, -2), at(0, -0.4)]
-  .map(p => followPose(hole, p, 0, true).target);
- for (const t of targets.slice(1)) {
-  assert.ok(Math.hypot(t.x - targets[0].x, t.z - targets[0].z) < 1e-9, 'the look wandered');
+test('a putt that runs past the cup is still in the frame', () => {
+ // Past the hole and off to the side: the angle from the camera's look to the
+ // ball stays well inside half the field of view.
+ for (const p of [at(0, -9), at(0, -0.4), at(1.5, 2.5), at(-2, 4), at(3, 0)]) {
+  const {eye, target} = followPose(hole, p, 0, true);
+  const look = [target.x - eye.x, target.y - eye.y, target.z - eye.z], toBall = [p.x - eye.x, p.y - eye.y, p.z - eye.z];
+  const dot = look.reduce((t, v, i) => t + v * toBall[i], 0) / Math.hypot(...look) / Math.hypot(...toBall);
+  assert.ok(Math.acos(Math.min(1, dot)) * 180 / Math.PI < 22, `the ball at ${JSON.stringify(p)} is out of frame`);
  }
- // And the eye did move, or nothing was being followed at all.
- const eyes = [at(0, -9), at(0, -0.4)].map(p => followPose(hole, p, 0, true).eye);
- assert.ok(Math.hypot(eyes[0].x - eyes[1].x, eyes[0].z - eyes[1].z) > 1);
+});
+
+// THE PUTT, AIMED (15 October 2026): low and behind the ball, looking along
+// the line at the green past the cup -- not the broadcast rig's 9 m tower.
+test('an aimed putt stands low behind the ball and looks at the green past the cup', () => {
+ const ball = at(0, -8);
+ const {eye, target} = puttAimPose(hole, ball, 0);
+ assert.ok(Math.abs(eye.y - PUTT_RIG.height) < 1e-9, `eye at ${eye.y} m`);
+ assert.ok(Math.abs(eye.z - (ball.z - PUTT_RIG.distance)) < 1e-9, 'not behind the ball on the line');
+ assert.ok(target.z > 0 && target.z <= PUTT_RIG.beyond + 1e-9, 'the look is not just past the cup');
+ // The ball sits inside the bottom half of a 53 degree frame.
+ const look = [target.x - eye.x, target.y - eye.y, target.z - eye.z], toBall = [0 - eye.x, ball.y - eye.y, ball.z - eye.z];
+ const dot = look.reduce((t, v, i) => t + v * toBall[i], 0) / Math.hypot(...look) / Math.hypot(...toBall);
+ assert.ok(Math.acos(dot) * 180 / Math.PI < 26.5, 'the ball is out of frame');
+ // Never below the ground behind the ball.
+ const hill = {...hole, height: (x, z) => z < -10 ? 3 : 0};
+ assert.ok(puttAimPose(hill, ball, 0).eye.y >= 3 + PUTT_RIG.clear - 1e-9, 'the eye went under the bank');
 });
 
 test('without the putt flag the follow is exactly what it always was', () => {

@@ -49,6 +49,18 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
+- [ ] **Pins and greens look wrong next to other sims -- a proposal for the
+  owner** (15 October 2026; RESEARCH *Why our pins look small*). The stick and
+  flag are real size; our greens are about twice the US average (median 12,060
+  sq ft against 5,600-5,700). Proposed, in order of effect: (1) **greens to real
+  size** -- the default green size cut so the median lands near 6,000-6,500 sq
+  ft (a generation change: GENERATOR_VERSION bump, every course and week's
+  course re-grown, `bench.mjs --since` before and after, putting distances
+  shorter); (2) **a stick within the Rules but easier to see**: 8 ft instead of
+  7, and the part more than 3 in above the green up to 1 in thick (the Rules
+  allow 2), the putting-height part unchanged so no putt changes; (3) **Larger
+  flags far away on by default**, with a gentler cap. Waiting on the owner.
+
 - [ ] **A new build stutters on its first visit, then never again** (the owner,
   15 October 2026, loading the `swing-meter` build and clicking round the
   menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
@@ -948,6 +960,16 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done (14 October 2026):** it hit `phone-landscape` the same way; both
     phone journeys now take relief before the check, as a golfer about to hit
     sees the screen.
+- [x] **The owner's round of 15 October 2026: flourishes, frames, pin,
+  cameras, cup.** Padlocks show on the meter skins; animated frames break out
+  of the ring (flames rise above the ball, glints orbit, ripples spread, leaves
+  drift); flourishes simple to grand (par, birdie, eagle, chip-in, every
+  birdie), the ace's lantern secret from the start, level 50 everything in
+  gold; the pin stays in while putting and is lifted as the ball comes near;
+  the shot review and the flight back go through trees; an aimed putt has its
+  own low camera behind the ball, and the ball stays in view while it rolls;
+  the cup rattles down, every knock softer than the last. Checked by unit tests
+  and static renders; not yet in the game.
 - [x] **More looks, and the golfer's own tracer everywhere** (the owner, 15
   October 2026). Eight solid balls, eight plain tracers and nine plain frames
   from the start; frames a reward of their own, with thirteen animated ones

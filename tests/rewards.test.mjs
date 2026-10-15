@@ -92,7 +92,7 @@ test('the finishes look different from each other', () => {
 });
 
 // PHASE 6 -----------------------------------------------------------------
-import {FRAMES, highestBadge, badgeName, METER_SKINS, flourishFor} from '../src/rewards.js';
+import {FRAMES, highestBadge, badgeName, METER_SKINS, flourishFor, goldFlourishes, SECRET_FLOURISHES} from '../src/rewards.js';
 
 test('every badge has a frame, the newest is worn unless one is chosen, and Master counts on', () => {
  assert.deepEqual(Object.keys(FRAMES).sort(), rewardsOf('frame').map(r => r.id).sort());
@@ -131,14 +131,27 @@ test('every meter skin keeps the zone, the perfect band and the target apart, co
  }
 });
 
+// SIMPLE TO GRAND (the owner, 15 October 2026): a par first, then a birdie,
+// an eagle, a chip-in, fireworks for every birdie; the ace's lantern from the
+// start; level 50 turns them gold rather than outranking them.
 test('a hole-out shows the rarest flourish the golfer has earned', () => {
- assert.equal(flourishFor({score: 1, par: 3}, 36), 'lantern-ace');
- assert.equal(flourishFor({score: 1, par: 3}, 35), 'fireworks-eagle', 'no lantern yet: an ace is an eagle or better');
- assert.equal(flourishFor({score: 3, par: 4, chipIn: true}, 30), 'ring-chip-in');
+ assert.equal(flourishFor({score: 1, par: 3}, 1), 'lantern-ace', 'the lantern is open from the start');
+ assert.equal(flourishFor({score: 4, par: 4}, 1), null, 'nothing else at level 1');
+ assert.equal(flourishFor({score: 4, par: 4}, 2), 'sparkle-par', 'a par is the first');
+ assert.equal(flourishFor({score: 3, par: 4}, 4), null, 'no birdie flourish before level 5');
  assert.equal(flourishFor({score: 3, par: 4}, 5), 'confetti-birdie');
- assert.equal(flourishFor({score: 3, par: 4}, 43), 'fireworks-birdie');
- assert.equal(flourishFor({score: 3, par: 4}, 4), null);
- assert.equal(flourishFor({score: 4, par: 4, gir: false}, 22), 'streamers-par-save');
- assert.equal(flourishFor({score: 4, par: 4, gir: true}, 22), null, 'a par with the green in regulation saved nothing');
- assert.equal(flourishFor({score: 6, par: 4}, 50), 'gold-confetti');
+ assert.equal(flourishFor({score: 3, par: 5}, 11), 'confetti-birdie', 'an eagle before level 12 still gets the birdie confetti');
+ assert.equal(flourishFor({score: 3, par: 5}, 12), 'fireworks-eagle');
+ assert.equal(flourishFor({score: 3, par: 4, chipIn: true}, 20), 'ring-chip-in');
+ assert.equal(flourishFor({score: 5, par: 4, chipIn: true}, 20), null, 'a chip-in for bogey is no celebration');
+ assert.equal(flourishFor({score: 3, par: 4}, 30), 'fireworks-birdie');
+ assert.equal(flourishFor({score: 6, par: 4}, 50), null, 'level 50 adds no flourish for a double bogey');
+ assert.equal(flourishFor({score: 4, par: 4}, 50), 'sparkle-par', 'level 50 outranks nothing');
+ assert.equal(goldFlourishes(49), false);
+ assert.equal(goldFlourishes(50), true);
+ assert.equal(rewardsOf('flourish').find(r => r.id === 'lantern-ace').level, 1);
+ assert.ok(SECRET_FLOURISHES.has('lantern-ace'));
+ // Unlocked in order: par, birdie, eagle.
+ const at = id => rewardsOf('flourish').find(r => r.id === id).level;
+ assert.ok(at('sparkle-par') < at('confetti-birdie') && at('confetti-birdie') < at('fireworks-eagle'));
 });

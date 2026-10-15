@@ -127,3 +127,18 @@ test('every hole-out sting is the signed-off chiptune jingle', async () => {
   assert.deepEqual(CHIP_FINAL[id][1], {length: .7, pitch: .63, bright: 1.2}, `${id} lost the owner's sliders`);
  }
 });
+
+// THE CUP RATTLES DOWN, NEVER UP (the owner, 15 October 2026: "more rattle,
+// and I think it's playing in reverse"): the first knock is the loudest, and
+// every bounce after it comes sooner and softer than the one before.
+test('the ball in the cup: a loud first knock, then quicker, quieter bounces', async () => {
+ const {cupHits, CUP_RATTLE} = await import('../src/sound.js');
+ const h = cupHits();
+ assert.ok(h.length >= 5, `only ${h.length} knocks`);
+ assert.equal(h[0].a, 1);
+ for (let i = 1; i < h.length; i++) {
+  assert.ok(h[i].a < h[i - 1].a, `knock ${i + 1} is not softer than knock ${i}`);
+  if (i > 1) assert.ok(h[i].t - h[i - 1].t < h[i - 1].t - h[i - 2].t, `bounce ${i} is not quicker than the one before`);
+ }
+ assert.ok(CUP_RATTLE.skitter >= 6, 'the settling skitter is too short');
+});

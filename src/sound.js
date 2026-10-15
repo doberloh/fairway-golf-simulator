@@ -381,15 +381,39 @@ const palm=x=>{x.ring(0,[[BALL,.003,.35]]);x.ring(0,[[260,.014,1],[520,.012,.5],
 // "clunk-clunk-k-k" rattle; the tube colours each hit with a short hollow
 // resonance near 640 Hz (a quarter wave of 0.1 m plus the open-end
 // correction), and now and then the ball clicks off the wall.
+// THE OWNER, 15 OCTOBER 2026: "needs more rattle, and I think it's playing in
+// reverse". Measured, it was: only three knocks were audible, and the second
+// -- 0.13 s after the first -- peaked as loud as the first, which reads as a
+// sound swelling rather than settling. Now the first knock (onto the floor,
+// with a low thup of the cup in the ground) is plainly the loudest, each
+// bounce is quicker AND quieter than the last (restitution 0.5, level falling
+// as the bounce speed^1.6), and a fast skitter of small ticks -- the ball
+// settling across the floor and its drain holes -- runs on after the bounces
+// die. PLACED; the test in tests/sound.test.mjs holds each knock below the
+// one before.
+export const CUP_RATTLE={e:.5,v0:1.4,fall:1.6,stop:.06,skitter:9};
+export function cupHits(){
+ const {e,v0,fall,stop}=CUP_RATTLE,out=[];let t=0,v=v0;
+ while(v>stop&&out.length<10){out.push({t,a:Math.pow(v/v0,fall)});v*=e;t+=2*v/9.81;}
+ return out;
+}
 function cupDrop(x,{metal=false,dt0=0}={}){
- const e=.45,v0=1.4;let t=dt0,v=v0;
- for(let i=0;i<6&&v>.12;i++){
-  const a=Math.pow(v/v0,1.2);
+ const hits=cupHits();
+ hits.forEach(({t,a},i)=>{
+  t+=dt0;
   x.hiss(t,{type:'bandpass',f:metal?3400:1700,q:.8,dur:.004,attack:.0003,amp:.9*a,role:'click',fixed:true});
   x.ring(t,metal?[[1650,.03,.8],[3900,.018,.6],[6200,.01,.35],[640,.008,.5]]:[[640,.007,.7],[1920,.004,.35],[2700,.002,.4],[BALL,.0015,.3]],{amp:.6*a});
-  if(Math.random()<.4)x.hiss(t+R(.01,.04),{type:'bandpass',f:metal?4000:2400,q:1,dur:.002,attack:.0002,amp:.35*a,role:'click',fixed:true});
-  v*=e;t+=2*v/9.81;
- }
+  // The first knock carries the cup's body in the ground: a short low thup.
+  if(i===0)x.ring(t,[[210,.012,.9],[430,.008,.4]],{amp:.45});
+  // Now and then a click off the wall, never louder than the knock it follows.
+  if(i>0&&Math.random()<.45)x.hiss(t+R(.006,.02),{type:'bandpass',f:metal?4000:2400,q:1,dur:.002,attack:.0002,amp:.3*a,role:'click',fixed:true});
+ });
+ // The skitter: small ticks a few milliseconds apart, fading out.
+ const last=hits.at(-1);let t=dt0+last.t+.012;
+ for(let k=0;k<CUP_RATTLE.skitter;k++){const a=last.a*.7*Math.pow(.78,k);
+  x.hiss(t,{type:'bandpass',f:metal?3800:2100,q:1.2,dur:.0015,attack:.0002,amp:.8*a,role:'click',fixed:true});
+  x.ring(t,[[metal?1650:640,.003,.5],[BALL,.001,.25]],{amp:.4*a});
+  t+=R(.007,.013);}
 }
 export const IMPACTS={
  green:{label:'Green',group:'turf',bounce:.35,knobs:T_KNOBS,note:'Short, tight turf on firm ground: a soft "thup".',

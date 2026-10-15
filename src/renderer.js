@@ -49,7 +49,7 @@ import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starR
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
 import {addVegetation} from './vegetation.js';
 import {cullInstances} from './instance-cull.js';
-import {playerCameraPose,flightCameraPose,followPose,framedForBall} from './camera.js';
+import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
@@ -1919,11 +1919,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
+ // Back into the hole for the next putt (the attended pin: main.js).
+ lowerFlag(){if(this.flagsticks?.[this.course?.hole])this.flagsticks[this.course.hole].userData.lift=false;}
  // THE PIN IS PULLED ONCE YOU ARE PUTTING, which is what happens on a real
  // green and takes the one object standing between the ball and the cup out
  // of the read. The cup, its liner and the floor are separate objects and
  // stay: it is the flagstick that goes, not the hole.
- setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
+ // THE PIN STAYS IN WHILE YOU PUTT (the owner, 15 October 2026): it stood out
+ // of sight the moment the ball was on the green. Now it stands in the cup and
+ // is lifted as the ball comes near (main.js PIN_ATTEND_M). The physics have
+ // always played a putt with the pin out, so nothing about the roll changes.
+ setPinOut(){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=true;}
  // THE GRID IS SQUARE TO THE SHOT, set once when it starts (the owner, 1
  // October). It first followed the play camera every frame, so every nudge of
  // the aim turned the whole grid with it -- hugely disorienting. Now `main`
@@ -2279,7 +2285,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // ON THE GREEN THE CAMERA BACKS OFF UNTIL THE BALL IS IN FRAME. A putt is aimed
   // from the ball, so the ball has to be on screen; everywhere else it may sit
   // below the bottom edge, which is where it is in the room.
-  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;this.screenAspect=rig.aspect||null;}
+  // An aimed putt off the bay has its own pose (camera.js puttAimPose).
+  else{const onGreen=h?.surface?.(p.x,p.z)==='green',rig=onGreen?framedForBall(cameraRig(c)):cameraRig(c);const pose=onGreen&&!c.sim&&h?.pin?puttAimPose(h,p,aim):playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;this.screenAspect=rig.aspect||null;}
   // Overview and the green view keep the chosen angle: neither is a view from
   // where anybody is standing, so a bay's measurements say nothing about them.
   if(c.mode!=='player'){this.camera.fov=c.fov;this.lensShift=0;this.screenAspect=null;}this.fitAspect();this.applyLensShift();this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
@@ -2304,7 +2311,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // left to the damping.
   if(!opts.hold&&eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
   this.camera.position.copy(eye);this.look.copy(look);this.camera.lookAt(look);
-  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0,arrival:!!opts.arrival}),elapsed:0};
+  // Back from the shot review (`from`), straight through the trees.
+  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0,arrival:!!opts.arrival,throughTrees:!!opts.from}),elapsed:0};
  }
  // THE ARRIVAL. Cut to a pose above and behind the tee, hold there long enough
  // to read the hole, then fly down onto the ball.
@@ -2489,7 +2497,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  tvReview(pose){
   this.tv=null;this.trackingBall=false;
   const to={eye:new T.Vector3(pose.eye.x,pose.eye.y,pose.eye.z),look:new T.Vector3(pose.look.x,pose.look.y,pose.look.z)};
-  this.camFlight={path:makeCameraFlight({eye:this.camera.position.clone(),look:this.look.clone()},to,this.world),elapsed:0};
+  this.camFlight={path:makeCameraFlight({eye:this.camera.position.clone(),look:this.look.clone()},to,this.world,{throughTrees:true}),elapsed:0};
  }
 
  render(dt){

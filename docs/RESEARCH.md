@@ -1357,7 +1357,7 @@ Three things key off one question — is the ball on the putting surface — and
 
 **The putter** was chosen by `surface === 'green' || d < 18`. That second clause handed you a putter from eighteen yards out — in the fringe, off a bank, out of a greenside bunker, anywhere at all so long as it was close. Gone. Short shots off the green now auto-pick the shortest club at full power, which is what the game has always done between 18 and 65 yards; the behaviour is not new, it just reaches further down. **Still open**: power should scale to the distance rather than defaulting to 100%.
 
-**The pin comes out**, which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
+**The pin comes out** -- since 15 October 2026 attended rather than gone: it stands in the cup while the putt is lined up and is lifted as the ball comes within about 3 m (the owner) -- which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
 
 **The marker therefore names the hole**, and stops being a thing that floats over a flag and drifts off the edge. It clamps to the screen and points at the cup -- with a notch that orbits its ring, while the flag icon inside stays upright. It used to rotate the whole circle, which turned the flag upside down whenever the cup was below or behind the view (fixed 9 October).
 
@@ -7840,6 +7840,28 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Why our pins look small: the greens are twice real size (15 October 2026)
+
+The owner asked why our pins do not look like other sims'. **The flagstick and
+flag are real size**: 7 ft (2.13 m), 14-18 mm across (`FLAGSTICK_TOP_R` 7 mm,
+`FLAGSTICK_BASE_R` 9 mm), flag 0.48 x 0.33 m. The Rules' Equipment section caps
+the pole at 0.75 in (19 mm) from 3 in above to 3 in below the green, allow up to
+2 in (50.8 mm) above that, and most US sticks are about 0.5 in; courses use 7 or
+8 ft sticks (sources in REFERENCES). **What is not real size is the green.**
+Measured from the generator (135 holes: 5 seeds x 3 landscapes x 9 holes,
+DEFAULT_COURSE, the putting surface sampled on a 0.5 m grid round each pin): a
+median **1,121 m2, about 12,060 sq ft** (10th-90th percentile 8,550-16,400 sq
+ft), median depth along the hole 35.5 m (39 yd). A USGA article cites a recent
+USGA study putting the average US green at **5,600-5,700 sq ft**; Pinehurst
+No. 2 for the 2024 US Open about 6,500, Chambers Bay (the largest of any modern
+US Open venue) about 9,000, Brookline about 4,400. So our median green is about
+twice the US average and larger than Chambers Bay's; a real-size stick on a
+twice-size green reads as a toothpick, and the green itself as flat and empty.
+I found no GSPro setting for stick size in its docs (one partial page read);
+how other sims draw pins was not established from a source -- the impression
+that they draw them larger is the owner's, not checked. **Proposal (not
+built)**: in the TODO entry *Pins and greens look wrong next to other sims*.
+
 ### Plain colours and animated frames (15 October 2026)
 
 No outside source; the owner's ask. PLACED: the solid ball colours (red
@@ -7849,6 +7871,19 @@ the old seat-coloured tracers now carry (Classic amber #ffe9a2, Comet gold,
 Dashed white, Ribbon pale blue, Starfall lilac), and the thirteen animated
 frames' levels (7 to 47) and movements: flames turn in 2.2 s and flicker every
 0.32 s, sparkle 7 s with a 1.4 s twinkle, water 9 s, leaves 14 s, aurora 5 s.
+
+### The cup rattle (15 October 2026)
+
+The owner: "needs more rattle and I think it's playing in reverse". The old
+pattern -- restitution 0.45, six knocks, level as bounce speed^1.2 -- left only
+three audible knocks; a first measurement (10 ms RMS windows) showed the second
+as loud as the first, but those windows were misaligned by the master chain's
+look-ahead, so whether the old sound truly swelled was not established. The new
+one: restitution 0.5, five knocks with level as bounce speed^1.6, a low 210 and
+430 Hz thup of the cup in the ground on the first, a wall click only after the
+first, then nine skitter ticks 7-13 ms apart each 0.78 of the last. Measured as
+played (limiter off, onset-aligned, five renders): knock peaks -17, -30, -39,
+-52 to -49, -53 to -56 dB -- every one below the one before. PLACED.
 
 ### Profile after Phases 5-7 (14 October 2026, late)
 

@@ -548,6 +548,30 @@ What sets how far a spun ball comes back on a green, read for RESEARCH.md *Spin-
   - USGS acoustic monitoring data summary (spring peeper) -- https://data.usgs.gov/datacatalog/data/USGS:5b3e4054e4b060350a0ef7e3 -- via search: most of a call's energy at 2,900-3,200 Hz. Popular pages giving 1.8 kHz, 10 kHz or 180-220 Hz were set aside as conflicting with it; no measured bullfrog figure was found.
   - Filtered-noise water synthesis (via search: an MIT 21M.380 quiz solution; aatishb.com's ocean sketch) -- the standard way to make waves; it is what rounds 4 and 5 used, and what round 6 moved away from.
 
+## Pins and greens (15 October 2026)
+
+- USGA, "Brookline's small greens..." (2022),
+  https://www.usga.org/content/usga/home-page/articles/2022/06/brookline-small-greens-maintain-play.html
+  -- cites a recent USGA study: the average US putting green is 5,600-5,700 sq
+  ft; Brookline's about 4,388, Chambers Bay's about 9,000. The study itself was
+  not found.
+- Australian Golf Digest on the 2024 US Open,
+  https://www.australiangolfdigest.com.au/2024-us-open-pinehurst-green-approach-short-sided-strategy/
+  -- Pinehurst No. 2's greens average about 6,500 sq ft (USGA figure).
+- R&A / USGA Rules of Equipment, Part 8 (Committee equipment requirements),
+  https://www.randa.org/roe/the-rules-of-equipment/part-8-committee-equipment-requirements
+  -- the flagstick's 0.75 in (19 mm) limit from 3 in above to 3 in below the
+  putting surface, 2 in (50.8 mm) above that, circular cross-section.
+- Golf.com, "Why flagsticks are way more interesting than you ever knew",
+  https://golf.com/lifestyle/flagsticks-more-interesting-ever-knew/ -- most US
+  sticks about 0.5 in; the same reading of the 0.75 in zone.
+- The Golf News Net, "How tall is a golf flagstick?",
+  https://thegolfnewsnet.com/golfnewsnetteam/2021/05/14/how-tall-is-golf-flagstick-what-is-minimum-recommended-height-110242/
+  -- most courses use 7 or 8 ft sticks.
+- GSPro documentation, Visual Settings,
+  https://gspro.document360.io/docs/visual-settings-new-settings -- read in
+  part; no flagstick size setting found there.
+
 ## Meter skins and colour blindness (14 October 2026)
 
 - Machado, G. M., Oliveira, M. M. and Fernandes, L. A. F. (2009), "A

@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
-import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor} from './rewards.js';
+import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
 import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,skins,recordChallenge,feetText} from './challenges.js';
 import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
@@ -449,7 +449,14 @@ const frameAttr=id=>{const f=FRAMES[id]||FRAMES.rookie;
  if(f.solid)return ` style="--frame:${f.solid}"`;
  if(f.anim)return ` style="--f1:${f.colours[0]};--f2:${f.colours[1]};--f3:${f.colours[2]}" data-anim="${f.anim}"`;
  return ` style="--frame:conic-gradient(from 210deg,${f.from},${f.to},${f.from},${f.to},${f.from})"${f.rainbow?' data-rainbow':''}`;};
-const framedPicture=(ball,frame,cls='')=>`<img class="ball-avatar framed${cls?' '+cls:''}" src="${ballPicture(ball)}" alt="" aria-hidden="true"${frameAttr(frame)}>`;
+// AN ANIMATED FRAME BREAKS OUT OF ITS RING (the owner, 15 October 2026: "the
+// flames look like the profile icon is actually on fire, not just a weird
+// circle around it"): the picture sits in a wrapper whose two layers, drawn by
+// style.css per `data-fx`, burn, sparkle, ripple or drift beyond the circle.
+const framedPicture=(ball,frame,cls='')=>{
+ const img=`<img class="ball-avatar framed${cls?' '+cls:''}" src="${ballPicture(ball)}" alt="" aria-hidden="true"${frameAttr(frame)}>`,fx=FRAMES[frame];
+ return fx?.anim?`<span class="frame-fx" data-fx="${fx.anim}" style="--f1:${fx.colours[0]};--f2:${fx.colours[1]};--f3:${fx.colours[2]}">${img}</span>`:img;
+};
 const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ball,l.frame,cls);};
 // THE CHALLENGES IN PLAY (Phase 7; challenges.js for the rules).
 //
@@ -903,8 +910,14 @@ function syncArmed(){
  if(was!==armed&&armed)cancelSwing();
  return was!==armed;
 }
+// How near the ball comes before the pin is lifted: about a second of a
+// putt's last roll, and the lift (renderer damp 14) is all but done in a
+// fifth of one. PLACED.
+const PIN_ATTEND_M=3;
 function setUpTurn(){
  syncArmed();
+ // A missed putt: the pin goes back in for the next one.
+ if(!round.holeComplete)view.lowerFlag?.();
  // A TEAM SELECTION IS NOT A TURN. Nobody is up until a ball has been chosen, so
  // setting a club, a power and an aim line for `round.position` here would offer
  // a shot from a lie the team may be about to abandon. This is also the path a
@@ -1513,7 +1526,7 @@ function takeShot(data=null,struck=null){
   // This hole's flagstick is in unless the ball is on the green (setPinOut) or
   // the putter is in hand (liftFlag): exactly when it is drawn standing.
   flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -1590,7 +1603,7 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  stopTour();if(!record||flight||dropState)return;
  cancelAdvance();closePanel();closeShotList();const camera={...view.config};
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
- view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);gameAudio?.strike({kind:record.kind,ballMs:record.shot.speed,monitor:!!record.typed});view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;if(record.putting||record.shot.vla===0)view.liftFlag();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
+ view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);gameAudio?.strike({kind:record.kind,ballMs:record.shot.speed,monitor:!!record.typed});view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;view.lowerFlag?.();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
 }
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
@@ -1673,8 +1686,8 @@ function announceHoleOut(before,{chipIn=false}={}){
  // THE FLOURISH (Phase 6): the rarest the golfer has earned for this score,
  // over the cup, visual only.
  {const prof=profileOf(round.players[seat]),gir=prof?.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]?.gir;
-  const id=prof&&flourishFor({score,par:course.par,chipIn,gir:gir!==false},levelOf(prof.xp).level);
-  if(id){const pin=course.pin;playFlourish($('flourish'),id,()=>view.screenPoint?.(pin));}}
+  const lv=prof?levelOf(prof.xp).level:1,id=prof&&flourishFor({score,par:course.par,chipIn},lv);
+  if(id){const pin=course.pin;playFlourish($('flourish'),id,()=>view.screenPoint?.(pin),{gold:goldFlourishes(lv)});}}
  clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
 }
 // THE CLOSE-UP (spec 7.3): the golfer's ball beside the score, turning slowly
@@ -3919,7 +3932,7 @@ function tracerPreview(id){
 // THE FLOURISHES, AND WHEN EACH PLAYS (the owner asked where to find them, 15
 // October 2026). Visual only; once earned they play by themselves, the rarest
 // that fits the hole.
-const FLOURISH_WHEN={'confetti-birdie':'When you make a birdie','fireworks-eagle':'When you make an eagle or better','streamers-par-save':'When you save par after missing the green','ring-chip-in':'When you chip in','lantern-ace':'When you make a hole in one','fireworks-birdie':'Fireworks for every birdie','gold-confetti':'Every time you hole out'};
+const FLOURISH_WHEN={'sparkle-par':'When you make a par','confetti-birdie':'When you make a birdie','fireworks-eagle':'When you make an eagle or better','ring-chip-in':'When you chip in for par or better','fireworks-birdie':'Every birdie, in place of the confetti','lantern-ace':'When you make a hole in one','gold-flourishes':'Every flourish you have, in gold'};
 // A small padlock on what is not earned yet; its colours still show.
 const LOCK='<svg class="look-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg>';
 function lookPicker(profile){
@@ -3929,7 +3942,7 @@ function lookPicker(profile){
  let body;
  if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,tracerPreview(r.id))).join('')}</div><p class="research-label">Your shots fly in your tracer, and at the end of a hole your lines are drawn in it too.</p>`;
  else if(lookTab==='frame')body=`<div class="look-grid balls">${rewardsOf('frame').map(r=>item(r,framedPicture(look.ball,r.id))).join('')}</div><p class="research-label">Plain colours from the start, a frame with every badge, and moving ones further up. Until you choose one, you wear your newest badge's.</p>`;
- else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
+ else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').filter(r=>!SECRET_FLOURISHES.has(r.id)||profile.achievements?.ace).map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
  else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
   const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
@@ -4001,7 +4014,8 @@ function renderProfile(content){
  });
  if($('wearTitle'))$('wearTitle').onchange=e=>{try{setProfileWorn(profiles,profile.id,'title',e.target.value,levelOf(profile.xp).level);}catch(err){fail(err);return;}if(course&&round)updateHUD();openPanel('profile');};
  content.querySelectorAll('[data-look-tab]').forEach(b=>b.onclick=()=>{lookTab=b.dataset.lookTab;openPanel('profile');});
- content.querySelectorAll('[data-flourish-preview]').forEach(b=>b.onclick=()=>{const c=$('flourishPreview');if(c){c.hidden=false;playFlourish(c,b.dataset.flourishPreview,()=>({x:c.clientWidth/2,y:c.clientHeight-18}));}});
+ // "Everything in gold" previews the birdie's confetti, in gold.
+ content.querySelectorAll('[data-flourish-preview]').forEach(b=>b.onclick=()=>{const c=$('flourishPreview'),id=b.dataset.flourishPreview,gold=id==='gold-flourishes';if(c){c.hidden=false;playFlourish(c,gold?'confetti-birdie':id,()=>({x:c.clientWidth/2,y:c.clientHeight-18}),{gold});}});
  content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
  // Two presses, like removing a player: a round's scores cannot be put back.
  content.querySelectorAll('[data-remove-round]').forEach(b=>b.onclick=()=>{
@@ -6186,6 +6200,11 @@ function tick(now){
   const ground=q=>course.height(q.x,q.z)+BALL_R+.004>=q.y,rolling=ground(a)&&ground(b),hopSpeed=Math.hypot(b.x-a.x,b.z-a.z)/((b.t-a.t)||1);
   const lift=flight.hop.step(dt*FLIGHT_PLAYBACK*timeScale,hopSpeed,course.surface(p.x,p.z),rolling&&flight.elapsed<flight.result.time);
   view.rollHopLift=lift;view.setBall(lift?{...p,y:p.y+lift}:p);flight.hold=(flight.hold||0)+dt*timeScale;flight.at=p;
+  // THE ATTENDED PIN: on a shot the physics play with the pin out (on the
+  // green, or the putter in hand), it stands in the cup until the ball is
+  // within PIN_ATTEND_M, then lifts clear before the ball arrives.
+  {const r=flight.record,pin=(flight.replay?view.course:course).pin;
+   if((r?.pinOut??(r?.putting||r?.shot?.vla===0))&&Math.hypot(p.x-pin.x,p.z-pin.z)<PIN_ATTEND_M)view.liftFlag();}
   if(now-lastMapFrame>60){lastMapFrame=now;redrawMap();}
   // THE CAMERA DURING A SHOT. A putt keeps its own follow camera; a full shot
   // is filmed by the television pair (tv-camera.js) -- the tee camera turning

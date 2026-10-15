@@ -1,6 +1,6 @@
 // HOLE-OUT FLOURISHES (Phase 6, 14 October 2026; the agreed spec, 7.4).
 //
-// Visual only -- the owner: no new sounds. Confetti, fireworks, streamers, a
+// Visual only -- the owner: no new sounds. Sparkles, confetti, fireworks, a
 // golden ring burst and a sky lantern, at the green when a golfer holes out
 // with one earned (rewards.js `flourishFor` picks which).
 //
@@ -25,20 +25,33 @@ const GOLD = ['#ffe58a', '#f5c542', '#d9a21b', '#fff3c4', '#c88a12'];
 // Each effect: `spawn(o, t)` adds particles while it runs, `life` its length in
 // seconds. Particles carry their own draw. PLACED by eye: counts, speeds,
 // gravity, lengths.
+// `pal`, when set (level 50: everything in gold), replaces each effect's
+// colours.
 const EFFECTS = {
+ 'sparkle-par': {life: 2.2, spawn: sparkles()},
  'confetti-birdie': {life: 3.2, spawn: confetti(CONFETTI, 140)},
- 'gold-confetti': {life: 3.2, spawn: confetti(GOLD, 120)},
  'fireworks-eagle': {life: 3.6, spawn: fireworks(4)},
  'fireworks-birdie': {life: 3.2, spawn: fireworks(3)},
- 'streamers-par-save': {life: 3.4, spawn: streamers(14)},
  'ring-chip-in': {life: 2.6, spawn: rings()},
  'lantern-ace': {life: 4.8, spawn: lantern()},
 };
+// A PAR'S SPARKLES: the simplest -- a soft rise of twinkling stars for under a
+// second, gone in two. PLACED.
+function sparkles() {
+ return (ps, o, t, first, fx) => {
+  if (t > .9) return;
+  const pal = fx.pal || ['#fff6c8', '#ffe58a', '#ffffff', '#cfefff'];
+  for (let k = 0; k < 2; k++) if (Math.random() < .55) ps.push({x: o.x + rnd(-36, 36), y: o.y + rnd(-8, 4), vx: rnd(-18, 18), vy: rnd(-130, -55), g: -8, drag: .6, life: rnd(.8, 1.3), c: pick(pal), r: rnd(1.6, 3.2), tw: rnd(0, TAU),
+   draw(ctx, p, k2) { const s = p.r * (.6 + .4 * Math.sin(p.age * 14 + p.tw)); ctx.globalAlpha = k2; ctx.fillStyle = p.c; ctx.beginPath();
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, rr = i % 2 ? s * .35 : s * 1.6; ctx.lineTo(p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); }});
+ };
+}
 export const FLOURISH_IDS = Object.keys(EFFECTS);
 
 function confetti(colours, n) {
- return (ps, o, t, first) => {
+ return (ps, o, t, first, fx) => {
   if (!first) return;
+  colours = fx.pal || colours;
   for (let i = 0; i < n; i++) {
    const a = rnd(-Math.PI * .85, -Math.PI * .15), v = rnd(260, 620);
    ps.push({x: o.x, y: o.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 520, drag: 1.6, w: rnd(5, 9), h: rnd(3, 6), rot: rnd(0, TAU), spin: rnd(-9, 9), c: pick(colours), life: rnd(2.2, 3.1),
@@ -48,7 +61,7 @@ function confetti(colours, n) {
 }
 function fireworks(bursts) {
  return (ps, o, t, first, fx) => {
-  if (first) fx.at = Array.from({length: bursts}, (_, i) => ({when: .15 + i * .45, dx: rnd(-160, 160), up: rnd(150, 260), c: pick(['#ffd166', '#ff5a5f', '#4dc3ff', '#b388ff', '#06d6a0'])}));
+  if (first) fx.at = Array.from({length: bursts}, (_, i) => ({when: .15 + i * .45, dx: rnd(-160, 160), up: rnd(150, 260), c: pick(fx.pal || ['#ffd166', '#ff5a5f', '#4dc3ff', '#b388ff', '#06d6a0'])}));
   for (const b of fx.at) if (!b.done && t >= b.when) {
    b.done = true;
    const cx = o.x + b.dx, cy = o.y - b.up;
@@ -63,17 +76,6 @@ function fireworks(bursts) {
    b.rocket = true;
    ps.push({x: o.x + b.dx * .2, y: o.y, vx: b.dx * 2.6, vy: -b.up / .3, g: 0, drag: 0, c: '#fff6d8', life: .3,
     draw(ctx, p, k) { ctx.globalAlpha = k; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, TAU); ctx.fill(); }});
-  }
- };
-}
-function streamers(n) {
- return (ps, o, t, first) => {
-  if (!first) return;
-  for (let i = 0; i < n; i++) {
-   const a = rnd(-Math.PI * .8, -Math.PI * .2), v = rnd(300, 520);
-   ps.push({x: o.x, y: o.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 300, drag: 1.4, c: pick(CONFETTI), life: rnd(2.6, 3.3), trail: [], ph: rnd(0, TAU),
-    draw(ctx, p, k) { p.trail.push([p.x + Math.sin(p.ph + p.age * 9) * 6, p.y]); if (p.trail.length > 22) p.trail.shift();
-     ctx.globalAlpha = k; ctx.strokeStyle = p.c; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); p.trail.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); }});
   }
  };
 }
@@ -108,12 +110,12 @@ function lantern() {
 // the last.
 const ZERO = {x: 0, y: 0};
 let running = null;
-export function playFlourish(canvas, id, origin) {
+export function playFlourish(canvas, id, origin, {gold = false} = {}) {
  const fx = EFFECTS[id];
  if (!fx || !canvas) return () => {};
  if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
  running?.();
- const ctx = canvas.getContext('2d'), ps = [], state = {};
+ const ctx = canvas.getContext('2d'), ps = [], state = {pal: gold ? GOLD : null};
  let start = null, last = null, alive = true, o = origin() || {x: canvas.clientWidth / 2, y: canvas.clientHeight * .6};
  const fit = () => { const d = Math.min(2, devicePixelRatio || 1), w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.round(w * d) || canvas.height !== Math.round(h * d)) { canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); };
  canvas.hidden = false;

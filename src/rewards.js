@@ -29,13 +29,21 @@ const ROWS = [
  ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black'].map(c => [1, 'ball', 'solid-' + c, c[0].toUpperCase() + c.slice(1)]),
  ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'white'].map(c => [1, 'tracer', c, c[0].toUpperCase() + c.slice(1)]),
  ...['white', 'black', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'].map(c => [1, 'frame', 'plain-' + c, c[0].toUpperCase() + c.slice(1)]),
+ // THE FLOURISHES, SIMPLE TO GRAND (the owner, 15 October 2026): a par first,
+ // then a birdie, an eagle, a chip-in, fireworks for every birdie; the hole in
+ // one's lantern open from the start but kept secret until it happens; and at
+ // 50 not one more flourish that would outrank the rest, but every one in gold.
+ [1, 'flourish', 'lantern-ace', 'Sky lantern on a hole in one'], [2, 'flourish', 'sparkle-par', 'Sparkles on a par'],
+ [5, 'flourish', 'confetti-birdie', 'Confetti on a birdie'], [12, 'flourish', 'fireworks-eagle', 'Fireworks on an eagle'],
+ [20, 'flourish', 'ring-chip-in', 'Golden ring on a chip-in'], [30, 'flourish', 'fireworks-birdie', 'Fireworks on every birdie'],
+ [50, 'flourish', 'gold-flourishes', 'Everything in gold'],
  // Every challenge open from the start (the owner, 15 October 2026); the spec
  // had them at levels 3, 6, 12 and 18.
  [1, 'challenge', 'closest', 'Closest to the pin'], [1, 'challenge', 'long-drive', 'Long drive'], [1, 'challenge', 'up-and-down', 'Up and down'], [1, 'challenge', 'skins', 'Skins game'],
  [2, 'tracer', 'sky', 'Sky'],
  [3, 'ball', 'red-stripe', 'Red stripe'],
  [4, 'title', 'weekend-golfer', 'Weekend Golfer'],
- [5, 'badge', 'club-member', 'Club Member'], [5, 'flourish', 'confetti-birdie', 'Confetti on a birdie'],
+ [5, 'badge', 'club-member', 'Club Member'],
  [6, 'skin', 'wood', 'Wood'],
  [7, 'tracer', 'comet', 'Comet'],
  [8, 'ball', 'smiley', 'Smiley'],
@@ -44,21 +52,18 @@ const ROWS = [
  [11, 'tracer', 'sunset', 'Sunset'],
  [12, 'skin', 'neon', 'Neon'],
  [13, 'ball', 'polka-dot', 'Polka dot'],
- [14, 'flourish', 'fireworks-eagle', 'Fireworks on an eagle'],
- [15, 'badge', 'single-digit', 'Single Digit'], [15, 'title', 'flag-hunter', 'Flag Hunter'],
+  [15, 'badge', 'single-digit', 'Single Digit'], [15, 'title', 'flag-hunter', 'Flag Hunter'],
  [16, 'tracer', 'dashed', 'Dashed'],
  [17, 'ball', 'pumpkin', 'Pumpkin'],
  [18, 'skin', 'retro-pixel', 'Retro pixel'],
  [19, 'tracer', 'sparkle', 'Sparkle trail'],
  [20, 'badge', 'scratch', 'Scratch'], [20, 'title', 'low-ball', 'Low Ball'],
  [21, 'ball', 'glow', 'Glow'],
- [22, 'flourish', 'streamers-par-save', 'Streamers on a par save'],
- [23, 'tracer', 'ribbon', 'Ribbon'],
+  [23, 'tracer', 'ribbon', 'Ribbon'],
  [24, 'skin', 'chalkboard', 'Chalkboard'],
  [25, 'badge', 'tour-card', 'Tour Card'], [25, 'ball', 'chrome', 'Chrome'], [25, 'title', 'tour-rookie', 'Tour Rookie'],
  [26, 'tracer', 'ice', 'Ice'],
- [27, 'flourish', 'ring-chip-in', 'Golden ring burst on a chip-in'],
- [28, 'ball', 'camo', 'Camo'],
+  [28, 'ball', 'camo', 'Camo'],
  [29, 'title', 'sharpshooter', 'Sharpshooter'],
  [30, 'badge', 'contender', 'Contender'], [30, 'tracer', 'fire', 'Fire'],
  [31, 'ball', 'galaxy', 'Galaxy'],
@@ -66,22 +71,20 @@ const ROWS = [
  [33, 'tracer', 'lightning', 'Lightning'],
  [34, 'title', 'iron-will', 'Iron Will'],
  [35, 'badge', 'major-winner', 'Major Winner'], [35, 'ball', 'tartan', 'Tartan'],
- [36, 'flourish', 'lantern-ace', 'Sky lantern on a hole in one'],
- [37, 'tracer', 'aurora', 'Aurora'],
+  [37, 'tracer', 'aurora', 'Aurora'],
  [38, 'skin', 'carbon', 'Carbon'],
  [39, 'ball', 'marble', 'Marble'],
  [40, 'badge', 'hall-of-fame', 'Hall of Fame'], [40, 'title', 'hall-of-famer', 'Hall of Famer'],
  [41, 'tracer', 'starfall', 'Starfall'],
  [42, 'ball', 'diamond-plate', 'Diamond plate'],
- [43, 'flourish', 'fireworks-birdie', 'Fireworks on any birdie'],
- [44, 'skin', 'gold-leaf', 'Gold leaf'],
+  [44, 'skin', 'gold-leaf', 'Gold leaf'],
  [45, 'badge', 'legend', 'Legend'], [45, 'tracer', 'ghost', 'Ghost'], [45, 'title', 'legend', 'Legend'],
  [46, 'ball', 'gold', 'Gold'],
  [47, 'tracer', 'comet-sparkle', 'Comet tail plus sparkle'],
  [48, 'skin', 'aurora', 'Aurora'],
  [49, 'ball', 'black-pearl', 'Black pearl'],
  [50, 'badge', 'fairway-master', 'Fairway Master'], [50, 'tracer', 'rainbow', 'Rainbow'], [50, 'ball', 'rainbow', 'Rainbow'],
- [50, 'flourish', 'gold-confetti', 'Gold confetti on every hole-out'], [50, 'title', 'fairway-master', 'Fairway Master'], [50, 'skin', 'champion', 'Champion'],
+ [50, 'title', 'fairway-master', 'Fairway Master'], [50, 'skin', 'champion', 'Champion'],
 ];
 // ANIMATED FRAMES (the owner, 15 October 2026: "different color flames and
 // sparkles, water, leaves"), spread over the higher levels. PLACED.
@@ -246,20 +249,22 @@ export const METER_SKINS = {
 };
 export const meterSkin = id => METER_SKINS[id] || METER_SKINS.classic;
 
-// FLOURISHES (Phase 6, spec 7.4): visual only, no sound. Which one a hole-out
-// shows, of those the golfer has earned, the rarest first: a hole in one, a
-// chip-in, an eagle or better, a birdie, a par save (par without the green in
-// regulation -- PLACED), then any hole-out once Gold confetti is earned. Null
-// when none applies.
-export function flourishFor({score, par, chipIn = false, gir = true}, level) {
+// FLOURISHES (Phase 6, spec 7.4; redone 15 October 2026): visual only, no
+// sound. Which one a hole-out shows, of those the golfer has earned, the
+// rarest first: a hole in one, a chip-in (par or better), an eagle or better,
+// a birdie, a par. Bogeys and worse get none. Null when none applies.
+export function flourishFor({score, par, chipIn = false}, level) {
  const has = id => isUnlocked('flourish', id, level);
  if (!Number.isFinite(score) || !Number.isFinite(par)) return null;
  if (score === 1 && has('lantern-ace')) return 'lantern-ace';
- if (chipIn && has('ring-chip-in')) return 'ring-chip-in';
+ if (chipIn && score <= par && has('ring-chip-in')) return 'ring-chip-in';
  if (score <= par - 2 && has('fireworks-eagle')) return 'fireworks-eagle';
  if (score <= par - 1 && has('fireworks-birdie')) return 'fireworks-birdie';
  if (score <= par - 1 && has('confetti-birdie')) return 'confetti-birdie';
- if (score === par && !gir && has('streamers-par-save')) return 'streamers-par-save';
- if (has('gold-confetti')) return 'gold-confetti';
+ if (score === par && has('sparkle-par')) return 'sparkle-par';
  return null;
 }
+// Level 50's reward: every flourish in gold.
+export const goldFlourishes = level => isUnlocked('flourish', 'gold-flourishes', level);
+// Kept off the Flourishes tab until it has happened (the hole in one's).
+export const SECRET_FLOURISHES = new Set(['lantern-ace']);
