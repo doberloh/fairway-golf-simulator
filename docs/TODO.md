@@ -27,8 +27,13 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
-  finished, and as the profile picture) and titles.**
+- [ ] **Phase 5 left to check, when the owner's machine is free** (it was in use;
+  GPU runs crashed it while they gamed, 14 October 2026). Smoke
+  `phone-portrait`, `phone-landscape`, `hud-reachable` with the look picker;
+  pictures of Lightning, Ribbon, Fire, Starfall, Rainbow in flight, the
+  end-of-hole lines, the level-up unlock list, titles on the scorecard; and a
+  graphics profile for the tracer and glint changes (the owner: save profiles
+  for the end of all the phases).
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
 - [ ] **Phase 7: course of the week, achievements, challenges.**
 
@@ -916,6 +921,20 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done:** the owner chose take D, the game jingles, for every score, at
     length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
     game, and tests/sound.test.mjs holds every score to it.
+- [x] **Phase 5: tracer styles, ball finishes and titles** (`src/rewards.js`,
+  `src/ball-finishes.js`). One reward table by level (the spec's 7.1); what a
+  golfer wears saved on the profile (`worn`), shown only once earned. Sixteen
+  ball finishes, each one rule painting both the 3D ball and its picture; the
+  ball as the profile picture (My profile, its tabs, the group editor, the
+  level-up banner) and close up, turning, in the hole-out banner. Fifteen tracer
+  styles on the golfer's own shots; the end-of-hole lines in seat colour keeping
+  the style's shape. Ten level titles under the name (My profile, scorecard,
+  level-up banner); achievement titles wait for Phase 7. The level-up banner
+  lists what each level brought. A "Your look" picker on My profile. Every look
+  is uniforms and buffers, never a new shader; no-late-shaders now also hits a
+  first shot. **With it:** the daily first-round bonus's day was dropped on every
+  load (a pattern that had lost its backslashes), so the bonus could be paid
+  twice a day -- fixed, with a test; the level-up banner now lets taps through.
 - [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
   and meter golfers: hole, score, fairway and green, on the number, chip-ins,
   long putts, personal bests, rounds, wins and the daily first round, with the

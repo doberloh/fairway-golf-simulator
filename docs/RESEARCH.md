@@ -7840,6 +7840,21 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Rewards: tracer styles and ball finishes (14 October 2026)
+
+No outside source: the reward table is the agreed spec's (7.1), names as its
+placeholders, and every look is PLACED by eye. Tracers: live width 3.5-11 px
+(Classic 4.5, as before; the end-of-hole lines stay 3 px at 0.72 opacity),
+comet heads 9-10 px over the last 10-14% of the line, Ribbon 11 px at 0.42
+opacity with a 2.5 px white core, Dashed 2.4 m on and 1.6 m off, Lightning's
+zigzag 0.9 m (widened in proportion past 120 m of shot) re-drawn 14 times a
+second, flicker up to 45%, glints 36-48 alive for 1.1 s each at 10 px, Starfall
+falling 1.6 m/s, colour runs on Aurora and Rainbow moving 0.12 and 0.25 of the
+line a second. Ball finishes: a 256x128 texture, a 22-row dimple lattice at 7%
+shading (30% of that on Chrome, 50% on Gold), Glow's own light 0.35 by day. The
+close-up turns once every 4 s at 72 px. The level-up banner stays 4.2 s when it
+lists unlocks, 2.8 s when not.
+
 ### The Swing Meter's sounds
 
 Synthesised like every other sound (no recordings), PLACED by ear, and chosen

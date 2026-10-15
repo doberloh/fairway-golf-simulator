@@ -23,7 +23,9 @@ import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,lo
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay} from './profile.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
+import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE} from './rewards.js';
+import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
@@ -120,7 +122,7 @@ const resetTrails=()=>{holeTrails=[];practiceShots=0;viewShot=null;};
 // before `round.takeShot` advances the turn, so `round.active` is still the
 // golfer who struck it rather than whoever is up next.
 function pushTrail(points,player=round.active){
- holeTrails.push({points,player,colour:playerTracer(player)});practiceShots++;
+ holeTrails.push({points,player,colour:playerTracer(player),style:seatLooks(player).tracer});practiceShots++;
  if(rangeMode&&holeTrails.length>SHOT_LINE_MAX)holeTrails.splice(0,holeTrails.length-SHOT_LINE_MAX);
 }
 // The tail the setting asks for. Zero is a real answer -- a clear field -- and
@@ -360,9 +362,29 @@ function syncProfile(){
   }
   queueXpGain(r.prof,items,before,mult);
  }
- for(const r of rows){const now=levelOf(r.prof.xp).level;if(now>was.get(r.prof.id))queueLevelUp(r.prof,now);}
+ for(const r of rows){const now=levelOf(r.prof.xp).level;if(now>was.get(r.prof.id))queueLevelUp(r.prof,now,was.get(r.prof.id));}
  storeProfiles(profiles);
 }
+// WHAT A GOLFER WEARS (Phase 5; rewards.js, ball-finishes.js): their ball
+// finish, tracer and title, each what they chose if their level has earned it
+// and the starting look if not. Someone with no profile -- the menu's showcase
+// hole -- wears the starting look.
+function looksOf(prof){
+ const level=prof?levelOf(prof.xp).level:1,w=prof?.worn;
+ return {level,ball:wornItem(w,'ball',level),tracer:wornItem(w,'tracer',level),title:wornItem(w,'title',level)};
+}
+const seatLooks=seat=>looksOf(profileOf(round?.players?.[seat]));
+const titleName=id=>id?reward('title',id)?.name||'':'';
+// THE BALL AS A PICTURE: the finish drawn face on (ball-finishes.js
+// ballPixels, the rule the 3D ball is painted from), as an image, kept per
+// finish and size. The profile picture everywhere the golfer is shown.
+const ballPics=new Map();
+function ballPicture(id,size=96){
+ const k=id+':'+size;
+ if(!ballPics.has(k)){const c=document.createElement('canvas');c.width=c.height=size;c.getContext('2d').putImageData(new ImageData(ballPixels(id,size),size,size),0,0);ballPics.set(k,c.toDataURL());}
+ return ballPics.get(k);
+}
+const ballAvatar=(prof,cls='')=>`<img class="ball-avatar${cls?' '+cls:''}" src="${ballPicture(looksOf(prof).ball)}" alt="" aria-hidden="true">`;
 // THE XP MULTIPLIER for a golfer's hole: their Swing Meter difficulty (Easy
 // 0.75, Normal 1, Hard 1.5), or 1 if they played it off a launch monitor.
 // Read from how their last shot on this hole was struck; with none yet, from
@@ -441,14 +463,20 @@ function showXpGain(){
 }
 // THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
 const levelUps=[];let levelUpTimer=null;
-function queueLevelUp(prof,level){levelUps.push({name:prof.name,level});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
+// It names what the new level brought (rewards.js unlocksAt) -- every level
+// crossed, when one gain crosses several -- with the golfer's ball and title.
+function queueLevelUp(prof,level,from=level-1){
+ const got=[];for(let l=from+1;l<=level;l++)got.push(...unlocksAt(l));
+ const look=looksOf(prof);
+ levelUps.push({name:prof.name,level,ball:look.ball,title:titleName(look.title),got});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
 function showLevelUp(){
  if(levelUpTimer||!levelUps.length)return;
  if(($('holeOut')&&!$('holeOut').hidden)||($('xpGain')&&!$('xpGain').hidden)||xpQueue.length){levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},500);return;}
  const u=levelUps.shift(),el=$('levelUp');if(!el)return;
- el.innerHTML=`<small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}</span>`;
+ const got=u.got.length?`<ul class="level-up-got">${u.got.slice(0,5).map(r=>`<li>New ${escape(KIND_NAMES[r.kind])}: <b>${escape(r.name)}</b></li>`).join('')}${u.got.length>5?`<li>and ${u.got.length-5} more</li>`:''}</ul>`:'';
+ el.innerHTML=`<img class="ball-avatar" src="${ballPicture(u.ball)}" alt="" aria-hidden="true"><small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}${u.title?` · <i>${escape(u.title)}</i>`:''}</span>${got}`;
  el.hidden=true;void el.offsetWidth;el.hidden=false;
- levelUpTimer=setTimeout(()=>{el.hidden=true;levelUpTimer=null;showLevelUp();},2800);
+ levelUpTimer=setTimeout(()=>{el.hidden=true;levelUpTimer=null;showLevelUp();},u.got.length?4200:2800);
 }
 // ONE BALL, AS ITS GOLFER'S PROFILE COUNTS IT. `before` is what was true before
 // the round moved on: who hit, which stroke this was, and where it was played from.
@@ -480,7 +508,7 @@ function recordProfileShot(result,before){
   if(award(prof,`${prefix}s${stroke}:shot`,withMult(sumParts(parts),mult),{stroke})>0)items.push(...parts);
   queueXpGain(prof,items,xpBefore,mult);
  }
- const levelNow=levelOf(prof.xp).level;if(levelNow>levelBefore)queueLevelUp(prof,levelNow);
+ const levelNow=levelOf(prof.xp).level;if(levelNow>levelBefore)queueLevelUp(prof,levelNow,levelBefore);
  storeProfiles(profiles);
 }
 // DISCARD HAS TO ACTUALLY DISCARD. "This round and its scores are gone" was a
@@ -784,6 +812,8 @@ function updateHUD(){
  // colour their tracer is drawn in and the same dot beside their scorecard row,
  // which is the whole point: the line over the fairway and the name on the card
  // have to be recognisably the same person.
+ // Their ball finish on the ball and their tracer style on the next shot.
+ {const look=seatLooks(round.active);view.setBallFinish?.(look.ball);view.setTracer?.(look.tracer,playerTracer(round.active));}
  const initial=p.name[0]?.toUpperCase()||'P',chip=playerColour(round.active);
  for(const el of [$('playerInitial'),document.querySelector('.header-right .avatar')]){
   if(!el)continue;
@@ -1413,12 +1443,23 @@ function announceHoleOut(before){
  // score belongs to the team, so the team is named.
  const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
  const tint=parTint(label.rel,1),el=$('holeOut');
- el.innerHTML=(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
+ el.innerHTML='<canvas class="hole-out-ball" width="72" height="72" aria-hidden="true"></canvas>'+(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
   +`<strong class="hole-out-name">${escape(label.name)}</strong>`
   +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`;
  // Restart the animation even when the banner is already up: hidden, reflow, shown.
  el.hidden=true;void el.offsetWidth;el.hidden=false;
+ spinHoleOutBall(el.querySelector('.hole-out-ball'),seatLooks(seat).ball);
  clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
+}
+// THE CLOSE-UP (spec 7.3): the golfer's ball beside the score, turning slowly
+// while the banner is up -- drawn from the finish's own rule a frame at a time,
+// 72 pixels square, so it costs a few thousand pixel writes a frame and no 3D
+// render. Stops when the banner goes. PLACED: a turn every 4 s.
+function spinHoleOutBall(canvas,finish){
+ if(!canvas)return;const ctx=canvas.getContext('2d'),size=canvas.width,t0=performance.now();
+ const draw=now=>{if(!canvas.isConnected||canvas.closest('[hidden]'))return;
+  ctx.putImageData(new ImageData(ballPixels(finish,size,((now-t0)/4000)%1),size,size),0,0);requestAnimationFrame(draw);};
+ draw(t0);
 }
 function renderResult(event){
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
@@ -3118,6 +3159,7 @@ function groupEditor(hostId,start,onChange){
   // fairway, with nothing on screen tying it to a name.
   host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
    +`<span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>`
+   +(p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):'')
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)} · Level ${levelOf(q.xp).level}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
@@ -3569,6 +3611,23 @@ function profileCard(r){
   +`<span class="course-when">${profileWhen(r.started)}${tags}</span></div>`
   +`<div class="course-card-actions"><button class="secondary" data-replay-course="${escape(r.id)}"${tip}><i data-lucide="rotate-ccw"></i> Replay this course</button><button class="secondary" data-remove-round="${escape(r.id)}" aria-label="Remove ${escape(r.course?.name||'this round')} from the history">Remove</button></div></div>`;
 }
+// THE LOOK (Phase 5): the ball finishes, tracers and titles in the reward
+// table, the ones earned to put on and the rest shown with the level that
+// brings them. One kind at a time, on tabs.
+let lookTab='ball';
+const TRACER_SWATCH=id=>{const st=TRACERS[id],c=Array.isArray(st.colours)?st.colours:['#f3e3b0'];
+ return st.dash?`repeating-linear-gradient(90deg,${c[0]} 0 10px,transparent 10px 16px)`:c.length>1?`linear-gradient(90deg,${c.join(',')})`:c[0];};
+function lookPicker(profile){
+ const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${k==='ball'?'Ball':k==='tracer'?'Tracer':'Title'}</button>`;
+ const item=(r,inner)=>{const has=r.level<=lv,on=look[r.kind]===r.id;
+  return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${r.kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
+ let body;
+ if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,`<i class="tracer-swatch${TRACERS[r.id].colours==='seat'?' seat':''}${TRACERS[r.id].dash?' dash':''}" style="background:${TRACER_SWATCH(r.id)}"></i>`)).join('')}</div><p class="research-label">Your own shots fly in your tracer. At the end of a hole every line goes back to its golfer's colour and keeps its shape.</p>`;
+ else if(lookTab==='title'){const titles=rewardsOf('title');
+  body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option>${titles.map(r=>`<option value="${r.id}" ${r.level>lv?'disabled':''} ${look.title===r.id?'selected':''}>${escape(r.name)}${r.level>lv?` (level ${r.level})`:''}</option>`).join('')}</select></label>`;}
+ else body=`<div class="look-grid balls">${rewardsOf('ball').map(r=>item(r,`<img class="ball-avatar" src="${ballPicture(r.id)}" alt="">`)).join('')}</div>`;
+ return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${WEARABLE.map(tab).join('')}</div>${body}`;
+}
 function renderProfile(content){
  if(!profiles){content.innerHTML='<p>Nobody has signed the card yet.</p><button class="primary" id="profileStart">Enter your name</button>';$('profileStart').onclick=()=>{closePanel();showWelcome();};return;}
  const profile=findProfile(profiles,viewingProfile)||mainProfile(profiles),isMain=profile.id===profiles.main;
@@ -3587,10 +3646,10 @@ function renderProfile(content){
  // Main first, then everyone else in the order they joined.
  const everyone=[mainProfile(profiles),...profiles.profiles.filter(p=>p.id!==profiles.main)];
  const strip=everyone.length>1?`<div class="panel-tabs profile-switch" role="tablist" aria-label="Players">${everyone.map(p=>
-  `<button class="panel-tab${p.id===profile.id?' active':''}" role="tab" aria-selected="${p.id===profile.id}" data-view-profile="${p.id}">${escape(p.name)}${p.id===profiles.main?' <small>main</small>':''}</button>`).join('')}</div>`:'';
+  `<button class="panel-tab${p.id===profile.id?' active':''}" role="tab" aria-selected="${p.id===profile.id}" data-view-profile="${p.id}">${ballAvatar(p,'tiny')}${escape(p.name)}${p.id===profiles.main?' <small>main</small>':''}</button>`).join('')}</div>`:'';
  const head=renamingProfile
   ?`<div class="profile-rename"><label class="field">Name<input id="profileNameInput" maxlength="${MAX_PLAYER_NAME}" value="${escape(profile.name)}"></label><div class="course-card-actions"><button class="secondary" id="profileNameSave">Save name</button><button class="secondary" id="profileNameCancel">Cancel</button></div><p class="field-error" id="profileError"></p></div>`
-  :`<div class="profile-id"><span class="profile-avatar" aria-hidden="true">${escape(profile.name.slice(0,1).toUpperCase())}</span><div><h3>${escape(profile.name)}${isMain?' <em class="profile-tag counts">Main profile</em>':''}</h3><small>Playing since ${profileWhen(profile.created)} · ${s.roundsPlayed} round${s.roundsPlayed===1?'':'s'} · ${s.holes} hole${s.holes===1?'':'s'}</small>`
+  :`<div class="profile-id">${ballAvatar(profile,'profile-avatar')}<div><h3>${escape(profile.name)}${isMain?' <em class="profile-tag counts">Main profile</em>':''}</h3>${(t=>t?`<em class="golfer-title">${escape(t)}</em>`:'')(titleName(looksOf(profile).title))}<small>Playing since ${profileWhen(profile.created)} · ${s.roundsPlayed} round${s.roundsPlayed===1?'':'s'} · ${s.holes} hole${s.holes===1?'':'s'}</small>`
    +`<div class="profile-actions">${isMain?'':`<button class="secondary" id="profileMakeMain">Make main profile</button><button class="secondary" id="profileDelete">Remove ${escape(profile.name)}</button>`}</div><p class="field-error" id="profileError"></p></div>`
    +`<button class="small-icon" id="profileRename" aria-label="Change ${escape(profile.name)}'s name" title="Change the name"><i data-lucide="pencil"></i></button></div>`;
  const lv=levelOf(profile.xp);
@@ -3599,6 +3658,7 @@ function renderProfile(content){
  content.innerHTML=`<div class="profile">${strip}`
   +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
   +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
+  +lookPicker(profile)
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))
@@ -3615,6 +3675,15 @@ function renderProfile(content){
  $('profilesExport').onclick=()=>{try{download('fairway-players.json',exportProfiles(profiles),'application/json');toast(`Saved ${profiles.profiles.length} player${profiles.profiles.length===1?'':'s'} to a backup file.`);}catch(e){fail(e);}};
  $('profilesImport').onclick=()=>pickBackup(r=>{viewingProfile=profiles.main;openPanel('profile');toast(restoreSummary(r));},e=>{const el=$('backupError');if(el)el.textContent=e.message;});
  content.querySelectorAll('[data-view-profile]').forEach(b=>b.onclick=()=>{viewingProfile=b.dataset.viewProfile;renamingProfile=false;openPanel('profile');});
+ // Putting on a ball, a tracer or a title: saved to the golfer, and on the
+ // course at once if they are up.
+ content.querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{
+  const [kind,item]=b.dataset.wear.split(':');
+  try{setProfileWorn(profiles,profile.id,kind,item,levelOf(profile.xp).level);}catch(e){fail(e);return;}
+  lookTab=kind;if(course&&round)updateHUD();openPanel('profile');
+ });
+ if($('wearTitle'))$('wearTitle').onchange=e=>{try{setProfileWorn(profiles,profile.id,'title',e.target.value,levelOf(profile.xp).level);}catch(err){fail(err);return;}if(course&&round)updateHUD();openPanel('profile');};
+ content.querySelectorAll('[data-look-tab]').forEach(b=>b.onclick=()=>{lookTab=b.dataset.lookTab;openPanel('profile');});
  content.querySelectorAll('[data-replay-course]').forEach(b=>b.onclick=()=>replayFromHistory(profile,b.dataset.replayCourse));
  // Two presses, like removing a player: a round's scores cannot be put back.
  content.querySelectorAll('[data-remove-round]').forEach(b=>b.onclick=()=>{
@@ -4528,7 +4597,7 @@ function renderPanel(name,content){
   // any hole but the one under the player's feet.
   const teeRows=round.endless?[]:enabledTees(settings).map(t=>({name:t,yards:world.holes.map(h=>Math.round(h.tees[t].yards))}));
   const hcol=h=>from+h+1;
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${round.mode==='scramble'?'Team scramble':round.mode==='match'?'Best-ball match':'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${round.mode!=='stroke'?' · '+p.team:''}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${round.mode==='scramble'?'Team scramble':round.mode==='match'?'Best-ball match':'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${round.mode!=='stroke'?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){

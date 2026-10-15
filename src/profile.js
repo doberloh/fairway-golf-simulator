@@ -24,6 +24,7 @@
 // with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
 import {validateBag, stockBag} from './clubs.js';
+import {WEARABLE, reward, isUnlocked} from './rewards.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
@@ -141,9 +142,16 @@ export function normaliseProfile(d) {
  const xpLog = {};
  if (d.xpLog && typeof d.xpLog === 'object') for (const [k, v] of Object.entries(d.xpLog)) if (typeof k === 'string' && k.length <= 120 && Number.isFinite(v?.xp) && v.xp > 0) xpLog[k] = {xp: Math.round(v.xp), at: finite(v.at), ...(Number.isInteger(v.stroke) ? {stroke: v.stroke} : {})};
  const extra = {};
- if (typeof d.xpDaily === 'string' && /^d{4}-d{2}-d{2}$/.test(d.xpDaily)) extra.xpDaily = d.xpDaily;
+ if (typeof d.xpDaily === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d.xpDaily)) extra.xpDaily = d.xpDaily;
  if (typeof d.xpRange?.day === 'string' && Number.isFinite(d.xpRange.xp)) extra.xpRange = {day: d.xpRange.day, xp: d.xpRange.xp};
  if (d.xpNew === true) extra.xpNew = true;
+ // WHAT THEY WEAR (Phase 5): a ball finish, a tracer and a title, by id from
+ // the reward table. Kept whether or not it is earned yet -- rewards.js
+ // `wornItem` decides what shows -- and dropped when the table has no such
+ // thing. Absent reads as the starting look, so it needs no migration.
+ const worn = {};
+ for (const kind of WEARABLE) if (typeof d.worn?.[kind] === 'string' && (d.worn[kind] === '' && kind === 'title' || reward(kind, d.worn[kind]))) worn[kind] = d.worn[kind];
+ if (Object.keys(worn).length) extra.worn = worn;
  return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
@@ -212,6 +220,17 @@ export function renameProfile(store, id, name) {
 // one does. Listed here rather than imported so the profile store does not load
 // the ball model.
 export const METER_DIFFICULTIES = ['easy', 'normal', 'hard'];
+// Put on a ball finish, a tracer or a title (the empty title is none). Only
+// what the golfer has earned; the table says what that is.
+export function setProfileWorn(store, id, kind, item, level) {
+ const p = findProfile(store, id);
+ if (!p) return null;
+ if (!WEARABLE.includes(kind)) throw Error('That cannot be worn.');
+ if (!(kind === 'title' && item === '') && !isUnlocked(kind, item, level)) throw Error('Not earned yet.');
+ p.worn = {...(p.worn || {}), [kind]: item};
+ storeProfiles(store);
+ return p;
+}
 export const meterDifficulty = p => p?.meter?.difficulty || 'normal';
 export function setProfileMeter(store, id, difficulty) {
  if (!METER_DIFFICULTIES.includes(difficulty)) throw Error('Choose Easy, Normal or Hard.');

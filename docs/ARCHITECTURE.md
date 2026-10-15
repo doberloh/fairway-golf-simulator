@@ -83,6 +83,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
+- `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
 **Drawing it**
@@ -173,6 +174,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
+- A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
 
 **Physics**
 - Check apex, descent and hang time, not only carry, whenever the aerodynamics move. [CHECK APEX]

@@ -277,3 +277,32 @@ test('a round removed from the history leaves the scoring and the handicap, and 
  removeRound(profile, 'gone'); storeProfiles(store);
  assert.deepEqual(findProfile(loadProfiles(), profile.id).removed, ['gone']);
 });
+
+// THE DAILY BONUS'S DAY SURVIVES A RELOAD. Its pattern had lost its
+// backslashes, so the day was dropped on every load and the first-round-today
+// bonus could be paid again after one (found 14 October 2026).
+test('the day of the daily XP bonus is kept across a reload', () => {
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Dana');
+ profile.xpDaily = '2026-10-14'; storeProfiles(store);
+ assert.equal(findProfile(loadProfiles(), profile.id).xpDaily, '2026-10-14');
+ profile.xpDaily = 'yesterday'; storeProfiles(store);
+ assert.equal(findProfile(loadProfiles(), profile.id).xpDaily, undefined);
+});
+
+// WHAT A GOLFER WEARS (Phase 5): kept by id, only what the table knows, and
+// put on only once earned.
+test('a golfer wears an earned finish, tracer and title, and they are kept', async () => {
+ const {setProfileWorn} = await import('../src/profile.js');
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Wren');
+ assert.throws(() => setProfileWorn(store, profile.id, 'tracer', 'sky', 1), /Not earned/);
+ setProfileWorn(store, profile.id, 'tracer', 'sky', 2);
+ setProfileWorn(store, profile.id, 'ball', 'red-stripe', 3);
+ setProfileWorn(store, profile.id, 'title', '', 1);
+ assert.throws(() => setProfileWorn(store, profile.id, 'badge', 'rookie', 50), /cannot be worn/);
+ const back = findProfile(loadProfiles(), profile.id);
+ assert.deepEqual(back.worn, {tracer: 'sky', ball: 'red-stripe', title: ''});
+ const odd = normalise({version: PROFILE_VERSION, main: 'x', profiles: [{id: 'x', name: 'Odd', worn: {ball: 'plaid', tracer: 'comet', title: 7}}]});
+ assert.deepEqual(odd.profiles[0].worn, {tracer: 'comet'});
+});

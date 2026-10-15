@@ -772,6 +772,14 @@ const JOURNEYS = [
    await t.step('putt out', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.putt();
+     // THE BALL CLOSE UP in the hole-out banner (Phase 5): drawn, turning, and
+     // pictured for a look.
+     if (await t.page.waitForSelector('#holeOut:not([hidden]) .hole-out-ball', {timeout: 2500}).then(() => true, () => false)) {
+      await t.page.waitForTimeout(400);
+      const drawn = await t.page.evaluate(() => { const c = document.querySelector('#holeOut .hole-out-ball'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) n += d[i] > 200; return n / (c.width * c.height); });
+      if (drawn < .5) throw new Error(`the ball in the hole-out banner is ${(drawn * 100).toFixed(0)}% drawn`);
+      await t.page.locator('#holeOut').screenshot({path: 'bench/shots/smoke/hole-out.png'}).catch(() => {});
+     }
      // The XP popup comes up as the hole is paid (14 October 2026): caught here,
      // while it is on screen, and pictured for a look.
      if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 6000}).then(() => true, () => false))
@@ -887,6 +895,20 @@ const JOURNEYS = [
     await t.page.waitForTimeout(5000);
     const late = await t.page.evaluate(() => window.__lateLit);
     if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+   });
+   // THE FIRST SHOT'S TRACER (Phase 5). The tracer styles moved every line onto
+   // one program with per-vertex colour and the dash switch; it is not the aim
+   // line's program any more, and nothing on screen at load draws it -- so it
+   // would be built on the first shot of every course, a frozen frame as the
+   // ball leaves. A stand-in now builds it behind the loading screen.
+   await t.step('the first shot, its tracer and its glints build no shader', async () => {
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the first shot to start', 5 * SLOW);
+    await t.page.waitForTimeout(2500);
+    const late = await t.page.evaluate(() => window.__lateAny);
+    if (late.length) throw new Error(`${late.length} shader(s) built during the first shot: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
    });
    await t.step('turning a full circle, toward the sun and away, builds no shader of any kind', async () => {
     // From above the first fairway, looking up a little: the sun is in shot
@@ -1086,6 +1108,21 @@ const JOURNEYS = [
     await t.press('Newcomer');
     await t.until(async () => /Make main profile/.test(await t.page.textContent('#drawerContent')), "the newcomer's page", 5 * SLOW);
     await t.press('Tester main');
+   });
+   // THE LOOK (Phase 5): the ball as the picture, the starting ball and tracer
+   // on, what is not earned shown with its level, and an earned one put on and
+   // kept.
+   await t.step('My profile: the look picker shows what is earned and saves a choice', async () => {
+    if (!await t.page.evaluate(() => !!document.querySelector('#drawerContent .profile-id img.ball-avatar'))) throw new Error('no ball picture on the profile');
+    await t.page.click('[data-look-tab="tracer"]');
+    await t.until(() => t.page.evaluate(() => !!document.querySelector('.look-item.on')), 'the tracer list', 5 * SLOW);
+    const view = await t.page.evaluate(() => ({on: document.querySelector('.look-item.on')?.textContent, locked: document.querySelectorAll('.look-item.locked').length, open: [...document.querySelectorAll('.look-item:not(.on):not(.locked)')].map(b => b.dataset.wear)}));
+    if (!/Classic/.test(view.on || '')) throw new Error(`a new golfer wears "${view.on}", not Classic`);
+    if (view.locked < 10) throw new Error(`only ${view.locked} tracers are locked for a new golfer`);
+    if (view.open.length) {
+     await t.page.click(`[data-wear="${view.open[0]}"]`);
+     await t.until(async () => main(await stored())?.worn?.tracer === view.open[0].split(':')[1], 'the tracer to be saved', 5 * SLOW);
+    }
    });
    await t.step('Replay this course grows the same run again', async () => {
     const seed = main(await stored()).rounds[0].course.seed;
