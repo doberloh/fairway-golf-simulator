@@ -172,7 +172,10 @@ export function summaryStyle(id) {
 // A colour on a line of stops, t from 0 (the tee) to 1 (the ball); `shift`
 // slides the stops along with time and wraps.
 export function stopColour(stops, t) {
- if (stops.length === 1) return stops[0];
+ // One stop is one colour -- as numbers, like every other answer. Returned as
+ // the hex string it was, a one-colour tracer threw on every frame of its
+ // flight and froze the game after one shot (15 October 2026).
+ if (stops.length === 1) return hexRgb(stops[0]);
  const x = Math.min(1, Math.max(0, t)) * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(x)), f = x - i;
  const a = hexRgb(stops[i]), b = hexRgb(stops[i + 1]);
  return a.map((v, k) => v + (b[k] - v) * f);

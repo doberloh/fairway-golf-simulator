@@ -58,6 +58,9 @@ test('the summary keeps a tracer\'s colours and shape', () => {
  for (const [id, st] of Object.entries(TRACERS)) assert.ok(Array.isArray(st.colours) && st.colours.length, id + ' has no colours of its own');
  assert.equal(tracerStyle('nonsense'), TRACERS.classic);
  assert.deepEqual(stopColour(['#000000', '#ffffff'], .5).map(v => +v.toFixed(3)), [.5, .5, .5]);
+ // A one-colour tracer: numbers, not the hex string (it froze the game).
+ assert.deepEqual(stopColour(['#ff0000'], .3), [1, 0, 0]);
+ for (const [id, st] of Object.entries(TRACERS)) assert.ok(Array.isArray(stopColour(st.colours, .5)), id + ' gives no colour');
  assert.deepEqual(stopColour(['#ff0000', '#0000ff'], 2), [0, 0, 1]);
 });
 
