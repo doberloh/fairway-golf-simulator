@@ -1257,16 +1257,25 @@ export const XP_SOUNDS={
   A:{name:'Two-coin chime',play:x=>{x.ring(0,[[midi(83),.18,1],[midi(83)*2.76,.05,.2]],{amp:.13});x.ring(.07,[[midi(88),.28,1],[midi(88)*2.76,.07,.2]],{amp:.14});}},
   B:{name:'Soft pop and sparkle',play:x=>{x.thump(0,320,.02,.9,1.6);for(const dt of [.04,.08,.12])x.ring(dt,[[midi(pick([96,100,103])),.08,1]],{amp:.09});}},
   C:{name:'Wood tick pair',play:x=>{x.ring(0,[[1250,.04,1],[3200,.012,.3]],{amp:.17});x.ring(.075,[[1650,.05,1],[4100,.012,.3]],{amp:.17});}},
+  D:{name:'Single bright ping',play:x=>x.ring(0,[[midi(96),.35,1],[midi(96)*2.01,.08,.18]],{amp:.25})},
+  E:{name:'Quick three-note pluck',play:(x,t,K,lab,dest)=>{[[72,0],[76,.06],[79,.12]].forEach(([n,dt])=>sung(lab,dest,t+dt,K,{contour:[midi(n)],dur:.09,amp:.13,wave:'triangle'}));}},
+  F:{name:'Glassy blip',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[1760,1860],dur:.12,amp:.12,harm:.35})},
  }},
  fill:{label:'The level bar filling',note:'Under the bar as it fills, about seven tenths of a second.',takes:{
   A:{name:'Rising shimmer',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[620,700,820,980,1180],dur:.65,amp:.1,harm:.25})},
   B:{name:'Quickening ticks',play:x=>{let dt=0,g=.11;for(let i=0;i<10;i++){x.ring(dt,[[1500+i*120,.008,1]],{amp:.18});dt+=g;g*=.82;}}},
   C:{name:'Airy sweep up',play:x=>x.hiss(0,{type:'bandpass',f:500,f2:2600,q:3,dur:.6,attack:.08,hold:.1,amp:.5})},
+  D:{name:'Low sine glide',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[300,360,450,600],dur:.65,amp:.13})},
+  E:{name:'Rattle of beads',play:x=>x.crackle(0,{dur:.65,rate:70,f:3800,q:1.2,amp:.35,tick:.003,fade:false})},
+  F:{name:'Harp run',play:x=>[67,69,72,74,76,79,81,84].forEach((n,i)=>x.ring(i*.08,[[midi(n),.25,1],[midi(n)*2,.06,.2]],{amp:.07}))},
  }},
  levelUp:{label:'Over into a new level',note:'When the bar runs over the top; the big level-up banner follows.',takes:{
   A:{name:'Marimba fanfare',play:x=>{chime(x,[72,76,79,84],.08,.07,.4);x.ring(.36,[[midi(88),.6,1],[midi(91),.6,.7]],{amp:.05});}},
   B:{name:'Bell chord',play:x=>{for(const n of [79,83,86])x.ring(0,[[midi(n),1,1],[midi(n)*2.76,.3,.25]],{amp:.05});}},
   C:{name:'Rising two-note swell',play:(x,t,K,lab,dest)=>{sung(lab,dest,t,K,{contour:[523],dur:.18,amp:.1,wave:'triangle'});sung(lab,dest,t+.16,K,{contour:[784,790],dur:.5,amp:.1,wave:'triangle',vib:.01,vibHz:5.5});}},
+  D:{name:'Little brass fanfare',play:(x,t,K,lab,dest)=>{[[67,0,.12],[72,.13,.12],[76,.26,.12],[79,.39,.45]].forEach(([n,dt,d])=>sung(lab,dest,t+dt,K,{contour:[midi(n)],dur:d,amp:.14,wave:'sawtooth',harm:.2}));}},
+  E:{name:'Sparkle cascade',play:x=>{for(let i=0;i<9;i++)x.ring(i*.055,[[midi(108-i*2),.2,1]],{amp:.06});x.ring(.5,[[midi(84),.8,1],[midi(88),.8,.6]],{amp:.05});}},
+  F:{name:'Warm gong swell',play:x=>{x.ring(0,[[196,1.4,1],[196*2.4,.7,.35],[196*5.1,.25,.12]],{amp:.18});x.hiss(.05,{type:'highpass',f:6000,dur:.9,attack:.25,amp:.03});}},
  }},
 };
 for(const e of Object.values(XP_SOUNDS))e.knobs=['level','pitch','length','bright'];

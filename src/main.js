@@ -397,8 +397,18 @@ function queueXpGain(prof,items,before,mult=1){
  else xpQueue.push({id:prof.id,name:prof.name,items:[...items],before,after:prof.xp,gained,mult});
  if(!xpTimer)xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},120);
 }
+// THE POPUP'S TIMING (the owner, 14 October 2026): its sounds one at a time,
+// never on top of each other or of the hole's own. It waits for the hole-out
+// banner -- and the score sting with it -- to finish; then the gain; a beat;
+// the fill; and on a level-up the bar stops at the top, the level-up sound plays
+// on its own, and only after it does the bar fill on into the new level.
+// PLACED: XP_FILL_AT after the gain, XP_FILL_MS a fill, XP_LEVEL_AT after a
+// fill reaches the top, XP_LEVEL_HOLD for the level-up sound to finish, and
+// XP_LINGER after the last fill. tools/sound-lab/xp.html's demo copies them.
+const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700;
 function showXpGain(){
  if(xpTimer||!xpQueue.length)return;
+ if($('holeOut')&&!$('holeOut').hidden){xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},300);return;}
  const g=xpQueue.shift(),el=$('xpGain');if(!el)return;g.shown=true;
  const from=levelOf(g.before),to=levelOf(g.after),pct=l=>Math.round(l.into/l.need*100);
  const multNote=g.mult!==1?`<li class="xp-mult"><span>${g.mult>1?'Hard':'Easy'} ×${g.mult}</span></li>`:'';
@@ -413,17 +423,20 @@ function showXpGain(){
  const bar=el.querySelector('.xp-bar b'),badge=el.querySelector('.level-badge');
  const steps=[];for(let l=from.level;l<to.level;l++)steps.push({w:100,next:l+1});steps.push({w:pct(to)});
  let i=0;const run=()=>{const s=steps[i++];if(!s)return;
-  bar.style.transition='width .7s cubic-bezier(.3,.7,.3,1)';bar.style.width=s.w+'%';gameAudio?.xpSound?.('fill');
-  if(s.next)setTimeout(()=>{badge.textContent=s.next;gameAudio?.xpSound?.('levelUp');bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},760);};
- setTimeout(run,260);
- xpTimer=setTimeout(()=>{el.hidden=true;xpTimer=null;showXpGain();},2600+steps.length*780);
+  bar.style.transition=`width ${XP_FILL_MS}ms cubic-bezier(.3,.7,.3,1)`;bar.style.width=s.w+'%';gameAudio?.xpSound?.('fill');
+  if(s.next)setTimeout(()=>{badge.textContent=s.next;el.classList.add('levelled');gameAudio?.xpSound?.('levelUp');
+   setTimeout(()=>{bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},XP_LEVEL_HOLD);},XP_FILL_MS+XP_LEVEL_AT);};
+ el.classList.remove('levelled');
+ setTimeout(run,XP_FILL_AT);
+ const levels=steps.length-1;
+ xpTimer=setTimeout(()=>{el.hidden=true;xpTimer=null;showXpGain();showLevelUp();},XP_FILL_AT+steps.length*XP_FILL_MS+levels*(XP_LEVEL_AT+XP_LEVEL_HOLD)+XP_LINGER);
 }
 // THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
 const levelUps=[];let levelUpTimer=null;
 function queueLevelUp(prof,level){levelUps.push({name:prof.name,level});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
 function showLevelUp(){
  if(levelUpTimer||!levelUps.length)return;
- if($('holeOut')&&!$('holeOut').hidden){levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},500);return;}
+ if(($('holeOut')&&!$('holeOut').hidden)||($('xpGain')&&!$('xpGain').hidden)||xpQueue.length){levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},500);return;}
  const u=levelUps.shift(),el=$('levelUp');if(!el)return;
  el.innerHTML=`<small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}</span>`;
  el.hidden=true;void el.offsetWidth;el.hidden=false;

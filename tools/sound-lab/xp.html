@@ -46,13 +46,13 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <body>
 <main>
 <h1>XP sounds</h1>
-<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1. None of these play in the game yet; the popup itself is in the game, silent.</p>
+<p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1, with three more takes each (D, E, F). None of these play in the game yet; the popup itself is in the game, silent.</p>
 <div class="note"><p><b>What this is.</b> Whenever a golfer earns XP a popup comes up with what earned it and their level bar filling. Three sounds go with it: <b>the gain</b> as it comes up, <b>the fill</b> under the bar, and <b>a new level</b> when the bar runs over the top. Each has three takes and sliders.</p>
-<p>Try them together with the demo just below, which plays the popup the way the game does with the takes you have picked. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
+<p>Try them together with the demo just below, which plays the popup the way the game does with the takes you have picked. <b>The order is the game's:</b> the hole's own score sting first (the marimba you already chose), and the popup only once that has finished; then the gain, a beat, the bar filling; and on a level-up the bar stops at the top, the level-up sound plays by itself, and only then does the bar fill on. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
 <div class="row"><button class="act" id="start">Start sound</button></div>
 
 <h2>Demo</h2>
-<div class="row"><button class="act" id="demoBirdie">A birdie hole</button><button class="act" id="demoLevel">A hole that levels up</button></div>
+<div class="row"><button class="act" id="demoShot">A shot on the number</button><button class="act" id="demoBirdie">A birdie hole</button><button class="act" id="demoLevel">An eagle that levels up</button></div><p class="muted" id="demoSays"></p>
 <div id="stage"><div class="pop" id="pop" hidden></div></div>
 
 <h2>The sounds</h2>
@@ -95,24 +95,35 @@ for(const [id,E] of Object.entries(XP_SOUNDS)){
  $('#cards').append(c);
 }
 
-// THE DEMO: the game's popup, timed as the game times it (main.js showXpGain):
-// the gain as it comes up, the fill 0.26 s later over 0.7 s, and a new level as
-// the bar runs over the top.
+// THE DEMO: the game's popup, timed as the game times it (main.js showXpGain,
+// XP_FILL_AT and the rest -- keep the two in step): after a hole the score sting
+// and its banner first (2.7 s), then the gain, the fill 0.65 s later over 0.7
+// s, and on a level-up a pause at the top, the level-up sound alone for 1.4 s,
+// and the fill on into the new level.
+const XP_FILL_AT=650,XP_FILL_MS=700,XP_LEVEL_AT=300,XP_LEVEL_HOLD=1400,XP_LINGER=1700,HOLE_OUT=2700;
 let busy=false;
-function demo(items,fromLevel,fromPct,toPct,levels){
+const says=t=>$('#demoSays').textContent=t;
+function demo(items,fromLevel,fromPct,toPct,levels,sting){
  if(busy)return;busy=true;ensure();
+ if(sting){score(lab,sting);says(`The hole-out sting (${SCORES[sting].label}) and its banner first...`);}
+ setTimeout(()=>popup(items,fromLevel,fromPct,toPct,levels),sting?HOLE_OUT:0);
+}
+function popup(items,fromLevel,fromPct,toPct,levels){
+ says('The XP popup.');
  const pop=$('#pop'),total=items.reduce((a,i)=>a+i[1],0);
  pop.innerHTML=`<div class="top"><b>+${total} XP</b></div><ul>${items.map(([l,x])=>`<li><span>${l}</span><b>+${x}</b></li>`).join('')}</ul><div class="lvl"><i class="badge">${fromLevel}</i><span class="bar"><b style="width:${fromPct}%"></b></span></div>`;
  pop.hidden=false;play('gain');
  const bar=pop.querySelector('.bar b'),badge=pop.querySelector('.badge');
  const steps=[];for(let i=0;i<levels;i++)steps.push({w:100,next:fromLevel+i+1});steps.push({w:toPct});
- let n=0;const run=()=>{const s=steps[n++];if(!s)return;bar.style.transition='width .7s cubic-bezier(.3,.7,.3,1)';bar.style.width=s.w+'%';play('fill');
-  if(s.next)setTimeout(()=>{badge.textContent=s.next;play('levelUp');bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},760);};
- setTimeout(run,260);
- setTimeout(()=>{pop.hidden=true;busy=false;},2600+steps.length*780);
+ let n=0;const run=()=>{const st=steps[n++];if(!st)return;bar.style.transition=`width ${XP_FILL_MS}ms cubic-bezier(.3,.7,.3,1)`;bar.style.width=st.w+'%';play('fill');
+  if(st.next)setTimeout(()=>{badge.textContent=st.next;play('levelUp');says('Level up -- the sound plays on its own.');
+   setTimeout(()=>{bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},XP_LEVEL_HOLD);},XP_FILL_MS+XP_LEVEL_AT);};
+ setTimeout(run,XP_FILL_AT);
+ setTimeout(()=>{pop.hidden=true;busy=false;says('');},XP_FILL_AT+steps.length*XP_FILL_MS+levels*(XP_LEVEL_AT+XP_LEVEL_HOLD)+XP_LINGER);
 }
-$('#demoBirdie').onclick=()=>demo([['Finished the hole',10],['Birdie',30],['Fairway hit',5]],3,20,55,0);
-$('#demoLevel').onclick=()=>demo([['Finished the hole',10],['Eagle',80],['Green in regulation',5]],3,80,25,1);
+$('#demoShot').onclick=()=>demo([['On the number',5]],3,40,45,0,null);
+$('#demoBirdie').onclick=()=>demo([['Finished the hole',10],['Birdie',30],['Fairway hit',5]],3,20,55,0,'birdie');
+$('#demoLevel').onclick=()=>demo([['Finished the hole',10],['Eagle',80],['Green in regulation',5]],3,80,25,1,'eagle');
 
 $('#copy').onclick=async()=>{
  const knobs=Object.fromEntries(Object.entries(saved.knobs).filter(([,v])=>Object.keys(v).length));

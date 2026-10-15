@@ -27,11 +27,12 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Three
-  takes each for the gain, the bar filling and a new level, in `src/sound.js`
+- [ ] **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Six
+  takes each (three more added on the owner's ask) for the gain, the bar filling and a new level, in `src/sound.js`
   (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
-  `docs/reports/sounds/xp.html` (local), with a demo of the popup. All render
-  between -13 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
+  `docs/reports/sounds/xp.html` (local), with a demo of the popup that plays
+  the hole-out sting first and spaces the sounds as the game does. All render
+  between -12 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
   which is silent until `XP_FINAL` holds the picks; then extend
   tests/sound.test.mjs as for the meter sounds.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is

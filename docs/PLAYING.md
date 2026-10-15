@@ -282,7 +282,7 @@ moves a ball anywhere with no penalty, and it waits until relief is taken.
 
 **Levels** come from XP: 400 for level 2, 50 more for each level after that, and from level 50 on every level costs 2,850 -- they never stop. Your level is the small gold number beside your name on the score chips and in the group editor, and on **My profile** with how far you are to the next. When you go up a level a banner says so, after the hole's own banner.
 
-**Every time you earn XP a small popup comes up at the top of the screen**: the total, each thing that earned it (*Birdie +30*, *On the number +5*), the Easy or Hard multiplier if one applied, and your level bar filling from where it was to where it is now, running over into the next level when you cross one. Gains made together -- the putt that holed and the hole it finished -- are one popup. Its sounds are still being chosen, so for now it is silent.
+**Every time you earn XP a small popup comes up at the top of the screen**: the total, each thing that earned it (*Birdie +30*, *On the number +5*), the Easy or Hard multiplier if one applied, and your level bar filling from where it was to where it is now, running over into the next level when you cross one. Gains made together -- the putt that holed and the hole it finished -- are one popup, and it waits for the hole's own banner and score sting to finish so the two never sound together. On a level-up the bar stops at the top, the level-up sound plays by itself, and then it fills on into the new level; the big level-up banner follows once the popup has gone. Its sounds are still being chosen, so for now it is silent.
 
 Golfers who were playing before XP arrived start at level 1 with nothing back-filled from their history; a note says so once.
 
