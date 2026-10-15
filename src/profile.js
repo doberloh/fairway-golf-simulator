@@ -24,7 +24,7 @@
 // with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
 import {validateBag, stockBag} from './clubs.js';
-import {WEARABLE, reward, isUnlocked} from './rewards.js';
+import {WEARABLE, REWARD_KIND, reward, isUnlocked} from './rewards.js';
 import {normaliseProgress, normaliseEarned} from './achievements.js';
 import {normaliseWeekly} from './weekly.js';
 import {normaliseRecords} from './challenges.js';
@@ -157,7 +157,7 @@ export function normaliseProfile(d) {
  // `wornItem` decides what shows -- and dropped when the table has no such
  // thing. Absent reads as the starting look, so it needs no migration.
  const worn = {};
- for (const kind of WEARABLE) if (typeof d.worn?.[kind] === 'string' && (d.worn[kind] === '' && kind === 'title' || reward(kind, d.worn[kind]))) worn[kind] = d.worn[kind];
+ for (const kind of WEARABLE) if (typeof d.worn?.[kind] === 'string' && (d.worn[kind] === '' && (kind === 'title' || kind === 'frame') || reward(REWARD_KIND[kind] || kind, d.worn[kind]))) worn[kind] = d.worn[kind];
  if (Object.keys(worn).length) extra.worn = worn;
  // ACHIEVEMENTS (Phase 7): which are earned and when, and what they count
  // across rounds (achievements.js). Absent reads as none, so no migration.
@@ -244,7 +244,7 @@ export function setProfileWorn(store, id, kind, item, level) {
  const p = findProfile(store, id);
  if (!p) return null;
  if (!WEARABLE.includes(kind)) throw Error('That cannot be worn.');
- if (!(kind === 'title' && item === '') && !isUnlocked(kind, item, level, p.achievements)) throw Error('Not earned yet.');
+ if (!(item === '' && (kind === 'title' || kind === 'frame')) && !isUnlocked(REWARD_KIND[kind] || kind, item, level, p.achievements)) throw Error('Not earned yet.');
  p.worn = {...(p.worn || {}), [kind]: item};
  storeProfiles(store);
  return p;

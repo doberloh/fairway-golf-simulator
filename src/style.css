@@ -1484,3 +1484,32 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 .challenge-results li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--field);font-size:12.5px}
 .challenge-results li span:last-child{margin-left:auto;color:var(--ink-dim)}
 .challenge-results em{color:#d9c27a;font-style:normal}
+
+/* PHASE 6. FRAMES: a ring of the badge's metal round the ball picture -- the
+   image's padding over a background of it. Fairway Master's turns. */
+.ball-avatar.framed{padding:3px;background:var(--frame,#d9c27a)}
+.ball-avatar.framed.tiny{padding:1.5px}
+.ball-avatar.framed[data-rainbow]{background:conic-gradient(from var(--frame-turn,0deg),#ff4d4d,#ffa64d,#ffe74d,#5ee05e,#4dc3ff,#7a6cff,#d36cff,#ff4d4d);animation:frame-turn 6s linear infinite}
+@property --frame-turn{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes frame-turn{to{--frame-turn:360deg}}
+@media (prefers-reduced-motion:reduce){.ball-avatar.framed[data-rainbow]{animation:none}}
+/* METER SKINS: the meter reads its colours from custom properties a skin sets
+   (main.js applyMeterSkin); unset, they fall back to the Classic look. The
+   zone, the perfect band and the target keep their colours' roles in every
+   skin, and a target out of range still turns red. */
+.swing-meter .sm-bar{background:var(--sm-track,linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.14)));border-color:var(--sm-edge,var(--glass-line))}
+.swing-meter[data-rainbow] .sm-bar{border:1px solid transparent;background:var(--sm-track) padding-box,linear-gradient(90deg,#ff4d4d,#ffa64d,#ffe74d,#5ee05e,#4dc3ff,#7a6cff,#d36cff) border-box}
+.swing-meter .sm-zone{background:var(--sm-zone,rgba(240,198,116,.4))}
+.swing-meter .sm-perfect{background:var(--sm-perfect,rgba(110,214,135,.95))}
+.swing-meter .sm-marker{background:var(--sm-marker,#fff)}
+.swing-meter .sm-target:not(.out){border-left-color:var(--sm-target,#8fd3ff)}
+.swing-meter .sm-target:not(.out)::before{border-top-color:var(--sm-target,#8fd3ff)}
+.swing-meter.perfect .sm-hint{color:var(--sm-flash,#7ee39a)}
+.skin-swatch{position:relative;display:block;width:100%;height:14px;border-radius:4px;background:var(--sm-track);border:1px solid var(--sm-edge);margin:4px 0 2px;overflow:hidden}
+.skin-swatch b{position:absolute;top:0;bottom:0}
+.skin-swatch .z{left:46%;width:30%;background:var(--sm-zone)}
+.skin-swatch .p{left:58%;width:7%;background:var(--sm-perfect)}
+.skin-swatch .t{left:70%;width:3px;background:var(--sm-target)}
+/* FLOURISHES: a 2D overlay over the course, only while one plays. */
+.flourish{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+.flourish[hidden]{display:none}

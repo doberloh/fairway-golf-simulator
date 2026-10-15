@@ -24,7 +24,8 @@ import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
-import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES} from './rewards.js';
+import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor} from './rewards.js';
+import {playFlourish} from './flourishes.js';
 import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,skins,recordChallenge,feetText} from './challenges.js';
 import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
@@ -390,7 +391,7 @@ function syncProfile(){
 // hole -- wears the starting look.
 function looksOf(prof){
  const level=prof?levelOf(prof.xp).level:1,w=prof?.worn,e=prof?.achievements;
- return {level,ball:wornItem(w,'ball',level),tracer:wornItem(w,'tracer',level),title:wornItem(w,'title',level,e)};
+ return {level,ball:wornItem(w,'ball',level),tracer:wornItem(w,'tracer',level),title:wornItem(w,'title',level,e),frame:wornItem(w,'frame',level),skin:wornItem(w,'skin',level)};
 }
 const seatLooks=seat=>looksOf(profileOf(round?.players?.[seat]));
 // Pay newly earned achievements through the ledger (one key each, so never
@@ -423,6 +424,14 @@ function payAchievements(prof,ids,items){
  }
 }
 const titleName=id=>id?reward('title',id)?.name||'':'';
+// THE METER SKIN (Phase 6, rewards.js METER_SKINS): colours set on the meter
+// as custom properties its stylesheet reads; zones and timing untouched.
+function applyMeterSkin(id){
+ const el=$('swingMeter');if(!el||el.dataset.skin===id)return;
+ const s=meterSkin(id);el.dataset.skin=id;
+ for(const [k,v] of Object.entries({track:s.track,edge:s.edge,zone:s.zone,perfect:s.perfect,marker:s.marker,target:s.target,flash:s.flash}))el.style.setProperty('--sm-'+k,v);
+ el.toggleAttribute('data-rainbow',!!s.rainbow);
+}
 // THE BALL AS A PICTURE: the finish drawn face on (ball-finishes.js
 // ballPixels, the rule the 3D ball is painted from), as an image, kept per
 // finish and size. The profile picture everywhere the golfer is shown.
@@ -432,7 +441,11 @@ function ballPicture(id,size=96){
  if(!ballPics.has(k)){const c=document.createElement('canvas');c.width=c.height=size;c.getContext('2d').putImageData(new ImageData(ballPixels(id,size),size,size),0,0);ballPics.set(k,c.toDataURL());}
  return ballPics.get(k);
 }
-const ballAvatar=(prof,cls='')=>`<img class="ball-avatar${cls?' '+cls:''}" src="${ballPicture(looksOf(prof).ball)}" alt="" aria-hidden="true">`;
+// THE FRAME (Phase 6): a ring of the badge's metal round the picture -- the
+// image's own padding over a background of it. Fairway Master's moves.
+const frameAttr=id=>{const f=FRAMES[id]||FRAMES.rookie;return ` style="--frame:conic-gradient(from 210deg,${f.from},${f.to},${f.from},${f.to},${f.from})"${f.rainbow?' data-rainbow':''}`;};
+const framedPicture=(ball,frame,cls='')=>`<img class="ball-avatar framed${cls?' '+cls:''}" src="${ballPicture(ball)}" alt="" aria-hidden="true"${frameAttr(frame)}>`;
+const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ball,l.frame,cls);};
 // THE CHALLENGES IN PLAY (Phase 7; challenges.js for the rules).
 //
 // START. Grown like any round on the chosen course -- the course of the week, a
@@ -662,13 +675,13 @@ const levelUps=[];let levelUpTimer=null;
 function queueLevelUp(prof,level,from=level-1){
  const got=[];for(let l=from+1;l<=level;l++)got.push(...unlocksAt(l));
  const look=looksOf(prof);
- levelUps.push({name:prof.name,level,ball:look.ball,title:titleName(look.title),got});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
+ levelUps.push({name:prof.name,level,ball:look.ball,frame:look.frame,title:titleName(look.title),got});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
 function showLevelUp(){
  if(levelUpTimer||!levelUps.length)return;
  if(($('holeOut')&&!$('holeOut').hidden)||($('xpGain')&&!$('xpGain').hidden)||xpQueue.length){levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},500);return;}
  const u=levelUps.shift(),el=$('levelUp');if(!el)return;
  const got=u.got.length?`<ul class="level-up-got">${u.got.slice(0,5).map(r=>`<li>New ${escape(KIND_NAMES[r.kind])}: <b>${escape(r.name)}</b></li>`).join('')}${u.got.length>5?`<li>and ${u.got.length-5} more</li>`:''}</ul>`:'';
- el.innerHTML=`<img class="ball-avatar" src="${ballPicture(u.ball)}" alt="" aria-hidden="true"><small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}${u.title?` · <i>${escape(u.title)}</i>`:''}</span>${got}`;
+ el.innerHTML=`${framedPicture(u.ball,u.frame)}<small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}${u.title?` · <i>${escape(u.title)}</i>`:''}</span>${got}`;
  el.hidden=true;void el.offsetWidth;el.hidden=false;
  levelUpTimer=setTimeout(()=>{el.hidden=true;levelUpTimer=null;showLevelUp();},u.got.length?4200:2800);
 }
@@ -1012,7 +1025,7 @@ function updateHUD(){
  // have to be recognisably the same person.
  drawChallengeBar();
  // Their ball finish on the ball and their tracer style on the next shot.
- {const look=seatLooks(round.active);view.setBallFinish?.(look.ball);view.setTracer?.(look.tracer,playerTracer(round.active));}
+ {const look=seatLooks(round.active);view.setBallFinish?.(look.ball);view.setTracer?.(look.tracer,playerTracer(round.active));applyMeterSkin(look.skin);}
  const initial=p.name[0]?.toUpperCase()||'P',chip=playerColour(round.active);
  for(const el of [$('playerInitial'),document.querySelector('.header-right .avatar')]){
   if(!el)continue;
@@ -1539,7 +1552,7 @@ function finishShot(){
  // never crossed the boundary line; the house is the edge, and it is where it
  // stopped.
  if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded);recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);announceHoleOut(carded,{chipIn:!!result.holed&&!result.hazard&&before.lie!=='green'&&before.stroke>1});recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -1633,7 +1646,7 @@ function updateSoundScene(){
   night:!!view.solar&&view.solar.elevation<-4,waterDist:water.dist,waterKind:water.kind,waterPan:d>1?clamp((dx*e[0]+dz*e[2])/d,-1,1):0});
 }
 let holeOutTimer=null,holeOutAt=-1e9;
-function announceHoleOut(before){
+function announceHoleOut(before,{chipIn=false}={}){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
  if(!seats.length)return;
  const seat=seats[0],score=round.cards[seat][round.hole],label=holeOutLabel(score,course.par);
@@ -1649,6 +1662,11 @@ function announceHoleOut(before){
  // Restart the animation even when the banner is already up: hidden, reflow, shown.
  el.hidden=true;void el.offsetWidth;el.hidden=false;
  spinHoleOutBall(el.querySelector('.hole-out-ball'),seatLooks(seat).ball);
+ // THE FLOURISH (Phase 6): the rarest the golfer has earned for this score,
+ // over the cup, visual only.
+ {const prof=profileOf(round.players[seat]),gir=prof?.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]?.gir;
+  const id=prof&&flourishFor({score,par:course.par,chipIn,gir:gir!==false},levelOf(prof.xp).level);
+  if(id){const pin=course.pin;playFlourish($('flourish'),id,()=>view.screenPoint?.(pin));}}
  clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
 }
 // THE CLOSE-UP (spec 7.3): the golfer's ball beside the score, turning slowly
@@ -3639,7 +3657,8 @@ function toPar(index=round.active){
 // shot list, which is what the old player row did.
 // A golfer's level, as a small badge beside their name (Phase 4; the badges'
 // own looks come with the rewards).
-const levelBadge=prof=>prof?`<i class="level-badge" title="Level ${levelOf(prof.xp).level}">${levelOf(prof.xp).level}</i>`:'';
+const levelBadge=prof=>{if(!prof)return '';const lv=levelOf(prof.xp).level,f=FRAMES[highestBadge(lv)];
+ return `<i class="level-badge" title="Level ${lv} · ${escape(badgeName(lv))}" style="background:linear-gradient(135deg,${f.from},${f.to});color:${f.ink}">${lv}</i>`;};
 const chipLevel=p=>rangeMode?'':levelBadge(profileOf(p));
 function drawScoreChips(){
  const host=$('scoreChips');if(!host)return;
@@ -3827,11 +3846,13 @@ let lookTab='ball';
 const TRACER_SWATCH=id=>{const st=TRACERS[id],c=Array.isArray(st.colours)?st.colours:['#f3e3b0'];
  return st.dash?`repeating-linear-gradient(90deg,${c[0]} 0 10px,transparent 10px 16px)`:c.length>1?`linear-gradient(90deg,${c.join(',')})`:c[0];};
 function lookPicker(profile){
- const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${k==='ball'?'Ball':k==='tracer'?'Tracer':'Title'}</button>`;
- const item=(r,inner)=>{const has=r.level<=lv,on=look[r.kind]===r.id;
-  return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${r.kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
+ const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter'})[k]}</button>`;
+ const item=(r,inner,kind=r.kind)=>{const has=r.level<=lv,on=look[kind]===r.id;
+  return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
  let body;
  if(lookTab==='tracer')body=`<div class="look-grid">${rewardsOf('tracer').map(r=>item(r,`<i class="tracer-swatch${TRACERS[r.id].colours==='seat'?' seat':''}${TRACERS[r.id].dash?' dash':''}" style="background:${TRACER_SWATCH(r.id)}"></i>`)).join('')}</div><p class="research-label">Your own shots fly in your tracer. At the end of a hole every line goes back to its golfer's colour and keeps its shape.</p>`;
+ else if(lookTab==='frame')body=`<div class="look-grid balls">${rewardsOf('badge').map(r=>item(r,framedPicture(look.ball,r.id),'frame')).join('')}</div><p class="research-label">Each badge brings a frame for your picture. Unless you choose one, you wear your newest.</p>`;
+ else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
   const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
   body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`level ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
@@ -3875,7 +3896,7 @@ function renderProfile(content){
  const xpNote=!!profile.xpNew;if(xpNote){delete profile.xpNew;storeProfiles(profiles);}
  content.innerHTML=`<div class="profile">${strip}`
   +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
-  +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
+  +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL · ${escape(badgeName(lv.level).toUpperCase())}</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
   +lookPicker(profile)+achievementList(profile)+challengeRecords(profile)
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`

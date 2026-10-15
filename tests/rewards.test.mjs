@@ -42,7 +42,7 @@ test('a golfer wears what they have earned, and the starting look otherwise', ()
  assert.equal(wornItem({}, 'title', 50), '', 'no title unless one is chosen');
  assert.equal(wornItem({title: 'legend'}, 'title', 44), '');
  assert.equal(wornItem({title: 'legend'}, 'title', 45), 'legend');
- assert.deepEqual(WEARABLE, ['ball', 'tracer', 'title']);
+ assert.deepEqual(WEARABLE, ['ball', 'tracer', 'title', 'frame', 'skin']);
 });
 
 test('the summary keeps a tracer\'s shape and drops its colour', () => {
@@ -82,4 +82,55 @@ test('the finishes look different from each other', () => {
  // A turned close-up shows a different side.
  const a = ballPixels('two-tone', 24, 0), b = ballPixels('two-tone', 24, .25);
  assert.notDeepEqual(a, b);
+});
+
+// PHASE 6 -----------------------------------------------------------------
+import {FRAMES, highestBadge, badgeName, METER_SKINS, flourishFor} from '../src/rewards.js';
+
+test('every badge has a frame, the newest is worn unless one is chosen, and Master counts on', () => {
+ assert.deepEqual(Object.keys(FRAMES).sort(), rewardsOf('badge').map(r => r.id).sort());
+ assert.equal(highestBadge(1), 'rookie');
+ assert.equal(highestBadge(14), 'club-regular');
+ assert.equal(highestBadge(60), 'fairway-master');
+ assert.equal(wornItem({}, 'frame', 22), 'scratch', 'unchosen: the newest');
+ assert.equal(wornItem({frame: 'club-member'}, 'frame', 22), 'club-member');
+ assert.equal(wornItem({frame: 'legend'}, 'frame', 22), 'scratch', 'not earned: the newest');
+ assert.equal(badgeName(57), 'Master 57');
+ assert.equal(badgeName(50), 'Fairway Master');
+ assert.equal(badgeName(5), 'Club Member');
+});
+
+// LEGIBLE IN EVERY SKIN (spec 7.6): the zone over the track, the perfect band
+// and the target marker must stand apart by LIGHTNESS -- not by hue alone --
+// for normal vision and simulated red-green colour blindness, so a player who
+// cannot tell yellow from green still sees the band inside the zone.
+const rgb = c => { const m = c.match(/rgba?\(([^)]+)\)/); if (m) { const [r, g, b, a = 1] = m[1].split(',').map(Number); return {c: [r, g, b].map(v => v / 255), a}; } const n = parseInt(c.slice(1), 16); return {c: [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255], a: 1}; };
+const lin = v => v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
+const over = (top, base) => top.c.map((v, i) => v * top.a + base.c[i] * (1 - top.a));
+// Machado, Oliveira and Fernandes (2009), severity 1.0, applied in linear light.
+const SIM = {none: null, deutan: [[.367322, .860646, -.227968], [.280085, .672501, .047413], [-.01182, .04294, .968881]], protan: [[.152286, 1.052583, -.204868], [.114503, .786281, .099216], [-.003882, -.048116, 1.051998]]};
+const lum = (c, m) => { let l = c.map(lin); if (m) l = m.map(r => Math.max(0, r[0] * l[0] + r[1] * l[1] + r[2] * l[2])); return .2126 * l[0] + .7152 * l[1] + .0722 * l[2]; };
+const ratio = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+test('every meter skin keeps the zone, the perfect band and the target apart, colour blind or not', () => {
+ assert.equal(Object.keys(METER_SKINS).length, 10);
+ assert.deepEqual(Object.keys(METER_SKINS).sort(), rewardsOf('skin').map(r => r.id).sort());
+ for (const [id, s] of Object.entries(METER_SKINS)) for (const [vision, m] of Object.entries(SIM)) {
+  const base = rgb(s.base), zone = over(rgb(s.zone), base), perfect = rgb(s.perfect).c, target = rgb(s.target).c;
+  const Lt = lum(base.c, m), Lz = lum(zone, m), Lp = lum(perfect, m), Lg = lum(target, m);
+  assert.ok(ratio(Lz, Lt) >= 1.5, `${id} (${vision}): the zone barely shows on the track (${ratio(Lz, Lt).toFixed(2)})`);
+  assert.ok(ratio(Lp, Lz) >= 1.5, `${id} (${vision}): the perfect band is lost in the zone (${ratio(Lp, Lz).toFixed(2)})`);
+  assert.ok(ratio(Lg, Lt) >= 3, `${id} (${vision}): the target marker is faint on the track (${ratio(Lg, Lt).toFixed(2)})`);
+ }
+});
+
+test('a hole-out shows the rarest flourish the golfer has earned', () => {
+ assert.equal(flourishFor({score: 1, par: 3}, 36), 'lantern-ace');
+ assert.equal(flourishFor({score: 1, par: 3}, 35), 'fireworks-eagle', 'no lantern yet: an ace is an eagle or better');
+ assert.equal(flourishFor({score: 3, par: 4, chipIn: true}, 30), 'ring-chip-in');
+ assert.equal(flourishFor({score: 3, par: 4}, 5), 'confetti-birdie');
+ assert.equal(flourishFor({score: 3, par: 4}, 43), 'fireworks-birdie');
+ assert.equal(flourishFor({score: 3, par: 4}, 4), null);
+ assert.equal(flourishFor({score: 4, par: 4, gir: false}, 22), 'streamers-par-save');
+ assert.equal(flourishFor({score: 4, par: 4, gir: true}, 22), null, 'a par with the green in regulation saved nothing');
+ assert.equal(flourishFor({score: 6, par: 4}, 50), 'gold-confetti');
 });

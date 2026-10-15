@@ -7840,6 +7840,25 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Badges, meter skins and flourishes (14 October 2026)
+
+The badge metals, skin colours and flourish particles are PLACED by eye; the
+names and levels are the agreed spec's (7.1). **The skin legibility test** uses
+the colour-vision-deficiency matrices of Machado, Oliveira and Fernandes (2009),
+severity 1.0, for deuteranopia and protanopia, applied in linear light, and the
+WCAG relative-luminance contrast ratio. The thresholds are PLACED: 1.5 for the
+zone against the track and the perfect band against the zone (they sit side by
+side and only need to read as different), 3 for the target marker against the
+track (WCAG's figure for large graphical objects). **The matrices were typed
+from the paper's published table from memory in this session, not fetched**:
+check them against the source (REFERENCES) before relying on the test for
+anything finer. Every skin passes in all three visions. Tightest margins (measured):
+the zone against the track 2.22 (Classic, protanopia), the perfect band
+against the zone 1.87 (Wood, deuteranopia), the target against the track
+5.10 (Wood, deuteranopia). A par save is PLACED as par after missing the green in
+regulation. Flourishes: confetti 120-140 pieces, fireworks 70 sparks a burst,
+3.2-4.8 s each.
+
 ### Challenges (14 October 2026)
 
 No outside source; the XP is the spec's (8.1): 10 a ball inside 20 feet and 50

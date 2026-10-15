@@ -548,6 +548,18 @@ What sets how far a spun ball comes back on a green, read for RESEARCH.md *Spin-
   - USGS acoustic monitoring data summary (spring peeper) -- https://data.usgs.gov/datacatalog/data/USGS:5b3e4054e4b060350a0ef7e3 -- via search: most of a call's energy at 2,900-3,200 Hz. Popular pages giving 1.8 kHz, 10 kHz or 180-220 Hz were set aside as conflicting with it; no measured bullfrog figure was found.
   - Filtered-noise water synthesis (via search: an MIT 21M.380 quiz solution; aatishb.com's ocean sketch) -- the standard way to make waves; it is what rounds 4 and 5 used, and what round 6 moved away from.
 
+## Meter skins and colour blindness (14 October 2026)
+
+- Machado, G. M., Oliveira, M. M. and Fernandes, L. A. F. (2009), "A
+  Physiologically-based Model for Simulation of Color Vision Deficiency", IEEE
+  Transactions on Visualization and Computer Graphics 15(6), 1291-1298;
+  https://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html
+  -- the severity-1.0 deuteranopia and protanopia matrices in
+  tests/rewards.test.mjs. Typed from memory, not fetched: to be checked.
+- W3C, Web Content Accessibility Guidelines 2.1, relative luminance and
+  contrast ratio; https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio -- the
+  contrast measure, and the 3:1 figure for graphical objects.
+
 ## The Swing Meter (14 October 2026)
 
 Read for RESEARCH.md *The Swing Meter*. The meter's own timings are placed; the

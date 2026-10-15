@@ -2239,6 +2239,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // A high, slow orbit of the whole hole, so every tracer is in one frame while
  // the scorecard is up. Radius and height come off the hole's own length: a
  // 130 yard par three should not be framed from where a 600 yard par five is.
+ // WHERE A POINT ON THE HOLE IS ON SCREEN, in the canvas's CSS pixels, or null
+ // when it is behind the camera: for the 2D flourishes over the cup
+ // (flourishes.js). A projection, nothing drawn.
+ screenPoint(p){
+  const h=this.course;if(!h||!p)return null;
+  const w=h.toWorld(p),v=new T.Vector3(w.x,h.height(p.x,p.z),w.z).project(this.camera);
+  if(v.z>1||v.z<-1)return null;
+  const c=this.canvas;return {x:(v.x+1)/2*c.clientWidth,y:(1-v.y)/2*c.clientHeight};
+ }
  summaryOrbit(seconds){
   const h=this.course;if(!h)return;
   const mid={x:h.center(h.length*.5),z:h.length*.5};

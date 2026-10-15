@@ -6,9 +6,10 @@
 // golfer wear that" reads it, so the level-up banner, the look picker and the
 // renderer cannot disagree about what is earned.
 //
-// Version one (Phase 5) makes tracers, ball finishes and titles wearable. The
-// other kinds are listed so the table is whole and the level-up banner can name
-// them, but nothing wears them until their phase lands (WEARABLE, below).
+// Phase 5 made tracers, ball finishes and titles wearable; Phase 6 adds the
+// badges' frames and the meter skins (WEARABLE, below), and the flourishes,
+// which play by themselves once earned (`flourishFor`). Challenges are opened
+// here and played from challenges.js.
 //
 // Nothing unlocks after 50 (spec 7.2). Names are the spec's placeholders, kept.
 // The tracers' and the finishes' looks live with what draws them: tracer styles
@@ -76,8 +77,11 @@ const ROWS = [
 export const REWARDS = ROWS.map(([level, kind, id, name]) => ({level, kind, id, name}));
 export const KINDS = ['badge', 'tracer', 'ball', 'flourish', 'title', 'skin', 'challenge'];
 // What a golfer can choose and wear in this version. Titles may be none.
-export const WEARABLE = ['ball', 'tracer', 'title'];
-export const DEFAULT_WORN = {ball: 'classic', tracer: 'classic', title: ''};
+export const WEARABLE = ['ball', 'tracer', 'title', 'frame', 'skin'];
+// A frame is a badge's: the reward table lists badges, and wearing one means
+// its frame round the picture. An empty frame is "my newest badge's".
+export const REWARD_KIND = {frame: 'badge'};
+export const DEFAULT_WORN = {ball: 'classic', tracer: 'classic', title: '', frame: '', skin: 'classic'};
 // How each kind is named on its own, in the level-up banner's list.
 export const KIND_NAMES = {badge: 'badge', tracer: 'tracer', ball: 'ball finish', flourish: 'flourish', title: 'title', skin: 'meter skin', challenge: 'challenge'};
 
@@ -97,6 +101,7 @@ export const isUnlocked = (kind, id, level, earned = {}) => { const r = reward(k
 export function wornItem(worn, kind, level, earned = {}) {
  const id = worn?.[kind];
  if (kind === 'title' && !id) return '';
+ if (kind === 'frame') return id && isUnlocked('badge', id, level) ? id : highestBadge(level);
  return id && isUnlocked(kind, id, level, earned) ? id : DEFAULT_WORN[kind];
 }
 
@@ -148,4 +153,70 @@ export function stopColour(stops, t) {
 export function hexRgb(h) {
  const n = parseInt(h.slice(1), 16);
  return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
+}
+
+// BADGES AND THEIR FRAMES (Phase 6, spec 7.1 and 7.5): the metal or colour of
+// each, as two stops; the frame is a ring of it round the ball picture, and the
+// level chip is filled with the highest badge earned. Fairway Master's runs
+// through the rainbow and moves. PLACED by eye.
+export const FRAMES = {
+ rookie: {from: '#b98a55', to: '#e8c999', ink: '#2a1c0e'},
+ 'club-member': {from: '#8c5a2b', to: '#e2a46a', ink: '#24150a'},
+ 'club-regular': {from: '#8d969e', to: '#eef2f5', ink: '#1d2328'},
+ 'single-digit': {from: '#b8901e', to: '#ffe58a', ink: '#2a2008'},
+ scratch: {from: '#1f7a4a', to: '#86e8ae', ink: '#0b2416'},
+ 'tour-card': {from: '#a9b6bd', to: '#fbfdff', ink: '#1a2227'},
+ contender: {from: '#1b3f9c', to: '#7aa5ff', ink: '#ffffff'},
+ 'major-winner': {from: '#8e0f25', to: '#ff6177', ink: '#ffffff'},
+ 'hall-of-fame': {from: '#086b45', to: '#46e6a8', ink: '#05291b'},
+ legend: {from: '#121218', to: '#64647c', ink: '#ffffff'},
+ 'fairway-master': {from: '#ff4d4d', to: '#4dc3ff', ink: '#1b1b1b', rainbow: true},
+};
+// The highest badge a level has earned.
+export function highestBadge(level) {
+ let best = 'rookie';
+ for (const r of rewardsOf('badge')) if (r.level <= level) best = r.id;
+ return best;
+}
+// The badge's name as shown: Fairway Master carries the level from 50 on
+// (spec 7.2, "Master 57").
+export const badgeName = level => { const id = highestBadge(level), r = reward('badge', id); return id === 'fairway-master' && level > 50 ? `Master ${level}` : r.name; };
+
+// METER SKINS (Phase 6, spec 7.6): the meter's look only -- its track, edge,
+// the marker and the strike flash. The strike zone stays yellow, the perfect
+// band green and the target marker blue in every skin (the owner's colours,
+// 14 October 2026), and tests/rewards.test.mjs holds each skin's zone, band,
+// target and track apart in lightness, in normal colour vision and simulated
+// red-green colour blindness, so they never depend on hue alone. `base` is the
+// track's average colour, which the test composites the zone over. PLACED.
+export const METER_SKINS = {
+ classic: {track: 'linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.14))', base: '#33443a', edge: 'rgba(236,243,230,.3)', zone: 'rgba(240,198,116,.4)', perfect: '#6ed687', marker: '#ffffff', target: '#8fd3ff', flash: '#7ee39a'},
+ wood: {track: 'repeating-linear-gradient(90deg,#5b3a1e 0 6px,#6e4825 6px 9px,#64401f 9px 15px)', base: '#634121', edge: '#a8784a', zone: 'rgba(246,206,110,.5)', perfect: '#7fe08f', marker: '#fff4dc', target: '#8fd3ff', flash: '#9cf0a6'},
+ neon: {track: 'linear-gradient(90deg,#0d0b1f,#160f2e)', base: '#120d27', edge: '#ff4fd8', zone: 'rgba(255,224,77,.42)', perfect: '#39ff88', marker: '#ffffff', target: '#5fd6ff', flash: '#39ff88'},
+ 'retro-pixel': {track: 'repeating-linear-gradient(90deg,#1b1f3a 0 8px,#232849 8px 16px)', base: '#1f2441', edge: '#8a8fc9', zone: 'rgba(252,216,72,.48)', perfect: '#58d65c', marker: '#f8f8f8', target: '#6cc3ff', flash: '#7af07c'},
+ chalkboard: {track: 'linear-gradient(90deg,#20382c,#284434)', base: '#243e30', edge: '#e8efe6', zone: 'rgba(250,220,130,.42)', perfect: '#9be7a8', marker: '#f4f6f2', target: '#9fd8ff', flash: '#b8f5c2'},
+ blueprint: {track: 'linear-gradient(90deg,#173a6b,#1d4680),repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,255,255,.12) 11px 12px)', base: '#1a4075', edge: '#cfe3ff', zone: 'rgba(255,214,102,.48)', perfect: '#78e39a', marker: '#ffffff', target: '#a8e4ff', flash: '#9ef0b6'},
+ carbon: {track: 'repeating-linear-gradient(45deg,#1b1d20 0 3px,#24272b 3px 6px)', base: '#202326', edge: '#6b7178', zone: 'rgba(245,205,105,.45)', perfect: '#64d98a', marker: '#ffffff', target: '#7fd0ff', flash: '#7ef0a0'},
+ 'gold-leaf': {track: 'linear-gradient(90deg,#3a2c10,#4d3a14)', base: '#433312', edge: '#e2bf5c', zone: 'rgba(255,226,120,.45)', perfect: '#7ee39a', marker: '#fff8e0', target: '#8fd3ff', flash: '#ffe58a'},
+ aurora: {track: 'linear-gradient(90deg,#0f2433,#16243f,#20193d)', base: '#16223a', edge: '#7ff2c8', zone: 'rgba(250,214,110,.45)', perfect: '#5cf2a0', marker: '#ffffff', target: '#86d4ff', flash: '#a6ffd0'},
+ champion: {track: 'linear-gradient(90deg,#2a2208,#3b2e0b)', base: '#33280a', edge: '#ffd86b', zone: 'rgba(255,220,110,.48)', perfect: '#6ee08e', marker: '#ffffff', target: '#8fd3ff', flash: '#ffe58a', rainbow: true},
+};
+export const meterSkin = id => METER_SKINS[id] || METER_SKINS.classic;
+
+// FLOURISHES (Phase 6, spec 7.4): visual only, no sound. Which one a hole-out
+// shows, of those the golfer has earned, the rarest first: a hole in one, a
+// chip-in, an eagle or better, a birdie, a par save (par without the green in
+// regulation -- PLACED), then any hole-out once Gold confetti is earned. Null
+// when none applies.
+export function flourishFor({score, par, chipIn = false, gir = true}, level) {
+ const has = id => isUnlocked('flourish', id, level);
+ if (!Number.isFinite(score) || !Number.isFinite(par)) return null;
+ if (score === 1 && has('lantern-ace')) return 'lantern-ace';
+ if (chipIn && has('ring-chip-in')) return 'ring-chip-in';
+ if (score <= par - 2 && has('fireworks-eagle')) return 'fireworks-eagle';
+ if (score <= par - 1 && has('fireworks-birdie')) return 'fireworks-birdie';
+ if (score <= par - 1 && has('confetti-birdie')) return 'confetti-birdie';
+ if (score === par && !gir && has('streamers-par-save')) return 'streamers-par-save';
+ if (has('gold-confetti')) return 'gold-confetti';
+ return null;
 }

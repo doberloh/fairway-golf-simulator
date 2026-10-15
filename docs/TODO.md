@@ -34,10 +34,12 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
   end-of-hole lines, the level-up unlock list, titles on the scorecard; the
   main menu with its new Course of the week tile, on a phone too; a played
   course-of-the-week round and an achievement popping; each challenge played
-  through, solo and in a group, with its results card and Play it again; and a
+  through, solo and in a group, with its results card and Play it again; the
+  frames, the badge colours on the level chip, every meter skin in light and
+  dark, and each flourish over the cup (including as the camera pulls back);
+  check the colour-blind matrices against Machado et al. (REFERENCES); and a
   graphics profile for the tracer and glint changes (the owner: save profiles
   for the end of all the phases).
-- [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
 
 ## The UI pass (10 October 2026)
 
@@ -923,6 +925,13 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done:** the owner chose take D, the game jingles, for every score, at
     length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
     game, and tests/sound.test.mjs holds every score to it.
+- [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
+  (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
+  Eleven badges with frames round the picture (the newest worn unless one is
+  chosen) and the level chip in the badge's colours, *Master 51* on from 50;
+  ten meter skins as colour data on the meter, held legible for colour-blind
+  players by a test; seven flourishes drawn flat over the cup, no sound, off
+  for reduced motion. Frame and Meter tabs on Your look.
 - [x] **Phase 7: challenges** (`src/challenges.js`). Closest to the pin,
   long drive and up and down as practice games on a hole of the course of the
   week or a saved course (no card, no history, no mulligans), a bar over the
