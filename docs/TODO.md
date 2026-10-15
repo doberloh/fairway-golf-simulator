@@ -27,19 +27,14 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Phase 5 left to check, when the owner's machine is free** (it was in use;
-  GPU runs crashed it while they gamed, 14 October 2026). Smoke
-  `phone-portrait`, `phone-landscape`, `hud-reachable` with the look picker;
-  pictures of Lightning, Ribbon, Fire, Starfall, Rainbow in flight, the
-  end-of-hole lines, the level-up unlock list, titles on the scorecard; the
-  main menu with its new Course of the week tile, on a phone too; a played
-  course-of-the-week round and an achievement popping; each challenge played
-  through, solo and in a group, with its results card and Play it again; the
-  frames, the badge colours on the level chip, every meter skin in light and
-  dark, and each flourish over the cup (including as the camera pulls back);
-  check the colour-blind matrices against Machado et al. (REFERENCES); and a
-  graphics profile for the tracer and glint changes (the owner: save profiles
-  for the end of all the phases).
+- [ ] **Owner: play-test the Swing Meter journey's Phases 5-7** (14 October 2026).
+  Everything a machine can check has been: unit tests, the full smoke run (30
+  journeys, with new ones for a challenge, the course of the week and the look
+  picker with a flourish), pictures of the tracers in flight and the phone
+  menus, and a graphics profile (RESEARCH *Profile after Phases 5-7*). What is
+  left is feel and looks: the owner's list is `docs/reports/SWING_METER_TESTING.md`
+  (local). Open questions there: Ribbon's wide band reads faint from behind the
+  tee; the definitions placed without the owner (spec section 14).
 
 ## The UI pass (10 October 2026)
 
@@ -86,13 +81,6 @@ What `tools/smoke.mjs` turned up on its first full runs, and what building it
 turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
 
-- [ ] **`phone-portrait` fails when its random course puts a shot in water.**
-  Seen once in four runs on 10 October 2026: the relief bar covered the club,
-  the power and the aim pad when the reachability check ran, and it reported
-  eleven unreachable controls. Three re-runs passed. The harness, not the game:
-  the bar is meant to cover them while relief is chosen. The journey wants a
-  fixed seed or to take relief before checking. (`monitor` had the same kind of
-  flake, fixed under *The UI pass* in `# Done`.)
 
 - [ ] **The floating tool windows during play have not been swept for layout.**
   `hud-reachable` covers the main menu and the play screen at nine sizes, and
@@ -925,6 +913,16 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done:** the owner chose take D, the game jingles, for every score, at
     length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
     game, and tests/sound.test.mjs holds every score to it.
+- [x] Closed: **`phone-portrait` fails when its random course puts a shot in water.**
+    Seen once in four runs on 10 October 2026: the relief bar covered the club,
+    the power and the aim pad when the reachability check ran, and it reported
+    eleven unreachable controls. Three re-runs passed. The harness, not the game:
+    the bar is meant to cover them while relief is chosen. The journey wants a
+    fixed seed or to take relief before checking. (`monitor` had the same kind of
+    flake, fixed under *The UI pass* in `# Done`.)
+    **Done (14 October 2026):** it hit `phone-landscape` the same way; both
+    phone journeys now take relief before the check, as a golfer about to hit
+    sees the screen.
 - [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
   (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
   Eleven badges with frames round the picture (the newest worn unless one is

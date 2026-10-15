@@ -947,9 +947,14 @@ body:has(#world[data-mode="menu"]) .hole-strip,body:has(#world[data-mode="studio
  .menu-tile i,.menu-tile svg{width:20px;height:20px;margin-bottom:6px}
  .menu-tile strong{font-size:15px}
 }
-/* Upright: one card per row, full width. */
+/* Upright: two cards a row, the main one (Continue, or Play) across both.
+   One a row ran the bottom cards -- and the launch monitor and Camera links
+   under them -- off a 390x844 screen once Course of the week and Challenges
+   joined (14 October 2026). */
 @container app (max-width:560px) and (min-height:501px){
- .menu-tile{width:100%;max-width:380px}
+ .menu-modes{max-width:380px;margin:0 auto}
+ .menu-tile{width:calc(50% - 4px);max-width:none}
+ .menu-tile.primary{width:100%}
 }
 /* Sideways: every card on one row where they fit, two where "Continue" is
    there as well, and the tagline goes -- there is no height to spare. */
@@ -1476,7 +1481,9 @@ html,body{overscroll-behavior:none}
 h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 
 /* CHALLENGES (Phase 7): the bar over the course, the picker and the results. */
-.challenge-bar{position:absolute;z-index:33;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid rgba(217,194,122,.55);color:var(--ink);font-size:12px;box-shadow:var(--panel-shadow);backdrop-filter:blur(12px);pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+/* Beside the shot controls, not at the top centre: the game's own messages
+   ("14 ft 3 in from the pin") come up there and covered it. */
+.challenge-bar{position:absolute;z-index:33;top:12px;left:calc(var(--edge-l,16px) + var(--panel-w,330px) + var(--gap,12px));display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid rgba(217,194,122,.55);color:var(--ink);font-size:12px;box-shadow:var(--panel-shadow);backdrop-filter:blur(12px);pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 .challenge-bar b{color:#d9c27a;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
 .challenge-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:10px}
 .challenge-pick .look-item b{font-size:12px}
@@ -1511,5 +1518,8 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 .skin-swatch .p{left:58%;width:7%;background:var(--sm-perfect)}
 .skin-swatch .t{left:70%;width:3px;background:var(--sm-target)}
 /* FLOURISHES: a 2D overlay over the course, only while one plays. */
-.flourish{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+/* No z-index: it follows the course canvas in the page, so every panel
+   and banner, all positioned later, draws over it -- a burst over the shot
+   controls covered them. */
+.flourish{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .flourish[hidden]{display:none}

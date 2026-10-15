@@ -7840,6 +7840,32 @@ about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
 popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
 away from the popup. All three hold lengths are PLACED.
 
+### Profile after Phases 5-7 (14 October 2026, late)
+
+Run by the owner's leave, on this machine's RTX 4090 with the card idle (2-13%
+busy before each run), real-GPU arm only: **the software-rasteriser arm
+(`--only weak`) was skipped**, because a processor-only run took this machine
+down on 13 October. Each GPU group against `bench/profile-baseline.json` (saved
+7 October; not re-saved): **nothing slower anywhere.** Median frame ms since
+the baseline: tiers -3.2 to -7.8 (Ultra 6.30 ms CPU, 6.98 ms GPU on redwood);
+overview views -3.5 to -16.4; biomes -1.2 to -6.6; ablation -6.2 to -6.6;
+water -0.8 to -1.1; pixels -4.4 to -6.6 (sun has no baseline). The gains are a
+week of other work and the machine, not this journey -- these cases stand
+still and never fly a ball, so **the profile cannot see the tracer styles at
+all**.
+
+**So a ball in flight was measured separately** (a scratch script with the
+profiler's own probe, `tools/profile-probe.js`, injected from outside): the
+same course-of-the-week tee shot on Ultra, styles alternated over three rounds,
+2.5 s of flight each, about 1,600 frames a run. Median of runs, CPU / GPU ms per
+frame and draws: Classic 1.00 / 1.01 / 163; Comet tail plus sparkle (head,
+glints) 1.20 / 1.04 / 166; Lightning (zigzag, core, flicker) 1.10 / 1.03 / 166;
+Rainbow (moving colours) 1.10 / 1.01 / 162. **The heaviest style costs about
+0.2 ms of CPU and three draws a frame**, against a 16.7 ms frame; within the
+run-to-run spread for the others. The flourishes are 2D on a canvas and do not
+reach the GPU's scene at all; no shader is built by any look (smoke
+`no-late-shaders`, first shot included).
+
 ### Badges, meter skins and flourishes (14 October 2026)
 
 The badge metals, skin colours and flourish particles are PLACED by eye; the
@@ -7849,10 +7875,12 @@ severity 1.0, for deuteranopia and protanopia, applied in linear light, and the
 WCAG relative-luminance contrast ratio. The thresholds are PLACED: 1.5 for the
 zone against the track and the perfect band against the zone (they sit side by
 side and only need to read as different), 3 for the target marker against the
-track (WCAG's figure for large graphical objects). **The matrices were typed
-from the paper's published table from memory in this session, not fetched**:
-check them against the source (REFERENCES) before relying on the test for
-anything finer. Every skin passes in all three visions. Tightest margins (measured):
+track (WCAG's figure for large graphical objects). The matrices were first typed
+from memory, then **checked against the paper's page the same day: every digit
+matches** its severity-1.0 protanomaly and deuteranomaly rows (the page calls
+them dichromacy). The page does not say whether they apply to linear or
+gamma-encoded RGB; the test uses linear, and every skin also passes with them
+applied to gamma-encoded values (tightest margin 1.78 there, against 1.87). Every skin passes in all three visions. Tightest margins (measured):
 the zone against the track 2.22 (Classic, protanopia), the perfect band
 against the zone 1.87 (Wood, deuteranopia), the target against the track
 5.10 (Wood, deuteranopia). A par save is PLACED as par after missing the green in

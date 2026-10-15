@@ -1742,13 +1742,20 @@ const JOURNEYS = [
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
-     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false)) return;
+     // The card waits for the XP popup (14 October 2026), so give it time.
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false)) return;
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
    await t.step('the next hole, from the scorecard', () => t.nextHole(() => t.page.locator('#nextHoleScore').tap({timeout: 3000 * SLOW})));
    await t.step('and plays', swing);
    await t.step('nothing on the play screen is out of reach', async () => {
+    // A random course can put that shot in water, and the relief bar is MEANT
+    // to cover the club and the aim pad while relief is chosen -- so relief is
+    // taken first and the screen checked as a golfer about to hit sees it
+    // (the flake in TODO, closed 14 October 2026).
+    await reliefFirst(t, tap);
+    await t.until(() => t.page.evaluate(() => document.getElementById('reliefBar')?.hidden !== false), 'relief to be taken', 10 * SLOW);
     const bad = await t.page.evaluate(unreachableControls);
     if (bad.length) throw new Error(`${bad.length} unreachable: ${bad.join('; ')}`);
    });
@@ -2176,6 +2183,156 @@ const JOURNEYS = [
      await t.until(async () => /"Code"\s*:\s*200/.test(replies), `the connector to hear 200 (it heard ${replies.trim() || 'nothing'})`, 10 * SLOW);
     });
    } finally { connector.destroy(); }
+  },
+ },
+ // PHASES 5-7 (14 October 2026), written while the owner's machine was busy and
+ // first run once it was free. Each seeds a golfer of a known level, so what is
+ // open is known.
+ {
+  name: 'challenge',
+  what: 'Challenges: the locked ones say their level, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
+  async prepare(page) {
+   // Level 7: closest (3) and long drive (6) open, up and down (12) and skins (18) not.
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Challenges → the four, two open at level 7', async () => {
+    await fromMenu(t, 'Challenges');
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 4), 'the four challenges', 10 * SLOW);
+    const locked = await t.page.evaluate(() => [...document.querySelectorAll('.challenge-pick .look-item.locked')].map(b => b.textContent));
+    if (locked.length !== 2 || !locked.every(x => /Level (12|18)/.test(x))) throw new Error(`locked: ${JSON.stringify(locked)}`);
+   });
+   await t.step('closest to the pin on the course of the week starts on a par 3, with the bar', async () => {
+    await t.page.click('[data-challenge="closest"]');
+    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => t.page.evaluate(() => !document.getElementById('challengeBar').hidden && /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'the challenge bar on ball 1', 20 * SLOW);
+    if (await t.page.textContent('#holePar') !== '3') throw new Error(`the challenge is on a par ${await t.page.textContent('#holePar')}`);
+   });
+   await t.step('five balls, and the results card', async () => {
+    for (let i = 1; i <= 5; i++) {
+     await t.shot();
+     if (i < 5) await t.until(() => t.page.evaluate(n => new RegExp('Ball ' + n + ' of 5').test(document.getElementById('challengeBar').textContent), i + 1), `the bar to move to ball ${i + 1}`, 10 * SLOW);
+    }
+    await t.until(async () => (await t.drawerOpen()) && (await t.drawerTitle()) === 'Challenge', 'the results card', 10 * SLOW);
+    const text = await t.page.textContent('#drawerContent');
+    if (!/Nearest|No ball on the green/.test(text)) throw new Error(`the card reads: ${text.slice(0, 200)}`);
+    await t.page.screenshot({path: 'bench/shots/smoke/challenge-results.png'}).catch(() => {});
+   });
+   await t.step('nothing of it was saved as a round', async () => {
+    const slot = await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'));
+    if (slot) throw new Error('the challenge wrote the round slot');
+    const p = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
+    if (p.rounds?.length) throw new Error(`the challenge put ${p.rounds.length} round(s) in the history`);
+   });
+   await t.step('Play it again starts ball 1 again', async () => {
+    await t.page.click('#challengeAgain');
+    await t.until(() => t.page.evaluate(() => /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'ball 1 again', 10 * SLOW);
+   });
+   await t.step('a long drive starts from the menu, on a par 4 or 5', async () => {
+    await t.page.click('#menuNav');
+    await t.page.click('#dropMenu');
+    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
+    await fromMenu(t, 'Challenges');
+    await t.page.click('[data-challenge="long"]');
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => t.page.evaluate(() => /Ball 1 of 6/.test(document.getElementById('challengeBar').textContent)), 'the long-drive bar', 20 * SLOW);
+    if (!['4', '5'].includes(await t.page.textContent('#holePar'))) throw new Error('the long drive is not on a par 4 or 5');
+    await t.shot();
+    await t.until(() => t.page.evaluate(() => /Ball 2 of 6/.test(document.getElementById('challengeBar').textContent)), 'the second drive', 10 * SLOW);
+   });
+  },
+ },
+ {
+  name: 'weekly',
+  what: 'the course of the week: the tile names the week, the panel says what it is, and the round it starts is eighteen holes that remember their week',
+  async run(t) {
+   await menuReady(t);
+   await t.step('the tile names the week and its landscape', async () => {
+    const note = await t.page.textContent('#menuWeeklyNote');
+    if (!/^Week [0-9]+ · /.test(note)) throw new Error(`the tile reads "${note}"`);
+   });
+   await t.step('the panel, then play it', async () => {
+    await fromMenu(t, 'Course of the week');
+    await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
+    await t.page.click('#weeklyGo');
+    await t.inPlay(180 * SLOW);
+   });
+   await t.step('eighteen holes, and the saved round knows its week', async () => {
+    const hole = await t.page.textContent('#holeNumber');
+    if (!/\/18/.test(hole)) throw new Error(`the hole counter reads ${hole}`);
+    await t.shot();
+    const saved = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null'));
+    if (!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]+$/.test(saved?.round?.weekly || '')) throw new Error(`the saved round's week is ${saved?.round?.weekly}`);
+   });
+  },
+ },
+ {
+  name: 'look',
+  what: 'Your look on My profile: every tab, a frame and a meter skin put on and kept, the skin on the meter in play, the achievements list, and a flourish when the hole is finished',
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'plk', profiles: [{id: 'plk', name: 'Looks', created: 1, counters: {}, bests: {}, rounds: [], xp: 78400, xpLog: {}, achievements: {ace: 1}}]})); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
+   await t.step('My profile: the framed picture, the badge, the achievements', async () => {
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    const v = await t.page.evaluate(() => ({framed: !!document.querySelector('.profile-id img.ball-avatar.framed'), level: document.querySelector('.profile-level small')?.textContent, ach: document.querySelectorAll('.achievement').length, earned: document.querySelectorAll('.achievement.earned').length}));
+    if (!v.framed) throw new Error('no frame on the picture');
+    if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
+    if (v.ach !== 13 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+   });
+   for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {
+    await t.step(`the ${tab} tab: put one on, and it is kept`, async () => {
+     await t.page.click(`[data-look-tab="${tab}"]`);
+     await t.page.waitForSelector(wear, {timeout: 10000 * SLOW});
+     await t.page.locator('.look-grid').first().screenshot({path: `bench/shots/smoke/look-${tab}.png`}).catch(() => {});
+     await t.page.click(wear);
+     await t.until(async () => (await stored()).worn?.[key] === val, `the ${key} to be saved`, 10 * SLOW);
+    });
+   }
+   await t.step('the title list holds the earned achievement title', async () => {
+    await t.page.click('[data-look-tab="title"]');
+    await t.page.selectOption('#wearTitle', 'ach-ace');
+    await t.until(async () => (await stored()).worn?.title === 'ach-ace', 'the title to be saved', 10 * SLOW);
+   });
+   await t.step('in play, the meter wears the skin', async () => {
+    await t.page.click('#closeDrawer');
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay(120 * SLOW);
+    const skin = await t.page.evaluate(() => ({id: document.getElementById('swingMeter').dataset.skin, track: getComputedStyle(document.getElementById('swingMeter')).getPropertyValue('--sm-track')}));
+    if (skin.id !== 'neon' || !/#0d0b1f/.test(skin.track)) throw new Error(`the meter wears ${JSON.stringify(skin)}`);
+    await t.page.locator('#swingMeter').screenshot({path: 'bench/shots/smoke/meter-neon.png'}).catch(() => {});
+   });
+   // THE FLOURISH (Phase 6): level 50 has gold confetti on every hole-out, at
+   // the least, drawn on the overlay over the cup.
+   await t.step('holing out plays a flourish over the cup', async () => {
+    await t.shot();
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; putt <= 6; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#flourish:not([hidden])', {timeout: 3000}).then(() => true, () => false)) {
+      await t.page.waitForTimeout(700);
+      const drawn = await t.page.evaluate(() => { const c = document.getElementById('flourish'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) n += d[i] > 0; return n; });
+      await t.page.screenshot({path: 'bench/shots/smoke/flourish.png'}).catch(() => {});
+      if (drawn < 50) throw new Error(`the flourish drew ${drawn} pixels`);
+      return;
+     }
+     if (await t.page.evaluate(() => !document.getElementById('holeOut').hidden)) throw new Error('holed out with no flourish');
+    }
+    throw new Error('six putts from two yards and the ball never dropped');
+   });
   },
  },
  // THE SAME, WITH THE PROGRAM IN THE DOWNLOAD: run_fairway_server, compiled with

@@ -318,7 +318,7 @@ function toast(message){$('toast').textContent=message;$('toast').hidden=false;c
 // had played, and the next launch offered Continue on it. It is also what
 // resurrected a round the player had just discarded: the slot was cleared, the
 // backdrop grew, and the backdrop wrote itself straight back into it.
-function save(){if(menuBackdrop||challenge)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));}catch{}syncProfile();}
+function save(){if(menuBackdrop||challenge||challengeStarting)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));}catch{}syncProfile();}
 // WHICH PROFILE A GOLFER IS. By the id the group editor gave them; a golfer
 // with none -- a save from before profiles -- by name, ignoring case. Null on
 // the menu's showcase hole, which is nobody's round.
@@ -462,7 +462,9 @@ async function startChallenge(id,choice,group){
   toast(`Skins on ${name}: the lowest score alone takes each hole's skin; a tie carries it on.`);
   return;
  }
- await startRoundOn(s,{...group,mode:'stroke'},name);
+ // Nothing is saved while the course grows: the round it builds is the
+ // challenge's, and must not take the Continue slot or a line of history.
+ await startRoundOn(s,{...group,mode:'stroke'},name,{quiet:true});
  if(appMode!=='play'||!world)return;
  const at=pickHole(world.holes.map(h=>({par:h.par,length:h.routeLength})),id);
  if(at<0){toast(`${name} has no hole for ${def.name}. Choose another course.`);return;}
@@ -2490,9 +2492,11 @@ function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$
 // spot is named by the suggestion for its seed, so there is no such thing as an
 // unnamed course in play any more -- the card, the save button and the course
 // code all had to invent something when there was.
-function startRoundOn(courseSettings,group,name){
+// `quiet`: a practice challenge's course -- nothing is saved while it grows,
+// set only once the build really starts (a guard answered "Stay" never starts it).
+function startRoundOn(courseSettings,group,name,{quiet=false}={}){
  return new Promise(resolve=>{
-  const go=()=>buildRoundOn(courseSettings,group,name).then(resolve);
+  const go=()=>{challengeStarting=quiet;return buildRoundOn(courseSettings,group,name).finally(()=>{challengeStarting=false;}).then(resolve);};
   if(appMode==='studio')return guardStudio(go);
   if(appMode==='play')return guardRound(go);
   go();
@@ -2550,7 +2554,7 @@ let rangeMode=false;
 // `syncProfile` and `recordProfileShot` all stand aside, and `finishShot`
 // hands every ball to `challengeShot`. A skins game is a real round
 // (`round.challenge`) and never sets this.
-let challenge=null;
+let challenge=null,challengeStarting=false;
 // Remembered for the next visit within this session. The world cache key leaves
 // `rangeGreen` out on purpose -- moving the green must not throw the landscape
 // away -- so a re-entry reuses the cached world and finds the green wherever it
@@ -2768,7 +2772,7 @@ async function loadMenuBackdrop(report){
  const [hour,dark]=showcaseHour(random(seed+':hour')());
  view.daylight.hour=hour;view.daylight.floodlights=dark;view.borrowedClock=true;
  menuBackdrop=true;world=await generateProgressively(backdrop,report);worldKey=worldKeyFor(backdrop);
- round=new Round();course=world.holes[0];round.placeTee(course.tees);
+ challenge=null;round=new Round();course=world.holes[0];round.placeTee(course.tees);
  view.build(world,'cartoon',0);view.setPutting(round.putting);
  view.config.mode='free';view.wasFree=true;
  view.ball.visible=false;view.ballRing.visible=false;view.aimLine.visible=false;view.aimRing.visible=false;
@@ -3020,7 +3024,7 @@ async function continueRound(){
  if(menuBackdrop)await whileGenerating('Rebuilding your course…',async report=>{
   leaveBackdrop();
   if(pendingRound){challenge=null;round=pendingRound;pendingRound=null;if(round.endless)settings=endlessFor(round.seed,round.hole,settings);}
-  else round=new Round({players:round.players,mode:round.mode,holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
+  else{challenge=null;round=new Round({players:round.players,mode:round.mode,holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});}
   await prepareWorld(report);
   loadCourse();
  });
@@ -3254,7 +3258,7 @@ async function enterStudio(){
   // their first round, which is most people trying the demo -- landed in it at
   // midnight, because an unset hour reads as 0:00.
   leaveBackdrop();lightsOffForRound();middayForRound();
-  round=new Round({holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
+  challenge=null;round=new Round({holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
   loadCourse();
  });
@@ -3268,7 +3272,7 @@ async function enterStudio(){
 async function regenerateStudio(){
  if(!applyStudioSettings())return;
  await whileGenerating('Growing your landscape…',async report=>{
-  round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
+  challenge=null;round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
   loadCourse();studioDirty=false;setMode('studio');
   cameraMode('free');view.flyToHole(0);updateExplorer();
@@ -3329,7 +3333,7 @@ function resumeRound(id){
 function showVersionNotice(){
  const box=$('versionNotice');box.hidden=false;updateHUD();
  $('versionContinue').onclick=()=>{box.hidden=true;save();updateHUD();toast('Playing on the rebuilt landscape.');};
- $('versionFresh').onclick=()=>{box.hidden=true;round=new Round({players:round.players,mode:round.mode,holes:round.holes===18?18:9,tee:round.tee,putting:round.putting});loadCourse();toast('Fresh round started on this course.');};
+ $('versionFresh').onclick=()=>{box.hidden=true;challenge=null;round=new Round({players:round.players,mode:round.mode,holes:round.holes===18?18:9,tee:round.tee,putting:round.putting});loadCourse();toast('Fresh round started on this course.');};
  $('versionContinue').focus();
 }
 // The top nav shows where you are. A panel with its own tab (the scorecard)

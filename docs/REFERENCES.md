@@ -555,7 +555,7 @@ What sets how far a spun ball comes back on a green, read for RESEARCH.md *Spin-
   Transactions on Visualization and Computer Graphics 15(6), 1291-1298;
   https://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html
   -- the severity-1.0 deuteranopia and protanopia matrices in
-  tests/rewards.test.mjs. Typed from memory, not fetched: to be checked.
+  tests/rewards.test.mjs. Checked against the page, 14 October 2026: every digit matches.
 - W3C, Web Content Accessibility Guidelines 2.1, relative luminance and
   contrast ratio; https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio -- the
   contrast measure, and the 3:1 figure for graphical objects.
