@@ -772,6 +772,10 @@ const JOURNEYS = [
    await t.step('putt out', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.putt();
+     // The XP popup comes up as the hole is paid (14 October 2026): caught here,
+     // while it is on screen, and pictured for a look.
+     if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 3000}).then(() => true, () => false))
+      await t.page.locator('#xpGain').screenshot({path: 'bench/shots/smoke/xp-popup.png'}).catch(() => {});
      // The hole reveal holds for three seconds of WALL time, then the card opens.
      const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false);
      if (done) return;
@@ -787,6 +791,7 @@ const JOURNEYS = [
    await t.step('the hole paid XP, and the score chip shows the level', async () => {
     const p = await t.page.evaluate(() => { const s = JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'); return s?.profiles?.find(q => q.id === s.main); });
     if (!(p?.xp >= 10)) throw new Error(`the main golfer has ${p?.xp} XP after a finished hole`);
+    if (!(await t.page.evaluate(() => Number(document.getElementById('xpGain')?.dataset.shown) || 0) > 0)) throw new Error('the XP popup never came up');
     const chip = await t.page.evaluate(() => document.querySelector('.score-chip')?.outerHTML || '(no chip)');
     if (!/class="level-badge"[^>]*>[0-9]+</.test(chip)) throw new Error(`no level on the score chip: ${chip.slice(0, 300)}`);
    });

@@ -17,7 +17,7 @@
 // or pressed a key, so nothing is created until then (`unlock`); before it,
 // every call here is a quiet no-op. The context is suspended while the page is
 // hidden, so a game left in a background tab costs nothing.
-import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent} from './sound.js';
+import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL} from './sound.js';
 import {crownRadius} from './species.js';
 
 const KEY='fairway-sound-v1';
@@ -147,6 +147,9 @@ export function createGameAudio(){
   meterMove(p,stage){voice?.set(p,stage);},
   meterStop(){voice?.stop();voice=null;},
   meterSound(id){if(ok())meterEvent(lab,id);},
+  // THE XP POPUP's sounds: 'gain', 'fill', 'levelUp'. Silent until the owner
+  // has signed each off (sound.js XP_FINAL); the report has the takes.
+  xpSound(id){if(ok()&&XP_FINAL[id])xpSound(lab,id);},
  };
 }
 

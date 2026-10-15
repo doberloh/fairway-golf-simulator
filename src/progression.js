@@ -43,12 +43,16 @@ export function levelOf(xp) {
 // A FINISHED HOLE: 10, plus the score's XP, plus a fairway and a green in
 // regulation. Scores are named by the nearest whole stroke, as the profile's
 // stats name a decimal-putting score.
-export function holeXp({strokes, par, fairway = false, gir = false}) {
- if (!Number.isFinite(strokes) || !Number.isFinite(par)) return 0;
+// The parts, each with what the player is told earned it (the XP popup).
+export function holeXpParts({strokes, par, fairway = false, gir = false}) {
+ if (!Number.isFinite(strokes) || !Number.isFinite(par)) return [];
  const n = Math.round(strokes), d = n - par;
- const score = n === 1 ? XP.ace : d <= -3 ? XP.albatross : d === -2 ? XP.eagle : d === -1 ? XP.birdie : d === 0 ? XP.par : 0;
- return XP.hole + score + (fairway ? XP.fairway : 0) + (gir ? XP.gir : 0);
+ const [label, score] = n === 1 ? ['Hole in one', XP.ace] : d <= -3 ? ['Albatross', XP.albatross] : d === -2 ? ['Eagle', XP.eagle] : d === -1 ? ['Birdie', XP.birdie] : d === 0 ? ['Par', XP.par] : [null, 0];
+ return [{label: 'Finished the hole', xp: XP.hole}, ...(score ? [{label, xp: score}] : []),
+  ...(fairway ? [{label: 'Fairway hit', xp: XP.fairway}] : []), ...(gir ? [{label: 'Green in regulation', xp: XP.gir}] : [])];
 }
+export const sumParts = parts => parts.reduce((a, p) => a + p.xp, 0);
+export const holeXp = facts => sumParts(holeXpParts(facts));
 // ON THE NUMBER: the ball came down within 5% of the aim distance of the aim
 // point. `landed` and `aimed` are points ({x, z}), `distance` the aim distance.
 export function onTheNumber(landed, aimed, distance) {
@@ -57,13 +61,15 @@ export function onTheNumber(landed, aimed, distance) {
 }
 // What one shot is worth, before the multiplier: On the number (not a putt),
 // a chip-in, a long putt holed, and each personal best it set.
-export function shotXp({onNumber = false, putt = false, holed = false, fromGreen = false, teeShot = false, puttFeet = 0, bests = 0}) {
- let xp = 0;
- if (onNumber && !putt) xp += XP.onNumber;
- if (holed && !fromGreen && !teeShot) xp += XP.chipIn;
- if (holed && fromGreen && puttFeet > LONG_PUTT_FEET) xp += XP.longPutt;
- return xp + bests * XP.best;
+export function shotXpParts({onNumber = false, putt = false, holed = false, fromGreen = false, teeShot = false, puttFeet = 0, bests = 0}) {
+ const out = [];
+ if (onNumber && !putt) out.push({label: 'On the number', xp: XP.onNumber});
+ if (holed && !fromGreen && !teeShot) out.push({label: 'Chip-in', xp: XP.chipIn});
+ if (holed && fromGreen && puttFeet > LONG_PUTT_FEET) out.push({label: 'Long putt holed', xp: XP.longPutt});
+ if (bests > 0) out.push({label: bests > 1 ? `${bests} personal bests` : 'Personal best', xp: bests * XP.best});
+ return out;
 }
+export const shotXp = facts => sumParts(shotXpParts(facts));
 export const roundXp = holes => holes === 18 ? XP.round18 : holes === 9 ? XP.round9 : 0;
 export const withMult = (xp, mult = 1) => Math.round(xp * (Number.isFinite(mult) ? mult : 1));
 

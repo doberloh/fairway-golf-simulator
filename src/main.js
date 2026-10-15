@@ -22,7 +22,7 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
-import {XP,XP_MULT,levelOf,holeXp,shotXp,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
+import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
@@ -347,13 +347,18 @@ function syncProfile(){
  // mulligan that un-holes a putt takes the hole's XP back with it.
  const was=new Map(rows.map(r=>[r.prof.id,levelOf(r.prof.xp).level]));
  for(const r of rows){
-  const h=r.prof.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]||{};
-  award(r.prof,`${round.uid}:h${round.hole}`,Number.isFinite(r.score)?withMult(holeXp({strokes:r.score,par:course.par,fairway:!!h.fairway,gir:!!h.gir}),xpMult(r.seat)):0);
+  const h=r.prof.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]||{},before=r.prof.xp||0,items=[];
+  const parts=Number.isFinite(r.score)?holeXpParts({strokes:r.score,par:course.par,fairway:!!h.fairway,gir:!!h.gir}):[],mult=xpMult(r.seat);
+  const got=award(r.prof,`${round.uid}:h${round.hole}`,withMult(sumParts(parts),mult));
+  // A hole paid in full is told part by part; a re-scored one (a mulligan, a
+  // decimal putting change) as one line.
+  if(got>0)items.push(...(got===withMult(sumParts(parts),mult)?parts:[{label:'Hole re-scored',xp:got}]));
   if(round.finished&&!round.endless&&roundXp(round.holes)){
-   award(r.prof,`${round.uid}:round`,roundXp(round.holes));
-   award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0);
-   dailyXp(r.prof);
+   if(award(r.prof,`${round.uid}:round`,roundXp(round.holes))>0)items.push({label:`Finished ${round.holes} holes`,xp:roundXp(round.holes)});
+   if(award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0)>0)items.push({label:round.mode==='match'?'Won the match':'Won the scramble',xp:XP.win});
+   if(dailyXp(r.prof)>0)items.push({label:'First round today',xp:XP.daily});
   }
+  queueXpGain(r.prof,items,before,mult);
  }
  for(const r of rows){const now=levelOf(r.prof.xp).level;if(now>was.get(r.prof.id))queueLevelUp(r.prof,now);}
  storeProfiles(profiles);
@@ -375,6 +380,43 @@ function wonRound(seat){
   const tot=Object.fromEntries(teams.map(t=>[t,sumScores(round.teamCards[t])])),best=Math.min(...Object.values(tot));
   return tot[team]===best&&Object.values(tot).filter(v=>v===best).length===1;}
  return false;
+}
+// THE XP POPUP (the owner, 14 October 2026): whenever a golfer gains XP, what
+// earned it, the amount, and their level bar filling from where it was to where
+// it is -- running over into the next level when it crosses one. Gains made at
+// the same moment are one popup; popups queue. At the top of the screen, so it
+// sits beside the hole-out banner rather than over it. With a sound for the gain
+// and the fill once the owner has picked them (sound.js XP_SOUNDS; audio.js
+// plays nothing until then).
+const xpQueue=[];let xpTimer=null;
+function queueXpGain(prof,items,before,mult=1){
+ const gained=(prof.xp||0)-before;
+ if(gained<=0||!items.length)return;
+ const last=xpQueue.at(-1);
+ if(last&&last.id===prof.id&&!last.shown){last.items.push(...items);last.after=prof.xp;last.gained+=gained;}
+ else xpQueue.push({id:prof.id,name:prof.name,items:[...items],before,after:prof.xp,gained,mult});
+ if(!xpTimer)xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},120);
+}
+function showXpGain(){
+ if(xpTimer||!xpQueue.length)return;
+ const g=xpQueue.shift(),el=$('xpGain');if(!el)return;g.shown=true;
+ const from=levelOf(g.before),to=levelOf(g.after),pct=l=>Math.round(l.into/l.need*100);
+ const multNote=g.mult!==1?`<li class="xp-mult"><span>${g.mult>1?'Hard':'Easy'} ×${g.mult}</span></li>`:'';
+ el.innerHTML=`<div class="xp-top"><b>+${g.gained} XP</b>${round.players.length>1?`<span>${escape(g.name)}</span>`:''}</div>`
+  +`<ul class="xp-items">${g.items.map(i=>`<li><span>${escape(i.label)}</span><b>+${i.xp}</b></li>`).join('')}${multNote}</ul>`
+  +`<div class="xp-level"><i class="level-badge">${from.level}</i><span class="xp-bar"><b style="width:${pct(from)}%"></b></span><small>${to.into.toLocaleString()} / ${to.need.toLocaleString()}</small></div>`;
+ el.dataset.shown=String((Number(el.dataset.shown)||0)+1);
+ el.hidden=true;void el.offsetWidth;el.hidden=false;
+ gameAudio?.xpSound?.('gain');
+ // The fill: to the end of the bar and over for each level crossed, then on to
+ // where it now is.
+ const bar=el.querySelector('.xp-bar b'),badge=el.querySelector('.level-badge');
+ const steps=[];for(let l=from.level;l<to.level;l++)steps.push({w:100,next:l+1});steps.push({w:pct(to)});
+ let i=0;const run=()=>{const s=steps[i++];if(!s)return;
+  bar.style.transition='width .7s cubic-bezier(.3,.7,.3,1)';bar.style.width=s.w+'%';gameAudio?.xpSound?.('fill');
+  if(s.next)setTimeout(()=>{badge.textContent=s.next;gameAudio?.xpSound?.('levelUp');bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},760);};
+ setTimeout(run,260);
+ xpTimer=setTimeout(()=>{el.hidden=true;xpTimer=null;showXpGain();},2600+steps.length*780);
 }
 // THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
 const levelUps=[];let levelUpTimer=null;
@@ -406,13 +448,16 @@ function recordProfileShot(result,before){
  const L=lastShot,putt=before.lie==='green'||L?.kind==='putter';
  const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what))||result.end;
  const on=!result.hazard&&!putt&&onTheNumber(landed,L?.aimAt,L?.aimDist);
- if(range){if(on)rangeXp(prof);}
+ const xpBefore=prof.xp||0;
+ if(range){if(on){const got=rangeXp(prof);if(got)queueXpGain(prof,[{label:'On the number',xp:got}],xpBefore,1);}}
  else{
-  const prefix=`${round.uid}:h${round.hole}:`,stroke=before.stroke,mult=xpMult(before.seat);
+  const prefix=`${round.uid}:h${round.hole}:`,stroke=before.stroke,mult=xpMult(before.seat),items=[];
   const bests=['longestDrive','longestPutt','ballSpeed'].filter(k=>(prof.bests[k]||0)>(bestsBefore[k]||0)).length;
-  if(on&&!hasOnNumber(prof,prefix,stroke))award(prof,`${prefix}s${stroke}:number`,withMult(XP.onNumber,mult),{stroke});
+  if(on&&!hasOnNumber(prof,prefix,stroke)&&award(prof,`${prefix}s${stroke}:number`,withMult(XP.onNumber,mult),{stroke})>0)items.push({label:'On the number',xp:XP.onNumber});
   const holed=!!result.holed&&!result.hazard,puttFeet=before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:0;
-  award(prof,`${prefix}s${stroke}:shot`,withMult(shotXp({holed,fromGreen:before.lie==='green',teeShot:stroke===1,puttFeet,bests}),mult),{stroke});
+  const parts=shotXpParts({holed,fromGreen:before.lie==='green',teeShot:stroke===1,puttFeet,bests});
+  if(award(prof,`${prefix}s${stroke}:shot`,withMult(sumParts(parts),mult),{stroke})>0)items.push(...parts);
+  queueXpGain(prof,items,xpBefore,mult);
  }
  const levelNow=levelOf(prof.xp).level;if(levelNow>levelBefore)queueLevelUp(prof,levelNow);
  storeProfiles(profiles);

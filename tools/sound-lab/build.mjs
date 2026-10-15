@@ -39,3 +39,11 @@ const meter=readFileSync(join(here,'meter.html'),'utf8')
 <meta name="built" content="${built}">`);
 writeFileSync(join(outDir,'meter.html'),meter);
 console.log(`wrote ${join('docs','reports','sounds','meter.html')} (${(meter.length/1024).toFixed(0)} KB)`);
+// The XP popup's sounds (14 October 2026): their own small page, with a demo
+// of the popup that plays the takes the owner has picked.
+const xp=readFileSync(join(here,'xp.html'),'utf8')
+ .replace('/*SYNTH*/',()=>synth)
+ .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">
+<meta name="built" content="${built}">`);
+writeFileSync(join(outDir,'xp.html'),xp);
+console.log(`wrote ${join('docs','reports','sounds','xp.html')} (${(xp.length/1024).toFixed(0)} KB)`);

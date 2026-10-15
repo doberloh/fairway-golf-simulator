@@ -50,6 +50,9 @@ const rows=await tab.evaluate(async secs=>{
    for(let i=0;i<=120;i++){const t=i/60,p=t<.98?t/1.15:.85-(t-.98)/1.15;ctx.suspend(t).then(()=>{v.set(p,t<.98?'power':'strike');ctx.resume();});}
    ctx.suspend(2.1).then(()=>{v.stop();ctx.resume();});});
   out.push(stats(b,`meter voice ${take}`));}
+ // The XP popup's sounds (14 October 2026), every take.
+ for(const [id,E]of Object.entries(L.XP_SOUNDS))for(const take of Object.keys(E.takes)){
+  const [b]=await render(3,lab=>L.xpSound(lab,id,{take,at:0}));out.push(stats(b,`xp ${id} ${take}`));}
  return out;
 },secs);
 await browser.close();

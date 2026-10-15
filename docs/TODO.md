@@ -27,6 +27,13 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
+- [ ] **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Three
+  takes each for the gain, the bar filling and a new level, in `src/sound.js`
+  (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
+  `docs/reports/sounds/xp.html` (local), with a demo of the popup. All render
+  between -13 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
+  which is silent until `XP_FINAL` holds the picks; then extend
+  tests/sound.test.mjs as for the meter sounds.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
   finished, and as the profile picture) and titles.**
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
@@ -901,6 +908,8 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
   tests/progression.test.mjs; smoke checks a finished hole pays XP. **With it,
   the owner's meter notes:** the carry/total/apex row never hides (dashes while
   you swing), and the swing's marks on the bar clear when the ball stops.
+  **Then the XP popup** (the owner, same day): what earned the XP, the amount
+  and the level bar filling, every time XP is earned; smoke checks it comes up.
 - [x] **Phase 3: mixed groups.** Each golfer plays with the launch monitor (the
   default: whenever it is armed, as before) or the Swing Meter, chosen in the
   group editor once a bridge has connected, with their hand; both saved to the

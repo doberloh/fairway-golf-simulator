@@ -1245,3 +1245,39 @@ export function meterEvent(lab,id,{take='A',knobs={},at}={}){
  lab.sweep();
  return t;
 }
+
+// ---------------------------------------------------------------- XP
+// The XP popup's sounds (round 1 of their own, 14 October 2026): the gain as
+// the popup comes up, the level bar filling, and the bar running over into a
+// new level. Three takes each for the owner to choose in the XP report
+// (tools/sound-lab/xp.html). NOT PLAYED IN THE GAME until signed off: the game's
+// xpSound (audio.js) checks XP_FINAL and stays quiet while it is empty. PLACED by ear.
+export const XP_SOUNDS={
+ gain:{label:'XP gained (the popup comes up)',note:'Short and bright: it plays after nearly every hole.',takes:{
+  A:{name:'Two-coin chime',play:x=>{x.ring(0,[[midi(83),.18,1],[midi(83)*2.76,.05,.2]],{amp:.13});x.ring(.07,[[midi(88),.28,1],[midi(88)*2.76,.07,.2]],{amp:.14});}},
+  B:{name:'Soft pop and sparkle',play:x=>{x.thump(0,320,.02,.9,1.6);for(const dt of [.04,.08,.12])x.ring(dt,[[midi(pick([96,100,103])),.08,1]],{amp:.09});}},
+  C:{name:'Wood tick pair',play:x=>{x.ring(0,[[1250,.04,1],[3200,.012,.3]],{amp:.17});x.ring(.075,[[1650,.05,1],[4100,.012,.3]],{amp:.17});}},
+ }},
+ fill:{label:'The level bar filling',note:'Under the bar as it fills, about seven tenths of a second.',takes:{
+  A:{name:'Rising shimmer',play:(x,t,K,lab,dest)=>sung(lab,dest,t,K,{contour:[620,700,820,980,1180],dur:.65,amp:.1,harm:.25})},
+  B:{name:'Quickening ticks',play:x=>{let dt=0,g=.11;for(let i=0;i<10;i++){x.ring(dt,[[1500+i*120,.008,1]],{amp:.18});dt+=g;g*=.82;}}},
+  C:{name:'Airy sweep up',play:x=>x.hiss(0,{type:'bandpass',f:500,f2:2600,q:3,dur:.6,attack:.08,hold:.1,amp:.5})},
+ }},
+ levelUp:{label:'Over into a new level',note:'When the bar runs over the top; the big level-up banner follows.',takes:{
+  A:{name:'Marimba fanfare',play:x=>{chime(x,[72,76,79,84],.08,.07,.4);x.ring(.36,[[midi(88),.6,1],[midi(91),.6,.7]],{amp:.05});}},
+  B:{name:'Bell chord',play:x=>{for(const n of [79,83,86])x.ring(0,[[midi(n),1,1],[midi(n)*2.76,.3,.25]],{amp:.05});}},
+  C:{name:'Rising two-note swell',play:(x,t,K,lab,dest)=>{sung(lab,dest,t,K,{contour:[523],dur:.18,amp:.1,wave:'triangle'});sung(lab,dest,t+.16,K,{contour:[784,790],dur:.5,amp:.1,wave:'triangle',vib:.01,vibHz:5.5});}},
+ }},
+};
+for(const e of Object.values(XP_SOUNDS))e.knobs=['level','pitch','length','bright'];
+// Filled in when the owner signs the takes off; empty, the game plays none.
+export const XP_FINAL={};
+export function xpSound(lab,id,{take='A',knobs={},at}={}){
+ const E=XP_SOUNDS[id];if(!E)return;
+ const T=E.takes[take]||E.takes.A,t=(at??lab.ctx.currentTime)+.01;
+ const K={...Object.fromEntries(Object.entries(KNOBS).map(([n,d])=>[n,d.def])),...mergeKnobs(T.base,knobs)};
+ const dest=place(lab,{dist:6,wet:.12,until:t+3});
+ T.play(kit(lab,dest,t,1,K),t,K,lab,dest);
+ lab.sweep();
+ return t;
+}
