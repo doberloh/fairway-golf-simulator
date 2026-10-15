@@ -1451,6 +1451,18 @@ html,body{overscroll-behavior:none}
 .ball-avatar.profile-avatar{background:none;width:52px;height:52px}
 .ball-avatar.tiny{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-right:6px;filter:none}
 .player-row .ball-avatar.tiny{margin:0}
+.player-mark{display:flex;align-items:center;gap:6px;min-width:33px}
+/* A ROW WITH A LAUNCH MONITOR IN PLAY has five controls -- name, team, plays
+   with, hand, remove -- and on one line the name box was squeezed to a few
+   letters (the ball picture made it worse, 15 October 2026). Two lines: the
+   golfer across the top, how they play underneath. */
+.player-row.play{grid-template-columns:auto 1fr 1fr 64px auto;grid-template-areas:"mark who who who drop" ". team input hand ."}
+.player-row.play .player-mark{grid-area:mark}
+.player-row.play .player-who{grid-area:who}
+.player-row.play [id^=team]{grid-area:team}
+.player-row.play [id^=input]{grid-area:input}
+.player-row.play [id^=hand]{grid-area:hand}
+.player-row.play .drop-player,.player-row.play .drop-spacer{grid-area:drop}
 .golfer-title{display:block;font-style:italic;font-size:11px;color:#d9c27a;font-weight:500}
 .score-table .golfer-title{font-size:10px;line-height:1.2}
 .look-tabs{margin-bottom:10px}

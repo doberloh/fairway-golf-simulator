@@ -3387,8 +3387,9 @@ function groupEditor(hostId,start,onChange){
   // otherwise the first time anyone sees a golfer's colour is a tracer over a
   // fairway, with nothing on screen tying it to a name.
   host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
-   +`<span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>`
-   +(p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):'')
+   // The colour and the golfer's ball share the first column: as a cell of
+   // their own, the ball pushed the name box into the team's narrow column.
+   +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):''}</span>`
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)} · Level ${levelOf(q.xp).level}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
