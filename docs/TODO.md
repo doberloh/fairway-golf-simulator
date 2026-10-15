@@ -27,7 +27,6 @@ local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
 `docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
 `# Done`.
 
-- [ ] **Phase 4: XP and levels**, one system for monitor and meter golfers.
 - [ ] **Phase 5: tracer styles, ball finishes (shown close up when a hole is
   finished, and as the profile picture) and titles.**
 - [ ] **Phase 6: badges and frames, meter skins, visual hole-out flourishes.**
@@ -891,6 +890,17 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     picked takes. `check.mjs` renders every take: all between -10 and -17 dB
     peak. **None plays in the game** until signed off; then fold the choices into
     a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
+  and meter golfers: hole, score, fairway and green, on the number, chip-ins,
+  long putts, personal bests, rounds, wins and the daily first round, with the
+  difficulty multiplier; a mulligan takes back its shot's XP; the range a
+  capped trickle. Levels without end, 2,850 a level from 50. Profile store 3
+  (no back-fill; a one-time note). The level beside the name on the score
+  chips, the group editor and My profile, and a level-up banner after the
+  hole-out banner (it names no unlocks yet: those come with Phase 5).
+  tests/progression.test.mjs; smoke checks a finished hole pays XP. **With it,
+  the owner's meter notes:** the carry/total/apex row never hides (dashes while
+  you swing), and the swing's marks on the bar clear when the ball stops.
 - [x] **Phase 3: mixed groups.** Each golfer plays with the launch monitor (the
   default: whenever it is armed, as before) or the Swing Meter, chosen in the
   group editor once a bridge has connected, with their hand; both saved to the

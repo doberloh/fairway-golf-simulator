@@ -751,9 +751,10 @@ const JOURNEYS = [
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
     if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
-    // The bar keeps the swing that was struck: the distance stop stays on it
-    // after the ball lands, until the next swing (14 October 2026).
-    if (!await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter forgot where the distance was set');
+    // The swing's marks clear once the ball stops; the three numbers stay
+    // (14 October 2026).
+    if (await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter kept the last swing after the ball stopped');
+    if (!/d/.test(await t.page.textContent('#smResult'))) throw new Error('the meter lost the last shot numbers');
    });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
@@ -780,6 +781,14 @@ const JOURNEYS = [
    await t.step('the scorecard offers the next hole', async () => {
     const title = await t.drawerTitle();
     if (!title) throw new Error('no panel open after holing out');
+   });
+   // XP AND LEVELS (Phase 4, 14 October 2026): a finished hole pays at least its
+   // ten for finishing, and the golfer's chip carries their level.
+   await t.step('the hole paid XP, and the score chip shows the level', async () => {
+    const p = await t.page.evaluate(() => { const s = JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'); return s?.profiles?.find(q => q.id === s.main); });
+    if (!(p?.xp >= 10)) throw new Error(`the main golfer has ${p?.xp} XP after a finished hole`);
+    const chip = await t.page.evaluate(() => document.querySelector('.score-chip')?.outerHTML || '(no chip)');
+    if (!/class="level-badge"[^>]*>[0-9]+</.test(chip)) throw new Error(`no level on the score chip: ${chip.slice(0, 300)}`);
    });
    await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());

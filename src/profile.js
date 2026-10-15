@@ -28,7 +28,7 @@ import {validateBag, stockBag} from './clubs.js';
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
 export const LEGACY_KEY = 'fairway-profile-v1';
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 export const MAX_PROFILES = 60;
 // How many removed round ids a profile remembers; far more than are ever in play.
 const MAX_REMOVED = 200;
@@ -83,6 +83,10 @@ export function scoreType(score, par) {
 const MIGRATIONS = {
  // 1 -> 2: one profile becomes a store of them, and that profile is main.
  1: d => { const id = newProfileId(); return {version: 2, main: id, profiles: [{...d, id}]}; },
+ // 2 -> 3: XP and levels (14 October 2026). Nobody is back-filled from their
+ // history (the owner's call): every golfer starts at level 1 with no XP, and
+ // `xpNew` shows each existing golfer, once, a note that XP is new.
+ 2: d => ({...d, version: 3, profiles: (Array.isArray(d.profiles) ? d.profiles : []).map(p => p && typeof p === 'object' ? {...p, xp: 0, xpNew: true} : p)}),
 };
 export const newProfileId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
@@ -96,7 +100,7 @@ export function validName(name) {
 }
 
 export function blankProfile(name, now = Date.now(), id = newProfileId()) {
- return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: [], removed: []};
+ return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: [], removed: [], xp: 0, xpLog: {}};
 }
 
 const finite = v => Number.isFinite(v) ? v : 0;
@@ -130,7 +134,17 @@ export function normaliseProfile(d) {
  const play = {};
  if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
  if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play};
+ // XP (Phase 4): the total, the ledger of recent awards a mulligan can take
+ // back (progression.js `award`), the last day the daily bonus was given, the
+ // range's daily trickle, and whether the 'XP is new' note is still to show.
+ const xp = Number.isFinite(d.xp) && d.xp >= 0 ? Math.floor(d.xp) : 0;
+ const xpLog = {};
+ if (d.xpLog && typeof d.xpLog === 'object') for (const [k, v] of Object.entries(d.xpLog)) if (typeof k === 'string' && k.length <= 120 && Number.isFinite(v?.xp) && v.xp > 0) xpLog[k] = {xp: Math.round(v.xp), at: finite(v.at), ...(Number.isInteger(v.stroke) ? {stroke: v.stroke} : {})};
+ const extra = {};
+ if (typeof d.xpDaily === 'string' && /^d{4}-d{2}-d{2}$/.test(d.xpDaily)) extra.xpDaily = d.xpDaily;
+ if (typeof d.xpRange?.day === 'string' && Number.isFinite(d.xpRange.xp)) extra.xpRange = {day: d.xpRange.day, xp: d.xpRange.xp};
+ if (d.xpNew === true) extra.xpNew = true;
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile

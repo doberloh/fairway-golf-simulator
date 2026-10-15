@@ -7781,6 +7781,25 @@ only the wind as the skill to leave to the golfer. It approximates a partial
 swing by the full swing's ratio, as `playsLike` does (RESEARCH *Plays like, by
 geometry*); the test above bounds what that costs on level ground.
 
+### XP and levels
+
+Phase 4 (14 October 2026). Every amount is from the agreed spec and is PLACED:
+nothing about XP is measured. Finishing a hole 10; par 10, birdie 30, eagle 80,
+albatross 250, hole in one 300 (replacing the rest; the owner swapped the
+spec's albatross and ace); fairway and green in regulation 5 each; on the
+number 5 (within 5% of the aim distance, once a hole, not putts); chip-in 25;
+putt over 30 ft holed 25; new personal best 40; 9 or 18 holes finished 50 or
+100; a match or scramble won 50; the first round finished each day 100 (the
+owner raised it from 50). Multipliers Easy 0.75, Normal 1, Hard 1.5, a monitor
+golfer 1, not on the daily bonus. The range: on the number only, 2 a time,
+50 a day. Levels: 400 to level 2, 50 more each level, so 78,400 to reach level
+50, and 2,850 a level after that for ever (the owner: no cap, no unlocks past
+50). Estimated from these: a typical 18-hole round (18 holes finished, about
+nine pars, two birdies, a dozen fairways and greens, a few shots on the number,
+the round itself) pays about 500 to 650 XP, so about a level a round at first,
+one every three or four rounds by level 30, and roughly 140 eighteen-hole rounds
+to level 50. Not yet checked against real play.
+
 ### The Swing Meter's sounds
 
 Synthesised like every other sound (no recordings), PLACED by ear, and chosen

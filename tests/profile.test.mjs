@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const map = new Map();
 globalThis.localStorage = {getItem: k => map.has(k) ? map.get(k) : null, setItem: (k, v) => map.set(k, String(v)), removeItem: k => map.delete(k), clear: () => map.clear()};
-const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, storeProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
+const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, storeProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS, PROFILE_VERSION} = await import('../src/profile.js');
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
@@ -44,7 +44,8 @@ test('the single profile the first build wrote becomes the main profile of a sto
  localStorage.clear();
  map.set(LEGACY_KEY, JSON.stringify({version: 1, name: 'Dee', created: 5, counters: {shots: 12}, bests: {longestDrive: 250}, rounds: [{id: 'g1', card: [{par: 4, yards: 400, score: 5}]}]}));
  const store = loadProfiles();
- assert.equal(store.version, 2);
+ // Upgraded all the way to the current store (3 since XP, 14 October 2026).
+ assert.equal(store.version, PROFILE_VERSION);
  assert.equal(store.profiles.length, 1);
  const m = mainProfile(store);
  assert.equal(m.name, 'Dee');

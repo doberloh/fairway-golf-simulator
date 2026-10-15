@@ -82,6 +82,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
+- `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
 **Drawing it**
@@ -205,6 +206,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Build a slider with `slider()`, never by hand. [BUILD A SLIDER]
 - One thrown error while a panel wires itself kills every handler below it. [One thrown error in a panel]
 - `main.js` DOM paths are not covered by the tests; that is what `npm run smoke` is for. [`main.js` DOM paths]
+- XP is a keyed ledger: award by key, never add to `xp` directly; the level is derived. [XP is a ledger, not a running count]
 - `armed` is worked out per turn from the Armed switch (`armSwitch`) and how the golfer up plays; never set it directly. [`armed` is per turn]
 - A Swing Meter tap is judged on its own timestamp, never on a frame; the frame loop only draws the marker. [A Swing Meter tap is judged on its own time]
 - Escape closes what is in front first. [Escape closes what is in front]

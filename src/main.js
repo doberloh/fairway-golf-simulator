@@ -22,6 +22,7 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
+import {XP,XP_MULT,levelOf,holeXp,shotXp,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay} from './profile.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
@@ -341,12 +342,56 @@ function syncProfile(){
  const key=[round.uid,round.hole,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
  if(key===profileSynced)return;profileSynced=key;
  for(const r of rows)syncHole(r.prof,profileMeta(r.seat),{...holeFacts(),score:r.score,putts:r.putts});
+ // XP FOR THE HOLE AND THE ROUND (Phase 4). Worked out from the card on every
+ // save and kept under one key per hole, so a hole is never paid twice and a
+ // mulligan that un-holes a putt takes the hole's XP back with it.
+ const was=new Map(rows.map(r=>[r.prof.id,levelOf(r.prof.xp).level]));
+ for(const r of rows){
+  const h=r.prof.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]||{};
+  award(r.prof,`${round.uid}:h${round.hole}`,Number.isFinite(r.score)?withMult(holeXp({strokes:r.score,par:course.par,fairway:!!h.fairway,gir:!!h.gir}),xpMult(r.seat)):0);
+  if(round.finished&&!round.endless&&roundXp(round.holes)){
+   award(r.prof,`${round.uid}:round`,roundXp(round.holes));
+   award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0);
+   dailyXp(r.prof);
+  }
+ }
+ for(const r of rows){const now=levelOf(r.prof.xp).level;if(now>was.get(r.prof.id))queueLevelUp(r.prof,now);}
  storeProfiles(profiles);
+}
+// THE XP MULTIPLIER for a golfer's hole: their Swing Meter difficulty (Easy
+// 0.75, Normal 1, Hard 1.5), or 1 if they played it off a launch monitor.
+// Read from how their last shot on this hole was struck; with none yet, from
+// how they play.
+const shotInputs=new Map();
+function xpMult(seat){
+ const p=round.players[seat],how=shotInputs.get(`${round.uid}:${round.hole}:${seat}`)??(playsWith(p)==='meter'||!armSwitch?'meter':'monitor');
+ return how==='monitor'?XP_MULT.monitor:XP_MULT[meterDifficulty(profileOf(p))]??1;
+}
+// Won a match (best ball, by holes) or a scramble (lowest team total).
+function wonRound(seat){
+ const team=round.players[seat]?.team;
+ if(round.mode==='match'){const d=(round.match?.A||0)-(round.match?.B||0);return d!==0&&team===(d>0?'A':'B');}
+ if(round.mode==='scramble'){const teams=[...new Set(round.players.map(p=>p.team))];if(teams.length<2)return false;
+  const tot=Object.fromEntries(teams.map(t=>[t,sumScores(round.teamCards[t])])),best=Math.min(...Object.values(tot));
+  return tot[team]===best&&Object.values(tot).filter(v=>v===best).length===1;}
+ return false;
+}
+// THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
+const levelUps=[];let levelUpTimer=null;
+function queueLevelUp(prof,level){levelUps.push({name:prof.name,level});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
+function showLevelUp(){
+ if(levelUpTimer||!levelUps.length)return;
+ if($('holeOut')&&!$('holeOut').hidden){levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},500);return;}
+ const u=levelUps.shift(),el=$('levelUp');if(!el)return;
+ el.innerHTML=`<small>LEVEL UP</small><strong>Level ${u.level}</strong><span>${escape(u.name)}</span>`;
+ el.hidden=true;void el.offsetWidth;el.hidden=false;
+ levelUpTimer=setTimeout(()=>{el.hidden=true;levelUpTimer=null;showLevelUp();},2800);
 }
 // ONE BALL, AS ITS GOLFER'S PROFILE COUNTS IT. `before` is what was true before
 // the round moved on: who hit, which stroke this was, and where it was played from.
 function recordProfileShot(result,before){
  const prof=profileOf(round.players[before.seat]);if(!prof)return;
+ const bestsBefore={...prof.bests},levelBefore=levelOf(prof.xp).level;
  const shot=latest?.shot,range=rangeMode,meta=range?null:profileMeta(before.seat);
  const pin=course?.pin,rest=result.hazard||!course?null:course.surface(result.end.x,result.end.z);
  tallyShot(prof,{range,lie:before.lie,rest,hazard:result.hazard||null,holed:!!result.holed&&!result.hazard,lipped:!!result.lipped,
@@ -354,6 +399,22 @@ function recordProfileShot(result,before){
   teeShot:before.stroke===1,driver:before.driver,
   puttFeet:before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:NaN,
   strokes:before.stroke+(result.hazard?1:0),hole:meta?holeFacts():null},meta);
+ // XP FOR THE SHOT (Phase 4), kept under its stroke so a mulligan takes it back.
+ // On the number: where it came down -- the first bounce on the ground, or where
+ // it stopped -- within 5% of the aim distance of the aim point; once a hole,
+ // never for a putt. On the range, that alone, as a capped trickle.
+ const L=lastShot,putt=before.lie==='green'||L?.kind==='putter';
+ const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what))||result.end;
+ const on=!result.hazard&&!putt&&onTheNumber(landed,L?.aimAt,L?.aimDist);
+ if(range){if(on)rangeXp(prof);}
+ else{
+  const prefix=`${round.uid}:h${round.hole}:`,stroke=before.stroke,mult=xpMult(before.seat);
+  const bests=['longestDrive','longestPutt','ballSpeed'].filter(k=>(prof.bests[k]||0)>(bestsBefore[k]||0)).length;
+  if(on&&!hasOnNumber(prof,prefix,stroke))award(prof,`${prefix}s${stroke}:number`,withMult(XP.onNumber,mult),{stroke});
+  const holed=!!result.holed&&!result.hazard,puttFeet=before.lie==='green'&&shot&&pin?Math.hypot(shot.origin.x-pin.x,shot.origin.z-pin.z)/.3048:0;
+  award(prof,`${prefix}s${stroke}:shot`,withMult(shotXp({holed,fromGreen:before.lie==='green',teeShot:stroke===1,puttFeet,bests}),mult),{stroke});
+ }
+ const levelNow=levelOf(prof.xp).level;if(levelNow>levelBefore)queueLevelUp(prof,levelNow);
  storeProfiles(profiles);
 }
 // DISCARD HAS TO ACTUALLY DISCARD. "This round and its scores are gone" was a
@@ -784,7 +845,7 @@ function meterPress(t=performance.now()){
   closePanel();setAimView(false);
   const ctx=swingContext(),putt=ctx.club.code==='PT';
   swing=startSwing(t,{difficulty:ctx.difficulty,club:ctx.club,putt,accuracy:!putt,zoom:putt?ctx.puttRange/puttFullRoll(ctx.club,settings.turf):ctx.zoom});
-  swing.ctx=ctx;meterFlash=null;lastSwing=null;$('smResult').hidden=true;
+  swing.ctx=ctx;meterFlash=null;lastSwing=null;drawMeterResult();
   $('swingCatcher').hidden=false;$('world').classList.add('swinging');
   gameAudio?.meterStart();
   drawShapeControls();drawMeterScale();drawMeter(t);
@@ -796,11 +857,12 @@ function meterPress(t=performance.now()){
  return true;
 }
 // THE STRUCK SWING STAYS ON THE BAR (the owner's call, 14 October 2026): where
-// the distance was set and where the strike came, frozen, through the flight and
-// after it, until that golfer's next swing -- like the three numbers beside it.
-// The next golfer up, or a new hole, gets a clean bar.
+// the distance was set and where the strike came, frozen, while the ball is
+// moving; the bar is clean once it stops (the owner again, later that day).
 let lastSwing=null;
-const shownSwing=()=>!swing&&lastSwing&&lastSwing.player===round.player?.name&&lastSwing.hole===round.hole?lastSwing:null;
+// Only while that ball is moving (the owner, 14 October 2026: not for ever);
+// the bar is clean again once it stops.
+const shownSwing=()=>!swing&&flight&&!flight.replay&&lastSwing&&lastSwing.player===round.player?.name&&lastSwing.hole===round.hole?lastSwing:null;
 // Where a finished swing's marker stopped: the strike, or for a putt (two taps)
 // the distance.
 const frozenAt=sw=>sw.accuracy?sw.error:sw.power;
@@ -845,7 +907,7 @@ function placeZone(z){
 function drawMeter(t,last=null){
  const box=$('swingMeter');if(!box||box.hidden)return;
  const sw=swing||last||shownSwing();
- $('smMarker').style.left=barX(!sw?0:sw.done?frozenAt(sw):markerAt(sw,t))+'%';
+ $('smMarker').style.left=barX(!sw?MISS_AT:sw.done?frozenAt(sw):markerAt(sw,t))+'%';
  $('smPower').hidden=!sw||sw.power==null;
  if(sw&&sw.power!=null){$('smPower').style.left=barX(sw.power)+'%';if(sw.accuracy)placeZone(zonesFor(sw.ctx,sw.power));}
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
@@ -904,8 +966,12 @@ const meterMode=()=>!armed&&!cardRecord()?.typed;
 function drawMeterResult(record=cardRecord()){
  const box=$('smResult');if(!box)return;
  const mine=!!record&&!record.typed&&!swing&&(flight?meterFlight():record.player===round.player?.name&&record.hole===round.hole);
- box.hidden=!mine;if(!mine)return;
- const cells=shotGrid(record,{fields:['carry','total','apex'],columns:0}).cells;
+ // THE ROW NEVER GOES (the owner, 14 October 2026: numbers vanishing on the
+ // first tap made lining up the next shot jarring). With nothing of this
+ // golfer's to show -- a swing under way, a new golfer, a new hole -- it shows
+ // dashes in the same place.
+ box.hidden=false;
+ const cells=shotGrid(mine?record:null,{fields:['carry','total','apex'],columns:0}).cells;
  for(const c of cells){const el=box.querySelector(`[data-field=${c.id}]`);if(!el)continue;const html=tileInner(c);if(el.dataset.shown!==html){el.dataset.shown=html;el.innerHTML=html;}}
 }
 // THE TARGET MARKER (Phase 2): the stop on the bar that lands the ball in the
@@ -1131,7 +1197,7 @@ function takeShot(data=null,struck=null){
   // This hole's flagstick is in unless the ball is on the green (setPinOut) or
   // the putter is in hand (liftFlag): exactly when it is drawn standing.
   flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind};flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});if(c.code==='PT')view.liftFlag();showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -2593,6 +2659,7 @@ function setMode(mode){
  if(mode!=='play')cancelAdvance();
  syncNav();updateStudioState();updateHUD();updateExplorer();
 }
+const XP_NEW_TEXT='From now on every round earns XP toward levels, badges and rewards. Your stats and history are kept; levels start at 1 for everyone.';
 function openMenu(){
  if(flight||dropState)return;
  stopTour();closePanel();
@@ -2601,6 +2668,9 @@ function openMenu(){
  $('menuContinue').hidden=appMode==='studio'||(menuBackdrop&&!pendingRound);
  updateMenuProfile();
  $('menuNote').textContent=listCourses().length?'':'No saved courses yet. Shape one in Course studio, or let Play surprise you.';
+ // XP IS NEW (Phase 4): the main golfer is told once, here; everyone else on
+ // their own My profile page.
+ {const m=mainProfile(profiles);if(m?.xpNew){delete m.xpNew;storeProfiles(profiles);toast('New: XP and levels. '+XP_NEW_TEXT);}}
  setMode('menu');icon();$('menuContinue').hidden?$('menuPlay').focus():$('menuContinue').focus();
 }
 async function continueRound(){
@@ -2972,7 +3042,7 @@ function groupEditor(hostId,start,onChange){
   host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
    +`<span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>`
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
-   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)}</option>`).join('')
+   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)} · Level ${levelOf(q.xp).level}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
    +`</div>`
@@ -3241,6 +3311,10 @@ function toPar(index=round.active){
 // On a practice ground there is no par, so a chip counts shots instead, and
 // a tap picks who is hitting -- a second tap on whoever is up opens their
 // shot list, which is what the old player row did.
+// A golfer's level, as a small badge beside their name (Phase 4; the badges'
+// own looks come with the rewards).
+const levelBadge=prof=>prof?`<i class="level-badge" title="Level ${levelOf(prof.xp).level}">${levelOf(prof.xp).level}</i>`:'';
+const chipLevel=p=>rangeMode?'':levelBadge(profileOf(p));
 function drawScoreChips(){
  const host=$('scoreChips');if(!host)return;
  const others=round.players.length-1;
@@ -3262,7 +3336,7 @@ function drawScoreChips(){
    :`${p.name}, ${score==='E'?'even par':score}. Open the scorecard`;
   return `<button class="score-chip${up?' up':''}" data-player="${i}" aria-label="${escape(label)}">`
    +`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(p.name[0]?.toUpperCase()||'P')}</span>`
-   +`<span class="chip-name">${escape(p.name)}</span>${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
+   +`<span class="chip-name">${escape(p.name)}</span>${chipLevel(p)}${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
    +(up&&others>0?`<span class="chip-more">+${others}</span>`:'')+`</button>`;
  }).join('');
 }
@@ -3442,8 +3516,12 @@ function renderProfile(content){
   :`<div class="profile-id"><span class="profile-avatar" aria-hidden="true">${escape(profile.name.slice(0,1).toUpperCase())}</span><div><h3>${escape(profile.name)}${isMain?' <em class="profile-tag counts">Main profile</em>':''}</h3><small>Playing since ${profileWhen(profile.created)} · ${s.roundsPlayed} round${s.roundsPlayed===1?'':'s'} · ${s.holes} hole${s.holes===1?'':'s'}</small>`
    +`<div class="profile-actions">${isMain?'':`<button class="secondary" id="profileMakeMain">Make main profile</button><button class="secondary" id="profileDelete">Remove ${escape(profile.name)}</button>`}</div><p class="field-error" id="profileError"></p></div>`
    +`<button class="small-icon" id="profileRename" aria-label="Change ${escape(profile.name)}'s name" title="Change the name"><i data-lucide="pencil"></i></button></div>`;
+ const lv=levelOf(profile.xp);
+ // The note is shown once per golfer (the owner's call: no XP back-fill).
+ const xpNote=!!profile.xpNew;if(xpNote){delete profile.xpNew;storeProfiles(profiles);}
  content.innerHTML=`<div class="profile">${strip}`
-  +`<div class="profile-head">${head}<div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
+  +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
+  +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))
@@ -4783,7 +4861,9 @@ function bind(){
   const keptTrails=holeTrails.slice(0,-1),keptShots=Math.max(0,practiceShots-1);
   if(!round.mulligan())return;
   // The ball taken back belongs to whoever is up again now.
-  {const prof=rangeMode?null:profileOf(round.player);if(prof){tallyMulligan(prof);storeProfiles(profiles);}}
+  // ...and so does any XP it earned (progression.js `takeBack`); the hole's own
+  // XP follows the card on the next save.
+  {const prof=rangeMode?null:profileOf(round.player);if(prof){tallyMulligan(prof);takeBack(prof,`${round.uid}:h${round.hole}:`,round.stroke);storeProfiles(profiles);}}
   closePanel();loadCourse();save();
   holeTrails=keptTrails;practiceShots=keptShots;
   view.setShotHistory?.(visibleTrails());
