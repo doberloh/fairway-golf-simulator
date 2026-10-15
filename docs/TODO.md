@@ -61,6 +61,18 @@ Asked for by the owner on 10 October, in this order, on the branch
   behind the loading screen, or the next backdrop's before the menu shows it.
   Measure first, with a Chrome recording of a first visit after clearing the
   site's cache.
+- [ ] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
+  October 2026): during the hole-out banner, its chiptune sting and the XP
+  popup after it. The owner loves the pull-back into the summary orbit and
+  wants it kept exactly as it is; the fix is in what competes with it.
+  Suspects, unmeasured: the banners' and the popup's `backdrop-filter` blur
+  recomputed every frame over a moving scene; the turning ball close-up
+  redrawn per frame (1-4 ms of CPU in Node); `syncProfile` and its
+  synchronous localStorage write at the hole-out; the summary's tracer lines;
+  the sting's oscillators; the cull and LOD as more of the course comes into
+  view. The smoke probe on 14 October saw only one 50 ms frame, as the
+  scorecard opened -- the owner's machine and settings differ, so measure
+  from the owner's Chrome recording of a hole-out.
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
