@@ -117,7 +117,10 @@ test('a pond bites into a fairway but never crosses one', () => {
  }
  assert.equal(crossed, 0, `${crossed} ponds cross a fairway`);
  // A bite nobody can see from the tee is not the feature that was asked for.
- assert.ok(bit / total > .08, `only ${bit} of ${total} ponds reach into a fairway`);
+ // PLACED floor. Greens at real size (generator 36, 15 October 2026) took it
+ // from 32 of 348 (9.2%) to 26 of 331 (7.9%): a par three's fairway now starts
+ // later, leaving a pond less of it to bite. The floor moved from 8% to 7%.
+ assert.ok(bit / total > .07, `only ${bit} of ${total} ponds reach into a fairway`);
  assert.ok(deepest > 6, `the deepest bite is only ${deepest.toFixed(1)} m`);
 });
 

@@ -447,6 +447,8 @@ Two of those went wrong and are worth knowing about, because neither produced an
 
 If you add anything that pairs `greenSize`/`greenAspect` with a position, it is describing the green, so it takes `h.green`.
 
+**A green's bumps scale with the green** (generator 36, 15 October 2026). Greens are real size since 36 (`holeLine`: radius 10-15 m, a median of about 6,150 sq ft), and every mound, tier face, ridge and bowl in `greenShape` takes its width AND height times `r.k` = greenSize / `GREEN_REF` (17.5, the old mean). Their PLACES were always a share of the green; their sizes were metres, and on the smaller greens that stacked the slopes. Scaled, a putt feels the same slopes as on the old greens (median 1.03% before and after). **Change a feature's size in `greenRecipe` knowing it is multiplied by `k`**, and anything new on the putting surface should scale the same way, or the green's slopes drift with its size.
+
 ## Hole locations
 
 `choosePin(h, index, rng)` in `course.js` cuts the cup from the green's own contour, before the world exists, using its own RNG stream (`seed-pin-index`) so it cannot shift trees, bunkers or streams by consuming draws from the shared one.

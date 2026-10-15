@@ -162,7 +162,15 @@ export const SCHEMA_VERSION=10;
 //     (course.js, blocksView). On 12 planted courses with houses: 232 bushes and
 //     4 houses had stood in a tee's view; the bush count fell 2% and houses
 //     120 -> 112.
-export const GENERATOR_VERSION=35;
+// 36: greens at real size (the owner, 15 October 2026): the green's radius is
+//     drawn from 10-15 m instead of 14-21 m (one draw, so no later draw moves).
+//     The median putting surface fell from about 12,060 to 6,150 sq ft (the US
+//     average is 5,600-5,700); the course re-grows round the smaller greens
+//     (full bench: blind tee shots over 1 m 29 -> 35 of about 1,050, tees
+//     needing work 32 -> 14, no invariant broken). The green's bumps scale
+//     with it (course-plan.js GREEN_REF), so putting slopes are unchanged:
+//     median 1.03% before and after, 90th percentile 1.68 -> 1.67%.
+export const GENERATOR_VERSION=36;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

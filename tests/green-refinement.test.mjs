@@ -132,7 +132,10 @@ test('the slope grid and its flow are one surface that knows the green, and squa
  // fall direction really is downhill.
  const g=reading.surface.geometry,pos=g.attributes.position,slope=g.attributes.slope,fall=g.attributes.fall,inside=g.attributes.inside;
  let checked=0,steep=0;
- for(let k=0;k<pos.count;k+=37){
+ // Sampled in proportion to the green, not every 37th point: a real-size green
+ // (generator 36) has half the vertices, and a fixed stride checked too few.
+ const stride=Math.max(1,Math.floor(pos.count/2000));
+ for(let k=0;k<pos.count;k+=stride){
   if(inside.getX(k)>-.5)continue;
   const local=h.toLocal({x:pos.getX(k),z:pos.getZ(k)}),grad=greenGradient(h,local.x,local.z);
   assert(Math.abs(slope.getX(k)-Math.hypot(grad.x,grad.z))<1e-6);

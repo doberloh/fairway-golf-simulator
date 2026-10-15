@@ -2983,9 +2983,9 @@ What is actually specified, from [The R&A — Part 8, Committee Equipment Requir
 
 > Must have a constant diameter of no greater than 0.75 inches (19 mm) from a point 3 inches (76.2 mm) above to 3 inches (76.2 mm) below the putting green surface.
 
-The model against both: **14 mm** at the top against the 50.8 mm limit, and **18 mm** where it meets the green against the 19 mm limit — one millimetre of margin, so the base cannot be thickened without rechecking it. The pole tapers 0.29 mm across the 152 mm band the rule calls *constant*; that is left alone deliberately, being three tenths of a millimetre on a prop nobody measures.
+**Superseded 15 October 2026** (see *Why our pins look small*: the owner chose an 8 ft stick, 2 in at the top tapering to 1 in at the green, over the Rules at the base, for visibility). As it was: the model against both: **14 mm** at the top against the 50.8 mm limit, and **18 mm** where it meets the green against the 19 mm limit — one millimetre of margin, so the base cannot be thickened without rechecking it. The pole tapers 0.29 mm across the 152 mm band the rule calls *constant*; that is left alone deliberately, being three tenths of a millimetre on a prop nobody measures.
 
-**Height is seven feet by convention, and now exactly seven feet.** It was 2.13 m — a tidy metric rounding of 7 ft that lands 3.6 mm short of it at 6.988 ft. Nothing was broken by that, but the cup beside it is specified to six significant figures (`CUP_RADIUS = 0.053975`, exactly 4.25 in), and one loose number in an otherwise exact set is the kind of thing that gets copied. It is now `7 * 0.3048`.
+**Height was seven feet by convention (eight since 15 October 2026), and then exactly seven feet.** It was 2.13 m — a tidy metric rounding of 7 ft that lands 3.6 mm short of it at 6.988 ft. Nothing was broken by that, but the cup beside it is specified to six significant figures (`CUP_RADIUS = 0.053975`, exactly 4.25 in), and one loose number in an otherwise exact set is the kind of thing that gets copied. It is now `7 * 0.3048`.
 
 The driving range's target flagsticks are a separate thing at 3.6 m, and deliberately so: they are aiming markers read from the mats hundreds of yards away, not holes, and nothing in the Rules applies to them.
 
@@ -7661,8 +7661,7 @@ frame mistake in its own "inside" check, so it agreed with the old physics; it
 was corrected too.
 
 **The flagstick is solid while it stands in the hole.** A vertical cylinder
-at its regulated base radius (9 mm; the rule allows 9.5 mm from 76 mm above the
-surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to 7 ft
+at its base radius (9 mm until 15 October 2026, 12.7 mm since -- the owner's 1 in, over the 9.5 mm the Rules allow from 76 mm above the surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to its full height (7 ft, 8 ft since)
 above the green, in the same swept-cylinder test as a trunk, so a ball comes
 off it the way it comes off a tree (the normal component reversed at 0.3 of
 its speed). The game pulls the stick for a putt and when the ball is on the
@@ -7859,8 +7858,27 @@ twice the US average and larger than Chambers Bay's; a real-size stick on a
 twice-size green reads as a toothpick, and the green itself as flat and empty.
 I found no GSPro setting for stick size in its docs (one partial page read);
 how other sims draw pins was not established from a source -- the impression
-that they draw them larger is the owner's, not checked. **Proposal (not
-built)**: in the TODO entry *Pins and greens look wrong next to other sims*.
+that they draw them larger is the owner's, not checked.
+
+**Built (the owner's choice, same day): greens at real size and a bolder
+stick; "Larger flags far away" left off by default.** *Greens* (generator 36):
+the radius drawn 10-15 m instead of 14-21 m, one draw so nothing else moved;
+measured again over the same 135 holes, a median **6,146 sq ft** (4,373-8,364,
+10th-90th), median depth 25.0 m (27 yd). The green's bumps first stayed in
+metres, which on the smaller greens stacked the slopes (31 of 36 sampled
+points steep, a Thursday cup on 2.03%); they now scale with the green (radius
+and height by greenSize/17.5, `GREEN_REF`), and putting slopes are unchanged:
+median 1.03% before and after, 90th percentile 1.68 -> 1.67%, about 1% at the
+cup both ways. Full bench before and after: blind tee shots over 1 m 29 -> 35
+of about 1,050, tees needing work 32 -> 14, ponds biting into a fairway 32 of
+348 -> 26 of 331 (9.2 -> 7.9%: a par three's fairway starts later; that test's
+PLACED floor moved from 8% to 7%), no invariant broken. *The stick*: 8 ft, 2
+in (50.8 mm) at the top tapering to 1 in (25.4 mm) at the green -- the owner's
+taper; **the 1 in base is over the 0.75 in the Rules allow near the surface**.
+Drawn and hit alike. Rolling 594 balls at the cup with the pin in (six holes,
+11 lines from -5 to +5 cm, speeds 1.6-3.2 m/s from 4 m): 29 dropped with the
+old stick, 25 with the new (a ball beside it in the cup now has 41.3 mm
+between pin and liner against a 42.7 mm ball), 34 with the pin out.
 
 ### Plain colours and animated frames (15 October 2026)
 

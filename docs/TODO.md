@@ -49,17 +49,10 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
-- [ ] **Pins and greens look wrong next to other sims -- a proposal for the
-  owner** (15 October 2026; RESEARCH *Why our pins look small*). The stick and
-  flag are real size; our greens are about twice the US average (median 12,060
-  sq ft against 5,600-5,700). Proposed, in order of effect: (1) **greens to real
-  size** -- the default green size cut so the median lands near 6,000-6,500 sq
-  ft (a generation change: GENERATOR_VERSION bump, every course and week's
-  course re-grown, `bench.mjs --since` before and after, putting distances
-  shorter); (2) **a stick within the Rules but easier to see**: 8 ft instead of
-  7, and the part more than 3 in above the green up to 1 in thick (the Rules
-  allow 2), the putting-height part unchanged so no putt changes; (3) **Larger
-  flags far away on by default**, with a gentler cap. Waiting on the owner.
+- [ ] **Larger flags far away on by default?** (15 October 2026.) The third
+  part of the pin proposal, not chosen: with greens at real size and a bolder
+  stick, the pin is still hard to pick out from the tee at 350 yards. Ask the
+  owner after they have played the new pin.
 
 - [ ] **A new build stutters on its first visit, then never again** (the owner,
   15 October 2026, loading the `swing-meter` build and clicking round the
@@ -960,6 +953,22 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     **Done (14 October 2026):** it hit `phone-landscape` the same way; both
     phone journeys now take relief before the check, as a golfer about to hit
     sees the screen.
+- [x] Closed: **Pins and greens look wrong next to other sims -- a proposal for the
+    owner** (15 October 2026; RESEARCH *Why our pins look small*). The stick and
+    flag are real size; our greens are about twice the US average (median 12,060
+    sq ft against 5,600-5,700). Proposed, in order of effect: (1) **greens to real
+    size** -- the default green size cut so the median lands near 6,000-6,500 sq
+    ft (a generation change: GENERATOR_VERSION bump, every course and week's
+    course re-grown, `bench.mjs --since` before and after, putting distances
+    shorter); (2) **a stick within the Rules but easier to see**: 8 ft instead of
+    7, and the part more than 3 in above the green up to 1 in thick (the Rules
+    allow 2), the putting-height part unchanged so no putt changes; (3) **Larger
+    flags far away on by default**, with a gentler cap.
+    **Done (the owner chose 1 and 2, with the stick tapering 2 in to 1 in):**
+    greens at real size (generator 36, median 6,146 sq ft), their bumps scaled
+    with them so putting slopes are unchanged; the stick 8 ft, 2 in at the top
+    to 1 in at the green, drawn and hit. Smoke 30/30. RESEARCH *Why our pins
+    look small*.
 - [x] **The owner's round of 15 October 2026: flourishes, frames, pin,
   cameras, cup.** Padlocks show on the meter skins; animated frames break out
   of the ring (flames rise above the ball, glints orbit, ripples spread, leaves
