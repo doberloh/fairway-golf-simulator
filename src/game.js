@@ -6,6 +6,10 @@ import {puttingConfig,awardedPutts} from './putting.js';
 // monitor on their turn is refused as if it were unarmed.
 export const INPUTS=['monitor','meter'];
 export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
+// EVERY ROUND FORMAT, in one list. A format added here is refused by nothing
+// else -- and tests/round-matrix.test.mjs fails until its scorer plays it with
+// every group the format allows (AGENTS.md, *Game rules live in pure modules*).
+export const FORMATS=['stroke','match','scramble','skins'];
 // A SAVE FROM BEFORE SKINS WAS A FORMAT (16 October 2026): the Skins challenge
 // was a stroke round with `challenge: 'skins'`. It resumes as a skins round,
 // with the same card and so the same skins. Every way a round comes back goes
@@ -31,7 +35,7 @@ export class Round{
  static defaultMonitorLie=true;
  constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
-  if(!['stroke','match','scramble','skins'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
+  if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
   if(mode==='match'&&new Set(players.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   // SKINS (skins.js) is every golfer for themselves, so it needs two to four.
@@ -258,12 +262,23 @@ export class Round{
   data=upgradeSave(data);const r=new Round(data);r.teePlaced=data.teePlaced!==false;if(!Number.isInteger(data.hole)||data.hole<0||(!r.endless&&data.hole>=r.holes)||data.hole>9999)throw Error('Invalid saved hole.');
   for(const key of ['cards','positions','strokes','done'])if(!Array.isArray(data[key])||data[key].length!==r.players.length)throw Error('Invalid saved round.');
   const integer=v=>Number.isInteger(v)&&v>=0&&v<=999,score=v=>Number.isFinite(v)&&v>=0&&v<=999&&Math.abs(v*100-Math.round(v*100))<1e-6;
-  if(!Number.isInteger(data.active)||data.active<0||data.active>=r.players.length||!data.strokes.every(score)||!data.done.every(v=>typeof v==='boolean')||!data.cards.every(row=>Array.isArray(row)&&(r.endless||row.length<=r.holes)&&row.every(score))||!data.positions.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<20000&&Math.abs(p.z)<20000))throw Error('Invalid saved player state.');
-  if(!['finished','holeComplete','scrambleSelection'].every(k=>typeof data[k]==='boolean')||!['A','B'].every(t=>score(data.scrambleShots?.[t])&&integer(data.match?.[t])&&Array.isArray(data.teamCards?.[t])&&data.teamCards[t].every(score)))throw Error('Invalid saved scores.');
+  // A HOLE NOBODY SCORED. A golfer who joins mid-round has no score for the
+  // holes before, and neither has a scramble team that forms mid-round: their
+  // rows are sparse, and a save writes each gap as null. This refused null, so
+  // every save after somebody joined -- Continue, the library, and the
+  // mulligan, which restores its own snapshots -- threw "Invalid saved player
+  // state" (found by tests/round-matrix.test.mjs, 16 October 2026). A gap is
+  // allowed, and goes back to being a gap -- an explicit undefined, which a
+  // mulligan snapshot taken from a loaded round then carries, so that is
+  // allowed too.
+  const slot=v=>v===null||v===undefined||score(v),gaps=row=>row.map(v=>v===null?undefined:v);
+  if(!Number.isInteger(data.active)||data.active<0||data.active>=r.players.length||!data.strokes.every(score)||!data.done.every(v=>typeof v==='boolean')||!data.cards.every(row=>Array.isArray(row)&&(r.endless||row.length<=r.holes)&&row.every(slot))||!data.positions.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<20000&&Math.abs(p.z)<20000))throw Error('Invalid saved player state.');
+  if(!['finished','holeComplete','scrambleSelection'].every(k=>typeof data[k]==='boolean')||!['A','B'].every(t=>score(data.scrambleShots?.[t])&&integer(data.match?.[t])&&Array.isArray(data.teamCards?.[t])&&data.teamCards[t].every(slot)))throw Error('Invalid saved scores.');
   if(!Array.isArray(data.candidates)||data.candidates.length>4||!data.candidates.every(c=>c&&integer(c.player)&&c.player<r.players.length&&Number.isFinite(c.position?.x)&&Number.isFinite(c.position?.z)&&[0,1,2].includes(c.penalty)&&typeof c.holed==='boolean'&&Number.isFinite(c.distance)&&(c.putts===undefined||(score(c.putts)&&c.putts<=3))))throw Error('Invalid scramble candidates.');
-  if(data.puttCards!==undefined){if(!Array.isArray(data.puttCards)||data.puttCards.length!==r.players.length||!data.puttCards.every(row=>Array.isArray(row)&&(r.endless||row.length<=r.holes)&&row.every(score))||!Array.isArray(data.puttStrokes)||data.puttStrokes.length!==r.players.length||!data.puttStrokes.every(score)||!['A','B'].every(t=>score(data.teamPutts?.[t])))throw Error('Invalid putting statistics.');r.puttCards=data.puttCards;r.puttStrokes=data.puttStrokes;r.teamPutts=data.teamPutts;}
+  if(data.puttCards!==undefined){if(!Array.isArray(data.puttCards)||data.puttCards.length!==r.players.length||!data.puttCards.every(row=>Array.isArray(row)&&(r.endless||row.length<=r.holes)&&row.every(slot))||!Array.isArray(data.puttStrokes)||data.puttStrokes.length!==r.players.length||!data.puttStrokes.every(score)||!['A','B'].every(t=>score(data.teamPutts?.[t])))throw Error('Invalid putting statistics.');r.puttCards=data.puttCards.map(gaps);r.puttStrokes=data.puttStrokes;r.teamPutts=data.teamPutts;}
   if(data.pars!==undefined){if(!Array.isArray(data.pars)||data.pars.length>9999||!data.pars.every(v=>v===null||(Number.isInteger(v)&&v>=3&&v<=6)))throw Error('Invalid saved pars.');r.pars=data.pars;}
   for(const k of ['hole','finished','cards','teamCards','match','positions','strokes','done','active','holeComplete','candidates','scrambleSelection','scrambleShots'])r[k]=data[k];
+  r.cards=r.cards.map(gaps);r.teamCards={A:gaps(r.teamCards.A),B:gaps(r.teamCards.B)};
   // A ball waiting for its relief choice. Anything that is not a clean record
   // of one is refused rather than guessed at, like every other field here.
   if(data.relief!==undefined&&data.relief!==null){

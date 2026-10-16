@@ -185,6 +185,8 @@ file is indistinguishable from a forgotten one. What each holds:
   its heading. Move a ticked entry there with what was built, **close any open
   entry the change made untrue**, and never nest an open item under a finished
   one. An idea is not an entry (*Ideas live in IDEAS.md*).
+- **TESTING.md** -- what is tested and by which layer; a suite or smoke
+  journey added, removed or changing what it covers.
 - **IDEAS.md** -- what could be built; only when the change builds, kills or
   alters one of them.
 - **PROJECT_HANDOFF.md** -- architecture, invariants and traps: what must stay
@@ -291,6 +293,14 @@ plans testing from what the branch claims.
 test**; `main.js` only wires it in. A rule written straight into `main.js`
 cannot be checked until someone plays it, and the game cannot always be played
 (above).
+
+**A new round format, or a change to how one is played, goes into
+`tests/round-matrix.test.mjs`**, which plays every format with every group of
+one to four. Formats are listed once, `FORMATS` in game.js; the matrix fails
+until its scorer plays every one of them, so teach the scorer the rules (turn
+order, how a hole and the round are won, which groups are refused) rather than
+loosening the check. The owner cannot play four-golfer rounds quickly; this is
+what stands in for it.
 
 ## Check what an edit script wrote
 

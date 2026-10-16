@@ -116,7 +116,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
 - `tools/github-protect.mjs` -- the repository's GitHub protections
-- `tests/*.test.mjs` -- the regression suites; `bench/*.json` -- saved baselines
+- `tests/*.test.mjs` -- the regression suites (`round-matrix` plays every format with every group); `bench/*.json` -- saved baselines. docs/TESTING.md maps what is tested and how
 
 PROJECT_HANDOFF *File map* has a fuller line for every file.
 
@@ -231,6 +231,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]
+- A hole nobody scored (a golfer who joined mid-round) is a gap, saved as null; `Round.restore` must accept it. [A HOLE NOBODY SCORED IS A GAP]
 - The bag is the golfer's, re-read every turn; the putter's id is always `putter`. [THE BAG IS THE GOLFER'S]
 - Players are matched by seat, not list position; colours are by seat. [Removing a golfer], [A colour per golfer]
 - A ball in trouble waits in the round until relief is taken. [Penalty relief]
@@ -247,6 +248,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - **docs/README.md** -- which document answers which question.
 - **TODO.md** -- open work above `# Done`, the record of what was built below it.
 - **IDEAS.md** -- what could be built; read only when looking for something new.
+- **TESTING.md** -- what is tested, by which layer, and what only a person checks.
 - **RESEARCH.md** -- every number, its source and the measurement behind it.
 - **BALL_BEHAVIOUR_KNOBS.md** -- which tuning value changes which ball behaviour.
 - **PROCEDURAL_GENERATION.md** -- what the generator produces and why.
