@@ -1013,3 +1013,12 @@ graphics profile on the real-GPU arm found nothing slower than the baseline
 (RESEARCH *Final profile before the merge*); the software-renderer arm was
 skipped, as it crashed the owner's computer on 13 October. `npm test`: 796 of
 796.
+
+The website was redeployed after the release (preview, then live, at the
+owner's word): `/play/` serves this release's `Fairway.html` byte for byte
+(sha256 `b693fcaa…`, checked on the live URL), the page states generator 36
+and schema 11, and its four Download buttons resolve to the v0.8 zips. The
+packaged Windows server was run from its unzipped download before publishing
+and served the page byte for byte -- on spare ports (19922/19921), because the
+owner's own bridge (`npm run bridge`) was holding 1922 at the time; it was left
+running.
