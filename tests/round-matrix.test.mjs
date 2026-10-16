@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Round} from '../src/game.js';
+import {Round, FORMATS} from '../src/game.js';
 import {awardedPutts} from '../src/putting.js';
 import {skins, decidedHoles, skinsWinner} from '../src/skins.js';
 
@@ -46,6 +46,20 @@ function splits(n) {
  for (let m = 0; m < 2 ** n; m++) out.push([...Array(n)].map((_, i) => (m >> i) & 1 ? 'B' : 'A'));
  return out;
 }
+
+// HOW THE SCORER PLAYS EACH FORMAT: whether teams change anything, and the
+// fewest golfers it is for. A format game.js offers (`FORMATS`) that is not
+// here fails the first test below, so a new format cannot be added without
+// being played here: teach the scorer its rules -- whose turn it is, how a hole
+// is scored and won, how the round is won, which groups it refuses -- then add
+// it to this table and to `allowed`.
+const PLAYED = {
+ stroke: {teams: false, fewest: 1},
+ match: {teams: true, fewest: 2},
+ scramble: {teams: true, fewest: 1},
+ skins: {teams: false, fewest: 2},
+};
+const PLAYED_FORMATS = Object.keys(PLAYED);
 
 // Whether a group may play a format, by the rules of the round panel.
 function allowed(mode, teams, endless) {
@@ -306,11 +320,11 @@ function playRound(cfg, seed) {
 
 function configs({holes = 3, changes = false} = {}) {
  const out = [];
- for (const mode of ['stroke', 'match', 'scramble', 'skins'])
+ for (const mode of PLAYED_FORMATS)
   for (let n = 1; n <= 4; n++)
    // Teams only mean something in match play and scramble; the other formats
    // are played with everyone on A and with the group split, once each.
-   for (const teams of mode === 'match' || mode === 'scramble' ? splits(n) : [Array(n).fill('A'), [...Array(n)].map((_, i) => i % 2 ? 'B' : 'A')].filter((t, k) => k === 0 || n > 1))
+   for (const teams of PLAYED[mode].teams ? splits(n) : [Array(n).fill('A'), [...Array(n)].map((_, i) => i % 2 ? 'B' : 'A')].filter((t, k) => k === 0 || n > 1))
     for (const endless of [false, true])
      if (allowed(mode, teams, endless))
       for (const putting of ['holeout', 'dartboard', 'decimal'])
@@ -320,7 +334,12 @@ function configs({holes = 3, changes = false} = {}) {
 
 const SEEDS = [1, 2, 3];
 
-for (const mode of ['stroke', 'match', 'scramble', 'skins']) {
+test('the matrix plays every format the game offers', () => {
+ assert.deepEqual([...PLAYED_FORMATS].sort(), [...FORMATS].sort(),
+  'game.js FORMATS and this file disagree: a format was added or removed. Teach the scorer above its rules and add it to PLAYED and allowed()');
+});
+
+for (const mode of PLAYED_FORMATS) {
  test(`${mode}: every group size and team split plays whole rounds, scored shot by shot`, () => {
   const list = configs().filter(c => c.mode === mode);
   assert.ok(list.length > 0);
@@ -341,8 +360,8 @@ test('golfers come and go between holes in every format and group size', () => {
 
 test('the matrix reaches every format, every group size and both team splits', () => {
  const list = configs();
- for (const mode of ['stroke', 'match', 'scramble', 'skins'])
-  for (let n = mode === 'stroke' || mode === 'scramble' ? 1 : 2; n <= 4; n++)
+ for (const mode of PLAYED_FORMATS)
+  for (let n = PLAYED[mode].fewest; n <= 4; n++)
    assert.ok(list.some(c => c.mode === mode && c.teams.length === n), `${mode} with ${n}`);
  assert.ok(list.some(c => c.mode === 'match' && c.teams.join('') === 'ABBB'), 'match play one against three');
  assert.ok(list.some(c => c.mode === 'scramble' && c.teams.join('') === 'AAAA'), 'a scramble of one team of four');

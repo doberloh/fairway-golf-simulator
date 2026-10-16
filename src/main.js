@@ -21,7 +21,7 @@ import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
-import {Round,playsWith} from './game.js';
+import {Round,playsWith,FORMATS} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
@@ -5231,7 +5231,7 @@ function validateSave(d){
  if(!d.settings.courseYards)d.settings.courseYards=d.round.holes*360;
  d.settings=validateSettings(d.settings);
  turfConfig(d.settings.turf);customizeClubs(d.settings.clubYardages);
- if(![3,9,18].includes(d.round.holes)||!['stroke','scramble','match','skins'].includes(d.round.mode)||!Array.isArray(d.round.players)||!d.round.players.every(p=>typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&['RH','LH'].includes(p.hand)))throw Error('Invalid players or format.');
+ if(![3,9,18].includes(d.round.holes)||!FORMATS.includes(d.round.mode)||!Array.isArray(d.round.players)||!d.round.players.every(p=>typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&['RH','LH'].includes(p.hand)))throw Error('Invalid players or format.');
  if(!d.round.positions?.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<20000&&Math.abs(p.z)<20000))throw Error('Invalid positions.');
  return d.generator!==GENERATOR_VERSION;
 }

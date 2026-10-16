@@ -1534,7 +1534,10 @@ LOOK -- the flag lifting, the cup drop, the contour tile, reflections, banks --
 and it plays at most two golfers, so a whole multi-golfer round, match play and
 scramble selection stay manual ON SCREEN. Their RULES are covered:
 `tests/round-matrix.test.mjs` plays every format with every group in Node
-(docs/TESTING.md, which maps every layer of testing). Treat the list as the
+(docs/TESTING.md, which maps every layer of testing). **The formats are listed
+once, `FORMATS` in game.js**, read by `Round`, the save import in main.js and
+the matrix, whose first test fails until its scorer plays every format listed.
+Treat the list as the
 visual pass after the smoke test is green.
 
 Manual/browser regression sequence:

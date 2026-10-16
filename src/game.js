@@ -6,6 +6,10 @@ import {puttingConfig,awardedPutts} from './putting.js';
 // monitor on their turn is refused as if it were unarmed.
 export const INPUTS=['monitor','meter'];
 export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
+// EVERY ROUND FORMAT, in one list. A format added here is refused by nothing
+// else -- and tests/round-matrix.test.mjs fails until its scorer plays it with
+// every group the format allows (AGENTS.md, *Game rules live in pure modules*).
+export const FORMATS=['stroke','match','scramble','skins'];
 // A SAVE FROM BEFORE SKINS WAS A FORMAT (16 October 2026): the Skins challenge
 // was a stroke round with `challenge: 'skins'`. It resumes as a skins round,
 // with the same card and so the same skins. Every way a round comes back goes
@@ -31,7 +35,7 @@ export class Round{
  static defaultMonitorLie=true;
  constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
-  if(!['stroke','match','scramble','skins'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
+  if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
   if(mode==='match'&&new Set(players.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   // SKINS (skins.js) is every golfer for themselves, so it needs two to four.

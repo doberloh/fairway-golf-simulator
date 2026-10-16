@@ -49,6 +49,12 @@ and seed, so it can be replayed exactly.
 Each under all three putting modes (hole out, dartboard, decimal), both
 out-of-bounds rules, over 3 holes, then 9 and 18 with group changes.
 
+**A new format cannot skip it.** The formats are listed once, `FORMATS` in
+`src/game.js`, which the round, the save import and this suite all read. The
+suite's first test fails if `FORMATS` holds a format its scorer does not play
+(its `PLAYED` table), so adding one means teaching the scorer that format's
+rules -- AGENTS.md, *Game rules live in pure modules with Node tests*.
+
 Other round suites pin one behaviour each with a hand-written card:
 `core` (formats finish, scramble penalties), `play` (putting modes, mulligans,
 sim drops), `honours` (playing order, golfers added, removed and reordered),

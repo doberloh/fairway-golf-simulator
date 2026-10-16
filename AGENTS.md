@@ -294,6 +294,14 @@ test**; `main.js` only wires it in. A rule written straight into `main.js`
 cannot be checked until someone plays it, and the game cannot always be played
 (above).
 
+**A new round format, or a change to how one is played, goes into
+`tests/round-matrix.test.mjs`**, which plays every format with every group of
+one to four. Formats are listed once, `FORMATS` in game.js; the matrix fails
+until its scorer plays every one of them, so teach the scorer the rules (turn
+order, how a hole and the round are won, which groups are refused) rather than
+loosening the check. The owner cannot play four-golfer rounds quickly; this is
+what stands in for it.
+
 ## Check what an edit script wrote
 
 Scripts that edit files here (heredocs, `node -e`, Python strings, `String.raw`)
