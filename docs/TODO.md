@@ -72,8 +72,9 @@ Asked for by the owner on 10 October, in this order, on the branch
   view (1.85 s) because the ball's glow light hid with the ball. The light now
   sits beside the ball; starting Endless builds one small unlit program, worst
   frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
-  tab (page work, not graphics); that one unlit program. **Not seen by the
-  owner yet**: load a new build fresh and click round the menus, then Endless.
+  tab (page work, not graphics); that one unlit program. **The owner, after
+  playing the fix the same night: "much better."** Left open for the small
+  hitches above; close it if they are never noticed.
 - [ ] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
   October 2026): during the hole-out banner, its chiptune sting and the XP
   popup after it. The owner loves the pull-back into the summary orbit and
@@ -90,8 +91,9 @@ Asked for by the owner on 10 October, in this order, on the branch
   and the ball's glow light went with it, so 14-17 lit programs were rebuilt
   in view as the camera pulled back on a course built through Play (the 14
   October probe used Endless, where the menu had already built them). The
-  light now stays. **Not seen by the owner yet**: hole out on a Play course
-  and say whether the stutter is gone; if not, the suspects above remain.
+  light now stays. **The owner, the same night: "much better"** (said of the
+  build as a whole, not of a hole-out on its own); if a stutter is still felt
+  at the hole-out, the suspects above remain.
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
