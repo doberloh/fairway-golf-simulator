@@ -18,18 +18,6 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
-## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
-
-- [ ] **Run the smoke journeys on this layout.** A software-renderer run
-  (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
-  through on 13 October (only `boot` had passed), and 0.7 went out on 14
-  October with light testing at the owner's request, so `hud-reachable`,
-  `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
-  shot line and the new tile places. Only with the owner's go-ahead, on an idle
-  card, a few journeys at a time (`--only`). The finished work is under the
-  same heading in `# Done`.
-
-
 ## The UI pass (10 October 2026)
 
 Asked for by the owner on 10 October, in this order, on the branch
@@ -42,6 +30,7 @@ Asked for by the owner on 10 October, in this order, on the branch
   `--only views`. Redwood is the biome to watch.
 
 ## Found by driving the built game
+
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
@@ -68,27 +57,10 @@ Asked for by the owner on 10 October, in this order, on the branch
   pointer while a ball is up (style.css, beside the in-flight rule).
 
 
-
-
-- [ ] **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
-  The keyboard keeps a club's full-swing launch at any power, so there is no
-  keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
-  1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
-  for the 7 iron to the pitching wedge would add one. A feel decision as much as
-  a physics one. Report plan item 3.
-
-
 What `tools/smoke.mjs` turned up on its first full runs, and what building it
 turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
 
-- [ ] **`phone-portrait` fails when its random course puts a shot in water.**
-  Seen once in four runs on 10 October 2026: the relief bar covered the club,
-  the power and the aim pad when the reachability check ran, and it reported
-  eleven unreachable controls. Three re-runs passed. The harness, not the game:
-  the bar is meant to cover them while relief is chosen. The journey wants a
-  fixed seed or to take relief before checking. (`monitor` had the same kind of
-  flake, fixed under *The UI pass* in `# Done`.)
 
 - [ ] **The floating tool windows during play have not been swept for layout.**
   `hud-reachable` covers the main menu and the play screen at nine sizes, and
@@ -787,8 +759,6 @@ so several of these play differently as well as look different.
 
 - [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
 
-- [ ] **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
-
 - [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
 
 - [ ] **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
@@ -865,6 +835,324 @@ so several of these play differently as well as look different.
 Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
+
+## The Swing Meter, XP and levels (14 October 2026)
+
+- [x] **Owner: play-test the Swing Meter journey's Phases 5-7** (14 October 2026).
+  Everything a machine can check has been: unit tests, the full smoke run (30
+  journeys, with new ones for a challenge, the course of the week and the look
+  picker with a flourish), pictures of the tracers in flight and the phone
+  menus, and a graphics profile (RESEARCH *Profile after Phases 5-7*). What is
+  left is feel and looks: the owner's list is `docs/reports/SWING_METER_TESTING.md`
+  (local). Open questions there: Ribbon's wide band reads faint from behind the
+  tee; the definitions placed without the owner (spec section 14).
+  **Signed off by the owner, 15 October 2026: "everything is ok with me."** Ribbon stays as it is; the definitions placed without the owner (spec section 14, PLACED in RESEARCH) and the defaults for spec questions N1-N3 (W height, X spin; launch-monitor XP x1; reward names, colours and levels as drafted) all accepted.
+- [x] **Larger flags far away on by default?** (15 October 2026.) The third
+  part of the pin proposal, not chosen: with greens at real size and a bolder
+  stick, the pin is still hard to pick out from the tee at 350 yards. Ask the
+  owner after they have played the new pin.
+  **The owner, 15 October 2026: keep it off.**
+- [x] **A new build stutters on its first visit, then never again** (the owner,
+  15 October 2026, loading the `swing-meter` build and clicking round the
+  menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
+  graphics programs between visits, keyed by their source; a build that
+  changes any must rebuild them once, and each trip to the main menu grows a
+  fresh showcase hole that can need more. Not this branch's code: the ball
+  pictures cost about 75 ms the first time the Ball tab opens (measured), a
+  hitch rather than repeated freezes. Worth a look before a release, since
+  every player meets it once per version: warm the menu backdrop's programs
+  behind the loading screen, or the next backdrop's before the menu shows it.
+  Measure first, with a Chrome recording of a first visit after clearing the
+  site's cache.
+  **Measured and mostly fixed (15 October 2026, RESEARCH *First-visit
+  lock-ups and the hole-out stutter*)**: the menus build nothing late; the
+  lock-up was starting Endless from the menu, which rebuilt 35-40 programs in
+  view (1.85 s) because the ball's glow light hid with the ball. The light now
+  sits beside the ball; starting Endless builds one small unlit program, worst
+  frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
+  tab (page work, not graphics); that one unlit program. **The owner, after
+  playing the fix the same night: "much better."** Left open for the small
+  hitches above; close it if they are never noticed.
+  **Closed by the owner, 15 October 2026: the leftovers (100-150 ms opening Play, My profile and the Frame tab; one small unlit program on starting Endless) are acceptable.**
+- [x] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
+  October 2026): during the hole-out banner, its chiptune sting and the XP
+  popup after it. The owner loves the pull-back into the summary orbit and
+  wants it kept exactly as it is; the fix is in what competes with it.
+  Suspects, unmeasured: the banners' and the popup's `backdrop-filter` blur
+  recomputed every frame over a moving scene; the turning ball close-up
+  redrawn per frame (1-4 ms of CPU in Node); `syncProfile` and its
+  synchronous localStorage write at the hole-out; the summary's tracer lines;
+  the sting's oscillators; the cull and LOD as more of the course comes into
+  view. The smoke probe on 14 October saw only one 50 ms frame, as the
+  scorecard opened -- the owner's machine and settings differ, so measure
+  from the owner's Chrome recording of a hole-out.
+  **One cause found and fixed (15 October 2026)**: the flyover hides the ball,
+  and the ball's glow light went with it, so 14-17 lit programs were rebuilt
+  in view as the camera pulled back on a course built through Play (the 14
+  October probe used Endless, where the menu had already built them). The
+  light now stays. **The owner, the same night: "much better"** (said of the
+  build as a whole, not of a hole-out on its own); if a stutter is still felt
+  at the hole-out, the suspects above remain.
+  **Closed by the owner, 15 October 2026: acceptable as it is now.** The untested suspects above stay written down in case it comes back.
+- [x] **Phase 1: the Swing Meter** (`src/swing-meter.js`). Three taps -- start,
+  distance, strike -- judged on each input's own timestamp, never on a frame.
+  The bar is in yards of carry for the club in hand, solved against the ball
+  model; overswing worth up to 5%; Easy, Normal and Hard per golfer, kept in
+  the profile; early goes right and late goes left for everyone. Curve (S),
+  height (W) and a spin dial (X) replace the Shot shape sliders, and with no
+  spin added a ball never spins back (swept; the pitching and lob wedges and the
+  High and Flop heights carry a little less spin to hold it). Putts are two
+  taps (three on Hard) on a bar that zooms to the putt, aimed at a length by
+  the circle, with the read line showing the break for that length -- all of it
+  on Easy and Normal, the first third on Hard, and the panel saying why (all
+  three replaced later the same day: see *Phase 2, round 3* below). The
+  lie is shown before every shot for every way of playing, and costs ball
+  speed by one table for everyone: semi-rough 96%, rough 90%, sand 80% (was
+  72%). A launch monitor's measured ball speed now takes the same share, shown
+  as sent with the penalty beside it in red, unless the round switches it off
+  in Format & tees. The power slider and the ball-flight profile are gone
+  (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
+  simulator never invents ball data* was rewritten for the lie rule.
+  RESEARCH.md *The Swing Meter*.
+- [x] Closed by round 4: **Owner: tune the Swing Meter's sounds** (round 1, 14 October 2026). Built
+    in `src/sound.js` (`METER_VOICES`, `meterVoice`, `METER_EVENTS`,
+    `meterEvent`): a voice that follows the marker, and a sound for the distance
+    set, overswing, a perfect strike, a strike in the zone, a miss and a swing
+    that ran out, three takes each. Report: `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/meter.html` (local), with a practice meter that plays the
+    picked takes. `check.mjs` renders every take: all between -10 and -17 dB
+    peak. **None plays in the game** until signed off; then fold the choices into
+    a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] Closed: **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Six
+    takes each (three more added on the owner's ask) for the gain, the bar filling and a new level, in `src/sound.js`
+    (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/xp.html` (local), with a demo of the popup that plays
+    the hole-out sting first and spaces the sounds as the game does. All render
+    between -12 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
+    which is silent until `XP_FINAL` holds the picks; then extend
+    tests/sound.test.mjs as for the meter sounds.
+    **Done:** the owner picked gain E, fill D and level-up C with their sliders
+    (`XP_FINAL`), and they play in the game.
+- [x] **The scorecard covered the XP popup, and the screen sat still before it**
+    (the owner, 14 October 2026). The card now waits for the popup and any
+    level-up banner; a holed ball holds 1.2 s instead of 3; the popup comes
+    1.6 s into the banner. Measured: no stalled frame before the popup, the
+    "freeze" was six seconds of still picture (RESEARCH *The pause before the
+    XP popup*). The level-up banner now lets taps through.
+- [x] Closed: **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
+    Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
+    for every score; report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/stings.html` (local), with the current marimba beside
+    each to compare. `gameAudio.score` already plays a score's chiptune sting
+    once it is in `CHIP_FINAL`; until then the marimba. On sign-off: fold the
+    picks in, retire the marimba takes from play, extend tests/sound.test.mjs.
+    **Done:** the owner chose take D, the game jingles, for every score, at
+    length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
+    game, and tests/sound.test.mjs holds every score to it.
+- [x] Closed: **`phone-portrait` fails when its random course puts a shot in water.**
+    Seen once in four runs on 10 October 2026: the relief bar covered the club,
+    the power and the aim pad when the reachability check ran, and it reported
+    eleven unreachable controls. Three re-runs passed. The harness, not the game:
+    the bar is meant to cover them while relief is chosen. The journey wants a
+    fixed seed or to take relief before checking. (`monitor` had the same kind of
+    flake, fixed under *The UI pass* in `# Done`.)
+    **Done (14 October 2026):** it hit `phone-landscape` the same way; both
+    phone journeys now take relief before the check, as a golfer about to hit
+    sees the screen.
+- [x] Closed: **Pins and greens look wrong next to other sims -- a proposal for the
+    owner** (15 October 2026; RESEARCH *Why our pins look small*). The stick and
+    flag are real size; our greens are about twice the US average (median 12,060
+    sq ft against 5,600-5,700). Proposed, in order of effect: (1) **greens to real
+    size** -- the default green size cut so the median lands near 6,000-6,500 sq
+    ft (a generation change: GENERATOR_VERSION bump, every course and week's
+    course re-grown, `bench.mjs --since` before and after, putting distances
+    shorter); (2) **a stick within the Rules but easier to see**: 8 ft instead of
+    7, and the part more than 3 in above the green up to 1 in thick (the Rules
+    allow 2), the putting-height part unchanged so no putt changes; (3) **Larger
+    flags far away on by default**, with a gentler cap.
+    **Done (the owner chose 1 and 2, with the stick tapering 2 in to 1 in):**
+    greens at real size (generator 36, median 6,146 sq ft), their bumps scaled
+    with them so putting slopes are unchanged; the stick 8 ft, 2 in at the top
+    to 1 in at the green, drawn and hit. Smoke 30/30. RESEARCH *Why our pins
+    look small*.
+- [x] **Course studio's Settings fill the play area** (the owner, 15 October
+    2026: "just make the Course studio settings full screen; leave the other
+    windows alone"). The sheet runs from just under the studio bar to the foot
+    of the screen; from the main menu's setup, to the top. A full-screen toggle
+    on every window was offered and declined. The `studio` smoke journey now
+    also checks the sheet fills the space. Its first run failed: the sheet's
+    top is counted from the page, not the play area, so it slid under the top
+    bar and pushed the studio bar off screen; the top is now measured from where
+    the course starts. Then studio, phone-portrait and phone-landscape smoke
+    green, the sheet filling the space at all five sizes, and pictured at
+    1600x900 (local, bench/shots/). **Not yet played by the owner.**
+- [x] **A Green size setting** (the owner, 15 October 2026). Course studio,
+    turf: *Green size*, 60-160%, default 100% (`greenScale`, SCHEMA_VERSION
+    11, a save from before migrates to 100%). It multiplies each green's
+    drawn radius; the bumps scale with it, so slopes are unchanged (median
+    1.06% at 60, 100 and 160%). 100% is exactly the generator-36 greens -- the
+    fingerprint is unchanged, so no GENERATOR_VERSION bump. Full bench clean
+    at both ends. Tests: `tests/green-scale.test.mjs`. Numbers in RESEARCH
+    *Why our pins look small*. **Not seen in the game**: move the slider in
+    Course studio and look at a green at 60% and 160%.
+- [x] **The owner's round of 15 October 2026: flourishes, frames, pin,
+  cameras, cup.** Padlocks show on the meter skins; animated frames break out
+  of the ring (flames rise above the ball, glints orbit, ripples spread, leaves
+  drift); flourishes simple to grand (par, birdie, eagle, chip-in, every
+  birdie), the ace's lantern secret from the start, level 50 everything in
+  gold; the pin stays in while putting and is lifted as the ball comes near;
+  the shot review and the flight back go through trees; an aimed putt has its
+  own low camera behind the ball, and the ball stays in view while it rolls;
+  the cup rattles down, every knock softer than the last. Checked by unit tests
+  and static renders; not yet in the game.
+- [x] **More looks, and the golfer's own tracer everywhere** (the owner, 15
+  October 2026). Eight solid balls, eight plain tracers and nine plain frames
+  from the start; frames a reward of their own, with thirteen animated ones
+  (flames, sparkle, water, leaves, ice, aurora, galaxy) at higher levels;
+  locked items in full colour with a padlock; tracers previewed as a moving
+  flight and frames animating in the picker; a Flourishes tab saying what each
+  is, when it plays and its level, with a preview. The seat colour no longer
+  overrides anyone's tracer -- live or in the end-of-hole summary.
+- [x] **The owner's round of 15 October 2026 on the journey.** The top-bar
+  chip's circle is the golfer's ball in their frame with the level over it (the
+  seat colour a dot on its edge); whose turn it is flashes up in the middle of
+  the screen with the chip's details (a group on every change of golfer, alone
+  at each hole's start); the course of the week is stroke play only, said on
+  the tile and the panel; every challenge is open from the start. The group
+  editor's name box spans its row again (two lines when a monitor is in play).
+  Smoke (15 October, the owner's go-ahead): the eight affected journeys
+  green, with two fixes found there -- the flash now waits for the hole-out
+  banner it used to land on, and a flourish's particles follow the cup (one
+  run in eight drew nothing when the burst began with the cup off screen).
+- [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
+  (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
+  Eleven badges with frames round the picture (the newest worn unless one is
+  chosen) and the level chip in the badge's colours, *Master 51* on from 50;
+  ten meter skins as colour data on the meter, held legible for colour-blind
+  players by a test; seven flourishes drawn flat over the cup, no sound, off
+  for reduced motion. Frame and Meter tabs on Your look.
+- [x] **Phase 7: challenges** (`src/challenges.js`). Closest to the pin,
+  long drive and up and down as practice games on a hole of the course of the
+  week or a saved course (no card, no history, no mulligans), a bar over the
+  course, a results card, records on My profile and their XP; a skins game as a
+  stroke round with skins over the card and on the scorecard. From a Challenges
+  tile, all four open from the start (at first by the main profile's level:
+  changed by the owner on 15 October 2026). tests/challenges.
+- [x] **Phase 7 (part): course of the week and achievements** (`src/weekly.js`,
+  `src/achievements.js`). The week's course from the ISO week and the
+  generator version, rotating landscapes, eighteen holes at the defaults, a menu
+  tile and a setup panel, weekly bests on the profile, 150 / 50 XP. The
+  thirteen achievements with their XP and nine titles (worn from My profile),
+  an Achievements list with progress, and two new counters, **Sand saves** and
+  **On the number**. tests/achievements, tests/weekly, profile round trips. Not
+  yet played through in the game (the owner tests at the end).
+- [x] **Phase 5: tracer styles, ball finishes and titles** (`src/rewards.js`,
+  `src/ball-finishes.js`). One reward table by level (the spec's 7.1); what a
+  golfer wears saved on the profile (`worn`), shown only once earned. Sixteen
+  ball finishes, each one rule painting both the 3D ball and its picture; the
+  ball as the profile picture (My profile, its tabs, the group editor, the
+  level-up banner) and close up, turning, in the hole-out banner. Fifteen tracer
+  styles on the golfer's own shots; the end-of-hole lines in seat colour keeping
+  the style's shape. Ten level titles under the name (My profile, scorecard,
+  level-up banner); achievement titles wait for Phase 7. The level-up banner
+  lists what each level brought. A "Your look" picker on My profile. Every look
+  is uniforms and buffers, never a new shader; no-late-shaders now also hits a
+  first shot. **With it:** the daily first-round bonus's day was dropped on every
+  load (a pattern that had lost its backslashes), so the bonus could be paid
+  twice a day -- fixed, with a test; the level-up banner now lets taps through.
+- [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
+  and meter golfers: hole, score, fairway and green, on the number, chip-ins,
+  long putts, personal bests, rounds, wins and the daily first round, with the
+  difficulty multiplier; a mulligan takes back its shot's XP; the range a
+  capped trickle. Levels without end, 2,850 a level from 50. Profile store 3
+  (no back-fill; a one-time note). The level beside the name on the score
+  chips, the group editor and My profile, and a level-up banner after the
+  hole-out banner (it names no unlocks yet: those come with Phase 5).
+  tests/progression.test.mjs; smoke checks a finished hole pays XP. **With it,
+  the owner's meter notes:** the carry/total/apex row never hides (dashes while
+  you swing), and the swing's marks on the bar clear when the ball stops.
+  **Then the XP popup** (the owner, same day): what earned the XP, the amount
+  and the level bar filling, every time XP is earned; smoke checks it comes up.
+- [x] **Phase 3: mixed groups.** Each golfer plays with the launch monitor (the
+  default: whenever it is armed, as before) or the Swing Meter, chosen in the
+  group editor once a bridge has connected, with their hand; both saved to the
+  profile and carried through a group change mid-round. `armed` is per turn
+  (`syncArmed` from the Armed switch `armSwitch` and `playsWith`): a Swing
+  Meter golfer gets the meter with the monitor waiting on its strip, and a
+  monitor ball on their turn is refused; the window and strip say who is up;
+  the device is told the golfer's hand; a dropped bridge says so and the meter
+  comes up. Smoke journey `mixed-group`; tests/mixed-groups.test.mjs.
+- [x] **Phase 2, round 5: short shots and putts** (the owner, 14 October 2026:
+  "the bar starts in the wrong place and just moves too fast"). The marker
+  starts from the far left of the bar and runs up to the strike line; a short
+  full shot's bar zooms to a half or quarter swing; zoomed bars (putts too) run
+  12-25% slower; the chip's wider strike zone follows the share of the club.
+- [x] **Phase 2, round 4 (the owner's notes, 14 October 2026).** Overswing
+  crawls at a quarter speed with the meter flashing, and holds at its end until
+  the second tap. Colours swapped: the strike zone is yellow, the perfect band
+  green. **The Swing Meter's sounds signed off and in the game** (round 1, the
+  owner's picks: voice C air, power B click, overswing A buzz, perfect A
+  marimba, zone A wood block, miss A thunk, duff B falling whistle, with their
+  sliders; `METER_FINAL`), on the Swing Meter only; tests/sound.test.mjs holds
+  them to one signed-off take each.
+- [x] **Phase 2, round 3 (the owner's notes, 14 October 2026).** The bar keeps
+  the struck swing -- the distance stop and the strike -- until the next swing.
+  No putt preview for any way of playing: a straight line to the aim, the break
+  read from the green, the putt target on a flat green, and the aim point shown
+  on the green for everyone. Putts are two taps on every difficulty. The putting
+  bar reaches from a quarter of the putter's roll to six times it, so a putt
+  can cross any green (80 yd at Stimp 6 is tested).
+- [x] **The smoke journeys, on the Swing Meter and the 13 October layout: 26 of
+  26 pass** (14 October 2026, the owner's go-ahead, hardware GPU, the full set
+  in about 4 minutes 40 seconds). Getting there found, in order:
+  - **Stale harness: the phone journeys expected the shot numbers to start
+    folded.** Since 13 October they start shown, as PLAYING.md says; the step
+    was first run against that layout here. Fixed in the harness.
+  - **A real game fault: the Swing Meter's pickers were under a thumb's width
+    on a phone** (42 px tall), and held sideways the taller panel squeezed the
+    Swing button to 30 px. Fixed in the game: on a phone the three pickers are
+    one row of 46 px buttons, spin is one button that steps round like X, and
+    held sideways the club's carry line goes (the bar's full line shows it).
+  - **Stale harness: putting out with three taps at fixed gaps.** A putt is two
+    taps, so the third waited 30 s for a layer already gone; and with no power
+    preset to the hole any more, fixed gaps hole a two-yard putt only by luck --
+    `profile` and `bag` passed one run and failed the next. Putting out now
+    stops the meter on the blue target marker (`tapOnTarget`, `t.putt()`).
+  Closes, from *Shot line in the play window, tiles placed afresh, the bridge's
+  clubs*:
+  **Run the smoke journeys on this layout.** A software-renderer run
+    (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
+    through on 13 October (only `boot` had passed), and 0.7 went out on 14
+    October with light testing at the owner's request, so `hud-reachable`,
+    `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
+    shot line and the new tile places. Only with the owner's go-ahead, on an idle
+    card, a few journeys at a time (`--only`). The finished work is under the
+    same heading in `# Done`.
+- [x] **Phase 2: the target marker.** A blue mark on the bar where to stop for
+  the ball to land in the aim circle, found by flying the ball (`targetShare`,
+  through `playsLike`): slope, lie and air always, wind only on Easy; out of
+  reach, the full line in red with *Out of reach: take more club*; for a putt,
+  the circle's length on a flat green. Changing club moves a circle nobody
+  placed to the new club's carry; a placed one stays and the marker moves.
+  Worked out at most ten times a second while aiming. RESEARCH.md *The Swing
+  Meter*, *The target marker*. **Added at the owner's request the same day:**
+  on the Swing Meter the floating number tiles are gone and the meter shows
+  carry, total and apex, counting up through the flight and kept until the
+  next swing; armed, the tiles are as before.
+- [x] Closed by Phase 1, from *Found by driving the built game*:
+  **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
+    The keyboard keeps a club's full-swing launch at any power, so there is no
+    keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
+    1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
+    for the 7 iron to the pitching wedge would add one. A feel decision as much as
+    a physics one. Report plan item 3.
+  **Resolved:** Bump & run, the Swing Meter's Low height near the green with a
+  wedge, leaves at 55% of the club's launch on half its spin.
+- [x] Closed by Phase 1, from *Still open from the putting and cup update*:
+  **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+  **Superseded:** there is no power to start at. The Swing Meter's bar is in
+  yards, so half the bar is half the carry, and the golfer stops it where the
+  chip needs, and Phase 2's target marker shows where.
 
 ## Release 0.7 (14 October)
 

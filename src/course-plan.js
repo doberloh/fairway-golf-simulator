@@ -211,7 +211,17 @@ export function spreadHarmonics(waves,slider){
 }
 export function holeLine(s,planned,rng){
  const par=planned.par;
- const greenSize=14+rng()*7,greenAspect=.95+rng()*.38;
+ // GREENS AT REAL SIZE (the owner, 15 October 2026). 14-21 m gave a median
+ // putting surface of about 12,000 sq ft -- twice the US average of 5,600-5,700
+ // (RESEARCH *Why our pins look small*) -- and a real-size pin looked like a
+ // toothpick on it. 10-15 m, the same single draw (so no later draw moves),
+ // halves the area. PLACED to land the median near 6,000 sq ft.
+ //
+ // `greenScale` (Green size, 60-160%) multiplies the radius AFTER the draw, so
+ // no draw moves, and 100% is a multiply by exactly 1 (the share is taken
+ // first: `x*100/100` need not give back x). Everything on the green scales
+ // with it through `GREEN_REF`, so the slopes stay what they were.
+ const greenSize=(10+rng()*5)*((s.greenScale??100)/100),greenAspect=.95+rng()*.38;
  // THE OUTLINE IS SCALED, NOT REPLACED.
  //
  // A green's radius is its size times one plus three harmonics -- a two-lobed
@@ -399,22 +409,32 @@ function greenRecipe(h){
   type:g(),raise:between(.9,1.6),sink:between(.6,1.1),bank:between(5,8),
   falseFront:g(),frontDrop:between(.55,.9),frontDepth:between(3.2,4.8),
   phase:a};
+ // THE BUMPS SCALE WITH THE GREEN (generator 36, 15 October 2026). Their
+ // places were already a share of the green's size, but their widths and
+ // heights were metres, so the real-size greens of 36 packed the same bumps
+ // into half the area and the slopes stacked up (31 of 36 sampled points
+ // steep; a Thursday cup on 2%). Width and height now both scale by the green's
+ // size against GREEN_REF, the old average, so the slopes a putt feels stay
+ // what they were, over a smaller surface. No draw is added or moved.
+ r.k=reach/GREEN_REF;
  r.zero=greenShape(r,0,0);
  RECIPES.set(h,r);
  return r;
 }
+// The green size the bumps were drawn for (the mean of the old 14-21 m).
+const GREEN_REF=17.5;
 function greenShape(r,dx,dz,spread=1,widen=1){
- let y=0;
+ let y=0;const k=r.k??1;
  dx/=spread;dz/=spread;
- for(const m of r.mounds){const q=((dx-m.x)**2+(dz-m.z)**2)/(m.r*m.r);y+=m.amp*Math.exp(-q);}
+ for(const m of r.mounds){const q=((dx-m.x)**2+(dz-m.z)**2)/(m.r*m.r*k*k);y+=m.amp*k*Math.exp(-q);}
  if(r.character==='tiered'){
   const c=Math.cos(r.tierAngle),s=Math.sin(r.tierAngle),across=dx*c+dz*s-r.tierAt;
-  y+=r.tierDrop*Math.tanh(across/(r.tierFace*widen)*1.6)*.5;
+  y+=r.tierDrop*k*Math.tanh(across/(r.tierFace*k*widen)*1.6)*.5;
  }else if(r.character==='ridged'){
   const c=Math.cos(r.ridgeAngle),s=Math.sin(r.ridgeAngle),across=dx*c+dz*s-r.ridgeAt;
-  y+=r.ridgeAmp*Math.exp(-(across*across)/(r.ridgeHalf*r.ridgeHalf));
+  y+=r.ridgeAmp*k*Math.exp(-(across*across)/(r.ridgeHalf*r.ridgeHalf*k*k));
  }
- if(r.dish){const q=(dx*dx+dz*dz)/(r.dishR*r.dishR);y+=r.dish*Math.exp(-q);}
+ if(r.dish){const q=(dx*dx+dz*dz)/(r.dishR*r.dishR*k*k);y+=r.dish*k*Math.exp(-q);}
  return y;
 }
 export function greenGradient(h,x,z){const e=.35;return{x:(h.height(x+e,z)-h.height(x-e,z))/(2*e),z:(h.height(x,z+e)-h.height(x,z-e))/(2*e)};}

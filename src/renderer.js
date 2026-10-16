@@ -20,6 +20,8 @@ const SHOT_LINE_COLOR='#ffe0a0';
 import {groundGeometry,groundMaterial,HOLE_ATLAS} from './ground.js';
 import {uiZoom} from './ui-scale.js';
 import {rangeTargets} from './range.js';
+import {tracerStyle,summaryStyle,stopColour,hexRgb} from './rewards.js';
+import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 
 // The flagstick's dimensions live in physics.js beside the collider that uses
 // them (FLAGSTICK_HEIGHT and the two radii), so what is drawn is what is hit.
@@ -47,7 +49,7 @@ import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starR
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
 import {addVegetation} from './vegetation.js';
 import {cullInstances} from './instance-cull.js';
-import {playerCameraPose,flightCameraPose,followPose,framedForBall} from './camera.js';
+import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
@@ -343,6 +345,46 @@ const CLOUD_DAY=new T.Color(.97,.975,.96);
 const GLOW_DAY=new T.Color(1,.72,.35),GLOW_NIGHT=new T.Color(.42,.52,.78);
 const DISC_DAY=new T.Color(1,.96,.83),DISC_NIGHT=new T.Color(.88,.92,1);
 
+// EVERY TRACER LINE IS ONE PROGRAM (Phase 5). The live line, its comet head,
+// its bright core and the end-of-hole lines all carry per-vertex colour and the
+// dash switch, whatever style is worn: a style is then only uniforms and
+// buffers, and putting a new one on never builds a shader mid-round (a program
+// built on first draw is a frozen frame -- B7 in TODO). Solid is a dash longer
+// than any shot.
+const NO_DASH=[1e6,0];
+// Vertex colours are read as LINEAR light; the style's colours are written as
+// sRGB hex, the way a material's `color.set` takes them. Unconverted, every
+// tracer drew washed out -- a sunset as pale pink, the seat gold as cream.
+const linear=c=>c.map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));
+const tracerMaterial=(width,opacity)=>new LineMaterial({color:'#ffffff',vertexColors:true,dashed:true,dashSize:NO_DASH[0],gapSize:NO_DASH[1],linewidth:width,transparent:true,opacity,depthWrite:false});
+// Fill a Line2 from world points [[x,y,z]...] and a colour per point.
+function writeStyled(line,world,colours,dash){
+ line.geometry.dispose();
+ const g=new LineGeometry();g.setPositions(world.flat());g.setColors(colours);
+ line.geometry=g;line.computeLineDistances();
+ line.material.dashSize=(dash||NO_DASH)[0];line.material.gapSize=(dash||NO_DASH)[1];
+ line.visible=true;
+}
+// THE LIGHTNING STYLE'S ZIGZAG: the path resampled into strokes a few metres
+// long, each corner pushed sideways and up by up to `amp` metres, the same way
+// for the same `seed` (the live line changes seed many times a second, which
+// is the flicker; the summary keeps one). Longer shots zig wider so it reads
+// from behind the tee.
+function jagged(world,amp,seed){
+ if(world.length<3)return world;
+ let total=0;for(let i=1;i<world.length;i++)total+=Math.hypot(world[i][0]-world[i-1][0],world[i][1]-world[i-1][1],world[i][2]-world[i-1][2]);
+ const step=Math.max(2,total/60),a=amp*Math.max(1,total/120),out=[world[0]];
+ let run=0,k=0;
+ const h=(i,j)=>{const x=Math.sin(i*127.1+j*311.7+seed*74.7)*43758.5453;return (x-Math.floor(x))*2-1;};
+ for(let i=1;i<world.length-1;i++){
+  const p=world[i],q=world[i-1];run+=Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2]);
+  if(run<step)continue;run=0;k++;
+  const n=world[i+1],dx=n[0]-q[0],dz=n[2]-q[2],l=Math.hypot(dx,dz)||1;
+  out.push([p[0]-dz/l*a*h(k,1),p[1]+a*.6*h(k,2),p[2]+dx/l*a*h(k,1)]);
+ }
+ out.push(world[world.length-1]);
+ return out;
+}
 // A tracer stops a ball's radius short of where the ball ended, so it comes out
 // of the BACK of the ball rather than from under it. Ending at the centre means
 // the ball covers the last 21 mm of line, and a hop smaller than the ball --
@@ -749,7 +791,16 @@ export class GolfView{
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
   if(blue){const grids=new T.GridHelper(Math.max(world.halfX,world.halfZ)*2,50,'#93bdb8','#335e71');grids.position.y=4;add(grids);}
-  this.ball=add(new T.Mesh(new T.SphereGeometry(R,24,16),this.surfaceMaterial('#fffdf3',{roughness:.35,emissive:GLOW_BALL,emissiveIntensity:0})));
+  // THE BALL WEARS ITS GOLFER'S FINISH (Phase 5, ball-finishes.js): always a
+  // texture, Classic white included, so changing finish rewrites the texels
+  // and never builds a new program. Rebuilt with the course, so the finish
+  // worn is put back on (setBallFinish).
+  this.ballTexture=new T.DataTexture(finishTexels('classic'),256,128);
+  this.ballTexture.colorSpace=T.SRGBColorSpace;this.ballTexture.wrapS=T.RepeatWrapping;
+  this.ballTexture.magFilter=T.LinearFilter;this.ballTexture.minFilter=T.LinearMipmapLinearFilter;this.ballTexture.generateMipmaps=true;
+  this.ballTexture.needsUpdate=true;this.resources.push(this.ballTexture);
+  this.ball=add(new T.Mesh(new T.SphereGeometry(R,24,16),this.surfaceMaterial('#ffffff',{roughness:.35,emissive:GLOW_BALL,emissiveIntensity:0,map:this.ballTexture})));
+  const finish=this.ballFinish||'classic';this.ballFinish=null;this.setBallFinish(finish);
   // NOT castShadow. A golf ball is 4.3 cm across and the sun's shadow map covers
   // 280-370 m: measured, the ball is 0.16 of a texel on low and 0.47 on ultra, so
   // it has never once drawn a shadow at any tier. The flag was costing a draw
@@ -767,7 +818,15 @@ export class GolfView{
   // to a scene changes the lighting uniforms and forces three to recompile every
   // material in it -- a stall of hundreds of milliseconds, and it would land on
   // exactly the frame the sun went down.
-  this.ballLight=new T.PointLight(GLOW_BALL,0,18,2);this.ball.add(this.ballLight);
+  //
+  // NOT A CHILD OF THE BALL. Three counts only VISIBLE lights, and the ball is
+  // hidden often: the menu's showcase hole, the end-of-hole flyover, a team
+  // choosing its ball. As a child the light went with it, so every lit program
+  // was built for "no point light" behind the menu, and pressing Endless (or
+  // the flyover ending) rebuilt all of them on screen -- 1.8 s frozen on a
+  // first visit, measured 15 October 2026. It stays in the scene, follows the
+  // ball in `render`, and goes dark while the ball is hidden.
+  this.ballLight=add(new T.PointLight(GLOW_BALL,0,18,2));this.ballLightPower=0;
   // A sprite halo so the glow is not ultra-only. On ultra the bloom pass adds a
   // real flare over the top of it; below that, this is the whole effect.
   const halo=haloTexture();this.resources.push(halo);
@@ -776,7 +835,23 @@ export class GolfView{
   this.ballRing=add(new T.Mesh(new T.RingGeometry(.45,.51,64),new T.MeshBasicMaterial({color:'#fff8d9',side:T.DoubleSide})));this.ringBase=this.ballRing.material.color.clone();this.ballRing.rotation.x=-Math.PI/2;
   this.aimLine=add(new Line2(new LineGeometry(),new LineMaterial({color:'#fff5d2',linewidth:3.5,transparent:true,opacity:.82,depthWrite:false})));
   this.effects=createShotEffects(this);add(this.effects.group);
-  this.trail=add(new Line2(new LineGeometry(),new LineMaterial({color:'#ffe9a2',linewidth:4.5,transparent:true,opacity:.95,depthWrite:false})));this.trailBase=this.trail.material.color.clone();
+  // The live tracer, its comet head and its bright core (tracer styles,
+  // Phase 5; setTracer). White materials: the colour is in the vertices, and
+  // the material colour is what the night tints.
+  this.trail=add(new Line2(new LineGeometry(),tracerMaterial(4.5,.95)));this.trailBase=new T.Color('#ffffff');
+  this.trailHead=add(new Line2(new LineGeometry(),tracerMaterial(10,.95)));this.trailHead.visible=false;
+  this.trailCore=add(new Line2(new LineGeometry(),tracerMaterial(2.5,1)));this.trailCore.visible=false;
+  // THE GLINTS behind a sparkling tracer: a pool of points, born at the ball
+  // and fading over SPARKLE_LIFE. A stand-in (see showStandIns), so its program
+  // is built and drawn behind the loading screen: one black point far below the
+  // ground until a sparkling shot flies.
+  {const n=64,g=new T.BufferGeometry();
+   g.setAttribute('position',new T.BufferAttribute(new Float32Array(n*3),3).setUsage(T.DynamicDrawUsage));
+   g.setAttribute('color',new T.BufferAttribute(new Float32Array(n*3),3).setUsage(T.DynamicDrawUsage));
+   g.attributes.position.array[1]=-1e4;g.setDrawRange(0,1);
+   const glint=haloTexture();this.resources.push(glint);
+   this.sparkles=add(new T.Points(g,new T.PointsMaterial({size:10,sizeAttenuation:false,map:glint,vertexColors:true,transparent:true,depthWrite:false,blending:T.AdditiveBlending})));
+   this.sparkles.frustumCulled=false;this.sparkles.visible=false;this.sparkleList=[];this.standIns.push(this.sparkles);}
   // Every tracer of the hole so far, drawn only when the hole is over. One Line2
   // cannot hold several separate strokes -- it would join the end of one shot to
   // the start of the next with a line across the fairway -- so they get a line
@@ -1852,11 +1927,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}
+ // Back into the hole for the next putt (the attended pin: main.js).
+ lowerFlag(){if(this.flagsticks?.[this.course?.hole])this.flagsticks[this.course.hole].userData.lift=false;}
  // THE PIN IS PULLED ONCE YOU ARE PUTTING, which is what happens on a real
  // green and takes the one object standing between the ball and the cup out
  // of the read. The cup, its liner and the floor are separate objects and
  // stay: it is the flagstick that goes, not the hole.
- setPinOut(out){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=!out;}
+ // THE PIN STAYS IN WHILE YOU PUTT (the owner, 15 October 2026): it stood out
+ // of sight the moment the ball was on the green. Now it stands in the cup and
+ // is lifted as the ball comes near (main.js PIN_ATTEND_M). The physics have
+ // always played a putt with the pin out, so nothing about the roll changes.
+ setPinOut(){const a=this.flagsticks?.[this.course.hole];if(a)a.visible=true;}
  // THE GRID IS SQUARE TO THE SHOT, set once when it starts (the owner, 1
  // October). It first followed the play camera every frame, so every nudge of
  // the aim turned the whole grid with it -- hugely disorienting. Now `main`
@@ -1979,12 +2060,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   line.geometry.instanceCount=segments;
   return segments;
  }
- setAim(degrees,distance){
+ // `lift` is 15 mm for a putt (main.js), which lies on the green like the
+ // putt preview line it replaced; a full shot's line clears the ground at 100.
+ setAim(degrees,distance,lift=.10){
   const start=this.localBall||this.course.tee,steps=Math.max(60,Math.ceil(distance/.75));
   const flat=this.aimScratch(steps+1);
   for(let i=0;i<=steps;i++){
    const p=aimTarget(start,degrees,distance*i/steps),v=this.course.toWorld(p),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(p.x,p.z)+.10;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(p.x,p.z)+lift;flat[at+2]=v.z;
   }
   this.writeLine(this.aimLine,flat,steps+1);
   this.aimRing.position.set(flat[steps*3],flat[steps*3+1],flat[steps*3+2]);
@@ -2004,14 +2087,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // 21 mm), which is what puts the ball ON the line instead of hanging off it,
  // and still stands clear of the surface. For reference the putting rings sit
  // at 25 mm and the lie scatter at 35 mm, so nothing here z-fights.
- setAimPath(points,distance){
+ //
+ // `lift` is 100 mm for a full shot drawn curved (the Swing Meter's draw and
+ // fade, main.js `shapeTrack`), for the same reason the straight aim line is.
+ setAimPath(points,distance,lift=.015){
   if(points.length<2)return;
   // Same line, so it writes the same way: two writers replacing and rewriting the
   // one geometry would undo each other's buffer every time the club changed.
   const flat=this.aimScratch(points.length);
   points.forEach((q,i)=>{
    const v=this.course.toWorld(q),at=i*3;
-   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+.015;flat[at+2]=v.z;
+   flat[at]=v.x;flat[at+1]=this.course.height(q.x,q.z)+lift;flat[at+2]=v.z;
   });
   this.writeLine(this.aimLine,flat,points.length);
   const last=(points.length-1)*3;
@@ -2025,12 +2111,67 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // back of it rather than from under it. Ending at the centre means the ball
  // covers the last 21 mm of line, and a hop smaller than the ball -- which most
  // of the interesting ones are -- is hidden behind the thing that made it.
+ //
+ // THE STYLE (Phase 5, rewards.js TRACERS) is the active golfer's, put on by
+ // setTracer before the shot: its colours along the line, a head, a core, a
+ // dash, a zigzag, a flicker and glints. Drawn every frame of a flight anyway,
+ // so a moving colour or a flicker costs nothing extra.
+ // `seat` is kept for a style that asks for it; none does since 15 October 2026.
+ setTracer(id,seat){this.tracer={id,style:tracerStyle(id),seat:linear(hexRgb(seat||'#ffe9a2'))};}
  setTrail(points){
-  this.trail.visible=points.length>1;if(points.length<2)return;
-  const kept=trimToBall(points);
-  if(kept.length<2){this.trail.visible=false;return;}
-  this.trail.geometry.dispose();
-  this.trail.geometry=new LineGeometry().setPositions(kept.flatMap(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];}));
+  const kept=points.length>1?trimToBall(points):[];
+  this.trailHead.visible=this.trailCore.visible=false;
+  if(kept.length<2){this.trail.visible=false;this.sparkles.visible=false;this.sparkleList.length=0;this.sparkleAt=null;return;}
+  const tr=this.tracer||{style:tracerStyle('classic'),seat:linear(hexRgb('#ffe9a2'))},st=tr.style,now=performance.now()/1000;
+  let world=kept.map(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];});
+  if(st.jag)world=jagged(world,st.jag,Math.floor(now*14));
+  const n=world.length,cols=new Float32Array(n*3),ring=Array.isArray(st.colours)?[...st.colours,st.colours[0]]:null;
+  for(let i=0;i<n;i++){
+   const t=i/(n-1),c=!ring?tr.seat:linear(st.shift?stopColour(ring,(t+now*st.shift)%1):stopColour(st.colours,t));
+   cols[i*3]=c[0];cols[i*3+1]=c[1];cols[i*3+2]=c[2];
+  }
+  const wave=st.flicker?(Math.sin(now*23)+Math.sin(now*37.3))*.25+.5:0,fade=1-(st.flicker||0)*wave;
+  this.trail.material.linewidth=st.width;this.trail.material.opacity=(st.opacity??.95)*fade;
+  writeStyled(this.trail,world,cols,st.dash);
+  if(st.head){const from=Math.max(0,Math.floor(n*(1-st.head.share))-1);
+   if(n-from>1){this.trailHead.material.linewidth=st.head.width;this.trailHead.material.opacity=.95*fade;writeStyled(this.trailHead,world.slice(from),cols.slice(from*3),null);}}
+  if(st.core){const c=linear(hexRgb(st.core.colour)),cc=new Float32Array(n*3);for(let i=0;i<n;i++)cc.set(c,i*3);
+   this.trailCore.material.linewidth=st.core.width;this.trailCore.material.opacity=fade;writeStyled(this.trailCore,world,cc,st.dash);}
+  this.updateSparkles(st.sparkle,world[n-1],now);
+ }
+ // The glints: born where the ball is while it moves, about `count` alive at
+ // once, each twinkling and fading over SPARKLE_LIFE seconds and, for
+ // Starfall, drifting down `fall` metres a second. PLACED.
+ updateSparkles(sp,head,now){
+  const list=this.sparkleList,LIFE=1.1;
+  if(!sp){this.sparkles.visible=false;list.length=0;this.sparkleAt=null;return;}
+  const dt=Math.min(.1,Math.max(0,now-(this.sparkleAt??now)));this.sparkleAt=now;
+  const moved=this.sparkleHead?Math.hypot(head[0]-this.sparkleHead[0],head[1]-this.sparkleHead[1],head[2]-this.sparkleHead[2]):0;
+  this.sparkleHead=head;
+  if(moved>.02){this.sparkleOwed=(this.sparkleOwed||0)+dt*sp.count/LIFE;
+   while(this.sparkleOwed>=1){this.sparkleOwed--;const r=()=>Math.random()-.5;list.push({x:head[0]+r()*.8,y:head[1]+r()*.8,z:head[2]+r()*.8,born:now,tw:Math.random()*6.3});}}
+  while(list.length&&(now-list[0].born>LIFE||list.length>Math.min(64,sp.count)))list.shift();
+  const g=this.sparkles.geometry,pos=g.attributes.position.array,col=g.attributes.color.array,c=linear(hexRgb(sp.colour));
+  list.forEach((p,i)=>{const age=now-p.born,k=(1-age/LIFE)*(.55+.45*Math.sin(now*18+p.tw));
+   pos[i*3]=p.x;pos[i*3+1]=p.y-(sp.fall||0)*age;pos[i*3+2]=p.z;col[i*3]=c[0]*k;col[i*3+1]=c[1]*k;col[i*3+2]=c[2]*k;});
+  g.setDrawRange(0,list.length);g.attributes.position.needsUpdate=g.attributes.color.needsUpdate=true;
+  this.sparkles.visible=list.length>0;
+ }
+ // THE BALL'S FINISH (ball-finishes.js): a texture rewrite. `glow` is a little
+ // light of the finish's own colour by day, on top of the night's glow.
+ setBallFinish(id){
+  if(!this.ballTexture||this.ballFinish===id)return;
+  this.ballFinish=id;
+  this.ballTexture.image.data.set(finishTexels(id,256,128));this.ballTexture.needsUpdate=true;
+  this.ballFinishGlow=finishSurface(id).glow;this.ballFinishColour=new T.Color(...finishAverage(id));
+  this.applyBallGlow();
+ }
+ applyBallGlow(){
+  if(!this.ball)return;
+  const night=this.ballNightGlow||0,own=this.ballFinishGlow||0;
+  this.ball.material.emissive.copy(GLOW_BALL);
+  if(own>0)this.ball.material.emissive.lerp(this.ballFinishColour,own/(own+night+1e-6));
+  this.ball.material.emissiveIntensity=night+own*.6;
  }
  // The tracers of a finished hole, all at once. Dimmer and thinner than the live
  // one, because this is the record of what happened rather than the thing that is
@@ -2051,16 +2192,20 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(kept.length<2)return;
    let line=this.shotLines[i];
    if(!line){
-    line=new Line2(new LineGeometry(),new LineMaterial({color:SHOT_LINE_COLOR,linewidth:3,transparent:true,opacity:.72,depthWrite:false}));
+    line=new Line2(new LineGeometry(),tracerMaterial(3,.72));
     this.shotLines[i]=line;this.shotGroup.add(line);
    }
    // Lines are POOLED and reused across holes and players, so the colour is set
    // every time rather than only when one is created -- otherwise trail 2 keeps
-   // whoever hit trail 2 on the previous hole.
-   line.material.color.set(trail?.colour||SHOT_LINE_COLOR);
-   line.geometry.dispose();
-   line.geometry=new LineGeometry().setPositions(kept.flatMap(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];}));
-   line.visible=true;
+   // whoever hit trail 2 on the previous hole. In the golfer's own tracer --
+   // its colours and its shape, held still: a dash stays a dash and a zigzag a
+   // zigzag. (It was the seat colour, per spec 7.4, until the owner asked for
+   // the golfer's choice everywhere, 15 October 2026.)
+   const shape=summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
+   let world=kept.map(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];});
+   if(shape.jag)world=jagged(world,shape.jag,i+1);
+   const cols=new Float32Array(world.length*3);for(let k=0;k<world.length;k++)cols.set(linear(stopColour(stops,k/Math.max(1,world.length-1))),k*3);
+   writeStyled(line,world,cols,shape.dash);
   });
  }
  clearShotHistory(){for(const line of this.shotLines)line.visible=false;}
@@ -2110,6 +2255,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // A high, slow orbit of the whole hole, so every tracer is in one frame while
  // the scorecard is up. Radius and height come off the hole's own length: a
  // 130 yard par three should not be framed from where a 600 yard par five is.
+ // WHERE A POINT ON THE HOLE IS ON SCREEN, in the canvas's CSS pixels, or null
+ // when it is behind the camera: for the 2D flourishes over the cup
+ // (flourishes.js). A projection, nothing drawn.
+ screenPoint(p){
+  const h=this.course;if(!h||!p)return null;
+  const w=h.toWorld(p),v=new T.Vector3(w.x,h.height(p.x,p.z),w.z).project(this.camera);
+  if(v.z>1||v.z<-1)return null;
+  const c=this.canvas;return {x:(v.x+1)/2*c.clientWidth,y:(1-v.y)/2*c.clientHeight};
+ }
  summaryOrbit(seconds){
   const h=this.course;if(!h)return;
   const mid={x:h.center(h.length*.5),z:h.length*.5};
@@ -2139,7 +2293,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // ON THE GREEN THE CAMERA BACKS OFF UNTIL THE BALL IS IN FRAME. A putt is aimed
   // from the ball, so the ball has to be on screen; everywhere else it may sit
   // below the bottom edge, which is where it is in the room.
-  else{const rig=(h?.surface?.(p.x,p.z)==='green')?framedForBall(cameraRig(c)):cameraRig(c);const pose=playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;this.screenAspect=rig.aspect||null;}
+  // An aimed putt off the bay has its own pose (camera.js puttAimPose).
+  else{const onGreen=h?.surface?.(p.x,p.z)==='green',rig=onGreen?framedForBall(cameraRig(c)):cameraRig(c);const pose=onGreen&&!c.sim&&h?.pin?puttAimPose(h,p,aim):playerCameraPose(h,p,aim,rig);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.camera.fov=rig.fov;this.lensShift=rig.shift||0;this.screenAspect=rig.aspect||null;}
   // Overview and the green view keep the chosen angle: neither is a view from
   // where anybody is standing, so a bay's measurements say nothing about them.
   if(c.mode!=='player'){this.camera.fov=c.fov;this.lensShift=0;this.screenAspect=null;}this.fitAspect();this.applyLensShift();this.camera.updateProjectionMatrix();if(instant||this.camera.position.distanceTo(this.targetPos)>60){this.camera.position.copy(this.targetPos);this.look.copy(this.targetLook);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);}
@@ -2164,7 +2319,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // left to the damping.
   if(!opts.hold&&eye.distanceTo(to.eye)<FLIGHT_FLOOR)return;
   this.camera.position.copy(eye);this.look.copy(look);this.camera.lookAt(look);
-  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0,arrival:!!opts.arrival}),elapsed:0};
+  // Back from the shot review (`from`), straight through the trees.
+  this.camFlight={path:makeCameraFlight({eye,look},to,this.world,{hold:opts.hold||0,arrival:!!opts.arrival,throughTrees:!!opts.from}),elapsed:0};
  }
  // THE ARRIVAL. Cut to a pose above and behind the tee, hold there long enough
  // to read the hole, then fly down onto the ball.
@@ -2198,14 +2354,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  updateGlowBall(solar,daylight){
   if(!this.ball)return;
   const glow=daylight.glowBall===false?0:solar.lamplight,strength=Math.max(0,daylight.glowStrength??1);
-  this.ball.material.emissiveIntensity=glow*1.76*strength;
-  this.ballLight.intensity=glow*2.08*strength;
+  this.ballNightGlow=glow*1.76*strength;this.applyBallGlow();
+  this.ballLightPower=glow*2.08*strength;this.ballLight.intensity=this.ball.visible?this.ballLightPower:0;
   this.ballHalo.visible=glow*strength>.01;
   this.ballHalo.material.opacity=Math.min(1,glow*.4*strength);
   // The ring and the trail are unlit materials, so nothing else would ever dim
   // them; left alone they stay daylight-bright against a dark course.
   this.ballRing.material.color.copy(this.ringBase).lerp(GLOW_BALL,glow);
   this.trail.material.color.copy(this.trailBase).lerp(GLOW_BALL,glow);
+  this.trailHead.material.color.copy(this.trail.material.color);this.trailCore.material.color.copy(this.trail.material.color);
  }
  // Advance the clock and apply the light that follows from it. Everything here
  // is a uniform write and costs nothing per frame; CSM re-reads lightDirection
@@ -2348,7 +2505,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  tvReview(pose){
   this.tv=null;this.trackingBall=false;
   const to={eye:new T.Vector3(pose.eye.x,pose.eye.y,pose.eye.z),look:new T.Vector3(pose.look.x,pose.look.y,pose.look.z)};
-  this.camFlight={path:makeCameraFlight({eye:this.camera.position.clone(),look:this.look.clone()},to,this.world),elapsed:0};
+  this.camFlight={path:makeCameraFlight({eye:this.camera.position.clone(),look:this.look.clone()},to,this.world,{throughTrees:true}),elapsed:0};
  }
 
  render(dt){
@@ -2365,6 +2522,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
+  // The ball's light is the ball's neighbour, not its child (see its note in
+  // `build`): it follows, and is dark while the ball is hidden.
+  if(this.ballLight){this.ballLight.position.copy(this.ball.position);this.ballLight.intensity=this.ball.visible?this.ballLightPower:0;}
   // One queued pond photograph a frame (stepWaterProbes), here so the cull's
   // update further down puts back what the photograph had to show.
   this.stepWaterProbes();

@@ -34,6 +34,19 @@ const sub = (a, b) => a != null && b != null ? a - b : null;
 const sided = (v, dp, unit, right = 'R', left = 'L') =>
  v == null ? null : {value: Math.abs(v).toFixed(dp), unit: `${unit}${unit ? ' ' : ''}${v >= 0 ? right : left}`};
 const fixed = (v, dp) => v == null ? null : v.toFixed(dp);
+// THE LIE'S PENALTY, beside the number it changed (14 October 2026). A shot from
+// rough, semi-rough or sand records the ball speed it would have had and the
+// share the lie kept (main.js `takeShot`). For a LAUNCH MONITOR shot the tile
+// shows the speed the monitor measured -- never the docked one in its place --
+// with what the lie took off beside it in red; for a Swing Meter shot it shows
+// the speed the ball left with, and the same red note. Carry and total are the
+// game's own result, so they carry the penalty already, and say so.
+const LIE_WORD = {semi: 'semi-rough', rough: 'rough', sand: 'sand'};
+const docked = r => { const l = r?.shot?.lie; return l && l.factor < 1 && Number.isFinite(l.before) ? l : null; };
+export const liePenaltyNote = r => { const l = docked(r); return l ? `−${(l.before * (1 - l.factor) / MPH).toFixed(1)} ${LIE_WORD[l.surface] || l.surface}` : null; };
+const lieTag = r => { const l = docked(r); return l ? LIE_WORD[l.surface] || l.surface : null; };
+// The ball speed to show: measured for a monitor shot, played for the meter's.
+export const shownSpeed = r => { const l = r?.shot?.lie; return l?.measured && Number.isFinite(l.before) ? l.before : num(r?.shot?.speed); };
 const signed = (v, dp) => v == null ? null : (v > 0 ? '+' : '') + v.toFixed(dp);
 
 // `get` is handed the whole record and returns the STRING to print, already in
@@ -43,7 +56,7 @@ export const SHOT_FIELDS = [
  // --- The five. Always available: a keyboard shot has them too, because the
  // model needs them whether a monitor supplied them or the swing did.
  {id: 'ballSpeed', group: 'ball', label: 'Ball speed', unit: 'mph',
-  get: r => fixed(div(num(r?.shot?.speed), MPH), 1)},
+  get: r => fixed(div(shownSpeed(r), MPH), 1), note: liePenaltyNote},
  {id: 'launch', group: 'ball', label: 'Launch angle', unit: '°',
   get: r => fixed(num(r?.shot?.vla), 1)},
  {id: 'direction', group: 'ball', label: 'Launch direction', unit: '°',
@@ -100,9 +113,9 @@ export const SHOT_FIELDS = [
 
  // --- What OUR model did with the shot. Not the device's opinion.
  {id: 'carry', group: 'flight', label: 'Carry', unit: 'yd',
-  get: r => fixed(div(num(r?.result?.carry), YARD), 0)},
+  get: r => fixed(div(num(r?.result?.carry), YARD), 0), note: lieTag},
  {id: 'total', group: 'flight', label: 'Total', unit: 'yd',
-  get: r => fixed(div(num(r?.result?.total), YARD), 0)},
+  get: r => fixed(div(num(r?.result?.total), YARD), 0), note: lieTag},
  {id: 'apex', group: 'flight', label: 'Apex', unit: 'ft',
   get: r => fixed(div(num(r?.result?.apex), FOOT), 0)},
  {id: 'offline', group: 'flight', label: 'Offline', unit: 'yd',
@@ -327,9 +340,11 @@ export function shotGrid(record, prefs) {
    // that may predate the field, from a device's arbitrary JSON, and from a
    // result the flight may have ended early -- so every one is caught.
    try { got = record ? f.get(record) : null; } catch { got = null; }
+   let note = null;
+   try { note = record && f.note ? f.note(record) : null; } catch { note = null; }
    const value = got == null ? null : typeof got === 'object' ? got.value : got;
    const unit = got != null && typeof got === 'object' ? got.unit : f.unit;
-   return {id, label: f.label, unit, value: value ?? '—', blank: value == null};
+   return {id, label: f.label, unit, value: value ?? '—', blank: value == null, ...(note && value != null ? {note} : {})};
   }),
  };
 }

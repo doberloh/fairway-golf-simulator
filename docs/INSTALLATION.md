@@ -208,7 +208,7 @@ Served from a web address, the game links a web manifest, so it can be added to 
 
 ## Mouse, touch and controllers
 
-Mouse/keyboard and on-screen controls are available without device drivers specific to Fairway. Basic controls are Space to shoot, arrow keys to aim/change power, Q/E to select clubs, V for free flight, and Escape to close a panel/end a flyover. Full controls are in PLAYING.md.
+Mouse/keyboard and on-screen controls are available without device drivers specific to Fairway. Basic controls are Space to swing with the Swing Meter (three taps: start, distance, strike), arrow keys to aim and move the aim point, S/W/X for curve, height and spin, Q/E to select clubs, V for free flight, and Escape to close a panel/end a flyover. Full controls are in PLAYING.md.
 
 For a controller, connect it through the operating system by USB or Bluetooth, focus the app and press a button. Fairway reads the first controller the browser exposes with the standard mapping. The [browser Gamepad API](https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API) and operating system determine which controllers are exposed; physical models have not been verified here.
 

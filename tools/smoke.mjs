@@ -285,14 +285,38 @@ class Trip {
   await this.until(async () => !(await this.drawerOpen()), 'the panel to close', 5 * SLOW);
  }
 
- // A shot, the way a keyboard player takes one: Space to hit, Enter to skip
- // the flight. It checks the shot actually STARTED -- the game refuses a shot
- // silently in several states, and a harness that assumed every Space was a
- // shot would report a round it never played.
- async shot() {
+ // THE SWING METER (14 October 2026) is three taps of Space: start, set the
+ // distance, strike. Real gaps between them, because the meter judges each tap
+ // on its own time -- three back to back would be a swing of nothing.
+ async swing() {
+  await this.key('Space');
+  await this.page.waitForTimeout(800);
+  await this.key('Space');
+  await this.page.waitForTimeout(300);
+  await this.key('Space');
+ }
+
+ // A shot, the way a keyboard player takes one: the Swing Meter's three taps,
+ // Enter to skip the flight. It checks the shot actually STARTED -- the game
+ // refuses a shot silently in several states, and a harness that assumed every
+ // swing was a shot would report a round it never played.
+ // A PUTT, the way a player putts one: Space starts the stroke and it stops on
+ // the blue target marker (`tapOnTarget`). Three Space taps at fixed gaps hole a
+ // two-yard putt only by luck, which is how `profile` and `bag` passed one run
+ // and failed the next (14 October 2026).
+ async putt() {
   await this.until(async () => !(await this.inFlight()), 'the previous shot to finish', 30 * SLOW);
   await this.key('Space');
-  await this.until(() => this.inFlight(), 'Space to start a shot (the game refused it)', 5 * SLOW);
+  await tapOnTarget(this);
+  await this.until(() => this.inFlight(), 'the putt to start', 5 * SLOW);
+  await this.key('Enter');
+  await this.until(async () => !(await this.inFlight()), 'Enter to finish the putt', 30 * SLOW);
+ }
+
+ async shot() {
+  await this.until(async () => !(await this.inFlight()), 'the previous shot to finish', 30 * SLOW);
+  await this.swing();
+  await this.until(() => this.inFlight(), 'the Swing Meter to start a shot (the game refused it)', 5 * SLOW);
   await this.key('Enter');
   await this.until(async () => !(await this.inFlight()), 'Enter to finish the shot', 30 * SLOW);
  }
@@ -485,7 +509,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #power, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -503,10 +527,37 @@ const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status',
 // since the shot panel (10 October 2026) the rule is the same at every size.
 // Since 13 October the shot panel is a line in the play window, so the window
 // stays through a flight with that line alone in it: what must go is
-// everything else in it -- club, power, the shot button, the keyboard hints.
+// everything else in it -- club, the shot's shape, the shot button, the keyboard hints.
 // The panels FADE, over a fifth of a second, so a check made the instant the
 // ball leaves catches them half-way; it is retried until it passes or two
 // seconds are up, and only the last failure is reported.
+// A SWING THAT STOPS ON THE TARGET MARKER, the way a player aims one: the meter
+// is started by the caller, then this waits, frame by frame inside the page,
+// for the marker to reach the blue target and taps the screen there, and taps
+// again as it comes back over the strike line (if the swing has a third tap).
+// Used where the harness needs the ball to go where it is aimed -- putting out
+// -- which three taps at fixed gaps cannot do since the Swing Meter replaced
+// a power that was set to the hole for you (14 October 2026).
+async function tapOnTarget(t) {
+ await t.page.evaluate(() => new Promise((resolve, reject) => {
+  const meter = document.getElementById('swingMeter'), marker = document.getElementById('smMarker');
+  const target = document.getElementById('smTarget'), catcher = document.getElementById('swingCatcher');
+  const goal = target && !target.hidden ? parseFloat(target.style.left) : 70;
+  const line = parseFloat(document.querySelector('#smTicks .strike')?.style.left ?? '21');
+  const tap = () => catcher.dispatchEvent(new PointerEvent('pointerdown', {button: 0, bubbles: true, isPrimary: true}));
+  const until = performance.now() + 10000;
+  const step = () => {
+   if (performance.now() > until) return reject(new Error('the meter never reached the target'));
+   const stage = meter.dataset.stage, x = parseFloat(marker.style.left);
+   if (stage === 'ready') return resolve();
+   if (stage === 'power' && x >= goal) tap();
+   else if (stage === 'strike' && x <= line) { tap(); return resolve(); }
+   requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+ }));
+}
+
 async function flightClearsTheScreen(t, phone) {
  const until = Date.now() + 2000 * SLOW;
  for (;;) {
@@ -519,7 +570,12 @@ async function flightScreenOnce(t, phone) {
   const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
-   panel: gone('#power') && gone('#bottomHints'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
+   panel: gone('#shapeControl') && gone('#bottomHints'),
+   // On the Swing Meter the meter stays up through the flight with carry,
+   // total and apex, and the floating tiles are gone (14 October 2026).
+   meterMode: document.getElementById('world').classList.contains('meter-mode'),
+   meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
+   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
    numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
@@ -541,6 +597,8 @@ async function flightScreenOnce(t, phone) {
  if (state.wind) bad.push('the wind went');
  if (!/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
+ if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
+ if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
  const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
@@ -636,36 +694,67 @@ const JOURNEYS = [
     await t.hold('ArrowLeft', '#aimOutput');
     await t.hold('ArrowRight', '#aimOutput');
    });
-   // Power taps DOWN: it starts at 100% and up has nowhere to go -- the first
-   // draft of this tapped up and reported a dead key that was merely at its cap.
+   // Up and down move the aim point further and shorter (the power slider went
+   // with the Swing Meter, 14 October 2026). Down, so a tee shot near the end
+   // of the hole cannot be at the 2000-yard cap.
    //
    // THE TAP THAT NO FRAME SAW. A synthetic press puts key-down and key-up
    // back to back with no frame between -- exactly the tap a slow machine used
    // to lose, and exactly what this harness's first draft took for a broken
    // control. The game now owes that tap to the next frame.
-   for (const [code, readout, what] of [['ArrowLeft', '#aimOutput', 'aim'], ['ArrowDown', '#powerOutput', 'power']]) {
+   for (const [code, readout, what] of [['ArrowLeft', '#aimOutput', 'aim'], ['ArrowDown', '#aimRange', 'the aim point']]) {
     await t.step(`an instant ${code} tap still moves ${what}`, async () => {
-     const before = await t.page.textContent(readout);
+     const read = () => readout === '#aimRange' ? t.page.inputValue(readout) : t.page.textContent(readout);
+     const before = await read();
      await t.key(code);
-     await t.until(async () => (await t.page.textContent(readout)) !== before,
+     await t.until(async () => (await read()) !== before,
       `a tap of ${code} to register (it read "${before}" and never changed)`, 5 * SLOW);
     });
    }
-   await t.step('power with ↑ and ↓', async () => {
-    await t.hold('ArrowDown', '#powerOutput');
-    await t.hold('ArrowUp', '#powerOutput');
+   await t.step('the aim point with ↑ and ↓', async () => {
+    await t.hold('ArrowDown', '#aimLabelDistance');
+    await t.hold('ArrowUp', '#aimLabelDistance');
+   });
+   await t.step('the Swing Meter: the bar in yards, the lie, and S, W and X shape the shot', async () => {
+    if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the Swing Meter is not showing');
+    const full = await t.page.textContent('#smTicks .full');
+    if (!/\d+\s*yd/.test(full)) throw new Error(`the bar's full line reads "${full}"`);
+    if (!/LIE/.test(await t.page.textContent('#lieReadout'))) throw new Error('the lie readout is empty');
+    // Phase 2: the target marker is on the bar, inside it.
+    await t.until(() => t.page.evaluate(() => { const m = document.getElementById('smTarget'); return !m.hidden && parseFloat(m.style.left) > 0; }), 'the target marker on the bar', 5 * SLOW);
+    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinLabel']]) {
+     const before = await t.page.textContent(label);
+     await t.key(code);
+     await t.until(async () => (await t.page.textContent(label)) !== before, `${code} to change ${label}`, 5 * SLOW);
+    }
+    // Back to a plain shot: the curve and height round their lists, and Shift+X
+    // takes the step of spin off again.
+    await t.key('KeyS'); await t.key('KeyS'); await t.key('KeyW'); await t.key('KeyW');
+    await t.page.keyboard.press('Shift+KeyX');
+    if (await t.page.textContent('#spinLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
+   });
+   await t.step('Escape cancels a swing before the distance is set, with no stroke', async () => {
+    await t.key('Space');
+    await t.until(() => t.page.evaluate(() => document.getElementById('swingMeter').dataset.stage === 'power'), 'Space to start the swing', 5 * SLOW);
+    await t.key('Escape');
+    await t.until(() => t.page.evaluate(() => document.getElementById('swingMeter').dataset.stage === 'ready'), 'Escape to cancel the swing', 5 * SLOW);
+    if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
     for (const id of ['overview', 'playerView', 'greenView', 'playerView']) await t.page.click(`#${id}`);
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
-    await t.key('Space');
-    await t.until(() => t.inFlight(), 'Space to start a shot', 5 * SLOW);
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the Swing Meter to start a shot', 5 * SLOW);
     await flightClearsTheScreen(t, false);
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
     if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
+    // The swing's marks clear once the ball stops; the three numbers stay
+    // (14 October 2026).
+    if (await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter kept the last swing after the ball stopped');
+    if (!/d/.test(await t.page.textContent('#smResult'))) throw new Error('the meter lost the last shot numbers');
    });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
@@ -682,16 +771,42 @@ const JOURNEYS = [
    });
    await t.step('putt out', async () => {
     for (let putt = 1; putt <= 6; putt++) {
-     await t.shot();
-     // The hole reveal holds for three seconds of WALL time, then the card opens.
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false);
-     if (done) return;
+     await t.putt();
+     // THE BALL CLOSE UP in the hole-out banner (Phase 5): drawn, turning, and
+     // pictured for a look.
+     if (await t.page.waitForSelector('#holeOut:not([hidden]) .hole-out-ball', {timeout: 2500}).then(() => true, () => false)) {
+      await t.page.waitForTimeout(400);
+      const drawn = await t.page.evaluate(() => { const c = document.querySelector('#holeOut .hole-out-ball'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) n += d[i] > 200; return n / (c.width * c.height); });
+      if (drawn < .5) throw new Error(`the ball in the hole-out banner is ${(drawn * 100).toFixed(0)}% drawn`);
+      await t.page.locator('#holeOut').screenshot({path: 'bench/shots/smoke/hole-out.png'}).catch(() => {});
+     }
+     // The XP popup comes up as the hole is paid (14 October 2026): caught here,
+     // while it is on screen, and pictured for a look.
+     if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 6000}).then(() => true, () => false))
+      await t.page.locator('#xpGain').screenshot({path: 'bench/shots/smoke/xp-popup.png'}).catch(() => {});
+     // The hole reveal holds for three seconds of WALL time at least, and the
+     // card waits for the XP popup to finish (14 October 2026).
+     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false);
+     if (done) {
+      if (await t.page.evaluate(() => !document.getElementById('xpGain').hidden)) throw new Error('the scorecard opened over the XP popup');
+      return;
+     }
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
    await t.step('the scorecard offers the next hole', async () => {
     const title = await t.drawerTitle();
     if (!title) throw new Error('no panel open after holing out');
+   });
+   // XP AND LEVELS (Phase 4, 14 October 2026): a finished hole pays at least its
+   // ten for finishing, and the golfer's chip carries their level.
+   await t.step('the hole paid XP, and the score chip shows the level', async () => {
+    const p = await t.page.evaluate(() => { const s = JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'); return s?.profiles?.find(q => q.id === s.main); });
+    if (!(p?.xp >= 10)) throw new Error(`the main golfer has ${p?.xp} XP after a finished hole`);
+    if (!(await t.page.evaluate(() => Number(document.getElementById('xpGain')?.dataset.shown) || 0) > 0)) throw new Error('the XP popup never came up');
+    // The level sits on the golfer's circle (15 October 2026), not beside the name.
+    const level = await t.page.evaluate(() => document.querySelector('.score-chip .chip-level')?.textContent || '');
+    if (!/^[0-9]+$/.test(level)) throw new Error(`no level on the score chip's circle (read "${level}")`);
    });
    await t.step('next hole grows and loads', () => t.nextHole(() => t.page.click('#nextHoleScore', {timeout: 3000 * SLOW})));
    await t.step('and plays', () => t.shot());
@@ -782,6 +897,20 @@ const JOURNEYS = [
     const late = await t.page.evaluate(() => window.__lateLit);
     if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
    });
+   // THE FIRST SHOT'S TRACER (Phase 5). The tracer styles moved every line onto
+   // one program with per-vertex colour and the dash switch; it is not the aim
+   // line's program any more, and nothing on screen at load draws it -- so it
+   // would be built on the first shot of every course, a frozen frame as the
+   // ball leaves. A stand-in now builds it behind the loading screen.
+   await t.step('the first shot, its tracer and its glints build no shader', async () => {
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the first shot to start', 5 * SLOW);
+    await t.page.waitForTimeout(2500);
+    const late = await t.page.evaluate(() => window.__lateAny);
+    if (late.length) throw new Error(`${late.length} shader(s) built during the first shot: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+   });
    await t.step('turning a full circle, toward the sun and away, builds no shader of any kind', async () => {
     // From above the first fairway, looking up a little: the sun is in shot
     // for part of the turn whatever the hour and the course's heading.
@@ -791,6 +920,107 @@ const JOURNEYS = [
     }
     const late = await t.page.evaluate(() => window.__lateAny);
     if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+   });
+  },
+ },
+ // NO LIT SHADER WHEN THE BALL COMES OR GOES (15 October 2026). The ball's glow
+ // light was the ball's child, and three counts only visible lights: the menu
+ // hides the ball, so every lit program was built for "no point light", and
+ // starting Endless from the menu -- which adopts the hole on screen with no
+ // loading screen -- rebuilt all of them in view: 35-40 programs, 1.8 s frozen
+ // on a first visit. The end-of-hole flyover hides the ball too, and did the
+ // same as the camera pulled back. Watched from the moment the menu settles,
+ // with no loading screen to hide behind.
+ {
+  name: 'ball-light-shaders',
+  what: 'starting Endless from the menu builds no lit shader',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    const P = WebGL2RenderingContext.prototype, create = P.createProgram, use = P.useProgram, shaderSource = P.shaderSource, attach = P.attachShader;
+    // FIRST DRAWN, not created, after the watch starts: on Windows a program is
+    // finished on its first real draw, so one created earlier and first drawn
+    // in view is the same frozen frame -- and this check, counting creations,
+    // passed on the build it was written to catch.
+    const src = new WeakMap(), parts = new WeakMap(), fresh = new WeakSet();
+    window.__watch = false; window.__lateLit = []; window.__lateAny = [];
+    P.shaderSource = function (shader, text) { src.set(shader, text); return shaderSource.call(this, shader, text); };
+    P.attachShader = function (program, shader) { (parts.get(program) || parts.set(program, []).get(program)).push(shader); return attach.call(this, program, shader); };
+    P.createProgram = function () { const program = create.call(this); fresh.add(program); return program; };
+    P.useProgram = function (program) {
+     if (program && fresh.has(program)) {
+      fresh.delete(program);
+      // Behind a loading screen is allowed: that is where programs belong.
+      if (window.__watch && document.getElementById('generating')?.hidden !== false) {
+       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
+       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1] || 'ShaderMaterial';
+       window.__lateAny.push(type);
+       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(type);
+      }
+     }
+     return use.call(this, program);
+    };
+   });
+  },
+  async run(t) {
+   const lit = async when => {
+    const late = await t.page.evaluate(() => window.__lateLit);
+    if (late.length) throw new Error(`${late.length} lit shader(s) built ${when}: ${late.join(', ')}`);
+   };
+   await menuReady(t);
+   await t.step('Endless from the menu builds no lit shader', async () => {
+    await t.page.waitForTimeout(2000);
+    await t.page.evaluate(() => { window.__watch = true; });
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+    await t.page.waitForTimeout(3000);
+    await lit('as the menu hole became the first hole');
+   });
+  },
+ },
+ // The flyover half of the same fault, on a course built through Play. An
+ // Endless round adopts the menu's hole, whose no-light programs already exist,
+ // so its flyover passed even before the fix; a course behind a loading screen
+ // had never drawn without the ball, and its flyover built 17 lit programs as
+ // the camera pulled back -- the hole-out stutter the owner reported.
+ {
+  name: 'ball-light-hole-out',
+  what: 'holing out on a Play course: the end-of-hole flyover builds no lit shader',
+  gpuOnly: true,
+  prepare: page => JOURNEYS.find(j => j.name === 'ball-light-shaders').prepare(page),
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('drop beside the pin', async () => {
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+   });
+   await t.step('holing out and the end-of-hole flyover build no lit shader', async () => {
+    await t.page.evaluate(() => { window.__watch = true; });
+    for (let putt = 1; putt <= 6; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) {
+      // The flyover orbits while the scorecard is up.
+      await t.page.waitForTimeout(3000);
+      const late = await t.page.evaluate(() => window.__lateLit);
+      if (late.length) throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}`);
+      return;
+     }
+    }
+    throw new Error('six putts from two yards and the ball never dropped');
    });
   },
  },
@@ -939,10 +1169,18 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
     await t.closeTools();
     for (let putt = 1; ; putt++) {
-     await t.shot();
+     await t.putt();
      if ((await saved())?.done?.[0]) break;
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
+   });
+   // THE TURN FLASH (15 October 2026): the turn has passed to the newcomer, so
+   // their name comes up in the middle of the screen, with their circle.
+   await t.step('the turn passing to the newcomer flashes their name', async () => {
+    await t.until(() => t.page.evaluate(() => { const f = document.getElementById('turnFlash'); return !f.hidden && /Newcomer/.test(f.textContent) && !!f.querySelector('.chip-ball, .chip-dot'); }), 'the turn flash naming the newcomer', 10 * SLOW);
+    await t.page.locator('#turnFlash').screenshot({path: 'bench/shots/smoke/turn-flash.png'}).catch(() => {});
+    // And the top-bar chip carries the circle with the level on it.
+    if (!await t.page.evaluate(() => !!document.querySelector('.score-chip .chip-ball .chip-level'))) throw new Error('no ball circle with the level in the score chip');
    });
    await t.step("the newcomer's tee shot goes to the newcomer", async () => {
     await t.shot();
@@ -980,6 +1218,23 @@ const JOURNEYS = [
     await t.press('Newcomer');
     await t.until(async () => /Make main profile/.test(await t.page.textContent('#drawerContent')), "the newcomer's page", 5 * SLOW);
     await t.press('Tester main');
+   });
+   // THE LOOK (Phase 5): the ball as the picture, the starting ball and tracer
+   // on, what is not earned shown with its level, and an earned one put on and
+   // kept.
+   await t.step('My profile: the look picker shows what is earned and saves a choice', async () => {
+    if (!await t.page.evaluate(() => !!document.querySelector('#drawerContent .profile-id img.ball-avatar'))) throw new Error('no ball picture on the profile');
+    await t.page.click('[data-look-tab="tracer"]');
+    await t.until(() => t.page.evaluate(() => !!document.querySelector('.look-item.on')), 'the tracer list', 5 * SLOW);
+    const view = await t.page.evaluate(() => ({on: document.querySelector('.look-item.on')?.textContent, locked: document.querySelectorAll('.look-item.locked').length, open: [...document.querySelectorAll('.look-item:not(.on):not(.locked)')].map(b => b.dataset.wear)}));
+    if (!/Classic/.test(view.on || '')) throw new Error(`a new golfer wears "${view.on}", not Classic`);
+    if (view.locked < 10) throw new Error(`only ${view.locked} tracers are locked for a new golfer`);
+    // Locked, not grey (15 October 2026): a padlock, and the colours at full strength.
+    if (!await t.page.evaluate(() => { const l = document.querySelector('.look-item.locked'); return !!l?.querySelector('.look-lock') && getComputedStyle(l).opacity === '1'; })) throw new Error('a locked tracer is greyed out or has no padlock');
+    if (view.open.length) {
+     await t.page.click(`[data-wear="${view.open[0]}"]`);
+     await t.until(async () => main(await stored())?.worn?.tracer === view.open[0].split(':')[1], 'the tracer to be saved', 5 * SLOW);
+    }
    });
    await t.step('Replay this course grows the same run again', async () => {
     const seed = main(await stored()).rounds[0].course.seed;
@@ -1076,7 +1331,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
     await t.closeTools();
     for (let putt = 1; ; putt++) {
-     await t.shot();
+     await t.putt();
      if ((await saved())?.done?.[0]) break;
      if (putt === 6) throw new Error('six putts from two yards and the ball never dropped');
     }
@@ -1346,11 +1601,15 @@ const JOURNEYS = [
       const bar = document.getElementById('studioBar').getBoundingClientRect();
       const panel = document.getElementById('drawer').getBoundingClientRect();
       const world = document.getElementById('world').getBoundingClientRect();
+      // The settings take the play area but for a strip holding the bar (15
+      // October 2026): `spare` is the course still showing besides that strip.
       return {gap: Math.round(panel.top - bar.bottom), above: Math.round(bar.top - world.top),
+       spare: Math.round((panel.top - world.top) - (bar.height + 28) + (world.bottom - panel.bottom)),
        compact: document.getElementById('studioBar').classList.contains('compact')};
      });
      const bad = await t.page.evaluate(unreachableControls, '#studioBar button, #closeDrawer');
      const notes = [...(fit.gap < 0 ? [`the bar overlaps the panel by ${-fit.gap}px`] : []),
+      ...(Math.abs(fit.spare) > 2 ? [`the settings leave ${fit.spare}px of course showing`] : []),
       ...(fit.above < 0 ? [`the bar runs ${-fit.above}px off the top of the course`] : []),
       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
      console.log(`     ${`${w}x${h}`.padEnd(10)} ${fit.compact ? 'icons only' : 'full bar  '}  ${notes.length ? notes.join('; ') : 'fine'}`);
@@ -1447,11 +1706,15 @@ const JOURNEYS = [
     // phone, open on anything bigger. Both are checked: an open grid is the
     // most of the course the panel covers, and on a phone the one state that
     // can crowd the map.
+    // On the Swing Meter there are no tiles and no fold (14 October 2026), so
+    // the open state is only checked where the fold is on screen.
     await t.page.evaluate(() => { if (document.getElementById('world').classList.contains('shot-open')) document.getElementById('shotToggle').click(); });
     await check(`${w}x${h} shot panel folded`);
-    await t.page.click('#shotToggle');
-    await check(`${w}x${h} shot panel open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
-    await t.page.click('#shotToggle');
+    if (await t.page.isVisible('#shotToggle')) {
+     await t.page.click('#shotToggle');
+     await check(`${w}x${h} shot panel open`, phone ? OPENED_FLOOR : SCENE_FLOOR);
+     await t.page.click('#shotToggle');
+    }
    }
    await t.step('every control reachable, no scrolling, the course visible, at every size', async () => {
     if (problems.length) throw new Error(`layout problems at ${problems.join(', ')}`);
@@ -1539,13 +1802,13 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
-   await t.step('the shot panel is folded on a phone, and one tap opens and closes it', async () => {
-    const visible = () => t.page.evaluate(() => !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight);
-    if (await visible()) throw new Error('the shot numbers show before anything was tapped');
-    await tap('#shotToggle');
-    await t.until(visible, 'the shot numbers to appear', 5 * SLOW);
-    await tap('#shotToggle');
-    await t.until(async () => !(await visible()), 'the shot numbers to fold away', 5 * SLOW);
+   // On the Swing Meter the floating number tiles and their fold are gone: the
+   // meter carries carry, total and apex itself (14 October 2026), checked in
+   // flight by flightClearsTheScreen. Before that, from 13 October, the tiles
+   // started shown on a phone; before that, folded.
+   await t.step('on the Swing Meter the number tiles and their fold are gone', async () => {
+    const shown = await t.page.evaluate(() => ({tiles: !!document.querySelector('#shotTiles .shot-tile')?.offsetHeight, fold: !!document.getElementById('shotToggle')?.offsetParent}));
+    if (shown.tiles || shown.fold) throw new Error(`still showing: ${JSON.stringify(shown)}`);
    });
    await t.step('aim by tapping the course', async () => {
     const before = await t.page.textContent('#aimOutput');
@@ -1559,8 +1822,17 @@ const JOURNEYS = [
    let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
+    // The Swing button starts the meter; mid-swing the whole screen is the tap
+    // target, so the next two taps land anywhere.
+    // A putt is two taps, so the third is only made while a swing still waits.
+    // The marker starts from the far left (14 October 2026), so the distance tap
+    // waits for it to pass the strike line and the strike comes on its way back.
     await tap('#swing');
-    await t.until(() => t.inFlight(), 'the shot button to start a shot', 5 * SLOW);
+    await t.page.waitForTimeout(800);
+    await tap('#swingCatcher');
+    await t.page.waitForTimeout(300);
+    if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await t.page.tap('#swingCatcher', {timeout: 2000}).catch(() => {});
+    await t.until(() => t.inFlight(), 'the Swing button and two taps to start a shot', 5 * SLOW);
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);
@@ -1581,14 +1853,25 @@ const JOURNEYS = [
    });
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
-     await swing();
-     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 6000}).then(() => true, () => false)) return;
+     await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
+     await tap('#swing');
+     await tapOnTarget(t);
+     await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
+     await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
+     // The card waits for the XP popup (14 October 2026), so give it time.
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false)) return;
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
    await t.step('the next hole, from the scorecard', () => t.nextHole(() => t.page.locator('#nextHoleScore').tap({timeout: 3000 * SLOW})));
    await t.step('and plays', swing);
    await t.step('nothing on the play screen is out of reach', async () => {
+    // A random course can put that shot in water, and the relief bar is MEANT
+    // to cover the club and the aim pad while relief is chosen -- so relief is
+    // taken first and the screen checked as a golfer about to hit sees it
+    // (the flake in TODO, closed 14 October 2026).
+    await reliefFirst(t, tap);
+    await t.until(() => t.page.evaluate(() => document.getElementById('reliefBar')?.hidden !== false), 'relief to be taken', 10 * SLOW);
     const bad = await t.page.evaluate(unreachableControls);
     if (bad.length) throw new Error(`${bad.length} unreachable: ${bad.join('; ')}`);
    });
@@ -1759,18 +2042,17 @@ const JOURNEYS = [
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
-    for (const sel of ['.bottom-area', '#swing', '#power', '.shape-button', '.aim-control', '#aimRange', '#monState'])
+    for (const sel of ['.bottom-area', '#swing', '#swingMeter', '#shapeControl', '.meter-button', '.aim-control', '#aimRange', '#monState'])
      if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm'])
+    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm', '#monLie'])
      if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
     if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
    });
    await t.step('armed, up and down move the aim point, and the pin label gives way while aiming', async () => {
-    const power = await t.page.inputValue('#power');
     const {before, after} = await t.hold('ArrowUp', '#aimLabelDistance');
     const n = v => parseFloat(String(v).replace(/[^0-9.]/g, ''));
     if (!(n(after) > n(before))) throw new Error(`up moved the aim point from ${before} to ${after}`);
-    if (await t.page.inputValue('#power') !== power) throw new Error('up changed the power, which a monitor shot ignores');
+    if (await shown('#swingMeter')) throw new Error('the Swing Meter came up while the monitor is armed');
     const faded = sel => t.page.evaluate(q => document.querySelector(q).classList.contains('faded'), sel);
     if (await faded('#aimLabel') || !await faded('#flagLabel')) throw new Error('while aiming, the aim label should show and the pin label give way');
     await t.until(async () => (await faded('#aimLabel')) && !(await faded('#flagLabel')), 'the pin label to come back after aiming stops', 5 * SLOW);
@@ -1816,7 +2098,7 @@ const JOURNEYS = [
    await t.step('the Armed switch in the window brings back the shot controls', async () => {
     await t.page.click('#monArm');
     await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
-    if (!await shown('#power')) throw new Error('the power slider did not come back');
+    if (!await shown('#swingMeter')) throw new Error('the Swing Meter did not come back');
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
     if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
     await t.shot();
@@ -1831,6 +2113,97 @@ const JOURNEYS = [
  // The phone's top bar has no room for "Connect monitor", so the ways in are
  // the main menu and the Tools window -- the first cut hid the button with no
  // way in at all, which the owner found on an iPhone.
+ // A MIXED GROUP (Phase 3, 14 October 2026): one golfer on the launch monitor,
+ // one on the Swing Meter, the monitor armed throughout. Stroke play keeps a
+ // golfer on the hole until they hole out, so rather than playing a hole out
+ // this switches the golfer who is up between the two ways of playing, mid-
+ // round, through the group editor -- which is how a player changes it.
+ {
+  name: 'mixed-group',
+  what: 'a monitor golfer and a Swing Meter golfer in one group: the meter on a meter golfer\'s turn with the monitor waiting, a monitor ball refused then, and the monitor back the moment the golfer switches',
+  context: {viewport: {width: 1366, height: 768}},
+  async prepare(page) {
+   this.acks = [];this.players = [];
+   await page.routeWebSocket('ws://127.0.0.1:1922/', ws => {
+    this.bridge = ws;
+    ws.onMessage(m => { try { const d = JSON.parse(m); if (d.type === 'ack') this.acks.push(d); if (d.type === 'player') this.players.push(d); } catch {} });
+    ws.send(monitorStatus('green'));
+   });
+  },
+  async run(t) {
+   const shown = sel => t.page.evaluate(s => { const e = document.querySelector(s); return !!e && !e.closest('[hidden]') && e.offsetParent !== null; }, sel);
+   const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
+    BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
+   const groupPanel = async () => {
+    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
+    await t.press('Your group');
+   };
+   await menuReady(t);
+   await t.step('connect and arm from the main menu', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).click();
+    await t.press('Connect bridge');
+    await t.until(async () => (await t.page.textContent('#connectionLabel')) === 'Bridge connected', 'the bridge to connect', 5 * SLOW);
+    await t.page.getByLabel(/Arm monitor/).check();
+    await t.key('Escape');
+   });
+   await t.step('a group of two: the first golfer on the Swing Meter, left-handed; the second on the monitor', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Your group');
+    await t.press('Add player');
+    await t.page.fill('#name1', 'Second');
+    // The "plays with" and hand choices are there: a bridge has connected.
+    if (!await shown('#input0') || !await shown('#hand0')) throw new Error('the group editor does not ask how each golfer plays');
+    await t.page.selectOption('#input0', 'meter');
+    await t.page.selectOption('#hand0', 'LH');
+    await t.page.selectOption('#input1', 'monitor');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.step('on the Swing Meter golfer\'s turn: the meter is up and the monitor waits on its strip', async () => {
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter', 5 * SLOW);
+    if (await shown('#monitorPanel')) throw new Error('the launch monitor window is up on a Swing Meter turn');
+    if (!await shown('#monState')) throw new Error('the monitor strip is missing');
+    const text = await t.page.textContent('#monStateText');
+    if (!/Swing Meter/.test(text)) throw new Error(`the strip says "${text}"`);
+    if (!await t.page.isChecked('#monArmHand')) throw new Error('Armed went off; it should stay on for the monitor golfer');
+   });
+   await t.step('a ball hit into the monitor then is refused', async () => {
+    this.bridge.send(shot(1));
+    await t.until(() => this.acks.some(a => a.requestId === 'mixed-1'), 'the bridge to hear back', 5 * SLOW);
+    if (this.acks.find(a => a.requestId === 'mixed-1').accepted) throw new Error('a monitor shot was played on a Swing Meter golfer\'s turn');
+    if (await t.inFlight()) throw new Error('a ball is in the air');
+   });
+   await t.step('switched to the monitor mid-round: the window is back, the device is told the hand, and a shot plays', async () => {
+    await groupPanel();
+    await t.page.selectOption('#input0', 'monitor');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    await t.until(() => shown('#monitorPanel'), 'the launch monitor window', 5 * SLOW);
+    if (await shown('#swingMeter')) throw new Error('the Swing Meter stayed up');
+    await t.until(() => this.players.some(p => p.Player?.Handed === 'LH' && p.ready), 'the device to be told this golfer is left-handed and ready', 5 * SLOW);
+    this.bridge.send(shot(2));
+    await t.until(() => t.inFlight(), 'the monitor shot to fly', 5 * SLOW);
+    if (!this.acks.find(a => a.requestId === 'mixed-2')?.accepted) throw new Error('the monitor shot was not accepted');
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
+   });
+   await t.step('and back to the Swing Meter: the meter returns and swings', async () => {
+    await groupPanel();
+    await t.page.selectOption('#input0', 'meter');
+    await t.page.click('#applyGroup');
+    await t.until(async () => !(await t.drawerOpen()), 'the group to apply', 5 * SLOW);
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter', 5 * SLOW);
+    await t.shot();
+   });
+   await t.step('the golfers\' choices are remembered in their profiles', async () => {
+    const store = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1') || 'null'));
+    const first = store?.profiles?.find(p => p.id === store.main), second = store?.profiles?.find(p => p.name === 'Second');
+    if (first?.input !== 'meter' || first?.hand !== 'LH') throw new Error(`the first golfer's profile reads ${JSON.stringify({input: first?.input, hand: first?.hand})}`);
+    if (second?.input !== 'monitor') throw new Error(`the second golfer's profile reads ${JSON.stringify({input: second?.input})}`);
+   });
+  },
+ },
  {
   name: 'monitor-phone',
   what: 'a phone reaches the launch monitor from the menu and Tools, with the bridge address filled in and remembered',
@@ -1926,6 +2299,168 @@ const JOURNEYS = [
      await t.until(async () => /"Code"\s*:\s*200/.test(replies), `the connector to hear 200 (it heard ${replies.trim() || 'nothing'})`, 10 * SLOW);
     });
    } finally { connector.destroy(); }
+  },
+ },
+ // PHASES 5-7 (14 October 2026), written while the owner's machine was busy and
+ // first run once it was free. Each seeds a golfer of a known level, so what is
+ // open is known.
+ {
+  name: 'challenge',
+  what: 'Challenges: all four open, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
+  async prepare(page) {
+   // A golfer at level 7. Every challenge is open from the start (15 October 2026).
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   await t.step('Challenges → the four, all open', async () => {
+    await fromMenu(t, 'Challenges');
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 4), 'the four challenges', 10 * SLOW);
+    const locked = await t.page.evaluate(() => [...document.querySelectorAll('.challenge-pick .look-item.locked')].map(b => b.textContent));
+    if (locked.length) throw new Error(`locked: ${JSON.stringify(locked)}`);
+   });
+   await t.step('closest to the pin on the course of the week starts on a par 3, with the bar', async () => {
+    await t.page.click('[data-challenge="closest"]');
+    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => t.page.evaluate(() => !document.getElementById('challengeBar').hidden && /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'the challenge bar on ball 1', 20 * SLOW);
+    if (await t.page.textContent('#holePar') !== '3') throw new Error(`the challenge is on a par ${await t.page.textContent('#holePar')}`);
+   });
+   await t.step('five balls, and the results card', async () => {
+    for (let i = 1; i <= 5; i++) {
+     await t.shot();
+     if (i < 5) await t.until(() => t.page.evaluate(n => new RegExp('Ball ' + n + ' of 5').test(document.getElementById('challengeBar').textContent), i + 1), `the bar to move to ball ${i + 1}`, 10 * SLOW);
+    }
+    await t.until(async () => (await t.drawerOpen()) && (await t.drawerTitle()) === 'Challenge', 'the results card', 10 * SLOW);
+    const text = await t.page.textContent('#drawerContent');
+    if (!/Nearest|No ball on the green/.test(text)) throw new Error(`the card reads: ${text.slice(0, 200)}`);
+    await t.page.screenshot({path: 'bench/shots/smoke/challenge-results.png'}).catch(() => {});
+   });
+   await t.step('nothing of it was saved as a round', async () => {
+    const slot = await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'));
+    if (slot) throw new Error('the challenge wrote the round slot');
+    const p = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
+    if (p.rounds?.length) throw new Error(`the challenge put ${p.rounds.length} round(s) in the history`);
+   });
+   await t.step('Play it again starts ball 1 again', async () => {
+    await t.page.click('#challengeAgain');
+    await t.until(() => t.page.evaluate(() => /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'ball 1 again', 10 * SLOW);
+   });
+   await t.step('a long drive starts from the menu, on a par 4 or 5', async () => {
+    await t.page.click('#menuNav');
+    await t.page.click('#dropMenu');
+    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
+    await fromMenu(t, 'Challenges');
+    await t.page.click('[data-challenge="long"]');
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => t.page.evaluate(() => /Ball 1 of 6/.test(document.getElementById('challengeBar').textContent)), 'the long-drive bar', 20 * SLOW);
+    if (!['4', '5'].includes(await t.page.textContent('#holePar'))) throw new Error('the long drive is not on a par 4 or 5');
+    await t.shot();
+    await t.until(() => t.page.evaluate(() => /Ball 2 of 6/.test(document.getElementById('challengeBar').textContent)), 'the second drive', 10 * SLOW);
+   });
+  },
+ },
+ {
+  name: 'weekly',
+  what: 'the course of the week: the tile names the week, the panel says what it is, and the round it starts is eighteen holes that remember their week',
+  async run(t) {
+   await menuReady(t);
+   await t.step('the tile names the week and its landscape', async () => {
+    const note = await t.page.textContent('#menuWeeklyNote');
+    if (!/^Week [0-9]+ · /.test(note)) throw new Error(`the tile reads "${note}"`);
+   });
+   await t.step('the panel, then play it', async () => {
+    await fromMenu(t, 'Course of the week');
+    await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
+    await t.page.click('#weeklyGo');
+    await t.inPlay(180 * SLOW);
+   });
+   await t.step('eighteen holes, and the saved round knows its week', async () => {
+    const hole = await t.page.textContent('#holeNumber');
+    if (!/\/18/.test(hole)) throw new Error(`the hole counter reads ${hole}`);
+    await t.shot();
+    const saved = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null'));
+    if (!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]+$/.test(saved?.round?.weekly || '')) throw new Error(`the saved round's week is ${saved?.round?.weekly}`);
+   });
+  },
+ },
+ {
+  name: 'look',
+  what: 'Your look on My profile: every tab, a frame and a meter skin put on and kept, the skin on the meter in play, the achievements list, and a flourish when the hole is finished',
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'plk', profiles: [{id: 'plk', name: 'Looks', created: 1, counters: {}, bests: {}, rounds: [], xp: 78400, xpLog: {}, achievements: {ace: 1}}]})); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
+   await t.step('My profile: the framed picture, the badge, the achievements', async () => {
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    const v = await t.page.evaluate(() => ({framed: !!document.querySelector('.profile-id img.ball-avatar.framed'), level: document.querySelector('.profile-level small')?.textContent, ach: document.querySelectorAll('.achievement').length, earned: document.querySelectorAll('.achievement.earned').length}));
+    if (!v.framed) throw new Error('no frame on the picture');
+    if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
+    if (v.ach !== 13 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+   });
+   for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {
+    await t.step(`the ${tab} tab: put one on, and it is kept`, async () => {
+     await t.page.click(`[data-look-tab="${tab}"]`);
+     await t.page.waitForSelector(wear, {timeout: 10000 * SLOW});
+     await t.page.locator('.look-grid').first().screenshot({path: `bench/shots/smoke/look-${tab}.png`}).catch(() => {});
+     await t.page.click(wear);
+     await t.until(async () => (await stored()).worn?.[key] === val, `the ${key} to be saved`, 10 * SLOW);
+    });
+   }
+   // 15 OCTOBER 2026: frames that move, and flourishes you can watch.
+   await t.step('an animated frame moves, and the Flourishes tab plays one', async () => {
+    await t.page.click('[data-look-tab="frame"]');
+    const anim = await t.page.evaluate(() => getComputedStyle(document.querySelector('.look-item img.framed[data-anim="flames"]')).animationName);
+    if (!/frame-turn/.test(anim)) throw new Error(`the Flames frame does not move (animation "${anim}")`);
+    await t.page.click('[data-look-tab="flourish"]');
+    await t.page.click('[data-flourish-preview="fireworks-eagle"]');
+    await t.page.waitForTimeout(700);
+    const drawn = await t.page.evaluate(() => { const c = document.getElementById('flourishPreview'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) n += d[i] > 0; return n; });
+    await t.page.locator('#drawerContent').screenshot({path: 'bench/shots/smoke/look-flourish.png'}).catch(() => {});
+    if (drawn < 30) throw new Error(`the flourish preview drew ${drawn} pixels`);
+   });
+   await t.step('the title list holds the earned achievement title', async () => {
+    await t.page.click('[data-look-tab="title"]');
+    await t.page.selectOption('#wearTitle', 'ach-ace');
+    await t.until(async () => (await stored()).worn?.title === 'ach-ace', 'the title to be saved', 10 * SLOW);
+   });
+   await t.step('in play, the meter wears the skin', async () => {
+    await t.page.click('#closeDrawer');
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay(120 * SLOW);
+    const skin = await t.page.evaluate(() => ({id: document.getElementById('swingMeter').dataset.skin, track: getComputedStyle(document.getElementById('swingMeter')).getPropertyValue('--sm-track')}));
+    if (skin.id !== 'neon' || !/#0d0b1f/.test(skin.track)) throw new Error(`the meter wears ${JSON.stringify(skin)}`);
+    await t.page.locator('#swingMeter').screenshot({path: 'bench/shots/smoke/meter-neon.png'}).catch(() => {});
+   });
+   // THE FLOURISH (Phase 6): level 50 has gold confetti on every hole-out, at
+   // the least, drawn on the overlay over the cup.
+   await t.step('holing out plays a flourish over the cup', async () => {
+    await t.shot();
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+    for (let putt = 1; putt <= 6; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#flourish:not([hidden])', {timeout: 3000}).then(() => true, () => false)) {
+      await t.page.waitForTimeout(700);
+      const drawn = await t.page.evaluate(() => { const c = document.getElementById('flourish'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 16) n += d[i] > 0; return n; });
+      await t.page.screenshot({path: 'bench/shots/smoke/flourish.png'}).catch(() => {});
+      if (drawn < 50) throw new Error(`the flourish drew ${drawn} pixels (${await t.page.evaluate(() => { const c = document.getElementById('flourish'); return `cup at ${c.dataset.at} on ${c.dataset.size}, ${c.dataset.parts} particles alive`; })})`);
+      return;
+     }
+     if (await t.page.evaluate(() => !document.getElementById('holeOut').hidden)) throw new Error('holed out with no flourish');
+    }
+    throw new Error('six putts from two yards and the ball never dropped');
+   });
   },
  },
  // THE SAME, WITH THE PROGRAM IN THE DOWNLOAD: run_fairway_server, compiled with

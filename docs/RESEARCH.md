@@ -1357,7 +1357,7 @@ Three things key off one question — is the ball on the putting surface — and
 
 **The putter** was chosen by `surface === 'green' || d < 18`. That second clause handed you a putter from eighteen yards out — in the fringe, off a bank, out of a greenside bunker, anywhere at all so long as it was close. Gone. Short shots off the green now auto-pick the shortest club at full power, which is what the game has always done between 18 and 65 yards; the behaviour is not new, it just reaches further down. **Still open**: power should scale to the distance rather than defaulting to 100%.
 
-**The pin comes out**, which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
+**The pin comes out** -- since 15 October 2026 attended rather than gone: it stands in the cup while the putt is lined up and is lifted as the ball comes within about 3 m (the owner) -- which is what happens on a real green and takes the one object standing between ball and cup out of the read. The cup, its liner and the floor are separate objects and stay — it is the flagstick that goes, not the hole.
 
 **The marker therefore names the hole**, and stops being a thing that floats over a flag and drifts off the edge. It clamps to the screen and points at the cup -- with a notch that orbits its ring, while the flag icon inside stays upright. It used to rotate the whole circle, which turned the flag upside down whenever the cup was below or behind the view (fixed 9 October).
 
@@ -2983,9 +2983,9 @@ What is actually specified, from [The R&A — Part 8, Committee Equipment Requir
 
 > Must have a constant diameter of no greater than 0.75 inches (19 mm) from a point 3 inches (76.2 mm) above to 3 inches (76.2 mm) below the putting green surface.
 
-The model against both: **14 mm** at the top against the 50.8 mm limit, and **18 mm** where it meets the green against the 19 mm limit — one millimetre of margin, so the base cannot be thickened without rechecking it. The pole tapers 0.29 mm across the 152 mm band the rule calls *constant*; that is left alone deliberately, being three tenths of a millimetre on a prop nobody measures.
+**Superseded 15 October 2026** (see *Why our pins look small*: the owner chose an 8 ft stick, 2 in at the top tapering to 1 in at the green, over the Rules at the base, for visibility). As it was: the model against both: **14 mm** at the top against the 50.8 mm limit, and **18 mm** where it meets the green against the 19 mm limit — one millimetre of margin, so the base cannot be thickened without rechecking it. The pole tapers 0.29 mm across the 152 mm band the rule calls *constant*; that is left alone deliberately, being three tenths of a millimetre on a prop nobody measures.
 
-**Height is seven feet by convention, and now exactly seven feet.** It was 2.13 m — a tidy metric rounding of 7 ft that lands 3.6 mm short of it at 6.988 ft. Nothing was broken by that, but the cup beside it is specified to six significant figures (`CUP_RADIUS = 0.053975`, exactly 4.25 in), and one loose number in an otherwise exact set is the kind of thing that gets copied. It is now `7 * 0.3048`.
+**Height was seven feet by convention (eight since 15 October 2026), and then exactly seven feet.** It was 2.13 m — a tidy metric rounding of 7 ft that lands 3.6 mm short of it at 6.988 ft. Nothing was broken by that, but the cup beside it is specified to six significant figures (`CUP_RADIUS = 0.053975`, exactly 4.25 in), and one loose number in an otherwise exact set is the kind of thing that gets copied. It is now `7 * 0.3048`.
 
 The driving range's target flagsticks are a separate thing at 3.6 m, and deliberately so: they are aiming markers read from the mats hundreds of yards away, not holes, and nothing in the Rules applies to them.
 
@@ -7661,8 +7661,7 @@ frame mistake in its own "inside" check, so it agreed with the old physics; it
 was corrected too.
 
 **The flagstick is solid while it stands in the hole.** A vertical cylinder
-at its regulated base radius (9 mm; the rule allows 9.5 mm from 76 mm above the
-surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to 7 ft
+at its base radius (9 mm until 15 October 2026, 12.7 mm since -- the owner's 1 in, over the 9.5 mm the Rules allow from 76 mm above the surface to 76 mm below), from the cup floor (CUP_DEPTH, 101.6 mm, down) to its full height (7 ft, 8 ft since)
 above the green, in the same swept-cylinder test as a trunk, so a ball comes
 off it the way it comes off a tree (the normal component reversed at 0.3 of
 its speed). The game pulls the stick for a putt and when the ball is on the
@@ -7692,3 +7691,454 @@ drawn exactly to size from anywhere, as before 13 October. The growth numbers
 above are unchanged and apply only with the switch on; the range's distance
 boards are not under it. No record saved before the switch has the key, so
 every player starts with it off.
+
+## The Swing Meter (14 October 2026)
+
+**Signed off by the owner, 15 October 2026.** Every number and rule in this
+section and its subsections marked PLACED -- the par save, the sand save, Beat
+the Index at half the index for nine holes, a long drive counting only on the
+fairway, the up-and-down drop distances, the Monday-midnight week, the flat
+flourishes, the hold lengths at the hole-out -- was put to the owner and
+accepted as it stands. They remain PLACED (no outside source behind them); the
+owner can still overrule any.
+
+The owner asked for keyboard play to become a game's three-tap meter (Hot
+Shots Golf, PGA 2K): tap to start, tap to set the distance, tap at the strike
+line for accuracy. It replaced the power slider, the Shot shape sliders and the
+ball-flight profile (`src/swing-meter.js`; PROJECT_HANDOFF *The Swing Meter
+replaced the shot-shape sliders*). The spec was agreed over four rounds with the
+owner and lives as a local report.
+
+**Nothing on the meter is published; every number below is PLACED** -- chosen to
+feel right and to be tuned by playing. The console games publish no timings and
+none were taken from them; the three-tap structure is all that was borrowed.
+
+| What | Value | Note |
+| --- | --- | --- |
+| Marker, start to full (`rise`) | Easy 1.5 s, Normal 1.15 s, Hard 0.9 s | x0.9 driver, x0.92 3 wood, x1.1 wedges, x1.15 putter |
+| Strike zone half-width | Easy 0.10, Normal 0.065, Hard 0.04 bar lengths | the bar from start to full is 1 |
+| Perfect band half-width | Easy 0.03, Normal 0.015, Hard 0.008 | |
+| Overswing | 0.12 bar lengths, worth +5% carry; the marker crawls through it at a quarter speed and holds at its end for the tap | the owner's 5% (Q1); the slow, flashing, holding overswing is the owner's call of 14 October 2026 -- it used to go off by itself at the end |
+| Zone narrowing | rough x0.8, sand x0.7, each spin step x0.85, Flop x0.8, overswing down to x0.5 | under 40% of the bar x1.5 |
+| A miss at the zone's edge | 1.25 deg start line, 5 deg spin axis | growing linearly to 4x outside the zone; a swing that runs out is -7 deg, -25 deg axis at 75% speed |
+| Draw / Fade | -8 / +8 deg spin axis | start line turned the other way by the bend, found by flying it once |
+| Low / High | -4 / +4 deg launch | |
+| Bump & run / Flop (wedges within 60 yd) | 55% of launch on 50% spin / +10 deg launch | the 55% puts a 7-iron-like chip at Trackman's 6-14 deg chip launches (TODO *a lower launch for keyboard chips*) |
+| Spin dial | -1: x0.75; +1, +2, +3: x1.1, x1.2, x1.3 | |
+| Run-up | the marker starts at the left edge and takes 0.3 rises to reach the strike line (0.35 s at Normal) | the owner's call, 14 October 2026: short shots were a sliver from where the marker started |
+| Short full shots | the bar zooms to a half or quarter of the full carry; a half bar runs 12% slower, a quarter 25% | the owner's call, 14 October 2026. Tested: an 18 yd chip with a 100 yd wedge is about seven tenths of a quarter-swing bar and carries within 1.5 yd |
+| Putting bar | a quarter of the putter's roll up to six times it | the zoom was added in building; the reach past the putter's roll is the owner's call (14 October 2026): the widest green a course grows is about 80 yd across (green size 14-21 m radius, aspect up to 1.33, outline harmonics), and at Stimp 6 the putter's own 30 yd (Stimp 10) roll is about 18 yd, so six times holds 80 yd with the bar's quarter to spare. Tested: an 80 yd putt at Stimp 6 rolls within 2 m of 80 yd |
+
+**Early goes right, late goes left, for every golfer** (the owner's rule, third
+round): the meter has no handedness.
+
+**The bar is in yards, and it is honest to within a yard and a half.** Half the
+bar is half the club's full carry, solved by bisection against the ball model
+on level ground in still air (`speedForCarry`, 18 halvings, cached per quarter
+yard). Checked by test for the driver, 7 iron and pitching wedge: a full clean
+swing carries the bag yardage, half the bar half of it, both within 1.5 yd. The
+solve flies at 1/120 s steps for speed; the shot itself at the default 1/240,
+which is where the yard and a half comes from. In play: a perfect full driver
+from rough (90% ball speed) carried 224 yd against a 250 yd bag on a 57 F
+night; a perfect high fade with a 125 yd 9 iron carried 118 into a hole that
+played eight yards uphill.
+
+### With no spin added, nothing spins back
+
+The owner's rule (second and third rounds): a ball must not zip back unless the
+golfer added spin, and there is no named "spin back" shot. Swept 14 October
+2026 with every club kind in `CLUB_KINDS` at its stock carry, every height (and
+Bump & run and Flop for the wedges), the spin dial at -1 to +3, 30%, 50%, 75%,
+100% and full overswing of the bar, all four firmness presets, landing on level
+ground and into 2% rises and falls.
+
+- **At the club's own spin (dial 0), before any adjustment:** 7 come-backs, all
+  on Soft into a 2% rise, none over half a yard -- the lob wedge at Normal
+  height (0.42-0.50 yd at full swing and overswing), the lob wedge High (0.10),
+  and the pitching wedge at overswing (0.11). Fixed by carrying 85% of the lob
+  wedge's stock spin and 95% of the pitching wedge's on the meter (`KIND_SPIN`),
+  and 85% at High and 80% at Flop (`HEIGHT_SPIN`). **After: zero.**
+- **With spin added:** 453 of the combinations come back, up to about 12 yd (a
+  sand wedge at +3, 11,250 rpm, overswung onto a soft green into a 2% rise).
+  That is the golfer's choice and is left to the physics.
+- **Short chips (10-30% of the bar)** with the sand wedge, pitching wedge and 9
+  iron, level and 2%, Soft and Normal: none come back.
+- **Steeper slopes are not the rule's business.** Into an 8% rise the same
+  sweep found pitching and gap wedges finishing up to 84 yd behind the landing
+  -- rolling down the hill by gravity, with or without spin. A chip in play
+  that carried 14 yd and finished 12 was the green's slope, not spin.
+
+### The target marker
+
+The blue mark on the bar (Phase 2, 14 October 2026) is the stop that lands the
+ball in the aim circle. It is `playsLike` -- the circle's distance scaled by how
+much shorter or longer a full swing of this club and shape reaches the circle's
+height in today's air than level ground in still air -- then the bar share for
+that level carry, with the lie's lost ball speed made up by solving the speed
+before the lie. Checked by test: on level ground in still air the marker is the
+circle's share of the carry within 2%, and stopping the meter on it carries
+within 2 yd of 60, 100 and 140 yd with a 7 iron; uphill and rough ask for more,
+downhill for less. In play: a circle at 150 yd with a 5 iron on Hard (so no wind
+allowance, 11 mph blowing) carried 151.
+
+**Wind only on Easy** is the owner's call (spec Q7). **Altitude and temperature
+are always in** -- an assumption made in building, recorded here so it can be
+reversed: they are the air, not something a golfer reads, and the spec named
+only the wind as the skill to leave to the golfer. It approximates a partial
+swing by the full swing's ratio, as `playsLike` does (RESEARCH *Plays like, by
+geometry*); the test above bounds what that costs on level ground.
+
+### XP and levels
+
+Phase 4 (14 October 2026). Every amount is from the agreed spec and is PLACED:
+nothing about XP is measured. Finishing a hole 10; par 10, birdie 30, eagle 80,
+albatross 250, hole in one 300 (replacing the rest; the owner swapped the
+spec's albatross and ace); fairway and green in regulation 5 each; on the
+number 5 (within 5% of the aim distance, once a hole, not putts); chip-in 25;
+putt over 30 ft holed 25; new personal best 40; 9 or 18 holes finished 50 or
+100; a match or scramble won 50; the first round finished each day 100 (the
+owner raised it from 50). Multipliers Easy 0.75, Normal 1, Hard 1.5, a monitor
+golfer 1, not on the daily bonus. The range: on the number only, 2 a time,
+50 a day. Levels: 400 to level 2, 50 more each level, so 78,400 to reach level
+50, and 2,850 a level after that for ever (the owner: no cap, no unlocks past
+50). Estimated from these: a typical 18-hole round (18 holes finished, about
+nine pars, two birdies, a dozen fairways and greens, a few shots on the number,
+the round itself) pays about 500 to 650 XP, so about a level a round at first,
+one every three or four rounds by level 30, and roughly 140 eighteen-hole rounds
+to level 50. Not yet checked against real play.
+
+### The XP popup's sounds, and chiptune stings
+
+Synthesised, PLACED by ear. The XP popup's three sounds were chosen by the owner
+on 14 October 2026 from six takes each (`XP_FINAL`): the gain a quick
+three-note triangle pluck (C5-E5-G5, pitched down an octave by their 0.5 pitch
+slider), the fill a low sine glide (300 to 600 Hz before the same halving), a
+new level a rising two-note triangle swell. Renders at -12 to -17 dB peak.
+They play one at a time and never with the hole-out sting (PROJECT_HANDOFF
+*The XP popup reports what award paid*).
+
+The hole-out stings, reworked as chiptune on the owner's ask the same day,
+were four takes (`CHIP_TAKES`, `chipSting`): the known tunes on a square
+wave, on a 25% pulse over a triangle bass, on a triangle with a 12.5% pulse
+echo and a noise drum, and new game jingles. **The owner chose take D, the game
+jingles, for every score** (`CHIP_FINAL`), at length 0.7, pitch 0.63 and
+brightness 1.2: a square lead, a triangle bass and a noise drum, the whole
+pitched down by about eight semitones and shortened to 70%, its low-pass at
+about 3,500 Hz. They replace the marimba stings in play (which stay in the
+code for comparison). Pulse waves are built from their Fourier series (40
+harmonics). As played they peak at -15 dB for a hole in one or albatross and
+about -18 dB for the rest (`tools/sound-lab/check.mjs`, its "final" rows). The
+marimba they replace peaked at about -7 dB for a hole in one, -17 for a birdie
+and -21 for a bogey, so the best scores are now quieter and the worst slightly
+louder; the owner chose them by ear at these levels.
+
+### The pause before the XP popup (measured 14 October 2026)
+
+The owner saw the game "freeze a bit" before the XP came up after holing out.
+A frame probe in the built game (every frame over 34 ms, and when the banner,
+the popup and the scorecard came and went), on this machine's GPU at Low and
+again at Ultra, found **no stalled frame before the popup**: the only one was a
+single 50 ms frame just after the scorecard opened. What it did find was the
+time: the camera held on the empty cup for 3 s (`SHOT_HOLD_SECONDS`, meant for
+looking at a lie), the banner 2.7 s, then the popup -- nearly six seconds of a
+still picture -- and the scorecard 0.17 s after the popup, over it. Now: 1.2 s
+on the cup (`HOLED_HOLD_SECONDS`), the popup 1.6 s into the banner, the card
+about 0.5 s after the popup has gone. Measured after: banner to popup 1.60 s,
+popup gone to scorecard 0.57 s; the 50 ms frame stays on the card's opening,
+away from the popup. All three hold lengths are PLACED.
+
+### Why our pins look small: the greens are twice real size (15 October 2026)
+
+The owner asked why our pins do not look like other sims'. **The flagstick and
+flag are real size**: 7 ft (2.13 m), 14-18 mm across (`FLAGSTICK_TOP_R` 7 mm,
+`FLAGSTICK_BASE_R` 9 mm), flag 0.48 x 0.33 m. The Rules' Equipment section caps
+the pole at 0.75 in (19 mm) from 3 in above to 3 in below the green, allow up to
+2 in (50.8 mm) above that, and most US sticks are about 0.5 in; courses use 7 or
+8 ft sticks (sources in REFERENCES). **What is not real size is the green.**
+Measured from the generator (135 holes: 5 seeds x 3 landscapes x 9 holes,
+DEFAULT_COURSE, the putting surface sampled on a 0.5 m grid round each pin): a
+median **1,121 m2, about 12,060 sq ft** (10th-90th percentile 8,550-16,400 sq
+ft), median depth along the hole 35.5 m (39 yd). A USGA article cites a recent
+USGA study putting the average US green at **5,600-5,700 sq ft**; Pinehurst
+No. 2 for the 2024 US Open about 6,500, Chambers Bay (the largest of any modern
+US Open venue) about 9,000, Brookline about 4,400. So our median green is about
+twice the US average and larger than Chambers Bay's; a real-size stick on a
+twice-size green reads as a toothpick, and the green itself as flat and empty.
+I found no GSPro setting for stick size in its docs (one partial page read);
+how other sims draw pins was not established from a source -- the impression
+that they draw them larger is the owner's, not checked.
+
+**Built (the owner's choice, same day): greens at real size and a bolder
+stick; "Larger flags far away" left off by default.** *Greens* (generator 36):
+the radius drawn 10-15 m instead of 14-21 m, one draw so nothing else moved;
+measured again over the same 135 holes, a median **6,146 sq ft** (4,373-8,364,
+10th-90th), median depth 25.0 m (27 yd). The green's bumps first stayed in
+metres, which on the smaller greens stacked the slopes (31 of 36 sampled
+points steep, a Thursday cup on 2.03%); they now scale with the green (radius
+and height by greenSize/17.5, `GREEN_REF`), and putting slopes are unchanged:
+median 1.03% before and after, 90th percentile 1.68 -> 1.67%, about 1% at the
+cup both ways. Full bench before and after: blind tee shots over 1 m 29 -> 35
+of about 1,050, tees needing work 32 -> 14, ponds biting into a fairway 32 of
+348 -> 26 of 331 (9.2 -> 7.9%: a par three's fairway starts later; that test's
+PLACED floor moved from 8% to 7%), no invariant broken. *The stick*: 8 ft, 2
+in (50.8 mm) at the top tapering to 1 in (25.4 mm) at the green -- the owner's
+taper; **the 1 in base is over the 0.75 in the Rules allow near the surface**.
+Drawn and hit alike. Rolling 594 balls at the cup with the pin in (six holes,
+11 lines from -5 to +5 cm, speeds 1.6-3.2 m/s from 4 m): 29 dropped with the
+old stick, 25 with the new (a ball beside it in the cup now has 41.3 mm
+between pin and liner against a 42.7 mm ball), 34 with the pin out.
+
+**Then a Green size setting (the owner, same night)**: `greenScale`, 60-160%,
+default 100, multiplying the drawn radius. Measured over 9-hole courses on three
+seeds and three biomes (PNW, links, desert), area by counting half-metre cells
+of putting surface: **60%** median 2,026 sq ft (1,526-2,933, 10th-90th);
+**100%** 5,681 (4,236-7,981); **160%** 14,518 (10,465-20,780). Median slope
+1.06% at all three, 90th percentile 1.68-1.69% -- the bumps follow the green.
+Full bench, no invariant broken at either end: tees needing work 14 at 100%,
+25 at 60%, 27 at 160%; blind tee shots over 1 m 35, 22 and 25 of 1,080. The
+range is PLACED: 60% reaches the smallest famous greens (Pebble Beach's 7th is
+often quoted near 2,000 sq ft, not checked against a source), 160% the size
+the greens were before generator 36 and a little beyond. The tip's "about
+14,000" and "about 2,000" are these medians rounded.
+
+### First-visit lock-ups and the hole-out stutter: the ball's light (15 October 2026)
+
+The owner saw "lots of lock ups" clicking round the menus on a new build's
+first load, smooth after a reload, and a stutter as the camera pulls back after
+holing out. Asked whether a "compiling shaders" screen on first load would help.
+**Measured first** (scratch probe, not committed: the built game in a fresh
+Chrome profile on this machine's RTX 4090, every WebGL program logged on its
+first draw after the main menu appeared, and every frame over 50 ms; the menu
+idle 20 s, every menu tile, My profile and every look tab, a flourish preview,
+then Endless started from the menu and back to the menu, twice; then a reload
+and the same walk again).
+
+- **The menus themselves build nothing late.** Their only long frames are
+  100-150 ms on opening Play, My profile and the Frame tab -- page work, not
+  graphics programs, and the same after a reload.
+- **Starting Endless from the menu was the lock-up**: 35-40 programs built in
+  view, one frame of **1.85 s** on the first visit (117-133 ms after a reload,
+  when Chrome's disk cache has them). Endless adopts the hole on screen with no
+  loading screen, so nothing could hide it -- but nothing was new: only 12-26
+  GPU buffers were made, so no geometry was rebuilt. Diffing each late program
+  against the menu's program for the same material: every lit one differed only
+  by `pointLights[1]`. The ball's glow light was the ball's child; the menu
+  hides the ball, so every program behind the menu was built with no point
+  light, and the ball appearing rebuilt all of them. Midday or night made no
+  difference (it is not the clock).
+- **The same fault at the hole-out**: the end-of-hole flyover hides the ball.
+  On a course built through Play (whose programs had only ever been drawn WITH
+  the ball), 14-17 lit programs were built in view as the flyover began.
+  Starting Endless from the menu hid it, because the menu had already built the
+  no-light set -- which is why the hole-out probe of 14 October (*The pause
+  before the XP popup*), run on an Endless round, saw no stall.
+- **The fix**: the light sits beside the ball, follows it each frame, and is
+  dark while the ball is hidden; the light count never changes. After: starting
+  Endless builds one small unlit program (a double-sided MeshBasicMaterial,
+  probably the aim ring), worst frame 100 ms; the hole-out builds no lit program.
+- **So a first-load "compiling" screen was not the answer**: the programs that
+  froze were not missing from the loading screen's warm-up, they were
+  invalidated after it. A screen warming more up front would have cost every
+  player a longer start and still missed these.
+
+Not established: whether the hole-out stutter the owner sees is wholly this
+(the other suspects in TODO are untested); the 100-150 ms menu frames.
+
+### Plain colours and animated frames (15 October 2026)
+
+No outside source; the owner's ask. PLACED: the solid ball colours (red
+#d93a3a, orange #f08a2b, yellow #f5d33a, green #3fae55, blue #3a7fd9, purple
+#8457d9, pink #ec6fb2, black #26282b), the plain tracers and frames, the colours
+the old seat-coloured tracers now carry (Classic amber #ffe9a2, Comet gold,
+Dashed white, Ribbon pale blue, Starfall lilac), and the thirteen animated
+frames' levels (7 to 47) and movements: flames turn in 2.2 s and flicker every
+0.32 s, sparkle 7 s with a 1.4 s twinkle, water 9 s, leaves 14 s, aurora 5 s.
+
+### The cup rattle (15 October 2026)
+
+The owner: "needs more rattle and I think it's playing in reverse". The old
+pattern -- restitution 0.45, six knocks, level as bounce speed^1.2 -- left only
+three audible knocks; a first measurement (10 ms RMS windows) showed the second
+as loud as the first, but those windows were misaligned by the master chain's
+look-ahead, so whether the old sound truly swelled was not established. The new
+one: restitution 0.5, five knocks with level as bounce speed^1.6, a low 210 and
+430 Hz thup of the cup in the ground on the first, a wall click only after the
+first, then nine skitter ticks 7-13 ms apart each 0.78 of the last. Measured as
+played (limiter off, onset-aligned, five renders): knock peaks -17, -30, -39,
+-52 to -49, -53 to -56 dB -- every one below the one before. PLACED.
+
+### Profile after Phases 5-7 (14 October 2026, late)
+
+Run by the owner's leave, on this machine's RTX 4090 with the card idle (2-13%
+busy before each run), real-GPU arm only: **the software-rasteriser arm
+(`--only weak`) was skipped**, because a processor-only run took this machine
+down on 13 October. Each GPU group against `bench/profile-baseline.json` (saved
+7 October; not re-saved): **nothing slower anywhere.** Median frame ms since
+the baseline: tiers -3.2 to -7.8 (Ultra 6.30 ms CPU, 6.98 ms GPU on redwood);
+overview views -3.5 to -16.4; biomes -1.2 to -6.6; ablation -6.2 to -6.6;
+water -0.8 to -1.1; pixels -4.4 to -6.6 (sun has no baseline). The gains are a
+week of other work and the machine, not this journey -- these cases stand
+still and never fly a ball, so **the profile cannot see the tracer styles at
+all**.
+
+**So a ball in flight was measured separately** (a scratch script with the
+profiler's own probe, `tools/profile-probe.js`, injected from outside): the
+same course-of-the-week tee shot on Ultra, styles alternated over three rounds,
+2.5 s of flight each, about 1,600 frames a run. Median of runs, CPU / GPU ms per
+frame and draws: Classic 1.00 / 1.01 / 163; Comet tail plus sparkle (head,
+glints) 1.20 / 1.04 / 166; Lightning (zigzag, core, flicker) 1.10 / 1.03 / 166;
+Rainbow (moving colours) 1.10 / 1.01 / 162. **The heaviest style costs about
+0.2 ms of CPU and three draws a frame**, against a 16.7 ms frame; within the
+run-to-run spread for the others. The flourishes are 2D on a canvas and do not
+reach the GPU's scene at all; no shader is built by any look (smoke
+`no-late-shaders`, first shot included).
+
+### Final profile before the merge (15 October 2026, night)
+
+Asked for by the owner at the end of the journey. RTX 4090, card idle (14%
+busy before the first group), real-GPU arm only, every group but `weak` (the
+software arm stays skipped: a processor-only run took this machine down on 13
+October). Against `bench/profile-baseline.json` (saved 28 September, not
+re-saved): **nothing slower anywhere.** Median frame ms since the baseline:
+tiers -2.9 to -6.7 (redwood Ultra 7.40 ms CPU, 8.21 ms GPU); overview views
+-2.1 to -17.2; biomes -0.5 to -5.8; ablation -5.4 to -5.9; water -1.5 to -1.7;
+pixels -3.9 to -5.8; sun has no baseline (redwood Ultra facing the sun 4.10 /
+3.84 ms).
+
+**Against the profile of 14 October it reads about 1 ms slower on redwood
+High and Ultra, and that is a different course, not slower code.** Checked by
+building three commits side by side and profiling the tiers twice each,
+alternated: before generator 36 (2f77dd5), generator 36 without the ball-light
+fix (5667701), and the branch head. The run-to-run spread on High and Ultra is
+large -- one build gave Ultra 6.4 ms in one round and 10.7 ms in the next -- so
+only what holds in both rounds counts: **generator 36 regenerated the
+profile's fixed course** (seed PROFILE, redwood) and the camera now sees about
+10% more geometry (Ultra 77.8 -> 85.3 million triangles; Low 40.9 -> 46.5);
+**the ball-light fix measured nothing** (Low, Medium, High the same within
+0.3 ms with and without it; Ultra inside the spread). Redwood High and Ultra
+keep their occasional long frames (p99 37-71 ms, worst 80-175 ms) on every
+build, before and after; they are not this journey's.
+
+### Badges, meter skins and flourishes (14 October 2026)
+
+The badge metals, skin colours and flourish particles are PLACED by eye; the
+names and levels are the agreed spec's (7.1). **The skin legibility test** uses
+the colour-vision-deficiency matrices of Machado, Oliveira and Fernandes (2009),
+severity 1.0, for deuteranopia and protanopia, applied in linear light, and the
+WCAG relative-luminance contrast ratio. The thresholds are PLACED: 1.5 for the
+zone against the track and the perfect band against the zone (they sit side by
+side and only need to read as different), 3 for the target marker against the
+track (WCAG's figure for large graphical objects). The matrices were first typed
+from memory, then **checked against the paper's page the same day: every digit
+matches** its severity-1.0 protanomaly and deuteranomaly rows (the page calls
+them dichromacy). The page does not say whether they apply to linear or
+gamma-encoded RGB; the test uses linear, and every skin also passes with them
+applied to gamma-encoded values (tightest margin 1.78 there, against 1.87). Every skin passes in all three visions. Tightest margins (measured):
+the zone against the track 2.22 (Classic, protanopia), the perfect band
+against the zone 1.87 (Wood, deuteranopia), the target against the track
+5.10 (Wood, deuteranopia). A par save is PLACED as par after missing the green in
+regulation. Flourishes: confetti 120-140 pieces, fireworks 70 sparks a burst,
+3.2-4.8 s each.
+
+### Challenges (14 October 2026)
+
+No outside source; the XP is the spec's (8.1): 10 a ball inside 20 feet and 50
+a new best for closest to the pin, 50 a new best for the long drive, 20 an
+up-and-down, 30 a skin. PLACED here: the holes (the first par 3; the longest
+par 5, or par 4 without one; the first par 4); a long drive is "in play" only
+on the fairway itself, as in a long-drive grid, not the first cut; up-and-down
+drops are 3 to 18 yards off the green's edge on fringe, cut, fairway or sand,
+spread round the green, seeded by course and hole; a drop is picked up after
+eight strokes and water or out of bounds is two strokes from the drop; the
+up-and-down record is the most of five, fewest strokes breaking a tie; skins
+left carried after the last hole are unclaimed.
+
+### Course of the week and achievements (14 October 2026)
+
+No outside source. The XP amounts, thresholds and names are the agreed spec's
+placeholders (8.2, 8.3), kept as written: course of the week 150 XP for the
+first finished round a week and 50 for beating that week's best; achievements
+50-300 XP. Two definitions were PLACED here: an up-and-down from sand is the
+hole finished within one stroke of the last shot from sand (so a holed bunker
+shot counts, and a fairway bunker 150 yards out counts if the next shot holes);
+*Beat the Index* compares strokes over par with the sim handicap index scaled by
+holes played over 18. Weeks are ISO weeks in the player's local time, so the
+course turns over at their midnight Sunday to Monday, not at one moment
+everywhere.
+
+### Rewards: tracer styles and ball finishes (14 October 2026)
+
+No outside source: the reward table is the agreed spec's (7.1), names as its
+placeholders, and every look is PLACED by eye. Tracers: live width 3.5-11 px
+(Classic 4.5, as before; the end-of-hole lines stay 3 px at 0.72 opacity),
+comet heads 9-10 px over the last 10-14% of the line, Ribbon 11 px at 0.42
+opacity with a 2.5 px white core, Dashed 2.4 m on and 1.6 m off, Lightning's
+zigzag 0.9 m (widened in proportion past 120 m of shot) re-drawn 14 times a
+second, flicker up to 45%, glints 36-48 alive for 1.1 s each at 10 px, Starfall
+falling 1.6 m/s, colour runs on Aurora and Rainbow moving 0.12 and 0.25 of the
+line a second. Ball finishes: a 256x128 texture, a 22-row dimple lattice at 7%
+shading (30% of that on Chrome, 50% on Gold), Glow's own light 0.35 by day. The
+close-up turns once every 4 s at 72 px. The level-up banner stays 4.2 s when it
+lists unlocks, 2.8 s when not.
+
+### The Swing Meter's sounds
+
+Synthesised like every other sound (no recordings), PLACED by ear, and chosen
+by the owner in one round on 14 October 2026 from three takes each
+(`METER_FINAL` in sound.js): the voice an air whoosh whose band-pass centre
+follows the marker (220 Hz x 2^(1.4 x position), times the owner's 0.63 pitch,
+doubled for the noise band), a soft click for the distance, a sawtooth buzz
+for overswing, a four-note marimba run for a perfect strike, a wood block for
+the yellow zone, a low thunk for a miss and a falling whistle for a swing that
+ran out. Offline renders (`tools/sound-lab/check.mjs`) put the one-shots at -15
+to -19 dB peak and the voice at -32 dB peak, under the strikes and landings.
+The first takes of the perfect strike came out 5 dB over full scale before
+the limiter and were brought down about 20 dB before the owner heard them.
+
+`tests/swing-meter.test.mjs` re-sweeps the corner where a come-back was ever
+found (8 iron to lob wedge, every height, full swing and overswing, Soft, level
+and a 2% rise) in under a second; the full sweep took a minute and is not a
+test.
+
+### The lie costs ball speed, for every golfer
+
+The keyboard has always taken ball speed off for the lie: semi-rough 96%,
+rough 90%, sand 72%. These were placed when the keyboard controls were written
+and are not from a source. On 14 October 2026 the owner extended the rule to
+launch-monitor shots, softened sand to **80%** for everyone, and asked for a
+switch to turn the monitor half off.
+
+**How it is applied to a monitor shot:** the measured ball speed is multiplied
+by the lie's share; launch, direction, spin and axis are untouched. Chosen
+because it is literally the Swing Meter's calculation (so a mixed group plays
+one rule), because carry follows ball speed closely (about a yard per mph for
+an iron, so 10% off speed is close to 10% off carry), and because it changes
+one measured number rather than several. The measured number is shown and
+recorded as sent, with the penalty beside it in red.
+
+Compared and not followed:
+
+- **GSPro**, as its users describe it in a Golf Simulator Forum thread (no
+  official documentation found): a penalty that depends on vertical launch
+  angle, low shots losing far more -- figures quoted there of about 60% for a 3
+  wood and 10% for a pitching wedge from rough, semi-rough about 5%, rough
+  about 8% speed and 15% spin; a 6 iron from 170 yd in rough 10-15%; a
+  greenside wedge mainly a spin penalty. Unattributed in the thread and not
+  checkable. Rejected: it would make monitor shots follow a different rule from
+  the Swing Meter, and it has no source to check against. GSPro also has an
+  off switch, which is where the owner's switch came from.
+- **The Golf Club 2019**, from a forum-compiled table: about 7% distance lost
+  from light rough, rough and fairway sand, 13% from heavy rough. Recorded as a
+  comparison: our rough (10%) sits between; our sand (20%) is harsher. The
+  owner chose 80% sand knowing TGC's figure.
+- **Cutting spin as well (a "flyer").** A single-golfer GolfWRX Trackman test
+  saw a 7 iron leave a thick lie at about 1,300 rpm, carrying 87 yd off 87 mph
+  of club speed, while a down-grain lie gave 115 mph of ball speed against 121
+  from the fairway. Rejected for now: a flyer can carry *further* than the
+  fairway shot, which works against a penalty, and it would be a second hidden
+  change to a measured number.
+- **Taking the loss off the carry instead of the ball speed.** Rejected: the
+  game would have to solve a speed for that carry anyway, and speed is the
+  number the rule is stated in and the number shown in red.
+
+Sources in REFERENCES.md *The Swing Meter*.

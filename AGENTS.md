@@ -200,14 +200,30 @@ file is indistinguishable from a forgotten one. What each holds:
   with the passage used, and its figures, quoted in the RESEARCH.md entry.
 - **Say plainly when a number is placed rather than published**, at the point it
   is created, so someone goes back for it.
+- **A rule the spec left undefined and the build had to decide is marked PLACED
+  too** -- where it is made, in RESEARCH, and in the spec's list of departures --
+  so the owner can overrule it (a "par save", a long drive "in play").
 
 ## Leave no processes running
 
 Run whatever verification needs inside a turn -- skipping verification to avoid
-starting a process is the wrong trade. **Shut down everything you started before
+starting a process is the wrong trade, **except on the graphics card** (next
+section). **Shut down everything you started before
 the turn ends**, and check the port is actually free (a wrapper like `npx` can
 leave its child running). Never end a turn with a server up and an offer to stop
 it later.
+
+## Nothing runs on the graphics card unless the owner asks
+
+The owner plays games on this machine, and test runs on its GPU have crashed it
+twice while they did. **Nothing that draws on the graphics card runs unless the
+owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
+browser pane, `npm run profile`. Earlier permission does not carry over.
+
+- **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
+  start, even with permission; say so and wait.
+- **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
+  build`, the fingerprint, the bench) and say so (next-but-one section).
 
 ## Ask before a graphics profile; never just run one
 
@@ -233,13 +249,37 @@ for a full sweep, about a minute for one group (`--only tiers`, `views`,
 
 `npm test` cannot see the interface; **`npm run smoke` plays the built file in a
 real browser** and fails on any uncaught error, `console.error` or network
-request. **Run it after any change to `main.js`, `index.html`, `style.css`,
+request. **Ask to run it after any change to `main.js`, `index.html`, `style.css`,
 `renderer.js`, `popups.js`, `layout.js`, or anything the frame loop calls**
-(about a minute). It proves it works, not that it looks right -- look too. **When it
+(about a minute for the journeys touched, 5 for all) -- it uses the graphics
+card, so the rule above decides when. It proves it works, not that it looks right -- look too. **When it
 fails, find out whether the game or the harness is wrong before changing
 anything**; the screenshot in `bench/shots/smoke/` usually tells. Every journey
 should be green, including `hud-reachable`, `phone-portrait` and
 `phone-landscape`.
+
+## Built is not working
+
+**A feature not seen working in the game is reported as not seen**: in the
+commit message, in TODO's open work (what to check, and where), and in the
+reply. Never describe interface work nobody has played as done -- the owner
+plans testing from what the branch claims.
+
+## Game rules live in pure modules with Node tests
+
+**A new game rule goes in its own module, with no DOM or three.js, and a Node
+test**; `main.js` only wires it in. A rule written straight into `main.js`
+cannot be checked until someone plays it, and the game cannot always be played
+(above).
+
+## Check what an edit script wrote
+
+Scripts that edit files here (heredocs, `node -e`, Python strings, `String.raw`)
+mangle backslashes and backticks, sometimes silently. **After an edit made by a
+script, search the touched files** for a backslash beside a backtick and for
+regex classes that lost their backslash (`d{`, `s+`, `w+` inside `/.../`). In
+regexes a script writes, prefer `[0-9]` to `\d`. Write the script with an editor
+tool, never through a heredoc, when it holds backticks or backslashes.
 
 ## Measure with `tools/bench.mjs`, not a throwaway script
 

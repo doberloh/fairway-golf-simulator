@@ -24,11 +24,15 @@
 // with no id -- a save from before profiles -- is matched by name, ignoring case.
 import {simHandicap} from './handicap.js';
 import {validateBag, stockBag} from './clubs.js';
+import {WEARABLE, reward, isUnlocked} from './rewards.js';
+import {normaliseProgress, normaliseEarned} from './achievements.js';
+import {normaliseWeekly} from './weekly.js';
+import {normaliseRecords} from './challenges.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
 export const LEGACY_KEY = 'fairway-profile-v1';
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 export const MAX_PROFILES = 60;
 // How many removed round ids a profile remembers; far more than are ever in play.
 const MAX_REMOVED = 200;
@@ -47,6 +51,10 @@ export const COUNTERS = [
  {key: 'trees', label: 'Trees hit', help: 'Every trunk the ball struck, counted per hit.'},
  {key: 'houses', label: 'Houses hit', help: 'Every time a ball struck a house.'},
  {key: 'chipIns', label: 'Chip-ins', help: 'Holed from off the green, tee shots aside.'},
+ // Phase 7: the two counts achievements wait on. New keys read as zero, so,
+ // like any new counter, no migration.
+ {key: 'sandSaves', label: 'Sand saves', help: 'Up and down from a bunker: the hole finished within one stroke of the last shot from sand.'},
+ {key: 'onNumber', label: 'On the number', help: 'Shots on a course that came down within 5% of the aim distance of where you aimed.'},
  {key: 'lipOuts', label: 'Lip-outs', help: 'Balls that caught the cup and stayed out.'},
  {key: 'mulligans', label: 'Mulligans', help: 'Shots taken back.'},
  {key: 'distance', label: 'Ball travel', unit: 'mi', scale: 1 / 1760, help: 'How far all your balls have travelled, in miles.'},
@@ -83,6 +91,10 @@ export function scoreType(score, par) {
 const MIGRATIONS = {
  // 1 -> 2: one profile becomes a store of them, and that profile is main.
  1: d => { const id = newProfileId(); return {version: 2, main: id, profiles: [{...d, id}]}; },
+ // 2 -> 3: XP and levels (14 October 2026). Nobody is back-filled from their
+ // history (the owner's call): every golfer starts at level 1 with no XP, and
+ // `xpNew` shows each existing golfer, once, a note that XP is new.
+ 2: d => ({...d, version: 3, profiles: (Array.isArray(d.profiles) ? d.profiles : []).map(p => p && typeof p === 'object' ? {...p, xp: 0, xpNew: true} : p)}),
 };
 export const newProfileId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
@@ -96,7 +108,7 @@ export function validName(name) {
 }
 
 export function blankProfile(name, now = Date.now(), id = newProfileId()) {
- return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: [], removed: []};
+ return {id, name: validName(name), created: now, counters: {}, bests: {}, rounds: [], removed: [], xp: 0, xpLog: {}};
 }
 
 const finite = v => Number.isFinite(v) ? v : 0;
@@ -120,7 +132,45 @@ export function normaliseProfile(d) {
  // needs no migration. One that no longer validates is dropped, not the profile.
  let bag = null;
  if (Array.isArray(d.bag)) try { bag = validateBag(d.bag); } catch {}
- return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {})};
+ // The Swing Meter's difficulty (14 October 2026), the golfer's own so a group
+ // can play on different settings. Absent reads as Normal, so like the bag it
+ // needs no migration; anything unrecognised is dropped.
+ const meter = METER_DIFFICULTIES.includes(d.meter?.difficulty) ? {difficulty: d.meter.difficulty} : null;
+ // How this golfer plays and which hand they swing with (Phase 3, 14 October
+ // 2026): remembered for the next group. Absent reads as the launch monitor
+ // when armed and right-handed, which is how everyone played before.
+ const play = {};
+ if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
+ if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
+ // XP (Phase 4): the total, the ledger of recent awards a mulligan can take
+ // back (progression.js `award`), the last day the daily bonus was given, the
+ // range's daily trickle, and whether the 'XP is new' note is still to show.
+ const xp = Number.isFinite(d.xp) && d.xp >= 0 ? Math.floor(d.xp) : 0;
+ const xpLog = {};
+ if (d.xpLog && typeof d.xpLog === 'object') for (const [k, v] of Object.entries(d.xpLog)) if (typeof k === 'string' && k.length <= 120 && Number.isFinite(v?.xp) && v.xp > 0) xpLog[k] = {xp: Math.round(v.xp), at: finite(v.at), ...(Number.isInteger(v.stroke) ? {stroke: v.stroke} : {})};
+ const extra = {};
+ if (typeof d.xpDaily === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d.xpDaily)) extra.xpDaily = d.xpDaily;
+ if (typeof d.xpRange?.day === 'string' && Number.isFinite(d.xpRange.xp)) extra.xpRange = {day: d.xpRange.day, xp: d.xpRange.xp};
+ if (d.xpNew === true) extra.xpNew = true;
+ // WHAT THEY WEAR (Phase 5): a ball finish, a tracer and a title, by id from
+ // the reward table. Kept whether or not it is earned yet -- rewards.js
+ // `wornItem` decides what shows -- and dropped when the table has no such
+ // thing. Absent reads as the starting look, so it needs no migration.
+ const worn = {};
+ for (const kind of WEARABLE) if (typeof d.worn?.[kind] === 'string' && (d.worn[kind] === '' && (kind === 'title' || kind === 'frame') || reward(kind, d.worn[kind]))) worn[kind] = d.worn[kind];
+ if (Object.keys(worn).length) extra.worn = worn;
+ // ACHIEVEMENTS (Phase 7): which are earned and when, and what they count
+ // across rounds (achievements.js). Absent reads as none, so no migration.
+ const earned = normaliseEarned(d.achievements);
+ if (Object.keys(earned).length) extra.achievements = earned;
+ if (d.progress) extra.progress = normaliseProgress(d.progress);
+ // The course of the week's bests, by week and generator (weekly.js).
+ const weekly = normaliseWeekly(d.weekly);
+ if (Object.keys(weekly).length) extra.weekly = weekly;
+ // The challenges' records (challenges.js).
+ const records = normaliseRecords(d.challenges);
+ if (Object.keys(records).length) extra.challenges = records;
+ return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
 // with the same name or id keep the first. Main falls back to the first profile
@@ -184,6 +234,39 @@ export function renameProfile(store, id, name) {
  p.name = n; storeProfiles(store); return p;
 }
 // A golfer's bag, checked before it is kept. Null puts them back on the stock bag.
+// The Swing Meter difficulties a profile may hold; swing-meter.js has what each
+// one does. Listed here rather than imported so the profile store does not load
+// the ball model.
+export const METER_DIFFICULTIES = ['easy', 'normal', 'hard'];
+// Put on a ball finish, a tracer or a title (the empty title is none). Only
+// what the golfer has earned; the table says what that is.
+export function setProfileWorn(store, id, kind, item, level) {
+ const p = findProfile(store, id);
+ if (!p) return null;
+ if (!WEARABLE.includes(kind)) throw Error('That cannot be worn.');
+ if (!(item === '' && (kind === 'title' || kind === 'frame')) && !isUnlocked(kind, item, level, p.achievements)) throw Error('Not earned yet.');
+ p.worn = {...(p.worn || {}), [kind]: item};
+ storeProfiles(store);
+ return p;
+}
+export const meterDifficulty = p => p?.meter?.difficulty || 'normal';
+export function setProfileMeter(store, id, difficulty) {
+ if (!METER_DIFFICULTIES.includes(difficulty)) throw Error('Choose Easy, Normal or Hard.');
+ const p = findProfile(store, id);
+ if (!p) return null;
+ p.meter = {...(p.meter || {}), difficulty};
+ storeProfiles(store);
+ return p;
+}
+// A golfer's hand and way of playing, saved when a group is started or changed.
+export function setProfilePlay(store, id, {hand, input} = {}) {
+ const p = findProfile(store, id);
+ if (!p) return null;
+ if (['RH', 'LH'].includes(hand)) p.hand = hand;
+ if (['monitor', 'meter'].includes(input)) p.input = input;
+ storeProfiles(store);
+ return p;
+}
 export function setProfileBag(store, id, bag) {
  const p = findProfile(store, id);
  if (!p) throw Error('That player is no longer on this device.');
@@ -265,6 +348,8 @@ export function tallyShot(p, f, meta = null, now = Date.now()) {
   const h = holeRecord(entryFor(p, meta, now), f.hole.index);
   h.par = f.hole.par; h.yards = f.hole.yards;
   if (f.teeShot && f.hole.par >= 4) h.fairway = !f.hazard && f.rest === 'fairway';
+  // Which strokes were played from sand, for the up-and-down count (Phase 7).
+  if (f.lie === 'sand' && Number.isInteger(f.stroke)) h.sand = [...new Set([...(h.sand || []), f.stroke])].slice(-12);
   if (!f.hazard && (f.rest === 'green' || f.holed) && f.strokes <= f.hole.par - 2) h.gir = true;
   else if (f.teeShot) h.gir = false;
  }

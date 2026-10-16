@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const map = new Map();
 globalThis.localStorage = {getItem: k => map.has(k) ? map.get(k) : null, setItem: (k, v) => map.set(k, String(v)), removeItem: k => map.delete(k), clear: () => map.clear()};
-const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, storeProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS} = await import('../src/profile.js');
+const {removeRound, exportProfiles, importProfiles, PROFILE_KEY, LEGACY_KEY, blankProfile, normalise, loadProfiles, storeProfiles, addProfile, renameProfile, setMainProfile, deleteProfile, findProfile, profileByName, mainProfile, tallyShot, tallyMulligan, syncHole, profileSummary, scoreType, sameGolfer, qualifies, COUNTERS, PROFILE_VERSION} = await import('../src/profile.js');
 const {Round} = await import('../src/game.js');
 
 const meta = (id = 'g1', extra = {}) => ({id, me: 0, mode: 'stroke', players: 1, tee: 'blue', holes: 9, endless: false, finished: false,
@@ -44,7 +44,8 @@ test('the single profile the first build wrote becomes the main profile of a sto
  localStorage.clear();
  map.set(LEGACY_KEY, JSON.stringify({version: 1, name: 'Dee', created: 5, counters: {shots: 12}, bests: {longestDrive: 250}, rounds: [{id: 'g1', card: [{par: 4, yards: 400, score: 5}]}]}));
  const store = loadProfiles();
- assert.equal(store.version, 2);
+ // Upgraded all the way to the current store (3 since XP, 14 October 2026).
+ assert.equal(store.version, PROFILE_VERSION);
  assert.equal(store.profiles.length, 1);
  const m = mainProfile(store);
  assert.equal(m.name, 'Dee');
@@ -275,4 +276,50 @@ test('a round removed from the history leaves the scoring and the handicap, and 
  const {store, profile} = addProfile(null, 'Dee');
  removeRound(profile, 'gone'); storeProfiles(store);
  assert.deepEqual(findProfile(loadProfiles(), profile.id).removed, ['gone']);
+});
+
+// THE DAILY BONUS'S DAY SURVIVES A RELOAD. Its pattern had lost its
+// backslashes, so the day was dropped on every load and the first-round-today
+// bonus could be paid again after one (found 14 October 2026).
+test('the day of the daily XP bonus is kept across a reload', () => {
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Dana');
+ profile.xpDaily = '2026-10-14'; storeProfiles(store);
+ assert.equal(findProfile(loadProfiles(), profile.id).xpDaily, '2026-10-14');
+ profile.xpDaily = 'yesterday'; storeProfiles(store);
+ assert.equal(findProfile(loadProfiles(), profile.id).xpDaily, undefined);
+});
+
+// WHAT A GOLFER WEARS (Phase 5): kept by id, only what the table knows, and
+// put on only once earned.
+test('a golfer wears an earned finish, tracer and title, and they are kept', async () => {
+ const {setProfileWorn} = await import('../src/profile.js');
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Wren');
+ assert.throws(() => setProfileWorn(store, profile.id, 'tracer', 'sky', 1), /Not earned/);
+ setProfileWorn(store, profile.id, 'tracer', 'sky', 2);
+ setProfileWorn(store, profile.id, 'ball', 'red-stripe', 3);
+ setProfileWorn(store, profile.id, 'title', '', 1);
+ assert.throws(() => setProfileWorn(store, profile.id, 'badge', 'rookie', 50), /cannot be worn/);
+ const back = findProfile(loadProfiles(), profile.id);
+ assert.deepEqual(back.worn, {tracer: 'sky', ball: 'red-stripe', title: ''});
+ const odd = normalise({version: PROFILE_VERSION, main: 'x', profiles: [{id: 'x', name: 'Odd', worn: {ball: 'plaid', tracer: 'comet', title: 7}}]});
+ assert.deepEqual(odd.profiles[0].worn, {tracer: 'comet'});
+});
+
+// PHASE 7: achievements, their progress, the weekly bests and the sand strokes
+// survive a reload.
+test('achievements, progress, weekly bests and sand strokes are kept', () => {
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Sam');
+ profile.achievements = {ace: 5};
+ profile.progress = {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']};
+ profile.weekly = {'WEEK-2026-42@g35': 78};
+ tallyShot(profile, {lie: 'sand', stroke: 3, hole: {index: 0, par: 4, yards: 380}, strokes: 3}, meta());
+ storeProfiles(store);
+ const back = findProfile(loadProfiles(), profile.id);
+ assert.deepEqual(back.achievements, {ace: 5});
+ assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']});
+ assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
+ assert.deepEqual(back.rounds[0].card[0].sand, [3]);
 });

@@ -1,4 +1,11 @@
 import {puttingConfig,awardedPutts} from './putting.js';
+// HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
+// the default, and every golfer from before this -- plays off the launch
+// monitor whenever it is armed, which is exactly how a round played before;
+// 'meter' always plays on the Swing Meter, armed or not, and a ball hit into the
+// monitor on their turn is refused as if it were unarmed.
+export const INPUTS=['monitor','meter'];
+export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -6,7 +13,11 @@ export class Round{
  static defaultPlayer={name:'Alex',team:'A',hand:'RH'};
  // The out-of-bounds rule a new round starts with; main.js keeps it as a preference.
  static defaultOutOfBounds='stroke';
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds}={}){
+ // Whether the lie costs a launch-monitor shot ball speed, as it costs a Swing
+ // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
+ // keeps the choice as a preference, like the out-of-bounds rule.
+ static defaultMonitorLie=true;
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',challenge=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -17,6 +28,14 @@ export class Round{
   // Out of bounds is stroke and distance under the Rules of Golf; 'e5' adds the
   // two-stroke drop of Model Local Rule E-5 (relief.js).
   if(!['stroke','e5'].includes(outOfBounds))throw Error('Invalid out-of-bounds rule.');this.outOfBounds=outOfBounds;
+  if(typeof monitorLie!=='boolean')throw Error('Invalid lie rule.');this.monitorLie=monitorLie;
+  // THE COURSE OF THE WEEK this round is on (weekly.js weekKey), or ''. It rides
+  // through saves like the rest, so a week's round resumed still counts for it.
+  if(typeof weekly!=='string'||(weekly&&!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(weekly)))throw Error('Invalid course of the week.');this.weekly=weekly;
+  // A SKINS GAME (Phase 7, challenges.js) is a stroke round with skins counted
+  // over its card; this says so, through saves. The other challenges are not
+  // rounds and never get here.
+  if(!['','skins'].includes(challenge)||(challenge==='skins'&&(mode!=='stroke'||players.length<2)))throw Error('A skins game is stroke play for two to four golfers.');this.challenge=challenge;
   // WHICH ROUND THIS IS, for the player's history. It rides through every save,
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.
@@ -94,7 +113,10 @@ export class Round{
   // `profile` is which player profile this golfer is: it rides through so a
   // golfer who stays keeps counting to the same profile, and one who joins
   // counts to theirs from their first shot.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),id:i}));
+  // `input` is how this golfer plays (playsWith, below): it rides through a
+  // group change mid-round, so switching a golfer to the Swing Meter or back
+  // to the monitor is just applying the group again.
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,

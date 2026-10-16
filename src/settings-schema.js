@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=9;
+export const SCHEMA_VERSION=11;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -162,7 +162,15 @@ export const SCHEMA_VERSION=9;
 //     (course.js, blocksView). On 12 planted courses with houses: 232 bushes and
 //     4 houses had stood in a tee's view; the bush count fell 2% and houses
 //     120 -> 112.
-export const GENERATOR_VERSION=35;
+// 36: greens at real size (the owner, 15 October 2026): the green's radius is
+//     drawn from 10-15 m instead of 14-21 m (one draw, so no later draw moves).
+//     The median putting surface fell from about 12,060 to 6,150 sq ft (the US
+//     average is 5,600-5,700); the course re-grows round the smaller greens
+//     (full bench: blind tee shots over 1 m 29 -> 35 of about 1,050, tees
+//     needing work 32 -> 14, no invariant broken). The green's bumps scale
+//     with it (course-plan.js GREEN_REF), so putting slopes are unchanged:
+//     median 1.03% before and after, 90th percentile 1.68 -> 1.67%.
+export const GENERATOR_VERSION=36;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.
@@ -208,6 +216,7 @@ export const SETTINGS=[
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
  {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and an irregular edge. Raising it also EVENS OUT the waves that make the outline, so no single one takes over — letting one dominate is what turns a green into a clean three-lobed flower rather than a golf green.'},
+ {key:'greenScale',category:'turf',kind:'range',min:60,max:160,step:5,unit:'%',def:100,label:'Green size',short:'Size',tip:'How big the putting surfaces are. At 100% a typical green is about 6,000 square feet, the size of an average American green; at 160% about 14,000, the sprawling greens of a links; at 60% about 2,000, as small as the smallest famous greens. The slopes on a green grow and shrink with it, so a bigger green is not a steeper one.'},
  {key:'bunkerShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Bunker shape',short:'Irregularity',tip:'How ragged the outline of a bunker is. Low is a smooth oval; high gives waisted and lobed sand. Green-side bunkers are re-fitted to the green after shaping, so they keep the gap they are told to leave whatever this is set to.'},
  {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add tilts, rolls, ridges, tiers and bowls, each green with a character of its own. The top of the range is severe: championship relief, with tier faces well past ten per cent.',
   // NOT A SETTING, a caution the studio shows: past `above` the slider turns red,
@@ -328,9 +337,17 @@ const MIGRATIONS={
  // had none of them, so it keeps none rather than taking the defaults; its
  // greens still change shape (GENERATOR_VERSION 33), which the player is told.
  8:s=>({...s,raisedGreens:0,sunkenGreens:0,falseFronts:0}),
+ // 9 -> 10: the ball-flight profile (speed, launch, spin and axis biases, with
+ // its high/low/draw/fade presets) is gone. The Swing Meter replaced it on 14
+ // October 2026 with a curve, a height and a spin dial chosen shot by shot
+ // (swing-meter.js); a saved bias has nothing left to apply to.
+ 9:s=>{const {flightProfile,...rest}=s;return rest;},
+ // 10 -> 11: `greenScale` added (the owner, 15 October 2026). 100 is the size
+ // every green was drawn at before, so a saved course keeps its greens.
+ 10:s=>({...s,greenScale:100}),
 };
 
-// Play-scope keys (turf, flight profile, club yardages, art style) ride along in
+// Play-scope keys (turf, club yardages, art style) ride along in
 // the same object and are validated by their own modules, so they are preserved
 // rather than dropped.
 
@@ -345,7 +362,7 @@ const MIGRATIONS={
 // `style` is deliberately NOT here. Endless forces cartoon and the range has its
 // own look; an art direction the mode chose is not something to carry across, so
 // the two callers that do preserve it say so themselves.
-export const PLAY_KEYS=['clubYardages','flightProfile','turf'];
+export const PLAY_KEYS=['clubYardages','turf'];
 export const playScope=s=>Object.fromEntries(PLAY_KEYS.filter(k=>s?.[k]!==undefined).map(k=>[k,s[k]]));
 export function migrateSettings(settings={},from=1){
  let s={...settings};

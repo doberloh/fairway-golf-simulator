@@ -93,3 +93,52 @@ test('every kind of water has its signed-off sound, and is told apart',()=>{
 test('sound settings fall back to the defaults without storage',()=>{
  assert.deepEqual(loadSound(),DEFAULT_SOUND);
 });
+
+// THE SWING METER'S SOUNDS (signed off 14 October 2026, round 1): the game plays
+// them, so each must be the one take the owner chose, with their sliders in.
+test('every Swing Meter sound is signed off, one take each', async () => {
+ const {METER_EVENTS, METER_VOICES, METER_FINAL} = await import('../src/sound.js');
+ assert.deepEqual(Object.keys(METER_VOICES), ['A'], 'the voice has one take');
+ assert.ok(METER_VOICES.A.final && METER_VOICES.A.kind === 'air', 'the voice is the signed-off air take');
+ for (const id of ['power', 'overswing', 'perfect', 'zone', 'miss', 'duff']) {
+  assert.ok(METER_EVENTS[id]?.final, `${id} was never signed off`);
+  assert.deepEqual(Object.keys(METER_EVENTS[id].takes), ['A'], `${id} has more than one take`);
+  assert.deepEqual(METER_EVENTS[id].takes.A.base, METER_FINAL[id][1], `${id} lost the owner's sliders`);
+ }
+});
+
+// THE XP POPUP'S SOUNDS (signed off 14 October 2026): one take each, the owner's sliders in.
+test('every XP sound is signed off, one take each', async () => {
+ const {XP_SOUNDS, XP_FINAL} = await import('../src/sound.js');
+ for (const id of ['gain', 'fill', 'levelUp']) {
+  assert.ok(XP_SOUNDS[id]?.final, `${id} was never signed off`);
+  assert.deepEqual(Object.keys(XP_SOUNDS[id].takes), ['A'], `${id} has more than one take`);
+  assert.deepEqual(XP_SOUNDS[id].takes.A.base, XP_FINAL[id][1], `${id} lost the owner's sliders`);
+ }
+});
+
+// THE HOLE-OUT STINGS ARE CHIPTUNE (signed off 14 October 2026): every score
+// plays the owner's take, D, with their sliders.
+test('every hole-out sting is the signed-off chiptune jingle', async () => {
+ const {CHIP_FINAL, SCORES} = await import('../src/sound.js');
+ for (const id of Object.keys(SCORES)) {
+  assert.ok(CHIP_FINAL[id], `${id} would still play the marimba`);
+  assert.equal(CHIP_FINAL[id][0], 'D', `${id} is not the take the owner chose`);
+  assert.deepEqual(CHIP_FINAL[id][1], {length: .7, pitch: .63, bright: 1.2}, `${id} lost the owner's sliders`);
+ }
+});
+
+// THE CUP RATTLES DOWN, NEVER UP (the owner, 15 October 2026: "more rattle,
+// and I think it's playing in reverse"): the first knock is the loudest, and
+// every bounce after it comes sooner and softer than the one before.
+test('the ball in the cup: a loud first knock, then quicker, quieter bounces', async () => {
+ const {cupHits, CUP_RATTLE} = await import('../src/sound.js');
+ const h = cupHits();
+ assert.ok(h.length >= 5, `only ${h.length} knocks`);
+ assert.equal(h[0].a, 1);
+ for (let i = 1; i < h.length; i++) {
+  assert.ok(h[i].a < h[i - 1].a, `knock ${i + 1} is not softer than knock ${i}`);
+  if (i > 1) assert.ok(h[i].t - h[i - 1].t < h[i - 1].t - h[i - 2].t, `bounce ${i} is not quicker than the one before`);
+ }
+ assert.ok(CUP_RATTLE.skitter >= 6, 'the settling skitter is too short');
+});

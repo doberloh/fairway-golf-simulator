@@ -368,20 +368,24 @@ export function cupApproach(old,p,velocity,pin){
 // out at 3.1 m, and the old 2.4 clipped a metre off the widest of them.
 // The floodlight mast, at its base where it is widest.
 export const POLE_RADIUS=.34;
-// A flagstick, to the dimensions that are actually specified. The renderer
-// draws these same numbers, and simulateShot collides with them.
+// A flagstick. The renderer draws these same numbers, and simulateShot
+// collides with them.
 //
 // HEIGHT IS NOT REGULATED. The Equipment Rules govern the flagstick's DIAMETER
 // and say nothing at all about how tall it is -- which is the opposite of what
-// everyone assumes, this author included. Seven feet is near-universal
-// convention rather than a rule, and this is exactly seven feet because there is
-// no reason to be a rounded 2.13 m and miss it by 3.6 mm.
+// everyone assumes, this author included. Seven and eight feet are the usual
+// heights; it is eight since 15 October 2026 (below).
 //
-// The diameters below are the regulated ones and both pass: 14 mm at the top
-// against a 50.8 mm limit, and 18 mm where it meets the green against the 19 mm
-// limit that applies from 76 mm above the surface to 76 mm below. One millimetre
-// of margin on that second one, so do not thicken the base without checking it.
-export const FLAGSTICK_HEIGHT=7*0.3048, FLAGSTICK_TOP_R=.007, FLAGSTICK_BASE_R=.009;
+// THE OWNER'S PIN (15 October 2026): eight feet, 2 in (50.8 mm) across at the
+// top tapering to 1 in (25.4 mm) at the bottom, so it reads on screen beside a
+// green (RESEARCH *Why our pins look small*). Until then it was seven feet, 14
+// mm at the top and 18 mm at the green -- the regulated sizes. Eight feet is a
+// common real height and 2 in is the Rules' limit for the top; **1 in at the
+// green is over the 0.75 in (19 mm) the Rules allow from 3 in above to 3 in
+// below the surface** -- the owner's call, for visibility. Drawn and hit alike:
+// the collider is the base radius, so a ball beside the pin in the cup now has
+// 41.3 mm between pin and liner against a 42.7 mm ball.
+export const FLAGSTICK_HEIGHT=8*0.3048, FLAGSTICK_TOP_R=.0254, FLAGSTICK_BASE_R=.0127;
 export function trunkRadius(tree){return NO_TRUNK.has(tree.kind)?0:tree.kind==='cactus'?.8:clamp((tree.h||16)*.027,.14,3.6);}
 const hypot=Math.hypot;
 export function airDensity(altitude=0,temp=18){const t=temp+273.15;return 101325*Math.exp(-G*0.0289644*altitude/(8.31446*t))/(287.058*t);}
@@ -630,7 +634,7 @@ export function simulateShot(shot,course,options={}){
  // THE FLAGSTICK IS SOLID WHILE IT STANDS IN THE HOLE (the owner, 13 October
  // 2026). It used to be scenery and a ball flew straight through it. It is the
  // same cylinder as everything else, at its base radius, standing on the cup
- // floor and reaching its full seven feet above the green. The caller says
+ // floor and reaching its full height above the green. The caller says
  // whether THIS hole's stick is in (`flagsticks.current`): the game pulls it for
  // a putt and once the ball is on the green, so a putt never meets it. Every
  // other hole's stick is always standing, so a ball that strays onto another

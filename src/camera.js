@@ -25,6 +25,26 @@ export function framedForBall(rig){
  return need>rig.distance?{...rig,distance:need}:rig;
 }
 
+// THE PUTT, AIMED (the owner, 15 October 2026: "the camera is too far up; we
+// need to be back behind the ball more to see the green"). The play camera is
+// the broadcast rig -- 9 m up, 23 m back, pushed further back to keep the ball
+// in frame -- which on a green looks down on it from a tower. Off the bay's
+// own measurements (`sim`, which is the room and is left alone), an aimed putt
+// stands PUTT_RIG behind the ball, looking along the line at the green just
+// past the cup, so the ball sits low in the picture and the green fills it.
+// PLACED: 6.5 m back, 2.2 m up, the look 2.5 m past the cup (6-30 m ahead).
+export const PUTT_RIG={distance:6.5,height:2.2,beyond:2.5,near:6,far:30,clear:1.2};
+export function puttAimPose(hole,p,aim){
+ const a=aim*Math.PI/180,dx=Math.sin(a),dz=Math.cos(a),y=hole.height(p.x,p.z);
+ const toPin=hole.pin?Math.hypot(hole.pin.x-p.x,hole.pin.z-p.z):PUTT_RIG.near;
+ const ahead=Math.min(PUTT_RIG.far,Math.max(PUTT_RIG.near,toPin+PUTT_RIG.beyond));
+ const e={x:p.x-dx*PUTT_RIG.distance,z:p.z-dz*PUTT_RIG.distance};
+ // Never under the ground behind the ball: an upslope off the back of a green.
+ const eyeY=Math.max(y+PUTT_RIG.height,hole.height(e.x,e.z)+PUTT_RIG.clear);
+ const t={x:p.x+dx*ahead,z:p.z+dz*ahead};
+ return {eye:hole.toWorld({...e,y:eyeY}),target:hole.toWorld({...t,y:hole.height(t.x,t.z)})};
+}
+
 // Shared camera math; a lateral offset translates both eye and target equally.
 export function playerCameraPose(hole,p,aim,config){
  const a=aim*Math.PI/180,dx=Math.sin(a),dz=Math.cos(a),rx=Math.cos(a),rz=-Math.sin(a),y=hole.height(p.x,p.z);
@@ -151,9 +171,24 @@ export function flightCameraPose(hole,p,aim,putting=false){
 // A hole with no pin -- the practice bench, a malformed course -- falls straight
 // back to the ordinary pose rather than dereferencing something that is not
 // there.
+// THE BALL STAYS IN VIEW (the owner, 15 October 2026): pinned on the cup, a
+// putt that ran wide or past it rolled out of the frame. The look is now
+// halfway between the ball and the cup, so both stay on screen whichever way
+// it goes. PLACED: halfway.
+// Once the ball is past or beside the cup the camera comes in close, and
+// halfway to the cup would put the ball 30-40 degrees off the look -- out of
+// the picture -- so the look slides toward the ball (a quarter of the way,
+// then the ball itself) until the ball is within PUTT_BALL_ANGLE of it.
+export const PUTT_LOOK_SHARE=.5,PUTT_BALL_ANGLE=18;
 export function followPose(hole,p,aim,aimAtCup=false){
  const pose=flightCameraPose(hole,p,aim,false);
  if(!aimAtCup||!hole?.pin)return pose;
- const cup=hole.toWorld(hole.pin);
- return {eye:pose.eye,target:{x:cup.x,y:hole.height(hole.pin.x,hole.pin.z),z:cup.z}};
+ const cup=hole.toWorld(hole.pin),ball=hole.toWorld(p),cy=hole.height(hole.pin.x,hole.pin.z),by=p.y??cy,e=pose.eye;
+ const toBall=[ball.x-e.x,by-e.y,ball.z-e.z],nb=Math.hypot(...toBall)||1;
+ for(const k of [PUTT_LOOK_SHARE,.25,0]){
+  const target={x:ball.x+(cup.x-ball.x)*k,y:by+(cy-by)*k,z:ball.z+(cup.z-ball.z)*k};
+  const look=[target.x-e.x,target.y-e.y,target.z-e.z],nl=Math.hypot(...look)||1;
+  const angle=Math.acos(Math.min(1,(look[0]*toBall[0]+look[1]*toBall[1]+look[2]*toBall[2])/nl/nb))*180/Math.PI;
+  if(angle<PUTT_BALL_ANGLE||k===0)return {eye:e,target};
+ }
 }

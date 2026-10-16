@@ -9,12 +9,15 @@
 //  - Water is heard only near water, and each kind sounds like itself: a pond
 //    or lake, a river, a creek (sound.js, WATER_FOR); the sea keeps its surf.
 //  - Never more than one bird at a time (sound.js keeps that).
+//  - The Swing Meter (14 October 2026) has its own sounds: a voice that
+//    follows the marker and one sound for each moment of a swing. They are
+//    Swing Meter only, so they never play with a launch monitor either.
 //
 // A browser only lets a page make sound after the player has clicked, tapped
 // or pressed a key, so nothing is created until then (`unlock`); before it,
 // every call here is a quiet no-op. The context is suspended while the page is
 // hidden, so a game left in a background tab costs nothing.
-import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES} from './sound.js';
+import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL,chipSting,CHIP_FINAL} from './sound.js';
 import {crownRadius} from './species.js';
 
 const KEY='fairway-sound-v1';
@@ -72,7 +75,7 @@ export function canopyContacts(points,allTrees,toWorld){
 }
 
 export function createGameAudio(){
- let ctx=null,lab=null,amb=null,ambGain=null,prefs=loadSound(),scene=null,sceneState={};
+ let ctx=null,lab=null,amb=null,ambGain=null,prefs=loadSound(),scene=null,sceneState={},voice=null;
  const ok=()=>!!ctx&&prefs.on;
  function applyVolumes(){
   if(!ctx)return;const now=ctx.currentTime,v=x=>Math.max(0,x)/100;
@@ -135,7 +138,20 @@ export function createGameAudio(){
    impact(lab,what,{speed:c.speed??2,dist,pan});
   },
   // A hole finished: the sting for that score.
-  score(strokes,par){if(ok())score(lab,scoreSting(strokes,par));},
+  // A score with a signed-off chiptune sting (sound.js CHIP_FINAL) plays that;
+  // every other plays the signed-off marimba, as before.
+  score(strokes,par){if(!ok())return;const name=scoreSting(strokes,par),chip=CHIP_FINAL[name];if(chip)chipSting(lab,name,{take:chip[0],knobs:chip[1]});else score(lab,name);},
+  // THE SWING METER. The voice starts with the first tap, follows the marker
+  // (`meterMove`, every frame, position in bar lengths) and stops with the
+  // swing; `meterSound` plays one moment: 'power', 'overswing', 'perfect',
+  // 'zone', 'miss' or 'duff'. All signed off (sound.js METER_FINAL).
+  meterStart(){this.meterStop();if(!ok())return;voice=meterVoice(lab);voice.start();},
+  meterMove(p,stage){voice?.set(p,stage);},
+  meterStop(){voice?.stop();voice=null;},
+  meterSound(id){if(ok())meterEvent(lab,id);},
+  // THE XP POPUP's sounds: 'gain', 'fill', 'levelUp'. Silent until the owner
+  // has signed each off (sound.js XP_FINAL); the report has the takes.
+  xpSound(id){if(ok()&&XP_FINAL[id])xpSound(lab,id);},
  };
 }
 

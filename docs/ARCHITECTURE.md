@@ -45,7 +45,7 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | `npm run dev` | The game at http://127.0.0.1:5173 |
 | `npm test` | Every regression suite (Node test runner); must pass before committing |
 | `npm run build` | `dist/index.html`, the single-file game, plus the bridge bundle |
-| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change |
+| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
 | `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first |
@@ -71,7 +71,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/physics.js` -- flight and contact, cup capture, monitor shot normalisation; `AERO`, `CONTACT`
 - `src/contact.js` -- the bounce as something that takes time; `src/cup.js` -- the analytic capture reference
 - `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
-- `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable, manual flight profiles
+- `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable
+- `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, the target marker, curve / height / spin, and the lie table every golfer plays under
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
 - `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 
@@ -81,6 +82,10 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
+- `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
+- `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
+- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week from the date; `src/challenges.js` -- the four challenges: scoring a ball, the drops, skins, records
+- `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
 **Drawing it**
@@ -171,6 +176,10 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
+- A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
+- A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`. [A practice challenge is not a round]
+- The course of the week is the date plus `DEFAULT_COURSE`, `BIOME_KEYS` order and the generator; changing any changes it on every copy. [The course of the week is the date]
+- A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
 
 **Physics**
 - Check apex, descent and hang time, not only carry, whenever the aerodynamics move. [CHECK APEX]
@@ -178,7 +187,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
 - Everything solid is a vertical cylinder in one collision index; do not add a second routine. [EVERYTHING SOLID]
 - A house's rotation is a world angle: in a hole's frame subtract the hole's. The flagstick is solid only while it stands in the hole. [A HOUSE'S ROTATION IS A WORLD ANGLE], [THE FLAGSTICK IS SOLID]
-- The simulator never invents ball data. [The simulator never invents ball data]
+- The simulator never invents ball data; the one thing applied on top is the round's stated lie rule, shown beside the measured number. [The simulator never invents ball data]
+- With no spin added, a Swing Meter ball never spins back; the club's own spin is set below the come-back point by sweeping. [With no spin added, nothing spins back]
 
 **Shaders and drawing**
 - The ground shader is a chain of `.replace()` anchors; every link is load-bearing, and `tests/ground-shader-structure.test.mjs` checks it. Never script a shader edit whose replacement you have not printed. [THE GROUND SHADER IS A CHAIN]
@@ -193,6 +203,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
+- A light counts only while it and its parents are visible, and every lit shader is built for the count: never parent a light to something that hides (the ball's glow light sits beside the ball). [IT IS NOT A CHILD OF THE BALL]
 - Flagsticks can be drawn larger with distance so they never vanish (Graphics, "Larger flags far away", off by default); drawing only, the ball hits the real stick. [FLAGSTICKS STAY VISIBLE FROM ANYWHERE]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
@@ -203,10 +214,14 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Build a slider with `slider()`, never by hand. [BUILD A SLIDER]
 - One thrown error while a panel wires itself kills every handler below it. [One thrown error in a panel]
 - `main.js` DOM paths are not covered by the tests; that is what `npm run smoke` is for. [`main.js` DOM paths]
+- XP is a keyed ledger: award by key, never add to `xp` directly; the level is derived. [XP is a ledger, not a running count]
+- `armed` is worked out per turn from the Armed switch (`armSwitch`) and how the golfer up plays; never set it directly. [`armed` is per turn]
+- A Swing Meter tap is judged on its own timestamp, never on a frame; the frame loop only draws the marker. [A Swing Meter tap is judged on its own time]
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
+- Course studio's Settings sheet fills the play area under a strip the same observer sizes for the bar. [COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA]
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 - The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]
 - The bridge's accepted club codes come from `CLUB_KINDS`; a typed list once dropped the connection on any non-stock club. [passes on every club a bag can hold]

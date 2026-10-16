@@ -139,6 +139,14 @@ Several of the pages the physics is anchored to return 403 to any automated
 request -- the USGA's are the worst offenders -- which is why an unfetchable
 source is saved under `docs/sources/` and its passage quoted into RESEARCH.md.
 
+**Placed definitions, not only numbers** (14 October 2026). The Swing Meter
+journey's later phases had to decide what the spec never defined -- a "par
+save", an up-and-down from sand, a long drive "in play", how up-and-down drops
+are placed, how a nine-hole round is held to a handicap index. Each became a
+rule players would meet. They were recorded as PLACED in RESEARCH and listed in
+the spec's departures so the owner could overrule them; the rule makes that the
+habit rather than the exception.
+
 **Flagging placed numbers works.** A note reading "these depths were chosen by
 judgement inside the instrument's range, and if someone can read that page they
 are the first thing to check" is what made the firmness presets get fixed: it
@@ -151,6 +159,21 @@ than the published one and had nothing behind it.
 `npx vite preview` leaves its server running when the `npx` that launched it is
 killed, and the next attempt silently attaches to the stale one and loads
 nothing -- which is why a stopped server's port is checked, not assumed free.
+
+## The graphics card
+
+**Twice the owner's PC crashed while they were gaming and a test drew the game
+on the same card.** On 5 October a floodlit Ultra smoke run preceded a hard
+crash. On 14 October, during the Swing Meter journey, a run of smoke journeys,
+Playwright picture captures and a session of the game left open in the browser
+pane took the machine down again -- with `nvidia-smi` showing the card 20 to 60
+per cent busy the whole time, which was the owner playing. The rules then said
+to run the smoke test after any interface change and that skipping verification
+to avoid starting a process was the wrong trade; both pushed toward starting the
+runs. The owner: "whatever you keep doing is crashing my computer while im
+gaming. Please dont do that anymore." The rest of that journey (three phases)
+was built, unit-tested and documented with the card untouched, and its in-game
+checks were listed for the owner to run at the end.
 
 ## The graphics profile
 
@@ -168,6 +191,33 @@ tests passed: the putting distance marker it belonged to had never positioned
 itself once. Its own first draft reported six failures that were the harness
 misreading the game -- a panel checked for a class it never uses, keys pressed
 faster than a frame, a toggle pressed twice -- and three that were real.
+
+## Built is not working
+
+Three phases of the Swing Meter journey (rewards, challenges, the course of the
+week) were committed on 14 October 2026 without being played: the graphics card
+was off limits. Each commit message, a TODO entry and the reply said so, with a
+list of exactly what to look at, so the owner could plan the testing. Without
+that, "Phase 7 committed" would have read as "Phase 7 works".
+
+## Pure modules
+
+The same three phases stayed testable without the game only because their rules
+-- the reward table, the ball finishes, achievements, the course of the week,
+the challenges -- were written as modules with no DOM and Node tests (about 60
+tests), with `main.js` only wiring them in. Everything in `main.js` itself
+waited for the owner.
+
+## Edit scripts
+
+A regular expression written into `src/profile.js` by an edit script (a
+heredoc or `node -e`; which one was not recorded) lost its backslashes on the way -- `/^\d{4}-\d{2}-\d{2}$/` became
+`/^d{4}-d{2}-d{2}$/`, still valid JavaScript -- so the date of the daily XP
+bonus was dropped on every load and the bonus could be paid twice a day. No
+test caught it; it was found a phase later by reading the code (14 October
+2026). The same day, a backslash written before a backtick in Python strings and in a
+`String.raw` template went into source comments as a stray backslash-backtick. Searching the touched files
+after a scripted edit catches both.
 
 ## The bench
 
