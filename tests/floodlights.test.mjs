@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld, fairwayWidth} from '../src/course.js';
 import {polesFor, activePoles, orderPoles, POLE_HEIGHT, POLE_SPACING, POLE_REACH} from '../src/floodlights.js';
-import {loadDaylight, MENU_HOURS, showcaseHour} from '../src/daylight.js';
+import {loadDaylight, MENU_HOURS, showcaseHour, roundHour, solarState, advance} from '../src/daylight.js';
 
 const world = generateWorld({seed: 'LIGHTS', holes: 9, water: 0, homes: false});
 
@@ -152,6 +152,34 @@ test('the menu shows its hole at a variety of daylight hours, never at night', (
  assert.equal(picked.size, MENU_HOURS.length, 'some hours are never chosen');
  assert.deepEqual(showcaseHour(0.999999), MENU_HOURS[MENU_HOURS.length - 1]);
  assert.deepEqual(showcaseHour(0), MENU_HOURS[0]);
+});
+
+test('Endless off the menu starts in the showcase hole\'s light, not at midnight', () => {
+ // The bug (16 October 2026): on a device that had never set the clock, the
+ // menu kept the player's hour aside -- null -- and Endless, adopting the menu's
+ // world without rebuilding it, put that null back. Only a rebuild swaps a null
+ // hour for the biome's default, and everything else reads it as 0:00.
+ const fresh = loadDaylight();
+ assert.equal(fresh.hour, null, 'a device with no saved clock has no hour');
+ const sun = 28;
+ assert.deepEqual(solarState(fresh.hour, sun).direction, solarState(0, sun).direction, 'a null hour is drawn as midnight');
+ assert.ok(solarState(fresh.hour, sun).elevation < 0, 'and the sun is down');
+ assert.ok(advance(fresh.hour, 1, 60) < .02, 'and the running clock starts from 0:00');
+
+ // The rule: never null, and the adopted hole keeps the hour it is shown at.
+ for (const [h] of MENU_HOURS) {
+  const start = roundHour(false, 3, h);
+  assert.equal(start, h, `adopting a hole shown at ${h} moved the clock`);
+  assert.ok(solarState(start, sun).elevation > 0, `${h} starts the round in the dark`);
+ }
+ // No showcase hole -- Play, Surprise me, the studio, an endless run that grows
+ // its own first hole -- is midday.
+ assert.equal(roundHour(false, 3), 12);
+ assert.equal(roundHour(false, 3, null), 12);
+ assert.equal(roundHour(false, 3, NaN), 12);
+ // "Start at my local time" wins either way.
+ assert.equal(roundHour(true, 21.5, 8.2), 21.5);
+ assert.equal(roundHour(true, 21.5), 21.5);
 });
 
 

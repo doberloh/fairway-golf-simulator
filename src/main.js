@@ -18,7 +18,7 @@ import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './tu
 import './style.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
-import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour} from './daylight.js';
+import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
@@ -2709,8 +2709,12 @@ async function buildEndless(group,replaySeed){
  const fresh=new Round({players:round.players,mode:'stroke',tee:round.tee,...group,putting:restorePutting(),endless:true,seed});
  const begin=()=>{
   // Not leaveBackdrop(): that clears the world key to force a rebuild, which is
-  // exactly what we are here to avoid.
-  if(adopt){menuBackdrop=false;restoreClock();}else leaveBackdrop();
+  // exactly what we are here to avoid. Nor restoreClock(): the player's clock is
+  // the one the menu put aside, and on a device that never set one its hour is
+  // null -- which, with no rebuild to replace it, played the round at midnight.
+  // The adopted hole keeps the hour it was shown at instead (roundHour).
+  if(adopt){const shown=view.daylight.hour;menuBackdrop=false;claimClock();lightsOffForRound();clockForRound(shown);}
+  else{leaveBackdrop();lightsOffForRound();clockForRound();}
   pendingRound=null;staleGenerator=false;
   challenge=null;round=fresh;settings=adopt?{...backdropRun.settings,...playScope(settings)}:endlessFor(seed,0,settings);
   closePanel();
@@ -2733,7 +2737,7 @@ async function buildRoundOn(courseSettings,group,name){
  const fresh=new Round({...group,holes:next.holes,putting:restorePutting()});
  await whileGenerating('Building your course…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;
-  lightsOffForRound();middayForRound();
+  lightsOffForRound();clockForRound();
   challenge=null;round=fresh;settings=next;closePanel();
   await prepareWorld(report);
   loadCourse();setMode('play');
@@ -2743,8 +2747,11 @@ async function buildRoundOn(courseSettings,group,name){
 // player's course: generation settings, the saved round and the library are all
 // untouched by it.
 // The player's clock, kept aside while the menu shows its own, and put back the
-// moment a real round starts. The backdrop is a picture; it must not quietly
-// rewrite a setting the player chose.
+// moment the menu is left for anything that rebuilds the world. The backdrop is a
+// picture; it must not quietly rewrite a setting the player chose. ONLY BEFORE A
+// REBUILD: the hour put back can be null (a device that never set the clock), and
+// only building a world swaps that for the biome's default -- anywhere else it
+// reads as midnight. Endless adopting the menu's hole claims the clock instead.
 function restoreClock(){
  view.borrowedClock=false;
  if(playerClock){Object.assign(view.daylight,playerClock);playerClock=null;}
@@ -2763,10 +2770,10 @@ function lightsOffForRound(){
 // A COURSE BUILT TO PLAY STARTS AT MIDDAY (the owner, 30 September): what was
 // just shaped or chosen is seen first in clear light, not in whatever dark the
 // clock happens to be in. "Start at my local time" still wins -- it is a choice
-// the player made explicitly. Endless keeps the hour of the showcase hole it
-// grows from.
-function middayForRound(){
- const d=view.daylight;d.hour=d.syncToLocal?localHour():12;saveDaylight(d);
+// the player made explicitly. Endless adopting the menu's hole keeps the hour
+// that hole was shown at (`shown`). The rule is `roundHour` in daylight.js.
+function clockForRound(shown){
+ const d=view.daylight;d.hour=roundHour(d.syncToLocal,localHour(),shown);saveDaylight(d);
 }
 // Touch the clock and you own it. The backdrop borrows the hour for its picture,
 // but the moment the player sets one themselves the loan is off -- otherwise
@@ -3276,7 +3283,7 @@ async function enterStudio(){
   // player whose clock had never been set -- anyone opening the studio before
   // their first round, which is most people trying the demo -- landed in it at
   // midnight, because an unset hour reads as 0:00.
-  leaveBackdrop();lightsOffForRound();middayForRound();
+  leaveBackdrop();lightsOffForRound();clockForRound();
   challenge=null;round=new Round({holes:settings.holes===18?18:9,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
   loadCourse();

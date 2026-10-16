@@ -209,6 +209,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 
 **Interface and state**
 - The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler. [THE SPLASH LIVES]
+- An unset clock hour is null and reads as midnight; only a world build replaces it, so a round that keeps its world sets the hour itself (`roundHour`). [The menu borrows the clock]
 - `appMode` changes only through `setMode`; generation controls only in the studio, course choice only in play. [Application modes]
 - A saved graphics record beats a new default; raise `GREEN_READ_GEN` to move everyone. [A SAVED GRAPHICS RECORD]
 - Build a slider with `slider()`, never by hand. [BUILD A SLIDER]

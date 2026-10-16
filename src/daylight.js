@@ -310,3 +310,20 @@ export const MENU_HOURS = [
 // Takes a number in [0,1) rather than a seed, so the caller owns the stream and
 // this stays testable without pulling the generator in.
 export const showcaseHour = r => MENU_HOURS[Math.min(MENU_HOURS.length - 1, Math.floor(r * MENU_HOURS.length))];
+
+// The hour a round starts at. Never null: an unset hour reads as 0:00 everywhere
+// it is used (wrapHour(null) is 0), and only a fresh build gives the renderer the
+// chance to swap it for a biome default -- so a round that keeps the world it was
+// handed, Endless adopting the menu's hole, started at midnight on any device
+// whose clock had never been set (16 October 2026).
+//
+// - "Start at my local time" wins over everything: the player chose it.
+// - Endless adopting the menu's hole keeps the hour that hole is shown at
+//   (`showcase`), so the hole you picked is the hole you play, in the same light
+//   -- there is no loading screen to hide a jump to some other hour.
+// - Anything else -- a course from Play, Surprise me, the studio, an endless run
+//   that grows its first hole (a replay, or Endless chosen during a round) --
+//   starts at midday (the owner, 30 September). The grown endless run is PLACED:
+//   nothing decided it, and it was following the player's old clock.
+export const roundHour = (syncToLocal, local, showcase = null) =>
+ syncToLocal ? local : Number.isFinite(showcase) ? showcase : 12;
