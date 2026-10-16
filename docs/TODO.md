@@ -377,8 +377,8 @@ nothing was run on the graphics card.
   profile. One golfer with Skins chosen should be refused with "Skins is for two
   to four golfers". Also: an endless run on skins, and the Challenges screen's
   line about where Skins went.
-- [ ] **Run the smoke journey `skins` (new)** (and `challenge`, *More
-  challenges* below) when the owner allows the graphics card. `skins` was written without being
+- [ ] **Run the smoke journey `skins` (new)** when the owner allows the
+  graphics card. `skins` was written without being
   run; if it fails, check the harness before the game.
 - [ ] **A save from the Skins challenge resumes as skins** -- covered in Node
   (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
@@ -395,8 +395,8 @@ is on branch `more-challenges`: 27 challenges from one table
 medals, the new pay and the day's allowance, the Challenges screen with five
 tabs, range challenges, the three old ones moved onto it. Tested in Node
 (the table, every challenge with every group, the pay, the Challenge Course
-hosting all of them, old profiles); **not yet seen in the game** -- nothing was
-run on the graphics card.
+hosting all of them, old profiles); **not yet seen in the game** by a person. The
+smoke journey `challenge` passes (below, *Done*).
 
 - [ ] **Play some in the game and look.** Main menu -> Challenges: the five
   tabs (on a phone they should slide sideways), the cards' medal dots and
@@ -408,9 +408,6 @@ run on the graphics card.
   -- say if it needs a ring), Up and down. The results card's medals, *Other
   challenges*, and the line when the day's 250 XP is used up. My profile ->
   *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
-- [ ] **Run the smoke journey `challenge`** (rewritten for the tabs, a putting,
-  a range and a long-drive challenge) when the owner allows the graphics card.
-  Written without being run; if it fails, check the harness before the game.
 - [ ] **Step 2: the challenge of the week** and five new achievements (First
   medal, Gold Standard, All-Rounder, Weekly Regular, Head of the Table), as the
   plan says.
@@ -419,6 +416,20 @@ run on the graphics card.
   (Sudden death waits for `endless-menu-clock` to merge).
 
 # Done
+
+## More challenges (16 October 2026)
+
+- [x] **The smoke journey `challenge`, rewritten for step 1, passes** (GPU, the
+  owner's go-ahead, 46 s): five tabs and 27 cards, an old 9-foot record shown as
+  a gold, closest to the pin to its results card with nothing in the round slot
+  or the history, Play it again, Four-footers holing out with the putter, the
+  Dartboard on the range, a long drive. Its first run caught a real bug: moving
+  to the challenge's hole saved the Challenge Course's round into the Continue
+  slot, because `challenge` was set only after the hole loaded (the old code
+  set it before). Saving and the profile sync are now held off
+  (`challengeStarting`) while the hole loads. The results card and the
+  Challenges screen were not looked at as pictures: the one screenshot was
+  taken as the card slid in.
 
 ## Release 0.8.1 (16 October)
 

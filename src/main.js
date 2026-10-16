@@ -346,7 +346,7 @@ const holeFacts=()=>({index:round.hole,par:course.par,yards:Math.round(course.te
 // when some golfer's record for this hole actually moved.
 let profileSynced='';
 function syncProfile(){
- if(!profiles||rangeMode||!course||menuBackdrop||challenge)return;
+ if(!profiles||rangeMode||!course||menuBackdrop||challenge||challengeStarting)return;
  const rows=round.players.map((p,seat)=>({prof:profileOf(p),seat,score:round.cards[seat]?.[round.hole],putts:round.puttCards[seat]?.[round.hole]})).filter(r=>r.prof);
  const key=[round.uid,round.hole,round.holeComplete,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
  if(key===profileSynced)return;profileSynced=key;
@@ -505,9 +505,15 @@ async function startChallenge(id,group){
  if(appMode!=='play'||!world)return;
  const pick=chooseHole(def,world.holes.map(h=>({par:h.par,length:h.routeLength})),i=>def.spot?spotsFor(def,holeAdapter(world.holes[i],round.tee),`${s.seed}:${i}:${def.id}`):[]);
  if(!pick){toast(`${CHALLENGE_COURSE_NAME} has no hole for ${def.name} in this version of Fairway.`);return;}
- rememberPutting();round.putting={...round.putting,mode:'holeout'};
- round.hole=pick.hole;round.beginHole();loadCourse();
- beginChallenge(def,{seed:`${s.seed}:${pick.hole}:${def.id}`,spots:pick.spots,targets:[],pin:course.pin,length:course.routeLength/YARD,name:CHALLENGE_COURSE_NAME,hole:pick.hole});
+ // Moving to the hole saves (loadCourse), and `challenge` is only set once the
+ // hole is loaded: hold saving off in between, or the Challenge Course's round
+ // lands in the Continue slot (the smoke journey caught it, 16 October 2026).
+ challengeStarting=true;
+ try{
+  rememberPutting();round.putting={...round.putting,mode:'holeout'};
+  round.hole=pick.hole;round.beginHole();loadCourse();
+  beginChallenge(def,{seed:`${s.seed}:${pick.hole}:${def.id}`,spots:pick.spots,targets:[],pin:course.pin,length:course.routeLength/YARD,name:CHALLENGE_COURSE_NAME,hole:pick.hole});
+ }finally{challengeStarting=false;}
 }
 // A golfer's driver carry, in yards, from their own bag: what the distance
 // medals are measured against. No driver: the longest club.
