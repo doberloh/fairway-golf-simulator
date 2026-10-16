@@ -2405,25 +2405,49 @@ const JOURNEYS = [
  // open is known.
  {
   name: 'challenge',
-  what: 'Challenges: all three open, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
+  what: 'Challenges: five tabs holding all 27, closest to the pin plays five balls on the Challenge Course with the bar up, nothing is saved as a round, the results card offers it again; a putting one holes out, a range one plays on the range, and a long drive starts',
   async prepare(page) {
-   // A golfer at level 7. Every challenge is open from the start (15 October 2026).
-   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
+   // A golfer at level 7 with a record from before medals. Every challenge is
+   // open from the start (15 and 16 October 2026).
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}, challenges: {closest: {feet: 9, at: 1}}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Challenges → the three, all open (Skins is a round format now)', async () => {
+   const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
+   // From the main menu to a challenge's Start, by its tab and card.
+   const open = async (tab, id) => {
+    if (!(await t.page.evaluate(() => !document.getElementById('mainMenu').hidden))) {
+     await t.page.click('#menuNav');await t.page.click('#dropMenu');
+     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
+    }
     await fromMenu(t, 'Challenges');
-    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 3), 'the three challenges', 10 * SLOW);
-    const locked = await t.page.evaluate(() => [...document.querySelectorAll('.challenge-pick .look-item.locked')].map(b => b.textContent));
-    if (locked.length) throw new Error(`locked: ${JSON.stringify(locked)}`);
+    await t.page.click(`[data-chal-tab="${tab}"]`);
+    await t.page.click(`[data-challenge="${id}"]`);
+    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+   };
+   await t.step('Challenges → five tabs, all 27, none locked, the old record already a medal', async () => {
+    await fromMenu(t, 'Challenges');
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 5), 'the five tabs', 10 * SLOW);
+    let cards = 0;
+    for (const tab of ['tee', 'approach', 'range', 'short', 'putting']) {
+     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
+     cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card').length);
+    }
+    if (cards !== 27) throw new Error(`${cards} challenge cards`);
+    if (await t.page.evaluate(() => document.querySelectorAll('.chal-card.locked, .chal-card[disabled]').length)) throw new Error('a challenge is locked');
+    const m = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0].medals);
+    if (m?.closest !== 3) throw new Error(`the 9-foot record from before medals is not a gold: ${JSON.stringify(m)}`);
    });
-   await t.step('closest to the pin on the course of the week starts on a par 3, with the bar', async () => {
+   await t.step('closest to the pin starts on a par 3 of the Challenge Course, with the bar', async () => {
+    await t.page.click('[data-chal-tab="approach"]');
     await t.page.click('[data-challenge="closest"]');
     await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
     await t.page.click('#challengeGo');
     await t.inPlay(180 * SLOW);
-    await t.until(() => t.page.evaluate(() => !document.getElementById('challengeBar').hidden && /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'the challenge bar on ball 1', 20 * SLOW);
+    await t.until(() => bar(/Ball 1 of 5/), 'the challenge bar on ball 1', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error(`the challenge is on a par ${await t.page.textContent('#holePar')}`);
    });
    await t.step('five balls, and the results card', async () => {
@@ -2433,31 +2457,45 @@ const JOURNEYS = [
     }
     await t.until(async () => (await t.drawerOpen()) && (await t.drawerTitle()) === 'Challenge', 'the results card', 10 * SLOW);
     const text = await t.page.textContent('#drawerContent');
-    if (!/Nearest|No ball on the green/.test(text)) throw new Error(`the card reads: ${text.slice(0, 200)}`);
+    if (!/Closest to the pin/.test(text) || !/Chal/.test(text)) throw new Error(`the card reads: ${text.slice(0, 200)}`);
     await t.page.screenshot({path: 'bench/shots/smoke/challenge-results.png'}).catch(() => {});
    });
-   await t.step('nothing of it was saved as a round', async () => {
+   await t.step('nothing of it was saved as a round; the play is counted', async () => {
     const slot = await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'));
     if (slot) throw new Error('the challenge wrote the round slot');
     const p = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
     if (p.rounds?.length) throw new Error(`the challenge put ${p.rounds.length} round(s) in the history`);
+    if (!(p.challenges?.closest?.plays >= 1)) throw new Error(`the play was not counted: ${JSON.stringify(p.challenges)}`);
+    if (!p.xpChallenge) throw new Error('the day\'s challenge XP was not kept');
    });
    await t.step('Play it again starts ball 1 again', async () => {
     await t.page.click('#challengeAgain');
-    await t.until(() => t.page.evaluate(() => /Ball 1 of 5/.test(document.getElementById('challengeBar').textContent)), 'ball 1 again', 10 * SLOW);
+    await t.until(() => bar(/Ball 1 of 5/), 'ball 1 again', 10 * SLOW);
+   });
+   await t.step('a putting challenge holes out, on the green, with the putter', async () => {
+    await open('putting', 'fourft');
+    await t.until(() => bar(/Ball 1 of 10/), 'the four-footers bar', 20 * SLOW);
+    const s = await t.page.evaluate(() => window.lab.state().challenge);
+    if (s?.id !== 'fourft' || s.putting !== 'holeout') throw new Error(`the putting challenge is not holing out: ${JSON.stringify(s)}`);
+    if (await t.page.evaluate(() => document.getElementById('club').value) !== 'putter') throw new Error('not putting from four feet');
+    await t.shot();
+    await t.until(() => bar(/Ball 2 of 10/), 'the second putt', 15 * SLOW);
+   });
+   await t.step('a range challenge plays on the range', async () => {
+    await open('range', 'dartboard');
+    await t.until(() => bar(/Ball 1 of 6/), 'the dartboard bar', 20 * SLOW);
+    const s = await t.page.evaluate(() => window.lab.state().challenge);
+    if (!s?.range) throw new Error(`the dartboard is not on the range: ${JSON.stringify(s)}`);
+    await t.shot();
+    await t.until(() => bar(/Ball 2 of 6/), 'the second ball', 15 * SLOW);
    });
    await t.step('a long drive starts from the menu, on a par 4 or 5', async () => {
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
-    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
-    await fromMenu(t, 'Challenges');
-    await t.page.click('[data-challenge="long"]');
-    await t.page.click('#challengeGo');
-    await t.inPlay(180 * SLOW);
-    await t.until(() => t.page.evaluate(() => /Ball 1 of 6/.test(document.getElementById('challengeBar').textContent)), 'the long-drive bar', 20 * SLOW);
+    await open('tee', 'long');
+    await t.until(() => bar(/Ball 1 of 6/), 'the long-drive bar', 20 * SLOW);
     if (!['4', '5'].includes(await t.page.textContent('#holePar'))) throw new Error('the long drive is not on a par 4 or 5');
+    if (await t.page.evaluate(() => window.lab.state().challenge?.range)) throw new Error('the long drive is still on the range');
     await t.shot();
-    await t.until(() => t.page.evaluate(() => /Ball 2 of 6/.test(document.getElementById('challengeBar').textContent)), 'the second drive', 10 * SLOW);
+    await t.until(() => bar(/Ball 2 of 6/), 'the second drive', 10 * SLOW);
    });
   },
  },

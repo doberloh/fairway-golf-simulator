@@ -62,6 +62,19 @@ sim drops), `honours` (playing order, golfers added, removed and reordered),
 (monitor and Swing Meter golfers together), `endless`, `round-library` and
 `course-library` (saving), `weekly`, `challenges`.
 
+**`tests/challenge-matrix.test.mjs` plays every challenge with every group of
+one to four** -- 27 challenges, six seeds each, 648 plays and over 5,000 balls
+in under a second. A seeded made-up golfer plays each ball, and a referee
+written separately from challenge-play.js checks whose turn it is after every
+ball, when a golfer is out, when the play ends, each golfer's score, medal and
+place. A second test plays an evening of 600 challenges and checks the pay:
+each first medal once, repeat pay inside the day's allowance, a new best once
+a challenge a day. What a single ball scores is pinned by hand in
+`challenge-play` (which also flies the Swing Meter's High, Low, draw and fade
+through the ball model, so High and low and Curve it stay reachable), and
+`challenge-spots` checks on the real Challenge Course that it hosts every
+challenge and every spot is on ground its challenge allows.
+
 **What the round tests do not cover:** `main.js` -- the round panel, the
 buttons that hand the turn over, the scorecard and banner on screen, the XP
 popup. That is wired code, checked only by the smoke test and by playing.
@@ -74,7 +87,8 @@ the courses several suites share.
 - **A round and its records** -- `round-matrix`, `core`, `play`, `honours`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
-  `achievements`, `challenges`, `weekly`, `player-colours`, `bag`.
+  `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
+  `challenge-spots`, `weekly`, `player-colours`, `bag`.
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
@@ -110,7 +124,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
-| `challenge`, `weekly` | the challenges and the course of the week |
+| `challenge`, `weekly` | the Challenges screen's five tabs and 27 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the course of the week |
 | `range`, `studio` | the driving range; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch |

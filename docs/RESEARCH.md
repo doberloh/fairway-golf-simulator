@@ -8063,18 +8063,74 @@ against the zone 1.87 (Wood, deuteranopia), the target against the track
 regulation. Flourishes: confetti 120-140 pieces, fireworks 70 sparks a burst,
 3.2-4.8 s each.
 
-### Challenges (14 October 2026)
+### Challenges and medals (14 October 2026; 27 with medals since 16 October)
 
-No outside source; the XP is the spec's (8.1): 10 a ball inside 20 feet and 50
-a new best for closest to the pin, 50 a new best for the long drive, 20 an
-up-and-down, 30 a skin (skins has been a round format since 16 October 2026;
-*Skins as a format*, below). PLACED here: the holes (the first par 3; the longest
-par 5, or par 4 without one; the first par 4); a long drive is "in play" only
-on the fairway itself, as in a long-drive grid, not the first cut; up-and-down
-drops are 3 to 18 yards off the green's edge on fringe, cut, fairway or sand,
-spread round the green, seeded by course and hole; a drop is picked up after
-eight strokes and water or out of bounds is two strokes from the drop; the
-up-and-down record is the most of five, fewest strokes breaking a tie.
+No outside source. Every number here is PLACED -- set by Claude for the owner's
+plan of 16 October 2026 (a local report, `docs/reports/CHALLENGES_PLAN.md`),
+not taken from any published figure -- and the owner may overrule any of it.
+
+**The pay** (progression.js `CHALLENGE_PAY`). Set against a round: an
+18-hole round earns roughly 450-700 XP in about an hour, a short challenge
+takes 3-5 minutes. First bronze, silver, gold 25 / 50 / 100, once each ever
+(`long` challenges double, none yet); a finished play 5 / 10 / 15 / 25 by the
+medal it reached (none, bronze, silver, gold), until 250 XP of such pay in a
+day across all challenges; a new best 20, once a challenge a day; the Swing
+Meter multiplier on all of it. All first medals together come to 4,725 XP for
+the 27 (about level 1 to 9). **Replaced** (14 October 2026, the spec's 8.1):
+10 XP a closest-to-the-pin ball inside 20 feet, 20 an up-and-down, 50 a new
+best on closest and long, paid every play with no limit -- the three oldest
+challenges were the only farmable ones, which is why they moved onto medals.
+**Rejected**: one amount per ball (pays a repeat like a first, and floods the
+400-entry XP ledger); no repeat pay at all (the owner chose "medals pay,
+repeats capped").
+
+**Where they play** (the owner, 16 October 2026: one fixed course rather than
+any course). The Challenge Course is `DEFAULT_COURSE` with seed
+`CHALLENGE-1`, biome pnw, 18 holes, at generator 36. Checked on the day:
+`CHALLENGE-1` hosts all 21 course challenges; `CHALLENGE-2` (pnw) and
+`CHALLENGE-3` (links) have no hole with water to carry. On `CHALLENGE-1` the
+long hole is the 1st (par 5), the par 3 the 3rd, the long par 4 the 6th, the
+water carry the 4th, the bunker challenges the 1st and up and down the 2nd.
+Records and medals are kept across generator changes; wiping them at each bump
+was rejected because the generator moves often.
+
+**Medals.** Distance medals against the golfer's own bag driver D (stock 250
+yd): Long drive D+5 / D+20 / D+35 yards; Long and straight 75% / 85% / 95% of
+D. Closest to the pin within 8% / 4% / 2% of the hole's length (160 yd: 38 /
+19 / 10 ft). A record kept before medals, whose hole length was never saved,
+is measured against 160 yards. Every other challenge's three scores are in its
+row in challenges.js.
+
+**Measured, 16 October 2026: High and low.** Through the ball model a stock
+7-iron off the Swing Meter (full power, centred strike) peaks at 0.206 of its
+carry, 0.237 with High and 0.164 with Low; the lines are set halfway, high at
+0.222 of the carry or more, low at 0.185 or less, so a normal flight makes
+neither call and the meter's High and Low each make theirs
+(tests/challenge-play.test.mjs keeps it so). The same flights curve 10.7 yards
+with draw or fade (the driver 15), so the 4-yard (Curve it) and 5-yard (Draw
+and fade) lines are within reach of the meter's shapes. Curve is measured
+where the ball lands against the line of its first five metres, right
+positive, a right-hander's draw curving left.
+
+**Spots and rules** (challenge-spots.js, challenge-play.js). Up and down: 3 to
+18 yards off the green's edge on fringe, cut, fairway or sand, spread round
+the green; chips 5-25 and 5-20 yards on grass only; greenside bunker drops 0.5
+to 20 yards off the edge in sand, not spread (a green may have sand on one side
+only) but 3 m apart; short side: grass 2 to 22 yards off with sand on the line
+to the pin; ladders on the centre line at the stated distance from the pin, on
+fairway or first cut, nudged up to 12 m sideways and 4 yards along; Over the
+water: fairway 100-170 yards out with water on the line to the pin, one spot
+repeated when only one fits; putts a foot inside the green's edge, lag putts
+brought in a tenth at a time when a green has no room, the putting ladder on
+one line with room for as many as fit (three at least). The zone is 85% of the
+golfer's driver carry from the tee (never past three quarters of the hole),
+15 yards round. Called carries 60 yards to 80% of the shortest driver in the
+group (at most 200), in fives, never the same twice running. A ball in water
+where feet are added up counts 99 feet. A spot is picked up after eight
+strokes; water or out of bounds there is two strokes from the drop. A long
+drive is "in play" only on the fairway itself, as in a long-drive grid; Long
+and straight also takes the first cut. Up and down's record is the most made,
+fewest strokes breaking a tie.
 
 ### Skins as a format (16 October 2026)
 

@@ -375,13 +375,48 @@ nothing was run on the graphics card.
   mulligan of the winning putt takes the skins and their XP back; the finished
   card ("... wins the skins" or a tie) and the 50 XP win; *Records* on My
   profile. One golfer with Skins chosen should be refused with "Skins is for two
-  to four golfers". Also: an endless run on skins, and Challenges showing three
-  tiles with the line about where Skins went.
-- [ ] **Run the smoke journeys `skins` (new) and `challenge` (now three tiles)**
-  when the owner allows the graphics card. `skins` was written without being
+  to four golfers". Also: an endless run on skins, and the Challenges screen's
+  line about where Skins went.
+- [ ] **Run the smoke journey `skins` (new)** (and `challenge`, *More
+  challenges* below) when the owner allows the graphics card. `skins` was written without being
   run; if it fails, check the harness before the game.
 - [ ] **A save from the Skins challenge resumes as skins** -- covered in Node
   (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
+
+## More challenges (16 October 2026)
+
+The owner asked for 30-40 challenges, repeatable, and a challenge of the week;
+the plan (local: `docs/reports/CHALLENGES_PLAN.md`) was approved with the
+owner's answers the same day -- medals, nothing locked, repeat pay capped,
+distance medals against the golfer's own driver, every hole challenge on one
+fixed Challenge Course, the week's challenge on the course of the week. Step 1
+is on branch `more-challenges`: 27 challenges from one table
+(`src/challenges.js`, `src/challenge-play.js`, `src/challenge-spots.js`),
+medals, the new pay and the day's allowance, the Challenges screen with five
+tabs, range challenges, the three old ones moved onto it. Tested in Node
+(the table, every challenge with every group, the pay, the Challenge Course
+hosting all of them, old profiles); **not yet seen in the game** -- nothing was
+run on the graphics card.
+
+- [ ] **Play some in the game and look.** Main menu -> Challenges: the five
+  tabs (on a phone they should slide sideways), the cards' medal dots and
+  bests, a card's medal list ("Gold: within 10 ft", "measured against your own
+  driver"). Play closest to the pin on the Challenge Course, Four-footers
+  (the putter in hand, holing out under dartboard putting), Dartboard on the
+  range (aimed at the 150 target), Draw and fade (the bar shows the call),
+  Find the zone (the aim starts on the zone; nothing marks the zone itself yet
+  -- say if it needs a ring), Up and down. The results card's medals, *Other
+  challenges*, and the line when the day's 250 XP is used up. My profile ->
+  *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
+- [ ] **Run the smoke journey `challenge`** (rewritten for the tabs, a putting,
+  a range and a long-drive challenge) when the owner allows the graphics card.
+  Written without being run; if it fails, check the harness before the game.
+- [ ] **Step 2: the challenge of the week** and five new achievements (First
+  medal, Gold Standard, All-Rounder, Weekly Regular, Head of the Table), as the
+  plan says.
+- [ ] **Step 3: the rest** -- Every par 3, Greens in regulation, Scrambler and
+  Putting tour (holes in turn), the three head-to-heads, and the two Rounds
+  (Sudden death waits for `endless-menu-clock` to merge).
 
 # Done
 

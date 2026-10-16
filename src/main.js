@@ -22,11 +22,13 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith,FORMATS} from './game.js';
-import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
+import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp,challengePay,CHALLENGE_PAY} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
-import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,recordChallenge,feetText} from './challenges.js';
+import {CHALLENGES,GROUPS,MEDALS,challenge as challengeDef,challengesIn,recordChallenge,recordScore,scoreText as challengeScoreText,targetText,medalTargets,medalsFromRecords,challengeCourseSettings,CHALLENGE_COURSE_NAME,MEDAL_TOTAL} from './challenges.js';
+import {newPlay,turn,playBall,results,ballFacts,progressText} from './challenge-play.js';
+import {chooseHole,spotsFor,holeAdapter,zoneFor,callsFor} from './challenge-spots.js';
 import {skins,decidedHoles,skinsWinner,holeSkinLine,skinsStatus,skinsText} from './skins.js';
 import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
@@ -52,7 +54,7 @@ import {playerColour,playerTracer,PLAYER_INK} from './player-colours.js';
 import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan,dropOutcome,jitterStream,groupStats} from './lab.js';
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
-import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,SHOT_LINE_MAX,loadShotLines,saveShotLines} from './range.js';
+import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines} from './range.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
@@ -474,149 +476,176 @@ const framedPicture=(ball,frame,cls='')=>{
  return fx?.anim?`<span class="frame-fx" data-fx="${fx.anim}" style="--f1:${fx.colours[0]};--f2:${fx.colours[1]};--f3:${fx.colours[2]}">${img}</span>`:img;
 };
 const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ball,l.frame,cls);};
-// THE CHALLENGES IN PLAY (Phase 7; challenges.js for the rules).
+// THE CHALLENGES IN PLAY (16 October 2026: challenges.js is the table,
+// challenge-play.js the rules, challenge-spots.js where the balls go).
 //
-// START. Grown like any round on the chosen course -- the course of the week or
-// a saved course -- then put on the challenge's own hole (pickHole) with
-// `challenge` set, so nothing about it is saved or counted as a round. (Skins,
-// once the fourth, is a round format in Play since 16 October 2026.)
-async function startChallenge(id,choice,group){
- const def=challengeDef(id);let s,name;
- if(choice==='weekly'){s=weeklySettings();name=`${suggestCourseName(s)} · Week ${isoWeek().week}`;}
- else{const c=findCourse(choice);if(!c)throw Error('That course is no longer saved.');s=courseSettings(c.settings);name=c.name;}
- // Nothing is saved while the course grows: the round it builds is the
- // challenge's, and must not take the Continue slot or a line of history.
- await startRoundOn(s,{...group,mode:'stroke'},name,{quiet:true});
+// START. A hole challenge grows the Challenge Course -- one fixed course for
+// everybody (the owner, 16 October 2026) -- like any round, then goes to the
+// hole its rule picks with `challenge` set, so nothing about it is saved or
+// counted as a round. A range challenge opens the range. Either way the
+// putting is hole out while it lasts, and the golfer's own setting comes back
+// with the next round (`restorePutting`).
+async function startChallenge(id,group){
+ const def=challengeDef(id);
+ // From a range challenge's results card, *Other challenges* starts the next
+ // one while still on the range: leave it first, as the menu would, or a
+ // course challenge would play in range mode and a range one would remember
+ // the range as the course to go back to.
+ if(rangeMode){rangeMode=false;closeRangeBox();restoreCourse();}
+ if(def.where==='range'){
+  await enterRange({players:group.players,challenge:true});
+  if(!rangeMode||appMode!=='play')return;
+  const mat=round.position,marks=rangeTargets();
+  const targets=(def.targets||[]).map(y=>{const t=marks.find(m=>m.yards===y);return t?{x:t.x,z:t.z,yards:y}:{x:mat.x,z:mat.z+y*YARD,yards:y};});
+  beginChallenge(def,{seed:`range:${def.id}`,spots:[],targets,pin:course.pin,length:0,name:'the driving range'});
+  return;
+ }
+ const s=challengeCourseSettings();
+ await startRoundOn(s,{...group,mode:'stroke'},CHALLENGE_COURSE_NAME,{quiet:true});
  if(appMode!=='play'||!world)return;
- const at=pickHole(world.holes.map(h=>({par:h.par,length:h.routeLength})),id);
- if(at<0){toast(`${name} has no hole for ${def.name}. Choose another course.`);return;}
- challenge={id,uid:round.uid,name,hole:at,balls:def.balls,results:round.players.map(()=>[]),spot:0,strokes:0,spots:[]};
- round.hole=at;round.beginHole();loadCourse();
- if(id==='updown'){
-  challenge.spots=upDownSpots({pin:course.pin,surface:(x,z)=>course.surface(x,z),edge:(x,z)=>greenDistance(course,x,z)},`${s.seed}:${at}`,def.balls);
-  if(!challenge.spots.length){challenge=null;toast('No room round that green for the drops. Choose another course.');return;}
-  challenge.balls=challenge.spots.length;placeChallengeBall(challenge.spots[0]);
- }
- round.active=0;setUpTurn();
- toast(`${def.name} on hole ${at+1} of ${name}.`);
+ const pick=chooseHole(def,world.holes.map(h=>({par:h.par,length:h.routeLength})),i=>def.spot?spotsFor(def,holeAdapter(world.holes[i],round.tee),`${s.seed}:${i}:${def.id}`):[]);
+ if(!pick){toast(`${CHALLENGE_COURSE_NAME} has no hole for ${def.name} in this version of Fairway.`);return;}
+ rememberPutting();round.putting={...round.putting,mode:'holeout'};
+ round.hole=pick.hole;round.beginHole();loadCourse();
+ beginChallenge(def,{seed:`${s.seed}:${pick.hole}:${def.id}`,spots:pick.spots,targets:[],pin:course.pin,length:course.routeLength/YARD,name:CHALLENGE_COURSE_NAME,hole:pick.hole});
 }
-// Every golfer's ball to one spot: the next drop.
-function placeChallengeBall(p){round.positions=round.players.map(()=>({x:p.x,z:p.z}));round.teePlaced=true;}
-// EVERY BALL. Closest and long: one ball a golfer in turn, each from the tee
-// (the round never moved them). Up and down: a golfer plays the drop out --
-// water or out of bounds is stroke and distance, two strokes and the same
-// spot -- then the next golfer plays the same drop, then the next drop.
+// A golfer's driver carry, in yards, from their own bag: what the distance
+// medals are measured against. No driver: the longest club.
+function driverCarry(player){
+ let bag;try{bag=bagFor(player);}catch{bag=stockBag();}
+ const d=bag.find(c=>c.kind==='driver');return d?d.carry:Math.max(...bag.map(c=>c.carry));
+}
+function beginChallenge(def,{seed,spots,targets,pin,length,name,hole=null}){
+ const ctx=round.players.map(p=>({driver:driverCarry(p),hand:p.hand==='LH'?'LH':'RH'}));
+ if(def.ball==='zone'){const a=holeAdapter(course,round.tee);for(const c of ctx)c.zone=zoneFor(a,c.driver);
+  if(ctx.some(c=>!c.zone)){toast('No fairway for the zone on this hole.');return;}}
+ const calls=callsFor(def,seed,{driver:Math.min(...ctx.map(c=>c.driver))});
+ challenge={id:def.id,def,name,hole,info:{seats:round.players.length,spots,targets,calls,ctx,pin,length},uid:'c'+Date.now().toString(36),done:false,summary:null};
+ challenge.play=newPlay(def.id,challenge.info);
+ round.active=0;round.strokes=round.players.map(()=>0);
+ placeForTurn();setUpTurn();
+ toast(`${def.name}${hole!=null?` on hole ${hole+1}`:''} of ${name}.`);
+}
+// THE BALL ABOUT TO BE PLAYED: on its spot, back on the tee (or the mat),
+// or -- playing a spot out -- where the last one stopped. `aimAt` is where the
+// turn starts aimed: the range target, the zone, or the called carry.
+function placeForTurn(from=null){
+ const c=challenge,t=turn(c.play),seat=t.seat,p=from||t.spot;
+ if(p)round.positions[seat]={x:p.x,z:p.z};
+ else if(!rangeMode){const tee=course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
+ round.active=seat;round.teePlaced=true;round.strokes[seat]=c.def.order==='spotOut'?t.strokes:0;
+ const at=round.positions[seat];
+ c.aimAt=t.target?{x:t.target.x,z:t.target.z}:t.zone?{...t.zone}:typeof t.call==='number'?{x:at.x,z:at.z+t.call*YARD}:null;
+}
+// THE CLUB FOR A TURN: the one the challenge asks for (the nearest the bag
+// holds), or the one for the distance to what it aims at.
+function challengeClub(){
+ const c=challenge,p=round.position;if(!c||course.surface(p.x,p.z)==='green')return;
+ const list=Object.entries(clubs).filter(([id])=>id!=='putter');
+ if(c.def.club){const want=CLUB_KINDS[c.def.club]?.carry??150,id=list.find(([,k])=>k.kind===c.def.club)?.[0]||list.sort((a,b)=>Math.abs(a[1].carry-want)-Math.abs(b[1].carry-want))[0]?.[0];if(id)$('club').value=id;}
+ else if(c.aimAt){const d=Math.hypot(c.aimAt.x-p.x,c.aimAt.z-p.z)/YARD;$('club').value=list.sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];}
+ $('monClub').value=$('club').value;
+}
+// EVERY BALL goes to the play (challenge-play.js), which says what it scored
+// and who is up; this only puts the next ball down.
 function challengeShot(result){
- const c=challenge,seat=round.active,prof=profileOf(round.players[seat]),items=[],before=prof?.xp||0;
+ const c=challenge;if(c.done)return;
  const origin=lastShot?.shot?.origin||round.position,rest=result.hazard?null:course.surface(result.end.x,result.end.z);
- let next=true;
- if(c.id==='closest'){
-  const ft=closestFeet(result.end,course.pin,result.hazard);c.results[seat].push(ft);
-  if(prof&&ft!=null&&ft<=CHALLENGE_XP.closeFeet&&award(prof,`chal:${c.uid}:${seat}:b${c.results[seat].length}`,CHALLENGE_XP.closeBall)>0)items.push({label:'Inside 20 feet',xp:CHALLENGE_XP.closeBall});
-  toast(ft==null?`${result.hazard}: no score for that ball.`:`${feetText(ft)} from the pin.`);
- }else if(c.id==='long'){
-  const yd=driveYards(origin,result.end,rest,result.hazard);c.results[seat].push(yd);
-  toast(yd==null?'Off the fairway: it does not count.':`${Math.round(yd)} yards, in play.`);
- }else{
-  if(result.hazard){c.strokes+=2;next=false;toast(`${result.hazard}: two strokes, and play it again from the drop.`);}
-  else{c.strokes++;
-   if(result.holed||c.strokes>=UPDOWN_GIVE_UP){
-    const n=result.holed?c.strokes:UPDOWN_GIVE_UP;c.results[seat].push(n);
-    if(prof&&isUpAndDown(n)&&award(prof,`chal:${c.uid}:${seat}:d${c.spot}`,CHALLENGE_XP.upDown)>0)items.push({label:'Up and down',xp:CHALLENGE_XP.upDown});
-    toast(result.holed?(isUpAndDown(n)?`Up and down in ${n}.`:`Down in ${n}.`):'Picked up: that one counts as eight.');
-   }else{next=false;round.positions[seat]={x:result.end.x,z:result.end.z};}
-  }
-  round.strokes[seat]=next?0:c.strokes;
- }
- if(prof&&items.length){queueXpGain(prof,items,before,1);storeProfiles(profiles);}
- if(next){
-  c.strokes=0;
-  const n=round.players.length;
-  if(c.id==='updown'){
-   if(seat<n-1)round.active=seat+1;
-   else{c.spot++;round.active=0;if(c.spot<c.balls)placeChallengeBall(c.spots[c.spot]);}
-  }else round.active=(seat+1)%n;
-  if(c.results.every(r=>r.length>=c.balls)){finishChallenge();return;}
- }
- setUpTurn();
+ const e=playBall(c.play,ballFacts({origin,result,rest,club:lastShot?.kind||null}));
+ if(e.text)toast(e.text);
+ if(e.done){finishChallenge();return;}
+ placeForTurn(e.again?e.from:null);setUpTurn();
 }
-// THE END: each golfer's score, their records (and 50 XP for a new best on
-// closest and long), then the results card.
+// THE END: each golfer's score and medal, their record, and the pay
+// (progression.js `challengePay`: first medals once, a play's pay inside the
+// day's allowance, a new best once a day) -- one ledger entry a golfer a play.
 function finishChallenge(){
  const c=challenge;c.done=true;
- c.summary=round.players.map((p,seat)=>{
-  const r=c.results[seat],prof=profileOf(p),items=[],before=prof?.xp||0;
-  let score,text,best=false;
-  if(c.id==='closest'){const ok=r.filter(v=>v!=null);score=ok.length?Math.min(...ok):null;text=score==null?'No ball on the green':`Nearest ${feetText(score)}`;}
-  else if(c.id==='long'){const ok=r.filter(v=>v!=null);score=ok.length?Math.max(...ok):null;text=score==null?'No drive in play':`Longest ${Math.round(score)} yards`;}
-  else{const made=r.filter(isUpAndDown).length,strokes=r.reduce((a,b)=>a+b,0);score={made,strokes};text=`${made} of ${r.length} up and down, ${strokes} strokes`;}
-  if(prof){best=recordChallenge(prof,c.id,score);
-   if(best&&c.id!=='updown'&&award(prof,`chal:${c.uid}:${seat}:best`,CHALLENGE_XP.best)>0)items.push({label:'New best',xp:CHALLENGE_XP.best});
-   if(items.length)queueXpGain(prof,items,before,1);}
-  return {name:p.name,seat,text,best,balls:r};
+ c.summary=results(c.play).map(r=>{
+  const p=round.players[r.seat],prof=profileOf(p);let best=false,capped=false;
+  if(prof){
+   settleMedals(prof);
+   const before=prof.xp||0,mult=xpMult(r.seat);best=recordChallenge(prof,c.id,r.score);
+   const pay=challengePay(prof,{id:c.id,medal:r.medal,best,long:!!c.def.long,mult});capped=pay.capped;
+   if(pay.xp>0)award(prof,`chal:${c.uid}:${r.seat}`,pay.xp);
+   if(pay.parts.length)queueXpGain(prof,pay.parts,before,mult);
+  }
+  return {name:p.name,seat:r.seat,text:r.text,medal:r.medal,best,capped};
  });
  storeProfiles(profiles);drawChallengeBar();
  setTimeout(()=>{if(challenge===c)openPanel('challenge');},1800);
 }
-// THE BAR at the top of the course: which challenge, who is up, which ball,
-// and the best so far.
+// Old records turn into medals once, before a golfer's first medal is paid
+// (challenges.js `medalsFromRecords`), measured against their own driver.
+function settleMedals(prof){if(prof&&!prof.medals&&medalsFromRecords(prof,{driver:driverCarry({profile:prof.id,name:prof.name})}))return true;return false;}
+// THE BAR beside the shot controls: which challenge, who is up, which ball,
+// the call, the score so far.
 function drawChallengeBar(){
  const el=$('challengeBar');if(!el)return;
  el.hidden=!challenge||appMode!=='play';if(el.hidden)return;
- const c=challenge,def=challengeDef(c.id),seat=round.active,r=c.results[seat]||[];
- const ball=c.done?'Finished':c.id==='updown'?`Drop ${Math.min(c.spot+1,c.balls)} of ${c.balls}${c.strokes?` · ${c.strokes} played`:''}`:`Ball ${Math.min(r.length+1,c.balls)} of ${c.balls}`;
- const ok=r.filter(v=>v!=null),so=c.id==='closest'?(ok.length?`best ${feetText(Math.min(...ok))}`:''):c.id==='long'?(ok.length?`best ${Math.round(Math.max(...ok))} yd`:''):(r.length?`${r.filter(isUpAndDown).length} up and down`:'');
- el.innerHTML=`<b>${escape(def.name)}</b><span>${round.players.length>1&&!c.done?escape(round.player.name)+' · ':''}${ball}${so?' · '+so:''}</span>`;
+ const c=challenge;
+ el.innerHTML=`<b>${escape(c.def.name)}</b><span>${round.players.length>1&&!c.done?escape(round.player.name)+' · ':''}${escape(progressText(c.play))}</span>`;
 }
+const MEDAL_PIPS=m=>`<span class="medal-pips" aria-label="${m?MEDALS[m]:'No medal'}">${[1,2,3].map(k=>`<i class="m${k}${m>=k?' on':''}"></i>`).join('')}</span>`;
 function renderChallengeResult(content){
  const c=challenge;
  if(!c?.summary){content.innerHTML='<p>No challenge has finished.</p>';return;}
- const def=challengeDef(c.id);
- content.innerHTML=`<p><b>${escape(def.name)}</b> on hole ${c.hole+1} of ${escape(c.name)}.</p><ul class="challenge-results">${c.summary.map(s=>`<li><span class="player-dot" style="background:${playerColour(s.seat)}"></span><b>${escape(s.name)}</b><span>${escape(s.text)}${s.best?' · <em>a new best</em>':''}</span></li>`).join('')}</ul>`
-  +`<div class="course-card-actions"><button class="primary" id="challengeAgain">Play it again</button><button class="secondary" id="challengeMenu">Main menu</button></div>`;
+ content.innerHTML=`<p><b>${escape(c.def.name)}</b>${c.hole!=null?` on hole ${c.hole+1} of`:' on'} ${escape(c.name)}.</p><ul class="challenge-results">${c.summary.map(s=>`<li><span class="player-dot" style="background:${playerColour(s.seat)}"></span><b>${escape(s.name)}</b>${MEDAL_PIPS(s.medal)}<span>${escape(s.text)}${s.medal?` · ${MEDALS[s.medal].toLowerCase()}`:''}${s.best?' · <em>a new best</em>':''}</span></li>`).join('')}</ul>`
+  +(c.summary.some(s=>s.capped)?`<p class="note">Today's challenge XP for playing again is used up (${CHALLENGE_PAY.dayCap} a day). Medals and records still count, and first medals still pay.</p>`:'')
+  +`<div class="course-card-actions"><button class="primary" id="challengeAgain">Play it again</button><button class="secondary" id="challengeOthers">Other challenges</button><button class="secondary" id="challengeMenu">Main menu</button></div>`;
  $('challengeAgain').onclick=()=>{
-  const id=c.id;challenge={...c,results:round.players.map(()=>[]),spot:0,strokes:0,done:false,summary:null,uid:'c'+Date.now().toString(36)};
-  closePanel();round.active=0;round.strokes=round.players.map(()=>0);
-  if(id==='updown')placeChallengeBall(challenge.spots[0]);else{round.teePlaced=false;round.placeTee(course.tees);}
-  setUpTurn();
+  challenge={...c,uid:'c'+Date.now().toString(36),done:false,summary:null,play:newPlay(c.id,c.info)};
+  closePanel();round.strokes=round.players.map(()=>0);placeForTurn();setUpTurn();
  };
+ $('challengeOthers').onclick=()=>{challengeSetup=true;openPanel('round');};
  $('challengeMenu').onclick=()=>{closePanel();openMenu();};
 }
-// THE SETUP: the three, the ones not open yet with the level that opens them;
-// the course; the group. A line under them says where Skins went.
+// THE CHALLENGES SCREEN: a tab for each group, a card for each challenge with
+// its medals and the best, and under them the chosen one -- how it plays, what
+// each medal asks, the group, Start. Nothing is locked.
+let challengeTab='tee';
 function renderChallengeSetup(content){
- const me=mainProfile(profiles),lv=levelOf(me?.xp||0).level,open=c=>c.level<=lv;
+ const me=mainProfile(profiles);if(settleMedals(me))storeProfiles(profiles);
  if(!challengeDef(challengePick))challengePick=CHALLENGES[0].id;
- if(!open(challengeDef(challengePick)))challengePick=CHALLENGES.find(open)?.id||challengePick;
- const def=challengeDef(challengePick),courses=listCourses();
- content.innerHTML=`<div class="challenge-pick">${CHALLENGES.map(c=>`<button class="look-item${c.id===challengePick?' on':''}${open(c)?'':' locked'}" ${open(c)?`data-challenge="${c.id}"`:'disabled'}><b>${escape(c.name)}</b>${open(c)?'':`<small>Level ${c.level}</small>`}</button>`).join('')}</div>`
-  +`<p>${escape(def.how)}</p>${me?`<p class="note">${escape(challengeRecordText(me,def.id))}</p>`:''}`
-  +(open(def)?`<label class="field">Course<select id="challengeCourse"><option value="weekly">The course of the week</option>${courses.map(c=>`<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('')}</select></label>`
-   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="challengeGo">Start ${escape(def.name)} <i data-lucide="arrow-right"></i></button>`
-   :`<p class="note">Opens at level ${def.level}. ${me?`${escape(me.name)} is level ${lv}.`:''}</p>`)
+ if(!GROUPS.some(g=>g.id===challengeTab))challengeTab=challengeDef(challengePick).group;
+ const def=challengeDef(challengePick),medals=me?.medals||{},have=g=>challengesIn(g).reduce((a,c)=>a+(medals[c.id]||0),0);
+ const tab=g=>`<button class="panel-tab${challengeTab===g.id?' active':''}" role="tab" aria-selected="${challengeTab===g.id}" data-chal-tab="${g.id}">${escape(g.name)} <small>${have(g.id)}/${challengesIn(g.id).length*3}</small></button>`;
+ const card=c=>`<button class="chal-card${c.id===challengePick?' on':''}" data-challenge="${c.id}" aria-pressed="${c.id===challengePick}"><b>${escape(c.name)}</b>${MEDAL_PIPS(medals[c.id]||0)}<small>${me?escape(bestText(me,c.id)):''}</small></button>`;
+ const ctx={driver:me?driverCarry({profile:me.id,name:me.name}):250,length:160};
+ const asks=medalTargets(def,ctx).map((v,i)=>`<li>${MEDAL_PIPS(i+1)}<b>${MEDALS[i+1]}</b><span>${escape(def.scale==='lengthFeet'?`within ${Math.round(def.medals[i]*100)}% of the hole's length`:targetText(def,v))}${medals[def.id]>i?' · yours':''}</span></li>`).join('');
+ content.innerHTML=`<div class="panel-tabs chal-tabs" role="tablist" aria-label="Challenges">${GROUPS.map(tab).join('')}</div>`
+  +`<div class="chal-cards">${challengesIn(challengeTab).map(card).join('')}</div>`
+  +`<h3>${escape(def.name)}</h3><p>${escape(def.how)}</p><p class="note">${def.where==='range'?'On the driving range.':`On ${CHALLENGE_COURSE_NAME}, the same holes for everyone.`}${def.scale==='driverPlus'||def.scale==='driverShare'?` Medals are measured against your own driver (${Math.round(ctx.driver)} yd in your bag).`:''}</p>`
+  +`<ul class="medal-asks">${asks}</ul>${me?`<p class="note">${escape(challengeRecordText(me,def.id))}</p>`:''}`
+  +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>`
+  +`<button class="primary" data-panel-action id="challengeGo">Start ${escape(def.name)} <i data-lucide="arrow-right"></i></button>`
   +`<p class="note">Skins is a round format now: choose it under <em>Format</em> when you start a round from Play.</p>`;
+ content.querySelectorAll('[data-chal-tab]').forEach(b=>b.onclick=()=>{challengeTab=b.dataset.chalTab;challengePick=challengesIn(challengeTab)[0].id;openPanel('round');});
  content.querySelectorAll('[data-challenge]').forEach(b=>b.onclick=()=>{challengePick=b.dataset.challenge;openPanel('round');});
- if(!open(def))return;
  groupEditor('playerRows',round.players,()=>{});
  $('challengeGo').onclick=async()=>{
   if(flight){toast('Finish the current shot first.');return;}
   let group;
   try{const g=readDraft();group={players:g,mode:'stroke',tee:round.tee||'blue'};new Round(group);}
   catch(e){$('roundError').textContent=e.message;return;}
-  const choice=$('challengeCourse').value;challengeSetup=false;closePanel();
-  try{await startChallenge(def.id,choice,group);}catch(e){toast(e.message);}
+  challengeSetup=false;closePanel();
+  try{await startChallenge(def.id,group);}catch(e){toast(e.message);}
  };
 }
+const bestText=(prof,id)=>{const def=challengeDef(id),s=recordScore(id,prof.challenges?.[id]);return s==null?'Not played':`Best ${challengeScoreText(def,s)}`;};
 const challengeRecordText=(prof,id)=>{const r=prof.challenges?.[id];
- return !r?`${prof.name} has no record here yet.`:id==='closest'?`${prof.name}'s nearest: ${feetText(r.feet)}.`:id==='long'?`${prof.name}'s longest: ${Math.round(r.yards)} yards.`
-  :id==='updown'?`${prof.name}'s best: ${r.made} of 5 up and down, ${r.strokes} strokes.`:`${prof.name}: ${r.won} skin${r.won===1?'':'s'} in ${r.games} game${r.games===1?'':'s'}.`;};
-// MY PROFILE: the records -- the three challenges' bests, and the skins won in
-// skins rounds, which are kept with them (challenges.js).
+ if(id==='skins')return `${prof.name}: ${r.won} skin${r.won===1?'':'s'} in ${r.games} game${r.games===1?'':'s'}.`;
+ const def=challengeDef(id),s=recordScore(id,r);
+ return s==null?`${prof.name} has no record here yet.`:`${prof.name}'s best: ${challengeScoreText(def,s)}${r.plays?` · played ${r.plays} time${r.plays===1?'':'s'}`:''}.`;};
+// MY PROFILE: the medals, then the records -- every challenge played, by tab,
+// and the skins won in skins rounds, which are kept with them (challenges.js).
 function challengeRecords(profile){
- const r=profile.challenges||{};if(!Object.keys(r).length)return '';
+ if(settleMedals(profile))storeProfiles(profiles);
+ const r=profile.challenges||{},m=profile.medals||{},count=k=>Object.values(m).filter(v=>v===k).length;
  const rows=[...CHALLENGES,{id:'skins',name:'Skins'}].filter(c=>r[c.id]);
- return `<h3>Records</h3><ul class="achievement-list">${rows.map(c=>`<li class="achievement earned"><b>${escape(c.name)}</b><span>${escape(challengeRecordText(profile,c.id))}</span></li>`).join('')}</ul>`;
+ if(!rows.length&&!Object.keys(m).length)return '';
+ return `<h3>Challenges</h3><p class="note">${count(3)} gold · ${count(2)} silver · ${count(1)} bronze, from ${CHALLENGES.length} challenges.</p>`
+  +(rows.length?`<ul class="achievement-list">${rows.map(c=>`<li class="achievement earned"><b>${escape(c.name)}</b>${c.id==='skins'?'':MEDAL_PIPS(m[c.id]||0)}<span>${escape(challengeRecordText(profile,c.id))}</span></li>`).join('')}</ul>`:'');
 }
 // THE XP MULTIPLIER for a golfer's hole: their Swing Meter difficulty (Easy
 // 0.75, Normal 1, Hard 1.5), or 1 if they played it off a launch monitor.
@@ -949,6 +978,8 @@ function setUpTurn(){
  // from eighteen yards out in the fringe, off a bank, out of a greenside
  // bunker -- anywhere at all, so long as it was close.
  $('club').value=course.surface(p.x,p.z)==='green'?'putter':Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-d)-Math.abs(b[1].carry-d))[0][0];
+ // A challenge asks for its own club, or the one for what it aims at.
+ if(challenge)challengeClub();
  defaultAim();
  // The slope grid takes this shot's frame now, from the aim it starts with, and
  // keeps it while the player aims (GolfView.setReadingHeading).
@@ -978,7 +1009,8 @@ function drawPlaysLike(){
 // WHERE A TURN STARTS AIMING, and where A puts the aim back to: the middle of
 // the fairway at the club's stock carry, or the pin near the end of the hole.
 function defaultAim(){
- const p=round.position,target=fairwayAim(course,p,clubs[$('club').value].carry*YARD);
+ // A challenge turn starts aimed at its target, zone or called carry (`aimAt`).
+ const p=round.position,target=challenge?.aimAt||fairwayAim(course,p,clubs[$('club').value].carry*YARD);
  aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
  // A putt starts aimed at the hole, the whole distance, however it is struck:
  // off a monitor the device measures it, and on the Swing Meter the circle is
@@ -2552,7 +2584,7 @@ function startRoundOn(courseSettings,group,name,{quiet=false}={}){
 // and hit, and the only thing that comes back is what the ball did.
 async function enterRange(options={}){
  rememberPutting();
- const fresh=new Round({players:round.players,mode:'stroke',putting:{mode:'holeout'}});
+ const fresh=new Round({players:options.players||round.players,mode:'stroke',putting:{mode:'holeout'}});
  await whileGenerating('Opening the range…',async report=>{
   leaveBackdrop();pendingRound=null;staleGenerator=false;rangeMode=true;
   // The centre mat. placeTee honours round.tee and the default is blue, which
@@ -2590,6 +2622,8 @@ async function enterRange(options={}){
  // The cached world keeps whatever green position it was left with, so the box
  // is pointed at the hole rather than the other way round.
  rangeGreenPref=rangeGreenYards(course.settings);
+ // A range challenge (challenges.js) opens no range tools: it says what to do itself.
+ if(options.challenge)return;
  openRangeBox();
  toast(`Range open · green at ${Math.round(rangeGreenPref)} yd`);
 }
@@ -4093,11 +4127,11 @@ function followRename(profile,from){
  useMainProfile();profileSynced='';updateMenuProfile();
 }
 // The tile says which week, which landscape, and the main golfer's best on it.
-// The challenges tile says how many the main golfer has open.
+// The challenges tile says how many there are and the main golfer's medals.
 function updateMenuChallenges(){
  const el=$('menuChallengesNote');if(!el)return;
- const lv=levelOf(mainProfile(profiles)?.xp||0).level,open=CHALLENGES.filter(c=>c.level<=lv).length;
- el.textContent=open===CHALLENGES.length?'Closest, long drive, up and down':open?`${open} of ${CHALLENGES.length} open`:`The first opens at level ${CHALLENGES[0].level}`;
+ const m=mainProfile(profiles)?.medals||{},have=Object.values(m).reduce((a,b)=>a+b,0);
+ el.textContent=`${CHALLENGES.length} challenges · ${have} of ${MEDAL_TOTAL} medals`;
 }
 function updateMenuWeekly(){
  updateMenuChallenges();
@@ -5706,6 +5740,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // Whether the ball is down. Read the moment a putt stops, it says holed or
    // not without waiting to see whether a scorecard turns up.
    holeComplete:!!round.holeComplete,
+   // The challenge being played (challenge-play.js), read-only, so the smoke
+   // test can follow one without reading the bar's words.
+   challenge:challenge?{id:challenge.id,done:!!challenge.done,hole:challenge.hole,range:rangeMode,putting:round.putting?.mode,turn:turn(challenge.play),balls:challenge.play.results.map(r=>r.length)}:null,
    // How far the tracer's end sits from the ball, a number worth being able to
    // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
    // once the ball has stopped and the line caught up, it should be ~0.
