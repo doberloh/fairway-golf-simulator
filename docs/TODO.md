@@ -11,25 +11,370 @@ entry here once asserted the exact opposite of what the physics did, which is ho
 a correct behaviour nearly got "fixed" back into a bug.
 
 **Open work is above; everything finished is in `# Done` at the foot of the
-file.** Nothing was deleted and no entry lost a word -- a section that held both
-kinds keeps its heading in both halves, so a finished entry still says which
-piece of work it belonged to. Where an open item had been left as a note under a
-finished one, it was promoted to an item of its own and carries a breadcrumb
-back; live work nested inside the archive is the thing this split exists to
-prevent.
+file.** A section that holds both kinds keeps its heading in both halves, so a
+finished entry still says which piece of work it belonged to. Never nest an open
+item under a finished one.
 
-## The UI pass (10 October 2026)
+**Pared down on 16 October 2026, at the owner's request.** The open list had
+grown to about 120 entries in a month: some finished elsewhere and never ticked,
+some saying the same thing under three headings, some notes that were never
+work. Every entry open that morning is kept word for word in `# Done` under
+*The open list before the 16 October prune*, with a table saying what became of
+each: closed (and why), merged into an entry below, or carried over. **The
+entries below are short on purpose; "was:" names the original there, which has
+the full reasoning, the measurements and the how-to.** Read it before starting
+one.
+
+**Ideas are not here.** A feature, look or mode nobody has decided to build
+goes in [IDEAS.md](IDEAS.md), not in this list; the same day, the biome ideas
+and thirteen entries that were ideas rather than work moved there, each with
+its "was:" pointer. An entry here is something wrong, unfinished, or owed a
+check.
+
+## Found on GitHub
+
+- [ ] **The smoke step fails on GitHub, in `endless-round`.** The tests
+  workflow runs on every push to `main` (the two entries that said it never had
+  were wrong by 10 October at the latest), and the unit tests pass there. The
+  smoke step (`--software --only boot,range,endless-round`) failed on 6 of the
+  8 latest pushes, every time in `endless-round`: "putts from two yards and the
+  ball never dropped" (both 0.8 pushes), "waited 60s for Space to start a shot
+  (the game refused it)" (0.6 and 0.6.1), and a click timing out at "Start an
+  endless run" (0.7). A two-core runner without a graphics card is about twelve
+  times slower than here. Find out whether the game or the harness is wrong
+  before changing either: `gh run view <id> --log-failed` has the log, and the
+  run keeps its screenshots as the `smoke-screenshots` artifact. Once it runs
+  green, add it as a required check to the *main changes by reviewed pull
+  request* ruleset in `tools/github-protect.mjs` -- not before, or every pull
+  request waits for a check that never passes. (was: *The CI smoke step has
+  never run on GitHub*; *The tests workflow has never run on GitHub*)
+
+- [ ] **Three high-severity advisories in the build tools.** `npm audit`, run
+  16 October 2026: nothing in what the game ships (`--omit=dev`: 0); three
+  high in `micromatch`, pulled in by `vite-plugin-singlefile`. Build-time only,
+  run on the owner's own files, so no player is exposed; upgrading the plugin
+  clears it, and an upgrade means a build-size check and the attribution files.
+  (was: *Run a live dependency advisory audit*)
+
+## The owner's hands-on checks
+
+Only the owner can do these, with hardware or browsers the development machine
+does not have. Nothing here is a claim of support until it is done.
+
+- [ ] **A real launch monitor through the bridge.** Everything is checked
+  against a pretend bridge sending what `bridge/server.mjs` sends. Check: the
+  ball arrives and the big numbers update; the ClubData fields (club speed,
+  attack angle, path, face to target, closure rate, impact position) against
+  the device's own app; reconnecting, duplicated shots, putting. **And one
+  deliberate fade**: the R50's export signs sidespin opposite to its spin axis,
+  so if the connector sends backspin and sidespin rather than an axis, a fade
+  would arrive as a draw (RESEARCH, *The R50 session against the model*).
+  Record the operating system, firmware and connector version. (was: *Owner:
+  the launch-monitor panel with a real device*; *Validate against real
+  hardware*; *Nothing has been tested against a real monitor*; *Hardware
+  validation, when requested*; the monitor half of *Finish
+  target-browser/direct-file...*)
+
+- [ ] **A launch monitor from the iPhone, loaded from the bridge.** Start the
+  bridge with `FAIRWAY_HTTP_HOST` set to the computer's address, open
+  `http://<address>:1922` on the phone, **Launch monitor** in the main menu,
+  Connect bridge, arm, hit. If the phone cannot reach the computer: same Wi-Fi
+  (not a guest network), and Settings > Privacy & Security > Local Network.
+  (was: *Owner: a launch monitor from the iPhone*)
+
+- [ ] **run_fairway_server on a real Mac and a Linux machine.** Built and
+  tested on Windows only. Mac: unzip, Control-click Open, allow it in Privacy &
+  Security if asked, check it serves the game and prints a phone link. Linux:
+  `./run_fairway_server` from a terminal. (was: same heading)
+
+- [ ] **A real phone, an iPad and a weak laptop: the frame rate.** The layout is
+  checked under emulation; no real phone's graphics have been measured, and the
+  low tier is known to miss 30 fps on weak hardware. Report a problem shows the
+  tier and frame rate, so the test produces numbers to state honestly on the
+  page. (was: *Nobody has measured a real phone*; *Weak hardware: the owner is
+  testing it personally*)
+
+- [ ] **What the smoke test does not walk, by hand:** a multi-player stroke
+  round to the end, match play, scramble selection, a replay across holes,
+  leaving during a pending timer, the lab, a round saved and continued, free
+  flight on a phone, export and import round-trips, and Safari, Firefox and
+  Edge opening the file. (`mixed-group` now covers a monitor golfer and a
+  Swing Meter golfer in one group.) (was: *What the smoke test does not walk*;
+  *Browser timing and state-transition regression*; *Offline release matrix*;
+  the browser half of *Finish target-browser/direct-file...*)
+
+## Getting the word out
+
+The decisions behind these (MIT, open to everyone at once, the two audiences)
+are in the archived section of the same name.
+
+- [ ] **Ten testers, recruited one message at a time.** A request for help,
+  not a launch. Go where simulator owners already are -- the golf-simulator
+  subreddits, GolfSimulatorForum, the GSPro community, home-simulator Facebook
+  groups, each monitor's owner community -- and **check which are alive
+  first**; the list was written from general knowledge. Issues is where
+  reports go, with the Report a problem block. (was: same heading)
+
+- [ ] **Then one public moment, not a drip.** Hacker News, the procedural
+  generation and WebGL communities, the three.js showcase and the simulator
+  forums, the same week, one post each, **each leading with the play link**,
+  the repository under it. Say plainly that launch-monitor support is untested
+  and that it was built with Claude Code. Donation wording rules are in
+  DISTRIBUTION_REVIEW. (was: same heading; *Donation wording is the part that
+  carries risk*)
+
+## Play
+
+- [ ] **Export the range's shot data.** The shot list holds every shot of the
+  session; nothing downloads it. The website says "view your shot data" until
+  a release can; when one does, tell the owner -- the website's repository has
+  the matching item. (was: same heading)
+
+- [ ] **The shot panel forgets its numbers on a reload.** `lastShot` is memory
+  only, so a resumed round shows dashes mid-hole. Decide first whether a shot
+  from an earlier session should look as though it just happened. (was: *The
+  card forgets its numbers on a reload*)
+
+- [ ] **Saving: a full store says nothing.** `save()` in main.js swallows the
+  error, so Continue silently stops updating. Also, a saved round deletes in one
+  click and a saved course needs two taps; pick one. (was: *Save/import/export,
+  what is left*)
+
+- [ ] **The rest of the penalty rules**: an unplayable ball (Rule 19), a
+  provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
+  RESEARCH *Penalty relief* lists what was left out and why. (was: same heading)
+
+- [ ] **Accessibility**: keyboard-only play end to end, reduced motion, and
+  readability settings. The smaller-screen half is covered by `hud-reachable`.
+  (was: *Accessibility and smaller screens*)
+
+- [ ] **The floating tool windows are not swept for layout.** `hud-reachable`
+  checks the menu and play screen at nine sizes and the studio bar has its own
+  journey; the tool windows opened from the tray during play are not checked
+  for overlap. (was: *The floating tool windows during play...*)
+
+- [ ] **The green marker may still show a flag after the stick is pulled.** A
+  cup or target mark would be honest. Not re-checked since it was written.
+  (was: same heading)
+
+- [ ] **Send `DistanceToTarget` to the device**, so a monitor can switch itself
+  into putting mode. Blocked on units (`distM` in the log, yards nominally); a
+  wrong guess switches modes at the wrong distance. Needs the connector's
+  documentation or a measured test. (was: same heading)
+
+- [ ] **Rate courses by more than their length.** The sim handicap rates on
+  yardage alone; the generator knows the water, sand, trees and slopes, and the
+  USGA's obstacle factors would make a hard course rate hard. Also check the
+  placed bogey-rating formula against the Course Rating manual. (was: same
+  heading)
+
+- [ ] **WHS soft and hard caps, and exceptional scores** -- once profiles carry
+  a year of history. (was: same heading)
+
+## Ball flight and the bounce
+
+- [ ] **The next launch-monitor session: a real driver session, and roll.** The
+  6 October refit used Trackman's two tour rows for the driver because the R50's
+  driver swings were unrepresentative; against those rows the driver carries
+  262 yd to Trackman's 275 and peaks about 4% high. A normal driver session (and
+  a second day) settles it. For that session to be worth fitting: total spin
+  AND spin axis as reported, peak height, hang time to hundredths, descent angle
+  (kept out of the fit as a check), and **roll with the surface it happened
+  on** -- chips at 10, 20 and 30 yd, a 50 yd pitch, a 7 iron onto a green and a
+  driver on a fairway. Roll has no reference data at all yet, and it would also
+  anchor the rolling resistance's speed gain, which is a choice. Fit all
+  sources together and accept the residual: matching one device exactly is
+  overfitting to its algorithm. (was: *One last fit when the Garmin R50 data
+  lands*; *No driver data in either session*; *What the R50 session has to
+  carry*; *The PGA driver carries 262*; *Measured physics calibration*; *Roll
+  has no reference data*; *The gain magnitude is unanchored*)
+
+- [ ] **Hang time runs about 0.7 s long** against the GC3 while height, carry
+  and landing agree, so the descent's shape is off rather than its scale; no
+  `spinDrag` value moves it. Needs a look at how drag varies through the
+  descent. (was: *Hang time is 0.7 s long*)
+
+- [ ] **A stinger needs a 2-5 degree launch.** At a plausible 8-9 degrees the
+  lowest apex is 50-56 ft against a wanted 30-45 ft, which was the owner's
+  figure, not a sourced one; more spin raises it hard. Points at the lift
+  curve's shape at low launch. Find a sourced stinger apex before refitting.
+  (was: same heading)
+
+- [ ] **The bounce uses the paper's restitution and tilt but not its friction,
+  and a speed-dependent tilt the paper rejected** (`clamp(-incomingNormal/12,0,1)`
+  in physics.js). Swapping to its fixed tilt is not a drop-in: it moves a full
+  driver's run from 20.8 to 31.2 yd. It needs a refit of the whole bounce
+  against every anchor. RESEARCH *After the ball lands*. (was: *We use the
+  bounce paper's restitution and tilt but not its friction*)
+
+- [ ] **Deep rough no longer tracks firmness in bounce height** (1.48-1.61 ft
+  across the range, against a green's 2.81-4.52). Defensible -- the canopy does
+  the stopping -- but worth a second look. (was: same heading)
+
+- [ ] **Up to 0.36% of a course reads `semi` where it is painted `rough`**,
+  behind the green: the shader mows to `length + 8`, `fairwayWidth` stops at
+  `length`. Forgiving direction. (was: *Remaining drift behind the green*)
+
+## Generation and landscape
+
+- [ ] **Green surrounds are steeper than intended.** The shoulder blends off
+  the green's nominal size, not its outline, so a shaped green that bulges
+  outward gets a steeper bank: the worst surround goes 0.570 at shaping 0 to
+  0.709 at the default. Within the intended 0.6 at default settings in most
+  places, a perched green at slider extremes. Fix: blend off the outline, with a
+  maximum grade around green complexes; measure with raised and sunken greens
+  off. (was: *Shaping a green steepens the ground around it*; *Green surrounds
+  are steeper than intended on extreme settings*; *Green-surface shaping
+  quality*)
+
+- [ ] **Blind tee shots: a decision, not a fix.** 23 remain, and the forward
+  tee improves least (red blocked over 1 m on 12% of holes, blue 5%). Every
+  lever is a trade: lifting tees or flattening landing areas (the owner ruled
+  out building up land), per-pad lift (the complex stops reading as one piece),
+  or an aiming post on the crest, which is gameplay. (was: *23 blind tee shots
+  remain*; *Blind shots that remain*)
+
+- [ ] **Watercourses: endings and junctions.** A channel cannot flow into a
+  pond (a pond is raised in the drainage model); where two channels meet, or a
+  channel meets a pond, the geometry is a segment strip, not a triangulation;
+  9 endings in 24 courses fade out on a hillside. The curvature cap is what
+  keeps strips safe -- re-check it before widening rivers past 30 m or raising
+  meander. (was: *Watercourse endings that remain*; *Hydrology mesh quality*)
+
+- [ ] **More natural pond siting.** At high Water settings about one pond per
+  hole is placed however many are asked for. Prefer existing low ground, let
+  ponds share a basin, add wetlands and reeds. (was: same heading)
+
+- [ ] **Ponds and lakes end on a flat alpha.** Channels and the sea fade by
+  depth at their edges; ponds and lakes need a depth map per basin to match.
+  Per-body planar mirrors only if a probe's missing parallax ever reads wrong
+  on a big still lake. (was: *Lighting and water fidelity*)
+
+- [ ] **Turn `crownShare` on for the other biomes.** One number each; the
+  fingerprint says what moved. (was: same heading)
+
+- [ ] **The bush family is sized by height**, not spread -- the ferns' old bug.
+  `fern`, `gorse`, `heather`, `naupaka` and `shrub`, across six biomes; look at
+  each. (was: same heading)
+
+- [ ] **The baked trees' leaves go near-black.** Multiplying the green leaf
+  sheet by a green role colour darkens it; tint white, or use the sheet as
+  alpha only and take the colour from the role. (was: *Leaf tinting for the
+  baked trees*; its partner, a third crown shape, is in IDEAS.md)
+
+- [ ] **Deadfall does not collide.** A ball rolls through a fallen log; fine at
+  this size. (was: same heading)
+
+## Graphics
+
+- [ ] **Profile the slower descent through the trees** -- `clearCameraTrees`
+  does more work now the camera passes through canopies. About a minute for
+  `--only views`, asked first; redwood is the one to watch. (was: same heading)
+
+- [ ] **The redwood cull rebuild on a card that cannot hold 60 fps.** Its
+  170-195 ms stall shows only uncapped here; a struggling card may feel it. If
+  so, spread the 6.7 MB upload over several frames. No player report yet.
+  (was: *Check the redwood cull rebuild...*)
+
+- [ ] **Give Giant Redwood a fog of its own** -- it borrows Midwest's prairie
+  haze. A look decision for the owner; `tests/mist.test.mjs` lists it in
+  `BORROWS` until then. (was: same heading)
+
+## Tools and code
+
+- [ ] **The test suite's wall time** is set by its slowest file, six over 100 s.
+  Underneath: `nearest` is 15% of a generation and walks all holes with no
+  spatial rejection; a bounding box per hole would speed the tests, the bench
+  and the game's loading at once -- and the ground grid, 81% of generation, is
+  where any real loading win is. (was: *The suite's wall time is one file at a
+  time*; *Generation is still ~24% slower*)
+
+- [ ] **The per-hole tree list is dead code.** `h.trees` is built per hole in
+  `generateCourse` and only test fixtures without a world read it; its 22 m
+  keep-out reads as though it protects tee shots and protects nothing. Delete
+  it or make it the fallback it is. (was: same heading)
+
+- [ ] **Separate main.js concerns**: studio, round settings, scorecard, input
+  and monitor, presentation. Keep IDs and accessible names; no framework move
+  for file size alone. (was: same heading)
+
+- [ ] **The profiler should say how its slow frames were paced.** It runs
+  uncapped, so a large upload can show as a 170-195 ms stall that 60 fps never
+  sees; and something on the machine hitching every 200 ms once doubled a
+  biome's cost. Flag a case whose slow frames fall on a regular period and
+  re-run it; consider a fresh browser per case. (was: *The profiler's worst
+  frames are not a player's*; *The profiler can be fooled...*)
+
+- [ ] **Fewer, smaller documents, the rest of the 1 October plan.** The first
+  step (ARCHITECTURE.md as the short entry point) is done; moving TODO's
+  `# Done` and PROJECT_HANDOFF's dated narrative into a HISTORY.md, merging
+  LANDSCAPE_RESEARCH into RESEARCH, and the rest of that plan have not started.
+  The plan, with its order and its traps, is in the archive. (was: *Fewer,
+  smaller documents*)
+
+# Done
+
+## The open list before the 16 October prune
+
+The owner asked on 16 October 2026 for the TODO list to be pared down: "there
+is a lot of stuff in there that isn't needed anymore". Below is every entry that
+was open that morning, word for word, under its original heading (one level
+down). **The boxes were removed, so nothing here reads as open**; the two
+already-ticked entries that had been left in the open half keep their ticks.
+Each entry was checked against the code, GitHub and RESEARCH.md that day.
+
+**What became of them.** Most were carried over, shortened, into the new open
+list, whose entries name their original here with "was:". Duplicates were
+merged: the launch-monitor checks (six entries), the real-device checks (two),
+the by-hand browser checks (four), the next launch-monitor session (seven), the
+green surrounds (three), blind tee shots (two), watercourses (two), the
+green-reading options (seven), the profiler (two), range targets (two, the same
+text twice). The sixteen biome ideas went across word for word, and later that
+day moved to IDEAS.md with the other entries that were ideas rather than work
+(each with its "was:" line); the Haunted Hollow follow-ups went to *Graphics*,
+*Tools and code* and IDEAS.md; the empty *Selling
+it* and *Sounds* headings were dropped. **Closed, and why:**
+
+| Entry | Why it was closed |
+| --- | --- |
+| *The flag marker and the aim marker overlap on screen* | Already ticked: fixed 10 October; left in the open half by mistake |
+| *A panel moved while it is folded away for a shot...* | Already ticked: closed off 13 October |
+| *The CI smoke step has never run on GitHub* | Untrue: it runs on every push to `main`, and fails; replaced by *The smoke step fails on GitHub* |
+| *The tests workflow has never run on GitHub* | Untrue: same runs; its required-check step moved into that entry |
+| *ACCEPTED AS IS ... The hole flyover flies through the trees* | Accepted by the owner on 23 September and, in its own words, not pending work. Its measurements stay here; reopen only if the flyover looks wrong |
+| *Progress is weighted by measured cost...* | A caveat, not work: the bar cannot stall or go backward, and a test holds both |
+| *Generation is still ~24% slower in wall time* | A measurement; its one lever (the ground grid) is in *The test suite's wall time* |
+| *Donation wording is the part that carries risk* | A rule, kept in DISTRIBUTION_REVIEW; the posting entry points there |
+| *The library card still shows the seed* | Deliberate, by its own words |
+| *A name is suggested, never enforced as unique* | Harmless: import dedupes on name and settings together |
+| *UNEXPLAINED ... The far ring around greens* | The owner said not to chase it; a measurement, not work |
+| *Six metrics in this project have now measured the wrong thing* | A habit, now in AGENTS.md: a metric imports its geometry from `src`, and invariants must be zero |
+| *Wider generation stress tests* | Done by `tools/bench.mjs`: every biome, many seeds, slider sweeps, invariants that must be zero |
+| *Generation worker and progress* | Untrue: `generateWorldSteps` yields to a real progress bar, and `gen-pool.js` workers compute the ground heights |
+| *Terrain/vegetation/house LOD* | Superseded by October's frame-rate work (*OPUS5.5 GFX and OPTIMIZATIONS*); reopen from a profile that shows a bottleneck |
+| *Home interiors and regional architecture* | Never asked for from play; an idea, not a defect |
+| *A sink pond can be given a water plane its basin cannot reach* | Guarded at the call site; measured at float noise (worst 0.02 m) |
+| *The debris tails point along the mean wind* | Invisible at this sprite size, by its own words |
+| *Choose public publisher/support details...* | Done in effect: Fairway has been released publicly under the owner's name since 7 October |
+| *Run a live dependency advisory audit* | Run 16 October; the result is the open entry *Three high-severity advisories in the build tools* |
+| *Range dispersion is always zero* | Untrue since the Swing Meter: tap timing makes the miss, and a monitor's ball is never added to, by design (PLAYING, dispersion) |
+| *`CONTACT_GAIN` in contact.js has been declared and unused* | It is gone; no file names it |
+| *First-hop DISTANCE now descends slightly with firmness*; *7 iron on a Burnt green runs 11.4 yd* | Both predate the 13 October green refit (*Spin-back rework*). The green's bounce is fitted as one piece by `tools/green-fit.mjs`; a defect there is a target to add to that fit, not an entry |
+| *One last fit when the Garmin R50 data lands* | Done 6 October (RESEARCH, *The flight refitted against three launch monitors*); what is still wanted is in *The next launch-monitor session* |
+| *No driver data in either session, and the R50 session will have it* | Untrue: the R50's driver swings were set aside as unrepresentative; carried into the same entry |
+
+### The UI pass (10 October 2026)
 
 Asked for by the owner on 10 October, in this order, on the branch
 `shot-panel-and-monitor-mode`. Done so far is under the same heading in
 `# Done`.
 
-- [ ] **Profile the slower descent through the trees.** It passes through
+- **Profile the slower descent through the trees.** It passes through
   canopies now instead of over them, and `clearCameraTrees` does more work when
   it does. Not profiled (AGENTS.md: ask first); about a minute for
   `--only views`. Redwood is the biome to watch.
 
-## Found by driving the built game
+### Found by driving the built game
 
 
 
@@ -63,7 +408,7 @@ turned up alongside. The one outright crash is fixed and recorded under the
 same heading in `# Done`.
 
 
-- [ ] **The floating tool windows during play have not been swept for layout.**
+- **The floating tool windows during play have not been swept for layout.**
   `hud-reachable` covers the main menu and the play screen at nine sizes, and
   every menu panel and tab is opened on a phone both ways up. The tool windows
   opened from the tray during play are not checked for overlap the same way.
@@ -72,26 +417,26 @@ same heading in `# Done`.
   *Shot views and the studio bar* in `# Done`.)
 
 
-- [ ] **Nobody has measured a real phone.** The layout is checked under
+- **Nobody has measured a real phone.** The layout is checked under
   emulation at a phone's size; the GPU is not. The low tier's known weakness on
   weak hardware is the whole first impression on a phone, and the owner's own
   phone and iPad test is the next data point. The tester diagnostic reports
   the tier and the frame rate, so that test produces numbers.
 
-- [ ] **The CI smoke step has never run on GitHub.** There is no remote yet,
+- **The CI smoke step has never run on GitHub.** There is no remote yet,
   so it has been proven locally with `--software` and not on a runner. A
   runner has two to four cores against the 32 it was measured on; the job
   has a 45-minute ceiling and every smoke wait scales twelvefold without a
   GPU. If the first push fails there, look first at Chromium's system
   libraries (which `--with-deps` installs) and at a timeout.
 
-- [ ] **What the smoke test does not walk is still checked by hand:**
+- **What the smoke test does not walk is still checked by hand:**
   multi-player rounds, match play and scramble selection, the lab, the
   launch-monitor panel against a live bridge, a round saved and continued,
   free flight on a phone, Safari and Firefox, and any REAL phone or tablet --
   the phone journeys run in a browser that emulates one.
 
-- [ ] **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
+- **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
   trees, and has since redwoods landed.** Owner's call: not worth changing for
   now. Left open because it is still true, NOT because it is waiting on
   somebody -- do not pick this up as pending work, and do not re-report it as a
@@ -106,13 +451,13 @@ same heading in `# Done`.
   the ring: a 200 m orbit is a different shot. Growing the radius instead, or
   both, needs a look on screen.
 
-- [ ] **Generation is still ~24% slower in wall time than it was.** The blocking
+- **Generation is still ~24% slower in wall time than it was.** The blocking
   work is unchanged at ~7.0 s for an 18-hole feature-heavy course; the extra is
   the frame handed back at each pause, and it is the price of the overlay moving
   at all. Worth revisiting only if the grid itself gets cheaper -- at 81% of the
   work it is where any real win is, not in the pacing.
 
-- [ ] **Progress is weighted by measured cost, not by real-time feedback.** The
+- **Progress is weighted by measured cost, not by real-time feedback.** The
   PHASE table in course.js and LOOP_WEIGHT in terrain-grid.js were fitted to one
   profile on one machine. A very different course shape could make the bar
   advance unevenly. It cannot stall or go backward -- there is a test for both --
@@ -120,9 +465,9 @@ same heading in `# Done`.
   half of the bar is an estimate too: shader compilation cannot report its
   progress, so the bar creeps through it, paced by the last compile.
 
-## Reading a green without the overlays
+### Reading a green without the overlays
 
-- [ ] **Bands that follow the contour may alias at distance, and this has not
+- **Bands that follow the contour may alias at distance, and this has not
   been tested on screen.** The anti-alias fade is measured on the PLAN coordinate
   deliberately -- measuring it on the bent one once made bands vanish on exactly
   the slopes they describe -- so raising the bend raises the frequency without
@@ -131,36 +476,36 @@ same heading in `# Done`.
   at 2.25x, below it again, so the risk is back to modest; it matters again if
   anyone raises the slider.
 
-## Tee boxes: what was wrong, and what was not
+### Tee boxes: what was wrong, and what was not
 
 Reported from play on 2026-09-25, with an instruction to measure before
 changing anything. Worth it: one of the three assumptions was wrong.
 
-- [ ] **23 blind tee shots remain and every lever is a trade.** Lifting tees or
+- **23 blind tee shots remain and every lever is a trade.** Lifting tees or
   flattening the landing area, both of which the owner ruled out in principle
   ("without building up too much land"). Needs a decision rather than a fix.
 
-- [ ] **No picture of a tee complex from above.** The overview camera frames the
+- **No picture of a tee complex from above.** The overview camera frames the
   whole course from very high with clouds in the way, so the stagger is
   evidenced by numbers rather than by an image. A camera that frames one tee
   complex would be worth having for exactly this.
 
-## Playing on a phone
+### Playing on a phone
 
-- [ ] **Owner: the launch-monitor panel with a real device.** It is checked
+- **Owner: the launch-monitor panel with a real device.** It is checked
   against a pretend bridge that sends what `bridge/server.mjs` sends. A real
   connector may report the ball differently -- or never -- and the big numbers
   wait for the monitor to see the next ball.
 
-## On a phone's home screen
+### On a phone's home screen
 
-- [ ] **Owner: run_fairway_server on a real Mac and a Linux machine.** Built
+- **Owner: run_fairway_server on a real Mac and a Linux machine.** Built
   and packaged from Windows (ad-hoc signed for macOS, checked in the binary)
   and tested on Windows only. On a Mac: unzip, Control-click Open, allow it in
   Privacy & Security if asked, and check it serves the game and prints a phone
   link. On Linux: `./run_fairway_server` from a terminal.
 
-- [ ] **Owner: a launch monitor from the iPhone, loaded from the bridge.**
+- **Owner: a launch monitor from the iPhone, loaded from the bridge.**
   Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
   open `http://<address>:1922` on the phone, **Launch monitor** in the main
   menu, Connect bridge, arm, hit. Checked in emulation against a pretend
@@ -168,13 +513,13 @@ changing anything. Worth it: one of the three assumptions was wrong.
   computer at all: same Wi-Fi (not a guest network), and Settings > Privacy &
   Security > Local Network.
 
-- [ ] **It needs a connection every time it opens.** Offline play is a service
+- **It needs a connection every time it opens.** Offline play is a service
   worker that keeps a copy of the game on the phone: about thirty lines, plus a
   cache named by the build stamp so an update replaces the old copy cleanly,
   plus a smoke journey that goes offline and reloads. It must never register
   when the file is opened from disk.
 
-## Getting the word out
+### Getting the word out
 
 Planned on 2026-09-25. The decisions below are the owner's and are recorded so
 the next person does not reopen them.
@@ -217,7 +562,7 @@ first 327 commits carry its co-author line). The two-audience reasoning above
 is kept because it is still true -- it is the risk being accepted, not a
 mistake: a monitor owner whose first shot fails will say so publicly.
 
-- [ ] **Export the range's shot data.** The owner's copy for the website's
+- **Export the range's shot data.** The owner's copy for the website's
   practice panel said "view and export your shot data"; the game has no such
   export (it downloads the scorecard, saved rounds and courses, and nothing
   else), so the page says "view your shot data" until it does. The shot list
@@ -225,7 +570,7 @@ mistake: a monitor owner whose first shot fails will say so publicly.
   owner: the website's repository has the matching item to put "and export"
   back.
 
-- [ ] **Ten testers, recruited one message at a time.** Not a launch -- a
+- **Ten testers, recruited one message at a time.** Not a launch -- a
   request for help, which is a different thing and gets a far better response
   rate. With the repository public, Issues is where their reports should go;
   that does not remove the need for the diagnostic block, because the thing a
@@ -236,7 +581,7 @@ mistake: a monitor owner whose first shot fails will say so publicly.
   specific monitor. **Check which of those are actually alive first**; this
   list was written from general knowledge, not from looking.
 
-- [ ] **Validate against real hardware.** No longer the gate before
+- **Validate against real hardware.** No longer the gate before
   approaching simulator owners (see the 8 October reversal above), but still
   the first thing that audience checks and the weakest claim the project
   makes: nothing has been tested against a physical launch monitor, and the
@@ -245,7 +590,7 @@ mistake: a monitor owner whose first shot fails will say so publicly.
   never been checked against a real session. Recorded here as the gate, not as
   a plan: how it gets done is the owner's call.
 
-- [ ] **Then one public moment, not a drip.** Hacker News, the procedural
+- **Then one public moment, not a drip.** Hacker News, the procedural
   generation and WebGL communities, the three.js showcase, and the simulator
   forums -- same week, one post each. **Lead every one of them with the play
   link, not the repository.** Open source is what makes the developer half of
@@ -254,7 +599,7 @@ mistake: a monitor owner whose first shot fails will say so publicly.
   click, and they look at the source afterwards. "Show HN" with a repository
   link under a play link is the right shape; a repository link alone is not.
 
-- [ ] **Donation wording is the part that carries risk, not the licence.**
+- **Donation wording is the part that carries risk, not the licence.**
   Recorded in DISTRIBUTION_REVIEW and worth repeating here because it is
   written at the moment the page goes up: do not imply a donation is required
   to play, unlocks anything that already works, buys promised hardware
@@ -263,12 +608,12 @@ mistake: a monitor owner whose first shot fails will say so publicly.
   an obligation, but a donation page for a game built on their free work must
   not read as though the money reaches them.
 
-## Making the repository public
+### Making the repository public
 
 Asked for on 2026-09-25: organise the tree and the documentation for a public
 GitHub repository, and stop shipping what nobody needs.
 
-- [ ] **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
+- **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
   is active, but GitHub shows 0 runs, on any branch, after many pushes (checked
   3 October, and again on 7 October in the new public repository, with Actions
   enabled and the workflow listed as active, after two pushes to `main`). Worth a look at the repository's Actions tab: Actions may be
@@ -277,7 +622,7 @@ GitHub repository, and stop shipping what nobody needs.
   changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
   not before, or every pull request waits for a check that never comes.
 
-- [ ] **Fewer, smaller documents.** Asked for 1 October. **The first step is
+- **Fewer, smaller documents.** Asked for 1 October. **The first step is
   done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
   14 KB, and AGENTS.md says to search the long documents rather than read them**
   -- see the Done entry. The rest below is still a plan; nothing else has moved.
@@ -333,12 +678,12 @@ GitHub repository, and stop shipping what nobody needs.
     starts at one squashed commit, so that archive is the only record of why
     most decisions went the way they did).
 
-## Selling it: the attribution pass
+### Selling it: the attribution pass
 
 
-## Getting it into other people's hands
+### Getting it into other people's hands
 
-- [ ] **Weak hardware: the owner is testing it personally**, on a phone, an
+- **Weak hardware: the owner is testing it personally**, on a phone, an
   iPad and a laptop, and the answer is whatever those give. Decided 25
   September: there is no route to a broad device matrix for a solo project and
   waiting for one would stop everything. The open item saying the low tier
@@ -347,55 +692,55 @@ GitHub repository, and stop shipping what nobody needs.
   devices and stated honestly on the page, rather than discovered by a
   stranger.
 
-## Networked multiplayer
+### Networked multiplayer
 
 Asked for on 2026-09-25 as a feasibility study, not a plan.
 
-- [ ] **The product question is unanswered and blocks any code.** Two people in
+- **The product question is unanswered and blocks any code.** Two people in
   different houses, or several people standing in one bay? They want different
   things and the second is nearly free.
 
-- [ ] **Version skew would become a shipping constraint.** GENERATOR_VERSION was
+- **Version skew would become a shipping constraint.** GENERATOR_VERSION was
   at 32 and moved twice on the night the study was written. Once people play
   together, a bump costs a MATCH rather than a saved round, and the handshake
   has to refuse a mismatch at the door.
 
-## A course has a name, not a serial number
+### A course has a name, not a serial number
 
 Asked for on 2026-09-25, in the run-up to letting other people play it. One
 idea under several bullet points: a course is presented by what it is CALLED,
 and the development chrome around that goes.
 
-- [ ] **The library card still shows the seed** -- deliberately, since that is
+- **The library card still shows the seed** -- deliberately, since that is
   metadata about a stored course rather than chrome on the playing screen. Worth
   a second look if seeds are being retired from the player's view generally.
 
-- [ ] **A name is suggested, never enforced as unique.** Two saved courses can
+- **A name is suggested, never enforced as unique.** Two saved courses can
   have the same name; the dedupe on import compares name AND settings, so this
   does not cause a collision there. It would read oddly in a long library.
 
-## Shot numbers that stay on the card
+### Shot numbers that stay on the card
 
 Asked for on 2026-09-24, in the run-up to letting other people play it.
 
-- [ ] **The card forgets its numbers on a reload.** `lastShot` is memory only,
+- **The card forgets its numbers on a reload.** `lastShot` is memory only,
   so resuming a saved round opens with dashes and "Nothing hit yet" even though
   the round is mid-hole. Saving the last shot with the round would fix it; the
   question first is whether a shot from a previous SESSION should be presented as
   though it just happened.
 
-- [ ] **The range's own session summary is still its own thing.** Average carry
+- **The range's own session summary is still its own thing.** Average carry
   and offline spread across the session sit in the paragraph above the grid
   rather than being fields you can tick. They are session statistics rather than
   shot readings, which is a real distinction -- but somebody will want them as
   tiles.
 
-- [ ] **Nothing has been tested against a real monitor.** Every extra field is
+- **Nothing has been tested against a real monitor.** Every extra field is
   exercised through the lab and through `parseLaunchMessage`, which is the same
   code path a device drives, but no physical device has sent a ClubData block
   into this. First thing to check at the R50 session.
 
-## Greens read better if the art style bends for greens only
+### Greens read better if the art style bends for greens only
 
 Asked for on 2026-09-24, after the second retune. **Updated 30 September:**
 the five green sliders are now two (definition, bands) plus a course-wide grass
@@ -416,7 +761,7 @@ the old program from cache.
 
 **Ordered by payoff for how much style is broken.** The first is the one to do.
 
-- [ ] **Give greens their own lighting ramp -- this is the blocker, and it is
+- **Give greens their own lighting ramp -- this is the blocker, and it is
   small.** `toonRamp()` in `textures.js` is four texels (90, 145, 205, 245) on
   `LinearFilter`, sampled by three at `dot(normal,light)*0.5+0.5`; texel centres
   stop at .875, so a near-flat green under a sun above about 48 degrees is
@@ -453,7 +798,7 @@ the old program from cache.
   50, 65 and 80 degrees of sun, against the numbers above. Anything below about
   15 out of 255 at 65 degrees means it did not land.
 
-- [ ] **Cross-cut the bands instead of striping them.** A stripe bends one way,
+- **Cross-cut the bands instead of striping them.** A stripe bends one way,
   so it describes slope along one axis and says nothing across it; a grid bends
   both ways and reads like a wireframe laid on the surface, which is shape
   information rather than brightness information and therefore survives midday.
@@ -472,7 +817,7 @@ the old program from cache.
   want re-tuning downward; the owner already has bands at 10%, which suggests
   starting the grid lower still.
 
-- [ ] **Contour lines on greens only, at a fine interval.** The most legible cue
+- **Contour lines on greens only, at a fine interval.** The most legible cue
   we own by a distance -- our own note on the course-wide toggle says so, because
   it turns a slope into a spacing you can count -- and the reason it is off is
   that a metre-interval topographic map across the whole course looks absurd.
@@ -490,7 +835,7 @@ the old program from cache.
   helper**, which is the thing the owner asked to do without. Ship it off by
   default and let them decide.
 
-- [ ] **Bake shading into each green when the course is built.** Everything
+- **Bake shading into each green when the course is built.** Everything
   sun-driven collapses at midday because that is what midday does; shading baked
   from the geometry does not care where the sun is. `localReliefField()` in
   `ground.js` already does exactly this at course scale, into the `localRelief`
@@ -505,7 +850,7 @@ the old program from cache.
   --tier full --since` before and after, and it is not worth more than a few
   hundred milliseconds.
 
-- [ ] **Slope in colour, not brightness.** The ramp quantises LIGHT; it does not
+- **Slope in colour, not brightness.** The ramp quantises LIGHT; it does not
   touch the colour of the grass, so hue is an entirely unused channel on a
   surface where the brightness channel is saturated. A few per cent cooler
   running uphill, warmer running down, keyed off the same tilted normal
@@ -516,7 +861,7 @@ the old program from cache.
   -- worth reading first, because it already solved the "does this look like
   grass" problem once.
 
-- [ ] **The honest caveat, to be repeated to anyone who picks this up.** Part of
+- **The honest caveat, to be repeated to anyone who picks this up.** Part of
   why a green reads flat is not shading at all: you are looking at it from near
   ground level at a shallow angle, which compresses the slope out of the picture
   geometrically. No shading cue fixes viewing geometry -- it is why real golfers
@@ -525,14 +870,14 @@ the old program from cache.
   cues; that is what produced a green that read as a lit object rather than a
   shaped one and had to be walked back.
 
-## Green and bunker shapes
+### Green and bunker shapes
 
 Both outlines were a smooth oval. Measured over 108 greens and 284 bunkers:
 widest radius over narrowest ran 1.15-1.40 for greens and 1.11-2.40 for bunkers,
 and a bend figure that is non-zero only where an outline turns back on itself was
 **0.00 for all 392 shapes**. Nothing had a lobe or a waist anywhere.
 
-- [ ] **Shaping a green steepens the ground around it, and the shoulder blend is
+- **Shaping a green steepens the ground around it, and the shoulder blend is
   why.** The shoulder falls away from the green's NOMINAL size and does not
   follow the outline, so wherever a shaped green bulges outward its shoulder has
   less room. On default terrain the steepest surround goes 0.570 at slider 0 to
@@ -546,16 +891,16 @@ and a bend figure that is non-zero only where an outline turns back on itself wa
   `raisedGreens: 0, sunkenGreens: 0` to separate the unintended steepening
   from the intended.
 
-- [ ] **True scalloped edges need a data channel that does not exist.** Capes and
+- **True scalloped edges need a data channel that does not exist.** Capes and
   bays -- the fingers of grass that intrude into sandbelt bunkers -- want
   harmonics above the two a bunker carries, and `meta` in the hazard texture is a
   full vec4 (phase, kind, wave2, wave3). Adding a third means changing the
   texture layout, which is where the paint-versus-lie risk lives. Worth doing
   only if the amplitude alone turns out not to be enough on screen.
 
-## Tee surrounds, and the moat that made them
+### Tee surrounds, and the moat that made them
 
-- [ ] **UNEXPLAINED, AND THAT IS FINE FOR NOW, 23 September 2026. The far ring
+- **UNEXPLAINED, AND THAT IS FINE FOR NOW, 23 September 2026. The far ring
   around greens is probably structural rather than a pile-up.** Owner's call:
   keep it on the list, do not chase it. It was recorded earlier as bunching at a
   hard edge, but it sits at 179-205% at 55-120 m even with the edge softened and
@@ -567,7 +912,7 @@ and a bend figure that is non-zero only where an outline turns back on itself wa
   the soft-edge change where nobody will think to look for a correction.
   `tools/bench.mjs surrounds --set trees=65` is what measures it.
 
-## Obstructions in the shot path
+### Obstructions in the shot path
 
 Measured across 216 holes, 648 tee shots (8 biomes x 3 seeds x 3 tees): **29 tee
 shots (4.5%) have a trunk sitting on the straight line to the fairway**, the
@@ -581,7 +926,7 @@ outside a corridor", which near the tee is right beside the tee box. There IS a
 hole-local origin while the tees sit 11 to 85 m away from it -- and that list is
 dead anyway (see below), so the bubble never protected anything.
 
-- [ ] **The per-hole tree list is dead code.** `h.trees` is built in
+- **The per-hole tree list is dead code.** `h.trees` is built in
   `generateCourse` for every hole and nothing reads it once a world exists:
   physics takes `course.world?.trees` first, and the renderer, vegetation and
   camera all read `world.trees` only. `course.trees` survives as a fallback for
@@ -589,9 +934,9 @@ dead anyway (see below), so the bubble never protected anything.
   hole and carries a stale keep-out rule that reads like it is protecting tee
   shots. Delete it or make it the fallback it actually is.
 
-## Ball flight, after the GC3 session
+### Ball flight, after the GC3 session
 
-- [ ] **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
+- **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
   between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
   tuned from here. The 6 October refit left it at 0.70 s, and putting hang into
   the fit with a heavy weight moved it only to 0.66 s while making height, carry
@@ -601,7 +946,7 @@ dead anyway (see below), so the bubble never protected anything.
   its scale -- and descent angle running 1.5 degrees steep says the same. Needs
   a look at how drag varies through the descent, with its own evidence.
 
-- [ ] **One last fit when the Garmin R50 data lands.** A third device makes the
+- **One last fit when the Garmin R50 data lands.** A third device makes the
   spread readable instead of a two-way argument: with two sources that disagree
   there is no way to tell which is off, and with three the odd one out shows.
   Fit against all three together, report the residual against each, and accept
@@ -609,13 +954,13 @@ dead anyway (see below), so the bubble never protected anything.
   exactly would be overfitting to that device's algorithm. Worth asking whether
   the session can include driver, since the item below is still open.
 
-- [ ] **No driver data in either session, and the R50 session will have it.**
+- **No driver data in either session, and the R50 session will have it.**
   Confirmed 23 September 2026. Both existing sets are irons and wedges, 78 to
   142 mph, so the high-speed low-spin corner is entirely unmeasured -- and it is
   the corner the original six-row tour fit was most confident about, which is
   the combination that hides an error rather than showing one.
 
-- [ ] **What the R50 session has to carry for the fit to be worth doing.**
+- **What the R50 session has to carry for the fit to be worth doing.**
   Written down before the data arrives, because every one of these has already
   cost something once:
   - **Total spin AND spin axis, reported not derived.** The GC3 gave both
@@ -640,32 +985,32 @@ dead anyway (see below), so the bubble never protected anything.
 
 Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
 
-## Priority 1: correctness and continuity
+### Priority 1: correctness and continuity
 
-- [ ] **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
+- **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
 
 
-- [ ] **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
+- **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
 
-- [ ] **Six metrics in this project have now measured the wrong thing.** Each had a filter or a clamp that excluded exactly the case under test. Worth a short checklist in the tooling: before trusting a number, confirm it can move.
+- **Six metrics in this project have now measured the wrong thing.** Each had a filter or a clamp that excluded exactly the case under test. Worth a short checklist in the tooling: before trusting a number, confirm it can move.
 
-- [ ] **Leaf tinting for the baked trees.** The sprite sheet is green; multiplying it by a green role colour comes out near-black. Either tint white and accept the sheet's own colour, or use the sheet as alpha only and take RGB from the role.
+- **Leaf tinting for the baked trees.** The sprite sheet is green; multiplying it by a green role colour comes out near-black. Either tint white and accept the sheet's own colour, or use the sheet as alpha only and take RGB from the role.
 
-- [ ] **Only two crown shapes.** Acceptable while the crown is seventy metres up, but a third would want either a pack with a single-mass conifer or a procedural plume built from overlapping foliage.
+- **Only two crown shapes.** Acceptable while the crown is seventy metres up, but a third would want either a pack with a single-mass conifer or a procedural plume built from overlapping foliage.
 
-- [ ] **The bush family is still sized by height.** Same bug the ferns had -- ground cover should be sized by its spread. `fern`, `gorse`, `heather`, `naupaka` and `shrub` all draw from it across six biomes, so it wants doing on its own with a look at each.
+- **The bush family is still sized by height.** Same bug the ferns had -- ground cover should be sized by its spread. `fern`, `gorse`, `heather`, `naupaka` and `shrub` all draw from it across six biomes, so it wants doing on its own with a look at each.
 
-- [ ] **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
+- **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
 
-- [ ] **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
+- **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
 
-- [ ] **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
+- **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
 
-- [ ] **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
+- **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
 
-- [ ] **Browser timing and state-transition regression -- partly covered now.** `npm run smoke` drives the three-second cup reveal through to the scorecard and the next hole, a replay, a mulligan, and Enter skipping a flight. **Still manual:** replay across holes, multi-player completion, scramble selection, and cancellation during pending timers.
+- **Browser timing and state-transition regression -- partly covered now.** `npm run smoke` drives the three-second cup reveal through to the scorecard and the next hole, a replay, a mulligan, and Enter skipping a flight. **Still manual:** replay across holes, multi-player completion, scramble selection, and cancellation during pending timers.
 
-## New biome ideas (9 October)
+### New biome ideas (9 October)
 
 Sixteen landscapes the owner and Claude drew up together, with what each would
 cost. Ordered cheapest first within each group. **Haunted Hollow was
@@ -680,162 +1025,160 @@ so several of these play differently as well as look different.
 
 **Haunted Hollow follow-ups**
 
-- [ ] **Check the redwood cull rebuild on a graphics card that cannot hold 60 fps.** On the development machine the 170-195 ms stall at the start of the opening descent appears only with the frame rate uncapped (RESEARCH, *The redwood hitch: an uncapped-profiler stall*). A card already struggling on the redwood course queues frames the same way and may feel it. If so: spread each rebuild's 6.7 MB upload over several frames, measured before and after. Not done by decision (9 October): no player report, and nothing here reproduces it at 60 fps.
-- [ ] **The profiler's worst frames are not a player's.** It runs uncapped, so frames pile up behind the graphics card and a large upload can stall it for 170-195 ms where normal 60 fps pacing shows nothing -- that is the whole of the redwood hitch. A worst-frame or p99 figure wants a second run at normal pacing before it is believed, and the report should say which it was.
-- [ ] **The profiler can be fooled by something on the machine hitching every 200 ms.** One run in four, either biome, a burst of 25-100 ms frames at exactly 5 Hz, and the median goes up 1-2 ms with it. One browser for a whole sweep also makes later cases worse. It reported Haunted Hollow at twice its real cost. The harness should flag a case whose slow frames fall on a regular period (and re-run it), and consider a fresh browser per case.
-- [ ] **A glow round the lit lanterns.** An additive point-sprite halo drew a dark square behind every lit face, even with the mist patch kept off it (RESEARCH, *Second pass: full fantasy*). Find what in the frame does that before trying again; the lit face reads without it.
-- [ ] **Giant Redwood has no fog of its own.** Found while adding Haunted Hollow: `profileFor` falls back to Midwest, and the test that claimed every biome had a profile could not fail. The grove's "wet air" has been prairie haze since it was added. A look decision for the owner; `tests/mist.test.mjs` lists redwood in `BORROWS` until it is made.
+- **Check the redwood cull rebuild on a graphics card that cannot hold 60 fps.** On the development machine the 170-195 ms stall at the start of the opening descent appears only with the frame rate uncapped (RESEARCH, *The redwood hitch: an uncapped-profiler stall*). A card already struggling on the redwood course queues frames the same way and may feel it. If so: spread each rebuild's 6.7 MB upload over several frames, measured before and after. Not done by decision (9 October): no player report, and nothing here reproduces it at 60 fps.
+- **The profiler's worst frames are not a player's.** It runs uncapped, so frames pile up behind the graphics card and a large upload can stall it for 170-195 ms where normal 60 fps pacing shows nothing -- that is the whole of the redwood hitch. A worst-frame or p99 figure wants a second run at normal pacing before it is believed, and the report should say which it was.
+- **The profiler can be fooled by something on the machine hitching every 200 ms.** One run in four, either biome, a burst of 25-100 ms frames at exactly 5 Hz, and the median goes up 1-2 ms with it. One browser for a whole sweep also makes later cases worse. It reported Haunted Hollow at twice its real cost. The harness should flag a case whose slow frames fall on a regular period (and re-run it), and consider a fresh browser per case.
+- **A glow round the lit lanterns.** An additive point-sprite halo drew a dark square behind every lit face, even with the mist patch kept off it (RESEARCH, *Second pass: full fantasy*). Find what in the frame does that before trying again; the lit face reads without it.
+- **Giant Redwood has no fog of its own.** Found while adding Haunted Hollow: `profileFor` falls back to Midwest, and the test that claimed every biome had a profile could not fail. The grove's "wet air" has been prairie haze since it was added. A look decision for the owner; `tests/mist.test.mjs` lists redwood in `BORROWS` until it is made.
 
 **Settings only, no new assets**
 
-- [ ] **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
-- [ ] **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
-- [ ] **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
-- [ ] **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
+- **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
+- **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
+- **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
+- **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
 
 **Unused models already in vendor/**
 
-- [ ] **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
-- [ ] **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
-- [ ] **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
-- [ ] **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
-- [ ] **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
+- **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
+- **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
+- **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
+- **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
+- **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
 
 **Some new building**
 
-- [ ] **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
-- [ ] **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
-- [ ] **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be grown the way the redwoods were (`tools/grow.mjs`). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
-- [ ] **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
-- [ ] **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
-- [ ] **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
+- **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
+- **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
+- **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be grown the way the redwoods were (`tools/grow.mjs`). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
+- **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
+- **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
+- **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
 
-## Priority 2: landscape and performance
+### Priority 2: landscape and performance
 
-- [ ] **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
+- **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
 
-- [ ] **Bridges and crossings.** Channels currently cross walking routes with no deck. A first attempt shipped `src/bridges.js`, which overrode contact height over each deck footprint while the ground mesh kept its carved channel; it was removed because a height override is not a solid — a ball flying *under* a deck registered as landing on it, and the override fought every other height consumer. A real crossing needs an actual collision volume with an underside, sitting above ground that is left alone, rather than a second height function layered over the terrain.
+- **Bridges and crossings.** Channels currently cross walking routes with no deck. A first attempt shipped `src/bridges.js`, which overrode contact height over each deck footprint while the ground mesh kept its carved channel; it was removed because a height override is not a solid — a ball flying *under* a deck registered as landing on it, and the override fought every other height consumer. A real crossing needs an actual collision volume with an underside, sitting above ground that is left alone, rather than a second height function layered over the terrain.
 
-- [ ] **Home interiors and regional architecture.** Interiors, varied window patterns and per-region architecture beyond the warm/arid palette split are still unbuilt.
+- **Home interiors and regional architecture.** Interiors, varied window patterns and per-region architecture beyond the warm/arid palette split are still unbuilt.
 
-- [ ] **Generation worker and progress.** Generation still runs on the main thread and still blocks it; an 18-hole feature-heavy course pauses the tab for several seconds. A **"Growing your landscape…" overlay** now covers that: `whileGenerating` paints the message, waits for a frame (or a timeout, since a background tab fires no frames), then does the work. That is a status message, not progress — it cannot advance, because the thread is locked for the duration.
+- **Generation worker and progress.** Generation still runs on the main thread and still blocks it; an 18-hole feature-heavy course pauses the tab for several seconds. A **"Growing your landscape…" overlay** now covers that: `whileGenerating` paints the message, waits for a frame (or a timeout, since a background tab fires no frames), then does the work. That is a status message, not progress — it cannot advance, because the thread is locked for the duration.
   Real progress needs generation split into steps that yield between them. The cheapest route is to make `generateWorld` a `function*` yielding phase labels: a sync wrapper drains it for the tests, an async wrapper yields to the browser between phases. Measure first — if one phase such as `makeGroundGrid` dominates, yielding between phases buys little and that phase needs chunking too. **A Web Worker is the wrong tool here:** `generateWorld` returns closures (`toWorld`, `height`, `surface`) that cannot cross a worker boundary, so it would mean refactoring the world into pure data with closures rebuilt on the main thread. Acceptance: controls remain responsive while generating; stale results cannot replace a newer round.
 
-- [ ] **Terrain/vegetation/house LOD.** Reduce distant draw calls and mesh density, batch houses, stream visible cells, and profile shadow/reflection costs. Preserve close-up green/cup/contact precision. Benchmark several screen sizes/GPUs rather than choosing limits from one computer. **Start by establishing what actually binds the frame** -- the redwood LOD was built against an assumption that instanced vertices were expensive, and they are not; the grove went from 1 M to 33.6 M vertices a frame with no measurable change. Draw calls, shadow passes and fill are the candidates that have not been ruled out.
+- **Terrain/vegetation/house LOD.** Reduce distant draw calls and mesh density, batch houses, stream visible cells, and profile shadow/reflection costs. Preserve close-up green/cup/contact precision. Benchmark several screen sizes/GPUs rather than choosing limits from one computer. **Start by establishing what actually binds the frame** -- the redwood LOD was built against an assumption that instanced vertices were expensive, and they are not; the grove went from 1 M to 33.6 M vertices a frame with no measurable change. Draw calls, shadow passes and fill are the candidates that have not been ruled out.
 
-- [ ] **Routing quality metrics.** Evaluate forced carries, recovery space, green-to-tee walks, finishing-hole return and strategic choices. Improve footprint resemblance without forcing fixed hole templates or sacrificing separation. Previews are guidance rather than guaranteed exact silhouettes today.
+- **Routing quality metrics.** Evaluate forced carries, recovery space, green-to-tee walks, finishing-hole return and strategic choices. Improve footprint resemblance without forcing fixed hole templates or sacrificing separation. Previews are guidance rather than guaranteed exact silhouettes today.
 
-- [ ] **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
+- **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
 
-- [ ] **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
+- **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
 
-- [ ] **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is handled for channels by a per-vertex bank weight, and for the ocean since `water-edges` by a depth map of the terrain (the sea fades out over its last 35 cm); ponds and lakes still end on a uniform alpha at their edge, softened by their foam strip — a depth map per basin is the way to give them the same. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
+- **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is handled for channels by a per-vertex bank weight, and for the ocean since `water-edges` by a depth map of the terrain (the sea fades out over its last 35 cm); ponds and lakes still end on a uniform alpha at their edge, softened by their foam strip — a depth map per basin is the way to give them the same. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
 
-## Player profile
+### Player profile
 
-- [ ] **Rate courses by more than their length.** The sim handicap rates every course from yardage alone (RESEARCH.md *The sim handicap*). The generator knows where the water, sand, trees and slopes are; obstacle values from the USGA's ten factors would make a hard course rate hard. Also check the placed bogey-rating formula against the Course Rating System manual.
-- [ ] **WHS soft and hard caps, and exceptional scores.** Left out until profiles carry a year of history.
+- **Rate courses by more than their length.** The sim handicap rates every course from yardage alone (RESEARCH.md *The sim handicap*). The generator knows where the water, sand, trees and slopes are; obstacle values from the USGA's ten factors would make a hard course rate hard. Also check the placed bogey-rating formula against the Course Rating System manual.
+- **WHS soft and hard caps, and exceptional scores.** Left out until profiles carry a year of history.
 
-## Priority 3: play and maintainability
+### Priority 3: play and maintainability
 
-- [ ] **Separate main.js concerns.** Extract studio, round settings, scorecard, input/monitor and presentation controllers. Preserve accessible names/IDs and public behavior; avoid a framework migration solely for file size.
+- **Separate main.js concerns.** Extract studio, round settings, scorecard, input/monitor and presentation controllers. Preserve accessible names/IDs and public behavior; avoid a framework migration solely for file size.
 
-- [ ] **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
+- **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
 
-- [ ] **The rest of the penalty rules.** Water and out of bounds are done (see *Done*): what is left is an unplayable ball (Rule 19), a provisional ball (18.3), yellow penalty areas if a course ever marks one, and choosing a drop spot by hand anywhere in the relief area rather than the best one the game picks. RESEARCH.md *Penalty relief* lists what was left out and why.
+- **The rest of the penalty rules.** Water and out of bounds are done (see *Done*): what is left is an unplayable ball (Rule 19), a provisional ball (18.3), yellow penalty areas if a course ever marks one, and choosing a drop spot by hand anywhere in the relief area rather than the best one the game picks. RESEARCH.md *Penalty relief* lists what was left out and why.
 
-- [ ] **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
+- **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
 
-- [ ] **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
+- **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
 
-- [ ] **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels. **The smaller-screen half is now measured**, by the smoke test's `hud-reachable` journey -- and it fails; see "Found by driving the built game".
+- **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels. **The smaller-screen half is now measured**, by the smoke test's `hud-reachable` journey -- and it fails; see "Found by driving the built game".
 
-- [ ] **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
+- **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
 
-- [ ] **Offline release matrix -- the Chromium half is automated.** Archives are one command (`npm run release`), and `npm run smoke` opens the built file by file:// in Chromium on every run. **Still manual:** Safari, Firefox and Edge, and export/import round-trips. The last sentence this entry used to carry -- that browser automation disallows file URLs -- was the in-app preview pane, not browsers.
+- **Offline release matrix -- the Chromium half is automated.** Archives are one command (`npm run release`), and `npm run smoke` opens the built file by file:// in Chromium on every run. **Still manual:** Safari, Firefox and Edge, and export/import round-trips. The last sentence this entry used to carry -- that browser automation disallows file URLs -- was the in-app preview pane, not browsers.
 
-## Still open from the putting and cup update
+### Still open from the putting and cup update
 
-- [ ] **Green surrounds are steeper than intended on extreme settings.** The test that claimed otherwise was pinned to one lucky seed at 0.582 while most seeds were already over its 0.6 line. Now a multi-seed characterisation test; the underlying shoulder blending on elevation 100 / landform 100 mountain still wants doing. **Not a release blocker, measured**: at the default elevation 35 / landform 70 the worst surround across 8 biomes x 3 seeds is 0.59 with a median of 0.54, and nothing exceeds the intended 0.6. It only bites at slider extremes, where the result is a perched green rather than a broken one.
+- **Green surrounds are steeper than intended on extreme settings.** The test that claimed otherwise was pinned to one lucky seed at 0.582 while most seeds were already over its 0.6 line. Now a multi-seed characterisation test; the underlying shoulder blending on elevation 100 / landform 100 mountain still wants doing. **Not a release blocker, measured**: at the default elevation 35 / landform 70 the worst surround across 8 biomes x 3 seeds is 0.59 with a median of 0.54, and nothing exceeds the intended 0.6. It only bites at slider extremes, where the result is a perched green rather than a broken one.
 
-- [ ] **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
+- **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
 
-- [ ] **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
+- **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
 
-- [ ] **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
+- **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
 
-- [ ] **The green marker still shows a flag glyph** after the flagstick has been pulled. A cup or target mark would be honest.
+- **The green marker still shows a flag glyph** after the flagstick has been pulled. A cup or target mark would be honest.
 
-## Distribution follow-up (September 11 review)
+### Distribution follow-up (September 11 review)
 
-- [ ] Run a live dependency advisory audit on a machine with working registry certificate trust. Current attempts failed TLS verification; no clean-security claim.
+- Run a live dependency advisory audit on a machine with working registry certificate trust. Current attempts failed TLS verification; no clean-security claim.
 
-- [ ] Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
+- Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
 
-- [ ] Choose public publisher/support details and check the working product name before a broad release.
+- Choose public publisher/support details and check the working product name before a broad release.
 
-- [ ] **The PGA driver carries 262 against Trackman's 275 and peaks about 4% high.** After the 6 October refit (RESEARCH.md, *The flight refitted against three launch monitors*), Trackman's tour inputs (167 mph, 10.9°, 2,686 rpm) carry 262 yd, peak 33.4 yd against the sheet's 32, land at 39° against 38, and total 284 against 296. The LPGA driver is within 1.2% on carry and +5% on height. The earlier entry said the apex was 9% LOW against a quoted 35 yd; Trackman's own sheet says 32, and the refit moved it to slightly high.
+- **The PGA driver carries 262 against Trackman's 275 and peaks about 4% high.** After the 6 October refit (RESEARCH.md, *The flight refitted against three launch monitors*), Trackman's tour inputs (167 mph, 10.9°, 2,686 rpm) carry 262 yd, peak 33.4 yd against the sheet's 32, land at 39° against 38, and total 284 against 296. The LPGA driver is within 1.2% on carry and +5% on height. The earlier entry said the apex was 9% LOW against a quoted 35 yd; Trackman's own sheet says 32, and the refit moved it to slightly high.
   **What was tried and rejected:** letting lift and drag depend on airspeed fitted the PGA driver exactly, by making drag fall with speed against Kensrud and Smith's measurements. Next evidence wanted: a normal driver session on the owner's R50.
   - **Acted on 6 October:** the refit closed the R50's long-iron gap to about 4%. **The R50 had said the same about long irons:** On the owner's R50 session the model's peak height matches within about 1% on wedges and falls away as spin falls: 5% low on the 8 iron, 8% on the 7, 11-12% (7-8 ft) on the 6 iron, 5 iron and 5 wood -- with carry still within 1% on those clubs, so the model's long-iron flight is flatter rather than shorter. Same direction and size as the driver gap above; the SkyTrak check pointed slightly the other way. Wanted before a refit: a normal driver session and a second day. RESEARCH.md, *The R50 session against the model*.
 
-- [ ] **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
-  - [ ] **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
+- **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
+  - **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
   - [x] **The measured data DOES cover amateur speeds.** Campaign B spans 1.93-38.7 m/s, so the anchor is valid down to a chip. What is narrow is our tour validation set: it spans 3.49x in arrival spin but only 1.26x in landing speed, while the stock bag lands as slow as 14.7 m/s.
   - [x] **Partial shots show the release-spread defect from the other side:** a half 7-iron releases 17.5 yd against a full one's 3.5.
   **SUPERSEDED** by the fairway and green refits.
 
-- [ ] **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
+- **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
   - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
   - **Unchanged by the 6 October refit:** 150 mph, 7°, 2,800 rpm still peaks at 51 ft; 2,400 rpm gives 44 ft and 6,400 rpm 90 ft.
   - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above said (before the refit) the driver's apex was 9% LOW against a quoted 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
   - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
   - Searched again 3 October for the shot-making clips, with the same result. The stinger clip (2 iron, 152 mph, 7.5 deg, 2,800 rpm) peaks at 54 ft and says so on its page; RESEARCH.md, *Shot-making clips*.
 
-- [ ] **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
+- **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
 
-- [ ] **Save/import/export, what is left.** Neither loses work.
+- **Save/import/export, what is left.** Neither loses work.
   - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
   - `save()` swallows quota errors, so a full store means *Continue* silently stops updating with nothing said.
 
-- [ ] **Remaining drift behind the green.** Up to 0.36% of a course still classifies `semi` where the shader paints `rough`: the shader mows to `length + 8`, `fairwayWidth` stops at `length`. Forgiving direction, separate defect.
+- **Remaining drift behind the green.** Up to 0.36% of a course still classifies `semi` where the shader paints `rough`: the shader mows to `length + 8`, `fairwayWidth` stops at `length`. Forgiving direction, separate defect.
   *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
 
-- [ ] **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
+- **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
   *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
 
-- [ ] **Deep rough no longer tracks firmness in bounce height** (1.48–1.61 ft across the range, against a green's 2.81–4.52). Defensible — the canopy does the stopping — but it is a behaviour change worth a second look.
+- **Deep rough no longer tracks firmness in bounce height** (1.48–1.61 ft across the range, against a green's 2.81–4.52). Defensible — the canopy does the stopping — but it is a behaviour change worth a second look.
 
   *(was a note under "The bounce takes time now (Option C). A spun ball st..." -- see `# Done`.)*
 
-- [ ] **Range dispersion is always zero** — see above; needs a strike-quality model.
+- **Range dispersion is always zero** — see above; needs a strike-quality model.
   *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
 
-- [ ] Targets are scenery, not greens — needs a GLSL loop over an extended cup atlas.
+- Targets are scenery, not greens — needs a GLSL loop over an extended cup atlas.
 
   *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
 
-- [ ] `CONTACT_GAIN` in contact.js has been declared and unused since it was written.
+- `CONTACT_GAIN` in contact.js has been declared and unused since it was written.
 
   *(was a note under "The bounce turns backspin into topspin, which is why..." -- see `# Done`.)*
 
-- [ ] **The gain magnitude is unanchored.** Nobody has measured how turf resistance grows with speed; the shape is pinned at the Stimpmeter end but `k = 1` is a choice.
+- **The gain magnitude is unanchored.** Nobody has measured how turf resistance grows with speed; the shape is pinned at the Stimpmeter end but `k = 1` is a choice.
 
   *(was a note under "Speed-dependent rolling resistance is ON (ROLL_SPEED..." -- see `# Done`.)*
 
-- [ ] **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
+- **First-hop DISTANCE now descends slightly with firmness on a green** (0.34 m Soft to 0.15 Burnt) where height still ascends correctly. Minor and cosmetic, but it is the wrong way round.
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
-- [ ] **7 iron on a Burnt green runs 11.4 yd** (11.8 when first noted; `node tools/landing-scorecard.mjs`, 2 October). Defensible for a surface meant to reject shots, but worth an eye.
+- **7 iron on a Burnt green runs 11.4 yd** (11.8 when first noted; `node tools/landing-scorecard.mjs`, 2 October). Defensible for a surface meant to reject shots, but worth an eye.
 
 
   *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
 
 
-## Sounds (13 October 2026)
+### Sounds (13 October 2026)
 
 Built, signed off and in the game; nothing open (see `# Done`, same heading).
-
-# Done
 
 ## Release 0.8 (15 October)
 

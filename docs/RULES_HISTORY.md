@@ -107,6 +107,14 @@ accumulated nested as notes under finished ones, invisible. One open entry
 once asserted the exact opposite of what the physics did, which is how a
 correct behaviour nearly got "fixed" back into a bug.
 
+**IDEAS.md was split off TODO.md** on 16 October 2026, at the owner's request.
+A month after the first split the open list had grown to about 120 entries,
+and pruning it found that roughly a fifth were finished, untrue or duplicated,
+and a further thirty (sixteen biomes, thirteen features and looks) were ideas
+nobody had decided to build, sitting beside real defects and read as work on
+every pass. The owner asked for ideas to live apart and to be read only when
+looking for something new, to save tokens.
+
 **Why every document, every pass.** The player-facing manual and
 PROJECT_HANDOFF.md went fourteen commits without an update while RESEARCH.md,
 PROCEDURAL_GENERATION.md and TODO.md were updated in every single one. "Update

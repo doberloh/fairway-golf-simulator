@@ -1,6 +1,6 @@
 # Fairway documentation
 
-Fourteen documents, and the fastest way through them is to know which question
+Eighteen documents, and the fastest way through them is to know which question
 each one answers. Nothing here is an archive: every document is expected to
 describe the code as it stands today, and correcting a stale claim is part of
 the change that made it stale, not a follow-up.
@@ -16,6 +16,7 @@ the change that made it stale, not a follow-up.
 | change the code | [ARCHITECTURE.md](ARCHITECTURE.md), then [../AGENTS.md](../AGENTS.md); search [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the detail |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
 | know what is left to do | [TODO.md](TODO.md) |
+| find something new to build, or note an idea | [IDEAS.md](IDEAS.md) |
 
 ## The full set
 
@@ -57,6 +58,9 @@ the change that made it stale, not a follow-up.
 - **[TODO.md](TODO.md)** — open work at the top under its section headings,
   everything finished in `# Done` at the foot with what was actually built.
   As much a changelog as a list.
+- **[IDEAS.md](IDEAS.md)** — what could be built and nobody has decided to
+  build: modes, practice, looks, biomes, and the ideas turned down. Read only
+  when looking for something new (AGENTS.md says when).
 
 **The numbers and where they came from**
 

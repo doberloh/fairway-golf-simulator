@@ -4995,9 +4995,8 @@ surfaces are commonly built at 1-3% with hole locations kept under about 3%
 standing view, a green still looks gentle, because it is: half a percent of
 shape. The sheen makes the tilt and the larger rolls visible and changes as you
 walk round, which is the cue a real green gives; it does not invent breaks,
-and should not. The TODO section *Greens read better if the art style bends
-for greens only* keeps the further options, with its own caveat about chasing
-the last of it.
+and should not. The TODO entry *Greens that read at midday, five ideas not yet tried*
+keeps the further options, with its own caveat about chasing the last of it.
 
 All shading: `surface()`, the physics and the generator are untouched; the
 biome fingerprints are unchanged and no version bump was owed. No outside
@@ -5413,8 +5412,8 @@ most needs it -- never stepping down.
 target to step down, 6% to count as steady, 0.6 s ignored after a change while
 render targets reallocate, and the 85/72/60/50% steps. They are the usual
 shape of such controllers rather than numbers from a source. Nobody has run it
-on a real phone yet; that is the first thing to check (TODO, *Nobody has
-measured a real phone*).
+on a real phone yet; that is the first thing to check (TODO, *A real phone,
+an iPad and a weak laptop*).
 
 **Checked in the built game** (High, PNW nine, 1600x900, processor slowed
 eightfold through the browser's own throttling): pixel ratio 1 -> 0.72 in 2 s,

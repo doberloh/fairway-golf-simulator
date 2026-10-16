@@ -602,8 +602,9 @@ with push protection; private vulnerability reporting; holding outside
 contributors' workflows for approval. TODO, *Making the repository public*,
 says to run the script the minute the repository goes public.
 
-Not set, on purpose: a required status check (the tests workflow has never
-run on GitHub), deleting merged branches, and immutable releases.
+Not set, on purpose: a required status check (the tests workflow runs on
+GitHub, but its smoke step usually fails there -- TODO, *Found on GitHub*),
+deleting merged branches, and immutable releases.
 
 ## Addendum, 5 October 2026: v0.1 flies left and right mirrored
 
