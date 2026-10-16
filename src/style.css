@@ -1186,9 +1186,10 @@ html,body{overscroll-behavior:none}
 /* COURSE STUDIO TAKES THE PLAY AREA (the owner, 15 October 2026). It has the
    most controls in the game, and changes show only on Regenerate, so the
    landscape behind it has little to offer while it is open. The other sheets
-   keep their strip. The sheet lives in #world, so `top:0` is the top of the
-   play area, under the top bar whatever its height. In the studio, main.js
-   moves the top down to leave room for the studio bar and its Regenerate
+   keep their strip. `top:0` is the top of the PAGE (the sheet's containing
+   block is not #world), which is right only over the menu, where the top bar
+   is hidden. In the studio, main.js measures where the course starts and
+   moves the top down past it and the studio bar with its Regenerate
    (*COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA*). */
 .drawer[data-panel=course]{top:0;height:auto;min-height:0;max-height:none}
 .profile .course-card{background:var(--field);border-color:var(--glass-line)}.profile .course-meta strong{color:var(--ink)}.profile .course-meta span{color:var(--ink-dim)}

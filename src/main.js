@@ -5342,12 +5342,25 @@ function bind(){
   let pending=0;
   // COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA (the owner, 15 October 2026),
   // all but a strip at the top for this bar: its Regenerate stays in reach, as
-  // above. The strip is the bar's own height plus its 18px gap and 8px of air,
-  // so the bar lands exactly above the sheet and never needs `compact`. With
-  // no bar (the setup sheet over the menu) the sheet goes to the top, as the
-  // stylesheet has it.
+  // above. The strip is the bar's own FULL height (measured with `compact` off)
+  // plus its 18px gap and 10px of air, so the bar lands exactly above the
+  // sheet and never needs `compact` (which trips under 26px to spare). With no bar (the setup sheet over the menu) the
+  // sheet goes to the top of the course, as the stylesheet has it.
+  //
+  // MEASURED FROM WHERE THE COURSE STARTS, not assumed. The sheet's `top` is
+  // counted from its containing block, which the browser reports as the page,
+  // not #world: the first version wrote the bar's height alone and slid the
+  // sheet under the top bar, the studio bar shrunk to icons above the screen.
+  // So the course's top is found from the sheet's own box, and `k` undoes the
+  // interface zoom between drawn pixels and CSS ones.
   const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');
-   const room=!bar.hidden&&!d.hidden&&d.dataset.panel==='course'?bar.offsetHeight+26+'px':'';
+   bar.classList.remove('compact');
+   let room='';
+   if(!bar.hidden&&!d.hidden&&d.dataset.panel==='course'&&d.offsetHeight){
+    const box=d.getBoundingClientRect(),k=box.height/d.offsetHeight||1;
+    const block=box.top-(parseFloat(getComputedStyle(d).top)||0)*k;
+    room=Math.round(($('world').getBoundingClientRect().top-block)/k+bar.offsetHeight+28)+'px';
+   }
    if(d.style.top!==room)d.style.top=room;
    if(bar.hidden)return;
    const by=d.hidden?0:d.offsetHeight;

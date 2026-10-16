@@ -1604,7 +1604,7 @@ const JOURNEYS = [
       // The settings take the play area but for a strip holding the bar (15
       // October 2026): `spare` is the course still showing besides that strip.
       return {gap: Math.round(panel.top - bar.bottom), above: Math.round(bar.top - world.top),
-       spare: Math.round((panel.top - world.top) - (bar.height + 26) + (world.bottom - panel.bottom)),
+       spare: Math.round((panel.top - world.top) - (bar.height + 28) + (world.bottom - panel.bottom)),
        compact: document.getElementById('studioBar').classList.contains('compact')};
      });
      const bad = await t.page.evaluate(unreachableControls, '#studioBar button, #closeDrawer');
