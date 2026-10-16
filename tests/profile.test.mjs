@@ -319,7 +319,7 @@ test('achievements, progress, weekly bests and sand strokes are kept', () => {
  storeProfiles(store);
  const back = findProfile(loadProfiles(), profile.id);
  assert.deepEqual(back.achievements, {ace: 5});
- assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']});
+ assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], chalWeeks: [], once: ['g1:done']});
  assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
  assert.deepEqual(back.rounds[0].card[0].sand, [3]);
 });
@@ -339,11 +339,13 @@ test('a profile from before medals loads with its records; medals and the allowa
  p.medals = {};
  p.challenges.lag = {best: 14, at: 3, plays: 2};
  p.xpChallenge = {day: '2026-10-16', xp: 120, bests: ['lag']};
+ p.challengeWeek = {'CHAL-2026-42:curve': {best: 3, medal: 2}};
  storeProfiles(store);
  const back = findProfile(loadProfiles(), 'p1');
  assert.deepEqual(back.medals, {}, 'an empty set of medals is kept: it says the old records were already looked at');
  assert.deepEqual(back.challenges.lag, {best: 14, at: 3, plays: 2});
  assert.deepEqual(back.xpChallenge, {day: '2026-10-16', xp: 120, bests: ['lag']});
+ assert.deepEqual(back.challengeWeek, {'CHAL-2026-42:curve': {best: 3, medal: 2}}, 'the challenge of the week\'s best is kept');
  const store2 = loadProfiles();findProfile(store2, 'p1').medals = {lag: 2, ghost: 3};storeProfiles(store2);
  assert.deepEqual(findProfile(loadProfiles(), 'p1').medals, {lag: 2}, 'a medal for no challenge is dropped');
 });

@@ -4,11 +4,12 @@ import {ACHIEVEMENTS, achievement, sandSave, longestStreak, holeAchievements, ro
 import {ACHIEVEMENT_TITLES, isUnlocked, wornItem, reward} from '../src/rewards.js';
 
 // THE SPEC'S TABLE (8.3): thirteen, each with XP, the titles where named.
-test('thirteen achievements, each paying XP, eight with a title', () => {
- assert.equal(ACHIEVEMENTS.length, 13);
- assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 13);
+// Thirteen from the spec, and four for the challenges (16 October 2026).
+test('seventeen achievements, each paying XP, eleven with a title', () => {
+ assert.equal(ACHIEVEMENTS.length, 17);
+ assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 17);
  for (const a of ACHIEVEMENTS) assert.ok(a.xp > 0 && a.name && a.how, a.id);
- assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 9);
+ assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 11);
  assert.equal(achievement('ace').xp, 200);
 });
 
@@ -54,16 +55,32 @@ test('counted achievements, streaks, and each earned only once', () => {
 });
 
 test('stored progress is cleaned on the way in', () => {
- assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['pnw', 'pnw', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['pnw'], weeks: [2, 3], once: ['a']});
+ assert.deepEqual(normaliseProgress({rounds: -1, biomes: ['pnw', 'pnw', 4], weeks: [3, 'x', 2], once: ['a', 5]}), {rounds: 0, biomes: ['pnw'], weeks: [2, 3], chalWeeks: [], once: ['a']});
+ assert.deepEqual(normaliseProgress({chalWeeks: [9, 8, 8, 'x']}).chalWeeks, [8, 9]);
  assert.deepEqual(normaliseEarned({ace: 5, bogus: 1, sandy: 'x'}), {ace: 5});
 });
 
 // TITLES FROM ACHIEVEMENTS (spec 7.5): worn only once earned, whatever the level.
 test('an achievement title is earned with its achievement, not by level', () => {
- assert.equal(ACHIEVEMENT_TITLES.length, 9);
+ assert.equal(ACHIEVEMENT_TITLES.length, 11);
  assert.equal(reward('title', 'ach-ace').name, 'Ace');
  assert.equal(isUnlocked('title', 'ach-ace', 50, {}), false);
  assert.equal(isUnlocked('title', 'ach-ace', 1, {ace: 1}), true);
  assert.equal(wornItem({title: 'ach-ace'}, 'title', 1, {ace: 1}), 'ach-ace');
  assert.equal(wornItem({title: 'ach-ace'}, 'title', 50, {}), '');
+});
+
+// THE CHALLENGE ACHIEVEMENTS (16 October 2026): counted from the profile's
+// medals and the weeks the challenge of the week was played.
+test('medals and weeks of the week\'s challenge earn their achievements', () => {
+ const prof = {medals: {closest: 1}, progress: {...blankProgress(), chalWeeks: [140, 141, 142]}};
+ assert.deepEqual(progressOf(achievement('first-medal'), prof), [1, 1]);
+ assert.ok(countedAchievements(prof).includes('first-medal'));
+ assert.ok(!countedAchievements(prof).includes('weekly-regular'), 'three weeks running is not four');
+ prof.progress.chalWeeks.push(143);
+ assert.ok(countedAchievements(prof).includes('weekly-regular'));
+ const golds = {medals: Object.fromEntries(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'].map(k => [k, 3]))};
+ assert.deepEqual(progressOf(achievement('gold-standard'), golds), [10, 10]);
+ assert.equal(achievement('all-rounder').goal, 27, 'every challenge there is');
+ assert.ok(!countedAchievements({medals: {closest: 3}}).includes('all-rounder'));
 });

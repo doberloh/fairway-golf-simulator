@@ -2499,6 +2499,45 @@ const JOURNEYS = [
    });
   },
  },
+ // THE CHALLENGE OF THE WEEK (16 October 2026): whichever the date picks, from
+ // the card across the top of the Challenges screen. It may be on the range or
+ // the course of the week, so this follows the game's own state, not a name.
+ {
+  name: 'challenge-week',
+  what: 'The challenge of the week: its card on the Challenges screen and the menu tile, started on the course of the week or the range, a ball played, nothing saved as a round',
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pcw', profiles: [{id: 'pcw', name: 'Week', created: 1, counters: {}, bests: {}, rounds: [], xp: 0, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
+   await t.step('the menu tile names this week\'s challenge', async () => {
+    const note = await t.page.textContent('#menuChallengesNote');
+    if (!/^This week: .+ · 0 of 81 medals$/.test(note)) throw new Error(`the tile reads: ${note}`);
+   });
+   await t.step('its card is on the Challenges screen, and it starts', async () => {
+    await fromMenu(t, 'Challenges');
+    await t.page.waitForSelector('[data-chal-week]', {timeout: 10000 * SLOW});
+    await t.page.click('[data-chal-week]');
+    await t.until(() => t.page.evaluate(() => /This week:/.test(document.querySelector('#drawerContent h3')?.textContent || '')), 'the week\'s details', 10 * SLOW);
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => bar(/This week/), 'the bar says this week', 20 * SLOW);
+    const s = await t.page.evaluate(() => window.lab.state().challenge);
+    if (!/^CHAL-[0-9]{4}-[0-9]{2}:[a-z]+/.test(s?.week || '')) throw new Error(`no week's key: ${JSON.stringify(s)}`);
+   });
+   await t.step('a ball moves the play on, and nothing is saved as a round', async () => {
+    const before = await t.page.evaluate(() => window.lab.state().challenge.balls.reduce((a, b) => a + b, 0));
+    for (let i = 0; i < 9; i++) {
+     await t.shot();
+     const now = await t.page.evaluate(() => window.lab.state().challenge.balls.reduce((a, b) => a + b, 0));
+     if (now > before) break;
+     if (i === 8) throw new Error('nine strokes and no ball finished');
+    }
+    if (await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'))) throw new Error('the week\'s challenge wrote the round slot');
+   });
+  },
+ },
  // SKINS, A ROUND FORMAT (16 October 2026; it was the fourth challenge). Play
  // offers it under Format with its note; a two-golfer skins round starts, each
  // chip counts skins, and the scorecard names the format and carries the Skins

@@ -15,6 +15,11 @@
 //                       finished (as week numbers), and keys already counted
 //                       (`markOnce`), so a save that runs again counts nothing
 //                       twice.
+//   progress.chalWeeks  the weeks the challenge of the week was played (week
+//                       numbers), for Weekly Regular. Medals are the
+//                       profile's own (challenges.js).
+
+import {CHALLENGES} from './challenges.js';
 
 export const ACHIEVEMENTS = [
  {id: 'first-birdie', name: 'First birdie', how: 'Make a birdie.', xp: 50},
@@ -30,12 +35,19 @@ export const ACHIEVEMENTS = [
  {id: 'centurion', name: 'Centurion', how: 'Finish 100 rounds.', xp: 300, title: 'Centurion', progress: 'rounds', goal: 100},
  {id: 'streak', name: 'Streak', how: 'Finish the course of the week four weeks running.', xp: 150, progress: 'streak', goal: 4},
  {id: 'on-the-dot', name: 'On the Dot', how: 'Land 50 shots on the number.', xp: 100, title: 'On the Dot', counter: 'onNumber', goal: 50},
+ // CHALLENGES (16 October 2026; the owner's plan, step 2). Names and amounts
+ // PLACED. All-Rounder's goal is every challenge there is: it grows when
+ // challenges are added, and a golfer who has it keeps it.
+ {id: 'first-medal', name: 'First Medal', how: 'Win a medal in any challenge.', xp: 25, progress: 'medals', goal: 1},
+ {id: 'gold-standard', name: 'Gold Standard', how: 'Win ten gold medals.', xp: 150, title: 'Gold Standard', progress: 'golds', goal: 10},
+ {id: 'all-rounder', name: 'All-Rounder', how: 'Win a medal in every challenge.', xp: 250, title: 'All-Rounder', progress: 'medals', goal: CHALLENGES.length},
+ {id: 'weekly-regular', name: 'Weekly Regular', how: 'Play the challenge of the week four weeks running.', xp: 150, progress: 'chalStreak', goal: 4},
 ];
 export const achievement = id => ACHIEVEMENTS.find(a => a.id === id) || null;
 export const LANDSCAPES = 9;
 const ONCE_KEEP = 300;
 
-export const blankProgress = () => ({rounds: 0, biomes: [], weeks: [], once: []});
+export const blankProgress = () => ({rounds: 0, biomes: [], weeks: [], chalWeeks: [], once: []});
 // What survives from a stored record; anything unreadable is dropped.
 export function normaliseProgress(d) {
  const p = blankProgress();
@@ -43,6 +55,7 @@ export function normaliseProgress(d) {
  if (Number.isInteger(d.rounds) && d.rounds >= 0) p.rounds = d.rounds;
  if (Array.isArray(d.biomes)) p.biomes = [...new Set(d.biomes.filter(b => typeof b === 'string' && b.length <= 20))].slice(0, 30);
  if (Array.isArray(d.weeks)) p.weeks = [...new Set(d.weeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
+ if (Array.isArray(d.chalWeeks)) p.chalWeeks = [...new Set(d.chalWeeks.filter(w => Number.isInteger(w) && w >= 0 && w < 1e5))].sort((a, b) => a - b).slice(-200);
  if (Array.isArray(d.once)) p.once = d.once.filter(k => typeof k === 'string' && k.length <= 120).slice(-ONCE_KEEP);
  return p;
 }
@@ -79,6 +92,9 @@ export function progressOf(a, prof) {
  if (a.progress === 'biomes') return [p.biomes.length, a.goal];
  if (a.progress === 'rounds') return [p.rounds, a.goal];
  if (a.progress === 'streak') return [longestStreak(p.weeks), a.goal];
+ if (a.progress === 'chalStreak') return [longestStreak(p.chalWeeks || []), a.goal];
+ if (a.progress === 'medals') return [Object.values(prof?.medals || {}).filter(m => m >= 1).length, a.goal];
+ if (a.progress === 'golds') return [Object.values(prof?.medals || {}).filter(m => m === 3).length, a.goal];
  return null;
 }
 

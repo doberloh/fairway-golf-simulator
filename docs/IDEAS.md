@@ -52,6 +52,11 @@ often has the how-to already worked out.
 
 ## Practice
 
+- **Twists for the challenge of the week**: a wind of the week, a club of the
+  week, a tee of the week -- seeded from the date like the pick, so still the
+  same on every copy. Left out of the first version on purpose. Small.
+  (Claude, 16 October 2026)
+
 - **A short-game area.** A practice green beside the range. The drills it was
   for -- four-footers, up and downs, chipping, a putting ladder -- are
   challenges since 16 October 2026, played on the Challenge Course's greens;

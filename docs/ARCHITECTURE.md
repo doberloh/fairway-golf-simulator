@@ -85,7 +85,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
 - `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
-- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week from the date; `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course; `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
+- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week and the challenge of the week from the date; `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course; `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
 - `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
@@ -180,6 +180,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
 - A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test. [A practice challenge is not a round]
 - The course of the week is the date plus `DEFAULT_COURSE`, `BIOME_KEYS` order and the generator; changing any changes it on every copy. [The course of the week is the date]
+- The challenge of the week is the date plus `WEEKLY_POOLS`; a pool row is never edited once shipped -- a new pool starts at a future week. [The challenge of the week is the date]
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
 
 **Physics**

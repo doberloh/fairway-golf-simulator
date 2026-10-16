@@ -26,7 +26,7 @@ import {simHandicap} from './handicap.js';
 import {validateBag, stockBag} from './clubs.js';
 import {WEARABLE, reward, isUnlocked} from './rewards.js';
 import {normaliseProgress, normaliseEarned} from './achievements.js';
-import {normaliseWeekly} from './weekly.js';
+import {normaliseWeekly, normaliseChallengeWeeks} from './weekly.js';
 import {normaliseRecords, normaliseMedals} from './challenges.js';
 import {normaliseChallengeDay} from './progression.js';
 
@@ -178,6 +178,9 @@ export function normaliseProfile(d) {
  if (d.medals && typeof d.medals === 'object') extra.medals = normaliseMedals(d.medals);
  const chalDay = normaliseChallengeDay(d.xpChallenge);
  if (chalDay) extra.xpChallenge = chalDay;
+ // The challenge of the week's bests, by week, challenge and generator (weekly.js).
+ const chalWeeks = normaliseChallengeWeeks(d.challengeWeek);
+ if (Object.keys(chalWeeks).length) extra.challengeWeek = chalWeeks;
  return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two

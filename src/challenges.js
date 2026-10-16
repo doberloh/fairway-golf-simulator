@@ -30,6 +30,14 @@ import {DEFAULT_COURSE, validateSettings} from './settings-schema.js';
 
 const FOOT = .3048, YARD = .9144;
 
+// A seeded stream of numbers in [0, 1), from any string.
+export function seeded(seed) {
+ let h = 2166136261;
+ for (const ch of String(seed)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+ return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+
 // THE CHALLENGE COURSE: eighteen holes at the default settings from a fixed
 // seed, chosen because it hosts every challenge (a par 3, water to carry, a
 // greenside bunker, a short side, a green big enough for long lag putts) --

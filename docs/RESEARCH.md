@@ -8132,6 +8132,21 @@ drive is "in play" only on the fairway itself, as in a long-drive grid; Long
 and straight also takes the first cut. Up and down's record is the most made,
 fewest strokes breaking a tie.
 
+**The challenge of the week** (16 October 2026, step 2). PLACED: it pays 100
+XP for the first finish of the week (never multiplied, like the daily
+bonus), 25 for beating the week's best (once a day) and 100 for a gold (once
+a week), on top of the challenge's own pay. The pool is every challenge but
+the three whose hole rule needs a feature (Over the water, Sand save, Short
+side) -- 24 at its start, so a cycle is 24 weeks. Checked on the day: the
+next nine weeks' courses (one per landscape) each host their pick. The four
+achievements (First Medal 25, Gold Standard 150, All-Rounder 250, Weekly
+Regular 150) are PLACED; Head of the Table waits for the head-to-head
+challenges. **Rejected**: a fixed rotation (week 1 the first row, and so on)
+-- predictable for ever, and adding a challenge would shift every later week;
+a week key without the generator (a best set on a different hole would sit
+beside the new one); recording the week's play as the challenge's own record
+(it is a different course from the Challenge Course).
+
 ### Skins as a format (16 October 2026)
 
 Skins was the fourth challenge, a stroke round with skins counted over it (the

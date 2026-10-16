@@ -30,7 +30,7 @@ import {CHALLENGES,GROUPS,MEDALS,challenge as challengeDef,challengesIn,recordCh
 import {newPlay,turn,playBall,results,ballFacts,progressText} from './challenge-play.js';
 import {chooseHole,spotsFor,holeAdapter,zoneFor,callsFor} from './challenge-spots.js';
 import {skins,decidedHoles,skinsWinner,holeSkinLine,skinsStatus,skinsText} from './skins.js';
-import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
+import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP,weeklyChallenge,challengeWeekKey,recordChallengeWeek,WEEKLY_CHALLENGE_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
@@ -485,8 +485,15 @@ const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ba
 // counted as a round. A range challenge opens the range. Either way the
 // putting is hole out while it lasts, and the golfer's own setting comes back
 // with the next round (`restorePutting`).
-async function startChallenge(id,group){
- const def=challengeDef(id);
+// THE CHALLENGE OF THE WEEK (`week`, weekly.js) is the date's pick, played on
+// the course of the week (range ones on the range) with spots seeded from the
+// week's seed; a week whose course has no hole for it plays the next of the
+// cycle that fits, and says so.
+async function startChallenge(id,group,{week=false}={}){
+ const wk=week?weeklyChallenge():null;
+ if(wk)id=wk.id;
+ let def=challengeDef(id);
+ const weekFor=d=>wk?{key:challengeWeekKey(d.id),index:wk.index}:null;
  // From a range challenge's results card, *Other challenges* starts the next
  // one while still on the range: leave it first, as the menu would, or a
  // course challenge would play in range mode and a range one would remember
@@ -497,14 +504,17 @@ async function startChallenge(id,group){
   if(!rangeMode||appMode!=='play')return;
   const mat=round.position,marks=rangeTargets();
   const targets=(def.targets||[]).map(y=>{const t=marks.find(m=>m.yards===y);return t?{x:t.x,z:t.z,yards:y}:{x:mat.x,z:mat.z+y*YARD,yards:y};});
-  beginChallenge(def,{seed:`range:${def.id}`,spots:[],targets,pin:course.pin,length:0,name:'the driving range'});
+  beginChallenge(def,{seed:`range:${def.id}`,spots:[],targets,pin:course.pin,length:0,name:'the driving range',week:weekFor(def)});
   return;
  }
- const s=challengeCourseSettings();
- await startRoundOn(s,{...group,mode:'stroke'},CHALLENGE_COURSE_NAME,{quiet:true});
+ const s=wk?weeklySettings():challengeCourseSettings(),name=wk?`${suggestCourseName(s)} · Week ${isoWeek().week}`:CHALLENGE_COURSE_NAME;
+ await startRoundOn(s,{...group,mode:'stroke'},name,{quiet:true});
  if(appMode!=='play'||!world)return;
- const pick=chooseHole(def,world.holes.map(h=>({par:h.par,length:h.routeLength})),i=>def.spot?spotsFor(def,holeAdapter(world.holes[i],round.tee),`${s.seed}:${i}:${def.id}`):[]);
- if(!pick){toast(`${CHALLENGE_COURSE_NAME} has no hole for ${def.name} in this version of Fairway.`);return;}
+ const holes=world.holes.map(h=>({par:h.par,length:h.routeLength}));
+ const tryPick=d=>chooseHole(d,holes,i=>d.spot?spotsFor(d,holeAdapter(world.holes[i],round.tee),`${s.seed}:${i}:${d.id}`):[]);
+ let pick=tryPick(def);
+ if(!pick&&wk)for(const other of wk.next.map(challengeDef).filter(d=>d.where!=='range')){const p=tryPick(other);if(p){toast(`This week's course has no hole for ${def.name}: ${other.name} instead.`);def=other;pick=p;break;}}
+ if(!pick){toast(`${name} has no hole for ${def.name} in this version of Fairway.`);return;}
  // Moving to the hole saves (loadCourse), and `challenge` is only set once the
  // hole is loaded: hold saving off in between, or the Challenge Course's round
  // lands in the Continue slot (the smoke journey caught it, 16 October 2026).
@@ -512,7 +522,7 @@ async function startChallenge(id,group){
  try{
   rememberPutting();round.putting={...round.putting,mode:'holeout'};
   round.hole=pick.hole;round.beginHole();loadCourse();
-  beginChallenge(def,{seed:`${s.seed}:${pick.hole}:${def.id}`,spots:pick.spots,targets:[],pin:course.pin,length:course.routeLength/YARD,name:CHALLENGE_COURSE_NAME,hole:pick.hole});
+  beginChallenge(def,{seed:`${s.seed}:${pick.hole}:${def.id}`,spots:pick.spots,targets:[],pin:course.pin,length:course.routeLength/YARD,name,hole:pick.hole,week:weekFor(def)});
  }finally{challengeStarting=false;}
 }
 // A golfer's driver carry, in yards, from their own bag: what the distance
@@ -521,16 +531,16 @@ function driverCarry(player){
  let bag;try{bag=bagFor(player);}catch{bag=stockBag();}
  const d=bag.find(c=>c.kind==='driver');return d?d.carry:Math.max(...bag.map(c=>c.carry));
 }
-function beginChallenge(def,{seed,spots,targets,pin,length,name,hole=null}){
+function beginChallenge(def,{seed,spots,targets,pin,length,name,hole=null,week=null}){
  const ctx=round.players.map(p=>({driver:driverCarry(p),hand:p.hand==='LH'?'LH':'RH'}));
  if(def.ball==='zone'){const a=holeAdapter(course,round.tee);for(const c of ctx)c.zone=zoneFor(a,c.driver);
   if(ctx.some(c=>!c.zone)){toast('No fairway for the zone on this hole.');return;}}
  const calls=callsFor(def,seed,{driver:Math.min(...ctx.map(c=>c.driver))});
- challenge={id:def.id,def,name,hole,info:{seats:round.players.length,spots,targets,calls,ctx,pin,length},uid:'c'+Date.now().toString(36),done:false,summary:null};
+ challenge={id:def.id,def,name,hole,week,info:{seats:round.players.length,spots,targets,calls,ctx,pin,length},uid:'c'+Date.now().toString(36),done:false,summary:null};
  challenge.play=newPlay(def.id,challenge.info);
  round.active=0;round.strokes=round.players.map(()=>0);
  placeForTurn();setUpTurn();
- toast(`${def.name}${hole!=null?` on hole ${hole+1}`:''} of ${name}.`);
+ toast(`${week?'Challenge of the week: ':''}${def.name}${hole!=null?` on hole ${hole+1}`:''} of ${name}.`);
 }
 // THE BALL ABOUT TO BE PLAYED: on its spot, back on the tee (or the mat),
 // or -- playing a spot out -- where the last one stopped. `aimAt` is where the
@@ -565,18 +575,29 @@ function challengeShot(result){
 // THE END: each golfer's score and medal, their record, and the pay
 // (progression.js `challengePay`: first medals once, a play's pay inside the
 // day's allowance, a new best once a day) -- one ledger entry a golfer a play.
+// The week's challenge keeps its own best for the week instead of the
+// challenge's record (it is a different course), pays its own (weekly.js
+// `recordChallengeWeek`), and counts the week towards Weekly Regular. Then
+// the medal achievements.
 function finishChallenge(){
  const c=challenge;c.done=true;
  c.summary=results(c.play).map(r=>{
-  const p=round.players[r.seat],prof=profileOf(p);let best=false,capped=false;
+  const p=round.players[r.seat],prof=profileOf(p);let best=false,capped=false,weekBest=false;
   if(prof){
    settleMedals(prof);
-   const before=prof.xp||0,mult=xpMult(r.seat);best=recordChallenge(prof,c.id,r.score);
+   const before=prof.xp||0,mult=xpMult(r.seat);
+   best=c.week?false:recordChallenge(prof,c.id,r.score);
    const pay=challengePay(prof,{id:c.id,medal:r.medal,best,long:!!c.def.long,mult});capped=pay.capped;
-   if(pay.xp>0)award(prof,`chal:${c.uid}:${r.seat}`,pay.xp);
-   if(pay.parts.length)queueXpGain(prof,pay.parts,before,mult);
+   const items=[...pay.parts];let xp=pay.xp;
+   if(c.week){
+    const w=recordChallengeWeek(prof,c.week.key,r.score,r.medal,Date.now(),mult);items.push(...w.parts);xp+=w.xp;weekBest=w.first||w.better;
+    const prog=(prof.progress||=blankProgress());(prog.chalWeeks||=[]);if(!prog.chalWeeks.includes(c.week.index))prog.chalWeeks.push(c.week.index);
+   }
+   if(xp>0)award(prof,`chal:${c.uid}:${r.seat}`,xp);
+   payAchievements(prof,countedAchievements(prof),items);
+   if(items.length)queueXpGain(prof,items,before,mult);
   }
-  return {name:p.name,seat:r.seat,text:r.text,medal:r.medal,best,capped};
+  return {name:p.name,seat:r.seat,text:r.text,medal:r.medal,best,weekBest,capped};
  });
  storeProfiles(profiles);drawChallengeBar();
  setTimeout(()=>{if(challenge===c)openPanel('challenge');},1800);
@@ -590,13 +611,13 @@ function drawChallengeBar(){
  const el=$('challengeBar');if(!el)return;
  el.hidden=!challenge||appMode!=='play';if(el.hidden)return;
  const c=challenge;
- el.innerHTML=`<b>${escape(c.def.name)}</b><span>${round.players.length>1&&!c.done?escape(round.player.name)+' · ':''}${escape(progressText(c.play))}</span>`;
+ el.innerHTML=`<b>${c.week?'This week · ':''}${escape(c.def.name)}</b><span>${round.players.length>1&&!c.done?escape(round.player.name)+' · ':''}${escape(progressText(c.play))}</span>`;
 }
 const MEDAL_PIPS=m=>`<span class="medal-pips" aria-label="${m?MEDALS[m]:'No medal'}">${[1,2,3].map(k=>`<i class="m${k}${m>=k?' on':''}"></i>`).join('')}</span>`;
 function renderChallengeResult(content){
  const c=challenge;
  if(!c?.summary){content.innerHTML='<p>No challenge has finished.</p>';return;}
- content.innerHTML=`<p><b>${escape(c.def.name)}</b>${c.hole!=null?` on hole ${c.hole+1} of`:' on'} ${escape(c.name)}.</p><ul class="challenge-results">${c.summary.map(s=>`<li><span class="player-dot" style="background:${playerColour(s.seat)}"></span><b>${escape(s.name)}</b>${MEDAL_PIPS(s.medal)}<span>${escape(s.text)}${s.medal?` · ${MEDALS[s.medal].toLowerCase()}`:''}${s.best?' · <em>a new best</em>':''}</span></li>`).join('')}</ul>`
+ content.innerHTML=`<p>${c.week?'Challenge of the week: ':''}<b>${escape(c.def.name)}</b>${c.hole!=null?` on hole ${c.hole+1} of`:' on'} ${escape(c.name)}.</p><ul class="challenge-results">${c.summary.map(s=>`<li><span class="player-dot" style="background:${playerColour(s.seat)}"></span><b>${escape(s.name)}</b>${MEDAL_PIPS(s.medal)}<span>${escape(s.text)}${s.medal?` · ${MEDALS[s.medal].toLowerCase()}`:''}${s.best?' · <em>a new best</em>':''}${s.weekBest?' · <em>best this week</em>':''}</span></li>`).join('')}</ul>`
   +(c.summary.some(s=>s.capped)?`<p class="note">Today's challenge XP for playing again is used up (${CHALLENGE_PAY.dayCap} a day). Medals and records still count, and first medals still pay.</p>`:'')
   +`<div class="course-card-actions"><button class="primary" id="challengeAgain">Play it again</button><button class="secondary" id="challengeOthers">Other challenges</button><button class="secondary" id="challengeMenu">Main menu</button></div>`;
  $('challengeAgain').onclick=()=>{
@@ -609,25 +630,39 @@ function renderChallengeResult(content){
 // THE CHALLENGES SCREEN: a tab for each group, a card for each challenge with
 // its medals and the best, and under them the chosen one -- how it plays, what
 // each medal asks, the group, Start. Nothing is locked.
-let challengeTab='tee';
+let challengeTab='tee',challengeWeekPick=false;
+// The week's challenge, as its card and the screen say it: which, where, and
+// the main golfer's best and medal this week.
+function weekChallengeInfo(me){
+ const wk=weeklyChallenge(),def=challengeDef(wk.id),s=weeklySettings(),rec=me?.challengeWeek?.[challengeWeekKey(wk.id)];
+ const where=def.where==='range'?'on the driving range':`on the course of the week (week ${isoWeek().week}, ${BIOMES[s.biome]?.name||s.biome})`;
+ return {def,where,rec,best:rec?.best!=null?challengeScoreText(def,rec.best):null};
+}
 function renderChallengeSetup(content){
  const me=mainProfile(profiles);if(settleMedals(me))storeProfiles(profiles);
  if(!challengeDef(challengePick))challengePick=CHALLENGES[0].id;
  if(!GROUPS.some(g=>g.id===challengeTab))challengeTab=challengeDef(challengePick).group;
- const def=challengeDef(challengePick),medals=me?.medals||{},have=g=>challengesIn(g).reduce((a,c)=>a+(medals[c.id]||0),0);
+ const week=weekChallengeInfo(me);
+ const def=challengeWeekPick?week.def:challengeDef(challengePick),medals=me?.medals||{},have=g=>challengesIn(g).reduce((a,c)=>a+(medals[c.id]||0),0);
+ const weekCard=`<button class="chal-card chal-week${challengeWeekPick?' on':''}" data-chal-week aria-pressed="${challengeWeekPick}"><small>Challenge of the week · until Sunday</small><b>${escape(week.def.name)}</b>${MEDAL_PIPS(week.rec?.medal||0)}<small>${escape(week.where)}${week.best?` · your best this week ${escape(week.best)}`:''}</small></button>`;
  const tab=g=>`<button class="panel-tab${challengeTab===g.id?' active':''}" role="tab" aria-selected="${challengeTab===g.id}" data-chal-tab="${g.id}">${escape(g.name)} <small>${have(g.id)}/${challengesIn(g.id).length*3}</small></button>`;
- const card=c=>`<button class="chal-card${c.id===challengePick?' on':''}" data-challenge="${c.id}" aria-pressed="${c.id===challengePick}"><b>${escape(c.name)}</b>${MEDAL_PIPS(medals[c.id]||0)}<small>${me?escape(bestText(me,c.id)):''}</small></button>`;
+ const card=c=>`<button class="chal-card${!challengeWeekPick&&c.id===challengePick?' on':''}" data-challenge="${c.id}" aria-pressed="${!challengeWeekPick&&c.id===challengePick}"><b>${escape(c.name)}</b>${MEDAL_PIPS(medals[c.id]||0)}<small>${me?escape(bestText(me,c.id)):''}</small></button>`;
  const ctx={driver:me?driverCarry({profile:me.id,name:me.name}):250,length:160};
  const asks=medalTargets(def,ctx).map((v,i)=>`<li>${MEDAL_PIPS(i+1)}<b>${MEDALS[i+1]}</b><span>${escape(def.scale==='lengthFeet'?`within ${Math.round(def.medals[i]*100)}% of the hole's length`:targetText(def,v))}${medals[def.id]>i?' · yours':''}</span></li>`).join('');
- content.innerHTML=`<div class="panel-tabs chal-tabs" role="tablist" aria-label="Challenges">${GROUPS.map(tab).join('')}</div>`
+ const where=challengeWeekPick?`This week everyone plays it ${week.where}, the same balls on every copy of Fairway. The first finish this week earns ${WEEKLY_CHALLENGE_XP.first} XP, beating your best this week ${WEEKLY_CHALLENGE_XP.better} (once a day), and a gold ${WEEKLY_CHALLENGE_XP.gold} (once a week), besides the challenge's own medals.`
+  :def.where==='range'?'On the driving range.':`On ${CHALLENGE_COURSE_NAME}, the same holes for everyone.`;
+ const mine=!me?'':challengeWeekPick?(week.best?`${me.name}'s best this week: ${week.best}.`:`${me.name} has not played it this week.`):challengeRecordText(me,def.id);
+ content.innerHTML=`<div class="chal-cards chal-week-row">${weekCard}</div>`
+  +`<div class="panel-tabs chal-tabs" role="tablist" aria-label="Challenges">${GROUPS.map(tab).join('')}</div>`
   +`<div class="chal-cards">${challengesIn(challengeTab).map(card).join('')}</div>`
-  +`<h3>${escape(def.name)}</h3><p>${escape(def.how)}</p><p class="note">${def.where==='range'?'On the driving range.':`On ${CHALLENGE_COURSE_NAME}, the same holes for everyone.`}${def.scale==='driverPlus'||def.scale==='driverShare'?` Medals are measured against your own driver (${Math.round(ctx.driver)} yd in your bag).`:''}</p>`
-  +`<ul class="medal-asks">${asks}</ul>${me?`<p class="note">${escape(challengeRecordText(me,def.id))}</p>`:''}`
+  +`<h3>${challengeWeekPick?'This week: ':''}${escape(def.name)}</h3><p>${escape(def.how)}</p><p class="note">${escape(where)}${def.scale==='driverPlus'||def.scale==='driverShare'?` Medals are measured against your own driver (${Math.round(ctx.driver)} yd in your bag).`:''}</p>`
+  +`<ul class="medal-asks">${asks}</ul>${mine?`<p class="note">${escape(mine)}</p>`:''}`
   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>`
   +`<button class="primary" data-panel-action id="challengeGo">Start ${escape(def.name)} <i data-lucide="arrow-right"></i></button>`
   +`<p class="note">Skins is a round format now: choose it under <em>Format</em> when you start a round from Play.</p>`;
- content.querySelectorAll('[data-chal-tab]').forEach(b=>b.onclick=()=>{challengeTab=b.dataset.chalTab;challengePick=challengesIn(challengeTab)[0].id;openPanel('round');});
- content.querySelectorAll('[data-challenge]').forEach(b=>b.onclick=()=>{challengePick=b.dataset.challenge;openPanel('round');});
+ content.querySelectorAll('[data-chal-tab]').forEach(b=>b.onclick=()=>{challengeTab=b.dataset.chalTab;challengePick=challengesIn(challengeTab)[0].id;challengeWeekPick=false;openPanel('round');});
+ content.querySelectorAll('[data-challenge]').forEach(b=>b.onclick=()=>{challengePick=b.dataset.challenge;challengeWeekPick=false;openPanel('round');});
+ content.querySelector('[data-chal-week]').onclick=()=>{challengeWeekPick=true;openPanel('round');};
  groupEditor('playerRows',round.players,()=>{});
  $('challengeGo').onclick=async()=>{
   if(flight){toast('Finish the current shot first.');return;}
@@ -635,7 +670,7 @@ function renderChallengeSetup(content){
   try{const g=readDraft();group={players:g,mode:'stroke',tee:round.tee||'blue'};new Round(group);}
   catch(e){$('roundError').textContent=e.message;return;}
   challengeSetup=false;closePanel();
-  try{await startChallenge(def.id,group);}catch(e){toast(e.message);}
+  try{await startChallenge(def.id,group,{week:challengeWeekPick});}catch(e){toast(e.message);}
  };
 }
 const bestText=(prof,id)=>{const def=challengeDef(id),s=recordScore(id,prof.challenges?.[id]);return s==null?'Not played':`Best ${challengeScoreText(def,s)}`;};
@@ -648,9 +683,10 @@ const challengeRecordText=(prof,id)=>{const r=prof.challenges?.[id];
 function challengeRecords(profile){
  if(settleMedals(profile))storeProfiles(profiles);
  const r=profile.challenges||{},m=profile.medals||{},count=k=>Object.values(m).filter(v=>v===k).length;
- const rows=[...CHALLENGES,{id:'skins',name:'Skins'}].filter(c=>r[c.id]);
- if(!rows.length&&!Object.keys(m).length)return '';
+ const rows=[...CHALLENGES,{id:'skins',name:'Skins'}].filter(c=>r[c.id]),week=weekChallengeInfo(profile);
+ if(!rows.length&&!Object.keys(m).length&&!week.rec)return '';
  return `<h3>Challenges</h3><p class="note">${count(3)} gold · ${count(2)} silver · ${count(1)} bronze, from ${CHALLENGES.length} challenges.</p>`
+  +`<p class="note">This week: ${escape(week.def.name)}, ${escape(week.where)}. ${week.best?`Best this week ${escape(week.best)}.`:'Not played yet this week.'}</p>`
   +(rows.length?`<ul class="achievement-list">${rows.map(c=>`<li class="achievement earned"><b>${escape(c.name)}</b>${c.id==='skins'?'':MEDAL_PIPS(m[c.id]||0)}<span>${escape(challengeRecordText(profile,c.id))}</span></li>`).join('')}</ul>`:'');
 }
 // THE XP MULTIPLIER for a golfer's hole: their Swing Meter difficulty (Easy
@@ -4137,7 +4173,7 @@ function followRename(profile,from){
 function updateMenuChallenges(){
  const el=$('menuChallengesNote');if(!el)return;
  const m=mainProfile(profiles)?.medals||{},have=Object.values(m).reduce((a,b)=>a+b,0);
- el.textContent=`${CHALLENGES.length} challenges · ${have} of ${MEDAL_TOTAL} medals`;
+ el.textContent=`This week: ${challengeDef(weeklyChallenge().id).name} · ${have} of ${MEDAL_TOTAL} medals`;
 }
 function updateMenuWeekly(){
  updateMenuChallenges();
@@ -5748,7 +5784,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    holeComplete:!!round.holeComplete,
    // The challenge being played (challenge-play.js), read-only, so the smoke
    // test can follow one without reading the bar's words.
-   challenge:challenge?{id:challenge.id,done:!!challenge.done,hole:challenge.hole,range:rangeMode,putting:round.putting?.mode,turn:turn(challenge.play),balls:challenge.play.results.map(r=>r.length)}:null,
+   challenge:challenge?{id:challenge.id,week:challenge.week?.key||null,done:!!challenge.done,hole:challenge.hole,range:rangeMode,putting:round.putting?.mode,turn:turn(challenge.play),balls:challenge.play.results.map(r=>r.length)}:null,
    // How far the tracer's end sits from the ball, a number worth being able to
    // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
    // once the ball has stopped and the line caught up, it should be ~0.

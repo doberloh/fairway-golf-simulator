@@ -74,6 +74,10 @@ a challenge a day. What a single ball scores is pinned by hand in
 through the ball model, so High and low and Curve it stay reachable), and
 `challenge-spots` checks on the real Challenge Course that it hosts every
 challenge and every spot is on ground its challenge allows.
+`challenge-week` checks the challenge of the week: the same date gives the
+same pick (this week's and next week's are pinned), each cycle plays every
+challenge in the pool once, a pool added later leaves earlier weeks alone,
+the week's pay, and that the next nine weeks' courses host their picks.
 
 **What the round tests do not cover:** `main.js` -- the round panel, the
 buttons that hand the turn over, the scorecard and banner on screen, the XP
@@ -88,7 +92,7 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `weekly`, `player-colours`, `bag`.
+  `challenge-spots`, `challenge-week`, `weekly`, `player-colours`, `bag`.
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
@@ -124,7 +128,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
-| `challenge`, `weekly` | the Challenges screen's five tabs and 27 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the course of the week |
+| `challenge`, `challenge-week`, `weekly` | the Challenges screen's five tabs and 27 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; the course of the week |
 | `range`, `studio` | the driving range; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch |

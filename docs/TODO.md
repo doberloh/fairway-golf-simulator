@@ -408,12 +408,20 @@ smoke journey `challenge` passes (below, *Done*).
   -- say if it needs a ring), Up and down. The results card's medals, *Other
   challenges*, and the line when the day's 250 XP is used up. My profile ->
   *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
-- [ ] **Step 2: the challenge of the week** and five new achievements (First
-  medal, Gold Standard, All-Rounder, Weekly Regular, Head of the Table), as the
-  plan says.
+- [ ] **Look at the challenge of the week in the game**: its card across the
+  top of the Challenges screen (gold edge, "until Sunday", where it is played),
+  the menu tile's "This week: ...", the bar's "This week ·", the results
+  card's "best this week", its line on My profile, and the XP popup for a
+  first finish (100) and a gold. The four new achievements on My profile.
+- [ ] **Run the smoke journey `challenge-week`** when the owner allows the
+  graphics card. Written without being run; if it fails, check the harness
+  before the game.
 - [ ] **Step 3: the rest** -- Every par 3, Greens in regulation, Scrambler and
-  Putting tour (holes in turn), the three head-to-heads, and the two Rounds
-  (Sudden death waits for `endless-menu-clock` to merge).
+  Putting tour (holes in turn), the three head-to-heads with the *Head of the
+  Table* achievement, and the two Rounds (Sudden death waits for
+  `endless-menu-clock` to merge). Adding the four course ones to the week's
+  pool means a new `WEEKLY_POOLS` row from a future week, never editing the
+  first (PROJECT_HANDOFF *The challenge of the week is the date*).
 
 # Done
 
@@ -430,6 +438,13 @@ smoke journey `challenge` passes (below, *Done*).
   (`challengeStarting`) while the hole loads. The results card and the
   Challenges screen were not looked at as pictures: the one screenshot was
   taken as the card slid in.
+- [x] **Step 2: the challenge of the week** (weekly.js `weeklyChallenge`), on
+  the course of the week or the range, with its own best for the week and its
+  own pay, its card on the Challenges screen, the menu tile and My profile;
+  and four achievements (First Medal, Gold Standard, All-Rounder, Weekly
+  Regular). The fifth in the plan, Head of the Table, waits for the
+  head-to-heads in step 3. Tested in Node (`challenge-week`, `achievements`,
+  `profile`); not seen in the game.
 
 ## Release 0.8.1 (16 October)
 

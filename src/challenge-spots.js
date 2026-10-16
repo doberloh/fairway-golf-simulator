@@ -13,6 +13,9 @@
 // Every rule here is PLACED (RESEARCH.md *Challenges and medals*).
 
 import {greenDistance} from './course.js';
+import {seeded} from './challenges.js';
+
+export {seeded};
 
 const YARD = .9144, FOOT = .3048;
 
@@ -22,12 +25,6 @@ export function holeAdapter(h, tee = 'white') {
  return {pin: h.pin, tee: {x: t.x, z: t.z}, length: h.length, surface: (x, z) => h.surface(x, z), edge: (x, z) => greenDistance(h, x, z), center: z => h.center(z)};
 }
 
-// A seeded stream of numbers in [0, 1), from any string.
-export function seeded(seed) {
- let h = 2166136261;
- for (const ch of String(seed)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
- return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
 const CHIP = ['fringe', 'semi', 'rough', 'fairway', 'sand'], GRASS = ['fringe', 'semi', 'rough', 'fairway'], LIE = ['fairway', 'semi'];
 const crosses = (hole, a, b, kind, from = .05, to = .95) => {
  for (let i = 0; i <= 24; i++) { const f = from + (to - from) * i / 24; if (hole.surface(a.x + (b.x - a.x) * f, a.z + (b.z - a.z) * f) === kind) return true; }

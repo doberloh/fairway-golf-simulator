@@ -1523,6 +1523,10 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 .chal-card b{font-size:12px}
 .chal-card small{font-size:10px;color:var(--ink-faint)}
 .chal-card.on{border-color:#d9c27a;box-shadow:0 0 0 1px #d9c27a inset;background:rgba(217,194,122,.12)}
+/* The challenge of the week: one card across the top, edged in gold. */
+.chal-week-row{grid-template-columns:1fr;margin-bottom:0}
+.chal-week{border-color:rgba(217,194,122,.55)}
+.chal-week small:first-child{color:#d9c27a;letter-spacing:.4px;text-transform:uppercase;font-size:9.5px}
 .medal-pips{display:inline-flex;gap:4px;vertical-align:middle}
 .medal-pips i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--glass-line);box-sizing:border-box}
 .medal-pips i.m1.on{background:#b9804b;border-color:#b9804b}
