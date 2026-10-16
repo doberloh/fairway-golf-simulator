@@ -52,18 +52,24 @@ const ROWS = [
  [11, 'tracer', 'sunset', 'Sunset'],
  [12, 'skin', 'neon', 'Neon'],
  [13, 'ball', 'polka-dot', 'Polka dot'],
-  [15, 'badge', 'single-digit', 'Single Digit'], [15, 'title', 'flag-hunter', 'Flag Hunter'],
+ // FIVE LEVELS FILLED (the owner, 15 October 2026): 14, 22, 27, 36 and 43 had
+ // brought nothing since the flourish ladder moved off them. Each new reward
+ // sits where its kind waits longest between unlocks. PLACED.
+ [14, 'tracer', 'smoke', 'Smoke'],
+ [15, 'badge', 'single-digit', 'Single Digit'], [15, 'title', 'flag-hunter', 'Flag Hunter'],
  [16, 'tracer', 'dashed', 'Dashed'],
  [17, 'ball', 'pumpkin', 'Pumpkin'],
  [18, 'skin', 'retro-pixel', 'Retro pixel'],
  [19, 'tracer', 'sparkle', 'Sparkle trail'],
  [20, 'badge', 'scratch', 'Scratch'], [20, 'title', 'low-ball', 'Low Ball'],
  [21, 'ball', 'glow', 'Glow'],
-  [23, 'tracer', 'ribbon', 'Ribbon'],
+ [22, 'title', 'grinder', 'Grinder'],
+ [23, 'tracer', 'ribbon', 'Ribbon'],
  [24, 'skin', 'chalkboard', 'Chalkboard'],
  [25, 'badge', 'tour-card', 'Tour Card'], [25, 'ball', 'chrome', 'Chrome'], [25, 'title', 'tour-rookie', 'Tour Rookie'],
  [26, 'tracer', 'ice', 'Ice'],
-  [28, 'ball', 'camo', 'Camo'],
+ [27, 'skin', 'sunset', 'Sunset'],
+ [28, 'ball', 'camo', 'Camo'],
  [29, 'title', 'sharpshooter', 'Sharpshooter'],
  [30, 'badge', 'contender', 'Contender'], [30, 'tracer', 'fire', 'Fire'],
  [31, 'ball', 'galaxy', 'Galaxy'],
@@ -71,13 +77,14 @@ const ROWS = [
  [33, 'tracer', 'lightning', 'Lightning'],
  [34, 'title', 'iron-will', 'Iron Will'],
  [35, 'badge', 'major-winner', 'Major Winner'], [35, 'ball', 'tartan', 'Tartan'],
-  [37, 'tracer', 'aurora', 'Aurora'],
+ [37, 'tracer', 'aurora', 'Aurora'],
  [38, 'skin', 'carbon', 'Carbon'],
  [39, 'ball', 'marble', 'Marble'],
  [40, 'badge', 'hall-of-fame', 'Hall of Fame'], [40, 'title', 'hall-of-famer', 'Hall of Famer'],
  [41, 'tracer', 'starfall', 'Starfall'],
  [42, 'ball', 'diamond-plate', 'Diamond plate'],
-  [44, 'skin', 'gold-leaf', 'Gold leaf'],
+ [43, 'ball', 'lava', 'Lava'],
+ [44, 'skin', 'gold-leaf', 'Gold leaf'],
  [45, 'badge', 'legend', 'Legend'], [45, 'tracer', 'ghost', 'Ghost'], [45, 'title', 'legend', 'Legend'],
  [46, 'ball', 'gold', 'Gold'],
  [47, 'tracer', 'comet-sparkle', 'Comet tail plus sparkle'],
@@ -92,7 +99,7 @@ const ANIMATED_FRAMES = [
  [7, 'sparkle-silver', 'Silver sparkle'], [9, 'water', 'Water'], [13, 'leaves', 'Spring leaves'],
  [16, 'flames', 'Flames'], [19, 'sparkle-gold', 'Gold sparkle'], [21, 'leaves-autumn', 'Autumn leaves'],
  [24, 'flames-blue', 'Blue flames'], [26, 'ice', 'Ice'], [29, 'flames-green', 'Green flames'],
- [32, 'deep-water', 'Deep water'], [38, 'flames-purple', 'Purple flames'], [42, 'aurora', 'Aurora'], [47, 'galaxy', 'Galaxy'],
+ [32, 'deep-water', 'Deep water'], [36, 'lightning', 'Lightning'], [38, 'flames-purple', 'Purple flames'], [42, 'aurora', 'Aurora'], [47, 'galaxy', 'Galaxy'],
 ];
 // Each badge still brings its frame, as a frame of the same id at its level.
 const BADGE_FRAMES = ROWS.filter(r => r[1] === 'badge').map(([level, , id, name]) => [level, 'frame', id, name]);
@@ -169,6 +176,9 @@ export const TRACERS = {
  aurora: {colours: ['#5cf2b0', '#3fd6d6', '#7d7cf2', '#c46ef0'], width: 6, opacity: .8, shift: .12},
  starfall: {colours: ['#e6e0ff'], width: 3.5, sparkle: {count: 48, colour: '#fff9e0', fall: 1.6}},
  ghost: {colours: ['#e8fff4', '#bfe8d6'], width: 6, opacity: .38, flicker: .2},
+ // Skywriting: wide and soft, grey where it has hung longest (at the tee),
+ // with puffs that drift UP (a negative fall).
+ smoke: {colours: ['#a9aeb3', '#dfe2e4', '#ffffff'], width: 9, opacity: .5, sparkle: {count: 30, colour: '#eef0f2', fall: -.35}},
  'comet-sparkle': {colours: ['#ffd36b'], width: 3.5, head: {share: .14, width: 10}, sparkle: {count: 40, colour: '#fff6c8', fall: .6}},
  rainbow: {colours: ['#ff4d4d', '#ffa64d', '#ffe74d', '#5ee05e', '#4dc3ff', '#7a6cff', '#d36cff'], width: 5.5, shift: .25},
 };
@@ -230,6 +240,8 @@ export const FRAMES = {
  'flames-purple': {anim: 'flames', colours: ['#4b138e', '#a14dff', '#f0c6ff']},
  aurora: {anim: 'spin', colours: ['#3ff2a8', '#3fb7d6', '#a46ef0']},
  galaxy: {anim: 'sparkle', colours: ['#1a0f3d', '#4b2a8e', '#c6b8ff']},
+ // A crackle that jumps outside the circle and flickers on and off.
+ lightning: {anim: 'lightning', colours: ['#16226e', '#6fb2ff', '#ffffff']},
 };
 // The highest badge a level has earned.
 export function highestBadge(level) {
@@ -257,6 +269,7 @@ export const METER_SKINS = {
  blueprint: {track: 'linear-gradient(90deg,#173a6b,#1d4680),repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,255,255,.12) 11px 12px)', base: '#1a4075', edge: '#cfe3ff', zone: 'rgba(255,214,102,.48)', perfect: '#78e39a', marker: '#ffffff', target: '#a8e4ff', flash: '#9ef0b6'},
  carbon: {track: 'repeating-linear-gradient(45deg,#1b1d20 0 3px,#24272b 3px 6px)', base: '#202326', edge: '#6b7178', zone: 'rgba(245,205,105,.45)', perfect: '#64d98a', marker: '#ffffff', target: '#7fd0ff', flash: '#7ef0a0'},
  'gold-leaf': {track: 'linear-gradient(90deg,#3a2c10,#4d3a14)', base: '#433312', edge: '#e2bf5c', zone: 'rgba(255,226,120,.45)', perfect: '#7ee39a', marker: '#fff8e0', target: '#8fd3ff', flash: '#ffe58a'},
+ sunset: {track: 'linear-gradient(90deg,#2b1638,#4a1f3d,#5e2a26)', base: '#41203a', edge: '#ff9f6b', zone: 'rgba(255,214,110,.45)', perfect: '#6ee08e', marker: '#fff3e6', target: '#8fd3ff', flash: '#ffc58a'},
  aurora: {track: 'linear-gradient(90deg,#0f2433,#16243f,#20193d)', base: '#16223a', edge: '#7ff2c8', zone: 'rgba(250,214,110,.45)', perfect: '#5cf2a0', marker: '#ffffff', target: '#86d4ff', flash: '#a6ffd0'},
  champion: {track: 'linear-gradient(90deg,#2a2208,#3b2e0b)', base: '#33280a', edge: '#ffd86b', zone: 'rgba(255,220,110,.48)', perfect: '#6ee08e', marker: '#ffffff', target: '#8fd3ff', flash: '#ffe58a', rainbow: true},
 };
