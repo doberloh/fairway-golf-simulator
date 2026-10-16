@@ -185,6 +185,8 @@ file is indistinguishable from a forgotten one. What each holds:
   its heading. Move a ticked entry there with what was built, **close any open
   entry the change made untrue**, and never nest an open item under a finished
   one. An idea is not an entry (*Ideas live in IDEAS.md*).
+- **TESTING.md** -- what is tested and by which layer; a suite or smoke
+  journey added, removed or changing what it covers.
 - **IDEAS.md** -- what could be built; only when the change builds, kills or
   alters one of them.
 - **PROJECT_HANDOFF.md** -- architecture, invariants and traps: what must stay

@@ -29,6 +29,8 @@ no formatter. Match the style of the file you are editing.
 
 ## What is verified, and how
 
+[docs/TESTING.md](docs/TESTING.md) is the full map; in short:
+
 - **`npm test`** — regression suites in `tests/`. Add a focused one for the
   behaviour you are changing.
 - **`npm run bench`** — builds many courses in parallel and measures what the

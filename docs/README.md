@@ -1,6 +1,6 @@
 # Fairway documentation
 
-Eighteen documents, and the fastest way through them is to know which question
+Nineteen documents, and the fastest way through them is to know which question
 each one answers. Nothing here is an archive: every document is expected to
 describe the code as it stands today, and correcting a stale claim is part of
 the change that made it stale, not a follow-up.
@@ -12,6 +12,7 @@ the change that made it stale, not a follow-up.
 | play, and find the controls | [PLAYING.md](PLAYING.md) |
 | get it running on a device | [INSTALLATION.md](INSTALLATION.md) |
 | publish a release, or retake pictures and clips of the game | [INSTALLATION.md](INSTALLATION.md), *Publishing a release on GitHub* and *Pictures and clips of the game* |
+| know what is tested, and how | [TESTING.md](TESTING.md) |
 | find the command for something | [COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md) |
 | change the code | [ARCHITECTURE.md](ARCHITECTURE.md), then [../AGENTS.md](../AGENTS.md); search [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the detail |
 | know why a number is what it is | [RESEARCH.md](RESEARCH.md) |
@@ -38,6 +39,10 @@ the change that made it stale, not a follow-up.
 
 - **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
   measurement, release and capture command on one page.
+- **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
+  generator checks, the smoke test, the frame profile), what each can and
+  cannot see, which formats and groups the round tests play, every smoke
+  journey, and what only a person checks.
 
 - **[RULES_HISTORY.md](RULES_HISTORY.md)** — why each rule in AGENTS.md exists: the incidents behind them, with dates and costs. AGENTS.md keeps only the rules, because it is loaded with every message.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — read first: the product, where

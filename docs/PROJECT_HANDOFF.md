@@ -1179,6 +1179,8 @@ THE TRAP: `.main-menu` is `position:fixed; z-index:80` and the drawer is 21, so 
 
 ### Removing a golfer, and choosing a scramble ball
 
+**A HOLE NOBODY SCORED IS A GAP, AND A SAVE MUST TAKE A GAP.** A golfer who joins mid-round has no score for the holes before, and a scramble team that forms mid-round has no team score for them: those rows are sparse arrays, and `JSON.stringify` writes each gap as `null`. `Round.restore` checked every entry with `score`, which refuses `null` -- so from the first hole a joined golfer finished, every save of that round was refused: Continue silently dropped it (`pendingRound=null`), the library would not open it, and the mulligan, which restores its own JSON snapshots, threw. It now allows `null` and `undefined` in `cards`, `puttCards` and `teamCards` and turns them back into empty slots (`slot`, `gaps`). Found 16 October 2026 by the round matrix, not by a player; no hand-written test had saved a round after somebody joined and finished a hole.
+
 **`setPlayers` matches on SEAT, not on list position, and that was a real data bug.** It resized every per-player array by length — slot `i` kept slot `i`, truncated from the end — while the editor removes the row you clicked. So removing the first of two golfers deleted the SECOND one's card and handed the first one's strokes, ball and scorecard to whoever was left, under the remaining name. Draft rows now carry `seat`, the id the golfer already holds; `setPlayers` reads each slot from its seat and treats an entry without one as new. `seat` is stripped when `this.players` is built — persisted, it would be read back as a seat in a group that has since changed.
 
 **The first golfer could not be removed at all.** The row's delete button was gated on `i`, so row zero never had one and the only way to drop the first name was to remove everyone else and retype it. The rule is that a round needs ONE golfer, so the gate is now `draft.length > 1` on every row.
@@ -1529,8 +1531,11 @@ step 3's sim drop beside the cup, the putt, the three-second reveal, the
 scorecard and the next hole, and step 5's drop onto a green, in a real browser
 on the built file, failing on any error. What it cannot judge is how things
 LOOK -- the flag lifting, the cup drop, the contour tile, reflections, banks --
-and it plays one golfer, so multi-player completion and scramble selection
-stay manual. Treat the list as the visual pass after the smoke test is green.
+and it plays at most two golfers, so a whole multi-golfer round, match play and
+scramble selection stay manual ON SCREEN. Their RULES are covered:
+`tests/round-matrix.test.mjs` plays every format with every group in Node
+(docs/TESTING.md, which maps every layer of testing). Treat the list as the
+visual pass after the smoke test is green.
 
 Manual/browser regression sequence:
 

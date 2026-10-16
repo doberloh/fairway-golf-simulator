@@ -139,7 +139,13 @@ does not have. Nothing here is a claim of support until it is done.
   leaving during a pending timer, the lab, a round saved and continued, free
   flight on a phone, export and import round-trips, and Safari, Firefox and
   Edge opening the file. (`mixed-group` now covers a monitor golfer and a
-  Swing Meter golfer in one group.) (was: *What the smoke test does not walk*;
+  Swing Meter golfer in one group, and `skins` starts a two-golfer skins
+  round. The RULES of every format with every group are played in Node by
+  `tests/round-matrix.test.mjs`, so what is left here is the screens.) **And
+  one new since 16 October:** a round somebody joined partway through -- let
+  them finish a hole, then reload and Continue, and take a mulligan. Both
+  failed before the fix below and neither has been seen working in the game.
+  (was: *What the smoke test does not walk*;
   *Browser timing and state-transition regression*; *Offline release matrix*;
   the browser half of *Finish target-browser/direct-file...*)
 
@@ -378,6 +384,27 @@ nothing was run on the graphics card.
   (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
 
 # Done
+
+## Every format with every group (16 October 2026)
+
+- [x] **The round matrix.** Asked for by the owner, who cannot play
+  multi-golfer rounds quickly: `tests/round-matrix.test.mjs` plays every
+  format (stroke, match, scramble, skins) with every group of one to four
+  golfers and every team split the format allows, under all three putting
+  modes, both out-of-bounds rules and endless runs -- about 1,250 rounds and
+  65,000 made-up shots in five seconds -- against a scorer written from the
+  rules rather than from game.js. It saves and restores mid-hole and while a
+  ball waits for relief, takes mulligans, drops balls, and has golfers join
+  and leave between holes. docs/TESTING.md, new, maps every layer of testing.
+  **It found a real bug on its first run:** a round somebody joined partway
+  through could not be saved and loaded once they had finished a hole --
+  Continue dropped the round, and the mulligan threw -- because a save writes
+  the holes they missed as null and loading refused null (PROJECT_HANDOFF, *A
+  HOLE NOBODY SCORED IS A GAP*). Fixed in `Round.restore`; the regression
+  test fails without the fix. **Not seen in the game** -- the owner check is
+  in the open list, *What the smoke test does not walk*. One thing it showed
+  that was the test's assumption, not a bug: after a sim drop in match play
+  the golfer who dropped plays next, nearest ball or not.
 
 ## The open list before the 16 October prune
 
