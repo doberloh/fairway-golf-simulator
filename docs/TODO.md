@@ -837,6 +837,17 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
 
+## Release 0.8 (15 October)
+
+- [x] **v0.8 published**, "Fairway 0.8 (beta)", at the owner's request, from
+  the merge of `release-0.8` into `main`: the Swing Meter, XP and levels,
+  things to unlock and wear, achievements, challenges and the course of the
+  week, greens at real size with a bolder attended pin and a Green size
+  setting, and every level from 2 to 50 bringing something. Generator 36,
+  schema 11. Notes: `docs/releases/v0.8.md`. Smoke: full 32/32 before the last
+  changes, the touched journeys after (DISTRIBUTION_REVIEW, *v0.8*); the
+  website is redeployed after it so its demo runs 0.8.
+
 ## Unlocks under test (15 October 2026)
 
 - [x] **Every unlock checked one by one, and levelling up played** (the owner

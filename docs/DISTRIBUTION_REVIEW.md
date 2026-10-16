@@ -974,3 +974,42 @@ and its four Download buttons resolve to the v0.7 zips.
 The packaged Windows server was also run from its unzipped download before
 publishing: it served the page and passed 4I, GW, 3H, LW and DR to a pretend
 device without dropping the browser.
+
+## Addendum, 15 October 2026: v0.8
+
+**v0.8** is published at the owner's request as "Fairway 0.8 (beta)", tag
+`v0.8`, not a pre-release, the same four zip names, from the merge of
+`release-0.8` into `main`, with its notes in `docs/releases/v0.8.md` in that
+commit. It carries four journeys since 0.7: the Swing Meter with XP, levels,
+rewards, achievements, challenges and the course of the week (`swing-meter`,
+which also brought greens at real size, the bolder and attended pin, the Green
+size setting, the ball-light shader fix and Course studio's full-screen
+settings); every unlock under test (`unlock-tests`); and the five empty levels
+filled (`fill-empty-levels`). **`GENERATOR_VERSION` is 36** (greens at real
+size), so a round saved in 0.7 opens with the version notice; course codes
+still load, on the new ground. **`SCHEMA_VERSION` is 11** (the ball-flight
+profile removed at 10, `greenScale` added at 11), migrated silently. The
+page's `fairway-versions` tag reads `generator=36 schema=11`, which the
+website's sample course code is written from. Profiles gain XP, levels, what
+is worn, achievements, challenge records and weekly bests inside the existing
+profile store (no new storage key); devices keep `fairway-*` preferences as
+before.
+
+**The bridge is unchanged** (no change under `bridge/`, `public/` or
+`vendor/` since 0.7), so 0.7's server works with this game; the zips carry it
+rebuilt from the same source. No dependency was added, removed or upgraded
+(`package.json` and the lock file unchanged), so ATTRIBUTION and
+THIRD_PARTY_NOTICES stand. Every new look -- ball finishes, tracers, frames,
+meter skins, flourishes -- is drawn in code at run time; no image, font or
+audio file was added.
+
+The built page is 17,131,522 bytes (7.06 MB gzipped), +133 KB on 0.7. **Smoke
+on the release code: partly.** The last full run, 32 of 32 journeys on an idle
+card, was on `swing-meter` at the ball-light fix (813a074). After it, each
+later change ran the journeys it touched, on an idle card with the owner's
+leave: `studio`, `phone-portrait` and `phone-landscape` for the full-screen
+settings; `look` and `level-up` on the final reward code (474bf7e). A final
+graphics profile on the real-GPU arm found nothing slower than the baseline
+(RESEARCH *Final profile before the merge*); the software-renderer arm was
+skipped, as it crashed the owner's computer on 13 October. `npm test`: 796 of
+796.
