@@ -363,6 +363,12 @@ const menuReady = t => t.step('menu ready', () =>
 // in trouble waits for its golfer's choice and nothing else can be played --
 // a sim drop included. A journey that is not about relief takes whichever drop
 // is offered first and carries on; `press` is how it presses (a tap on a phone).
+// The course, its seed and the hole, as the screen names them.
+const whereAmI = page => page.evaluate(() => {
+ const map = document.getElementById('map');
+ return {seed: map?.dataset.courseSeed || null, course: document.getElementById('courseTitle')?.textContent?.trim() || null,
+  hole: document.getElementById('holeNumber')?.textContent?.trim() || null};
+}).catch(() => ({}));
 const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
  if (await t.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false)) await press('#reliefTake');
 };
@@ -758,6 +764,11 @@ const JOURNEYS = [
     await fromMenu(t, 'Endless');
     await t.pressToPlay('Start an endless run');
    });
+   // Which course, on every run and not only a failed one: a software frame's
+   // cost depends on the course as well as the machine, and a slow run cannot
+   // be told from a slow course without it (16 October 2026).
+   const where = await whereAmI(t.page);
+   console.log(`       (on ${where.course ?? '?'} · seed ${where.seed ?? '?'})`);
    await t.step('change club with Q and E', async () => {
     const before = await t.page.inputValue('#club');
     await t.key('KeyE'); await t.key('KeyE'); await t.key('KeyQ');
@@ -2780,11 +2791,7 @@ for (const journey of chosen) {
   // full diagnostic block -- build, mode, hole, machine, errors -- because it
   // is exactly what a player's report would carry, and it cannot be collected
   // afterwards once the page is gone.
-  const where = await page.evaluate(() => {
-   const map = document.getElementById('map');
-   return {seed: map?.dataset.courseSeed || null, course: document.getElementById('courseTitle')?.textContent?.trim() || null,
-    hole: document.getElementById('holeNumber')?.textContent?.trim() || null};
-  }).catch(() => ({}));
+  const where = await whereAmI(page);
   if (where.seed || where.course) console.log(`   on: ${where.course ?? '?'} · seed ${where.seed ?? '?'} · hole ${where.hole ?? '?'}`);
   for (const extra of trip.steps.at(-1)?.extra ?? []) console.log(`       also: ${extra}`);
  }

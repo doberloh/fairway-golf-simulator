@@ -57,11 +57,23 @@ check.
   marker reaches the target (`lab.state().swing` gives the start and pace),
   holed-or-not is asked of the game (`lab.state().holeComplete`), and Start an
   endless run is accepted once the game leaves the menu (`pressToPlay`).
-  PROJECT_HANDOFF, *A harness tap that has to land*. **Not yet seen running:**
-  no browser was run locally (the owner's GPU rule), so the first push of the
-  branch is the test -- check that run's `endless-round` passes, and that its
-  putt out takes one or two putts. Close this entry when it has gone green
-  on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
+  PROJECT_HANDOFF, *A harness tap that has to land*. **First GitHub run of the
+  branch (38961631676, 16 October): cancelled by the job's 45-minute limit**
+  with every step passing, during `endless-round`'s putting out, right after
+  the drop beside the pin -- the fallback for the start click saved that step.
+  Its smoke steps ran 5 to 10 times slower than the faster 0.8 run's
+  (38856836307: menu ready 104 s against 17, the cameras 348 against 44) and
+  about three times slower than the slower one's (38857024163), while its unit
+  tests were only 13% slower (546 s against 483). Not the fix: boot, which none
+  of the change touches, was already slow (two single page reads 13 s and
+  11 s, 0.0 s on every earlier run), and that runner was the slowest of the
+  five measured (RESEARCH, *The smoke test on GitHub*). The branch at 8a6058d
+  was merged into main anyway, at the owner's word, on 16 October. The job's
+  limit is now 90 minutes and the smoke step's 70, and the log names the
+  course on every run (c61bdf6 onward, on the branch). **The stamped putt is
+  still not seen running:** the next push is the test -- check that
+  `endless-round` passes and its putt out takes one or two putts. Close this
+  entry when it has gone green on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
   a failed run keeps its screenshots as the `smoke-screenshots` artifact. Once
   it runs green, add it as a required check to the *main changes by reviewed pull
   request* ruleset in `tools/github-protect.mjs` -- not before, or every pull
