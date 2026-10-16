@@ -4038,7 +4038,9 @@ engineering provenance pass, not legal advice.
   **Filled (the owner chose new rewards, 15 October 2026):** Smoke tracer
   14, Grinder title 22, Sunset meter skin 27, Lightning frame 36, Lava ball
   43; a test now fails if any level from 2 to 50 brings nothing. RESEARCH
-  *Five empty levels filled*. Not yet seen in the picker by the owner.
+  *Five empty levels filled*. Seen in screenshots of the picker and the
+  worn picture (Lightning and Lava redrawn after the first look); smoke
+  `look` and `level-up` green. Not yet played by the owner.
 - [x] **Panels drag by a title bar like the tool windows' (5 October).** The
   map, shot controls, weather, tools strip, course card and flight controls
   each carry the grip-and-name bar a tool window has; phones keep the corner

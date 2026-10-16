@@ -7965,11 +7965,17 @@ track #2b1638 -> #4a1f3d -> #5e2a26 on base #41203a, the usual yellow zone,
 green band and blue target; it passes the same lightness test for normal and
 red-green colour-blind vision as every skin. **Lightning** frame at 36 (frames
 32 -> 38): a dark blue ring with bright bolts turning in eight jumps every 1.6
-s and flaring twice per 2.3 s, and outside it a saw-toothed corona -- 26
-spikes, two layers -- flickering on and off out of step (2.3 s and 1.7 s).
-**Lava** ball at 43 (a flashy late ball before Gold at 46): rock #1c1614 to
-#3a2a24 split by cracks from #ff5a14 to #ffd36b where a noise field crosses
-its middle, roughness 0.6, a little glow of its own (0.2).
+s and flaring twice per 2.3 s, and outside it thin jagged bolts (an SVG, white with
+a glow in the frame's blue; two layers of four and five bolts) flickering and
+jumping round out of step (2.3 s and 1.7 s). **Lava** ball at 43 (a flashy late
+ball before Gold at 46): rock #1c1614 to #3a2a24 split into irregular plates
+(cellular noise, wobbled by fbm) whose seams glow #ff5a14 to #ffd36b,
+roughness 0.6, a little glow of its own (0.2); its texture takes 57 ms to
+build, once, when it is put on. **Two first drafts were rejected on sight**
+(screenshots, same night): the Lightning corona as a filled saw-toothed ring
+read as a gear or a sunburst, and crowded the name beside the picture; Lava's
+cracks from the ridges of an fbm field came out as broad gold blotches --
+leopard print, not lava.
 
 ### The cup rattle (15 October 2026)
 

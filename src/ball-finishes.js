@@ -40,6 +40,19 @@ function noise3(x, y, z) {
 }
 const fbm = (p, f, oct = 3) => { let a = 0, amp = .5, n = 0; for (let i = 0; i < oct; i++) { a += amp * noise3(p[0] * f + 17 * i, p[1] * f + 31 * i, p[2] * f + 47 * i); n += amp; f *= 2; amp *= .5; } return a / n; };
 
+// Cellular noise: how far a point is from the seam between the two nearest of
+// a lattice of jittered points (0 on the seam). Lava's cracks.
+function plates(q) {
+ const xi = Math.floor(q[0]), yi = Math.floor(q[1]), zi = Math.floor(q[2]);
+ let d1 = 9, d2 = 9;
+ for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+  const cx = xi + dx, cy = yi + dy, cz = zi + dz;
+  const d = Math.hypot(cx + hash(cx, cy, cz) - q[0], cy + hash(cx + 7, cy, cz) - q[1], cz + hash(cx, cy + 13, cz) - q[2]);
+  if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+ }
+ return d2 - d1;
+}
+
 // A point on the ball: the direction `p` [x, y, z] (y up), its longitude `u`
 // (0 to 1 round the ball) and latitude `v` (0 at the top, 1 at the bottom).
 const WHITE = C('#fbfaf2');
@@ -129,10 +142,17 @@ const FINISH_RULES = {
  },
  // Dark rock split by glowing cracks: the ridges of a noise field, hottest
  // at their middle.
+ //
+ // The cracks are the seams between irregular plates (cellular noise: the gap
+ // between the nearest and second-nearest of a jittered lattice of points),
+ // wobbled a little by fbm so they do not run straight. The first version used
+ // the ridges of an fbm field instead, and its "cracks" came out as broad gold
+ // blotches -- leopard print, not lava.
  lava: ({p}) => {
-  const r = Math.abs(fbm(p, 3.2, 4) - .5), crack = 1 - smooth(.012, .05, r);
+  const w = fbm(p, 4, 2) - .5, q = [p[0] * 3.6 + w, p[1] * 3.6 + w * .7, p[2] * 3.6 - w];
+  const edge = plates(q), crack = 1 - smooth(.03, .12, edge);
   const rock = mix(C('#1c1614'), C('#3a2a24'), fbm([p[2], p[1], p[0]], 5.5, 3));
-  return crack > 0 ? mix(rock, mix(C('#ff5a14'), C('#ffd36b'), smooth(.5, 1, crack)), crack) : rock;
+  return crack > 0 ? mix(rock, mix(C('#ff5a14'), C('#ffd36b'), smooth(.6, 1, crack)), crack) : rock;
  },
  gold: ({p}) => mix(C('#8a5a12'), C('#ffe08a'), clamp01(.55 + p[1] * .45 + (fbm(p, 3) - .5) * .3)),
  'black-pearl': ({p}) => {
