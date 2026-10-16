@@ -80,6 +80,15 @@ check.
   request waits for a check that never passes. (was: *The CI smoke step has
   never run on GitHub*; *The tests workflow has never run on GitHub*)
 
+- [ ] **Check that Endless off the menu now starts in daylight.** Fixed 16
+  October 2026 on branch `endless-menu-clock` (every Endless run started from
+  the menu on a fresh device was at 12:00 AM; RESEARCH.md *The smoke test on
+  GitHub*, fourth finding). Not seen in the game: no browser was run. Check: the
+  next `endless-round` smoke screenshot (`bench/shots/smoke/endless-round.png`,
+  or GitHub's `smoke-screenshots`) shows daylight; by hand, with
+  `fairway-time-v1` removed from localStorage, Endless from the menu starts at
+  the hour the hole was shown at, and the clock reads that hour.
+
 - [ ] **Three high-severity advisories in the build tools.** `npm audit`, run
   16 October 2026: nothing in what the game ships (`--omit=dev`: 0); three
   high in `micromatch`, pulled in by `vite-plugin-singlefile`. Build-time only,

@@ -5508,7 +5508,7 @@ floodlit PNW night.
 ## The floodlight freeze on Ultra, and the work moved into loading (30 September)
 
 Branch `frame-and-lights`. `asDrawn`, `ready` and `warmUp(grassBudget)` in
-`src/renderer.js`; `lightsOffForRound` and `middayForRound` in `src/main.js`;
+`src/renderer.js`; `lightsOffForRound` and `middayForRound` (now `clockForRound`) in `src/main.js`;
 the `floodlit-night` smoke journey. Reported by the owner: a massive freeze
 when the floodlights came on, and a freeze after loading into a course.
 
@@ -5554,7 +5554,8 @@ off.** `ready` now runs the floodlight warm-up itself and waits for its programs
 to link before the overlay goes. Every round starts with the floodlights off
 (they used to follow the saved preference) and a round built through Play
 starts at midday unless "Start at my local time" is ticked; Endless keeps the
-showcase hole's hour. Cost: about 3 s more loading on an Ultra nine than with
+showcase hole's hour (claimed here, but not built until 16 October: the code
+put the player's clock back, *The smoke test on GitHub*). Cost: about 3 s more loading on an Ultra nine than with
 the fix alone (3.5 -> 6.8 s), still a little under main.
 
 **The hole change.** Not floodlights: `warmUp` spent up to 70 ms building the
@@ -8253,11 +8254,42 @@ canvas): it might help, and might not, and nothing can say which without a
 browser run, which waits for the owner. A slimmer CI journey: the endless
 journey's controls -- clubs, aim, the Swing Meter's keys, the cameras -- took
 two thirds of its time on the slow runner, but they are what the journey is
-for, and cutting them is the owner's call. Also seen and left for its own
-change: in every smoke picture, GPU runs included, the Endless round is at
-12:00 AM, although the menu hole it adopts is always in daylight
-(`MENU_HOURS`). Read from the code, not yet confirmed: on a device with no saved clock, adopting the menu hole puts
-back a player clock that was never set (`restoreClock`), and an hour of
-nothing is drawn as midnight.
+for, and cutting them is the owner's call. Also seen, and fixed in its own change: every
+Endless round was at midnight (next entry).
+
+**A fourth finding, in the game: every Endless round was at midnight.** Every
+`endless-round` screenshot -- GitHub's, and the GPU runs here -- shows the
+round at 12:00 AM under the stars, though the menu's hole is only ever shown in
+daylight (`MENU_HOURS`, 6.4 to 17.8). Not the software renderer: a real bug for
+any player whose clock had never been set. The cause, read from the code and
+held by a Node test (`tests/floodlights.test.mjs`, *Endless off the menu*):
+the menu puts the player's clock aside before showing its own hour, and on a
+fresh device that clock's hour is null (`loadDaylight`). Endless adopts the
+menu's world without rebuilding it -- the point of the adoption -- and called
+`restoreClock`, which put the null back. Only building a world replaces a null
+hour with the biome's default (`renderer.js`, `build`); `solarState` and
+`advance` read it as 0:00. Opening the studio had the same hole on 1 October,
+fixed then by starting it at midday; this path was missed because it never
+rebuilds.
+
+**The rule, settled.** Three documents (PLAYING.md, this file's 30 September
+entry, the comment over `middayForRound`) said Endless keeps the showcase
+hole's hour; the code restored the player's clock, and an older line in
+PROJECT_HANDOFF said that was deliberate. The newer claim was followed: the hole
+you chose is played in the light you chose it in, and adopting has no loading
+screen to hide a jump to another hour. `roundHour` in `src/daylight.js` now
+decides every round's starting hour: local time if "Start at my local time" is
+ticked, else the showcase hour when Endless adopts the menu's hole, else midday.
+**PLACED:** an endless run that grows its first hole (a replay from the
+profile, or Endless chosen during a round) now starts at midday like a course
+from Play; nothing had decided it, and it followed the player's old clock --
+which on a fresh device was the biome's default, late afternoon. **Rejected:**
+restoring the player's clock and falling back to the biome default when it is
+null -- it fixes midnight, but a player who last played at night would still
+see the daylight hole they picked turn dark the moment they chose it. Midday
+for Endless too -- simple, but the hole would visibly re-light at the moment of
+choosing. Rendering only: no generator or schema version moves. **Not seen in
+the game**: no browser was run (the GPU rule); the next `endless-round`
+screenshot should show daylight.
 
 Sources in REFERENCES.md *The smoke test on GitHub*.
