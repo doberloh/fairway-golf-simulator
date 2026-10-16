@@ -595,3 +595,10 @@ numbers were taken from them.
 - GolfWRX, "Hitting shots from the rough at TPC Scottsdale" -- https://www.golfwrx.com/277599/hitting-shots-from-the-rough-at-tpc-scottsdale/ -- through a search summary: one golfer on Trackman, a thick lie leaving a 7 iron at about 1,300 rpm and 87 yd carry from 87 mph of club speed; a down-grain lie 115 mph of ball speed against 121 from the fairway. The basis for rejecting a flyer spin cut for now.
 - MyGolfSpy, "What is a flier lie in golf" -- https://mygolfspy.com/news-opinion/instruction/what-is-a-flier-lie-in-golf-and-how-do-you-play-it/ -- through a search summary: grass between face and ball can cut spin and send a shot further, or slow the club and come up short. Background.
 - USGA, "Rough penalty: elite player testing (Trackman and face tape)", R22-11 -- https://usga.org/content/dam/usga/pdf/Equipment/R22-11%20Qualitative%20Insights%20-%20,%20Trackman%20and%20Face%20Tape-Rough%20Penalty%20Elite%20Player%20Testing.pdf -- found, not read; about tee-shot rough rather than approach lies.
+
+## The smoke test on GitHub (16 October 2026)
+
+Read for RESEARCH.md *The smoke test on GitHub*.
+
+- Chromium, `content/browser/devtools/protocol/input_handler.cc` (main, read 16 October 2026) -- https://github.com/chromium/chromium/blob/main/content/browser/devtools/protocol/input_handler.cc -- `GetEventTimeTicks`: a `timestamp` in seconds since the epoch becomes the event's tick time, anchored to the current instant (`TimeTicks::Now() - (Time::Now() - event_time)`); with none it is now. Used by `dispatchMouseEvent` and `dispatchKeyEvent`.
+- Chromium, `third_party/blink/renderer/core/events/pointer_event_factory.cc` -- https://github.com/chromium/chromium/blob/main/third_party/blink/renderer/core/events/pointer_event_factory.cc -- pointer events are created with the input event's `TimeStamp()`, so the stamp reaches `event.timeStamp`.

@@ -217,6 +217,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - XP is a keyed ledger: award by key, never add to `xp` directly; the level is derived. [XP is a ledger, not a running count]
 - `armed` is worked out per turn from the Armed switch (`armSwitch`) and how the golfer up plays; never set it directly. [`armed` is per turn]
 - A Swing Meter tap is judged on its own timestamp, never on a frame; the frame loop only draws the marker. [A Swing Meter tap is judged on its own time]
+- The smoke harness taps by stamping the moment, never on a frame, and asks the game whether a putt dropped. [A harness tap that has to land]
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]

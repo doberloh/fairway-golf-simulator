@@ -8164,3 +8164,59 @@ Compared and not followed:
   number the rule is stated in and the number shown in red.
 
 Sources in REFERENCES.md *The Swing Meter*.
+
+## The smoke test on GitHub: three harness faults (16 October 2026)
+
+The tests workflow's smoke step (`--software --only boot,range,endless-round`)
+failed on 6 of the 8 pushes to `main` from 9 to 16 October, always in
+`endless-round`. Read from the logs and the `smoke-screenshots` artifacts of
+runs 37884702842, 37885197331, 38036233362, 38036513481, 38128966772,
+38523037456, 38856836307 and 38857024163, against the passing 37736602143,
+37964439423, 38128860890 and 38522786171. The game was right each time.
+
+- **Putts that never dropped (both 0.8 merges).** The putt's stop was tapped
+  from a `requestAnimationFrame` callback once the drawn marker had passed the
+  target. The game judges the tap on the event's own time, so the stop was late
+  by however far the marker had gone since the frame was drawn plus the frame's
+  own work. A putt's marker runs at 1.15 s per bar length at Normal, times 1.15
+  for a putt and 1.25 for a short putt's quarter bar -- about 1.65 s; the
+  software renderer's frame was measured at 0.8 to 1.6 s (the header of
+  `tools/smoke.mjs`), so the stop could come most of a bar late. The screenshots:
+  after six putts the ball 8.1 ft away on one, 23.4 ft away in the semi-rough on
+  the other. The passing runs' putt out took about 21 s; these took 167 s and
+  224 s.
+- **Space refused (0.6, 0.6.1).** The putt had dropped -- the screenshots show
+  one under par and the next hole growing, or hole 2 already in play -- but the
+  harness waited a fixed 6 s for the scorecard, not scaled for the software
+  renderer, then took the missing card for a miss and putted on a finished hole,
+  which the game rightly refuses.
+- **A click timing out (0.7).** `menu ready` alone took 98 s on that runner
+  (16 s on the fastest). The click on Start an endless run timed out at 120 s,
+  and the screenshot shows the round in play on hole 1 with nothing hit: the
+  press had landed, and Playwright's click was still waiting on a page busy
+  starting the round.
+
+**The fix, in `tools/smoke.mjs`.** The tap is sent through the DevTools
+protocol with a `timestamp`: `lab.state().swing` reports the swing's start and
+its pace, the harness works out when `markerAt` reaches the target share, and
+the press carries that moment. Chromium turns the stamp into the event's time
+by anchoring the wall clock to its tick clock at dispatch (the source below),
+and `PointerEvent`s keep that time, so the page's `event.timeStamp` is the
+moment asked for, however late the busy page handles it -- what a player's tap
+during a slow frame is. The page clock maps onto the epoch through
+`performance.timeOrigin`; the two processes' clocks agree to well under the
+roughly 20 ms that would move a two-yard putt by a third of a foot. Holed or not
+is read from `lab.state().holeComplete` the moment the putt stops, and the
+scorecard's wait then scales with the renderer. A Start press that times out is
+forgiven once the game has left the menu.
+
+**Rejected.** Raising the fixed waits: the putt was missing for real, so no
+wait would have holed it. Scheduling an in-page synthetic tap with
+`setTimeout`: a synthetic event's time is when it is created, and the page's
+main thread is not free at the moment it is wanted. Reading the pace from two
+drawn frames instead of the lab: workable, but it rests on the frame's
+timestamp matching the draw, and the lab already knows. **Not yet seen
+running on GitHub**: no browser was run locally (AGENTS.md, the graphics card
+rule); the first push of the branch is the test.
+
+Sources in REFERENCES.md *The smoke test on GitHub*.
