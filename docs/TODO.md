@@ -385,6 +385,17 @@ nothing was run on the graphics card.
 
 # Done
 
+## Release 0.8.1 (16 October)
+
+- [x] **v0.8.1 published**, "Fairway 0.8.1 (beta)", at the owner's request, from
+  the merge of `release-0.8.1` into `main`: Skins as a round format, Endless
+  from the menu in daylight, and rounds a golfer joined mid-round saving and
+  loading again. Generator 36, schema 11, both unchanged. Notes:
+  `docs/releases/v0.8.1.md`. Smoke: full 34/34 before the save fix, none after
+  it, by the owner's choice (DISTRIBUTION_REVIEW, *v0.8.1*); none of the three
+  changes has been seen in the game. The website is redeployed after it so its
+  demo runs 0.8.1.
+
 ## Every format with every group (16 October 2026)
 
 - [x] **The round matrix.** Asked for by the owner, who cannot play

@@ -1024,3 +1024,35 @@ packaged Windows server was run from its unzipped download before publishing
 and served the page byte for byte -- on spare ports (19922/19921), because the
 owner's own bridge (`npm run bridge`) was holding 1922 at the time; it was left
 running.
+
+## Addendum, 16 October 2026: v0.8.1
+
+**v0.8.1** is published at the owner's request as "Fairway 0.8.1 (beta)", tag
+`v0.8.1`, not a pre-release, the same four zip names, from the merge of
+`release-0.8.1` into `main`, with its notes in `docs/releases/v0.8.1.md` in
+that commit. It carries, since 0.8: Skins as a round format, out of the
+challenges (`skins-game-mode`); an Endless run from the menu starting in the
+menu hole's daylight instead of at midnight (`endless-menu-clock`); and a fix
+for rounds a golfer joined mid-round, which could not be loaded or take a
+mulligan once that golfer finished a hole (`round-matrix-tests`). The rest is
+tests, the smoke harness, CI and documentation. **`GENERATOR_VERSION` is still
+36 and `SCHEMA_VERSION` still 11**, so a round saved in 0.8 opens without the
+version notice, and the page's `fairway-versions` tag still reads
+`generator=36 schema=11`. A skins round saved in 0.8.1 does not open in 0.8,
+whose `Round` refuses the mode; a round saved in the old Skins challenge opens
+in 0.8.1 as a skins round.
+
+**The bridge is unchanged** (no change under `bridge/`, `public/` or
+`vendor/` since 0.8), and no dependency was added, removed or upgraded
+(`package.json` and the lock file unchanged), so ATTRIBUTION and
+THIRD_PARTY_NOTICES stand. `npm audit` (16 October): nothing in what the game
+ships; three high-severity advisories in the build tools (TODO).
+
+The built page is 17,134,701 bytes (7.08 MB gzipped), +3 KB on 0.8. **Smoke on
+the release code: nearly.** The full run, 34 of 34 journeys on an idle card,
+was on `main` at 1da4f74, with Skins, the Endless fix and the smoke fixes in;
+after it, `round-matrix-tests` changed `Round.restore` (the save fix) and one
+line of `main.js` (the save import reads `FORMATS`), and the owner chose to
+release without another smoke run. `npm test`: 816 of 816. **Not seen in the
+game by anyone:** Skins, the Endless daylight and the save fix (TODO, *Skins as
+a round format* and *What the smoke test does not walk*).
