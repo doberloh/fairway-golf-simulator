@@ -24,7 +24,7 @@ import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
-import {rewardsOf,reward,unlocksAt,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
+import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
 import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,skins,recordChallenge,feetText} from './challenges.js';
 import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
@@ -684,10 +684,10 @@ function showXpGain(){
 }
 // THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
 const levelUps=[];let levelUpTimer=null;
-// It names what the new level brought (rewards.js unlocksAt) -- every level
-// crossed, when one gain crosses several -- with the golfer's ball and title.
+// It names what the new level brought (rewards.js unlocksBetween) -- every
+// level crossed, when one gain crosses several -- with the golfer's ball and title.
 function queueLevelUp(prof,level,from=level-1){
- const got=[];for(let l=from+1;l<=level;l++)got.push(...unlocksAt(l).filter(r=>!(r.kind==='frame'&&reward('badge',r.id))));
+ const got=unlocksBetween(from,level);
  const look=looksOf(prof);
  levelUps.push({name:prof.name,level,ball:look.ball,frame:look.frame,title:titleName(look.title),got});if(!levelUpTimer)levelUpTimer=setTimeout(()=>{levelUpTimer=null;showLevelUp();},450);}
 function showLevelUp(){

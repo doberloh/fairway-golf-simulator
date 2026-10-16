@@ -323,3 +323,21 @@ test('achievements, progress, weekly bests and sand strokes are kept', () => {
  assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
  assert.deepEqual(back.rounds[0].card[0].sand, [3]);
 });
+
+// EVERY WEARABLE ITEM, AT THE SAVE (15 October 2026). The picker's padlock is
+// only a picture; the save is what refuses. Each item is refused one level
+// early, and kept once its level is reached.
+test('the save refuses every item a level early and keeps it at its level', async () => {
+ const {setProfileWorn} = await import('../src/profile.js');
+ const {WEARABLE, rewardsOf} = await import('../src/rewards.js');
+ localStorage.clear();
+ const {store, profile} = addProfile(null, 'Ivy');
+ let checked = 0;
+ for (const kind of WEARABLE) for (const r of rewardsOf(kind)) {
+  if (r.level > 1) assert.throws(() => setProfileWorn(store, profile.id, kind, r.id, r.level - 1), /Not earned/, `${kind} ${r.id} saved at level ${r.level - 1}`);
+  setProfileWorn(store, profile.id, kind, r.id, r.level);
+  assert.equal(findProfile(loadProfiles(), profile.id).worn[kind], r.id, `${kind} ${r.id} not kept at level ${r.level}`);
+  checked++;
+ }
+ assert.ok(checked > 80, `only ${checked} items checked`);
+});
