@@ -66,6 +66,14 @@ Asked for by the owner on 10 October, in this order, on the branch
   behind the loading screen, or the next backdrop's before the menu shows it.
   Measure first, with a Chrome recording of a first visit after clearing the
   site's cache.
+  **Measured and mostly fixed (15 October 2026, RESEARCH *First-visit
+  lock-ups and the hole-out stutter*)**: the menus build nothing late; the
+  lock-up was starting Endless from the menu, which rebuilt 35-40 programs in
+  view (1.85 s) because the ball's glow light hid with the ball. The light now
+  sits beside the ball; starting Endless builds one small unlit program, worst
+  frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
+  tab (page work, not graphics); that one unlit program. **Not seen by the
+  owner yet**: load a new build fresh and click round the menus, then Endless.
 - [ ] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
   October 2026): during the hole-out banner, its chiptune sting and the XP
   popup after it. The owner loves the pull-back into the summary orbit and
@@ -78,6 +86,12 @@ Asked for by the owner on 10 October, in this order, on the branch
   view. The smoke probe on 14 October saw only one 50 ms frame, as the
   scorecard opened -- the owner's machine and settings differ, so measure
   from the owner's Chrome recording of a hole-out.
+  **One cause found and fixed (15 October 2026)**: the flyover hides the ball,
+  and the ball's glow light went with it, so 14-17 lit programs were rebuilt
+  in view as the camera pulled back on a course built through Play (the 14
+  October probe used Endless, where the menu had already built them). The
+  light now stays. **Not seen by the owner yet**: hole out on a Play course
+  and say whether the stutter is gone; if not, the suspects above remain.
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures

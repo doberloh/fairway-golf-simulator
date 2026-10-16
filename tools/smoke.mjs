@@ -923,6 +923,107 @@ const JOURNEYS = [
    });
   },
  },
+ // NO LIT SHADER WHEN THE BALL COMES OR GOES (15 October 2026). The ball's glow
+ // light was the ball's child, and three counts only visible lights: the menu
+ // hides the ball, so every lit program was built for "no point light", and
+ // starting Endless from the menu -- which adopts the hole on screen with no
+ // loading screen -- rebuilt all of them in view: 35-40 programs, 1.8 s frozen
+ // on a first visit. The end-of-hole flyover hides the ball too, and did the
+ // same as the camera pulled back. Watched from the moment the menu settles,
+ // with no loading screen to hide behind.
+ {
+  name: 'ball-light-shaders',
+  what: 'starting Endless from the menu builds no lit shader',
+  gpuOnly: true,
+  async prepare(page) {
+   await page.addInitScript(() => {
+    const P = WebGL2RenderingContext.prototype, create = P.createProgram, use = P.useProgram, shaderSource = P.shaderSource, attach = P.attachShader;
+    // FIRST DRAWN, not created, after the watch starts: on Windows a program is
+    // finished on its first real draw, so one created earlier and first drawn
+    // in view is the same frozen frame -- and this check, counting creations,
+    // passed on the build it was written to catch.
+    const src = new WeakMap(), parts = new WeakMap(), fresh = new WeakSet();
+    window.__watch = false; window.__lateLit = []; window.__lateAny = [];
+    P.shaderSource = function (shader, text) { src.set(shader, text); return shaderSource.call(this, shader, text); };
+    P.attachShader = function (program, shader) { (parts.get(program) || parts.set(program, []).get(program)).push(shader); return attach.call(this, program, shader); };
+    P.createProgram = function () { const program = create.call(this); fresh.add(program); return program; };
+    P.useProgram = function (program) {
+     if (program && fresh.has(program)) {
+      fresh.delete(program);
+      // Behind a loading screen is allowed: that is where programs belong.
+      if (window.__watch && document.getElementById('generating')?.hidden !== false) {
+       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
+       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1] || 'ShaderMaterial';
+       window.__lateAny.push(type);
+       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(type);
+      }
+     }
+     return use.call(this, program);
+    };
+   });
+  },
+  async run(t) {
+   const lit = async when => {
+    const late = await t.page.evaluate(() => window.__lateLit);
+    if (late.length) throw new Error(`${late.length} lit shader(s) built ${when}: ${late.join(', ')}`);
+   };
+   await menuReady(t);
+   await t.step('Endless from the menu builds no lit shader', async () => {
+    await t.page.waitForTimeout(2000);
+    await t.page.evaluate(() => { window.__watch = true; });
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+    await t.page.waitForTimeout(3000);
+    await lit('as the menu hole became the first hole');
+   });
+  },
+ },
+ // The flyover half of the same fault, on a course built through Play. An
+ // Endless round adopts the menu's hole, whose no-light programs already exist,
+ // so its flyover passed even before the fix; a course behind a loading screen
+ // had never drawn without the ball, and its flyover built 17 lit programs as
+ // the camera pulled back -- the hole-out stutter the owner reported.
+ {
+  name: 'ball-light-hole-out',
+  what: 'holing out on a Play course: the end-of-hole flyover builds no lit shader',
+  gpuOnly: true,
+  prepare: page => JOURNEYS.find(j => j.name === 'ball-light-shaders').prepare(page),
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Surprise me & play', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('Surprise me & play');
+    await t.inPlay(120 * SLOW);
+   });
+   await t.step('drop beside the pin', async () => {
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+   });
+   await t.step('holing out and the end-of-hole flyover build no lit shader', async () => {
+    await t.page.evaluate(() => { window.__watch = true; });
+    for (let putt = 1; putt <= 6; putt++) {
+     await t.putt();
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 14000}).then(() => true, () => false)) {
+      // The flyover orbits while the scorecard is up.
+      await t.page.waitForTimeout(3000);
+      const late = await t.page.evaluate(() => window.__lateLit);
+      if (late.length) throw new Error(`${late.length} lit shader(s) built during the hole-out and its flyover: ${late.join(', ')}`);
+      return;
+     }
+    }
+    throw new Error('six putts from two yards and the ball never dropped');
+   });
+  },
+ },
  // THE FLOODLIGHTS ON ULTRA, SWITCHED ON MID-ROUND THE WAY A PLAYER DOES IT.
  //
  // Two failures this guards. Each casting lamp is a texture unit in every lit

@@ -818,7 +818,15 @@ export class GolfView{
   // to a scene changes the lighting uniforms and forces three to recompile every
   // material in it -- a stall of hundreds of milliseconds, and it would land on
   // exactly the frame the sun went down.
-  this.ballLight=new T.PointLight(GLOW_BALL,0,18,2);this.ball.add(this.ballLight);
+  //
+  // NOT A CHILD OF THE BALL. Three counts only VISIBLE lights, and the ball is
+  // hidden often: the menu's showcase hole, the end-of-hole flyover, a team
+  // choosing its ball. As a child the light went with it, so every lit program
+  // was built for "no point light" behind the menu, and pressing Endless (or
+  // the flyover ending) rebuilt all of them on screen -- 1.8 s frozen on a
+  // first visit, measured 15 October 2026. It stays in the scene, follows the
+  // ball in `render`, and goes dark while the ball is hidden.
+  this.ballLight=add(new T.PointLight(GLOW_BALL,0,18,2));this.ballLightPower=0;
   // A sprite halo so the glow is not ultra-only. On ultra the bloom pass adds a
   // real flare over the top of it; below that, this is the whole effect.
   const halo=haloTexture();this.resources.push(halo);
@@ -2347,7 +2355,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(!this.ball)return;
   const glow=daylight.glowBall===false?0:solar.lamplight,strength=Math.max(0,daylight.glowStrength??1);
   this.ballNightGlow=glow*1.76*strength;this.applyBallGlow();
-  this.ballLight.intensity=glow*2.08*strength;
+  this.ballLightPower=glow*2.08*strength;this.ballLight.intensity=this.ball.visible?this.ballLightPower:0;
   this.ballHalo.visible=glow*strength>.01;
   this.ballHalo.material.opacity=Math.min(1,glow*.4*strength);
   // The ring and the trail are unlit materials, so nothing else would ever dim
@@ -2514,6 +2522,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
   this.clouds?.update(dt);
   this.updateDaylight(dt);
+  // The ball's light is the ball's neighbour, not its child (see its note in
+  // `build`): it follows, and is dark while the ball is hidden.
+  if(this.ballLight){this.ballLight.position.copy(this.ball.position);this.ballLight.intensity=this.ball.visible?this.ballLightPower:0;}
   // One queued pond photograph a frame (stepWaterProbes), here so the cull's
   // update further down puts back what the photograph had to show.
   this.stepWaterProbes();

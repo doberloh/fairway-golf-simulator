@@ -7880,6 +7880,49 @@ Drawn and hit alike. Rolling 594 balls at the cup with the pin in (six holes,
 old stick, 25 with the new (a ball beside it in the cup now has 41.3 mm
 between pin and liner against a 42.7 mm ball), 34 with the pin out.
 
+### First-visit lock-ups and the hole-out stutter: the ball's light (15 October 2026)
+
+The owner saw "lots of lock ups" clicking round the menus on a new build's
+first load, smooth after a reload, and a stutter as the camera pulls back after
+holing out. Asked whether a "compiling shaders" screen on first load would help.
+**Measured first** (scratch probe, not committed: the built game in a fresh
+Chrome profile on this machine's RTX 4090, every WebGL program logged on its
+first draw after the main menu appeared, and every frame over 50 ms; the menu
+idle 20 s, every menu tile, My profile and every look tab, a flourish preview,
+then Endless started from the menu and back to the menu, twice; then a reload
+and the same walk again).
+
+- **The menus themselves build nothing late.** Their only long frames are
+  100-150 ms on opening Play, My profile and the Frame tab -- page work, not
+  graphics programs, and the same after a reload.
+- **Starting Endless from the menu was the lock-up**: 35-40 programs built in
+  view, one frame of **1.85 s** on the first visit (117-133 ms after a reload,
+  when Chrome's disk cache has them). Endless adopts the hole on screen with no
+  loading screen, so nothing could hide it -- but nothing was new: only 12-26
+  GPU buffers were made, so no geometry was rebuilt. Diffing each late program
+  against the menu's program for the same material: every lit one differed only
+  by `pointLights[1]`. The ball's glow light was the ball's child; the menu
+  hides the ball, so every program behind the menu was built with no point
+  light, and the ball appearing rebuilt all of them. Midday or night made no
+  difference (it is not the clock).
+- **The same fault at the hole-out**: the end-of-hole flyover hides the ball.
+  On a course built through Play (whose programs had only ever been drawn WITH
+  the ball), 14-17 lit programs were built in view as the flyover began.
+  Starting Endless from the menu hid it, because the menu had already built the
+  no-light set -- which is why the hole-out probe of 14 October (*The pause
+  before the XP popup*), run on an Endless round, saw no stall.
+- **The fix**: the light sits beside the ball, follows it each frame, and is
+  dark while the ball is hidden; the light count never changes. After: starting
+  Endless builds one small unlit program (a double-sided MeshBasicMaterial,
+  probably the aim ring), worst frame 100 ms; the hole-out builds no lit program.
+- **So a first-load "compiling" screen was not the answer**: the programs that
+  froze were not missing from the loading screen's warm-up, they were
+  invalidated after it. A screen warming more up front would have cost every
+  player a longer start and still missed these.
+
+Not established: whether the hole-out stutter the owner sees is wholly this
+(the other suspects in TODO are untested); the 100-150 ms menu frames.
+
 ### Plain colours and animated frames (15 October 2026)
 
 No outside source; the owner's ask. PLACED: the solid ball colours (red
