@@ -11,7 +11,8 @@ every file, the units, the pipeline and the traps. **Never read
 PROJECT_HANDOFF.md, TODO.md or RESEARCH.md whole** -- about 80, 90 and 140
 thousand tokens. List headings (`grep -n "^## \|^### " docs/PROJECT_HANDOFF.md`),
 search (`grep -n -i "<subject>" docs/*.md`), and read only matching sections.
-TODO.md's open work is above `# Done`; search PLAYING.md the same way.
+TODO.md's open work is above `# Done` (about 5 thousand tokens, fine to read
+whole); search PLAYING.md the same way.
 
 Preserve the portable offline single-file build, Cartoon-only graphics,
 complete 9/18-hole landscapes, seeded procedural holes, real ball and cup
@@ -21,6 +22,23 @@ attention to old saved rounds and the GPU data textures. Use focused regression
 tests, look at visual changes in the browser, and build before updating
 archives. Physical launch-monitor testing waits until requested. A TODO entry
 is not permission to widen an unrelated task.
+
+## Ideas live in IDEAS.md, and are read only when wanted
+
+`docs/IDEAS.md` holds what could be built and nobody has decided to build;
+TODO.md holds what is wrong, unfinished or owed a check. Keeping them apart
+keeps the open list short enough to trust.
+
+- **Do not read IDEAS.md unless** the owner asks what to build next, asks
+  about an idea, or an idea is being added. It is not part of starting work.
+- **A new idea goes in IDEAS.md, never TODO** -- a few lines: what, why,
+  rough cost, where in the code, who and when. One that comes up during other
+  work is added and mentioned in the reply, not built.
+- **Picked by the owner:** it leaves IDEAS.md and becomes TODO work or a
+  branch. **Turned down:** one line under *Turned down* with the reason, so it
+  is not offered again. An idea is never permission to build it.
+- **Skip it in the documentation sweep** below unless the change builds, kills
+  or alters an idea in it.
 
 ## One branch per journey, and the branch is not yours to merge
 
@@ -166,7 +184,9 @@ file is indistinguishable from a forgotten one. What each holds:
 - **TODO.md** -- open work at the top; finished work in `# Done` under a copy of
   its heading. Move a ticked entry there with what was built, **close any open
   entry the change made untrue**, and never nest an open item under a finished
-  one.
+  one. An idea is not an entry (*Ideas live in IDEAS.md*).
+- **IDEAS.md** -- what could be built; only when the change builds, kills or
+  alters one of them.
 - **PROJECT_HANDOFF.md** -- architecture, invariants and traps: what must stay
   true, and what breaks when it does not.
 - **ARCHITECTURE.md** -- the short map. A new, removed or renamed file gets its

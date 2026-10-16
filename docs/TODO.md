@@ -25,6 +25,12 @@ entries below are short on purpose; "was:" names the original there, which has
 the full reasoning, the measurements and the how-to.** Read it before starting
 one.
 
+**Ideas are not here.** A feature, look or mode nobody has decided to build
+goes in [IDEAS.md](IDEAS.md), not in this list; the same day, the biome ideas
+and thirteen entries that were ideas rather than work moved there, each with
+its "was:" pointer. An entry here is something wrong, unfinished, or owed a
+check.
+
 ## Found on GitHub
 
 - [ ] **The smoke step fails on GitHub, in `endless-round`.** The tests
@@ -124,20 +130,10 @@ are in the archived section of the same name.
   a release can; when one does, tell the owner -- the website's repository has
   the matching item. (was: same heading)
 
-- [ ] **Play offline from a phone's home screen.** It needs a connection every
-  time it opens. A service worker keeping a copy, its cache named by the build
-  stamp so an update replaces it, and a smoke journey that goes offline and
-  reloads; it must never register when the file is opened from disk. (was: *It
-  needs a connection every time it opens*)
-
 - [ ] **The shot panel forgets its numbers on a reload.** `lastShot` is memory
   only, so a resumed round shows dashes mid-hole. Decide first whether a shot
   from an earlier session should look as though it just happened. (was: *The
   card forgets its numbers on a reload*)
-
-- [ ] **The range's session averages as tiles.** Average carry and offline
-  spread sit in the paragraph above the grid, not as fields you can tick. (was:
-  *The range's own session summary is still its own thing*)
 
 - [ ] **Saving: a full store says nothing.** `save()` in main.js swallows the
   error, so Continue silently stops updating. Also, a saved round deletes in one
@@ -147,13 +143,6 @@ are in the archived section of the same name.
 - [ ] **The rest of the penalty rules**: an unplayable ball (Rule 19), a
   provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
   RESEARCH *Penalty relief* lists what was left out and why. (was: same heading)
-
-- [ ] **Tees per golfer.** The tee is a round setting; separate tees per golfer
-  need mixed-tee scoring and the CSVs to follow. (was: *Per-player tee choice*)
-
-- [ ] **Replays you can keep and control**: save shots, pause, scrub, choose
-  the camera; recorded flights kept apart from score and undo, with a size
-  bound. (was: *Replay persistence and controls*)
 
 - [ ] **Accessibility**: keyboard-only play end to end, reduced motion, and
   readability settings. The smaller-screen half is covered by `hud-reachable`.
@@ -168,11 +157,6 @@ are in the archived section of the same name.
   cup or target mark would be honest. Not re-checked since it was written.
   (was: same heading)
 
-- [ ] **Range targets are scenery, not greens.** A ball landing on one bounces
-  as range turf, because the shader and `localSurface` carry one green per
-  hole; real target greens need a loop over an extended cup atlas on both sides.
-  (was: two entries, *Targets are scenery, not greens*)
-
 - [ ] **Send `DistanceToTarget` to the device**, so a monitor can switch itself
   into putting mode. Blocked on units (`distM` in the log, yards nominally); a
   wrong guess switches modes at the wrong distance. Needs the connector's
@@ -186,12 +170,6 @@ are in the archived section of the same name.
 
 - [ ] **WHS soft and hard caps, and exceptional scores** -- once profiles carry
   a year of history. (was: same heading)
-
-- [ ] **Networked multiplayer: the product question first.** Two people in
-  different houses, or several in one bay? The second is nearly free. If the
-  first: a generator bump would cost a match rather than a saved round, so the
-  handshake must refuse a version mismatch at the door. A feasibility study, not
-  a plan. (was: both entries under *Networked multiplayer*)
 
 ## Ball flight and the bounce
 
@@ -233,10 +211,6 @@ are in the archived section of the same name.
   across the range, against a green's 2.81-4.52). Defensible -- the canopy does
   the stopping -- but worth a second look. (was: same heading)
 
-- [ ] **Spin at the rim.** A ball reaches the lip carrying only rolling spin; a
-  putt with sidespin should engage it differently. (was: *Spin-dependent rim
-  behaviour*)
-
 - [ ] **Up to 0.36% of a course reads `semi` where it is painted `rough`**,
   behind the green: the shader mows to `length + 8`, `fairwayWidth` stops at
   `length`. Forgiving direction. (was: *Remaining drift behind the green*)
@@ -267,10 +241,6 @@ are in the archived section of the same name.
   keeps strips safe -- re-check it before widening rivers past 30 m or raising
   meander. (was: *Watercourse endings that remain*; *Hydrology mesh quality*)
 
-- [ ] **Bridges and crossings.** Channels cross walking routes with no deck. A
-  height override was tried and removed (a ball flying under the deck landed on
-  it); a real crossing needs a solid with an underside. (was: same heading)
-
 - [ ] **More natural pond siting.** At high Water settings about one pond per
   hole is placed however many are asked for. Prefer existing low ground, let
   ponds share a basin, add wetlands and reeds. (was: same heading)
@@ -287,20 +257,13 @@ are in the archived section of the same name.
   `fern`, `gorse`, `heather`, `naupaka` and `shrub`, across six biomes; look at
   each. (was: same heading)
 
-- [ ] **The baked trees: leaf tint and a third crown.** Multiplying the green
-  leaf sheet by a green role colour comes out near-black (tint white, or use the
-  sheet as alpha only); and there are only two crown shapes. (was: *Leaf
-  tinting for the baked trees*; *Only two crown shapes*)
+- [ ] **The baked trees' leaves go near-black.** Multiplying the green leaf
+  sheet by a green role colour darkens it; tint white, or use the sheet as
+  alpha only and take the colour from the role. (was: *Leaf tinting for the
+  baked trees*; its partner, a third crown shape, is in IDEAS.md)
 
 - [ ] **Deadfall does not collide.** A ball rolls through a fallen log; fine at
   this size. (was: same heading)
-
-- [ ] **Scalloped bunker edges** need a third harmonic and a new hazard-texture
-  layout. Only if the amplitude alone turns out not to be enough on screen.
-  (was: *True scalloped edges need a data channel that does not exist*)
-
-- [ ] **Routing quality metrics**: forced carries, recovery space, green-to-tee
-  walks, the finishing hole's return, strategic choice. (was: same heading)
 
 ## Graphics
 
@@ -316,21 +279,6 @@ are in the archived section of the same name.
 - [ ] **Give Giant Redwood a fog of its own** -- it borrows Midwest's prairie
   haze. A look decision for the owner; `tests/mist.test.mjs` lists it in
   `BORROWS` until then. (was: same heading)
-
-- [ ] **A glow round the lit lanterns.** An additive halo drew a dark square
-  behind every face; find what does that before trying again. (was: same
-  heading)
-
-- [ ] **Greens that read at midday, five ideas not yet tried**, in order of
-  payoff: a smooth lighting ramp for the putting surface alone (the blocker:
-  the four-step toon ramp clamps a near-flat green to one brightness above
-  about 48 degrees of sun); cross-cut bands; contour lines on greens only, at
-  20-25 cm, off by default; shading baked from each green's shape; slope shown
-  in hue. Graphics only, so no generator bump, but a `SCHEMA_VERSION` and
-  `GREEN_READ_GEN` bump per batch. Expect an improvement, not a solved problem:
-  part of why a green reads flat is the low viewing angle. (was: the six
-  entries under *Greens read better if the art style bends for greens only*;
-  *Bands that follow the contour may alias at distance*)
 
 ## Tools and code
 
@@ -357,53 +305,12 @@ are in the archived section of the same name.
   re-run it; consider a fresh browser per case. (was: *The profiler's worst
   frames are not a player's*; *The profiler can be fooled...*)
 
-- [ ] **A camera that frames one tee complex from above**, so the tee stagger
-  can be shown rather than argued from numbers. (was: *No picture of a tee
-  complex from above*)
-
 - [ ] **Fewer, smaller documents, the rest of the 1 October plan.** The first
   step (ARCHITECTURE.md as the short entry point) is done; moving TODO's
   `# Done` and PROJECT_HANDOFF's dated narrative into a HISTORY.md, merging
   LANDSCAPE_RESEARCH into RESEARCH, and the rest of that plan have not started.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
-
-## New biome ideas (9 October)
-
-Sixteen landscapes the owner and Claude drew up together, with what each would
-cost. Ordered cheapest first within each group. **Haunted Hollow was
-picked first** and built as a Halloween update (in `# Done` under this heading);
-everything else here is open. A biome is one record in `src/biomes.js` (PROJECT_HANDOFF *Adding a
-biome*), so "settings only" really means one record plus a course-name list and
-a mist profile. "Unused models" means the model is already in `vendor/` and goes
-in through `PICK` in `tools/build-meshes.mjs`; check it in `npm run assets`
-before choosing, because picking by file name has been wrong twice. Altitude and
-temperature are biome fields and feed the air density the ball flies through,
-so several of these play differently as well as look different.
-
-**Settings only, no new assets**
-
-- [ ] **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
-- [ ] **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
-- [ ] **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
-- [ ] **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
-
-**Unused models already in vendor/**
-
-- [ ] **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
-- [ ] **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
-- [ ] **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
-- [ ] **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
-- [ ] **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
-
-**Some new building**
-
-- [ ] **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
-- [ ] **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
-- [ ] **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be grown the way the redwoods were (`tools/grow.mjs`). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
-- [ ] **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
-- [ ] **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
-- [ ] **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
 
 # Done
 
@@ -422,8 +329,10 @@ merged: the launch-monitor checks (six entries), the real-device checks (two),
 the by-hand browser checks (four), the next launch-monitor session (seven), the
 green surrounds (three), blind tee shots (two), watercourses (two), the
 green-reading options (seven), the profiler (two), range targets (two, the same
-text twice). The sixteen biome ideas went across word for word; the Haunted
-Hollow follow-ups went to *Graphics* and *Tools and code*; the empty *Selling
+text twice). The sixteen biome ideas went across word for word, and later that
+day moved to IDEAS.md with the other entries that were ideas rather than work
+(each with its "was:" line); the Haunted Hollow follow-ups went to *Graphics*,
+*Tools and code* and IDEAS.md; the empty *Selling
 it* and *Sounds* headings were dropped. **Closed, and why:**
 
 | Entry | Why it was closed |

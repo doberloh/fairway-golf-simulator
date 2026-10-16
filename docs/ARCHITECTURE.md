@@ -242,6 +242,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 
 - **docs/README.md** -- which document answers which question.
 - **TODO.md** -- open work above `# Done`, the record of what was built below it.
+- **IDEAS.md** -- what could be built; read only when looking for something new.
 - **RESEARCH.md** -- every number, its source and the measurement behind it.
 - **BALL_BEHAVIOUR_KNOBS.md** -- which tuning value changes which ball behaviour.
 - **PROCEDURAL_GENERATION.md** -- what the generator produces and why.
