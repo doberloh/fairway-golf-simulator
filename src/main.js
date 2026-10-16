@@ -500,11 +500,17 @@ async function startChallenge(id,group,{week=false}={}){
  // the range as the course to go back to.
  if(rangeMode){rangeMode=false;closeRangeBox();restoreCourse();}
  if(def.where==='range'){
-  await enterRange({players:group.players,challenge:true});
-  if(!rangeMode||appMode!=='play')return;
-  const mat=round.position,marks=rangeTargets();
-  const targets=(def.targets||[]).map(y=>{const t=marks.find(m=>m.yards===y);return t?{x:t.x,z:t.z,yards:y}:{x:mat.x,z:mat.z+y*YARD,yards:y};});
-  beginChallenge(def,{seed:`range:${def.id}`,spots:[],targets,pin:course.pin,length:0,name:'the driving range',week:weekFor(def)});
+  // Entering the range saves the round slot (it keeps the course to go back
+  // to), so a range challenge holds saving off until `challenge` is set: a
+  // smoke run found Curve it writing the slot, 16 October 2026.
+  challengeStarting=true;
+  try{
+   await enterRange({players:group.players,challenge:true});
+   if(!rangeMode||appMode!=='play')return;
+   const mat=round.position,marks=rangeTargets();
+   const targets=(def.targets||[]).map(y=>{const t=marks.find(m=>m.yards===y);return t?{x:t.x,z:t.z,yards:y}:{x:mat.x,z:mat.z+y*YARD,yards:y};});
+   beginChallenge(def,{seed:`range:${def.id}`,spots:[],targets,pin:course.pin,length:0,name:'the driving range',week:weekFor(def)});
+  }finally{challengeStarting=false;}
   return;
  }
  const s=wk?weeklySettings():challengeCourseSettings(),name=wk?`${suggestCourseName(s)} · Week ${isoWeek().week}`:CHALLENGE_COURSE_NAME;

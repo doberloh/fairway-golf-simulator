@@ -413,9 +413,6 @@ smoke journey `challenge` passes (below, *Done*).
   the menu tile's "This week: ...", the bar's "This week ·", the results
   card's "best this week", its line on My profile, and the XP popup for a
   first finish (100) and a gold. The four new achievements on My profile.
-- [ ] **Run the smoke journey `challenge-week`** when the owner allows the
-  graphics card. Written without being run; if it fails, check the harness
-  before the game.
 - [ ] **Step 3: the rest** -- Every par 3, Greens in regulation, Scrambler and
   Putting tour (holes in turn), the three head-to-heads with the *Head of the
   Table* achievement, and the two Rounds (Sudden death waits for
@@ -444,7 +441,17 @@ smoke journey `challenge` passes (below, *Done*).
   and four achievements (First Medal, Gold Standard, All-Rounder, Weekly
   Regular). The fifth in the plan, Head of the Table, waits for the
   head-to-heads in step 3. Tested in Node (`challenge-week`, `achievements`,
-  `profile`); not seen in the game.
+  `profile`); not seen in the game by a person.
+- [x] **The smoke journeys `challenge` and `challenge-week` pass** (GPU, the
+  owner's go-ahead, 50 s). The first run failed twice: the harness counted
+  the challenge of the week's card on every tab (32 cards, not 27 -- the
+  harness was wrong), and this week's pick, Curve it on the range, wrote the
+  round slot -- a real bug: entering the range saves the slot, and a range
+  challenge went through it. Saving is now held off (`challengeStarting`)
+  while a range challenge opens, and `challenge` checks the slot after its
+  range challenge too. The failed run's screenshot showed the week's challenge
+  on the range as it should be: the bar ("This week · Curve it · Ball 2 of 6 ·
+  fade"), the 7-iron, the aim on the 150 target.
 
 ## Release 0.8.1 (16 October)
 

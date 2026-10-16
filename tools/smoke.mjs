@@ -2434,7 +2434,8 @@ const JOURNEYS = [
     for (const tab of ['tee', 'approach', 'range', 'short', 'putting']) {
      await t.page.click(`[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
-     cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card').length);
+     // The challenge of the week's card sits above the tabs, on every one: count the tab's own.
+     cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
     }
     if (cards !== 27) throw new Error(`${cards} challenge cards`);
     if (await t.page.evaluate(() => document.querySelectorAll('.chal-card.locked, .chal-card[disabled]').length)) throw new Error('a challenge is locked');
@@ -2488,6 +2489,7 @@ const JOURNEYS = [
     if (!s?.range) throw new Error(`the dartboard is not on the range: ${JSON.stringify(s)}`);
     await t.shot();
     await t.until(() => bar(/Ball 2 of 6/), 'the second ball', 15 * SLOW);
+    if (await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'))) throw new Error('the range challenge wrote the round slot');
    });
    await t.step('a long drive starts from the menu, on a par 4 or 5', async () => {
     await open('tee', 'long');
