@@ -7880,6 +7880,19 @@ Drawn and hit alike. Rolling 594 balls at the cup with the pin in (six holes,
 old stick, 25 with the new (a ball beside it in the cup now has 41.3 mm
 between pin and liner against a 42.7 mm ball), 34 with the pin out.
 
+**Then a Green size setting (the owner, same night)**: `greenScale`, 60-160%,
+default 100, multiplying the drawn radius. Measured over 9-hole courses on three
+seeds and three biomes (PNW, links, desert), area by counting half-metre cells
+of putting surface: **60%** median 2,026 sq ft (1,526-2,933, 10th-90th);
+**100%** 5,681 (4,236-7,981); **160%** 14,518 (10,465-20,780). Median slope
+1.06% at all three, 90th percentile 1.68-1.69% -- the bumps follow the green.
+Full bench, no invariant broken at either end: tees needing work 14 at 100%,
+25 at 60%, 27 at 160%; blind tee shots over 1 m 35, 22 and 25 of 1,080. The
+range is PLACED: 60% reaches the smallest famous greens (Pebble Beach's 7th is
+often quoted near 2,000 sq ft, not checked against a source), 160% the size
+the greens were before generator 36 and a little beyond. The tip's "about
+14,000" and "about 2,000" are these medians rounded.
+
 ### First-visit lock-ups and the hole-out stutter: the ball's light (15 October 2026)
 
 The owner saw "lots of lock ups" clicking round the menus on a new build's

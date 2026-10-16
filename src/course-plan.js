@@ -216,7 +216,12 @@ export function holeLine(s,planned,rng){
  // (RESEARCH *Why our pins look small*) -- and a real-size pin looked like a
  // toothpick on it. 10-15 m, the same single draw (so no later draw moves),
  // halves the area. PLACED to land the median near 6,000 sq ft.
- const greenSize=10+rng()*5,greenAspect=.95+rng()*.38;
+ //
+ // `greenScale` (Green size, 60-160%) multiplies the radius AFTER the draw, so
+ // no draw moves, and 100% is a multiply by exactly 1 (the share is taken
+ // first: `x*100/100` need not give back x). Everything on the green scales
+ // with it through `GREEN_REF`, so the slopes stay what they were.
+ const greenSize=(10+rng()*5)*((s.greenScale??100)/100),greenAspect=.95+rng()*.38;
  // THE OUTLINE IS SCALED, NOT REPLACED.
  //
  // A green's radius is its size times one plus three harmonics -- a two-lobed

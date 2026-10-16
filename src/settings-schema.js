@@ -10,7 +10,7 @@
 //                     migrated: the same settings simply build different
 //                     terrain afterwards, so a mismatch is put to the player
 //                     rather than applied behind their back.
-export const SCHEMA_VERSION=10;
+export const SCHEMA_VERSION=11;
 // 2: pond shelves that overlap now settle to one shared level. Ponds on sloping
 //    ground previously sank metres below their own banks, so terrain around
 //    water moved for every seed.
@@ -216,6 +216,7 @@ export const SETTINGS=[
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
  {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and an irregular edge. Raising it also EVENS OUT the waves that make the outline, so no single one takes over — letting one dominate is what turns a green into a clean three-lobed flower rather than a golf green.'},
+ {key:'greenScale',category:'turf',kind:'range',min:60,max:160,step:5,unit:'%',def:100,label:'Green size',short:'Size',tip:'How big the putting surfaces are. At 100% a typical green is about 6,000 square feet, the size of an average American green; at 160% about 14,000, the sprawling greens of a links; at 60% about 2,000, as small as the smallest famous greens. The slopes on a green grow and shrink with it, so a bigger green is not a steeper one.'},
  {key:'bunkerShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Bunker shape',short:'Irregularity',tip:'How ragged the outline of a bunker is. Low is a smooth oval; high gives waisted and lobed sand. Green-side bunkers are re-fitted to the green after shaping, so they keep the gap they are told to leave whatever this is set to.'},
  {key:'greenDifficulty',category:'turf',kind:'range',min:0,max:100,step:1,unit:'%',def:35,label:'Green slope & difficulty',tip:'Slope and contour on the putting surfaces. At 0 greens are level; higher settings add tilts, rolls, ridges, tiers and bowls, each green with a character of its own. The top of the range is severe: championship relief, with tier faces well past ten per cent.',
   // NOT A SETTING, a caution the studio shows: past `above` the slider turns red,
@@ -341,6 +342,9 @@ const MIGRATIONS={
  // October 2026 with a curve, a height and a spin dial chosen shot by shot
  // (swing-meter.js); a saved bias has nothing left to apply to.
  9:s=>{const {flightProfile,...rest}=s;return rest;},
+ // 10 -> 11: `greenScale` added (the owner, 15 October 2026). 100 is the size
+ // every green was drawn at before, so a saved course keeps its greens.
+ 10:s=>({...s,greenScale:100}),
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

@@ -985,6 +985,15 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     with them so putting slopes are unchanged; the stick 8 ft, 2 in at the top
     to 1 in at the green, drawn and hit. Smoke 30/30. RESEARCH *Why our pins
     look small*.
+- [x] **A Green size setting** (the owner, 15 October 2026). Course studio,
+    turf: *Green size*, 60-160%, default 100% (`greenScale`, SCHEMA_VERSION
+    11, a save from before migrates to 100%). It multiplies each green's
+    drawn radius; the bumps scale with it, so slopes are unchanged (median
+    1.06% at 60, 100 and 160%). 100% is exactly the generator-36 greens -- the
+    fingerprint is unchanged, so no GENERATOR_VERSION bump. Full bench clean
+    at both ends. Tests: `tests/green-scale.test.mjs`. Numbers in RESEARCH
+    *Why our pins look small*. **Not seen in the game**: move the slider in
+    Course studio and look at a green at 60% and 160%.
 - [x] **The owner's round of 15 October 2026: flourishes, frames, pin,
   cameras, cup.** Padlocks show on the meter skins; animated frames break out
   of the ring (flames rise above the ball, glints orbit, ripples spread, leaves
