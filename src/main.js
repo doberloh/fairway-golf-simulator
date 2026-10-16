@@ -5340,7 +5340,16 @@ function bind(){
  // layout.js gives (*Written a frame LATER*).
  {
   let pending=0;
-  const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');if(bar.hidden)return;
+  // COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA (the owner, 15 October 2026),
+  // all but a strip at the top for this bar: its Regenerate stays in reach, as
+  // above. The strip is the bar's own height plus its 18px gap and 8px of air,
+  // so the bar lands exactly above the sheet and never needs `compact`. With
+  // no bar (the setup sheet over the menu) the sheet goes to the top, as the
+  // stylesheet has it.
+  const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');
+   const room=!bar.hidden&&!d.hidden&&d.dataset.panel==='course'?bar.offsetHeight+26+'px':'';
+   if(d.style.top!==room)d.style.top=room;
+   if(bar.hidden)return;
    const by=d.hidden?0:d.offsetHeight;
    bar.style.setProperty('--panel-lift',by+'px');
    bar.classList.remove('compact');

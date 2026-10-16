@@ -1601,11 +1601,15 @@ const JOURNEYS = [
       const bar = document.getElementById('studioBar').getBoundingClientRect();
       const panel = document.getElementById('drawer').getBoundingClientRect();
       const world = document.getElementById('world').getBoundingClientRect();
+      // The settings take the play area but for a strip holding the bar (15
+      // October 2026): `spare` is the course still showing besides that strip.
       return {gap: Math.round(panel.top - bar.bottom), above: Math.round(bar.top - world.top),
+       spare: Math.round((panel.top - world.top) - (bar.height + 26) + (world.bottom - panel.bottom)),
        compact: document.getElementById('studioBar').classList.contains('compact')};
      });
      const bad = await t.page.evaluate(unreachableControls, '#studioBar button, #closeDrawer');
      const notes = [...(fit.gap < 0 ? [`the bar overlaps the panel by ${-fit.gap}px`] : []),
+      ...(Math.abs(fit.spare) > 2 ? [`the settings leave ${fit.spare}px of course showing`] : []),
       ...(fit.above < 0 ? [`the bar runs ${-fit.above}px off the top of the course`] : []),
       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
      console.log(`     ${`${w}x${h}`.padEnd(10)} ${fit.compact ? 'icons only' : 'full bar  '}  ${notes.length ? notes.join('; ') : 'fine'}`);

@@ -985,6 +985,14 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     with them so putting slopes are unchanged; the stick 8 ft, 2 in at the top
     to 1 in at the green, drawn and hit. Smoke 30/30. RESEARCH *Why our pins
     look small*.
+- [x] **Course studio's Settings fill the play area** (the owner, 15 October
+    2026: "just make the Course studio settings full screen; leave the other
+    windows alone"). The sheet runs from just under the studio bar to the foot
+    of the screen; from the main menu's setup, to the top. A full-screen toggle
+    on every window was offered and declined. The `studio` smoke journey now
+    also checks the sheet fills the space. **Not seen in the game, and that
+    smoke journey not yet run on it** (the graphics card was not cleared this
+    turn): open Course studio, then Settings, at desktop size and on a phone.
 - [x] **A Green size setting** (the owner, 15 October 2026). Course studio,
     turf: *Green size*, 60-160%, default 100% (`greenScale`, SCHEMA_VERSION
     11, a save from before migrates to 100%). It multiplies each green's

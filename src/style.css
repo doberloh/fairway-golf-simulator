@@ -1183,6 +1183,14 @@ html,body{overscroll-behavior:none}
 /* A page to read rather than a form to fill, so it takes more of the screen
    than the settings sheets do. The menu's hole still shows above it. */
 .drawer[data-panel=profile]{height:calc(68vh / var(--ui-zoom,1));max-height:calc(76vh / var(--ui-zoom,1))}
+/* COURSE STUDIO TAKES THE PLAY AREA (the owner, 15 October 2026). It has the
+   most controls in the game, and changes show only on Regenerate, so the
+   landscape behind it has little to offer while it is open. The other sheets
+   keep their strip. The sheet lives in #world, so `top:0` is the top of the
+   play area, under the top bar whatever its height. In the studio, main.js
+   moves the top down to leave room for the studio bar and its Regenerate
+   (*COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA*). */
+.drawer[data-panel=course]{top:0;height:auto;min-height:0;max-height:none}
 .profile .course-card{background:var(--field);border-color:var(--glass-line)}.profile .course-meta strong{color:var(--ink)}.profile .course-meta span{color:var(--ink-dim)}
 .profile-round{flex-wrap:nowrap}.profile-round .course-meta{flex:1;min-width:0}
 .profile-round-score{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:58px;padding:7px 0;border-radius:9px;background:var(--field);border:1px solid var(--glass-line)}
