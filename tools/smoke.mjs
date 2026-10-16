@@ -433,8 +433,10 @@ function smallTargets(selectors) {
 // protocol, can: the page receives real touch and pointer events, one pointer
 // per finger. `points` is a list of [x, y]; an empty list lifts every finger.
 async function fingers(t, type, points) {
- t.cdp ??= await t.page.context().newCDPSession(t.page);
- await t.cdp.send('Input.dispatchTouchEvent', {type, touchPoints: points.map(([x, y], id) => ({x, y, id}))});
+ // One DevTools session per page, shared with the stamped mouse tap
+ // (`t.cdp()`); `t.cdp` is that method, so never assign to it.
+ const cdp = await t.cdp();
+ await cdp.send('Input.dispatchTouchEvent', {type, touchPoints: points.map(([x, y], id) => ({x, y, id}))});
 }
 
 // The rest of the layout's health, beside reachability: a game screen must
