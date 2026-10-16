@@ -26,7 +26,8 @@ import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,r
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
-import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,skins,recordChallenge,feetText} from './challenges.js';
+import {CHALLENGES,challenge as challengeDef,CHALLENGE_XP,UPDOWN_GIVE_UP,pickHole,closestFeet,driveYards,upDownSpots,isUpAndDown,recordChallenge,feetText} from './challenges.js';
+import {skins,decidedHoles,skinsWinner,holeSkinLine,skinsStatus,skinsText} from './skins.js';
 import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
@@ -345,7 +346,7 @@ let profileSynced='';
 function syncProfile(){
  if(!profiles||rangeMode||!course||menuBackdrop||challenge)return;
  const rows=round.players.map((p,seat)=>({prof:profileOf(p),seat,score:round.cards[seat]?.[round.hole],putts:round.puttCards[seat]?.[round.hole]})).filter(r=>r.prof);
- const key=[round.uid,round.hole,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
+ const key=[round.uid,round.hole,round.holeComplete,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
  if(key===profileSynced)return;profileSynced=key;
  for(const r of rows)syncHole(r.prof,profileMeta(r.seat),{...holeFacts(),score:r.score,putts:r.putts});
  // XP FOR THE HOLE AND THE ROUND (Phase 4). Worked out from the card on every
@@ -359,9 +360,10 @@ function syncProfile(){
   // A hole paid in full is told part by part; a re-scored one (a mulligan, a
   // decimal putting change) as one line.
   if(got>0)items.push(...(got===withMult(sumParts(parts),mult)?parts:[{label:'Hole re-scored',xp:got}]));
+  skinsXp(r.prof,r.seat,items);
   if(round.finished&&!round.endless&&roundXp(round.holes)){
    if(award(r.prof,`${round.uid}:round`,roundXp(round.holes))>0)items.push({label:`Finished ${round.holes} holes`,xp:roundXp(round.holes)});
-   if(award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0)>0)items.push({label:round.mode==='match'?'Won the match':'Won the scramble',xp:XP.win});
+   if(award(r.prof,`${round.uid}:win`,wonRound(r.seat)?XP.win:0)>0)items.push({label:{match:'Won the match',scramble:'Won the scramble',skins:'Won the skins'}[round.mode],xp:XP.win});
    if(dailyXp(r.prof)>0)items.push({label:'First round today',xp:XP.daily});
   }
   // ACHIEVEMENTS (Phase 7, achievements.js): the hole's -- a birdie, an ace, an
@@ -376,7 +378,7 @@ function syncProfile(){
    const card=r.prof.rounds.find(e=>e.id===round.uid)?.card||[];
    earned.push(...roundAchievements({holes:card.map(c=>c&&{par:c.par,score:c.score,fairway:c.fairway}),index:profileSummary(r.prof).handicap.index,floodlit:!!view.daylight?.floodlights,biome:settings.biome}));
    weeklyRoundDone(r.prof,r.seat,items);
-   skinsRoundDone(r.prof,r.seat,items);
+   skinsRoundDone(r.prof,r.seat);
   }
   earned.push(...countedAchievements(r.prof));
   payAchievements(r.prof,earned,items);
@@ -400,12 +402,26 @@ const seatLooks=seat=>looksOf(profileOf(round?.players?.[seat]));
 // score for the eighteen -- their team's in a scramble -- recorded for the
 // week; 150 XP for the first finished round of the week, 50 for beating their
 // best that week; and the week counted for the Streak achievement.
-// A SKINS GAME, FINISHED: 30 XP a skin won, and the skins on the record.
-function skinsRoundDone(prof,seat,items){
- if(round.challenge!=='skins')return;
- const won=skins(round.cards,round.holes).won[seat]||0;
- recordChallenge(prof,'skins',won);
- if(won&&award(prof,`${round.uid}:skins`,won*CHALLENGE_XP.skin)>0)items.push({label:`${won} skin${won===1?'':'s'}`,xp:won*CHALLENGE_XP.skin});
+// SKINS (skins.js; a round format since 16 October 2026). 30 XP a skin, paid
+// the moment the hole is decided, one ledger key a hole: every hole up to the
+// one being played is worked out again from the card on each save, so a
+// mulligan that undoes the winning putt takes its skins back, and a skin
+// decided while a golfer without a profile holed out last is still paid.
+// Not multiplied by the Swing Meter difficulty -- like the round's own XP it
+// is for the result, not the swing. A round the Skins CHALLENGE already paid
+// at its finish (`<round>:skins`) is not paid again hole by hole.
+function skinsXp(prof,seat,items){
+ if(round.mode!=='skins'||prof.xpLog?.[`${round.uid}:skins`])return;
+ const k=skins(round.cards,decidedHoles(round));
+ for(let h=0;h<=round.hole;h++){
+  const e=k.perHole[h],xp=e&&e.winner===seat?e.value*XP.skin:0;
+  if(award(prof,`${round.uid}:skin:h${h}`,xp)>0)items.push({label:`Won ${skinsText(e.value)}`,xp});
+ }
+}
+// A SKINS ROUND, FINISHED: the skins won go on the record (My profile).
+function skinsRoundDone(prof,seat){
+ if(round.mode!=='skins')return;
+ recordChallenge(prof,'skins',skins(round.cards,decidedHoles(round)).won[seat]||0);
 }
 function weeklyRoundDone(prof,seat,items){
  if(!round.weekly)return;
@@ -460,20 +476,14 @@ const framedPicture=(ball,frame,cls='')=>{
 const ballAvatar=(prof,cls='')=>{const l=looksOf(prof);return framedPicture(l.ball,l.frame,cls);};
 // THE CHALLENGES IN PLAY (Phase 7; challenges.js for the rules).
 //
-// START. Grown like any round on the chosen course -- the course of the week, a
-// saved course, or for skins a fresh nine -- then, for the practice three, put
-// on the challenge's own hole (pickHole) with `challenge` set, so nothing about
-// it is saved or counted as a round. Skins is a stroke round that says so.
+// START. Grown like any round on the chosen course -- the course of the week or
+// a saved course -- then put on the challenge's own hole (pickHole) with
+// `challenge` set, so nothing about it is saved or counted as a round. (Skins,
+// once the fourth, is a round format in Play since 16 October 2026.)
 async function startChallenge(id,choice,group){
  const def=challengeDef(id);let s,name;
  if(choice==='weekly'){s=weeklySettings();name=`${suggestCourseName(s)} · Week ${isoWeek().week}`;}
- else if(choice==='surprise'){s=randomSettings(Math.random,{holes:9});name=suggestCourseName(s);}
  else{const c=findCourse(choice);if(!c)throw Error('That course is no longer saved.');s=courseSettings(c.settings);name=c.name;}
- if(id==='skins'){
-  await startRoundOn(s,{...group,mode:'stroke',challenge:'skins'},name);
-  toast(`Skins on ${name}: the lowest score alone takes each hole's skin; a tie carries it on.`);
-  return;
- }
  // Nothing is saved while the course grows: the round it builds is the
  // challenge's, and must not take the Continue slot or a line of history.
  await startRoundOn(s,{...group,mode:'stroke'},name,{quiet:true});
@@ -572,27 +582,27 @@ function renderChallengeResult(content){
  };
  $('challengeMenu').onclick=()=>{closePanel();openMenu();};
 }
-// THE SETUP: the four, the ones not open yet with the level that opens them;
-// the course; the group.
+// THE SETUP: the three, the ones not open yet with the level that opens them;
+// the course; the group. A line under them says where Skins went.
 function renderChallengeSetup(content){
  const me=mainProfile(profiles),lv=levelOf(me?.xp||0).level,open=c=>c.level<=lv;
+ if(!challengeDef(challengePick))challengePick=CHALLENGES[0].id;
  if(!open(challengeDef(challengePick)))challengePick=CHALLENGES.find(open)?.id||challengePick;
- const def=challengeDef(challengePick),courses=listCourses().filter(c=>challengePick!=='skins'||c.settings?.holes===9);
+ const def=challengeDef(challengePick),courses=listCourses();
  content.innerHTML=`<div class="challenge-pick">${CHALLENGES.map(c=>`<button class="look-item${c.id===challengePick?' on':''}${open(c)?'':' locked'}" ${open(c)?`data-challenge="${c.id}"`:'disabled'}><b>${escape(c.name)}</b>${open(c)?'':`<small>Level ${c.level}</small>`}</button>`).join('')}</div>`
   +`<p>${escape(def.how)}</p>${me?`<p class="note">${escape(challengeRecordText(me,def.id))}</p>`:''}`
-  +(open(def)?`<label class="field">Course<select id="challengeCourse">${def.id==='skins'?'<option value="surprise">A fresh nine, built now</option>':'<option value="weekly">The course of the week</option>'}${courses.map(c=>`<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('')}</select></label>`
+  +(open(def)?`<label class="field">Course<select id="challengeCourse"><option value="weekly">The course of the week</option>${courses.map(c=>`<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('')}</select></label>`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>`
    +`<button class="primary" data-panel-action id="challengeGo">Start ${escape(def.name)} <i data-lucide="arrow-right"></i></button>`
-   :`<p class="note">Opens at level ${def.level}. ${me?`${escape(me.name)} is level ${lv}.`:''}</p>`);
+   :`<p class="note">Opens at level ${def.level}. ${me?`${escape(me.name)} is level ${lv}.`:''}</p>`)
+  +`<p class="note">Skins is a round format now: choose it under <em>Format</em> when you start a round from Play.</p>`;
  content.querySelectorAll('[data-challenge]').forEach(b=>b.onclick=()=>{challengePick=b.dataset.challenge;openPanel('round');});
  if(!open(def))return;
  groupEditor('playerRows',round.players,()=>{});
  $('challengeGo').onclick=async()=>{
   if(flight){toast('Finish the current shot first.');return;}
   let group;
-  try{const g=readDraft();group={players:g,mode:'stroke',tee:round.tee||'blue'};
-   if(def.id==='skins'&&(g.length<2||g.length>4))throw Error('A skins game is for two to four golfers.');
-   new Round({...group,...(def.id==='skins'?{challenge:'skins'}:{})});}
+  try{const g=readDraft();group={players:g,mode:'stroke',tee:round.tee||'blue'};new Round(group);}
   catch(e){$('roundError').textContent=e.message;return;}
   const choice=$('challengeCourse').value;challengeSetup=false;closePanel();
   try{await startChallenge(def.id,choice,group);}catch(e){toast(e.message);}
@@ -601,10 +611,12 @@ function renderChallengeSetup(content){
 const challengeRecordText=(prof,id)=>{const r=prof.challenges?.[id];
  return !r?`${prof.name} has no record here yet.`:id==='closest'?`${prof.name}'s nearest: ${feetText(r.feet)}.`:id==='long'?`${prof.name}'s longest: ${Math.round(r.yards)} yards.`
   :id==='updown'?`${prof.name}'s best: ${r.made} of 5 up and down, ${r.strokes} strokes.`:`${prof.name}: ${r.won} skin${r.won===1?'':'s'} in ${r.games} game${r.games===1?'':'s'}.`;};
-// MY PROFILE: the records.
+// MY PROFILE: the records -- the three challenges' bests, and the skins won in
+// skins rounds, which are kept with them (challenges.js).
 function challengeRecords(profile){
  const r=profile.challenges||{};if(!Object.keys(r).length)return '';
- return `<h3>Challenge records</h3><ul class="achievement-list">${CHALLENGES.filter(c=>r[c.id]).map(c=>`<li class="achievement earned"><b>${escape(c.name)}</b><span>${escape(challengeRecordText(profile,c.id))}</span></li>`).join('')}</ul>`;
+ const rows=[...CHALLENGES,{id:'skins',name:'Skins'}].filter(c=>r[c.id]);
+ return `<h3>Records</h3><ul class="achievement-list">${rows.map(c=>`<li class="achievement earned"><b>${escape(c.name)}</b><span>${escape(challengeRecordText(profile,c.id))}</span></li>`).join('')}</ul>`;
 }
 // THE XP MULTIPLIER for a golfer's hole: their Swing Meter difficulty (Easy
 // 0.75, Normal 1, Hard 1.5), or 1 if they played it off a launch monitor.
@@ -615,13 +627,15 @@ function xpMult(seat){
  const p=round.players[seat],how=shotInputs.get(`${round.uid}:${round.hole}:${seat}`)??(playsWith(p)==='meter'||!armSwitch?'meter':'monitor');
  return how==='monitor'?XP_MULT.monitor:XP_MULT[meterDifficulty(profileOf(p))]??1;
 }
-// Won a match (best ball, by holes) or a scramble (lowest team total).
+// Won a match (best ball, by holes), a scramble (lowest team total), or the
+// skins (the most skins alone, skins.js).
 function wonRound(seat){
  const team=round.players[seat]?.team;
  if(round.mode==='match'){const d=(round.match?.A||0)-(round.match?.B||0);return d!==0&&team===(d>0?'A':'B');}
  if(round.mode==='scramble'){const teams=[...new Set(round.players.map(p=>p.team))];if(teams.length<2)return false;
   const tot=Object.fromEntries(teams.map(t=>[t,sumScores(round.teamCards[t])])),best=Math.min(...Object.values(tot));
   return tot[team]===best&&Object.values(tot).filter(v=>v===best).length===1;}
+ if(round.mode==='skins')return skinsWinner(skins(round.cards,decidedHoles(round)).won)===seat;
  return false;
 }
 // THE XP POPUP (the owner, 14 October 2026): whenever a golfer gains XP, what
@@ -1022,8 +1036,11 @@ function updateHUD(){
  // the thing actually worth having, and the biome moves down to the subtitle so
  // the card still says where in the world you are.
  $('courseTitle').textContent=playingCourseName();$('barCourse').textContent=playingCourseName();
- $('courseSubtitle').textContent=rangeMode?'500 yards · practise anything'
-  :round.endless?`Endless run · ${course.bio.name}`:course.bio.name;
+ // In skins, what the hole being played is worth once skins have carried to
+ // it -- the holes before it decide that (skins.js).
+ const worth=round.mode==='skins'&&!rangeMode?skins(round.cards,round.hole).worth:1;
+ $('courseSubtitle').textContent=(rangeMode?'500 yards · practise anything'
+  :round.endless?`Endless run · ${course.bio.name}`:course.bio.name)+(worth>1?` · ${skinsText(worth)} on this hole`:'');
  // A range has no hole number, no par and no pin position for the week. It does
  // have a distance, and that one is real -- it follows the green slider.
  // No leading zero: "01" read as "O1" in the old serif, and a hole number is
@@ -1666,6 +1683,15 @@ function updateSoundScene(){
  gameAudio.setScene({biome:w.settings?.biome,wind:Number(w.settings?.wind)||0,tempC:h?.bio?.temperature??w.bio?.temperature,
   night:!!view.solar&&view.solar.elevation<-4,waterDist:water.dist,waterKind:water.kind,waterPan:d>1?clamp((dx*e[0]+dz*e[2])/d,-1,1):0});
 }
+// SKINS ON THE BANNER: the last golfer in decides the hole, so their banner
+// says what came of it -- who won how many skins, in the winner's colour, or
+// that a tie carried them on (on the last hole, that they go unclaimed).
+function skinsBannerLine(){
+ if(round.mode!=='skins'||!round.holeComplete)return '';
+ const e=skins(round.cards,decidedHoles(round)).perHole[round.hole];if(!e)return '';
+ const text=holeSkinLine(e,round.players.map(p=>p.name),round.hole,!round.endless&&round.hole+1>=round.holes);
+ return `<span class="hole-out-skin">${e.winner!==null?`<i style="background:${playerColour(e.winner)}"></i>`:''}${escape(text)}</span>`;
+}
 let holeOutTimer=null,holeOutAt=-1e9;
 function announceHoleOut(before,{chipIn=false}={}){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
@@ -1679,7 +1705,8 @@ function announceHoleOut(before,{chipIn=false}={}){
  const tint=parTint(label.rel,1),el=$('holeOut');
  el.innerHTML='<canvas class="hole-out-ball" width="72" height="72" aria-hidden="true"></canvas>'+(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
   +`<strong class="hole-out-name">${escape(label.name)}</strong>`
-  +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`;
+  +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`
+  +skinsBannerLine();
  // Restart the animation even when the banner is already up: hidden, reflow, shown.
  el.hidden=true;void el.offsetWidth;el.hidden=false;
  spinHoleOutBall(el.querySelector('.hole-out-ball'),seatLooks(seat).ball);
@@ -2571,8 +2598,8 @@ let rangeMode=false;
 // drive or up and down -- a practice game on a real hole, null otherwise. Like
 // the range it keeps no card, no history and no round XP: `save`,
 // `syncProfile` and `recordProfileShot` all stand aside, and `finishShot`
-// hands every ball to `challengeShot`. A skins game is a real round
-// (`round.challenge`) and never sets this.
+// hands every ball to `challengeShot`. Skins, once a challenge, is a round
+// format (`round.mode`) and never sets this.
 let challenge=null,challengeStarting=false;
 // Remembered for the next visit within this session. The world cache key leaves
 // `rangeGreen` out on purpose -- moving the green must not throw the landscape
@@ -3474,13 +3501,17 @@ function readDraft(){
   return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',seat:r.seat};
  });
 }
-const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next player tees off. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.'};
+// What each format is called in Saved rounds and a golfer's history.
+const FORMAT_NAMES={stroke:'Stroke play',match:'Match play',scramble:'Scramble',skins:'Skins'};
+const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next player tees off. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.',skins:'Two to four golfers, each for themselves, playing every hole out as in stroke play. Every hole is worth a skin: the lowest score alone wins it, and a tie carries it to the next hole. Skins still carried after the last hole go unclaimed.'};
 // `match` is false for endless: a match ends when the lead exceeds the holes
 // remaining and an endless run has no last hole, so `Round` rejects the
 // combination outright. Offering it and then throwing would be a worse answer.
+// Skins stays: it needs no last hole -- each skin is paid as it is won and the
+// carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -3727,6 +3758,8 @@ function flashTurn(tries=0){
 function drawScoreChips(){
  const host=$('scoreChips');if(!host)return;
  const others=round.players.length-1;
+ // In skins each chip also says how many skins its golfer has won.
+ const k=round.mode==='skins'&&!rangeMode?skins(round.cards,decidedHoles(round)):null;
  host.innerHTML=round.players.map((p,i)=>{
   const up=i===round.active;
   let score,note,tint='';
@@ -3740,6 +3773,7 @@ function drawScoreChips(){
    tint=parTint(rel,played);
    note=round.done?.[i]?'In':round.strokes?.[i]>0?`Shot ${round.strokes[i]+1}`:'';
    if(up&&round.mode==='scramble'&&!round.holeComplete)note=`Shot ${scoreText(round.stroke)}`;
+   if(k)note=[skinsText(k.won[i]),note].filter(Boolean).join(' · ');
   }
   const label=rangeMode?(up?`${p.name}, hitting. Open ${p.name}'s shots`:`Hand the mat to ${p.name}`)
    :`${p.name}, ${score==='E'?'even par':score}. Open the scorecard`;
@@ -3849,7 +3883,7 @@ function roundCards(){
     +`<div class="course-card-actions"><button class="secondary" data-rround-save="${r.id}">Save name</button>`
     +`<button class="secondary" data-rround-cancel="1">Cancel</button></div></div>`;
   return `<div class="course-card"><div class="course-meta"><strong>${escape(r.name)}</strong>`
-   +`<span>${where} · ${s.players} player${s.players===1?'':'s'} · ${escape(s.format)}${s.strokes?` · ${s.strokes} strokes`:''}</span>`
+   +`<span>${where} · ${s.players} player${s.players===1?'':'s'} · ${escape(FORMAT_NAMES[s.format]||s.format)}${s.strokes?` · ${s.strokes} strokes`:''}</span>`
    +`<span class="course-when">${when(r.saved)}${stale?' · built by an earlier generator':''}</span></div>`
    // EXPORT LIVES ON THE ROW. The tab listed saved rounds and then offered an
    // export of the LIVE one underneath, which is a different round from any of
@@ -3894,7 +3928,7 @@ const hcpText=i=>i===null?'—':i<0?'+'+(-i).toFixed(1):i.toFixed(1);
 function profileCard(r){
  const t=roundTotals(r),stale=r.course?.generator!==GENERATOR_VERSION;
  const of=r.endless?`Endless · ${t.played} hole${t.played===1?'':'s'}`:t.played>=r.holes?`${r.holes} holes`:`${t.played} of ${r.holes} holes`;
- const format={stroke:'Stroke play',match:'Match play',scramble:'Scramble'}[r.mode]||'Stroke play';
+ const format=FORMAT_NAMES[r.mode]||'Stroke play';
  const tags=[qualifies(r)?'<em class="profile-tag counts">Counts toward handicap</em>':'',r.mode==='scramble'?'<em class="profile-tag">Team score</em>':'',stale?'<em class="profile-tag">Earlier generator</em>':''].join('');
  const tip=stale?' title="Fairway&#39;s generator has changed since, so the land will grow a little differently."':'';
  return `<div class="course-card profile-round"><div class="profile-round-score" data-side="${parSide(t.rel,t.played)}"><strong>${scoreText(t.score)}</strong><small>${toParText(t.rel)}</small></div>`
@@ -4056,7 +4090,7 @@ function followRename(profile,from){
 function updateMenuChallenges(){
  const el=$('menuChallengesNote');if(!el)return;
  const lv=levelOf(mainProfile(profiles)?.xp||0).level,open=CHALLENGES.filter(c=>c.level<=lv).length;
- el.textContent=open===CHALLENGES.length?'Closest, long drive, up and down, skins':open?`${open} of ${CHALLENGES.length} open`:`The first opens at level ${CHALLENGES[0].level}`;
+ el.textContent=open===CHALLENGES.length?'Closest, long drive, up and down':open?`${open} of ${CHALLENGES.length} open`:`The first opens at level ${CHALLENGES[0].level}`;
 }
 function updateMenuWeekly(){
  updateMenuChallenges();
@@ -4967,10 +5001,16 @@ function renderPanel(name,content){
   // any hole but the one under the player's feet.
   const teeRows=round.endless?[]:enabledTees(settings).map(t=>({name:t,yards:world.holes.map(h=>Math.round(h.tees[t].yards))}));
   const hcol=h=>from+h+1;
-  if(round.challenge==='skins'){const k=skins(round.cards,round.holes);status=`Skins: ${round.players.map((p,i)=>`${p.name} ${k.won[i]}`).join(' · ')}${k.carry?` · ${k.carry} carried`:''}`;}
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${round.mode==='scramble'?'Team scramble':round.mode==='match'?'Best-ball match':'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${round.mode!=='stroke'?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  // SKINS (skins.js): the count on the top line, the result once the round is
+  // over, and a Skins row under the golfers -- each decided hole's winner as
+  // their colour and the skins it paid, or an arrow where a tie carried them.
+  const sk=round.mode==='skins'?skins(round.cards,decidedHoles(round)):null;
+  if(sk)status=skinsStatus(round.players.map(p=>p.name),sk,{finished:round.finished,holes:round.holes});
+  const skinCell=g=>{const e=sk.perHole[g];return !e?'<td>—</td>':e.winner===null?'<td class="skin-carry" title="Tied: carried to the next hole">→</td>':`<td title="${escape(round.players[e.winner].name)}"><span class="player-dot" style="background:${playerColour(e.winner)}"></span>${e.value}</td>`;};
+  const skinsRow=sk?`<tr class="skins-row"><td>Skins</td>${pars.map((_,h)=>skinCell(from+h)).join('')}<td>${sk.won.reduce((a,b)=>a+b,0)}</td><td>${sk.carry?`${sk.carry} carried`:''}</td></tr>`:'';
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
-  if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
+  if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']]),...(sk?[['Skins','',...allPars.map((_,h)=>{const e=sk.perHole[h];return !e?'':e.winner===null?'carried':`${round.players[e.winner].name} ${e.value}`;}),sk.won.reduce((a,b)=>a+b,0),sk.carry?`${sk.carry} carried`:'']]:[])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
   content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Validate & play sample shot</button>`;
   $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
@@ -5184,7 +5224,7 @@ function validateSave(d){
  if(!d.settings.courseYards)d.settings.courseYards=d.round.holes*360;
  d.settings=validateSettings(d.settings);
  turfConfig(d.settings.turf);customizeClubs(d.settings.clubYardages);
- if(![3,9,18].includes(d.round.holes)||!['stroke','scramble','match'].includes(d.round.mode)||!Array.isArray(d.round.players)||!d.round.players.every(p=>typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&['RH','LH'].includes(p.hand)))throw Error('Invalid players or format.');
+ if(![3,9,18].includes(d.round.holes)||!['stroke','scramble','match','skins'].includes(d.round.mode)||!Array.isArray(d.round.players)||!d.round.players.every(p=>typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&['RH','LH'].includes(p.hand)))throw Error('Invalid players or format.');
  if(!d.round.positions?.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<20000&&Math.abs(p.z)<20000))throw Error('Invalid positions.');
  return d.generator!==GENERATOR_VERSION;
 }
@@ -5446,10 +5486,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // often. It goes through `startRoundOn`, the same path Play and Saved
   // courses take, so what gets measured is what gets played. Resolves when the
   // world is built and the first frame can be drawn.
-  course:(overrides={})=>startRoundOn({...DEFAULT_COURSE,...overrides},
+  // `group` replaces the lone golfer -- the smoke journey `skins` plays two.
+  course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},
    // `hand` like every group the editor builds: a save without it is refused on
    // reload (validateSave), so a lab round could never be continued.
-   {players:[{name:'Bench',team:'A',hand:'RH'}],mode:'stroke',tee:'blue'}),
+   group||{players:[{name:'Bench',team:'A',hand:'RH'}],mode:'stroke',tee:'blue'}),
   // Which view the camera is in, so a run can state what it measured rather
   // than assuming. 'player' is down at the ball; 'overview' is the whole hole
   // and is much the heavier of the two.

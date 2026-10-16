@@ -6,6 +6,18 @@ import {puttingConfig,awardedPutts} from './putting.js';
 // monitor on their turn is refused as if it were unarmed.
 export const INPUTS=['monitor','meter'];
 export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
+// A SAVE FROM BEFORE SKINS WAS A FORMAT (16 October 2026): the Skins challenge
+// was a stroke round with `challenge: 'skins'`. It resumes as a skins round,
+// with the same card and so the same skins. Every way a round comes back goes
+// through `restore` -- Continue, Saved rounds, an imported file, and each of
+// the thirty mulligan snapshots -- so this is the one place it is upgraded.
+function upgradeSave(data){
+ if(!data||typeof data!=='object'||data.challenge===undefined)return data;
+ const {challenge,...rest}=data;
+ if(challenge!=='skins')return rest;
+ if(rest.mode!=='stroke')throw Error('Invalid saved skins game.');
+ return {...rest,mode:'skins'};
+}
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -17,11 +29,13 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',challenge=''}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
-  if(!['stroke','match','scramble'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
+  if(!['stroke','match','scramble','skins'].includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
   if(mode==='match'&&new Set(players.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
+  // SKINS (skins.js) is every golfer for themselves, so it needs two to four.
+  if(mode==='skins'&&players.length<2)throw Error('Skins is for two to four golfers.');
   if(endless&&mode==='match')throw Error('Match play needs a last hole, so it cannot run endlessly.');
   if(typeof seed!=='string'||seed.length>40)throw Error('Invalid round seed.');
   if(!['blue','white','red'].includes(tee))throw Error('Invalid tee selection.');this.tee=tee;
@@ -32,10 +46,6 @@ export class Round{
   // THE COURSE OF THE WEEK this round is on (weekly.js weekKey), or ''. It rides
   // through saves like the rest, so a week's round resumed still counts for it.
   if(typeof weekly!=='string'||(weekly&&!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(weekly)))throw Error('Invalid course of the week.');this.weekly=weekly;
-  // A SKINS GAME (Phase 7, challenges.js) is a stroke round with skins counted
-  // over its card; this says so, through saves. The other challenges are not
-  // rounds and never get here.
-  if(!['','skins'].includes(challenge)||(challenge==='skins'&&(mode!=='stroke'||players.length<2)))throw Error('A skins game is stroke play for two to four golfers.');this.challenge=challenge;
   // WHICH ROUND THIS IS, for the player's history. It rides through every save,
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.
@@ -88,6 +98,7 @@ export class Round{
   if(!Array.isArray(next)||next.length<1||next.length>4)throw Error('Choose 1–4 players.');
   if(!next.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
   if(this.mode==='match'&&new Set(next.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
+  if(this.mode==='skins'&&next.length<2)throw Error('Skins is for two to four golfers.');
   const tee=tees&&tees[this.tee];
   // WHICH SEAT EACH GOLFER CAME FROM. `seat` is the id they held before the
   // edit; a golfer who has just been added has none.
@@ -167,8 +178,9 @@ export class Round{
   }else{
    this.puttStrokes[i]=Math.round((this.puttStrokes[i]+puttStroke+putts)*100)/100;this.strokes[i]=Math.round((this.strokes[i]+1+putts)*100)/100;this.positions[i]=position;
    if(complete){this.done[i]=true;this.cards[i][this.hole]=this.strokes[i];this.puttCards[i][this.hole]=this.puttStrokes[i];}
-   // Simulator stroke play: keep the same golfer until their ball is holed.
-   if(this.mode==='stroke'){if(complete)this.active=this.nextInOrder();}
+   // Simulator stroke play, and skins, which is played the same way: keep the
+   // same golfer until their ball is holed.
+   if(this.mode==='stroke'||this.mode==='skins'){if(complete)this.active=this.nextInOrder();}
    else this.active=this.farthestOut(pin);
    if(this.done.every(Boolean))this.completeHole();
   }
@@ -243,7 +255,7 @@ export class Round{
  simDrop(position){if(this.relief)throw Error('Choose where to take relief first.');if(this.holeComplete||this.finished||this.scrambleSelection)throw Error('Finish the current team selection or start the next hole before dropping.');if(!Number.isFinite(position.x)||!Number.isFinite(position.z))throw Error('Choose a valid drop position.');const ids=this.mode==='scramble'?this.teamMembers(this.team):[this.active];if(this.mode==='scramble'&&this.candidates.length)throw Error('Choose the team lie before taking a drop.');for(const i of ids)this.positions[i]={x:position.x,z:position.z};}
  toJSON(){return {...this};}
  static restore(data,withHistory=true){
-  const r=new Round(data);r.teePlaced=data.teePlaced!==false;if(!Number.isInteger(data.hole)||data.hole<0||(!r.endless&&data.hole>=r.holes)||data.hole>9999)throw Error('Invalid saved hole.');
+  data=upgradeSave(data);const r=new Round(data);r.teePlaced=data.teePlaced!==false;if(!Number.isInteger(data.hole)||data.hole<0||(!r.endless&&data.hole>=r.holes)||data.hole>9999)throw Error('Invalid saved hole.');
   for(const key of ['cards','positions','strokes','done'])if(!Array.isArray(data[key])||data[key].length!==r.players.length)throw Error('Invalid saved round.');
   const integer=v=>Number.isInteger(v)&&v>=0&&v<=999,score=v=>Number.isFinite(v)&&v>=0&&v<=999&&Math.abs(v*100-Math.round(v*100))<1e-6;
   if(!Number.isInteger(data.active)||data.active<0||data.active>=r.players.length||!data.strokes.every(score)||!data.done.every(v=>typeof v==='boolean')||!data.cards.every(row=>Array.isArray(row)&&(r.endless||row.length<=r.holes)&&row.every(score))||!data.positions.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<20000&&Math.abs(p.z)<20000))throw Error('Invalid saved player state.');

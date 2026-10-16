@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CHALLENGES, challenge, pickHole, closestFeet, driveYards, upDownSpots, isUpAndDown, skins, recordChallenge, normaliseRecords, feetText} from '../src/challenges.js';
+import {CHALLENGES, challenge, pickHole, closestFeet, driveYards, upDownSpots, isUpAndDown, recordChallenge, normaliseRecords, feetText} from '../src/challenges.js';
 import {rewardsOf} from '../src/rewards.js';
 
 // ALL OPEN FROM THE START (the owner, 15 October 2026), and the reward table
 // agrees, so no level-up banner announces one.
-test('four challenges, all open at level 1, as the reward table says', () => {
- assert.deepEqual(CHALLENGES.map(c => [c.id, c.level]), [['closest', 1], ['long', 1], ['updown', 1], ['skins', 1]]);
+test('three challenges, all open at level 1, as the reward table says', () => {
+ assert.deepEqual(CHALLENGES.map(c => [c.id, c.level]), [['closest', 1], ['long', 1], ['updown', 1]]);
  const table = Object.fromEntries(rewardsOf('challenge').map(r => [r.id, r.level]));
- assert.equal(table.closest, 1); assert.equal(table['long-drive'], 1); assert.equal(table['up-and-down'], 1); assert.equal(table.skins, 1);
+ assert.equal(table.closest, 1); assert.equal(table['long-drive'], 1); assert.equal(table['up-and-down'], 1); assert.equal(table.skins, undefined);
 });
 
 test('each challenge finds its hole, or says there is none', () => {
@@ -42,15 +42,8 @@ test('up-and-down drops are seeded, off the green and on ground a chip is played
  for (const p of a) { const e = edge(p.x, p.z); assert.ok(e >= 2.7 && e <= 16.5, `edge ${e}`); assert.ok(p.x <= 20, 'never in the water'); }
 });
 
-test('skins: the lowest score alone wins, ties carry, and what is left over is unclaimed', () => {
- const cards = [[4, 4, 3, 5, 4], [4, 5, 4, 4, 4], [5, 4, 4, 6, 4]];
- const r = skins(cards, 5);
- assert.deepEqual(r.perHole.map(h => [h.winner, h.value]), [[null, 1], [null, 2], [0, 3], [1, 1], [null, 1]]);
- assert.deepEqual(r.won, [3, 1, 0]);
- assert.equal(r.carry, 1);
- assert.deepEqual(skins([[4, 3], [4]], 2).perHole.length, 1, 'an unfinished hole stops the count');
-});
-
+// Skins is a round format now; its rule is tested in skins.test.mjs. Its
+// record is still kept here, with the challenges'.
 test('records keep the best, and skins add up', () => {
  const prof = {};
  assert.equal(recordChallenge(prof, 'closest', 12.3), true);
@@ -65,19 +58,7 @@ test('records keep the best, and skins add up', () => {
  assert.deepEqual(prof.challenges.skins, {won: 5, games: 2});
  const back = normaliseRecords(JSON.parse(JSON.stringify(prof.challenges)));
  assert.equal(back.closest.feet, 12.3); assert.equal(back.updown.strokes, 13);
+ assert.equal(back.skins.won, 5, 'the skins record survives a reload');
  assert.deepEqual(normaliseRecords({closest: {feet: -1}, long: 'x'}), {});
- assert.equal(challenge('skins').name, 'Skins game');
-});
-
-// A SKINS GAME IS A STROKE ROUND THAT SAYS SO, through a save; never for one
-// golfer or another format.
-test('a skins round keeps its label through a save and refuses what is not skins', async () => {
- const {Round} = await import('../src/game.js');
- const two = [{name: 'A', team: 'A'}, {name: 'B', team: 'B'}];
- const r = new Round({players: two, holes: 9, challenge: 'skins'});
- assert.equal(Round.restore(JSON.parse(JSON.stringify(r.toJSON()))).challenge, 'skins');
- assert.throws(() => new Round({holes: 9, challenge: 'skins'}), /two to four/);
- assert.throws(() => new Round({players: two, mode: 'match', holes: 9, challenge: 'skins'}), /stroke play/);
- assert.throws(() => new Round({players: two, holes: 9, challenge: 'closest'}), /skins/);
- assert.equal(new Round({holes: 9}).challenge, '');
+ assert.equal(challenge('skins'), null, 'skins is a round format, not a challenge');
 });

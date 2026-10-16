@@ -1,28 +1,29 @@
 // CHALLENGES (Phase 7, 14 October 2026; the agreed spec, 8.1).
 //
-// Four, all open from the start (the owner, 15 October 2026: "no reason not
-// to" -- the spec had them opened at levels 3, 6, 12 and 18):
+// Three, all open from the start (the owner, 15 October 2026: "no reason not
+// to" -- the spec had them opened at levels 3, 6 and 12):
 //   closest   five balls at a par 3; how near the pin each finishes
 //   long      six drives down a fairway; the longest that stays on it
 //   updown    five drops at seeded spots round a green; strokes to hole out
-//   skins     nine holes, two to four golfers, a skin a hole, ties carry
-// They play on existing courses -- the course of the week or a saved one. The first three are a practice game like the range:
-// no card, no round history, no handicap, no hole XP, only their own XP and
-// records. Skins is an ordinary stroke round with skins counted over it, so
-// the four round formats stay as they were (spec: "a challenge, not a new
-// round format").
+// They play on existing courses -- the course of the week or a saved one, as a
+// practice game like the range: no card, no round history, no handicap, no
+// hole XP, only their own XP and records.
 //
-// Pure: what a ball scored, where the drops go, who won which skin. main.js
-// runs the turns. Amounts are the spec's; definitions marked PLACED are not.
+// Skins was the fourth, a stroke round with skins counted over it, until the
+// owner made it a round format of its own (16 October 2026; skins.js). Its
+// record stays here with the others' (`recordChallenge(prof, 'skins', won)`),
+// so profiles keep the shape they had.
+//
+// Pure: what a ball scored, where the drops go, the records. main.js runs the
+// turns. Amounts are the spec's; definitions marked PLACED are not.
 
 export const CHALLENGES = [
  {id: 'closest', name: 'Closest to the pin', level: 1, balls: 5, how: 'Five balls at a par 3. Each one inside 20 feet earns 10 XP; a new best, 50.'},
  {id: 'long', name: 'Long drive', level: 1, balls: 6, how: 'Six drives down a fairway. The longest that stays on the fairway counts; a new best earns 50 XP.'},
  {id: 'updown', name: 'Up and down', level: 1, balls: 5, how: 'Five drops round a green. Hole out from each; every one in two strokes or fewer earns 20 XP.'},
- {id: 'skins', name: 'Skins game', level: 1, how: 'Nine holes for two to four golfers. The lowest score alone wins the hole\'s skin; a tie carries it on. 30 XP a skin.'},
 ];
 export const challenge = id => CHALLENGES.find(c => c.id === id) || null;
-export const CHALLENGE_XP = {closeBall: 10, closeFeet: 20, best: 50, upDown: 20, skin: 30};
+export const CHALLENGE_XP = {closeBall: 10, closeFeet: 20, best: 50, upDown: 20};
 // How many strokes an up-and-down drop may take before it is picked up. PLACED.
 export const UPDOWN_GIVE_UP = 8;
 const FOOT = .3048, YARD = .9144;
@@ -64,26 +65,9 @@ export function upDownSpots({pin, surface, edge}, seed, n = 5) {
 }
 export const isUpAndDown = strokes => Number.isFinite(strokes) && strokes <= 2;
 
-// SKINS over a stroke card. `cards` is each golfer's scores by hole. A hole
-// all have finished goes to the one lowest score, with the skins carried to it;
-// a tie carries this hole's skin and those before it on. Skins still carried
-// after the last hole are unclaimed.
-export function skins(cards, holes) {
- const won = cards.map(() => 0), perHole = [];
- let carry = 0;
- for (let h = 0; h < holes; h++) {
-  const s = cards.map(c => c[h]);
-  if (!s.every(Number.isFinite)) break;
-  const low = Math.min(...s), at = s.flatMap((v, i) => v === low ? [i] : []);
-  const value = carry + 1;
-  if (at.length === 1) { won[at[0]] += value; perHole.push({winner: at[0], value}); carry = 0; }
-  else { perHole.push({winner: null, value}); carry = value; }
- }
- return {won, perHole, carry};
-}
-
 // RECORDS (My profile): the nearest ball, the longest drive, the most
-// up-and-downs from five (fewest strokes breaking a tie), the skins won.
+// up-and-downs from five (fewest strokes breaking a tie), and the skins won in
+// finished skins rounds (a format now, skins.js; its record is kept here).
 export const blankRecords = () => ({});
 export function normaliseRecords(d) {
  const out = {}, num = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi;

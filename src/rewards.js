@@ -38,8 +38,9 @@ const ROWS = [
  [20, 'flourish', 'ring-chip-in', 'Golden ring on a chip-in'], [30, 'flourish', 'fireworks-birdie', 'Fireworks on every birdie'],
  [50, 'flourish', 'gold-flourishes', 'Everything in gold'],
  // Every challenge open from the start (the owner, 15 October 2026); the spec
- // had them at levels 3, 6, 12 and 18.
- [1, 'challenge', 'closest', 'Closest to the pin'], [1, 'challenge', 'long-drive', 'Long drive'], [1, 'challenge', 'up-and-down', 'Up and down'], [1, 'challenge', 'skins', 'Skins game'],
+ // had them at levels 3, 6, 12 and 18. Skins was the fourth until it became a
+ // round format (16 October 2026), open to everyone, so it unlocks nothing.
+ [1, 'challenge', 'closest', 'Closest to the pin'], [1, 'challenge', 'long-drive', 'Long drive'], [1, 'challenge', 'up-and-down', 'Up and down'],
  [2, 'tracer', 'sky', 'Sky'],
  [3, 'ball', 'red-stripe', 'Red stripe'],
  [4, 'title', 'weekend-golfer', 'Weekend Golfer'],

@@ -68,6 +68,19 @@ test('the list summarises without rebuilding every round', () => {
  assert.equal(s.finished, false);
 });
 
+// SKINS IS A FORMAT (16 October 2026): a skins round is listed as one, and so
+// is a round the old Skins challenge saved as stroke play labelled skins.
+test('a skins round, new or from the old challenge, is listed as skins', () => {
+ store.clear();
+ const two = [{name: 'Alex', team: 'A', hand: 'RH'}, {name: 'Bo', team: 'A', hand: 'RH'}];
+ lib.saveRound(record({name: 'New', round: new Round({holes: 9, players: two, mode: 'skins'}).toJSON()}));
+ lib.saveRound(record({name: 'Old', round: {...new Round({holes: 9, players: two}).toJSON(), challenge: 'skins'}}));
+ lib.saveRound(record({name: 'Plain'}));
+ const by = Object.fromEntries(lib.listRounds().map(r => [r.name, r.summary.format]));
+ assert.deepEqual(by, {New: 'skins', Old: 'skins', Plain: 'stroke'});
+ assert.equal(Round.restore(lib.listRounds().find(r => r.name === 'Old').round).mode, 'skins', 'and it resumes as skins');
+});
+
 test('bad records are refused rather than stored', () => {
  store.clear();
  assert.throws(() => lib.saveRound(record({name: ''})), /name/i, 'an empty name is refused');

@@ -595,3 +595,13 @@ numbers were taken from them.
 - GolfWRX, "Hitting shots from the rough at TPC Scottsdale" -- https://www.golfwrx.com/277599/hitting-shots-from-the-rough-at-tpc-scottsdale/ -- through a search summary: one golfer on Trackman, a thick lie leaving a 7 iron at about 1,300 rpm and 87 yd carry from 87 mph of club speed; a down-grain lie 115 mph of ball speed against 121 from the fairway. The basis for rejecting a flyer spin cut for now.
 - MyGolfSpy, "What is a flier lie in golf" -- https://mygolfspy.com/news-opinion/instruction/what-is-a-flier-lie-in-golf-and-how-do-you-play-it/ -- through a search summary: grass between face and ball can cut spin and send a shot further, or slow the club and come up short. Background.
 - USGA, "Rough penalty: elite player testing (Trackman and face tape)", R22-11 -- https://usga.org/content/dam/usga/pdf/Equipment/R22-11%20Qualitative%20Insights%20-%20,%20Trackman%20and%20Face%20Tape-Rough%20Penalty%20Elite%20Player%20Testing.pdf -- found, not read; about tee-shot rough rather than approach lies.
+
+## Skins as a format (16 October 2026)
+
+Read for RESEARCH.md *Skins as a format*. No governing body publishes rules for
+skins; these describe how it is played.
+
+- Wikipedia, "Skins Game (PGA Tour)" -- https://en.wikipedia.org/wiki/Skins_Game_(PGA_Tour) -- fetched: a halved hole carries; a halved 18th went to sudden death, anyone not halving a playoff hole eliminated; 2008 values $25,000 (holes 1-6), $50,000 (7-12), $70,000 (13-17), $200,000 (18th), $1 million in all; the 2001 "validation" rule, dropped in 2002. The carry followed; the playoff, rising values and validation not.
+- Stymie, "What is a skins game in golf?" -- https://stymie.golf/glossary/skins -- through a search summary: lowest score alone wins, ties carry; settle handicap strokes before the first carry. Followed for the rule; strokes left out.
+- GolfLink, "Golf skins game: everything you need to know" -- https://www.golflink.com/golf-rules/golf-skins-game-everything-you-need-to-know -- through a search summary: skins left after the last hole are split, played off, or settled by the group's own rule. The basis for calling "unclaimed" a placed choice.
+- 18Birdies help, "Skins" -- https://help.18birdies.com/article/57-skins -- through a search summary: an app's settings for carryovers, handicap strokes and the last hole. Compared, not followed.
