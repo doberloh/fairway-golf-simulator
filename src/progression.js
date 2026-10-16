@@ -107,6 +107,42 @@ export function dailyXp(p, now = Date.now()) {
  p.xpDaily = day;p.xp = (p.xp || 0) + XP.daily;
  return XP.daily;
 }
+// CHALLENGES (16 October 2026; the owner's plan). Medals are what pays: the
+// first bronze, silver and gold in each challenge, once each, ever (a long
+// challenge twice as much). Finishing a play pays a little, by the best medal
+// it reached, and only until the day's allowance is used -- that is what
+// stops a challenge being farmed. A new best pays once a challenge a day.
+// All PLACED (RESEARCH.md *Challenges and medals*).
+export const CHALLENGE_PAY = {
+ medal: [0, 25, 50, 100],      // first bronze, silver, gold; doubled when `long`
+ play: [5, 10, 15, 25],        // a finished play: no medal, bronze, silver, gold
+ playLong: [15, 25, 40, 60],
+ best: 20,                      // a new best, once per challenge per day
+ dayCap: 250,                   // repeat pay (finishing plays) a day, across all challenges
+};
+const MEDAL_LABEL = ['', 'bronze', 'silver', 'gold'];
+// What a finished play pays one golfer, and the parts that earned it. Writes
+// the medal and the day's allowance onto the profile; the caller awards the
+// total through the ledger. `medal` 0-3 is the best this play reached, `best`
+// whether it set a new record, `mult` the Swing Meter difficulty's.
+export function challengePay(p, {id, medal = 0, best = false, long = false, mult = 1}, now = Date.now()) {
+ const parts = [], day = dayOf(now), m = Number.isFinite(mult) ? mult : 1;
+ if (p.xpChallenge?.day !== day) p.xpChallenge = {day, xp: 0, bests: []};
+ const had = p.medals?.[id] || 0;
+ if (medal > had) {
+  for (let k = had + 1; k <= medal; k++) parts.push({label: `First ${MEDAL_LABEL[k]}`, xp: Math.round(CHALLENGE_PAY.medal[k] * (long ? 2 : 1) * m)});
+  (p.medals ||= {})[id] = medal;
+ }
+ if (best && !p.xpChallenge.bests.includes(id)) { p.xpChallenge.bests.push(id);parts.push({label: 'New best', xp: Math.round(CHALLENGE_PAY.best * m)}); }
+ const play = Math.min(Math.round((long ? CHALLENGE_PAY.playLong : CHALLENGE_PAY.play)[medal] * m), Math.max(0, CHALLENGE_PAY.dayCap - p.xpChallenge.xp));
+ if (play > 0) { p.xpChallenge.xp += play;parts.push({label: medal ? `${MEDAL_LABEL[medal][0].toUpperCase() + MEDAL_LABEL[medal].slice(1)} play` : 'Challenge played', xp: play}); }
+ return {parts, xp: sumParts(parts), capped: play < Math.round((long ? CHALLENGE_PAY.playLong : CHALLENGE_PAY.play)[medal] * m)};
+}
+export function normaliseChallengeDay(d) {
+ if (!d || typeof d !== 'object' || typeof d.day !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d.day)) return null;
+ return {day: d.day, xp: Number.isFinite(d.xp) && d.xp >= 0 ? Math.min(d.xp, 1e5) : 0, bests: Array.isArray(d.bests) ? d.bests.filter(b => typeof b === 'string' && b.length <= 30).slice(0, 100) : []};
+}
+
 // THE RANGE: On the number only, a trickle, capped a day.
 export function rangeXp(p, now = Date.now()) {
  const day = dayOf(now);

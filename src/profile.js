@@ -27,7 +27,8 @@ import {validateBag, stockBag} from './clubs.js';
 import {WEARABLE, reward, isUnlocked} from './rewards.js';
 import {normaliseProgress, normaliseEarned} from './achievements.js';
 import {normaliseWeekly} from './weekly.js';
-import {normaliseRecords} from './challenges.js';
+import {normaliseRecords, normaliseMedals} from './challenges.js';
+import {normaliseChallengeDay} from './progression.js';
 
 export const PROFILE_KEY = 'fairway-profiles-v1';
 // The single-profile record the first build wrote, read once and converted.
@@ -170,6 +171,13 @@ export function normaliseProfile(d) {
  // The challenges' records (challenges.js).
  const records = normaliseRecords(d.challenges);
  if (Object.keys(records).length) extra.challenges = records;
+ // Their medals (16 October 2026): kept even when empty, because an empty
+ // record is what says old records have already been turned into medals
+ // (challenges.js `medalsFromRecords`). And the day's challenge XP allowance
+ // (progression.js `challengePay`). Absent reads as none: no migration.
+ if (d.medals && typeof d.medals === 'object') extra.medals = normaliseMedals(d.medals);
+ const chalDay = normaliseChallengeDay(d.xpChallenge);
+ if (chalDay) extra.xpChallenge = chalDay;
  return {id: d.id, name, created: finite(d.created), counters, bests, rounds, removed, ...(bag ? {bag} : {}), ...(meter ? {meter} : {}), ...play, xp, xpLog, ...extra};
 }
 // The whole store. A profile that cannot be read is dropped, not the store; two
