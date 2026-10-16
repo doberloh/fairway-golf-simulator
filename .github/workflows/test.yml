@@ -34,11 +34,11 @@
 # merge; AGENTS.md makes
 # that a rule.
 #
-# NOT YET RUN ON GITHUB. This repository had no remote when this was written,
-# so the smoke step has been proven with `--software` locally and never on a
-# runner. If it fails on the first push, the likeliest causes are Chromium's
-# system libraries (that is what `--with-deps` is for) and a runner slow
-# enough to trip a timeout -- every wait scales by 12x under `--software`.
+# IT RUNS ON GITHUB, AND THE SMOKE STEP USUALLY FAILS THERE. Checked 16
+# October 2026: the unit tests pass on the runner; the smoke step failed on 6
+# of the 8 latest pushes to main, every time in endless-round (a putt that
+# never dropped, Space refused for 60 s, or a click timing out). Every wait
+# scales by 12x under `--software`. Open in docs/TODO.md, *Found on GitHub*.
 name: tests
 
 on:
