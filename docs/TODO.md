@@ -352,6 +352,31 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## Skins as a round format (16 October 2026)
+
+Skins left the challenges and became a Format beside stroke, match and scramble
+(branch `skins-game-mode`; `src/skins.js`, RESEARCH.md *Skins as a format*,
+PROJECT_HANDOFF *Skins is a round format*). Built and tested in Node (the rule,
+the mode, old saves, the saved-rounds list); **not yet seen in the game** --
+nothing was run on the graphics card.
+
+- [ ] **Play a skins round in the game and look.** Play -> Format -> *Skins*
+  with two or three golfers: the format note; each chip's "N skins"; a tied hole
+  -- the last golfer's banner says the skins carry, and the next hole's course
+  line says "2 skins on this hole"; a won hole -- the banner names the winner in
+  their colour, the XP popup says "Won 2 skins"; the scorecard's *Skins* header,
+  top line and Skins row (dots and carry arrows), and the CSV's Skins row; a
+  mulligan of the winning putt takes the skins and their XP back; the finished
+  card ("... wins the skins" or a tie) and the 50 XP win; *Records* on My
+  profile. One golfer with Skins chosen should be refused with "Skins is for two
+  to four golfers". Also: an endless run on skins, and Challenges showing three
+  tiles with the line about where Skins went.
+- [ ] **Run the smoke journeys `skins` (new) and `challenge` (now three tiles)**
+  when the owner allows the graphics card. `skins` was written without being
+  run; if it fails, check the harness before the game.
+- [ ] **A save from the Skins challenge resumes as skins** -- covered in Node
+  (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
+
 # Done
 
 ## The open list before the 16 October prune

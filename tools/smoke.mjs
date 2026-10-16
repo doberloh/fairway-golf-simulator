@@ -2403,16 +2403,16 @@ const JOURNEYS = [
  // open is known.
  {
   name: 'challenge',
-  what: 'Challenges: all four open, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
+  what: 'Challenges: all three open, closest to the pin plays five balls with the bar up, nothing is saved as a round, the results card offers it again, and a long drive starts',
   async prepare(page) {
    // A golfer at level 7. Every challenge is open from the start (15 October 2026).
    await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pch', profiles: [{id: 'pch', name: 'Chal', created: 1, counters: {}, bests: {}, rounds: [], xp: 3150, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Challenges → the four, all open', async () => {
+   await t.step('Challenges → the three, all open (Skins is a round format now)', async () => {
     await fromMenu(t, 'Challenges');
-    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 4), 'the four challenges', 10 * SLOW);
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.challenge-pick .look-item').length === 3), 'the three challenges', 10 * SLOW);
     const locked = await t.page.evaluate(() => [...document.querySelectorAll('.challenge-pick .look-item.locked')].map(b => b.textContent));
     if (locked.length) throw new Error(`locked: ${JSON.stringify(locked)}`);
    });
@@ -2456,6 +2456,51 @@ const JOURNEYS = [
     if (!['4', '5'].includes(await t.page.textContent('#holePar'))) throw new Error('the long drive is not on a par 4 or 5');
     await t.shot();
     await t.until(() => t.page.evaluate(() => /Ball 2 of 6/.test(document.getElementById('challengeBar').textContent)), 'the second drive', 10 * SLOW);
+   });
+  },
+ },
+ // SKINS, A ROUND FORMAT (16 October 2026; it was the fourth challenge). Play
+ // offers it under Format with its note; a two-golfer skins round starts, each
+ // chip counts skins, and the scorecard names the format and carries the Skins
+ // row. Written while the GPU was not to be used; the hole-out banner's skins
+ // line is not reached here (two golfers holing out is minutes of putting).
+ {
+  name: 'skins',
+  what: 'Skins: Play offers it as a format with its note, a two-golfer skins round starts, the chips count skins and the scorecard has the Skins row',
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play → Format offers Skins, with its note', async () => {
+    await fromMenu(t, 'Play');
+    await t.page.waitForSelector('#roundMode', {state: 'attached', timeout: 10000 * SLOW});
+    const note = await t.page.evaluate(() => {
+     const sel = document.getElementById('roundMode');
+     if (![...sel.options].some(o => o.value === 'skins')) return null;
+     sel.value = 'skins'; sel.dispatchEvent(new Event('change'));
+     return document.getElementById('formatNote').textContent;
+    });
+    if (note === null) throw new Error('Format has no Skins choice');
+    if (!/skin/i.test(note)) throw new Error(`the Skins note reads: ${note}`);
+   });
+   await t.step('a two-golfer skins round starts', async () => {
+    await t.page.evaluate(() => window.lab.course({holes: 9}, {players: [{name: 'Ann', team: 'A', hand: 'RH'}, {name: 'Ben', team: 'A', hand: 'RH'}], mode: 'skins', tee: 'blue'}));
+    await t.inPlay(120 * SLOW);
+    const mode = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.mode);
+    if (mode !== 'skins') throw new Error(`the saved round's format is ${mode}`);
+   });
+   await t.step('each chip counts skins', async () => {
+    const chips = await t.page.evaluate(() => [...document.querySelectorAll('#scoreChips .score-chip small')].map(e => e.textContent));
+    if (chips.length !== 2 || !chips.every(c => /0 skins/.test(c))) throw new Error(`the chips read ${JSON.stringify(chips)}`);
+   });
+   await t.step('a shot, then the scorecard: Skins, the count and the Skins row', async () => {
+    await t.shot();
+    await t.page.getByRole('button', {name: /Open the scorecard/}).first().click();
+    await t.until(() => t.drawerOpen(), 'the scorecard', 5 * SLOW);
+    const card = await t.page.evaluate(() => ({text: document.getElementById('drawerContent').textContent, row: !!document.querySelector('#drawerContent .skins-row')}));
+    if (!/Skins: Ann 0 · Ben 0/.test(card.text)) throw new Error(`the card's top line is missing: ${card.text.slice(0, 200)}`);
+    if (!/· Skins ·/.test(card.text)) throw new Error('the card does not name the format');
+    if (!card.row) throw new Error('the card has no Skins row');
+    await t.page.screenshot({path: 'bench/shots/smoke/skins-card.png'}).catch(() => {});
+    await t.key('Escape');
    });
   },
  },

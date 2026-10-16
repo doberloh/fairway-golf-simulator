@@ -6022,7 +6022,7 @@ is called a sim handicap.
 - **No soft or hard cap, no exceptional-score reduction.** Both depend on a
   twelve-month low-index history that a sim profile rarely has; worth adding if
   players keep long histories.
-- **What qualifies:** a 9 or 18 hole stroke or match play round, not endless,
+- **What qualifies:** a 9 or 18 hole stroke play, skins or match play round, not endless,
   with every hole scored. Scramble is a team score. Three-hole rounds are too
   short for the WHS. A match conceded before its last hole is left out rather
   than given "most likely scores".
@@ -8067,14 +8067,74 @@ regulation. Flourishes: confetti 120-140 pieces, fireworks 70 sparks a burst,
 
 No outside source; the XP is the spec's (8.1): 10 a ball inside 20 feet and 50
 a new best for closest to the pin, 50 a new best for the long drive, 20 an
-up-and-down, 30 a skin. PLACED here: the holes (the first par 3; the longest
+up-and-down, 30 a skin (skins has been a round format since 16 October 2026;
+*Skins as a format*, below). PLACED here: the holes (the first par 3; the longest
 par 5, or par 4 without one; the first par 4); a long drive is "in play" only
 on the fairway itself, as in a long-drive grid, not the first cut; up-and-down
 drops are 3 to 18 yards off the green's edge on fringe, cut, fairway or sand,
 spread round the green, seeded by course and hole; a drop is picked up after
 eight strokes and water or out of bounds is two strokes from the drop; the
-up-and-down record is the most of five, fewest strokes breaking a tie; skins
-left carried after the last hole are unclaimed.
+up-and-down record is the most of five, fewest strokes breaking a tie.
+
+### Skins as a format (16 October 2026)
+
+Skins was the fourth challenge, a stroke round with skins counted over it (the
+spec: "a challenge, not a new round format"). The owner made it a round format
+of its own, beside stroke, match, scramble and endless; the rule is in
+src/skins.js. The plan, with the owner's seven decisions, is a local report
+(docs/reports/SKINS_GAME_MODE_PLAN.md); the owner asked for it to be built
+after reading the plan, and its seven recommendations were followed -- each is
+marked PLACED below so it can be overruled.
+
+**Sources.**
+
+- Wikipedia, *Skins Game (PGA Tour)*,
+  https://en.wikipedia.org/wiki/Skins_Game_(PGA_Tour) -- the TV event, 1983 to
+  2008. Taken: a halved (tied) hole carries its skin to the next. Read and not
+  followed: a halved 18th went to sudden death until one golfer won a hole
+  outright, anyone not halving a playoff hole dropping out; hole values rose
+  through the round (2008: $25,000 a hole for holes 1-6, $50,000 for 7-12,
+  $70,000 for 13-17 and $200,000 for the 18th, $1 million in all); in 2001
+  only, a "validation" rule -- a golfer who won a hole had to win or tie the
+  next to keep it -- dropped the following year.
+- Stymie, *What is a skins game*, https://stymie.golf/glossary/skins; GolfLink,
+  https://www.golflink.com/golf-rules/golf-skins-game-everything-you-need-to-know;
+  18Birdies help, https://help.18birdies.com/article/57-skins -- casual play.
+  Taken: the lowest score alone wins; a tie carries. They agree a group must
+  settle beforehand what happens to skins still carried after the last hole
+  (split among the tied, a playoff, or the group's own rule) and whether
+  handicap strokes are given; some groups play "no carryover", a tied skin
+  simply dead. None of these is a governing body; there is no Rules of Golf
+  or WHS text for skins.
+
+**What the game does, and what is PLACED.**
+
+- One skin a hole, every hole (PLACED; the TV game's rising values not
+  followed: a skin is XP here, and later holes worth more would make the front
+  nine matter less).
+- The lowest score alone wins; **any tie for the lowest carries**, however many
+  share it and whatever the others scored ("one tie, all tie", as on TV).
+- **Skins carried past the last hole go unclaimed** (PLACED; the challenge did
+  the same). Rejected for now: a playoff -- holes past the round's last, a card
+  longer than the course, which touches saves and the handicap -- and sharing
+  among the tied, which pays for a tie.
+- **Gross only**, no handicap strokes (PLACED). handicap.js could rank holes for
+  strokes (`strokesReceived`), but the index would have to be fixed at the
+  start and saved with the round, and a golfer with no index would get none.
+- **Every golfer plays every hole out** (PLACED): real groups pick up once they
+  cannot win or tie a skin; here the stroke card stays whole for the handicap
+  and achievements.
+- **A golfer who joins mid-round** plays for skins from that hole; the holes
+  before are decided among the golfers who played them (PLACED). The challenge
+  version stopped counting at the first hole anyone had no score on, so a
+  golfer joining froze every skin after it.
+- Scores compare to two decimals, the precision of decimal putting.
+- XP: **30 a skin** (the spec's amount, kept), paid when the hole is decided;
+  **50 for the most skins alone** (`XP.win`, as for winning a match or a
+  scramble; PLACED -- a tie on skins wins nobody). Skins XP is not scaled by
+  the Swing Meter difficulty, like the round's own XP.
+- Allowed in an endless run (no last hole is needed; the carry runs on); not on
+  the course of the week, whose bests are strokes.
 
 ### Course of the week and achievements (14 October 2026)
 

@@ -13,7 +13,8 @@ export const XP = {
  fairway: 5, gir: 5,                                    // as the profile's own stats count them
  onNumber: 5,                                           // landing within 5% of the aim distance, once a hole
  chipIn: 25, longPutt: 25,                              // holed from off the green; a putt over 30 ft
- round9: 50, round18: 100, win: 50,                     // finishing a round; winning a match or a scramble
+ round9: 50, round18: 100, win: 50,                     // finishing a round; winning a match, a scramble or the skins
+ skin: 30,                                              // each skin won, paid when the hole is decided (skins.js)
  best: 40,                                              // a new personal best
  daily: 100,                                            // the first round finished each day
  rangeNumber: 2, rangeDayCap: 50,                       // on the range: On the number only, capped a day

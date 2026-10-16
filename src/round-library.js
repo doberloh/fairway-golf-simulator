@@ -78,7 +78,9 @@ function summarise(round, settings) {
   hole: (round.hole ?? 0) + 1,
   holes,
   players: round.players?.length || 1,
-  format: round.mode || 'stroke',
+  // A round saved by the Skins challenge was stroke play labelled skins; it
+  // resumes as a skins round (game.js upgradeSave), so it is listed as one.
+  format: round.challenge === 'skins' ? 'skins' : round.mode || 'stroke',
   endless: !!round.endless,
   finished: !!round.finished,
   holesPlayed: played,

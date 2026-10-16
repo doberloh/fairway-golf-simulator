@@ -30,7 +30,7 @@ with no account, backend, telemetry or fetched fonts. An optional local bridge
 launch monitor. Every course is **generated from a seed**: one continuous
 landscape holding 9 or 18 holes, in one of nine biomes, Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
-match play, scramble, endless; a driving range and a course studio.
+match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
 
 The **product is the four platform zips** a release carries, each holding the
@@ -79,12 +79,13 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 **Playing a round**
 - `src/game.js` -- round rules, teams, scores, undo, drops; `src/relief.js` -- penalty relief
 - `src/scoring.js`, `src/putting.js`, `src/presentation.js` -- against par, putting modes, replay timing
+- `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
 - `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
 - `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
-- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week from the date; `src/challenges.js` -- the four challenges: scoring a ball, the drops, skins, records
+- `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week from the date; `src/challenges.js` -- the three challenges: scoring a ball, the drops, records (the skins record too)
 - `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
 
@@ -233,6 +234,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The bag is the golfer's, re-read every turn; the putter's id is always `putter`. [THE BAG IS THE GOLFER'S]
 - Players are matched by seat, not list position; colours are by seat. [Removing a golfer], [A colour per golfer]
 - A ball in trouble waits in the round until relief is taken. [Penalty relief]
+- Skins are worked from the card, never stored; an old Skins-challenge save becomes a skins round in `Round.restore`. [Skins is a round format]
 - No club sound with a launch monitor; nothing audible before the first input; one bird at a time; never schedule a sound in the past -- Web Audio plays it whole, late. [WHEN THE GAME MAKES A SOUND]
 
 **Packaging and the outside world**

@@ -20,7 +20,7 @@ test('the reward table holds the spec\'s counts, all by level 50', () => {
  assert.equal(count('flourish'), 7);
  assert.equal(count('title'), 11);
  assert.equal(count('skin'), 11);
- assert.equal(count('challenge') - 2, 4, 'four challenges besides the course of the week and achievements');
+ assert.equal(count('challenge') - 2, 3, 'three challenges besides the course of the week and achievements');
  for (const r of REWARDS) {
   assert.ok(KINDS.includes(r.kind), r.kind);
   assert.ok(r.level >= 1 && r.level <= MAX_UNLOCK_LEVEL, `${r.id} at ${r.level}`);
@@ -232,7 +232,7 @@ const AGREED = {
  flourish: 'lantern-ace:1 sparkle-par:2 confetti-birdie:5 fireworks-eagle:12 ring-chip-in:20 fireworks-birdie:30 gold-flourishes:50',
  title: 'weekend-golfer:4 range-rat:9 flag-hunter:15 low-ball:20 grinder:22 tour-rookie:25 sharpshooter:29 iron-will:34 hall-of-famer:40 legend:45 fairway-master:50',
  skin: 'classic:1 wood:6 neon:12 retro-pixel:18 chalkboard:24 sunset:27 blueprint:32 carbon:38 gold-leaf:44 aurora:48 champion:50',
- challenge: 'course-of-the-week:1 achievements:1 closest:1 long-drive:1 up-and-down:1 skins:1',
+ challenge: 'course-of-the-week:1 achievements:1 closest:1 long-drive:1 up-and-down:1',
 };
 test('every reward unlocks at the level agreed with the owner', () => {
  for (const kind of KINDS) {

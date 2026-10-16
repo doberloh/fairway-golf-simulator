@@ -602,3 +602,13 @@ Read for RESEARCH.md *The smoke test on GitHub*.
 
 - Chromium, `content/browser/devtools/protocol/input_handler.cc` (main, read 16 October 2026) -- https://github.com/chromium/chromium/blob/main/content/browser/devtools/protocol/input_handler.cc -- `GetEventTimeTicks`: a `timestamp` in seconds since the epoch becomes the event's tick time, anchored to the current instant (`TimeTicks::Now() - (Time::Now() - event_time)`); with none it is now. Used by `dispatchMouseEvent` and `dispatchKeyEvent`.
 - Chromium, `third_party/blink/renderer/core/events/pointer_event_factory.cc` -- https://github.com/chromium/chromium/blob/main/third_party/blink/renderer/core/events/pointer_event_factory.cc -- pointer events are created with the input event's `TimeStamp()`, so the stamp reaches `event.timeStamp`.
+
+## Skins as a format (16 October 2026)
+
+Read for RESEARCH.md *Skins as a format*. No governing body publishes rules for
+skins; these describe how it is played.
+
+- Wikipedia, "Skins Game (PGA Tour)" -- https://en.wikipedia.org/wiki/Skins_Game_(PGA_Tour) -- fetched: a halved hole carries; a halved 18th went to sudden death, anyone not halving a playoff hole eliminated; 2008 values $25,000 (holes 1-6), $50,000 (7-12), $70,000 (13-17), $200,000 (18th), $1 million in all; the 2001 "validation" rule, dropped in 2002. The carry followed; the playoff, rising values and validation not.
+- Stymie, "What is a skins game in golf?" -- https://stymie.golf/glossary/skins -- through a search summary: lowest score alone wins, ties carry; settle handicap strokes before the first carry. Followed for the rule; strokes left out.
+- GolfLink, "Golf skins game: everything you need to know" -- https://www.golflink.com/golf-rules/golf-skins-game-everything-you-need-to-know -- through a search summary: skins left after the last hole are split, played off, or settled by the group's own rule. The basis for calling "unclaimed" a placed choice.
+- 18Birdies help, "Skins" -- https://help.18birdies.com/article/57-skins -- through a search summary: an app's settings for carryovers, handicap strokes and the last hole. Compared, not followed.
