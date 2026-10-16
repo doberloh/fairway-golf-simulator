@@ -8219,4 +8219,45 @@ timestamp matching the draw, and the lab already knows. **Not yet seen
 running on GitHub**: no browser was run locally (AGENTS.md, the graphics card
 rule); the first push of the branch is the test.
 
+**The first push of the fix ran out of time instead (run 38961631676).** No
+step failed; the job's 45-minute limit cancelled it in `endless-round`, just
+before putting out. The change was ruled out: boot, which runs none of it, was
+already slow -- "the world is in menu mode" and "the build names itself" are a
+single page read each and took 13.1 s and 11.4 s, against 0.0 s on every
+earlier run -- and the code it added is not reached before putting, apart from
+the start-click fallback, which is what let that step pass at all. The runner
+was slow. The steps that need no browser show the spread, in seconds:
+
+| run | `npm test` | ground check | smoke step |
+|---|---|---|---|
+| 38522786171 (0.7, green) | 297 | 33 | 384 |
+| 38856836307 (0.8) | 314 | 45 | 535 |
+| 38036233362 (0.6) | 539 | 60 | 958 |
+| 38857024163 (0.8) | 483 | 61 | 1,070 |
+| 38961631676 (the fix) | 546 | 72 | over 2,061 |
+
+So the runners differ about twofold on CPU-only work and the smoke step about
+sevenfold with them, and the slowest runner yet came last: each `endless-round`
+step took about three times as long as on the 0.8 run at 1,070 s (menu ready
+104 s against 38, the cameras 348 against 129, the drop 259 against 95).
+Scaled the same way, the steps it had left needed about fifteen minutes more,
+about an hour for the whole job. The job limit went to 90 minutes, with 70 on
+the smoke step so that running out fails the step (the upload still runs)
+rather than cancelling the job (nothing kept).
+
+**Rejected for now.** Drawing fewer pixels: automatic resolution already takes
+a software run to its floor of half the pixels, and pixels were the lever only
+on the 32-core machine. Running the page at a device pixel ratio of a half,
+which would also halve the page's own compositing (its blurred panels over the
+canvas): it might help, and might not, and nothing can say which without a
+browser run, which waits for the owner. A slimmer CI journey: the endless
+journey's controls -- clubs, aim, the Swing Meter's keys, the cameras -- took
+two thirds of its time on the slow runner, but they are what the journey is
+for, and cutting them is the owner's call. Also seen and left for its own
+change: in every smoke picture, GPU runs included, the Endless round is at
+12:00 AM, although the menu hole it adopts is always in daylight
+(`MENU_HOURS`). Read from the code, not yet confirmed: on a device with no saved clock, adopting the menu hole puts
+back a player clock that was never set (`restoreClock`), and an hour of
+nothing is drawn as midnight.
+
 Sources in REFERENCES.md *The smoke test on GitHub*.

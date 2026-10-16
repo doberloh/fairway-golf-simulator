@@ -57,11 +57,17 @@ check.
   marker reaches the target (`lab.state().swing` gives the start and pace),
   holed-or-not is asked of the game (`lab.state().holeComplete`), and Start an
   endless run is accepted once the game leaves the menu (`pressToPlay`).
-  PROJECT_HANDOFF, *A harness tap that has to land*. **Not yet seen running:**
-  no browser was run locally (the owner's GPU rule), so the first push of the
-  branch is the test -- check that run's `endless-round` passes, and that its
-  putt out takes one or two putts. Close this entry when it has gone green
-  on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
+  PROJECT_HANDOFF, *A harness tap that has to land*. **First GitHub run of the
+  branch (38961631676, 16 October): cancelled by the job's 45-minute limit**
+  with every step passing, just before putting out -- the fallback for the
+  start click saved that step. Not the fix: boot, which none of the change
+  touches, was already slow (two single page reads 13 s and 11 s, 0.0 s on
+  every earlier run), and that runner was the slowest of the five measured
+  (RESEARCH, *The smoke test on GitHub*). The job's limit is now 90 minutes and
+  the smoke step's 70, and the log names the course on every run. **The
+  stamped putt is still not seen running:** the next push is the test --
+  check that `endless-round` passes and its putt out takes one or two putts.
+  Close this entry when it has gone green on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
   a failed run keeps its screenshots as the `smoke-screenshots` artifact. Once
   it runs green, add it as a required check to the *main changes by reviewed pull
   request* ruleset in `tools/github-protect.mjs` -- not before, or every pull

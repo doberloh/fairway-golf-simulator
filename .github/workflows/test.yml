@@ -40,8 +40,9 @@
 # never dropped, Space refused for 60 s, or a click timing out). All three were
 # the harness timing things by frames or fixed waits that a frame of most of a
 # second outruns; fixed the same day (docs/PROJECT_HANDOFF.md, *A harness tap
-# that has to land*), and not yet seen green here. Open in docs/TODO.md,
-# *Found on GitHub*, until it has been.
+# that has to land*), and not yet seen green here: the first push of the fix
+# ran out of time on a slow runner (below, `timeout-minutes`). Open in
+# docs/TODO.md, *Found on GitHub*, until it has been.
 name: tests
 
 on:
@@ -52,7 +53,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 90, not 45 (16 October 2026). Runners differ about twofold in speed (the
+    # ground check below took 33 s on one and 72 s on another), and the smoke
+    # step about sevenfold with them, because a software frame is mostly CPU:
+    # 384 s on the fastest runner seen, and on the slowest it had not finished
+    # endless-round when 45 minutes cancelled the job (run 38961631676, every
+    # step passing, each about three times slower than on the slowest 0.8
+    # run). Scaled the same way, that runner needed about an hour.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -74,7 +82,12 @@ jobs:
       # job; there was never a download to skip.
       - name: Install Chromium for the smoke test
         run: npx playwright install --with-deps chromium
+      # Its own limit, under the job's, with the eleven minutes before it to
+      # spare: a step that runs out FAILS, so the upload below still runs and
+      # keeps whatever pictures the journeys took; a job that runs out is
+      # cancelled and keeps nothing.
       - name: Play the built file in a browser
+        timeout-minutes: 70
         run: node tools/smoke.mjs --software --only boot,range,endless-round
       - name: Keep the smoke test's screenshots if it failed
         if: failure()
