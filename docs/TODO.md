@@ -18,24 +18,6 @@ finished one, it was promoted to an item of its own and carries a breadcrumb
 back; live work nested inside the archive is the thing this split exists to
 prevent.
 
-## The Swing Meter, XP and levels (14 October 2026)
-
-The owner's journey on the branch `swing-meter`: keyboard, mouse, touch and
-controller play becomes a game's three-tap meter, then mixed monitor and meter
-groups, then XP, levels and rewards. The agreed spec and the phase checklist are
-local reports (`docs/reports/KEYBOARD_GAME_MODE_SPEC.md`,
-`docs/reports/SWING_METER_CHECKLIST.md`). Phase 1 is under the same heading in
-`# Done`.
-
-- [ ] **Owner: play-test the Swing Meter journey's Phases 5-7** (14 October 2026).
-  Everything a machine can check has been: unit tests, the full smoke run (30
-  journeys, with new ones for a challenge, the course of the week and the look
-  picker with a flourish), pictures of the tracers in flight and the phone
-  menus, and a graphics profile (RESEARCH *Profile after Phases 5-7*). What is
-  left is feel and looks: the owner's list is `docs/reports/SWING_METER_TESTING.md`
-  (local). Open questions there: Ribbon's wide band reads faint from behind the
-  tee; the definitions placed without the owner (spec section 14).
-
 ## The UI pass (10 October 2026)
 
 Asked for by the owner on 10 October, in this order, on the branch
@@ -49,51 +31,6 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
-- [ ] **Larger flags far away on by default?** (15 October 2026.) The third
-  part of the pin proposal, not chosen: with greens at real size and a bolder
-  stick, the pin is still hard to pick out from the tee at 350 yards. Ask the
-  owner after they have played the new pin.
-
-- [ ] **A new build stutters on its first visit, then never again** (the owner,
-  15 October 2026, loading the `swing-meter` build and clicking round the
-  menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
-  graphics programs between visits, keyed by their source; a build that
-  changes any must rebuild them once, and each trip to the main menu grows a
-  fresh showcase hole that can need more. Not this branch's code: the ball
-  pictures cost about 75 ms the first time the Ball tab opens (measured), a
-  hitch rather than repeated freezes. Worth a look before a release, since
-  every player meets it once per version: warm the menu backdrop's programs
-  behind the loading screen, or the next backdrop's before the menu shows it.
-  Measure first, with a Chrome recording of a first visit after clearing the
-  site's cache.
-  **Measured and mostly fixed (15 October 2026, RESEARCH *First-visit
-  lock-ups and the hole-out stutter*)**: the menus build nothing late; the
-  lock-up was starting Endless from the menu, which rebuilt 35-40 programs in
-  view (1.85 s) because the ball's glow light hid with the ball. The light now
-  sits beside the ball; starting Endless builds one small unlit program, worst
-  frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
-  tab (page work, not graphics); that one unlit program. **The owner, after
-  playing the fix the same night: "much better."** Left open for the small
-  hitches above; close it if they are never noticed.
-- [ ] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
-  October 2026): during the hole-out banner, its chiptune sting and the XP
-  popup after it. The owner loves the pull-back into the summary orbit and
-  wants it kept exactly as it is; the fix is in what competes with it.
-  Suspects, unmeasured: the banners' and the popup's `backdrop-filter` blur
-  recomputed every frame over a moving scene; the turning ball close-up
-  redrawn per frame (1-4 ms of CPU in Node); `syncProfile` and its
-  synchronous localStorage write at the hole-out; the summary's tracer lines;
-  the sting's oscillators; the cull and LOD as more of the course comes into
-  view. The smoke probe on 14 October saw only one 50 ms frame, as the
-  scorecard opened -- the owner's machine and settings differ, so measure
-  from the owner's Chrome recording of a hole-out.
-  **One cause found and fixed (15 October 2026)**: the flyover hides the ball,
-  and the ball's glow light went with it, so 14-17 lit programs were rebuilt
-  in view as the camera pulled back on a course built through Play (the 14
-  October probe used Endless, where the menu had already built them). The
-  light now stays. **The owner, the same night: "much better"** (said of the
-  build as a whole, not of a hole-out on its own); if a stutter is still felt
-  at the hole-out, the suspects above remain.
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
@@ -118,9 +55,6 @@ Asked for by the owner on 10 October, in this order, on the branch
   (and the launch monitor window) now shrink to the shot line in flight
   instead of going, so their drag and resize handles are hidden and take no
   pointer while a ball is up (style.css, beside the in-flight rule).
-
-
-
 
 
 What `tools/smoke.mjs` turned up on its first full runs, and what building it
@@ -904,6 +838,62 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 ## The Swing Meter, XP and levels (14 October 2026)
 
+- [x] **Owner: play-test the Swing Meter journey's Phases 5-7** (14 October 2026).
+  Everything a machine can check has been: unit tests, the full smoke run (30
+  journeys, with new ones for a challenge, the course of the week and the look
+  picker with a flourish), pictures of the tracers in flight and the phone
+  menus, and a graphics profile (RESEARCH *Profile after Phases 5-7*). What is
+  left is feel and looks: the owner's list is `docs/reports/SWING_METER_TESTING.md`
+  (local). Open questions there: Ribbon's wide band reads faint from behind the
+  tee; the definitions placed without the owner (spec section 14).
+  **Signed off by the owner, 15 October 2026: "everything is ok with me."** Ribbon stays as it is; the definitions placed without the owner (spec section 14, PLACED in RESEARCH) and the defaults for spec questions N1-N3 (W height, X spin; launch-monitor XP x1; reward names, colours and levels as drafted) all accepted.
+- [x] **Larger flags far away on by default?** (15 October 2026.) The third
+  part of the pin proposal, not chosen: with greens at real size and a bolder
+  stick, the pin is still hard to pick out from the tee at 350 yards. Ask the
+  owner after they have played the new pin.
+  **The owner, 15 October 2026: keep it off.**
+- [x] **A new build stutters on its first visit, then never again** (the owner,
+  15 October 2026, loading the `swing-meter` build and clicking round the
+  menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
+  graphics programs between visits, keyed by their source; a build that
+  changes any must rebuild them once, and each trip to the main menu grows a
+  fresh showcase hole that can need more. Not this branch's code: the ball
+  pictures cost about 75 ms the first time the Ball tab opens (measured), a
+  hitch rather than repeated freezes. Worth a look before a release, since
+  every player meets it once per version: warm the menu backdrop's programs
+  behind the loading screen, or the next backdrop's before the menu shows it.
+  Measure first, with a Chrome recording of a first visit after clearing the
+  site's cache.
+  **Measured and mostly fixed (15 October 2026, RESEARCH *First-visit
+  lock-ups and the hole-out stutter*)**: the menus build nothing late; the
+  lock-up was starting Endless from the menu, which rebuilt 35-40 programs in
+  view (1.85 s) because the ball's glow light hid with the ball. The light now
+  sits beside the ball; starting Endless builds one small unlit program, worst
+  frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
+  tab (page work, not graphics); that one unlit program. **The owner, after
+  playing the fix the same night: "much better."** Left open for the small
+  hitches above; close it if they are never noticed.
+  **Closed by the owner, 15 October 2026: the leftovers (100-150 ms opening Play, My profile and the Frame tab; one small unlit program on starting Endless) are acceptable.**
+- [x] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
+  October 2026): during the hole-out banner, its chiptune sting and the XP
+  popup after it. The owner loves the pull-back into the summary orbit and
+  wants it kept exactly as it is; the fix is in what competes with it.
+  Suspects, unmeasured: the banners' and the popup's `backdrop-filter` blur
+  recomputed every frame over a moving scene; the turning ball close-up
+  redrawn per frame (1-4 ms of CPU in Node); `syncProfile` and its
+  synchronous localStorage write at the hole-out; the summary's tracer lines;
+  the sting's oscillators; the cull and LOD as more of the course comes into
+  view. The smoke probe on 14 October saw only one 50 ms frame, as the
+  scorecard opened -- the owner's machine and settings differ, so measure
+  from the owner's Chrome recording of a hole-out.
+  **One cause found and fixed (15 October 2026)**: the flyover hides the ball,
+  and the ball's glow light went with it, so 14-17 lit programs were rebuilt
+  in view as the camera pulled back on a course built through Play (the 14
+  October probe used Endless, where the menu had already built them). The
+  light now stays. **The owner, the same night: "much better"** (said of the
+  build as a whole, not of a hole-out on its own); if a stutter is still felt
+  at the hole-out, the suspects above remain.
+  **Closed by the owner, 15 October 2026: acceptable as it is now.** The untested suspects above stay written down in case it comes back.
 - [x] **Phase 1: the Swing Meter** (`src/swing-meter.js`). Three taps -- start,
   distance, strike -- judged on each input's own timestamp, never on a frame.
   The bar is in yards of carry for the club in hand, solved against the ball

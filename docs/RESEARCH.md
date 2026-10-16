@@ -7694,6 +7694,14 @@ every player starts with it off.
 
 ## The Swing Meter (14 October 2026)
 
+**Signed off by the owner, 15 October 2026.** Every number and rule in this
+section and its subsections marked PLACED -- the par save, the sand save, Beat
+the Index at half the index for nine holes, a long drive counting only on the
+fairway, the up-and-down drop distances, the Monday-midnight week, the flat
+flourishes, the hold lengths at the hole-out -- was put to the owner and
+accepted as it stands. They remain PLACED (no outside source behind them); the
+owner can still overrule any.
+
 The owner asked for keyboard play to become a game's three-tap meter (Hot
 Shots Golf, PGA 2K): tap to start, tap to set the distance, tap at the strike
 line for accuracy. It replaced the power slider, the Shot shape sliders and the
@@ -7984,6 +7992,32 @@ Rainbow (moving colours) 1.10 / 1.01 / 162. **The heaviest style costs about
 run-to-run spread for the others. The flourishes are 2D on a canvas and do not
 reach the GPU's scene at all; no shader is built by any look (smoke
 `no-late-shaders`, first shot included).
+
+### Final profile before the merge (15 October 2026, night)
+
+Asked for by the owner at the end of the journey. RTX 4090, card idle (14%
+busy before the first group), real-GPU arm only, every group but `weak` (the
+software arm stays skipped: a processor-only run took this machine down on 13
+October). Against `bench/profile-baseline.json` (saved 28 September, not
+re-saved): **nothing slower anywhere.** Median frame ms since the baseline:
+tiers -2.9 to -6.7 (redwood Ultra 7.40 ms CPU, 8.21 ms GPU); overview views
+-2.1 to -17.2; biomes -0.5 to -5.8; ablation -5.4 to -5.9; water -1.5 to -1.7;
+pixels -3.9 to -5.8; sun has no baseline (redwood Ultra facing the sun 4.10 /
+3.84 ms).
+
+**Against the profile of 14 October it reads about 1 ms slower on redwood
+High and Ultra, and that is a different course, not slower code.** Checked by
+building three commits side by side and profiling the tiers twice each,
+alternated: before generator 36 (2f77dd5), generator 36 without the ball-light
+fix (5667701), and the branch head. The run-to-run spread on High and Ultra is
+large -- one build gave Ultra 6.4 ms in one round and 10.7 ms in the next -- so
+only what holds in both rounds counts: **generator 36 regenerated the
+profile's fixed course** (seed PROFILE, redwood) and the camera now sees about
+10% more geometry (Ultra 77.8 -> 85.3 million triangles; Low 40.9 -> 46.5);
+**the ball-light fix measured nothing** (Low, Medium, High the same within
+0.3 ms with and without it; Ultra inside the spread). Redwood High and Ultra
+keep their occasional long frames (p99 37-71 ms, worst 80-175 ms) on every
+build, before and after; they are not this journey's.
 
 ### Badges, meter skins and flourishes (14 October 2026)
 
