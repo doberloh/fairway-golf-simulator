@@ -856,9 +856,9 @@ Built, signed off and in the game; nothing open (see `# Done`, same heading).
     so it could be tested); the save refusing every item a level early; and
     an AGREED list pinning each reward's level. Smoke: `level-up`, a golfer
     5 XP short of level 2 -- Sky padlocked and refused, one hole, the banner
-    names it, then it goes on. **The smoke journey was written without being
-    run** (the graphics card was not cleared that turn); run it with
-    `node tools/smoke.mjs --only level-up`.
+    names it, then it goes on. Run on the graphics card the same night,
+    green first time; the banner read "Level 2 · New flourish: Sparkles on a
+    par · New tracer: Sky".
 
 ## The Swing Meter, XP and levels (14 October 2026)
 
