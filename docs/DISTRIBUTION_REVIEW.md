@@ -1056,3 +1056,10 @@ line of `main.js` (the save import reads `FORMATS`), and the owner chose to
 release without another smoke run. `npm test`: 816 of 816. **Not seen in the
 game by anyone:** Skins, the Endless daylight and the save fix (TODO, *Skins as
 a round format* and *What the smoke test does not walk*).
+
+The website was redeployed after the release (preview, then live, at the
+owner's word): `/play/` serves this release's `Fairway.html` byte for byte
+(sha256 `83dbca39…`, checked on the live URL), and its four Download buttons
+resolve to the v0.8.1 zips. The packaged Windows server was run from its
+unzipped download before publishing and served the page byte for byte, on
+spare ports (19922/19921) to leave the owner's own bridge on 1922 alone.
