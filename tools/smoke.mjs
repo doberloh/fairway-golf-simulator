@@ -58,6 +58,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {MISS_AT, OVERSWING, RUN_UP, markerAt} from '../src/swing-meter.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist', 'index.html');
@@ -153,6 +154,10 @@ class Trip {
   }
  }
 
+ // A DevTools session on the page, for input stamped with the moment it
+ // happened (`tapOnTarget`), which Playwright's own mouse cannot do.
+ cdp() { return this.cdpSession ??= this.page.context().newCDPSession(this.page); }
+
  // ------------------------------------------------------------- observing
  mode() { return this.page.evaluate(() => document.getElementById('world')?.dataset.mode); }
  inFlight() { return this.page.evaluate(() => !!window.lab?.state?.().inFlight); }
@@ -185,6 +190,21 @@ class Trip {
   const target = this.page.getByRole('button', {name, exact: true}).or(this.page.getByRole('tab', {name, exact: true}))
    .filter({visible: true}).first();
   await target.click({timeout: 10000 * SLOW});
+ }
+
+ // A PRESS THAT STARTS A ROUND counts if the round starts. Playwright's click
+ // waits for the page to take the press, and with no GPU the page can be busy
+ // for minutes once a round begins: on GitHub on 14 October 2026 the click on
+ // Start an endless run timed out at 120 s with the round already started
+ // behind it (the screenshot: in play on hole 1, nothing hit yet). So a click
+ // that timed out is forgiven when the game has left the menu, and reported
+ // at once when it has not.
+ async pressToPlay(name) {
+  const missed = await this.press(name).then(() => null, e => e);
+  if (missed && await this.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'menu'
+   && document.getElementById('generating')?.hidden !== false)) throw missed;
+  await this.inPlay();
+  if (missed) console.log('       (the click outlasted its timeout while the page was busy; the round started anyway)');
  }
 
  // Keys go to the window, so nothing may be holding focus -- a focused
@@ -312,6 +332,15 @@ class Trip {
   await this.key('Enter');
   await this.until(async () => !(await this.inFlight()), 'Enter to finish the putt', 30 * SLOW);
  }
+
+ // HOLED OR NOT, asked of the game once a putt has stopped -- the round
+ // records the hole in the same step that ends the flight. Until 16 October
+ // 2026 the harness decided by whether a scorecard turned up within six, later
+ // twelve, seconds; with no GPU it can take longer, and the 0.6 and 0.6.1
+ // merges failed on GitHub by putting again on a hole already holed ("Space to
+ // start a shot (the game refused it)", the screenshot one under par and the
+ // next hole growing). undefined from a build whose lab cannot say.
+ holed() { return this.page.evaluate(() => window.lab?.state?.().holeComplete); }
 
  async shot() {
   await this.until(async () => !(await this.inFlight()), 'the previous shot to finish', 30 * SLOW);
@@ -538,7 +567,54 @@ const monitorStatus = state => JSON.stringify(state === 'red' ? {type: 'status',
 // Used where the harness needs the ball to go where it is aimed -- putting out
 // -- which three taps at fixed gaps cannot do since the Swing Meter replaced
 // a power that was set to the hole for you (14 October 2026).
+//
+// THE TAP IS TIMED ON THE CLOCK, NOT ON A FRAME (16 October 2026). The game
+// judges a tap on the time the input happened (`event.timeStamp`), never on the
+// frame that handled it. The first version of this watched the marker frame by
+// frame and tapped once it had passed the target -- right on a GPU, where a
+// frame is 16 ms, and wrong with no GPU, where a frame is most of a second and
+// the marker crosses a putt's whole bar in about 1.6 s: the tap came up to a
+// bar-length late, every putt ran long, and GitHub failed "six putts from two
+// yards" on both 0.8 merges (the screenshots: the ball 8 ft and 23 ft away
+// after six putts). So the harness reads when the swing started and how fast
+// it runs (`lab.state().swing`, a look), works out when the marker reaches the
+// target, and sends a real press STAMPED with that moment -- what a player's
+// tap during a slow frame is: on time, handled late. A build from before the
+// lab reported the swing falls back to watching frames.
 async function tapOnTarget(t) {
+ const now = await t.page.evaluate(() => {
+  const target = document.getElementById('smTarget'), catcher = document.getElementById('swingCatcher').getBoundingClientRect();
+  const state = window.lab?.state?.() ?? {};
+  return {known: 'swing' in state, swing: state.swing ?? null, origin: performance.timeOrigin,
+   goal: target && !target.hidden ? parseFloat(target.style.left) : 70,
+   x: catcher.left + catcher.width / 2, y: catcher.top + catcher.height / 2};
+ });
+ if (!now.known) return tapOnTargetByFrame(t);
+ // No swing: the game refused to start one, which the caller's wait reports.
+ if (!now.swing) return;
+ const sw = now.swing;
+ // The target is drawn at `barX(share)` (main.js); this is that, inverted.
+ const share = MISS_AT + now.goal / 100 * (1 + OVERSWING - MISS_AT);
+ // The marker sweeps up from the left edge (swing-meter.js `riseAt`) ...
+ const power = sw.start + (share + RUN_UP) * sw.rise;
+ if (Math.abs(markerAt({...sw, power: null}, power) - share) > 1e-6) throw new Error('the meter does not run the way the harness reads it');
+ const taps = [power];
+ // ... and, on a swing with a strike tap, back down to the strike line at 0.
+ if (sw.accuracy) taps.push(power + share * sw.rise);
+ const cdp = await t.cdp();
+ for (const at of taps) {
+  const wait = now.origin + at - Date.now();
+  if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+  // CDP takes seconds since the epoch; the page's clock is milliseconds from
+  // its time origin, which is itself on the epoch.
+  const timestamp = (now.origin + at) / 1000;
+  for (const type of ['mousePressed', 'mouseReleased'])
+   await cdp.send('Input.dispatchMouseEvent', {type, x: now.x, y: now.y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1, timestamp});
+ }
+}
+// The frame-watching tap, kept for builds whose lab does not report the swing.
+// Right on a GPU; late by up to a frame without one (above).
+async function tapOnTargetByFrame(t) {
  await t.page.evaluate(() => new Promise((resolve, reject) => {
   const meter = document.getElementById('swingMeter'), marker = document.getElementById('smMarker');
   const target = document.getElementById('smTarget'), catcher = document.getElementById('swingCatcher');
@@ -680,8 +756,7 @@ const JOURNEYS = [
    await menuReady(t);
    await t.step('Endless → Start an endless run', async () => {
     await fromMenu(t, 'Endless');
-    await t.press('Start an endless run');
-    await t.inPlay();
+    await t.pressToPlay('Start an endless run');
    });
    await t.step('change club with Q and E', async () => {
     const before = await t.page.inputValue('#club');
@@ -772,6 +847,8 @@ const JOURNEYS = [
    await t.step('putt out', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.putt();
+     const holed = await t.holed();
+     if (holed === false) continue;
      // THE BALL CLOSE UP in the hole-out banner (Phase 5): drawn, turning, and
      // pictured for a look.
      if (await t.page.waitForSelector('#holeOut:not([hidden]) .hole-out-ball', {timeout: 2500}).then(() => true, () => false)) {
@@ -785,12 +862,16 @@ const JOURNEYS = [
      if (await t.page.waitForSelector('#xpGain:not([hidden])', {timeout: 6000}).then(() => true, () => false))
       await t.page.locator('#xpGain').screenshot({path: 'bench/shots/smoke/xp-popup.png'}).catch(() => {});
      // The hole reveal holds for three seconds of WALL time at least, and the
-     // card waits for the XP popup to finish (14 October 2026).
-     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false);
+     // card waits for the XP popup to finish (14 October 2026). Once the game
+     // says the ball is down there is no deciding left to do, so the wait
+     // scales with the renderer; only a build that cannot say waits a fixed
+     // time and putts again.
+     const done = await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false);
      if (done) {
       if (await t.page.evaluate(() => !document.getElementById('xpGain').hidden)) throw new Error('the scorecard opened over the XP popup');
       return;
      }
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });
@@ -1858,8 +1939,13 @@ const JOURNEYS = [
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
-     // The card waits for the XP popup (14 October 2026), so give it time.
-     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: 12000}).then(() => true, () => false)) return;
+     await t.until(async () => !(await t.inFlight()), 'the putt to finish', 30 * SLOW);
+     // Holed or not from the game (`holed`); the card waits for the XP popup
+     // (14 October 2026), so give it time.
+     const holed = await t.holed();
+     if (holed === false) continue;
+     if (await t.page.waitForSelector('#nextHoleScore', {state: 'visible', timeout: holed ? 12000 * SLOW : 12000}).then(() => true, () => false)) return;
+     if (holed) throw new Error(`the putt dropped and no scorecard offered the next hole in ${12 * SLOW}s`);
     }
     throw new Error('six putts from two yards and the ball never dropped');
    });

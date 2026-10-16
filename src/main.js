@@ -5650,6 +5650,14 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
   state:()=>({inFlight:!!flight,
+   // THE SWING IN PROGRESS, on the input clock (`event.timeStamp`): when it
+   // started and how long the marker takes per bar length, so the smoke test can
+   // time a tap the way a player does -- on the clock, not on a frame, which on a
+   // software renderer lasts most of a second. null between swings.
+   swing:swing?{start:swing.start,rise:swing.rise,power:swing.power,accuracy:swing.accuracy}:null,
+   // Whether the ball is down. Read the moment a putt stops, it says holed or
+   // not without waiting to see whether a scorecard turns up.
+   holeComplete:!!round.holeComplete,
    // How far the tracer's end sits from the ball, a number worth being able to
    // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
    // once the ball has stopped and the line caught up, it should be ~0.

@@ -603,7 +603,8 @@ contributors' workflows for approval. TODO, *Making the repository public*,
 says to run the script the minute the repository goes public.
 
 Not set, on purpose: a required status check (the tests workflow runs on
-GitHub, but its smoke step usually fails there -- TODO, *Found on GitHub*),
+GitHub, but its smoke step usually failed there, through the harness; fixed
+16 October and not yet seen green -- TODO, *Found on GitHub*),
 deleting merged branches, and immutable releases.
 
 ## Addendum, 5 October 2026: v0.1 flies left and right mirrored

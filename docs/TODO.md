@@ -41,10 +41,29 @@ check.
   ball never dropped" (both 0.8 pushes), "waited 60s for Space to start a shot
   (the game refused it)" (0.6 and 0.6.1), and a click timing out at "Start an
   endless run" (0.7). A two-core runner without a graphics card is about twelve
-  times slower than here. Find out whether the game or the harness is wrong
-  before changing either: `gh run view <id> --log-failed` has the log, and the
-  run keeps its screenshots as the `smoke-screenshots` artifact. Once it runs
-  green, add it as a required check to the *main changes by reviewed pull
+  times slower than here.
+  **Cause found 16 October 2026 (branch `smoke-on-github`): the harness, three
+  ways; the game was right each time.** (1) *Never dropped* (0.8): the putt's
+  stop was tapped on the first FRAME after the marker passed the target, but
+  the game judges a tap on its own timestamp, and with no GPU a frame is most of
+  a second against a putt bar crossed in about 1.6 s -- every putt ran long (the
+  screenshots: 8 ft and 23 ft away, off the green, after six putts). (2) *Space
+  refused* (0.6, 0.6.1): the putt HAD dropped (screenshots: one under par, the
+  next hole growing), but the harness gave the scorecard six seconds, not scaled
+  for the software renderer, then putted again on a finished hole. (3) *Click
+  timing out* (0.7): the round had started (screenshot: in play, nothing hit);
+  Playwright's click waited on a page busy starting it. Fixed in
+  `tools/smoke.mjs`: the tap is a DevTools press stamped with the moment the
+  marker reaches the target (`lab.state().swing` gives the start and pace),
+  holed-or-not is asked of the game (`lab.state().holeComplete`), and Start an
+  endless run is accepted once the game leaves the menu (`pressToPlay`).
+  PROJECT_HANDOFF, *A harness tap that has to land*. **Not yet seen running:**
+  no browser was run locally (the owner's GPU rule), so the first push of the
+  branch is the test -- check that run's `endless-round` passes, and that its
+  putt out takes one or two putts. Close this entry when it has gone green
+  on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
+  a failed run keeps its screenshots as the `smoke-screenshots` artifact. Once
+  it runs green, add it as a required check to the *main changes by reviewed pull
   request* ruleset in `tools/github-protect.mjs` -- not before, or every pull
   request waits for a check that never passes. (was: *The CI smoke step has
   never run on GitHub*; *The tests workflow has never run on GitHub*)

@@ -34,11 +34,14 @@
 # merge; AGENTS.md makes
 # that a rule.
 #
-# IT RUNS ON GITHUB, AND THE SMOKE STEP USUALLY FAILS THERE. Checked 16
+# IT RUNS ON GITHUB, AND THE SMOKE STEP USUALLY FAILED THERE. Checked 16
 # October 2026: the unit tests pass on the runner; the smoke step failed on 6
 # of the 8 latest pushes to main, every time in endless-round (a putt that
-# never dropped, Space refused for 60 s, or a click timing out). Every wait
-# scales by 12x under `--software`. Open in docs/TODO.md, *Found on GitHub*.
+# never dropped, Space refused for 60 s, or a click timing out). All three were
+# the harness timing things by frames or fixed waits that a frame of most of a
+# second outruns; fixed the same day (docs/PROJECT_HANDOFF.md, *A harness tap
+# that has to land*), and not yet seen green here. Open in docs/TODO.md,
+# *Found on GitHub*, until it has been.
 name: tests
 
 on:
