@@ -127,6 +127,13 @@ const FINISH_RULES = {
   const bump = (a > .35 && a < .65 && b > .1 && b < .3) || (b > .35 && b < .65 && a > .6 && a < .8);
   return bump ? C('#e9edf0') : mix(C('#8e959b'), C('#b8bec3'), (u * 7 + v * 3) % 1 * .5);
  },
+ // Dark rock split by glowing cracks: the ridges of a noise field, hottest
+ // at their middle.
+ lava: ({p}) => {
+  const r = Math.abs(fbm(p, 3.2, 4) - .5), crack = 1 - smooth(.012, .05, r);
+  const rock = mix(C('#1c1614'), C('#3a2a24'), fbm([p[2], p[1], p[0]], 5.5, 3));
+  return crack > 0 ? mix(rock, mix(C('#ff5a14'), C('#ffd36b'), smooth(.5, 1, crack)), crack) : rock;
+ },
  gold: ({p}) => mix(C('#8a5a12'), C('#ffe08a'), clamp01(.55 + p[1] * .45 + (fbm(p, 3) - .5) * .3)),
  'black-pearl': ({p}) => {
   const n = fbm(p, 1.8), h = (n * 1.6 + p[1] * .3) % 1;
@@ -139,7 +146,7 @@ export const FINISH_IDS = Object.keys(FINISH_RULES);
 
 // How the surface takes the light: roughness (0 glassy, 1 chalky), how much of
 // the dimple lattice shows, and `glow`, a little light of its own by day.
-const SURFACE = {chrome: {rough: .12, dimple: .3}, gold: {rough: .22, dimple: .5}, 'black-pearl': {rough: .16}, 'diamond-plate': {rough: .3}, glow: {glow: .35}, galaxy: {rough: .28}};
+const SURFACE = {chrome: {rough: .12, dimple: .3}, gold: {rough: .22, dimple: .5}, 'black-pearl': {rough: .16}, 'diamond-plate': {rough: .3}, glow: {glow: .35}, galaxy: {rough: .28}, lava: {rough: .6, glow: .2}};
 export const finishSurface = id => ({rough: .35, dimple: 1, glow: 0, ...(SURFACE[id] || {})});
 
 // The colour of finish `id` at the direction `p` (need not be unit length).

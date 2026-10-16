@@ -31,13 +31,6 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
-- [ ] **Five levels bring nothing** (found 15 October 2026 by the new unlock
-  tests). Levels 14, 22, 27, 36 and 43 unlock nothing and show a level-up
-  banner with no list: they were the flourishes' levels until the flourish
-  ladder moved them (par 2, birdie 5, eagle 12, chip-in 20, every birdie 30).
-  The spec never promised something at every level, so nothing is wrong; ask
-  the owner whether to put something there. If anything moves, the AGREED
-  list in tests/rewards.test.mjs moves with it.
 
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
@@ -4035,6 +4028,17 @@ engineering provenance pass, not legal advice.
 
 ## Found by driving the built game
 
+- [x] **Five levels bring nothing** (found 15 October 2026 by the new unlock
+  tests). Levels 14, 22, 27, 36 and 43 unlock nothing and show a level-up
+  banner with no list: they were the flourishes' levels until the flourish
+  ladder moved them (par 2, birdie 5, eagle 12, chip-in 20, every birdie 30).
+  The spec never promised something at every level, so nothing is wrong; ask
+  the owner whether to put something there. If anything moves, the AGREED
+  list in tests/rewards.test.mjs moves with it.
+  **Filled (the owner chose new rewards, 15 October 2026):** Smoke tracer
+  14, Grinder title 22, Sunset meter skin 27, Lightning frame 36, Lava ball
+  43; a test now fails if any level from 2 to 50 brings nothing. RESEARCH
+  *Five empty levels filled*. Not yet seen in the picker by the owner.
 - [x] **Panels drag by a title bar like the tool windows' (5 October).** The
   map, shot controls, weather, tools strip, course card and flight controls
   each carry the grip-and-name bar a tool window has; phones keep the corner

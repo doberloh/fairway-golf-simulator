@@ -11,13 +11,15 @@ test('the reward table holds the spec\'s counts, all by level 50', () => {
  // Phase 5's fifteen and sixteen, plus eight plain colours each from the start
  // (15 October 2026); frames a list of their own: the eleven badges', nine
  // plain colours and thirteen animated.
- assert.equal(count('tracer'), 23);
- assert.equal(count('ball'), 24);
- assert.equal(count('frame'), 33);
+ // Plus one each for four of the five levels filled on 15 October 2026 (the
+ // fifth is a title).
+ assert.equal(count('tracer'), 24);
+ assert.equal(count('ball'), 25);
+ assert.equal(count('frame'), 34);
  assert.equal(rewardsOf('frame').filter(r => r.level === 1).length, 10);
  assert.equal(count('flourish'), 7);
- assert.equal(count('title'), 10);
- assert.equal(count('skin'), 10);
+ assert.equal(count('title'), 11);
+ assert.equal(count('skin'), 11);
  assert.equal(count('challenge') - 2, 4, 'four challenges besides the course of the week and achievements');
  for (const r of REWARDS) {
   assert.ok(KINDS.includes(r.kind), r.kind);
@@ -123,7 +125,7 @@ const SIM = {none: null, deutan: [[.367322, .860646, -.227968], [.280085, .67250
 const lum = (c, m) => { let l = c.map(lin); if (m) l = m.map(r => Math.max(0, r[0] * l[0] + r[1] * l[1] + r[2] * l[2])); return .2126 * l[0] + .7152 * l[1] + .0722 * l[2]; };
 const ratio = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
 test('every meter skin keeps the zone, the perfect band and the target apart, colour blind or not', () => {
- assert.equal(Object.keys(METER_SKINS).length, 10);
+ assert.equal(Object.keys(METER_SKINS).length, 11);
  assert.deepEqual(Object.keys(METER_SKINS).sort(), rewardsOf('skin').map(r => r.id).sort());
  for (const [id, s] of Object.entries(METER_SKINS)) for (const [vision, m] of Object.entries(SIM)) {
   const base = rgb(s.base), zone = over(rgb(s.zone), base), perfect = rgb(s.perfect).c, target = rgb(s.target).c;
@@ -224,12 +226,12 @@ test('the level-up banner lists what each level brought, every level crossed', (
 // changing it here too, on purpose.
 const AGREED = {
  badge: 'rookie:1 club-member:5 club-regular:10 single-digit:15 scratch:20 tour-card:25 contender:30 major-winner:35 hall-of-fame:40 legend:45 fairway-master:50',
- frame: 'plain-white:1 plain-black:1 plain-red:1 plain-orange:1 plain-yellow:1 plain-green:1 plain-blue:1 plain-purple:1 plain-pink:1 rookie:1 club-member:5 sparkle-silver:7 water:9 club-regular:10 leaves:13 single-digit:15 flames:16 sparkle-gold:19 scratch:20 leaves-autumn:21 flames-blue:24 tour-card:25 ice:26 flames-green:29 contender:30 deep-water:32 major-winner:35 flames-purple:38 hall-of-fame:40 aurora:42 legend:45 galaxy:47 fairway-master:50',
- tracer: 'classic:1 red:1 orange:1 yellow:1 green:1 blue:1 purple:1 pink:1 white:1 sky:2 comet:7 sunset:11 dashed:16 sparkle:19 ribbon:23 ice:26 fire:30 lightning:33 aurora:37 starfall:41 ghost:45 comet-sparkle:47 rainbow:50',
- ball: 'classic:1 solid-red:1 solid-orange:1 solid-yellow:1 solid-green:1 solid-blue:1 solid-purple:1 solid-pink:1 solid-black:1 red-stripe:3 smiley:8 two-tone:10 polka-dot:13 pumpkin:17 glow:21 chrome:25 camo:28 galaxy:31 tartan:35 marble:39 diamond-plate:42 gold:46 black-pearl:49 rainbow:50',
+ frame: 'plain-white:1 plain-black:1 plain-red:1 plain-orange:1 plain-yellow:1 plain-green:1 plain-blue:1 plain-purple:1 plain-pink:1 rookie:1 club-member:5 sparkle-silver:7 water:9 club-regular:10 leaves:13 single-digit:15 flames:16 sparkle-gold:19 scratch:20 leaves-autumn:21 flames-blue:24 tour-card:25 ice:26 flames-green:29 contender:30 deep-water:32 major-winner:35 lightning:36 flames-purple:38 hall-of-fame:40 aurora:42 legend:45 galaxy:47 fairway-master:50',
+ tracer: 'classic:1 red:1 orange:1 yellow:1 green:1 blue:1 purple:1 pink:1 white:1 sky:2 comet:7 sunset:11 smoke:14 dashed:16 sparkle:19 ribbon:23 ice:26 fire:30 lightning:33 aurora:37 starfall:41 ghost:45 comet-sparkle:47 rainbow:50',
+ ball: 'classic:1 solid-red:1 solid-orange:1 solid-yellow:1 solid-green:1 solid-blue:1 solid-purple:1 solid-pink:1 solid-black:1 red-stripe:3 smiley:8 two-tone:10 polka-dot:13 pumpkin:17 glow:21 chrome:25 camo:28 galaxy:31 tartan:35 marble:39 diamond-plate:42 lava:43 gold:46 black-pearl:49 rainbow:50',
  flourish: 'lantern-ace:1 sparkle-par:2 confetti-birdie:5 fireworks-eagle:12 ring-chip-in:20 fireworks-birdie:30 gold-flourishes:50',
- title: 'weekend-golfer:4 range-rat:9 flag-hunter:15 low-ball:20 tour-rookie:25 sharpshooter:29 iron-will:34 hall-of-famer:40 legend:45 fairway-master:50',
- skin: 'classic:1 wood:6 neon:12 retro-pixel:18 chalkboard:24 blueprint:32 carbon:38 gold-leaf:44 aurora:48 champion:50',
+ title: 'weekend-golfer:4 range-rat:9 flag-hunter:15 low-ball:20 grinder:22 tour-rookie:25 sharpshooter:29 iron-will:34 hall-of-famer:40 legend:45 fairway-master:50',
+ skin: 'classic:1 wood:6 neon:12 retro-pixel:18 chalkboard:24 sunset:27 blueprint:32 carbon:38 gold-leaf:44 aurora:48 champion:50',
  challenge: 'course-of-the-week:1 achievements:1 closest:1 long-drive:1 up-and-down:1 skins:1',
 };
 test('every reward unlocks at the level agreed with the owner', () => {
@@ -237,5 +239,23 @@ test('every reward unlocks at the level agreed with the owner', () => {
   const want = Object.fromEntries(AGREED[kind].split(' ').map(p => { const [id, l] = p.split(':'); return [id, Number(l)]; }));
   const have = Object.fromEntries(rewardsOf(kind).map(r => [r.id, r.level]));
   assert.deepEqual(have, want, `${kind}: the table's levels differ from the agreed ones`);
+ }
+});
+
+// EVERY LEVEL BRINGS SOMETHING (the owner, 15 October 2026, filling 14, 22,
+// 27, 36 and 43), and every animated frame has its two rules in the
+// stylesheet -- the ring and the effect outside it -- or it shows as a plain
+// still ring with nothing said.
+test('every level from 2 to 50 brings something', () => {
+ for (let l = 2; l <= MAX_UNLOCK_LEVEL; l++) assert.ok(unlocksBetween(l - 1, l).length > 0, 'level ' + l + ' brings nothing');
+});
+test('every animated frame is drawn by the stylesheet, ring and effect', async () => {
+ const fs = await import('node:fs');
+ const css = fs.readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
+ const anims = new Set(Object.values(FRAMES).filter(f => f.anim).map(f => f.anim));
+ assert.ok(anims.has('lightning'));
+ for (const a of anims) {
+  assert.ok(css.includes('.ball-avatar.framed[data-anim=' + a + ']'), a + ': no ring rule');
+  assert.ok(css.includes('.frame-fx[data-fx=' + a + ']'), a + ': no effect rule');
  }
 });

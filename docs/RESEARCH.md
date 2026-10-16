@@ -7954,6 +7954,23 @@ Dashed white, Ribbon pale blue, Starfall lilac), and the thirteen animated
 frames' levels (7 to 47) and movements: flames turn in 2.2 s and flicker every
 0.32 s, sparkle 7 s with a 1.4 s twinkle, water 9 s, leaves 14 s, aurora 5 s.
 
+**Five empty levels filled (the owner, same night).** Levels 14, 22, 27, 36
+and 43 brought nothing once the flourish ladder moved off them. One reward
+each, placed where its kind waits longest between unlocks -- all PLACED, by
+eye, no outside source: **Smoke** tracer at 14 (tracers 11 -> 16): grey
+#a9aeb3 at the tee to white at the ball, 9 px wide at 0.5 opacity, 30 puffs
+#eef0f2 rising at 0.35 (a negative fall). **Grinder** title at 22 (titles 20 ->
+25). **Sunset** meter skin at 27 (skins 24 -> 32, the longest wait of any kind):
+track #2b1638 -> #4a1f3d -> #5e2a26 on base #41203a, the usual yellow zone,
+green band and blue target; it passes the same lightness test for normal and
+red-green colour-blind vision as every skin. **Lightning** frame at 36 (frames
+32 -> 38): a dark blue ring with bright bolts turning in eight jumps every 1.6
+s and flaring twice per 2.3 s, and outside it a saw-toothed corona -- 26
+spikes, two layers -- flickering on and off out of step (2.3 s and 1.7 s).
+**Lava** ball at 43 (a flashy late ball before Gold at 46): rock #1c1614 to
+#3a2a24 split by cracks from #ff5a14 to #ffd36b where a noise field crosses
+its middle, roughness 0.6, a little glow of its own (0.2).
+
 ### The cup rattle (15 October 2026)
 
 The owner: "needs more rattle and I think it's playing in reverse". The old
