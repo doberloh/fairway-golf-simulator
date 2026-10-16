@@ -158,3 +158,84 @@ test('a hole-out shows the rarest flourish the golfer has earned', () => {
  const at = id => rewardsOf('flourish').find(r => r.id === id).level;
  assert.ok(at('sparkle-par') < at('confetti-birdie') && at('confetti-birdie') < at('fireworks-eagle'));
 });
+
+// EVERY ITEM, ONE BY ONE (15 October 2026). The owner cannot reach most of
+// these without weeks of play, so each is checked at its own level: shut one
+// level early, open at its level, and worn only once it is open. A lock that
+// lets go early fails here by name; a reward given the wrong level in the
+// table is caught by the agreed list at the end of this file.
+import {unlocksBetween, reward, ACHIEVEMENT_TITLES, DEFAULT_WORN as STARTING} from '../src/rewards.js';
+
+test('every reward is shut one level early and open at its level', () => {
+ for (const r of REWARDS) {
+  assert.equal(isUnlocked(r.kind, r.id, r.level), true, `${r.kind} ${r.id} is shut at its level ${r.level}`);
+  assert.equal(isUnlocked(r.kind, r.id, MAX_UNLOCK_LEVEL + 20), true, `${r.kind} ${r.id} shuts again past 50`);
+  if (r.level > 1) assert.equal(isUnlocked(r.kind, r.id, r.level - 1), false, `${r.kind} ${r.id} opens before level ${r.level}`);
+ }
+});
+
+test('every wearable item is worn from its level and not a level before', () => {
+ for (const kind of WEARABLE) for (const r of rewardsOf(kind)) {
+  assert.equal(wornItem({[kind]: r.id}, kind, r.level), r.id, `${kind} ${r.id} is not worn at level ${r.level}`);
+  if (r.level > 1) {
+   const early = wornItem({[kind]: r.id}, kind, r.level - 1);
+   assert.notEqual(early, r.id, `${kind} ${r.id} is worn at level ${r.level - 1}`);
+   // What is worn instead is the starting look (a frame: the newest badge's).
+   if (kind === 'frame') assert.equal(early, highestBadge(r.level - 1));
+   else assert.equal(early, STARTING[kind], `${kind} ${r.id} too early falls back to ${early}`);
+  }
+ }
+});
+
+test('an achievement title is worn only once the achievement is earned', () => {
+ assert.ok(ACHIEVEMENT_TITLES.length > 0);
+ for (const t of ACHIEVEMENT_TITLES) {
+  assert.equal(isUnlocked('title', t.id, MAX_UNLOCK_LEVEL), false, `${t.id} is open without its achievement`);
+  assert.equal(isUnlocked('title', t.id, 1, {[t.achievement]: 1}), true, `${t.id} stays shut with its achievement`);
+  assert.equal(wornItem({title: t.id}, 'title', 50), '');
+  assert.equal(wornItem({title: t.id}, 'title', 1, {[t.achievement]: 1}), t.id);
+ }
+});
+
+test('the level-up banner lists what each level brought, every level crossed', () => {
+ const badgeFrame = r => r.kind === 'frame' && !!reward('badge', r.id);
+ for (let l = 2; l <= MAX_UNLOCK_LEVEL; l++)
+  assert.deepEqual(unlocksBetween(l - 1, l), unlocksAt(l).filter(r => !badgeFrame(r)), `level ${l}`);
+ // One gain across several levels lists them all, in order.
+ assert.deepEqual(unlocksBetween(3, 6), [...unlocksBetween(3, 4), ...unlocksBetween(4, 5), ...unlocksBetween(5, 6)]);
+ // Across the whole climb: everything past level 1 exactly once, badges
+ // included, their own frames not.
+ const all = unlocksBetween(1, MAX_UNLOCK_LEVEL);
+ assert.deepEqual(new Set(all), new Set(REWARDS.filter(r => r.level > 1 && !badgeFrame(r))));
+ assert.equal(all.length, new Set(all).size);
+ assert.ok(all.some(r => r.kind === 'badge'));
+ assert.ok(!all.some(badgeFrame));
+ // Nothing for no change, and nothing past 50 (levels never stop, rewards do).
+ assert.deepEqual(unlocksBetween(5, 5), []);
+ assert.deepEqual(unlocksBetween(50, 60), []);
+ // The banner can only list what a golfer can then put on.
+ for (const r of all) assert.equal(isUnlocked(r.kind, r.id, r.level), true);
+});
+
+// THE LEVELS ARE THE AGREED ONES, pinned (15 October 2026). The tests above
+// read each reward's level from the table, so they prove the locks follow the
+// table -- not that the table is right. This list is the table as agreed with
+// the owner (spec section 7, the 15 October changes); moving a reward means
+// changing it here too, on purpose.
+const AGREED = {
+ badge: 'rookie:1 club-member:5 club-regular:10 single-digit:15 scratch:20 tour-card:25 contender:30 major-winner:35 hall-of-fame:40 legend:45 fairway-master:50',
+ frame: 'plain-white:1 plain-black:1 plain-red:1 plain-orange:1 plain-yellow:1 plain-green:1 plain-blue:1 plain-purple:1 plain-pink:1 rookie:1 club-member:5 sparkle-silver:7 water:9 club-regular:10 leaves:13 single-digit:15 flames:16 sparkle-gold:19 scratch:20 leaves-autumn:21 flames-blue:24 tour-card:25 ice:26 flames-green:29 contender:30 deep-water:32 major-winner:35 flames-purple:38 hall-of-fame:40 aurora:42 legend:45 galaxy:47 fairway-master:50',
+ tracer: 'classic:1 red:1 orange:1 yellow:1 green:1 blue:1 purple:1 pink:1 white:1 sky:2 comet:7 sunset:11 dashed:16 sparkle:19 ribbon:23 ice:26 fire:30 lightning:33 aurora:37 starfall:41 ghost:45 comet-sparkle:47 rainbow:50',
+ ball: 'classic:1 solid-red:1 solid-orange:1 solid-yellow:1 solid-green:1 solid-blue:1 solid-purple:1 solid-pink:1 solid-black:1 red-stripe:3 smiley:8 two-tone:10 polka-dot:13 pumpkin:17 glow:21 chrome:25 camo:28 galaxy:31 tartan:35 marble:39 diamond-plate:42 gold:46 black-pearl:49 rainbow:50',
+ flourish: 'lantern-ace:1 sparkle-par:2 confetti-birdie:5 fireworks-eagle:12 ring-chip-in:20 fireworks-birdie:30 gold-flourishes:50',
+ title: 'weekend-golfer:4 range-rat:9 flag-hunter:15 low-ball:20 tour-rookie:25 sharpshooter:29 iron-will:34 hall-of-famer:40 legend:45 fairway-master:50',
+ skin: 'classic:1 wood:6 neon:12 retro-pixel:18 chalkboard:24 blueprint:32 carbon:38 gold-leaf:44 aurora:48 champion:50',
+ challenge: 'course-of-the-week:1 achievements:1 closest:1 long-drive:1 up-and-down:1 skins:1',
+};
+test('every reward unlocks at the level agreed with the owner', () => {
+ for (const kind of KINDS) {
+  const want = Object.fromEntries(AGREED[kind].split(' ').map(p => { const [id, l] = p.split(':'); return [id, Number(l)]; }));
+  const have = Object.fromEntries(rewardsOf(kind).map(r => [r.id, r.level]));
+  assert.deepEqual(have, want, `${kind}: the table's levels differ from the agreed ones`);
+ }
+});

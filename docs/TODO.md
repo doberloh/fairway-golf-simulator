@@ -31,6 +31,14 @@ Asked for by the owner on 10 October, in this order, on the branch
 
 ## Found by driving the built game
 
+- [ ] **Five levels bring nothing** (found 15 October 2026 by the new unlock
+  tests). Levels 14, 22, 27, 36 and 43 unlock nothing and show a level-up
+  banner with no list: they were the flourishes' levels until the flourish
+  ladder moved them (par 2, birdie 5, eagle 12, chip-in 20, every birdie 30).
+  The spec never promised something at every level, so nothing is wrong; ask
+  the owner whether to put something there. If anything moves, the AGREED
+  list in tests/rewards.test.mjs moves with it.
+
 
 - [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
   HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
@@ -835,6 +843,22 @@ so several of these play differently as well as look different.
 Built, signed off and in the game; nothing open (see `# Done`, same heading).
 
 # Done
+
+## Unlocks under test (15 October 2026)
+
+- [x] **Every unlock checked one by one, and levelling up played** (the owner
+    asked whether the tests prove unlocks happen and can then be worn; they
+    cannot reach most rewards without weeks of play). Node: every reward shut
+    a level early and open at its level; every wearable worn only from its
+    level, falling back to the starting look (a frame to the newest badge's);
+    achievement titles only with their achievement; the level-up list for
+    every level 2-50 (moved from main.js into rewards.js as `unlocksBetween`
+    so it could be tested); the save refusing every item a level early; and
+    an AGREED list pinning each reward's level. Smoke: `level-up`, a golfer
+    5 XP short of level 2 -- Sky padlocked and refused, one hole, the banner
+    names it, then it goes on. **The smoke journey was written without being
+    run** (the graphics card was not cleared that turn); run it with
+    `node tools/smoke.mjs --only level-up`.
 
 ## The Swing Meter, XP and levels (14 October 2026)
 

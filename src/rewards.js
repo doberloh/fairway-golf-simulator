@@ -115,6 +115,16 @@ export const ACHIEVEMENT_TITLES = ACHIEVEMENTS.filter(a => a.title).map(a => ({l
 export const reward = (kind, id) => REWARDS.find(r => r.kind === kind && r.id === id) || (kind === 'title' && ACHIEVEMENT_TITLES.find(r => r.id === id)) || null;
 // Everything a level brings, in the table's order.
 export const unlocksAt = level => REWARDS.filter(r => r.level === level);
+// What the level-up banner lists when XP takes a golfer from `from` to `to`:
+// every level crossed, in order, when one gain crosses several. A badge's own
+// frame is left out -- it arrives with the badge, which is listed, and naming
+// both would say the same thing twice. Moved here from main.js (15 October
+// 2026) so it has a test.
+export const unlocksBetween = (from, to) => {
+ const got = [];
+ for (let l = Math.max(1, from + 1); l <= to; l++) got.push(...unlocksAt(l).filter(r => !(r.kind === 'frame' && reward('badge', r.id))));
+ return got;
+};
 // `earned` is the golfer's achievements, for the titles they bring.
 export const isUnlocked = (kind, id, level, earned = {}) => { const r = reward(kind, id); return !!r && (r.achievement ? !!earned?.[r.achievement] : r.level <= level); };
 // What a golfer of this level has on: their choice when it is earned, the

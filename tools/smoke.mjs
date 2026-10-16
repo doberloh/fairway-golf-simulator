@@ -2386,6 +2386,77 @@ const JOURNEYS = [
    });
   },
  },
+ // LEVELLING UP, PLAYED (15 October 2026). The owner cannot reach most rewards
+ // without weeks of play, so this golfer starts five XP short of level 2, which
+ // brings the Sky tracer. Before: Sky is shown with a padlock and cannot be put
+ // on. Then one hole: the level-up banner names it. After: it goes on and is
+ // kept. Every item's level and lock is checked in Node (rewards.test.mjs,
+ // profile.test.mjs); this is the one path through the real interface.
+ {
+  name: 'level-up',
+  what: 'a golfer a few XP short of level 2: Sky locked, one hole, the banner names it, and it goes on',
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'plu', profiles: [{id: 'plu', name: 'Climber', created: 1, counters: {}, bests: {}, rounds: [], xp: 395, xpLog: {}}]})); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0]);
+   const skyItem = '.look-grid .look-item[title^="Sky"]';
+   await t.step('at level 1, Sky has a padlock and cannot be put on', async () => {
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.page.click('[data-look-tab="tracer"]');
+    await t.page.waitForSelector(skyItem, {timeout: 10000 * SLOW});
+    const v = await t.page.evaluate(sel => { const b = document.querySelector(sel); return {locked: b.classList.contains('locked'), lock: !!b.querySelector('.look-lock'), disabled: b.disabled, wear: b.dataset.wear || null}; }, skyItem);
+    if (!v.locked || !v.lock || !v.disabled || v.wear) throw new Error(`Sky at level 1 is not locked: ${JSON.stringify(v)}`);
+    await t.page.click(skyItem, {force: true}).catch(() => {});
+    await t.page.waitForTimeout(300);
+    if ((await stored()).worn?.tracer === 'sky') throw new Error('a locked Sky was put on');
+    await t.closeDrawer();
+   });
+   await t.step('one hole: Endless, a drop beside the pin, putt out', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Start an endless run');
+    await t.inPlay();
+    await t.swing();
+    await t.until(() => t.inFlight(), 'the shot to start', 5 * SLOW);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
+    await reliefFirst(t);
+    await t.tool('simDrop');
+    await t.page.click('#dropAtGreen');
+    await t.page.click('#confirmDrop');
+    await t.until(() => t.page.evaluate(() => document.getElementById('dropBar')?.hidden !== false), 'the drop to be confirmed', 5 * SLOW);
+    await t.closeTools();
+   });
+   await t.step('the level-up banner says level 2 and names Sky', async () => {
+    for (let putt = 1; putt <= 6; putt++) {
+     await t.putt();
+     const banner = await t.page.waitForSelector('#levelUp:not([hidden])', {timeout: 15000 * SLOW}).then(() => true, () => false);
+     if (!banner) continue;
+     const text = await t.page.textContent('#levelUp');
+     await t.page.locator('#levelUp').screenshot({path: 'bench/shots/smoke/level-up.png'}).catch(() => {});
+     if (!/Level 2/.test(text) || !/New tracer:\s*Sky/.test(text)) throw new Error(`the banner reads "${text.replace(/\s+/g, ' ').trim()}"`);
+     return;
+    }
+    throw new Error('six putts and no level-up banner');
+   });
+   await t.step('now Sky goes on, and is kept', async () => {
+    await t.until(() => t.page.evaluate(() => document.getElementById('levelUp')?.hidden !== false), 'the banner to go', 15 * SLOW);
+    if (await t.drawerOpen()) await t.closeDrawer().catch(() => {});
+    await t.page.click('#menuNav');
+    await t.page.click('#dropMenu');
+    // Leaving a round with a hole played asks whether to keep it.
+    if (await t.page.waitForSelector('#leaveNotice:not([hidden])', {timeout: 5000 * SLOW}).then(() => true, () => false)) await t.page.click('#leaveDiscard');
+    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('generating')?.hidden !== false), 'the main menu', 60 * SLOW);
+    await fromMenu(t, 'My profile');
+    await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.page.click('[data-look-tab="tracer"]');
+    await t.page.click('[data-wear="tracer:sky"]', {timeout: 10000 * SLOW});
+    await t.until(async () => (await stored()).worn?.tracer === 'sky', 'Sky to be saved', 10 * SLOW);
+   });
+  },
+ },
  {
   name: 'look',
   what: 'Your look on My profile: every tab, a frame and a meter skin put on and kept, the skin on the meter in play, the achievements list, and a flourish when the hole is finished',
