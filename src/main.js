@@ -17,6 +17,7 @@ import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_R
 import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
 import './style.css';
 import './ui-kit.css';
+import './round-hud.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -45,6 +46,8 @@ import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,st
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
+import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale} from './round-hud.js';
+import {screenPalette,paletteVars} from './ui-palette.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
@@ -202,7 +205,7 @@ function currentTextSize(){return effectiveTextSize(graphics.textSize,view?.conf
 // in its own pixels (2560 at 200% and 1920 at 150% are both 1280 wide), so its
 // resize watcher never fires, and the pixel ratio -- which carries the zoom --
 // would keep the old one.
-function applyUiScale(){applyTextSize(currentTextSize());view?.resize?.();textSizeNote();}
+function applyUiScale(){applyTextSize(currentTextSize());applyHudScale();view?.resize?.();textSizeNote();}
 function textSizeNote(){
  const n=document.getElementById('gfxTextNote');if(!n)return;
  const cam=view?.config??loadCamera(),now=currentTextSize();
@@ -1239,7 +1242,7 @@ function updateHUD(){
  // THE LINE IN THE SHOT PANEL says only that the hole or the round is over.
  // Between shots the score chip says whose shot it is.
  if(!flight)$('playerTurn').textContent=round.finished?'Round complete':round.holeComplete?'Hole complete':'';
- drawScoreChips();
+ drawScoreChips();drawRoundHud();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
  view.setPinOut?.(ballOnGreen);
  // THE MAP FOLLOWS THE BALL ONTO THE GREEN. Framed on the green it also paints
@@ -1268,7 +1271,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
   if($('bottomHints'))$('bottomHints').hidden=armed;
  }
- $('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
+ $('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=hud1?clubPanel(clubs[$('club').value]).line:$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
  redrawMap();const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
   // Says why when it is off. "Nothing to take back yet" on a fresh tee is a
   // different answer from "finish the shot first", and a dimmed button with no
@@ -1431,6 +1434,8 @@ function drawMeter(t,last=null){
  else if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
  else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
+ // The 1.0 round screen has no Swing button: the bar is what you tap or click.
+ else if(hud1)hint.innerHTML=matchMedia('(pointer:coarse)').matches?'Tap the bar to swing':'<kbd>SPACE</kbd> or click the bar';
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
  box.classList.toggle('perfect',!!(flashing&&meterFlash.perfect));
  box.dataset.stage=swing?(swing.power==null?'power':'strike'):'ready';
@@ -3350,7 +3355,7 @@ function shortfall(){
 }
 function setMode(mode){
  const was=appMode;
- appMode=mode;$('world').dataset.mode=mode;
+ appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');
  // NO AIM LINE IN THE STUDIO. Nobody is about to hit, and a white line running
  // off the first tee read as part of the course being shaped. Building a world
  // makes a fresh, visible line, so the studio hides it every time it enters;
@@ -3964,6 +3969,7 @@ function setWindArrow(){
  try{bearing=view.cameraHeading()-wind;}catch{}
  el.style.transform='';
  el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+ $('roundHud')?.style.setProperty('--wind',bearing.toFixed(1)+'deg');
 }
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
@@ -4109,6 +4115,88 @@ function drawScoreChips(){
    +`<span class="chip-name">${escape(p.name)}</span>${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
    +(up&&others>0?`<span class="chip-more">+${others}</span>`:'')+`</button>`;
  }).join('');
+}
+// THE 1.0 ROUND SCREEN (phase 1 of the 1.0 interface, 17 October 2026;
+// PROJECT_HANDOFF *The 1.0 round screen*). round-hud.js says what each piece
+// says, round-hud.css where it sits. The stylesheet decides where it is on --
+// in play, and not on a phone, which keeps today's screen until phase 5 -- and
+// says so with --hud1 on #world; `hud1` is that answer, read once per HUD
+// update rather than every frame.
+let hud1=false,hudBiome='';
+const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
+// The course's colours, on #app so the pause list (the top bar) wears them too.
+function applyHudPalette(){
+ const p=screenPalette({screen:rangeMode?'range':'round',course:{biome:course?.bio?.key}});
+ if(p.biome===hudBiome)return;hudBiome=p.biome;
+ for(const [k,v] of Object.entries(paletteVars(p)))$('app').style.setProperty(k,v);
+}
+// The pieces' size: the 1280 canvas's scale inside #app (round-hud.js hudScale).
+function applyHudScale(){$('app').style.setProperty('--hud-z',String(Math.round(hudScale(innerWidth,innerHeight,currentTextSize()/100)*1e4)/1e4));}
+const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
+const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
+function drawRoundHud(){
+ hud1=hudOn();
+ if(!course||!round)return;
+ applyHudPalette();
+ if(!hud1)return;
+ const c=clubs[$('club').value],putt=c?.code==='PT'||!!ballOnGreen;
+ // The hole slab.
+ const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
+  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
+ setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
+ // The conditions: wind, plays like, the rise to the hole.
+ const rise=course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z);
+ setHtml($('rhSubs'),conditions({wind:settings.wind,playsLike:putt?null:playsLikeYards,rise,putting:putt}).map(k=>
+  `<div class="rh-sub" data-sub="${k.id}"><span>${k.id==='wind'?WIND_SVG:''}${escape(k.value)}${k.unit?` <small>${escape(k.unit)}</small>`:''}</span></div>`).join(''));
+ // The golfer cards.
+ const k=round.mode==='skins'&&!rangeMode?skins(round.cards,decidedHoles(round)):null;
+ const cards=golferCards(round.players.map((p,i)=>{
+  const prof=profileOf(p),lv=prof?levelOf(prof.xp):null,look=prof?looksOf(prof):null;
+  const up=i===round.active,{rel,played}=rangeMode?{rel:0,played:0}:toPar(i);
+  let note=rangeMode?'':round.done?.[i]?'In':'';
+  if(k)note=[skinsText(k.won[i]),note].filter(Boolean).join(' · ');
+  return {name:p.name,level:lv?.level,title:look?titleName(look.title)||badgeName(lv.level):'',into:lv?.into,need:lv?.need,rel,played,note,
+   ...(rangeMode?{score:{text:up?`SHOT ${practiceShots+1}`:'',under:false}}:{})};
+ }),round.active);
+ setHtml($('rhCards'),cards.map(g=>{
+  const p=round.players[g.seat],prof=profileOf(p),l=prof?looksOf(prof):null;
+  const pic=l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(g.seat)};color:${PLAYER_INK}">${escape(g.name[0]||'P')}</span>`;
+  const lv=g.level!=null?`LV ${g.level}`:'',seat=`<i class="rh-seat" style="background:${playerColour(g.seat)}"></i>`;
+  const label=rangeMode?(g.up?`${p.name}, hitting. Open ${p.name}'s shots`:`Hand the mat to ${p.name}`):`${p.name}, ${g.score==='E'?'even par':g.score}. Open the scorecard`;
+  const score=`<span class="rh-score${g.under?' under':''}">${escape(g.score)}</span>`;
+  return g.up
+   ?`<button type="button" class="rh-card up" data-player="${g.seat}" aria-label="${escape(label)}"><span><span class="rh-pic">${pic}</span><span class="rh-stack"><span class="rh-who">${escape(g.name)}${seat}</span><span class="rh-ttl">${escape(g.title)}${lv?`<b>${lv}</b>`:''}</span>${g.xp!=null&&lv?`<span class="rh-xp"><b style="width:${(g.xp*100).toFixed(1)}%"></b></span>`:''}</span>${score}</span></button>`
+   :`<button type="button" class="rh-card" data-player="${g.seat}" aria-label="${escape(label)}"><span><span class="rh-pic">${pic}</span><span class="rh-who">${escape(g.name)}${seat}${lv?`<span class="rh-lv">${lv}</span>`:''}</span>${g.note?`<span class="rh-note">${escape(g.note)}</span>`:''}${score}</span></button>`;
+ }).join(''));
+ // The keys along the foot, and the club's code in its block.
+ setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
+  ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
+ const cc=document.querySelector('.club-control');if(cc)cc.dataset.code=clubPanel(c).code;
+ if(document.getElementById('app').classList.contains('rh-paused'))drawPauseInfo();
+}
+// PAUSE (Escape), until phase 3's pause screen: the top bar's own controls,
+// laid out as a list over the course (round-hud.css), so every one keeps its
+// id, its name and its handler.
+function drawPauseInfo(){
+ const where=rangeMode?'Driving range':`${playingCourseName()} · Hole ${round.hole+1} · Par ${course.par}`;
+ $('pauseWhere').textContent=where;
+ $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
+}
+function setPause(on){
+ const app=$('app');
+ if(on&&(!hud1||appMode!=='play'))return;
+ app.classList.toggle('rh-paused',!!on);
+ if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();}
+ else toggleClockPop(false);
+}
+// A golfer's card or chip: on the range it hands the mat over (or, for whoever
+// is hitting, opens their shots); on a course it opens the scorecard.
+function pickGolfer(i){
+ if(rangeMode){
+  if(i===round.active||round.players.length<2){openShotList(round.active);return;}
+  round.active=i;updateHUD();toast(`${round.player.name} is up.`);return;
+ }
+ guardStudio(()=>openPanel('score'));
 }
 // While a panel is open the surrounding chrome softens so it is obvious where
 // the focus is. The course itself is left sharp on purpose.
@@ -5590,7 +5678,7 @@ function drawMonitorState(state){
  if(armed!==gridArmed){
   gridArmed=armed;layout?.setVariant(playMode());
   const line=$('shotPanel');
-  if(line)(armed?$('monText'):box).after(line);
+  if(line)(armed&&!hud1?$('monText'):box).after(line);
  }
  // Arming switches to the monitor's own set of tiles, and their places.
  syncTileSet();
@@ -5658,7 +5746,7 @@ function bind(){
  // so it was already soft before the green tile was magnified on top of it.
  // Capped at 3 because the gain above that is invisible and the fill cost is
  // not. `mapPixels` divides by the ratio it finds, so pointer input follows.
- new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1),3),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
+ new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1)*(hud1?Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1:1),4),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
  // The course card's menu button is gone from every mode -- the card reports the
  // hole, and a second way into the menu sitting on top of it was clutter beside
  // the nav that already does the job.
@@ -5790,7 +5878,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   e.preventDefault();e.stopImmediatePropagation();
  },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
- $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();resetTilePlaces();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
+ $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();toast('Shot tiles put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={
@@ -6299,13 +6387,22 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // THE SCORE CHIPS open the scorecard, or on a practice ground pick who hits.
  $('scoreChips').onclick=e=>{
   const chip=e.target.closest('.score-chip');if(!chip)return;
-  const i=Number(chip.dataset.player);
-  if(rangeMode){
-   if(i===round.active||round.players.length<2){openShotList(round.active);return;}
-   round.active=i;updateHUD();toast(`${round.player.name} is up.`);return;
-  }
-  guardStudio(()=>openPanel('score'));
+  pickGolfer(Number(chip.dataset.player));
  };
+ $('rhCards').onclick=e=>{const card=e.target.closest('.rh-card');if(card)pickGolfer(Number(card.dataset.player));};
+ // The round screen's Esc key, for a mouse; the pause list's own buttons close
+ // it once they have done their job -- all but the clock and the tee picker,
+ // which are worked in place.
+ $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))$('rangeControls').click();};
+ // The pause list's cameras are the camera strip's own buttons, pressed for you.
+ $('pauseCams').onclick=e=>{const b=e.target.closest('[data-proxy]');if(b)$(b.dataset.proxy)?.click();};
+ $('pauseResume').onclick=()=>setPause(false);
+ document.querySelector('.topbar').addEventListener('click',e=>{
+  if(!$('app').classList.contains('rh-paused'))return;
+  const b=e.target.closest('button,a');
+  if(!b||b.closest('.sim-time,.clock-pop,.tee-control'))return;
+  setPause(false);
+ });
  // Tools from the top bar, where a phone keeps it; the camera strip folds
  // behind one button on a phone and closes again once a camera is picked.
  $('barTools').onclick=openToolsBox;
@@ -6449,7 +6546,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }

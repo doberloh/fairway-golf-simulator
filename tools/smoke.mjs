@@ -235,10 +235,34 @@ class Trip {
  // first draft of this found by pressing it twice and then waiting thirty
  // seconds for a Mulligan button that had just been put away. So it is opened
  // only if it is shut, and then the tool is pressed.
+ // THE TOP BAR'S CONTROLS, WHEREVER THIS SCREEN KEEPS THEM (17 October 2026).
+ // In a round on anything bigger than a phone, the 1.0 round screen has no top
+ // bar: Escape opens its controls as the pause list (round-hud.css), and the
+ // list closes itself once one of them is pressed -- all but the clock and the
+ // tee picker, which are worked in place. Everywhere else the bar is there to
+ // click. `chrome` makes them clickable either way.
+ async hud1() { return this.page.evaluate(() => getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1'); }
+ async paused() { return this.page.evaluate(() => document.getElementById('app').classList.contains('rh-paused')); }
+ async chrome() {
+  if (!await this.hud1() || await this.paused()) return;
+  await this.page.evaluate(() => document.activeElement?.blur?.());
+  await this.page.keyboard.press('Escape');
+  await this.until(() => this.paused(), 'the pause list', 5 * SLOW);
+ }
+ async unpause() { if (await this.paused()) await this.page.click('#pauseResume'); }
+ // An entry in the in-round menu: under Menu in the top bar on a phone, in the
+ // pause list everywhere else.
+ async menuItem(name) {
+  await this.chrome();
+  if (!await this.page.locator('#menuDrop').isVisible()) await this.page.click('#menuNav');
+  await this.page.locator('#menuDrop').getByRole('menuitem', {name}).click();
+ }
+
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
    // Whichever Tools button this screen shows: the camera strip's on a
    // laptop, the top bar's on a phone, where the strip folds away.
+   await this.chrome();
    const bar = this.page.locator('#barTools');
    await (await bar.isVisible() ? bar : this.page.locator('#toolsButton')).click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
@@ -1161,6 +1185,7 @@ const JOURNEYS = [
    });
    const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
    await t.step('Floodlight the course, from the clock: no freeze', async () => {
+    await t.chrome();
     await t.page.click('#clockButton');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
     await box.scrollIntoViewIfNeeded();
@@ -1174,13 +1199,13 @@ const JOURNEYS = [
     const worst = await watch;
     if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
     await t.page.click('#clockButton');
+    await t.unpause();
    });
    await t.step('the lamps nearest the shot cast shadows', async () => {
     await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
    });
    const flip = async on => {
-    await t.page.click('#menuNav');
-    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.menuItem('Graphics & performance');
     await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
     // It lives on the window's "Costs a frame" tab.
     await t.press('Costs a frame');
@@ -1207,7 +1232,7 @@ const JOURNEYS = [
    const named = (s, n) => s?.profiles.find(p => p.name === n);
    const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
    const groupPanel = async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
     await t.press('Your group');
    };
@@ -1298,8 +1323,7 @@ const JOURNEYS = [
     await t.closeDrawer().catch(() => {});
    });
    await t.step('the profile page shows both players', async () => {
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     // Leaving asks whether to keep the round. The history keeps it either way:
     // it was written hole by hole, not on the way out.
     await t.until(() => t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false), 'the leave question', 10 * SLOW);
@@ -1395,7 +1419,7 @@ const JOURNEYS = [
     if (got.join() !== want.join()) throw new Error(`the club picker reads ${got.join(', ')}`);
    });
    await t.step('a second golfer joins, and their bag is edited in the round', async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
     await t.press('Your group');
     await t.press('Add player');
@@ -1483,7 +1507,7 @@ const JOURNEYS = [
     if (await barUp()) throw new Error('the relief bar stayed up');
    });
    await t.step('Local Rule E-5, chosen in Format & tees, offers the two-stroke drop', async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
     await t.press('Format & tees');
     await t.page.selectOption('#roundOB', 'e5');
@@ -1500,8 +1524,7 @@ const JOURNEYS = [
     } else if ((await saved()).strokes[0] !== before + 2) throw new Error('with no fairway to drop on, stroke and distance should have applied');
    });
    await t.step('a player backup saves, and restores a player into this device', async () => {
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     await t.until(() => t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false), 'the leave question', 10 * SLOW);
     await t.page.click('#leaveDiscard');
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('app').dataset.mode === 'menu'), 'the main menu', 60 * SLOW);
@@ -1609,8 +1632,7 @@ const JOURNEYS = [
    // Help opens as "Welcome to Fairway".
    for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Welcome to Fairway']]) {
     await t.step(`menu → ${entry}`, async () => {
-     await t.page.click('#menuNav');
-     await t.page.locator('#menuDrop').getByRole('menuitem', {name: entry}).click();
+     await t.menuItem(entry);
      await t.until(async () => !!(await t.panelShowing(title)), `a window called "${title}"`, 5 * SLOW);
      await t.closePanel(title);
     });
@@ -1652,7 +1674,7 @@ const JOURNEYS = [
    // The owner's report (16 October 2026): once closed, there was no way back.
    await t.step('closed, the range controls come back from the view bar', async () => {
     await t.closePanel('Range controls');
-    await t.page.click('#rangeControls');
+    if (await t.hud1()) await t.page.click('#rhKeys [data-hud=range]'); else await t.page.click('#rangeControls');
     await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
    });
    await t.step('a ball at the 100 target lands on a green', async () => {
@@ -1937,8 +1959,7 @@ const JOURNEYS = [
    await t.step('the play screen at 150% on 1920x1080', () => play('1920x1080 at 150%'));
    await t.step('200% on 2560x1440, set in Graphics', async () => {
     await t.page.setViewportSize({width: 2560, height: 1440});
-    await t.page.click('#menuNav');
-    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.menuItem('Graphics & performance');
     await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
     await t.page.$eval('#gfxTextSize', el => { el.value = 200; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); });
     await t.until(async () => Math.abs((await zoom()) - 2) < .01, 'the interface at 200%', 5 * SLOW);
@@ -2209,6 +2230,7 @@ const JOURNEYS = [
     await t.inPlay();
    });
    await t.step('connect the bridge and arm the monitor', async () => {
+    await t.chrome();
     await t.page.getByRole('button', {name: 'Connect monitor'}).click();
     await t.press('Connect bridge');
     await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
@@ -2219,7 +2241,7 @@ const JOURNEYS = [
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
     for (const sel of ['.bottom-area', '#swing', '#swingMeter', '#shapeControl', '.meter-button', '.aim-control', '#aimRange', '#monState'])
      if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm', '#monLie'])
+    for (const sel of await t.hud1() ? ['#monitorPanel', '#monArm', '#club', '#lieReadout'] : ['#monitorPanel', '#monClub', '#monReconnect', '#monArm', '#monLie'])
      if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
     if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
    });
@@ -2272,7 +2294,8 @@ const JOURNEYS = [
    });
    await t.step('the Armed switch in the window brings back the shot controls', async () => {
     await t.page.click('#monArm');
-    await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
+    const hud = await t.hud1();
+    await t.until(() => shown(hud ? '#swingMeter' : '#swing'), 'the shot button (or, on the round screen, the meter) to come back', 5 * SLOW);
     if (!await shown('#swingMeter')) throw new Error('the Swing Meter did not come back');
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
     if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
@@ -2310,7 +2333,7 @@ const JOURNEYS = [
    const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
     BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
    const groupPanel = async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
     await t.press('Your group');
    };
@@ -2493,7 +2516,7 @@ const JOURNEYS = [
    // From the main menu to a challenge's Start, by its tab and card.
    const open = async (tab, id) => {
     if (!(await t.page.evaluate(() => !document.getElementById('mainMenu').hidden))) {
-     await t.page.click('#menuNav');await t.page.click('#dropMenu');
+     await t.menuItem('Main menu');
      await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
     }
     await fromMenu(t, 'Challenges');
@@ -2630,7 +2653,7 @@ const JOURNEYS = [
    const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
    // Leaving a real round (a goal round is one) asks first: leave it unsaved.
    const toMenu = async () => {
-    await t.page.click('#menuNav');await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     const leave = t.page.getByRole('button', {name: /Leave without saving/});
     await leave.waitFor({timeout: 3000 * SLOW}).then(() => leave.click(), () => {});
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
@@ -2826,8 +2849,7 @@ const JOURNEYS = [
    await t.step('now Sky goes on, and is kept', async () => {
     await t.until(() => t.page.evaluate(() => document.getElementById('levelUp')?.hidden !== false), 'the banner to go', 15 * SLOW);
     if (await t.drawerOpen()) await t.closeDrawer().catch(() => {});
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     // Leaving a round with a hole played asks whether to keep it.
     if (await t.page.waitForSelector('#leaveNotice:not([hidden])', {timeout: 5000 * SLOW}).then(() => true, () => false)) await t.page.click('#leaveDiscard');
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('generating')?.hidden !== false), 'the main menu', 60 * SLOW);

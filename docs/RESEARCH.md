@@ -8613,3 +8613,17 @@ bytes): the two woff2 files (17,808 and 17,984 bytes) base64-encoded, the
 kit's stylesheet, and about 5 KB of licence text in Help's notices. The plan's
 estimate was 130 KB, made for four weights including italics the family does
 not have.
+
+**The round screen's size (phase 1, 17 October 2026).** Every piece of the
+round screen is laid out in design pixels for the 1280 canvas and zoomed by
+`hudScale` (round-hud.js). Two numbers there are PLACED, not measured: the
+pieces are never drawn smaller than **0.75** (a small window crowds rather than
+shrinks to nothing), and never wider than the screen over **1160 design
+pixels** (`ROUND_MIN_WIDTH`): along the foot the club panel reaches about 368
+(30 margin, 86 code block, 22 + 200 name, 30) and the centred meter is 400, so
+the two need 368 + 8 + 400 / 2 on each side of the middle. On a 16:9 screen
+that leaves the Text size about **+10%** on the round screen (1920 x 1080 at
+125%: pieces drawn 1.66 screen pixels per design pixel, against 1.5 at 100%).
+The tests check, at seven screen sizes and four Text sizes, that the club and
+the meter never meet and the slab and the cards never meet.
+

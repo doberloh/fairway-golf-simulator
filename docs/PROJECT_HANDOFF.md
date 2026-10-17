@@ -176,7 +176,8 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | index.html | Static app shell, canvas and primary HUD element IDs |
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
-| src/layout.js | Saved draggable/resizable HUD layout (a panel marked per-mode keeps a place for playing by hand and one for an armed monitor, `setVariant`; the shot panel was the only one, and since 13 October 2026 none is), and the MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world |
+| src/layout.js | The MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world. It was the saved draggable/resizable HUD layout until 17 October 2026, when the 1.0 interface fixed the layout (*The 1.0 round screen*); the grips, drags and saved places (`fairway-layout-v2`, deleted once on start) are gone, and `reset`/`setVariant` are kept as no-ops |
+| src/round-hud.js, src/round-hud.css | The 1.0 round screen: what each corner piece says (hole slab, conditions, golfer cards, club panel, keys, ball light) and how large it is drawn (`hudScale`), and where each sits. Pure module with a Node test; the stylesheet only applies in play and off a phone |
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
@@ -770,7 +771,7 @@ THE TRAP, and it cost a broken build: `layout.sync()` had a comment saying “se
 
 **Sim drop and Putting options are disabled on the range.** A practice ground has no round to drop into and no penalty to avoid, and its putting mode is forced to hole-out — the putting panel would have edited the setting for your NEXT round while appearing to change where you are. Mulligan already disabled itself there because `round.history` never fills. A dedicated putting mode is planned; until then it is simply not offered. **Both carry the reason in their `title`**, as the three reading toggles do: a dimmed control with no explanation reads as broken, and "where is putting?" on a practice ground is a reasonable thing to go looking for. The putting button's title is otherwise the current mode, so the range case replaces it rather than adding to it.
 
-**Every HUD panel moves and resizes at all times, not inside a mode.** Arranging used to be a MODE — press *Arrange UI*, dashed outlines appear over seven panels, drag, press Done — which meant the answer to "can I move this?" was no until you remembered the mode existed, while the tool windows beside them dragged whenever you liked. Two behaviours for the same question. `createLayout` now gives each panel a live grip and resize corner. Arrange mode has since been deleted outright -- once nothing was gated behind it, a button promising a mode you enter to arrange things was the misconception the change removed; *Reset panel layout* moved to the tools tray. It works in play, free flight, the studio, the range and the menu backdrop with no per-mode code.
+**RETIRED 17 October 2026: the round's layout is fixed** (UI_1_0_PLAN 5.1, the owner's call; *The 1.0 round screen*). The history below is kept because it says why a title bar and not the whole panel, which still holds for tool windows. **Every HUD panel moved and resized at all times, not inside a mode.** Arranging used to be a MODE — press *Arrange UI*, dashed outlines appear over seven panels, drag, press Done — which meant the answer to "can I move this?" was no until you remembered the mode existed, while the tool windows beside them dragged whenever you liked. Two behaviours for the same question. `createLayout` now gives each panel a live grip and resize corner. Arrange mode has since been deleted outright -- once nothing was gated behind it, a button promising a mode you enter to arrange things was the misconception the change removed; *Reset panel layout* moved to the tools tray. It works in play, free flight, the studio, the range and the menu backdrop with no per-mode code.
 
 **A title bar, not the whole panel (5 October).** Every HUD panel now carries the same bar a tool window has (`.hud-head`, built in `layout.js`), and on a phone the old corner grip instead. Three traps found building it. **The bar goes FIRST in a panel's markup, except on the weather and the flight controls**, which the stylesheet picks contents out of by position (`.weather>div:nth-child(2)`, `.explore-bar>div:first-child`): there a bar put first shifted every one of them, and the wind readout collapsed onto one line, so those two are marked `'last'` in `sections` and lifted to the top with `order:-1`. That lift only works while a panel is a flex box. The first version lifted every panel that way, and it failed twice: the course card is a plain block, so its bar sat mid-card over the word "Links"; and the shot controls are a flex column only in their default place (`.bottom-area:not(.hud-custom)`), so the moment a player MOVED that panel its bar dropped to the bottom (6 October). A new panel goes first unless something picks its contents out by position -- and then it has to stay a flex box moved or not. And it is a real row pulled over the panel's padding with negative margins (padding measured per panel into `--hud-pt/-pr/-pl` by `pads()`), not drawn in a deepened top border: that needed no measuring, but any panel with overflow hidden or auto clips its border area, which is the map, the course card and every panel once resized, and the bar vanished. The shot-controls column is see-through, so its bar brings its own glass and joins the card under it. The bar cost that column 37px, which at 1280x720 pushed the last-shot fold button under the keyboard hints (`hud-reachable` caught it); below 760px of height the sections pack 8px top and bottom instead of 13px.
 
@@ -860,7 +861,7 @@ inside the callback that resizes an observed element trips Chrome's
 "ResizeObserver loop completed with undelivered notifications", which is an
 ERROR event -- and the smoke test fails on error events, correctly.
 
-**Every rule skips `.hud-custom`.** A panel the player dragged keeps their
+**Every rule skipped `.hud-custom`** (until 17 October 2026, when nothing could be dragged any more). A panel the player dragged kept their
 geometry. **The saved layout key went to `fairway-layout-v2`** with the redraw:
 a position saved for the old bottom bar would have parked the new panel across
 the course. Everyone starts from the new defaults once.
@@ -1017,6 +1018,82 @@ another that happened to use the same name, and nothing said so; the
 stylesheet the kit sits beside is 180 KB of short names. So every kit class
 starts `uk-` and every kit rule is scoped to `.uk`; `tests/ui-kit.test.mjs`
 refuses either slipping. Keep new screens' own classes prefixed the same way.
+
+## The 1.0 round screen
+
+Phase 1 of the 1.0 interface (17 October 2026, branch `ui-1-0`).
+`src/round-hud.js` decides what each piece says, `src/round-hud.css` where it
+sits, `drawRoundHud` in main.js fills it on every `updateHUD`. **Built without
+being seen**: the owner allowed the browser pane for this phase, then asked for
+the phases to run overnight with nothing on the graphics card, so none of it has
+been looked at (TODO, *The 1.0 interface*).
+
+**Where everything went.** Hole slab (number in the biome's gradient, course
+name and pin, "PAR 4 / 412 YDS") top left, and under it the conditions (wind
+with its arrow, plays like, the rise in feet). Golfer cards top right: the
+golfer up gets the big card (ball in frame ring, title, level tag, XP bar,
+score), everyone else a plate; a card does what a score chip does
+(`pickGolfer`). The map down the right, straight, under the cards. The club
+bottom left (the hot block holds the code, the real `#club` select is the
+name), the keys under it (the Esc one clickable; on the range an R key opens
+the range controls). The lie line and, when a monitor is connected but not
+armed, its strip above the club. The shape chips above the meter, the Swing
+Meter bottom middle; with a monitor armed the meter gives way to the ball light
+(the monitor window, restyled: its word, who is up, the Armed switch, Reconnect
+only once the device is lost). The pin tag is the flag label, restyled. The
+last-shot line keeps a place under the conditions until phase 2's shot card.
+A faint logo bottom right.
+
+**Gone from the round:** the top bar, the shot controls window, the weather
+window, the camera strip, the Swing button (the bar is the tap target, and
+Space), the aim buttons and the typed aim distance (arrows and the map aim;
+the typed distance has no home yet), temperature and the weather words (in the
+pause list's conditions line).
+
+**Esc opens the top bar as a pause list** until phase 3's pause screen: the
+same elements, laid out as rows (`#app.rh-paused .topbar`), plus Resume, the
+tee picker and the Swing Meter button (moved there from the shot controls;
+both were already hidden on a phone), a row of camera buttons (they press the
+camera strip's own, `data-proxy`) and the conditions. Any press in it closes
+it, except the clock and the tee picker, which are worked in place. While it is
+up the game's keys are ignored; the round itself does not stop. **Smoke
+journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
+which open the list where the round screen hides the bar.
+
+**Only in play and off a phone.** Every rule sits inside the inverse of the
+phone query (`min-width:561px and min-height:501px` on `#app`), and #world
+carries `--hud1:1` there so main.js asks the same question (`hud1`, read on
+each `updateHUD`). A phone keeps today's round screen until phase 5.
+
+**Size.** Every piece is laid out in design pixels and zoomed by `--hud-z`
+(`hudScale`): the 1280 canvas's scale, but never wider than the screen over
+`ROUND_MIN_WIDTH` (1160, PLACED: the room the club panel and the meter need
+side by side), never below 0.75. **The Text size barely enlarges the round
+screen on 16:9** -- the pieces already span it at 100%, so it can add about a
+tenth; on taller and wider shapes the same. That is a departure from "the Text
+size still multiplies it" and is the owner's to overrule. The map's canvas is
+drawn at the device pixel ratio times the zoom so it stays sharp.
+
+**THE SHOT CONTROLS ARE `display:contents`**, so the children they kept (the
+club, the lie, the shape chips, the monitor strip, the shot line) can be pinned
+where the design puts them without moving them in the markup -- ids, handlers
+and the phone's layout untouched. The trap: **any new child of `.shot-controls`
+lands loose at the top left of the course** unless round-hud.css gives it a
+place or hides it.
+
+**A LABEL THE FRAME LOOP POSITIONS IS SCALED BY `transform`/`scale`, NEVER
+`zoom`.** The flag and aim labels get inline `left`/`top` every frame;
+`zoom` would multiply those too and throw the label off its flag.
+
+**AN AUTHOR `display` BEATS `[hidden]`.** Every restyled piece that is hidden
+by the attribute (the monitor window, the monitor strip) needs its own
+`[hidden]{display:none}` or a `:not([hidden])`, or it shows when it should not.
+
+**A COLOURED BOX WITH TEXT IT CANNOT WRAP LEANS BY A PSEUDO-ELEMENT.** The
+restyled controls carry text nodes that cannot be counter-skewed, so the
+slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
+box itself stays upright, and the text with it -- the kit's rule (only the
+colour leans) by another route.
 
 ## Playing by touch
 
@@ -1223,7 +1300,7 @@ Physics is research-informed, not hardware-calibrated commercial simulation: mid
 - `fairway-round-v1` localStorage stores `{version, schema, generator, settings, round, camera}`. Round serialization includes bounded undo history. Export/import provides portable JSON.
 - `fairway-courses-v1` stores the named course library as `{version, courses:[{id, name, created, schema, generator, settings}]}`. A record holds **generation settings only** — `courseSettings` strips turf, club yardages, flight profile and art style, so a shared course never carries the author's own gear, and never a round, a lie or a score. A course's stored `generator` is preserved rather than refreshed on load: that is what lets the library flag a course whose landscape no longer matches how it was designed. One unreadable entry is skipped rather than discarding the whole library.
 - Export codes are `FW1.<base64url payload>.<checksum>`. The payload carries the schema version, the generator version, the name, and **only the settings that differ from the defaults**, which keeps a typical code a few hundred characters rather than eight hundred. Base64 is UTF-8 safe because names are free text. On import the checksum catches a truncated paste, an older schema is migrated, and a *newer* schema is refused outright rather than guessed at.
-- `fairway-layout-v1` stores independent relative panel positions/sizes. Do not reset a user's layout just to improve a screenshot.
+- `fairway-layout-v1`, then `-v2`, stored relative panel positions and sizes until the layout was fixed on 17 October 2026; `layout.js` deletes `-v2` once on start, and nothing reads either.
 - Last-shot replay is not persisted. Geometry/functions are regenerated from settings and seed rather than serialized.
 - The live `settings` object starts as `{...DEFAULT_COURSE, style:'cartoon'}`. It was a hand-written partial copy holding 11 of the 38 keys, which was invisible until something read it before a course had been loaded: Course studio renders each control straight from it, so the 27 missing keys drew `undefined` captions over sliders the browser had silently parked at the midpoint of their range — spacing read 37 where its default is 18. Never write a second copy of a default.
 - `src/settings-schema.js` is the single source of truth for every generated-course setting: default, bounds, step, unit, category, help text and kind. Defaults (`DEFAULT_COURSE`), validation (`validateSettings`), migration (`migrateSettings`), the world rebuild key and the studio sliders all derive from it. **Adding a generation setting means adding one schema entry** — not a default here, a slider there and a bounds list somewhere else, which is how the previous hand-written validator drifted. The studio panel renders itself from `CATEGORIES` and `SETTINGS`: group headings, order, labels, bounds, step, unit and the help text behind each hint button. Only `holes`, `courseYards`, `seed`, `biome`, `footprint` and `homes` are written by hand, because they are not plain sliders; everything else appears automatically. A test asserts every setting lands in exactly one rendered category, so a new entry cannot be added and silently never shown. Round validates its own serialized state separately. Add matching GPU parameters if a setting changes surfaces.

@@ -1,0 +1,250 @@
+/* THE 1.0 ROUND SCREEN (phase 1 of the 1.0 interface, 17 October 2026;
+   PROJECT_HANDOFF *The 1.0 round screen*; what each piece says is
+   src/round-hud.js).
+
+   Pieces pinned to corners, each leaning on its own, the map the one straight
+   panel: the hole slab and the conditions top left, the golfer cards top
+   right, the map down the right, the club and the keys bottom left, the Swing
+   Meter (or the monitor's ball light) bottom middle, a faint logo bottom
+   right. The top bar, the shot controls window and the weather window are
+   gone from the round; Escape opens what the top bar held as a pause list
+   until phase 3 builds the real pause screen.
+
+   ONLY IN PLAY, AND NOT ON A PHONE. A phone keeps today's round screen until
+   phase 5 (sideways and upright layouts, the aim pad, tapping the bar), so
+   every rule below sits in the inverse of the phone query style.css uses
+   (max-width 560 or max-height 500), and #world carries --hud1 so main.js can
+   ask the same question (`hudOn`).
+
+   SIZES ARE DESIGN PIXELS ON THE 1280 CANVAS. Each piece is zoomed by --hud-z
+   (main.js, from ui-layout.js `canvasFrame` through round-hud.js `hudScale`),
+   so a 1920 x 1080 screen draws them half again larger and the Text size
+   still multiplies them.
+
+   EXISTING CONTROLS ARE MOVED, NOT REBUILT. The club picker, the shape
+   buttons, the lie line, the map, the meter and the monitor window keep their
+   ids and their handlers; the shot controls window becomes display:contents so
+   its children can be pinned where the design puts them. A coloured box that
+   holds text it cannot wrap leans by a pseudo-element behind it (`::before`,
+   skewed), so the text in front stays upright -- the same rule as the kit's
+   panels (ui-kit.css), reached another way. Class names here start `rh-`. */
+
+#roundHud,.rh-pause-head,.rh-pause-extra{display:none}
+
+@container app (min-width:561px) and (min-height:501px){
+
+ #world[data-mode=play]{--hud1:1}
+
+ /* ---------------------------------------------------------------- shared */
+ #world[data-mode=play] :is(#roundHud,.club-control,.lie-readout,.shape-control,.shot-panel,.swing-meter,.monitor-panel,.minimap,.flag-label,.aim-label),
+ #app[data-mode=play] .topbar{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ /* A leaning coloured box behind upright contents. */
+ #world[data-mode=play] :is(.club-control .club-select,.lie-readout,.shape-pick,.shot-panel,.monitor-panel)::before,
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control)::before{
+  content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+
+ /* The old chrome the round no longer shows. */
+ #app[data-mode=play]:not(.rh-paused) .topbar{display:none}
+ #world[data-mode=play] :is(.course-info,.weather,.view-tools,.cam-button,#bottomHints,.aim-control,.aim-distance-control,#swing,.spin-dial,.club-control>label,.club-select>svg,.club-select>i){display:none!important}
+ #world[data-mode=play] :is(.bottom-area,.shot-controls){display:contents!important}
+
+ /* ---------------------------------------------------------------- the layer */
+ #world[data-mode=play] #roundHud{display:block;position:absolute;inset:0;z-index:7;pointer-events:none;zoom:var(--hud-z,1);color:#fff}
+ #app.hud-hidden #roundHud{display:none}
+
+ /* The hole slab: the number in the biome's gradient, the name and the line. */
+ .rh-hole{position:absolute;left:30px;top:24px;display:flex;height:92px}
+ .rh-hole .rh-n{width:100px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ .rh-hole .rh-n>span{transform:skewX(12deg);font-size:76px;font-weight:800;font-style:italic;line-height:1;color:var(--on-hot)}
+ .rh-hole .rh-f{display:grid;align-content:center;padding:0 26px 0 20px;background:var(--panel);transform:skewX(-12deg)}
+ .rh-hole .rh-f>div{transform:skewX(12deg)}
+ .rh-hole .rh-a{font-size:17px;letter-spacing:.2em;color:var(--soft);font-weight:700;white-space:nowrap}
+ .rh-hole .rh-a i{font-style:normal;color:var(--hot);margin-left:10px}
+ .rh-hole .rh-b{font-size:36px;font-weight:800;font-style:italic;line-height:1.05;white-space:nowrap}
+ .rh-hole .rh-b i{color:var(--hot);margin:0 8px;font-style:normal}
+
+ /* The conditions under it. */
+ .rh-subs{position:absolute;left:44px;top:128px;display:flex;gap:8px}
+ .rh-sub{height:44px;display:flex;align-items:center;padding:0 16px;background:var(--panel);transform:skewX(-12deg)}
+ .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;font-style:italic}
+ .rh-sub small{font-size:15px;letter-spacing:.14em;color:var(--soft);font-style:normal;font-weight:700}
+ .rh-sub svg{width:26px;height:26px;stroke:var(--a1);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;transform:rotate(var(--wind,0deg))}
+
+ /* The golfer cards. */
+ .rh-cards{position:absolute;right:30px;top:24px;width:340px;display:grid;gap:6px;justify-items:end}
+ .rh-card{pointer-events:auto;position:relative;display:flex;align-items:center;width:250px;height:46px;padding:0 18px 0 8px;border:0;color:#fff;background:var(--panel);transform:skewX(-12deg);cursor:pointer}
+ .rh-card>span{transform:skewX(12deg);display:flex;align-items:center;gap:12px;width:100%;min-width:0}
+ .rh-card .rh-who{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;font-size:22px;font-weight:800;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .rh-card .rh-lv{font-size:14px;color:var(--soft);letter-spacing:.08em;font-style:normal;font-weight:700}
+ .rh-card .rh-score{font-size:26px;font-weight:800;font-style:italic}
+ .rh-card .rh-score.under{color:var(--under)}
+ .rh-card .rh-note{font-size:12px;letter-spacing:.12em;color:var(--soft);font-weight:700;font-style:normal}
+ .rh-card .rh-pic{flex:none;display:grid;place-items:center;width:34px;height:34px}
+ .rh-card .rh-pic :is(img,.chip-dot){width:30px;height:30px}
+ .rh-card .rh-pic .chip-dot{display:grid;place-items:center;border-radius:50%;font-size:16px;font-weight:800}
+ .rh-card.up{width:340px;height:86px;padding:0 20px 0 10px;box-shadow:inset 0 0 0 3px var(--hot)}
+ .rh-card.up .rh-pic{width:66px;height:66px}
+ .rh-card.up .rh-pic :is(img,.chip-dot){width:62px;height:62px}
+ .rh-card.up .rh-stack{flex:1;min-width:0;display:grid;gap:2px}
+ .rh-card.up .rh-who{font-size:32px;line-height:1}
+ .rh-card.up .rh-ttl{font-size:14px;letter-spacing:.18em;color:var(--soft);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .rh-card.up .rh-ttl b{display:inline-block;margin-left:6px;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:15px;font-weight:800;font-style:italic;letter-spacing:.04em;transform:skewX(-12deg)}
+ .rh-card.up .rh-xp{height:6px;margin-top:4px;background:rgba(255,255,255,.15);position:relative}
+ .rh-card.up .rh-xp>b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
+ .rh-card.up .rh-score{font-size:40px}
+ .rh-card:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+
+ /* The keys along the foot, and the faint logo. */
+ .rh-keys{position:absolute;left:40px;bottom:24px;display:flex;gap:14px;font-size:16px;font-weight:700;color:#e6e8ff;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap}
+ .rh-keys kbd{display:inline-grid;place-items:center;min-width:28px;height:26px;margin-right:5px;padding:0 6px;border:2px solid currentColor;border-radius:4px;font:inherit;font-size:14px;background:rgba(0,0,0,.35)}
+ .rh-keys button{pointer-events:auto;display:inline-flex;align-items:center;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
+ .rh-logo{position:absolute;right:36px;bottom:22px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.42);font-size:22px;font-weight:700;letter-spacing:-.01em}
+ .rh-logo svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+
+ /* ---------------------------------------------------------------- the club */
+ #world[data-mode=play] .club-control{position:absolute;left:30px;bottom:64px;z-index:7;zoom:var(--hud-z,1);display:flex;align-items:stretch;height:86px;min-width:0;padding:0;border:0;flex:none}
+ #world[data-mode=play] .club-control::before{content:"";width:86px;flex:none;background:var(--hot);transform:skewX(-12deg)}
+ #world[data-mode=play] .club-control::after{content:attr(data-code);position:absolute;left:0;top:0;width:86px;height:86px;display:grid;place-items:center;color:var(--on-hot);font-size:34px;font-weight:800;font-style:italic;pointer-events:none}
+ #world[data-mode=play] .club-control .club-select{position:relative;isolation:isolate;display:grid;align-content:center;margin:0;padding:0 30px 0 22px;border:0;background:none}
+ #world[data-mode=play] .club-control select{appearance:none;-webkit-appearance:none;width:auto;min-width:0;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 40px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer;max-width:200px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+ #world[data-mode=play] .club-control select:focus-visible{outline:3px solid var(--hot);outline-offset:4px}
+ #world[data-mode=play] .club-control option{font:16px var(--font-ui);text-transform:none;color:#111;background:#fff}
+ #world[data-mode=play] .club-control #clubHint{display:block;margin-top:2px;font-size:18px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase;white-space:nowrap}
+
+ /* ---------------------------------------------------------------- the lie */
+ #world[data-mode=play] .shot-controls .lie-readout{position:absolute;left:44px;bottom:164px;z-index:7;zoom:var(--hud-z,1);isolation:isolate;display:flex;align-items:center;gap:8px;height:34px;padding:0 16px;font-size:17px;font-weight:700;letter-spacing:.1em;color:#fff;text-transform:uppercase;white-space:nowrap}
+ #world[data-mode=play] .shot-controls .lie-readout>span{font-size:13px;color:var(--soft)}
+ #world[data-mode=play] .shot-controls .lie-readout.penalty{color:#ffb3a8}
+ #world[data-mode=play] .shot-controls .lie-readout .read-note{display:none}
+
+ /* A monitor connected but not armed: a chip above the lie, with its switch. */
+ #world[data-mode=play] .shot-controls>.mon-state:not([hidden]){position:absolute;left:44px;bottom:208px;z-index:7;zoom:var(--hud-z,1);isolation:isolate;display:grid;gap:2px;max-width:420px;padding:8px 18px;color:#fff}
+ #world[data-mode=play] .shot-controls>.mon-state::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-controls>.mon-state .mon-head{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #world[data-mode=play] .shot-controls>.mon-state .mon-arm{margin-left:auto;font-size:12px;letter-spacing:.14em;font-weight:700;font-style:normal;color:var(--soft)}
+ #world[data-mode=play] .shot-controls>.mon-state .mon-text{font-size:12px;letter-spacing:.1em;color:var(--soft);text-transform:uppercase}
+
+ /* ---------------------------------------------------------------- shape chips */
+ #world[data-mode=play] .shape-control{position:absolute;left:50%;bottom:150px;z-index:8;zoom:var(--hud-z,1);transform:translateX(-50%);display:flex;gap:6px;padding:0;flex:none;border:0}
+ #world[data-mode=play] .shape-control.putt,#world[data-mode=play].monitor-armed .shape-control{display:none}
+ #world[data-mode=play] .shape-pick{position:relative;isolation:isolate;display:flex;align-items:center;gap:6px;height:30px;min-width:0;padding:0 12px;border:0;background:none;color:#fff;font-size:16px;font-weight:800;font-style:italic;cursor:pointer;flex-direction:row}
+ #world[data-mode=play] .shape-pick small{order:-1;display:flex;align-items:center;gap:6px;font-size:11px;font-style:normal;color:var(--soft);letter-spacing:.14em;font-weight:700}
+ #world[data-mode=play] .shape-pick small kbd{order:2;font:700 10px/1 inherit;display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border:1.5px solid currentColor;border-radius:3px}
+ #world[data-mode=play] .shape-pick strong{font-weight:800;text-transform:uppercase}
+ #world[data-mode=play] .shape-control .spin-cycle{display:flex!important}
+
+ /* ---------------------------------------------------------------- last shot */
+ /* Until phase 2 builds the shot card that pops up where the ball lands, the
+    shot line keeps a place under the conditions. */
+ #world[data-mode=play] .shot-controls>.shot-panel{position:absolute;left:44px;top:188px;z-index:7;zoom:var(--hud-z,1);isolation:isolate;width:330px;max-height:220px;overflow:auto;padding:10px 26px 12px 22px;color:#fff}
+ #world[data-mode=play] .shot-panel .sp-head{font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+
+ /* ---------------------------------------------------------------- the meter */
+ /* Smaller, slanted, in the biome's ring. The skins' colours (--sm-*) still
+    paint the track, the zones and the markers. No white strike line through
+    the green band, and the orange overswing runs to the end of the bar. */
+ #world[data-mode=play] .swing-meter{left:50%;right:auto;top:auto;bottom:40px;width:400px;zoom:var(--hud-z,1);transform:translateX(-50%);padding:0;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff}
+ #world[data-mode=play] .swing-meter .sm-head{margin-bottom:24px;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+ #world[data-mode=play] .swing-meter .sm-title{font-size:16px;letter-spacing:.04em;color:#fff;text-transform:uppercase}
+ #world[data-mode=play] .swing-meter .sm-hint{color:var(--hot);text-transform:uppercase}
+ #world[data-mode=play] .swing-meter .sm-hint kbd{font:inherit;font-size:13px;padding:0 4px;border:1.5px solid currentColor;border-radius:3px}
+ #world[data-mode=play] .swing-meter .sm-bar{height:34px;border:0;border-radius:0;transform:skewX(-12deg);pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 4px var(--panel)}
+ #world[data-mode=play] .swing-meter .sm-ticks span{border-left-color:rgba(255,255,255,.35)}
+ #world[data-mode=play] .swing-meter .sm-ticks span b{bottom:calc(100% + 8px);transform:translateX(-50%) skewX(12deg);font-size:13px;font-weight:700;color:#e8ecff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+ #world[data-mode=play] .swing-meter .sm-ticks span small{bottom:calc(100% + 9px);font-size:11px;color:var(--hot);transform:skewX(12deg)}
+ #world[data-mode=play] .swing-meter .sm-ticks span.full{border-left:3px solid var(--hot)}
+ #world[data-mode=play] .swing-meter .sm-ticks span.full b{color:var(--hot)}
+ #world[data-mode=play] .swing-meter .sm-ticks span.strike{display:none}
+ #world[data-mode=play] .swing-meter .sm-ticks span.over{background:repeating-linear-gradient(90deg,rgba(255,140,40,.55) 0 6px,rgba(255,140,40,.3) 6px 10px)}
+ #world[data-mode=play] .swing-meter .sm-zone{border:0}
+ #world[data-mode=play] .swing-meter .sm-marker{width:6px;margin-left:-3px;top:-7px!important;bottom:-7px!important;border-radius:0;box-shadow:0 0 14px var(--sm-marker,#fff)}
+ #world[data-mode=play] .swing-meter .sm-result{margin-top:8px;padding-top:0;border:0}
+ #world[data-mode=play] .swing-meter .sm-result strong{font-size:22px;font-weight:800;font-style:italic;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+ #world[data-mode=play] .swing-meter .sm-result>span>span{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase}
+
+ /* ---------------------------------------------------------------- the ball light */
+ /* With a monitor armed the meter gives way to one light: its word, who is up,
+    and the Armed switch. The club panel stays (the club is still sent). */
+ #world[data-mode=play] .monitor-panel{left:50%;right:auto;top:auto;bottom:46px;width:auto;max-width:none;zoom:var(--hud-z,1);transform:translateX(-50%);isolation:isolate;display:flex;align-items:center;gap:16px;height:72px;padding:0 32px;border:0;border-radius:0;background:none;backdrop-filter:none;box-shadow:none;color:#fff;animation:none}
+ #world[data-mode=play] .monitor-panel[hidden]{display:none}
+ #world[data-mode=play] .monitor-panel::before{box-shadow:inset 0 0 0 3px var(--light,var(--a1))}
+ #world[data-mode=play] .monitor-panel[data-monitor=green]{--light:#4ade80}
+ #world[data-mode=play] .monitor-panel[data-monitor=amber]{--light:#fbbf24}
+ #world[data-mode=play] .monitor-panel[data-monitor=red]{--light:#f87171}
+ #world[data-mode=play] .monitor-panel :is(.lie-readout,.mon-club){display:none}
+ #world[data-mode=play] .monitor-panel:not([data-monitor=red]) .mon-reconnect{display:none}
+ #world[data-mode=play] .monitor-panel .mon-reconnect{order:4;height:36px;padding:0 14px;border:0;border-radius:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:skewX(-12deg)}
+ #world[data-mode=play] .monitor-panel .mon-head{display:flex;align-items:center;gap:16px}
+ #world[data-mode=play] .monitor-panel .mon-dot{width:20px;height:20px;border-radius:50%;background:var(--light,#9ca3af);box-shadow:0 0 0 7px color-mix(in srgb,var(--light,#9ca3af) 25%,transparent)}
+ #world[data-mode=play] .monitor-panel #monTitle{font-size:40px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ #world[data-mode=play] .monitor-panel .mon-text{max-width:300px;font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #world[data-mode=play] .monitor-panel .mon-arm{order:3;display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+
+ /* ---------------------------------------------------------------- the pin tag */
+ #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(var(--hud-z,1));transform-origin:50% 100%;text-shadow:none}
+ #world[data-mode=play] .flag-label:not(.edge)>span{display:none}
+ #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
+ #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .flag-label:not(.edge) #pinUnit{order:2;margin:-4px 0 0;font-size:0}
+ #world[data-mode=play] .flag-label:not(.edge) #pinUnit::after{content:"";display:block;width:0;height:0;margin-top:6px;border:10px solid transparent;border-top:12px solid var(--hot);border-bottom:0}
+ #world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
+ #world[data-mode=play] .flag-label.edge,#world[data-mode=play] .aim-label{scale:var(--hud-z,1);transform-origin:50% 100%}
+ #world[data-mode=play] .aim-label>strong{font-size:22px;font-weight:800;font-style:italic}
+
+ /* ---------------------------------------------------------------- the map */
+ /* The one straight panel: tall, down the right, under the golfer cards. */
+ #world[data-mode=play]:not(.aim-view) .minimap{left:auto;right:30px;top:290px;bottom:80px;width:214px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
+ #world[data-mode=play]:not(.aim-view) .minimap #map{height:100%;min-height:0}
+ #world[data-mode=play] .minimap .map-header{padding:6px 12px 4px;font-size:15px;letter-spacing:.14em;color:var(--soft);font-weight:700}
+ #world[data-mode=play] .minimap .map-footer{padding:4px 12px 6px;font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #world[data-mode=play] .minimap .map-reading button{width:28px;height:24px;border-radius:0;transform:skewX(-12deg);background:rgba(255,255,255,.1);color:#fff}
+ #world[data-mode=play] .minimap .map-reading button>svg{transform:skewX(12deg)}
+ #world[data-mode=play] .minimap .map-reading button.on{background:var(--a1);color:var(--on-hot);border-color:transparent}
+
+ /* ---------------------------------------------------------------- pause (Esc) */
+ /* Interim: what the top bar held, as a list over the course. Phase 3 builds
+    the real pause screen (standings, conditions, cameras) on the kit. */
+ #app[data-mode=play].rh-paused .topbar{position:absolute;inset:0;z-index:95;height:auto;display:grid;grid-template-columns:repeat(2,minmax(0,380px));grid-template-areas:"head head" "menu right" "menu extra";align-content:center;justify-content:center;gap:16px 48px;padding:40px;zoom:var(--hud-z,1);background:rgba(4,8,12,.62);border:0;backdrop-filter:blur(4px);filter:none;opacity:1;pointer-events:auto;color:#fff}
+ #app.rh-paused .topbar :is(.brand,.hole-strip,#menuNav,.mode-pill,.divider,.sim-time-label){display:none!important}
+ #app.rh-paused .topbar .rh-pause-head{grid-area:head;display:grid;gap:4px}
+ #app.rh-paused .topbar .rh-pause-head strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ #app.rh-paused .topbar .rh-pause-head small{font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar nav{grid-area:menu;display:grid;align-content:start}
+ #app.rh-paused .topbar .menu-wrap{position:static}
+ #app.rh-paused .topbar #menuDrop{position:static;display:grid!important;gap:8px;padding:0;margin:0;border:0;background:none;box-shadow:none;backdrop-filter:none;min-width:0;transform:none;opacity:1;visibility:visible}
+ #app.rh-paused .topbar .menu-drop-line{display:none}
+ #app.rh-paused .topbar .header-right{grid-area:right;display:grid;align-content:start;gap:8px;margin:0}
+ #app.rh-paused .topbar .rh-pause-extra{grid-area:extra;display:grid;align-content:start;gap:8px}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 20px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-transform:uppercase;text-align:left;filter:none;cursor:pointer}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume) svg{width:18px;height:18px;color:var(--a1)}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button):hover::before{background:color-mix(in srgb,var(--panel) 70%,var(--a2))}
+ #app.rh-paused .topbar .rh-resume{order:-1;height:56px;color:var(--on-hot);font-size:24px}
+ #app.rh-paused .topbar .rh-resume::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #app.rh-paused .topbar .rh-resume kbd{margin-left:auto;font:700 13px/1 inherit;font-style:normal;padding:2px 6px;border:2px solid currentColor;border-radius:4px}
+ #app.rh-paused .topbar #barTools::after{content:"Tools"}
+ #app.rh-paused .topbar .avatar{font-size:0;background:none!important;color:#fff!important}
+ #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:20px}
+ #app.rh-paused .topbar [data-panel=help]{display:none}
+ #app.rh-paused .topbar .connection .status-dot{flex:none}
+ #app.rh-paused .topbar .sim-time{cursor:default}
+ #app.rh-paused .topbar .sim-time-row{display:flex;align-items:center;gap:12px;width:100%}
+ #app.rh-paused .topbar .sim-time-row::before{content:"Time of day";color:var(--soft);font-size:13px;letter-spacing:.16em;font-style:normal;font-weight:700}
+ #app.rh-paused .topbar #clockButton{margin-left:auto;color:var(--a1)}
+ #app.rh-paused .topbar .clock-pop{position:absolute;left:100%;top:0;margin-left:16px;z-index:2}
+ #app.rh-paused .topbar .tee-control{justify-content:space-between}
+ #app.rh-paused .topbar .tee-control label{font-size:13px;letter-spacing:.16em;color:var(--soft);font-style:normal;font-weight:700}
+ #app.rh-paused .topbar .tee-control .club-select{display:flex;align-items:center;gap:6px;margin:0;padding:0;border:0;background:none}
+ #app.rh-paused .topbar .tee-control .club-select>:is(svg,i){display:none}
+ #app.rh-paused .topbar .tee-control select{appearance:none;-webkit-appearance:none;border:0;background:none;color:#fff;font:800 italic 20px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+ #app.rh-paused .topbar .tee-control option{font:15px var(--font-ui);color:#111;text-transform:none}
+ #app.rh-paused .topbar .meter-button>span{display:flex;align-items:baseline;gap:10px}
+ #app.rh-paused .topbar .meter-button small{font-size:13px;letter-spacing:.16em;color:var(--soft);font-style:normal;font-weight:700}
+ #app.rh-paused .topbar .meter-button>svg:last-child{display:none}
+ #app.rh-paused .topbar .rh-pause-cams{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+ #app.rh-paused .topbar .rh-pause-cams::before{content:"Cameras";flex-basis:100%;font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar .rh-pause-cams button{position:relative;isolation:isolate;height:36px;padding:0 14px;border:0;background:none;color:#fff;font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+ #app.rh-paused .topbar .rh-pause-cams button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-pause-cams button:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+ #app.rh-paused .topbar .rh-pause-cond{margin:8px 0 0;font-size:15px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase}
+}

@@ -198,7 +198,7 @@ npm run preview -- --host 0.0.0.0 --port 4173 --strictPort
 2. Find the host’s local IPv4 address in its network settings. On Windows, `ipconfig` also lists it; use the address for the active Wi-Fi/Ethernet adapter.
 3. On Android, iPhone, iPad, Chromebook or the other computer, open `http://HOST_IP:4173/`, replacing `HOST_IP` with that address. For example, if the host is `192.168.1.50`, use `http://192.168.1.50:4173/`. **127.0.0.1 on a phone means the phone, not your PC.**
 4. If prompted, allow the host application’s access only on your trusted/private network. Guest Wi-Fi isolation or an organizational policy may prevent devices from reaching each other. No router port forwarding is needed.
-5. Use landscape orientation on touch devices. Use on-screen aim, shot and free-flight controls; every panel can be dragged by its grip and resized from its corner at any time, and *Reset panel layout* in the tools tray puts them back. A mouse/keyboard remains useful on tablets. Fullscreen availability depends on the browser.
+5. Use landscape orientation on touch devices. Use on-screen aim, shot and free-flight controls; the panels stay where the layout puts them (since the 1.0 interface, they no longer drag). A mouse/keyboard remains useful on tablets. Fullscreen availability depends on the browser.
 
 This binds the static preview to all host interfaces. Stop it when finished; do not expose Vite preview to the public internet. The receiving device still needs enough GPU/memory to generate and render the course. No internet connection is needed once the files/dependencies are available, but the local network and host must remain available for page loads.
 

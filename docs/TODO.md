@@ -47,6 +47,22 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
   5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
   screens keep text on the light end, or the gradient changes.
+- [ ] **Phase 1 (the round screen) is built and not seen** (17 October 2026,
+  overnight, CPU checks only). Look at, on a laptop and on the projector: the
+  hole slab, conditions, golfer cards (every frame, one to four golfers), the
+  straight map, the club panel (a long club name), the shape chips, the
+  meter (and a meter skin), the pin tag, the ball light with a monitor armed,
+  the Esc list (every row works and closes it; the clock and tee work in
+  place), the range (R for range controls), and an iPad both ways up. Then run
+  the smoke journeys (their top-bar steps now go through the Esc list) --
+  `hud-reachable`, `text-size`, `monitor`, `mixed-group`, `profile`,
+  `relief`, `range`, `floodlit-night`, the challenges -- and phones, which
+  should be unchanged.
+- [ ] **The Text size barely enlarges the round screen on 16:9** (about a
+  tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
+  The owner's call whether that is right for the bay.
+- [ ] **The typed aim distance has no home on the round screen** (arrows and
+  the map still aim). Decide in phase 3 whether it comes back.
 - [ ] **The canvas's 1024 floor for the Text size is PLACED** (ui-layout.js
   `MIN_CANVAS_WIDTH`): the first screen that overflows at 125% moves it.
 

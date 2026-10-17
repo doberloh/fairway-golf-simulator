@@ -142,7 +142,14 @@ the courses several suites share.
   following the week), `ui-kit` (every class `uk-` and every rule scoped to
   `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
   rules, the two font files are local woff2 with their licence, text escaped).
-  None of it is on a screen yet, so no smoke journey covers it.
+  `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
+  club, scores with a real minus, golfer cards, keys, the ball light -- and
+  how large they are drawn: the club panel and the meter, and the slab and the
+  cards, never meet at any tested size or Text size).
+  The kit is on no screen yet; the round screen is (in play, off a phone), and
+  the smoke journeys reach the top bar's controls through `t.chrome()` /
+  `t.menuItem()`, which open the Esc list where the round screen hides the bar
+  (17 October 2026; not yet run).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 
