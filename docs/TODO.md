@@ -390,7 +390,7 @@ the plan (local: `docs/reports/CHALLENGES_PLAN.md`) was approved with the
 owner's answers the same day -- medals, nothing locked, repeat pay capped,
 distance medals against the golfer's own driver, every hole challenge on one
 fixed Challenge Course, the week's challenge on the course of the week. Step 1
-is on branch `more-challenges`: 27 challenges from one table
+is on branch `more-challenges`: 27 challenges (36 since step 3) from one table
 (`src/challenges.js`, `src/challenge-play.js`, `src/challenge-spots.js`),
 medals, the new pay and the day's allowance, the Challenges screen with five
 tabs, range challenges, the three old ones moved onto it. Tested in Node
@@ -413,12 +413,14 @@ smoke journey `challenge` passes (below, *Done*).
   the menu tile's "This week: ...", the bar's "This week ·", the results
   card's "best this week", its line on My profile, and the XP popup for a
   first finish (100) and a gold. The four new achievements on My profile.
-- [ ] **Step 3: the rest** -- Every par 3, Greens in regulation, Scrambler and
-  Putting tour (holes in turn), the three head-to-heads with the *Head of the
-  Table* achievement, and the two Rounds (Sudden death waits for
-  `endless-menu-clock` to merge). Adding the four course ones to the week's
-  pool means a new `WEEKLY_POOLS` row from a future week, never editing the
-  first (PROJECT_HANDOFF *The challenge of the week is the date*).
+- [ ] **Look at step 3 in the game**: Every par 3 and Greens in regulation
+  moving hole to hole by themselves; Putting tour; a shootout and a long-drive
+  knockout with two or three golfers (the toast naming who went out, the
+  results card's "Won" and "Out in round 2"); Bingo Bango Bongo with every
+  golfer's ball showing where it lies and the bar's points; Sudden death's card
+  coming up when everyone is out, while the run can go on; Bogey-free nine's
+  card at the end of the nine; the bar following each goal; the Head of the
+  Table achievement.
 
 # Done
 
@@ -442,6 +444,23 @@ smoke journey `challenge` passes (below, *Done*).
   Regular). The fifth in the plan, Head of the Table, waits for the
   head-to-heads in step 3. Tested in Node (`challenge-week`, `achievements`,
   `profile`); not seen in the game by a person.
+- [x] **Step 3: the last nine and the play-through tests** (16 October 2026).
+  Every par 3, Greens in regulation, Scrambler and Putting tour across holes
+  (`spotsAcross`); Closest-to-the-pin shootout, Long-drive knockout and Bingo
+  Bango Bongo for two to four, with Head of the Table; Sudden death and
+  Bogey-free nine as real rounds with a goal (`src/round-goals.js`,
+  `round.goal`). The four across holes join the week's pool from 4 January 2027
+  (a new `WEEKLY_POOLS` row). Set-up moved into `planChallenge`/`playContext`,
+  shared with a new Node test that plays every challenge through the ball model
+  (`challenge-virtual`, `tests/virtual-golfer.mjs`); its first run found One
+  club unwinnable with the stock bag (no 8-iron) -- fixed. The round matrix
+  plays both goals. npm test 884/884. Smoke: `challenge`, `challenge-week` and
+  the new `challenge-more` pass (GPU, the owner's go-ahead); `challenge-more`'s
+  first run stopped at the "Leave this round?" question after Bogey-free nine
+  -- right of the game, a real round; the harness now answers it.
+  The full smoke run then passed 34 of 35; `look` still expected 13
+  achievements (now 18) and passes with the count updated. Not yet looked at
+  by a person in the game.
 - [x] **The smoke journeys `challenge` and `challenge-week` pass** (GPU, the
   owner's go-ahead, 50 s). The first run failed twice: the harness counted
   the challenge of the week's card on every tab (32 cards, not 27 -- the

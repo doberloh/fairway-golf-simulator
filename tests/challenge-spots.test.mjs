@@ -5,14 +5,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {world} from './worlds.mjs';
 import {CHALLENGES, challenge, challengeCourseSettings} from '../src/challenges.js';
-import {chooseHole, spotsFor, holeAdapter, zoneFor, callsFor, onLine, seeded} from '../src/challenge-spots.js';
+import {chooseHole, spotsFor, spotsAcross, holeAdapter, zoneFor, callsFor, onLine, seeded} from '../src/challenge-spots.js';
 import {greenDistance} from '../src/course.js';
 
 const YARD = .9144, FOOT = .3048;
 const settings = challengeCourseSettings(), w = world(settings);
 const holes = w.holes.map(h => ({par: h.par, length: h.routeLength}));
 const course = CHALLENGES.filter(c => c.where === 'course');
-const pick = def => chooseHole(def, holes, i => def.spot ? spotsFor(def, holeAdapter(w.holes[i]), `${settings.seed}:${i}:${def.id}`) : []);
+const adapters = w.holes.map(h => holeAdapter(h));
+// A challenge across holes has spots on several, each with its hole.
+const pick = def => def.hole === 'course' ? (s => s && {hole: s[0].hole, spots: s})(spotsAcross(def, adapters, `${settings.seed}:${def.id}`, {driver: 250}))
+ : chooseHole(def, holes, i => def.spot ? spotsFor(def, adapters[i], `${settings.seed}:${i}:${def.id}`) : []);
 
 // THE COURSE HOSTS EVERY ONE. If a generator change breaks this, the seed
 // moves on (CHALLENGE-2) and RESEARCH.md says so -- never loosen the test.
@@ -25,9 +28,16 @@ test('every spot is on ground its challenge allows, and the same every time', ()
   const p = pick(def), h = w.holes[p.hole], again = pick(def);
   assert.deepEqual(p, again, `${def.id}: the same spots every time`);
   for (const s of p.spots) {
-   const surf = h.surface(s.x, s.z), edge = greenDistance(h, s.x, s.z);
-   assert.ok(!['water', 'tee'].includes(surf), `${def.id}: a spot on ${surf}`);
+   const hh = s.hole != null ? w.holes[s.hole] : h, surf = hh.surface(s.x, s.z), edge = greenDistance(hh, s.x, s.z);
    const k = def.spot.kind;
+   // Every par 3 and Bingo Bango Bongo play from the tee, and so does Greens
+   // in regulation on a par 3: those are the tee in play, exactly.
+   const fromTee = k === 'par3s' || k === 'firstHoles' || (k === 'gir' && hh.par === 3);
+   if (fromTee) { const t = holeAdapter(hh).tee; assert.deepEqual([s.x, s.z], [t.x, t.z], `${def.id}: hole ${s.hole + 1}'s tee`); continue; }
+   assert.ok(!['water', 'tee'].includes(surf), `${def.id}: a spot on ${surf}`);
+   if (k === 'gir') assert.ok(['fairway', 'semi'].includes(surf), `gir: hole ${s.hole + 1} from the ${surf}`);
+   if (k === 'scrambler') { assert.ok(edge >= 3 * YARD - .01 && edge <= 18 * YARD + .01, `scrambler: ${(edge / YARD).toFixed(1)} yd off`); }
+   if (k === 'putttour') { assert.equal(surf, 'green', 'putttour'); assert.ok(s.feet >= 6 && s.feet <= 40, `putttour: ${s.feet} ft`); }
    if (k === 'around') { assert.ok(edge >= def.spot.lo * YARD - .01 && edge <= def.spot.hi * YARD + .01, `${def.id}: ${(edge / YARD).toFixed(1)} yd off`); if (def.spot.grass) assert.notEqual(surf, 'sand', def.id); }
    if (k === 'bunker') assert.equal(surf, 'sand', def.id);
    if (k === 'shortSide') assert.ok(['fringe', 'semi', 'rough'].includes(surf), def.id);
@@ -82,4 +92,13 @@ test('calls alternate, and called carries stay in the golfer\'s reach', () => {
  assert.deepEqual(callsFor(challenge('number'), 'x'), callsFor(challenge('number'), 'x'), 'seeded');
  assert.deepEqual(callsFor(challenge('closest'), 'x'), []);
  assert.notEqual(seeded('a')(), seeded('b')());
+});
+
+// ACROSS HOLES: the holes they ask for, in course order.
+test('challenges across holes use the holes they say', () => {
+ const across = id => pick(challenge(id)).spots.map(s => s.hole);
+ assert.deepEqual(across('par3s'), holes.map((h, i) => h.par === 3 ? i : -1).filter(i => i >= 0), 'every par 3');
+ for (const id of ['gir', 'scrambler', 'putttour']) assert.deepEqual(across(id), [0, 1, 2, 3, 4, 5, 6, 7, 8], `${id}: the first nine`);
+ assert.deepEqual(across('bbb'), [0, 1, 2]);
+ assert.equal(spotsAcross(challenge('gir'), adapters.slice(0, 5), 'x'), null, 'a course without nine holes cannot host it');
 });

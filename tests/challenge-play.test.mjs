@@ -179,3 +179,42 @@ test('a play pays first medals once, then only a capped trickle', () => {
  assert.deepEqual(normaliseChallengeDay({day: '2026-10-16', xp: 40, bests: ['lag', 7]}), {day: '2026-10-16', xp: 40, bests: ['lag']});
  assert.equal(normaliseChallengeDay({day: 'today'}), null);
 });
+
+// THE KNOCKOUT, by hand: the one worst ball alone goes; a tie for last keeps
+// everyone in it; off the green is out unless everyone is.
+test('a knockout puts out the worst alone, keeps a tie, and spares a round everyone missed', () => {
+ const st = newPlay('shootout', {seats: 3, pin});
+ const play = (...feet) => feet.map(ft => playBall(st, ball(ft == null ? {rest: 'rough'} : {end: at(ft), rest: 'green'})));
+ play(10, 20, 20);
+ assert.deepEqual(st.out, [false, false, false], 'a tie for last keeps both');
+ play(null, null, null);
+ assert.deepEqual(st.out, [false, false, false], 'everyone off the green: nobody out');
+ let e = play(10, null, 30).at(-1);
+ assert.deepEqual(e.outs, [1], 'off the green is out when someone is on');
+ assert.deepEqual(st.out, [false, true, false]);
+ e = play(12, 8).at(-1);
+ assert.equal(e.done, true);
+ assert.deepEqual(st.winners, [2]);
+ assert.deepEqual(results(st).map(r => [r.seat, r.score.won]), [[2, true], [0, false], [1, false]]);
+ assert.throws(() => newPlay('shootout', {seats: 1, pin}), /two to four/);
+});
+// BINGO BANGO BONGO, by hand: the away rule, and the three points.
+test('Bingo Bango Bongo: the farthest plays, and each point goes where it should', () => {
+ const tees = [{x: 0, z: 0, hole: 0}], st = newPlay('bbb', {seats: 2, spots: tees, pins: [pin]});
+ assert.equal(st.balls, 1);
+ assert.equal(turn(st).seat, 0, 'both on the tee: the first golfer');
+ playBall(st, ball({end: at(60), rest: 'fairway'}));
+ assert.equal(turn(st).seat, 1, 'the other is still on the tee, so farther');
+ playBall(st, ball({end: at(30), rest: 'green'}));
+ assert.equal(st.bingo, 1, 'first on the green');
+ assert.equal(turn(st).seat, 0, 'now golfer 1 is farther');
+ playBall(st, ball({end: at(5), rest: 'green'}));
+ assert.equal(st.bango, 0, 'the nearest once both are on');
+ assert.equal(turn(st).seat, 1);
+ playBall(st, ball({end: {...pin}, holed: true}));
+ assert.equal(st.bongo, 1, 'the first in');
+ const e = playBall(st, ball({end: {...pin}, holed: true}));
+ assert.equal(e.done, true);
+ assert.deepEqual(st.results, [[1], [2]]);
+ assert.deepEqual(st.winners, [1]);
+});

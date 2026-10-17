@@ -118,6 +118,7 @@ export const CHALLENGE_PAY = {
  play: [5, 10, 15, 25],        // a finished play: no medal, bronze, silver, gold
  playLong: [15, 25, 40, 60],
  best: 20,                      // a new best, once per challenge per day
+ win: 30,                       // winning a head-to-head, inside the day's allowance
  dayCap: 250,                   // repeat pay (finishing plays) a day, across all challenges
 };
 const MEDAL_LABEL = ['', 'bronze', 'silver', 'gold'];
@@ -125,7 +126,7 @@ const MEDAL_LABEL = ['', 'bronze', 'silver', 'gold'];
 // the medal and the day's allowance onto the profile; the caller awards the
 // total through the ledger. `medal` 0-3 is the best this play reached, `best`
 // whether it set a new record, `mult` the Swing Meter difficulty's.
-export function challengePay(p, {id, medal = 0, best = false, long = false, mult = 1}, now = Date.now()) {
+export function challengePay(p, {id, medal = 0, best = false, long = false, mult = 1, won = false}, now = Date.now()) {
  const parts = [], day = dayOf(now), m = Number.isFinite(mult) ? mult : 1;
  if (p.xpChallenge?.day !== day) p.xpChallenge = {day, xp: 0, bests: []};
  const had = p.medals?.[id] || 0;
@@ -136,6 +137,9 @@ export function challengePay(p, {id, medal = 0, best = false, long = false, mult
  if (best && !p.xpChallenge.bests.includes(id)) { p.xpChallenge.bests.push(id);parts.push({label: 'New best', xp: Math.round(CHALLENGE_PAY.best * m)}); }
  const play = Math.min(Math.round((long ? CHALLENGE_PAY.playLong : CHALLENGE_PAY.play)[medal] * m), Math.max(0, CHALLENGE_PAY.dayCap - p.xpChallenge.xp));
  if (play > 0) { p.xpChallenge.xp += play;parts.push({label: medal ? `${MEDAL_LABEL[medal][0].toUpperCase() + MEDAL_LABEL[medal].slice(1)} play` : 'Challenge played', xp: play}); }
+ // A head-to-head won pays inside the same allowance (it can be replayed).
+ const win = won ? Math.min(Math.round(CHALLENGE_PAY.win * m), Math.max(0, CHALLENGE_PAY.dayCap - p.xpChallenge.xp)) : 0;
+ if (win > 0) { p.xpChallenge.xp += win;parts.push({label: 'Won the head-to-head', xp: win}); }
  return {parts, xp: sumParts(parts), capped: play < Math.round((long ? CHALLENGE_PAY.playLong : CHALLENGE_PAY.play)[medal] * m)};
 }
 export function normaliseChallengeDay(d) {

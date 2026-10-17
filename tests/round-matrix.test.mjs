@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {Round, FORMATS} from '../src/game.js';
 import {awardedPutts} from '../src/putting.js';
 import {skins, decidedHoles, skinsWinner} from '../src/skins.js';
+import {goalStatus} from '../src/round-goals.js';
 
 // EVERY FORMAT, EVERY GROUP. The other round suites each pin one behaviour with
 // a hand-written card; this one plays whole rounds of every format with every
@@ -288,12 +289,15 @@ function expectedSkins(golfers, decided) {
 function playRound(cfg, seed) {
  const rand = random(seed);
  const players = cfg.teams.map((team, i) => ({name: NAMES[i], team}));
- let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds});
+ let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, goal: cfg.goal || ''});
  const ref = scorer(r);
  const why = `${cfg.mode}${cfg.endless ? ' (endless)' : ''}, ${cfg.teams.join('')}, ${cfg.holes} holes, ${cfg.putting} putting, seed ${seed}`;
  const holes = cfg.endless ? cfg.holes + 2 : cfg.holes;
  for (let h = 0; h < holes; h++) {
+  // A round with a goal (round-goals.js) is told its par, as main.js does.
+  if (cfg.goal) r.pars[r.hole] = 4;
   r = playHole(r, ref, rand, cfg, why);
+  if (cfg.goal) checkGoal(r, why, h);
   if (r.mode === 'skins') {
    const got = skins(r.cards, decidedHoles(r)).won;
    assert.deepEqual(got, expectedSkins(ref.golfers, decidedHoles(r)), `${why}: skins after hole ${h + 1}`);
@@ -403,4 +407,43 @@ test('a round somebody joined mid-round saves, loads and takes a mulligan', () =
   assert.ok(back.mulligan(), `${mode}: the mulligan works after loading`);
   assert.ok(r.mulligan(), `${mode}: and without loading`);
  }
+});
+
+// ROUNDS WITH A GOAL (round-goals.js, 16 October 2026): Sudden death on an
+// endless run and Bogey-free nine on nine holes, with every group and putting
+// mode, saves and mulligans and golfers coming and going as for any round. The
+// goal changes nothing about play, so the scorer above checks the play; this
+// checks the goal against its own reading of the card after every hole, and
+// that the goal rides through every save.
+function checkGoal(r, why, h) {
+ assert.ok(['suddendeath', 'bogeyfree'].includes(r.goal), `${why}: the goal survives the hole ${h + 1}`);
+ const got = goalStatus(r.goal, r);
+ r.cards.forEach((card, seat) => {
+  let score = 0, out = false;
+  for (let k = 0; k < card.length; k++) {
+   if (!Number.isFinite(card[k])) continue;
+   const bogey = Math.round(card[k]) > 4;
+   if (r.goal === 'suddendeath') { if (bogey) { out = true; break; } score++; } else if (bogey) score++;
+  }
+  if (r.goal === 'bogeyfree') out = r.finished;
+  assert.deepEqual(got.seats[seat], {score, out}, `${why}: golfer ${seat + 1}'s goal after hole ${h + 1}`);
+ });
+ assert.equal(got.over, got.seats.every(x => x.out), `${why}: over when everyone is decided`);
+}
+test('rounds with a goal: sudden death and bogey-free nine, every group', () => {
+ let played = 0;
+ for (let n = 1; n <= 4; n++) for (const putting of ['holeout', 'dartboard', 'decimal']) for (const seed of SEEDS) {
+  const teams = Array(n).fill('A');
+  playRound({mode: 'stroke', teams, endless: true, putting, holes: 3, changes: true, outOfBounds: 'stroke', goal: 'suddendeath'}, seed);
+  playRound({mode: 'stroke', teams, endless: false, putting, holes: 9, changes: true, outOfBounds: 'e5', goal: 'bogeyfree'}, seed);
+  played += 2;
+ }
+ assert.equal(played, 72);
+ // A goal the round cannot carry is refused.
+ const p = [{name: 'Alex', team: 'A'}];
+ assert.throws(() => new Round({players: p, goal: 'suddendeath'}), /endless/);
+ assert.throws(() => new Round({players: p, holes: 18, goal: 'bogeyfree'}), /nine/);
+ assert.throws(() => new Round({players: p, mode: 'skins', endless: true, goal: 'suddendeath'}), /stroke play|two to four/);
+ assert.throws(() => new Round({players: p, goal: 'nonsense'}), /goal/);
+ assert.equal(new Round({players: p}).goal, '');
 });

@@ -4,10 +4,10 @@ import {ACHIEVEMENTS, achievement, sandSave, longestStreak, holeAchievements, ro
 import {ACHIEVEMENT_TITLES, isUnlocked, wornItem, reward} from '../src/rewards.js';
 
 // THE SPEC'S TABLE (8.3): thirteen, each with XP, the titles where named.
-// Thirteen from the spec, and four for the challenges (16 October 2026).
-test('seventeen achievements, each paying XP, eleven with a title', () => {
- assert.equal(ACHIEVEMENTS.length, 17);
- assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 17);
+// Thirteen from the spec, and five for the challenges (16 October 2026).
+test('eighteen achievements, each paying XP, eleven with a title', () => {
+ assert.equal(ACHIEVEMENTS.length, 18);
+ assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 18);
  for (const a of ACHIEVEMENTS) assert.ok(a.xp > 0 && a.name && a.how, a.id);
  assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 11);
  assert.equal(achievement('ace').xp, 200);
@@ -81,6 +81,11 @@ test('medals and weeks of the week\'s challenge earn their achievements', () => 
  assert.ok(countedAchievements(prof).includes('weekly-regular'));
  const golds = {medals: Object.fromEntries(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'].map(k => [k, 3]))};
  assert.deepEqual(progressOf(achievement('gold-standard'), golds), [10, 10]);
- assert.equal(achievement('all-rounder').goal, 27, 'every challenge there is');
+ assert.equal(achievement('all-rounder').goal, 33, 'every challenge with medals');
+ // Head of the Table: head-to-heads won, all of them together.
+ const h = {challenges: {shootout: {won: 4, plays: 9}, knockout: {won: 3, plays: 5}, bbb: {won: 2, plays: 2}}};
+ assert.deepEqual(progressOf(achievement('head-of-the-table'), h), [9, 10]);
+ h.challenges.bbb.won = 3;
+ assert.ok(countedAchievements(h).includes('head-of-the-table'));
  assert.ok(!countedAchievements({medals: {closest: 3}}).includes('all-rounder'));
 });

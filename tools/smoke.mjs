@@ -2405,7 +2405,7 @@ const JOURNEYS = [
  // open is known.
  {
   name: 'challenge',
-  what: 'Challenges: five tabs holding all 27, closest to the pin plays five balls on the Challenge Course with the bar up, nothing is saved as a round, the results card offers it again; a putting one holes out, a range one plays on the range, and a long drive starts',
+  what: 'Challenges: seven tabs holding all 36, closest to the pin plays five balls on the Challenge Course with the bar up, nothing is saved as a round, the results card offers it again; a putting one holes out, a range one plays on the range, and a long drive starts',
   async prepare(page) {
    // A golfer at level 7 with a record from before medals. Every challenge is
    // open from the start (15 and 16 October 2026).
@@ -2427,17 +2427,17 @@ const JOURNEYS = [
     await t.page.click('#challengeGo');
     await t.inPlay(180 * SLOW);
    };
-   await t.step('Challenges → five tabs, all 27, none locked, the old record already a medal', async () => {
+   await t.step('Challenges → seven tabs, all 36, none locked, the old record already a medal', async () => {
     await fromMenu(t, 'Challenges');
-    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 5), 'the five tabs', 10 * SLOW);
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
     let cards = 0;
-    for (const tab of ['tee', 'approach', 'range', 'short', 'putting']) {
+    for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
      await t.page.click(`[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
      // The challenge of the week's card sits above the tabs, on every one: count the tab's own.
      cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
     }
-    if (cards !== 27) throw new Error(`${cards} challenge cards`);
+    if (cards !== 36) throw new Error(`${cards} challenge cards`);
     if (await t.page.evaluate(() => document.querySelectorAll('.chal-card.locked, .chal-card[disabled]').length)) throw new Error('a challenge is locked');
     const m = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-profiles-v1')).profiles[0].medals);
     if (m?.closest !== 3) throw new Error(`the 9-foot record from before medals is not a gold: ${JSON.stringify(m)}`);
@@ -2515,7 +2515,7 @@ const JOURNEYS = [
    const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
    await t.step('the menu tile names this week\'s challenge', async () => {
     const note = await t.page.textContent('#menuChallengesNote');
-    if (!/^This week: .+ · 0 of 81 medals$/.test(note)) throw new Error(`the tile reads: ${note}`);
+    if (!/^This week: .+ · 0 of 99 medals$/.test(note)) throw new Error(`the tile reads: ${note}`);
    });
    await t.step('its card is on the Challenges screen, and it starts', async () => {
     await fromMenu(t, 'Challenges');
@@ -2537,6 +2537,89 @@ const JOURNEYS = [
      if (i === 8) throw new Error('nine strokes and no ball finished');
     }
     if (await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'))) throw new Error('the week\'s challenge wrote the round slot');
+   });
+  },
+ },
+ // STEP 3 OF THE CHALLENGES (16 October 2026): a challenge that goes from hole
+ // to hole, a head-to-head (refused alone, played with two), and the two
+ // rounds with a goal, which are real rounds and do save.
+ {
+  name: 'challenge-more',
+  what: 'Challenges, step 3: seven tabs holding all 36; Every par 3 moves from hole to hole; a head-to-head is refused alone and played by two; Bogey-free nine and Sudden death start as real rounds that save, with the goal on the bar',
+  async prepare(page) {
+   await page.addInitScript(() => { try { localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 3, main: 'pcm', profiles: [{id: 'pcm', name: 'More', created: 1, counters: {}, bests: {}, rounds: [], xp: 0, xpLog: {}}]})); localStorage.removeItem('fairway-round-v1'); } catch {} });
+  },
+  async run(t) {
+   await menuReady(t);
+   const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
+   // Leaving a real round (a goal round is one) asks first: leave it unsaved.
+   const toMenu = async () => {
+    await t.page.click('#menuNav');await t.page.click('#dropMenu');
+    const leave = t.page.getByRole('button', {name: /Leave without saving/});
+    await leave.waitFor({timeout: 3000 * SLOW}).then(() => leave.click(), () => {});
+    await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
+   };
+   await t.step('Challenges → seven tabs, all 36', async () => {
+    await fromMenu(t, 'Challenges');
+    await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
+    let cards = 0;
+    for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
+     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
+     cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
+    }
+    if (cards !== 36) throw new Error(`${cards} challenge cards`);
+   });
+   await t.step('a head-to-head alone is refused, with the reason', async () => {
+    await t.page.click('[data-chal-tab="versus"]');
+    await t.page.click('[data-challenge="shootout"]');
+    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
+    await t.page.click('#challengeGo');
+    await t.until(() => t.page.evaluate(() => /two to four/.test(document.getElementById('roundError')?.textContent || '')), 'the refusal', 10 * SLOW);
+   });
+   await t.step('Every par 3 starts on a par 3 and moves to the next after a ball', async () => {
+    await t.page.click('[data-chal-tab="approach"]');
+    await t.page.click('[data-challenge="par3s"]');
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => bar(/Ball 1 of 7/), 'the bar on ball 1 of 7', 20 * SLOW);
+    if (await t.page.textContent('#holePar') !== '3') throw new Error('not on a par 3');
+    const first = await t.page.textContent('#holeNumber');
+    await t.shot();
+    await t.until(() => bar(/Ball 2 of 7/), 'ball 2', 15 * SLOW);
+    await t.until(async () => (await t.page.textContent('#holeNumber')) !== first, 'the next par 3', 15 * SLOW);
+    if (await t.page.textContent('#holePar') !== '3') throw new Error('the second hole is not a par 3');
+    if (await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'))) throw new Error('the challenge wrote the round slot');
+   });
+   await t.step('a shootout for two: a round, then someone out or both on', async () => {
+    await t.page.evaluate(() => window.lab.challenge('shootout', [{name: 'Ann', team: 'A', hand: 'RH'}, {name: 'Ben', team: 'A', hand: 'RH'}]));
+    await t.inPlay(180 * SLOW);
+    await t.until(() => bar(/Round 1 · 2 left/), 'round 1 with two left', 20 * SLOW);
+    await t.shot();
+    await t.shot();
+    await t.until(() => t.page.evaluate(() => { const c = window.lab.state().challenge; return c && (c.done || c.turn.k === 1); }), 'the round judged', 15 * SLOW);
+   });
+   await t.step('Bogey-free nine starts as a real round: it saves, with the goal on the bar', async () => {
+    await toMenu();
+    await fromMenu(t, 'Challenges');
+    await t.page.click('[data-chal-tab="rounds"]');
+    await t.page.click('[data-challenge="bogeyfree"]');
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => bar(/Bogey-free nine/), 'the goal on the bar', 20 * SLOW);
+    await t.shot();
+    await t.until(() => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.goal === 'bogeyfree'), 'the round saved with its goal', 15 * SLOW);
+   });
+   await t.step('Sudden death starts an endless run with its goal', async () => {
+    await toMenu();
+    await fromMenu(t, 'Challenges');
+    await t.page.click('[data-chal-tab="rounds"]');
+    await t.page.click('[data-challenge="suddendeath"]');
+    await t.page.click('#challengeGo');
+    await t.inPlay(180 * SLOW);
+    await t.until(() => bar(/Sudden death/), 'the goal on the bar', 20 * SLOW);
+    const g = await t.page.evaluate(() => window.lab.state().goal);
+    if (g?.goal !== 'suddendeath') throw new Error(`the round's goal: ${JSON.stringify(g)}`);
    });
   },
  },
@@ -2695,7 +2778,8 @@ const JOURNEYS = [
     const v = await t.page.evaluate(() => ({framed: !!document.querySelector('.profile-id img.ball-avatar.framed'), level: document.querySelector('.profile-level small')?.textContent, ach: document.querySelectorAll('.achievement').length, earned: document.querySelectorAll('.achievement.earned').length}));
     if (!v.framed) throw new Error('no frame on the picture');
     if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
-    if (v.ach !== 13 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+    // Thirteen from the spec and five for the challenges (16 October 2026).
+    if (v.ach !== 18 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
    });
    for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {
     await t.step(`the ${tab} tab: put one on, and it is kept`, async () => {

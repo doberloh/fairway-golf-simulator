@@ -1,4 +1,5 @@
 import {puttingConfig,awardedPutts} from './putting.js';
+import {goalProblem} from './round-goals.js';
 // HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
 // the default, and every golfer from before this -- plays off the launch
 // monitor whenever it is armed, which is exactly how a round played before;
@@ -33,7 +34,7 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly=''}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
@@ -50,6 +51,10 @@ export class Round{
   // THE COURSE OF THE WEEK this round is on (weekly.js weekKey), or ''. It rides
   // through saves like the rest, so a week's round resumed still counts for it.
   if(typeof weekly!=='string'||(weekly&&!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(weekly)))throw Error('Invalid course of the week.');this.weekly=weekly;
+  // A GOAL on top of the round (round-goals.js): Sudden death or Bogey-free
+  // nine, or ''. It changes nothing about how the round is played; it rides
+  // through saves so a resumed round still counts for it.
+  {const why=typeof goal==='string'?goalProblem(goal,{endless,holes,mode}):'Invalid round goal.';if(why)throw Error(why);this.goal=goal;}
   // WHICH ROUND THIS IS, for the player's history. It rides through every save,
   // mulligan and restore, so a round left and resumed is one entry, not two. A
   // save from before it existed gets one on its first load.

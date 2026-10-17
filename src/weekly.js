@@ -87,6 +87,12 @@ export const WEEKLY_POOLS = [
  {from: 0, ids: ['long', 'fairway', 'straight', 'streak', 'shape', 'zone', 'closest', 'ace', 'ladder', 'hold',
   'dartboard', 'clock', 'number', 'oneclub', 'highlow', 'curve', 'updown', 'chipclose', 'chipin', 'pitch',
   'fourft', 'puttladder', 'lag', 'world']},
+ // From Monday 4 January 2027 (week 157), with the four that go from hole to
+ // hole (step 3 of the plan, 16 October 2026). Head to head needs a group and
+ // the rounds are rounds, so neither is ever the week's challenge.
+ {from: 157, ids: ['long', 'fairway', 'straight', 'streak', 'shape', 'zone', 'closest', 'ace', 'ladder', 'hold',
+  'dartboard', 'clock', 'number', 'oneclub', 'highlow', 'curve', 'updown', 'chipclose', 'chipin', 'pitch',
+  'fourft', 'puttladder', 'lag', 'world', 'par3s', 'gir', 'scrambler', 'putttour']},
 ];
 // The pool and the position in it for a week.
 function poolFor(index) {

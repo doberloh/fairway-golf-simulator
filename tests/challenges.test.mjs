@@ -7,32 +7,37 @@ import {CHALLENGES, GROUPS, challenge, challengesIn, medalOf, medalTargets, bett
  medalsFromRecords, recordScore, feetText, scoreText, targetText, isUpAndDown, MEDAL_TOTAL, challengeCourseSettings, CHALLENGE_SEED} from '../src/challenges.js';
 import {rewardsOf} from '../src/rewards.js';
 
-const ORDERS = ['turns', 'streak', 'spotOut'], PLAYS = ['max', 'min', 'sum', 'mean', 'updown'], SHOWS = ['feet', 'yards', 'points', 'count', 'updown'];
-const HOLES = ['par3', 'shortPar3', 'longest', 'longPar4', 'par4', 'spots', 'bigGreen'];
+const ORDERS = ['turns', 'streak', 'spotOut', 'knockout', 'holes', 'round'], PLAYS = ['max', 'min', 'sum', 'mean', 'updown', 'knockout', 'points', 'round'];
+const SHOWS = ['feet', 'yards', 'points', 'count', 'updown', 'percent', 'strokes', 'versus'];
+const HOLES = ['par3', 'shortPar3', 'longest', 'longPar4', 'par4', 'spots', 'bigGreen', 'course'];
 
-// STEP 1 OF THE PLAN: 27 challenges in five tabs; head to head, rounds and the
-// course ones that move from hole to hole come in step 3.
-test('27 challenges, each row complete, in five tabs', () => {
- assert.equal(CHALLENGES.length, 27);
- assert.deepEqual(GROUPS.map(g => [g.id, challengesIn(g.id).length]), [['tee', 6], ['approach', 5], ['range', 6], ['short', 6], ['putting', 4]]);
+// THE PLAN'S 36, in seven tabs (16 October 2026): 27 in step 1, the four that
+// go from hole to hole, three head-to-heads and two rounds in step 3.
+test('36 challenges, each row complete, in seven tabs', () => {
+ assert.equal(CHALLENGES.length, 36);
+ assert.deepEqual(GROUPS.map(g => [g.id, challengesIn(g.id).length]), [['tee', 6], ['approach', 7], ['range', 6], ['short', 7], ['putting', 5], ['versus', 3], ['rounds', 2]]);
  assert.equal(new Set(CHALLENGES.map(c => c.id)).size, CHALLENGES.length, 'ids are unique');
  for (const c of CHALLENGES) {
-  for (const k of ['id', 'name', 'group', 'how', 'where', 'balls', 'order', 'ball', 'play', 'better', 'medals', 'show']) assert.ok(c[k] != null, `${c.id} has no ${k}`);
+  for (const k of ['id', 'name', 'group', 'how', 'where', 'balls', 'order', 'ball', 'play', 'better', 'show']) assert.ok(c[k] != null, `${c.id} has no ${k}`);
   assert.ok(GROUPS.some(g => g.id === c.group), c.id);
-  assert.ok(['course', 'range'].includes(c.where), c.id);
+  assert.ok(['course', 'range', 'round'].includes(c.where), c.id);
   assert.ok(ORDERS.includes(c.order) && PLAYS.includes(c.play) && SHOWS.includes(c.show), c.id);
   assert.ok(['high', 'low'].includes(c.better), c.id);
   if (c.where === 'course') assert.ok(HOLES.includes(c.hole), `${c.id} needs a hole rule`);
+  if (c.hole === 'course') assert.ok(c.spot?.kind, `${c.id} needs spots across holes`);
   if (c.where === 'range') assert.ok(!c.spot && !c.hole, `${c.id} plays from the mat`);
+  if (c.where === 'round') assert.ok(['suddendeath', 'bogeyfree'].includes(c.goal), `${c.id} is a round with a goal`);
   if (c.targets) assert.equal(c.targets.length, c.balls, `${c.id}: a target for every ball`);
-  if (c.order === 'spotOut') assert.equal(c.play, 'updown', c.id);
+  if (c.order === 'spotOut') assert.ok(['updown', 'sum'].includes(c.play), c.id);
+  // Head to head is won, not medalled, and needs a group.
+  if (c.group === 'versus') { assert.equal(c.medals, null, c.id); assert.equal(c.who, 'group', c.id); assert.equal(medalOf(c, {won: true}), 0); continue; }
   assert.equal(c.medals.length, 3, c.id);
   // Bronze is the easiest.
   const t = medalTargets(c, {driver: 250, length: 160});
-  for (let i = 1; i < 3; i++) assert.ok(c.better === 'low' ? t[i] < t[i - 1] : t[i] > t[i - 1], `${c.id}: medals in order ${t}`);
-  if (c.show === 'count' || c.show === 'points') assert.ok(c.better === 'high', c.id);
+  for (let k = 1; k < 3; k++) assert.ok(c.better === 'low' ? t[k] < t[k - 1] : t[k] > t[k - 1], `${c.id}: medals in order ${t}`);
+  if (c.show === 'points') assert.ok(c.better === 'high', c.id);
  }
- assert.equal(MEDAL_TOTAL, 81);
+ assert.equal(MEDAL_TOTAL, 99, 'three medals in each of the 33 that have them');
  // The putting ones hole out, whatever the group's putting setting.
  for (const c of challengesIn('putting')) assert.equal(c.putts, true, c.id);
 });
@@ -133,4 +138,17 @@ test('old records become medals once, and only the first three', () => {
  medalsFromRecords(none);
  assert.deepEqual(none.medals, {}, 'a golfer with no records gets an empty set, which marks it done');
  assert.deepEqual(normaliseMedals({closest: 3, long: 4, ghost: 2, lag: 1}), {closest: 3, lag: 1});
+});
+
+// HEAD TO HEAD keeps games won and played, never a best.
+test('a head-to-head records wins and games', () => {
+ const prof = {};
+ assert.equal(recordChallenge(prof, 'shootout', {won: true}), false);
+ recordChallenge(prof, 'shootout', {won: false});
+ assert.deepEqual(prof.challenges.shootout, {won: 1, plays: 2});
+ assert.deepEqual(normaliseRecords({shootout: {won: 1, plays: 2}, bbb: {best: 3}}), {shootout: {won: 1, plays: 2}});
+ assert.equal(scoreText(challenge('bbb'), {won: true}), 'Won');
+ assert.equal(scoreText(challenge('par3s'), .0423), '4.2% of the length');
+ recordChallenge(prof, 'par3s', .04234);
+ assert.equal(prof.challenges.par3s.best, .042, 'a share keeps three places');
 });

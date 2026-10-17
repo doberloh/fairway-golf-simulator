@@ -8147,6 +8147,46 @@ a week key without the generator (a best set on a different hole would sit
 beside the new one); recording the week's play as the challenge's own record
 (it is a different course from the Challenge Course).
 
+**Step 3: the last nine** (16 October 2026). PLACED: Every par 3 scores a
+ball in water as a fifth of the hole's length (`HAZARD_SHARE`); Greens in
+regulation plays a par 4 from the hole's length less the shortest driver in
+the group, kept 90 to 200 yards out (a stock 250 for the week's challenge),
+and a par 5 from 100 yards; Scrambler's drops are up and down's (3 to 18 yards
+off); Putting tour's putts are 10 to 40 feet in fives, brought in a tenth at a
+time where a green has no room; Bingo Bango Bongo picks a ball up after ten
+strokes on a hole (`HOLES_GIVE_UP`), counts water or out of bounds two
+strokes from where it was played, gives bango the moment every ball still in
+play is on the green, and shares the win on a tie; a knockout puts out every
+ball that scored nothing (off the green or fairway) unless all did, else the
+one worst alone (a tie for last keeps them all), and after ten rounds the best
+of the last round wins. A head-to-head win pays 30 XP inside the day's
+allowance; Head of the Table is ten wins, 100 XP. All-Rounder's goal is the 33
+challenges with medals. Sudden death's medals are 3 / 6 / 10 holes at par or
+better, Bogey-free nine's 2 / 1 / 0 bogeys; both pay the long challenges'
+first medals (50 / 100 / 200). **Rejected**: a sudden-death run that
+`finished` the round when everyone was out (it would count a two-hole run as
+a finished round for the handicap, Centurion and round XP; an endless run is
+never finished); Bogey-free nine on any course (the owner's one fixed course).
+
+**Measured with the play-through golfer** (tests/virtual-golfer.mjs, 16 October
+2026; the Swing Meter on Normal, the ball model, the Challenge Course at
+generator 36): a sand wedge carries exactly to the target marker from 10 to
+60 yards on the range's flat turf and runs 3 to 4 yards after (so the golfer
+lands a chip 3.5 yards short); a stock 7-iron to a 120-yard par 3 rolls 7.5
+yards after landing with no spin added, 4.3 with the Swing Meter's spin at 3,
+and a 9-iron with spin 3 about 1 yard -- so Hold the green's 5 yards asks for
+spin or a shorter club, as meant. A steady golfer (taps within about 1% of
+the bar) medalled in 26 of the 31 challenges with medals tried and scored in
+29; the misses were putting (the golfer does not read greens). **Found**: One
+club asked for an 8-iron, which the stock bag does not have; the game handed
+over the nearest club and then scored it as the wrong one, so the challenge
+could not be won with the stock bag. Fixed: the club is settled per golfer
+from their bag at the start (challenge-spots.js `challengeClub`). A first
+version of the golfer struck every swing a full bar-length after the distance
+tap; a part swing is struck sooner (the marker runs back from where the
+distance was set), and chips came up 40% short until that was fixed -- the
+golfer's mistake, not the game's.
+
 ### Skins as a format (16 October 2026)
 
 Skins was the fourth challenge, a stroke round with skins counted over it (the

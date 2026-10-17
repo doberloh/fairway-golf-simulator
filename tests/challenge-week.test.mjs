@@ -16,7 +16,12 @@ test('the pool: real challenges, none that needs a feature not every course has'
   assert.equal(new Set(pool.ids).size, pool.ids.length);
   for (const id of pool.ids) { assert.ok(challenge(id), id); assert.notEqual(challenge(id).hole, 'spots', `${id} needs water or sand`); }
  }
- assert.equal(WEEKLY_POOLS[0].ids.length, CHALLENGES.filter(c => c.hole !== 'spots').length, 'every other challenge is in the first pool');
+ // Every solo challenge but those three: the first pool before the challenges
+ // across holes existed, the second with them.
+ const solo = CHALLENGES.filter(c => c.hole !== 'spots' && c.where !== 'round' && c.group !== 'versus');
+ assert.deepEqual([...WEEKLY_POOLS.at(-1).ids].sort(), solo.map(c => c.id).sort());
+ assert.equal(WEEKLY_POOLS[0].ids.length, 24);
+ assert.ok(WEEKLY_POOLS[0].ids.every(id => WEEKLY_POOLS[1].ids.includes(id)), 'a later pool keeps every earlier challenge');
  for (let i = 1; i < WEEKLY_POOLS.length; i++) assert.ok(WEEKLY_POOLS[i].from > WEEKLY_POOLS[i - 1].from, 'pools start in order');
 });
 
@@ -30,15 +35,17 @@ test('the same date gives the same challenge, and it turns over on Monday', () =
 });
 
 test('each cycle plays every challenge in the pool once, in a new order each time', () => {
- const pool = WEEKLY_POOLS[0], n = pool.ids.length, start = Math.ceil(weekIndex(at('2026-10-16')) / n) * n;
  const week = i => new Date(2024, 0, 1 + 7 * i, 12);
- for (const c of [0, 1, 2]) {
-  const seen = Array.from({length: n}, (_, k) => weeklyChallenge(week(start + c * n + k)).id);
-  assert.deepEqual([...seen].sort(), [...pool.ids].sort(), `cycle ${c}`);
+ for (const [p, pool] of WEEKLY_POOLS.entries()) {
+  const n = pool.ids.length, until = WEEKLY_POOLS[p + 1]?.from ?? Infinity;
+  for (let c = 0; c < 3 && pool.from + (c + 1) * n <= until; c++) {
+   const seen = Array.from({length: n}, (_, k) => weeklyChallenge(week(pool.from + c * n + k)).id);
+   assert.deepEqual([...seen].sort(), [...pool.ids].sort(), `pool ${p}, cycle ${c}`);
+  }
+  assert.notDeepEqual(cycleOrder(pool, 0), cycleOrder(pool, 1));
  }
- assert.notDeepEqual(cycleOrder(pool, 0), cycleOrder(pool, 1));
  const w = weeklyChallenge(at('2026-10-16'));
- assert.equal(w.next.length, n - 1);
+ assert.equal(w.next.length, WEEKLY_POOLS[0].ids.length - 1);
  assert.ok(!w.next.includes(w.id));
 });
 

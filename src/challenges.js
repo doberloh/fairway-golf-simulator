@@ -56,15 +56,20 @@ export const GROUPS = [
  {id: 'range', name: 'On the range'},
  {id: 'short', name: 'Short game'},
  {id: 'putting', name: 'Putting'},
+ {id: 'versus', name: 'Head to head'},
+ {id: 'rounds', name: 'Rounds'},
 ];
 export const MEDALS = ['', 'Bronze', 'Silver', 'Gold'];
 
 // A ROW:
 //   id, name, group, how      what the player is told
-//   where   'course' (a hole of the Challenge Course) or 'range'
+//   where   'course' (the Challenge Course), 'range', or 'round' (a real round
+//           with a goal on top, round-goals.js -- no play engine)
 //   hole    which hole (challenge-spots.js `chooseHole`): par3, shortPar3,
 //           longest, longPar4, par4, spots (the first the spots fit),
-//           bigGreen (the green with room for the longest putts)
+//           bigGreen (the green with room for the longest putts), course
+//           (several holes, one after another: `spotsAcross`)
+//   who     'group' for head to head (two to four); otherwise one to four
 //   spot    where each ball is played from (challenge-spots.js `spotsFor`);
 //           none = the tee, or the mat on the range
 //   targets range only: the target each ball is aimed at, in yards
@@ -72,15 +77,19 @@ export const MEDALS = ['', 'Bronze', 'Silver', 'Gold'];
 //   club    a club every ball must be hit with (the nearest in the bag)
 //   balls   balls a golfer plays (the most, for a streak)
 //   order   'turns' (a ball each in turn), 'streak' (in turn, out at the first
-//           miss), 'spotOut' (a golfer plays the spot out, then the next)
+//           miss), 'spotOut' (a golfer plays the spot out, then the next),
+//           'knockout' (a ball each a round; the worst is out), 'holes'
+//           (holes played out, the farthest from the hole first)
 //   ball    how one ball scores (challenge-play.js `scoreBall`)
 //   play    how a play's balls make the score: max, min, sum, mean, updown
 //   better  'high' or 'low'
-//   medals  [bronze, silver, gold]; `scale` says what they are measured on:
+//   medals  [bronze, silver, gold], or null (head to head is won, not
+//           medalled); `scale` says what they are measured on:
 //           driverPlus (yards over the golfer's own driver carry),
 //           driverShare (a share of it), lengthFeet (a share of the hole's
 //           length, in feet)
-//   show    how the score is written: feet, yards, points, count, updown
+//   show    how the score is written: feet, yards, points, count, updown,
+//           percent, strokes, versus
 //   noun    for a count
 //   putts   always hole out, whatever the group's putting setting
 //   long    a long challenge (pays double for its first medals)
@@ -109,6 +118,10 @@ export const CHALLENGES = [
   where: 'course', hole: 'spots', spot: {kind: 'water'}, balls: 5, order: 'turns', ball: 'onGreen', play: 'sum', better: 'high', medals: [2, 3, 5], show: 'count', noun: 'on the green'},
  {id: 'hold', name: 'Hold the green', group: 'approach', how: 'Five balls at a par 3. It counts if it stops on the green within 5 yards of where it landed.',
   where: 'course', hole: 'par3', balls: 5, order: 'turns', ball: 'holdGreen', play: 'sum', better: 'high', medals: [2, 3, 5], show: 'count', noun: 'held'},
+ {id: 'par3s', name: 'Every par 3', group: 'approach', how: 'One ball from the tee of every par 3 on the course. Your average distance from the pin, as a share of each hole\'s length, counts.',
+  where: 'course', hole: 'course', spot: {kind: 'par3s'}, balls: 0, order: 'turns', ball: 'pinShare', play: 'mean', better: 'low', medals: [.1, .06, .03], show: 'percent'},
+ {id: 'gir', name: 'Greens in regulation', group: 'approach', how: 'One approach on each of the first nine holes: par 3s from the tee, par 4s from where a good drive finishes, par 5s from 100 yards. Count the greens you hit.',
+  where: 'course', hole: 'course', spot: {kind: 'gir'}, balls: 9, order: 'turns', ball: 'onGreen', play: 'sum', better: 'high', medals: [4, 6, 8], show: 'count', noun: 'greens', long: true},
  // ON THE RANGE -- targets are paint, not greens, so these score where a ball LANDS
  {id: 'dartboard', name: 'Dartboard', group: 'range', how: 'Six balls at the 150 target, scored where they land: within 3 yards 10, 6 yards 5, on the target 3, within 15 yards 1.',
   where: 'range', targets: [150, 150, 150, 150, 150, 150], balls: 6, order: 'turns', ball: 'dart', play: 'sum', better: 'high', medals: [15, 30, 45], show: 'points'},
@@ -116,7 +129,7 @@ export const CHALLENGES = [
   where: 'range', targets: [50, 100, 150, 200, 250], balls: 5, order: 'turns', ball: 'clock', play: 'sum', better: 'high', medals: [12, 25, 38], show: 'points'},
  {id: 'number', name: 'On the number', group: 'range', how: 'Each ball has a carry called for it. Your average miss in yards counts.',
   where: 'range', balls: 6, order: 'turns', calls: 'carry', ball: 'carryMiss', play: 'mean', better: 'low', medals: [8, 5, 3], show: 'yards'},
- {id: 'oneclub', name: 'One club', group: 'range', how: 'Your 8-iron at the 50, 100 and 150 targets, two balls each, scored as Around the clock. Any other club scores nothing.',
+ {id: 'oneclub', name: 'One club', group: 'range', how: 'Your 8-iron (or the nearest club your bag holds) at the 50, 100 and 150 targets, two balls each, scored as Around the clock. Any other club scores nothing.',
   where: 'range', targets: [50, 50, 100, 100, 150, 150], club: 'iron8', balls: 6, order: 'turns', ball: 'clock', play: 'sum', better: 'high', medals: [12, 25, 38], show: 'points'},
  {id: 'highlow', name: 'High and low', group: 'range', how: 'Your 7-iron at the 150, each ball called high or low. It counts if it flies high or low enough for the call and lands within 15 yards.',
   where: 'range', targets: [150, 150, 150, 150, 150, 150], club: 'iron7', balls: 6, order: 'turns', calls: 'height', ball: 'height', play: 'sum', better: 'high', medals: [3, 4, 6], show: 'count', noun: 'called'},
@@ -135,6 +148,8 @@ export const CHALLENGES = [
   where: 'course', hole: 'longPar4', spot: {kind: 'line', yards: [30, 40, 50, 60, 70]}, balls: 5, order: 'turns', ball: 'ringShare', rings: [.05, .1], play: 'sum', better: 'high', medals: [5, 9, 13], show: 'points'},
  {id: 'shortside', name: 'Short side', group: 'short', how: 'Five drops with a bunker between you and the pin. Hole out from each, as in Up and down.',
   where: 'course', hole: 'spots', spot: {kind: 'shortSide'}, balls: 5, order: 'spotOut', ball: 'strokes', play: 'updown', better: 'high', medals: [1, 2, 4], show: 'updown'},
+ {id: 'scrambler', name: 'Scrambler', group: 'short', how: 'One drop round each of the first nine greens. Hole out from each, as in Up and down. Count the up and downs.',
+  where: 'course', hole: 'course', spot: {kind: 'scrambler'}, balls: 9, order: 'spotOut', ball: 'strokes', play: 'updown', better: 'high', medals: [3, 5, 7], show: 'updown', long: true},
  // PUTTING -- always hole out
  {id: 'fourft', name: 'Four-footers', group: 'putting', how: 'Ten putts from four feet, from all round the hole. Count the ones you hole.',
   where: 'course', hole: 'par4', spot: {kind: 'putt', feet: Array(10).fill(4), angles: 'seeded'}, balls: 10, order: 'turns', ball: 'holed', play: 'sum', better: 'high', medals: [6, 8, 10], show: 'count', noun: 'holed', putts: true},
@@ -144,6 +159,21 @@ export const CHALLENGES = [
   where: 'course', hole: 'bigGreen', spot: {kind: 'putt', feet: [30, 40, 50, 60, 70], angles: 'seeded', shrink: true}, balls: 5, order: 'turns', ball: 'feetLeft', play: 'sum', better: 'low', medals: [25, 15, 8], show: 'feet', putts: true},
  {id: 'world', name: 'Around the world', group: 'putting', how: 'Eight putts from eight feet, one from each point of the compass, so every break. Count the ones you hole.',
   where: 'course', hole: 'par4', spot: {kind: 'putt', feet: Array(8).fill(8), angles: 'compass'}, balls: 8, order: 'turns', ball: 'holed', play: 'sum', better: 'high', medals: [4, 6, 8], show: 'count', noun: 'holed', putts: true},
+ {id: 'putttour', name: 'Putting tour', group: 'putting', how: 'One putt from 10 to 40 feet on each of the first nine greens. Hole out on each; your strokes against a par of 18.',
+  where: 'course', hole: 'course', spot: {kind: 'putttour'}, balls: 9, order: 'spotOut', ball: 'strokes', play: 'sum', better: 'low', medals: [19, 17, 15], show: 'strokes', putts: true, long: true},
+ // HEAD TO HEAD -- two to four golfers, won rather than medalled
+ {id: 'shootout', name: 'Closest-to-the-pin shootout', group: 'versus', who: 'group', how: 'Everyone hits one ball at a par 3; the farthest from the pin, and anyone off the green, is out. Again until one is left -- ten rounds at most.',
+  where: 'course', hole: 'par3', balls: 10, order: 'knockout', ball: 'greenFeet', play: 'knockout', better: 'low', medals: null, show: 'versus'},
+ {id: 'knockout', name: 'Long-drive knockout', group: 'versus', who: 'group', how: 'Everyone drives; the shortest, and anyone off the fairway, is out -- unless everyone misses. Again until one is left -- ten rounds at most.',
+  where: 'course', hole: 'longest', balls: 10, order: 'knockout', ball: 'driveFairway', play: 'knockout', better: 'high', medals: null, show: 'versus'},
+ {id: 'bbb', name: 'Bingo Bango Bongo', group: 'versus', who: 'group', how: 'Three holes, played out, the farthest from the hole first. A point each hole for the first on the green (bingo), the nearest once all are on (bango) and the first in (bongo).',
+  where: 'course', hole: 'course', spot: {kind: 'firstHoles', holes: 3}, balls: 3, order: 'holes', ball: 'holes', play: 'points', better: 'high', medals: null, show: 'versus', long: true},
+ // ROUNDS -- real rounds with a goal on top (round-goals.js): they save, go in
+ // the history, count for the handicap and earn round XP, plus their medals
+ {id: 'suddendeath', name: 'Sudden death', group: 'rounds', how: 'An endless run that ends at your first bogey or worse. Count the holes at par or better before it. In a group, each golfer is out at their first.',
+  where: 'round', goal: 'suddendeath', balls: 0, order: 'round', ball: 'round', play: 'round', better: 'high', medals: [3, 6, 10], show: 'count', noun: 'holes', long: true},
+ {id: 'bogeyfree', name: 'Bogey-free nine', group: 'rounds', how: 'Nine holes of stroke play on the Challenge Course\'s nine. Count your bogeys or worse: none is gold.',
+  where: 'round', goal: 'bogeyfree', balls: 0, order: 'round', ball: 'round', play: 'round', better: 'low', medals: [2, 1, 0], show: 'count', noun: 'bogeys', long: true},
 ];
 export const challenge = id => CHALLENGES.find(c => c.id === id) || null;
 export const challengesIn = group => CHALLENGES.filter(c => c.group === group);
@@ -165,6 +195,7 @@ export function better(def, a, b) {
 // their own driver in yards, `length` the hole's in yards. Rounded the way
 // they are shown.
 export function medalTargets(def, {driver = 250, length = 160} = {}) {
+ if (!def.medals) return [];
  if (def.scale === 'driverPlus') return def.medals.map(m => Math.round(driver + m));
  if (def.scale === 'driverShare') return def.medals.map(m => Math.round(driver * m));
  if (def.scale === 'lengthFeet') return def.medals.map(m => Math.round(length * 3 * m));
@@ -172,7 +203,7 @@ export function medalTargets(def, {driver = 250, length = 160} = {}) {
 }
 // The medal a score reaches: 0 none, 1 bronze, 2 silver, 3 gold.
 export function medalOf(def, score, ctx) {
- if (score == null) return 0;
+ if (score == null || !def.medals) return 0;
  const value = def.play === 'updown' ? score.made : score, t = medalTargets(def, ctx);
  let m = 0;
  t.forEach((x, i) => { if (def.better === 'low' ? value <= x : value >= x) m = i + 1; });
@@ -184,6 +215,10 @@ export const feetText = f => f == null ? 'missed' : f < 1 ? `${Math.round(f * 12
 export function scoreText(def, score) {
  if (score == null) return def.show === 'feet' && def.better === 'low' ? 'no ball on the green' : 'no score';
  if (def.show === 'updown') return `${score.made} up and down, ${score.strokes} strokes`;
+ if (def.show === 'percent') return `${Math.round(score * 1000) / 10}% of the length`;
+ if (def.show === 'strokes') return `${Math.round(score)} strokes`;
+ if (def.show === 'versus') return score.won ? 'Won' : score.text || 'Lost';
+ if (def.ball === 'holedFeet' && !score) return 'none holed';
  if (def.show === 'feet') return def.play === 'sum' ? `${Math.round(score)} ft` : feetText(score);
  if (def.show === 'yards') return `${Math.round(score)} yd`;
  if (def.show === 'points') return `${Math.round(score)} point${Math.round(score) === 1 ? '' : 's'}`;
@@ -192,6 +227,8 @@ export function scoreText(def, score) {
 // What a medal asks for, as the card writes it: "Gold: 9 fairways".
 export function targetText(def, value) {
  if (def.show === 'updown') return `${value} up and down`;
+ if (def.show === 'percent') return `within ${Math.round(value * 100)}% of the length`;
+ if (def.show === 'strokes') return `${value} strokes or fewer`;
  if (def.show === 'feet') return def.play === 'sum' ? `${value} ft or less` : def.better === 'low' ? `within ${value} ft` : `${value} ft`;
  if (def.show === 'yards') return def.better === 'low' ? `${value} yd or less` : `${value} yd`;
  if (def.show === 'points') return `${value} points`;
@@ -214,20 +251,24 @@ export function normaliseRecords(d) {
  for (const c of CHALLENGES) {
   if (LEGACY[c.id] || c.id === 'updown') continue;
   const r = d[c.id];
+  if (isVersus(c)) { if (num(r?.won, 0, 1e6) && num(r?.plays, 0, 1e6)) out[c.id] = {won: Math.floor(r.won), plays: Math.floor(r.plays)}; continue; }
   if (c.play === 'updown') { if (num(r?.best?.made, 0, 99) && num(r?.best?.strokes, 0, 999)) out[c.id] = {best: {made: r.best.made, strokes: r.best.strokes}, at: Number(r.at) || 0, ...plays(r)}; }
   else if (num(r?.best, 0, 1e5)) out[c.id] = {best: r.best, at: Number(r.at) || 0, ...plays(r)};
  }
  return out;
 }
 // Record a finished play; true when it is a new best. Skins, from a skins
-// round, adds a game and the skins won.
+// round, adds a game and the skins won; a head-to-head (`value` {won}) a game
+// and whether it was won -- neither has a best.
 export function recordChallenge(prof, id, value, now = Date.now()) {
  const r = (prof.challenges ||= {});
  if (id === 'skins') { r.skins = {won: (r.skins?.won || 0) + value, games: (r.skins?.games || 0) + 1}; return false; }
  const def = challenge(id);
  if (!def) return false;
+ if (isVersus(def)) { r[id] = {won: (r[id]?.won || 0) + (value?.won ? 1 : 0), plays: (r[id]?.plays || 0) + 1}; return false; }
  const was = r[id], plays = (was?.plays || 0) + 1, best = value != null && better(def, value, recordScore(id, was));
- const round1 = v => Math.round(v * 10) / 10;
+ // Shares of a hole's length keep three places; everything else one.
+ const round1 = v => def.show === 'percent' ? Math.round(v * 1000) / 1000 : Math.round(v * 10) / 10;
  if (best) {
   if (id === 'closest') r[id] = {feet: round1(value), at: now, plays};
   else if (id === 'long') r[id] = {yards: round1(value), at: now, plays};
@@ -244,7 +285,9 @@ export function normaliseMedals(d) {
  return out;
 }
 export const medalCount = (prof, at = 1) => Object.values(prof?.medals || {}).filter(m => m >= at).length;
-export const MEDAL_TOTAL = CHALLENGES.length * 3;
+export const MEDAL_TOTAL = CHALLENGES.filter(c => c.medals).length * 3;
+// A HEAD-TO-HEAD's record is games won and played, like skins'.
+export const isVersus = def => def?.group === 'versus';
 // OLD RECORDS BECOME MEDALS, WITH NO XP (the owner's rule for XP itself:
 // nothing back-filled). A record kept before medals existed shows the medal it
 // already reaches. Closest to the pin's old record never kept its hole's

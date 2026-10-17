@@ -40,8 +40,9 @@ export const ACHIEVEMENTS = [
  // challenges are added, and a golfer who has it keeps it.
  {id: 'first-medal', name: 'First Medal', how: 'Win a medal in any challenge.', xp: 25, progress: 'medals', goal: 1},
  {id: 'gold-standard', name: 'Gold Standard', how: 'Win ten gold medals.', xp: 150, title: 'Gold Standard', progress: 'golds', goal: 10},
- {id: 'all-rounder', name: 'All-Rounder', how: 'Win a medal in every challenge.', xp: 250, title: 'All-Rounder', progress: 'medals', goal: CHALLENGES.length},
+ {id: 'all-rounder', name: 'All-Rounder', how: 'Win a medal in every challenge.', xp: 250, title: 'All-Rounder', progress: 'medals', goal: CHALLENGES.filter(c => c.medals).length},
  {id: 'weekly-regular', name: 'Weekly Regular', how: 'Play the challenge of the week four weeks running.', xp: 150, progress: 'chalStreak', goal: 4},
+ {id: 'head-of-the-table', name: 'Head of the Table', how: 'Win ten head-to-head challenges.', xp: 100, progress: 'versusWins', goal: 10},
 ];
 export const achievement = id => ACHIEVEMENTS.find(a => a.id === id) || null;
 export const LANDSCAPES = 9;
@@ -94,6 +95,7 @@ export function progressOf(a, prof) {
  if (a.progress === 'streak') return [longestStreak(p.weeks), a.goal];
  if (a.progress === 'chalStreak') return [longestStreak(p.chalWeeks || []), a.goal];
  if (a.progress === 'medals') return [Object.values(prof?.medals || {}).filter(m => m >= 1).length, a.goal];
+ if (a.progress === 'versusWins') return [CHALLENGES.filter(c => c.group === 'versus').reduce((n, c) => n + (prof?.challenges?.[c.id]?.won || 0), 0), a.goal];
  if (a.progress === 'golds') return [Object.values(prof?.medals || {}).filter(m => m === 3).length, a.goal];
  return null;
 }

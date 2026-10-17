@@ -14,6 +14,7 @@
 
 import {greenDistance} from './course.js';
 import {seeded} from './challenges.js';
+import {CLUB_KINDS} from './clubs.js';
 
 export {seeded};
 
@@ -22,7 +23,7 @@ const YARD = .9144, FOOT = .3048;
 // The adapter for a generated hole (course.js), played from tee set `tee`.
 export function holeAdapter(h, tee = 'white') {
  const t = h.tees?.[tee] || Object.values(h.tees || {})[0] || {x: 0, z: 0};
- return {pin: h.pin, tee: {x: t.x, z: t.z}, length: h.length, surface: (x, z) => h.surface(x, z), edge: (x, z) => greenDistance(h, x, z), center: z => h.center(z)};
+ return {pin: h.pin, tee: {x: t.x, z: t.z}, length: h.length, par: h.par, yards: (h.routeLength || h.length) / YARD, surface: (x, z) => h.surface(x, z), edge: (x, z) => greenDistance(h, x, z), center: z => h.center(z)};
 }
 
 const CHIP = ['fringe', 'semi', 'rough', 'fairway', 'sand'], GRASS = ['fringe', 'semi', 'rough', 'fairway'], LIE = ['fairway', 'semi'];
@@ -163,7 +164,72 @@ export function chooseHole(def, holes, spotsOn) {
   let best = null, room = -1;
   for (const h of idx) { const s = spotsOn(h.i); if (!s) continue; const r = s.reduce((a, p) => a + (p.feet || 0), 0); if (r > room) { room = r;best = {hole: h.i, spots: s}; } }
   return best;
- } else throw Error(`No hole rule called ${def.hole}.`);
+ } else if (def.hole === 'course') throw Error('A challenge across holes takes its spots from spotsAcross.');
+ else throw Error(`No hole rule called ${def.hole}.`);
  for (const h of order) { const s = spotsOn(h.i); if (s) return {hole: h.i, spots: s}; }
  return null;
+}
+
+// A CHALLENGE ACROSS HOLES (hole rule 'course'): its spots on several holes of
+// the course, each carrying `hole`. `holes` are adapters (holeAdapter) in
+// course order; `driver` the shortest driver carry in the group, in yards.
+// Null when the course cannot host it. PLACED, as everything here.
+//   par3s      the tee of every par 3
+//   gir        holes 1-9: a par 3 from the tee, a par 4 from the fairway where
+//              a good drive finishes (the hole's length less the driver, 90
+//              to 200 yards out), a par 5 from 100 yards
+//   scrambler  one drop round each of the first nine greens (as up and down)
+//   putttour   one putt of 10 to 40 feet on each of the first nine greens
+//   firstHoles the tees of the first `holes` holes
+export function spotsAcross(def, holes, seed, {driver = 250} = {}) {
+ const rnd = seeded(seed), k = def.spot.kind, at = (p, i) => p && {x: p.x, z: p.z, hole: i, ...(p.feet ? {feet: p.feet} : {})};
+ const nine = holes.slice(0, 9).map((h, i) => [h, i]);
+ let out;
+ if (k === 'par3s') out = holes.map((h, i) => h.par === 3 ? at(h.tee, i) : undefined).filter(p => p !== undefined);
+ else if (k === 'firstHoles') out = holes.slice(0, def.spot.holes).map((h, i) => at(h.tee, i));
+ else if (k === 'gir') out = nine.map(([h, i]) => h.par === 3 ? at(h.tee, i) : at(onLine(h, h.par === 5 ? 100 : Math.max(90, Math.min(200, Math.round(h.yards - driver)))), i));
+ else if (k === 'scrambler') out = nine.map(([h, i]) => at(aroundGreen(h, rnd, 1, {lo: 3, hi: 18})[0], i));
+ else if (k === 'putttour') out = nine.map(([h, i]) => at(onGreen(h, rnd, [10 + 5 * Math.floor(rnd() * 7)], {angles: 'seeded', shrink: true})[0], i));
+ else throw Error(`No spot kind called ${k}.`);
+ const need = k === 'par3s' ? 1 : k === 'firstHoles' ? def.spot.holes : 9;
+ return out.length >= need && out.every(Boolean) ? out : null;
+}
+
+// SETTING A CHALLENGE UP, as the game does it and the tests do it (one function,
+// so a test plays exactly what a player gets). `holes` are the course's
+// adapters (holeAdapter) -- or, on the range, its one hole with `range` {mat,
+// marks: range.js rangeTargets()}; `seed` the course's seed; `driver` the
+// shortest driver carry in the group. Returns where the play starts (`hole`,
+// null on the range), its spots, range targets, pins and lengths by hole, and
+// the seed its calls are drawn from -- or null when the course cannot host it.
+export function planChallenge(def, {holes = [], seed = '', driver = 250, range = null} = {}) {
+ const YD = YARD;
+ if (def.where === 'range') {
+  const {mat, marks = []} = range || {mat: {x: 0, z: 0}};
+  const targets = (def.targets || []).map(y => { const t = marks.find(m => m.yards === y); return t ? {x: t.x, z: t.z, yards: y} : {x: mat.x, z: mat.z + y * YD, yards: y}; });
+  return {hole: null, spots: [], targets, pins: [], lengths: [], callSeed: `range:${def.id}`};
+ }
+ if (def.hole === 'course') {
+  const spots = spotsAcross(def, holes, `${seed}:${def.id}`, {driver});
+  return spots && {hole: spots[0].hole, spots, targets: [], pins: holes.map(h => h.pin), lengths: holes.map(h => h.yards), callSeed: `${seed}:${def.id}`};
+ }
+ const pick = chooseHole(def, holes.map(h => ({par: h.par, length: h.yards})), i => def.spot ? spotsFor(def, holes[i], `${seed}:${i}:${def.id}`) : []);
+ return pick && {hole: pick.hole, spots: pick.spots, targets: [], pins: [], lengths: [], callSeed: `${seed}:${pick.hole}:${def.id}`};
+}
+// EACH GOLFER'S PART: their driver and hand, their zone (Find the zone) on the
+// hole being played (`hole`, an adapter), and the club the challenge asks of
+// them -- its own kind if their bag (`clubs`, [{kind, carry}]) holds one, else
+// the nearest in carry (the stock bag has no 8-iron: a play-through in Node
+// found One club unwinnable with it, 16 October 2026). The calls are drawn for
+// the shortest driver so every golfer can reach them. Null when a zone will not fit.
+export function challengeClub(want, clubs = []) {
+ if (!want) return null;
+ if (!clubs.length || clubs.some(c => c.kind === want)) return want;
+ const carry = CLUB_KINDS[want]?.carry ?? 150;
+ return [...clubs].filter(c => c.kind !== 'putter').sort((a, b) => Math.abs(a.carry - carry) - Math.abs(b.carry - carry))[0]?.kind || want;
+}
+export function playContext(def, {hole = null, callSeed = '', players = []} = {}) {
+ const ctx = players.map(p => ({driver: p.driver ?? 250, hand: p.hand === 'LH' ? 'LH' : 'RH', ...(def.club ? {club: challengeClub(def.club, p.clubs)} : {})}));
+ if (def.ball === 'zone') { for (const c of ctx) c.zone = hole && zoneFor(hole, c.driver); if (ctx.some(c => !c.zone)) return null; }
+ return {ctx, calls: callsFor(def, callSeed, {driver: Math.min(...ctx.map(c => c.driver))})};
 }

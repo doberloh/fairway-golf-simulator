@@ -79,6 +79,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 **Playing a round**
 - `src/game.js` -- round rules, teams, scores, undo, drops; `src/relief.js` -- penalty relief
 - `src/scoring.js`, `src/putting.js`, `src/presentation.js` -- against par, putting modes, replay timing
+- `src/round-goals.js` -- rounds with a goal (Sudden death, Bogey-free nine): which rounds can carry one, each golfer's goal from the card
 - `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
 - `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
@@ -116,7 +117,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
 - `tools/github-protect.mjs` -- the repository's GitHub protections
-- `tests/*.test.mjs` -- the regression suites (`round-matrix` plays every format with every group); `bench/*.json` -- saved baselines. docs/TESTING.md maps what is tested and how
+- `tests/*.test.mjs` -- the regression suites (`round-matrix` plays every format with every group; `challenge-virtual` plays every challenge through the ball model with `tests/virtual-golfer.mjs`, a Swing Meter golfer in Node); `bench/*.json` -- saved baselines. docs/TESTING.md maps what is tested and how
 
 PROJECT_HANDOFF *File map* has a fuller line for every file.
 
@@ -178,7 +179,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
-- A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test. [A practice challenge is not a round]
+- A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test; a challenge is set up only through `planChallenge`/`playContext`. [A practice challenge is not a round]
+- Rounds with a goal are real rounds (`round.goal`); the goal never changes play, and a sudden-death run is never finished. [Rounds with a goal are real rounds]
 - The course of the week is the date plus `DEFAULT_COURSE`, `BIOME_KEYS` order and the generator; changing any changes it on every copy. [The course of the week is the date]
 - The challenge of the week is the date plus `WEEKLY_POOLS`; a pool row is never edited once shipped -- a new pool starts at a future week. [The challenge of the week is the date]
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
