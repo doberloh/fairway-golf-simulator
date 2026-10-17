@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses, the studio and the range controls since rebuilt, below):
+old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses, the studio, the range controls and pause since rebuilt, below):
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1264,9 +1264,20 @@ choice on the page redraws it, so the tab shown lives in main.js
 (`profileHubTab`). On the Locker tab the left stack swaps to what is worn now
 (the locker mockup's live preview), by CSS on `.ph[data-tab]`.
 
-**Pause is two columns** (the Esc list, reshaped toward the mockup): Paused,
-Resume and every action down the left; the course, standings, tee, Swing Meter,
-shot numbers, cameras and conditions on the right. **Settings: help on
+**Pause is the mockup's two columns** (the Esc list; third pass, 17 October
+2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
+Help & controls and Main menu as tall rows, the settings as four half-width
+chips (Graphics, Sound, Saved courses, Connect monitor) and the time of day;
+on the right the course, hole and par over the standings (each golfer's ball
+in its frame), the tee, the Swing Meter, shot numbers, cameras and the
+conditions as a row. **The list's own containers are `display:contents`**
+(`.header-right`, `nav`, `.menu-wrap`, `#menuDrop`) so every row is a grid
+item of the top bar, placed by explicit rows; **but `.sim-time` is ALSO a
+`.menu-wrap`** -- caught by the first look, when its box vanished and its
+slanted panel, positioned against the whole top bar, became one giant red
+shape behind the screen. The selector is `.menu-wrap:not(.sim-time)`. Resume
+never had its gradient: the shared row rule's `:is()` holds ids and
+outranked `.rh-resume` (fixed by id). **Settings: help on
 demand.** In the tool windows each control's explanation shows while it has the
 focus, and ? (with the focus in a window or a sheet) shows them all
 (`#app.rh-help`).

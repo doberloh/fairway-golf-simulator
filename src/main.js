@@ -4296,8 +4296,11 @@ function drawPauseInfo(){
  const where=rangeMode?'Driving range':`${playingCourseName()} · Hole ${round.hole+1} · Par ${course.par}`;
  $('pauseWhere').textContent=where;
  // The standings beside the list: each golfer, how far through, against par.
- setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
-  return `<div${i===round.active?' class="up"':''}><span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
+ // Headed by where you are (the mockup's line over the standings), each row
+ // the golfer's ball in its frame.
+ const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
+ setHtml($('pauseStand'),rangeMode?'':`<h4 class="rh-pause-k">${escape(where.toUpperCase())}</h4>`+round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
+  return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
 function setPause(on){

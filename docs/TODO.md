@@ -136,6 +136,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   while looking at it, and balls are hit with it open), now 720 wide; the
   mockup's green firmness and speed pickers are not here (no such range
   setting yet), and Lab tools is one row that opens the Lab window.
+- [ ] **1.0 pause: built to the mockup, seen in the browser pane at 1280 x
+  720** (one golfer, Endless; 17 October 2026, third pass). Not seen: two to
+  four golfers in the standings, the range's pause, 4:3, a controller moving
+  down the new order. PLACED: the mockup's six rows hold eleven things here
+  -- Tools stands for Camera & bay (it opens the tools tray), Main menu for
+  Save & leave (it asks to save), the settings are four half-width chips
+  under the rows rather than one Settings row, and the time of day stays (the
+  mockup has no clock).
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -155,8 +163,7 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   every panel and window through the old variables. **Not rebuilt on the kit**
   (each keeps its old layout, restyled; the lobby, monitor setup and profile
   hub, settings, challenges, course of the week and saved courses,
-  the course studio and the range controls since rebuilt): pause as its own
-  screen, and the small windows. Look at the main menu at 16:9, 16:10,
+  the course studio, the range controls and pause since rebuilt): and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.
 - [ ] **Phase 4 (sounds): wired in, NOT HEARD IN THE GAME.** Family C (clean)
