@@ -37,8 +37,8 @@
  .main-menu .menu-tile :is(i,svg){display:none}
  .main-menu .menu-tile strong{font-size:22px;font-weight:800;font-style:italic;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap}
  .main-menu .menu-tile small{font-size:13px;letter-spacing:.14em;color:var(--soft);opacity:1;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .main-menu .menu-tile:is(:hover,:focus-visible)::before,.main-menu .menu-modes:not(:focus-within) .menu-tile.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- .main-menu .menu-tile:is(:hover,:focus-visible) :is(strong,small),.main-menu .menu-modes:not(:focus-within) .menu-tile.primary :is(strong,small){color:var(--on-hot)}
+ .main-menu .menu-tile:is(:hover,:focus)::before,.main-menu .menu-modes:not(:focus-within) .menu-tile.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ .main-menu .menu-tile:is(:hover,:focus) :is(strong,small),.main-menu .menu-modes:not(:focus-within) .menu-tile.primary :is(strong,small){color:var(--on-hot)}
  .main-menu .menu-tile:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
  .main-menu .menu-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
  .main-menu .menu-link{position:relative;isolation:isolate;height:32px;padding:0 14px;border-radius:0;opacity:1;color:#fff;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}

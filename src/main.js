@@ -4163,7 +4163,10 @@ function placeShotCard(now){
  const p=cardPhase(shotCard.at,now);
  if(p.phase==='gone'){hideShotCard();return;}
  const q=view.project({x:shotCard.end.x,y:course.height(shotCard.end.x,shotCard.end.z)+1,z:shotCard.end.z});
- el.style.left=q.x+'px';el.style.top=q.y+'px';
+ // Kept clear of the club, the meter and the map: a short shot rests low on
+ // the screen, and the card sat on the meter (seen 17 October 2026).
+ const w=$('world'),z=Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1;
+ el.style.left=Math.min(q.x,w.clientWidth-(330+36+260)*z)+'px';el.style.top=Math.min(q.y,w.clientHeight-300*z)+'px';
  el.style.visibility=q.visible?'visible':'hidden';
  el.style.opacity=String(1-p.fade);
 }
@@ -6660,7 +6663,12 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
  if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
- window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);if(!dir)return;const t=document.activeElement;if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
+ window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
+  // Enter and Space press the focused button there. The game's own handler
+  // cancels both (they swing and finish a shot), which left a menu driven by
+  // arrows with no way to choose (seen 17 October 2026).
+  if(!dir&&['Enter','NumpadEnter','Space'].includes(e.code)){const s=focusScope(),b=document.activeElement;if(s&&b?.tagName==='BUTTON'&&s.contains(b)){e.preventDefault();e.stopPropagation();b.click();}return;}
+  if(!dir)return;const t=document.activeElement;if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }

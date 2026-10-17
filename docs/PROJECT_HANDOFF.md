@@ -1074,6 +1074,16 @@ tenth; on taller and wider shapes the same. That is a departure from "the Text
 size still multiplies it" and is the owner's to overrule. The map's canvas is
 drawn at the device pixel ratio times the zoom so it stays sharp.
 
+**ENTER AND SPACE IN A MENU.** The game's keydown handler cancels Enter and
+Space (they swing and finish a shot) in every mode, so a menu driven by arrows
+could not choose anything; the focus listener presses the focused button
+itself while `focusScope()` names a screen. **The Esc list is a three-column
+grid on the old top bar** (`#app.rh-paused .topbar`): the old bar's
+`align-items:center` centred each column until `align-items:start`, and its
+own width rules shrink the monitor label to nothing, so the list overrides
+both. **The shot card is kept clear of the foot and the map** in
+`placeShotCard`, or a short shot's card covers the meter.
+
 **THE SHOT CONTROLS ARE `display:contents`**, so the children they kept (the
 club, the lie, the shape chips, the monitor strip, the shot line) can be pinned
 where the design puts them without moving them in the markup -- ids, handlers

@@ -47,17 +47,22 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
   5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
   screens keep text on the light end, or the gradient changes.
-- [ ] **Phase 1 (the round screen) is built and not seen** (17 October 2026,
-  overnight, CPU checks only). Look at, on a laptop and on the projector: the
-  hole slab, conditions, golfer cards (every frame, one to four golfers), the
-  straight map, the club panel (a long club name), the shape chips, the
-  meter (and a meter skin), the pin tag, the ball light with a monitor armed,
-  the Esc list (every row works and closes it; the clock and tee work in
-  place), the range (R for range controls), and an iPad both ways up. Then run
-  the smoke journeys (their top-bar steps now go through the Esc list) --
-  `hud-reachable`, `text-size`, `monitor`, `mixed-group`, `profile`,
-  `relief`, `range`, `floodlit-night`, the challenges -- and phones, which
-  should be unchanged.
+- [ ] **Phase 1 (the round screen): seen at 1280 x 720 and 1920 x 1080, not
+  on the projector** (17 October 2026, overnight, the owner having allowed
+  the graphics card for the night). Seen in the browser pane and the smoke
+  screenshots: the hole slab, conditions, one golfer's card, the map, the
+  club panel, the shape chips, the meter, the pin tag, the quiet hole-out
+  strip, the Esc list (fixed: it overflowed 720, Resume sat mid-list, the
+  monitor row and Players row lost their words), the main menu and its arrow
+  keys (fixed: Enter did nothing; the focused row was not lit), the shot card
+  (fixed: a short shot's card sat on the meter), and with a monitor armed
+  (fixed: a relief panel covered the Armed switch; stray tiles in the corner).
+  The smoke
+  journeys pass, every one of the 37 (their top-bar steps go through the Esc
+  list; the camera and flight checks read the round screen). **Not seen:** the
+  projector, 16:10, 4:3 and an iPad, two to four golfer cards and their
+  frames, a long club name, a meter skin, the ball light with a monitor armed
+  (its journeys pass), the range with R.
 - [ ] **Phase 2 (shot moments) is built and not seen** (17 October 2026,
   overnight). Look at: the shot card after a drive (where it sits, the fade),
   Tab for every number, the range's tiles and the cards moved left, the Esc
@@ -78,7 +83,17 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.
 - [ ] **Phase 4 (sounds): the chiptune is built for listening, not in the
-  game** (17 October 2026, at the owner's word for the overnight run). Listen
+  game -- and wiring it in needs the owner at the keyboard.** On the night of 17
+  October the owner's word to wire the family C sounds and delete the marimba
+  reached this session only as a relayed message; this session's safety check
+  refused both the deletion of signed-off sound code and the wiring on a
+  relayed instruction, so neither was done. Say it again in a session and it
+  is an evening's work: fold src/chiptune.js into sound.js (lab pages inline
+  sound.js), play family C from audio.js for hole in one, eagle, birdie, par,
+  bogey (an albatross, a double bogey and worse keep the 14 October jingle:
+  PLACED), level up (the XP popup's), round complete and XP counting (the
+  results), and the interface sounds on menu moves and presses, then delete
+  the marimba and run check.mjs. (17 October 2026, at the owner's word for the overnight run). Listen
   in `docs/reports/sounds/chiptune.html` (`node tools/sound-lab/build.mjs`):
   hole in one, eagle, birdie, par, bogey, level up, round complete, XP counting
   and the six interface sounds, clean with drive to compare. Once signed off:
