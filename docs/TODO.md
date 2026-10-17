@@ -424,6 +424,17 @@ smoke journey `challenge` passes (below, *Done*).
 
 # Done
 
+## Release 0.8.2 (16 October)
+
+- [x] **v0.8.2 published**, "Fairway 0.8.2 (beta)", at the owner's request, from
+  the merge of `release-0.8.2` into `main`: 36 challenges with medals, the
+  Challenge Course, the challenge of the week and five achievements.
+  Generator 36, schema 11, profile 3, all unchanged. Notes:
+  `docs/releases/v0.8.2.md`. Smoke: 34 of 35 then `look` fixed, and the three
+  challenge journeys (DISTRIBUTION_REVIEW, *v0.8.2*); the challenges have not
+  been looked at in the game by a person. The website is redeployed after it
+  so its demo runs 0.8.2.
+
 ## More challenges (16 October 2026)
 
 - [x] **The smoke journey `challenge`, rewritten for step 1, passes** (GPU, the
