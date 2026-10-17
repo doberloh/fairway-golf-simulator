@@ -18,6 +18,7 @@ import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './tu
 import './style.css';
 import './ui-kit.css';
 import './round-hud.css';
+import './ui-screens.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -50,6 +51,7 @@ import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,parScore,sta
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
+import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
@@ -3366,7 +3368,7 @@ function shortfall(){
 }
 function setMode(mode){
  const was=appMode;
- appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');
+ appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');applyHudPalette();
  // NO AIM LINE IN THE STUDIO. Nobody is about to hit, and a white line running
  // off the first tee read as part of the course being shaped. Building a world
  // makes a fresh, visible line, so the studio hides it every time it enters;
@@ -4171,8 +4173,8 @@ function cycleShotChoice(){
 }
 const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
 // The course's colours, on #app so the pause list (the top bar) wears them too.
-function applyHudPalette(){
- const p=screenPalette({screen:rangeMode?'range':'round',course:{biome:course?.bio?.key}});
+function applyHudPalette(screen=appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
+ const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:settings?.biome}});
  if(p.biome===hudBiome)return;hudBiome=p.biome;
  for(const [k,v] of Object.entries(paletteVars(p)))$('app').style.setProperty(k,v);
 }
@@ -4247,6 +4249,9 @@ function roundCompleteHtml(){
 function drawPauseInfo(){
  const where=rangeMode?'Driving range':`${playingCourseName()} · Hole ${round.hole+1} · Par ${course.par}`;
  $('pauseWhere').textContent=where;
+ // The standings beside the list: each golfer, how far through, against par.
+ setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
+  return `<div${i===round.active?' class="up"':''}><span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
 function setPause(on){
@@ -4255,6 +4260,32 @@ function setPause(on){
  app.classList.toggle('rh-paused',!!on);
  if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();}
  else toggleClockPop(false);
+}
+// ARROWS AND A CONTROLLER IN THE MENUS (phase 3; ui-focus.js). On the main menu
+// and the Esc list the arrows -- or a controller's d-pad or stick -- move between
+// the buttons the way a console menu does; Enter, Space or the pad's A presses
+// one, and B (or Escape) backs out of the Esc list. A text box, a slider or a
+// drop-down keeps its own arrows.
+function focusScope(){
+ if(document.getElementById('app').classList.contains('rh-paused'))return document.querySelector('.topbar');
+ if(appMode==='menu'&&!$('mainMenu').hidden&&!panel&&$('welcome').hidden&&$('leaveNotice').hidden&&$('versionNotice').hidden)return $('mainMenu');
+ return null;
+}
+function moveFocus(dir){
+ const scope=focusScope();if(!scope)return false;
+ const els=[...scope.querySelectorAll('button,select,a[href]')].filter(el=>!el.disabled&&el.offsetParent!==null&&el.getBoundingClientRect().width>0);
+ if(!els.length)return false;
+ const rects=els.map(el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};});
+ const from=els.indexOf(document.activeElement);
+ els[from<0?0:nextFocus(rects,from,dir)].focus();
+ return true;
+}
+let padNavAt=0;
+function menuPad(pad,pressed,now){
+ const dir=dirOfPad(pad);
+ if(dir){if(now-padNavAt>220){padNavAt=now;moveFocus(dir);}}else padNavAt=0;
+ if(pressed(0))document.activeElement?.click?.();
+ if(pressed(1)||pressed(9)){if(document.getElementById('app').classList.contains('rh-paused'))setPause(false);}
 }
 // A golfer's card or chip: on the range it hands the mat over (or, for whoever
 // is hitting, opens their shots); on a course it opens the scorecard.
@@ -4582,11 +4613,24 @@ function updateMenuWeekly(){
  el.textContent=`Week ${w.week} · ${BIOMES[s.biome]?.name||s.biome} · stroke play${best?` · your best ${best}`:''}`;
 }
 function updateMenuProfile(){
- updateMenuWeekly();
+ updateMenuWeekly();drawMenuCard();
  const note=$('menuProfileNote'),m=mainProfile(profiles);if(!note)return;
  if(!m){note.textContent='Stats, rounds, handicap';return;}
  const h=profileSummary(m).handicap,others=profiles.profiles.length-1;
  note.textContent=(h.index===null?`${m.name} · stats and rounds`:`${m.name} · sim handicap ${hcpText(h.index)}`)+(others?` · +${others} player${others===1?'':'s'}`:'');
+}
+// THE MAIN MENU'S GOLFER CARD (phase 3): the main golfer's ball in its frame,
+// name, title and level, how far into the level, and the challenge of the
+// week. Nothing without a profile.
+function drawMenuCard(){
+ const el=$('menuCard');if(!el)return;
+ const m=mainProfile(profiles);if(!m){el.hidden=true;return;}
+ const l=looksOf(m),lv=levelOf(m.xp),wk=weeklyChallenge(),def=wk?challengeDef(wk.id):null;
+ const title=titleName(l.title)||badgeName(lv.level),share=lv.need?Math.min(1,lv.into/lv.need):0;
+ el.hidden=false;
+ el.innerHTML=`<div class="rh-mc-top"><span class="rh-mc-pic">${framedPicture(l.ball,l.frame,'rh-ballpic')}</span><div><strong>${escape(m.name.toUpperCase())}</strong><small>${escape(title.toUpperCase())} <b>LV ${lv.level}</b></small></div></div>`
+  +`<div class="rh-mc-xp"><div><span>LEVEL ${lv.level}</span><span>${lv.into.toLocaleString()} / ${lv.need.toLocaleString()} XP</span></div><i><b style="width:${(share*100).toFixed(1)}%"></b></i></div>`
+  +(def?`<div class="rh-mc-week"><small>CHALLENGE OF THE WEEK</small><strong>${escape(String(def.name||'').toUpperCase())}</strong></div>`:'');
 }
 // "REPLAY THIS COURSE": the same ground, a fresh card. A course comes back from
 // the settings it was grown from, an endless run from its seed; the group and
@@ -6616,6 +6660,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
  if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);if(!dir)return;const t=document.activeElement;if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
@@ -6739,7 +6784,8 @@ function tick(now){
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');
  if(!!pad!==gamepadActive){gamepadActive=!!pad;$('inputStatus').innerHTML=pad?'<i data-lucide="gamepad-2"></i> Controller connected <span class="tiny-dot"></span> Ready to play':'<i data-lucide="keyboard"></i> Mouse & keyboard <span class="tiny-dot"></span> Ready to play';icon();}
  const pressed=i=>pad?.buttons[i]?.pressed&&!gamepadLast[i];
- if(pad){if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
+ if(pad&&focusScope()){menuPad(pad,pressed,now);gamepadLast=pad.buttons.map(b=>b.pressed);}
+ else if(pad){if(pressed(9)&&hud1&&appMode==='play'&&!panel){setPause(true);gamepadLast=pad.buttons.map(b=>b.pressed);}if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
  if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
  if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}

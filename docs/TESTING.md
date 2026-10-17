@@ -152,6 +152,9 @@ the courses several suites share.
   birdie or better earning the band, every banner under two seconds with the
   next turn announced as it leaves, the paper card's marks), and `round-hud`'s
   round-complete helpers (places with ties, XP this round, the handicap line).
+  `ui-focus` (phase 3: arrows and a controller -- every button reachable from
+  every other in the menus' layouts, none a dead end, down goes to the next
+  row, a single line wraps, the keys and pad directions).
   The kit is on no screen yet; the round screen is (in play, off a phone), and
   the smoke journeys reach the top bar's controls through `t.chrome()` /
   `t.menuItem()`, which open the Esc list where the round screen hides the bar

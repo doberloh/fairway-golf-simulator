@@ -66,6 +66,17 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   flashing hole, and round complete. Not built: the XP flying to the golfer's
   card, the scorecard's leaning columns, *Play again* with the same group, the
   round's three highlights (longest drive, closest approach).
+- [ ] **Phase 3 (menus and windows) is partly built and not seen** (17
+  October 2026, overnight). Built: arrows and a controller on the main menu
+  and the Esc list (ui-focus.js), the main menu as the title screen with the
+  golfer card, the standings in the Esc list, and the 1.0 colours and type on
+  every panel and window through the old variables. **Not rebuilt on the kit**
+  (each keeps its old layout, restyled): the lobby, pause as its own screen,
+  profile hub, Look locker, settings with one line of ? help, challenges,
+  course of the week, saved courses, course studio, launch monitor setup,
+  range controls, and the small windows. Look at the main menu at 16:9, 16:10,
+  4:3 and on an iPad, drive it with arrows and a controller, and open every
+  panel to check the restyle reads.
 - [ ] **The Text size barely enlarges the round screen on 16:9** (about a
   tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
   The owner's call whether that is right for the bay.

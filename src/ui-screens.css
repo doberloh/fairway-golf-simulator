@@ -1,0 +1,95 @@
+/* THE 1.0 MENUS AND WINDOWS (phase 3 of the 1.0 interface, 17 October 2026;
+   PROJECT_HANDOFF *The 1.0 menus and windows*).
+
+   Two layers. The MAIN MENU is restyled to the approved title screen: the
+   logo top left, one list down the left that arrows and a controller drive
+   (ui-focus.js), the main golfer's card on the right, the keys at the foot.
+   EVERY OTHER PANEL AND WINDOW -- the sheets (#drawer), the tool windows
+   (.popup), the dialogues -- takes the 1.0 colours and type through the old
+   stylesheet's own variables (--glass, --accent, --font-display), set from
+   the screen's biome palette, with the main buttons and tabs slanted. That is
+   a restyle, not the rebuild on the kit the plan asks for: each of those
+   screens keeps its layout. Said so in TODO.
+
+   As with the round screen: not on a phone (phase 5), so all of it sits in
+   the inverse of the phone query; class names here start `rh-` or are the
+   old ones being restyled. */
+
+#menuCard,.rh-menu-keys{display:none}
+
+@container app (min-width:561px) and (min-height:501px){
+
+ /* ---------------------------------------------------------------- colours */
+ /* The old stylesheet's variables, from the palette main.js puts on #app. */
+ #app>*{--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
+
+ /* ---------------------------------------------------------------- main menu */
+ .main-menu:not(.menu-behind){display:block;background:linear-gradient(90deg,rgba(4,8,12,.72) 0%,rgba(4,8,12,.42) 42%,rgba(4,8,12,0) 70%)}
+ .main-menu :is(.menu-masthead,.menu-deck,.rh-menu-card,.rh-menu-keys){zoom:var(--hud-z,1);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ .main-menu .menu-masthead{position:absolute;left:60px;top:36px;padding:0;text-align:left}
+ .main-menu .menu-brand{justify-content:flex-start;font-size:88px;font-weight:800;font-style:italic;letter-spacing:-.02em}
+ .main-menu .menu-brand .brandmark svg{width:64px;height:64px}
+ .main-menu .brand-dot{color:var(--a1)}
+ .main-menu .menu-deck{position:absolute;left:60px;top:150px;bottom:auto;padding:0;display:grid;justify-items:start;gap:12px;width:560px}
+ .main-menu .menu-modes{display:grid;gap:4px;width:100%;max-width:none;margin:0}
+ .main-menu .menu-tile{position:relative;isolation:isolate;flex-direction:row;align-items:center;justify-content:flex-start;gap:16px;width:100%;max-width:none;height:42px;min-height:0;padding:0 26px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;text-align:left;transform:none}
+ .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .main-menu .menu-tile :is(i,svg){display:none}
+ .main-menu .menu-tile strong{font-size:22px;font-weight:800;font-style:italic;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap}
+ .main-menu .menu-tile small{font-size:13px;letter-spacing:.14em;color:var(--soft);opacity:1;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .main-menu .menu-tile:is(:hover,:focus-visible)::before,.main-menu .menu-modes:not(:focus-within) .menu-tile.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ .main-menu .menu-tile:is(:hover,:focus-visible) :is(strong,small),.main-menu .menu-modes:not(:focus-within) .menu-tile.primary :is(strong,small){color:var(--on-hot)}
+ .main-menu .menu-tile:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ .main-menu .menu-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+ .main-menu .menu-link{position:relative;isolation:isolate;height:32px;padding:0 14px;border-radius:0;opacity:1;color:#fff;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+ .main-menu .menu-link::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ .main-menu .menu-link:is(:hover,:focus-visible)::before{background:var(--a1)}
+ .main-menu .menu-link:is(:hover,:focus-visible){color:var(--on-hot);outline:none}
+ .main-menu .menu-note{text-align:left;font-size:13px;letter-spacing:.06em;opacity:.75}
+
+ /* The main golfer's card. */
+ #menuCard:not([hidden]){display:grid;gap:8px;position:absolute;right:60px;top:150px;width:380px;color:#fff}
+ .rh-menu-card>div{position:relative;isolation:isolate;padding:16px 28px}
+ .rh-menu-card>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-menu-card .rh-mc-top{display:flex;align-items:center;gap:18px}
+ .rh-menu-card .rh-mc-pic :is(img){width:66px;height:66px}
+ .rh-menu-card .rh-mc-top strong{display:block;font-size:40px;font-weight:800;font-style:italic;line-height:1}
+ .rh-menu-card .rh-mc-top small{font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700}
+ .rh-menu-card .rh-mc-top small b{display:inline-block;margin-left:6px;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:14px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ .rh-menu-card .rh-mc-xp>div{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.14em;color:var(--soft);font-weight:700}
+ .rh-menu-card .rh-mc-xp i{display:block;height:8px;margin-top:8px;background:rgba(255,255,255,.14);position:relative}
+ .rh-menu-card .rh-mc-xp i b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
+ .rh-menu-card .rh-mc-week small{display:block;font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700}
+ .rh-menu-card .rh-mc-week strong{font-size:26px;font-weight:800;font-style:italic}
+ .rh-menu-keys{position:absolute;left:60px;bottom:24px;display:flex!important;gap:14px;font-size:16px;font-weight:700;color:#e6e8ff;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+ .main-menu.menu-behind .rh-menu-keys,.main-menu.menu-behind #menuCard{display:none!important}
+ .rh-menu-keys kbd{display:inline-grid;place-items:center;min-width:28px;height:26px;margin-right:5px;padding:0 6px;border:2px solid currentColor;border-radius:4px;font:inherit;font-size:14px;background:rgba(0,0,0,.35)}
+
+ /* ---------------------------------------------------------------- the Esc list's standings */
+ #app.rh-paused .topbar .rh-pause-stand{display:grid;gap:6px;margin-bottom:6px}
+ #app.rh-paused .topbar .rh-pause-stand>div{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr auto 52px;align-items:center;gap:12px;height:44px;padding:0 24px;font-size:20px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-pause-stand>div.up::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #app.rh-paused .topbar .rh-pause-stand small{font-size:13px;letter-spacing:.14em;color:var(--soft);font-style:normal;font-weight:700}
+ #app.rh-paused .topbar .rh-pause-stand b{text-align:right}
+ #app.rh-paused .topbar .rh-pause-stand b.under{color:var(--under)}
+
+ /* ---------------------------------------------------------------- panels and windows */
+ :is(#drawer,.popup,.version-notice,.shot-list-inner) :is(h2,.drawer-header h2){font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;text-transform:uppercase;letter-spacing:.01em}
+ :is(#drawer,.popup,.version-notice) h3{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.16em;color:var(--soft)}
+ :is(#drawer,.popup) .eyebrow{color:var(--soft)}
+ .drawer,.popup{border-radius:0;border-color:transparent;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+ .popup .popup-head{border-bottom:3px solid var(--a1)}
+ .drawer{border-top:4px solid var(--a1)}
+ /* The main button leans in the biome's gradient; the others lean plain. */
+ :is(#drawer,.popup,.version-notice) button.primary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+ :is(#drawer,.popup,.version-notice) button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ :is(#drawer,.popup,.version-notice) button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
+ :is(#drawer,.popup,.version-notice) button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ :is(#drawer,.popup,.version-notice) button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ /* Tabs: slanted, the current one filled. */
+ .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+ .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ .panel-tab.active{background:none;color:var(--on-hot)}
+ .panel-tab.active::before{background:var(--a1)}
+}

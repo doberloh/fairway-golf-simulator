@@ -108,6 +108,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
 - `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag), the Text size zoom
 - `src/round-hud.js`, `src/round-hud.css` -- the 1.0 round screen (in play, off a phone): what each corner piece says and how large, and where it sits; Esc opens the top bar as a pause list; round complete's standings
+- `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks
 - The 1.0 interface (branch `ui-1-0`; phase 0): `src/ui-layout.js` -- the design canvas, bands and 12-column leaning grid, and the canvas with the Text size; `src/ui-palette.js` -- which biome's colours a screen wears, and the contrast check; `src/ui-kit.js`, `src/ui-kit.css` -- the building kit and the `@font-face` rules; `src/fonts/` -- Saira Condensed (OFL), inlined by the build
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API

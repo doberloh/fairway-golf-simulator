@@ -1125,6 +1125,48 @@ slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
 box itself stays upright, and the text with it -- the kit's rule (only the
 colour leans) by another route.
 
+## The 1.0 menus and windows
+
+Phase 3 of the 1.0 interface (17 October 2026, branch `ui-1-0`; **not seen**,
+like phases 1 and 2). Off a phone only, like the round screen.
+
+**Arrows and a controller** (`src/ui-focus.js`, tested): on the main menu and
+the Esc list, the arrows -- or a controller's d-pad or left stick -- move the
+focus to the button in that direction (nearest along it, sideways distance
+counting double; a single column or row wraps), Enter or the pad's A presses
+it, B or Start backs out of the Esc list, and Start pauses a round. A capturing
+keydown listener takes the arrows before the game does, but only while
+`focusScope()` names a screen; a text box, slider or drop-down keeps its own.
+The test walks every layout the menus use: every button reachable from every
+other, none a dead end. **The panels and tool windows are not on it yet** --
+they keep Tab.
+
+**The main menu** is the approved title screen by restyling the old markup
+(`src/ui-screens.css`): the logo top left, one list down the left (each tile a
+slanted row; the focused one, or Play when nothing is focused, in the
+gradient), the links under it, the main golfer's card on the right
+(`drawMenuCard`: ball in frame, name, title and level, XP into the level, the
+challenge of the week), the keys at the foot. Menus wear the course of the
+week's palette, the studio its own landscape's, a round its course's
+(`applyHudPalette`, on every `setMode`).
+
+**Every other panel and window is restyled, not rebuilt.** The old stylesheet's
+own variables are set from the palette for everything under #app (`--glass`
+is the panel colour, `--accent` the light end of the gradient with `--on-hot`
+text, `--font-display` Saira Condensed), so the sheets, tool windows and
+dialogues take the biome's colours and the typeface; the main buttons and tabs
+lean (pseudo-element), headings are the italic capitals. Their layouts are the
+old ones: the lobby, profile hub, Look locker, settings with ? help,
+challenges, course of the week, saved courses, studio, launch monitor setup
+and range controls of the plan are **not rebuilt on the kit** (TODO). **The
+Esc list gains the standings**: each golfer, how far through, against par.
+
+**`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
+`--glass` or `--accent` on a deeper element still wins there; one that
+reads them gets the palette. `--accent` is now the LIGHT end of the gradient
+and its text `--on-hot` -- the dark end (`--a2`) under light text fails the
+contrast check on Giant Redwood (*The 1.0 interface: layout rules*).
+
 ## Playing by touch
 
 A tap on the course aims wherever the finger lands, and at 200 yards a
