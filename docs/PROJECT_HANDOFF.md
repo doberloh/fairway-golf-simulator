@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week and saved courses since rebuilt, below):
+old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses and the studio since rebuilt, below):
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1300,6 +1300,23 @@ specificity of its MOST specific member**: the shared panel rule once listed
 per-piece rule after it (the week banner lost its gradient); it is `:where()`
 now. None of this runs in the studio (`appMode!=='studio'`), whose sheet
 keeps the old layout.
+
+**The course studio** (`src/ui-studio.js`): flying, `#studioSlab`,
+`#studioChip` and `#studioKeys` (made once in #world) replace the old course
+card and weather there, and the studio bar becomes the action bar, bottom
+left. **#studioBar IS A CHILD OF BODY**, like the sheets: its 1.0 rules are in
+round-hud.css under `@media`, not the app's container query (the first try
+put them in the query and nothing changed). Its geometry is untouched -- the
+observer still lifts it over an open sheet, and the studio journey's checks
+still hold. With Settings open (`studioSheet`), the tabs are the category
+list with counts, each row a name, a segment bar and the value, and
+`.sd-side` lists `studioChanges()` -- every schema control on the page
+against `settings`, plus holes, seed, landscape and footprint -- with the
+facts and the focused row's tip. With the sheet closed the last list stands
+(`studioChangeList`) until a regrow clears it. `markStudioDirty` now redraws
+through `studioRepaint`, at most once a frame: the panel's input listeners
+pile up one per render (an old habit of this panel), so a redraw per event
+would multiply.
 
 **`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
 `--glass` or `--accent` on a deeper element still wins there; one that

@@ -58,6 +58,7 @@ import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
+import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
@@ -304,7 +305,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null;
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -3434,6 +3435,8 @@ async function continueRound(){
 function updateStudioState(){
  if(appMode!=='studio')return;
  const el=$('studioState');el.classList.toggle('dirty',studioDirty);
+ studioHud($('world'));
+ paintStudioHud({facts:{biome:BIOMES[settings.biome]?.name||settings.biome,holes:settings.holes},changes:studioDirty?studioChanges():[],regenerate:()=>$('studioRegenerate').click()});
  el.textContent=studioDirty?'Settings changed — regenerate to see them.':panel?'Close the settings panel to fly around with W A S D.':'Fly around with W A S D. Drag to look.';
 }
 // A studio landscape lives only in memory until it is saved, so anything that
@@ -3614,7 +3617,25 @@ async function returnToMenu(){
 // the overlay (whileGenerating waits for them to run smoothly) rather than on
 // screen.
 const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);openMenu();});
-function markStudioDirty(){if(appMode==='studio'&&!studioDirty){studioDirty=true;updateStudioState();}}
+function markStudioDirty(){if(appMode!=='studio')return;studioDirty=true;studioRepaint();}
+// The 1.0 studio's changed list, slab, chip and right-hand column, redrawn at
+// most once a frame however many inputs a slider fires (ui-studio.js).
+function studioRepaint(){if(studioRepaint.q)return;studioRepaint.q=requestAnimationFrame(()=>{studioRepaint.q=0;studioSheet?.paint();updateStudioState();});}
+// What the settings panel says now against the landscape as grown. With the
+// panel closed its controls are gone, so the last list stands until the
+// landscape is regrown.
+function studioChanges(){
+ if(panel!=='course'||appMode!=='studio'||!$('courseHoles'))return studioChangeList;
+ const read=k=>{const el=$(k);return !el?undefined:el.type==='checkbox'?el.checked:el.value;};
+ const list=settingsChanges(SETTINGS,settings,read);
+ const add=(key,label,from,to)=>{if(String(from)!==String(to))list.push({key,label,from,to,unit:''});};
+ add('courseHoles','Holes',settings.holes,Number($('courseHoles').value));
+ if($('seed'))add('seed','Seed',settings.seed,$('seed').value.trim()||'EVERGREEN');
+ if(studioBiome)add('biome','Landscape',BIOMES[settings.biome]?.name||settings.biome,BIOMES[studioBiome]?.name||studioBiome);
+ if($('footprint'))add('footprint','Footprint',settings.footprint,$('footprint').value);
+ studioChangeList=list;
+ return list;
+}
 // Studio keeps a throwaway round alive so the renderer, camera and map keep
 // working; the play HUD is simply hidden.
 // Opening the studio from the menu asks what to grow before growing anything.
@@ -3662,7 +3683,7 @@ async function enterStudio(){
   await prepareWorld(report);
   loadCourse();
  });
- setMode('studio');studioDirty=false;
+ setMode('studio');studioDirty=false;studioChangeList=[];updateStudioState();
  // Land flying, not behind the settings panel. Keys are ignored while a panel
  // is open -- they have to be, the seed field is a text input -- so opening one
  // here meant the studio always started with its camera parked.
@@ -3674,7 +3695,7 @@ async function regenerateStudio(){
  await whileGenerating('Growing your landscape…',async report=>{
   challenge=null;round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
-  loadCourse();studioDirty=false;setMode('studio');
+  loadCourse();studioDirty=false;studioChangeList=[];setMode('studio');updateStudioState();
   cameraMode('free');view.flyToHole(0);updateExplorer();
  });
  toast(shortfall()||'Landscape rebuilt.');
@@ -5648,6 +5669,9 @@ function renderPanel(name,content){
  monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
  // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
  if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
+ // The studio's settings in the studio: categories, rows, what has changed (ui-studio.js).
+ studioSheet=name==='course'&&appMode==='studio'&&content.id==='drawerContent'
+  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed})}):null;
  // Challenges, the course of the week and saved courses, the same way
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){

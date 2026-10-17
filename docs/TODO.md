@@ -114,6 +114,19 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (only a grown course knows it); course pictures are the landscape's
   colours; saved courses has no Saved rounds tab or Open in studio button
   (rounds stay in the lobby; the studio opens courses from its own bar).
+- [ ] **1.0 course studio: built to the mockups, seen in the browser pane at
+  1280 x 720** (flying and with Settings open, one slider moved: the dot, the
+  column, the chip; 17 October 2026, third pass; src/ui-studio.js). Not seen:
+  regenerating from the chip, a phone (the old bar and sheet there), 4:3, the
+  Show all descriptions mode in the new rows, a warned slider's bubble in the
+  new rows. PLACED: the map stays where the studio has it (right, as in a
+  round) rather than the mockup's left; the bar keeps Leave studio where the
+  mockup has Play it; no key letters on the bar -- R flies up in the studio,
+  so the mockup's "R regenerate" would lie; the studio bar stays where the
+  owner's 15 October layout puts it over an open sheet (a strip above it), not
+  in a footer band, because the sheet's geometry and its smoke check depend
+  on it and it was no obstacle; eight categories, not the mockup's nine (water
+  is one group here).
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -132,8 +145,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   golfer card, the standings in the Esc list, and the 1.0 colours and type on
   every panel and window through the old variables. **Not rebuilt on the kit**
   (each keeps its old layout, restyled; the lobby, monitor setup and profile
-  hub, settings, challenges, course of the week and saved courses since
-  rebuilt): pause as its own screen, course studio,
+  hub, settings, challenges, course of the week and saved courses and
+  the course studio since rebuilt): pause as its own screen,
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.

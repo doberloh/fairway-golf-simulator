@@ -323,3 +323,49 @@
  #app.rh-paused .topbar .rh-pause-choice::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #app.rh-paused .topbar .rh-pause-choice small{font-size:13px;letter-spacing:.12em;color:var(--soft);font-style:normal;font-weight:700}
 }
+
+/* THE 1.0 COURSE STUDIO, FLYING (ui-studio.js; mockup r10 'studio'): the
+   studio's slab top left, "N settings changed" top right while the landscape
+   is out of date, the flying keys, and the studio bar as the action bar along
+   the foot -- its buttons leaning, Regenerate in the gradient. The bar's own
+   caption gives way to the slab and the chip. Its height and lift above an
+   open panel are untouched (PROJECT_HANDOFF *THE STUDIO BAR RIDES ABOVE*). */
+@container app (min-width:561px) and (min-height:501px){
+ #world:not([data-mode=studio]) :is(#studioSlab,#studioChip,#studioKeys){display:none!important}
+ #world[data-mode=studio] :is(#studioSlab,#studioChip,#studioKeys){position:absolute;z-index:8;zoom:var(--hud-z,1);color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #app.hud-hidden :is(#studioSlab,#studioChip,#studioKeys){display:none!important}
+ /* The old course card and weather give way to the slab and the chip. */
+ #world[data-mode=studio]>:is(.course-info,.weather){display:none}
+ #studioSlab{left:30px;top:24px;display:flex;height:92px;pointer-events:none}
+ #studioSlab>b{width:100px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg);font-size:72px;font-weight:800;font-style:italic;color:var(--on-hot)}
+ #studioSlab>span{display:grid;align-content:center;gap:4px;padding:0 30px 0 22px;background:var(--panel);transform:skewX(-12deg)}
+ #studioSlab strong{transform:skewX(12deg);font-size:36px;font-weight:800;font-style:italic;line-height:1;white-space:nowrap}
+ #studioSlab small{transform:skewX(12deg);font-size:17px;letter-spacing:.2em;font-weight:700;color:var(--soft);white-space:nowrap}
+ #studioChip{right:76px;top:24px;display:flex;align-items:center;gap:14px;height:48px;padding:0 26px;border:0;border-radius:0;background:none;isolation:isolate;cursor:pointer}
+ #studioChip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #studioChip[hidden]{display:none}
+ #studioChip .sd-chip-n{font-size:20px;font-weight:800;font-style:italic;color:var(--on-hot)}
+ #studioChip .sd-chip-go{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--on-hot);opacity:.85}
+ #studioChip:focus-visible{outline:none}
+ #studioChip:focus-visible::before{box-shadow:0 0 0 3px var(--hot)}
+ #studioKeys{left:44px;bottom:116px;display:flex;gap:18px;pointer-events:none;font-size:13px;letter-spacing:.14em;font-weight:700;color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,0,.7)}
+ #studioKeys i{margin-right:8px;padding:2px 6px;border:2px solid currentColor;border-radius:4px;font-style:normal}
+ /* Keys only while flying: an open sheet takes the play area. */
+ body:has(#drawer:not([hidden])) #studioKeys{display:none!important}
+}
+
+/* The studio bar is a child of body, outside #app, so the app's container
+   query never reaches it: matched on the screen's size instead. */
+@media (min-width:561px) and (min-height:501px){
+ body:has(#world[data-mode=studio]) #studioBar{left:30px;transform:none;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ body:has(#world[data-mode=studio]) #studioBar>div{display:none}
+ body:has(#world[data-mode=studio]) #studioBar>button{position:relative;isolation:isolate;height:56px;min-height:56px;padding:0 26px;border:0;border-radius:0;background:none;color:#fff;font-size:22px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase;box-shadow:none}
+ body:has(#world[data-mode=studio]) #studioBar>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#world[data-mode=studio]) #studioBar>button.primary{color:var(--on-hot)}
+ body:has(#world[data-mode=studio]) #studioBar>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ body:has(#world[data-mode=studio]) #studioBar>button svg{width:20px;height:20px}
+ body:has(#world[data-mode=studio]) #studioBar>button:focus-visible{outline:none}
+ body:has(#world[data-mode=studio]) #studioBar>button:focus-visible::before{box-shadow:0 0 0 3px var(--hot)}
+ /* Folded to icons where the room is short, as before. */
+ body:has(#world[data-mode=studio]) #studioBar.compact>button{font-size:0;padding:0 14px}
+}

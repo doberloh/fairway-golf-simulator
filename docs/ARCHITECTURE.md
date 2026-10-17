@@ -115,6 +115,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/ui-profile-hub.js` -- 1.0 My profile hub: sorts the old profile page by its headings into six tabs, golfer chips in the header, the left stack; `tabOfHeading`, `overviewTiles` tested in tests/ui-profile-hub.test.mjs
 - `src/ui-settings.js` -- 1.0 settings: Camera & bay, Graphics and Sound from the menu get the category list, all groups as rows, and the focused row's help line; tests/ui-settings.test.mjs
 - `src/ui-menu-screens.js` -- 1.0 challenges (banner, categories, cards, detail), course of the week (picture, earlier weeks, fact rows) and saved courses (shelf and chosen-course column): the old sheets' nodes placed on the mockups' grids
+- `src/ui-studio.js` -- 1.0 course studio: the slab, "N settings changed" chip and keys while flying; the settings sheet's category counts, changed dots and what-changed column; `settingsChanges` tested in tests/ui-studio.test.mjs
 - `src/ui-sheets.css` -- the sheets (#drawer, outside #app) as 1.0 screens: full screen, slanted control stacks, the lobby on the grid; the scorecard and round complete
 - `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks

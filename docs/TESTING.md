@@ -164,7 +164,8 @@ the courses several suites share.
   numbers and their dashes). The `profile`, `bag`, `look` and `level-up`
   journeys press the hub's Locker, Bag and History tabs before reaching in.
   `ui-settings` (the category list opens known sheets and holds every
-  settings screen).
+  settings screen). `ui-studio` (what counts as a changed studio setting, how
+  a change reads, and the schema reading clean against itself).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring
