@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby since rebuilt, below): profile hub, Look locker, settings with ? help,
+old ones (the lobby, monitor setup and profile hub since rebuilt, below): settings with ? help,
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1252,6 +1252,17 @@ address box, the last shot, Connect bridge and Try a sample shot (its JSON
 folded under *Edit the sample shot*). `monitorSetup.paint()` redraws it on
 a status message, the Arm switch and every `updateHUD` while it is open. The
 old notes and connector list run along the foot (PLACED).
+
+**My profile is the hub** (`src/ui-profile-hub.js`): the golfers' chips (the old
+`.profile-switch`) fixed in the header band; the left stack (who, level and
+bar, sim handicap, playing since); six tabs. `renderProfile` still writes the
+old page and adds the hub's own blocks (`hubBlocks`: `.ph-since`,
+`.ph-overview`, `.ph-preview`); `buildProfileHub` sorts the rest by heading
+(`tabOfHeading`) -- **a new heading on the profile page needs a line in
+`SECTION_TAB`, or its section lands on whichever tab came before it**. Every
+choice on the page redraws it, so the tab shown lives in main.js
+(`profileHubTab`). On the Locker tab the left stack swaps to what is worn now
+(the locker mockup's live preview), by CSS on `.ph[data-tab]`.
 
 **Pause is two columns** (the Esc list, reshaped toward the mockup): Paused,
 Resume and every action down the left; the course, standings, tee, Swing Meter,

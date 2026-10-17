@@ -55,6 +55,7 @@ import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
 import {buildLobby} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
+import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
@@ -301,7 +302,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-let lobbyBiome=null,monitorSetup=null;
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview';
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -2567,7 +2568,7 @@ function renderBag(content){
  $('saveBag').onclick=()=>{try{
   setProfileBag(profiles,owner.id,read());syncClubs();updateHUD();updateAim();sendPlayer();
   toast(`${owner.name}'s bag is saved.`);
-  if(bagReturn==='profile'){bagReturn=null;viewingProfile=owner.id;openPanel('profile');}else renderBag(content);
+  if(bagReturn==='profile'){bagReturn=null;viewingProfile=owner.id;profileHubTab='Bag';openPanel('profile');}else renderBag(content);
  }catch(e){$('playError').textContent=e.message;}};
  $('resetBag').onclick=()=>{list.innerHTML=stockBag().map(row).join('');icon();rows().forEach(wire);count();};
 }
@@ -4512,7 +4513,7 @@ const FLOURISH_WHEN={'sparkle-par':'When you make a par','confetti-birdie':'When
 // A small padlock on what is not earned yet; its colours still show.
 const LOCK='<svg class="look-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg>';
 function lookPicker(profile){
- const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter',flourish:'Flourishes'})[k]}</button>`;
+ const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter',flourish:'Flourishes'})[k]}${(l=>` <small class="look-count">${l.filter(r=>r.level<=lv).length}/${l.length}</small>`)(rewardsOf(k).filter(r=>!SECRET_FLOURISHES.has(r.id)))}</button>`;
  const item=(r,inner,kind=r.kind)=>{const has=r.level<=lv,on=look[kind]===r.id;
   return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${has?'':LOCK}${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
  let body;
@@ -4575,7 +4576,9 @@ function renderProfile(content){
   +`<h3>Back up &amp; move</h3><p class="note">Players live in this browser on this device, and the game opened from the download, from the server and on a phone each keep their own. A backup file holds everyone; restoring it adds to the players already here and never removes any.</p>`
   +`<div class="profile-actions profile-backup"><button class="secondary" id="profilesExport"><i data-lucide="download"></i> Save a backup file</button><button class="secondary" id="profilesImport"><i data-lucide="upload"></i> Restore from a backup</button></div><p class="field-error" id="backupError"></p>`
   +`<p class="research-label">Every golfer in a group is a profile, picked in the group setup; a new player gets one the moment they join. The sim handicap follows the World Handicap System: every finished 9 or 18 hole round becomes a score differential, holes are capped at net double bogey, and the index is the average of the best 8 of the last 20. Fairway's courses have never been rated, so each is rated from its length alone, the way the USGA's yardage formula rates a course; its hazards, slopes and greens are not counted. Scramble scores belong to the team and stay out of the totals. Profiles live in this browser on this device.</p>`
+  +hubBlocks(profile,s,lv)
   +`</div>`;
+ buildProfileHub(content.querySelector('.profile'),{tab:profileHubTab,onTab:t=>{profileHubTab=t;}});
  icon();
  const fail=e=>{const el=$('profileError');if(el)el.textContent=e.message;};
  $('profilesExport').onclick=()=>{try{download('fairway-players.json',exportProfiles(profiles),'application/json');toast(`Saved ${profiles.profiles.length} player${profiles.profiles.length===1?'':'s'} to a backup file.`);}catch(e){fail(e);}};
@@ -4617,6 +4620,23 @@ function renderProfile(content){
   requestAnimationFrame(()=>{const el=$('profileNameInput');if(el){el.focus();el.select();}});
   $('profileNameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape'){renamingProfile=false;openPanel('profile');}};
  }
+}
+// THE 1.0 HUB'S OWN BLOCKS (ui-profile-hub.js sorts the rest of the page into
+// its tabs): how long they have played, the overview's eight numbers, last
+// three rounds and next unlock, and the locker's view of what is worn.
+function hubBlocks(profile,s,lv){
+ const tiles=overviewTiles(s,scoreText).map(t=>`<div class="ph-tile"><strong>${escape(t.value)}${t.unit?` <small>${t.unit}</small>`:''}</strong><span>${t.label}</span></div>`).join('');
+ const recent=s.history.slice(0,3).map(r=>{const t=roundTotals(r),of=r.endless?`ENDLESS · ${t.played}`:`${profileWhen(r.started).toUpperCase()} · ${r.holes}`;
+  return `<div class="ph-round"><span class="ph-round-pic" data-biome="${escape(r.course?.settings?.biome||'')}"></span><span class="ph-round-what"><strong>${escape((r.course?.name||'A course').toUpperCase())}</strong><small>${escape(of)}</small></span><b>${escape(toParText(t.rel))}</b></div>`;}).join('');
+ const next=unlocksBetween(lv.level,lv.level+100)[0],share=lv.need?Math.min(1,lv.into/lv.need):0;
+ const unlock=next?`<div class="ph-next"><span class="ph-next-what"><small>NEXT UNLOCK · LV ${next.level}</small><strong>${escape(next.name.toUpperCase())} ${escape((KIND_NAMES[next.kind]||next.kind).toUpperCase())}</strong></span><i class="level-bar"><b style="width:${(share*100).toFixed(1)}%"></b></i><small>${next.level===lv.level+1?`${(lv.need-lv.into).toLocaleString()} XP TO GO`:`LEVEL ${next.level}`}</small></div>`:'';
+ const look=looksOf(profile),worn=(kind,id)=>escape((reward(kind,id)?.name||'—').toUpperCase());
+ const preview=`<div class="ph-preview"><div class="ph-who">${ballAvatar(profile,'ph-ball')}<span><strong>${escape(profile.name.toUpperCase())}</strong><small>${escape((titleName(look.title)||badgeName(lv.level)).toUpperCase())} · LV ${lv.level}</small></span></div>`
+  +`<div class="ph-tracer">${tracerPreview(look.tracer)}</div>`
+  +[['BALL','ball',look.ball],['FRAME','frame',look.frame],['TRACER','tracer',look.tracer],['METER','skin',look.skin]].map(([k,kind,id])=>`<div class="ph-worn"><span>${k}</span><b>${worn(kind,id)}</b></div>`).join('')+`</div>`;
+ return `<div class="ph-since"><small>PLAYING SINCE ${escape(profileWhen(s.created).toUpperCase()||'TODAY')}</small><strong>${s.roundsPlayed} ROUND${s.roundsPlayed===1?'':'S'} · ${s.holes} HOLE${s.holes===1?'':'S'}</strong></div>`
+  +`<div class="ph-overview"><div class="ph-tiles">${tiles}</div><h4>RECENT ROUNDS</h4>${recent?`<div class="ph-rounds">${recent}</div>`:'<p class="note">No rounds yet. Finish a hole and it shows up here.</p>'}${unlock}</div>`
+  +preview;
 }
 // A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
 // in a round waiting behind Continue, and in an open group editor. A golfer is

@@ -87,6 +87,15 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   mockup says Reconnect; the journeys press it by name), the address is the
   editable box, the last shot is the last of any kind, the connector notes
   sit along the foot.
+- [ ] **1.0 My profile hub: built to the mockups, seen in the browser pane at
+  1280 x 720** (Overview, Locker, Stats, History; 17 October 2026, third pass;
+  src/ui-profile-hub.js). Not seen: two or more golfers (the chips in the
+  header band), a golfer with rounds (recent-round cards, the history), the
+  rename and remove buttons in the new stack, a phone. PLACED: locked looks
+  keep full colour with a padlock and their level (the owner's 15 October rule,
+  which the smoke checks) rather than dimmed as drawn; the recent-round cards
+  show the landscape's colours, not a picture; the tab shown is remembered
+  while the game is open, and coming back from the bag editor opens Bag.
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -104,9 +113,9 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   and the Esc list (ui-focus.js), the main menu as the title screen with the
   golfer card, the standings in the Esc list, and the 1.0 colours and type on
   every panel and window through the old variables. **Not rebuilt on the kit**
-  (each keeps its old layout, restyled; the lobby since rebuilt): pause as its own screen,
-  profile hub, Look locker, settings with one line of ? help, challenges,
-  course of the week, saved courses, course studio, launch monitor setup,
+  (each keeps its old layout, restyled; the lobby, monitor setup and profile
+  hub since rebuilt): pause as its own screen, settings with one line of ? help, challenges,
+  course of the week, saved courses, course studio,
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.

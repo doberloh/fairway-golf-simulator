@@ -1348,6 +1348,7 @@ const JOURNEYS = [
    // kept.
    await t.step('My profile: the look picker shows what is earned and saves a choice', async () => {
     if (!await t.page.evaluate(() => !!document.querySelector('#drawerContent .profile-id img.ball-avatar'))) throw new Error('no ball picture on the profile');
+    await t.press('Locker'); // the look is the hub's Locker tab (1.0, 17 October 2026)
     await t.page.click('[data-look-tab="tracer"]');
     await t.until(() => t.page.evaluate(() => !!document.querySelector('.look-item.on')), 'the tracer list', 5 * SLOW);
     const view = await t.page.evaluate(() => ({on: document.querySelector('.look-item.on')?.textContent, locked: document.querySelectorAll('.look-item.locked').length, open: [...document.querySelectorAll('.look-item:not(.on):not(.locked)')].map(b => b.dataset.wear)}));
@@ -1362,6 +1363,7 @@ const JOURNEYS = [
    });
    await t.step('Replay this course grows the same run again', async () => {
     const seed = main(await stored()).rounds[0].course.seed;
+    await t.press('History'); // the round history is the hub's History tab
     await t.press('Replay this course');
     await t.until(() => t.page.evaluate(s => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.seed === s && !JSON.parse(localStorage.getItem('fairway-round-v1')).round.cards[0].some(Number.isFinite) && document.getElementById('app').dataset.mode === 'play', seed),
      `a fresh run on seed ${seed}`, 120 * SLOW);
@@ -1386,6 +1388,7 @@ const JOURNEYS = [
    await t.step("My profile → Edit Smoke's bag", async () => {
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    await t.press('Bag'); // the bag is the hub's Bag tab
     await t.press("Edit Smoke's bag");
     await t.until(() => t.page.locator('#bagList').isVisible().catch(() => false), 'the bag editor', 5 * SLOW);
     if (await rows().count() !== 8) throw new Error(`a new golfer's bag has ${await rows().count()} clubs, not the stock eight`);
@@ -1536,6 +1539,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('app').dataset.mode === 'menu'), 'the main menu', 60 * SLOW);
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    await t.press('History'); // the backup is on the hub's History tab
     const [download] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#profilesExport')]);
     const file = JSON.parse(await (await import('node:fs/promises')).readFile(await download.path(), 'utf8'));
     if (file.kind !== 'fairway-profiles' || !file.profiles.some(p => p.name === 'Smoke')) throw new Error('the backup does not hold the players');
@@ -2816,6 +2820,7 @@ const JOURNEYS = [
    await t.step('at level 1, Sky has a padlock and cannot be put on', async () => {
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.press('Locker');
     await t.page.click('[data-look-tab="tracer"]');
     await t.page.waitForSelector(skyItem, {timeout: 10000 * SLOW});
     const v = await t.page.evaluate(sel => { const b = document.querySelector(sel); return {locked: b.classList.contains('locked'), lock: !!b.querySelector('.look-lock'), disabled: b.disabled, wear: b.dataset.wear || null}; }, skyItem);
@@ -2861,6 +2866,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('generating')?.hidden !== false), 'the main menu', 60 * SLOW);
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.press('Locker');
     await t.page.click('[data-look-tab="tracer"]');
     await t.page.click('[data-wear="tracer:sky"]', {timeout: 10000 * SLOW});
     await t.until(async () => (await stored()).worn?.tracer === 'sky', 'Sky to be saved', 10 * SLOW);
@@ -2884,6 +2890,7 @@ const JOURNEYS = [
     if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
     // Thirteen from the spec and five for the challenges (16 October 2026).
     if (v.ach !== 18 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+    await t.press('Locker'); // the look is the hub's Locker tab (1.0, 17 October 2026)
    });
    for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {
     await t.step(`the ${tab} tab: put one on, and it is kept`, async () => {

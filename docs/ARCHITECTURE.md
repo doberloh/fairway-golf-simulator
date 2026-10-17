@@ -112,6 +112,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/round-phone.css` -- the 1.0 round screen on a phone, sideways and upright (the slanted aim pad, the tapped meter, a MENU chip), and the phone's main menu rows
 - `src/ui-lobby.js` -- the 1.0 lobby: moves the round panel's own controls into the mockup's three columns (tiles and ◀ ▶ pickers drive the real drop-downs); `optionWords`, `courseFacts` tested in tests/ui-lobby.test.mjs
 - `src/ui-monitor-setup.js` -- 1.0 launch monitor setup: moves the monitor panel's controls into the mockup's three ticked steps and status column; `monitorSteps`, `monitorLight`, `lastShotLine` tested in tests/ui-monitor-setup.test.mjs
+- `src/ui-profile-hub.js` -- 1.0 My profile hub: sorts the old profile page by its headings into six tabs, golfer chips in the header, the left stack; `tabOfHeading`, `overviewTiles` tested in tests/ui-profile-hub.test.mjs
 - `src/ui-sheets.css` -- the sheets (#drawer, outside #app) as 1.0 screens: full screen, slanted control stacks, the lobby on the grid; the scorecard and round complete
 - `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks

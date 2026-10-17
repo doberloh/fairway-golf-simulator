@@ -228,6 +228,101 @@
  #drawer .lm-foot :is(p,li){font-family:var(--font-ui);font-size:13px;line-height:1.5;color:var(--soft)}
  #drawer .lm-foot h3{margin:8px 0;font-size:13px;letter-spacing:.16em;color:var(--soft)}
 
+ /* ------------------------------------------------------------ my profile */
+ /* MY PROFILE, THE HUB (ui-profile-hub.js sorts the old page into it): the
+    golfers as chips in the header band, the left stack (4 columns) and six
+    tabs on the right (8). On the Locker tab the left stack shows what is worn
+    instead of the level and handicap, as the locker mockup does. */
+ #drawer .ph-root{display:block}
+ #drawer .ph{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .ph .ph-chips{position:fixed;top:24px;left:340px;right:220px;z-index:3;display:flex;flex-wrap:nowrap;gap:8px;margin:0;padding:0;border:0;overflow:hidden}
+ #drawer .ph .ph-chips>.panel-tab{display:flex;align-items:center;gap:8px;height:40px;padding:0 18px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap}
+ #drawer .ph .ph-chips img{width:24px;height:24px}
+ #drawer .ph .ph-chips small{font-size:11px;font-style:normal;letter-spacing:.12em;opacity:.75}
+ #drawer .ph-side,#drawer .ph-main{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
+ #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ /* The left stack. */
+ #drawer .ph .profile-id{display:flex;align-items:center;gap:16px;min-height:104px;padding:12px 32px}
+ #drawer .ph .profile-id .profile-avatar{width:68px;height:68px}
+ #drawer .ph .profile-id h3{margin:0;font-size:36px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff;text-transform:uppercase}
+ #drawer .ph .profile-id .golfer-title{display:block;margin-top:6px;font-size:13px;font-style:normal;letter-spacing:.16em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .profile-id .profile-tag{font-size:11px;letter-spacing:.12em;vertical-align:middle}
+ #drawer .ph .profile-id .profile-actions button{height:32px;min-height:32px;padding:0 12px;font-size:13px}
+ #drawer .ph .profile-level{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:88px;padding:12px 32px}
+ #drawer .ph .profile-level small{grid-column:1/-1;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .ph .profile-level strong::before{content:"LV "}
+ #drawer .ph .profile-level span{font-size:13px;letter-spacing:.08em;font-weight:700;color:var(--soft);text-align:right}
+ #drawer .ph .level-bar{grid-column:1/-1;display:block;height:8px;background:rgba(255,255,255,.14);border-radius:0}
+ #drawer .ph .level-bar b{display:block;height:100%;background:var(--hot);border-radius:0}
+ #drawer .ph .profile-hcp{display:grid;gap:4px;min-height:88px;align-content:center;padding:12px 32px}
+ #drawer .ph .profile-hcp small,#drawer .ph .ph-since small{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-hcp strong{font-size:48px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .ph .profile-hcp span{font-family:var(--font-ui);font-size:12px;color:var(--soft)}
+ #drawer .ph .ph-since{display:grid;gap:6px;min-height:72px;align-content:center;padding:12px 32px}
+ #drawer .ph .ph-since strong{font-size:22px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph[data-tab=Locker] .ph-side>:not(.ph-preview),#drawer .ph:not([data-tab=Locker]) .ph-side>.ph-preview{display:none}
+ #drawer .ph .ph-preview{display:grid;gap:8px}
+ #drawer .ph .ph-who{display:flex;align-items:center;gap:16px;min-height:96px;padding:12px 32px}
+ #drawer .ph .ph-who .ph-ball{width:64px;height:64px}
+ #drawer .ph .ph-who strong{display:block;font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .ph :is(.ph-who,.ph-round-what,.ph-next-what) small{display:block;margin-top:4px;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-tracer{display:grid;place-items:center;min-height:80px;padding:8px 32px}
+ #drawer .ph .ph-tracer svg{width:100%;height:64px}
+ #drawer .ph .ph-worn{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 32px}
+ #drawer .ph .ph-worn span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-worn b{font-size:17px;font-weight:800;font-style:italic;color:#fff}
+ /* The tabs and the panes. */
+ #drawer .ph .ph-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:0;border:0}
+ #drawer .ph .ph-tabs>.panel-tab{height:40px;padding:0 18px;font-size:13px}
+ #drawer .ph .ph-pane{min-width:0}
+ #drawer .ph .ph-pane>h3,#drawer .ph h4{margin:16px 0 8px;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-pane>h3:first-child,#drawer .ph-tab-locker>h3{margin-top:0}
+ /* Overview. */
+ #drawer .ph .ph-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #drawer .ph .ph-tile{display:grid;gap:6px;min-height:88px;align-content:center;padding:12px 26px}
+ #drawer .ph .ph-tile strong{font-size:34px;font-weight:800;font-style:italic;line-height:1;color:#fff;white-space:nowrap}
+ #drawer .ph .ph-tile strong small{margin-left:4px;font-size:15px;font-style:normal;letter-spacing:.06em;color:var(--soft)}
+ #drawer .ph .ph-tile span{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-rounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ #drawer .ph .ph-round{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:6px}
+ #drawer .ph .ph-round-pic{height:72px;background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 45%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 45%);transform:skewX(-12deg)}
+ #drawer .ph .ph-round-what{grid-column:2/-1;grid-row:1;display:grid;align-content:center;min-height:72px;padding:8px 64px 8px 24px}
+ #drawer .ph .ph-round-what strong{font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .ph .ph-round>b{grid-column:3;grid-row:1;z-index:1;padding-right:24px;font-size:24px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .ph-next{display:flex;align-items:center;gap:20px;min-height:80px;margin-top:16px;padding:8px 32px}
+ #drawer .ph .ph-next .level-bar{flex:1}
+ #drawer .ph .ph-next-what strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .ph-next>small{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ /* Locker: the kinds down the side, the grid beside them. */
+ #drawer .ph .ph-tab-locker{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,6fr);gap:8px 16px;align-items:start}
+ #drawer .ph .ph-tab-locker>h3{display:none}
+ #drawer .ph .ph-tab-locker>*{grid-column:2}
+ #drawer .ph .ph-tab-locker>.ph-kinds{grid-column:1;grid-row:1/span 20;display:grid;gap:8px;margin:0;padding:0;border:0}
+ #drawer .ph .profile-id>div>small{display:none}
+ #drawer .ph .ph-kinds .look-count{margin-left:auto;font-size:13px;font-style:normal;letter-spacing:.08em;opacity:.8}
+ #drawer .ph .ph-kinds>.panel-tab{justify-content:flex-start;height:48px;padding:0 20px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.04em}
+ #drawer .ph .look-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+ #drawer .ph .look-item{position:relative;isolation:isolate;min-height:96px;border:0;border-radius:0;background:none;color:#fff;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+ #drawer .ph .look-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .ph .look-item.on::before{background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 0 3px var(--hot)}
+ #drawer .ph .look-item.on{color:var(--on-hot)}
+ #drawer .ph .look-item:focus-visible{outline:none}
+ #drawer .ph .look-item:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* Stats, achievements, bag, history: the old blocks as panels. */
+ #drawer .ph .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ #drawer .ph .stat-tile{padding:12px 24px}
+ #drawer .ph .stat-tile strong{font-size:24px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .stat-tile span{font-size:11px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .achievement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;list-style:none}
+ #drawer .ph .achievement{padding:12px 28px}
+ #drawer .ph .achievement:not(.earned){opacity:.6}
+ #drawer .ph .achievement.earned::before{box-shadow:inset 0 0 0 2px var(--hot)}
+ #drawer .ph .profile-bag{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #drawer .ph .profile-bag>span{display:flex;justify-content:space-between;padding:12px 24px;font-size:15px;font-weight:700;color:#fff}
+ #drawer .ph .profile-bag b{font-style:italic}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */
