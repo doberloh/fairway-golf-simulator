@@ -1167,3 +1167,15 @@ base64-encoded, the kit's stylesheet, and the licence text, which Help's
 notices carry; the kit's modules are not imported yet, so not in the page);
 the plan had guessed 130 KB. Nothing is drawn in the new face yet -- phase 0 adds the face and the
 kit; phase 1 is the first screen to use them.
+
+**The rest of the overnight build (phases 1-5, same branch, same night).** No
+dependency, font or asset was added after the typeface: the round screen,
+shot moments, menus and focus are the game's own CSS and JavaScript, and the
+chiptune (`src/chiptune.js`) is synthesised and not even in the page yet (it is
+not imported; the sound lab inlines it into its local listening page). The
+built page is **17,328,446 bytes, +115 KB on 0.8.3** with everything on the
+branch. Its one `fetch(` is still Vite's module-preload helper, which never
+runs in the single file (THIRD_PARTY_NOTICES, *Vite 8.3.0 module-preload
+helper*). **Smoke on the branch: not run** (the owner asked for nothing on the
+graphics card overnight), so the zero-request claim rests on the unchanged
+build path, not on a run.
