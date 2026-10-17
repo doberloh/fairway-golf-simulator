@@ -1135,7 +1135,7 @@ slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
 box itself stays upright, and the text with it -- the kit's rule (only the
 colour leans) by another route.
 
-## The 1.0 sounds (built, not wired)
+## The 1.0 sounds (wired in 17 October 2026)
 
 Phase 4 of the 1.0 interface (17 October 2026). `src/chiptune.js` holds the
 family C tunes the owner picked in the mockups (prog metal, clean tone,
@@ -1145,9 +1145,22 @@ bogey, level up, round complete and XP counting, and the six interface sounds
 sixteenth notes, with the player ported from the mockup (`playChip`: pulse
 guitars and leads, triangle bass, noise drums, a dotted-eighth echo; never
 scheduled in the past; its noise is a fixed sequence so a tune sounds the same
-twice). **Nothing in the game plays them yet**: the owner asked for them built
-for listening overnight; the sound lab's `chiptune.html` plays them. Wiring
-them in and deleting the marimba stings waits for the sign-off (TODO).
+twice). **They are wired in** (the owner: "you can also wire all the new
+sounds i agreed on", 17 October 2026; `CHIP_SIGNED_OFF` records it). audio.js
+plays them: `score` sends hole in one, eagle, birdie, par and bogey to family
+C and albatross, double bogey and worse to the 14 October jingle (`CHIP_FINAL`;
+PLACED, family C has no tune for them); `moment('level' | 'xp' | 'round')`;
+`ui('move' | 'select' | 'back' | 'toggle' | 'locked' | 'ready')`, with
+interface sounds within 45 ms of the last skipped. main.js calls them from the
+XP popup (fill and level-up; its `gain` take stays), the results (round
+complete, once per round), `moveFocus`, a captured click on the main menu or
+Esc list, Escape, the green-reading buttons, a pointerdown on a locked look and
+`drawMonitorState` turning green while armed. Levels are `CHIP_LEVELS`
+(0.32 / 0.22), measured by check.mjs. **The marimba stings are deleted**
+(`INSTRUMENTS`, `score()`, `FINAL.scores`); `SCORES` keeps each score's name and
+notes for the stings report. TRAP: the sound-lab main page inlines chiptune.js
+inside a function scope (`/*CHIP*/`), because pasted beside sound.js its short
+names (`L`, `D`, `B`, `noise`, `pulse`) would collide.
 
 ## The 1.0 menus and windows
 

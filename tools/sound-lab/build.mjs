@@ -17,9 +17,13 @@ const here=dirname(fileURLToPath(import.meta.url)),root=join(here,'..','..');
 // The game's own sound module, not a copy: src/sound.js is what plays in the
 // game, so the report plays exactly that.
 const synth=readFileSync(join(root,'src','sound.js'),'utf8').replace(/^export /gm,'');
+// The 1.0 interface's chiptune goes into the main page too (in a scope of its
+// own there), so check.mjs measures the tunes the game plays beside the rest.
+const chipSrc=readFileSync(join(root,'src','chiptune.js'),'utf8').replace(/^export /gm,'');
 const built=new Date().toISOString().slice(0,16).replace('T',' ');
 const page=readFileSync(join(here,'page.html'),'utf8')
  .replace('/*SYNTH*/',()=>synth)
+ .replace('/*CHIP*/',()=>chipSrc)
  .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">\n<meta name="built" content="${built}">`);
 const outDir=join(root,'docs','reports','sounds');
 mkdirSync(outDir,{recursive:true});

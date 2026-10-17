@@ -90,7 +90,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week and the challenge of the week from the date; `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course; `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
 - `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
-- `src/chiptune.js` -- the 1.0 interface's chiptune (prog metal, clean, family C): the moments and interface sounds as data, and their player; for listening in the sound lab, not wired into the game yet
+- `src/chiptune.js` -- the 1.0 interface's chiptune (prog metal, clean, family C): the moments and interface sounds as data, and their player; wired in through audio.js (17 October 2026), the marimba stings deleted
 
 **Drawing it**
 - `src/renderer.js` -- the three.js scene, ball, cup, flag, cameras, maps

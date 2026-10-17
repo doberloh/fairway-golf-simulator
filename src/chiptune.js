@@ -3,11 +3,13 @@
 // mockup rounds: "a half-time groove with an echoing lead", a melody of its
 // own for each moment).
 //
-// BUILT FOR LISTENING, NOT WIRED IN. The owner asked for the overnight build to
-// make these listenable in the sound lab (tools/sound-lab/chiptune.html) and to
-// leave the game's sounds as they are; the marimba stings go, and these come
-// in, only once each one has been tuned and signed off by ear, the way the
-// current sounds were (UI_1_0_PLAN, phase 4).
+// WIRED IN (17 October 2026). Built first for listening in the sound lab
+// (tools/sound-lab/chiptune.html); then the owner said, of the sounds they had
+// picked in the mockups, "you can also wire all the new sounds i agreed on" --
+// their sign-off for exactly the tunes below (CHIP_SIGNED_OFF), and the marimba
+// stings were deleted (sound.js). audio.js plays them: the five score moments,
+// a new level, round complete, XP counting, and the six interface sounds. The
+// families and tones the owner did not pick (A, B, drive) are not here.
 //
 // Ported from the approved mockup page (its `rock` player and the round-6
 // MOMENTS table, column C, plus the round-4 interface set, clean). Everything
@@ -72,6 +74,18 @@ export const CHIP_MOMENTS = {
    [LE(76, 0, 4), LE(83, 4, 4), LE(81, 8, 4), LE(80, 12, 4)], [G(EMAJ, 16, 10), B(28, 16, 10), LE(88, 16, 8, {vib: 1}), D('crash', 16), D('kick', 16)])},
  xp: {name: 'XP counting up', how: 'Sparse pings, the echo fills the gaps', bpm: 200,
   seq: cat([76, 79, 81, 83, 86, 88].map((n, i) => LE(n, i, .6)), Hats(0, 6, 1))},
+};
+
+// THE OWNER'S SIGN-OFF (17 October 2026): every tune above, in the clean tone,
+// as ported from the approved mockup. tests/chiptune.test.mjs holds the game to
+// playing only these.
+// How loud the game plays them (audio.js, and check.mjs measures the same):
+// the tunes are mixed hot, with the mockup's compressor inside playChip.
+// PLACED by ear from the mockup; check.mjs compares them with the other sounds.
+export const CHIP_LEVELS = {moment: .32, ui: .22};
+export const CHIP_SIGNED_OFF = {
+ by: 'the owner', on: '2026-10-17', words: 'you can also wire all the new sounds i agreed on', tone: 'clean',
+ moments: Object.keys(CHIP_MOMENTS), interface: Object.keys(CHIP_INTERFACE),
 };
 
 // Which moment a finished hole plays: the same judgement as the marimba's

@@ -11,7 +11,7 @@ import {holeScoreName} from '../src/scoring.js';
 // signed-off takes stayed signed off, and the rules the owner set hold.
 
 test('every signed-off sound has exactly one take',()=>{
- for(const [group,table] of [[STRIKES,FINAL.strikes],[IMPACTS,FINAL.impacts],[SCORES,FINAL.scores]])
+ for(const [group,table] of [[STRIKES,FINAL.strikes],[IMPACTS,FINAL.impacts]])
   for(const id of Object.keys(table)){
    assert.deepEqual(Object.keys(group[id].takes),['A'],`${id} still offers more than its final take`);
    assert(group[id].final,`${id} is not marked final`);
@@ -19,7 +19,29 @@ test('every signed-off sound has exactly one take',()=>{
  // Everything the game can play is signed off.
  for(const id of Object.keys(STRIKES))assert(FINAL.strikes[id],`strike ${id} was never signed off`);
  for(const id of Object.keys(IMPACTS))assert(FINAL.impacts[id],`impact ${id} was never signed off`);
- for(const id of Object.keys(SCORES))assert(FINAL.scores[id],`score ${id} was never signed off`);
+ // The scores are chiptune (family C, or the 14 October jingles): see below.
+ assert.equal(FINAL.scores,undefined,'the marimba stings were deleted (17 October 2026)');
+ assert.ok(Object.keys(SCORES).length>=8,'every score keeps its name and tune');
+});
+
+// THE MARIMBA IS GONE (the owner chose "Delete", 16 October 2026; wired out 17
+// October): no instrument, no player, nothing the game could fall back to.
+test('the marimba stings are deleted', async () => {
+ const S = await import('../src/sound.js');
+ assert.equal(S.INSTRUMENTS, undefined);
+ assert.equal(S.score, undefined);
+});
+
+// THE 1.0 INTERFACE'S SOUNDS (17 October 2026): the owner picked family C for
+// hole in one, eagle, birdie, par and bogey, a new level, round complete and XP
+// counting, plus the interface set, and signed them off in words.
+test('the sounds the owner signed off are the ones the game can play', async () => {
+ const {CHIP_MOMENTS, CHIP_INTERFACE, CHIP_SIGNED_OFF} = await import('../src/chiptune.js');
+ for (const id of ['ace', 'eagle', 'birdie', 'par', 'bogey', 'level', 'round', 'xp']) assert.ok(CHIP_MOMENTS[id], `no family C tune for ${id}`);
+ for (const id of ['move', 'select', 'back', 'toggle', 'locked', 'ready']) assert.ok(CHIP_INTERFACE[id], `no interface sound ${id}`);
+ assert.deepEqual(CHIP_SIGNED_OFF.moments, Object.keys(CHIP_MOMENTS));
+ assert.deepEqual(CHIP_SIGNED_OFF.interface, Object.keys(CHIP_INTERFACE));
+ assert.equal(CHIP_SIGNED_OFF.tone, 'clean');
 });
 
 test('each score name has its sting, decimal putting included',()=>{
@@ -117,12 +139,13 @@ test('every XP sound is signed off, one take each', async () => {
  }
 });
 
-// THE HOLE-OUT STINGS ARE CHIPTUNE (signed off 14 October 2026): every score
-// plays the owner's take, D, with their sliders.
+// THE HOLE-OUT JINGLES (signed off 14 October 2026): every score keeps the
+// owner's take, D, with their sliders. Since 17 October the game plays them for
+// albatross, double bogey and worse, which family C has no tune for.
 test('every hole-out sting is the signed-off chiptune jingle', async () => {
  const {CHIP_FINAL, SCORES} = await import('../src/sound.js');
  for (const id of Object.keys(SCORES)) {
-  assert.ok(CHIP_FINAL[id], `${id} would still play the marimba`);
+  assert.ok(CHIP_FINAL[id], `${id} has no jingle`);
   assert.equal(CHIP_FINAL[id][0], 'D', `${id} is not the take the owner chose`);
   assert.deepEqual(CHIP_FINAL[id][1], {length: .7, pitch: .63, bright: 1.2}, `${id} lost the owner's sliders`);
  }

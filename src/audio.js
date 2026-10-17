@@ -17,7 +17,16 @@
 // or pressed a key, so nothing is created until then (`unlock`); before it,
 // every call here is a quiet no-op. The context is suspended while the page is
 // hidden, so a game left in a background tab costs nothing.
-import {createSoundLab,createAmbience,strike,impact,score,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL,chipSting,CHIP_FINAL} from './sound.js';
+import {createSoundLab,createAmbience,strike,impact,scoreSting,SCENES,STRIKES,meterVoice,meterEvent,xpSound,XP_FINAL,chipSting,CHIP_FINAL} from './sound.js';
+import {playChip,CHIP_MOMENTS,CHIP_INTERFACE,CHIP_LEVELS} from './chiptune.js';
+// THE 1.0 INTERFACE'S SOUNDS (17 October 2026). The owner picked family C of
+// the prog-metal chiptune in the mockups -- "a half-time groove with an
+// echoing lead", clean tone -- for hole in one, eagle, birdie, par, bogey,
+// level up, round complete and XP counting, and the clean interface set for
+// menus, and said: "you can also wire all the new sounds i agreed on." That is
+// their sign-off for exactly these (chiptune.js CHIP_SIGNED_OFF).
+const FAMILY_C_SCORES=new Set(['ace','eagle','birdie','par','bogey']);
+const CHIP_GAIN=CHIP_LEVELS.moment,UI_GAIN=CHIP_LEVELS.ui;
 import {crownRadius} from './species.js';
 
 const KEY='fairway-sound-v1';
@@ -75,7 +84,7 @@ export function canopyContacts(points,allTrees,toWorld){
 }
 
 export function createGameAudio(){
- let ctx=null,lab=null,amb=null,ambGain=null,prefs=loadSound(),scene=null,sceneState={},voice=null;
+ let ctx=null,lab=null,amb=null,ambGain=null,prefs=loadSound(),scene=null,sceneState={},voice=null,uiAt=-1;
  const ok=()=>!!ctx&&prefs.on;
  function applyVolumes(){
   if(!ctx)return;const now=ctx.currentTime,v=x=>Math.max(0,x)/100;
@@ -137,10 +146,24 @@ export function createGameAudio(){
    if(what!=='cup'&&!(c.speed>=QUIET))return;
    impact(lab,what,{speed:c.speed??2,dist,pan});
   },
-  // A hole finished: the sting for that score.
-  // A score with a signed-off chiptune sting (sound.js CHIP_FINAL) plays that;
-  // every other plays the signed-off marimba, as before.
-  score(strokes,par){if(!ok())return;const name=scoreSting(strokes,par),chip=CHIP_FINAL[name];if(chip)chipSting(lab,name,{take:chip[0],knobs:chip[1]});else score(lab,name);},
+  // A hole finished: the sting for that score. The five the owner picked play
+  // family C; albatross, double bogey and worse have no family C tune, so they
+  // keep the signed-off 14 October jingle (sound.js CHIP_FINAL). PLACED.
+  score(strokes,par){
+   if(!ok())return;const name=scoreSting(strokes,par);
+   if(FAMILY_C_SCORES.has(name)){playChip(ctx,lab.fx,CHIP_MOMENTS[name],{tone:'clean',gain:CHIP_GAIN});return;}
+   const chip=CHIP_FINAL[name];chipSting(lab,name,{take:chip[0],knobs:chip[1]});
+  },
+  // A family C moment that is not a score: 'level' (a new level), 'round'
+  // (round complete) or 'xp' (XP counting up).
+  moment(id){if(ok()&&CHIP_MOMENTS[id])playChip(ctx,lab.fx,CHIP_MOMENTS[id],{tone:'clean',gain:CHIP_GAIN});},
+  // An interface sound: 'move', 'select', 'back', 'toggle', 'locked' or
+  // 'ready'. A held arrow repeats moves faster than a chug rings, so a sound
+  // within 45 ms of the last is skipped rather than stacked. PLACED.
+  ui(id){
+   if(!ok()||!CHIP_INTERFACE[id])return;const now=ctx.currentTime;
+   if(now-uiAt<.045)return;uiAt=now;playChip(ctx,lab.fx,CHIP_INTERFACE[id],{tone:'clean',gain:UI_GAIN});
+  },
   // THE SWING METER. The voice starts with the first tap, follows the marker
   // (`meterMove`, every frame, position in bar lengths) and stops with the
   // swing; `meterSound` plays one moment: 'power', 'overswing', 'perfect',

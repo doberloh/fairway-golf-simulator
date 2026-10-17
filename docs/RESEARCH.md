@@ -7844,8 +7844,10 @@ echo and a noise drum, and new game jingles. **The owner chose take D, the game
 jingles, for every score** (`CHIP_FINAL`), at length 0.7, pitch 0.63 and
 brightness 1.2: a square lead, a triangle bass and a noise drum, the whole
 pitched down by about eight semitones and shortened to 70%, its low-pass at
-about 3,500 Hz. They replace the marimba stings in play (which stay in the
-code for comparison). Pulse waves are built from their Fourier series (40
+about 3,500 Hz. They replaced the marimba stings in play; the marimba stayed in
+the code for comparison until 17 October 2026, when it was deleted and family C
+took over five of the scores (*The 1.0 interface's sounds, wired in*, below).
+Pulse waves are built from their Fourier series (40
 harmonics). As played they peak at -15 dB for a hole in one or albatross and
 about -18 dB for the rest (`tools/sound-lab/check.mjs`, its "final" rows). The
 marimba they replace peaked at about -7 dB for a hole in one, -17 for a birdie
@@ -8634,3 +8636,51 @@ usually picked a club. The hole-out band's **0.2 s in, 1.5 s hold, 0.3 s out**
 is the approved mockup's (*Big but brief*); the quiet strip's **0.15 / 1.3 /
 0.25 s** is PLACED to sit under it. The old banner held 2.7 s.
 
+
+## The 1.0 interface's sounds, wired in (17 October 2026)
+
+**What plays.** The owner picked, in the 1.0 mockups, the prog-metal chiptune
+in a clean tone, family C ("a half-time groove with an echoing lead"), with a
+melody of its own per moment, and the clean interface set; then said "you can
+also wire all the new sounds i agreed on" (17 October 2026, the overnight
+build). `src/chiptune.js` plays them, ported note for note from the approved
+mockup page (`docs/reports/ui-1-0/mockups/index.html`, local). In the game:
+hole in one, eagle, birdie, par and bogey play family C; **albatross, double
+bogey and worse keep the 14 October jingle**, because family C has no tune for
+them (PLACED: an albatross could take the eagle's tune or the ace's, a double
+the bogey's). A new level and the XP bar filling play family C's level-up and
+XP tunes in place of the XP popup's signed-off `levelUp` and `fill` takes (its
+`gain` take stays: family C has nothing for it). Round complete plays the
+first time a round's results open. The interface sounds play on menu moves
+(arrows, d-pad), presses on the main menu and the Esc list, Escape out of the
+Esc list or a panel, the map's green-reading buttons, a locked look in the
+locker, and the monitor's ball light turning Ready while armed. Interface
+sounds closer than 45 ms are skipped rather than stacked (PLACED).
+
+**The marimba is deleted** (`INSTRUMENTS`, `score()` and `FINAL.scores`), as
+the owner chose on 16 October ("Delete", no option). Each score's name and its
+round-3 tune as notes stay in `SCORES`: the stings report's chip takes A-C play
+them.
+
+**Levels** (`tools/sound-lab/check.mjs`, limiter off, `CHIP_LEVELS` 0.32 for
+the moments and 0.22 for the interface; PLACED from the mockup, where the owner
+heard them at one master level). Peak / RMS dB:
+
+| Sound | Peak | RMS | Length s |
+|---|---|---|---|
+| Hole in one | -6.8 | -25.4 | 4.8 |
+| Eagle | -9.5 | -27.9 | 3.8 |
+| Birdie | -11.2 | -39.3 | 2.4 |
+| Par | -14.9 | -38.2 | 2.0 |
+| Bogey | -19.2 | -42.7 | 3.1 |
+| Level up | -7.5 | -26.9 | 4.4 |
+| Round complete | -6.0 | -25.8 | 4.7 |
+| XP counting | -19.7 | -48.6 | 1.4 |
+| Interface (six) | -14.6 to -31.5 | -37 to -58 | 0.1-0.5 |
+
+Against the 14 October jingles they replace (RMS about -31 for a hole in one,
+-36 for a birdie, -36 for a bogey) the big moments are 4-6 dB louder and
+birdie and bogey 3-6 dB quieter; the XP count, sparse pings with an echo, sits
+about 18 dB under the old `fill`. This is the balance the owner approved in the
+mockup; whether it holds in the game, over ambience and on a projector's
+speakers, has not been heard (TODO).

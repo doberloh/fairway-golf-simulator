@@ -82,25 +82,20 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.
-- [ ] **Phase 4 (sounds): the chiptune is built for listening, not in the
-  game -- and wiring it in needs the owner at the keyboard.** On the night of 17
-  October the owner's word to wire the family C sounds and delete the marimba
-  reached this session only as a relayed message; this session's safety check
-  refused both the deletion of signed-off sound code and the wiring on a
-  relayed instruction, so neither was done. Say it again in a session and it
-  is an evening's work: fold src/chiptune.js into sound.js (lab pages inline
-  sound.js), play family C from audio.js for hole in one, eagle, birdie, par,
-  bogey (an albatross, a double bogey and worse keep the 14 October jingle:
-  PLACED), level up (the XP popup's), round complete and XP counting (the
-  results), and the interface sounds on menu moves and presses, then delete
-  the marimba and run check.mjs. (17 October 2026, at the owner's word for the overnight run). Listen
-  in `docs/reports/sounds/chiptune.html` (`node tools/sound-lab/build.mjs`):
-  hole in one, eagle, birdie, par, bogey, level up, round complete, XP counting
-  and the six interface sounds, clean with drive to compare. Once signed off:
-  wire them through audio.js (score stings, level up, XP, menu move / select /
-  back / toggle / locked / ready), delete the marimba stings with no option
-  to keep them (UI_1_0_PLAN 5.3), and run `tools/sound-lab/check.mjs` (a
-  headless browser: ask first).
+- [ ] **Phase 4 (sounds): wired in, NOT HEARD IN THE GAME.** Family C (clean)
+  now plays for hole in one, eagle, birdie, par and bogey, a new level, XP
+  counting and round complete, and the interface set on menu moves, presses,
+  Escape, the green-reading buttons, a locked look and the monitor turning
+  Ready; the marimba stings are deleted (17 October 2026, at the owner's word,
+  given directly to the planning session: "you can also wire all the new
+  sounds i agreed on"). An albatross, a double bogey and worse keep the 14
+  October jingle (PLACED). Levels were measured, not heard (RESEARCH *The 1.0
+  interface's sounds, wired in*): the big moments run 4-6 dB louder than the
+  old jingles, birdie and bogey 3-6 dB quieter, the XP count much quieter.
+  **To check:** play a round with sound on -- hole a birdie, a par, a bogey,
+  level up, finish a round -- and drive the main menu and the Esc list with
+  arrows; on the projector's speakers if you can. Say what's too loud or too
+  quiet and `CHIP_LEVELS` (chiptune.js) moves.
 - [ ] **Phase 5 (phones and screen shapes) is only partly built** (17 October
   2026, overnight). Built: the round screen's pieces fit 16:9, 16:10, 4:3, 21:9
   and an iPad both ways up (round-hud.js `hudScale`, the map taking the

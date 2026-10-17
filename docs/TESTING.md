@@ -157,7 +157,10 @@ the courses several suites share.
   row, a single line wraps, the keys and pad directions).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
-  the player never scheduling in the past).
+  the player never scheduling in the past). `sound` also holds the wiring
+  (17 October 2026): the marimba stings are gone (no `INSTRUMENTS`, no
+  `score`, no `FINAL.scores`), and the owner's signed-off list
+  (`CHIP_SIGNED_OFF`) is exactly the moments and interface sounds there are.
   The kit is on no screen yet; the round screen is (in play, off a phone), and
   the smoke journeys reach the top bar's controls through `t.chrome()` /
   `t.menuItem()`, which open the Esc list where the round screen hides the bar
