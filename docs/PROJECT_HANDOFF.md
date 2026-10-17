@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses and the studio since rebuilt, below):
+old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses, the studio and the range controls since rebuilt, below):
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1317,6 +1317,14 @@ facts and the focused row's tip. With the sheet closed the last list stands
 through `studioRepaint`, at most once a frame: the panel's input listeners
 pile up one per render (an old habit of this panel), so a redraw per event
 would multiply.
+
+**The range controls** (`src/ui-range-controls.js`) stay a tool window (`POPUP_SIZE.range` now 720 wide)
+and sort `.range-box`'s runs by its own `h4` headings into two columns
+(one when the window is narrower than 560, a container query on the window's
+body). The session table is `clubTable` from range-report.js -- the report's
+own numbers -- and `recordRangeShot` refreshes it in place
+(`updateRangeSession`) rather than redrawing the window, so a slider being
+dragged keeps its place.
 
 **`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
 `--glass` or `--accent` on a deeper element still wins there; one that

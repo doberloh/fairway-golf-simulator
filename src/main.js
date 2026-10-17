@@ -72,7 +72,8 @@ import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
 import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines,centreSetup,shortSetup,shapes,loadRangeSetup,saveRangeSetup,SLOPES,SLOPE_NAMES,TILT,CONTOUR,greenById,activeGreen,setActiveGreen,nearestGreen,moveCup,chipSpot,puttSpot,CHIP_YARDS,PUTT_FEET} from './range.js';
-import {sessionCsv,sessionReport} from './range-report.js';
+import {sessionCsv,sessionReport,clubTable} from './range-report.js';
+import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
@@ -2127,6 +2128,8 @@ function recordRangeShot(result){
   // for a shot still on the field this costs nothing at all.
   replay:lastShot,
  });
+ // The range controls' session table, if the window is open (ui-range-controls.js).
+ updateRangeSession(document,{rows:sessionRows(clubTable(rangeShots)),balls:rangeShots.length,golfers:new Set(rangeShots.map(s=>s.player??0)).size});
  // Past the tracer window the row would be the only thing keeping a ~660-point
  // flight alive, and a session has no end. The payload is dropped and the row
  // goes summary-only; the numbers, which are what the list is for, all stay.
@@ -2952,6 +2955,8 @@ function renderRangePanel(content){
   +`<h4 class="range-head">This session</h4>${slider('rangeLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}<label class="check"><input type="checkbox" id="rangeDispersion"${showDispersion?' checked':''}> Dispersion on the map</label><div id="dispersionLegend"></div>`
   +`<div class="split"><button class="secondary" id="rangeCsv"${rangeShots.length?'':' disabled'}><i data-lucide="sheet"></i> Export CSV</button><button class="secondary" id="rangePdf"${rangeShots.length?'':' disabled'}><i data-lucide="file-text"></i> PDF report</button></div>`
   +`<p class="note">The CSV is every shot's numbers, for a spreadsheet. The PDF report adds each club's averages and spread, a chart of where the full shots went, the short game, and every shot. Shot lines are the tracers left on the field; zero clears them.</p></div>`;
+ // The 1.0 layout: two columns, the session by club, the lab tools (ui-range-controls.js).
+ buildRangeControls(content,{rows:sessionRows(clubTable(rangeShots)),balls:rangeShots.length,golfers:new Set(rangeShots.map(s=>s.player??0)).size,openLab:()=>openPanel('lab')});
  content.scrollTop=keep;
  for(const b of content.querySelectorAll('[data-station]'))b.onclick=()=>setRangeStation({mode:b.dataset.station});
  const on=(id,ev,fn)=>{const el=content.querySelector('#'+id);if(el)el[ev]=fn;};
@@ -4419,7 +4424,7 @@ function openSheet(name){stopTour();
 // rest -- setting up a round, the scorecard, the studio -- are once-a-round
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
-const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:330,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
+const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:720,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
 const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
