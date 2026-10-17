@@ -323,6 +323,64 @@
  #drawer .ph .profile-bag>span{display:flex;justify-content:space-between;padding:12px 24px;font-size:15px;font-weight:700;color:#fff}
  #drawer .ph .profile-bag b{font-style:italic}
 
+ /* ------------------------------------------------------------- settings */
+ /* SETTINGS (ui-settings.js): Camera & bay, Graphics and Sound from the menu
+    as one screen -- the categories down the left (3 columns), every group of
+    the open one at once in two columns of rows (9), the help line for the
+    focused row at the foot of the screen. Each control is a row: what it is
+    on the left, the real control on the right -- a tick box drawn as an
+    ON/OFF switch, a drop-down as ◀ value ▶, a slider as a segment bar. The
+    tabs ride in the footer band as chips that scroll to a group. */
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:0 32px;align-content:start;align-items:start}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.st-cats{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-lead{display:none}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:13px;white-space:nowrap}
+ #drawer .st-cats{display:grid;gap:8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-cat{position:relative;isolation:isolate;display:flex;align-items:center;height:48px;min-height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-align:left}
+ #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .st-cat.on{color:var(--on-hot)}
+ #drawer .st-cat.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .st-cat:hover:not(.on)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
+ #drawer .st-cat:focus-visible{outline:none}
+ #drawer .st-cat:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups{columns:2;column-gap:32px}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section{display:block!important;break-inside:avoid;margin:0 0 16px;columns:auto!important}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section>h3{display:block;margin:0 0 8px;font-size:13px;letter-spacing:.16em;color:var(--hot)}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section[data-title=Overview]>h3:empty{display:none}
+ /* One group alone flows its own rows into the two columns. */
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups:has(>.panel-section:only-child){columns:1}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section:only-child{columns:2!important;column-gap:32px}
+ /* A row: the label left, the control right. */
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card{display:block;min-height:48px;margin:0 0 8px;padding:6px 28px;break-inside:avoid}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.field{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.field>select{flex:0 1 auto;width:auto;max-width:60%;height:34px;padding:0 26px 0 10px;border:0;border-radius:0;background:rgba(0,0,0,.25) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M0 0l10 5-10 5z' fill='%23ffffff'/%3E%3C/svg%3E") no-repeat right 9px center;color:#fff;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;appearance:none;cursor:pointer}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.field:has(input[type=range]){display:grid;grid-template-columns:1fr auto;grid-template-areas:"what value" "bar bar";gap:6px 12px}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.field>output{grid-area:value;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.field>input[type=range]{grid-area:bar;width:100%;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
+ #drawer .st-groups input[type=range]::-webkit-slider-runnable-track{height:20px;background:linear-gradient(90deg,var(--a1) var(--fill,0%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);transform:skewX(-12deg)}
+ #drawer .st-groups input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:20px;background:var(--hot)}
+ #drawer .st-groups input[type=range]:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+ #drawer .st-groups input[type=range]::-moz-range-track{height:20px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 12px,transparent 12px 15px)}
+ #drawer .st-groups input[type=range]::-moz-range-progress{height:20px;background:repeating-linear-gradient(90deg,var(--a1) 0 12px,transparent 12px 15px)}
+ #drawer .st-groups input[type=range]::-moz-range-thumb{width:12px;height:24px;border:0;border-radius:0;background:var(--hot)}
+ /* A tick box as an ON/OFF switch, on the right of its words. */
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>label.check{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff}
+ #drawer .st-groups label.check>input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
+ #drawer .st-groups label.check>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
+ #drawer .st-groups label.check>input[type=checkbox]:checked{background:var(--a1)}
+ #drawer .st-groups label.check>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
+ #drawer .st-groups label.check>input[type=checkbox]:disabled{opacity:.4;cursor:default}
+ #drawer .st-groups label.check>input[type=checkbox]:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+ /* The notes move to the help line (? shows them all in place). */
+ body:not(:has(#app[data-mode=studio])):not(:has(#app.rh-help)) #drawer .st-groups .control-card>:is(.note,p.tip,.research-label){display:none}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>.field-error:empty{display:none}
+ #drawer .st-help{position:sticky;bottom:0;z-index:2;display:grid;gap:6px;margin-top:8px;padding:16px 36px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--panel) 92%,black);box-shadow:0 -12px 24px rgba(4,8,12,.6);transform:skewX(-12deg)}
+ #drawer .st-help-k{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
+ #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */

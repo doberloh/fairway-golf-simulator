@@ -96,6 +96,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   which the smoke checks) rather than dimmed as drawn; the recent-round cards
   show the landscape's colours, not a picture; the tab shown is remembered
   while the game is open, and coming back from the bag editor opens Bag.
+- [ ] **1.0 settings: built to the mockup, seen in the browser pane at 1280 x
+  720** (Graphics, Camera & bay, Sound from the menu; 17 October 2026, third
+  pass; src/ui-settings.js). Not seen: the help line following a real
+  keyboard or controller focus (checked by a synthetic focus event: the pane
+  had no window focus), ? showing every note in place, the switches and
+  segment bars driven by arrows, a phone. PLACED: the categories are the five
+  sheets there are, not the mockup's seven; the tool windows in a round keep
+  their own layout.
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -114,7 +122,7 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   golfer card, the standings in the Esc list, and the 1.0 colours and type on
   every panel and window through the old variables. **Not rebuilt on the kit**
   (each keeps its old layout, restyled; the lobby, monitor setup and profile
-  hub since rebuilt): pause as its own screen, settings with one line of ? help, challenges,
+  hub, and settings since rebuilt): pause as its own screen, challenges,
   course of the week, saved courses, course studio,
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every

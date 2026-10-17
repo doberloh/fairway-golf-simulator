@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby, monitor setup and profile hub since rebuilt, below): settings with ? help,
+old ones (the lobby, monitor setup, profile hub and settings since rebuilt, below):
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1270,6 +1270,20 @@ shot numbers, cameras and conditions on the right. **Settings: help on
 demand.** In the tool windows each control's explanation shows while it has the
 focus, and ? (with the focus in a window or a sheet) shows them all
 (`#app.rh-help`).
+
+**Settings is one screen from the menu** (`src/ui-settings.js`, 17 October
+2026, third pass): Camera & bay, Graphics and Sound opened as sheets get the
+category list down the left (Camera & bay, Graphics, Sound, Launch monitor,
+Help & controls -- each opens its own sheet; the mockup's Display, Controls,
+Data & backup and About map onto these, PLACED), every group shown at once in
+two columns of rows, and the help line at the foot for the focused row. CSS
+only turns the real controls into rows: a tick box is drawn as an ON/OFF
+switch (`appearance:none`), a drop-down as a value with ▶, a slider as a
+segment bar filled to `--fill` (the track is masked into segments). **One
+focus listener for good:** #drawerContent outlives every sheet, so
+`buildSettings` wires `focusin` once and swaps `root.stFocus`; adding a
+listener per render piled them up. In a round the same panels are tool
+windows and keep their own layout.
 
 **`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
 `--glass` or `--accent` on a deeper element still wins there; one that

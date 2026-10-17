@@ -56,6 +56,7 @@ import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js'
 import {buildLobby} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
+import {buildSettings} from './ui-settings.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
@@ -5621,6 +5622,8 @@ function renderPanel(name,content){
  lobbyBiome=null;
  // Launch monitor setup the same way: three steps and the status (ui-monitor-setup.js).
  monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
+ // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
+ if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
  if(name==='round')buildLobby(content,{onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();}});
  wireSliders(content);icon();
 }

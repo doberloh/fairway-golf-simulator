@@ -163,6 +163,8 @@ the courses several suites share.
   heading the old profile page writes has a hub tab; the overview's eight
   numbers and their dashes). The `profile`, `bag`, `look` and `level-up`
   journeys press the hub's Locker, Bag and History tabs before reaching in.
+  `ui-settings` (the category list opens known sheets and holds every
+  settings screen).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring
