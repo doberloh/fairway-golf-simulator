@@ -133,6 +133,16 @@ the courses several suites share.
   `auto-resolution`, `ui-scale`, `roll-hop`.
 - **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
   `projector`, `course-map`, `green-map`, `shot-views`, `shot-data`.
+- **The 1.0 interface** (branch `ui-1-0`, from phase 0) -- `ui-layout` (the
+  canvas for 16:9, 16:10, 4:3 and 21:9, the bands, the leaning sheet's corners
+  on the 60 px margins at every height, columns that never overlap, the canvas
+  filling the screen at every Text size and its 1024 floor), `ui-palette`
+  (every biome has a complete palette and no two share one, readable text over
+  a light and a dark picture, which biome each screen wears, the menus
+  following the week), `ui-kit` (every class `uk-` and every rule scoped to
+  `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
+  rules, the two font files are local woff2 with their licence, text escaped).
+  None of it is on a screen yet, so no smoke journey covers it.
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 

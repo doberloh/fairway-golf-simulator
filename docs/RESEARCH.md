@@ -8568,3 +8568,48 @@ and no draws. NOT MEASURED: the software-rasteriser arm (`--only weak`), left
 alone because a CPU-only smoke run took the owner's machine down on 13
 October; nor any real weak laptop (TODO, *A real phone, an iPad and a weak
 laptop*).
+
+## The 1.0 interface: palettes, contrast and the canvas (17 October 2026)
+
+Phase 0 of the 1.0 interface (branch `ui-1-0`; PROJECT_HANDOFF *The 1.0
+interface: layout rules*). The layout numbers -- 12 degrees, 60 px margins, 14
+px gutters, the bands, the type sizes -- are the owner's, settled in the
+mockup rounds, not measured. What has a number of its own:
+
+**The nine palettes' contrast**, by the WCAG 2 contrast ratio (REFERENCES,
+*The 1.0 interface*), with the see-through panel laid over white (the worst
+case for light text) and over black. The thresholds are WCAG 2.1's AA minimum,
+**4.5** for ordinary text and **3** for large text (24 px, or about 18.7 px
+bold); 3 is used only for the under-par scores, which are always 24 px or
+more. Over white, every palette passes with room:
+
+| Biome | white | label | accent | hot | under par | on hot | on accent (light end) | on accent (dark end) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Pacific Northwest | 12.2 | 7.8 | 8.2 | 9.8 | 4.5 | 13.3 | 11.2 | 3.0 |
+| Desert | 11.7 | 7.6 | 8.1 | 11.7 | 4.3 | 17.5 | 12.1 | 4.9 |
+| Mountain | 12.7 | 7.3 | 7.0 | 8.8 | 4.6 | 12.5 | 10.0 | 3.5 |
+| Links | 11.4 | 7.5 | 9.8 | 9.8 | 4.2 | 14.5 | 14.5 | 5.5 |
+| Midwest | 11.8 | 7.3 | 6.8 | 7.7 | 4.3 | 10.8 | 9.5 | 3.3 |
+| Island | 12.0 | 7.8 | 6.6 | 5.6 | 4.4 | 7.8 | 9.3 | 4.6 |
+| Giant Redwood | 13.5 | 7.3 | 4.9 | 10.8 | 4.9 | 14.7 | 6.6 | **2.3** |
+| Autumn | 12.0 | 7.7 | 7.2 | 12.0 | 4.4 | 17.3 | 10.4 | 3.3 |
+| Haunted Hollow | 14.4 | 7.8 | 5.5 | 6.4 | 5.3 | 8.2 | 7.1 | 3.3 |
+
+The last column is not tested: a highlighted box is a gradient from the
+accent `a1` to the darker `a2`, and text sits at the light end in the approved
+mockups. Giant Redwood's 2.3 there fails even the large-text figure, so a
+screen must not put text at the dark end (TODO, *The 1.0 interface*).
+Separately, Giant Redwood's and Haunted Hollow's accent is almost the shared
+under-par red (contrast 1.0 between them), so an under-par score is written
+only on a panel.
+
+**The canvas floor for the Text size: 1024 design pixels, PLACED** (125% on a
+16:9 canvas). At 1024 x 576 the 16:9 grid's columns are 55.8 px; at 1024 x 768
+(4:3) 52 px. Chosen as the narrowest a 12-column screen drawn for 1280 plausibly
+survives; no screen has been laid out at it yet.
+
+**The typeface's weight in the page: +58 KB** (17,213,640 to 17,271,965
+bytes): the two woff2 files (17,808 and 17,984 bytes) base64-encoded, the
+kit's stylesheet, and about 5 KB of licence text in Help's notices. The plan's
+estimate was 130 KB, made for four weights including italics the family does
+not have.

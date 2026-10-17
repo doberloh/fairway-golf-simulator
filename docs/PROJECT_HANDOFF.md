@@ -180,6 +180,10 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
+| src/ui-layout.js | The 1.0 interface's layout rules as arithmetic: the design canvas for a screen shape (1280 x 720/800/960), the header/content/footer bands, the 12-column grid on the leaning sheet (`gridFor`), and the canvas on a screen with the Text size (`canvasFrame`). Pure; *The 1.0 interface: layout rules* |
+| src/ui-palette.js | Which biome's colours a screen wears (`screenBiome`: the course in play, the course being chosen, or the course of the week), the shared under-par red, and the contrast check every palette passes. Pure |
+| src/ui-kit.js, src/ui-kit.css | The 1.0 interface's building kit: root, sheet, `place`, panel, row, item, tile, stack, switch, picker, segment slider, tabs, chip, level tag, key hint, as HTML strings; every class `uk-`, every rule scoped to `.uk`. Also the `@font-face` rules. Built, tested, not yet used by any screen (phase 0) |
+| src/fonts/ | Saira Condensed 700 and 800, Latin, woff2, with `OFL.txt`; inlined into the page by the build |
 
 ### Outside the game
 
@@ -585,7 +589,7 @@ Two things to keep in mind if you touch this:
 
 Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds every field (the count used to be written here and drifted; read the object), `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
 
-To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry, a traits entry and an interface palette (`INTERFACE`: the six colours the 1.0 interface wears on that biome's courses; `tests/ui-palette.test.mjs` refuses a biome without one, or one whose text is unreadable -- *The 1.0 interface: layout rules*), and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
 
 **Three per-biome tables still live outside the record**, and Haunted Hollow (9 October) had to touch all three: the course-name word lists in `src/course-names.js` (a test fails if a biome has none, and every word is searched with "golf" first -- see the denylist test), the fog profile in `src/mist.js` `PROFILES` (**no test: a biome missing from it silently takes Midwest's fog**), and `tools/fixtures.mjs` / `tools/profile.mjs`, which list biomes by hand so a new one is not measured until it is added. The per-biome grass texture density in `textures.js` falls back to 1, which is fine.
 
@@ -930,6 +934,89 @@ along the bottom (10 October 2026): folded 53% (1280x720) to 74% (1920x1080), op
 a phone held sideways 56% folded and 44% open, upright 65% and 54%. NOT re-measured since the line moved into the play window and the tiles went to the foot (13 October 2026): `hud-reachable` has not been run on it. The browser
 only EMULATES a phone -- a real iPhone's Safari, its safe-area insets (zero in
 emulation) and a real phone's GPU are still checked by hand.
+
+## The 1.0 interface: layout rules
+
+The interface is being rebuilt on branch `ui-1-0` (approved 17 October 2026
+after twelve rounds of mockups; the plan and the mockups are the owner's local
+`docs/reports/UI_1_0_PLAN.md` and `docs/reports/ui-1-0/`). Phase 0 laid the
+foundations and changed nothing a player sees: the typeface, the palettes, the
+layout arithmetic and the kit. The rules below are what every rebuilt screen
+keeps; `src/ui-layout.js` holds them as numbers and its test holds every
+screen shape to them.
+
+- **One slant, 12 degrees.** The coloured box leans; text and pictures inside
+  it stand straight (`uk-p` is skewed -12, its wrapper `uk-pi` +12).
+- **A design canvas 1280 wide, as tall as the screen's shape needs**: 720 on
+  16:9, 800 on 16:10, 960 on 4:3, scaled to fill the screen. Wider than 16:9 the
+  canvas widens (21:9 is 1680 x 720); taller screens get room, never bars.
+  Narrower than 4:3 (an upright phone) is `narrow`, with no sheet: phones lean
+  row by row and are phase 5.
+- **Bands:** header 24 to 64, content 96 to 104 above the bottom, footer 80
+  from the bottom and 56 tall.
+- **The content leans as one sheet** about its middle line; the boxes in it
+  never lean on their own. So every left edge in a column lies on one slanted
+  line and every gap is the same from top to bottom.
+- **Twelve columns, 14 apart, measured along the middle line.** The column
+  width comes from the sheet's height so the leaning corners land exactly on
+  60 px margins: the middle-line margin is 60 + half the sheet height x tan 12
+  degrees (about 115 on 16:9, giving 74.6 px columns; narrower on taller
+  screens, because a taller sheet leans further). Every box starts and ends on
+  a column edge: place it with `place(grid, column, span, y)`, never by eye.
+- **Sizes:** panels padded 16 top and bottom, 36 at the sides; rows 48, list
+  items 56, tiles 96; type 13 (labels, capitals), 18 (body), 24 (values), 36
+  (titles), 56 (hero numbers); a label above its value.
+- **Selection** is an outline that follows the slanted shape (drop shadows of
+  the box), and the current tab is filled. No inner boxes.
+- **Colours come from the biome** (`ui` in each biome record): in a round the
+  course's, in the lobby and studio the course being chosen, everywhere else
+  the course of the week, so the menus change colour every Monday. Red for
+  under par is one colour everywhere (`UNDER_PAR`). Every palette passes a
+  contrast check over a white and a black picture: 4.5 for ordinary text, 3
+  only for the large under-par numbers. **Not checked, and weak:** text on the
+  dark end of a highlighted box's gradient (`onHot` on `a2`) is 2.3 to 5.5,
+  lowest on Giant Redwood; it reads in the mockups because the text sits on the
+  light end, and a screen that puts text at the dark end must not. Giant
+  Redwood's and Haunted Hollow's accent `a1` is almost the under-par red
+  (contrast 1.0), so an under-par score is never written on an accent.
+- **The typeface** is Saira Condensed, 700 and 800, inlined (DISTRIBUTION_REVIEW,
+  *Addendum, 17 October 2026*). It has no italic: the slanted numbers are the
+  browser's slant, which **the old stylesheet turns off page-wide**
+  (`:root{font-synthesis:none}`); `.uk` turns it back on for style only. Without
+  that the hero numbers come out upright and nothing errors.
+
+**The canvas and the Text size.** `canvasFrame({width, height, zoom})` takes
+the screen in CSS pixels and the Text size. At 100% the canvas fills the
+screen (`drawn`: each design pixel is drawn 1.5 CSS pixels on a 1920 x 1080
+screen, 0.8 on a 1024 x 768 one). The Text size
+multiplies that, and the canvas gives up design room by the same factor so it
+still fills the screen exactly -- the rule the Text size has always followed,
+"laid out as a window z times smaller". Scaling the 1280 canvas up instead
+would run it off the screen; scaling it to fit regardless would make the Text
+size do nothing. **PLACED:** the canvas never gets narrower than 1024 design
+pixels (125% on 16:9); past that a larger Text size still enlarges the old
+interface but not the canvas. The canvas root goes inside `#app`, which the
+stylesheet already zooms, so the root's own transform is `drawn / zoom`
+(`scale`), never `drawn` -- applying both multiplies the Text size twice. A
+pointer's design position is `(clientX - root left) / drawn`. Not yet wired:
+phase 1 is the first screen on the canvas.
+
+**SKEWING A PARENT AND STRAIGHTENING A COLOURED CHILD MAKES AN UPRIGHT BLOCK.**
+Found in the mockups when the sheet started leaning as one: a coloured box
+inside the leaning sheet, given the straightening skew so its text would
+stand up, came out as an upright rectangle -- the two skews cancel on the
+colour as well as the text, so the slant vanished from exactly the boxes that
+should show it, with nothing wrong in the markup. Inside the sheet the panel
+itself does not transform (`.uk-sheet .uk-p{transform:none}`), only its
+contents are straightened, and the straightening wrappers (`uk-pi`, `uk-u`)
+never carry a colour. `tests/ui-kit.test.mjs` refuses a background on them.
+
+**A SHORT SHARED CLASS NAME SILENTLY RESTYLES ANOTHER SCREEN.** In the mockups
+a highlight class called `hl` written for one screen restyled boxes on
+another that happened to use the same name, and nothing said so; the
+stylesheet the kit sits beside is 180 KB of short names. So every kit class
+starts `uk-` and every kit rule is scoped to `.uk`; `tests/ui-kit.test.mjs`
+refuses either slipping. Keep new screens' own classes prefixed the same way.
 
 ## Playing by touch
 

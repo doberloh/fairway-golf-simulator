@@ -16,6 +16,7 @@ import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './co
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
 import './style.css';
+import './ui-kit.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';

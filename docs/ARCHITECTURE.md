@@ -107,6 +107,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
 - `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, draggable panels, the Text size zoom
+- The 1.0 interface (branch `ui-1-0`; phase 0, on no screen yet): `src/ui-layout.js` -- the design canvas, bands and 12-column leaning grid, and the canvas with the Text size; `src/ui-palette.js` -- which biome's colours a screen wears, and the contrast check; `src/ui-kit.js`, `src/ui-kit.css` -- the building kit and the `@font-face` rules; `src/fonts/` -- Saira Condensed (OFL), inlined by the build
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API
 
 **Outside the game**
@@ -234,6 +235,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 - The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]
 - The bridge's accepted club codes come from `CLUB_KINDS`; a typed list once dropped the connection on any non-stock club. [passes on every club a bag can hold]
+- 1.0 interface: skewing a parent and straightening a coloured child leaves the block upright -- only text and pictures are straightened. [SKEWING A PARENT AND STRAIGHTENING]
+- 1.0 interface: a short shared class name silently restyles another screen; every kit class is `uk-`, every rule scoped to `.uk`. The canvas root inside `#app` scales by `drawn / zoom`, never `drawn`. [A SHORT SHARED CLASS NAME], [The canvas and the Text size]
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]

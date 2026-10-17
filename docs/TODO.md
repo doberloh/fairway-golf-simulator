@@ -31,6 +31,25 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The 1.0 interface (branch `ui-1-0`)
+
+The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17
+October 2026): seven phases, a stop for the owner's look after each. The rules
+are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
+
+- [ ] **Phase 0 (foundations) is built and not seen.** The typeface, the nine
+  palettes, `ui-layout.js`, `ui-palette.js` and the kit are on the branch with
+  their tests (17 October 2026), but no screen uses them, so nothing of it has
+  been looked at in a browser: the font's look at 700/800 and its browser
+  slant, the kit's pieces, and `canvasFrame` on a real screen are unseen. The
+  first look is phase 1's round screen. **Phase 1 waits for the owner's
+  go-ahead.**
+- [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
+  5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
+  screens keep text on the light end, or the gradient changes.
+- [ ] **The canvas's 1024 floor for the Text size is PLACED** (ui-layout.js
+  `MIN_CANVAS_WIDTH`): the first screen that overflows at 125% moves it.
+
 ## Found on GitHub
 
 - [ ] **The smoke step fails on GitHub, in `endless-round`.** The tests

@@ -162,3 +162,21 @@ and Helvetica-Bold, the standard faces every PDF reader supplies, so no font
 file is embedded in the report or shipped with Fairway. The only thing taken is
 a table of character widths, from Adobe's published metrics for those faces,
 used to line text up (REFERENCES.md, *The range's PDF report*).
+
+## The 1.0 interface's typeface: Saira Condensed
+
+The 1.0 interface (branch `ui-1-0`, from 17 October 2026) is set in **Saira
+Condensed** by The Saira Project Authors (Omnibus-Type, per the licence's
+copyright line), licensed under the **SIL Open Font License 1.1**. Two files ship, inlined into
+the page: Bold (700) and ExtraBold (800), Latin subset, woff2, unmodified as
+Google Fonts distributes them (version 12, through `@fontsource/saira-condensed`
+5.3.0). They live in `src/fonts/` with the licence (`OFL.txt`) beside them,
+and the licence is reproduced in THIRD_PARTY_NOTICES.txt.
+
+| Typeface | Authors | Licence | Source |
+|---|---|---|---|
+| Saira Condensed (700, 800; Latin) | The Saira Project Authors (Omnibus-Type) | OFL 1.1 | https://github.com/google/fonts/tree/main/ofl/sairacondensed |
+
+"Saira" is a Reserved Font Name: a modified copy would have to be renamed.
+Fairway ships the files unmodified. Distribution review, *Addendum, 17 October
+2026: the 1.0 interface's typeface*, has what was checked.

@@ -156,7 +156,9 @@ The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
 64 KB in total**: Kenney house colour atlases (`colormap` plus three
 variations), CC0. Kenney's licence text states the content is free to use in
 personal, educational **and commercial** projects, with credit appreciated and
-not required. Quaternius ships the CC0 1.0 dedication.
+not required. Quaternius ships the CC0 1.0 dedication. (From 17 October 2026
+the page also carries two font files, about 35 KB, under the SIL Open Font
+License: see *No fonts ship* below, now *One font ships*.)
 
 Everything else imported is **geometry with its materials stripped at ingest**
 and repainted from the biome palette. Verified this pass rather than assumed:
@@ -166,10 +168,14 @@ and repainted from the biome palette. Verified this pass rather than assumed:
   bark maps, and no bark image is taken because trunks are painted.
 - **No ez-tree leaf sprite ships.** `broadleaf` appears 14 times in the build as
   a species *family* name, not as the sprite file.
-- **No fonts ship.** `--font-display` and `--font-ui` are system stacks
-  (Georgia / Times New Roman, Inter / system sans). No `@font-face` anywhere, so
-  no font binary is distributed and naming a face in a CSS stack distributes
-  nothing.
+- **One font ships, from the `ui-1-0` branch (17 October 2026) on.** Until
+  then none did: `--font-display` and `--font-ui` are system stacks and there
+  was no `@font-face`. The 1.0 interface embeds **Saira Condensed** (SIL Open
+  Font License 1.1), two woff2 files -- Bold and ExtraBold, Latin only, about
+  35 KB -- inlined into the page as `data:` URLs, so nothing is fetched. The
+  licence travels in `src/fonts/OFL.txt` and THIRD_PARTY_NOTICES.txt
+  (addendum of 17 October 2026, below). The old interface still uses the
+  system stacks.
 - **No audio files ship.** The game has sound from 13 October 2026, but every
   sound is synthesised in the browser by its own code (`src/sound.js`,
   `src/audio.js`): no recording, no asset, nothing to license. About 52 KB of
@@ -1131,3 +1137,33 @@ preview: the owner asked for the live site): `/play/` serves this release's
 and its four Download buttons resolve through `releases/latest` to the v0.8.3
 zips. The packaged Windows server was run from its unzipped download before
 publishing and served the page byte for byte, on spare ports (19922/19921).
+
+## Addendum, 17 October 2026: the 1.0 interface's typeface (branch `ui-1-0`, phase 0)
+
+**A font ships for the first time.** Phase 0 of the 1.0 interface embeds
+**Saira Condensed**, the typeface the owner approved in the mockups, under the
+**SIL Open Font License 1.1**: Bold (700) and ExtraBold (800), Latin subset,
+woff2, 17,808 and 17,984 bytes, unmodified as Google Fonts distributes them
+(taken from `@fontsource/saira-condensed` 5.3.0, which repackages Google Fonts
+version 12; the package itself is not a dependency -- the two files are copied
+into `src/fonts/` with the licence beside them). The OFL allows bundling with
+software, commercial use included, on two conditions that matter here: the
+licence must travel with the font (it is in `src/fonts/OFL.txt`, which the
+source archive carries, and in THIRD_PARTY_NOTICES.txt, which every zip
+carries), and a modified version may not use the Reserved Font Name "Saira"
+(the files are not modified).
+
+The family has **no italic**: the slanted numbers in the design are the
+browser's own slant of the upright faces, as they were in the mockups. Only
+two weights ship; a 600 asked for falls to 700.
+
+**Still no request.** `src/ui-kit.css` names the files by relative path and the
+build inlines them as `data:font/woff2` URLs (Vite's `assetsInlineLimit`), so
+the portable file makes no network request; checked in the built page (two
+`@font-face` rules, both `data:`). Characters outside the Latin subset (the
+macrons in "rēlā", the arrow glyphs) fall back to the system face, glyph by
+glyph. The built page is **17,271,965 bytes, +58 KB** on 0.8.3 (the fonts
+base64-encoded, the kit's stylesheet, and the licence text, which Help's
+notices carry; the kit's modules are not imported yet, so not in the page);
+the plan had guessed 130 KB. Nothing is drawn in the new face yet -- phase 0 adds the face and the
+kit; phase 1 is the first screen to use them.
