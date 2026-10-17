@@ -209,6 +209,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
 - A light counts only while it and its parents are visible, and every lit shader is built for the count: never parent a light to something that hides (the ball's glow light sits beside the ball). [IT IS NOT A CHILD OF THE BALL]
 - Flagsticks can be drawn larger with distance so they never vanish (Graphics, "Larger flags far away", off by default); drawing only, the ball hits the real stick. [FLAGSTICKS STAY VISIBLE FROM ANYWHERE]
+- A tier's shadow normal offset is at least a texel of its map, or crowns shade themselves in stripes; only a crown of many sprays (the grown trees) gets a thinned twin -- a cartoon crown's comes apart into shards. [A SHADOW'S NORMAL OFFSET GOES WITH ITS TEXEL], [ONLY A CROWN OF MANY SPRAYS]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**

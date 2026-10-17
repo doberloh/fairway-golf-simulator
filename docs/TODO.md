@@ -348,6 +348,25 @@ are in the archived section of the same name.
 
 # Done
 
+## Low and Medium trees (16 October 2026)
+
+- [x] **Trees on Low and Medium looked like "a mangled mess" (the owner).**
+  Branch `low-tier-trees`. Two faults, both absent on High and Ultra. (1)
+  Distant crowns were drawn as thinned twins (F2), which tore the few-faced
+  cartoon crowns into floating shards -- 84-93% of all crowns past 60 m on
+  every biome but Redwood. Only crowns of 2000+ leaf triangles (the grown
+  trees) get a twin now (`TWIN_MIN_TRIANGLES`, instance-cull.js); Redwood keeps
+  F2's saving. (2) Every near crown shaded itself in stripes: the shadow
+  normal offset was a quarter of a texel on Low. Now Low .7, Medium .35, the
+  floodlights still .15. Measured on the real GPU across four biomes: no
+  graphics time moved; Low and Medium make 20-78 fewer draw calls for 2-4%
+  more triangles. Seen in captured frames on every tier (the game in a
+  browser, cameras placed by script, nothing clicked); the floodlit-night and
+  boot smoke journeys run. Not checked: the software-rasteriser arm and a real
+  weak laptop (*A real phone, an iPad and a weak laptop*, open above).
+  RESEARCH.md *Low and Medium trees: striped crowns and shards*; test in
+  `tests/instance-cull.test.mjs`.
+
 ## Found on GitHub
 
 - [x] **Check that Endless off the menu now starts in daylight.** Fixed 16
@@ -2227,7 +2246,9 @@ does this point belong to") is 1.7 s of the 3.0 s generation.
   5.23, High 11.96 -> 11.71 -- and every tier pays draw calls (Low and Medium +25-57,
   High +50-167). Ships ON at 15% on Low and Medium pending the owner's call on
   that trade, OFF on High (calls for nothing) and Ultra (owner: Ultra stays
-  amazing). RESEARCH.md *Distant crowns drawn thinned*.
+  amazing). RESEARCH.md *Distant crowns drawn thinned*. **Since 16 October the
+  grown trees only**: it was measured on Redwood, and on every other biome it
+  tore the short cartoon crowns into shards (*Low and Medium trees*, in Done).
 
 - [x] **F3. Only the trees a shadow map can reach, and thinner beyond the
   nearest cascade.** Branch `tree-shadows`. Each shadow map now draws only
@@ -2916,7 +2937,8 @@ to put "potential gfx improvements" instead of inventing features overnight.
   draw distance or level of detail. The owner does not like the look of
   drawing fewer trees and plants, so it is closed rather than left open. What
   weak hardware has instead: Low's own trims, distant crowns drawn as their
-  thinned twins (F2), and automatic resolution (F4).
+  thinned twins (F2; the grown trees only, since 16 October), and automatic
+  resolution (F4).
 
 - [x] **Floodlight shadows, on every tier, with a switch (30 September).**
   Branch `frame-and-lights`. The texture unit they were blocked on was freed by

@@ -4161,6 +4161,12 @@ of graphics from the edge tee against 25-57 more draws, and whether that trade
 wins on a weak laptop -- the machine Low exists for -- cannot be measured on
 this one.
 
+**Since 16 October, grown trees only.** Every number here is Redwood's. On the
+other biomes the cartoon crowns crossed the line far more often (84-93% of all
+crowns) and their twins came apart into shards; only crowns of 2000 or more
+leaf triangles get a twin now. *Low and Medium trees: striped crowns and
+shards*, below.
+
 **How it looks.** At 15% on High from the first tee, the changed pixels lie
 only in the far band behind the green (plus wind and clouds); enlarged three
 times, the thinned distant crowns read very slightly darker and are otherwise
@@ -8464,3 +8470,87 @@ the game**: no browser was run (the GPU rule); the next `endless-round`
 screenshot should show daylight.
 
 Sources in REFERENCES.md *The smoke test on GitHub*.
+
+## Low and Medium trees: striped crowns and shards (16 October 2026)
+
+The owner: on Low and Medium the trees "look like a mangled mess". Captured
+the same views on every tier (1600x900 at density 1, a plain laptop screen;
+Pacific Northwest CEDAR hole 3 and 1, Autumn MAPLE hole 2, Midwest MEADOW,
+Redwood PROFILE) and found two separate faults, both absent on High and Ultra.
+
+**1. Distant crowns torn into shards (`farTrees`, F2).** A crown short on
+screen was drawn as its thinned twin (`thinSprays`: a third of the leaf
+geometry's connected pieces, each grown by the square root of three about its
+own centre). That suits what it was built and judged on -- a grown redwood,
+13-53 thousand leaf triangles in thousands of sprays. A Kenney cartoon crown is
+a few flat faces: `tree_oak` is 64 leaf triangles and its twin 16, the
+default tree 40 -> 17, the tall pines 68 -> 22-33, the palms ~167 -> ~60. Kept
+a third and enlarged, those faces float apart as flat orange and green shards
+past the green -- the "mess". And because a cartoon tree is short, far more
+crowns crossed the 15%-of-screen line than F2 measured on Redwood (43% from the
+edge tee, 4% mid-course): **84-93% of every crown drawn**, everything past the
+60 m always-whole radius (`thinCrowns` 0.876 Pacific Northwest, 0.898 Autumn,
+0.926 Midwest, from tee 1). All of it to save about 48 triangles a tree.
+
+Fixed in `src/instance-cull.js`: a crown gets a twin -- far mesh or shadow
+twin -- only with at least `TWIN_MIN_TRIANGLES` (2000) leaf triangles, which
+every grown tree has and no cartoon crown comes near. `farTrees` stays .15 on
+Low and Medium, so Redwood keeps exactly what F2 bought (`thinCrowns` 0.358
+before, 0.34 after: the cartoon understorey no longer counts). High and Ultra
+never drew far crowns, but their middle and far cascades took cartoon crowns'
+SHADOWS from the same shards; those are now cast by the whole crown.
+
+Rejected: `farTrees: 0` on Low and Medium. It also cleared the shards, but
+throws away the Redwood edge-tee saving F2 measured (3.15 -> 2.62 ms on Low),
+the one case where the twin earns its place and looks right.
+
+**2. Every near crown striped (shadow acne).** Diagonal bands across each
+sunlit crown, coarse on Low and fine on Medium, which the three-band toon ramp
+turns into hard stripes. A shadow map's normal offset (`shadowBias.normal`,
+metres) must be about a texel of that map or a surface shades itself. Texel
+sizes: Low's 512 map over a 280 x 310 m span is ~0.55-0.6 m; Medium's 2048
+over 370 x 410 m ~0.18-0.2 m; High and Ultra's nearest cascade a few
+centimetres. Low and Medium both had .15 -- a quarter of a texel on Low --
+while High's .055 is over a texel of its far finer map.
+
+Swept live on the same frame (`variants.mjs`, scratch): Low .15 / .4 / .7 --
+.4 still showed faint bands, .7 none; Medium .15 / .25 / .35 -- .25 still
+banded, .35 clean. **Chosen: Low .7, Medium .35.** It moves only where a
+fragment looks itself up, so it costs nothing per frame. The price is
+geometric: a shadow ends that offset over the tangent of the sun's height
+sooner, ~1.9 m on a 40 m tree shadow at 20 degrees on Low; on screen the
+ground shadows were indistinguishable before and after. **The floodlights
+keep .15** (`shadowBias.flood`): their 512 maps cover a pool a few dozen
+metres across, and the sun's offset would lift lamp shadows off the trunks.
+
+**What it cost.** Real GPU (RTX 4090, headless, vsync off, the profiler's
+probe; builds alternated before/after, two samples each; the slower of the two,
+except the mean for Redwood Medium after and Redwood High), tee 1, seed
+PROFILE, density 2. Graphics ms, draw calls, triangles:
+
+| Course, tier | Before | After |
+| --- | --- | --- |
+| Pacific NW, Low | 0.64 ms, 306 calls, 3.09 M | 0.64, 235, 3.21 M |
+| Pacific NW, Medium | 1.32, 307, 3.15 M | 1.31, 236, 3.29 M |
+| Pacific NW, High | 2.45, 400, 6.45 M | 2.46, 400, 6.70 M |
+| Autumn, Low | 0.64, 345, 3.39 M | 0.66, 269, 3.51 M |
+| Autumn, Medium | 1.36, 348, 3.47 M | 1.38, 270, 3.60 M |
+| Autumn, High | 2.60, 466, 7.09 M | 2.61, 466, 7.31 M |
+| Midwest, Low | 0.65, 292, 3.37 M | 0.65, 234, 3.45 M |
+| Midwest, Medium | 1.39, 299, 3.51 M | 1.39, 235, 3.60 M |
+| Midwest, High | 2.67, 394, 7.14 M | 2.69, 394, 7.29 M |
+| Redwood, Low | 2.49, 371, 46.5 M | 2.50, 351, 46.7 M |
+| Redwood, Medium | 3.59, 375, 48.8 M | 3.69, 354, 49.0 M |
+| Redwood, High | 8.10, 564, 85.4 M | 7.98, 564, 86.2 M |
+
+No graphics time moved beyond sample noise (Redwood Medium's two after samples
+were 3.57 and 3.81; Redwood High's before samples 7.68 and 8.51). **Low and
+Medium make 20-78 fewer draw calls a frame** -- the far meshes for cartoon
+models are gone -- for 2-4% more triangles, which cartoon crowns make cheap.
+On a weak machine fewer draws is the better side of that trade (it is
+processor time, which a weak laptop has least of); triangles were shown nearly
+free on this path in *A grove grown from nothing*. High gains 1-3% triangles
+and no draws. NOT MEASURED: the software-rasteriser arm (`--only weak`), left
+alone because a CPU-only smoke run took the owner's machine down on 13
+October; nor any real weak laptop (TODO, *A real phone, an iPad and a weak
+laptop*).

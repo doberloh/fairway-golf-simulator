@@ -21,9 +21,10 @@ export const QUALITY_LABELS = {
  ultra: 'Ultra · everything, for a card with room to spare',
 };
 
-// Medium is exactly what the renderer did before tiers existed. Every number in
-// it is the literal that used to be hardcoded, so an existing player sees no
-// change at all until they opt into another tier. Do not "improve" medium.
+// Medium began as exactly what the renderer did before tiers existed, every
+// number the literal that used to be hardcoded. It has since moved where that
+// look was broken -- the trees' shadow offset, 16 October --
+// so change it for a fault on screen, never for taste: it is the default.
 export const TIERS = {
  // LOW IS FOR A MACHINE WITH NO GRAPHICS CARD, so it spends where a weak
  // device actually loses time: pixels and shadow-map fill. Measured on this
@@ -48,7 +49,15 @@ export const TIERS = {
   // Shadow frustum around the camera, in metres. Smaller is crisper but covers
   // less ground; a fragment outside it is simply lit.
   shadowSpan: {half: 140, top: 190, bottom: -120, far: 700},
-  shadowBias: {normal: .15, constant: -.0002},
+  // THE NORMAL OFFSET GOES WITH THE TEXEL. A 512 map over this span is about
+  // 0.6 m a texel, and an offset smaller than a texel lets every crown shade
+  // itself in stripes -- the "mangled" trees of 16 October (RESEARCH.md
+  // *Low and Medium trees: striped crowns and shards*). 0.7 m is just over a
+  // texel. It only moves where a fragment looks itself up, so it costs nothing;
+  // the price is shadows a metre or two shorter at a low sun. `flood` is the
+  // floodlights' own: their small maps cover a few dozen metres, and an offset
+  // sized for the sun's map would lift their shadows off the trunks.
+  shadowBias: {normal: .7, constant: -.0002, flood: .15},
   // Cascades off: one shadow frustum that follows the camera, so ground beyond
   // it is simply lit. Medium has always worked this way.
   cascades: 0, shadowFar: 0, overviewShadowFar: 0,
@@ -60,11 +69,14 @@ export const TIERS = {
   // receiver has to be the same shape.
   thinShadowsFrom: Infinity,
   // Crowns smaller than 15% of the screen's height are drawn as their thinned
-  // twins (instance-cull.js). On these courses that is only trees past ~600 m:
-  // from the edge tee 43% of crowns, 3.15 -> 2.62 ms graphics for ~52 more
-  // draw calls; from mid-course tees nothing, for 27-32 more calls. Whether
-  // that trade wins on a real weak machine is unmeasured -- the owner's call.
-  // RESEARCH.md *Distant crowns drawn thinned*.
+  // twins (instance-cull.js) -- ONLY THE GROWN TREES, which have a twin worth
+  // drawing (TWIN_MIN_TRIANGLES). On Redwood that is trees past ~600 m: from
+  // the edge tee 43% of crowns, 3.15 -> 2.62 ms graphics for ~52 more draw
+  // calls; from mid-course tees nothing. Until 16 October the cartoon crowns
+  // were thinned too -- 84-93% of every crown past 60 m on the other biomes,
+  // each torn into floating shards to save 48 triangles. RESEARCH.md
+  // *Distant crowns drawn thinned* and *Low and Medium trees: striped crowns
+  // and shards*.
   farTrees: .15,
   godRays: 0,
   clouds: 0,
@@ -105,7 +117,9 @@ export const TIERS = {
   foliage: 1,
   anisotropy: 16,
   shadowSpan: {half: 185, top: 250, bottom: -160, far: 900},
-  shadowBias: {normal: .15, constant: -.0002},
+  // As low: a 2048 map over this span is about 0.2 m a texel, and .15 left
+  // fine stripes on every crown; .35 is the least that cleared them.
+  shadowBias: {normal: .35, constant: -.0002, flood: .15},
   cascades: 0, shadowFar: 0, overviewShadowFar: 0,
   // No thinned shadow trees, for the same reason as low.
   thinShadowsFrom: Infinity,
