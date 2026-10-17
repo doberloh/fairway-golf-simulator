@@ -58,6 +58,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   `hud-reachable`, `text-size`, `monitor`, `mixed-group`, `profile`,
   `relief`, `range`, `floodlit-night`, the challenges -- and phones, which
   should be unchanged.
+- [ ] **Phase 2 (shot moments) is built and not seen** (17 October 2026,
+  overnight). Look at: the shot card after a drive (where it sits, the fade),
+  Tab for every number, the range's tiles and the cards moved left, the Esc
+  list's *Shot numbers* choice, a birdie's band and a par's strip (and the
+  next golfer's turn coming in as it leaves), the scorecard's marks and the
+  flashing hole, and round complete. Not built: the XP flying to the golfer's
+  card, the scorecard's leaning columns, *Play again* with the same group, the
+  round's three highlights (longest drive, closest approach).
 - [ ] **The Text size barely enlarges the round screen on 16:9** (about a
   tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
   The owner's call whether that is right for the bay.

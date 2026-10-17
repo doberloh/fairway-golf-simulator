@@ -8627,3 +8627,10 @@ that leaves the Text size about **+10%** on the round screen (1920 x 1080 at
 The tests check, at seven screen sizes and four Text sizes, that the club and
 the meter never meet and the slab and the cards never meet.
 
+**Shot moments' timings (phase 2, 17 October 2026).** The pop-up shot card holds
+**6 s** and fades over **0.6 s** (`CARD_HOLD_MS`, `CARD_FADE_MS`): PLACED, long
+enough to read three numbers from the mat, gone before the next golfer has
+usually picked a club. The hole-out band's **0.2 s in, 1.5 s hold, 0.3 s out**
+is the approved mockup's (*Big but brief*); the quiet strip's **0.15 / 1.3 /
+0.25 s** is PLACED to sit under it. The old banner held 2.7 s.
+

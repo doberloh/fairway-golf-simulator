@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {holeSlab, distanceText, riseText, conditions, clubPanel, parScore, golferCards, keyHints, ballLight, hudScale, MIN_HUD_SCALE, ROUND_MIN_WIDTH, YARD, FOOT} from '../src/round-hud.js';
+import {holeSlab, distanceText, riseText, conditions, clubPanel, parScore, golferCards, keyHints, ballLight, hudScale, standings, xpThisRound, handicapLine, MIN_HUD_SCALE, ROUND_MIN_WIDTH, YARD, FOOT} from '../src/round-hud.js';
 import {CLUBS} from '../src/clubs.js';
 
 const MINUS = '−';
@@ -104,4 +104,20 @@ test('the pieces scale with the screen and the Text size, never below the floor'
    assert.ok(370 + 8 <= room / 2 - 200, `${w}x${h} at ${z}: club and meter meet (room ${room.toFixed(0)})`);
    assert.ok(30 + 400 + 24 + 340 + 30 <= room, `${w}x${h} at ${z}: slab and cards meet`);
   }
+});
+
+test('round complete: places with ties, XP earned this round, the handicap line', () => {
+ const s = standings([{name: 'Ann', total: 74}, {name: 'Ben', total: 70}, {name: 'Cal', total: 74}, {name: 'Dot', total: NaN}]);
+ assert.deepEqual(s.map(r => [r.name, r.place, r.win]), [['Ben', 1, true], ['Ann', 2, false], ['Cal', 2, false], ['Dot', null, false]]);
+ assert.deepEqual(standings([{name: 'A', total: 70}, {name: 'B', total: 70}]).map(r => r.win), [true, true]);
+ assert.deepEqual(standings(null), []);
+ const log = {'r1:h0': {xp: 30}, 'r1:h1': {xp: 45}, 'r2:h0': {xp: 99}, 'ach:x': {xp: 50}, 'r1:done': {xp: 100}};
+ assert.equal(xpThisRound(log, 'r1'), 175);
+ assert.equal(xpThisRound(log, 'r'), 0, 'a prefix of another round is not that round');
+ assert.equal(xpThisRound(null, 'r1'), 0);
+ assert.equal(handicapLine(8.4, 8.1), '8.4 → 8.1');
+ assert.equal(handicapLine(null, 12), 'FIRST HANDICAP 12.0');
+ assert.equal(handicapLine(null, null, 2), '2 MORE ROUNDS FOR A HANDICAP');
+ assert.equal(handicapLine(null, null, 1), '1 MORE ROUND FOR A HANDICAP');
+ assert.equal(handicapLine(null, null, 0), '');
 });

@@ -46,8 +46,10 @@ import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,st
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
-import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale} from './round-hud.js';
+import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
+import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
+import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
@@ -1753,7 +1755,7 @@ function finishShot(){
   view.setShotHistory?.(visibleTrails());
   setUpRangeTurn();
   if(fromReview)view.flyCamera(round.position,aim,{from:fromReview});
-  showRangeResult();
+  showRangeResult();if(hud1)showShotCard(cardRecord());
   view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
   save();sendPlayer();
   return;
@@ -1865,7 +1867,7 @@ function skinsBannerLine(){
  const text=holeSkinLine(e,round.players.map(p=>p.name),round.hole,!round.endless&&round.hole+1>=round.holes);
  return `<span class="hole-out-skin">${e.winner!==null?`<i style="background:${playerColour(e.winner)}"></i>`:''}${escape(text)}</span>`;
 }
-let holeOutTimer=null,holeOutAt=-1e9;
+let holeOutTimer=0,holeOutLeave=0,holeOutAt=-1e9;
 function announceHoleOut(before,{chipIn=false}={}){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
  if(!seats.length)return;
@@ -1875,9 +1877,9 @@ function announceHoleOut(before,{chipIn=false}={}){
  // Who, only when there is more than one golfer to tell apart. A scramble
  // score belongs to the team, so the team is named.
  const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
- const tint=parTint(label.rel,1),el=$('holeOut');
+ const tint=parTint(label.rel,1),el=$('holeOut'),cele=hud1?celebrationFor(score,course.par,{chipIn}):null;
  el.innerHTML='<canvas class="hole-out-ball" width="72" height="72" aria-hidden="true"></canvas>'+(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
-  +`<strong class="hole-out-name">${escape(label.name)}</strong>`
+  +`<strong class="hole-out-name">${escape(cele?cele.name:label.name)}</strong>`
   +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`
   +skinsBannerLine();
  // Restart the animation even when the banner is already up: hidden, reflow, shown.
@@ -1888,7 +1890,13 @@ function announceHoleOut(before,{chipIn=false}={}){
  {const prof=profileOf(round.players[seat]),gir=prof?.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]?.gir;
   const lv=prof?levelOf(prof.xp).level:1,id=prof&&flourishFor({score,par:course.par,chipIn},lv);
   if(id){const pin=course.pin;playFlourish($('flourish'),id,()=>view.screenPoint?.(pin),{gold:goldFlourishes(lv)});}}
- clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
+ // On the round screen (celebration.js): the full-width band for a birdie or
+ // better, a quiet strip otherwise, two seconds at most, and the next turn is
+ // announced as it starts to leave.
+ el.classList.toggle('rh-band',!!cele?.big);el.classList.toggle('rh-quiet',!!cele&&!cele.big);el.classList.remove('leaving');
+ if(cele){const t=cele.timing;el.style.setProperty('--b-in',t.in+'ms');el.style.setProperty('--b-hold',t.hold+'ms');el.style.setProperty('--b-out',t.out+'ms');
+  clearTimeout(holeOutLeave);holeOutLeave=setTimeout(()=>el.classList.add('leaving'),turnAfter(t));}
+ clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},cele?bannerLength(cele.timing):2700);
 }
 // THE CLOSE-UP (spec 7.3): the golfer's ball beside the score, turning slowly
 // while the banner is up -- drawn from the finish's own rule a frame at a time,
@@ -1901,6 +1909,7 @@ function spinHoleOutBall(canvas,finish){
  draw(t0);
 }
 function renderResult(event){
+ if(hud1)showShotCard(cardRecord());
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
  let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:''}</p>`.replace('<p></p>','')+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
@@ -2287,7 +2296,9 @@ function drawTiles(record){
  placeTiles();
 }
 function placeTiles(){
- const box=$('shotTiles'),w=$('world');if(!box||!w||!box.offsetParent)return;
+ const box=$('shotTiles'),w=$('world');if(!box||!w)return;
+ if(hud1){for(const t of box.children){t.style.left=t.style.top=t.style.width=t.style.minWidth='';}return;}
+ if(!box.offsetParent)return;
  const W=w.clientWidth,H=w.clientHeight,z=uiZoom(),wr=w.getBoundingClientRect(),gap=6;
  const rel=el=>{const r=el.getBoundingClientRect();return {l:(r.left-wr.left)/z,t:(r.top-wr.top)/z,r:(r.right-wr.left)/z,b:(r.bottom-wr.top)/z};};
  const shown=el=>el&&!el.hidden&&el.offsetParent&&el.getBoundingClientRect().width>0;
@@ -2344,7 +2355,7 @@ function placeTiles(){
 {
  const box=$('shotTiles');
  box?.addEventListener('pointerdown',ev=>{
-  const t=ev.target.closest('.shot-tile');if(!t||ev.button)return;
+  const t=ev.target.closest('.shot-tile');if(!t||ev.button||hud1)return;
   ev.preventDefault();
   const w=$('world'),z=uiZoom(),sx=ev.clientX,sy=ev.clientY,ox=t.offsetLeft,oy=t.offsetTop;let moved=false;
   const move=e=>{
@@ -4080,7 +4091,7 @@ function flashTurn(tries=0){
  // After someone holes out, the turn passes while their hole-out banner (or a
  // level-up) is still up: wait for it, then name who is up -- the two used to
  // sit on top of each other (smoke, 15 October 2026).
- if(!$('holeOut')?.hidden||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),300);return;}
+ if((!$('holeOut')?.hidden&&!$('holeOut').classList.contains('leaving'))||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),150);return;}
  lastTurn=key;
  const p=round.player,{rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played);
  const shot=round.mode==='scramble'?round.stroke:(round.strokes?.[i]||0)+1;
@@ -4123,6 +4134,41 @@ function drawScoreChips(){
 // says so with --hud1 on #world; `hud1` is that answer, read once per HUD
 // update rather than every frame.
 let hud1=false,hudBiome='';
+// THE SHOT NUMBERS ON THE ROUND SCREEN (phase 2; shot-display.js): a card that
+// pops up where the ball came to rest and fades, or tiles that stay -- the
+// course's way and the range's, unless the player chose (the Esc list). Tab
+// shows every number, as tiles, until pressed again.
+let allNumbers=false,shotChoice=loadChoice(),shotCard=null;
+function showShotCard(record){
+ const el=$('shotCard');if(!el)return;
+ const d=shotDisplay({range:rangeMode,choice:shotChoice,putt:!!record?.putting,all:allNumbers});
+ if(!hud1||!record||d.kind!=='card'){hideShotCard();return;}
+ const cells=shotGrid(record,{fields:[CARD_MAIN,...CARD_ROW],columns:0}).cells,main=cells[0],row=cells.slice(1);
+ const end=record.result?.end;if(!end||!main)return;
+ el.innerHTML=`<div class="rh-sc-tab"><span>${escape(cardTab(record.player,record.club))}</span></div>`
+  +`<div class="rh-sc-body"><div class="rh-sc-main"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>`
+  +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
+  +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div>';
+ shotCard={at:performance.now(),end:{x:end.x,z:end.z},hole:round.hole};
+ el.style.opacity='1';el.hidden=false;
+}
+function hideShotCard(){shotCard=null;const el=$('shotCard');if(el)el.hidden=true;}
+// Every frame while it is up: where the ball is on screen, and how faded.
+function placeShotCard(now){
+ if(!shotCard)return;
+ const el=$('shotCard');
+ if(!hud1||flight||swing||round.hole!==shotCard.hole){hideShotCard();return;}
+ const p=cardPhase(shotCard.at,now);
+ if(p.phase==='gone'){hideShotCard();return;}
+ const q=view.project({x:shotCard.end.x,y:course.height(shotCard.end.x,shotCard.end.z)+1,z:shotCard.end.z});
+ el.style.left=q.x+'px';el.style.top=q.y+'px';
+ el.style.visibility=q.visible?'visible':'hidden';
+ el.style.opacity=String(1-p.fade);
+}
+function cycleShotChoice(){
+ shotChoice=saveChoice(CHOICES[(CHOICES.indexOf(shotChoice)+1)%CHOICES.length]);
+ drawRoundHud();toast(`Shot numbers: ${CHOICE_NAMES[shotChoice]}.`);
+}
 const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
 // The course's colours, on #app so the pause list (the top bar) wears them too.
 function applyHudPalette(){
@@ -4172,7 +4218,28 @@ function drawRoundHud(){
  setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
   ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
  const cc=document.querySelector('.club-control');if(cc)cc.dataset.code=clubPanel(c).code;
+ const shown=shotDisplay({range:rangeMode,choice:shotChoice,putt:false,all:allNumbers});
+ $('world').classList.toggle('rh-tiles',shown.kind==='tiles');$('world').classList.toggle('rh-range',!!rangeMode);
+ if($('shotChoiceLabel'))$('shotChoiceLabel').textContent=CHOICE_NAMES[shotChoice];
  if(document.getElementById('app').classList.contains('rh-paused'))drawPauseInfo();
+}
+// ROUND COMPLETE (phase 2), at the head of the final scorecard on the round
+// screen: the standings with the winner in the course's colours, what each
+// golfer earned and where their level stands, and the handicap the round
+// moved. The card itself follows underneath.
+function roundCompleteHtml(){
+ const scramble=round.mode==='scramble',par=roundPars().reduce((a,b)=>a+b,0);
+ const entries=scramble?[...new Set(round.players.map(p=>p.team))].map(t=>({name:'Team '+t,total:sumScores(round.teamCards[t]),seat:round.players.findIndex(p=>p.team===t)}))
+  :round.players.map((p,i)=>({name:p.name,total:sumScores(round.cards[i]),seat:i}));
+ const pic=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(round.players[i]?.name?.[0]||'P')}</span>`;};
+ const rows=standings(entries).map(r=>{const sc=parScore(r.total-par);
+  return `<div class="rh-res-row${r.win?' win':''}"><span class="rh-res-pos">${r.place??'—'}</span><span class="rh-res-pic">${pic(r.seat)}</span><span class="rh-res-name">${escape(r.name.toUpperCase())}${r.win?' \u00b7 WINS':''}</span><span class="rh-res-score">${Number.isFinite(r.total)?scoreText(r.total):'—'}<small class="${sc.under?'under':''}">${escape(sc.text)}</small></span></div>`;}).join('');
+ const golfers=round.players.map((p,i)=>{const prof=profileOf(p);if(!prof)return '';
+  const xp=xpThisRound(prof.xpLog,round.uid),lv=levelOf(prof.xp),now=profileSummary(prof).handicap,was=profileSummary({...prof,rounds:(prof.rounds||[]).filter(r=>r.id!==round.uid)}).handicap;
+  return `<div class="rh-res-xp"><span>${escape(p.name.toUpperCase())}</span><span class="rh-res-bar"><b style="width:${(lv.need?Math.min(1,lv.into/lv.need)*100:0).toFixed(1)}%"></b></span><span>+${xp} XP \u00b7 LV ${lv.level}</span><small>${escape(handicapLine(was.index,now.index,now.needed))}</small></div>`;}).join('');
+ return `<section class="rh-results"><h2>Round complete<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></h2>`
+  +`<div class="rh-res-stand">${rows}</div>${golfers?`<div class="rh-res-golfers"><h3>XP and handicap</h3>${golfers}</div>`:''}`
+  +'<div class="rh-res-actions"><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button><button type="button" class="primary" id="resMenu">Main menu</button></div></section>';
 }
 // PAUSE (Escape), until phase 3's pause screen: the top bar's own controls,
 // laid out as a list over the course (round-hud.css), so every one keeps its
@@ -5417,8 +5484,9 @@ function renderPanel(name,content){
   if(sk)status=skinsStatus(round.players.map(p=>p.name),sk,{finished:round.finished,holes:round.holes});
   const skinCell=g=>{const e=sk.perHole[g];return !e?'<td>—</td>':e.winner===null?'<td class="skin-carry" title="Tied: carried to the next hole">→</td>':`<td title="${escape(round.players[e.winner].name)}"><span class="player-dot" style="background:${playerColour(e.winner)}"></span>${e.value}</td>`;};
   const skinsRow=sk?`<tr class="skins-row"><td>Skins</td>${pars.map((_,h)=>skinCell(from+h)).join('')}<td>${sk.won.reduce((a,b)=>a+b,0)}</td><td>${sk.carry?`${sk.carry} carried`:''}</td></tr>`:'';
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
+  if(round.finished&&hud1&&round.mode!=='match'){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();}
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']]),...(sk?[['Skins','',...allPars.map((_,h)=>{const e=sk.perHole[h];return !e?'':e.winner===null?'carried':`${round.players[e.winner].name} ${e.value}`;}),sk.won.reduce((a,b)=>a+b,0),sk.carry?`${sk.carry} carried`:'']]:[])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
   content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Validate & play sample shot</button>`;
@@ -6397,10 +6465,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The pause list's cameras are the camera strip's own buttons, pressed for you.
  $('pauseCams').onclick=e=>{const b=e.target.closest('[data-proxy]');if(b)$(b.dataset.proxy)?.click();};
  $('pauseResume').onclick=()=>setPause(false);
+ $('shotChoice').onclick=cycleShotChoice;
  document.querySelector('.topbar').addEventListener('click',e=>{
   if(!$('app').classList.contains('rh-paused'))return;
   const b=e.target.closest('button,a');
-  if(!b||b.closest('.sim-time,.clock-pop,.tee-control'))return;
+  if(!b||b.closest('.sim-time,.clock-pop,.tee-control,.rh-pause-choice'))return;
   setPause(false);
  });
  // Tools from the top bar, where a phone keeps it; the camera strip folds
@@ -6546,7 +6615,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
@@ -6746,6 +6815,7 @@ function tick(now){
  // hidden when the flag is not in view.
  const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
  const flagEl=$('flagLabel');
+ placeShotCard(now);
  // The narrow-screen rule hides this marker, which is right everywhere except
  // on the green, where it is the only distance there is. The class is what
  // lets the stylesheet tell those two apart.

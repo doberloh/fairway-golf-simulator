@@ -99,7 +99,7 @@ export function golferCards(players, active) {
 // On the range, R opens the range controls (the view bar's button, which the
 // round screen does not show).
 export function keyHints({putting = false, monitor = false, range = false} = {}) {
- const keys = [['Q E', 'CLUB'], ['TAB', 'KEYS'], ['C', 'CAMERA'], ['ESC', 'MENU']];
+ const keys = [['Q E', 'CLUB'], ['TAB', 'NUMBERS'], ['C', 'CAMERA'], ['ESC', 'MENU']];
  if (range) keys.splice(3, 0, ['R', 'RANGE']);
  if (!monitor && !putting) keys.splice(1, 0, ['S W X', 'SHAPE']);
  return keys.map(([key, text]) => ({key, text}));
@@ -131,4 +131,29 @@ export function hudScale(width, height, zoom = 1) {
  const z = zoom > 0 ? zoom : 1, f = canvasFrame({width, height, zoom: z});
  const across = width > 0 ? width / ROUND_MIN_WIDTH / z : f.scale;
  return Math.max(MIN_HUD_SCALE / z, Math.min(f.scale, across));
+}
+
+// ROUND COMPLETE (phase 2). The standings: lowest total first, golfers on the
+// same total sharing a place, the winner or winners flagged. A total that is
+// not a number (a golfer who never finished a hole) goes last, unplaced.
+//   entries  [{name, total, ...anything}]
+export function standings(entries) {
+ const done = (entries || []).filter(e => Number.isFinite(e.total)).sort((a, b) => a.total - b.total);
+ const rest = (entries || []).filter(e => !Number.isFinite(e.total));
+ return [...done.map(e => ({...e, place: 1 + done.findIndex(r => r.total === e.total), win: e.total === done[0].total})),
+  ...rest.map(e => ({...e, place: null, win: false}))];
+}
+// The XP a golfer earned in one round: every ledger entry keyed to it.
+export function xpThisRound(xpLog, uid) {
+ if (!xpLog || !uid) return 0;
+ const pre = `${uid}:`;
+ return Object.entries(xpLog).reduce((n, [k, v]) => n + (k.startsWith(pre) ? Number(v?.xp) || 0 : 0), 0);
+}
+// The handicap line: "8.4 → 8.1", or the first number a golfer gets, or how
+// many more rounds it needs.
+export function handicapLine(before, after, needed = 0) {
+ const f = v => (Number.isFinite(v) ? v.toFixed(1) : null);
+ if (f(after) == null) return needed > 0 ? `${needed} MORE ROUND${needed === 1 ? '' : 'S'} FOR A HANDICAP` : '';
+ if (f(before) == null) return `FIRST HANDICAP ${f(after)}`;
+ return `${f(before)} → ${f(after)}`;
 }

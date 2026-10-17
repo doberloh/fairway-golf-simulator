@@ -1089,6 +1089,36 @@ place or hides it.
 by the attribute (the monitor window, the monitor strip) needs its own
 `[hidden]{display:none}` or a `:not([hidden])`, or it shows when it should not.
 
+**Shot moments (phase 2, 17 October 2026; also not seen).** `src/shot-display.js`
+says which numbers show: on a course a **card** pops up beside where the ball
+came to rest (`#shotCard`, placed every frame by `placeShotCard`, scaled by
+transform like the flag label) with the total large and carry, ball speed and
+offline under it, and fades after 6 s (`CARD_HOLD_MS`, PLACED); on the range
+the **tiles** stay, in a fixed grid top right with carry lit, and the golfer
+cards move under the hole slab. **Tab** shows every number as tiles until
+pressed again (the keys list moved to ? and the Esc list's Help). The player's
+choice -- automatic, always the card, always tiles -- is the Esc list's *Shot
+numbers* row, kept per device under `fairway-shot-display-v1`. On the round
+screen `placeTiles` clears the tiles' inline places and returns, and tiles
+do not drag: the stylesheet lays them out. `src/celebration.js` says which
+**banner** a hole-out earns: the full-width band in the course's gradient for a
+birdie or better (any hole in one), a quiet strip otherwise, in / hold / out
+200 / 1500 / 300 ms and never past two seconds, by test; the banner gets
+`leaving` as it starts to go and `flashTurn` names the next golfer then,
+not after. The XP flying to the card is not built. The **scorecard** between
+holes fills the screen in the course's colours, the finished hole's number
+flashing (`th.rh-done`), each score marked as on paper (`paperMark`: a
+circle round a birdie, two round an eagle, a square round a bogey, two round
+worse); its columns do not lean -- the cells are text, not wrappers, and a
+leaning table with upright numbers needs them rebuilt. **Round complete**
+(`roundCompleteHtml`, at the head of the final card, not in match play):
+standings with ties sharing a place and the winner in the gradient, each
+golfer's XP this round (`xpThisRound`, the ledger entries keyed to the
+round), level, and the handicap the round moved (`handicapLine`: the
+profile summary with and without this round); New round, Save card, Main
+menu. "Play again with the same group" and the round's three highlights are
+not built.
+
 **A COLOURED BOX WITH TEXT IT CANNOT WRAP LEANS BY A PSEUDO-ELEMENT.** The
 restyled controls carry text nodes that cannot be counter-skewed, so the
 slanted panel is a `::before` behind them (`isolation:isolate` on the box), the

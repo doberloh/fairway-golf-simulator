@@ -146,6 +146,12 @@ the courses several suites share.
   club, scores with a real minus, golfer cards, keys, the ball light -- and
   how large they are drawn: the club panel and the meter, and the slab and the
   cards, never meet at any tested size or Text size).
+  `shot-moments` (phase 2: the card on a course and tiles on the range, the
+  player's choice and Tab winning, a putt popping no card, the card's hold and
+  fade, the range's eight tiles being real fields, the choice kept per device;
+  birdie or better earning the band, every banner under two seconds with the
+  next turn announced as it leaves, the paper card's marks), and `round-hud`'s
+  round-complete helpers (places with ties, XP this round, the handicap line).
   The kit is on no screen yet; the round screen is (in play, off a phone), and
   the smoke journeys reach the top bar's controls through `t.chrome()` /
   `t.menuItem()`, which open the Esc list where the round screen hides the bar
