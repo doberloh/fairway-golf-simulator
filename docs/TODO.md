@@ -343,6 +343,17 @@ are in the archived section of the same name.
 
 # Done
 
+## Release 0.8.3 (16 October)
+
+- [x] **v0.8.3 published**, "Fairway 0.8.3 (beta)", at the owner's request
+  (the owner chose 0.8.3 over 0.9), from the merge of `release-0.8.3` into
+  `main`: the range's greens, short game, shaped greens and CSV/PDF exports,
+  and the Low and Medium trees fix. Generator 36, schema 11, profile 3, all
+  unchanged. Notes: `docs/releases/v0.8.3.md`. Smoke 37 of 37, `npm test`
+  901 (DISTRIBUTION_REVIEW, *v0.8.3*). The website is redeployed after it so
+  its demo runs 0.8.3; its "view your shot data" wording can now say export
+  (its repository has the item; not changed in this release).
+
 ## The range's greens, short game and exports (16 October 2026)
 
 - [x] **Range targets play as greens, on the aim arc** (from IDEAS, and the

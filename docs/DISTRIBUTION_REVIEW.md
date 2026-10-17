@@ -1096,13 +1096,31 @@ resolve to the v0.8.2 zips. The packaged Windows server was run from its
 unzipped download before publishing and served the page byte for byte, on
 spare ports (19922/19921).
 
-## Note, 16 October 2026: the range's exports (unreleased)
+## Addendum, 16 October 2026: v0.8.3
 
-On the `range-greens` branch, not in a release. The range exports its session
-as a CSV and as a PDF report, both made in the page and handed to the browser
-as a `blob:` download -- the same way the scorecard's CSV always has been, so
-the portable file still makes no request; the `range-greens` smoke journey
-downloads both under the no-request rule. No dependency was added: the PDF is
-written by `src/pdf.js`, which names the reader's own Helvetica and embeds no
-font. When this ships, the website's "view your shot data" wording can say
-"export"; its repository has the matching item.
+**v0.8.3** is published at the owner's request as "Fairway 0.8.3 (beta)", tag
+`v0.8.3`, not a pre-release, the same four zip names, from the merge of
+`release-0.8.3` into `main`, with its notes in `docs/releases/v0.8.3.md` in
+that commit. It carries two journeys since 0.8.2: `low-tier-trees` (Low and
+Medium trees without shards or striped crowns) and `range-greens` (range
+targets as real greens on the aim arc, a short-game green with chip and putt
+stations, shaped greens, CSV and PDF exports, a view-bar button for Range
+controls), plus two TODO-only merges. **`GENERATOR_VERSION` is still 36,
+`SCHEMA_VERSION` still 11 and `PROFILE_VERSION` still 3**: the range is never
+saved, its green set-ups are device-local (`fairway-range-greens-v1`), and the
+biome fingerprint was unchanged. The page's `fairway-versions` tag still reads
+`generator=36 schema=11`.
+
+**The range's exports make no request.** The CSV and the PDF report are made
+in the page and handed to the browser as a `blob:` download -- the way the
+scorecard's CSV always has been -- so the portable file still makes none; the
+`range-greens` smoke journey downloads both under the no-request rule. **No
+dependency was added**: the PDF is written by `src/pdf.js`, which names the
+reader's own Helvetica and embeds no font (ATTRIBUTION, *The range's PDF report
+names a font*). The bridge is unchanged (nothing under `bridge/`, `public/`
+or `vendor/` since 0.8.2), so THIRD_PARTY_NOTICES stands. The built page is
+17,213,640 bytes (7.11 MB gzipped), +35 KB on 0.8.2. **Smoke:** 37 of 37 on the
+real GPU with the range code, including the new `range-greens` journey.
+`npm test`: 901 of 901. **Seen by a person:** the range greens, played by the
+owner with the keyboard controls. **Not seen by a person:** the Low and Medium
+trees on a real weak laptop or a phone.
