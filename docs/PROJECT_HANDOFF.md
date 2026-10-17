@@ -1060,7 +1060,7 @@ up the game's keys are ignored; the round itself does not stop. **Smoke
 journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
 which open the list where the round screen hides the bar.
 
-**Phones (phase 5, 17 October 2026) keep their old layout**, recoloured: ui-screens.css sets the same palette variables inside the phone query. The phone round screens of the mockups are not built (TODO). **Only in play and off a phone.** Every rule sits inside the inverse of the
+**Phones (phase 5, 17 October 2026) have their own round screen** (`src/round-phone.css`, the phone query): the same pieces at the phone's real size, sideways and upright as the round-12 mockups place them -- the hole top left, golfer chips top right, a small straight map, the slanted three-by-three aim pad (the old pad's buttons, so their names and the hold-to-sweep still work), the club bottom left, a narrow Swing Meter you tap to swing (no Swing button), a MENU chip in place of Escape that opens the same pause list as one scrolling column. #world carries `--hud1` in the phone query too, so main.js treats a phone as the round screen; `phoneScreen()` still says it is a phone. Touch targets are 44 px (the phone journeys check it: the club picker was 36 tall until they did). On a phone the main menu's rows lean one by one, one height, two columns sideways. The sheets on a phone are unchanged. **Only in play and off a phone.** Every rule sits inside the inverse of the
 phone query (`min-width:561px and min-height:501px` on `#app`), and #world
 carries `--hud1:1` there so main.js asks the same question (`hud1`, read on
 each `updateHUD`). A phone keeps today's round screen until phase 5.

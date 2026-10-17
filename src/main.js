@@ -20,6 +20,7 @@ import './ui-kit.css';
 import './round-hud.css';
 import './ui-screens.css';
 import './ui-sheets.css';
+import './round-phone.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';

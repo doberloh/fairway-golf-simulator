@@ -2024,7 +2024,7 @@ const JOURNEYS = [
     // A putt is two taps, so the third is only made while a swing still waits.
     // The marker starts from the far left (14 October 2026), so the distance tap
     // waits for it to pass the strike line and the strike comes on its way back.
-    await tap('#swing');
+    await tap(await t.hud1() ? '#smBar' : '#swing');
     await t.page.waitForTimeout(800);
     await tap('#swingCatcher');
     await t.page.waitForTimeout(300);
@@ -2040,7 +2040,7 @@ const JOURNEYS = [
    await t.step('the shot button, then Skip', swing);
    await t.step('drop beside the pin, through the tools', async () => {
     await reliefFirst(t, tap);
-    await tap('#barTools');
+    await t.chrome(); await tap('#barTools');
     await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools', 5 * SLOW);
     await tap('#simDrop');
     await tap('#dropAtGreen');
@@ -2051,7 +2051,7 @@ const JOURNEYS = [
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
-     await tap('#swing');
+     await tap(await t.hud1() ? '#smBar' : '#swing');
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
@@ -2444,7 +2444,7 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
-    await t.page.tap('#barTools');
+    await t.chrome(); await t.page.tap('#barTools');
     await t.page.getByRole('button', {name: 'Launch monitor', exact: true}).tap();
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
     await t.key('Escape');

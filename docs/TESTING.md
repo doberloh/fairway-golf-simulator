@@ -164,7 +164,10 @@ the courses several suites share.
   The kit is on no screen yet; the round screen is (in play, off a phone), and
   the smoke journeys reach the top bar's controls through `t.chrome()` /
   `t.menuItem()`, which open the Esc list where the round screen hides the bar
-  (17 October 2026; not yet run).
+  (17 October 2026). On a phone the journeys tap the Swing Meter's bar where
+  the round screen has no Swing button, and reach Tools through the menu list;
+  the 44 px thumb check covers the new pieces. All 37 journeys pass on the
+  real GPU (17 October 2026, overnight).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 

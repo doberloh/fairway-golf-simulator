@@ -108,15 +108,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   level up, finish a round -- and drive the main menu and the Esc list with
   arrows; on the projector's speakers if you can. Say what's too loud or too
   quiet and `CHIP_LEVELS` (chiptune.js) moves.
-- [ ] **Phase 5 (phones and screen shapes) is only partly built** (17 October
-  2026, overnight). Built: the round screen's pieces fit 16:9, 16:10, 4:3, 21:9
-  and an iPad both ways up (round-hud.js `hudScale`, the map taking the
-  height), the main menu likewise, and phones take the 1.0 colours and type.
-  **Not built:** the phone round screens of the mockups (sideways and upright,
-  16 px margins, 44 px targets, the slanted aim pad, swinging by tapping the
-  bar instead of the Swing button) -- touch layouts that need a phone in the
-  hand, with the phone smoke journeys (`phone-portrait`, `phone-landscape`,
-  `monitor-phone`) rebuilt alongside. A phone plays as before, recoloured.
+- [ ] **Phase 5 (phones and screen shapes): built, seen in the browser pane at
+  844 x 390 and 390 x 844, not on a real phone** (17 October 2026, overnight).
+  The phone round screen sideways and upright (src/round-phone.css), the
+  slanted aim pad, swinging by tapping the bar, the MENU chip and the pause
+  list as one column, the phone main menu with rows leaning one by one. The
+  phone smoke journeys pass (they tap the bar now). Not seen: a real iPhone's
+  Safari and safe areas, a phone with two or more golfers, the ball light on a
+  phone, the sheets on a phone (unchanged, old layout).
 - [ ] **The Text size barely enlarges the round screen on 16:9** (about a
   tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
   The owner's call whether that is right for the bay.

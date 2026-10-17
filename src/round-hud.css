@@ -208,6 +208,8 @@
     the real pause screen (standings, conditions, cameras) on the kit. */
  #app[data-mode=play].rh-paused .topbar{position:absolute;inset:0;z-index:95;height:auto;display:grid;grid-template-columns:minmax(0,400px) minmax(0,460px);grid-template-rows:auto auto auto 1fr;grid-template-areas:"head extra" "resume extra" "right extra" "menu extra";align-content:center;align-items:start;justify-content:center;gap:8px 56px;padding:24px 40px;overflow:hidden auto;zoom:var(--hud-z,1);background:linear-gradient(90deg,rgba(4,8,12,.84),rgba(4,8,12,.6));border:0;backdrop-filter:blur(4px);filter:none;opacity:1;pointer-events:auto;color:#fff}
  #app.rh-paused .topbar :is(.brand,.hole-strip,#menuNav,.mode-pill,.divider,.sim-time-label){display:none!important}
+ #app.rh-paused .topbar>*,#app.rh-paused .topbar .rh-pause-extra>*{min-width:0}
+ #app.rh-paused .topbar .rh-pause-choice{flex-wrap:wrap;height:auto}
  #app.rh-paused .topbar .rh-pause-head{grid-area:head;display:grid;gap:4px;margin-bottom:10px}
  #app.rh-paused .topbar .rh-pause-head strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  #app.rh-paused .topbar .rh-pause-head small{font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
