@@ -36,7 +36,7 @@ import {newPlay,turn,playBall,results,ballFacts,progressText} from './challenge-
 import {holeAdapter,planChallenge,playContext} from './challenge-spots.js';
 import {goalStatus} from './round-goals.js';
 import {skins,decidedHoles,skinsWinner,holeSkinLine,skinsStatus,skinsText} from './skins.js';
-import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP,weeklyChallenge,challengeWeekKey,recordChallengeWeek,WEEKLY_CHALLENGE_XP} from './weekly.js';
+import {isoWeek,weekIndex,weekKey,weeklySettings,weeklyBiome,recordWeekly,bestEverWeekly,WEEKLY_XP,weeklyChallenge,challengeWeekKey,recordChallengeWeek,WEEKLY_CHALLENGE_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
@@ -57,6 +57,7 @@ import {buildLobby} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
+import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
@@ -303,7 +304,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview';
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null;
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -4639,6 +4640,29 @@ function hubBlocks(profile,s,lv){
   +`<div class="ph-overview"><div class="ph-tiles">${tiles}</div><h4>RECENT ROUNDS</h4>${recent?`<div class="ph-rounds">${recent}</div>`:'<p class="note">No rounds yet. Finish a hole and it shows up here.</p>'}${unlock}</div>`
   +preview;
 }
+// A PICTURE OF A COURSE, until there is a real one: a panel in its
+// landscape's two colours, named (the 1.0 saved courses shelf). Hidden
+// outside the 1.0 sheets.
+const coursePic=biome=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span class="course-pic" style="--p1:${ui.a1||'#4ade80'};--p2:${ui.a2||'#166534'}" aria-hidden="true"><span>${escape((b?.name||biome||'').toUpperCase())}</span></span>`;};
+// THE COURSE OF THE WEEK'S OWN BLOCKS (ui-menu-screens.js buildWeekly): the
+// picture with the week and the course's name, the four weeks before with the
+// main golfer's best on each, and the facts as rows.
+function weeklyBlocks(s,w,me,best,ever){
+ const day=864e5,now=Date.now(),b=BIOMES[s.biome],ui=b?.ui||{};
+ const earlier=[1,2,3,4].map(i=>{const d=new Date(now-i*7*day),k=weekKey(d),bb=BIOMES[weeklyBiome(d)];
+  return `<div class="wk-week"><strong>WEEK ${isoWeek(d).week}</strong><small>${escape((bb?.name||'').toUpperCase())} · ${me?.weekly?.[k]??'—'}</small></div>`;}).join('');
+ const toMonday=((8-new Date(now).getDay())%7)||7,next=BIOMES[weeklyBiome(new Date(now+toMonday*day))];
+ const row=(k,v)=>`<div class="wk-row"><span>${k}</span><b>${v}</b></div>`;
+ const group=(label,rows)=>`<div class="wk-group"><h4>${label}</h4>${rows.join('')}</div>`;
+ return `<div class="wk-hero" style="--p1:${ui.a1||'#fcd34d'};--p2:${ui.a2||'#b45309'}"><span class="wk-tag">WEEK ${w.week} · ${escape((b?.name||s.biome).toUpperCase())}</span><strong>${escape(suggestCourseName(s).toUpperCase())}</strong></div>`
+  +`<div class="wk-earlier"><h4>EARLIER WEEKS</h4><div class="wk-weeks">${earlier}</div></div>`
+  +`<div class="wk-facts">`
+  +group('THE COURSE',[row('HOLES','18'),row('SETTINGS','THE DEFAULTS'),row('FORMAT','STROKE PLAY')])
+  +group('YOUR WEEK',[row('BEST THIS WEEK',best??'—'),row('BEST ON ANY WEEK',ever??'—')])
+  +group('XP',[row('FIRST FINISH',best!=null?'DONE \u2713':`+${WEEKLY_XP.first}`),row('BEAT YOUR BEST',`+${WEEKLY_XP.best}`)])
+  +group('NEXT COURSE',[row(`IN ${toMonday} DAY${toMonday===1?'':'S'}`,escape((next?.name||'').toUpperCase()))])
+  +`</div>`;
+}
 // A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
 // in a round waiting behind Continue, and in an open group editor. A golfer is
 // that profile by id, or -- in a save from before ids -- by the old name.
@@ -4755,7 +4779,7 @@ function renderPanel(name,content){
   // is how every other list action here works; the tab you were on is kept.
   const card=c=>renamingCourse===c.id
    ?`<div class="course-card"><label class="field course-rename">Rename this course<input id="renameCourseInput" maxlength="${MAX_NAME}" value="${escape(c.name)}"></label><div class="course-actions"><button class="secondary" data-rename-save="${c.id}">Save name</button><button class="secondary" data-rename-cancel="1">Cancel</button></div></div>`
-   :`<div class="course-card"><div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Get code</button><button data-remove="${c.id}">Delete</button></div></div>`;
+   :`<div class="course-card">${coursePic(c.settings.biome)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Copy code</button><button data-remove="${c.id}">Delete</button></div></div>`;
   content.innerHTML=`<p>Save a landscape you like, then play it again later or pass it to someone else. A course keeps its landscape only — players, format and tees are chosen when you play, so the same course suits any group.</p>
   <p class="field-error" id="libraryError"></p>
   <h3>Your courses</h3>
@@ -5063,7 +5087,7 @@ function renderPanel(name,content){
   // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
   // just the group and the format, and what it is.
   const s=weeklySettings(),w=isoWeek(),me=mainProfile(profiles),best=me?.weekly?.[weekKey()],ever=bestEverWeekly(me);
-  content.innerHTML=`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
+  content.innerHTML=weeklyBlocks(s,w,me,best,ever)+`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
    +(me?`<p class="note">${escape(me.name)}: best this week ${best??'—'} · best on any week's course ${ever??'—'}. The first round you finish each week earns ${WEEKLY_XP.first} XP, and beating your best that week ${WEEKLY_XP.best} more.</p>`:'')
    +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
@@ -5624,6 +5648,13 @@ function renderPanel(name,content){
  monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
  // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
  if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
+ // Challenges, the course of the week and saved courses, the same way
+ // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
+ if(content.id==='drawerContent'&&appMode!=='studio'){
+  if(name==='round'&&challengeSetup)buildChallenges(content);
+  else if(name==='round'&&weeklySetup)buildWeekly(content);
+  else if(name==='library')buildLibrary(content,{codeOf:id=>exportCourse(findCourse(id)),onNew:()=>{closePanel();openStudioSetup();},pick:libraryPick,onPick:id=>{libraryPick=id;}});
+ }
  if(name==='round')buildLobby(content,{onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();}});
  wireSliders(content);icon();
 }

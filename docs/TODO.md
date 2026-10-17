@@ -104,6 +104,16 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   segment bars driven by arrows, a phone. PLACED: the categories are the five
   sheets there are, not the mockup's seven; the tool windows in a round keep
   their own layout.
+- [ ] **1.0 challenges, course of the week, saved courses: built to the
+  mockups, seen in the browser pane at 1280 x 720** (17 October 2026, third
+  pass; src/ui-menu-screens.js). Not seen: a challenge with medals won, a
+  head-to-head's group, the share box after Copy code, renaming on the shelf,
+  the week with bests recorded, a phone, the studio's own Saved courses (old
+  layout there). PLACED: the challenge's group sits under its detail; the
+  week's tees and group sit under its facts; the week's length is not shown
+  (only a grown course knows it); course pictures are the landscape's
+  colours; saved courses has no Saved rounds tab or Open in studio button
+  (rounds stay in the lobby; the studio opens courses from its own bar).
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -122,8 +132,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   golfer card, the standings in the Esc list, and the 1.0 colours and type on
   every panel and window through the old variables. **Not rebuilt on the kit**
   (each keeps its old layout, restyled; the lobby, monitor setup and profile
-  hub, and settings since rebuilt): pause as its own screen, challenges,
-  course of the week, saved courses, course studio,
+  hub, settings, challenges, course of the week and saved courses since
+  rebuilt): pause as its own screen, course studio,
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.

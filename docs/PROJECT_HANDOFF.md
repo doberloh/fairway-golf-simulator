@@ -735,7 +735,7 @@ the website's build**, which refuses a game without it.
 
 **TWO BIOMES MAY SHARE A FIRST WORD OR A SECOND WORD, NEVER BOTH.** The word lists in `course-names.js` overlap on purpose, because cedar and hollow each genuinely belong in more than one landscape -- but an overlap in both halves means the same name can come out of two different places. "Cedar Hollow" was reachable from the Pacific Northwest and the Midwest. `tests/course-names.test.mjs` checks this against the LISTS rather than a sample, because a sample that happens not to collide is not the rule.
 
-**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the Tools window's Copy course code and the library's Get code go through it.
+**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the Tools window's Copy course code and the library's Copy code (once Get code) go through it.
 
 **PLAY AND COURSE STUDIO ARE WAYS IN, so `syncNav` hides them from the top-bar menu once you are in one.** Offering "Play" to somebody already playing means starting a different round from what looks like a settings menu, and "Course studio" mid-round is a guarded exit dressed as a nav item. Main menu stays, and is where both of them live.
 
@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones (the lobby, monitor setup, profile hub and settings since rebuilt, below):
+old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week and saved courses since rebuilt, below):
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1284,6 +1284,22 @@ focus listener for good:** #drawerContent outlives every sheet, so
 `buildSettings` wires `focusin` once and swaps `root.stFocus`; adding a
 listener per render piled them up. In a round the same panels are tool
 windows and keep their own layout.
+
+**Challenges, the course of the week and saved courses** follow
+(`src/ui-menu-screens.js`, same night): challenges put the week's card as a
+banner, the group tabs (`.chal-tabs`) down the left, the cards in two
+columns and the detail section (with the group under it) on the right; the
+panel's own section tabs go, and `#challengeGo` is moved out of them first.
+The week gets `weeklyBlocks` (picture, earlier weeks from `weekKey` of past
+dates, fact rows) and its format and group under the facts. Saved courses
+keep their tabs; Your courses becomes a shelf whose chosen card's own
+`.course-actions` are moved into the right column (and back when another is
+chosen), with the course code from `exportCourse`. **A `:is()` list takes the
+specificity of its MOST specific member**: the shared panel rule once listed
+`.ch-detail>ul.medal-asks>li` inside `:is()` and so outranked every
+per-piece rule after it (the week banner lost its gradient); it is `:where()`
+now. None of this runs in the studio (`appMode!=='studio'`), whose sheet
+keeps the old layout.
 
 **`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
 `--glass` or `--accent` on a deeper element still wins there; one that

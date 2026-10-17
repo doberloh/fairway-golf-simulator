@@ -381,6 +381,103 @@
  #drawer .st-help-k{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
  #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
 
+ /* ------------------------------------- challenges, the week, saved courses */
+ /* (ui-menu-screens.js places them; PROJECT_HANDOFF *The 1.0 lobby*.) */
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent:is(.ch-root,.wk-root){display:block}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent:is(.ch-root,.wk-root)>.panel-lead{display:none}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent:is(.ch-root,.wk-root)>[data-panel-action]{width:auto;left:auto}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-hero,.wk-week,.wk-row,.course-card,.lib-new,.lib-name,.lib-code){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.wk-row,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ /* Challenges: the week's banner; categories (3), cards (5), detail (4). */
+ #drawer .ch{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);grid-template-areas:"week week week" "cats cards detail";gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .ch>.chal-week-row{grid-area:week;display:block;margin:0}
+ #drawer .ch .chal-week{display:flex;flex-direction:row;align-items:center;gap:20px;width:100%;min-height:56px;padding:0 36px;color:var(--on-hot)}
+ #drawer .ch .chal-week::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .ch .chal-week small{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--on-hot);opacity:.85;text-transform:uppercase}
+ #drawer .ch .chal-week small:last-child{margin-left:auto}
+ #drawer .ch .chal-week b{font-size:24px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #drawer .ch .chal-week.on::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .ch>.chal-tabs{grid-area:cats;display:grid;gap:8px;margin:0;padding:0;border:0;overflow:visible}
+ #drawer .ch>.chal-tabs>.panel-tab{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 24px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em}
+ #drawer .ch>.chal-tabs>.panel-tab small{font-size:13px;font-style:normal;letter-spacing:.08em}
+ #drawer .ch>.chal-cards:not(.chal-week-row){grid-area:cards;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+ #drawer .ch .chal-card:not(.chal-week){display:grid;gap:6px;align-content:center;min-height:104px;padding:14px 32px;color:#fff}
+ #drawer .ch .chal-card:not(.chal-week) b{font-size:20px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #drawer .ch .chal-card:not(.chal-week) small{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ch .chal-card.on:not(.chal-week)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .ch .chal-card:focus-visible{outline:none}
+ #drawer .ch .chal-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .ch .medal-pips i{width:14px;height:14px}
+ #drawer .ch-detail{grid-area:detail;display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .ch-detail>h3{margin:0;padding:16px 36px 8px;font-size:30px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff!important;text-transform:uppercase}
+ #drawer .ch-detail>h3::before{bottom:-1px!important}
+ #drawer .ch-detail>p{margin:0;padding:0 8px;font-family:var(--font-ui);font-size:15px;line-height:1.4;color:#fff}
+ #drawer .ch-detail>p.note{font-size:13px;color:var(--soft)}
+ #drawer .ch-detail>ul.medal-asks{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+ #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .ch-detail>ul.medal-asks>li b{color:#fff;text-transform:uppercase}
+ #drawer .ch-detail>ul.medal-asks>li span{margin-left:auto;font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;color:#fff;text-align:right}
+ #drawer .ch-group{display:grid;gap:8px;margin-top:16px}
+ #drawer .ch-group>h3{margin:0;font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ /* The course of the week: the picture and earlier weeks (7), the facts (5). */
+ #drawer .wk{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .wk-left,#drawer .wk-right{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .wk-hero{display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:360px;padding:28px 56px;overflow:hidden}
+ #drawer .wk-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 45%,#ffe9c7) 0 46%,color-mix(in srgb,var(--p1) 70%,#3b2a12) 46% 100%);transform:skewX(-12deg)}
+ #drawer .wk-hero::after{content:"";position:absolute;left:-10%;right:-10%;top:32%;height:26%;z-index:-1;background:radial-gradient(55% 100% at 28% 100%,color-mix(in srgb,var(--p1) 55%,#2a1d0a) 0 60%,transparent 61%),radial-gradient(45% 90% at 76% 100%,color-mix(in srgb,var(--p1) 40%,#2a1d0a) 0 60%,transparent 61%);transform:skewX(-12deg)}
+ #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:16px;font-weight:800;font-style:italic;letter-spacing:.16em;transform:skewX(-12deg)}
+ #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
+ #drawer .wk h4{margin:8px 0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #drawer .wk-week{display:grid;gap:4px;min-height:64px;align-content:center;padding:10px 28px}
+ #drawer .wk-week strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .wk-week small{font-size:12px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .wk-group{display:grid;gap:6px;margin-bottom:8px}
+ #drawer .wk-group h4{margin:0 0 2px}
+ #drawer .wk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 32px}
+ #drawer .wk-row span{font-size:13px;letter-spacing:.14em;font-weight:700;color:#fff}
+ #drawer .wk-row b{font-size:20px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .wk-right>:is(h3,p){margin:8px 0 0}
+ #drawer .wk-right>h3{font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ /* Saved courses: the shelf (8) and the chosen course (4). */
+ body:not(:has(#app[data-mode=studio])) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:16px 32px;align-items:start;columns:auto!important}
+ #drawer .lib-courses>:not(.lib-shelf):not(.lib-detail){grid-column:1}
+ #drawer .lib-courses>h3,#drawer .lib-courses>.control-card:not(:has(>:not([hidden]))){display:none}
+ #drawer .lib-shelf{grid-column:1;grid-row:1/span 4;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-shelf>.course-card{display:grid;align-content:start;gap:0;margin:0;padding:0;cursor:pointer;color:#fff}
+ #drawer .lib-shelf>.course-card::before{top:100px}
+ #drawer .lib-shelf>.course-card .course-pic{display:block;position:relative;height:96px;margin-bottom:4px;overflow:hidden}
+ #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:12px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+ #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
+ #drawer .lib-shelf>.course-card .course-meta strong{font-size:20px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #drawer .lib-shelf>.course-card .course-meta span{font-size:12px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .lib-shelf>.course-card .course-flag{display:none}
+ #drawer .lib-shelf>.course-card>.course-actions{display:none}
+ #drawer .lib-shelf>.course-card.on::before,#drawer .lib-shelf>.course-card.on .course-pic::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .lib-shelf>.course-card:focus-visible{outline:none}
+ #drawer .lib-shelf>.course-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lib-new{display:grid;place-items:center;align-content:center;gap:4px;min-height:196px;margin:0;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-new::before{background:rgba(255,255,255,.05)!important}
+ #drawer .lib-new b{font-size:56px;font-weight:800;line-height:1;color:var(--a1)}
+ #drawer .lib-new span{font-size:20px;font-weight:800;font-style:italic}
+ #drawer .lib-detail{grid-column:2;grid-row:1/span 4;display:grid;gap:8px;align-content:start;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-name{display:grid;gap:6px;padding:16px 36px}
+ #drawer .lib-name strong{font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-transform:uppercase}
+ #drawer .lib-name small{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .lib-code{display:grid;gap:8px;padding:16px 36px}
+ #drawer .lib-code span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lib-code code{display:block;padding:8px 10px;background:rgba(0,0,0,.35);font:15px "IBM Plex Mono",ui-monospace,monospace;color:#e8ecff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .lib-detail>.course-flag{padding:0 8px;font-size:12px;color:var(--soft)}
+ #drawer .lib-detail>.course-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lib-detail>.course-actions>button{position:relative;isolation:isolate;height:44px;min-height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .lib-detail>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lib-detail>.course-actions>button[data-play]{grid-column:1/-1;height:56px;font-size:24px;color:var(--on-hot)}
+ #drawer .lib-detail>.course-actions>button[data-play]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .lib-detail>.course-actions>button[data-remove]{color:#ff8a7a}
+ #drawer .lib-detail>.course-actions>button:focus-visible{outline:none}
+ #drawer .lib-detail>.course-actions>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */
@@ -462,3 +559,6 @@
  #drawer .lb-arrow{min-width:44px;min-height:44px}
  #drawer .lb-root>.panel-section.lb-emptied{display:none!important}
 }
+
+/* A saved course's picture panel shows only on the 1.0 saved courses shelf. */
+.course-pic{display:none}
