@@ -1124,3 +1124,10 @@ real GPU with the range code, including the new `range-greens` journey.
 `npm test`: 901 of 901. **Seen by a person:** the range greens, played by the
 owner with the keyboard controls. **Not seen by a person:** the Low and Medium
 trees on a real weak laptop or a phone.
+
+The website was redeployed live after the release, at the owner's word (no
+preview: the owner asked for the live site): `/play/` serves this release's
+`Fairway.html` byte for byte (sha256 `00f22f32…`, checked on the live URL),
+and its four Download buttons resolve through `releases/latest` to the v0.8.3
+zips. The packaged Windows server was run from its unzipped download before
+publishing and served the page byte for byte, on spare ports (19922/19921).
