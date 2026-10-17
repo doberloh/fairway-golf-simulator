@@ -86,6 +86,15 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   back / toggle / locked / ready), delete the marimba stings with no option
   to keep them (UI_1_0_PLAN 5.3), and run `tools/sound-lab/check.mjs` (a
   headless browser: ask first).
+- [ ] **Phase 5 (phones and screen shapes) is only partly built** (17 October
+  2026, overnight). Built: the round screen's pieces fit 16:9, 16:10, 4:3, 21:9
+  and an iPad both ways up (round-hud.js `hudScale`, the map taking the
+  height), the main menu likewise, and phones take the 1.0 colours and type.
+  **Not built:** the phone round screens of the mockups (sideways and upright,
+  16 px margins, 44 px targets, the slanted aim pad, swinging by tapping the
+  bar instead of the Swing button) -- touch layouts that need a phone in the
+  hand, with the phone smoke journeys (`phone-portrait`, `phone-landscape`,
+  `monitor-phone`) rebuilt alongside. A phone plays as before, recoloured.
 - [ ] **The Text size barely enlarges the round screen on 16:9** (about a
   tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
   The owner's call whether that is right for the bay.

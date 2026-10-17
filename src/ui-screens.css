@@ -93,3 +93,12 @@
  .panel-tab.active{background:none;color:var(--on-hot)}
  .panel-tab.active::before{background:var(--a1)}
 }
+
+/* PHONES (phase 5, partly): the 1.0 colours and type, through the same
+   variables, on the phone's own layout. The phone round screens of the
+   mockups (sideways and upright, the slanted aim pad, tapping the bar instead
+   of a Swing button) are NOT built: they are touch layouts that need a phone
+   in the hand, and the phone smoke journeys rebuilt with them (TODO). */
+@container app (max-width:560px) or (max-height:500px){
+ #app>*{--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
+}

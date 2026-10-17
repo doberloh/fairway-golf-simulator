@@ -1060,7 +1060,7 @@ up the game's keys are ignored; the round itself does not stop. **Smoke
 journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
 which open the list where the round screen hides the bar.
 
-**Only in play and off a phone.** Every rule sits inside the inverse of the
+**Phones (phase 5, 17 October 2026) keep their old layout**, recoloured: ui-screens.css sets the same palette variables inside the phone query. The phone round screens of the mockups are not built (TODO). **Only in play and off a phone.** Every rule sits inside the inverse of the
 phone query (`min-width:561px and min-height:501px` on `#app`), and #world
 carries `--hud1:1` there so main.js asks the same question (`hud1`, read on
 each `updateHUD`). A phone keeps today's round screen until phase 5.
