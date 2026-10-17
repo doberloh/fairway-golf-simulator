@@ -1088,3 +1088,10 @@ and `challenge-more` pass. `npm test`: 884 of 884. **Not seen in the game by a
 person:** the challenges screens and most challenges (TODO, *More
 challenges*), and still Skins, the Endless daylight and the save fix from
 0.8.1.
+
+The website was redeployed after the release (preview, then live, at the
+owner's word): `/play/` serves this release's `Fairway.html` byte for byte
+(sha256 `bb8d0ebe…`, checked on the live URL), and its four Download buttons
+resolve to the v0.8.2 zips. The packaged Windows server was run from its
+unzipped download before publishing and served the page byte for byte, on
+spare ports (19922/19921).
