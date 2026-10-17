@@ -4,7 +4,7 @@ import {generateStreams,shoreBands,WATER_FREEBOARD,WATER_LIP} from './streams.js
 import {planCourse,holeLine,enabledTees,greenContour,greenPedestal,rng,shapeGain,spreadHarmonics,GREEN_SHAPE,BUNKER_SHAPE} from './course-plan.js';
 import {makeGroundGrid,makeGroundGridSteps,makeGroundGridPooled,groundHeight} from './terrain-grid.js';
 import {routeHoles} from './routing.js';
-import {buildRange} from './range.js';
+import {buildRange,rangeContour} from './range.js';
 import {clamp} from './physics.js';
 import {DEFAULT_COURSE as SCHEMA_DEFAULTS} from './settings-schema.js';
 import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS} from './species.js';
@@ -28,7 +28,11 @@ export function greenRadius(hole,angle){return (hole.greenSize??17)*(1+(hole.gre
 // Measured from the centre of the green, which since hole locations started
 // moving is not the same point as the cup. Falling back to the pin keeps any
 // caller that only has a cup working.
-export function greenDistance(hole,x,z){const c=hole.green??hole.pin,dx=(x-c.x)/(hole.greenAspect??1.17),dz=z-c.z,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
+// A hole with a LIST of greens (the driving range, range.js) is as near a green
+// as its nearest one: the lie, the painted ground and the map all ask this, so
+// every green in the list plays as a green. A green hidden by the centre green
+// standing over it is not there.
+export function greenDistance(hole,x,z){if(hole.greens){let d=Infinity;for(const g of hole.greens)if(!g.hidden)d=Math.min(d,greenDistance(g,x,z));return d;}const c=hole.green??hole.pin,dx=(x-c.x)/(hole.greenAspect??1.17),dz=z-c.z,angle=Math.atan2(dz,dx);return Math.hypot(dx,dz)-greenRadius(hole,angle);}
 // Where the cup is cut, and why it moves.
 //
 // A tournament moves the hole around the green through the week, and the two
@@ -923,6 +927,25 @@ const phaseAt=(i,local=0)=>{
  let base=0;for(let k=0;k<i;k++)base+=PHASE[k][1];
  return {label:PHASE[i][0],done:base+PHASE[i][1]*Math.min(1,Math.max(0,local))};
 };
+// THE RANGE'S GREENS IN THE GROUND (16 October 2026). Each green with a slope
+// set up (range.js rangeContour) is its contour inside the green and collar,
+// faded back to the level field over RANGE_BANK beyond the fringe, then blended
+// in the way a course green is. Faded rather than left to the blend alone,
+// because a tilted plane keeps rising past the edge: blended over a course
+// green's 40 m shoulder it leaned the ground under the next target. A flat
+// green changes nothing and is skipped. PLACED: an 8 m bank, a 12 m shoulder.
+const RANGE_BANK=8,RANGE_SHOULDER=12;
+function rangeGreensShape(h,p,y,base,fringe){
+ for(const g of h.greens){
+  if(g.hidden||!g.setup||g.setup.slope==='flat')continue;
+  const d=greenDistance(g,p.x,p.z);
+  if(d-fringe-1>=RANGE_SHOULDER)continue;
+  const w=h.toWorld(g.green),fade=1-smooth((d-fringe)/RANGE_BANK);
+  const greenY=base(w.x,w.z)+rangeContour(g,p.x,p.z)*fade,blend=1-smooth((d-fringe-1)/RANGE_SHOULDER);
+  if(blend>0)y=y*(1-blend)+greenY*blend;
+ }
+ return y;
+}
 export function generateWorld(settings={}){
  const it=generateWorldSteps(settings);
  let r=it.next();while(!r.done)r=it.next();
@@ -1166,7 +1189,7 @@ export function* generateWorldSteps(settings={},options={}){
   const weight=b/(1.001-b);
   pondBlend=Math.max(pondBlend,b);weightSum+=weight;targetSum+=weight*s.target;
  }
- if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z}),d=greenDistance(h,p.x,p.z);
+ if(pondBlend>0)y=y*(1-pondBlend)+targetSum/weightSum*pondBlend;for(const {h,minX,maxX,minZ,maxZ} of modifiers){if(x<minX||x>maxX||z<minZ||z>maxZ)continue;const p=h.toLocal({x,z});if(h.greens){y=rangeGreensShape(h,p,y,base,s.fringe);continue;}const d=greenDistance(h,p.x,p.z);
  // The shoulder is never wider than 100 m, so past it the blend below is
  // exactly nothing (smooth clamps at 1) whatever the green's height. Asking for
  // the green's contour first, as this did, was a third of what shaping an

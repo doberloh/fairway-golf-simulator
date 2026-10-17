@@ -87,7 +87,13 @@ export function groundGeometry(g){
 // program failing to link and the ground vanishing. Built by the renderer
 // (makeHazardAtlas, which writes the cups and hazards) before the ground,
 // which writes the route and the tees.
-export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, width: 35};
+// THE RANGE'S OTHER GREENS (16 October 2026) ride after the hazards: three
+// texels each -- centre and size, outline, cup -- for up to RANGE_GREENS of
+// them, counted in the third channel of the pin texel (cups + 1). Every course
+// hole writes zero there and the shader's loop ends before its first read. See
+// range.js greenTexels.
+export const RANGE_GREENS = 8;
+export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, greens: 35, width: 35 + 3 * RANGE_GREENS};
 export function groundMaterial(view,palette){
  const w=view.world,N=w.holes.length,span=Math.max(...w.holes.map(h=>h.length))+80,extent=new T.Vector2(w.groundGrid.halfX,w.groundGrid.halfZ);
  // WHICH HOLE OWNS EACH PATCH OF GROUND, AND HOW FINELY THAT IS RECORDED.
@@ -283,6 +289,10 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
  vec4 tr=holeTexel(0.,row),info=holeTexel(1.,row);vec2 d=wp-tr.xy;vec2 p=vec2(d.x*tr.z-d.y*tr.w,d.x*tr.w+d.y*tr.z);
  vec4 curve=texture2D(curves,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row));vec4 cupInfo=holeTexel(9.,row);vec2 cup=cupInfo.xy;vec2 pin=holeTexel(10.,row).xy;vec4 outline=holeTexel(2.,row);
  vec2 gd=vec2((p.x-cup.x)/cupInfo.w,p.y-cup.y);float angle=atan(gd.y,gd.x);float greenD=length(gd)-cupInfo.z*(1.+outline.y*sin(angle*2.+info.y)+outline.z*sin(angle*3.+info.y)+outline.w*cos(angle*5.));
+ // The range's other greens (HOLE_ATLAS.greens): nearest edge wins, the same
+ // rule as greenDistance on the CPU, and the nearest cup is the one cut.
+ vec2 cupAt=pin;float extraGreens=holeTexel(10.,row).z;
+ for(int gi=0;gi<${RANGE_GREENS};gi++){if(float(gi)>=extraGreens)break;float c0=${HOLE_ATLAS.greens}.+float(gi)*3.;vec4 ga=holeTexel(c0,row),gb=holeTexel(c0+1.,row);vec2 gc=holeTexel(c0+2.,row).xy;vec2 gq=vec2((p.x-ga.x)/ga.w,p.y-ga.y);float gang=atan(gq.y,gq.x);greenD=min(greenD,length(gq)-ga.z*(1.+gb.x*sin(gang*2.+gb.w)+gb.y*sin(gang*3.+gb.w)+gb.z*cos(gang*5.)));if(distance(p,gc)<distance(p,cupAt))cupAt=gc;}
  float width=p.x<curve.x?curve.y:curve.z;float fw=abs(p.x-curve.x)-width;float margin=info.w;
  float mowStart=holeTexel(2.,row).x;float start=mowStart-margin,end=info.x+8.+margin;
  vec2 outerCurve=texture2D(outer,vec2(((p.y+32.)/curveSpan*511.+.5)/512.,row)).xy;float outerWidth=p.x<curve.x?outerCurve.x:outerCurve.y;
@@ -438,7 +448,7 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
  // The CUP, not the green's centre. cupInfo.xy above is the GREEN and drives
  // the boundary; using it here punched the hole through the middle of every
  // green instead of at the pin.
- if(distance(p,pin)<${CUP_RADIUS.toFixed(6)})discard;
+ if(distance(p,cupAt)<${CUP_RADIUS.toFixed(6)})discard;
  // MOWING STRIPES THAT FOLLOW THE GROUND.
  //
  // These have always been here, and they were computed entirely in the PLAN --

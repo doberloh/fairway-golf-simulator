@@ -159,10 +159,14 @@ are in the archived section of the same name.
 
 ## Play
 
-- [ ] **Export the range's shot data.** The shot list holds every shot of the
-  session; nothing downloads it. The website says "view your shot data" until
-  a release can; when one does, tell the owner -- the website's repository has
-  the matching item. (was: same heading)
+- [ ] **Play the range's greens by hand (built 16 October 2026, branch
+  `range-greens`).** Seen working in the game by script and by the
+  `range-greens` smoke journey, never by a person swinging. Check: chips and
+  putts on the short-game green with the Swing Meter (the club picked, the
+  lie's cost, play it out, a new spot every ball); aiming at each target from
+  the mats switches the card and the cup; a left-to-right and a random green
+  read and break the right way; the bigger Range controls window on a phone;
+  two golfers taking turns at a station; the PDF opened in your own reader.
 
 - [ ] **The shot panel forgets its numbers on a reload.** `lastShot` is memory
   only, so a resumed round shows dashes mid-hole. Decide first whether a shot
@@ -347,6 +351,38 @@ are in the archived section of the same name.
   smaller documents*)
 
 # Done
+
+## The range's greens, short game and exports (16 October 2026)
+
+- [x] **Range targets play as greens, on the aim arc** (from IDEAS, and the
+  owner's ask). Branch `range-greens`. A hole may carry a list of greens:
+  `greenDistance` takes the nearest, the ground shader loops over an
+  extended cup atlas (`HOLE_ATLAS.greens`), and every target is a mown green
+  with a fringe, a cup and a flag. Each number is now the distance from the
+  centre mat to the green's middle (the 50 was 62 yd, the 100 106 yd); a
+  target the centre green covers steps aside. Aiming at a green from the mats
+  makes its cup the live one.
+- [x] **A chipping and putting green** (from IDEAS, *A short-game area*).
+  Beside the mats on the right; Range controls' *Hit from* chips (5-60 yd) or
+  putts (3-80 ft) on it or on the centre green, with play it out and a new
+  spot every ball.
+- [x] **Both greens shaped**: flat, left to right, right to left (0.5-4%), or
+  random contours with New green; New cup on either. A shaped green regrows
+  the range (about a second).
+- [x] **Export CSV and a PDF report** of the session (closes *Export the
+  range's shot data* from the open list). `src/range-report.js` and a
+  hand-written `src/pdf.js`, no dependency. **The website says "view your
+  shot data" until a release can export -- the owner was told; its
+  repository has the matching item.**
+- [x] **Range controls can always be reopened**: its own button on the view
+  bar. And the session caption averages one club's full shots, not every ball
+  (it mixed a driver, a wedge and now putts into one number).
+- Checked: `npm test`, the build, the `range` and new `range-greens` smoke
+  journeys on the real GPU, the targets, stations, a regrow and the report
+  looked at in the game and in Chrome's PDF viewer. Not checked by a person
+  swinging: the open entry *Play the range's greens by hand*. RESEARCH.md
+  *The driving range*; tests in `tests/range.test.mjs` and
+  `tests/range-report.test.mjs`.
 
 ## Low and Medium trees (16 October 2026)
 

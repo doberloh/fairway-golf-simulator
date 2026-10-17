@@ -81,7 +81,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/scoring.js`, `src/putting.js`, `src/presentation.js` -- against par, putting modes, replay timing
 - `src/round-goals.js` -- rounds with a goal (Sudden death, Bogey-free nine): which rounds can carry one, each golfer's goal from the card
 - `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
-- `src/range.js` -- the driving range (a hand-built hole); `src/endless.js` -- endless runs
+- `src/range.js` -- the driving range (a hand-built hole): its greens as a list (centre, six targets, short game), their slopes and cups, chip and putt spots; `src/endless.js` -- endless runs
+- `src/range-report.js`, `src/pdf.js` -- the range session as a CSV and a PDF report; a hand-written PDF, no dependency
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
@@ -178,6 +179,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
+- The range's greens are a list that `greenDistance` and the ground shader both loop over -- keep the two the same rule; one cup is live at a time (`course.pin`). [THE RANGE'S GREENS ARE A LIST]
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
 - A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test; a challenge is set up only through `planChallenge`/`playContext`. [A practice challenge is not a round]
 - Rounds with a goal are real rounds (`round.goal`); the goal never changes play, and a sudden-death run is never finished. [Rounds with a goal are real rounds]

@@ -114,11 +114,13 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `player-colours`, `bag`.
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `player-colours`, `bag`,
+  `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
-  `dispersion`, `plays-like`, `aim-preview`, `range`, `lab`.
+  `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
+  arc, slopes, cups, chip and putt spots), `lab`.
 - **Making a course** -- `world`, `landscape`, `landscape-edge`,
   `course-variety`, `course-living`, `course-names`, `atmosphere-routing`,
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
@@ -151,7 +153,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
-| `range`, `studio` | the driving range; Course studio grows and saves a course |
+| `range`, `range-greens`, `studio` | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch |
 | `no-late-shaders`, `ball-light-shaders`, `ball-light-hole-out`, `floodlit-night`, `no-swallowed-errors`, `sound` | no stalls, no hidden errors, lights and sound |

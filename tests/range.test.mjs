@@ -3,10 +3,11 @@
 // rather than anything about how it looks. RESEARCH.md carries the reasoning.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateWorld, fairwayWidth, localSurface, greenDistance, teeBox, TEE_PAD, TEE_APRON, TEE_ROUND, TEE_APRON_SCALE} from '../src/course.js';
+import {generateWorld, fairwayWidth, localSurface, greenDistance, greenRadius, teeBox, TEE_PAD, TEE_APRON, TEE_ROUND, TEE_APRON_SCALE} from '../src/course.js';
 import {buildRange, moveRangeGreen, rangeGreenYards, RANGE_SETTINGS, RANGE_DEPTH, RANGE_WIDTH,
- GREEN_RANGE, DEFAULT_GREEN_YARDS, rangeTargets, TARGET_YARDS, TARGET_COLORS, TARGET_RADIUS,
- offlineOf, SHOT_LINE_MAX, SHOT_LINE_DEFAULT, cleanShotLines} from '../src/range.js';
+ GREEN_RANGE, DEFAULT_GREEN_YARDS, rangeTargets, TARGET_YARDS, TARGET_COLORS, targetReach,
+ offlineOf, SHOT_LINE_MAX, SHOT_LINE_DEFAULT, cleanShotLines, SLOPES, TILT, CONTOUR, DEFAULT_SETUP, cleanSetup, centreSetup,
+ greenById, activeGreen, setActiveGreen, nearestGreen, moveCup, slopeOf, chipSpot, puttSpot, CHIP_YARDS, PUTT_FEET} from '../src/range.js';
 
 const YARD = 0.9144;
 const world = generateWorld(RANGE_SETTINGS);
@@ -154,7 +155,7 @@ test('the painted ground and the lie the ball gets are the same surface', () => 
   return kind;
  };
  let bad = 0, total = 0, example = null;
- for (let z = -20; z < range.length + 20; z += 2) for (let x = -70; x <= 70; x += 2) {
+ for (let z = -20; z < range.length + 20; z += 2) for (let x = -110; x <= 70; x += 2) {
   total++;
   const lie = range.surface(x, z), painted = shaderKind(range, x, z);
   if (lie !== painted) { bad++; example ??= `x=${x} z=${z.toFixed(0)}: lie ${lie}, painted ${painted}`; }
@@ -205,34 +206,178 @@ test('no target hangs off the field, and none overlaps another', () => {
  for (const t of targets) {
   assert.ok(Math.abs(t.x) + t.radius < half,
    `the ${t.yards} yd target reaches ${(Math.abs(t.x) + t.radius).toFixed(1)} m, past the ${half.toFixed(1)} m edge`);
-  // Sitting on mown turf, not in the rough alongside it.
-  assert.equal(range.surface(t.x, t.z), 'fairway', `the ${t.yards} yd target is on ${range.surface(t.x, t.z)}`);
  }
  for (let i = 0; i < targets.length; i++) for (let j = i + 1; j < targets.length; j++) {
   const a = targets[i], b = targets[j];
-  assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > a.radius + b.radius,
+  assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > a.radius + b.radius + 4,
    `the ${a.yards} and ${b.yards} yd targets overlap`);
  }
 });
 
-test('the green slider can never drive the green through a target', () => {
- // This is the reason TARGET_OFFSET is derived from the green's own reach
- // rather than chosen by eye. The green runs the whole centre line, so a
- // clearance that holds at 150 yd and fails at 300 would be a bug nobody found
- // until they dragged the slider to the end.
- const h = buildRange();
+test('every target is its number from the mat, along the aim arc', () => {
+ // The owner's ask (16 October 2026): "make sure the distances are on the
+ // player's aim arc so they play like what they say". The 50 used to stand at
+ // z = 50 yd and 33 m to the side -- 62 yards from the mat.
+ const mat = range.tees.white;
+ assert.deepEqual([mat.x, mat.z], [0, 0], 'every golfer plays the range off the centre mat');
+ for (const t of rangeTargets()) {
+  const yards = Math.hypot(t.x - mat.x, t.z - mat.z) / YARD;
+  assert.ok(Math.abs(yards - t.yards) < .01, `the ${t.yards} target is ${yards.toFixed(2)} yd from the mat`);
+ }
+});
+
+test('every target plays as a green: green inside, fringe round it, fairway beyond', () => {
+ const h = buildRange({rangeGreen: 30});
+ for (const t of rangeTargets()) {
+  const g = h.greens.find(q => q.yards === t.yards);
+  assert.ok(g, `no green for the ${t.yards} target`);
+  if (g.hidden) continue;
+  assert.equal(h.surface(t.x, t.z), 'green', `the ${t.yards} target is not a green`);
+  // Just outside its edge, toward the centre line: the fringe, then mown turf.
+  const inward = -Math.sign(t.x), edge = greenRadius(g, inward > 0 ? 0 : Math.PI) * g.greenAspect;
+  assert.equal(h.surface(t.x + inward * (edge + 1), t.z), 'fringe', `the ${t.yards} target has no fringe`);
+  assert.equal(h.surface(t.x + inward * (edge + 6), t.z), 'fairway', `the ${t.yards} target is not set in the field`);
+ }
+});
+
+test('the centre green never overlaps a target that is showing', () => {
+ // The centre green runs the whole centre line and the targets stand beside
+ // it, so a target the green sits on steps aside (hideCovered) -- slide the
+ // green to 150 and the 150 target IS the green. Whatever is still showing
+ // must be clear of the centre green by two fringes, at every slider stop.
+ const h = buildRange(), fringe = h.settings.fringe;
  for (let yards = GREEN_RANGE[0]; yards <= GREEN_RANGE[1]; yards += 5) {
   moveRangeGreen(h, yards);
-  for (const t of rangeTargets()) {
-   // Walk the target's rim and require every point of it to be off the green.
+  let hidden = 0;
+  for (const g of h.greens.filter(q => q.kind === 'target')) {
+   if (g.hidden) { hidden++; continue; }
+   const r = targetReach(g.yards) + 2 * fringe;
    for (let k = 0; k < 48; k++) {
     const a = k / 48 * Math.PI * 2;
-    const x = t.x + Math.cos(a) * t.radius, z = t.z + Math.sin(a) * t.radius;
-    assert.ok(greenDistance(h, x, z) > 0,
-     `green at ${yards} yd overlaps the ${t.yards} yd target`);
+    assert.ok(greenDistance(h.greens[0], g.green.x + Math.cos(a) * r, g.green.z + Math.sin(a) * r) > 0,
+     `green at ${yards} yd overlaps the ${g.yards} yd target`);
    }
   }
+  assert.ok(hidden <= 2, `the green at ${yards} yd hid ${hidden} targets`);
  }
+ moveRangeGreen(h, 150);
+ assert.ok(greenById(h, 't150').hidden, 'the green at 150 should stand in for the 150 target');
+ assert.ok(!greenById(h, 't100').hidden && !greenById(h, 't200').hidden, 'the green at 150 hid its neighbours');
+});
+
+test('the short-game green sits off the field, and plays as a green', () => {
+ const h = buildRange(), g = greenById(h, 'short'), s = h.settings;
+ assert.equal(h.surface(g.green.x, g.green.z), 'green');
+ // Its whole collar clears the mown field, so a chip never runs onto the range
+ // and a ball down the range never lands on it.
+ let inner = -Infinity;
+ for (let k = 0; k < 64; k++) {
+  const a = k / 64 * Math.PI * 2;
+  inner = Math.max(inner, g.green.x + Math.cos(a) * greenRadius(g, a) * g.greenAspect);
+ }
+ assert.ok(inner + s.fringe + s.semiRough < -RANGE_WIDTH / 2,
+  `the short-game collar reaches x=${(inner + s.fringe + s.semiRough).toFixed(1)}, inside the field edge`);
+ // Close enough to hit at from the mats.
+ assert.ok(Math.hypot(g.green.x, g.green.z) / YARD < 100, 'too far from the mats to aim at');
+});
+
+test('each slope set-up shapes its own green and leaves everything else level', () => {
+ const relief = (h, g) => {
+  let lo = Infinity, hi = -Infinity;
+  for (let x = -6; x <= 6; x += 1) for (let z = -6; z <= 6; z += 1) {
+   const y = h.height(g.green.x + x, g.green.z + z);
+   lo = Math.min(lo, y); hi = Math.max(hi, y);
+  }
+  return hi - lo;
+ };
+ for (const slope of SLOPES) {
+  const w = generateWorld({...RANGE_SETTINGS, rangeCentre: {slope, tilt: 2, contour: 60}, rangeShort: {slope, tilt: 2, contour: 60}});
+  const h = w.holes[0];
+  for (const id of ['centre', 'short']) {
+   const g = greenById(h, id), left = h.height(g.green.x + 6, g.green.z), right = h.height(g.green.x - 6, g.green.z);
+   if (slope === 'flat') assert.ok(relief(h, g) < .001, `a flat ${id} green has ${relief(h, g).toFixed(3)} m of relief`);
+   // Left is local +x. Left to right: the ground falls toward the golfer's right.
+   if (slope === 'ltr') assert.ok(Math.abs(left - right - .24) < .01, `ltr ${id}: left ${left.toFixed(3)}, right ${right.toFixed(3)}`);
+   if (slope === 'rtl') assert.ok(Math.abs(right - left - .24) < .01, `rtl ${id}: left ${left.toFixed(3)}, right ${right.toFixed(3)}`);
+   if (slope === 'random') assert.ok(relief(h, g) > .05, `a random ${id} green has only ${relief(h, g).toFixed(3)} m of relief`);
+  }
+  // The targets stay dead level, and so does the field away from the greens.
+  for (const g of h.greens.filter(q => q.kind === 'target' && !q.hidden))
+   assert.ok(relief(h, g) < .001, `the ${g.yards} target tilted under a ${slope} set-up`);
+  for (const z of [10, 60, 250, 400]) assert.ok(Math.abs(h.height(0, z * YARD) - h.height(0, 0)) < .001, `${slope}: the field is not level at ${z} yd`);
+ }
+});
+
+test('a random green is new when its seed is, and the same when it is not', () => {
+ const at = seed => {
+  const h = generateWorld({...RANGE_SETTINGS, rangeShort: {slope: 'random', contour: 60, seed}}).holes[0];
+  const g = greenById(h, 'short');
+  return [-5, 0, 5].map(x => h.height(g.green.x + x, g.green.z + 3).toFixed(4)).join();
+ };
+ assert.equal(at(3), at(3));
+ assert.notEqual(at(3), at(4));
+});
+
+test('cups are cut on the green with room round them, and New cup moves them', () => {
+ for (const slope of SLOPES) {
+  const h = buildRange({rangeCentre: {slope, contour: 70}, rangeShort: {slope, contour: 70}});
+  for (const id of ['centre', 'short']) {
+   const g = greenById(h, id);
+   assert.ok(greenDistance(g, g.pin.x, g.pin.z) <= -3, `${slope} ${id}: the cup is within 3 m of the edge`);
+   if (slope === 'random') assert.ok(slopeOf(g, g.pin.x, g.pin.z) <= 2.5, `${slope} ${id}: the cup sits on ${slopeOf(g, g.pin.x, g.pin.z).toFixed(1)}%`);
+   const before = {...g.pin}, moved = moveCup(h, id, 5);
+   assert.ok(Math.hypot(moved.x - before.x, moved.z - before.z) > .5, `${slope} ${id}: New cup did not move it`);
+   assert.ok(greenDistance(g, moved.x, moved.z) <= -3);
+  }
+ }
+});
+
+test('aiming picks the green being played to, and the cup goes with it', () => {
+ const w = generateWorld(RANGE_SETTINGS), h = w.holes[0];
+ const t200 = greenById(h, 't200');
+ assert.equal(nearestGreen(h, {x: t200.green.x + 3, z: t200.green.z - 4}).id, 't200');
+ setActiveGreen(h, 't200');
+ assert.equal(activeGreen(h).id, 't200');
+ assert.deepEqual(h.pin, t200.pin);
+ const expected = h.toWorld(t200.pin);
+ assert.ok(Math.hypot(h.worldPin.x - expected.x, h.worldPin.z - expected.z) < 1e-9, 'worldPin did not follow');
+ // A hidden target cannot be played to.
+ moveRangeGreen(h, 150);
+ assert.notEqual(setActiveGreen(h, 't150').id, 't150');
+ // Sliding the centre green while a target is in play leaves the target's cup live.
+ setActiveGreen(h, 't250'); moveRangeGreen(h, 100);
+ assert.deepEqual(h.pin, greenById(h, 't250').pin);
+});
+
+test('chips are played from off the green, putts from on it, at the distance asked', () => {
+ const h = buildRange({rangeShort: {slope: 'random', contour: 50}});
+ const g = greenById(h, 'short');
+ for (const yards of [CHIP_YARDS.min, 10, 20, 40, CHIP_YARDS.max]) for (const n of [0, 1, 7]) {
+  const p = chipSpot(h, 'short', yards, n), out = Math.hypot(p.x - g.pin.x, p.z - g.pin.z) / YARD;
+  // Exactly the distance asked wherever the green ends short of it; a chip
+  // asked for from closer than the green allows starts just off it instead.
+  if (yards >= 25) assert.ok(Math.abs(out - yards) < .01, `a ${yards} yd chip is ${out.toFixed(1)} yd out`);
+  else assert.ok(out < 25, `a ${yards} yd chip went ${out.toFixed(1)} yd out`);
+  assert.notEqual(h.surface(p.x, p.z), 'green', `a ${yards} yd chip starts on the green`);
+ }
+ for (const feet of [PUTT_FEET.min, 10, 25]) for (const n of [0, 2]) {
+  const p = puttSpot(h, 'short', feet, n);
+  assert.equal(h.surface(p.x, p.z), 'green', `a ${feet} ft putt is not on the green`);
+  assert.ok(Math.abs(Math.hypot(p.x - g.pin.x, p.z - g.pin.z) / .3048 - feet) < .01, `a ${feet} ft putt is the wrong length`);
+ }
+ // Too long for the green: the longest putt that fits.
+ const far = puttSpot(h, 'short', PUTT_FEET.max, 0);
+ assert.equal(h.surface(far.x, far.z), 'green');
+});
+
+test('a stored set-up is cleaned before it is built', () => {
+ assert.deepEqual(cleanSetup(null), DEFAULT_SETUP.centre);
+ assert.deepEqual(cleanSetup({slope: 'sideways', tilt: 99, contour: -5, seed: -1, cup: 1.5}),
+  {...DEFAULT_SETUP.centre, tilt: TILT.max, contour: CONTOUR.min});
+ assert.equal(cleanSetup({slope: 'rtl'}).slope, 'rtl');
+ // The bench's old request still grows a contoured centre green.
+ assert.equal(centreSetup({greenDifficulty: 40}).slope, 'random');
+ assert.equal(centreSetup({greenDifficulty: 40, rangeCentre: {slope: 'flat'}}).slope, 'flat');
 });
 
 test('moving the green refreshes the coordinates the scene actually reads', () => {

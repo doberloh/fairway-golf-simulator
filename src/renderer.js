@@ -17,9 +17,9 @@ import {cameraRig,loadCamera} from './camera-prefs.js';
 // The amber every tracer used to be, kept as the fallback for a trail that
 // names no golfer.
 const SHOT_LINE_COLOR='#ffe0a0';
-import {groundGeometry,groundMaterial,HOLE_ATLAS} from './ground.js';
+import {groundGeometry,groundMaterial,HOLE_ATLAS,RANGE_GREENS} from './ground.js';
 import {uiZoom} from './ui-scale.js';
-import {rangeTargets} from './range.js';
+import {writeRangeGreens,activeGreen} from './range.js';
 import {tracerStyle,summaryStyle,stopColour,hexRgb} from './rewards.js';
 import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 
@@ -37,7 +37,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // top of that so it never drops below POLE_MIN_PX. Close up -- a chip, a pitch,
 // anything from the green -- they are exactly to size. Drawing only: the ball
 // collides with the real stick. The range's target boards make the same
-// angular-size choice (addRangeTargets). PLACED by eye. All of this happens
+// angular-size choice (addTargetFurniture). PLACED by eye. All of this happens
 // only when the player turns on "Larger flags far away" (graphics.distantFlags,
 // OFF by default since 14 October 2026); the range boards are not under that
 // switch.
@@ -696,7 +696,7 @@ export class GolfView{
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
-  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.makeHazardAtlas();this.waterBodies=[];
+  this.disposeCourse();this.updateGrass=null;this.haunts=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
   // Shared materials belonging to systems that build their meshes later. A
   // scene-graph traverse cannot find those: the near-field grass owns one
   // material for every tile but has no tiles until the camera moves, so at
@@ -779,7 +779,6 @@ export class GolfView{
   // Haunted Hollow's pumpkins, lanterns and ghosts; null on every other biome.
   this.haunts=addHaunts(this);
   this.addFloodlights();
-  if(world.holes[0]?.range)this.addRangeTargets();
   // Every mesh instanced across the course -- trees, deadfall, rocks, ground
   // cover, homes, floodlights -- now draws only what is in view (instance-cull.js).
   // Taken here, after the last of them is built; the near-field grass tiles come
@@ -1138,7 +1137,8 @@ export class GolfView{
   const rows=this.world.holes.length,W=HOLE_ATLAS.width,holeData=new Float32Array(W*rows*4);
   const put=(hole,col,v)=>holeData.set(v,(hole*W+col)*4);
   for(const h of this.world.holes){
-   const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);
+   if(h.greens)writeRangeGreens(h,(col,v)=>put(h.hole,col,v),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
+   else{const g=h.green??h.pin;put(h.hole,HOLE_ATLAS.cups,[g.x,g.z,h.greenSize,h.greenAspect]);put(h.hole,HOLE_ATLAS.cups+1,[h.pin.x,h.pin.z,0,0]);}
    [...h.bunkers,...h.ponds].slice(0,12).forEach((b,j)=>{put(h.hole,HOLE_ATLAS.hazards+j*2,[b.x,b.z,b.rx,b.rz]);put(h.hole,HOLE_ATLAS.hazards+j*2+1,[b.phase,h.ponds.includes(b)?h.ponds.indexOf(b)+1:0,b.wave2??0,b.wave3??.07]);});
   }
   this.holeAtlas=new T.DataTexture(holeData,W,rows,T.RGBAFormat,T.FloatType);this.holeAtlas.minFilter=this.holeAtlas.magFilter=T.NearestFilter;this.holeAtlas.needsUpdate=true;this.resources.push(this.holeAtlas);
@@ -1501,16 +1501,24 @@ export class GolfView{
   if(!q.list.length){this.probeQueue=null;if(this.probeAgain){this.probeAgain=false;this.queueWaterProbes();}}
  }
  addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world),new T.MeshBasicMaterial());this.group.add(this.landscape);}
- addHoleDetails(h){
-  const group=this.group,blue=this.style==='blueprint',p=h.worldPin,y=h.height(h.pin.x,h.pin.z),white=this.surfaceMaterial('#f8f4df',{roughness:.55});
+ // One flagstick and cup at a world point. The range builds one per green (its
+ // targets' sticks taller and in their colour: `tall` and `cloth` scale them,
+ // and holdFlagsticks keeps the scale), every course hole one.
+ addCupAndFlag(p,y,{color=null,tall=1,cloth=1}={}){
+  const group=this.group,blue=this.style==='blueprint',white=this.surfaceMaterial('#f8f4df',{roughness:.55});
   const pole=new T.Mesh(new T.CylinderGeometry(FLAGSTICK_TOP_R,FLAGSTICK_BASE_R,FLAGSTICK_HEIGHT,10),white);pole.position.set(p.x,y+FLAGSTICK_HEIGHT/2,p.z);pole.castShadow=true;group.add(pole);
-  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;this.flagsticks[h.hole]=assembly;
+  const geo=new T.PlaneGeometry(.48,.33,12,4);for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}geo.computeVertexNormals();const flag=new T.Mesh(geo,this.surfaceMaterial(blue?'#8df1dd':color||'#dc7845',{side:T.DoubleSide,roughness:.6}));flag.position.set(p.x+.24,y+1.95,p.z);group.add(flag);this.flags.push(flag);const assembly=new T.Group();assembly.add(pole,flag);group.add(assembly);assembly.userData.lift=false;assembly.userData.base={x:p.x,y,z:p.z};assembly.userData.pole=pole;assembly.userData.cloth=flag;assembly.userData.tall=tall;assembly.userData.clothScale=cloth;
   const cup=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS,CUP_RADIUS,.115,48,1,true),this.surfaceMaterial('#56614f',{side:T.BackSide}));cup.position.set(p.x,y-.0575,p.z);group.add(cup);const liner=new T.Mesh(new T.CylinderGeometry(CUP_RADIUS-.001,CUP_RADIUS-.001,.0896,48,1,true),this.surfaceMaterial('#c5c9b8',{roughness:.7,side:T.BackSide}));liner.position.set(p.x,y-.0254-.0448,p.z);group.add(liner);const floor=new T.Mesh(new T.CircleGeometry(CUP_RADIUS,48),new T.MeshBasicMaterial({color:'#101b12'}));floor.rotation.x=-Math.PI/2;floor.position.set(p.x,y-.115,p.z);group.add(floor);
+  return {assembly,pole,flag,cup,liner,floor};
+ }
+ addHoleDetails(h){
+  const group=this.group;
   // Kept so the range's green can be moved without rebuilding the world. Every
-  // one of these was positioned in WORLD coordinates above, and the flagstick's
+  // one of these was positioned in WORLD coordinates, and the flagstick's
   // two parts live in an assembly whose own y is driven by the hole-out lift
   // animation -- so they are moved individually rather than by shifting a parent.
-  this.greenProps[h.hole]={pole,flag,cup,liner,floor};
+  if(h.greens)this.addRangeGreens(h);
+  else{const props=this.addCupAndFlag(h.worldPin,h.height(h.pin.x,h.pin.z));this.flagsticks[h.hole]=props.assembly;this.greenProps[h.hole]=props;}
   // Markers straddle the line of play, which runs to the middle of the fairway
   // where the fairway begins -- not to the pin. On a dogleg the two differ by
   // more than ten degrees, so markers squared to the green aim at trees.
@@ -1572,104 +1580,106 @@ export class GolfView{
  }
  // Move the range's green, without rebuilding anything.
  //
- // This is cheap for one specific reason: the ground shader reads the green's
- // position, size and shape from a row of the CUP ATLAS, not from the hole's
- // length or from the terrain. So the painted green follows four floats. The
- // props are ordinary meshes and get carried across by hand.
+ // THE RANGE'S GREENS: a flag and a cup on each, and the targets' signs.
  //
- // It only holds because the range is FLAT and its green has no contour. On a
- // real hole the terrain itself is cut to the green at build time, and moving
- // one would need the ground grid rebuilt.
- setRangeGreen(){
+ // Every green is a real green (range.js): the ground shader paints it from the
+ // cup atlas and the ball reads it from the same list. What is drawn here is
+ // the furniture -- a flagstick in each cup, taller and in its own colour on a
+ // target so it can be picked out from the mats; a painted ring in that colour
+ // just outside the target's fringe, so the colour still says the number at a
+ // glance; and the sign behind it. A target the centre green is standing on is
+ // hidden, furniture and all (refreshRangeGreens).
+ addRangeGreens(h){
+  this.rangeProps={};
+  for(const g of h.greens){
+   const w=h.toWorld(g.pin),y=h.height(g.pin.x,g.pin.z);
+   const target=g.kind==='target';
+   const props=this.addCupAndFlag(w,y,target?{color:g.color,tall:1.7,cloth:2.2}:{});
+   props.extra=target?this.addTargetFurniture(h,g):[];
+   this.rangeProps[g.id]=props;
+  }
+  this.refreshRangeGreens();
+ }
+ addTargetFurniture(h,g){
+  const group=this.group,parts=[],c=h.toWorld(g.green),y=h.height(g.green.x,g.green.z);
+  // The ring sits a stride outside the fringe, on mown turf, laid 2 cm proud and
+  // told to lose depth ties, because the field is dead flat: a ring exactly
+  // coplanar with the ground z-fights across its whole face.
+  const offset={polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2};
+  const inner=g.greenSize*(1+g.greenWave3+g.greenWave5)+(h.settings.fringe??2)+.8;
+  const ring=new T.Mesh(new T.RingGeometry(inner,inner+.9,72),this.surfaceMaterial(g.color,{roughness:.9,...offset}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(c.x,y+.025,c.z);group.add(ring);parts.push(ring);
+  // The sign stands BEHIND its target, square to the mats. Beside it would put
+  // it off the mown field on the outer targets; behind keeps every sign on the
+  // one sight line a player actually uses.
+  //
+  // It grows with distance. A fixed-size board legible at 50 yd is unreadable
+  // at 300, and every one of these is read from the same spot, so holding the
+  // ANGULAR size roughly even is the honest choice rather than a perspective
+  // trick -- real ranges make their far boards bigger for the same reason.
+  const height=Math.min(7,Math.max(3,2.2+g.yards*.014)),width=height*1.55;
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=330;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#16241b';ctx.fillRect(0,0,512,330);
+  ctx.strokeStyle=g.color;ctx.lineWidth=14;ctx.strokeRect(18,18,476,294);
+  ctx.textAlign='center';
+  ctx.fillStyle=g.color;ctx.font='bold 210px '+UI_FONT;ctx.fillText(String(g.yards),256,228);
+  ctx.fillStyle='#dfe7d6';ctx.font='54px '+UI_FONT;ctx.fillText('YARDS',256,292);
+  const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;this.resources.push(tex);
+  const board=new T.Mesh(new T.BoxGeometry(width,height,.28),this.surfaceMaterial('#ffffff',{map:tex,roughness:.85}));
+  // Behind the green along the line FROM THE MAT, now that the targets are
+  // turned off the centre line rather than pushed sideways.
+  const d=Math.hypot(g.green.x,g.green.z)||1,back=inner+4,sx=g.green.x+g.green.x/d*back,sz=g.green.z+g.green.z/d*back;
+  const sw=h.toWorld({x:sx,z:sz}),sy=h.height(sx,sz);
+  board.position.set(sw.x,sy+1.5+height/2,sw.z);
+  // Facing the mats: the box carries one material, so the far side shows the
+  // number mirrored, and the mapped face looks back down the line to the mat.
+  const mat=h.toWorld({x:0,z:0});
+  board.rotation.y=Math.atan2(mat.x-sw.x,mat.z-sw.z);
+  board.castShadow=true;group.add(board);parts.push(board);
+  for(const side of [-1,1]){
+   const post=new T.Mesh(new T.CylinderGeometry(.11,.13,1.5+height/2,8),this.surfaceMaterial('#645340'));
+   const ux=g.green.z/d,uz=-g.green.x/d,px=sx+ux*side*width*.32,pz=sz+uz*side*width*.32,pw=h.toWorld({x:px,z:pz});
+   post.position.set(pw.x,sy+(1.5+height/2)/2,pw.z);post.castShadow=true;group.add(post);parts.push(post);
+  }
+  return parts;
+ }
+ // After anything on the range moves -- the centre green slid, a cup recut, the
+ // green being played to changed -- the atlas, every green's flag and cup, which
+ // targets are showing, and which flagstick is the live one. Cheap because the
+ // ground itself does not change: a green with slope set up is regrown by
+ // main.js instead (a contoured green cannot be slid).
+ refreshRangeGreens(){
   const h=this.world.holes[0];
-  if(!h?.range)return;
-  const data=this.holeAtlas?.image?.data,at=(h.hole*HOLE_ATLAS.width+HOLE_ATLAS.cups)*4;
-  if(data){data.set([h.green.x,h.green.z,h.greenSize,h.greenAspect],at);data.set([h.pin.x,h.pin.z,0,0],at+4);this.holeAtlas.needsUpdate=true;}
-  const props=this.greenProps?.[h.hole];
-  if(props){
-   const p=h.toWorld(h.pin),y=h.height(h.pin.x,h.pin.z);
-   props.pole.position.set(p.x,y+1.065,p.z);
-   props.flag.position.set(p.x+.24,y+1.95,p.z);
-   // holdFlagsticks places the stick from its base every frame.
-   if(this.flagsticks[h.hole])this.flagsticks[h.hole].userData.base={x:p.x,y,z:p.z};
+  if(!h?.greens||!this.rangeProps)return;
+  const data=this.holeAtlas?.image?.data;
+  if(data){
+   const W=HOLE_ATLAS.width;
+   writeRangeGreens(h,(col,v)=>data.set(v,(h.hole*W+col)*4),{cups:HOLE_ATLAS.cups,greens:HOLE_ATLAS.greens,max:RANGE_GREENS});
+   this.holeAtlas.needsUpdate=true;
+  }
+  const live=activeGreen(h),others=[];
+  for(const g of h.greens){
+   const props=this.rangeProps[g.id];if(!props)continue;
+   const p=h.toWorld(g.pin),y=h.height(g.pin.x,g.pin.z),show=!g.hidden;
+   props.assembly.userData.base={x:p.x,y,z:p.z};
    props.cup.position.set(p.x,y-.0575,p.z);
    props.liner.position.set(p.x,y-.0254-.0448,p.z);
    props.floor.position.set(p.x,y-.115,p.z);
+   for(const o of [props.assembly,props.cup,props.liner,props.floor,...props.extra])o.visible=show;
+   // Only the stick in the live cup is ever lifted (liftFlag reads this.flagsticks[0]).
+   if(g!==live){props.assembly.userData.lift=false;others.push(props.assembly);}
   }
-  // Built against the old green position, so it has to go. The range forces the
-  // reading tools off anyway; this covers anyone turning them back on.
-  if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid=null;this.reading=null;}
+  const mine=this.rangeProps[live?.id];
+  // The live stick is the hole's own (index 0, which liftFlag and the frame loop
+  // read); the rest ride after it so they sway and hold their scale too.
+  this.flagsticks=[mine?.assembly,...others].filter(Boolean);
+  this.greenProps[h.hole]=mine;
+  // Built against the old green, so it has to go; the next read builds anew.
+  if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});this.greenGrid=null;this.reading=null;}
  }
- // The driving range's aiming targets: a coloured circle, an oversized flag and
- // a sign carrying the number.
- //
- // All three are SCENERY. The circle is a disc laid on the turf, not a putting
- // surface -- the ground shader and localSurface both know exactly one green per
- // hole, so a ball landing here bounces as range turf. Colour is the quick cue
- // and the sign is the authoritative one; see range.js for why the ramp avoids
- // blue.
- addRangeTargets(){
-  const h=this.world.holes[0],group=this.group;
-  for(const t of rangeTargets()){
-   const c=h.toWorld({x:t.x,z:t.z}),y=h.height(t.x,t.z);
-   // Laid 2 cm proud of the turf and told to lose depth ties, because the field
-   // is dead flat: a disc exactly coplanar with the ground z-fights across its
-   // whole face rather than at an edge, and flat ground is the worst case for it.
-   const offset={polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2};
-   const disc=new T.Mesh(new T.CircleGeometry(t.radius,64),this.surfaceMaterial(t.color,{roughness:.95,...offset}));
-   disc.rotation.x=-Math.PI/2;disc.position.set(c.x,y+.02,c.z);disc.receiveShadow=true;group.add(disc);
-   // A painted rim. Without it a disc is just a coloured patch of ground and
-   // reads as a hazard or a scorch mark; the hard white edge is what makes it
-   // read as a marking somebody put there. It also survives haze better than the
-   // fill does, which is what keeps the far targets legible.
-   const rim=new T.Mesh(new T.RingGeometry(t.radius,t.radius+.9,64),
-    this.surfaceMaterial('#f4f7ef',{roughness:.9,...offset}));
-   rim.rotation.x=-Math.PI/2;rim.position.set(c.x,y+.025,c.z);group.add(rim);
-
-   // A taller stick and a bigger flag than a hole's. A 2 m flagstick at 300 yd
-   // is a few pixels; these have to be picked out from the mats, which is the
-   // one place anyone ever looks at them from.
-   const pole=new T.Mesh(new T.CylinderGeometry(.03,.04,3.6,10),this.surfaceMaterial('#f8f4df',{roughness:.55}));
-   pole.position.set(c.x,y+1.8,c.z);pole.castShadow=true;group.add(pole);
-   const geo=new T.PlaneGeometry(1.05,.7,12,4);
-   for(let i=0;i<geo.attributes.position.count;i++){const x=geo.attributes.position.getX(i);geo.attributes.position.setZ(i,Math.sin(x*5)*.1);}
-   geo.computeVertexNormals();
-   const flag=new T.Mesh(geo,this.surfaceMaterial(t.color,{side:T.DoubleSide,roughness:.6}));
-   flag.position.set(c.x+.52,y+3.15,c.z);group.add(flag);
-   // Into the same list the hole flags use, so it catches the same breeze.
-   this.flags.push(flag);
-
-   // The sign stands BEHIND its target, square to the mats. Beside it would put
-   // it off the mown field on the outer targets; behind keeps every sign on the
-   // one sight line a player actually uses.
-   //
-   // It grows with distance. A fixed-size board legible at 50 yd is unreadable
-   // at 300, and every one of these is read from the same spot, so holding the
-   // ANGULAR size roughly even is the honest choice rather than a perspective
-   // trick -- real ranges make their far boards bigger for the same reason.
-   const height=Math.min(7,Math.max(3,2.2+t.yards*.014)),width=height*1.55;
-   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=330;
-   const ctx=canvas.getContext('2d');
-   ctx.fillStyle='#16241b';ctx.fillRect(0,0,512,330);
-   ctx.strokeStyle=t.color;ctx.lineWidth=14;ctx.strokeRect(18,18,476,294);
-   ctx.textAlign='center';
-   ctx.fillStyle=t.color;ctx.font='bold 210px '+UI_FONT;ctx.fillText(String(t.yards),256,228);
-   ctx.fillStyle='#dfe7d6';ctx.font='54px '+UI_FONT;ctx.fillText('YARDS',256,292);
-   const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;this.resources.push(tex);
-   const board=new T.Mesh(new T.BoxGeometry(width,height,.28),this.surfaceMaterial('#ffffff',{map:tex,roughness:.85}));
-   const sz=t.z+t.radius+5,sw=h.toWorld({x:t.x,z:sz}),sy=h.height(t.x,sz);
-   board.position.set(sw.x,sy+1.5+height/2,sw.z);
-   // Half a turn so the mapped face looks back down the field at the mats: the
-   // box carries one material, so the far side shows the number mirrored.
-   board.rotation.y=h.rotation+Math.PI;
-   board.castShadow=true;group.add(board);
-   for(const side of [-1,1]){
-    const post=new T.Mesh(new T.CylinderGeometry(.11,.13,1.5+height/2,8),this.surfaceMaterial('#645340'));
-    const pw=h.toWorld({x:t.x+side*width*.32,z:sz});
-    post.position.set(pw.x,sy+(1.5+height/2)/2,pw.z);post.castShadow=true;group.add(post);
-   }
-  }
- }
+ // Kept under its old name for the callers that move the centre green.
+ setRangeGreen(){this.refreshRangeGreens();}
  // Course floodlighting for night play.
  //
  // Placement comes from floodlights.js and is anchored to published sports
@@ -1879,7 +1889,7 @@ export class GolfView{
   // any of them lands mid-shot. Compiling an already-compiled scene is a cache
   // lookup, so the repeat costs nothing.
   if(this.warmedHole!==index){this.warmedHole=index;queueMicrotask(()=>this.warmUp(0));}
-for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];this.readingHeading=null;this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
+for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=0;flag.visible=true;}this.course=this.world.holes[index];if(this.rangeProps)this.refreshRangeGreens();this.readingHeading=null;this.setBall(this.course.tee);this.setAim(0,180);this.setTrail([]);this.setCamera(this.course.tee,0,instant);this.setGreenGrid(this.config.greenGrid);}
  setGreenGrid(enabled){this.config.greenGrid=!!enabled;this.setGreenReading();}
  setGreenReading(){
   if(this.greenGrid){this.group.remove(this.greenGrid);this.greenGrid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.greenGrid=null;this.reading=null;
@@ -1920,10 +1930,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    const s=grow?clamp(FLAG_MIN_PX/(FLAGSTICK_HEIGHT*perMetre),1,FLAG_MAX_SCALE):1;
    const cloth=grow?Math.max(s,Math.min(FLAG_CLOTH_PX/(.48*perMetre),s*1.8)):1;
    const thick=grow?Math.max(s,POLE_MIN_PX/(2*FLAGSTICK_BASE_R*perMetre)):1;
-   const {pole,cloth:f}=a.userData;
-   pole.scale.set(thick,s,thick);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s/2,b.z);
+   const {pole,cloth:f}=a.userData,k=a.userData.tall??1,cs=cloth*(a.userData.clothScale??1);
+   pole.scale.set(thick*k,s*k,thick*k);pole.position.set(b.x,b.y+FLAGSTICK_HEIGHT*s*k/2,b.z);
    // The cloth's top stays at the top of the stick, its edge against the pole.
-   f.scale.setScalar(cloth);f.position.set(b.x+.24*cloth+FLAGSTICK_TOP_R*(thick-1),b.y+FLAGSTICK_HEIGHT*s-.165*cloth,b.z);
+   f.scale.setScalar(cs);f.position.set(b.x+.24*cs+FLAGSTICK_TOP_R*(thick*k-1),b.y+FLAGSTICK_HEIGHT*s*k-.165*cs,b.z);
   }
  }
  liftFlag(){if(this.flagsticks[this.course.hole])this.flagsticks[this.course.hole].userData.lift=true;}

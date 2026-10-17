@@ -1638,6 +1638,82 @@ const JOURNEYS = [
  },
 
  {
+  name: 'range-greens',
+  what: 'the range: its controls reopen from the view bar, a ball finishes on the 100 target green, the putt and chip stations play on the short-game green, a slope regrows it, and the session exports as CSV and PDF',
+  async run(t) {
+   await menuReady(t);
+   const range = () => t.page.evaluate(() => window.lab.state().range);
+   await t.step('Driving range → Open the driving range', async () => {
+    await fromMenu(t, 'Driving range');
+    await t.press('Open the driving range');
+    await t.inPlay(120 * SLOW);
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, open by themselves', 5 * SLOW);
+   });
+   // The owner's report (16 October 2026): once closed, there was no way back.
+   await t.step('closed, the range controls come back from the view bar', async () => {
+    await t.closePanel('Range controls');
+    await t.page.click('#rangeControls');
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
+   });
+   await t.step('a ball at the 100 target lands on a green', async () => {
+    // Its number from the centre mat, turned 19 degrees left (range.js). A
+    // wedge's numbers, a little harder each try until one finishes on it: the
+    // point is what the ground does with the ball, not the launch numbers.
+    let r = null;
+    const tries = [];
+    for (const speed of [79, 81, 77, 83, 75]) {
+     const before = (await range())?.shots ?? 0;
+     await t.page.evaluate(v => window.lab.strike({speed: v, vla: 27, hla: -19.1, spin: 8500, axis: 0}), speed);
+     await t.until(async () => (await range())?.shots === before + 1 && !(await t.inFlight()), 'the shot at the 100 target', 30 * SLOW);
+     r = await range();
+     tries.push(`${speed} mph: ${r.last.on}`);
+     if (r.last.on === 'green') break;
+    }
+    if (r.last.on !== 'green') throw new Error(`no ball finished on the 100 target's green: ${tries.join(', ')}`);
+    if (r.ball !== 'tee') throw new Error(`the next ball is not on the mat: ${JSON.stringify(r)}`);
+   });
+   await t.step('Putt: on the short-game green, with the putter', async () => {
+    await t.page.click('[data-station="putt"]');
+    await t.until(async () => (await range())?.ball === 'green', 'the ball on the short-game green', 5 * SLOW);
+    const r = await range();
+    if (r.active !== 'short') throw new Error(`putting to ${r.active}, not the short-game green`);
+    await t.shot();
+    const after = await range();
+    if (after.last.from !== 'putt' || after.last.green !== 'Short-game green') throw new Error(`the putt was recorded as ${JSON.stringify(after.last)}`);
+   });
+   await t.step('Chip: from off the green, with a wedge', async () => {
+    await t.page.click('[data-station="chip"]');
+    await t.until(async () => !['green', 'tee'].includes((await range())?.ball), 'the ball off the green', 5 * SLOW);
+    if (await t.page.evaluate(() => document.getElementById('club').value) === 'putter') throw new Error('a chip was set up with the putter');
+    await t.shot();
+    if ((await range()).last.from !== 'chip') throw new Error('the chip was not recorded as one');
+   });
+   await t.step('a slope on the short-game green regrows it, and it can be read', async () => {
+    await t.page.selectOption('#rangeShortSlope', 'ltr');
+    await t.until(() => t.page.evaluate(() => document.getElementById('generating')?.hidden !== false && !!document.getElementById('rangeShortTilt')), 'the green regrown', 30 * SLOW);
+    await t.page.click('[data-station="putt"]');
+    await t.until(async () => (await range())?.ball === 'green', 'the ball back on the green', 5 * SLOW);
+    if (await t.page.evaluate(() => document.getElementById('readSlope').disabled)) throw new Error('a sloped range green cannot be read');
+   });
+   await t.step('the session exports as CSV and as a PDF report', async () => {
+    const fsp = await import('node:fs/promises');
+    const [csv] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#rangeCsv')]);
+    const text = await fsp.readFile(await csv.path(), 'utf8');
+    if (!text.startsWith('"Shot","Golfer","Club"') || text.trim().split('\r\n').length < 3) throw new Error(`the CSV is not the session: ${text.slice(0, 200)}`);
+    const [pdf] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#rangePdf')]);
+    const bytes = await fsp.readFile(await pdf.path());
+    if (bytes.subarray(0, 8).toString('latin1') !== '%PDF-1.4' || bytes.length < 2000) throw new Error(`the report is not a PDF (${bytes.length} bytes)`);
+    if (!pdf.suggestedFilename().endsWith('.pdf')) throw new Error(`the report is named ${pdf.suggestedFilename()}`);
+   });
+   await t.step('back to the mats, and a shot', async () => {
+    await t.page.click('[data-station="mats"]');
+    await t.until(async () => (await range())?.ball === 'tee', 'the ball on the mat', 5 * SLOW);
+    await t.shot();
+   });
+  },
+ },
+
+ {
   name: 'sound',
   what: 'the Sound window turns the sound down and off and keeps the choice, and shots still fly and land with sound playing',
   async run(t) {

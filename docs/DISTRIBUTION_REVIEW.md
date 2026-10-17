@@ -1095,3 +1095,14 @@ owner's word): `/play/` serves this release's `Fairway.html` byte for byte
 resolve to the v0.8.2 zips. The packaged Windows server was run from its
 unzipped download before publishing and served the page byte for byte, on
 spare ports (19922/19921).
+
+## Note, 16 October 2026: the range's exports (unreleased)
+
+On the `range-greens` branch, not in a release. The range exports its session
+as a CSV and as a PDF report, both made in the page and handed to the browser
+as a `blob:` download -- the same way the scorecard's CSV always has been, so
+the portable file still makes no request; the `range-greens` smoke journey
+downloads both under the no-request rule. No dependency was added: the PDF is
+written by `src/pdf.js`, which names the reader's own Helvetica and embeds no
+font. When this ships, the website's "view your shot data" wording can say
+"export"; its repository has the matching item.
