@@ -1063,3 +1063,28 @@ owner's word): `/play/` serves this release's `Fairway.html` byte for byte
 resolve to the v0.8.1 zips. The packaged Windows server was run from its
 unzipped download before publishing and served the page byte for byte, on
 spare ports (19922/19921) to leave the owner's own bridge on 1922 alone.
+
+## Addendum, 16 October 2026: v0.8.2
+
+**v0.8.2** is published at the owner's request as "Fairway 0.8.2 (beta)", tag
+`v0.8.2`, not a pre-release, the same four zip names, from the merge of
+`release-0.8.2` into `main`, with its notes in `docs/releases/v0.8.2.md` in
+that commit. It carries one journey since 0.8.1, `more-challenges`: 36
+challenges with medals on a fixed Challenge Course and the range, the
+challenge of the week, the new challenge pay with its daily allowance, and
+five achievements (18 in all). **`GENERATOR_VERSION` is still 36,
+`SCHEMA_VERSION` still 11 and `PROFILE_VERSION` still 3**: profiles gain their
+medals and weekly records inside the existing profile store, and an old
+challenge record is read as the medal it earns. The page's `fairway-versions`
+tag still reads `generator=36 schema=11`.
+
+**The bridge is unchanged** (no change under `bridge/`, `public/` or
+`vendor/` since 0.8.1), and no dependency was added, removed or upgraded, so
+ATTRIBUTION and THIRD_PARTY_NOTICES stand. The built page is 17,178,830 bytes
+(7.10 MB gzipped), +44 KB on 0.8.1. **Smoke:** the full run passed 34 of 35 on
+the challenges branch, the one failure being `look`'s achievement count (13,
+now 18), which passes with the count updated; `challenge`, `challenge-week`
+and `challenge-more` pass. `npm test`: 884 of 884. **Not seen in the game by a
+person:** the challenges screens and most challenges (TODO, *More
+challenges*), and still Skins, the Endless daylight and the save fix from
+0.8.1.
