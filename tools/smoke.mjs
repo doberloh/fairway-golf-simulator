@@ -684,7 +684,8 @@ async function flightScreenOnce(t, phone) {
    meterMode: document.getElementById('world').classList.contains('meter-mode'),
    meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
    tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
-   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
+   // The round screen's wind is in the conditions under the hole.
+   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone(getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' ? '#rhSubs [data-sub=wind]' : '.weather'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
    head: document.querySelector('#shotPanel .sp-head')?.textContent || '',
@@ -853,7 +854,11 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
-    for (const id of ['overview', 'playerView', 'greenView', 'playerView']) await t.page.click(`#${id}`);
+    // The round screen keeps the cameras in the Esc list; anywhere else, the strip.
+    const hud = await t.hud1();
+    for (const id of ['overview', 'playerView', 'greenView', 'playerView']) {
+     if (hud) { await t.chrome(); await t.page.click(`#pauseCams [data-proxy=${id}]`); } else await t.page.click(`#${id}`);
+    }
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
     await t.swing();
@@ -862,7 +867,8 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
-    if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
+    // The round screen has no Swing button: the meter is what comes back.
+    if (!await t.page.evaluate(() => !!document.getElementById(getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' ? 'swingMeter' : 'swing').offsetParent)) throw new Error('the shot button did not come back');
     // The swing's marks clear once the ball stops; the three numbers stay
     // (14 October 2026).
     if (await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter kept the last swing after the ball stopped');
