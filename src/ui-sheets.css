@@ -1,0 +1,146 @@
+/* THE 1.0 SCREENS THAT OPEN AS SHEETS (phase 3, second pass, 17 October 2026;
+   PROJECT_HANDOFF *The 1.0 menus and windows*).
+
+   Every sheet (#drawer: the lobby, My profile with the Look locker, saved
+   courses, challenges, the course of the week, launch monitor setup, help...)
+   opens as a full 1.0 screen: the header band with the screen's name and Esc,
+   the content on the 12-column grid, each control its own slanted panel in a
+   stack (a tall box would lean too far -- the layout rules' "a slanted panel
+   with text is at most 120 tall; taller content is a stack of panels on one
+   left edge"), and the screen's main button bottom right, in the gradient.
+
+   RESTYLED, NOT REWRITTEN. The sheets are still built by main.js's
+   renderPanel and laid out by groupPanelContent, so every id, label and
+   handler the smoke journeys press is the same; this stylesheet only places
+   and dresses them. Where a screen's sections should all show at once (the
+   lobby: course, golfers, format and rules side by side), its tabs stay as
+   "jump to" chips -- they still work, and the journeys still press them.
+
+   Matched on the SCREEN's size (see below). Not on a phone (phase 5 keeps a phone's sheets), and not in the course
+   studio, whose settings sheet takes the play area under the studio bar
+   (PROJECT_HANDOFF, COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA). */
+
+@media (min-width:561px) and (min-height:501px){
+ /* THE SHEET IS OUTSIDE #app (a child of body), so neither the app's size
+    query, the palette set on the page root nor #app's Text size zoom reaches
+    it through #app: it is matched by the screen's size, scaled by --sheet-z
+    (the round screen's scale times the Text size, set on the root by main.js),
+    and given the old variables here. Found on 17 October 2026, when the first
+    look showed the sheets in the old green. */
+ #drawer{--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
+ body:not(:has(#app[data-mode=studio])) #drawer:not([hidden]){left:0;right:0;top:0;bottom:0;width:auto;height:auto;min-height:0;max-height:none;padding:24px 60px 88px;zoom:var(--sheet-z,1);border:0;border-radius:0;background:linear-gradient(90deg,rgba(4,8,12,.9),rgba(4,8,12,.8));backdrop-filter:blur(6px);box-shadow:none;animation:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+
+ /* The header band: the screen's name, its eyebrow, and Esc. */
+ body:not(:has(#app[data-mode=studio])) #drawer .drawer-header{align-items:flex-end;min-height:40px;margin:0 0 24px}
+ body:not(:has(#app[data-mode=studio])) #drawer .drawer-header h2{font-size:36px;font-weight:800;font-style:italic;letter-spacing:.02em;line-height:1;text-transform:uppercase}
+ body:not(:has(#app[data-mode=studio])) #drawer .drawer-header .eyebrow{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer{position:relative;width:auto;height:36px;padding:0 16px 0 52px;border:0;border-radius:0;background:none;color:#e6e8ff}
+ body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer::before{content:"ESC";position:absolute;left:8px;top:6px;padding:2px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer::after{content:"BACK";font:700 16px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
+ body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer svg{display:none}
+
+ /* The content: wide, the type the design's. */
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent{max-width:none;padding:0 4px 0 0;font-size:15px;color:#fff}
+ body:not(:has(#app[data-mode=studio])) #drawer :is(.panel-intro,.note,.tip,.research-label){font-family:var(--font-ui);font-size:13px!important;line-height:1.5;color:var(--soft)!important}
+ body:not(:has(#app[data-mode=studio])) #drawer h3{font-size:13px;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
+
+ /* Each control is a slanted panel; its contents stand straight. */
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card{position:relative;isolation:isolate;margin:0 0 8px;padding:14px 30px;border:0;border-radius:0;background:none}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card:has(input:checked)::before{box-shadow:inset 0 0 0 2px var(--a1)}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card:focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.field{font-size:13px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.check{font-size:16px;color:#fff;font-weight:700}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card select,body:not(:has(#app[data-mode=studio])) #drawer .control-card input:not([type=checkbox]):not([type=radio]):not([type=range]){font:800 italic 18px/1.2 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:0}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card option{font:15px var(--font-ui);color:#111;background:#fff}
+
+ /* The screen's main button, bottom right, in the footer band. */
+ body:not(:has(#app[data-mode=studio])) #drawer [data-panel-action]{position:fixed;right:60px;bottom:24px;z-index:3;height:56px;min-width:240px;padding:0 40px;font-size:24px!important}
+
+ /* Tabs: slanted chips under the header; the current one filled. */
+ body:not(:has(#app[data-mode=studio])) #drawer .panel-tabs{gap:8px;margin:0 0 20px;padding:0;border:0}
+ body:not(:has(#app[data-mode=studio])) #drawer .panel-tab{height:40px;padding:0 18px;font-size:14px}
+
+ /* ---------------------------------------------------------------- the lobby */
+ /* One screen: the course on the left (3 columns), the golfers in the middle
+    (5), format and rules on the right (4), saved rounds along the foot -- all
+    at once. The tabs stay as chips that jump to a part. On the round panel
+    and the setups that share it (endless, the range, the course of the week,
+    a challenge). */
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent{display:grid;grid-template-columns:3fr 5fr 4fr;grid-template-areas:"lead lead lead" "tabs tabs tabs" "course group format" "saved saved saved";gap:0 32px;align-content:start}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-lead{grid-area:lead}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-tabs{grid-area:tabs}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-section{display:block!important;columns:auto;min-width:0}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-section>h3{display:block;margin:0 0 10px}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] .panel-section[data-title="Your course"]{grid-area:course}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] .panel-section[data-title="Your group"]{grid-area:group}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] .panel-section[data-title="Format & tees"]{grid-area:format}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] .panel-section[data-title="Saved rounds"]{grid-area:saved;margin-top:24px}
+ /* The endless and range setups have no course column: two columns. */
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent:not(:has(.panel-section[data-title="Your course"])){grid-template-columns:7fr 5fr;grid-template-areas:"lead lead" "tabs tabs" "group format" "saved saved"}
+
+ /* THE SCORECARD between holes: the whole screen, the finished hole's number
+    flashing, and the paper card's marks -- a circle round a birdie, two round
+    an eagle, a square round a bogey, two round worse (celebration.js). */
+ body:has(#app[data-mode=play]) #drawer[data-panel=score]{top:0;height:auto;max-height:none;min-height:0;padding:28px 60px 24px;border:0;background:rgba(4,8,12,.9);backdrop-filter:blur(6px);box-shadow:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;zoom:var(--sheet-z,1)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .drawer-header :is(h2,#drawerTitle){font-size:36px;font-weight:800;font-style:italic;text-transform:uppercase}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table{font-size:20px;font-weight:700}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td){padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th{color:var(--soft);letter-spacing:.1em;font-size:15px}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td):first-child{background:var(--panel)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table tr.current{background:color-mix(in srgb,var(--a2) 25%,transparent)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th.rh-done{background:var(--hot);color:var(--on-hot)}
+ @media (prefers-reduced-motion:no-preference){body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th.rh-done{animation:rhHoleFlash 1s steps(1,end) infinite}}
+ @keyframes rhHoleFlash{50%{background:transparent;color:var(--hot)}}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td[class^=mk-]{position:relative}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td[class^=mk-]::after{content:"";position:absolute;left:50%;top:50%;width:1.55em;height:1.55em;transform:translate(-50%,-50%);border:2px solid currentColor;pointer-events:none}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td:is(.mk-b,.mk-e)::after{border-radius:50%;color:var(--under)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td.mk-e::after{box-shadow:0 0 0 3px rgba(4,8,12,.9),0 0 0 5px var(--under)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td.mk-d::after{box-shadow:0 0 0 3px rgba(4,8,12,.9),0 0 0 5px currentColor}
+
+ /* ROUND COMPLETE, at the head of the final card. */
+ .rh-results{display:grid;gap:14px;margin:0 0 22px}
+ .rh-results h2{display:grid;gap:4px;margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ .rh-results h2 small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700}
+ .rh-results h3{margin:6px 0 4px;font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ .rh-res-stand{display:grid;gap:8px;max-width:640px}
+ .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;height:64px;padding:0 26px}
+ .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-res-row.win{height:88px;color:var(--on-hot)}
+ .rh-res-row.win::before{background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 0 3px var(--hot)}
+ .rh-res-pos{width:28px;font-size:34px;font-weight:800;font-style:italic}
+ .rh-res-pic :is(img,.chip-dot){width:48px;height:48px;display:grid;place-items:center;border-radius:50%}
+ .rh-res-row.win .rh-res-pic :is(img,.chip-dot){width:64px;height:64px}
+ .rh-res-name{flex:1;font-size:28px;font-weight:800;font-style:italic}
+ .rh-res-score{font-size:36px;font-weight:800;font-style:italic}
+ .rh-res-score small{margin-left:8px;font-size:20px}
+ .rh-res-score small.under{color:var(--under)}
+ .rh-res-row.win .rh-res-score small.under{color:var(--on-hot)}
+ .rh-res-golfers{display:grid;gap:6px;max-width:640px}
+ .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
+ .rh-res-xp small{grid-column:2/-1;font-size:13px;letter-spacing:.14em;color:var(--soft)}
+ .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
+ .rh-res-bar b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
+ .rh-res-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+
+ /* Headings, the main and other buttons and the tabs, as in ui-screens.css, for
+    the sheet and the dialogues, which sit outside #app. */
+ :is(#drawer,.popup,.version-notice,.shot-list-inner) :is(h2,.drawer-header h2){font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;text-transform:uppercase;letter-spacing:.01em}
+ #drawer h3,body>.version-notice h3{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.16em;color:var(--soft)}
+ :is(#drawer,.popup) .eyebrow{color:var(--soft)}
+ .drawer,.popup{border-radius:0;border-color:transparent;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+ .popup .popup-head{border-bottom:3px solid var(--a1)}
+ .drawer{border-top:4px solid var(--a1)}
+ /* The main button leans in the biome's gradient; the others lean plain. */
+ #drawer button.primary,body>.version-notice button.primary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+ #drawer button.primary::before,body>.version-notice button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #drawer button.secondary,body>.version-notice button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
+ #drawer button.secondary::before,body>.version-notice button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #drawer button:is(.primary,.secondary):focus-visible,body>.version-notice button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ /* Tabs: slanted, the current one filled. */
+ #drawer .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+ #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .panel-tab.active{background:none;color:var(--on-hot)}
+ #drawer .panel-tab.active::before{background:var(--a1)}
+}

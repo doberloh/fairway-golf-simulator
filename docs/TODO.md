@@ -63,6 +63,18 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   projector, 16:10, 4:3 and an iPad, two to four golfer cards and their
   frames, a long club name, a meter skin, the ball light with a monitor armed
   (its journeys pass), the range with R.
+- [ ] **Phase 3, second pass: the sheets as 1.0 screens** (17 October 2026,
+  seen in the browser pane at 1280 x 720 and 1024 x 768: the lobby, My
+  profile, challenges, launch monitor). Restyled on the grid, not rebuilt on
+  the kit: the lobby lacks the mockup's course picture, golfer rows with tee
+  chips and four format tiles; launch monitor setup is not the three steps;
+  course of the week and saved courses not looked at. The course studio's
+  sheet is unchanged. The pause screen (two columns) and settings' help on
+  demand are not yet seen.
+- [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
+  smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
+  on two reruns with other seeds). Course-dependent, not the interface: find
+  which material the flyover meets that the warm-up missed.
 - [ ] **Phase 2 (shot moments) is built and not seen** (17 October 2026,
   overnight). Look at: the shot card after a drive (where it sits, the fade),
   Tab for every number, the range's tiles and the cards moved left, the Esc

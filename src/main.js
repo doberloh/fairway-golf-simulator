@@ -19,6 +19,7 @@ import './style.css';
 import './ui-kit.css';
 import './round-hud.css';
 import './ui-screens.css';
+import './ui-sheets.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -4179,10 +4180,12 @@ const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==
 function applyHudPalette(screen=appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
  const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:settings?.biome}});
  if(p.biome===hudBiome)return;hudBiome=p.biome;
- for(const [k,v] of Object.entries(paletteVars(p)))$('app').style.setProperty(k,v);
+ for(const [k,v] of Object.entries(paletteVars(p)))document.documentElement.style.setProperty(k,v);
 }
 // The pieces' size: the 1280 canvas's scale inside #app (round-hud.js hudScale).
-function applyHudScale(){$('app').style.setProperty('--hud-z',String(Math.round(hudScale(innerWidth,innerHeight,currentTextSize()/100)*1e4)/1e4));}
+// --sheet-z is the same size for what sits outside #app and its Text size zoom
+// (the sheets): the round screen's scale times the Text size.
+function applyHudScale(){const t=currentTextSize()/100,z=hudScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
 const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
 const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
 function drawRoundHud(){
@@ -4273,6 +4276,8 @@ function setPause(on){
 // drop-down keeps its own arrows.
 function focusScope(){
  if(document.getElementById('app').classList.contains('rh-paused'))return document.querySelector('.topbar');
+ // An open sheet (the lobby, My profile, saved courses...) is a 1.0 screen too.
+ if(panel&&!$('drawer').hidden&&$('welcome').hidden&&$('leaveNotice').hidden)return $('drawer');
  if(appMode==='menu'&&!$('mainMenu').hidden&&!panel&&$('welcome').hidden&&$('leaveNotice').hidden&&$('versionNotice').hidden)return $('mainMenu');
  return null;
 }
@@ -4291,7 +4296,9 @@ function menuPad(pad,pressed,now){
  const dir=dirOfPad(pad);
  if(dir){if(now-padNavAt>220){padNavAt=now;moveFocus(dir);}}else padNavAt=0;
  if(pressed(0))document.activeElement?.click?.();
- if(pressed(1)||pressed(9)){if(document.getElementById('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');}}
+ if(pressed(1)||pressed(9)){if(document.getElementById('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');}
+  // B backs out of an open sheet, as it did before sheets joined the menus.
+  else if(pressed(1)&&panel){closePanel();gameAudio?.ui?.('back');}}
 }
 // THE MENUS' SOUNDS (1.0 interface, 17 October 2026): a press on the main menu
 // or the Esc list -- a click, Enter, Space or the pad's A -- selects, and a
@@ -6677,6 +6684,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
  if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
+  // ? in a settings window or a sheet shows every control's explanation (ui-screens.css).
+  if(e.key==='?'&&document.activeElement?.closest?.('.popup,#drawer')){e.preventDefault();e.stopPropagation();$('app').classList.toggle('rh-help');return;}
   // Enter and Space press the focused button there. The game's own handler
   // cancels both (they swing and finish a shot), which left a menu driven by
   // arrows with no way to choose (seen 17 October 2026).
