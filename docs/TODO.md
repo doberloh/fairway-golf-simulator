@@ -375,15 +375,102 @@ nothing was run on the graphics card.
   mulligan of the winning putt takes the skins and their XP back; the finished
   card ("... wins the skins" or a tie) and the 50 XP win; *Records* on My
   profile. One golfer with Skins chosen should be refused with "Skins is for two
-  to four golfers". Also: an endless run on skins, and Challenges showing three
-  tiles with the line about where Skins went.
-- [ ] **Run the smoke journeys `skins` (new) and `challenge` (now three tiles)**
-  when the owner allows the graphics card. `skins` was written without being
+  to four golfers". Also: an endless run on skins, and the Challenges screen's
+  line about where Skins went.
+- [ ] **Run the smoke journey `skins` (new)** when the owner allows the
+  graphics card. `skins` was written without being
   run; if it fails, check the harness before the game.
 - [ ] **A save from the Skins challenge resumes as skins** -- covered in Node
   (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
 
+## More challenges (16 October 2026)
+
+The owner asked for 30-40 challenges, repeatable, and a challenge of the week;
+the plan (local: `docs/reports/CHALLENGES_PLAN.md`) was approved with the
+owner's answers the same day -- medals, nothing locked, repeat pay capped,
+distance medals against the golfer's own driver, every hole challenge on one
+fixed Challenge Course, the week's challenge on the course of the week. Step 1
+is on branch `more-challenges`: 27 challenges (36 since step 3) from one table
+(`src/challenges.js`, `src/challenge-play.js`, `src/challenge-spots.js`),
+medals, the new pay and the day's allowance, the Challenges screen with five
+tabs, range challenges, the three old ones moved onto it. Tested in Node
+(the table, every challenge with every group, the pay, the Challenge Course
+hosting all of them, old profiles); **not yet seen in the game** by a person. The
+smoke journey `challenge` passes (below, *Done*).
+
+- [ ] **Play some in the game and look.** Main menu -> Challenges: the five
+  tabs (on a phone they should slide sideways), the cards' medal dots and
+  bests, a card's medal list ("Gold: within 10 ft", "measured against your own
+  driver"). Play closest to the pin on the Challenge Course, Four-footers
+  (the putter in hand, holing out under dartboard putting), Dartboard on the
+  range (aimed at the 150 target), Draw and fade (the bar shows the call),
+  Find the zone (the aim starts on the zone; nothing marks the zone itself yet
+  -- say if it needs a ring), Up and down. The results card's medals, *Other
+  challenges*, and the line when the day's 250 XP is used up. My profile ->
+  *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
+- [ ] **Look at the challenge of the week in the game**: its card across the
+  top of the Challenges screen (gold edge, "until Sunday", where it is played),
+  the menu tile's "This week: ...", the bar's "This week ·", the results
+  card's "best this week", its line on My profile, and the XP popup for a
+  first finish (100) and a gold. The four new achievements on My profile.
+- [ ] **Look at step 3 in the game**: Every par 3 and Greens in regulation
+  moving hole to hole by themselves; Putting tour; a shootout and a long-drive
+  knockout with two or three golfers (the toast naming who went out, the
+  results card's "Won" and "Out in round 2"); Bingo Bango Bongo with every
+  golfer's ball showing where it lies and the bar's points; Sudden death's card
+  coming up when everyone is out, while the run can go on; Bogey-free nine's
+  card at the end of the nine; the bar following each goal; the Head of the
+  Table achievement.
+
 # Done
+
+## More challenges (16 October 2026)
+
+- [x] **The smoke journey `challenge`, rewritten for step 1, passes** (GPU, the
+  owner's go-ahead, 46 s): five tabs and 27 cards, an old 9-foot record shown as
+  a gold, closest to the pin to its results card with nothing in the round slot
+  or the history, Play it again, Four-footers holing out with the putter, the
+  Dartboard on the range, a long drive. Its first run caught a real bug: moving
+  to the challenge's hole saved the Challenge Course's round into the Continue
+  slot, because `challenge` was set only after the hole loaded (the old code
+  set it before). Saving and the profile sync are now held off
+  (`challengeStarting`) while the hole loads. The results card and the
+  Challenges screen were not looked at as pictures: the one screenshot was
+  taken as the card slid in.
+- [x] **Step 2: the challenge of the week** (weekly.js `weeklyChallenge`), on
+  the course of the week or the range, with its own best for the week and its
+  own pay, its card on the Challenges screen, the menu tile and My profile;
+  and four achievements (First Medal, Gold Standard, All-Rounder, Weekly
+  Regular). The fifth in the plan, Head of the Table, waits for the
+  head-to-heads in step 3. Tested in Node (`challenge-week`, `achievements`,
+  `profile`); not seen in the game by a person.
+- [x] **Step 3: the last nine and the play-through tests** (16 October 2026).
+  Every par 3, Greens in regulation, Scrambler and Putting tour across holes
+  (`spotsAcross`); Closest-to-the-pin shootout, Long-drive knockout and Bingo
+  Bango Bongo for two to four, with Head of the Table; Sudden death and
+  Bogey-free nine as real rounds with a goal (`src/round-goals.js`,
+  `round.goal`). The four across holes join the week's pool from 4 January 2027
+  (a new `WEEKLY_POOLS` row). Set-up moved into `planChallenge`/`playContext`,
+  shared with a new Node test that plays every challenge through the ball model
+  (`challenge-virtual`, `tests/virtual-golfer.mjs`); its first run found One
+  club unwinnable with the stock bag (no 8-iron) -- fixed. The round matrix
+  plays both goals. npm test 884/884. Smoke: `challenge`, `challenge-week` and
+  the new `challenge-more` pass (GPU, the owner's go-ahead); `challenge-more`'s
+  first run stopped at the "Leave this round?" question after Bogey-free nine
+  -- right of the game, a real round; the harness now answers it.
+  The full smoke run then passed 34 of 35; `look` still expected 13
+  achievements (now 18) and passes with the count updated. Not yet looked at
+  by a person in the game.
+- [x] **The smoke journeys `challenge` and `challenge-week` pass** (GPU, the
+  owner's go-ahead, 50 s). The first run failed twice: the harness counted
+  the challenge of the week's card on every tab (32 cards, not 27 -- the
+  harness was wrong), and this week's pick, Curve it on the range, wrote the
+  round slot -- a real bug: entering the range saves the slot, and a range
+  challenge went through it. Saving is now held off (`challengeStarting`)
+  while a range challenge opens, and `challenge` checks the slot after its
+  range challenge too. The failed run's screenshot showed the week's challenge
+  on the range as it should be: the bar ("This week · Curve it · Ball 2 of 6 ·
+  fade"), the 7-iron, the aim on the 150 target.
 
 ## Release 0.8.1 (16 October)
 

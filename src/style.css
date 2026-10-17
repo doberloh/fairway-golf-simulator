@@ -1509,12 +1509,32 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
    ("14 ft 3 in from the pin") come up there and covered it. */
 .challenge-bar{position:absolute;z-index:33;top:12px;left:calc(var(--edge-l,16px) + var(--panel-w,330px) + var(--gap,12px));display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid rgba(217,194,122,.55);color:var(--ink);font-size:12px;box-shadow:var(--panel-shadow);backdrop-filter:blur(12px);pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 .challenge-bar b{color:#d9c27a;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
-.challenge-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:10px}
-.challenge-pick .look-item b{font-size:12px}
 .challenge-results{list-style:none;padding:0;margin:0 0 12px;display:flex;flex-direction:column;gap:6px}
 .challenge-results li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--field);font-size:12.5px}
 .challenge-results li span:last-child{margin-left:auto;color:var(--ink-dim)}
 .challenge-results em{color:#d9c27a;font-style:normal}
+/* THE CHALLENGES SCREEN (16 October 2026): a tab a group, sliding sideways
+   when they do not fit; a card a challenge with its medals; what each medal
+   asks. Medal pips are bronze, silver and gold, empty until earned. */
+.chal-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.chal-tabs .panel-tab small{font-size:9.5px;opacity:.75;margin-left:3px}
+.chal-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:6px}
+.chal-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 11px;border-radius:9px;background:var(--field);border:1px solid var(--glass-line);color:var(--ink);text-align:left;min-height:44px}
+.chal-card b{font-size:12px}
+.chal-card small{font-size:10px;color:var(--ink-faint)}
+.chal-card.on{border-color:#d9c27a;box-shadow:0 0 0 1px #d9c27a inset;background:rgba(217,194,122,.12)}
+/* The challenge of the week: one card across the top, edged in gold. */
+.chal-week-row{grid-template-columns:1fr;margin-bottom:0}
+.chal-week{border-color:rgba(217,194,122,.55)}
+.chal-week small:first-child{color:#d9c27a;letter-spacing:.4px;text-transform:uppercase;font-size:9.5px}
+.medal-pips{display:inline-flex;gap:4px;vertical-align:middle}
+.medal-pips i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--glass-line);box-sizing:border-box}
+.medal-pips i.m1.on{background:#b9804b;border-color:#b9804b}
+.medal-pips i.m2.on{background:#c8ced6;border-color:#c8ced6}
+.medal-pips i.m3.on{background:#e3c55a;border-color:#e3c55a}
+.drawer ul.medal-asks{list-style:none;padding:0;margin:0 0 10px;display:flex;flex-direction:column;gap:4px;line-height:1.5}
+.medal-asks li{display:flex;align-items:center;gap:8px;font-size:12px}
+.medal-asks li span{color:var(--ink-dim)}
 
 /* PHASE 6. FRAMES: a ring of the badge's metal round the ball picture -- the
    image's padding over a background of it. Fairway Master's turns. */

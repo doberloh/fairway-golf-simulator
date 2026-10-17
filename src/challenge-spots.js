@@ -1,0 +1,235 @@
+// WHERE A CHALLENGE'S BALLS GO, AND WHICH HOLE IT USES (16 October 2026).
+//
+// Pure: a hole is asked about through a small adapter, the way upDownSpots
+// always was --
+//   {pin, tee, length, surface(x, z), edge(x, z), center(z)}
+// with `edge` metres from the green's edge (negative on the green) and
+// `center(z)` the hole's centre line, in the hole's own frame (+z down the
+// hole). main.js builds one from a course hole; the tests build them from the
+// shared test worlds.
+//
+// The same course, hole and challenge always give the same spots: every draw
+// comes from a hash of `seed` (main.js passes "<course seed>:<hole>:<id>").
+// Every rule here is PLACED (RESEARCH.md *Challenges and medals*).
+
+import {greenDistance} from './course.js';
+import {seeded} from './challenges.js';
+import {CLUB_KINDS} from './clubs.js';
+
+export {seeded};
+
+const YARD = .9144, FOOT = .3048;
+
+// The adapter for a generated hole (course.js), played from tee set `tee`.
+export function holeAdapter(h, tee = 'white') {
+ const t = h.tees?.[tee] || Object.values(h.tees || {})[0] || {x: 0, z: 0};
+ return {pin: h.pin, tee: {x: t.x, z: t.z}, length: h.length, par: h.par, yards: (h.routeLength || h.length) / YARD, surface: (x, z) => h.surface(x, z), edge: (x, z) => greenDistance(h, x, z), center: z => h.center(z)};
+}
+
+const CHIP = ['fringe', 'semi', 'rough', 'fairway', 'sand'], GRASS = ['fringe', 'semi', 'rough', 'fairway'], LIE = ['fairway', 'semi'];
+const crosses = (hole, a, b, kind, from = .05, to = .95) => {
+ for (let i = 0; i <= 24; i++) { const f = from + (to - from) * i / 24; if (hole.surface(a.x + (b.x - a.x) * f, a.z + (b.z - a.z) * f) === kind) return true; }
+ return false;
+};
+const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+
+// ROUND THE GREEN: `n` spots off the putting surface by `lo` to `hi` yards, on
+// ground a chip is played from, spread round the green rather than bunched.
+// (What upDownSpots did, unchanged for up and down's 3 to 18 yards.) Bunkers
+// and short sides are not spread -- a green may have sand on one side only --
+// but kept 3 m apart.
+export function aroundGreen(hole, rnd, n, {lo = 3, hi = 18, ok = CHIP, test = null, reach = 40, spread = true} = {}) {
+ const out = [];
+ for (let k = 0; k < n; k++) {
+  for (let tries = 0; tries < (spread ? 200 : 600); tries++) {
+   const a = (spread ? (k + rnd()) / n : rnd()) * Math.PI * 2, r = 4 + rnd() * reach;
+   const p = {x: hole.pin.x + Math.sin(a) * r, z: hole.pin.z + Math.cos(a) * r}, e = hole.edge(p.x, p.z);
+   if (e >= lo * YARD && e <= hi * YARD && ok.includes(hole.surface(p.x, p.z)) && (spread || out.every(q => dist(p, q) >= 3)) && (!test || test(p))) { out.push(p); break; }
+  }
+ }
+ return out;
+}
+// ON THE CENTRE LINE, `yards` from the pin back toward the tee, on the fairway
+// or the first cut; nudged sideways up to 12 m, then along by up to 5 yards,
+// when the line itself is not mown there. Null when nothing fits.
+export function onLine(hole, yards, ok = LIE) {
+ const want = yards * YARD;
+ let lo = -60, hi = hole.pin.z;
+ for (let i = 0; i < 40; i++) { const z = (lo + hi) / 2, d = Math.hypot(hole.center(z) - hole.pin.x, z - hole.pin.z); if (d > want) lo = z; else hi = z; }
+ const z0 = (lo + hi) / 2;
+ for (const along of [0, 2, -2, 4, -4]) for (const side of [0, 3, -3, 6, -6, 9, -9, 12, -12]) {
+  const z = z0 + along * YARD, p = {x: hole.center(z) + side, z};
+  if (ok.includes(hole.surface(p.x, p.z))) return p;
+ }
+ return null;
+}
+// ON THE GREEN, `feet` from the hole: `angles` 'seeded' (each its own),
+// 'compass' (eight points, starting from the line back to the tee), 'line'
+// (one angle for all, the one with room for the longest). On the green with
+// a foot to spare. `shrink`: a putt with no room at its length is brought in
+// a tenth at a time until it fits. Null for any that will not fit.
+export function onGreen(hole, rnd, feet, {angles = 'seeded', shrink = false} = {}) {
+ const fits = p => hole.surface(p.x, p.z) === 'green' && hole.edge(p.x, p.z) <= -FOOT;
+ const at = (a, f) => ({x: hole.pin.x + Math.sin(a) * f * FOOT, z: hole.pin.z + Math.cos(a) * f * FOOT, feet: f});
+ const back = Math.atan2(hole.tee.x - hole.pin.x, hole.tee.z - hole.pin.z);
+ if (angles === 'compass') return feet.map((f, k) => { const p = at(back + k * Math.PI / 4, f); return fits(p) ? p : null; });
+ if (angles === 'line') {
+  const longest = Math.max(...feet);let best = null, reach = 0;
+  for (let i = 0; i < 48; i++) { const a = rnd() * Math.PI * 2;let f = 0; for (const x of [...feet].sort((p, q) => p - q)) { if (fits(at(a, x))) f = x; else break; } if (f > reach) { reach = f;best = a; } if (reach >= longest) break; }
+  return feet.map(f => best != null && f <= reach ? at(best, f) : null);
+ }
+ return feet.map(f => {
+  for (let len = f; len >= Math.min(f, 6); len = shrink ? Math.round(len * .9) : -1) {
+   for (let i = 0; i < 48; i++) { const p = at(rnd() * Math.PI * 2, len); if (fits(p)) return p; }
+   if (!shrink) break;
+  }
+  return null;
+ });
+}
+
+// THE SPOTS FOR A CHALLENGE on a hole. `def` is its challenges.js row;
+// `ctx` {driver}. An empty list for a tee or range challenge; null when the
+// hole cannot host it.
+export function spotsFor(def, hole, seed) {
+ const s = def.spot;
+ if (!s) return [];
+ const rnd = seeded(seed), n = def.balls;
+ let out;
+ if (s.kind === 'around') out = aroundGreen(hole, rnd, n, {lo: s.lo, hi: s.hi, ok: s.grass ? GRASS : CHIP});
+ else if (s.kind === 'bunker') out = aroundGreen(hole, rnd, n, {lo: .5, hi: 20, ok: ['sand'], reach: 45, spread: false});
+ // A BUNKER BETWEEN BALL AND PIN, and the ball on grass just beyond it.
+ else if (s.kind === 'shortSide') out = aroundGreen(hole, rnd, n, {lo: 2, hi: 22, ok: ['fringe', 'semi', 'rough'], test: p => crosses(hole, p, hole.pin, 'sand'), reach: 55, spread: false});
+ else if (s.kind === 'line') out = s.yards.map(y => onLine(hole, y));
+ // OVER THE WATER: on the fairway 100 to 170 yards out, with water on the way
+ // to the pin. The same spot for every ball when only one fits.
+ else if (s.kind === 'water') {
+  const found = [];
+  for (let y = 100; y <= 170 && found.length < n; y += 10) {
+   const p = onLine(hole, y + Math.floor(rnd() * 5));
+   if (p && crosses(hole, p, hole.pin, 'water') && !found.some(q => dist(p, q) < 8)) found.push(p);
+  }
+  out = found.length ? Array.from({length: n}, (_, k) => found[k % found.length]) : [];
+ } else if (s.kind === 'putt') out = onGreen(hole, rnd, s.feet, {angles: s.angles, shrink: s.shrink});
+ else throw Error(`No spot kind called ${s.kind}.`);
+ // The putting ladder may stop short of 30 feet on a small green; anything
+ // else needs every spot.
+ if (def.order === 'streak') { const k = out.findIndex(p => !p); out = k < 0 ? out : out.slice(0, k); return out.length >= 3 ? out : null; }
+ return out.length === n && out.every(Boolean) ? out : null;
+}
+
+// FIND THE ZONE: the middle of the fairway where this golfer's driver reaches
+// -- 85% of its carry from the tee, so most drives can get there -- or the
+// nearest mown ground to it. PLACED.
+export function zoneFor(hole, driverYards) {
+ const want = Math.min(driverYards * .85, (hole.length || 400) / YARD * .75) * YARD;
+ for (const along of [0, 5, -5, 10, -10, 15, -15]) {
+  const z = hole.tee.z + want + along * YARD, p = {x: hole.center(z), z};
+  if (hole.surface(p.x, p.z) === 'fairway') return p;
+ }
+ return null;
+}
+
+// THE CALLS: draw or fade and high or low alternate from a seeded start;
+// carries are seeded between 60 yards and the golfer's reach (80% of their
+// driver), in fives, and never the same twice running.
+export function callsFor(def, seed, {driver = 250} = {}) {
+ const rnd = seeded(seed + ':calls'), n = def.balls;
+ if (def.calls === 'shape' || def.calls === 'height') {
+  const pair = def.calls === 'shape' ? ['draw', 'fade'] : ['high', 'low'], first = rnd() < .5 ? 0 : 1;
+  return Array.from({length: n}, (_, k) => pair[(first + k) % 2]);
+ }
+ if (def.calls === 'carry') {
+  const top = Math.max(80, Math.min(200, Math.round(driver * .8 / 5) * 5)), out = [];
+  for (let k = 0; k < n; k++) { let c; do c = 60 + 5 * Math.floor(rnd() * ((top - 60) / 5 + 1)); while (out.length && c === out.at(-1)); out.push(c); }
+  return out;
+ }
+ return [];
+}
+
+// WHICH HOLE. `holes` are [{par, length}] in course order; `spotsOn(i)` asks
+// for the challenge's spots on hole i (null when it cannot host it). The rule
+// orders the candidates; the first whose spots fit is played. 'bigGreen' takes
+// the green with room for the most putting. Null when no hole will do.
+export function chooseHole(def, holes, spotsOn) {
+ const idx = holes.map((h, i) => ({...h, i})), byLength = list => [...list].sort((a, b) => (b.length || 0) - (a.length || 0));
+ const par = p => idx.filter(h => h.par === p);
+ let order;
+ if (def.hole === 'par3') order = par(3);
+ else if (def.hole === 'shortPar3') order = [...par(3)].sort((a, b) => (a.length || 0) - (b.length || 0));
+ else if (def.hole === 'longest') order = [...byLength(par(5)), ...byLength(par(4))];
+ else if (def.hole === 'longPar4') order = [...byLength(par(4)), ...byLength(par(5))];
+ else if (def.hole === 'par4') order = [...par(4), ...par(5)];
+ else if (def.hole === 'spots') order = idx;
+ else if (def.hole === 'bigGreen') {
+  let best = null, room = -1;
+  for (const h of idx) { const s = spotsOn(h.i); if (!s) continue; const r = s.reduce((a, p) => a + (p.feet || 0), 0); if (r > room) { room = r;best = {hole: h.i, spots: s}; } }
+  return best;
+ } else if (def.hole === 'course') throw Error('A challenge across holes takes its spots from spotsAcross.');
+ else throw Error(`No hole rule called ${def.hole}.`);
+ for (const h of order) { const s = spotsOn(h.i); if (s) return {hole: h.i, spots: s}; }
+ return null;
+}
+
+// A CHALLENGE ACROSS HOLES (hole rule 'course'): its spots on several holes of
+// the course, each carrying `hole`. `holes` are adapters (holeAdapter) in
+// course order; `driver` the shortest driver carry in the group, in yards.
+// Null when the course cannot host it. PLACED, as everything here.
+//   par3s      the tee of every par 3
+//   gir        holes 1-9: a par 3 from the tee, a par 4 from the fairway where
+//              a good drive finishes (the hole's length less the driver, 90
+//              to 200 yards out), a par 5 from 100 yards
+//   scrambler  one drop round each of the first nine greens (as up and down)
+//   putttour   one putt of 10 to 40 feet on each of the first nine greens
+//   firstHoles the tees of the first `holes` holes
+export function spotsAcross(def, holes, seed, {driver = 250} = {}) {
+ const rnd = seeded(seed), k = def.spot.kind, at = (p, i) => p && {x: p.x, z: p.z, hole: i, ...(p.feet ? {feet: p.feet} : {})};
+ const nine = holes.slice(0, 9).map((h, i) => [h, i]);
+ let out;
+ if (k === 'par3s') out = holes.map((h, i) => h.par === 3 ? at(h.tee, i) : undefined).filter(p => p !== undefined);
+ else if (k === 'firstHoles') out = holes.slice(0, def.spot.holes).map((h, i) => at(h.tee, i));
+ else if (k === 'gir') out = nine.map(([h, i]) => h.par === 3 ? at(h.tee, i) : at(onLine(h, h.par === 5 ? 100 : Math.max(90, Math.min(200, Math.round(h.yards - driver)))), i));
+ else if (k === 'scrambler') out = nine.map(([h, i]) => at(aroundGreen(h, rnd, 1, {lo: 3, hi: 18})[0], i));
+ else if (k === 'putttour') out = nine.map(([h, i]) => at(onGreen(h, rnd, [10 + 5 * Math.floor(rnd() * 7)], {angles: 'seeded', shrink: true})[0], i));
+ else throw Error(`No spot kind called ${k}.`);
+ const need = k === 'par3s' ? 1 : k === 'firstHoles' ? def.spot.holes : 9;
+ return out.length >= need && out.every(Boolean) ? out : null;
+}
+
+// SETTING A CHALLENGE UP, as the game does it and the tests do it (one function,
+// so a test plays exactly what a player gets). `holes` are the course's
+// adapters (holeAdapter) -- or, on the range, its one hole with `range` {mat,
+// marks: range.js rangeTargets()}; `seed` the course's seed; `driver` the
+// shortest driver carry in the group. Returns where the play starts (`hole`,
+// null on the range), its spots, range targets, pins and lengths by hole, and
+// the seed its calls are drawn from -- or null when the course cannot host it.
+export function planChallenge(def, {holes = [], seed = '', driver = 250, range = null} = {}) {
+ const YD = YARD;
+ if (def.where === 'range') {
+  const {mat, marks = []} = range || {mat: {x: 0, z: 0}};
+  const targets = (def.targets || []).map(y => { const t = marks.find(m => m.yards === y); return t ? {x: t.x, z: t.z, yards: y} : {x: mat.x, z: mat.z + y * YD, yards: y}; });
+  return {hole: null, spots: [], targets, pins: [], lengths: [], callSeed: `range:${def.id}`};
+ }
+ if (def.hole === 'course') {
+  const spots = spotsAcross(def, holes, `${seed}:${def.id}`, {driver});
+  return spots && {hole: spots[0].hole, spots, targets: [], pins: holes.map(h => h.pin), lengths: holes.map(h => h.yards), callSeed: `${seed}:${def.id}`};
+ }
+ const pick = chooseHole(def, holes.map(h => ({par: h.par, length: h.yards})), i => def.spot ? spotsFor(def, holes[i], `${seed}:${i}:${def.id}`) : []);
+ return pick && {hole: pick.hole, spots: pick.spots, targets: [], pins: [], lengths: [], callSeed: `${seed}:${pick.hole}:${def.id}`};
+}
+// EACH GOLFER'S PART: their driver and hand, their zone (Find the zone) on the
+// hole being played (`hole`, an adapter), and the club the challenge asks of
+// them -- its own kind if their bag (`clubs`, [{kind, carry}]) holds one, else
+// the nearest in carry (the stock bag has no 8-iron: a play-through in Node
+// found One club unwinnable with it, 16 October 2026). The calls are drawn for
+// the shortest driver so every golfer can reach them. Null when a zone will not fit.
+export function challengeClub(want, clubs = []) {
+ if (!want) return null;
+ if (!clubs.length || clubs.some(c => c.kind === want)) return want;
+ const carry = CLUB_KINDS[want]?.carry ?? 150;
+ return [...clubs].filter(c => c.kind !== 'putter').sort((a, b) => Math.abs(a.carry - carry) - Math.abs(b.carry - carry))[0]?.kind || want;
+}
+export function playContext(def, {hole = null, callSeed = '', players = []} = {}) {
+ const ctx = players.map(p => ({driver: p.driver ?? 250, hand: p.hand === 'LH' ? 'LH' : 'RH', ...(def.club ? {club: challengeClub(def.club, p.clubs)} : {})}));
+ if (def.ball === 'zone') { for (const c of ctx) c.zone = hole && zoneFor(hole, c.driver); if (ctx.some(c => !c.zone)) return null; }
+ return {ctx, calls: callsFor(def, callSeed, {driver: Math.min(...ctx.map(c => c.driver))})};
+}

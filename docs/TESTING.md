@@ -45,6 +45,7 @@ and seed, so it can be replayed exactly.
 | Match play | refused | 1 v 1 | 2 v 1, 1 v 2 | every split, 1 v 3 to 3 v 1 | every split with both sides | refused |
 | Scramble | yes | yes | yes | yes | every split, one team of four included | yes |
 | Skins | refused | yes | yes | yes | all on one side, and split | yes |
+| Stroke with a goal | Sudden death (endless) and Bogey-free nine, 1-4 golfers, golfers coming and going; the goal checked after every hole and through saves |  |  |  |  |  |
 
 Each under all three putting modes (hole out, dartboard, decimal), both
 out-of-bounds rules, over 3 holes, then 9 and 18 with group changes.
@@ -62,6 +63,44 @@ sim drops), `honours` (playing order, golfers added, removed and reordered),
 (monitor and Swing Meter golfers together), `endless`, `round-library` and
 `course-library` (saving), `weekly`, `challenges`.
 
+**`tests/challenge-matrix.test.mjs` plays every challenge with every group of
+one to four** -- the 34 that are plays (the two rounds are in the round
+matrix), two to four for head to head, six seeds each, 798 plays and over 5,000 balls
+in under a second. A seeded made-up golfer plays each ball, and a referee
+written separately from challenge-play.js checks whose turn it is after every
+ball, when a golfer is out, when the play ends, each golfer's score, medal and
+place. A second test plays an evening of 600 challenges and checks the pay:
+each first medal once, repeat pay inside the day's allowance, a new best once
+a challenge a day. What a single ball scores is pinned by hand in
+`challenge-play` (which also flies the Swing Meter's High, Low, draw and fade
+through the ball model, so High and low and Curve it stay reachable), and
+`challenge-spots` checks on the real Challenge Course that it hosts every
+challenge and every spot is on ground its challenge allows.
+`challenge-matrix` also plays the head-to-heads: a referee of its own follows every
+knockout (who is out each round, who wins) and checks every hole of Bingo
+Bango Bongo by what must hold (the farthest plays, the first in has bongo, no
+hole gives more than three points, the most points win); knockouts' ties and
+the away rule are pinned by hand in `challenge-play`.
+
+**`tests/challenge-virtual.test.mjs` plays every challenge through the ball
+model**, in Node with no browser or graphics card, in about 20 seconds. A
+golfer (`tests/virtual-golfer.mjs`) swings the Swing Meter with the game's
+own functions -- the bar zoomed to the shot, the distance tapped where the
+target marker sits, the strike as the marker runs back, a little seeded error
+on each -- and the ball flies through `simulateShot` on the real Challenge
+Course and the real range: slopes, rough, water, trees, the cup. Each
+challenge is set up by the same `planChallenge`/`playContext` the game calls
+and played to its end, one golfer and a group (two and three for head to
+head); Sudden death and Bogey-free nine are played as real rounds, hole after
+hole. A steady golfer must medal in at least half and score in nearly all. The
+golfer does not read greens -- it putts straight at the hole -- so it putts
+poorly on sloping greens, as such a golfer would. Its first run found One club
+unwinnable with the stock bag (no 8-iron) and that "Hold the green" needs spin.
+`challenge-week` checks the challenge of the week: the same date gives the
+same pick (this week's and next week's are pinned), each cycle plays every
+challenge in the pool once, a pool added later leaves earlier weeks alone,
+the week's pay, and that the next nine weeks' courses host their picks.
+
 **What the round tests do not cover:** `main.js` -- the round panel, the
 buttons that hand the turn over, the scorecard and banner on screen, the XP
 popup. That is wired code, checked only by the smoke test and by playing.
@@ -74,7 +113,8 @@ the courses several suites share.
 - **A round and its records** -- `round-matrix`, `core`, `play`, `honours`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
-  `achievements`, `challenges`, `weekly`, `player-colours`, `bag`.
+  `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `player-colours`, `bag`.
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
@@ -110,7 +150,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
-| `challenge`, `weekly` | the challenges and the course of the week |
+| `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
 | `range`, `studio` | the driving range; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch |

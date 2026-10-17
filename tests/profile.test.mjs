@@ -319,9 +319,35 @@ test('achievements, progress, weekly bests and sand strokes are kept', () => {
  storeProfiles(store);
  const back = findProfile(loadProfiles(), profile.id);
  assert.deepEqual(back.achievements, {ace: 5});
- assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], once: ['g1:done']});
+ assert.deepEqual(back.progress, {rounds: 3, biomes: ['pnw'], weeks: [145], chalWeeks: [], once: ['g1:done']});
  assert.deepEqual(back.weekly, {'WEEK-2026-42@g35': 78});
  assert.deepEqual(back.rounds[0].card[0].sand, [3]);
+});
+
+// CHALLENGES (16 October 2026): medals, every challenge's record and the day's
+// XP allowance are new keys, so a version-3 store from 0.8.1 -- with the three
+// old records and no medals -- loads as it was, with no migration.
+test('a profile from before medals loads with its records; medals and the allowance are kept', () => {
+ localStorage.clear();
+ const old = {version: 3, main: 'p1', profiles: [{id: 'p1', name: 'Sam', created: 1, counters: {}, bests: {}, rounds: [], xp: 500,
+  challenges: {closest: {feet: 9.5, at: 2}, long: {yards: 271, at: 2}, updown: {made: 3, strokes: 12, at: 2}, skins: {won: 4, games: 2}}}]};
+ const store = normalise(old);
+ assert.equal(PROFILE_VERSION, 3, 'no version bump');
+ const p = store.profiles[0];
+ assert.deepEqual(p.challenges, old.profiles[0].challenges);
+ assert.equal(p.medals, undefined, 'medals are worked out from the records once, in the game');
+ p.medals = {};
+ p.challenges.lag = {best: 14, at: 3, plays: 2};
+ p.xpChallenge = {day: '2026-10-16', xp: 120, bests: ['lag']};
+ p.challengeWeek = {'CHAL-2026-42:curve': {best: 3, medal: 2}};
+ storeProfiles(store);
+ const back = findProfile(loadProfiles(), 'p1');
+ assert.deepEqual(back.medals, {}, 'an empty set of medals is kept: it says the old records were already looked at');
+ assert.deepEqual(back.challenges.lag, {best: 14, at: 3, plays: 2});
+ assert.deepEqual(back.xpChallenge, {day: '2026-10-16', xp: 120, bests: ['lag']});
+ assert.deepEqual(back.challengeWeek, {'CHAL-2026-42:curve': {best: 3, medal: 2}}, 'the challenge of the week\'s best is kept');
+ const store2 = loadProfiles();findProfile(store2, 'p1').medals = {lag: 2, ghost: 3};storeProfiles(store2);
+ assert.deepEqual(findProfile(loadProfiles(), 'p1').medals, {lag: 2}, 'a medal for no challenge is dropped');
 });
 
 // EVERY WEARABLE ITEM, AT THE SAVE (15 October 2026). The picker's padlock is

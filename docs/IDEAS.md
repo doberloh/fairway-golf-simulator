@@ -52,10 +52,17 @@ often has the how-to already worked out.
 
 ## Practice
 
-- **A short-game area.** A practice green beside the range with chipping and
-  putting drills ("hole ten four-footers", "get up and down from here"). The
-  range is a hand-built hole, so a second one is a known shape. Medium.
+- **Twists for the challenge of the week**: a wind of the week, a club of the
+  week, a tee of the week -- seeded from the date like the pick, so still the
+  same on every copy. Left out of the first version on purpose. Small.
   (Claude, 16 October 2026)
+
+- **A short-game area.** A practice green beside the range. The drills it was
+  for -- four-footers, up and downs, chipping, a putting ladder -- are
+  challenges since 16 October 2026, played on the Challenge Course's greens;
+  what is left is the place itself, a green to wander and practise on with no
+  score. The range is a hand-built hole, so a second one is a known shape.
+  Medium. (Claude, 16 October 2026)
 - **Range targets that play as greens.** A ball on one bounces as range turf
   today, because the shader and `localSurface` carry one green per hole; real
   target greens need a loop over an extended cup atlas on both sides. Medium.
