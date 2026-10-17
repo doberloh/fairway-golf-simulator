@@ -55,7 +55,8 @@ import {playerColour,playerTracer,PLAYER_INK} from './player-colours.js';
 import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan,dropOutcome,jitterStream,groupStats} from './lab.js';
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
-import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines} from './range.js';
+import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines,centreSetup,shortSetup,shapes,loadRangeSetup,saveRangeSetup,SLOPES,SLOPE_NAMES,TILT,CONTOUR,greenById,activeGreen,setActiveGreen,nearestGreen,moveCup,chipSpot,puttSpot,CHIP_YARDS,PUTT_FEET} from './range.js';
+import {sessionCsv,sessionReport} from './range-report.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
@@ -84,7 +85,7 @@ let ballOnGreen=false;
 // late, so the heading and the picture disagree for a frame. A surface lookup
 // is cheap; being right is not optional.
 const onGreen=()=>{
- try{return appMode==='play'&&!rangeMode&&course.surface(round.position.x,round.position.z)==='green';}
+ try{return appMode==='play'&&course.surface(round.position.x,round.position.z)==='green';}
  catch{return false;}
 };
 // Every tracer played on this hole, and whether the hole-summary orbit is up.
@@ -993,7 +994,13 @@ function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:GENERATO
 // `range` is deliberately in the key and `rangeGreen` deliberately is not: the
  // range is a different world from a course, but moving its green is four floats
  // in the cup atlas and must not throw the landscape away.
-const worldKeyFor=s=>JSON.stringify([GENERATOR_VERSION,s.range?'range':'',...generationKeys().map(k=>s[k])]);
+// The range's greens are in it too (16 October 2026): a green with a slope set
+// up is shaped into the ground, so changing one is a different world, and the
+// centre green's distance joins the key only while it is shaped -- a flat one
+// still slides without a rebuild. A cup's place is never in it: recutting one
+// changes no ground.
+const rangeKey=s=>{if(!s.range)return '';const c=centreSetup(s),q=shortSetup(s),k=g=>[g.slope,g.tilt,g.contour,g.seed];return JSON.stringify(['range',k(c),k(q),shapes(c)?rangeGreenYards(s):null]);};
+const worldKeyFor=s=>JSON.stringify([GENERATOR_VERSION,rangeKey(s),...generationKeys().map(k=>s[k])]);
 // Settling `settings` into the exact shape the world is keyed on.
 //
 // Pulled out of loadCourse so `prepareWorld` can key on the same thing without a
@@ -1078,6 +1085,7 @@ function syncArmed(){
 // fifth of one. PLACED.
 const PIN_ATTEND_M=3;
 function setUpTurn(){
+ if(rangeMode&&course?.greens&&!challenge){setUpRangeTurn(true);return;}
  syncArmed();
  // A missed putt: the pin goes back in for the next one.
  if(!round.holeComplete)view.lowerFlag?.();
@@ -1168,14 +1176,16 @@ function updateHUD(){
  syncArmed();
  const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
-  // Reading is off on a practice ground: the bench green is dead flat, so the
-  // grid paints one colour and the heat map one shade. Switches that can only
-  // produce a featureless wash are disabled rather than left to disappoint.
-  el.disabled=rangeMode;
+  // Reading is off on a FLAT range green: the grid paints one colour and the
+  // heat map one shade. Switches that can only produce a featureless wash are
+  // disabled rather than left to disappoint. A range green with a slope set up
+  // (Range controls) reads like any other.
+  const flat=rangeMode&&!shapes(activeGreen(course)?.setup);
+  el.disabled=flat;
   if(rangeMode&&!el.dataset.readTitle)el.dataset.readTitle=el.title;
-  el.title=rangeMode?'Green reading needs a hole green -- the practice bench is flat':(el.dataset.readTitle||el.title);
-  el.classList.toggle('on',!rangeMode&&!!view.config[key]);
-  el.setAttribute('aria-pressed',String(!rangeMode&&!!view.config[key]));
+  el.title=flat?'This green is flat -- give it a slope in Range controls to read it':(el.dataset.readTitle||el.title);
+  el.classList.toggle('on',!flat&&!!view.config[key]);
+  el.setAttribute('aria-pressed',String(!flat&&!!view.config[key]));
  }
  // THE CARD DESCRIBES WHATEVER IS ON SCREEN, and a practice ground is not a
  // round. The range was already handled; the LAB never was, so it sat there
@@ -1202,12 +1212,12 @@ function updateHUD(){
  // middle and back come round in turn as the round goes on.
  // The day moves up into the label, so the value is one word in one case:
  // "THU front" mixed capitals, lowercase and two sizes in a single slot.
- {const band=pinBandFor(round.hole);$('holePinLabel').textContent=practice?'Pin':`Pin · ${pinDayOf(settings).slice(0,3)}`;$('holePin').textContent=practice?'—':band[0].toUpperCase()+band.slice(1);}
- // DISTANCE is the one field that stays real on a practice ground: it is where
- // the green has been put, and it follows the control that moves it. On a course
- // it is the tee yardage.
+ {const band=pinBandFor(round.hole);$('holePinLabel').textContent=practice?'Green':`Pin · ${pinDayOf(settings).slice(0,3)}`;$('holePin').textContent=practice?rangeGreenLabel(activeGreen(course)):band[0].toUpperCase()+band.slice(1);}
+ // DISTANCE on the range is to the cup being played to -- the target aimed at
+ // from the mats, or the green being chipped or putted on. On a course it is
+ // the tee yardage.
  $('holeDistance').innerHTML=practice
-  ? `${Math.round(rangeGreenYards(settings))}`
+  ? `${Math.round(distance()/YARD)}`
   : `${Math.round(course.tees[round.tee]?.yards??course.routeLength/YARD)}`;
  // THE GOLFER'S OWN COLOUR, on the two chips that say who is up: the same dot
  // as beside their scorecard row, so the chip and the name on the card are
@@ -1271,13 +1281,16 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
  // way back to them once closed -- there was none, so a closed window stayed
  // closed until the range was left and entered again.
  if($('rangeTool'))$('rangeTool').hidden=!rangeMode;
+ // And one on the view bar, always in sight, because the tray's button was
+ // still a menu away and the owner could not find it (16 October 2026).
+ if($('rangeControls'))$('rangeControls').hidden=!rangeMode;
  // Putting mode is forced to hole-out on a practice ground, so this would edit
  // a setting for the NEXT round while appearing to change where you are. A
  // dedicated putting mode is the plan; until then it is simply not offered.
  // On the range the button says WHY it is off. A disabled control with no
  // explanation reads as broken, and "putting" on a practice ground is a
  // reasonable thing to go looking for -- there is simply no putting there yet.
- if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'No putting on the practice ground yet':'Putting: '+{holeout:'hole out',dartboard:'dartboard',decimal:'decimal putting'}[round.putting.mode];}icon();
+ if($('puttingLabel')){$('puttingLabel').disabled=rangeMode;$('puttingLabel').title=rangeMode?'The range always holes out -- choose putts in Range controls':'Putting: '+{holeout:'hole out',dartboard:'dartboard',decimal:'decimal putting'}[round.putting.mode];}icon();
 }
 // A putt is previewed by running the shot, not by describing it. Everything else
 // keeps a straight target line, which is what an aim line means for a ball that
@@ -1291,6 +1304,7 @@ function updateAim(syncRange=true){const c=clubs[$('club').value];
  // from it on a flat green, and a monitor measures the stroke.
  puttPreview=null;
  const putt=c.code==='PT',range=aimRange??(putt?Math.max(.1,distance()):c.carry*YARD);aimPoint=aimTarget(round.position,aim,range);view.aimRing.visible=true;
+ if(rangeMode&&course?.greens&&onMat()&&!flight)followAimGreen();
  // A curved shape is drawn curved, so a draw is seen to bend before it is hit.
  const track=armed?null:shapeTrack(c,range);
  // A putt's line lies on the green, 15 mm up, like the preview line did.
@@ -1327,8 +1341,9 @@ function shapeTrack(c,range){
 // one, so aiming by tapping the course still works.
 const golferDifficulty=()=>meterDifficulty(profileOf(round.player));
 const isShortGame=()=>shortGame(clubs[$('club').value],distance()/YARD);
-// The range is played off the mat, which no lie table touches.
-const currentLie=()=>rangeMode?'tee':course.surface(round.position.x,round.position.z);
+// The range's full shots are played off the mat, which no lie table touches; a
+// chip on the range is played from wherever it lies, like anywhere else.
+const currentLie=()=>onMat()?'tee':course.surface(round.position.x,round.position.z);
 let meterFlash=null,meterScaleKey='';
 function swingContext(){const c=clubs[$('club').value],short=isShortGame(),putt=c?.code==='PT';
  // The bar zooms to the shot the circle asks for (swing-meter.js): a putt to a
@@ -1539,8 +1554,8 @@ function stepShape(which,dir,wrap=true){
 // monitor penalty switched off.
 function drawLie(){
  if(!course||!round)return;
- const lie=currentLie(),f=rangeMode?1:lieFactor(lie);
- const name=rangeMode?'Mat':lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
+ const lie=currentLie(),f=onMat()?1:lieFactor(lie);
+ const name=onMat()?'Mat':lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
  const meter=$('lieReadout');
  if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
@@ -1682,8 +1697,8 @@ function takeShot(data=null,struck=null){
  // exactly as sent, with the penalty in red (shot-data.js). Launch, direction,
  // spin and axis are never touched. The range and the lab's typed shots are
  // played off the mat. PROJECT_HANDOFF *The simulator never invents ball data*.
- const factor=rangeMode?1:lieFactor(lie);let launch,lieRecord=null;
- if(data)({launch,lie:lieRecord}=monitorLie(data,lie,{on:round.monitorLie,range:rangeMode}));
+ const factor=onMat()?1:lieFactor(lie);let launch,lieRecord=null;
+ if(data)({launch,lie:lieRecord}=monitorLie(data,lie,{on:round.monitorLie,range:onMat()}));
  else{launch=struck.shot;if(factor<1)lieRecord={surface:lie,factor,before:struck.before};}
  const shot={origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})};
  const wind=localWind(settings,course.rotation);
@@ -1726,7 +1741,7 @@ function finishShot(){
  // tracers stay on the field so a session reads as a session.
  const before={seat:round.active,stroke:round.stroke,driver:lastShot?.kind==='driver',lie:course.surface(lastShot.shot.origin.x,lastShot.shot.origin.z)};
  if(rangeMode){
-  recordRangeShot(result);recordProfileShot(result,before);
+  recordRangeShot(result);recordProfileShot(result,before);rangeAfterShot(result);
   // The panel follows play unless a row has been pinned from the shot list.
   viewShot=null;drawShotViews();refreshDispersion();drawDispersionLegend();
   view.setShotHistory?.(visibleTrails());
@@ -2067,6 +2082,12 @@ function recordRangeShot(result){
   clubKey:clubs[$('club').value]?.label??$('club').value,
   carry:result.carry,total:result.total,apex:result.apex,
   offline:offlineOf(shot.origin,result.end,lastShot?.aim??aim),
+  // WHERE IT WAS PLAYED FROM AND TO (16 October 2026): the mats or a chip or a
+  // putt, the green being played to, and how close to its cup it finished --
+  // what the exports and the short-game summary are made of.
+  from:rangeStation.mode,green:activeGreen(course)?.name??'',
+  toPin:Math.hypot(result.end.x-course.pin.x,result.end.z-course.pin.z),holed:!!result.holed&&!result.hazard,
+  descent:result.descentAngle,
   speed:shot.speed,vla:shot.vla,spin:shot.spin,axis:shot.spinAxis,
   landing:result.landingSpeed,
   // WHERE IT FINISHED. Two numbers, kept on every row for as long as the
@@ -2361,12 +2382,18 @@ function rangeCaption(){
  const s=rangeShots.at(-1);
  if(!s)return 'Ready when you are. Every shot stays on the field behind you.';
  const n=rangeShots.length;
- const mean=k=>rangeShots.reduce((a,b)=>a+b[k],0)/n;
+ // A chip or a putt is judged by where it finished, not by its carry.
+ if(s.from&&s.from!=='mats')return `${escape(s.club)} · shot ${n} of the session · ${s.holed?'holed':s.toPin<10*YARD?`${(s.toPin/.3048).toFixed(1)} ft from the cup`:`${Math.round(s.toPin/YARD)} yd from the cup`}`;
+ // The averages are THIS CLUB's full shots (16 October 2026): averaged over
+ // every shot of a session they mixed a driver with a wedge -- and, since the
+ // range has putts, with putts -- into a number describing no club.
+ const same=rangeShots.filter(r=>(r.from||'mats')==='mats'&&r.clubKey===s.clubKey),m=same.length;
+ const mean=k=>same.reduce((a,b)=>a+b[k],0)/m;
  // Dispersion as a standard deviation, not as a min-to-max spread: one shank
  // should not be allowed to describe a session.
- const spread=Math.sqrt(rangeShots.reduce((a,b)=>a+(b.offline-mean('offline'))**2,0)/n);
+ const spread=Math.sqrt(same.reduce((a,b)=>a+(b.offline-mean('offline'))**2,0)/m);
  return `${escape(s.club)} · shot ${n} of the session`
-  +(n>1?` · average carry ${Math.round(mean('carry')/YARD)} yd · offline spread ±${(spread/YARD).toFixed(1)} yd`:'');
+  +(m>1?` · ${escape(s.clubKey)} average carry ${Math.round(mean('carry')/YARD)} yd · offline spread ±${(spread/YARD).toFixed(1)} yd`:'');
 }
 // THE WHOLE PANEL, redrawn. Every caller that used to rebuild its own version --
 // standing, live, the range, a change in Shot data -- comes here.
@@ -2442,13 +2469,26 @@ function liveLine(html){const el=$('flightLabel');if(el)el.innerHTML=html;}
 // fairway. On a range both are wrong -- moving the green would silently swap
 // your club, and the whole point is to hit the same club until you are happy
 // with it.
-function setUpRangeTurn(){
- syncArmed();
- const tee=course.tees[round.tee]||Object.values(course.tees)[0];
- round.positions[round.active]={x:tee.x,z:tee.z};round.teePlaced=true;
- const p=round.position;shotShape={...DEFAULT_SHAPE};cancelSwing();
+//
+// Or to the short game (16 October 2026): a chip from off a green, or a putt on
+// one, the distance and the green chosen in Range controls. A club is picked
+// for those by the distance, as a hole's turn would; on the mats the club in
+// hand stays, unless it is the putter or `pick` asks (a new station).
+function setUpRangeTurn(pick=false){
+ syncArmed();view.lowerFlag?.();
+ const st=rangeStation;let p=null;
+ if(st.mode!=='mats'&&greenById(course,st.green)){
+  setActiveGreen(course,st.green);view.refreshRangeGreens?.();
+  p=st.next??(st.mode==='chip'?chipSpot(course,st.green,st.yards,st.n):puttSpot(course,st.green,st.feet,st.n));
+ }
+ st.next=null;
+ if(!p){const tee=course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
+ round.positions[round.active]={x:p.x,z:p.z};round.teePlaced=true;
+ shotShape={...DEFAULT_SHAPE};cancelSwing();rangePlaced=aimTurned=false;
+ const toPin=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
+ if(pick||st.mode!=='mats'||$('club').value==='putter'){syncClubs();$('club').value=course.surface(p.x,p.z)==='green'?'putter':nearestClubFor(toPin/YARD);}
  aim=Math.atan2(course.pin.x-p.x,course.pin.z-p.z)*180/Math.PI;
- aimRange=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
+ aimRange=Math.max(.1,toPin);
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();
 }
 
@@ -2712,6 +2752,7 @@ async function enterRange(options={}){
   // field whose whole point is that it is symmetrical about the centre line.
   fresh.tee='white';
   rangeShots=[];resetTrails();dispersion=[];
+  Object.assign(rangeStation,{mode:'mats',next:null,n:0});
   challenge=null;round=fresh;
   rememberCourse();
   settings={...RANGE_SETTINGS,
@@ -2719,7 +2760,10 @@ async function enterRange(options={}){
    // smooth tilt, which is how break is tested, and `seed` pins the shape so a
    // measurement can be repeated. Both are generation keys, so `loadCourse`
    // regrows rather than reusing the cached flat field.
-   ...(options.difficulty!==undefined?{greenDifficulty:options.difficulty}:{}),
+   ...(options.difficulty!==undefined?{greenDifficulty:options.difficulty}:{rangeCentre:rangeGreensPref.centre}),
+   // The greens as the player last set them up (range.js, device-local). The
+   // bench's `difficulty` still means a contoured centre green, from its seed.
+   rangeShort:rangeGreensPref.short,
    ...(options.seed?{seed:options.seed}:{}),
    turf:turfConfig({...(RANGE_SETTINGS.turf||{}),
     ...(options.firmness?{firmness:options.firmness}:{}),
@@ -2773,7 +2817,7 @@ function setRangeGreen(yards){
  //
  // `greenDifficulty` is a generation key, so clearing `worldKey` is what makes
  // `loadCourse` actually regrow rather than reuse the cached world.
- if((settings.greenDifficulty??0)>0){rangeGreenPref=settings.rangeGreen=y;worldKey='';loadCourse();}
+ if(shapes(centreSetup(settings))){rangeGreenPref=settings.rangeGreen=y;worldKey='';loadCourse();}
  else{rangeGreenPref=settings.rangeGreen=moveRangeGreen(course,y);view.setRangeGreen();}
  updateAim();updateHUD();
  // `slider()` names its readout <id>Value, and the window may be closed.
@@ -2786,6 +2830,127 @@ function setRangeGreen(yards){
 // ground with one control should not hide it behind a menu.
 function openRangeBox(){if(popups&&!popups.isOpen('range'))openPanel('range');}
 function closeRangeBox(){popups?.close('range');}
+// Re-drawn in place when something in it changes; a closed box stays closed.
+function renderRangeBox(){if(popups?.isOpen('range'))openPanel('range');}
+
+// THE RANGE'S STATIONS AND GREENS (16 October 2026).
+//
+// Where the next ball is played from: the mats, a chip, or a putt. A chip or a
+// putt is on the short-game green or the centre green, from a distance the
+// player sets; "a new spot every ball" walks round the cup, and "play it out"
+// keeps putting from where the last ball stopped until it drops (then back to
+// the spot). The greens' set-ups are device-local, like the shot lines.
+let rangeGreensPref=loadRangeSetup();
+const rangeStation={mode:'mats',green:'short',yards:CHIP_YARDS.def,feet:PUTT_FEET.def,fresh:false,playOut:true,n:0,next:null};
+const onMat=()=>rangeMode&&rangeStation.mode==='mats';
+const RANGE_AIM_REACH=12;
+const nearestClubFor=yards=>Object.entries(clubs).filter(([id])=>id!=='putter').sort((a,b)=>Math.abs(a[1].carry-yards)-Math.abs(b[1].carry-yards))[0][0];
+const rangeGreenLabel=g=>!g?'—':g.kind==='target'?`${g.yards}`:g.id==='centre'?'Centre':'Short';
+// From the mats, aiming IS choosing: the green nearest the aim point becomes
+// the one played to, so its cup is the live one and the card reads its yardage.
+function followAimGreen(){
+ const g=nearestGreen(course,aimPoint);
+ // Within RANGE_AIM_REACH of its edge: an aim down the middle at 100 yards is
+ // not an aim at the 100 target thirty metres to the side. PLACED.
+ if(!g||g.id===course.active||greenDistance(g,aimPoint.x,aimPoint.z)>RANGE_AIM_REACH)return;
+ setActiveGreen(course,g.id);view.refreshRangeGreens?.();updateHUD();
+}
+function rangeAfterShot(result){
+ const st=rangeStation,holed=!!result.holed&&!result.hazard;
+ if(holed)toast(st.mode==='putt'?'Holed.':`In the hole -- ${activeGreen(course)?.name??'the cup'}.`);
+ if(st.mode==='mats')return;
+ const end=result.end;
+ if(st.playOut&&!holed&&!result.hazard&&Math.hypot(end.x-course.pin.x,end.z-course.pin.z)<40*YARD){st.next={x:end.x,z:end.z};return;}
+ if(st.fresh)st.n++;
+}
+function setRangeStation(patch){
+ if(!rangeMode||!course?.greens||flight)return;
+ Object.assign(rangeStation,patch,{next:null});
+ if('mode' in patch&&patch.mode==='mats'){setActiveGreen(course,'centre');view.refreshRangeGreens?.();}
+ setUpRangeTurn(true);updateExplorer();renderRangeBox();
+}
+// A green's set-up changed. Slope, fall, contour or a new random green change
+// the ground, so the range regrows under the loading cover (it is one hole: a
+// moment); a new cup is a few floats and a flag, like sliding a flat green.
+async function setRangeSetup(id,patch){
+ if(!rangeMode||!course?.greens||flight)return;
+ const key=id==='centre'?'centre':'short';
+ rangeGreensPref=saveRangeSetup({...rangeGreensPref,[key]:{...rangeGreensPref[key],...patch}});
+ settings.rangeCentre=rangeGreensPref.centre;settings.rangeShort=rangeGreensPref.short;
+ // An explicit set-up replaces the bench's old difficulty request.
+ if(key==='centre')settings.greenDifficulty=0;
+ // Asked of the key rather than of the patch: the bench's old difficulty
+ // request is shaped ground too, and an explicit set-up replacing it regrows.
+ if(worldKeyFor(settings)!==worldKey){
+  await whileGenerating('Shaping the green…',async report=>{await prepareWorld(report);loadCourse();});
+ }else if('cup' in patch){moveCup(course,id,rangeGreensPref[key].cup);view.refreshRangeGreens?.();setUpRangeTurn();}
+ renderRangeBox();save();
+}
+// A one-line description of each green, for the report.
+function rangeGreensText(){
+ const one=(name,s,extra='')=>`${name}${extra}: ${SLOPE_NAMES[s.slope].toLowerCase()}${s.slope==='ltr'||s.slope==='rtl'?` at ${s.tilt}%`:s.slope==='random'?` (contour ${s.contour})`:''}`;
+ return [one('Centre green',centreSetup(settings),` at ${Math.round(rangeGreenYards(settings))} yd`),one('Short-game green',shortSetup(settings)),'Targets at 50 to 300 yd: flat, each its number from the centre mat'];
+}
+function exportRangeCsv(){
+ if(!rangeShots.length){toast('Hit a ball first -- there is nothing to export yet.');return;}
+ download(`fairway-range-${new Date().toISOString().slice(0,10)}.csv`,sessionCsv(rangeShots),'text/csv');
+}
+function exportRangeReport(){
+ if(!rangeShots.length){toast('Hit a ball first -- there is nothing to report yet.');return;}
+ download(`fairway-range-${new Date().toISOString().slice(0,10)}.pdf`,sessionReport({shots:rangeShots,when:new Date(),place:course?.bio?.name,greens:rangeGreensText()}),'application/pdf');
+}
+// THE RANGE CONTROLS. Everything the range has: where you hit from, both
+// greens' set-ups, and the session's lines, map and exports.
+function renderRangePanel(content){
+ const keep=content.scrollTop;
+ const st=rangeStation,c=centreSetup(settings),q=shortSetup(settings),yards=Math.round(rangeGreenYards(settings));
+ const tab=(k,label)=>`<button class="panel-tab${st.mode===k?' active':''}" data-station="${k}" aria-pressed="${st.mode===k}">${label}</button>`;
+ const shape=(id,name,s)=>`<label class="field">Slope<select id="${id}Slope" aria-label="${name} slope">${SLOPES.map(k=>`<option value="${k}"${s.slope===k?' selected':''}>${SLOPE_NAMES[k]}</option>`).join('')}</select></label>`
+  +(s.slope==='ltr'||s.slope==='rtl'?slider(`${id}Tilt`,'Fall across the green',s.tilt,TILT.min,TILT.max,'%',TILT.step):'')
+  +(s.slope==='random'?slider(`${id}Contour`,'Contour',s.contour,CONTOUR.min,CONTOUR.max,'',CONTOUR.step):'')
+  +`<div class="split">${s.slope==='random'?`<button class="secondary" id="${id}New">New green</button>`:''}<button class="secondary" id="${id}Cup">New cup</button></div>`;
+ content.innerHTML=`<div class="range-box"><h4 class="range-head">Hit from</h4><div class="panel-tabs range-station" role="group" aria-label="Hit from">${tab('mats','Mats')}${tab('chip','Chip')}${tab('putt','Putt')}</div>`
+  +(st.mode==='mats'?`<p class="note">Aim at a target and it becomes the green you are playing to: its cup is live and the card reads its distance. Every target is its number from the centre mat.</p>`
+   :`<label class="field">Green<select id="rangeStationGreen" aria-label="Which green"><option value="short"${st.green==='short'?' selected':''}>Short-game green</option><option value="centre"${st.green==='centre'?' selected':''}>Centre green</option></select></label>`
+    +(st.mode==='chip'?slider('rangeChip','Chip from',st.yards,CHIP_YARDS.min,CHIP_YARDS.max,' yd',CHIP_YARDS.step):slider('rangePutt','Putt from',st.feet,PUTT_FEET.min,PUTT_FEET.max,' ft',PUTT_FEET.step))
+    +`<label class="check"><input type="checkbox" id="rangePlayOut"${st.playOut?' checked':''}> Play it out until it drops</label>`
+    +`<label class="check"><input type="checkbox" id="rangeFresh"${st.fresh?' checked':''}> A new spot every ball</label>`
+    +`<button class="secondary" id="rangeNewSpot">New spot</button>`
+    +(st.mode==='chip'?`<p class="note">Measured to the cup. A chip asked for from closer than the green allows starts just off its edge.</p>`:''))
+  +`<h4 class="range-head">Centre green</h4>${slider('rangeGreen','Distance',yards,GREEN_RANGE[0],GREEN_RANGE[1],' yd',5)}${shape('rangeCentre','Centre green',c)}`
+  +(shapes(c)?`<p class="note">A green with a slope is grown into the ground, so moving it rebuilds the range when you let go of the slider.</p>`:'')
+  +`<h4 class="range-head">Short-game green</h4><p class="note">Beside the mats on your right, about 90 yards out: chip and putt to it from Hit from, or aim at it from the mats.</p>${shape('rangeShort','Short-game green',q)}`
+  +`<h4 class="range-head">This session</h4>${slider('rangeLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}<label class="check"><input type="checkbox" id="rangeDispersion"${showDispersion?' checked':''}> Dispersion on the map</label><div id="dispersionLegend"></div>`
+  +`<div class="split"><button class="secondary" id="rangeCsv"${rangeShots.length?'':' disabled'}><i data-lucide="sheet"></i> Export CSV</button><button class="secondary" id="rangePdf"${rangeShots.length?'':' disabled'}><i data-lucide="file-text"></i> PDF report</button></div>`
+  +`<p class="note">The CSV is every shot's numbers, for a spreadsheet. The PDF report adds each club's averages and spread, a chart of where the full shots went, the short game, and every shot. Shot lines are the tracers left on the field; zero clears them.</p></div>`;
+ content.scrollTop=keep;
+ for(const b of content.querySelectorAll('[data-station]'))b.onclick=()=>setRangeStation({mode:b.dataset.station});
+ const on=(id,ev,fn)=>{const el=content.querySelector('#'+id);if(el)el[ev]=fn;};
+ on('rangeStationGreen','onchange',e=>setRangeStation({green:e.target.value}));
+ on('rangeChip','onchange',e=>setRangeStation({yards:Number(e.target.value)}));
+ on('rangePutt','onchange',e=>setRangeStation({feet:Number(e.target.value)}));
+ on('rangePlayOut','onchange',e=>{rangeStation.playOut=e.target.checked;});
+ on('rangeFresh','onchange',e=>{rangeStation.fresh=e.target.checked;});
+ on('rangeNewSpot','onclick',()=>setRangeStation({n:rangeStation.n+1}));
+ // A flat green slides as the slider moves; a shaped one rebuilds once, on release.
+ on('rangeGreen','oninput',e=>{const v=Number(e.target.value);if(shapes(centreSetup(settings))){const out=$('rangeGreenValue');if(out)out.textContent=`${v} yd`;}else setRangeGreen(v);});
+ on('rangeGreen','onchange',e=>{if(shapes(centreSetup(settings)))setRangeGreen(Number(e.target.value));});
+ for(const [id,key] of [['rangeCentre','centre'],['rangeShort','short']]){
+  const now=key==='centre'?c:q;
+  on(id+'Slope','onchange',e=>setRangeSetup(key,{slope:e.target.value}));
+  on(id+'Tilt','onchange',e=>setRangeSetup(key,{tilt:Number(e.target.value)}));
+  on(id+'Contour','onchange',e=>setRangeSetup(key,{contour:Number(e.target.value)}));
+  on(id+'New','onclick',()=>setRangeSetup(key,{seed:now.seed+1,cup:0}));
+  on(id+'Cup','onclick',()=>setRangeSetup(key,{cup:now.cup+1}));
+ }
+ // Applied to the field as it is dragged, so the number is chosen by looking at
+ // the field rather than by guessing what 25 lines looks like.
+ on('rangeLines','oninput',()=>{shotLinePref=saveShotLines(Number($('rangeLines').value));view.setShotHistory?.(visibleTrails());});
+ on('rangeDispersion','onchange',()=>{showDispersion=$('rangeDispersion').checked;refreshDispersion();drawDispersionLegend();redrawMap();});
+ on('rangeCsv','onclick',exportRangeCsv);
+ on('rangePdf','onclick',exportRangeReport);
+ refreshDispersion();drawDispersionLegend();redrawMap();icon();
+}
 let labState=null;
 // Fire the five launch-monitor numbers exactly as shown, and nothing else.
 //
@@ -3999,6 +4164,7 @@ function openToolsBox(){
 function syncTools(){
  const b=$('toolsButton');
  if(b)b.classList.toggle('selected',popups?.isOpen('tools'));
+ const r=$('rangeControls');if(r)r.classList.toggle('selected',!!popups?.isOpen('range'));
 }
 function openSheet(name){stopTour();
  if(name!=='score')cancelAdvance();
@@ -4014,7 +4180,7 @@ function openSheet(name){stopTour();
 // rest -- setting up a round, the scorecard, the studio -- are once-a-round
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
-const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:300,height:260},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
+const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:330,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
 const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
@@ -5126,16 +5292,9 @@ function renderPanel(name,content){
   $('labFire').onclick=fire;
   $('labShotText').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();fire();}};
  }else if(name==='range'){
-  // Always open while the range is, so it needs no discovery: the one control a
-  // practice ground has should not be behind a menu.
-  const yards=Math.round(rangeGreenYards(settings));
-  content.innerHTML=`<p>Slide the green to the number you want to practise. The field stays 500 yards deep behind it.</p>${slider('rangeGreen','Green distance',yards,GREEN_RANGE[0],GREEN_RANGE[1],' yd',5)}${slider('rangeLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}<label class="check"><input type="checkbox" id="rangeDispersion"${showDispersion?' checked':''}> Dispersion on the map</label><div id="dispersionLegend"></div><p class="note">Shot lines are the tracers left behind on the field. Zero clears them; ${SHOT_LINE_MAX} is the most a session keeps, so the setting can be raised again without losing what is already there.</p><p class="note">The coloured targets are aiming marks at fixed distances; this moves the real green, the one that plays as a green.</p>`;
-  $('rangeGreen').oninput=()=>setRangeGreen(Number($('rangeGreen').value));
-  // Applied to the field as it is dragged, so the number is chosen by looking at
-  // the field rather than by guessing what 25 lines looks like.
-  $('rangeLines').oninput=()=>{shotLinePref=saveShotLines(Number($('rangeLines').value));view.setShotHistory?.(visibleTrails());};
-  $('rangeDispersion').onchange=()=>{showDispersion=$('rangeDispersion').checked;refreshDispersion();drawDispersionLegend();redrawMap();};
-  refreshDispersion();drawDispersionLegend();redrawMap();
+  // Opened by itself when the range is, and from the view bar's own button
+  // (rangeControls) once closed -- the range's controls should never be lost.
+  renderRangePanel(content);
  }else if(name==='shot'){
   // THE SWING METER'S WINDOW, in place of Shot shape (14 October 2026). The
   // difficulty belongs to the golfer who is up -- it is kept in their profile, so
@@ -5871,6 +6030,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    // test can follow one without reading the bar's words.
    goal:round.goal?{goal:round.goal,...goalStatus(round.goal,round)}:null,
    challenge:challenge?{id:challenge.id,week:challenge.week?.key||null,done:!!challenge.done,hole:challenge.hole,range:rangeMode,putting:round.putting?.mode,turn:turn(challenge.play),balls:challenge.play.results.map(r=>r.length)}:null,
+   // The range (16 October 2026): the green being played to, where the next
+   // ball is played from, which targets the centre green is standing in for,
+   // and what the last ball finished on -- so a journey can tell a green that
+   // plays as a green from one that is only painted.
+   range:rangeMode&&course?.greens?{active:course.active,station:rangeStation.mode,shots:rangeShots.length,
+    hidden:course.greens.filter(g=>g.hidden).map(g=>g.id),ball:course.surface(round.position.x,round.position.z),
+    last:(s=>s?{from:s.from,green:s.green,toPin:+s.toPin.toFixed(2),holed:s.holed,on:course.surface(s.end.x,s.end.z)}:null)(rangeShots.at(-1))}:null,
    // How far the tracer's end sits from the ball, a number worth being able to
    // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
    // once the ball has stopped and the line caught up, it should be ~0.
@@ -6088,6 +6254,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The tools button had no handler at all: openToolsBox existed and nothing
  // ever called it, so clicking Tools did nothing in any mode.
  $('toolsButton').onclick=openToolsBox;
+ if($('rangeControls'))$('rangeControls').onclick=()=>{if(popups?.isOpen('range'))closeRangeBox();else openPanel('range');};
  $('playerView').onclick=()=>cameraMode('player');$('freeView').onclick=()=>cameraMode(view.config.mode==='free'?'player':'free');$('exitExplorer').onclick=()=>cameraMode('player');$('exploreHole').onchange=()=>{const hole=Number($('exploreHole').value);stopTour();view.flyToHole(hole);updateExplorer();};$('overview').onclick=()=>cameraMode(view.config.mode==='overview'?'player':'overview');
  // The green view had no button of its own and was reachable only from a picker
  // in the camera settings -- a view you are looking THROUGH, hidden inside a

@@ -154,3 +154,11 @@ The connector paths Fairway can accept are protocol-level integrations; device
 firmware, vendor licences, connector versions and operating systems all affect
 whether any given one works, and none of that has been verified against
 physical hardware.
+
+## The range's PDF report names a font; it ships none
+
+The PDF report (`src/pdf.js`, 16 October 2026) asks the reader for Helvetica
+and Helvetica-Bold, the standard faces every PDF reader supplies, so no font
+file is embedded in the report or shipped with Fairway. The only thing taken is
+a table of character widths, from Adobe's published metrics for those faces,
+used to line text up (REFERENCES.md, *The range's PDF report*).

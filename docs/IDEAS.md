@@ -57,16 +57,6 @@ often has the how-to already worked out.
   same on every copy. Left out of the first version on purpose. Small.
   (Claude, 16 October 2026)
 
-- **A short-game area.** A practice green beside the range. The drills it was
-  for -- four-footers, up and downs, chipping, a putting ladder -- are
-  challenges since 16 October 2026, played on the Challenge Course's greens;
-  what is left is the place itself, a green to wander and practise on with no
-  score. The range is a hand-built hole, so a second one is a known shape.
-  Medium. (Claude, 16 October 2026)
-- **Range targets that play as greens.** A ball on one bounces as range turf
-  today, because the shader and `localSurface` carry one green per hole; real
-  target greens need a loop over an extended cup atlas on both sides. Medium.
-  (was: two entries, *Targets are scenery, not greens*)
 - **The range's session averages as tiles**, so average carry and spread can
   be ticked on like any other field. Small. (was: *The range's own session
   summary is still its own thing*)

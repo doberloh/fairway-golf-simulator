@@ -584,6 +584,11 @@ What sets how far a spun ball comes back on a green, read for RESEARCH.md *Spin-
   contrast ratio; https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio -- the
   contrast measure, and the 3:1 figure for graphical objects.
 
+## The range's PDF report (16 October 2026)
+
+- Adobe, the core-font metrics for Helvetica and Helvetica-Bold (the standard PDF faces every reader carries) -- the advance widths in `src/pdf.js`, used only to right-align and centre text. **Recalled, not fetched; no link recorded and a check against the file is owed** (RESEARCH.md, *The session's exports*).
+- The PDF format itself (objects, a cross-reference table of byte offsets, content streams) is the long-published PDF 1.4 structure; nothing was copied from a document for it.
+
 ## The Swing Meter (14 October 2026)
 
 Read for RESEARCH.md *The Swing Meter*. The meter's own timings are placed; the
