@@ -80,15 +80,6 @@ check.
   request waits for a check that never passes. (was: *The CI smoke step has
   never run on GitHub*; *The tests workflow has never run on GitHub*)
 
-- [ ] **Check that Endless off the menu now starts in daylight.** Fixed 16
-  October 2026 on branch `endless-menu-clock` (every Endless run started from
-  the menu on a fresh device was at 12:00 AM; RESEARCH.md *The smoke test on
-  GitHub*, fourth finding). Not seen in the game: no browser was run. Check: the
-  next `endless-round` smoke screenshot (`bench/shots/smoke/endless-round.png`,
-  or GitHub's `smoke-screenshots`) shows daylight; by hand, with
-  `fairway-time-v1` removed from localStorage, Endless from the menu starts at
-  the hour the hole was shown at, and the clock reads that hour.
-
 - [ ] **Three high-severity advisories in the build tools.** `npm audit`, run
   16 October 2026: nothing in what the game ships (`--omit=dev`: 0); three
   high in `micromatch`, pulled in by `vite-plugin-singlefile`. Build-time only,
@@ -141,10 +132,7 @@ does not have. Nothing here is a claim of support until it is done.
   Edge opening the file. (`mixed-group` now covers a monitor golfer and a
   Swing Meter golfer in one group, and `skins` starts a two-golfer skins
   round. The RULES of every format with every group are played in Node by
-  `tests/round-matrix.test.mjs`, so what is left here is the screens.) **And
-  one new since 16 October:** a round somebody joined partway through -- let
-  them finish a hole, then reload and Continue, and take a mulligan. Both
-  failed before the fix below and neither has been seen working in the game.
+  `tests/round-matrix.test.mjs`, so what is left here is the screens.)
   (was: *What the smoke test does not walk*;
   *Browser timing and state-transition regression*; *Offline release matrix*;
   the browser half of *Finish target-browser/direct-file...*)
@@ -358,6 +346,26 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+# Done
+
+## Found on GitHub
+
+- [x] **Check that Endless off the menu now starts in daylight.** Fixed 16
+  October 2026 on branch `endless-menu-clock` (every Endless run started from
+  the menu on a fresh device was at 12:00 AM; RESEARCH.md *The smoke test on
+  GitHub*, fourth finding). Not seen in the game: no browser was run. Check: the
+  next `endless-round` smoke screenshot (`bench/shots/smoke/endless-round.png`,
+  or GitHub's `smoke-screenshots`) shows daylight; by hand, with
+  `fairway-time-v1` removed from localStorage, Endless from the menu starts at
+  the hour the hole was shown at, and the clock reads that hour.
+  **Closed 16 October 2026 at the owner's word.**
+
+## The owner's hands-on checks
+
+- [x] **A round somebody joined partway through: Continue after a reload, and a
+  mulligan.** Both failed before the save fix of 16 October 2026 (*Every
+  format with every group*, below). **Closed 16 October 2026 at the owner's word.**
+
 ## Skins as a round format (16 October 2026)
 
 Skins left the challenges and became a Format beside stroke, match and scramble
@@ -366,7 +374,7 @@ PROJECT_HANDOFF *Skins is a round format*). Built and tested in Node (the rule,
 the mode, old saves, the saved-rounds list); **not yet seen in the game** --
 nothing was run on the graphics card.
 
-- [ ] **Play a skins round in the game and look.** Play -> Format -> *Skins*
+- [x] **Play a skins round in the game and look.** Play -> Format -> *Skins*
   with two or three golfers: the format note; each chip's "N skins"; a tied hole
   -- the last golfer's banner says the skins carry, and the next hole's course
   line says "2 skins on this hole"; a won hole -- the banner names the winner in
@@ -377,11 +385,23 @@ nothing was run on the graphics card.
   profile. One golfer with Skins chosen should be refused with "Skins is for two
   to four golfers". Also: an endless run on skins, and the Challenges screen's
   line about where Skins went.
-- [ ] **Run the smoke journey `skins` (new)** when the owner allows the
-  graphics card. `skins` was written without being
-  run; if it fails, check the harness before the game.
-- [ ] **A save from the Skins challenge resumes as skins** -- covered in Node
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Run the smoke journey `skins` (new).** Done: it passed in the full
+  smoke run of 16 October 2026, 34 of 34 at 1da4f74.
+- [x] **A save from the Skins challenge resumes as skins** -- covered in Node
   (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
+  **Closed 16 October 2026 at the owner's word.**
+
+## Release 0.8.2 (16 October)
+
+- [x] **v0.8.2 published**, "Fairway 0.8.2 (beta)", at the owner's request, from
+  the merge of `release-0.8.2` into `main`: 36 challenges with medals, the
+  Challenge Course, the challenge of the week and five achievements.
+  Generator 36, schema 11, profile 3, all unchanged. Notes:
+  `docs/releases/v0.8.2.md`. Smoke: 34 of 35 then `look` fixed, and the three
+  challenge journeys (DISTRIBUTION_REVIEW, *v0.8.2*); the challenges have not
+  been looked at in the game by a person. The website is redeployed after it
+  so its demo runs 0.8.2.
 
 ## More challenges (16 October 2026)
 
@@ -398,7 +418,7 @@ tabs, range challenges, the three old ones moved onto it. Tested in Node
 hosting all of them, old profiles); **not yet seen in the game** by a person. The
 smoke journey `challenge` passes (below, *Done*).
 
-- [ ] **Play some in the game and look.** Main menu -> Challenges: the five
+- [x] **Play some in the game and look.** Main menu -> Challenges: the five
   tabs (on a phone they should slide sideways), the cards' medal dots and
   bests, a card's medal list ("Gold: within 10 ft", "measured against your own
   driver"). Play closest to the pin on the Challenge Course, Four-footers
@@ -408,12 +428,14 @@ smoke journey `challenge` passes (below, *Done*).
   -- say if it needs a ring), Up and down. The results card's medals, *Other
   challenges*, and the line when the day's 250 XP is used up. My profile ->
   *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
-- [ ] **Look at the challenge of the week in the game**: its card across the
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Look at the challenge of the week in the game**: its card across the
   top of the Challenges screen (gold edge, "until Sunday", where it is played),
   the menu tile's "This week: ...", the bar's "This week ·", the results
   card's "best this week", its line on My profile, and the XP popup for a
   first finish (100) and a gold. The four new achievements on My profile.
-- [ ] **Look at step 3 in the game**: Every par 3 and Greens in regulation
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Look at step 3 in the game**: Every par 3 and Greens in regulation
   moving hole to hole by themselves; Putting tour; a shootout and a long-drive
   knockout with two or three golfers (the toast naming who went out, the
   results card's "Won" and "Out in round 2"); Bingo Bango Bongo with every
@@ -421,21 +443,7 @@ smoke journey `challenge` passes (below, *Done*).
   coming up when everyone is out, while the run can go on; Bogey-free nine's
   card at the end of the nine; the bar following each goal; the Head of the
   Table achievement.
-
-# Done
-
-## Release 0.8.2 (16 October)
-
-- [x] **v0.8.2 published**, "Fairway 0.8.2 (beta)", at the owner's request, from
-  the merge of `release-0.8.2` into `main`: 36 challenges with medals, the
-  Challenge Course, the challenge of the week and five achievements.
-  Generator 36, schema 11, profile 3, all unchanged. Notes:
-  `docs/releases/v0.8.2.md`. Smoke: 34 of 35 then `look` fixed, and the three
-  challenge journeys (DISTRIBUTION_REVIEW, *v0.8.2*); the challenges have not
-  been looked at in the game by a person. The website is redeployed after it
-  so its demo runs 0.8.2.
-
-## More challenges (16 October 2026)
+  **Closed 16 October 2026 at the owner's word.**
 
 - [x] **The smoke journey `challenge`, rewritten for step 1, passes** (GPU, the
   owner's go-ahead, 46 s): five tabs and 27 cards, an old 9-foot record shown as
