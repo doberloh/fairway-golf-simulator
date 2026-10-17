@@ -1125,6 +1125,20 @@ slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
 box itself stays upright, and the text with it -- the kit's rule (only the
 colour leans) by another route.
 
+## The 1.0 sounds (built, not wired)
+
+Phase 4 of the 1.0 interface (17 October 2026). `src/chiptune.js` holds the
+family C tunes the owner picked in the mockups (prog metal, clean tone,
+half-time grooves with an echoing lead) for hole in one, eagle, birdie, par,
+bogey, level up, round complete and XP counting, and the six interface sounds
+(menu move, select, back, toggle, locked, monitor ready), as event lists in
+sixteenth notes, with the player ported from the mockup (`playChip`: pulse
+guitars and leads, triangle bass, noise drums, a dotted-eighth echo; never
+scheduled in the past; its noise is a fixed sequence so a tune sounds the same
+twice). **Nothing in the game plays them yet**: the owner asked for them built
+for listening overnight; the sound lab's `chiptune.html` plays them. Wiring
+them in and deleting the marimba stings waits for the sign-off (TODO).
+
 ## The 1.0 menus and windows
 
 Phase 3 of the 1.0 interface (17 October 2026, branch `ui-1-0`; **not seen**,

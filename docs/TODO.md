@@ -77,6 +77,15 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
   4:3 and on an iPad, drive it with arrows and a controller, and open every
   panel to check the restyle reads.
+- [ ] **Phase 4 (sounds): the chiptune is built for listening, not in the
+  game** (17 October 2026, at the owner's word for the overnight run). Listen
+  in `docs/reports/sounds/chiptune.html` (`node tools/sound-lab/build.mjs`):
+  hole in one, eagle, birdie, par, bogey, level up, round complete, XP counting
+  and the six interface sounds, clean with drive to compare. Once signed off:
+  wire them through audio.js (score stings, level up, XP, menu move / select /
+  back / toggle / locked / ready), delete the marimba stings with no option
+  to keep them (UI_1_0_PLAN 5.3), and run `tools/sound-lab/check.mjs` (a
+  headless browser: ask first).
 - [ ] **The Text size barely enlarges the round screen on 16:9** (about a
   tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
   The owner's call whether that is right for the bay.

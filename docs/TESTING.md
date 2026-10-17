@@ -155,6 +155,9 @@ the courses several suites share.
   `ui-focus` (phase 3: arrows and a controller -- every button reachable from
   every other in the menus' layouts, none a dead end, down goes to the next
   row, a single line wraps, the keys and pad directions).
+  `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
+  longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
+  the player never scheduling in the past).
   The kit is on no screen yet; the round screen is (in play, off a phone), and
   the smoke journeys reach the top bar's controls through `t.chrome()` /
   `t.menuItem()`, which open the Esc list where the round screen hides the bar

@@ -55,3 +55,13 @@ const stings=readFileSync(join(here,'stings.html'),'utf8')
 <meta name="built" content="${built}">`);
 writeFileSync(join(outDir,'stings.html'),stings);
 console.log(`wrote ${join('docs','reports','sounds','stings.html')} (${(stings.length/1024).toFixed(0)} KB)`);
+// The 1.0 interface's chiptune (17 October 2026, phase 4): every moment and
+// interface sound of family C, made by src/chiptune.js, for listening and
+// signing off before any of it goes into the game.
+const chip=readFileSync(join(root,'src','chiptune.js'),'utf8').replace(/^export /gm,'');
+const chipPage=readFileSync(join(here,'chiptune.html'),'utf8')
+ .replace('/*SYNTH*/',()=>chip)
+ .replace('<meta charset="utf-8">',()=>`<meta charset="utf-8">
+<meta name="built" content="${built}">`);
+writeFileSync(join(outDir,'chiptune.html'),chipPage);
+console.log(`wrote ${join('docs','reports','sounds','chiptune.html')} (${(chipPage.length/1024).toFixed(0)} KB)`);

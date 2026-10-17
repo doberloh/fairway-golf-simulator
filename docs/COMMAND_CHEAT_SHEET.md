@@ -87,7 +87,7 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 
 | Command | What it does |
 | --- | --- |
-| `node tools/sound-lab/build.mjs` | Writes the listening report, `docs/reports/sounds/index.html`, and the water options, `water.html` beside it (local): every sound with takes, sliders and a notes box; opens straight from the file |
+| `node tools/sound-lab/build.mjs` | Writes the listening report, `docs/reports/sounds/index.html`, and the water options, `water.html` beside it (local): every sound with takes, sliders and a notes box; opens straight from the file. Also `chiptune.html`: the 1.0 interface's chiptune, family C, for signing off |
 | `node tools/sound-lab/check.mjs [--seconds 60]` | Renders every sound offline in a headless browser and prints peak and average level, length, event and bird-song counts for every strike, landing, score sting and ambience; fails on a silent, broken or NaN sound, or if two birds ever sing at once. A long `--seconds` takes minutes |
 
 ## Art assets (rarely needed)
