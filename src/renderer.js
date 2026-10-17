@@ -1764,7 +1764,7 @@ export class GolfView{
    // FLOOD_SHADOW_EVERY and the frame loop.
    lamp.shadow.mapSize.set(FLOOD_SHADOW_SIZE,FLOOD_SHADOW_SIZE);
    lamp.shadow.bias=this.quality.shadowBias.constant;
-   lamp.shadow.normalBias=this.quality.shadowBias.normal;
+   lamp.shadow.normalBias=this.quality.shadowBias.flood??this.quality.shadowBias.normal;
    lamp.shadow.autoUpdate=false;lamp.shadow.needsUpdate=false;
    this.group.add(lamp,lamp.target);
    return lamp;

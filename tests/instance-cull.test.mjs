@@ -195,6 +195,23 @@ test('small crowns are drawn thinned, every held crown exactly once, and none ne
  cull.tune({farTrees: null});
 });
 
+test('a cartoon crown is never thinned: its twin comes apart into shards', async () => {
+ const {modelParts} = await import('../src/mesh-assets.js');
+ const {TWIN_MIN_TRIANGLES} = await import('../src/instance-cull.js');
+ const parts = modelParts('tree_oak'), leaf = parts.findIndex(p => p.role === 'leaf');
+ assert.ok(parts[leaf].geometry.index.count / 3 < TWIN_MIN_TRIANGLES, 'the Kenney oak is a few dozen triangles');
+ const group = new T.Group(), m = new T.Matrix4(), n = 200;
+ const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeScale(15, 15, 15).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 80));
+ mesh.castShadow = true; mesh.userData = {model: 'tree_oak', part: leaf, role: 'leaf'};
+ group.add(mesh);
+ const cull = cullInstances(group, {farTrees: .15, thinShadowsFrom: 1}), cam = camera();
+ cull.update(cam, null);
+ assert.ok(!group.children.some(o => o.name === 'far trees' || o.name === 'shadow twin'), 'no twin mesh for a cartoon crown');
+ assert.equal(cull.stats().thinCrowns, 0);
+ assert.equal(mesh.count, cull.stats().drawn);
+});
+
 test('the tiers that split cascades split them inside their own shadow reach', async () => {
  const {TIERS} = await import('../src/graphics.js');
  for (const [name, t] of Object.entries(TIERS)) {

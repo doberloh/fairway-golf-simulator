@@ -46,6 +46,9 @@ const CELL = 64;          // metres on a side
 // `shadowMaps: false` gives every shadow map every held tree, as before 28 September.
 const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null, farTrees: null};  // metres, degrees, metres
 const MOVE = 4;           // metres of camera travel before a rebuild
+// The fewest leaf triangles a crown needs before it gets a thinned twin. The
+// grown trees have 13-53 thousand; the Kenney cartoon crowns 40-170.
+export const TWIN_MIN_TRIANGLES = 2000;
 const TURN = Math.cos(4 * Math.PI / 180);
 const SUN_TURN = Math.cos(.75 * Math.PI / 180);
 const MARGIN = () => tune.margin * Math.PI / 180;
@@ -123,7 +126,13 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // It is never drawn into the picture: only into shadow maps.
   const far = mesh.userData.role === 'leaf' && (thinShadowsFrom !== Infinity || farTrees > 0)
    ? farParts(mesh.userData.model)?.[mesh.userData.part]?.geometry : null;
-  const thins = far && far.index.count < geo.index.count * .6;
+  // ONLY A CROWN OF MANY SPRAYS HAS A TWIN. Thinning keeps a third of the
+  // pieces and grows each, which a grown redwood's thousands of sprays survive
+  // and a cartoon crown does not: Kenney's oak is 64 triangles in a handful of
+  // flat faces, its twin 16 of them floating apart -- the shards that made Low
+  // and Medium's trees a "mangled mess" (16 October) -- and it saved 48
+  // triangles a tree. RESEARCH.md *Low and Medium trees: striped crowns and shards*.
+  const thins = far && geo.index.count >= TWIN_MIN_TRIANGLES * 3 && far.index.count < geo.index.count * .6;
   if (thins && thinShadowsFrom !== Infinity && mesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = mesh.instanceMatrix;
