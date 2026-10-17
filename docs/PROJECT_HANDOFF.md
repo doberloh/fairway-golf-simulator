@@ -1243,6 +1243,16 @@ putting's note stay under their controls (the mockup has none); "your best"
 on the course is not shown; saved rounds scroll into view on 16:9 (the
 mockup shows them on 4:3 only). A phone stacks the columns in the old look.
 
+**Launch monitor setup is the mockup's layout the same way**
+(`src/ui-monitor-setup.js`): three numbered steps on the left, ticked from
+the game's own state (bridge connected; a device talking; armed -- a step
+is never done ahead of the bridge), with the moved Arm switch under them;
+the status on the right -- the ball light, bridge and device rows, the
+address box, the last shot, Connect bridge and Try a sample shot (its JSON
+folded under *Edit the sample shot*). `monitorSetup.paint()` redraws it on
+a status message, the Arm switch and every `updateHUD` while it is open. The
+old notes and connector list run along the foot (PLACED).
+
 **Pause is two columns** (the Esc list, reshaped toward the mockup): Paused,
 Resume and every action down the left; the course, standings, tee, Swing Meter,
 shot numbers, cameras and conditions on the right. **Settings: help on

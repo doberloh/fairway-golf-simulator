@@ -157,7 +157,9 @@ the courses several suites share.
   row, a single line wraps, the keys and pad directions). `ui-lobby` (the
   1.0 lobby: a picker's value and line are cut from the drop-down's own
   option text, every out-of-bounds rule reads as its short name, every format
-  has a tile).
+  has a tile). `ui-monitor-setup` (the setup screen's steps tick in order
+  and never ahead of the bridge, the ball light's words match the round
+  screen's, the last shot in mph, degrees and rpm).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring

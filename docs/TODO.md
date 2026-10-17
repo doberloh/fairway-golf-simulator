@@ -66,8 +66,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Phase 3, second pass: the sheets as 1.0 screens** (17 October 2026,
   seen in the browser pane at 1280 x 720 and 1024 x 768: the lobby, My
   profile, challenges, launch monitor). Restyled on the grid, not rebuilt on
-  the kit (the lobby since rebuilt to its mockup, below); launch monitor
-  setup is not the three steps;
+  the kit (the lobby and launch monitor setup since rebuilt to their
+  mockups, below);
   course of the week and saved courses not looked at. The course studio's
   sheet is unchanged. The pause screen (two columns) and settings' help on
   demand are not yet seen.
@@ -79,6 +79,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   course column), a controller on the tiles and pickers. Owed: tees per
   golfer if the owner wants the mockup's chips on every row (a round rule
   first), "your best" on the course panel, a picture of the course.
+- [ ] **1.0 launch monitor setup: built to the mockup, seen in the browser
+  pane at 1280 x 720 with no bridge** (17 October 2026, third pass;
+  src/ui-monitor-setup.js). Not seen: the steps ticking and the light going
+  green with a real connector (the monitor, mixed-group and bridge-bundle
+  journeys drive it), a phone. PLACED: Connect bridge keeps its words (the
+  mockup says Reconnect; the journeys press it by name), the address is the
+  editable box, the last shot is the last of any kind, the connector notes
+  sit along the foot.
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find

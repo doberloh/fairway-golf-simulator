@@ -176,6 +176,58 @@
  /* The endless and range setups have no course column: two columns. */
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent:not(:has(.panel-section[data-title="Your course"])){grid-template-columns:7fr 5fr;grid-template-areas:"lead lead" "tabs tabs" "group format" "saved saved"}
 
+ /* ------------------------------------------------- launch monitor setup */
+ /* LAUNCH MONITOR SETUP (ui-monitor-setup.js moves its controls into .lm):
+    the mockup's two halves -- three numbered steps and the Arm switch on the
+    left, the status on the right -- and what the old panel said about
+    connectors along the foot (PLACED). */
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=monitor] #drawerContent.lm-root>:is(.panel-lead,.panel-section,.panel-columns,.panel-tabs){display:none!important}
+ #drawer .lm{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .lm-col{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .lm-foot{grid-column:1/-1;min-width:0;columns:2;column-gap:32px}
+ #drawer .lm-foot>*{break-inside:avoid}
+ #drawer .lm .lm-head{margin:0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}
+ #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lm-step{display:flex;align-items:center;gap:18px;min-height:88px;padding:8px 32px}
+ #drawer .lm-n{flex:none;display:grid;place-items:center;min-width:40px;height:40px;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:28px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .lm-step:not(.done) .lm-n{background:rgba(255,255,255,.14);color:#fff}
+ #drawer .lm-what{display:grid;gap:4px;flex:1;min-width:0}
+ #drawer .lm-what strong{font-size:22px;font-weight:800;font-style:italic;line-height:1.1;color:#fff}
+ #drawer .lm-what span{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.3;color:#fff;opacity:.9}
+ #drawer .lm-tick{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft);white-space:nowrap}
+ #drawer .lm-step.done .lm-tick{color:#4ade80}
+ #drawer .lm-arm{display:flex;align-items:center;min-height:56px;padding:0 32px}
+ #drawer .lm-arm.on::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lm-arm>label{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;gap:16px;width:100%;margin:0;font-family:var(--font-ui);font-size:17px;font-weight:600;color:#fff}
+ #drawer .lm-arm input[type=checkbox]{width:22px;height:22px;accent-color:var(--hot)}
+ #drawer .lm-arm input:disabled{opacity:.4}
+ #drawer .lm-light{display:grid;grid-template-columns:auto minmax(0,1fr);align-content:center;gap:4px 18px;min-height:88px;padding:8px 32px}
+ #drawer .lm-light i{grid-row:1/3;align-self:center}
+ #drawer .lm-light i{flex:none;width:22px;height:22px;border-radius:50%;background:#6b7280}
+ #drawer .lm-light[data-state=green] i{background:#4ade80;box-shadow:0 0 0 7px rgba(74,222,128,.25)}
+ #drawer .lm-light[data-state=amber] i{background:#fbbf24;box-shadow:0 0 0 7px rgba(251,191,36,.25)}
+ #drawer .lm-light[data-state=red] i{background:#f87171;box-shadow:0 0 0 7px rgba(248,113,113,.25)}
+ #drawer .lm-light[data-state=green]::before{box-shadow:inset 0 0 0 3px #4ade80}
+ #drawer .lm-light strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .lm-light span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 32px}
+ #drawer .lm-k{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-v{min-width:0;font-size:18px;font-weight:800;font-style:italic;color:#fff;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .lm-v.ok{color:#4ade80}
+ #drawer .lm-address .lm-v{flex:1;overflow:visible}
+ #drawer .lm-address input{width:100%;height:34px;padding:0 8px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;text-align:right}
+ #drawer .lm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lm-buttons>button{width:100%;height:48px;min-height:48px;margin:0;padding:0 16px;font-size:17px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#fff}
+ #drawer .lm-buttons>button::before{background:var(--panel)!important}
+ #drawer .lm-buttons>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))!important}
+ #drawer .lm-buttons>button.primary{color:var(--on-hot)}
+ #drawer .lm-status>:is(#jsonError,#monitorStatus){margin:0;padding:0 8px}
+ #drawer .lm-json{padding:0 8px;font-family:var(--font-ui);font-size:13px;color:var(--soft)}
+ #drawer .lm-json textarea{width:100%;min-height:150px;font:12px/1.4 ui-monospace,monospace}
+ #drawer .lm-foot :is(p,li){font-family:var(--font-ui);font-size:13px;line-height:1.5;color:var(--soft)}
+ #drawer .lm-foot h3{margin:8px 0;font-size:13px;letter-spacing:.16em;color:var(--soft)}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */
