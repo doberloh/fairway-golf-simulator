@@ -62,11 +62,108 @@
  body:not(:has(#app[data-mode=studio])) #drawer .panel-tab{height:40px;padding:0 18px;font-size:14px}
 
  /* ---------------------------------------------------------------- the lobby */
- /* One screen: the course on the left (3 columns), the golfers in the middle
-    (5), format and rules on the right (4), saved rounds along the foot -- all
-    at once. The tabs stay as chips that jump to a part. On the round panel
-    and the setups that share it (endless, the range, the course of the week,
-    a challenge). */
+ /* THE LOBBY (ui-lobby.js moves its controls into .lb): the mockup's three
+    columns on the 12-column grid -- the course (3), the golfers (5), the
+    format and rules (4) -- and saved rounds along the foot, which a 16:9
+    screen reaches by scrolling (PLACED: the mockup shows them on 4:3 only).
+    The tabs ride in the footer band, where the mockup has its key hints, as
+    chips that scroll to a column (inside the scrolling content they would
+    cost a row, and the content clips anything pulled up into the header); the
+    intro line goes (the screen says what it is). */
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root{display:block}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-lead,body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-section.lb-emptied{display:none!important}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:13px;white-space:nowrap}
+ #drawer .lb{display:grid;grid-template-columns:3fr 5fr 4fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .lb-col{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .lb-saved{grid-column:1/-1;display:grid;gap:8px;min-width:0}
+ #drawer .lb .lb-head{margin:0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb-format>.lb-head:not(:first-child){margin-top:16px}
+ #drawer .lb-label{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2}
+ /* Every block in the lobby is a slanted panel with upright contents. */
+ #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.add-player,#roundSurprise,#roundStudio,#roundManage,#roundDelete,#applyGroup,.course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lb :is(.lb-pick,.player-row,.lb-tile,.lb-tees):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* The course: its picture (the landscape's colours, its name), its name panel, Change course, Surprise me. */
+ #drawer .lb-pic{height:150px;overflow:hidden}
+ #drawer .lb-pic::before{background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 42%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 42% 100%)!important}
+ #drawer .lb-pic::after{content:"";position:absolute;left:-8%;right:-8%;top:30%;height:30%;z-index:-1;background:radial-gradient(60% 100% at 30% 100%,color-mix(in srgb,var(--a1) 60%,#0d2210) 0 60%,transparent 61%),radial-gradient(50% 90% at 78% 100%,color-mix(in srgb,var(--a1) 45%,#0d2210) 0 60%,transparent 61%);transform:skewX(-12deg)}
+ #drawer .lb-pic span{position:absolute;left:26px;bottom:12px;font-size:13px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+ #drawer .lb-facts{display:grid;gap:6px;padding:14px 28px}
+ #drawer .lb-facts strong{font-size:26px;font-weight:800;font-style:italic;line-height:1;color:#fff;overflow-wrap:anywhere}
+ #drawer .lb-facts small{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb-course>button{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:48px;min-height:48px;margin:0;padding:0 28px;font-size:16px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#fff}
+ #drawer .lb-course>button::before{background:var(--panel)!important}
+ #drawer .lb-course>button svg{width:18px;height:18px;color:var(--a1)}
+ #drawer .lb-course>#roundSurprise::before{background:color-mix(in srgb,var(--a1) 35%,var(--panel))!important}
+ #drawer .lb-course>:is(#roundStudio,#roundManage,#roundDelete){height:40px;min-height:40px;font-size:14px!important;color:var(--soft)}
+ #drawer .lb-course>#roundDelete{color:#ff8a7a}
+ #drawer .lb-course>.research-label{margin:0;padding:0 8px}
+ /* A picker: label and line on the left, ◀ value ▶ on the right, the real drop-down see-through over the value. */
+ #drawer .lb-pick{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:6px 24px}
+ #drawer .lb-k{display:grid;gap:2px;flex:1 1 0;min-width:0}
+ #drawer .lb-sub{font-size:11px;letter-spacing:.04em;font-weight:700;color:#fff;opacity:.75}
+ #drawer .lb-v{display:flex;flex:none;align-items:center;gap:6px;max-width:70%}
+ #drawer .lb-sel{position:relative;display:block;min-width:0}
+ #drawer .lb-val{display:block;padding-right:4px;font-size:18px;font-weight:800;font-style:italic;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+ #drawer .lb-sel>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+ #drawer .lb-sel>select option{color:#111;background:#fff}
+ #drawer .lb-arrow{flex:none;width:28px;height:36px;min-height:36px;padding:0;border:0;border-radius:0;background:none;color:var(--a1);font-size:14px;line-height:1}
+ #drawer .lb-arrow:hover:not(:disabled){color:var(--hot)}
+ #drawer .lb-arrow:disabled{opacity:.3}
+ #drawer .lb-course .lb-pick .lb-sel{position:static;min-width:0}
+ #drawer .lb-course .lb-pick .lb-val{display:none}
+ #drawer .lb-course .lb-pick .lb-label{font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;color:#fff}
+ #drawer .lb-course .lb-pick .lb-arrow{position:relative;z-index:1}
+ #drawer .lb-course .lb-pick{min-height:48px}
+ /* The golfers: a colour bar, the ball in its frame, the name (still the drop-down that picks who), LV and HCP. */
+ #drawer .lb .players-list{display:grid;gap:8px}
+ #drawer .lb .player-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:none;align-items:center;gap:6px 12px;min-height:72px;margin:0;padding:8px 24px}
+ #drawer .lb .player-row.play{grid-template-columns:auto minmax(0,1fr) auto auto auto auto}
+ #drawer .lb .player-row>*{grid-area:auto!important}
+ #drawer .lb .player-mark{display:flex;align-items:center;gap:10px;align-self:stretch}
+ #drawer .lb .player-dot{width:5px;height:auto;align-self:stretch;margin:8px 0;border-radius:0}
+ #drawer .lb .player-mark :is(img,.ball-avatar,.framed){width:44px;height:44px}
+ #drawer .lb .player-who{display:grid;gap:3px;min-width:0}
+ #drawer .lb .player-who>select{width:100%;height:32px;min-height:32px;padding:0 4px 0 0;border:0;border-radius:0;background:transparent;color:#fff;font:800 italic 24px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;appearance:none;cursor:pointer}
+ #drawer .lb .player-who>select option{font:15px var(--font-ui);text-transform:none;color:#111;background:#fff}
+ #drawer .lb .player-who>input{height:34px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lb .player-sub{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb .player-row>select{height:32px;min-height:32px;padding:0 8px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em}
+ #drawer .lb .player-row>select option{color:#111;background:#fff}
+ #drawer .lb .drop-player{width:36px;height:36px;min-height:36px;border:0;background:none;color:var(--soft)}
+ #drawer .lb .add-player{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:56px;min-height:56px;margin:0;font-size:18px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+ #drawer .lb .add-player::before{background:rgba(255,255,255,.05)!important}
+ #drawer .lb .add-player svg{width:18px;height:18px}
+ #drawer .lb-tees{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:0 24px}
+ #drawer .lb-tee-row{display:flex;gap:6px}
+ #drawer .lb-tee{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:5px;width:48px;height:32px;min-height:32px;padding:0;border:0;border-radius:0;background:none;color:var(--soft);font:800 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
+ #drawer .lb-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .lb-tee[aria-pressed=true]{color:#111}
+ #drawer .lb-tee[aria-pressed=true]::before{background:#fff}
+ #drawer .lb-tee i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+ #drawer .lb-note{display:grid;gap:6px;margin-top:8px;padding:16px 32px;font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
+ #drawer .lb-note .lb-label{font-family:"Saira Condensed",var(--font-ui),sans-serif;color:var(--hot)}
+ #drawer .lb-group>:is(#roundError,#applyGroup){margin:0}
+ #drawer .lb-group>#applyGroup{height:44px;min-height:44px}
+ /* The format: four tiles, two by two, the chosen one in the gradient. */
+ #drawer .lb-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lb-tile{height:56px;min-height:56px;margin:0;padding:0 12px;color:#fff;font:800 italic 20px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em}
+ #drawer .lb-tile:hover:not(:disabled)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
+ #drawer .lb-tile[aria-pressed=true]{color:var(--on-hot)}
+ #drawer .lb-tile[aria-pressed=true]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .lb-tile:focus-visible{outline:none}
+ #drawer .lb-tile:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lb-tile:disabled{opacity:.4}
+ #drawer .lb-format>:is(#formatNote,#roundPuttingNote){margin:0;padding:0 8px;font-family:var(--font-ui);font-size:12px!important;line-height:1.4;color:var(--soft)!important}
+ #drawer .lb-format>#roundPutting-distances{padding:0 8px}
+ /* Saved rounds along the foot: a card each, two to a row. */
+ #drawer .lb-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lb-saved .course-card{padding:14px 32px;margin:0}
+ #drawer .lb-saved>:is(.note,.field-error){margin:0;padding:0 8px}
+ #drawer .lb-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
+ @media (min-height:740px) and (max-aspect-ratio:3/2){#drawer .lb-pic{height:240px}#drawer .lb .player-row{min-height:84px}}
+
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent{display:grid;grid-template-columns:3fr 5fr 4fr;grid-template-areas:"lead lead lead" "tabs tabs tabs" "course group format" "saved saved saved";gap:0 32px;align-content:start}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-lead{grid-area:lead}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-tabs{grid-area:tabs}
@@ -143,4 +240,20 @@
  #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
  #drawer .panel-tab.active{background:none;color:var(--on-hot)}
  #drawer .panel-tab.active::before{background:var(--a1)}
+}
+
+/* THE LOBBY ON A PHONE keeps the old sheet's look: the columns stack, the
+   drop-downs show themselves (no see-through picker), no course picture. */
+@media (max-width:560px),(max-height:500px){
+ #drawer .lb{display:grid;gap:12px}
+ #drawer .lb-col,#drawer .lb-saved{display:grid;gap:8px}
+ #drawer .lb-pic,#drawer .lb-val{display:none}
+ #drawer .lb-facts{display:grid;gap:2px}
+ #drawer .lb-pick,#drawer .lb-tees{display:flex;align-items:center;justify-content:space-between;gap:8px}
+ #drawer .lb-v{display:flex;align-items:center;gap:4px;min-width:0}
+ #drawer .lb-tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ #drawer .lb-tile[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+ #drawer .lb-tee[aria-pressed=true]{outline:2px solid currentColor}
+ #drawer .lb-arrow{min-width:44px;min-height:44px}
+ #drawer .lb-root>.panel-section.lb-emptied{display:none!important}
 }

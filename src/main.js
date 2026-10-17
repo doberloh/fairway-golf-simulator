@@ -53,6 +53,7 @@ import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,parScore,sta
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
+import {buildLobby} from './ui-lobby.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
@@ -3784,9 +3785,12 @@ function groupEditor(hostId,start,onChange){
    // their own, the ball pushed the name box into the team's narrow column.
    +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):''}</span>`
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
-   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)} · Level ${levelOf(q.xp).level}</option>`).join('')
+   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
+   // The 1.0 lobby's row line (ui-lobby.js): level and handicap under the name.
+   +(()=>{const q=p.profile&&findProfile(profiles,p.profile);if(!q)return '';const h=profileSummary(q).handicap?.index;
+     return `<span class="player-sub">LV ${levelOf(q.xp).level} · HCP ${Number.isFinite(h)?h.toFixed(1):'—'}</span>`;})()
    +`</div>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
    +(bridgeSeen()?`<select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select>`
@@ -3990,7 +3994,7 @@ function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
 }
-function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
+function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
 // to feel like a pause. Putts are excluded: one is over before the hold would be.
@@ -4178,8 +4182,10 @@ function cycleShotChoice(){
 }
 const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
 // The course's colours, on #app so the pause list (the top bar) wears them too.
-function applyHudPalette(screen=appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
- const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:settings?.biome}});
+// The lobby wears the course being chosen (`lobbyBiome`, while it is open).
+let lobbyBiome=null;
+function applyHudPalette(screen=panel==='round'&&lobbyBiome?'lobby':appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
+ const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:screen==='lobby'?lobbyBiome:settings?.biome}});
  if(p.biome===hudBiome)return;hudBiome=p.biome;
  for(const [k,v] of Object.entries(paletteVars(p)))document.documentElement.style.setProperty(k,v);
 }
@@ -5588,6 +5594,10 @@ function renderPanel(name,content){
  // turned two tall panels into one long scroll -- and a mode dialogue that
  // scrolls where its neighbours tab reads as a different, worse screen.
  groupPanelContent(content,name==='round'||name==='library',name);
+ // The 1.0 lobby: the same controls, moved into the mockup's three columns,
+ // wearing the colours of the course being chosen (ui-lobby.js).
+ lobbyBiome=null;
+ if(name==='round')buildLobby(content,{onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();}});
  wireSliders(content);icon();
 }
 

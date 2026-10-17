@@ -1193,7 +1193,7 @@ is the panel colour, `--accent` the light end of the gradient with `--on-hot`
 text, `--font-display` Saira Condensed), so the sheets, tool windows and
 dialogues take the biome's colours and the typeface; the main buttons and tabs
 lean (pseudo-element), headings are the italic capitals. Their layouts are the
-old ones: the lobby, profile hub, Look locker, settings with ? help,
+old ones (the lobby since rebuilt, below): profile hub, Look locker, settings with ? help,
 challenges, course of the week, saved courses, studio, launch monitor setup
 and range controls of the plan are **not rebuilt on the kit** (TODO). **The
 Esc list gains the standings**: each golfer, how far through, against par.
@@ -1214,15 +1214,34 @@ applied at all (moved to ui-sheets.css).
 **The sheets as 1.0 screens (17 October 2026, second pass).** Full screen,
 the header band (the screen's name, Esc back), each control a slanted panel
 in a stack, the main button (`[data-panel-action]`) bottom right in the
-gradient, tabs as slanted chips. The lobby (`#drawer[data-panel=round]`)
-shows its four parts at once on the grid -- course, golfers, format and rules,
-saved rounds along the foot -- and its tabs stay as working chips (the smoke
-journeys press them). The other sheets keep their tabs: My profile is the hub
-with the Look locker as a tab, as designed. **Restyled, not rebuilt**: every
-sheet is still renderPanel's markup, so the mockups' exact arrangements (the
-lobby's course picture and tee chips, the three-step monitor setup) are not
-there. Not in the course studio, whose sheet takes the play area. An open
-sheet is in `focusScope` (arrows, menu sounds; B closes it).
+gradient, tabs as slanted chips. The other sheets keep their tabs: My
+profile is the hub with the Look locker as a tab, as designed. Not in the
+course studio, whose sheet takes the play area. An open sheet is in
+`focusScope` (arrows, menu sounds; B closes it).
+
+**The 1.0 lobby is the mockup's layout** (`src/ui-lobby.js`, 17 October
+2026, third pass): three columns -- the course (a picture panel in the
+landscape's colours, the name panel, Change course ◀ ▶, Surprise me, then
+Course studio, Manage & share and Delete), the golfers (a row each: colour
+bar, the ball in its frame, the name, LV and HCP; + Add player; the tees;
+the lie-penalty note), the format and rules (four tiles, then ◀ ▶ pickers
+for putting, out of bounds and the lie penalty) -- and saved rounds along
+the foot. The lobby wears the colours of the course being chosen
+(`lobbyBiome`, cleared when the sheet closes). **MOVED, NOT REBUILT:**
+renderPanel still writes the old lobby and wires it; `buildLobby` then moves
+those very nodes into the columns, so every id, handler and rule is the old
+one. A tile or arrow sets the real drop-down and fires its change; a
+picker's drop-down lies see-through over its value, so clicking the value
+opens the list and Playwright's selectOption still works (`#roundOB`); the
+format drop-down stays in the page, hidden (the skins journey sets it). The
+tabs ride in the footer band and scroll to a column -- pulled up into the
+header they were clipped by the scrolling content. **PLACED:** tees are one
+choice for the group, as the round rules have it, not chips on each golfer's
+row as drawn; the course picture is the landscape's colours, not a
+photograph (none exists before the course is built); the format's note and
+putting's note stay under their controls (the mockup has none); "your best"
+on the course is not shown; saved rounds scroll into view on 16:9 (the
+mockup shows them on 4:3 only). A phone stacks the columns in the old look.
 
 **Pause is two columns** (the Esc list, reshaped toward the mockup): Paused,
 Resume and every action down the left; the course, standings, tee, Swing Meter,

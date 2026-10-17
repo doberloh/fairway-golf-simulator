@@ -154,7 +154,10 @@ the courses several suites share.
   round-complete helpers (places with ties, XP this round, the handicap line).
   `ui-focus` (phase 3: arrows and a controller -- every button reachable from
   every other in the menus' layouts, none a dead end, down goes to the next
-  row, a single line wraps, the keys and pad directions).
+  row, a single line wraps, the keys and pad directions). `ui-lobby` (the
+  1.0 lobby: a picker's value and line are cut from the drop-down's own
+  option text, every out-of-bounds rule reads as its short name, every format
+  has a tile).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring

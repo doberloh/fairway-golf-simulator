@@ -66,11 +66,19 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Phase 3, second pass: the sheets as 1.0 screens** (17 October 2026,
   seen in the browser pane at 1280 x 720 and 1024 x 768: the lobby, My
   profile, challenges, launch monitor). Restyled on the grid, not rebuilt on
-  the kit: the lobby lacks the mockup's course picture, golfer rows with tee
-  chips and four format tiles; launch monitor setup is not the three steps;
+  the kit (the lobby since rebuilt to its mockup, below); launch monitor
+  setup is not the three steps;
   course of the week and saved courses not looked at. The course studio's
   sheet is unchanged. The pause screen (two columns) and settings' help on
   demand are not yet seen.
+- [ ] **The 1.0 lobby: built to the mockup, seen in the browser pane** at
+  1280 x 720, 1024 x 768 and a phone sideways (17 October 2026, third pass;
+  src/ui-lobby.js). Not seen: four golfers (the middle column scrolls), a
+  long course name, the lobby opened mid-round (Apply to this session), the
+  course of the week and challenge setups (they keep the restyled sheet: no
+  course column), a controller on the tiles and pickers. Owed: tees per
+  golfer if the owner wants the mockup's chips on every row (a round rule
+  first), "your best" on the course panel, a picture of the course.
 - [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
   smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
   on two reruns with other seeds). Course-dependent, not the interface: find
@@ -88,7 +96,7 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   and the Esc list (ui-focus.js), the main menu as the title screen with the
   golfer card, the standings in the Esc list, and the 1.0 colours and type on
   every panel and window through the old variables. **Not rebuilt on the kit**
-  (each keeps its old layout, restyled): the lobby, pause as its own screen,
+  (each keeps its old layout, restyled; the lobby since rebuilt): pause as its own screen,
   profile hub, Look locker, settings with one line of ? help, challenges,
   course of the week, saved courses, course studio, launch monitor setup,
   range controls, and the small windows. Look at the main menu at 16:9, 16:10,
