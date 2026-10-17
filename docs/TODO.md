@@ -159,15 +159,6 @@ are in the archived section of the same name.
 
 ## Play
 
-- [ ] **Play the range's greens by hand (built 16 October 2026, branch
-  `range-greens`).** Seen working in the game by script and by the
-  `range-greens` smoke journey, never by a person swinging. Check: chips and
-  putts on the short-game green with the Swing Meter (the club picked, the
-  lie's cost, play it out, a new spot every ball); aiming at each target from
-  the mats switches the card and the cup; a left-to-right and a random green
-  read and break the right way; the bigger Range controls window on a phone;
-  two golfers taking turns at a station; the PDF opened in your own reader.
-
 - [ ] **The shot panel forgets its numbers on a reload.** `lastShot` is memory
   only, so a resumed round shows dashes mid-hole. Decide first whether a shot
   from an earlier session should look as though it just happened. (was: *The
@@ -379,10 +370,16 @@ are in the archived section of the same name.
   (it mixed a driver, a wedge and now putts into one number).
 - Checked: `npm test`, the build, the `range` and new `range-greens` smoke
   journeys on the real GPU, the targets, stations, a regrow and the report
-  looked at in the game and in Chrome's PDF viewer. Not checked by a person
-  swinging: the open entry *Play the range's greens by hand*. RESEARCH.md
+  looked at in the game and in Chrome's PDF viewer. RESEARCH.md
   *The driving range*; tests in `tests/range.test.mjs` and
   `tests/range-report.test.mjs`.
+- [x] **Played by hand: the range's greens** (closed at the owner's word, 16
+  October 2026). The owner played the greens with the keyboard controls and
+  closed the check. It listed chips and putts on the short-game green with the
+  Swing Meter, aiming at the targets, the sloped greens' read and break, the
+  bigger Range controls window on a phone, two golfers at a station and the
+  PDF in the owner's own reader; the owner's word covered the entry, not each
+  item separately.
 
 ## Low and Medium trees (16 October 2026)
 
