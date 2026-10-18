@@ -60,7 +60,7 @@ import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
-import {leanAsOne,makeWindow} from './ui-windows.js';
+import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
@@ -1703,7 +1703,9 @@ function setAimView(on){
  resetMapNav();
  if(on)$('aimViewHint').textContent=dropState?'Tap to place the ball · pinch to zoom'
   :['free','overview'].includes(view.config.mode)?'Tap to fly there · pinch to zoom':'Tap to aim · pinch to zoom';
- updateExplorer();
+ // The big screen's foot names the same thing as a key chip (frame c-bigmap).
+ if(on)$('aimViewClick').textContent=dropState?'Place the ball':['free','overview'].includes(view.config.mode)?'Fly there':'Aim here';
+ updateExplorer();drawRoundHud();
 }
 
 function takeShot(data=null,struck=null){
@@ -4272,6 +4274,8 @@ function drawRoundHud(){
  const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
   :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
  setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
+ // The big map's header: the hole's line, the aim and the pin (frame c-bigmap).
+ setHtml($('mapFacts'),aimViewOpen?escape([...s.line,!flight&&aimPoint?`AIM ${Math.round(aimRange/YARD)}`:'',`PIN ${Math.round(distance()/YARD)}`].filter(Boolean).join(' · ')):'');
  // THE WIND, alone at the top centre (round 13: the hole panel stands alone at
  // the top left; the rise to the hole went to the pin's marker).
  const rise=course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z);
@@ -6881,7 +6885,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
   // ? in a settings window or a sheet shows every control's explanation (ui-screens.css).
   if(e.key==='?'&&document.activeElement?.closest?.('.popup,#drawer')){e.preventDefault();e.stopPropagation();$('app').classList.toggle('rh-help');return;}
@@ -7165,6 +7169,16 @@ function tick(now){
   }
  }
 }
+// The old windows, dressed as 1.0 windows by ui-windows.css, lean as one block
+// whenever they open or redraw (ui-windows.js).
+watchWindows([
+ {el:$('leaveNotice'),rows:()=>[...document.querySelectorAll('#leaveNotice .leave-card>:not(.leave-options),#leaveNotice .leave-options>button')]},
+ {el:$('versionNotice'),rows:()=>[...document.querySelectorAll('#versionNotice>div>:not(.version-actions),#versionNotice .version-actions>button')]},
+ {el:$('welcome'),rows:()=>[...document.querySelectorAll('#welcomeForm>*')]},
+ {el:$('reliefBar'),rows:()=>[...document.querySelectorAll('#reliefBar>:not(.relief-options),#reliefOptions>button')]},
+ {el:$('dropBar'),rows:()=>[...document.querySelectorAll('#dropBar>*')]},
+ {el:$('pickBar'),rows:()=>[...document.querySelectorAll('#pickBar>*')]},
+]);
 try{
  // Text size first: the view measures its canvas as it is built.
  applyUiScale();addEventListener('resize',applyUiScale);

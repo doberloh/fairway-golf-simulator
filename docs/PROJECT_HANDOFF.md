@@ -1326,6 +1326,20 @@ pause is two such windows (the list; the round), the studio has its own
 (`toggleStudioPause`, Esc while flying: back to the view, studio settings,
 regenerate, save, settings, leave), built by `makeWindow`.
 
+**The old windows are dressed, not rebuilt** (round 13, frames c-dialogs1-3,
+c-xp, c-free). Leave this round, the version notice, the welcome, Take
+relief, the sim drop and the scramble pick keep their markup and IDs (smoke
+presses them); `ui-windows.css` draws them as windows, and `watchWindows`
+(main.js boot) re-runs `leanAsOne` whenever one is shown or its rows are
+redrawn -- **a new row in one of them needs nothing; a new window needs a
+line in that list, or its rows lean one by one**. The relief, drop and pick
+windows stand right of centre, so the ball and the drop stay in view. The
+toast is a pill under the wind, the XP card sits top centre, level up is a
+band across the screen, the keys list is a window of chips, the time of day
+and the shot list are dark windows. Free flight is a pill top left (the
+hole picker under it), its keys as chips along the bottom with Return to
+ball, and every round piece but the map hidden (`#world.exploring`).
+
 **Pause is the mockup's two columns** (the Esc list; third pass, 17 October
 2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
 Help & controls and Main menu as tall rows, the settings as four half-width
@@ -1441,7 +1455,14 @@ nothing got you exact. Four pieces fix that, each with a rule.
   press and the click both step: every tap moves twice.** `contextmenu` is
   cancelled, because a long press on Android opens one and ends the sweep.
 - **The big map is the SAME canvas**, with `aim-view` on `#world` laying the
-  `.minimap` panel over the course. Its rules are `!important` because a
+  `.minimap` panel over the course. On a big screen it is the round-13 window
+  (frame c-bigmap, `ui-windows.css`): centred, 62.5% x 89% of the screen and
+  NOT zoomed (only its header and foot take `--hud-z`), the rest dimmed by a
+  box shadow; `#mapFacts` (hole line, aim, pin) is filled by `drawRoundHud`
+  only while it is open; the green-reading buttons show their names; the
+  foot's keys are `.avb-keys` and `#aimViewDone` reads *M Close* there and
+  *Done* on a phone (its accessible name stays Done: the phone journey
+  presses it by name). M toggles it in play, not while a ball flies. Its rules are `!important` because a
   player may have dragged or sized the map, and those positions are inline
   styles. `setAimView` resets the zoom both ways -- a zoom chosen on the big
   map means nothing on a thumbnail. **A touch tap on the thumbnail opens it

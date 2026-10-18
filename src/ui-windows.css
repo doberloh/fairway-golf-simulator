@@ -21,3 +21,196 @@
 .w13-row:focus-visible{outline:none}
 .w13-row:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
 #world.studio-paused::after{content:"";position:absolute;inset:0;z-index:95;background:rgba(5,8,6,.55);pointer-events:none}
+
+/* ---------------------------------------------------------------- dialogs */
+/* LEAVE, THE VERSION NOTICE AND THE WELCOME AS WINDOWS (round 13, frames
+   c-dialogs1-3). They sit outside #app, so they are matched on the screen's
+   size and zoomed by --sheet-z. The card is a column of rows -- the title in
+   a panel, the words as a line, a typed name in an outlined row, each choice
+   a row with its line under it, the main one filled -- leaning as one block
+   (main.js watchWindows -> leanAsOne). */
+@media (min-width:561px) and (min-height:501px){
+ body>.version-notice{background:rgba(5,8,6,.55);backdrop-filter:none}
+ body>.version-notice>:is(div,form){width:660px;max-width:calc(100vw / var(--sheet-z,1) - 60px);display:grid;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;zoom:var(--sheet-z,1);color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;text-align:left}
+ body>.version-notice :is(.leave-options,.version-actions){display:contents}
+ body>.version-notice>:is(div,form)>*{position:relative;isolation:isolate;margin:0;translate:calc(var(--wy,0px) * .2126) 0}
+ body>.version-notice :is(.leave-options,.version-actions)>button{translate:calc(var(--wy,0px) * .2126) 0}
+ body>.version-notice>:is(div,form)>:is(h2,label.field)::before,body>.version-notice :is(.leave-options,.version-actions,form)>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);transform:skewX(-12deg)}
+ body>.version-notice h2{padding:14px 34px;font-size:31px;line-height:1.05}
+ body>.version-notice p{padding:0 34px;font-family:var(--font-ui);font-size:17px;line-height:1.4;color:var(--soft,#9ab)}
+ body>.version-notice label.field{display:grid;gap:6px;padding:12px 34px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft,#9ab);text-transform:uppercase}
+ body>.version-notice label.field::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
+ body>.version-notice label.field input{height:42px;padding:0 14px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#fff;font:800 italic 22px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button{position:relative;isolation:isolate;display:grid;gap:3px;justify-items:start;min-height:56px;padding:10px 34px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 21px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-align:left;text-transform:uppercase;cursor:pointer}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button strong{font:inherit}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button small{font-size:13px;font-style:normal;letter-spacing:.12em;font-weight:700;color:var(--soft,#9ab)}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button.primary{color:var(--on-hot,#111)}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button.primary small{color:var(--on-hot,#111);opacity:.8}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button:focus-visible{outline:none}
+ body>.version-notice :is(.leave-options,.version-actions,form)>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5)}
+ body>.version-notice .welcome-card .menu-brand{padding:0 34px;font-size:30px}
+ body>.version-notice .welcome-note{padding:0 34px;font-family:var(--font-ui);font-size:13px;color:var(--soft,#9ab)}
+ body>.version-notice .welcome-card .welcome-restore{font-size:16px}
+ body>.version-notice .field-error:empty{display:none}
+}
+
+/* ---------------------------------------------- windows on the round screen */
+@container app (min-width:561px) and (min-height:501px){
+ /* TAKE RELIEF, the sim drop and the scramble pick as windows (frame
+    c-dialogs1): the title, the choices as rows, the main choice filled.
+    Placed right of centre, clear of the club and the meter. */
+ #world[data-mode=play] :is(#reliefBar,#dropBar,#pickBar){left:auto!important;right:auto!important;bottom:auto!important;top:96px;inset-inline-start:calc(50% + 20px)!important;width:680px;zoom:var(--hud-z,1);display:grid!important;grid-template-columns:1fr;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
+ #world[data-mode=play] :is(#reliefBar,#dropBar,#pickBar)[hidden]{display:none!important}
+ #world[data-mode=play] #reliefBar :is(.relief-options){display:contents}
+ #world[data-mode=play] :is(#reliefBar,#dropBar,#pickBar) :is(.relief-head,.relief-option,.relief-back,#reliefTake,#dropBar>div,#dropBar>label,#dropBar>button,#pickBar>div,#pickBar>button,#pickBar>span){position:relative;isolation:isolate;margin:0;border:0;border-radius:0;background:none;box-shadow:none;translate:calc(var(--wy,0px) * .2126) 0}
+ #world[data-mode=play] :is(#reliefBar,#dropBar,#pickBar) :is(.relief-head,.relief-option,.relief-back,#reliefTake,#dropBar>div,#dropBar>label,#dropBar>button,#pickBar>div,#pickBar>button,#pickBar>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] #reliefBar .relief-head{display:grid;gap:4px;padding:12px 34px}
+ #world[data-mode=play] #reliefBar .relief-head strong,#world[data-mode=play] :is(#dropBar,#pickBar)>div>strong{font-size:31px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #world[data-mode=play] #reliefBar .relief-head small{font-family:var(--font-ui);font-size:16px;color:var(--soft)}
+ #world[data-mode=play] #reliefBar .relief-option{display:grid;gap:3px;justify-items:start;padding:10px 34px;color:#fff;text-align:left;font:800 italic 21px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+ #world[data-mode=play] #reliefBar .relief-option strong{font:inherit}
+ #world[data-mode=play] #reliefBar .relief-option em{font-style:normal;color:var(--hot)}
+ #world[data-mode=play] #reliefBar .relief-option :is(small,span){font-size:13px;font-style:normal;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #world[data-mode=play] #reliefBar .relief-option.active{color:var(--on-hot)}
+ #world[data-mode=play] #reliefBar .relief-option.active::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world[data-mode=play] #reliefBar .relief-option.active :is(small,span,em){color:var(--on-hot)}
+ #world[data-mode=play] #reliefBar .relief-back:not([hidden]){display:flex;align-items:center;gap:14px;min-height:48px;padding:0 34px}
+ #world[data-mode=play] #reliefBar .relief-back button{height:34px;padding:0 12px;border:0;background:none;color:var(--a1);font:800 20px/1 "Saira Condensed",var(--font-ui),sans-serif}
+ #world[data-mode=play] #reliefBar .relief-back span{flex:1;text-align:center;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #world[data-mode=play] :is(#reliefTake,#pickAccept,#confirmDrop){min-height:52px;padding:0 34px;color:var(--on-hot);font:800 italic 21px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+ #world[data-mode=play] :is(#reliefTake,#pickAccept,#confirmDrop)::before{background:linear-gradient(135deg,var(--a1),var(--a2))!important}
+ #world[data-mode=play] :is(#dropBar,#pickBar)>div{display:grid;gap:4px;padding:12px 34px}
+ #world[data-mode=play] :is(#dropBar,#pickBar)>div :is(span,small){font-family:var(--font-ui);font-size:15px;color:var(--soft)}
+ #world[data-mode=play] #dropBar>label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 34px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #world[data-mode=play] #dropBar>label input{width:120px;height:34px;border:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 18px "Saira Condensed",var(--font-ui),sans-serif;text-align:right}
+ #world[data-mode=play] :is(#dropBar,#pickBar)>button{min-height:46px;padding:0 34px;color:#fff;font:800 italic 19px "Saira Condensed",var(--font-ui),sans-serif;text-align:left;text-transform:uppercase;cursor:pointer}
+ #world[data-mode=play] #pickBar>span{display:flex;align-items:center;justify-content:center;min-height:46px;font-size:20px;font-weight:800;font-style:italic}
+
+ /* A NOTE (the toast): one small pill, top centre, under the wind. */
+ #world .toast{top:84px;left:50%;right:auto;bottom:auto;transform:translateX(-50%);zoom:var(--hud-z,1);display:flex;align-items:center;gap:10px;min-height:40px;max-width:900px;padding:0 24px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:600 17px/1.3 var(--font-ui);isolation:isolate}
+ #world .toast::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .toast::after{content:"";order:-1;flex:none;width:9px;height:9px;border-radius:50%;background:var(--a1)}
+
+ /* THE XP CARD (frame c-xp): top centre, the gain in the hot colour, what
+    earned it, the level and its bar. */
+ #world .xp-gain{top:110px;width:430px;min-width:0;max-width:none;zoom:var(--hud-z,1);padding:14px 32px 16px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .xp-gain .xp-top{display:flex;align-items:baseline;gap:10px}
+ #world .xp-gain .xp-top b{font-size:37px;font-weight:800;font-style:italic;color:var(--hot)}
+ #world .xp-gain .xp-top span{margin-left:auto;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #world .xp-gain .xp-items{display:grid;gap:3px;margin:6px 0;padding:0;list-style:none}
+ #world .xp-gain .xp-items li{display:flex;justify-content:space-between;font-size:14px;letter-spacing:.12em;font-weight:700;text-transform:uppercase}
+ #world .xp-gain .xp-items li b{font-size:18px;font-style:italic;letter-spacing:0}
+ #world .xp-gain .xp-level{display:flex;align-items:center;gap:10px}
+ #world .xp-gain .level-badge{padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:16px;font-weight:800;font-style:italic;border-radius:0;transform:skewX(-12deg)}
+ #world .xp-gain .xp-bar{flex:1;height:7px;border-radius:0;background:rgba(255,255,255,.14)}
+ #world .xp-gain .xp-bar b{border-radius:0;background:var(--hot)}
+ #world .xp-gain .xp-level small{font-size:13px;letter-spacing:.1em;color:var(--soft)}
+
+ /* LEVEL UP (frame c-xp): a band across the whole screen in the gradient. */
+ #world .level-up{left:-60px;right:-60px;top:40%;transform:translateY(-50%);zoom:var(--hud-z,1);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;height:136px;padding:0 120px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #world .level-up::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #world .level-up small{order:1;font-size:17px;letter-spacing:.14em;color:var(--on-hot)}
+ #world .level-up strong{order:2;font-size:90px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ #world .level-up>span{order:1;font-size:17px;letter-spacing:.12em;font-weight:700;color:var(--on-hot);text-transform:uppercase}
+ #world .level-up .ball-avatar{order:0;width:76px;height:76px}
+ #world .level-up .level-up-got{order:3;display:grid;gap:5px;margin:0;padding:0;list-style:none}
+ #world .level-up .level-up-got li{padding:3px 10px;background:rgba(0,0,0,.12);font-size:15px;letter-spacing:.1em;font-weight:700;text-transform:uppercase}
+
+ /* FREE FLIGHT (frame c-free): a pill top left saying so, with the hole to
+    jump to beside it; along the foot the keys as chips and V back to the
+    ball. The bar's own box steps aside so its pieces sit on the screen. */
+ #world .explore-bar{position:static;display:contents}
+ #world .explore-bar>div:first-child{position:absolute;left:30px;top:28px;zoom:var(--hud-z,1);display:flex;align-items:center;gap:12px;height:42px;padding:0 22px;color:var(--on-hot);isolation:isolate}
+ #world .explore-bar>div:first-child::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #world .explore-bar>div:first-child .eyebrow{font-size:21px;font-weight:800;font-style:italic;letter-spacing:.02em;color:var(--on-hot)}
+ #world .explore-bar>div:first-child .eyebrow::before{content:"";display:inline-block;width:11px;height:11px;margin-right:10px;border-radius:50%;background:var(--on-hot)}
+ #world .explore-bar>div:first-child :is(strong,small){display:none}
+ #world .explore-bar>div:first-child .pin-readout{font-size:16px;font-weight:800;font-style:italic}
+ #world .explore-bar>label{position:absolute;left:330px;top:28px;zoom:var(--hud-z,1);display:flex;align-items:center;gap:10px;height:42px;padding:0 20px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;isolation:isolate}
+ #world .explore-bar>label::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .explore-bar>label select{height:30px;border:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #world .explore-bar .flight-instructions{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);zoom:var(--hud-z,1);display:flex!important;gap:7px}
+ #world .explore-bar .flight-instructions>span,#world .explore-bar #exitExplorer{position:relative;isolation:isolate;display:flex;align-items:center;gap:7px;height:37px;padding:0 17px;border:0;background:none;color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+ #world .explore-bar .flight-instructions>span::before,#world .explore-bar #exitExplorer::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .explore-bar kbd{padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 12px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ #world .explore-bar #exitExplorer{position:absolute;left:calc(50% + 380px);bottom:30px;zoom:var(--hud-z,1);cursor:pointer}
+ #world .explore-bar #exitExplorer svg{display:none}
+ #world .explore-bar #exitExplorer::after{content:"V";order:-1;padding:1px 5px;border:2px solid currentColor;border-radius:4px;font-size:12px}
+ #world .explore-bar .fly-pad{display:none}
+
+ /* KEYS (frame c-dialogs3): a window of key chips, two to a row. */
+ #app .keys-help:not([hidden]){left:170px;top:96px;right:auto;bottom:auto;transform:none;zoom:var(--hud-z,1);width:740px;max-height:none;display:grid;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #app .keys-help>h3{position:relative;isolation:isolate;margin:0;padding:12px 34px;font-size:31px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;letter-spacing:.01em}
+ #app .keys-help>h3::before,#app .keys-help dl>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app .keys-help dl{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0}
+ #app .keys-help dl>div{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;min-height:40px;padding:0 22px}
+ #app .keys-help dt{flex:none;display:flex;gap:3px}
+ #app .keys-help dd{margin:0;font-size:13px;letter-spacing:.1em;font-weight:700;text-transform:uppercase;color:#fff}
+ #app .keys-help kbd{padding:1px 6px;border:2px solid currentColor;border-radius:4px;background:none;color:#fff;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif;box-shadow:none}
+
+ /* TIME OF DAY (frame c-dialogs2): the clock window, compact and dark. */
+ #app .clock-pop:not([hidden]){width:470px;padding:16px 30px;border:0;border-radius:0;background:var(--panel);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #app .clock-pop h4{margin:12px 0 6px;font-size:14px;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #app .clock-pop .time-chip{position:relative;isolation:isolate;height:34px;border:0;border-radius:0;background:none;color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase}
+ #app .clock-pop .time-chip::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #app .clock-pop .time-chip:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #app .clock-pop .time-chip:is(.active,[aria-pressed=true]){color:var(--on-hot)}
+}
+
+/* SHOTS (frame c-dialogs3): the shot list as a window of rows. Outside #app. */
+@media (min-width:561px) and (min-height:501px){
+ body>.shot-list:not([hidden]){background:rgba(5,8,6,.55)}
+ body>.shot-list .shot-list-inner{zoom:var(--sheet-z,1);border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ body>.shot-list .shot-list-head{position:relative;isolation:isolate;padding:12px 34px;border:0}
+ body>.shot-list .shot-list-head::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);transform:skewX(-12deg)}
+ body>.shot-list .shot-list-head h2{font-size:31px}
+ body>.shot-list .shot-list-head p{font-size:14px;letter-spacing:.14em;color:var(--soft,#9ab);text-transform:uppercase}
+ body>.shot-list table{border-collapse:separate;border-spacing:0 4px}
+ body>.shot-list :is(th,td){border:0;background:var(--panel,#1f2a22);font-size:17px;font-weight:800;font-style:italic}
+ body>.shot-list th{font-size:12px;font-style:normal;letter-spacing:.14em;color:var(--soft,#9ab);background:none}
+}
+@container app (min-width:561px) and (min-height:501px){
+ /* The scramble pick: the ball count between its arrows on one row. */
+ #world[data-mode=play] #pickBar{grid-template-columns:76px minmax(0,1fr) 76px!important}
+ #world[data-mode=play] #pickBar>:is(div,#pickAccept){grid-column:1/-1}
+ #world[data-mode=play] #pickBar>:is(#pickPrev,#pickNext){display:grid;place-items:center;padding:0}
+}
+@container app (min-width:561px) and (min-height:501px){
+ /* Flying, only the flight's own pieces and the map show (frame c-free). */
+ #world[data-mode=play].exploring :is(.rh-hole,.rh-subs,.rh-cards,.rh-tools,.rh-launch,.club-control,.lie-readout,.shape-control,.swing-meter,.monitor-panel,.flag-label,.aim-label,.rh-shot-card){display:none!important}
+}
+
+/* THE BIG MAP (frame c-bigmap; M, or the map's expand button). A window in
+   the middle of the screen over a dimmed course: the hole and its numbers
+   with Slope, Downhill and Heat as chips across the top, the map filling it,
+   the keys along the foot. A phone keeps its own (Tap to aim, Done). */
+.avb-keys,.avb-close,#aimViewDone kbd{display:none}
+@container app (min-width:561px) and (min-height:501px){
+ #world.aim-view .minimap{inset:0!important;margin:auto;z-index:90!important;width:min(62.5%,calc(100% - 48px))!important;height:min(89%,calc(100% - 48px))!important;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 0 0 100vmax rgba(5,8,6,.55);color:#fff;zoom:1}
+ #world.aim-view .minimap .map-header{order:0;display:flex;align-items:center;gap:16px;padding:12px 24px;border:0;zoom:var(--hud-z,1);font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #world.aim-view #mapTitle{font-size:28px;font-weight:800;font-style:italic;letter-spacing:.01em;color:#fff;text-transform:uppercase}
+ #world.aim-view .map-facts{font-size:15px;font-weight:700;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #world.aim-view .minimap .map-reading{margin-left:auto;display:flex;gap:6px}
+ #world.aim-view .minimap .map-reading button{width:auto;height:31px;padding:0 16px;border:0;border-radius:0;background:none;color:#fff;position:relative;isolation:isolate;transform:none}
+ #world.aim-view .minimap .map-reading button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #world.aim-view .minimap .map-reading button:is(.on,[aria-pressed=true]){background:none;color:var(--on-hot)}
+ #world.aim-view .minimap .map-reading button:is(.on,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world.aim-view .minimap .map-reading button:disabled{opacity:.4}
+ #world.aim-view .minimap .map-reading button>svg{display:none}
+ #world.aim-view .minimap .map-reading button::after{font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em}
+ #world.aim-view #readSlope::after{content:"SLOPE"}
+ #world.aim-view #readFlow::after{content:"DOWNHILL"}
+ #world.aim-view #readHeat::after{content:"HEAT"}
+ #world.aim-view .minimap #map{order:1}
+ #world.aim-view .minimap .map-footer{display:none}
+ #world.aim-view .aim-view-bar{order:2;justify-content:space-between;gap:24px;padding:10px 24px;border:0;zoom:var(--hud-z,1);font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#fff}
+ #world.aim-view #aimViewHint,#world.aim-view .avb-done{display:none}
+ #world.aim-view .avb-keys{flex:1;display:flex;justify-content:space-between;gap:24px;color:#fff}
+ #world.aim-view .aim-view-bar .avb-keys>span{flex:none;display:flex;align-items:center;gap:8px;color:#fff}
+ #world.aim-view .avb-keys b{font-weight:700}
+ #world.aim-view .aim-view-bar kbd{display:inline-block;padding:1px 6px;border:2px solid currentColor;border-radius:4px;background:none;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;box-shadow:none}
+ #world.aim-view #aimViewDone{display:flex;align-items:center;gap:8px;text-transform:uppercase;min-height:0;height:auto;padding:0;border:0;border-radius:0;background:none;color:#fff;font:inherit;letter-spacing:inherit;cursor:pointer}
+ #world.aim-view #aimViewDone .avb-close{display:inline;flex:none;color:#fff}
+}

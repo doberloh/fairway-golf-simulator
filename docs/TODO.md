@@ -76,6 +76,17 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
   a controller in the studio pause. PLACED: the round's pause keeps all its
   rows and a second window for the round (the frame has six rows).
+- [ ] **The big map, round 13: built to frame c-bigmap.** M opens and closes
+  it. Seen in the browser pane at 1280 x 720 on a tee shot (M to open and
+  close, Heat on and off). Not seen: aiming by a click on it, a putt with the
+  reading layers drawn, a drop or free flight on it, a phone (unchanged; the
+  phone journeys pass).
+- [ ] **Windows, round 13: built to frames c-dialogs1-3, c-xp and c-free,
+  seen in the browser pane at 1280 x 720** (Leave without saving, the keys,
+  a toast, the XP card, the level-up band, free flight; the XP card and band
+  were shown by hand, not earned). Not seen: Take relief, the sim drop, the
+  scramble pick, the version notice, the welcome, the time of day, the shot
+  list, a phone. A toast and the XP card at the same moment overlap a little.
 - [ ] **Round screen, round 13: built to frames c-aim, c-first and c-flight,
   seen in the browser pane at 1280 x 720** (at rest with the aim point shown
   first, and one shot in flight). Not seen: a putt, a monitor shot's strip,

@@ -51,3 +51,18 @@ export function makeWindow({id, title, line, rows}, doc = globalThis.document) {
  }
  return w;
 }
+
+// Old windows dressed by CSS (Leave, the version notice, the welcome, Take
+// relief...): each time one opens, or its rows are redrawn, its rows are lined
+// up as one block. `list` [{el, rows() -> elements}].
+export function watchWindows(list) {
+ const live = list.filter(w => w.el);
+ const run = w => requestAnimationFrame(() => { if (!w.el.hidden) leanAsOne(w.rows()); });
+ const mo = new MutationObserver(recs => {
+  const seen = new Set();
+  for (const r of recs) { const w = live.find(x => x.el === r.target || x.el.contains(r.target)); if (w && !seen.has(w)) { seen.add(w); run(w); } }
+ });
+ for (const w of live) mo.observe(w.el, {attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true});
+ globalThis.addEventListener?.('resize', () => live.forEach(run));
+ return mo;
+}
