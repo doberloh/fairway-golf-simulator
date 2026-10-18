@@ -22,6 +22,9 @@
 .dd-group{margin:.5em 0 .1em .5em;font:700 .65em/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--hot,#fd5);text-transform:uppercase}
 .dd-item{position:relative;isolation:isolate;display:flex;align-items:center;gap:.7em;min-height:1.9em;padding:0 1em;color:#fff;cursor:pointer}
 .dd-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);transform:skewX(-12deg)}
+.dd-l{width:2.2em;flex:none;font:800 italic .8em/1 "Saira Condensed",var(--font-ui),sans-serif;color:var(--a1,#8c8)}
+.dd-item.on .dd-l{color:var(--on-hot,#111)}
+.dd-head{margin-top:0}
 .dd-t{font:800 italic .85em/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;white-space:nowrap}
 .dd-t i{font-style:normal}
 .dd-r{margin-left:auto;padding-left:1em;font:700 .6em/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft,#9ab);text-align:right;text-transform:uppercase;white-space:nowrap}

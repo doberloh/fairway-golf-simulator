@@ -994,7 +994,7 @@ function syncClubs(){
  const key=JSON.stringify(Object.entries(clubs).map(([id,c])=>[id,c.label]));
  if(key===clubPicker)return;
  clubPicker=key;
- const was=$('club').value,options=Object.entries(clubs).map(([id,c])=>`<option value="${id}">${escape(c.label)}</option>`).join('');
+ const was=$('club').value,options=Object.entries(clubs).map(([id,c])=>`<option value="${id}" data-lead="${escape(String(c.code||'').toUpperCase())}" data-right="${c.code==='PT'?'':Math.round(c.carry)}">${escape(c.label)}</option>`).join('');
  $('club').innerHTML=options;$('monClub').innerHTML=options;
  $('club').value=clubs[was]?was:Object.keys(clubs)[0];$('monClub').value=$('club').value;
 }
@@ -4323,6 +4323,7 @@ function drawRoundHud(){
  setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
   ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
  const cc=document.querySelector('.club-control');if(cc)cc.dataset.code=clubPanel(c).code;
+ $('club').__dd?.refresh();
  const shown=shotDisplay({range:rangeMode,choice:shotChoice,putt:false,all:allNumbers});
  $('world').classList.toggle('rh-tiles',shown.kind==='tiles');$('world').classList.toggle('rh-range',!!rangeMode);
  if($('shotChoiceLabel'))$('shotChoiceLabel').textContent=CHOICE_NAMES[shotChoice];
@@ -6766,6 +6767,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
   else if(t==='range')$('rangeControls').click();else if(t==='full')$('fullscreen').click();else if(t==='menu')setPause(true);};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
+ // ROUND 14 (frames c-aim2, c-club, c-flight2): Skip stands where curve,
+ // height and spin were, at the bottom centre, not above the meter; and the
+ // club box opens the bag, upwards, as the 1.0 drop-down.
+ if($('smSkip'))$('world').append($('smSkip'));
+ dropdown($('club'),{field:document.querySelector('.club-control .club-select'),up:true,head:'Your bag · Q E or click'});
+ // The whole club box opens it (its code, name, carry and keys), not only the name.
+ document.querySelector('.club-control')?.addEventListener('click',e=>{if(!e.target.closest('.club-select,.dd-list'))$('club').__dd?.open();});
  // The pause list's cameras are the camera strip's own buttons, pressed for you.
  $('pauseCams').onclick=e=>{const b=e.target.closest('[data-proxy]');if(b)$(b.dataset.proxy)?.click();};
  $('pauseResume').onclick=()=>setPause(false);

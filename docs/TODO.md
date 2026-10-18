@@ -86,6 +86,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Round screen, round 14 (item 7): built; seen in the browser pane at
+  1280 x 720** -- at rest (nothing above the meter, the three boxes under it,
+  the club box with Q E and its triangle), the bag opened and a club picked
+  from it, Q back, and one shot in flight (launch strip, the meter counting,
+  Skip at the bottom centre). Not seen: the monitor armed (the boxes hiding
+  for the ball light), 21:9 and 4:3, a phone's bag (the phone journeys pass).
+  The out-of-reach words above the meter are gone with the head; the bar's
+  hatch still shows the reach.
 - [ ] **The locker's single highlight; one 1.0 drop-down for every select
   (round 14, items 5-6): built; seen in the browser pane at 1280 x 720** -- the
   locker's worn ball traced with its name ticked; the title list opened by

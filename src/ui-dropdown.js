@@ -16,7 +16,8 @@
 //
 // Markup on the select it reads: `data-dd-label` (the field's label; else the
 // aria-label), and on an option `data-right` (right-aligned: a level, a carry)
-// and, for a disabled one, `data-earn` (how to earn it). `data-dd="off"` keeps
+// and, for a disabled one, `data-earn` (how to earn it); `data-lead` is a short
+// column before the words (a club's code). `data-dd="off"` keeps
 // a select native.
 
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -35,7 +36,7 @@ export function listRows(select) {
  for (const o of select.options) {
   const g = o.parentElement?.tagName === 'OPTGROUP' ? o.parentElement.label : null;
   if (g !== group) { group = g; if (g) rows.push({head: g}); }
-  rows.push({value: o.value, text: o.textContent.trim(), right: o.dataset.right || '', earn: o.dataset.earn || '', disabled: o.disabled, index: o.index});
+  rows.push({value: o.value, text: o.textContent.trim(), lead: o.dataset.lead || '', right: o.dataset.right || '', earn: o.dataset.earn || '', disabled: o.disabled, index: o.index});
  }
  return rows;
 }
@@ -62,10 +63,11 @@ function openList(d) {
  list.setAttribute('role', 'listbox');
  list.setAttribute('aria-label', d.label || select.getAttribute('aria-label') || 'Choices');
  const rows = listRows(select), items = [];
+ if (d.head) list.append(make(doc, 'div', 'dd-group dd-head', esc(d.head)));
  for (const r of rows) {
   if (r.head) { list.append(make(doc, 'div', 'dd-group', esc(r.head))); continue; }
   const it = make(doc, 'div', 'dd-item' + (r.disabled ? ' dd-locked' : '') + (r.index === select.selectedIndex ? ' on' : ''),
-   `<span class="dd-t">${esc(r.text)}${r.index === select.selectedIndex ? ' <i>✓</i>' : ''}</span><span class="dd-r">${r.disabled && r.earn ? '🔒 ' + esc(r.earn) : esc(r.right)}</span>`);
+   `${r.lead ? `<span class="dd-l">${esc(r.lead)}</span>` : ''}<span class="dd-t">${esc(r.text)}${r.index === select.selectedIndex ? ' <i>✓</i>' : ''}</span><span class="dd-r">${r.disabled && r.earn ? '🔒 ' + esc(r.earn) : esc(r.right)}</span>`);
   it.setAttribute('role', 'option'); it.setAttribute('aria-selected', String(r.index === select.selectedIndex));
   if (r.disabled) it.setAttribute('aria-disabled', 'true');
   it.dataset.index = r.index;
@@ -101,11 +103,11 @@ function choose(d, index) {
 // Gives `select` the 1.0 drop-down. `opts.field` uses an element already on
 // the page as the closed field (the club box); `opts.up` opens the list above
 // it. Returns {open, close}. Safe to call twice.
-export function dropdown(select, {field = null, up = false, label = null, doc = globalThis.document} = {}) {
+export function dropdown(select, {field = null, up = false, label = null, head = null, doc = globalThis.document} = {}) {
  if (!select || select.dataset.dd === 'off') return null;
  if (select.__dd) return select.__dd;
  const wrap = field ? field.parentElement : make(doc, 'span', 'dd');
- const d = {select, doc, up, wrap, label: label ?? select.dataset.ddLabel ?? null};
+ const d = {select, doc, up, wrap, head, label: label ?? select.dataset.ddLabel ?? null};
  if (!field) {
   select.before(wrap);
   field = make(doc, 'button', 'dd-field', `${d.label ? `<span class="dd-k">${esc(d.label)}</span>` : ''}<span class="dd-v"></span><span class="dd-tri" aria-hidden="true">▾</span>`);

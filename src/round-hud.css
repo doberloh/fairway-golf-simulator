@@ -563,3 +563,51 @@
    this landscape (PROJECT_HANDOFF *THE STUDIO'S WINDOWS ARE THE MENU'S
    SHEETS*). */
 body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display:none!important}
+
+/* ROUND 14, THE FOOT OF THE ROUND SCREEN (frames c-aim2, c-club, c-flight2,
+   c-aim-mon). Nothing above the Swing Meter: its title line ("DRIVER ·
+   NORMAL") goes, the other boxes say it. Curve, height and spin are three
+   boxes at the bottom centre under the meter, each with its key; in flight,
+   Skip stands there instead; with a monitor armed they make way for the
+   ball light (PLACED: the monitor measures them). The club box shows Q and E
+   with CLUB under them and a triangle by the name, and opens the bag upwards
+   (ui-dropdown.js). Written at round 9's sizes, drawn at --hud-z: the
+   mockup's 380-wide meter 56 up is 543 here, 80 up; its 26-tall boxes 20 up
+   are 37 tall, 29 up. */
+@container app (min-width:561px) and (min-height:501px){
+ #world[data-mode=play] .swing-meter{bottom:80px;width:543px}
+ #world[data-mode=play] .swing-meter .sm-head{display:none!important}
+ #world[data-mode=play] .rh-launch{bottom:204px}
+ #world[data-mode=play] .shape-control,#world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{left:50%;bottom:29px;transform:translateX(-50%);height:auto;padding:0;gap:7px;isolation:auto}
+ #world[data-mode=play] .shape-control::before,#world[data-mode=play] .shape-control::after{display:none}
+ #world[data-mode=play] .shape-control .shape-pick{position:relative;isolation:isolate;display:flex!important;align-items:center;gap:10px;height:37px;padding:0 20px;color:#fff}
+ #world[data-mode=play] .shape-control .shape-pick::before{display:block!important;content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shape-control .shape-pick+.shape-pick:not(.spin-dial)::before,#world[data-mode=play] .shape-control .spin-cycle::before{content:"";position:absolute;inset:0;z-index:-1;margin:0;background:var(--panel);transform:skewX(-12deg);color:inherit}
+ #world[data-mode=play] .shape-control .shape-pick small{display:contents;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--soft);font-style:normal}
+ #world[data-mode=play] .shape-control .shape-pick strong{order:2;font-size:19px}
+ #world[data-mode=play] .shape-control .shape-pick kbd{order:3;padding:0 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.4 "Saira Condensed",var(--font-ui),sans-serif;color:var(--soft)}
+ #world[data-mode=play] .shape-control .spin-cycle strong::before{content:none}
+ #world[data-mode=play] .shape-control .spin-cycle::after{content:"X";order:3;padding:0 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.4 "Saira Condensed",var(--font-ui),sans-serif;color:var(--soft)}
+ #world[data-mode=play]:has(.monitor-panel:not([hidden])) .shape-control{display:none!important}
+ #world[data-mode=play]>.sm-skip{position:absolute;left:50%;bottom:29px;z-index:8;zoom:var(--hud-z,1);transform:translateX(-50%);isolation:isolate;display:flex;align-items:center;gap:10px;height:37px;padding:0 22px;border:0;background:none;color:#fff;font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;pointer-events:auto}
+ #world[data-mode=play]>.sm-skip::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play]>.sm-skip[hidden]{display:none}
+ #world[data-mode=play]>.sm-skip kbd{padding:0 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.4 "Saira Condensed",var(--font-ui),sans-serif;color:var(--soft)}
+ /* The club box: its name with a triangle (the drop-down's value), Q E and CLUB. */
+ #world[data-mode=play] .club-control select{position:absolute!important}
+ #world[data-mode=play] .club-control .club-select{cursor:pointer}
+ #world[data-mode=play] .club-control .dd-v{font:800 italic 40px/1 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;text-transform:uppercase;white-space:nowrap}
+ #world[data-mode=play] .club-control .club-select{display:flex!important;align-items:baseline;gap:10px}
+ #world[data-mode=play] .club-control .dd-tri{color:var(--a1);font-size:18px}
+ #world[data-mode=play] .club-control.dd-open .dd-tri{transform:scaleY(-1)}
+ #world[data-mode=play] .club-keys{display:grid;justify-items:center;align-content:center;gap:4px;padding:0 26px 0 6px}
+ #world[data-mode=play] .club-keys>span{display:flex;gap:5px}
+ #world[data-mode=play] .club-keys kbd{display:grid;place-items:center;min-width:29px;height:27px;padding:0 4px;border:2px solid currentColor;border-radius:4px;font:700 16px/1 "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
+ #world[data-mode=play] .club-keys small{font-size:12px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #world[data-mode=play] .club-control>.dd-list{position:absolute;left:0;bottom:calc(100% + 62px);width:340px;max-height:none;margin:0;font-size:22px}
+}
+@container app (max-width:560px) or (max-height:500px){
+ #world>.sm-skip{display:none!important}
+ #world .club-keys{display:none}
+ #world .club-control>.dd-list{position:absolute;left:0;bottom:calc(100% + 8px);width:260px;margin:0;font-size:15px;z-index:40}
+}

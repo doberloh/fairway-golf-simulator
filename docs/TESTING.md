@@ -152,6 +152,9 @@ the courses several suites share.
   birdie or better earning the band, every banner under two seconds with the
   next turn announced as it leaves, the paper card's marks), and `round-hud`'s
   round-complete helpers (places with ties, XP this round, the handicap line).
+  Round 14: the reachability and thumb checks skip a select under a 1.0
+  drop-down (`.dd-native`: its field is the control) and measure the whole
+  club box (`.club-control`, which opens the bag) rather than `#club`.
   On a big screen the flight check now expects no flight panel, Skip in the
   meter's title (`#smSkip`) and the launch strip; the range journey opens
   Range controls from the tool column (`#rhTools [data-hud=range]`).

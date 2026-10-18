@@ -111,6 +111,11 @@
  #world[data-mode=play] .club-control .club-select::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play] .club-control select{appearance:none;-webkit-appearance:none;width:auto;max-width:150px;min-width:64px;min-height:44px;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
  #world[data-mode=play] .club-control option{font:16px var(--font-ui);text-transform:none;color:#111;background:#fff}
+ /* Round 14: the club's name is the 1.0 drop-down's value (ui-dropdown.js), a
+    thumb tall; a tap opens the bag upwards. */
+ #world[data-mode=play] .club-control .club-select{display:flex!important;align-items:flex-start;gap:6px;min-height:52px;min-width:96px;padding-top:6px;cursor:pointer}
+ #world[data-mode=play] .club-control .dd-v{max-width:150px;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #world[data-mode=play] .club-control .dd-tri{color:var(--a1);font-size:13px}
  #world[data-mode=play] .club-control #clubHint{position:absolute;left:66px;bottom:6px;margin:0;font-size:11px!important;letter-spacing:.1em;color:var(--soft);font-weight:700;text-transform:uppercase;white-space:nowrap}
 
  /* The Swing Meter: narrow, its bar tall enough to tap. */

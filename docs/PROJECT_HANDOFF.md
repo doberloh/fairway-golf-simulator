@@ -1256,12 +1256,24 @@ box's bottom centre, the aim marker projected at the ground (+0.15 m, it was
 (`aimIntroUntil`, 2.2 s once no tour or flight is running), the marker in the
 hot colour. **The flight panel is gone** from the round screen (`#shotPanel`
 hidden; it stays on a phone): the meter counts carry, total and apex through
-the flight (as it already did), Skip is `#smSkip` in its title row (pressing
-`#skipFlight`), and the launch numbers are `#rhLaunch`, shown while the ball is
-in the air (`flight.elapsed < result.hang`) and faded at landing. Curve,
-height and spin are `#shapeControl` drawn as one pill on the meter's title
-row (positioned to the meter's right edge: the meter is 400 wide, centred,
-40 up, 137 tall). The map is at the bottom right and `#rhTools` stands above
+the flight (as it already did), and the launch numbers are `#rhLaunch`, shown
+while the ball is in the air (`flight.elapsed < result.hang`) and faded at
+landing. **Round 14** (frames c-aim2, c-club, c-flight2, c-aim-mon): nothing
+above the meter (`.sm-head` hidden: the title line and the out-of-reach words
+went; the bar's hatch still shows the reach); the meter is 543 wide, 80 up;
+curve, height and spin are `#shapeControl` as three boxes under it, 29 up,
+each label, value and key (the small labels are `display:contents` so their
+kbd can be ordered after the value); in flight `#smSkip` stands there instead
+-- **moved out of the meter's head into #world at boot**, because the head is
+hidden; with the monitor panel showing (`:has(.monitor-panel:not([hidden]))`)
+the boxes hide, PLACED (the monitor measures the shape). The club box shows
+Q and E with CLUB (`.club-keys`) and the club's name as the 1.0 drop-down's
+value (`.club-select .dd-v`, refreshed in drawRoundHud, since Q/E set
+`#club` without an event); a click anywhere on the box opens the bag
+upwards (`dropdown(#club, {field: .club-select, up: true})`, the options
+carrying `data-lead` = code and `data-right` = carry). An out-of-reach rule
+(`:has(.swing-meter.out-of-reach) .shape-control`) lifts the boxes and is
+overridden by name. The map is at the bottom right and `#rhTools` stands above
 it: each tool presses its own key (a synthetic keydown), so it does what the
 key does in every state. The keys row (`#rhKeys`) is hidden; Menu in the
 column is the mouse's way to pause (PLACED). **PLACED:** plays-like is no

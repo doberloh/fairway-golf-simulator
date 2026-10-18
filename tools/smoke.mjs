@@ -413,6 +413,8 @@ function unreachableControls(scope = '#world button, #world input, #world select
   if (seen.has(b)) continue; seen.add(b);
   const r = b.getBoundingClientRect(), cs = getComputedStyle(b);
   if (!r.width || !r.height || cs.visibility === 'hidden' || b.closest('[hidden]') || b.disabled) continue;
+  // A select under a 1.0 drop-down (round 14) is not the control: its field is.
+  if (b.classList.contains('dd-native')) continue;
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   const label = b.id ? '#' + b.id : (b.getAttribute('aria-label') || b.textContent || b.tagName).trim().replace(/\s+/g, ' ').slice(0, 40);
   if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) { out.push(`${label} is off screen`); continue; }
@@ -574,7 +576,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
