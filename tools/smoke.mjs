@@ -756,7 +756,7 @@ const JOURNEYS = [
     ['Saved courses', ['Your courses', 'Save a course', 'Import & export']],
     ['My profile', []],
     ['Camera & bay', []],
-    ['Graphics', ['Overview', 'Reading the ground', 'Costs a frame']],
+    ['Graphics', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The green', 'Who is hitting']],
     ['Endless', ['Golfers', 'Format', 'Landscape']],

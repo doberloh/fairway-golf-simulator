@@ -1244,6 +1244,13 @@ week's card opens its own setup (it is stroke play at fixed settings); the
 mockup's Goal and Holes rows are not there (the lobby has no goal, and the
 course decides its holes); "your best" on a course is not shown.
 
+**Sheet polish (round 13):** the sheet body has 26 px at both sides so a
+leaning panel's corners are not clipped by the scroll box (the review's
+"cut-off edges"); Settings shows every group with no tabs; only the focused row
+is outlined (a ticked box no longer outlines its row); drop-downs in the
+sheets, windows and dialogues are drawn in the 1.0 style with a dark list
+(the open list is the browser's own, PLACED).
+
 **#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
 `sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
 the `*-root` marks first. Without that, Help opened blank after Play, under
@@ -1311,7 +1318,7 @@ focus, and ? (with the focus in a window or a sheet) shows them all
 category list down the left (Camera & bay, Graphics, Sound, Launch monitor,
 Help & controls -- each opens its own sheet; the mockup's Display, Controls,
 Data & backup and About map onto these, PLACED), every group shown at once in
-two columns of rows, and the help line at the foot for the focused row. CSS
+two columns of rows (no tabs since round 13), and the help line at the foot for the focused row. CSS
 only turns the real controls into rows: a tick box is drawn as an ON/OFF
 switch (`appearance:none`), a drop-down as a value with ▶, a slider as a
 segment bar filled to `--fill` (the track is masked into segments). **One

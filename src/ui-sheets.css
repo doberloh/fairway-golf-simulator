@@ -40,14 +40,16 @@
  body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer svg{display:none}
 
  /* The content: wide, the type the design's. */
- body:not(:has(#app[data-mode=studio])) #drawer #drawerContent{max-width:none;padding:0 4px 0 0;font-size:15px;color:#fff}
+ /* Room at both sides for the slant: a leaning panel's corners reach past its
+    box, and the scrolling content clipped them ("cut-off edges" in the
+    owner's review, 17 October 2026). */
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent{max-width:none;padding:0 26px;font-size:15px;color:#fff}
  body:not(:has(#app[data-mode=studio])) #drawer :is(.panel-intro,.note,.tip,.research-label){font-family:var(--font-ui);font-size:13px!important;line-height:1.5;color:var(--soft)!important}
  body:not(:has(#app[data-mode=studio])) #drawer h3{font-size:14px;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
 
  /* Each control is a slanted panel; its contents stand straight. */
  body:not(:has(#app[data-mode=studio])) #drawer .control-card{position:relative;isolation:isolate;margin:0 0 8px;padding:14px 30px;border:0;border-radius:0;background:none}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- body:not(:has(#app[data-mode=studio])) #drawer .control-card:has(input:checked)::before{box-shadow:inset 0 0 0 2px var(--a1)}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card:focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.field{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.check{font-size:16px;color:#fff;font-weight:700}
@@ -239,13 +241,13 @@
     focused row at the foot of the screen. Each control is a row: what it is
     on the left, the real control on the right -- a tick box drawn as an
     ON/OFF switch, a drop-down as ◀ value ▶, a slider as a segment bar. The
-    tabs ride in the footer band as chips that scroll to a group. */
+    tabs went in round 13: every group shows, the page scrolls. */
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:0 32px;align-content:start;align-items:start}
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.st-cats{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0}
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-lead{display:none}
- body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
- body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:14px;white-space:nowrap}
+ /* No tabs: every group shows at once and the page scrolls (round 13). */
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs{display:none!important}
  #drawer .st-cats{display:grid;gap:8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .st-cat{position:relative;isolation:isolate;display:flex;align-items:center;height:48px;min-height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-align:left}
  #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -678,3 +680,13 @@
  #drawer .panel-tab.active{background:none;color:var(--on-hot)}
  #drawer .panel-tab.active::before{background:var(--a1)}
 }
+
+/* DROP-DOWNS IN THE 1.0 STYLE, EVERYWHERE (round 13, the owner: "drop-down
+   menus don't follow the style"): a closed drop-down is a dark slanted-feeling
+   box in the italic capitals with a ▾, and its list is dark too. The open list
+   is the browser's own (PLACED: a drawn list for every drop-down in the game
+   is a rebuild of each control), coloured to match. */
+:is(#drawer,.popup,.version-notice) select:not([hidden]):not(.lb-sel>select):not(.player-who>select){appearance:none;-webkit-appearance:none;border:0;border-radius:0;background:rgba(0,0,0,.32) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23ffffff'/%3E%3C/svg%3E") no-repeat right 10px center;padding-right:28px;color:#fff;font-family:'Saira Condensed',var(--font-ui),sans-serif;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase;box-shadow:inset 0 -2px 0 var(--a1,#4ade80)}
+:is(#drawer,.popup,.version-notice) select:focus-visible{outline:2px solid var(--hot,#fd5);outline-offset:1px}
+:is(#drawer,.popup,.version-notice) select option,:is(#drawer,.popup,.version-notice) select optgroup{background:#15191d;color:#fff;font-family:var(--font-ui);font-style:normal;font-weight:600;text-transform:none}
+:is(#drawer,.popup,.version-notice) select option:checked{background:var(--a2,#166534);color:#fff}

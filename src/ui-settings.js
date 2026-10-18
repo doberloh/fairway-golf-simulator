@@ -13,7 +13,7 @@
 // groupPanelContent groups it; this adds the category list and the help line,
 // and ui-sheets.css turns each control into a row. Every control is still the
 // real checkbox, drop-down or slider, so the smoke journeys and the panels'
-// own handlers see nothing new. The tabs stay as chips that scroll to a group.
+// own handlers see nothing new. No tabs (round 13): every group shows at once.
 
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 

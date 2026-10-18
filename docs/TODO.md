@@ -83,8 +83,7 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   seen in the browser pane at 1280 x 720** (17 October 2026; src/ui-lobby.js,
   ui-steps.js). Each golfer has their own tee (game.js `teeOf`). Not seen: four
   golfers, the saved rounds view, a long course name, a phone, the steps from
-  a controller. The smoke journeys were updated (the steps by name) but not
-  since run and passing. PLACED: no Goal or Holes rows; the course
+  a controller. The smoke journeys press the steps by name, and pass. PLACED: no Goal or Holes rows; the course
   of the week's card opens its own setup; the scorecard's yards are the
   round's tee.
 - [ ] **1.0 launch monitor setup: built to the mockup, seen in the browser
