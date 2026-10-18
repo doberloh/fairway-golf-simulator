@@ -132,6 +132,14 @@ export function rulesColumn(doc, q) {
  return rules;
 }
 
+// A SEAT'S NAME, NOTHING CLIPPED (round 14, frame c-play2l): the name steps
+// down 24 / 20 / 17 / 15 px (the mockup's sizes) as it gets longer, then ends in
+// "..." (CSS). By letters, not measured: the seat is one width everywhere. Pure.
+export function nameSize(name) {
+ const n = String(name ?? '').trim().length;
+ return n <= 9 ? 'nm-24' : n <= 12 ? 'nm-20' : n <= 15 ? 'nm-17' : 'nm-15';
+}
+
 // ENDLESS, STEP BY STEP (mockup `r13('c-endless')`): 1 Landscape -- the
 // landscapes as a grid of drawn pictures, or Any (a new one each hole), with
 // the goal and your best run beside them; 2 Golfers; 3 Format and rules (the
@@ -175,22 +183,23 @@ export function buildEndlessSetup(root, opts = {}, doc = globalThis.document) {
  p2.append(make(doc, 'h3', 'sx-head', 'WHO’S PLAYING · 1 TO 4'));
  const rows = q('playerRows'); if (rows) p2.append(rows);
 
- const p3 = page('sx-rules sx-endless-rules');
- const left = make(doc, 'div', 'sx-rules-col');
+ // Round 14: two steps (the frames c-endlessx, c-endless2). The format and
+ // the house rules, the old third step, go under THE RUN (PLACED: the frames
+ // have nowhere for them).
  const {tiles} = formatCards(doc, mode);
- left.append(make(doc, 'h3', 'sx-head', 'FORMAT'), tiles);
- const note = q('formatNote'); if (note) left.append(note);
- mode.hidden = true; left.append(mode);
- p3.append(left, rulesColumn(doc, q));
- const err = q('roundError'); if (err) p3.append(err);
+ side.append(make(doc, 'h3', 'sx-head', 'FORMAT'), tiles);
+ const note = q('formatNote'); if (note) side.append(note);
+ mode.hidden = true; side.append(mode);
+ side.append(rulesColumn(doc, q));
+ const err = q('roundError'); if (err) p2.append(err);
 
  for (const s of root.querySelectorAll('.panel-section')) s.classList.add('sx-emptied');
  root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
  root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
  const go = q('endlessGo');
  return stepSheet(root, {
-  steps: [{label: 'Landscape', page: p1}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3}],
-  index: opts.step ?? 0, finish: go, finishAlways: true, onStep: opts.onStep,
+  steps: [{label: 'Landscape', page: p1}, {label: 'Golfers', page: p2}],
+  index: opts.step ?? 0, finish: go, onStep: opts.onStep,
   hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
 }

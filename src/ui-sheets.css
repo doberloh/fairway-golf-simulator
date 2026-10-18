@@ -562,9 +562,27 @@
  #drawer .seat-tee[aria-pressed=true]::before{background:#fff}
  #drawer .seat-tee i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
  #drawer .sx-golfers .seat>select[id^=team]{display:none}
- #drawer .seat-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
- #drawer .seat-pick>select{max-width:62%;height:32px;min-height:32px;padding:0 22px 0 8px;border:0;border-radius:0;background:rgba(0,0,0,.25);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .seat-pick>select option{color:#111;background:#fff;text-transform:none}
+ /* ROUND 14 (frame c-play2l): nothing in a seat is clipped. A picker is its
+    label on a line, then its value on a full-width line with an arrow at each
+    end; the select lies see-through over the value (a click opens it). The
+    name steps down 34 / 29 / 24 / 21 here (the mockup's 24 / 20 / 17 / 15 at
+    the compact size, ui-lobby.js nameSize) and ends in ...; the title has its
+    own line and ends in ... too. */
+ #drawer .seat-pick{display:grid;gap:4px;width:100%;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase;text-align:left}
+ #drawer .seat-line{position:relative;isolation:isolate;display:grid;grid-template-columns:30px minmax(0,1fr) 30px;align-items:center;height:36px}
+ #drawer .seat-line::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.28);transform:skewX(-12deg)}
+ #drawer .seat-arrow{height:36px;min-height:0;padding:0;border:0;background:none;color:var(--a1);font-size:13px;cursor:pointer}
+ #drawer .seat-val{position:relative;min-width:0;text-align:center}
+ #drawer .seat-val>b{display:block;font:800 italic 17px/36px "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .seat-val>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+ #drawer .seat-val>select option{color:#111;background:#fff;text-transform:none}
+ #drawer .seat:focus-within .seat-line:has(select:focus-visible)::before{box-shadow:inset 0 0 0 2px var(--hot)}
+ #drawer .sx-golfers .seat .player-who>select{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-golfers .seat .player-who.nm-24>select{font-size:34px}
+ #drawer .sx-golfers .seat .player-who.nm-20>select{font-size:29px}
+ #drawer .sx-golfers .seat .player-who.nm-17>select{font-size:24px}
+ #drawer .sx-golfers .seat .player-who.nm-15>select{font-size:21px}
+ #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .sx-golfers .seat .drop-player{width:36px;height:36px;min-height:36px;margin-top:auto;border:0;background:none;color:var(--soft)}
  #drawer .sx-golfers .add-player{position:relative;isolation:isolate;display:grid;place-items:center;align-content:center;gap:10px;min-height:400px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 22px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  #drawer .sx-golfers .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
@@ -654,6 +672,9 @@
  #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
  #drawer .wk-week{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;align-items:stretch}
  #drawer .wk-week .wk-week-pic{--lean:13.6px;height:64px}
+ /* Each earlier week is its picture and its caption, each its own whole
+    leaning shape (round 14, frame c-cotw1): no panel behind the pair. */
+ #drawer .wk .wk-week::before{display:none}
  #drawer .wk-week-cap{position:relative;isolation:isolate;display:grid;gap:2px;align-content:center;padding:6px 18px}
  #drawer .wk-week-cap::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .wk-week-cap strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}

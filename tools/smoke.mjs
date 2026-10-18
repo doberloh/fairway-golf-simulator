@@ -187,9 +187,13 @@ class Trip {
  // ------------------------------------------------------------- doing
  // By the name a player reads, among the things actually on screen.
  async press(name) {
-  const target = this.page.getByRole('button', {name, exact: true}).or(this.page.getByRole('tab', {name, exact: true}))
+  const find = () => this.page.getByRole('button', {name, exact: true}).or(this.page.getByRole('tab', {name, exact: true}))
    .filter({visible: true}).first();
-  await target.click({timeout: 10000 * SLOW});
+  // A step sheet's main button (Start the run, Play...) is on its last step
+  // since round 14: a player not seeing it goes through the steps, so do that.
+  if (!await find().count() && await this.page.locator('#drawer .sx-steps .sx-step').filter({visible: true}).count())
+   await this.page.locator('#drawer .sx-steps .sx-step').last().click();
+  await find().click({timeout: 10000 * SLOW});
  }
 
  // A PRESS THAT STARTS A ROUND counts if the round starts. Playwright's click
@@ -768,7 +772,7 @@ const JOURNEYS = [
     ['Graphics', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The green', 'Who is hitting']],
-    ['Endless', ['Golfers', 'Format', 'Landscape']],
+    ['Endless', ['Golfers', 'Landscape']],
     ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
    ];
    for (const [entry, tabs] of PANELS) {
@@ -1998,6 +2002,8 @@ const JOURNEYS = [
    const tap = sel => t.page.tap(sel);
    await t.step('Endless → Start an endless run', async () => {
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    // Round 14: the run starts from the Golfers step.
+    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
@@ -2443,6 +2449,8 @@ const JOURNEYS = [
    });
    await t.step('into a round: the shot panel says Ready, and Tools has the monitor too', async () => {
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    // Round 14: the run starts from the Golfers step.
+    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
@@ -2787,7 +2795,8 @@ const JOURNEYS = [
    await t.step('the panel, then play it', async () => {
     await fromMenu(t, 'Course of the week');
     await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
-    await t.page.click('#weeklyGo');
+    // Round 14: Play is on the Golfers step; press goes there first.
+    await t.press('Play the course of the week');
     await t.inPlay(180 * SLOW);
    });
    await t.step('eighteen holes, and the saved round knows its week', async () => {

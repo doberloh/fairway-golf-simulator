@@ -63,8 +63,9 @@ export function buildWeekly(root, {step = 0, onStep, doc = globalThis.document} 
  root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
  root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
  const go = root.querySelector('#weeklyGo');
- stepSheet(root, {steps: [{label: 'This week', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: go, finishAlways: true, onStep,
-  hints: [['Enter', 'Play'], ['Esc', 'Back']], doc});
+ // Round 14 (frames c-cotw1, c-cotw2): Play only on the Golfers step.
+ stepSheet(root, {steps: [{label: 'This week', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: go, onStep,
+  hints: [['Enter', 'Next'], ['Esc', 'Back']], doc});
  return true;
 }
 

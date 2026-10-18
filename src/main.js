@@ -54,7 +54,7 @@ import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
-import {buildLobby,buildEndlessSetup} from './ui-lobby.js';
+import {buildLobby,buildEndlessSetup,nameSize} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
@@ -3855,19 +3855,24 @@ function groupEditor(hostId,start,onChange){
   // picker), title, level and handicap, the golfer's own tee, and -- once a
   // monitor has been seen -- what they play with and which hand they swing.
   const teeOf=p=>p.tee||round.tee||'blue';
+  const seatPick=(label,id,aria,opts,value)=>`<div class="seat-pick"><span class="seat-k">${label}</span><span class="seat-line"><button type="button" class="seat-arrow" data-step="-1" tabindex="-1" aria-hidden="true">◀</button><span class="seat-val"><b>${escape((opts.find(o=>o[0]===value)||opts[0])[1].toUpperCase())}</b><select id="${id}" aria-label="${aria}">${opts.map(([v,t])=>`<option value="${v}" ${v===value?"selected":""}>${t}</option>`).join("")}</select></span><button type="button" class="seat-arrow" data-step="1" tabindex="-1" aria-hidden="true">▶</button></span></div>`;
   host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
    return `<div class="player-row seat${bridgeSeen()?' play':''}" data-seat="${i}">`
    +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${q?ballAvatar(q,'tiny'):'<span class="seat-guest" aria-hidden="true">+</span>'}</span>`
-   +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
+   +`<div class="player-who ${nameSize(q?q.name:(p.name||"New player"))}"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(o=>!taken(i).has(o.id)).map(o=>`<option value="${o.id}" ${o.id===p.profile?'selected':''}>${escape(o.name)}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
-   +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())} · LV ${lv}</span><span class="player-hcp">HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
+   // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
+   +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
    +`</div>`
    +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${['blue','white','red'].map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeOf(p)===t}" aria-label="${t[0].toUpperCase()+t.slice(1)} tees"><i style="background:${TEE_DOT[t]}"></i>${t[0].toUpperCase()}</button>`).join('')}</span>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
-   +(bridgeSeen()?`<label class="seat-pick"><span>Plays with</span><select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select></label>`
-    +`<label class="seat-pick"><span>Swings</span><select id="hand${i}" aria-label="Player ${i+1} handedness"><option value="RH" ${p.hand==='RH'?'selected':''}>RH</option><option value="LH" ${p.hand==='LH'?'selected':''}>LH</option></select></label>`:'')
+   // Round 14 (frame c-play2l): each picker a label line, then its value on a
+   // full-width line with an arrow at each end; the select is still there,
+   // see-through over the value, so a click (or a test) can open it.
+   +(bridgeSeen()?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing Meter"]],p.input==="meter"?"meter":"monitor")
+    +seatPick("Swings",`hand${i}`,`Player ${i+1} handedness`,[["RH","Right"],["LH","Left"]],p.hand==="LH"?"LH":"RH"):'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
    // had no remove button at all, so the only way to drop the first name was to
@@ -5192,7 +5197,7 @@ function renderPanel(name,content){
    +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
    +`<p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="weeklyGo">Play the course of the week <i data-lucide="arrow-right"></i></button>`;
+   +`<button class="primary" data-panel-action id="weeklyGo" aria-label="Play the course of the week">Play <small>${escape(suggestCourseName(weeklySettings()).toUpperCase())}</small></button>`;
   const formatNote=wireFormatFields();
   groupEditor('playerRows',round.players,formatNote);
   $('weeklyGo').onclick=async()=>{
@@ -5215,7 +5220,7 @@ function renderPanel(name,content){
    // The run's goal (round 13): none, or Sudden death -- the challenge's own
    // goal, a real run that ends at the first bogey (round-goals.js).
    +`<label class="field">Goal<select id="endlessGoal"><option value="" ${endlessGoal?'':'selected'}>None · play as long as you like</option><option value="suddendeath" ${endlessGoal==='suddendeath'?'selected':''}>Sudden death · out at your first bogey</option></select></label>`
-   +`<button class="primary" data-panel-action id="endlessGo">Start an endless run <i data-lucide="arrow-right"></i></button>`;
+   +`<button class="primary" data-panel-action id="endlessGo" aria-label="Start an endless run">Start the run <small>HOLE 1</small></button>`;
   const formatNote=wireFormatFields();
   groupEditor('playerRows',round.players,formatNote);
   $('endlessGo').onclick=async()=>{
@@ -6744,6 +6749,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The studio's tool column is made later (ui-studio.js studioHud), so it is
  // heard from #world.
  $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')$('fullscreen').click();else if(t==='menu')toggleStudioPause();});
+ // A seat's picker arrows (round 14): step its select and say so, as a change.
+ document.addEventListener('click',e=>{const a=e.target.closest?.('.seat-arrow');if(!a)return;const sel=a.closest('.seat-pick')?.querySelector('select');if(!sel||!sel.options.length)return;e.preventDefault();sel.selectedIndex=(sel.selectedIndex+Number(a.dataset.step)+sel.options.length)%sel.options.length;sel.dispatchEvent(new Event('change',{bubbles:true}));});
+ document.addEventListener('change',e=>{const sel=e.target.closest?.('.seat-val>select');const b=sel?.parentElement.querySelector('b');if(b)b.textContent=(sel.selectedOptions[0]?.textContent||'').toUpperCase();});
  $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
   const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');

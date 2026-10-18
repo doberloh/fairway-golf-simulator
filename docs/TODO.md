@@ -86,6 +86,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Course of the week and Endless in two steps; seats where nothing clips
+  (round 14, items 2-4): built; seen in the browser pane at 1280 x 720** -- the
+  week's step 1 (Next only) and Golfers (Play · the course); Endless step 1
+  (Next only, format and rules under THE RUN) and Golfers (Start the run ·
+  Hole 1); Play's seats with Plays with / Swings as value lines and an arrow
+  stepping one. Not seen: a profile with a long name (nameSize is unit-tested),
+  the range's seats, a phone. Differs from the frames: the week's Golfers step
+  keeps its rules under the seats (c-cotw2 shows seats only).
 - [ ] **Tiny course models on every card (round 14, item 1): built; seen in the
   browser pane at 1280 x 720** on Play, Endless (nine landscapes), the course
   of the week (picture and earlier weeks) and Saved courses, two of them

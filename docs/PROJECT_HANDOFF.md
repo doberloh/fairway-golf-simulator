@@ -1302,11 +1302,22 @@ of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
 the `*-root` marks first. Without that, Help opened blank after Play, under
 Play's rule hiding the old sections (found by menu-panels).
 
-**Endless is three steps** (`buildEndlessSetup`): Landscape -- the biomes as
-pictures (each drawn from a fixed sample course), or Any -- with the goal
-(none or Sudden death, `#endlessGoal`) and the main golfer's best run;
-Golfers; Format and rules (the mockup's two steps had nowhere for them,
-PLACED). Its start button shows on every step (`finishAlways`). **A run's
+**Endless is two steps** (`buildEndlessSetup`, round 14, frames c-endlessx and
+c-endless2): Landscape -- the biomes as pictures, or Any -- with THE RUN
+beside them: the goal (none or Sudden death, `#endlessGoal`), the format
+cards, the house rules and the main golfer's best run (PLACED: the frames
+have nowhere for format and rules); then Golfers. **The start button is on the
+Golfers step only** (round 14: "the Play button appears only on the last step";
+the course of the week the same, *Play · <course>*). Its accessible name is
+still *Start an endless run* (`aria-label`; the journeys press it), its words
+*Start the run · Hole 1*. The journeys' `press` goes to a step sheet's last
+step when the button it wants is not on screen, as a player would.
+**Seats** (round 14, frame c-play2l): *Plays with* and *Swings* are a label line
+and a value line with an arrow at each end (`seatPick` in main.js; the select
+lies see-through over the value, so a click -- or a test's selectOption --
+still opens it, and the arrows dispatch its change); the name steps down
+34 / 29 / 24 / 21 by its length (ui-lobby.js `nameSize`) and ends in "...";
+the title has a line of its own. **A run's
 landscape rides in its seed** as `~<biome>` (endless.js `runLandscape`,
 `landscapeSeed`): saved and replayed runs keep it, and a seed without one --
 every run before -- grows exactly what it did (the fingerprint is unchanged,

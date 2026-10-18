@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {optionWords, courseFacts, FORMAT_TILE} from '../src/ui-lobby.js';
+import {optionWords, courseFacts, FORMAT_TILE, nameSize} from '../src/ui-lobby.js';
 import {OB_RULES} from '../src/relief.js';
 
 // The lobby's pickers show a short value and a line under it, cut from the
@@ -26,4 +26,12 @@ test("the course panel reads the course drop-down's option", () => {
 test('the four format tiles are the four formats', async () => {
  const {FORMATS} = await import('../src/game.js');
  assert.deepEqual(Object.keys(FORMAT_TILE).sort(), [...FORMATS].sort());
+});
+
+test('a seat name steps down in size as it gets longer (round 14)', () => {
+ assert.equal(nameSize('BEN'), 'nm-24');
+ assert.equal(nameSize('MAXIMILIAN'), 'nm-20');
+ assert.equal(nameSize('ALEXANDRA-JANE'), 'nm-17');
+ assert.equal(nameSize('BARTHOLOMEW-SMYTHE'), 'nm-15');
+ assert.equal(nameSize(''), 'nm-24');
 });
