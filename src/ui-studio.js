@@ -125,7 +125,7 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
   const card = e.target.closest?.('.control-card,.control-group,.course-plan');
   if (!card || !root.contains(card)) return;
   const tip = card.querySelector('p.tip');
-  const name = card.querySelector('[aria-label]')?.getAttribute('aria-label') || card.querySelector('label')?.childNodes[0]?.textContent || '';
+  const name = card.querySelector('[aria-label]')?.getAttribute('aria-label') || card.querySelector('.field-name')?.childNodes[0]?.textContent || card.querySelector('label')?.childNodes[0]?.textContent || '';
   if (tip?.textContent.trim()) { help.querySelector('.sd-k').textContent = name.trim().toUpperCase(); help.querySelector('.sd-help-v').textContent = tip.textContent.trim(); help.hidden = false; }
  };
  help.hidden = true;

@@ -53,7 +53,7 @@ import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js'
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
-import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
+import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
 import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
@@ -3942,7 +3942,8 @@ function groupEditor(hostId,start,onChange){
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
    +`</div>`;}).join('')
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
-  icon();
+  icon();leanSeatRows(host);
+  if(!host.leanWatch){host.leanWatch=new ResizeObserver(()=>leanSeatRows(host));host.leanWatch.observe(host);}
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
@@ -4285,13 +4286,21 @@ let hud1=false,hudBiome='';
 // course's way and the range's, unless the player chose (the Esc list). Tab
 // shows every number, as tiles, until pressed again.
 // WHEN THE CARD IS UP (the owner, 18 October 2026): from the moment the ball
-// comes to rest, while the shot's line is on screen, until the camera goes to
-// the next shot -- it had stayed six seconds into the next address and sat on
-// the meter. A skipped shot never rests on screen, so its card shows as the
+// comes to rest (as the camera pulls back to show the shot's line) until the
+// camera goes to the next shot, fading as it goes -- it had stayed six seconds
+// into the next address and sat on the meter. A skipped shot never rests on screen, so its card shows as the
 // next shot is set up and fades as before.
 let allNumbers=false,shotChoice=loadChoice(),shotCard=null;
-function nextShotCard(){if(shotCard?.resting)hideShotCard();else showShotCard(cardRecord());}
-function showShotCard(record,resting=false){
+// THE CARD POINTS AT THE APEX, AND FADES AS THE CAMERA COMES BACK (the owner,
+// 18 October 2026): it comes up as the camera pulls back to show the whole
+// shot line, an arrow from its edge to the line's highest point, and when the
+// camera flies in to the next shot it fades rather than vanishing. A shot
+// whose line is never shown (skipped, or the review camera off) points at
+// where the ball came to rest.
+function nextShotCard(){if(shotCard?.resting){if(!shotCard.fadeAt)shotCard.fadeAt=performance.now();}else showShotCard(cardRecord());}
+// The highest point of a shot's flight, in the hole's own coordinates.
+function apexOf(points){let top=null;for(const p of points||[])if(!top||p.y>top.y)top=p;return top?{x:top.x,y:top.y,z:top.z}:null;}
+function showShotCard(record,resting=false,point=null){
  const el=$('shotCard');if(!el)return;
  const d=shotDisplay({range:rangeMode,choice:shotChoice,putt:!!record?.putting,all:allNumbers});
  if(!hud1||!record||d.kind!=='card'){hideShotCard();return;}
@@ -4300,8 +4309,8 @@ function showShotCard(record,resting=false){
  el.innerHTML=`<div class="rh-sc-tab"><span>${escape(cardTab(record.player,record.club))}</span></div>`
   +`<div class="rh-sc-body"><div class="rh-sc-main"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>`
   +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
-  +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div>';
- shotCard={at:performance.now(),end:{x:end.x,z:end.z},hole:round.hole,resting};
+  +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div><i class="rh-sc-ptr" aria-hidden="true"></i>';
+ shotCard={at:performance.now(),point:point||{x:end.x,y:course.height(end.x,end.z)+1,z:end.z},hole:round.hole,resting,fadeAt:0};
  el.style.opacity='1';el.hidden=false;
 }
 function hideShotCard(){shotCard=null;const el=$('shotCard');if(el)el.hidden=true;}
@@ -4310,14 +4319,29 @@ function placeShotCard(now){
  if(!shotCard)return;
  const el=$('shotCard');
  if(!hud1||(flight&&!flight.reviewing)||swing||round.hole!==shotCard.hole){hideShotCard();return;}
- const p=shotCard.resting?{phase:'shown',fade:0}:cardPhase(shotCard.at,now);
+ const p=shotCard.fadeAt?(now-shotCard.fadeAt>=CARD_FADE_MS?{phase:'gone',fade:1}:{phase:'fading',fade:(now-shotCard.fadeAt)/CARD_FADE_MS})
+  :shotCard.resting?{phase:'shown',fade:0}:cardPhase(shotCard.at,now);
  if(p.phase==='gone'){hideShotCard();return;}
- const q=view.project({x:shotCard.end.x,y:course.height(shotCard.end.x,shotCard.end.z)+1,z:shotCard.end.z});
- // Kept clear of the club, the meter and the map: a short shot rests low on
- // the screen, and the card sat on the meter (seen 17 October 2026).
- const w=$('world'),z=Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1;
- el.style.left=Math.min(q.x,w.clientWidth-(330+36+260)*z)+'px';el.style.top=Math.min(q.y,w.clientHeight-300*z)+'px';
- el.style.visibility=q.visible?'visible':'hidden';
+ const q=view.project(shotCard.point);
+ if(!q.visible){el.style.visibility='hidden';return;}
+ // Beside the point, to its right -- or to its left where the map and tool
+ // column would be under it. Kept clear of the club and the meter below: a
+ // short shot rests low on the screen, and the card sat on the meter (seen
+ // 17 October 2026).
+ const w=$('world'),wr=w.getBoundingClientRect(),z=Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1;
+ const s=(el.getBoundingClientRect().width/(el.offsetWidth||1))||z,h=el.offsetHeight*s;
+ const y=Math.max(.42*h+12,Math.min(q.y,w.clientHeight-300*z));
+ el.classList.remove('flip');el.style.left=q.x+'px';el.style.top=y+'px';
+ let r=el.getBoundingClientRect();const gap=r.left-wr.left-q.x;
+ const mapLeft=(document.querySelector('#world .minimap')?.getBoundingClientRect().left??wr.right)-wr.left;
+ if(r.right-wr.left>Math.min(mapLeft,w.clientWidth)-8){el.classList.add('flip');el.style.left=Math.max(0,q.x-2*gap-r.width)+'px';r=el.getBoundingClientRect();}
+ // The arrow: from the card's near edge, at the height it is pinned to, out to
+ // the point -- drawn inside the scaled card, so lengths are divided back.
+ const flip=el.classList.contains('flip'),ex=(flip?r.right:r.left)-wr.left,ey=y,vx=q.x-ex,vy=q.y-ey;
+ el.style.setProperty('--py',((ey-(r.top-wr.top))/s).toFixed(1)+'px');
+ el.style.setProperty('--pl',(Math.hypot(vx,vy)/s).toFixed(1)+'px');
+ el.style.setProperty('--pa',(Math.atan2(vy,vx)*180/Math.PI).toFixed(1)+'deg');
+ el.style.visibility='visible';
  el.style.opacity=String(1-p.fade);
 }
 function cycleShotChoice(){
@@ -4539,6 +4563,19 @@ function toggleRangeBox(){if(popups?.isOpen('range'))closeRangeBox();else openPa
 // fullscreen at all, so its tool button hides there (#app.no-fullscreen); added
 // to the home screen the game already opens without Safari's bars.
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}}
+// THE PICKERS FOLLOW THE SEAT'S LEAN (the owner, 18 October 2026). A seat is a
+// tall panel leaning 12 degrees about its middle, so a full-width row low in it
+// slides left with the panel's edge and one high in it slides right -- the way
+// the round 14 frames lean the whole sheet. Measured in layout pixels (offsets
+// ignore the Text size zoom and the slide itself), again whenever the seats
+// resize or first appear.
+const SEAT_LEAN=Math.tan(12*Math.PI/180);
+function leanSeatRows(root){
+ for(const seat of root.querySelectorAll('.seat'))for(const el of seat.querySelectorAll('.seat-pick')){
+  let y=el.offsetHeight/2,n=el;while(n&&n!==seat){y+=n.offsetTop;n=n.offsetParent;}
+  el.style.translate=n===seat&&seat.clientHeight?`${(-(y-seat.clientHeight/2)*SEAT_LEAN).toFixed(1)}px 0`:'';
+ }
+}
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
  if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;}
@@ -5056,6 +5093,11 @@ function renderPanel(name,content){
   // bounds, units and help text. Only the handful of controls that are not a
   // plain slider are written out by hand.
   const hint=k=>`<button type="button" class="hint" data-tip="${k}" aria-expanded="false" aria-controls="tip-${k}" aria-label="What ${FIELD[k].label} changes">i</button>`;
+  // THE i GOES WITH ITS NAME (the owner, 18 October 2026): the setting's name and
+  // its i are one piece, so the i sits right after the words in every kind of
+  // row. Loose, the i was a row item of its own and landed mid-row in a list
+  // row and beside the slider in a slider row. (PROJECT_HANDOFF *Info icons*.)
+  const named=(text,k)=>`<span class="field-name">${text}${hint(k)}</span>`;
   const tip=k=>`<p class="tip" id="tip-${k}" hidden>${escape(FIELD[k].tip)}</p>`;
   // Every kind the schema can hold renders here. Naming one toggle as a special
   // case is how `residentialOB` shipped as a 0-100 slider that nothing read.
@@ -5069,20 +5111,20 @@ function renderPanel(name,content){
   // appear underneath a heading that supplies its missing noun. Move a field
   // out of its box and it goes back to saying what it is.
   const control=(k,short)=>{const f=FIELD[k],text=short&&f.short?f.short:f.label;
-   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${text}</label>${hint(k)}`;
+   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${named(text,k)}</label>`;
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
+   if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
    // A field with `warn` in the schema turns red past its threshold, and says
    // why in a bubble that pops out over the panel when the slider is let go
    // (wired below, after the panel is drawn). Opening the panel on a value
    // already past it shows the red alone.
    const warned=f.warn&&settings[k]>f.warn.above;
-   return `<label class="field${f.warn?' warns':''}${warned?' danger':''}">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" hidden>${escape(f.warn.text)}</span>`:''}</label>`;};
+   return `<label class="field${f.warn?' warns':''}${warned?' danger':''}">${named(text,k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" hidden>${escape(f.warn.text)}</span>`:''}</label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
-   holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
+   holes:()=>`<label class="field">${named(FIELD.holes.label,'holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
    // ONE BOX. The slider set a number, a second field set the same number
    // again, and a third element reported what that number produced -- three
    // controls for one decision, with the answer furthest from the hand that
@@ -5090,13 +5132,13 @@ function renderPanel(name,content){
    // now, and the card is the whole card rather than a par count.
    courseYards:()=>`<div class="course-plan" id="coursePlan" aria-live="polite">
     <div class="plan-summary" id="planSummary"></div>
-    <label class="field plan-slider">${FIELD.courseYards.label}${hint('courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
+    <label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
-   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
-   biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
-   footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
+   seed:()=>`<label class="field">${named(FIELD.seed.label,'seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
+   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
+   footprint:()=>`<label class="field">${named(FIELD.footprint.label,'footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
   // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
   // schema entry, which is right for most of them and wrong wherever a control
@@ -7190,7 +7232,7 @@ function tick(now){
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true);if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and

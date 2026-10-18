@@ -975,6 +975,22 @@ screen shape to them.
   mockups' 40, 32, 10 / 13 / 16 / 24 / 36. A label above its value.
 - **Selection** is an outline that follows the slanted shape (drop shadows of
   the box), and the current tab is filled. No inner boxes.
+- **A full-width row inside a tall leaning box follows the box's lean** (the
+  owner, 18 October 2026: the seats' Plays with / Swings bars sat upright in a
+  leaning seat). A row is slid sideways by its height above or below the box's
+  middle x tan 12 degrees -- left below the middle, right above -- so its ends
+  stay parallel to the box's edges, as everything does on the leaning sheet.
+  For the seats it is measured in main.js `leanSeatRows` (layout offsets, so
+  the Text size zoom and the slide itself do not count), again whenever the
+  seats resize. Centred things (the name, the ball, the tees) need nothing.
+- **Info icons: the i goes with its name** (the owner, 18 October 2026: "put
+  them all in places that make sense"). A setting's name and its i are one
+  piece (`.field-name`, main.js `named`): the i is 8 px after the last word,
+  centred on it, 22 px round, in every kind of row -- a slider row, a list
+  row, a switch row, a heading. Never a row item of its own (loose, it landed
+  mid-row in a list row and beside the bar in a slider row), never beside the
+  control. Pressing it opens that setting's note under the row; it never
+  changes the setting (a button inside a label does not activate the label).
 - **Colours come from the biome** (`ui` in each biome record): in a round the
   course's, in the lobby and studio the course being chosen, everywhere else
   the course of the week, so the menus change colour every Monday. Red for
@@ -1147,6 +1163,18 @@ restyled controls carry text nodes that cannot be counter-skewed, so the
 slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
 box itself stays upright, and the text with it -- the kit's rule (only the
 colour leans) by another route.
+
+**THE SHOT CARD POINTS AT THE APEX** (the owner, 18 October 2026; main.js
+*THE CARD POINTS AT THE APEX*). It comes up as the camera pulls back to show
+the whole shot line (the moment the ball stops), with an arrow from its near
+edge to the line's highest point (`apexOf` over the flight's points), and when
+the camera flies in to the next shot it fades over `CARD_FADE_MS` (600 ms)
+instead of vanishing. It sits right of the point, or left where the map and
+tool column would be under it (class `flip`), and stays clear of the club and
+meter below; the arrow's length and angle are worked out each frame from where
+the card had to sit, so it always reaches the point. A shot whose line is
+never shown (skipped, or the review camera off) points at where the ball came
+to rest. A new hole hides it at once.
 
 ### The old interface, removed (18 October 2026)
 

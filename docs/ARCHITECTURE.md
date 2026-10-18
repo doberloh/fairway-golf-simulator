@@ -107,7 +107,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
-- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag; the map and the Tab shot numbers do, `hud-places.js`), the Text size zoom. The old interface's hidden pieces and their styles were removed on 18 October 2026: four jobs still ran through them (PROJECT_HANDOFF *Hidden was not unused*)
+- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag; the map and the Tab shot numbers do, `hud-places.js`), the Text size zoom. The old interface's hidden pieces and their styles were removed on 18 October 2026: four jobs still ran through them (PROJECT_HANDOFF *Hidden was not unused*). Layout rules added that day: rows follow a tall box's lean, and the info i goes with its name (PROJECT_HANDOFF *A full-width row inside a tall leaning box*, *Info icons*)
 - `src/round-hud.js`, `src/round-hud.css` -- the 1.0 round screen (in play, off a phone): what each corner piece says and how large, and where it sits; Esc opens the top bar as a pause list; round complete's standings
 - `src/round-phone.css` -- the 1.0 round screen on a phone, sideways and upright (the slanted aim pad, the tapped meter, a MENU chip), and the phone's main menu rows
 - `src/ui-steps.js` -- step-by-step setup sheets (round 13): the steps along the top, one step's content centred, keys and Back / Next along the foot, the screen's main button on the last step

@@ -436,14 +436,13 @@
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group).sd-changed::after{content:"";position:absolute;left:12px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--hot)}
- /* A slider row: name (and its i), the segment bar, the value. */
- body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range]){display:grid;grid-template-columns:minmax(0,1fr) 22px 200px 104px;align-items:center;gap:4px 12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}
+ /* A slider row: the name with its i, the segment bar, the value. */
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range]){display:grid;grid-template-columns:minmax(0,1fr) 200px 104px;align-items:center;gap:4px 12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{order:2;width:100%;height:18px;margin:0;appearance:none;background:transparent;cursor:pointer}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>output{order:3;text-align:right;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
  body:has(#drawerContent.sd-root) #drawer .sd-root label.field>.warn-note{order:4;grid-column:1/-1}
- body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range])>.hint{grid-column:2}
- body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{grid-column:3}
- body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:4}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{grid-column:2}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:3}
  #drawer .sd-root input[type=range]::-webkit-slider-runnable-track{height:18px;background:linear-gradient(90deg,var(--a1) var(--fill,50%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);transform:skewX(-12deg)}
  #drawer .sd-root input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:18px;background:var(--hot)}
  #drawer .sd-root :is(input,select):focus-visible{outline:none}
@@ -456,7 +455,11 @@
  #drawer .sd-root label.toggle>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked{background:var(--a1)}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
- body:has(#drawerContent.sd-root) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;border-radius:50%;font-size:14px}
+ body:has(#drawerContent.sd-root) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;margin:0;border-radius:50%;font-size:14px;flex:none}
+ /* THE i GOES WITH ITS NAME (PROJECT_HANDOFF *Info icons*): the name and its i are one piece, the i 8 px after
+    the last word and centred on it, in every kind of row; a name too long for its room ends in ... before the i. */
+ #drawer .field-name{display:inline-flex;align-items:center;gap:8px;min-width:0}
+ #drawer .field-name>.hint{margin:0;flex:none}
  /* The right-hand column. */
  #drawer .sd-side{grid-area:side;display:grid;gap:8px;align-content:start;position:sticky;top:0;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sd-side :is(.sd-state,.sd-row,.sd-help){position:relative;isolation:isolate}

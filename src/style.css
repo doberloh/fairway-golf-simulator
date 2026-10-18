@@ -96,7 +96,7 @@ button.danger:hover{background:rgba(141,63,44,.1)}
 .hint:hover,.hint:focus-visible,.hint[aria-expanded="true"]{opacity:1;background:rgba(50,80,60,.14)}
 .tip{margin:-4px 0 13px;padding:9px 12px;border-radius:10px;background:rgba(50,80,60,.08);font-size:.78rem;line-height:1.5;opacity:.9}
 .control-label{display:flex;align-items:center;margin:14px 0 7px;font-size:.78rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;opacity:.72}
-.toggle+.hint{margin-left:8px}
+.field-name>.hint{margin-left:0}
 
 /* Generation locks the main thread, so this is painted before the work starts
    and removed after. It reports that something is happening; it cannot animate. */
