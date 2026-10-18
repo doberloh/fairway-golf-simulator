@@ -253,7 +253,9 @@ const playerPutting=()=>savedPutting||round.putting;
 // Hands the choice back and forgets it -- called once on the way out of practice.
 const restorePutting=()=>{const p=playerPutting();savedPutting=null;return p;};
 const PUTTING_MODES=`<option value="holeout">Hole out · make every putt</option><option value="dartboard">Dartboard · 1, 2 or 3 putts</option><option value="decimal">Decimal · distance-based putts</option>`;
-const PUTTING_NOTES={holeout:'Make the ball in the cup. No gimme radius. The 107.95 mm cup has a recessed liner and the ball is 42.67 mm across. The camera you have set up stays as it is.',dartboard:'Inside the first circle: 1 putt. Between the first and second: 2 putts. From the second through the third circle: 3 putts. Beyond the outer circle is also capped at 3. Circles are drawn only on the green.',decimal:'Inside the first circle: 1.00 putt. Between circles, the score increases linearly: halfway from 1 to 2 is 1.50 putts, halfway from 2 to 3 is 2.50. Beyond the last circle is capped at 3.00. Scores retain two decimal places. In scramble, choose the team result before the putts are added.'};
+// What each putting mode means is not explained on screen: the option's own
+// words say it (the owner, 18 October 2026: "the putting description is not
+// needed anywhere").
 // Distance fields for either surface. `id` prefixes them so the round panel and
 // the putting panel can both be in the DOM without colliding.
 const puttingFields=(id,p)=>['one','two','three'].map((key,i)=>`<label class="field">${i+1}-putt distance (yd)<input id="${id}-${key}" type="number" min=".1" max="100" step=".1" value="${p[key]}"></label>`).join('');
@@ -1260,7 +1262,9 @@ function updateHUD(){
  const initial=p.name[0]?.toUpperCase()||'P',chip=playerColour(round.active);
  for(const el of [$('playerInitial'),document.querySelector('.header-right .avatar')]){
   if(!el)continue;
-  el.textContent=initial;el.style.background=chip;el.style.color=PLAYER_INK;
+  // The bar's chip keeps its player icon beside the letter (the pause list
+  // shows the icon, not the letter: the owner, 18 October 2026).
+  (el.querySelector('.av-letter')||el).textContent=initial;el.style.background=chip;el.style.color=PLAYER_INK;
  }
  void p;
  // THE CHIP SAYS WHAT IT OPENS. There is no scorecard on a practice ground, so
@@ -1639,10 +1643,14 @@ let reachHeldFor=0;
 // pin's distance is what a player sees on arriving at the ball. How long the
 // aim label stays after the last touch is placed, not measured.
 let aimTouchedAt=-Infinity;
-// A NEW HOLE SHOWS ITS AIM POINT FIRST (round 13, frame c-first): highlighted,
-// with its distance and rise, for a couple of seconds once the camera has
-// settled on the tee, then the pin's distance comes back.
-let aimIntroKey='',aimIntroUntil=0;const AIM_INTRO_MS=2200;
+// A NEW HOLE STARTS QUIET (the owner, 18 October 2026, replacing round 13's
+// aim point first): no distance to the pin and no aim point while the box
+// naming who is up is on screen, then the distance to the hole fades in.
+// Quiet from the moment the hole is set up, while the loading screen is up,
+// while the turn box shows, and -- if that box has not come yet -- for up to
+// HOLE_QUIET_WAIT after the loading screen goes (PLACED: the box waits for a
+// hole-out banner, so it can come late; past that the distances show).
+let holeQuietKey='',holeQuietFrom=null,turnFlashHole='';const HOLE_QUIET_WAIT=3000;
 // WHETHER THE GOLFER HAS PLACED THE CIRCLE this turn: its distance (a click,
 // ↑ ↓, the pad, the distance box) or its direction (← →). Changing club moves
 // a circle nobody placed to the new club's carry down the fairway; one placed by
@@ -1786,7 +1794,7 @@ function finishShot(){
   view.setShotHistory?.(visibleTrails());
   setUpRangeTurn();
   if(fromReview)view.flyCamera(round.position,aim,{from:fromReview});
-  showRangeResult();if(hud1)showShotCard(cardRecord());
+  showRangeResult();if(hud1)nextShotCard();
   view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
   save();sendPlayer();
   return;
@@ -1940,7 +1948,7 @@ function spinHoleOutBall(canvas,finish){
  draw(t0);
 }
 function renderResult(event){
- if(hud1)showShotCard(cardRecord());
+ if(hud1)nextShotCard();
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
  let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:''}</p>`.replace('<p></p>','')+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
@@ -2661,8 +2669,8 @@ function openPlaySettings(name,content){
   content.innerHTML=`<p>The ground everything lands on. These apply immediately to every shot source.</p><h3>Turf & roll</h3>${slider('greenStimp','Green speed · Stimp',settings.turf.stimp,6,15,' ft',.5)}${slider('fairwayRoll','Fairway roll',settings.turf.fairway,30,180,'%')}${slider('semiRoll','Semi-rough roll',settings.turf.semi,30,180,'%')}${slider('roughRoll','Rough roll',settings.turf.rough,30,180,'%')}<label class="field">Green firmness<select id="turfFirmness">${FIRMNESS_NAMES.map(n=>`<option value="${n}"${firmnessName(settings.turf.firmness)===n?' selected':''}>${n}</option>`).join('')}</select></label><p class="note">Green firmness is not green speed. It decides what a ball does the moment it lands — how high it bounces and whether it holds — while the roll settings decide what it does once it is already rolling. A green can be quick and soft, or slow and baked hard.</p><p class="note"><strong>It is named for what it touches.</strong> Green firmness is measured in inches of penetration by a greens instrument, so it moves greens and their collars and nothing else — a fairway or rough keeps one landing behaviour and is set to run with the roll sliders above.</p><p class="note">100% is standard turf. Higher roll values mean less resistance. Stimp is the distance, in feet, a standard release rolls on a level green.</p><button class="primary" id="saveFlight">Save turf settings</button>`;
   $('saveFlight').onclick=()=>{settings.turf=turfConfig({stimp:Number($('greenStimp').value),fairway:Number($('fairwayRoll').value),semi:Number($('semiRoll').value),rough:Number($('roughRoll').value),firmness:$('turfFirmness')?.value});save();updateAim();closePanel();toast('Turf conditions saved.');};
  }else{
-  const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><div class="note" id="puttingExplanation"></div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
-  const explain=()=>{const m=$('puttingMode').value;$('putting-distances').hidden=m==='holeout';$('puttingExplanation').textContent=PUTTING_NOTES[m];};$('puttingMode').onchange=explain;explain();
+  const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
+  const explain=()=>{const m=$('puttingMode').value;$('putting-distances').hidden=m==='holeout';};$('puttingMode').onchange=explain;explain();
   $('savePutting').onclick=()=>{try{puttingGuard();applyPutting(readPutting('putting'));save();updateHUD();closePanel();toast('Putting mode saved. Existing scores stay as recorded.');}catch(e){$('playError').textContent=e.message;}};
  }
 }
@@ -3946,7 +3954,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -3956,7 +3964,7 @@ function wireFormatFields(){
  $('roundPuttingMode').value=playerPutting().mode;
  // Applied as it is changed. A button here would have been a third place to
  // press Save for one setting, and both panels already have a primary action.
- const puttNote=()=>{const m=$('roundPuttingMode').value;$('roundPutting-distances').hidden=m==='holeout';$('roundPuttingNote').textContent=PUTTING_NOTES[m];};
+ const puttNote=()=>{const m=$('roundPuttingMode').value;$('roundPutting-distances').hidden=m==='holeout';};
  const puttApply=()=>{try{puttingGuard();applyPutting(readPutting('roundPutting'));save();updateHUD();$('roundError').textContent='';}catch(e){$('roundError').textContent=e.message;toast(e.message);}};
  puttNote();$('roundPuttingMode').onchange=()=>{puttNote();puttApply();};
  for(const k of ['one','two','three'])$('roundPutting-'+k).onchange=puttApply;
@@ -4184,7 +4192,7 @@ function flashTurn(tries=0){
  // level-up) is still up: wait for it, then name who is up -- the two used to
  // sit on top of each other (smoke, 15 October 2026).
  if((!$('holeOut')?.hidden&&!$('holeOut').classList.contains('leaving'))||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),150);return;}
- lastTurn=key;
+ lastTurn=key;turnFlashHole=`${round.uid}:${round.hole}`;
  const p=round.player,{rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played);
  const shot=round.mode==='scramble'?round.stroke:(round.strokes?.[i]||0)+1;
  el.innerHTML=`<small>${round.players.length>1?'UP NOW':`HOLE ${round.hole+1}`}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong>${`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`}<span>Shot ${scoreText(shot)}</span></div>`;
@@ -4230,8 +4238,14 @@ let hud1=false,hudBiome='';
 // pops up where the ball came to rest and fades, or tiles that stay -- the
 // course's way and the range's, unless the player chose (the Esc list). Tab
 // shows every number, as tiles, until pressed again.
+// WHEN THE CARD IS UP (the owner, 18 October 2026): from the moment the ball
+// comes to rest, while the shot's line is on screen, until the camera goes to
+// the next shot -- it had stayed six seconds into the next address and sat on
+// the meter. A skipped shot never rests on screen, so its card shows as the
+// next shot is set up and fades as before.
 let allNumbers=false,shotChoice=loadChoice(),shotCard=null;
-function showShotCard(record){
+function nextShotCard(){if(shotCard?.resting)hideShotCard();else showShotCard(cardRecord());}
+function showShotCard(record,resting=false){
  const el=$('shotCard');if(!el)return;
  const d=shotDisplay({range:rangeMode,choice:shotChoice,putt:!!record?.putting,all:allNumbers});
  if(!hud1||!record||d.kind!=='card'){hideShotCard();return;}
@@ -4241,7 +4255,7 @@ function showShotCard(record){
   +`<div class="rh-sc-body"><div class="rh-sc-main"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>`
   +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
   +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div>';
- shotCard={at:performance.now(),end:{x:end.x,z:end.z},hole:round.hole};
+ shotCard={at:performance.now(),end:{x:end.x,z:end.z},hole:round.hole,resting};
  el.style.opacity='1';el.hidden=false;
 }
 function hideShotCard(){shotCard=null;const el=$('shotCard');if(el)el.hidden=true;}
@@ -4249,8 +4263,8 @@ function hideShotCard(){shotCard=null;const el=$('shotCard');if(el)el.hidden=tru
 function placeShotCard(now){
  if(!shotCard)return;
  const el=$('shotCard');
- if(!hud1||flight||swing||round.hole!==shotCard.hole){hideShotCard();return;}
- const p=cardPhase(shotCard.at,now);
+ if(!hud1||(flight&&!flight.reviewing)||swing||round.hole!==shotCard.hole){hideShotCard();return;}
+ const p=shotCard.resting?{phase:'shown',fade:0}:cardPhase(shotCard.at,now);
  if(p.phase==='gone'){hideShotCard();return;}
  const q=view.project({x:shotCard.end.x,y:course.height(shotCard.end.x,shotCard.end.z)+1,z:shotCard.end.z});
  // Kept clear of the club, the meter and the map: a short shot rests low on
@@ -4359,10 +4373,10 @@ function drawPauseInfo(){
  const where=rangeMode?'Driving range':`${playingCourseName()} · Hole ${round.hole+1} · Par ${course.par}`;
  $('pauseWhere').textContent=where;
  // The standings beside the list: each golfer, how far through, against par.
- // Headed by where you are (the mockup's line over the standings), each row
- // the golfer's ball in its frame.
+ // Each row the golfer's ball in its frame. Where you are is said once, in the
+ // PAUSED panel over the left column (the owner, 18 October 2026).
  const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
- setHtml($('pauseStand'),rangeMode?'':`<h4 class="rh-pause-k">${escape(where.toUpperCase())}</h4>`+round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
+ setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
   return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
 }
@@ -7144,7 +7158,7 @@ function tick(now){
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true);if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
@@ -7210,12 +7224,12 @@ function tick(now){
   // While the player is aiming the pin's label has faded out, so there is no
   // pile for the 8 m rule to prevent; it applies only at rest. Without this the
   // aim label vanished as the aim crossed the pin (owner, 11 October 2026).
-  const introKey=`${round.uid}:${round.hole}:${rangeMode?'range':''}`;
-  if(a&&!tour&&!flight&&aimIntroKey!==introKey){aimIntroKey=introKey;aimIntroUntil=now+AIM_INTRO_MS;}
-  const intro=now<aimIntroUntil;
-  const recent=now-aimTouchedAt<AIM_LABEL_HOLD||intro;
-  $('aimLabel').classList.toggle('hot',intro);
-  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState;
+  const holeKey=`${round.uid}:${round.hole}`;
+  if(holeQuietKey!==holeKey){holeQuietKey=holeKey;holeQuietFrom=null;}
+  if(holeQuietFrom===null&&appMode==='play'&&$('generating')?.hidden!==false)holeQuietFrom=now;
+  const quiet=!rangeMode&&!tour&&(holeQuietFrom===null||!$('turnFlash')?.hidden||(turnFlashHole!==holeKey&&now-holeQuietFrom<HOLE_QUIET_WAIT));
+  const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
+  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState&&!quiet;
   $('aimLabel').hidden=!show;
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
   // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"
@@ -7224,7 +7238,7 @@ function tick(now){
   // stops the two change back. The stylesheet does the fading.
   const aiming=show&&recent;
   $('aimLabel').classList.toggle('faded',!aiming);
-  flagEl.classList.toggle('faded',aiming);
+  flagEl.classList.toggle('faded',aiming||quiet);
   if(show){
    const q=view.project({x:a.x,y:course.height(a.x,a.z)+.15,z:a.z});
    $('aimLabel').style.left=q.x+'px';$('aimLabel').style.top=q.y+'px';

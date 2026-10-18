@@ -37,6 +37,23 @@ The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17
 October 2026): seven phases, a stop for the owner's look after each. The rules
 are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 
+- [ ] **The owner's fix list of 18 October 2026: built; seen only in scripted
+  screenshots at 1920 x 1080** (Playwright on the built file; nobody has
+  played it). Seat names centred and whole; the putting description gone
+  everywhere; cut italic and "..." fixed across the sheets (captions wrap);
+  notes, the map's expand button, the scorecard's countdown and match line no
+  longer rounded, and no "MAKE IT YOURS" over the scorecard; the shot card up
+  only while the ball rests; a new hole quiet until the turn box goes, then
+  the yards fade in; no blur past the XP card, level-up band or growing
+  window; pause: course line centred over the left column only, a player
+  icon on Players & round; the map and tools above the corner logo; the menu
+  wordmark up 20; the Tab tiles about 45% smaller with the units clear; the
+  ball light growing with its words; the range's targets as 1.0 sliders;
+  Challenges' group as compact seat rows. **To check:** the ball light with a
+  real bridge and a monitor armed (seen only faked, and the meter was still
+  drawn under it in the fake), the scorecard countdown between holes (not
+  captured), the turn box with two to four golfers, every size but 1920 x
+  1080 for the round screen, phones.
 - [ ] **Phase 0 (foundations) is built and not seen.** The typeface, the nine
   palettes, `ui-layout.js`, `ui-palette.js` and the kit are on the branch with
   their tests (17 October 2026), but no screen uses them, so nothing of it has
@@ -180,7 +197,8 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   list, a phone. A toast and the XP card at the same moment overlap a little.
 - [ ] **Round screen, round 13: built to frames c-aim, c-first and c-flight,
   seen in the browser pane at 1280 x 720** (at rest with the aim point shown
-  first, and one shot in flight). Not seen: a putt, a monitor shot's strip,
+  first -- retired 18 October 2026, a new hole now starts quiet -- and one
+  shot in flight). Not seen: a putt, a monitor shot's strip,
   the tools column on the range, 4:3, a phone (keeps its own layout). PLACED:
   plays-like left the round screen; Menu added to the tool column; Fly is V
   (the mockup's F is down in free flight).

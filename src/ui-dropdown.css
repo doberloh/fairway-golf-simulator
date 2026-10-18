@@ -14,7 +14,9 @@
 .dd-field:focus-visible{outline:none}
 .dd-field:focus-visible::before,.dd-open>.dd-field::before{box-shadow:inset 0 0 0 2px var(--hot,#fd5)}
 .dd-k{font:700 .8em/1 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal;letter-spacing:.14em;color:var(--soft,#9ab)}
-.dd-v{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+/* Room after the last letter for its slant: the heavy italic leans past its
+   box and overflow:hidden shaved it ("cut-off text", 18 October 2026). */
+.dd-v{flex:1;min-width:0;padding-right:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .dd-tri{color:var(--a1,#8c8);font-style:normal;font-size:.8em}
 .dd-open .dd-tri{transform:scaleY(-1)}
 .dd-list{display:grid;gap:3px;min-width:100%;max-height:min(22em,60vh);overflow:hidden auto;margin:.2em 0 0 .75em;padding:2px 14px 4px 10px;scrollbar-width:thin;scrollbar-color:var(--a1,#8c8) rgba(255,255,255,.12)}
@@ -48,6 +50,9 @@
 #drawer .player-who>.dd>.dd-field::before{background:none}
 #drawer .player-who>.dd>.dd-field:hover::before{background:rgba(255,255,255,.06)}
 #drawer .player-who>.dd .dd-v{flex:0 1 auto;text-align:center;font-size:34px;line-height:1.1}
+/* The name centred on the seat, not the name and its triangle: an unseen
+   triangle on the left balances the one on the right (owner, 18 October 2026). */
+#drawer .player-who>.dd>.dd-field::after{content:"\25BE";order:-1;visibility:hidden;font-size:.8em;font-style:normal}
 #drawer .player-who.nm-20>.dd .dd-v{font-size:29px}
 #drawer .player-who.nm-17>.dd .dd-v{font-size:24px}
 #drawer .player-who.nm-15>.dd .dd-v{font-size:21px}

@@ -115,8 +115,8 @@ export function formatCards(doc, mode) {
  return {tiles, paint};
 }
 
-// The house rules as pickers, putting's distances and what the putting choice
-// means; the round's own tee drop-down kept, hidden (each golfer has a tee).
+// The house rules as pickers and putting's distances (what each putting choice
+// means is no longer written out: the owner, 18 October 2026); the round's own tee drop-down kept, hidden (each golfer has a tee).
 export function rulesColumn(doc, q) {
  const rules = make(doc, 'div', 'sx-rules-col');
  rules.append(make(doc, 'h3', 'sx-head', 'HOUSE RULES'));
@@ -125,9 +125,6 @@ export function rulesColumn(doc, q) {
  const dist = q('roundPutting-distances'); if (dist) rules.append(dist);
  if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
  if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
- const help = make(doc, 'div', 'sx-help', '<span class="sx-help-k">PUTTING</span>');
- const puttNote = q('roundPuttingNote'); if (puttNote) help.append(puttNote);
- rules.append(help);
  const tee = q('roundTee'); if (tee) { tee.hidden = true; rules.append(tee); }
  return rules;
 }
@@ -363,6 +360,11 @@ export function buildRangeSetup(root, {step = 0, onStep, doc = globalThis.docume
  golfers.className = 'sx-body sx-golfers rs-golfers';
  range.className = 'sx-body rs-range';
  for (const s of root.querySelectorAll(':scope>.panel-section,:scope>.panel-lead,:scope>.panel-tabs,:scope>p')) s.classList.add('sx-emptied');
+ // The targets' sliders drawn as segment bars filled to their value (--fill).
+ for (const r of range.querySelectorAll('input[type=range]')) {
+  const fill = () => r.style.setProperty('--fill', ((r.value - r.min) / ((r.max - r.min) || 1) * 100).toFixed(1) + '%');
+  r.addEventListener('input', fill); fill();
+ }
  return stepSheet(root, {
   steps: [{label: 'Golfers', page: golfers}, {label: 'The range', page: range}],
   index: step, finish: root.querySelector('#rangeGo'), onStep,

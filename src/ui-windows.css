@@ -94,8 +94,10 @@
  #world .toast::after{content:"";order:-1;flex:none;width:9px;height:9px;border-radius:50%;background:var(--a1)}
 
  /* THE XP CARD (frame c-xp): top centre, the gain in the hot colour, what
-    earned it, the level and its bar. */
- #world .xp-gain{top:110px;width:430px;min-width:0;max-width:none;zoom:var(--hud-z,1);padding:14px 32px 16px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+    earned it, the level and its bar. No blur behind: it blurred the box, not
+    the slant, and showed past both ends (the owner, 18 October 2026; the
+    level-up band and the growing window likewise). */
+ #world .xp-gain{top:110px;width:430px;min-width:0;max-width:none;zoom:var(--hud-z,1);padding:14px 32px 16px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
  #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world .xp-gain .xp-top{display:flex;align-items:baseline;gap:10px}
  #world .xp-gain .xp-top b{font-size:37px;font-weight:800;font-style:italic;color:var(--hot)}
@@ -110,7 +112,7 @@
  #world .xp-gain .xp-level small{font-size:13px;letter-spacing:.1em;color:var(--soft)}
 
  /* LEVEL UP (frame c-xp): a band across the whole screen in the gradient. */
- #world .level-up{left:-60px;right:-60px;top:40%;transform:translateY(-50%);zoom:var(--hud-z,1);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;height:136px;padding:0 120px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #world .level-up{left:-60px;right:-60px;top:40%;transform:translateY(-50%);zoom:var(--hud-z,1);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;height:136px;padding:0 120px;border:0;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;background:none;box-shadow:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
  #world .level-up::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
  #world .level-up small{order:1;font-size:17px;letter-spacing:.14em;color:var(--on-hot)}
  #world .level-up strong{order:2;font-size:90px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
@@ -226,7 +228,7 @@
    every screen -- a slanted panel under the biome's line, the title in the
    italic capitals, the bar as a slanted track in the biome's colour. */
 #generating{background:rgba(5,8,6,.55);backdrop-filter:blur(4px)}
-#generating>div{position:relative;isolation:isolate;align-items:flex-start;max-width:none;width:min(460px,calc(100vw - 48px));padding:22px 40px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;text-align:left}
+#generating>div{position:relative;isolation:isolate;align-items:flex-start;max-width:none;width:min(460px,calc(100vw - 48px));padding:22px 40px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;text-align:left}
 #generating>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);border-top:4px solid var(--a1,#8fc79c);transform:skewX(-12deg)}
 #generating strong{font-size:26px;font-weight:800;font-style:italic;line-height:1.05;text-transform:uppercase}
 #generating small{font-family:var(--font-ui);font-size:14px;color:var(--soft,#9ab)}

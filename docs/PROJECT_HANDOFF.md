@@ -1110,7 +1110,12 @@ by the attribute (the monitor window, the monitor strip) needs its own
 says which numbers show: on a course a **card** pops up beside where the ball
 came to rest (`#shotCard`, placed every frame by `placeShotCard`, scaled by
 transform like the flag label) with the total large and carry, ball speed and
-offline under it, and fades after 6 s (`CARD_HOLD_MS`, PLACED); on the range
+offline under it. **When it is up** (the owner, 18 October 2026): from the
+moment the ball rests (`flight.reviewing` set, the shot-line review or the
+plain hold) until `finishShot` sets up the next shot (`nextShotCard` hides a
+`resting` card); it used to hold 6 s into the next address and sat on the
+meter. Only a skipped shot, which never rests on screen, still shows its card
+as the next shot is set up and fades after 6 s (`CARD_HOLD_MS`, PLACED); on the range
 the **tiles** stay, in a fixed grid top right with carry lit, and the golfer
 cards move under the hole slab. **Tab** shows every number as tiles until
 pressed again (the keys list moved to ? and the Esc list's Help). The player's
@@ -1252,9 +1257,13 @@ at the top centre; the rise to the hole moved into the pin's marker
 (`#pinRise`). **Both markers are one build**: a slanted pill over a stem and an
 arrow whose tip is on the point -- `translate(-50%,-100%)` with the tip at the
 box's bottom centre, the aim marker projected at the ground (+0.15 m, it was
-+3 m: "off centre and too high"). A new hole shows its aim point first
-(`aimIntroUntil`, 2.2 s once no tour or flight is running), the marker in the
-hot colour. **The flight panel is gone** from the round screen (`#shotPanel`
++3 m: "off centre and too high"). **A new hole starts quiet** (the owner, 18
+October 2026; round 13 showed the aim point first, `aimIntroUntil`, retired):
+no pin distance and no aim marker while the loading screen or the turn box
+(`#turnFlash`) is up, or for up to `HOLE_QUIET_WAIT` (3 s, PLACED) after the
+loading screen if the box has not come yet (it waits for a hole-out banner);
+then the flag label fades in (its `.faded` transition). `flashTurn` records
+`turnFlashHole`; not on the range or during a tour. **The flight panel is gone** from the round screen (`#shotPanel`
 hidden; it stays on a phone): the meter counts carry, total and apex through
 the flight (as it already did), and the launch numbers are `#rhLaunch`, shown
 while the ball is in the air (`flight.elapsed < result.hang`) and faded at
@@ -1351,6 +1360,23 @@ The check that finds a clipped shape and an off-screen piece is a few lines
 of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
 4:3 and both phone shapes after any sheet change.
 
+**THE OWNER'S FIX LIST (18 October 2026)** added four rules the page script
+now checks (`CUT`, `ITALIC`, `SLANTCUT`, `BLUR`, `ROUND`; the round 14 report
+has the script). **Heavy italic in a box that hides its overflow loses the
+lean of its last letter** ("DUSTI", "STRAIGHI"): such text gets
+`padding-right` of about 0.15 em, or the box does not hide its overflow. **A
+box whose `::before` is the skewed panel must not hide its overflow** -- it
+cuts the panel's own corners (the Endless landscape names, the pause screen's
+half-width chips). **No backdrop blur behind a slanted panel**: the blur is
+the rectangle's, so it showed past both slanted ends (the XP card, the
+level-up band, the growing window; `backdrop-filter:none`). **Nothing rounded,
+nothing "..."**: a note is words beside a thin bar (`.note`, empty ones
+hidden), the scorecard's next-hole countdown and match line are slanted
+panels, card names and captions wrap. A seat's name is centred by an unseen
+triangle balancing the real one (`.player-who .dd-field::after`).
+Challenges' group got its own compact seat row (`.ch-group .seat`): the old
+player-row grid had squashed its pickers to nothing.
+
 **#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
 `sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
 the `*-root` marks first. Without that, Help opened blank after Play, under
@@ -1438,8 +1464,9 @@ panel, and the card naming whose turn it is (`#turnFlash`) is a slanted panel
 2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
 Help & controls and Main menu as tall rows, the settings as four half-width
 chips (Graphics, Sound, Saved courses, Connect monitor) and the time of day;
-on the right the course, hole and par over the standings (each golfer's ball
-in its frame), the tee, the Swing Meter, shot numbers, cameras and the
+the course, hole and par once, centred under PAUSED over the left column
+(18 October 2026: it also headed the standings, `.rh-pause-k`, removed); on
+the right the standings (each golfer's ball in its frame), the tee, the Swing Meter, shot numbers, cameras and the
 conditions as a row. **The list's own containers are `display:contents`**
 (`.header-right`, `nav`, `.menu-wrap`, `#menuDrop`) so every row is a grid
 item of the top bar, placed by explicit rows; **but `.sim-time` is ALSO a
@@ -1731,7 +1758,7 @@ The CSS has to undo `.drawer .primary`, which sets `width:100%` and `margin-top:
 
 **The panel title follows the variant, not the key.** `panelTitle(name)` reads *Driving range*, *Endless run* or *Your next round* for the one `round` key. All four used to read "Your next round", which was wrong on three of them.
 
-**One putting setting, two surfaces, and a copy held apart from practice rounds.** The round panel's *Format & tees* section renders the mode select and the 1/2/3-putt distance fields inline — it used to be a button in *Your group* that opened the putting panel, which was a second click to reach one setting and put it under the wrong heading. `PUTTING_MODES`, `PUTTING_NOTES`, `puttingFields(id,p)`, `readPutting(id)`, `applyPutting(cfg)` and `puttingGuard()` in `main.js` are the shared pieces; the round panel and the tools-tray *Putting options* panel both build from them, so the option list and the explanatory notes have one definition. The round-panel fields apply on change with no save button of their own; the tray panel keeps its *Apply putting mode* button because it is a popup the player dismisses.
+**One putting setting, two surfaces, and a copy held apart from practice rounds.** The round panel's *Format & tees* section renders the mode select and the 1/2/3-putt distance fields inline — it used to be a button in *Your group* that opened the putting panel, which was a second click to reach one setting and put it under the wrong heading. `PUTTING_MODES`, `puttingFields(id,p)`, `readPutting(id)`, `applyPutting(cfg)` and `puttingGuard()` in `main.js` are the shared pieces; the round panel and the tools-tray *Putting options* panel both build from them, so the option list has one definition. (The explanatory notes, `PUTTING_NOTES`, are gone: "the putting description is not needed anywhere", the owner, 18 October 2026; each option's own words say it.) The round-panel fields apply on change with no save button of their own; the tray panel keeps its *Apply putting mode* button because it is a popup the player dismisses.
 
 **The range must not eat the choice.** It builds a throwaway `Round` forced to `{mode:'holeout'}`, and that round used to be the only copy of the setting: a visit to the range silently reset a player's Dartboard or Decimal mode, and *Start fresh round* from inside the range carried hole-out into the new round. `savedPutting` now holds the player's own choice across practice. `rememberPutting()` captures it on the way in (guarded on `!rangeMode&&!labMode`, so lab→range does not overwrite it), `playerPutting()` is what both surfaces read and edit, `applyPutting` writes to `savedPutting` while practice is live and to `round.putting` otherwise, and `restorePutting()` hands it back and forgets it — called from `restoreCourse()` on the way out and from `buildRoundOn()` for a round started from inside practice.
 

@@ -8639,7 +8639,11 @@ asked for everything 40-50% smaller, and the round-13 mockups set margins
 **Shot moments' timings (phase 2, 17 October 2026).** The pop-up shot card holds
 **6 s** and fades over **0.6 s** (`CARD_HOLD_MS`, `CARD_FADE_MS`): PLACED, long
 enough to read three numbers from the mat, gone before the next golfer has
-usually picked a club. The hole-out band's **0.2 s in, 1.5 s hold, 0.3 s out**
+usually picked a club. Since 18 October 2026 that timing is only a skipped
+shot's: a card shown as the ball rests stays exactly as long as the rest hold
+(3 s, or 4.5 s with the shot-line review, `SHOT_HOLD_SECONDS`,
+`REVIEW_HOLD_SECONDS`) and goes as the camera moves on -- the owner saw it
+sitting on the next address. The hole-out band's **0.2 s in, 1.5 s hold, 0.3 s out**
 is the approved mockup's (*Big but brief*); the quiet strip's **0.15 / 1.3 /
 0.25 s** is PLACED to sit under it. The old banner held 2.7 s.
 

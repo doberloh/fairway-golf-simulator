@@ -26,7 +26,8 @@
  /* ---------------------------------------------------------------- main menu */
  .main-menu:not(.menu-behind){display:block;background:linear-gradient(90deg,rgba(4,8,12,.72) 0%,rgba(4,8,12,.42) 42%,rgba(4,8,12,0) 70%)}
  .main-menu :is(.menu-masthead,.menu-deck,.rh-menu-card,.rh-menu-keys){zoom:var(--hud-z,1);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
- .main-menu .menu-masthead{position:absolute;left:60px;top:36px;padding:0;text-align:left}
+ /* Up 20 so the "y" of the wordmark clears PLAY (the owner, 18 October 2026). */
+ .main-menu .menu-masthead{position:absolute;left:60px;top:16px;padding:0;text-align:left}
  .main-menu .menu-brand{justify-content:flex-start;font-size:88px;font-weight:800;font-style:italic;letter-spacing:-.02em}
  .main-menu .menu-brand .brandmark svg{width:64px;height:64px}
  .main-menu .brand-dot{color:var(--a1)}
