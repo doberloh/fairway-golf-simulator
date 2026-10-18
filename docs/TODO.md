@@ -37,18 +37,23 @@ The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17
 October 2026): seven phases, a stop for the owner's look after each. The rules
 are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 
-- [ ] **Three fixes of 18 October 2026: built; `npm test` and the build pass;
-  not seen.** (1) The seats' Plays with / Swings bars follow the seat's lean,
+- [ ] **Three fixes of 18 October 2026: built; seen in the browser pane at
+  1600 x 900** (the seat's pickers leaning with it on Play's Golfers; a drive's
+  card above the apex with its arrow, YDS TOTAL and YDS TO PIN, ball speed,
+  backspin and apex, gone when the camera came back; all 47 info icons on the
+  studio's pages measured 8 px after their names). Smoke: endless-round,
+  hud-reachable, studio, both phones, monitor, mixed-group and challenge pass;
+  the rest not run (the card got busy). (1) The seats' Plays with / Swings bars follow the seat's lean,
   in every golfers step (Play, the course of the week, Endless, the range,
   Challenges' group); (2) the shot card hangs above the shot line's apex with an
   arrow down to it, comes up as the camera pulls back and fades as it flies
-  in, shows apex in place of offline, and has a second big number, the
+  in, shows ball speed, backspin and apex underneath, and has a second big number, the
   yards left to the pin (feet inside 10 m, PLACED); (3) every
   setting's info i sits right after its name (a new layout rule,
-  PROJECT_HANDOFF *Info icons*). **To check:** the seats at 16:9 and a phone;
-  a drive with the review camera on (the card and arrow, the flip near the
-  map, the fade) and one with it off; the studio's settings and the menu's
-  course settings (slider, list, switch and heading rows).
+  PROJECT_HANDOFF *Info icons*). **To check:** the seats on a phone and in
+  the other golfers steps; the card below the apex where the top of the
+  screen has no room, its fade caught mid-way, a drive with the review camera
+  off, a holed shot (IN THE HOLE); the remaining smoke journeys.
 - [ ] **The hidden old interface removed (18 October 2026): built; `npm test`
   1000/1000, the build, and all 37 smoke journeys pass** (run on the real GPU
   in 13 small batches the same day; the journeys were changed to read the 1.0

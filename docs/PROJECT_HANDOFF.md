@@ -1174,10 +1174,10 @@ from its foot (class `below` puts it under the point only where the top of the
 screen has no room), kept inside the screen and clear of the map and tool
 column; the arrow's start, length and angle are worked out each frame from
 where the card had to sit, so it always reaches the point. Its numbers: the
-total and, as a second big number, what is left to the pin (feet inside 10 m,
+total (labelled YDS TOTAL, the owner) and, as a second big number, what is left to the pin (feet inside 10 m,
 as the flag marker counts -- PLACED; IN THE HOLE once it drops; not on the
-range), then carry, ball speed and apex (apex replaced offline, the owner, 18
-October 2026: the card points at the top of the line). A shot whose line is
+range), then ball speed, backspin and apex, in that order (the owner, 18 October
+2026; carry and offline left the row). A shot whose line is
 never shown (skipped, or the review camera off) points at where the ball came
 to rest. A new hole hides it at once.
 

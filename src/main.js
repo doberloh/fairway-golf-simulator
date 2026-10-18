@@ -4317,7 +4317,7 @@ function showShotCard(record,resting=false,point=null){
  const cells=shotGrid(record,{fields:[CARD_MAIN,...CARD_ROW],columns:0}).cells,main=cells[0],row=cells.slice(1);
  const end=record.result?.end;if(!end||!main)return;
  el.innerHTML=`<div class="rh-sc-tab"><span>${escape(cardTab(record.player,record.club))}</span></div>`
-  +`<div class="rh-sc-body"><div class="rh-sc-main"><div class="rh-sc-big"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>${toPinBig(record)}</div>`
+  +`<div class="rh-sc-body"><div class="rh-sc-main"><div class="rh-sc-big"><b>${escape(main.value)}</b><span>${/ft/i.test(main.unit||'')?'FT':'YDS'} TOTAL</span></div>${toPinBig(record)}</div>`
   +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
   +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div><i class="rh-sc-ptr" aria-hidden="true"></i>';
  shotCard={at:performance.now(),point:point||{x:end.x,y:course.height(end.x,end.z)+1,z:end.z},hole:round.hole,resting,fadeAt:0};

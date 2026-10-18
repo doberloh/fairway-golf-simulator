@@ -168,7 +168,7 @@
  .rh-shot-card .rh-sc-big{display:flex;align-items:baseline;gap:8px;min-width:0}
  .rh-shot-card .rh-sc-main b{font-size:72px;font-weight:800;font-style:italic;line-height:.95}
  .rh-shot-card .rh-sc-big.pin b{color:var(--hot)}
- .rh-shot-card .rh-sc-big.pin span{max-width:4.5em;line-height:1.05}
+ .rh-shot-card .rh-sc-big span{max-width:4.5em;line-height:1.05}
  .rh-shot-card .rh-sc-main span{font-size:22px;color:var(--soft);font-weight:700}
  .rh-shot-card .rh-sc-row{display:grid;grid-template-columns:repeat(3,1fr);padding:4px 10px 12px}
  .rh-shot-card .rh-sc-row>div{display:grid;justify-items:center}

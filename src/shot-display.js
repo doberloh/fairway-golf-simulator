@@ -21,8 +21,9 @@ export const cleanChoice = v => (CHOICES.includes(v) ? v : 'auto');
 
 // The card's fields: the total, large, and three under it.
 export const CARD_MAIN = 'total';
-// The apex in place of offline (the owner, 18 October 2026): the card points at the top of the line.
-export const CARD_ROW = ['carry', 'ballSpeed', 'apex'];
+// Ball speed, backspin and apex, in that order (the owner, 18 October 2026): carry and offline left the
+// row; the card points at the top of the line, and the yards to the pin are its second big number.
+export const CARD_ROW = ['ballSpeed', 'backSpin', 'apex'];
 // The range's eight tiles when the player has not chosen their own (the
 // approved mockup's set), carry lit.
 export const RANGE_TILES = ['ballSpeed', 'launch', 'spin', 'spinAxis', 'carry', 'total', 'offline', 'apex'];
