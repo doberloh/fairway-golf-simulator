@@ -54,6 +54,12 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   drawn under it in the fake), the scorecard countdown between holes (not
   captured), the turn box with two to four golfers, every size but 1920 x
   1080 for the round screen, phones.
+- [ ] **The map and the Tab shot numbers move again (18 October 2026): built;
+  dragged only by script at 1920 x 1080** (moved, kept through a resize to
+  1280 x 720, a double-click put the map back). Not seen: by hand with a
+  mouse or a finger on a touch screen, the range (its tiles start top right),
+  the big map (M) after a move, the Tools window's Reset. PLACED: only those
+  two move; no resizing.
 - [ ] **Phase 0 (foundations) is built and not seen.** The typeface, the nine
   palettes, `ui-layout.js`, `ui-palette.js` and the kit are on the branch with
   their tests (17 October 2026), but no screen uses them, so nothing of it has

@@ -44,6 +44,7 @@ import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,ba
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
+import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
 import {createPopups} from './popups.js';
 import {suggestCourseName} from './course-names.js';
 import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,standardFields,moveField,liveRecord,COLUMN_CHOICES,maxFields,DEFAULT_COLUMNS} from './shot-data.js';
@@ -2390,6 +2391,67 @@ function placeTiles(){
   const y=Math.max(0,H-16-rowH*(rows.length-i)+gap);
   for(const t of row){t.style.left=x+'px';t.style.top=y+'px';x+=t.offsetWidth+gap;}
  });
+}
+// THE MAP AND THE SHOT NUMBERS MOVE (the owner, 18 October 2026: "I want to be
+// able to move at least the map and the shot data around"; hud-places.js). On
+// the 1.0 round screen the map is dragged by its title, the shot numbers (Tab)
+// anywhere on them; a double-click puts either back, and Reset in the Tools
+// window puts both back. Not over the big map (M), not on a phone (which
+// keeps its own layout), not in the studio. A place is kept per device.
+let hudPlaces=loadPlaces(),hudPlacesKey='',hudPlacesAt=0;
+const placeable=()=>({map:document.querySelector('#world .minimap'),tiles:$('shotTiles')});
+function movableNow(k){const w=$('world');return !!w&&hud1&&appMode==='play'&&!w.classList.contains('aim-view')&&(k!=='tiles'||w.classList.contains('rh-tiles'));}
+// Puts a piece's top-left corner at (left, top) screen pixels from the playing
+// area's corner, whatever zoom it is drawn at: one trial move measures how far
+// a CSS pixel of its `left` moves it on screen.
+function setPiecePos(el,left,top){
+ const wr=$('world').getBoundingClientRect();
+ el.style.right='auto';el.style.bottom='auto';el.style.transform='none';
+ el.style.left='0px';el.style.top='0px';const a=el.getBoundingClientRect();
+ el.style.left='100px';el.style.top='100px';const b=el.getBoundingClientRect();
+ const kx=(b.left-a.left)/100||1,ky=(b.top-a.top)/100||1;
+ el.style.left=((left-(a.left-wr.left))/kx).toFixed(1)+'px';el.style.top=((top-(a.top-wr.top))/ky).toFixed(1)+'px';
+}
+function clearPiecePos(el){for(const k of ['left','top','right','bottom','transform'])el.style[k]='';delete el.dataset.placed;}
+function drawHudPlaces(force=false){
+ const w=$('world');if(!w)return;const wr=w.getBoundingClientRect();
+ const key=JSON.stringify([hudPlaces,hud1,appMode,w.classList.contains('aim-view'),w.classList.contains('rh-tiles'),Math.round(wr.width),Math.round(wr.height)]);
+ if(!force&&key===hudPlacesKey)return;hudPlacesKey=key;
+ for(const [k,el] of Object.entries(placeable())){
+  if(!el)continue;const place=hudPlaces[k];
+  if(!place||!movableNow(k)){if(el.dataset.placed)clearPiecePos(el);continue;}
+  clearPiecePos(el);const r=el.getBoundingClientRect();if(!r.width)continue;
+  const at=placeIn(place,{w:r.width,h:r.height},{w:wr.width,h:wr.height});
+  setPiecePos(el,at.left,at.top);el.dataset.placed='1';
+ }
+}
+function resetHudPlaces(k){hudPlaces=savePlaces(k?{...hudPlaces,[k]:undefined}:{});drawHudPlaces(true);}
+function dragPiece(k,e){
+ if(!movableNow(k)||e.button)return;
+ const el=placeable()[k],w=$('world');if(!el)return;
+ e.preventDefault();
+ const wr=w.getBoundingClientRect(),r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top,sx=e.clientX,sy=e.clientY;let moved=false;
+ const move=ev=>{
+  if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<4)return;
+  moved=true;el.classList.add('dragging');
+  const c=clampBox({left:ev.clientX-wr.left-dx,top:ev.clientY-wr.top-dy,w:r.width,h:r.height},{w:wr.width,h:wr.height},8);
+  setPiecePos(el,c.left,c.top);el.dataset.placed='1';
+ };
+ const up=()=>{
+  removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+  el.classList.remove('dragging');if(!moved)return;
+  const now=el.getBoundingClientRect();
+  hudPlaces=savePlaces({...hudPlaces,[k]:placeFrom({left:now.left-wr.left,top:now.top-wr.top,w:now.width,h:now.height},{w:wr.width,h:wr.height})});
+  hudPlacesKey='';
+ };
+ addEventListener('pointermove',move);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+}
+{
+ const head=document.querySelector('#world .minimap .map-header'),tiles=$('shotTiles');
+ head?.addEventListener('pointerdown',e=>{if(!e.target.closest('button'))dragPiece('map',e);});
+ head?.addEventListener('dblclick',e=>{if(!e.target.closest('button')&&movableNow('map'))resetHudPlaces('map');});
+ tiles?.addEventListener('pointerdown',e=>{if(hud1)dragPiece('tiles',e);});
+ tiles?.addEventListener('dblclick',()=>{if(movableNow('tiles'))resetHudPlaces('tiles');});
 }
 // DRAGGING A TILE: anywhere on it, mouse or finger, kept within the playing
 // area. A press that never moves is not a drag and saves nothing.
@@ -6274,7 +6336,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   e.preventDefault();e.stopImmediatePropagation();
  },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
- $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();toast('Shot tiles put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
+ $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={
@@ -7183,6 +7245,8 @@ function tick(now){
  const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
  const flagEl=$('flagLabel');
  placeShotCard(now);
+ // The moved map and shot numbers, kept in place as the screen changes.
+ if(now-hudPlacesAt>200){hudPlacesAt=now;drawHudPlaces();}
  // The narrow-screen rule hides this marker, which is right everywhere except
  // on the green, where it is the only distance there is. The class is what
  // lets the stylesheet tell those two apart.

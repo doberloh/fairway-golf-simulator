@@ -186,7 +186,7 @@
  #world[data-mode=play] .monitor-panel .mon-head{display:flex;align-items:center;gap:16px}
  #world[data-mode=play] .monitor-panel .mon-dot{width:20px;height:20px;border-radius:50%;background:var(--light,#9ca3af);box-shadow:0 0 0 7px color-mix(in srgb,var(--light,#9ca3af) 25%,transparent)}
  #world[data-mode=play] .monitor-panel #monTitle{font-size:34px;white-space:nowrap;padding-right:.12em;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
- #world[data-mode=play] .monitor-panel .mon-text{max-width:340px;font-size:14px;line-height:1.3;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #world[data-mode=play] .monitor-panel .mon-text{max-width:440px;font-size:14px;line-height:1.3;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #world[data-mode=play] .monitor-panel .mon-arm{order:3;display:flex;align-items:center;gap:8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
 
  /* ------------------------------------------------- the pin and aim markers */
@@ -217,6 +217,11 @@
  #world[data-mode=play] .minimap .map-reading button>svg{transform:skewX(12deg)}
  #world[data-mode=play] .minimap .map-reading button.on{background:var(--a1);color:var(--on-hot);border-color:transparent}
  #world[data-mode=play] .minimap .map-expand{border:0;border-radius:0;background:rgba(0,0,0,.4);backdrop-filter:none}
+ /* The map moves by its title, the shot numbers anywhere on them (main.js
+    *THE MAP AND THE SHOT NUMBERS MOVE*). */
+ #world[data-mode=play]:not(.aim-view) .minimap .map-header{cursor:move;touch-action:none}
+ #world[data-mode=play].rh-tiles .shot-tiles{touch-action:none}
+ #world[data-mode=play] :is(.minimap,.shot-tiles).dragging{opacity:.85}
 
  /* ---------------------------------------------------------------- pause (Esc) */
  /* Interim: what the top bar held, as a list over the course. Phase 3 builds
@@ -305,7 +310,7 @@
     much space", "the units are overlapping the text"). */
  #world[data-mode=play]:not(.exploring).rh-tiles .shot-tiles{display:grid!important;position:absolute;inset:auto;left:50%;top:50%;right:auto;width:270px;transform:translate(-50%,-50%);grid-template-columns:1fr 1fr;gap:6px;zoom:var(--hud-z,1);z-index:9}
  #world[data-mode=play]:not(.exploring).rh-tiles.rh-range .shot-tiles{left:auto;top:24px;right:30px;transform:none}
- #world[data-mode=play].rh-tiles .shot-tile{position:relative;left:auto!important;top:auto!important;min-width:0;cursor:default;isolation:isolate;padding:6px 14px 7px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #world[data-mode=play].rh-tiles .shot-tile{position:relative;left:auto!important;top:auto!important;min-width:0;cursor:move;isolation:isolate;padding:6px 14px 7px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #world[data-mode=play].rh-tiles .shot-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play].rh-tiles .shot-tile[data-field=carry]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
  #world[data-mode=play].rh-tiles .shot-tile[data-field=carry] :is(strong,span,small){color:var(--on-hot)}

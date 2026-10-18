@@ -7,7 +7,9 @@ import {uiZoom} from './ui-scale.js';
 // UI_1_0_PLAN 5.1): the round's pieces sit where the design puts them
 // (round-hud.css), and a phone keeps its fixed layout until phase 5. So the
 // grips, the drags and the saved places are gone, and a place saved before is
-// deleted once rather than left to be read by something later.
+// deleted once rather than left to be read by something later. (The map and
+// the Tab shot numbers became movable again on 18 October 2026, by their own
+// code: hud-places.js and main.js *THE MAP AND THE SHOT NUMBERS MOVE*.)
 //
 // What is left is the measuring the default layout always needed: where the
 // controls' top edge is, and how far down the weather, the course card and

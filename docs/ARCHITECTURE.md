@@ -107,7 +107,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
-- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag), the Text size zoom
+- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag; the map and the Tab shot numbers do, `hud-places.js`), the Text size zoom
 - `src/round-hud.js`, `src/round-hud.css` -- the 1.0 round screen (in play, off a phone): what each corner piece says and how large, and where it sits; Esc opens the top bar as a pause list; round complete's standings
 - `src/round-phone.css` -- the 1.0 round screen on a phone, sideways and upright (the slanted aim pad, the tapped meter, a MENU chip), and the phone's main menu rows
 - `src/ui-steps.js` -- step-by-step setup sheets (round 13): the steps along the top, one step's content centred, keys and Back / Next along the foot, the screen's main button on the last step
@@ -126,6 +126,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/ui-windows.js`, `src/ui-windows.css` -- the 1.0 windows: `makeWindow` (title, line, rows) and `leanAsOne`, which lines a column's rows up as one leaning block; tests/ui-windows.test.mjs
 - `src/ui-sheets.css` -- the sheets (#drawer, outside #app) as 1.0 screens: full screen, slanted control stacks, the lobby on the grid; the scorecard and round complete
 - `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
+- `src/hud-places.js` -- where the map and the Tab shot numbers sit once the player has dragged them (fractions of the playing area, kept per device, held on screen); main.js drags and draws them
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks
 - The 1.0 interface (branch `ui-1-0`; phase 0): `src/ui-layout.js` -- the design canvas, bands and 12-column leaning grid, and the canvas with the Text size; `src/ui-palette.js` -- which biome's colours a screen wears, and the contrast check; `src/ui-kit.js`, `src/ui-kit.css` -- the building kit and the `@font-face` rules; `src/fonts/` -- Saira Condensed (OFL), inlined by the build
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API

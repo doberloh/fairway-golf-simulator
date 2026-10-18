@@ -158,6 +158,10 @@ the courses several suites share.
   On a big screen the flight check now expects no flight panel, Skip in the
   meter's title (`#smSkip`) and the launch strip; the range journey opens
   Range controls from the tool column (`#rhTools [data-hud=range]`).
+  `hud-places` (the map and the shot numbers once dragged: a place is a
+  fraction of the playing area and comes back the same, a drag past the edge
+  and a place from a wider window are held on screen, bad saves are
+  dropped, an empty set removes the key).
   `ui-windows` (each row of a window is moved by its distance from the
   column's middle). `ui-focus` (phase 3: arrows and a controller -- every button reachable from
   every other in the menus' layouts, none a dead end, down goes to the next
