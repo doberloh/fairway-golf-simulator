@@ -44,6 +44,15 @@ export function changeLine(c) {
 
 export const changedText = n => `${n} SETTING${n === 1 ? '' : 'S'} CHANGED`;
 
+// The studio's tools: the big map, full screen and the studio's pause. The
+// round's camera, green and shots have nothing to do over a landscape with no
+// ball, so they are not here (PLACED; the frame copies the round's column).
+const STUDIO_TOOLS = [
+ ['map', 'BIG MAP', 'M', '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/>'],
+ ['full', 'FULL SCREEN', 'F11', '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'],
+ ['menu', 'MENU', 'ESC', '<path d="M4 6h16M4 12h16M4 18h16"/>'],
+];
+
 // The flying HUD's own pieces, made once inside #world.
 export function studioHud(world, doc = globalThis.document) {
  let slab = doc.getElementById('studioSlab');
@@ -54,7 +63,12 @@ export function studioHud(world, doc = globalThis.document) {
   chip.id = 'studioChip'; chip.type = 'button'; chip.hidden = true;
   const keys = make(doc, 'div', 'sd-keys', '<span><i>W A S D</i>FLY</span><span><i>R F</i>UP / DOWN</span><span><i>SHIFT</i>FASTER</span><span><i>DRAG</i>LOOK</span>');
   keys.id = 'studioKeys'; keys.setAttribute('aria-hidden', 'true');
-  world.append(slab, chip, keys);
+  // The tool column above the map (frame c-studio), drawn like the round's
+  // (`.rh-tools`); main.js says what each does.
+  const tools = make(doc, 'div', 'rh-tools sd-tools', STUDIO_TOOLS.map(([id, label, key, icon]) =>
+   `<button type="button" data-tool="${id}" aria-label="${label[0] + label.slice(1).toLowerCase()} (${key})"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span><kbd>${key}</kbd></button>`).join(''));
+  tools.id = 'studioTools'; tools.setAttribute('role', 'group'); tools.setAttribute('aria-label', 'Studio tools');
+  world.append(slab, chip, keys, tools);
  }
  return {slab, chip: doc.getElementById('studioChip')};
 }
@@ -69,11 +83,26 @@ export function paintStudioHud({facts, changes, regenerate}, doc = globalThis.do
  chip.onclick = regenerate;
 }
 
-// The settings sheet in the studio. `changes()` is the current list; `facts()`
-// is {holes, yards, seed}. Returns {paint} for main.js to call on every input.
-export function buildStudioSheet(root, {changes, facts, doc = globalThis.document} = {}) {
+// The studio's settings: ONE screen, the same from the main menu and in the
+// studio (round 13: "they look exactly the same ... only the picture behind
+// differs"). `changes()` is the current list; `facts()` is {holes, yards,
+// seed}; `landscapes` [{key, name, settings}] and `pictures` draw Surroundings
+// as a grid of pictures (frame c-studio-set). Returns {paint} for main.js to
+// call on every input.
+export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], pictures, doc = globalThis.document} = {}) {
  if (root.querySelector('.sd-side')) return null;
  const sections = [...root.querySelectorAll('.panel-section')];
+ // Surroundings as pictures: each landscape button (main.js, `data-biome`)
+ // gets its drawn picture above its name.
+ const queue = [];
+ for (const b of root.querySelectorAll('.option-grid>[data-biome]')) {
+  const l = landscapes.find(x => x.key === b.dataset.biome);
+  if (!l) continue;
+  const pic = make(doc, 'span', 'sd-pic');
+  b.prepend(pic); queue.push({el: pic, settings: l.settings});
+  b.closest('.option-grid').classList.add('sd-lands');
+ }
+ if (queue.length) pictures?.(queue, 160, 64);
  // How many settings each category holds, on its tab.
  for (const tab of root.querySelectorAll(':scope>.panel-tabs>.panel-tab')) {
   const s = sections.find(x => x.dataset.title === tab.textContent.trim());
@@ -103,13 +132,15 @@ export function buildStudioSheet(root, {changes, facts, doc = globalThis.documen
 
  const paint = () => {
   const list = changes(), f = facts();
-  state.classList.toggle('stale', list.length > 0);
-  state.querySelector('.sd-k').textContent = list.length ? 'OUT OF DATE' : 'UP TO DATE';
-  state.querySelector('strong').textContent = list.length ? `${list.length} CHANGE${list.length === 1 ? '' : 'S'}` : 'AS GROWN';
+  state.classList.toggle('stale', list.length > 0 && !setup?.());
+  // Before the first grow (from the menu) nothing is out of date yet.
+  const fresh = !!setup?.();
+  state.querySelector('.sd-k').textContent = fresh ? 'NOT GROWN YET' : list.length ? 'OUT OF DATE' : 'UP TO DATE';
+  state.querySelector('strong').textContent = fresh ? 'A NEW LANDSCAPE' : list.length ? `${list.length} CHANGE${list.length === 1 ? '' : 'S'}` : 'AS GROWN';
   const lines = state.querySelector('.sd-list');
   lines.textContent = '';
-  for (const c of list.slice(0, 6)) { const s = make(doc, 'span'); s.textContent = changeLine(c); lines.append(s); }
-  if (list.length > 6) lines.append(make(doc, 'span', 'sd-more', `AND ${list.length - 6} MORE`));
+  if (!fresh) for (const c of list.slice(0, 6)) { const s = make(doc, 'span'); s.textContent = changeLine(c); lines.append(s); }
+  if (!fresh && list.length > 6) lines.append(make(doc, 'span', 'sd-more', `AND ${list.length - 6} MORE`));
   holes.textContent = f.holes ? String(f.holes) : '—';
   yards.textContent = f.yards ? `${Math.round(f.yards).toLocaleString('en-US')} YDS` : '—';
   seed.textContent = String(f.seed || '—').toUpperCase();
@@ -120,6 +151,7 @@ export function buildStudioSheet(root, {changes, facts, doc = globalThis.documen
   const changed = new Set(list.map(c => c.key));
   for (const card of root.querySelectorAll('.control-card,.control-group')) {
    const keys = [...card.querySelectorAll('input[id],select[id]')].map(e => e.id);
+   if (card.querySelector('[data-biome]')) keys.push('biome');
    card.classList.toggle('sd-changed', keys.some(k => changed.has(k)));
   }
  };

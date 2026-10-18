@@ -99,7 +99,7 @@ const DEFAULTS = {
  cover: 'grass',    // what the near-field ground cover reads as
  waterTint: '#478fbf', // the water surface colour
  waterMurk: .48,    // how far you can see into it
- mapWater: '#e0e5d5', // the course map's background beyond the land
+ mapWater: '#1e281c', // the course map's background beyond the land (dark since round 13; was paper, #e0e5d5)
  warm: false,       // house walls in warm tones
  arid: false,       // house surroundings without lawn
  // Ground shader, by name rather than by index into an array.

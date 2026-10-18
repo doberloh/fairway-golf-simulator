@@ -3662,7 +3662,7 @@ function studioRepaint(){if(studioRepaint.q)return;studioRepaint.q=requestAnimat
 // panel closed its controls are gone, so the last list stands until the
 // landscape is regrown.
 function studioChanges(){
- if(panel!=='course'||appMode!=='studio'||!$('courseHoles'))return studioChangeList;
+ if(panel!=='course'||!$('courseHoles'))return studioChangeList;
  const read=k=>{const el=$(k);return !el?undefined:el.type==='checkbox'?el.checked:el.value;};
  const list=settingsChanges(SETTINGS,settings,read);
  const add=(key,label,from,to)=>{if(String(from)!==String(to))list.push({key,label,from,to,unit:''});};
@@ -4252,7 +4252,7 @@ function cycleShotChoice(){
 const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
 // The course's colours, on #app so the pause list (the top bar) wears them too.
 // The lobby wears the course being chosen (`lobbyBiome`, while it is open).
-function applyHudPalette(screen=panel==='round'&&lobbyBiome?'lobby':appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
+function applyHudPalette(screen=(panel==='round'||panel==='course')&&lobbyBiome?'lobby':appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
  const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:screen==='lobby'?lobbyBiome:settings?.biome}});
  if(p.biome===hudBiome)return;hudBiome=p.biome;
  for(const [k,v] of Object.entries(paletteVars(p)))document.documentElement.style.setProperty(k,v);
@@ -5074,7 +5074,9 @@ function renderPanel(name,content){
    }).join('');
    return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
   };
-  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar above to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
+  // ONE SCREEN, from the menu or in the studio (round 13): the same words and
+  // the same Grow this landscape (R) -- in the studio it regrows this one.
+  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape the landscape, then grow it again to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p><button class="primary" data-panel-action id="growStudio" aria-label="Grow this landscape"><i data-lucide="mountain"></i> Grow this landscape <kbd>R</kbd></button><div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   // Past a field's `warn.above` (the green slope slider, past 75%): red while
   // dragging, then a bubble saying why, and a toast once, when the slider is
@@ -5117,11 +5119,14 @@ function renderPanel(name,content){
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
   $('openLibrary').onclick=()=>openPanel('library');
   // Setup only: apply what was chosen, then build once and enter the studio.
-  if(studioSetup)$('growStudio').onclick=()=>{if(!applyStudioSettings())return;studioSetup=false;closePanel();enterStudio();};
+  // In the studio, regrow: regenerateStudio reads the controls before its first
+  // await, so the sheet can close straight after.
+  $('growStudio').onclick=()=>{if(studioSetup){if(!applyStudioSettings())return;studioSetup=false;closePanel();enterStudio();}else{regenerateStudio();closePanel();}};
   // Any change to a generation control marks the landscape stale; nothing
   // regenerates on its own, because a rebuild is seconds of frozen tab.
   content.addEventListener('input',markStudioDirty);content.addEventListener('change',markStudioDirty);
-  document.querySelectorAll('[data-biome]').forEach(b=>b.onclick=()=>{studioBiome=b.dataset.biome;markStudioDirty();document.querySelectorAll('[data-biome]').forEach(x=>x.classList.toggle('active',x===b));});
+  // The sheet wears the colours of the landscape being shaped (round 13).
+  document.querySelectorAll('[data-biome]').forEach(b=>b.onclick=()=>{studioBiome=b.dataset.biome;lobbyBiome=studioBiome;applyHudPalette();markStudioDirty();document.querySelectorAll('[data-biome]').forEach(x=>x.classList.toggle('active',x===b));});
   // THE CARD BEFORE THE COURSE. `planScorecard` runs the same hole skeleton
   // the builder runs, over the same seeded stream, so every yardage here is
   // the yardage that gets built -- checked to within the rounding.
@@ -5743,9 +5748,13 @@ function renderPanel(name,content){
  monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
  // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
  if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
- // The studio's settings in the studio: categories, rows, what has changed (ui-studio.js).
- studioSheet=name==='course'&&appMode==='studio'&&content.id==='drawerContent'
-  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed})}):null;
+ // The studio's settings, from the menu or in the studio -- one screen:
+ // categories, rows, what has changed, the landscapes as pictures, in the
+ // colours of the landscape being shaped (ui-studio.js).
+ studioSheet=name==='course'&&content.id==='drawerContent'
+  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed}),
+   setup:()=>studioSetup,landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:pictureQueue}):null;
+ if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
  // Challenges, the course of the week and saved courses, the same way
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
@@ -6136,7 +6145,9 @@ function bind(){
   const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');
    bar.classList.remove('compact');
    let room='';
-   if(!bar.hidden&&!d.hidden&&d.dataset.panel==='course'&&d.offsetHeight){
+   // Not on a big screen (round 13): there the settings are the whole-screen
+   // sheet with its own Grow this landscape, and the bar steps aside.
+   if(!bar.hidden&&!d.hidden&&d.dataset.panel==='course'&&d.offsetHeight&&!matchMedia('(min-width:561px) and (min-height:501px)').matches){
     const box=d.getBoundingClientRect(),k=box.height/d.offsetHeight||1;
     const block=box.top-(parseFloat(getComputedStyle(d).top)||0)*k;
     room=Math.round(($('world').getBoundingClientRect().top-block)/k+bar.offsetHeight+28)+'px';
@@ -6727,6 +6738,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))$('rangeControls').click();};
  // The tool column: each button presses its own key, so it does exactly what
  // the key does in every state the key already handles.
+ // The studio's tool column is made later (ui-studio.js studioHud), so it is
+ // heard from #world.
+ $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')$('fullscreen').click();else if(t==='menu')toggleStudioPause();});
  $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
   const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
@@ -6887,6 +6901,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
  if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
+  // R on the studio's settings grows the landscape (round 13), unless a word is
+  // being typed (the seed). Flying, R stays up: the flying keys say so.
+  if(e.code==='KeyR'&&panel==='course'&&!e.repeat&&$('growStudio')&&!$('drawer').hidden){const t=document.activeElement;if(!(t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&!['range','checkbox','radio'].includes(t.type))))){e.preventDefault();e.stopPropagation();$('growStudio').click();return;}}
+  // M in the studio opens the big map, as in a round.
+  if(e.code==='KeyM'&&appMode==='studio'&&!panel&&!e.repeat&&!$('world').classList.contains('studio-paused')){e.preventDefault();setAimView(!aimViewOpen);return;}
   // ? in a settings window or a sheet shows every control's explanation (ui-screens.css).
   if(e.key==='?'&&document.activeElement?.closest?.('.popup,#drawer')){e.preventDefault();e.stopPropagation();$('app').classList.toggle('rh-help');return;}
   // Enter and Space press the focused button there. The game's own handler

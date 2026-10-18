@@ -1800,6 +1800,9 @@ const JOURNEYS = [
    // of the panel and inside the course -- plus every bar button clickable,
    // because a scrolled panel's own controls are clipped on purpose and would
    // read as covered.
+   // Round 13: on a big screen the settings are the whole-screen sheet, the
+   // same as from the menu, with their own Back and Grow this landscape; the
+   // bar steps aside. A phone keeps the strip and the lifted bar.
    await t.step('the studio bar clears an open panel, desktop to phone', async () => {
     const was = t.page.viewportSize();
     await t.page.click('#studioSettings');
@@ -1808,6 +1811,18 @@ const JOURNEYS = [
     for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 720], [844, 390], [390, 844]]) {
      await t.page.setViewportSize({width: w, height: h});
      await t.page.waitForTimeout(600 * SLOW);
+     const big = w > 560 && h > 500;
+     if (big) {
+      const sheet = await t.page.evaluate(() => ({bar: getComputedStyle(document.getElementById('studioBar')).display,
+       grow: !!document.getElementById('growStudio')}));
+      const bad = await t.page.evaluate(unreachableControls, '#growStudio, #closeDrawer');
+      const notes = [...(sheet.bar !== 'none' ? ['the studio bar shows over the settings sheet'] : []),
+       ...(!sheet.grow ? ['the sheet has no Grow this landscape'] : []),
+       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
+      console.log(`     ${`${w}x${h}`.padEnd(10)} sheet       ${notes.length ? notes.join('; ') : 'fine'}`);
+      if (notes.length) problems.push(`${w}x${h}`);
+      continue;
+     }
      const fit = await t.page.evaluate(() => {
       const bar = document.getElementById('studioBar').getBoundingClientRect();
       const panel = document.getElementById('drawer').getBoundingClientRect();

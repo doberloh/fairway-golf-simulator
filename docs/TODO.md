@@ -76,6 +76,16 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
   a controller in the studio pause. PLACED: the round's pause keeps all its
   rows and a second window for the round (the frame has six rows).
+- [ ] **Course studio, round 13: built to frames c-studio-set and c-studio,
+  seen in the browser pane at 1280 x 720** (the settings from the menu and in
+  the studio, Landscape and Routing, Desert changing the colours, a changed
+  slider with its dot and one outline, R regrowing, the flying view, the big
+  map). Not seen: every category, a controller on the sheet, Save course and
+  the other windows in the studio, a phone (unchanged). PLACED: R regrows only
+  from the sheet (R flies up); the tool column is Big map, Full screen and Menu
+  (no camera, green or shots over a landscape with no ball); Leave studio stays
+  on the bar where the frame has Play it; the whole-course map's surround is
+  dark now (biomes.js mapWater).
 - [ ] **The big map, round 13: built to frame c-bigmap.** M opens and closes
   it. Seen in the browser pane at 1280 x 720 on a tee shot (M to open and
   close, Heat on and off). Not seen: aiming by a click on it, a putt with the
