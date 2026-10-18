@@ -426,6 +426,8 @@
  #drawer .wk-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 45%,#ffe9c7) 0 46%,color-mix(in srgb,var(--p1) 70%,#3b2a12) 46% 100%);transform:skewX(-12deg)}
  #drawer .wk-hero::after{content:"";position:absolute;left:-10%;right:-10%;top:32%;height:26%;z-index:-1;background:radial-gradient(55% 100% at 28% 100%,color-mix(in srgb,var(--p1) 55%,#2a1d0a) 0 60%,transparent 61%),radial-gradient(45% 90% at 76% 100%,color-mix(in srgb,var(--p1) 40%,#2a1d0a) 0 60%,transparent 61%);transform:skewX(-12deg)}
  #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:16px;font-weight:800;font-style:italic;letter-spacing:.16em;transform:skewX(-12deg)}
+ #drawer .wk-hero.has-picture::before{background:var(--pic) center/cover}
+ #drawer .wk-hero.has-picture::after{display:none}
  #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
  #drawer .wk h4{margin:8px 0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -448,6 +450,7 @@
  #drawer .lib-shelf>.course-card::before{top:100px}
  #drawer .lib-shelf>.course-card .course-pic{display:block;position:relative;height:96px;margin-bottom:4px;overflow:hidden}
  #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card .course-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
  #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
  #drawer .lib-shelf>.course-card .course-meta strong{font-size:20px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

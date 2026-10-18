@@ -58,6 +58,7 @@ import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
+import {pictureQueue} from './course-picture.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
@@ -4673,7 +4674,7 @@ function hubBlocks(profile,s,lv){
 // A PICTURE OF A COURSE, until there is a real one: a panel in its
 // landscape's two colours, named (the 1.0 saved courses shelf). Hidden
 // outside the 1.0 sheets.
-const coursePic=biome=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span class="course-pic" style="--p1:${ui.a1||'#4ade80'};--p2:${ui.a2||'#166534'}" aria-hidden="true"><span>${escape((b?.name||biome||'').toUpperCase())}</span></span>`;};
+const coursePic=(biome,id)=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span class="course-pic"${id?` data-course="${escape(id)}"`:''} style="--p1:${ui.a1||'#4ade80'};--p2:${ui.a2||'#166534'}" aria-hidden="true"><span>${escape((b?.name||biome||'').toUpperCase())}</span></span>`;};
 // THE COURSE OF THE WEEK'S OWN BLOCKS (ui-menu-screens.js buildWeekly): the
 // picture with the week and the course's name, the four weeks before with the
 // main golfer's best on each, and the facts as rows.
@@ -4809,7 +4810,7 @@ function renderPanel(name,content){
   // is how every other list action here works; the tab you were on is kept.
   const card=c=>renamingCourse===c.id
    ?`<div class="course-card"><label class="field course-rename">Rename this course<input id="renameCourseInput" maxlength="${MAX_NAME}" value="${escape(c.name)}"></label><div class="course-actions"><button class="secondary" data-rename-save="${c.id}">Save name</button><button class="secondary" data-rename-cancel="1">Cancel</button></div></div>`
-   :`<div class="course-card">${coursePic(c.settings.biome)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Copy code</button><button data-remove="${c.id}">Delete</button></div></div>`;
+   :`<div class="course-card">${coursePic(c.settings.biome,c.id)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Copy code</button><button data-remove="${c.id}">Delete</button></div></div>`;
   content.innerHTML=`<p>Save a landscape you like, then play it again later or pass it to someone else. A course keeps its landscape only — players, format and tees are chosen when you play, so the same course suits any group.</p>
   <p class="field-error" id="libraryError"></p>
   <h3>Your courses</h3>
@@ -5685,8 +5686,10 @@ function renderPanel(name,content){
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
   if(name==='round'&&challengeSetup)buildChallenges(content);
-  else if(name==='round'&&weeklySetup)buildWeekly(content);
+  else if(name==='round'&&weeklySetup){buildWeekly(content);const hero=content.querySelector('.wk-hero');if(hero)pictureQueue([{el:hero,settings:weeklySettings()}],720,360);}
   else if(name==='library')buildLibrary(content,{codeOf:id=>exportCourse(findCourse(id)),onNew:()=>{closePanel();openStudioSetup();},pick:libraryPick,onPick:id=>{libraryPick=id;}});
+  // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
+  if(name==='library')pictureQueue([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
  }
  if(name==='round')buildLobby(content,{onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();}});
  wireSliders(content);icon();

@@ -167,7 +167,9 @@ the courses several suites share.
   settings screen). `ui-studio` (what counts as a changed studio setting, how
   a change reads, and the schema reading clean against itself).
   `ui-range-controls` (the range window's session table reads the report's
-  club table: balls, average carry, spread).
+  club table: balls, average carry, spread). `course-picture` (a course's
+  picture lays out every hole, the same course the same way, fills its frame
+  and draws inside it).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring

@@ -1342,6 +1342,16 @@ own numbers -- and `recordRangeShot` refreshes it in place
 (`updateRangeSession`) rather than redrawing the window, so a slider being
 dragged keeps its place.
 
+**Course pictures are drawn from the plan** (`src/course-picture.js`, round
+13): the holes come from `generateCourse` and are routed by `routeHoles`, as
+`generateWorld` does, so the picture is the course; no terrain is built (a nine
+is tens of milliseconds, an eighteen about a tenth of a second). Drawn like
+`drawMap` in the biome's `mapTurf`, with each hole's line stroked at least a
+few pixels wide so a small card still reads. `pictureQueue` draws a list one
+at a time in idle moments and hands each element `--pic`, which the CSS puts
+under its slanted shape. **If routing changes, the pictures change with it**
+-- they are not stored.
+
 **`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
 `--glass` or `--accent` on a deeper element still wins there; one that
 reads them gets the palette. `--accent` is now the LIGHT end of the gradient
