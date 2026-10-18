@@ -61,45 +61,7 @@
  body:not(:has(#app[data-mode=studio])) #drawer .panel-tabs{gap:8px;margin:0 0 20px;padding:0;border:0}
  body:not(:has(#app[data-mode=studio])) #drawer .panel-tab{height:40px;padding:0 18px;font-size:14px}
 
- /* ---------------------------------------------------------------- the lobby */
- /* THE LOBBY (ui-lobby.js moves its controls into .lb): the mockup's three
-    columns on the 12-column grid -- the course (3), the golfers (5), the
-    format and rules (4) -- and saved rounds along the foot, which a 16:9
-    screen reaches by scrolling (PLACED: the mockup shows them on 4:3 only).
-    The tabs ride in the footer band, where the mockup has its key hints, as
-    chips that scroll to a column (inside the scrolling content they would
-    cost a row, and the content clips anything pulled up into the header); the
-    intro line goes (the screen says what it is). */
- body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root{display:block}
- body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-lead,body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-section.lb-emptied{display:none!important}
- body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
- body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:14px;white-space:nowrap}
- #drawer .lb{display:grid;grid-template-columns:3fr 5fr 4fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
- #drawer .lb-col{display:grid;gap:8px;align-content:start;min-width:0}
- #drawer .lb-saved{grid-column:1/-1;display:grid;gap:8px;min-width:0}
- #drawer .lb .lb-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
- #drawer .lb-format>.lb-head:not(:first-child){margin-top:16px}
  #drawer .lb-label{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2}
- /* Every block in the lobby is a slanted panel with upright contents. */
- #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.add-player,#roundSurprise,#roundStudio,#roundManage,#roundDelete,#applyGroup,.course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
- #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #drawer .lb :is(.lb-pick,.player-row,.lb-tile,.lb-tees):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
- /* The course: its picture (the landscape's colours, its name), its name panel, Change course, Surprise me. */
- #drawer .lb-pic{height:150px;overflow:hidden}
- #drawer .lb-pic::before{background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 42%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 42% 100%)!important}
- #drawer .lb-pic::after{content:"";position:absolute;left:-8%;right:-8%;top:30%;height:30%;z-index:-1;background:radial-gradient(60% 100% at 30% 100%,color-mix(in srgb,var(--a1) 60%,#0d2210) 0 60%,transparent 61%),radial-gradient(50% 90% at 78% 100%,color-mix(in srgb,var(--a1) 45%,#0d2210) 0 60%,transparent 61%);transform:skewX(-12deg)}
- #drawer .lb-pic span{position:absolute;left:26px;bottom:12px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
- #drawer .lb-facts{display:grid;gap:6px;padding:14px 28px}
- #drawer .lb-facts strong{font-size:26px;font-weight:800;font-style:italic;line-height:1;color:#fff;overflow-wrap:anywhere}
- #drawer .lb-facts small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
- #drawer .lb-course>button{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:48px;min-height:48px;margin:0;padding:0 28px;font-size:16px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#fff}
- #drawer .lb-course>button::before{background:var(--panel)!important}
- #drawer .lb-course>button svg{width:18px;height:18px;color:var(--a1)}
- #drawer .lb-course>#roundSurprise::before{background:color-mix(in srgb,var(--a1) 35%,var(--panel))!important}
- #drawer .lb-course>:is(#roundStudio,#roundManage,#roundDelete){height:40px;min-height:40px;font-size:14px!important;color:var(--soft)}
- #drawer .lb-course>#roundDelete{color:#ff8a7a}
- #drawer .lb-course>.research-label{margin:0;padding:0 8px}
- /* A picker: label and line on the left, ◀ value ▶ on the right, the real drop-down see-through over the value. */
  #drawer .lb-pick{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:6px 24px}
  #drawer .lb-k{display:grid;gap:2px;flex:1 1 0;min-width:0}
  #drawer .lb-sub{font-size:14px;letter-spacing:.04em;font-weight:700;color:#fff;opacity:.75}
@@ -111,59 +73,6 @@
  #drawer .lb-arrow{flex:none;width:28px;height:36px;min-height:36px;padding:0;border:0;border-radius:0;background:none;color:var(--a1);font-size:14px;line-height:1}
  #drawer .lb-arrow:hover:not(:disabled){color:var(--hot)}
  #drawer .lb-arrow:disabled{opacity:.3}
- #drawer .lb-course .lb-pick .lb-sel{position:static;min-width:0}
- #drawer .lb-course .lb-pick .lb-val{display:none}
- #drawer .lb-course .lb-pick .lb-label{font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;color:#fff}
- #drawer .lb-course .lb-pick .lb-arrow{position:relative;z-index:1}
- #drawer .lb-course .lb-pick{min-height:48px}
- /* The golfers: a colour bar, the ball in its frame, the name (still the drop-down that picks who), LV and HCP. */
- #drawer .lb .players-list{display:grid;gap:8px}
- #drawer .lb .player-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:none;align-items:center;gap:6px 12px;min-height:72px;margin:0;padding:8px 24px}
- #drawer .lb .player-row.play{grid-template-columns:auto minmax(0,1fr) auto auto auto auto}
- #drawer .lb .player-row>*{grid-area:auto!important}
- #drawer .lb .player-mark{display:flex;align-items:center;gap:10px;align-self:stretch}
- #drawer .lb .player-dot{width:5px;height:auto;align-self:stretch;margin:8px 0;border-radius:0}
- #drawer .lb .player-mark :is(img,.ball-avatar,.framed){width:44px;height:44px}
- #drawer .lb .player-who{display:grid;gap:3px;min-width:0}
- #drawer .lb .player-who>select{width:100%;height:32px;min-height:32px;padding:0 4px 0 0;border:0;border-radius:0;background:transparent;color:#fff;font:800 italic 24px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;appearance:none;cursor:pointer}
- #drawer .lb .player-who>select option{font:15px var(--font-ui);text-transform:none;color:#111;background:#fff}
- #drawer .lb .player-who>input{height:34px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
- #drawer .lb .player-sub{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
- #drawer .lb .player-row>select{height:32px;min-height:32px;padding:0 8px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em}
- #drawer .lb .player-row>select option{color:#111;background:#fff}
- #drawer .lb .drop-player{width:36px;height:36px;min-height:36px;border:0;background:none;color:var(--soft)}
- #drawer .lb .add-player{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:56px;min-height:56px;margin:0;font-size:18px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
- #drawer .lb .add-player::before{background:rgba(255,255,255,.05)!important}
- #drawer .lb .add-player svg{width:18px;height:18px}
- #drawer .lb-tees{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:0 24px}
- #drawer .lb-tee-row{display:flex;gap:6px}
- #drawer .lb-tee{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:5px;width:48px;height:32px;min-height:32px;padding:0;border:0;border-radius:0;background:none;color:var(--soft);font:800 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
- #drawer .lb-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
- #drawer .lb-tee[aria-pressed=true]{color:#111}
- #drawer .lb-tee[aria-pressed=true]::before{background:#fff}
- #drawer .lb-tee i{width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
- #drawer .lb-note{display:grid;gap:6px;margin-top:8px;padding:16px 32px;font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
- #drawer .lb-note .lb-label{font-family:"Saira Condensed",var(--font-ui),sans-serif;color:var(--hot)}
- #drawer .lb-group>:is(#roundError,#applyGroup){margin:0}
- #drawer .lb-group>#applyGroup{height:44px;min-height:44px}
- /* The format: four tiles, two by two, the chosen one in the gradient. */
- #drawer .lb-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
- #drawer .lb-tile{height:56px;min-height:56px;margin:0;padding:0 12px;color:#fff;font:800 italic 20px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em}
- #drawer .lb-tile:hover:not(:disabled)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
- #drawer .lb-tile[aria-pressed=true]{color:var(--on-hot)}
- #drawer .lb-tile[aria-pressed=true]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- #drawer .lb-tile:focus-visible{outline:none}
- #drawer .lb-tile:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
- #drawer .lb-tile:disabled{opacity:.4}
- #drawer .lb-format>:is(#formatNote,#roundPuttingNote){margin:0;padding:0 8px;font-family:var(--font-ui);font-size:14px!important;line-height:1.4;color:var(--soft)!important}
- #drawer .lb-format>#roundPutting-distances{padding:0 8px}
- /* Saved rounds along the foot: a card each, two to a row. */
- #drawer .lb-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
- #drawer .lb-saved .course-card{padding:14px 32px;margin:0}
- #drawer .lb-saved>:is(.note,.field-error){margin:0;padding:0 8px}
- #drawer .lb-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
- @media (min-height:740px) and (max-aspect-ratio:3/2){#drawer .lb-pic{height:240px}#drawer .lb .player-row{min-height:84px}}
-
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent{display:grid;grid-template-columns:3fr 5fr 4fr;grid-template-areas:"lead lead lead" "tabs tabs tabs" "course group format" "saved saved saved";gap:0 32px;align-content:start}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-lead{grid-area:lead}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent>.panel-tabs{grid-area:tabs}
@@ -539,6 +448,144 @@
  #drawer .sd-help .sd-k{color:var(--hot)}
  #drawer .sd-help-v{font-family:var(--font-ui);font-size:14px;font-weight:600;line-height:1.35;color:#fff}
 
+ /* ------------------------------------------------- step-by-step setups */
+ /* STEP SHEETS (ui-steps.js; round 13): the steps across the top of the
+    sheet, the step's content centred, the keys and Back / Next along the foot.
+    Written at round 9's sizes and drawn at --sheet-z (COMPACT), like every
+    sheet: the mockup's 26-tall step chips are 36 here, its 32 rows 46. */
+ body:not(:has(#app[data-mode=studio])) #drawer:has(.sx-root) .drawer-header h2{font-size:24px}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.sx-root{display:flex;flex-direction:column;min-height:100%}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.sx-root>:is(.panel-lead,.panel-tabs,.panel-section,.panel-columns,.sx-emptied){display:none!important}
+ #drawer .sx{flex:1;display:flex;flex-direction:column;min-height:0;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .sx-steps{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px}
+ #drawer .sx-step{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;height:36px;min-height:36px;padding:0 20px;border:0;border-radius:0;background:none;color:var(--soft);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;white-space:nowrap}
+ #drawer .sx-step::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sx-step.done{color:#fff}
+ #drawer .sx-step.done::before{background:var(--panel)}
+ #drawer .sx-step.on{color:var(--on-hot)}
+ #drawer .sx-step.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-step:focus-visible{outline:none}
+ #drawer .sx-step:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-pages{flex:1;display:grid;align-content:center;min-height:0}
+ #drawer .sx-page[hidden]{display:none!important}
+ #drawer .sx-head{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .sx-foot{position:fixed;left:60px;right:60px;bottom:24px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none}
+ #drawer .sx-foot>*{pointer-events:auto}
+ #drawer .sx-keys{display:flex;gap:16px;font-size:14px;letter-spacing:.1em;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase}
+ #drawer .sx-keys kbd{margin-right:6px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sx-btns{display:flex;gap:12px}
+ #drawer .sx-btns>button{position:relative!important;inset:auto!important;isolation:isolate;display:flex;align-items:baseline;gap:10px;height:44px;min-height:44px;min-width:0;margin:0;padding:0 30px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 20px/44px "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;white-space:nowrap}
+ #drawer .sx-btns>button[hidden]{display:none!important}
+ #drawer .sx-btns>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .sx-btns>:is(.sx-next,[data-panel-action]){color:var(--on-hot)}
+ #drawer .sx-btns>:is(.sx-next,[data-panel-action])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-btns small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.8}
+ #drawer .sx-btns>button:focus-visible{outline:none}
+ #drawer .sx-btns>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* Every block in a step is a slanted panel. */
+ #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-help,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-help,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx :is(.lb-pick,.seat):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* A picture: the course from above, under a slanted window. */
+ #drawer .sx-pic{position:relative;isolation:isolate;display:block;height:130px;overflow:hidden}
+ #drawer .sx-pic::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
+ #drawer .sx-pic.has-picture::before{background:var(--pic) center/cover}
+ #drawer .sx-pic>b{position:absolute;inset:0;display:grid;place-items:center;font-size:60px;font-weight:800;font-style:italic;color:var(--a1)}
+ /* 1 · Course: five cards across, scrolling; the line along the foot. */
+ #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 22px 4px 4px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px 12px}
+ #drawer .sx-card{display:grid;gap:4px;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
+ #drawer .sx-cap{display:grid;gap:3px;align-content:center;min-height:64px;padding:8px 24px}
+ #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:skewX(-12deg)}
+ #drawer .sx-cap strong{font-size:21px;font-weight:800;font-style:italic;line-height:1.1;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #drawer .sx-cap small{font-size:13px;letter-spacing:.1em;font-weight:700;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-cap small i{font-style:normal;color:var(--hot)}
+ #drawer .sx-card.on :is(.sx-pic,.sx-cap)::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card:focus-visible{outline:none}
+ #drawer .sx-card:focus-visible :is(.sx-pic,.sx-cap)::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-line{display:flex;align-items:center;gap:24px;min-height:48px;margin-top:14px;padding:0 30px}
+ #drawer .sx-facts{display:flex;align-items:baseline;gap:20px;min-width:0;flex:1}
+ #drawer .sx-facts strong{font-size:22px;font-weight:800;font-style:italic;white-space:nowrap}
+ #drawer .sx-facts small{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-line>button{height:32px;min-height:32px;margin:0;padding:0 8px;border:0;background:none;color:var(--hot);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;width:auto}
+ #drawer .sx-line>button::before{display:none}
+ #drawer .sx-line>#roundDelete{color:#ff8a7a}
+ #drawer .sx-line>button svg{width:14px;height:14px}
+ #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;scrollbar-width:thin}
+ #drawer .sx-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
+ #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
+ #drawer .sx-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
+ /* 2 · Golfers: four seats. */
+ #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+ #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
+ #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
+ #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
+ #drawer .sx-golfers .seat .player-dot{width:56px;height:6px;border-radius:0}
+ #drawer .sx-golfers .seat .player-mark :is(img,.seat-guest){width:86px;height:86px;border-radius:50%}
+ #drawer .sx-golfers .seat .seat-guest{display:grid;place-items:center;border:3px dashed rgba(255,255,255,.35);font-size:44px;color:rgba(255,255,255,.6)}
+ #drawer .sx-golfers .seat .player-who{display:grid;justify-items:center;gap:4px;width:100%}
+ #drawer .sx-golfers .seat .player-who>select{width:100%;height:40px;min-height:40px;padding:0 4px;border:0;background:transparent;color:#fff;font:800 italic 32px/1 "Saira Condensed",var(--font-ui),sans-serif;text-align:center;text-align-last:center;text-transform:uppercase;appearance:none;cursor:pointer}
+ #drawer .sx-golfers .seat .player-who>select option{font:15px var(--font-ui);color:#111;background:#fff;text-transform:none}
+ #drawer .sx-golfers .seat .player-who>input{width:100%;height:36px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 20px "Saira Condensed",var(--font-ui),sans-serif;text-align:center}
+ #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .seat-tees{display:flex;gap:6px}
+ #drawer .seat-tee{position:relative;isolation:isolate;display:flex;align-items:center;gap:5px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft);font:800 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
+ #drawer .seat-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .seat-tee[aria-pressed=true]{color:#111}
+ #drawer .seat-tee[aria-pressed=true]::before{background:#fff}
+ #drawer .seat-tee i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+ #drawer .sx-golfers .seat>select[id^=team]{display:none}
+ #drawer .seat-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .seat-pick>select{max-width:62%;height:32px;min-height:32px;padding:0 22px 0 8px;border:0;border-radius:0;background:rgba(0,0,0,.25);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .seat-pick>select option{color:#111;background:#fff;text-transform:none}
+ #drawer .sx-golfers .seat .drop-player{width:36px;height:36px;min-height:36px;margin-top:auto;border:0;background:none;color:var(--soft)}
+ #drawer .sx-golfers .add-player{position:relative;isolation:isolate;display:grid;place-items:center;align-content:center;gap:10px;min-height:400px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 22px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .sx-golfers .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
+ #drawer .sx-golfers .add-player svg{width:44px;height:44px;padding:16px;border:3px dashed rgba(255,255,255,.35);border-radius:50%;box-sizing:content-box;color:rgba(255,255,255,.6)}
+ #drawer .sx-golfers>#applyGroup{justify-self:start;width:auto;margin-top:14px}
+ /* 3 · Format: four cards, the teams under them. */
+ #drawer .sx-formats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+ #drawer .sx-format-card{display:grid;align-content:start;gap:8px;min-height:168px;margin:0;padding:16px 30px;color:#fff;text-align:left;cursor:pointer}
+ #drawer .sx-format-card strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
+ #drawer .sx-format-card span{font-family:var(--font-ui);font-size:16px;line-height:1.35;color:var(--soft)}
+ #drawer .sx-format-card small{margin-top:auto;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-format-card.on{color:var(--on-hot)}
+ #drawer .sx-format-card.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-format-card.on :is(span,small){color:var(--on-hot)}
+ #drawer .sx-format-card:disabled{opacity:.45}
+ #drawer .sx-format-card:focus-visible{outline:none}
+ #drawer .sx-format-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-format>#formatNote{margin:12px 0 0;padding:0 8px}
+ #drawer .sx-teams{margin-top:22px;max-width:58%}
+ #drawer .sx-team-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ #drawer .sx-team{display:grid;gap:8px;align-content:start;min-height:120px;padding:14px 30px}
+ #drawer .sx-team-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-team-golfer{display:flex;align-items:center;gap:10px;min-height:36px;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 21px "Saira Condensed",var(--font-ui),sans-serif;text-align:left}
+ #drawer .sx-team-golfer :is(img,.player-dot){width:30px;height:30px;border-radius:50%}
+ #drawer .sx-team-golfer .player-dot{display:none}
+ #drawer .sx-team-golfer small{margin-left:auto;font-size:13px;font-style:normal;letter-spacing:.12em;color:var(--soft)}
+ /* 4 · Rules and the summary, side by side. */
+ #drawer .sx-rules{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 30px;align-items:start}
+ #drawer .sx-rules-col,#drawer .sx-summary{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .sx-rules .lb-pick{min-height:56px;padding:6px 28px}
+ #drawer .sx-rules #roundPutting-distances{padding:0 8px}
+ #drawer .sx-help{display:grid;gap:6px;margin-top:8px;padding:14px 30px}
+ #drawer .sx-help-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-help>#roundPuttingNote{margin:0;font-family:var(--font-ui);font-size:16px!important;line-height:1.4;color:#fff!important}
+ #drawer .sx-sum-pic{height:186px}
+ #drawer .sx-sum-name{display:grid;gap:6px;padding:14px 30px}
+ #drawer .sx-sum-name strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
+ #drawer .sx-sum-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .sx-sum-golfers{display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 30px}
+ #drawer .sx-sum-golfer{display:flex;align-items:center;gap:8px}
+ #drawer .sx-sum-golfer :is(img){width:30px;height:30px;border-radius:50%}
+ #drawer .sx-sum-golfer .player-dot{display:none}
+ #drawer .sx-sum-golfer strong{font-size:18px;font-weight:800;font-style:italic}
+ #drawer .sx-sum-golfer small{font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .sx-rules>#roundError{grid-column:1/-1;margin:0}
+ #drawer .lb-pick{position:relative;isolation:isolate}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */
@@ -604,22 +651,3 @@
  #drawer .panel-tab.active{background:none;color:var(--on-hot)}
  #drawer .panel-tab.active::before{background:var(--a1)}
 }
-
-/* THE LOBBY ON A PHONE keeps the old sheet's look: the columns stack, the
-   drop-downs show themselves (no see-through picker), no course picture. */
-@media (max-width:560px),(max-height:500px){
- #drawer .lb{display:grid;gap:12px}
- #drawer .lb-col,#drawer .lb-saved{display:grid;gap:8px}
- #drawer .lb-pic,#drawer .lb-val{display:none}
- #drawer .lb-facts{display:grid;gap:2px}
- #drawer .lb-pick,#drawer .lb-tees{display:flex;align-items:center;justify-content:space-between;gap:8px}
- #drawer .lb-v{display:flex;align-items:center;gap:4px;min-width:0}
- #drawer .lb-tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
- #drawer .lb-tile[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
- #drawer .lb-tee[aria-pressed=true]{outline:2px solid currentColor}
- #drawer .lb-arrow{min-width:44px;min-height:44px}
- #drawer .lb-root>.panel-section.lb-emptied{display:none!important}
-}
-
-/* A saved course's picture panel shows only on the 1.0 saved courses shelf. */
-.course-pic{display:none}

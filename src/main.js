@@ -307,7 +307,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,studioSheet=null,studioChangeList=[];
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,lobbyStep=0,lobbySaved=false,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -589,7 +589,7 @@ function placeForTurn(from=null){
  // Bingo Bango Bongo: every golfer's ball where it lies (the engine keeps them).
  if(c.def.order==='holes'){const st=c.play,tee=st.spots[Math.min(st.h,st.spots.length-1)];round.positions=round.players.map((_,s)=>{const q=st.pos?.[s]||tee;return {x:q.x,z:q.z};});}
  if(p)round.positions[seat]={x:p.x,z:p.z};
- else if(!rangeMode){const tee=course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
+ else if(!rangeMode){const tee=course.tees[round.teeOf(seat)]||course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
  round.active=seat;round.teePlaced=true;round.strokes[seat]=c.def.order==='spotOut'||c.def.order==='holes'?t.strokes:0;
  const at=round.positions[seat];
  c.aimAt=t.target?{x:t.target.x,z:t.target.z}:t.zone?{...t.zone}:typeof t.call==='number'?{x:at.x,z:at.z+t.call*YARD}:null;
@@ -2515,7 +2515,7 @@ function setUpRangeTurn(pick=false){
   p=st.next??(st.mode==='chip'?chipSpot(course,st.green,st.yards,st.n):puttSpot(course,st.green,st.feet,st.n));
  }
  st.next=null;
- if(!p){const tee=course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
+ if(!p){const tee=course.tees[round.teeOf(round.active)]||course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
  round.positions[round.active]={x:p.x,z:p.z};round.teePlaced=true;
  shotShape={...DEFAULT_SHAPE};cancelSwing();rangePlaced=aimTurned=false;
  const toPin=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
@@ -3790,6 +3790,8 @@ let groupDraft=null;
 // "PLAYS WITH" AND THE HAND are only asked once a launch monitor has ever
 // connected on this device (spec Q14): until then everyone is on the Swing
 // Meter and the hand is something only a monitor is told.
+// The tee sets' own colours, for the dots on a golfer's tee buttons.
+const TEE_DOT={blue:'#2b5fb4',white:'#f4f1e8',red:'#b8322b'};
 const bridgeSeen=()=>{if(monitorConnected)return true;try{return !!localStorage.getItem(BRIDGE_KEY);}catch{return false;}};
 function groupEditor(hostId,start,onChange){
  const host=$(hostId);if(!host)return null;
@@ -3802,7 +3804,7 @@ function groupEditor(hostId,start,onChange){
  // applied (`readDraft`). A golfer from a save older than profiles is matched by
  // name, and becomes a new player if nobody on this device has that name.
  const draft=start.map(p=>{const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
-  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',seat:p.id};});
+  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',tee:p.tee||prof?.tee||null,seat:p.id};});
  groupDraft=draft;
  const NEW='__new';
  const paint=()=>{
@@ -3813,21 +3815,23 @@ function groupEditor(hostId,start,onChange){
   // The dot is shown where the group is BUILT, not only where it is scored:
   // otherwise the first time anyone sees a golfer's colour is a tracer over a
   // fairway, with nothing on screen tying it to a name.
-  host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
-   // The colour and the golfer's ball share the first column: as a cell of
-   // their own, the ball pushed the name box into the team's narrow column.
-   +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):''}</span>`
+  // A SEAT EACH (round 13): the colour, the ball in its frame, who it is (the
+  // picker), title, level and handicap, the golfer's own tee, and -- once a
+  // monitor has been seen -- what they play with and which hand they swing.
+  const teeOf=p=>p.tee||round.tee||'blue';
+  host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
+   return `<div class="player-row seat${bridgeSeen()?' play':''}" data-seat="${i}">`
+   +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${q?ballAvatar(q,'tiny'):'<span class="seat-guest" aria-hidden="true">+</span>'}</span>`
    +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
-   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)}</option>`).join('')
+   +everyone.filter(o=>!taken(i).has(o.id)).map(o=>`<option value="${o.id}" ${o.id===p.profile?'selected':''}>${escape(o.name)}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
-   // The 1.0 lobby's row line (ui-lobby.js): level and handicap under the name.
-   +(()=>{const q=p.profile&&findProfile(profiles,p.profile);if(!q)return '';const h=profileSummary(q).handicap?.index;
-     return `<span class="player-sub">LV ${levelOf(q.xp).level} · HCP ${Number.isFinite(h)?h.toFixed(1):'—'}</span>`;})()
+   +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())} · LV ${lv}</span><span class="player-hcp">HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
    +`</div>`
+   +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${['blue','white','red'].map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeOf(p)===t}" aria-label="${t[0].toUpperCase()+t.slice(1)} tees"><i style="background:${TEE_DOT[t]}"></i>${t[0].toUpperCase()}</button>`).join('')}</span>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
-   +(bridgeSeen()?`<select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select>`
-    +`<select id="hand${i}" aria-label="Player ${i+1} handedness"><option ${p.hand==='RH'?'selected':''}>RH</option><option ${p.hand==='LH'?'selected':''}>LH</option></select>`:'')
+   +(bridgeSeen()?`<label class="seat-pick"><span>Plays with</span><select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select></label>`
+    +`<label class="seat-pick"><span>Swings</span><select id="hand${i}" aria-label="Player ${i+1} handedness"><option value="RH" ${p.hand==='RH'?'selected':''}>RH</option><option value="LH" ${p.hand==='LH'?'selected':''}>LH</option></select></label>`:'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
    // had no remove button at all, so the only way to drop the first name was to
@@ -3835,13 +3839,13 @@ function groupEditor(hostId,start,onChange){
    // row aligned with the others.
    +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name||'player '+(i+1))}"><i data-lucide="trash-2"></i></button>`
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
-   +`</div>`).join('')
+   +`</div>`;}).join('')
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
   icon();
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
-    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';}
+    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';p.tee=q?.tee||p.tee;}
     paint();onChange?.();
     if(v===NEW)$('name'+i)?.focus();
    };
@@ -3850,6 +3854,7 @@ function groupEditor(hostId,start,onChange){
    if($('hand'+i))$('hand'+i).onchange=e=>{p.hand=e.target.value;};
    if($('input'+i))$('input'+i).onchange=e=>{p.input=e.target.value;};
   });
+  host.querySelectorAll('[data-seat-tee]').forEach(b=>b.onclick=()=>{const p=draft[Number(b.closest('[data-seat]').dataset.seat)];p.tee=b.dataset.seatTee;paint();onChange?.();});
   host.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{
    draft.splice(Number(b.dataset.drop),1);paint();onChange?.();});
   const add=host.querySelector('[data-add]');
@@ -3857,7 +3862,7 @@ function groupEditor(hostId,start,onChange){
   // player when everyone on the device is already playing.
   if(add)add.onclick=()=>{
    const used=new Set(draft.map(q=>q.profile)),free=everyone.find(q=>!used.has(q.id));
-   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:free?.hand||'RH',input:free?.input||'monitor',seat:undefined});
+   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:free?.hand||'RH',input:free?.input||'monitor',tee:free?.tee||null,seat:undefined});
    paint();onChange?.();
    if(!free)$('name'+(draft.length-1))?.focus();};
  };
@@ -3881,8 +3886,8 @@ function readDraft(){
   let prof=r.prof;
   if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
   // Remembered for the next group this golfer joins.
-  setProfilePlay(profiles,prof.id,{hand:r.hand,input:r.input});
-  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',seat:r.seat};
+  setProfilePlay(profiles,prof.id,{hand:r.hand,input:r.input,tee:r.tee});
+  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',...(r.tee?{tee:r.tee}:{}),seat:r.seat};
  });
 }
 // What each format is called in Saved rounds and a golfer's history.
@@ -4236,7 +4241,7 @@ function drawRoundHud(){
  const c=clubs[$('club').value],putt=c?.code==='PT'||!!ballOnGreen;
  // The hole slab.
  const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
-  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
+  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
  setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
  // The conditions: wind, plays like, the rise to the hole.
  const rise=course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z);
@@ -4416,6 +4421,8 @@ function syncTools(){
  const r=$('rangeControls');if(r)r.classList.toggle('selected',!!popups?.isOpen('range'));
 }
 function openSheet(name){stopTour();
+ // Play opens on its first step from the menu, on Golfers during a round.
+ if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -5691,7 +5698,22 @@ function renderPanel(name,content){
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
   if(name==='library')pictureQueue([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
  }
- if(name==='round')buildLobby(content,{onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();}});
+ if(name==='round'){
+  // Play, step by step (ui-lobby.js): every saved course and the course of the
+  // week as cards with pictures, each with its biome, holes, par and length.
+  const biomeName=b=>(BIOMES[b]?.name||b||'').toUpperCase();
+  const lineOf=st=>{const p=planCourse(st);return `${biomeName(st.biome)} · ${p.holes.length} HOLES · PAR ${p.par} · ${Math.round(p.yards).toLocaleString()} YDS`;};
+  const ws=weeklySettings(),wk=isoWeek();
+  buildLobby(content,{
+   courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
+   weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
+   onWeekly:()=>{lobbyStep=0;weeklySetup=true;openPanel('round');},
+   pictures:pictureQueue,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
+   onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();},
+   golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
+    return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;},
+  });
+ }
  wireSliders(content);icon();
 }
 

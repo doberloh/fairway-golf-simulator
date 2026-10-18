@@ -110,7 +110,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag), the Text size zoom
 - `src/round-hud.js`, `src/round-hud.css` -- the 1.0 round screen (in play, off a phone): what each corner piece says and how large, and where it sits; Esc opens the top bar as a pause list; round complete's standings
 - `src/round-phone.css` -- the 1.0 round screen on a phone, sideways and upright (the slanted aim pad, the tapped meter, a MENU chip), and the phone's main menu rows
-- `src/ui-lobby.js` -- the 1.0 lobby: moves the round panel's own controls into the mockup's three columns (tiles and ◀ ▶ pickers drive the real drop-downs); `optionWords`, `courseFacts` tested in tests/ui-lobby.test.mjs
+- `src/ui-steps.js` -- step-by-step setup sheets (round 13): the steps along the top, one step's content centred, keys and Back / Next along the foot, the screen's main button on the last step
+- `src/ui-lobby.js` -- Play in four steps (course cards with pictures, golfer seats with their own tees, format cards with teams, rules and a summary), moving the round panel's own controls into them; tests/ui-lobby.test.mjs
 - `src/ui-monitor-setup.js` -- 1.0 launch monitor setup: moves the monitor panel's controls into the mockup's three ticked steps and status column; `monitorSteps`, `monitorLight`, `lastShotLine` tested in tests/ui-monitor-setup.test.mjs
 - `src/ui-profile-hub.js` -- 1.0 My profile hub: sorts the old profile page by its headings into six tabs, golfer chips in the header, the left stack; `tabOfHeading`, `overviewTiles` tested in tests/ui-profile-hub.test.mjs
 - `src/ui-settings.js` -- 1.0 settings: Camera & bay, Graphics and Sound from the menu get the category list, all groups as rows, and the focused row's help line; tests/ui-settings.test.mjs

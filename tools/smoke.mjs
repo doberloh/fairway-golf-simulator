@@ -760,7 +760,7 @@ const JOURNEYS = [
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The green', 'Who is hitting']],
     ['Endless', ['Format & tees', 'Your group']],
-    ['Play', ['Your course', 'Format & tees', 'Your group', 'Saved rounds']],
+    ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
    ];
    for (const [entry, tabs] of PANELS) {
     await t.step(`open "${entry}"`, async () => {
@@ -1240,7 +1240,7 @@ const JOURNEYS = [
    const groupPanel = async () => {
     await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
    };
    await t.step('the welcome is up, over the menu', () =>
     t.until(() => t.page.evaluate(() => document.getElementById('welcome')?.hidden === false && !document.getElementById('splash')), 'the welcome', 60 * SLOW));
@@ -1430,7 +1430,7 @@ const JOURNEYS = [
    await t.step('a second golfer joins, and their bag is edited in the round', async () => {
     await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     await t.page.click('#applyGroup');
@@ -1515,10 +1515,10 @@ const JOURNEYS = [
     if (after.strokes[0] !== 4) throw new Error(`strokes read ${after.strokes[0]}, want 4`);
     if (await barUp()) throw new Error('the relief bar stayed up');
    });
-   await t.step('Local Rule E-5, chosen in Format & tees, offers the two-stroke drop', async () => {
+   await t.step('Local Rule E-5, chosen in the Rules step, offers the two-stroke drop', async () => {
     await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
-    await t.press('Format & tees');
+    await t.press('Rules'); // the Play steps (round 13)
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
@@ -2345,7 +2345,7 @@ const JOURNEYS = [
    const groupPanel = async () => {
     await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
    };
    await menuReady(t);
    await t.step('connect and arm from the main menu', async () => {

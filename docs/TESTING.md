@@ -169,7 +169,8 @@ the courses several suites share.
   `ui-range-controls` (the range window's session table reads the report's
   club table: balls, average carry, spread). `course-picture` (a course's
   picture lays out every hole, the same course the same way, fills its frame
-  and draws inside it).
+  and draws inside it). `round-tees` (each golfer starts from their own tee,
+  falls back to the round's, joins at their own, and keeps it through a save).
   `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
   longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
   the player never scheduling in the past). `sound` also holds the wiring

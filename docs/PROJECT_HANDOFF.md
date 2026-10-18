@@ -1224,29 +1224,33 @@ profile is the hub with the Look locker as a tab, as designed. Not in the
 course studio, whose sheet takes the play area. An open sheet is in
 `focusScope` (arrows, menu sounds; B closes it).
 
-**The 1.0 lobby is the mockup's layout** (`src/ui-lobby.js`, 17 October
-2026, third pass): three columns -- the course (a picture panel in the
-landscape's colours, the name panel, Change course ◀ ▶, Surprise me, then
-Course studio, Manage & share and Delete), the golfers (a row each: colour
-bar, the ball in its frame, the name, LV and HCP; + Add player; the tees;
-the lie-penalty note), the format and rules (four tiles, then ◀ ▶ pickers
-for putting, out of bounds and the lie penalty) -- and saved rounds along
-the foot. The lobby wears the colours of the course being chosen
-(`lobbyBiome`, cleared when the sheet closes). **MOVED, NOT REBUILT:**
-renderPanel still writes the old lobby and wires it; `buildLobby` then moves
-those very nodes into the columns, so every id, handler and rule is the old
-one. A tile or arrow sets the real drop-down and fires its change; a
-picker's drop-down lies see-through over its value, so clicking the value
-opens the list and Playwright's selectOption still works (`#roundOB`); the
-format drop-down stays in the page, hidden (the skins journey sets it). The
-tabs ride in the footer band and scroll to a column -- pulled up into the
-header they were clipped by the scrolling content. **PLACED:** tees are one
-choice for the group, as the round rules have it, not chips on each golfer's
-row as drawn; the course picture is the landscape's colours, not a
-photograph (none exists before the course is built); the format's note and
-putting's note stay under their controls (the mockup has none); "your best"
-on the course is not shown; saved rounds scroll into view on 16:9 (the
-mockup shows them on 4:3 only). A phone stacks the columns in the old look.
+**Play is four steps** (round 13, 17 October 2026; `src/ui-lobby.js` on
+`src/ui-steps.js`). The owner reversed the one-screen lobby ("multiple menus
+again"): 1 Course -- every saved course and the course of the week as cards
+with their pictures (course-picture.js), then Surprise me and New in studio;
+the line along the foot names the chosen course, and its saved rounds open
+from there (they were the lobby's own tab); 2 Golfers -- a seat each, with
+the golfer's own tee; 3 Format -- four cards, the teams under them for match
+play and scramble (a golfer's chip moves them across); 4 Rules -- putting,
+out of bounds and the lie penalty with help, and what you are about to play.
+The steps along the top are buttons named by their label ("Golfers"), and
+the screen opens on Course from the menu and on Golfers during a round
+(`lobbyStep`, kept across redraws, like `lobbySaved`). **Moved, not rebuilt**
+as before: renderPanel writes the old lobby and `buildLobby` sorts its nodes
+into the steps; every id the journeys use is the old one. **A step sheet's
+foot holds the screen's main button**: `[data-panel-action]` is moved into
+`.sx-btns` and shown only on the last step. **PLACED:** the course of the
+week's card opens its own setup (it is stroke play at fixed settings); the
+mockup's Goal and Holes rows are not there (the lobby has no goal, and the
+course decides its holes); "your best" on a course is not shown.
+
+**Each golfer has their own tee** (round 13; `game.js` `teeOf`): a player may
+carry `tee` and starts every hole from it; one without plays from the round's
+tee (`#roundTee`, still there, hidden). The tee is remembered on the
+profile (`setProfilePlay`), rides through saves and the group editor, and
+names the yards on the hole panel for whoever is up. **PLACED:** the
+scorecard's yards row and the profile's hole record still show the round's
+tee.
 
 **Launch monitor setup is the mockup's layout the same way**
 (`src/ui-monitor-setup.js`): three numbered steps on the left, ticked from
