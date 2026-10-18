@@ -234,3 +234,31 @@
 #generating .generating-track{height:10px;border-radius:0;background:rgba(255,255,255,.12);transform:skewX(-12deg)}
 #generating .generating-track>i{border-radius:0;background:var(--a1,#8fc79c)}
 #generating .generating-phase{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:13px!important;font-weight:700;letter-spacing:.14em;color:var(--soft,#9ab)!important}
+
+/* THE TOOL WINDOWS AND THE TURN CARD (round 13, the sweep). The Tools list
+   (#toolsTray, opened from the pause) and every tool window (popups.js:
+   Range controls, Turf settings, Shot data...) were square already, with
+   the biome's line under the title, but their buttons were the old bordered
+   boxes: now slanted rows in the italic capitals. The card that names whose
+   turn it is (#turnFlash) is a slanted panel. */
+@container app (min-width:561px) and (min-height:501px){
+ #world .popup{background:linear-gradient(var(--panel),var(--panel)),#0b100e;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #world .popup .popup-move span{font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;text-transform:uppercase}
+ #world .tools-tray h4{margin:14px 0 6px;font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--soft);text-transform:uppercase}
+ #world .tools-tray .tools-row{gap:6px}
+ #world .tools-tray .tools-row>button{position:relative;isolation:isolate;min-height:34px;padding:0 16px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-transform:uppercase}
+ #world .tools-tray .tools-row>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #world .tools-tray .tools-row>button:hover:not(:disabled)::before{background:color-mix(in srgb,var(--a1) 35%,transparent)}
+ #world .tools-tray .tools-row>button:is(.active,[aria-pressed=true])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world .tools-tray .tools-row>button:is(.active,[aria-pressed=true]){color:var(--on-hot)}
+ #world .tools-tray .tools-row>button:disabled{opacity:.4}
+ #world .tools-tray .tools-row>button:focus-visible{outline:none}
+ #world .tools-tray .tools-row>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #world .popup .control-card{border:0;border-radius:0;background:rgba(255,255,255,.05)}
+ #world .turn-flash{border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;isolation:isolate;padding:14px 34px 16px;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #world .turn-flash::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);border-top:4px solid var(--a1);transform:skewX(-12deg)}
+ #world .turn-flash small{font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ #world .turn-flash strong{font:800 italic 30px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #world .turn-flash b{border-radius:0;background:none;padding:0;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif}
+ #world .turn-flash-row>span{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
+}

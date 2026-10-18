@@ -76,6 +76,16 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
   a controller in the studio pause. PLACED: the round's pause keeps all its
   rows and a second window for the round (the frame has six rows).
+- [ ] **Round 13 sweep: what still showed the old interface.** Converted and
+  seen at 1280 x 720: the Tools list and the tool windows (Turf settings
+  opened), the wait while a landscape grows (shown by hand). Converted, not
+  seen: the turn card between golfers. Still old, each needing a mockup: the
+  driving range setup (tabs, old player rows), the Help sheet's body (not
+  looked at this pass). Still in the page but hidden on every screen: the old
+  view strip, keys hints, aim control, Swing button, course card and weather
+  (the journeys read them to tell the old screen from the new; removing them
+  is a cleanup with the journeys). style.css still carries the old rules
+  under the 1.0 ones; they go with that markup.
 - [ ] **Phones get the 1.0 sheets and dialogs (round 13): built, seen in the
   browser pane at 390 x 844** (Play steps 1 to 4, Endless, the course of the
   week, Challenges, the studio's settings, Saved courses, My profile,

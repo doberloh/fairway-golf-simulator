@@ -1341,7 +1341,10 @@ band across the screen, the keys list is a window of chips, the time of day
 and the shot list are dark windows. Free flight is a pill top left (the
 hole picker under it), its keys as chips along the bottom with Return to
 ball, and every round piece but the map hidden (`#world.exploring`). The wait while a landscape grows (`#generating`, every screen) is a
-window too: a slanted panel under the biome's line, its bar a slanted track.
+window too: a slanted panel under the biome's line, its bar a slanted track. The
+Tools list and every tool window (popups.js) have slanted rows on a solid
+panel, and the card naming whose turn it is (`#turnFlash`) is a slanted panel
+(ui-windows.css, the sweep).
 
 **Pause is the mockup's two columns** (the Esc list; third pass, 17 October
 2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
