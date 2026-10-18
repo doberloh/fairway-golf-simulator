@@ -1180,3 +1180,13 @@ helper*). **Smoke on the branch: 37 of 37 journeys** on the real GPU, later
 the same night (the owner allowed the graphics card while asleep), so the
 zero-request rule held through every journey, the served and bridge ones
 included.
+
+
+## Round 14: the start splash's data in the page (17 October 2026)
+
+The built page carries one more small inline script in its head,
+`window.__FAIRWAY_SPLASH__` (vite.config.js `fairway-splash`): the nine
+landscapes' palettes and names, the package version, and two date functions
+from weekly.js, about 3 KB. It needs no network and no storage, so the file
+still opens offline from a file URL. Nothing else about the single file
+changed.

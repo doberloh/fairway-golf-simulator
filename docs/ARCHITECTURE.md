@@ -236,7 +236,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
-- The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler. [THE SPLASH LIVES]
+- The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler; its week colours come from `window.__FAIRWAY_SPLASH__`, written in by vite.config.js from biomes.js and weekly.js. [THE SPLASH LIVES]
 - An unset clock hour is null and reads as midnight; only a world build replaces it, so a round that keeps its world sets the hour itself (`roundHour`). [The menu borrows the clock]
 - `appMode` changes only through `setMode`; generation controls only in the studio, course choice only in play. [Application modes]
 - A saved graphics record beats a new default; raise `GREEN_READ_GEN` to move everyone. [A SAVED GRAPHICS RECORD]

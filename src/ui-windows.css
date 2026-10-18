@@ -262,3 +262,30 @@
  #world .turn-flash b{border-radius:0;background:none;padding:0;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif}
  #world .turn-flash-row>span{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
 }
+
+/* THE START SPLASH (round 14, frame c-splash). Drawn from the course of the
+   week's colours (--sp-*, set by the inline script in index.html from what
+   the build writes into the page), before anything loads: a SOLID dark
+   backdrop (the panel colour is see-through), two leaning bands, the
+   wordmark with its dot against the word, a leaning segmented bar saying what
+   it loads, a tip bottom left, the version and the week bottom right. */
+#splash{display:block;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,color-mix(in srgb,var(--sp-panel,#1d2a22) 70%,#000) 0,#07090a 75%),#07090a;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+#splash .sp-band{position:absolute;left:-9vw;top:0;width:41vw;height:100%;transform:skewX(-12deg);background:linear-gradient(180deg,var(--sp-a1,#4ade80),var(--sp-a2,#166534));opacity:.16}
+#splash .sp-stripe{position:absolute;left:33.6vw;top:0;width:2.8vw;height:100%;transform:skewX(-12deg);background:var(--sp-a1,#4ade80);opacity:.28}
+#splash .splash-mark{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:.16em;margin:0;font:600 clamp(52px,7.5vw,112px)/1 var(--font-ui);letter-spacing:-.04em;color:#fff;animation:none}
+#splash .splash-mark .brandmark svg{width:.86em;height:.86em;stroke:#fff}
+#splash .sp-word .brand-dot{margin-left:-.02em;color:var(--sp-hot,#facc15)}
+#splash .sp-load{position:absolute;left:50%;top:56%;transform:translateX(-50%);width:min(460px,80vw);display:grid;gap:8px}
+#splash .sp-bar{display:flex;gap:3px}
+#splash .sp-bar b{flex:1;height:14px;transform:skewX(-12deg);background:rgba(255,255,255,.12)}
+#splash .sp-bar b.on{background:var(--sp-a1,#4ade80)}
+#splash .sp-bar b.edge{box-shadow:0 0 10px var(--sp-a1,#4ade80)}
+#splash .sp-line{display:flex;justify-content:space-between;gap:16px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff}
+#splash .sp-line #splashPct{color:rgba(255,255,255,.6)}
+#splash .sp-tip{position:absolute;left:40px;bottom:30px;width:min(520px,calc(100vw - 80px));display:grid;gap:3px;padding:10px 28px;isolation:isolate}
+#splash .sp-tip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(var(--sp-panel,#1d2a22),var(--sp-panel,#1d2a22)),#0b100e;transform:skewX(-12deg)}
+#splash .sp-tip>span{font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--sp-hot,#facc15)}
+#splash .sp-tip>p{margin:0;font:600 14px/1.35 var(--font-ui);color:#fff}
+#splash .sp-ver{position:absolute;right:40px;bottom:34px;font-size:13px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.4)}
+#splash .splash-label{display:none}
+@media (max-width:560px){#splash .sp-tip{left:16px;bottom:56px;width:calc(100vw - 32px)}#splash .sp-ver{right:16px;bottom:24px}}

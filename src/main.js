@@ -3322,7 +3322,8 @@ async function whileGenerating(label,work,quiet=false){
  // screen paint before the first block of work.
  await nextFrame();
  try{
-  const result=await work(report=>{if(!quiet)setProgress(report&&{...report,done:report.done*GROWING_SHARE});});
+  // Behind the start splash (quiet), the same report moves its bar (round 14).
+  const result=await work(report=>{if(!quiet)setProgress(report&&{...report,done:report.done*GROWING_SHARE});else if(report)globalThis.__splashStep?.('Growing the first hole',.3+.55*report.done);});
   // The graphics card's share of the wait, behind the overlay rather than as a
   // frozen first frame after it (GolfView.ready).
   //
@@ -7229,7 +7230,9 @@ watchWindows([
 try{
  // Text size first: the view measures its canvas as it is built.
  applyUiScale();addEventListener('resize',applyUiScale);
+ globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
+ globalThis.__splashStep?.('Growing the first hole',.3);
  modelCards=createModelCards({renderer:()=>view?.renderer,hot:()=>getComputedStyle(document.documentElement).getPropertyValue('--hot').trim()});addEventListener('resize',()=>modelCards?.refit());
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
@@ -7251,6 +7254,8 @@ try{
  // player sees (the owner). So the loop runs and the menu opens under the
  // splash, and it fades only once frames come steadily, or after two seconds
  // whatever happens, so a slow machine is never kept on a black screen.
+ globalThis.__splashStep?.('Ready',.95);
  await smoothFrames();
+ globalThis.__splashStep?.('Ready',1);
  dismissSplash();
 }catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}

@@ -86,6 +86,11 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Start splash (round 14, item 8): built; seen in the browser pane at
+  1280 x 720** (Desert week: bands, wordmark, the bar at "Growing the first
+  hole · 30%", a tip, "v1.0.0 · WEEK 42 · DESERT"). Not seen: a phone, another
+  week's colours, the file opened from disk. The journeys boot, home-screen
+  (three) and no-swallowed-errors pass.
 - [ ] **Round screen, round 14 (item 7): built; seen in the browser pane at
   1280 x 720** -- at rest (nothing above the meter, the three boxes under it,
   the club box with Q E and its triangle), the bag opened and a club picked
