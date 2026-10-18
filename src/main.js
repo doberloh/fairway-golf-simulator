@@ -7172,7 +7172,13 @@ function autoResolutionFrame(now,interval){
  if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
  const key=graphics.quality+':'+view.pixelCeiling();
  if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
- if(document.hidden||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ // NOT JUDGED IN THE MENUS (18 October 2026): a menu or an open sheet is busy
+ // drawing its own cards -- course pictures and the tiny models, 50-190 ms of
+ // script at a time -- and those stutters said nothing about what the course
+ // costs to draw, yet stepped the resolution down, so a round began blurred and
+ // took four to eight seconds to sharpen (the text-size journey caught it). The
+ // menus, a sheet and the loading screen hold the step; play judges it.
+ if(document.hidden||appMode!=='play'||panel||$('generating')?.hidden===false){autoRes.hold(now);return;}
  const scale=autoRes.sample(interval,now,graphics.frameCap);
  if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
 }

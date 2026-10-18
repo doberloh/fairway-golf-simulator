@@ -42,13 +42,9 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   card above the apex with its arrow, YDS TOTAL and YDS TO PIN, ball speed,
   backspin and apex, gone when the camera came back; all 47 info icons on the
   studio's pages measured 8 px after their names). Smoke, run in small
-  batches: 36 of 37 journeys pass. **text-size fails** at "the play screen at
-  150% on 1920x1080": the course drawn at 54-64% of the screen's pixels
-  (Low's 75%, then the automatic resolution stepping down for slow frames).
-  It fails the same way on the build from before these fixes (22a992d), which
-  passed it earlier the same day, and on an idle card, so it is the
-  machine's state, not these changes; re-run it after a restart before
-  touching the game or the check. (1) The seats' Plays with / Swings bars follow the seat's lean,
+  batches: all 37 journeys pass. (text-size failed now and then before a
+  startup fix the same day: the menus' card drawing stepped the automatic
+  resolution down before a round began -- RESEARCH *F4*, the 18 October note.) (1) The seats' Plays with / Swings bars follow the seat's lean,
   in every golfers step (Play, the course of the week, Endless, the range,
   Challenges' group); (2) the shot card hangs above the shot line's apex with an
   arrow down to it, comes up as the camera pulls back and fades as it flies
@@ -58,7 +54,7 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   PROJECT_HANDOFF *Info icons*). **To check:** the seats on a phone and in
   the other golfers steps; the card below the apex where the top of the
   screen has no room, its fade caught mid-way, a drive with the review camera
-  off, a holed shot (IN THE HOLE); text-size again.
+  off, a holed shot (IN THE HOLE).
 - [ ] **The hidden old interface removed (18 October 2026): built; `npm test`
   1000/1000, the build, and all 37 smoke journeys pass** (run on the real GPU
   in 13 small batches the same day; the journeys were changed to read the 1.0

@@ -5395,6 +5395,20 @@ times after on four different courses. GPU only.
 
 ## F4: automatic resolution (30 September)
 
+**18 October 2026: the menus stepped it down before play.** The smoke journey
+`text-size` failed now and then with the course drawn at 64% or 54% of the
+screen's pixels on Low (75% expected). A startup trace (an Endless run at 150%
+text, every frame, long task and canvas width for 7 s from the end of the
+loading screen, three runs) found the canvas already one step down (1224 of
+1440 px) at the first frame of play in all three, sharpening at 4.3-4.5 s;
+in the 1.5 s before play there were 7-10 long tasks of 50-194 ms: the Endless
+sheet building its course pictures and tiny models. Frames under 200 ms count
+as slow, so the menu's own work stepped the resolution down, and the loading
+screen held the step into the round; two steps meant about 8 s blurred.
+**Fix:** frames are not judged while a menu or a sheet is up (as the loading
+screen already was). After it, three runs out of three started at 1440 px and
+stayed; `text-size` passed three times running.
+
 Branch `frame-and-lights`. `src/auto-resolution.js` (the decision, pure and
 unit-tested), `autoResolutionFrame` in `src/main.js` (feeding it),
 `setResolutionScale` / `pixelCeiling` in `src/renderer.js` (applying it).
