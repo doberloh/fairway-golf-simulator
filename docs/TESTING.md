@@ -152,6 +152,9 @@ the courses several suites share.
   birdie or better earning the band, every banner under two seconds with the
   next turn announced as it leaves, the paper card's marks), and `round-hud`'s
   round-complete helpers (places with ties, XP this round, the handicap line).
+  On a big screen the flight check now expects no flight panel, Skip in the
+  meter's title (`#smSkip`) and the launch strip; the range journey opens
+  Range controls from the tool column (`#rhTools [data-hud=range]`).
   `ui-focus` (phase 3: arrows and a controller -- every button reachable from
   every other in the menus' layouts, none a dead end, down goes to the next
   row, a single line wraps, the keys and pad directions). `ui-lobby` (the

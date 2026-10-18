@@ -690,6 +690,10 @@ async function flightScreenOnce(t, phone) {
    // may be folded away on a phone, the header never is.
    head: document.querySelector('#shotPanel .sp-head')?.textContent || '',
    live: !!document.getElementById('liveShotSpeed'),
+   // Round 13 on a big screen: no flight panel; Skip in the meter's title, the
+   // launch numbers in a strip above it.
+   roundScreen: getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' && !document.querySelector('.rh-launch')?.closest('[hidden]') && getComputedStyle(document.querySelector('.rh-tools') || document.body).display !== 'none',
+   meterSkip: !gone('#smSkip'),
   };
  });
  const bad = [];
@@ -701,15 +705,20 @@ async function flightScreenOnce(t, phone) {
  // used to keep through a flight are in the shot panel, whose line is all that
  // is left of the window (13 October 2026).
  if (!state.panel) bad.push('the shot controls are still showing');
- if (state.numbers) bad.push('the shot panel went, and it carries the flight');
+ if (state.numbers && !state.roundScreen) bad.push('the shot panel went, and it carries the flight');
+ if (state.roundScreen && !state.numbers) bad.push('the old flight panel is back on the round screen');
+ if (state.roundScreen && state.meterMode && !state.meterSkip) bad.push('Skip is not in the meter\'s title');
  if (state.map) bad.push('the map went, and it should follow the ball');
  if (state.wind) bad.push('the wind went');
- if (!/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
+ if (!state.roundScreen && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
  if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
  if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
- const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
+ // Round 13: on the round screen Skip is in the meter's title (with a monitor
+ // there is no button: Enter skips).
+ const skipSel = state.roundScreen ? (state.meterMode ? '#smSkip' : null) : '#skipFlight';
+ const skip = skipSel ? await t.page.evaluate(unreachableControls, skipSel) : [];
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
 }
 
@@ -1684,7 +1693,7 @@ const JOURNEYS = [
    // The owner's report (16 October 2026): once closed, there was no way back.
    await t.step('closed, the range controls come back from the view bar', async () => {
     await t.closePanel('Range controls');
-    if (await t.hud1()) await t.page.click('#rhKeys [data-hud=range]'); else await t.page.click('#rangeControls');
+    if (await t.hud1()) await t.page.click('#rhTools [data-hud=range]'); else await t.page.click('#rangeControls');
     await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
    });
    await t.step('a ball at the 100 target lands on a green', async () => {
@@ -2271,7 +2280,7 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
     if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
-    if (!await shown('#shotPanel')) throw new Error('the shot panel is not showing');
+    if (!(await t.hud1()) && !await shown('#shotPanel')) throw new Error('the shot panel is not showing');
     const carry = await t.page.textContent('#shotTiles [data-field=carry]');
     if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });

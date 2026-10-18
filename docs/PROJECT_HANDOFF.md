@@ -1244,6 +1244,27 @@ week's card opens its own setup (it is stroke play at fixed settings); the
 mockup's Goal and Holes rows are not there (the lobby has no goal, and the
 course decides its holes); "your best" on a course is not shown.
 
+**The round screen, round 13** (frames c-aim, c-first, c-flight). The hole
+panel stands alone top left; the wind (`#rhSubs`, only its wind chip now) is
+at the top centre; the rise to the hole moved into the pin's marker
+(`#pinRise`). **Both markers are one build**: a slanted pill over a stem and an
+arrow whose tip is on the point -- `translate(-50%,-100%)` with the tip at the
+box's bottom centre, the aim marker projected at the ground (+0.15 m, it was
++3 m: "off centre and too high"). A new hole shows its aim point first
+(`aimIntroUntil`, 2.2 s once no tour or flight is running), the marker in the
+hot colour. **The flight panel is gone** from the round screen (`#shotPanel`
+hidden; it stays on a phone): the meter counts carry, total and apex through
+the flight (as it already did), Skip is `#smSkip` in its title row (pressing
+`#skipFlight`), and the launch numbers are `#rhLaunch`, shown while the ball is
+in the air (`flight.elapsed < result.hang`) and faded at landing. Curve,
+height and spin are `#shapeControl` drawn as one pill on the meter's title
+row (positioned to the meter's right edge: the meter is 400 wide, centred,
+40 up, 137 tall). The map is at the bottom right and `#rhTools` stands above
+it: each tool presses its own key (a synthetic keydown), so it does what the
+key does in every state. The keys row (`#rhKeys`) is hidden; Menu in the
+column is the mouse's way to pause (PLACED). **PLACED:** plays-like is no
+longer on the round screen.
+
 **Sheet polish (round 13):** the sheet body has 26 px at both sides so a
 leaning panel's corners are not clipped by the scroll box (the review's
 "cut-off edges"); Settings shows every group with no tabs; only the focused row

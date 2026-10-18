@@ -1628,6 +1628,10 @@ let reachHeldFor=0;
 // pin's distance is what a player sees on arriving at the ball. How long the
 // aim label stays after the last touch is placed, not measured.
 let aimTouchedAt=-Infinity;
+// A NEW HOLE SHOWS ITS AIM POINT FIRST (round 13, frame c-first): highlighted,
+// with its distance and rise, for a couple of seconds once the camera has
+// settled on the tee, then the pin's distance comes back.
+let aimIntroKey='',aimIntroUntil=0;const AIM_INTRO_MS=2200;
 // WHETHER THE GOLFER HAS PLACED THE CIRCLE this turn: its distance (a click,
 // ↑ ↓, the pad, the distance box) or its direction (← →). Changing club moves
 // a circle nobody placed to the new club's carry down the fairway; one placed by
@@ -2464,6 +2468,9 @@ function drawPanelState(){
  const flying=!!flight;
  panel.classList.toggle('flying',flying);
  $('skipFlight').hidden=!flying;
+ // Round 13: the flight panel is gone from the round screen; Skip is in the
+ // meter's title row instead.
+ if($('smSkip'))$('smSkip').hidden=!flying;
  if(!flying){$('flightLabel').textContent='LAST SHOT';return;}
  if(flight.replay||flight.endHold)return;
  $('flightLabel').textContent=flight.result?.puttStroke?'BALL ROLLING':'BALL IN FLIGHT';
@@ -4243,9 +4250,10 @@ function drawRoundHud(){
  const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
   :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
  setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
- // The conditions: wind, plays like, the rise to the hole.
+ // THE WIND, alone at the top centre (round 13: the hole panel stands alone at
+ // the top left; the rise to the hole went to the pin's marker).
  const rise=course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z);
- setHtml($('rhSubs'),conditions({wind:settings.wind,playsLike:putt?null:playsLikeYards,rise,putting:putt}).map(k=>
+ setHtml($('rhSubs'),conditions({wind:settings.wind,playsLike:putt?null:playsLikeYards,rise,putting:putt}).filter(k=>k.id==='wind').map(k=>({...k,unit:'MPH WIND'})).map(k=>
   `<div class="rh-sub" data-sub="${k.id}"><span>${k.id==='wind'?WIND_SVG:''}${escape(k.value)}${k.unit?` <small>${escape(k.unit)}</small>`:''}</span></div>`).join(''));
  // The golfer cards.
  const k=round.mode==='skins'&&!rangeMode?skins(round.cards,decidedHoles(round)):null;
@@ -4268,6 +4276,12 @@ function drawRoundHud(){
    :`<button type="button" class="rh-card" data-player="${g.seat}" aria-label="${escape(label)}"><span><span class="rh-pic">${pic}</span><span class="rh-who">${escape(g.name)}${seat}${lv?`<span class="rh-lv">${lv}</span>`:''}</span>${g.note?`<span class="rh-note">${escape(g.note)}</span>`:''}${score}</span></button>`;
  }).join(''));
  // The keys along the foot, and the club's code in its block.
+ // THE TOOL COLUMN (round 13, frame c-aim): above the map, standing straight,
+ // each tool with its key -- in place of the old icon tray and the keys row.
+ // Each does what its key does. Menu is there for a mouse (PLACED).
+ const TOOL_ICON={cam:'<path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/>',fly:'<path d="M3 12h13M12 6l6 6-6 6"/>',green:'<path d="M4 18l8-12 8 12z"/>',shots:'<path d="M4 6h16M4 12h16M4 18h10"/>',full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',range:'<path d="M4 20h16M7 16l5-10 5 10"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'};
+ const tools=[['cam','CAMERA','C'],['fly','FLY','V'],['green','GREEN','G'],['shots','SHOTS','TAB'],...(rangeMode?[['range','RANGE','R']]:[]),['full','FULL SCREEN','F11'],['menu','MENU','ESC']];
+ setHtml($('rhTools'),tools.map(([id,label,key])=>`<button type="button" data-tool="${id}"${id==='range'?' data-hud="range"':''} aria-label="${label[0]+label.slice(1).toLowerCase()} (${key})"><svg viewBox="0 0 24 24" aria-hidden="true">${TOOL_ICON[id]}</svg><span>${label}</span><kbd>${key}</kbd></button>`).join(''));
  setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
   ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
  const cc=document.querySelector('.club-control');if(cc)cc.dataset.code=clubPanel(c).code;
@@ -6683,6 +6697,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // it once they have done their job -- all but the clock and the tee picker,
  // which are worked in place.
  $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))$('rangeControls').click();};
+ // The tool column: each button presses its own key, so it does exactly what
+ // the key does in every state the key already handles.
+ $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
+  const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
+  if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
+  else if(t==='range')$('rangeControls').click();else if(t==='full')$('fullscreen').click();else if(t==='menu')setPause(true);};
+ if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
  // The pause list's cameras are the camera strip's own buttons, pressed for you.
  $('pauseCams').onclick=e=>{const b=e.target.closest('[data-proxy]');if(b)$(b.dataset.proxy)?.click();};
  $('pauseResume').onclick=()=>setPause(false);
@@ -7062,6 +7083,15 @@ function tick(now){
   flagEl.style.visibility=label.visible&&worldLabels?'visible':'hidden';
   flagEl.classList.remove('edge');
  }
+ // THE LAUNCH NUMBERS (round 13, frame c-flight): a thin strip above the meter
+ // while the ball is in the air, fading as it lands -- gone before the next shot.
+ {const ls=$('rhLaunch'),sh=latest?.shot;
+  const on=!!(ls&&hud1&&flight&&!flight.replay&&sh&&Number.isFinite(sh.speed)&&!flight.result?.puttStroke&&flight.elapsed<(flight.result?.hang||0));
+  if(ls){if(on&&ls.launchFor!==flight){ls.launchFor=flight;const axis=Number(sh.spinAxis)||0;
+    ls.innerHTML=[[(sh.speed/MPH).toFixed(1),'MPH'],[(Number(sh.vla)||0).toFixed(1)+'°','LAUNCH'],[Math.round(Number(sh.spin)||0),'RPM'],[Math.abs(axis).toFixed(1)+(axis<0?' L':axis>0?' R':''),'AXIS']].map(([v,k])=>`<span><b>${v}</b><small>${k}</small></span>`).join('');}
+   ls.classList.toggle('on',on);}}
+ // The rise to the hole, beside its distance (round 13: it left the top left).
+ if($('pinRise')){const r=(course.height(pin.x,pin.z)-course.height(round.position.x,round.position.z))*3.28084;setHtml($('pinRise'),`${r<-.5?'↘':r>.5?'↗':'→'} ${Math.abs(r).toFixed(0)} FT`);}
  // THE AIM POINT, read where you are looking rather than in a bar at the bottom.
  // Lower than the pin's marker (3 m against 6) because it marks a spot on the
  // ground, not a flag, and a label floating at flag height over bare fairway
@@ -7078,7 +7108,11 @@ function tick(now){
   // While the player is aiming the pin's label has faded out, so there is no
   // pile for the 8 m rule to prevent; it applies only at rest. Without this the
   // aim label vanished as the aim crossed the pin (owner, 11 October 2026).
-  const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
+  const introKey=`${round.uid}:${round.hole}:${rangeMode?'range':''}`;
+  if(a&&!tour&&!flight&&aimIntroKey!==introKey){aimIntroKey=introKey;aimIntroUntil=now+AIM_INTRO_MS;}
+  const intro=now<aimIntroUntil;
+  const recent=now-aimTouchedAt<AIM_LABEL_HOLD||intro;
+  $('aimLabel').classList.toggle('hot',intro);
   const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState;
   $('aimLabel').hidden=!show;
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
@@ -7090,7 +7124,7 @@ function tick(now){
   $('aimLabel').classList.toggle('faded',!aiming);
   flagEl.classList.toggle('faded',aiming);
   if(show){
-   const q=view.project({x:a.x,y:course.height(a.x,a.z)+3,z:a.z});
+   const q=view.project({x:a.x,y:course.height(a.x,a.z)+.15,z:a.z});
    $('aimLabel').style.left=q.x+'px';$('aimLabel').style.top=q.y+'px';
    $('aimLabel').style.visibility=q.visible?'visible':'hidden';
    const d=Math.hypot(a.x-round.position.x,a.z-round.position.z);

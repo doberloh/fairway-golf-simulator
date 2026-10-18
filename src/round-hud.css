@@ -63,8 +63,8 @@
  .rh-hole .rh-b{font-size:36px;font-weight:800;font-style:italic;line-height:1.05;white-space:nowrap}
  .rh-hole .rh-b i{color:var(--hot);margin:0 8px;font-style:normal}
 
- /* The conditions under it. */
- .rh-subs{position:absolute;left:44px;top:128px;display:flex;gap:8px}
+ /* The wind, alone at the top centre (round 13). */
+ .rh-subs{position:absolute;left:50%;top:28px;display:flex;gap:8px;transform:translateX(-50%)}
  .rh-sub{height:44px;display:flex;align-items:center;padding:0 16px;background:var(--panel);transform:skewX(-12deg)}
  .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;font-style:italic}
  .rh-sub small{font-size:15px;letter-spacing:.14em;color:var(--soft);font-style:normal;font-weight:700}
@@ -182,16 +182,26 @@
  #world[data-mode=play] .monitor-panel .mon-text{max-width:300px;font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #world[data-mode=play] .monitor-panel .mon-arm{order:3;display:flex;align-items:center;gap:8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
 
- /* ---------------------------------------------------------------- the pin tag */
- #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(var(--hud-z,1));transform-origin:50% 100%;text-shadow:none}
- #world[data-mode=play] .flag-label:not(.edge)>span{display:none}
- #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
- #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #world[data-mode=play] .flag-label:not(.edge) #pinUnit{order:2;margin:-4px 0 0;font-size:0}
- #world[data-mode=play] .flag-label:not(.edge) #pinUnit::after{content:"";display:block;width:0;height:0;margin-top:6px;border:10px solid transparent;border-top:12px solid var(--hot);border-bottom:0}
+ /* ------------------------------------------------- the pin and aim markers */
+ /* ROUND 13 (frames c-aim, c-first): both markers are one build -- a slanted
+    pill (the distance, what it is to, the rise) over a stem and an arrow whose
+    tip is exactly on the point it names: centred on it, bottom on it. The aim
+    point's is filled in the hot colour while a new hole shows it first. */
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label){display:flex;align-items:baseline;gap:6px;height:auto;padding:0 18px 46px;transform:translate(-50%,-100%) scale(var(--hud-z,1));transform-origin:50% 100%;flex-direction:row;text-shadow:none;color:#fff;white-space:nowrap;isolation:isolate}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)::before{content:'';position:absolute;left:0;right:0;top:0;bottom:46px;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)::after{content:'';position:absolute;left:50%;bottom:0;width:20px;height:46px;margin-left:-10px;background:#fff;clip-path:polygon(8.5px 0,11.5px 0,11.5px 30px,20px 30px,10px 46px,0 30px,8.5px 30px)}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>span{display:none}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>strong{position:static;height:auto;padding:0;font-size:26px;font-weight:800;font-style:italic;line-height:37px;font-variant-numeric:tabular-nums}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>strong::before{display:none}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>small{order:0;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>small::after{display:none}
+ #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label) .aim-rise{margin-left:8px;color:#fff;letter-spacing:.06em}
  #world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
- #world[data-mode=play] .flag-label.edge,#world[data-mode=play] .aim-label{scale:var(--hud-z,1);transform-origin:50% 100%}
- #world[data-mode=play] .aim-label>strong{font-size:22px;font-weight:800;font-style:italic}
+ #world[data-mode=play] .aim-label.hot::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #world[data-mode=play] .aim-label.hot::after{background:var(--hot)}
+ #world[data-mode=play] .aim-label.hot :is(strong,small){color:var(--on-hot)}
+ /* On the green the pin's marker clamps to the edge and points at the cup, as before. */
+ #world[data-mode=play] .flag-label.edge{scale:var(--hud-z,1);transform-origin:50% 100%}
 
  /* ---------------------------------------------------------------- the map */
  /* The one straight panel: tall, down the right, under the golfer cards. */
@@ -456,3 +466,57 @@
  #app.rh-paused .topbar #pauseResume{color:var(--on-hot);font-size:24px!important}
  #app.rh-paused .topbar #pauseResume::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
 }
+
+/* ROUND 13, THE FOOT OF THE ROUND SCREEN (frames c-aim, c-flight). The
+   ball-in-flight panel is gone: the meter counts carry, total and apex
+   through the flight and Skip sits in its title row. Curve, height and spin
+   are one small pill in that row. The launch numbers are a thin strip above
+   it while the ball is in the air. The map is at the bottom right with the
+   tool column standing straight above it, each tool leaning on its own. */
+@container app (min-width:561px) and (min-height:501px){
+ #world[data-mode=play] .shot-controls>.shot-panel{display:none!important}
+ #world[data-mode=play] #rhKeys{display:none}
+ /* The meter's title row: what is in hand and how it is going on the left,
+    the shape pill or Skip on the right. */
+ #world[data-mode=play] .swing-meter .sm-head{display:flex;align-items:center;justify-content:flex-start;gap:14px;min-height:26px;margin-bottom:10px}
+ #world[data-mode=play] .swing-meter .sm-skip{margin-left:auto;display:flex;align-items:center;gap:6px;height:26px;padding:0;border:0;background:none;color:#fff;font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase;pointer-events:auto;cursor:pointer}
+ #world[data-mode=play] .swing-meter .sm-skip[hidden]{display:none}
+ #world[data-mode=play] .swing-meter .sm-skip kbd{padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 12px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ /* At rest the meter's own hint ("SPACE or click the bar") gives way to the
+    pill; a warning (out of reach) keeps the row and lifts the pill above it. */
+ #world[data-mode=play] .swing-meter[data-stage=ready]:not(.out-of-reach) .sm-hint{display:none}
+ #world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{bottom:183px}
+ #world[data-mode=play] .shape-control{left:calc(50% + 200px);bottom:151px;transform:translateX(-100%);display:flex;align-items:center;gap:0;height:28px;padding:0 14px;isolation:isolate}
+ #world[data-mode=play] .shape-control::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shape-control::after{content:"S W X";margin-left:10px;font:700 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft)}
+ #world[data-mode=play] .shape-control .shape-pick{height:28px;min-height:0;padding:0 4px;border:0;background:none;box-shadow:none;transform:none}
+ #world[data-mode=play] .shape-control .shape-pick::before{display:none}
+ #world[data-mode=play] .shape-control .shape-pick+.shape-pick{border-left:0}
+ #world[data-mode=play] .shape-control .shape-pick+.shape-pick:not(.spin-dial)::before,#world[data-mode=play] .shape-control .spin-cycle::before{display:inline;content:"\00b7";position:static;margin-right:8px;background:none;transform:none;color:var(--soft)}
+ #world[data-mode=play] .shape-control .shape-pick small{display:none}
+ #world[data-mode=play] .shape-control .shape-pick strong{font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
+ #world[data-mode=play] .shape-control .spin-dial{display:none}
+ #world[data-mode=play] .shape-control .spin-cycle{display:flex!important;align-items:center}
+ #world[data-mode=play] .shape-control .spin-cycle strong::before{content:"SPIN "}
+ /* The launch numbers while the ball is up. */
+ .rh-launch{position:absolute;left:50%;bottom:192px;display:flex;align-items:baseline;gap:20px;height:34px;padding:0 20px;transform:translateX(-50%);opacity:0;transition:opacity .5s ease;isolation:isolate;pointer-events:none}
+ .rh-launch::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-launch.on{opacity:.92;transition-duration:.15s}
+ .rh-launch span{display:flex;align-items:baseline;gap:5px;line-height:34px}
+ .rh-launch b{font-size:20px;font-weight:800;font-style:italic}
+ .rh-launch small{font-size:12px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ /* The map at the bottom right, the tool column above it. */
+ #world[data-mode=play]:not(.aim-view) .minimap{top:auto;bottom:30px;height:342px}
+ .rh-tools{position:absolute;right:30px;bottom:384px;width:214px;display:grid;gap:6px;pointer-events:auto}
+ .rh-tools button{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;height:34px;padding:0 16px;border:0;background:none;color:#fff;font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;cursor:pointer}
+ .rh-tools button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-tools button:hover::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
+ .rh-tools button:focus-visible{outline:none}
+ .rh-tools button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ .rh-tools svg{width:17px;height:17px;stroke:var(--a1);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+ .rh-tools kbd{margin-left:auto;min-width:20px;padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.2 "Saira Condensed",var(--font-ui),sans-serif;text-align:center;color:var(--soft)}
+ #world.in-flight .rh-tools{opacity:.5}
+}
+/* Off the round screen's query (a phone) the new pieces stay out of the way
+   until the phone's own layout takes them (round-phone.css). */
+@container app (max-width:560px) or (max-height:500px){.rh-tools,.rh-launch,.sm-skip{display:none!important}}

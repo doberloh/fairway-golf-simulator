@@ -71,6 +71,12 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   course of the week and saved courses not looked at. The course studio's
   sheet is unchanged. The pause screen (two columns) and settings' help on
   demand are not yet seen.
+- [ ] **Round screen, round 13: built to frames c-aim, c-first and c-flight,
+  seen in the browser pane at 1280 x 720** (at rest with the aim point shown
+  first, and one shot in flight). Not seen: a putt, a monitor shot's strip,
+  the tools column on the range, 4:3, a phone (keeps its own layout). PLACED:
+  plays-like left the round screen; Menu added to the tool column; Fly is V
+  (the mockup's F is down in free flight).
 - [ ] **Course of the week on one screen (round 13): built to frame c-cotw,
   seen in the browser pane at 1280 x 720.** Not seen: a week with bests. PLACED:
   a second step, Golfers, holds the group, tees and rules.
