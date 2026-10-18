@@ -12,10 +12,9 @@ import {uiZoom} from './ui-scale.js';
 // code: hud-places.js and main.js *THE MAP AND THE SHOT NUMBERS MOVE*.)
 //
 // What is left is the measuring the default layout always needed: where the
-// controls' top edge is, and how far down the weather, the course card and
-// the camera strip reach, written onto #world as custom properties the
-// stylesheet places other things by (--controls-top, --weather-bottom,
-// --weather-w, --card-bottom, --tools-bottom).
+// controls' top edge is, written onto #world as --controls-top for the
+// stylesheet to place other things by. (The weather, course card and camera
+// strip it once also measured went with the old interface, 18 October 2026.)
 
 const OLD_KEY = 'fairway-layout-v2';
 
@@ -23,8 +22,6 @@ export function createLayout(world) {
  try { localStorage.removeItem(OLD_KEY); } catch {}
  const bottomBars = ['.bottom-area', '#exploreBar', '#dropBar', '#pickBar']
   .map(s => world.querySelector(s)).filter(Boolean);
- const weather = world.querySelector('.weather'), card = world.querySelector('.course-info');
- const tools = world.querySelector('.view-tools');
  const written = {};
  const write = (name, px) => {
   const v = Math.round(px) + 'px';
@@ -42,16 +39,10 @@ export function createLayout(world) {
   const top = world.getBoundingClientRect().top, h = world.clientHeight, z = uiZoom();
   const bars = bottomBars.filter(shown).map(b => (b.getBoundingClientRect().top - top) / z);
   write('--controls-top', bars.length ? Math.min(...bars) : h - 16);
-  if (shown(weather)) {
-   write('--weather-bottom', (weather.getBoundingClientRect().bottom - top) / z);
-   write('--weather-w', weather.offsetWidth);
-  }
-  if (shown(card)) write('--card-bottom', (card.getBoundingClientRect().bottom - top) / z);
-  if (shown(tools)) write('--tools-bottom', (tools.getBoundingClientRect().bottom - top) / z);
  }
  const soon = () => { if (!pending) pending = requestAnimationFrame(measure); };
  const watch = new ResizeObserver(soon);
- for (const el of [world, weather, card, tools, ...bottomBars]) if (el) watch.observe(el);
+ for (const el of [world, ...bottomBars]) watch.observe(el);
  measure();
  // Kept so callers need not know the drags are gone; neither has anything left to do.
  return {reset() {}, setVariant() {}};

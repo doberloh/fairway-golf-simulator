@@ -227,12 +227,19 @@ class Trip {
  // copes with a software frame taking most of a second.
  async hold(code, readout, seconds = 5 * SLOW) {
   await this.page.evaluate(() => document.activeElement?.blur?.());
-  const before = await this.page.textContent(readout);
+  const before = await this.read(readout);
   await this.page.keyboard.down(code);
   try {
-   await this.until(async () => (await this.page.textContent(readout)) !== before, `holding ${code} to move ${readout}`, seconds);
+   await this.until(async () => (await this.read(readout)) !== before, `holding ${code} to move ${readout}`, seconds);
   } finally { await this.page.keyboard.up(code); }
-  return {before, after: await this.page.textContent(readout)};
+  return {before, after: await this.read(readout)};
+ }
+ // A reading: an element's text, or, for `@name`, #world's data-name -- the aim's
+ // angle (`@aim`) and the aim point's yards (`@aimYards`), which no box shows as
+ // a number since the old aim box went (18 October 2026).
+ read(readout) {
+  if (readout.startsWith('@')) return this.page.evaluate(k => document.getElementById('world').dataset[k] ?? '', readout.slice(1));
+  return this.page.textContent(readout);
  }
 
  // THE TOOLS BUTTON IS A TOGGLE. A second press closes the tray, which the
@@ -264,11 +271,9 @@ class Trip {
 
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
-   // Whichever Tools button this screen shows: the camera strip's on a
-   // laptop, the top bar's on a phone, where the strip folds away.
+   // The top bar's Tools button (`chrome` brings the bar up first).
    await this.chrome();
-   const bar = this.page.locator('#barTools');
-   await (await bar.isVisible() ? bar : this.page.locator('#toolsButton')).click();
+   await this.page.locator('#barTools').click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
   // An id, or a selector for a tray button that has none (`[data-panel="bag"]`).
@@ -394,7 +399,7 @@ const menuReady = t => t.step('menu ready', () =>
 // The course, its seed and the hole, as the screen names them.
 const whereAmI = page => page.evaluate(() => {
  const map = document.getElementById('map');
- return {seed: map?.dataset.courseSeed || null, course: document.getElementById('courseTitle')?.textContent?.trim() || null,
+ return {seed: map?.dataset.courseSeed || null, course: document.getElementById('barCourse')?.textContent?.trim() || null,
   hole: document.getElementById('holeNumber')?.textContent?.trim() || null};
 }).catch(() => ({}));
 const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
@@ -505,8 +510,8 @@ class JourneyFailed extends Error {
 // journeys, run after a tap on the course has aimed once.
 async function touchAiming(t) {
  const aimNow = () => t.page.evaluate(() => ({
-  aim: parseFloat(document.getElementById('aimOutput').textContent),
-  reach: parseFloat(document.getElementById('aimRange').value),
+  aim: parseFloat(document.getElementById('world').dataset.aim),
+  reach: parseFloat(document.getElementById('world').dataset.aimYards),
  }));
  const pad = name => t.page.locator('#aimPad').getByRole('button', {name, exact: true});
  await t.step('the aim pad: half a degree a tap, a yard further, and the pin', async () => {
@@ -518,17 +523,15 @@ async function touchAiming(t) {
   await pad('Aim further').tap();
   now = await aimNow();
   if (Math.abs(now.reach - was.reach - 1) > 0.051) throw new Error(`one tap further moved the target ${(now.reach - was.reach).toFixed(2)} yd, not 1`);
+  await pad('Aim right').tap();
   await pad('Aim at the pin').tap();
   now = await aimNow();
-  // The same answer as the "Aim at pin" button a laptop has in its shot bar.
-  // That one is hidden on a phone, so it is pressed through the page -- as a
-  // yardstick for the pad, not as something a player on a phone could reach.
-  // (The card's DISTANCE is no yardstick: it is the tee yardage, measured
-  // along the hole, not the straight line to the pin.)
-  await pad('Aim right').tap();
-  await t.page.evaluate(() => document.getElementById('aimAtPin').click());
-  const bar = await aimNow();
-  if (bar.aim !== now.aim || bar.reach !== now.reach) throw new Error(`the pad aimed at ${now.aim} deg, ${now.reach} yd; the bar's Aim at pin at ${bar.aim} deg, ${bar.reach} yd`);
+  // The aim point now sits on the pin: the angle and the straight-line yards
+  // from the ball, worked out from the course itself. (The card's DISTANCE is
+  // no yardstick: it is the tee yardage, measured along the hole.)
+  const pin = await t.page.evaluate(() => { const s = window.lab.state(); const p = s.pinAt, b = s.ballAt; return p && b ? {aim: Math.atan2(p.x - b.x, p.z - b.z) * 180 / Math.PI, reach: Math.hypot(p.x - b.x, p.z - b.z) / 0.9144} : null; });
+  if (!pin) throw new Error('lab.state() has no pin or ball to check the pad against');
+  if (Math.abs(now.aim - pin.aim) > 0.06 || Math.abs(now.reach - pin.reach) > 0.06) throw new Error(`the pad aimed at ${now.aim} deg, ${now.reach} yd; the pin is at ${pin.aim.toFixed(1)} deg, ${pin.reach.toFixed(1)} yd`);
  });
  await t.step('held, the pad sweeps -- and stops when the finger lifts', async () => {
   const box = await pad('Aim left').boundingBox();
@@ -576,7 +579,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -684,14 +687,14 @@ async function flightScreenOnce(t, phone) {
   const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
-   panel: gone('#shapeControl') && gone('#bottomHints'),
+   panel: gone('#shapeControl'),
    // On the Swing Meter the meter stays up through the flight with carry,
    // total and apex, and the floating tiles are gone (14 October 2026).
    meterMode: document.getElementById('world').classList.contains('meter-mode'),
    meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
-   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
+   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), pad: gone('#aimPad'),
    // The round screen's wind is in the conditions under the hole.
-   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone(getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' ? '#rhSubs [data-sub=wind]' : '.weather'),
+   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('#rhSubs [data-sub=wind]'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
    head: document.querySelector('#shotPanel .sp-head')?.textContent || '',
@@ -704,8 +707,7 @@ async function flightScreenOnce(t, phone) {
  });
  const bad = [];
  if (!state.flag) bad.push('the playing area is not marked in-flight');
- if (!state.club || !state.swing) bad.push('the club or the shot button is still showing');
- if (!state.strip) bad.push('the camera strip is still showing');
+ if (!state.club) bad.push('the club is still showing');
  if (!state.pad) bad.push('the aim pad is still showing');
  // Since 10 October 2026 the shot controls go at every size: the numbers they
  // used to keep through a flight are in the shot panel, whose line is all that
@@ -819,8 +821,8 @@ const JOURNEYS = [
     await t.key('KeyQ');
    });
    await t.step('aim with ← and →', async () => {
-    await t.hold('ArrowLeft', '#aimOutput');
-    await t.hold('ArrowRight', '#aimOutput');
+    await t.hold('ArrowLeft', '@aim');
+    await t.hold('ArrowRight', '@aim');
    });
    // Up and down move the aim point further and shorter (the power slider went
    // with the Swing Meter, 14 October 2026). Down, so a tee shot near the end
@@ -830,9 +832,9 @@ const JOURNEYS = [
    // back to back with no frame between -- exactly the tap a slow machine used
    // to lose, and exactly what this harness's first draft took for a broken
    // control. The game now owes that tap to the next frame.
-   for (const [code, readout, what] of [['ArrowLeft', '#aimOutput', 'aim'], ['ArrowDown', '#aimRange', 'the aim point']]) {
+   for (const [code, readout, what] of [['ArrowLeft', '@aim', 'aim'], ['ArrowDown', '@aimYards', 'the aim point']]) {
     await t.step(`an instant ${code} tap still moves ${what}`, async () => {
-     const read = () => readout === '#aimRange' ? t.page.inputValue(readout) : t.page.textContent(readout);
+     const read = () => t.read(readout);
      const before = await read();
      await t.key(code);
      await t.until(async () => (await read()) !== before,
@@ -850,7 +852,7 @@ const JOURNEYS = [
     if (!/LIE/.test(await t.page.textContent('#lieReadout'))) throw new Error('the lie readout is empty');
     // Phase 2: the target marker is on the bar, inside it.
     await t.until(() => t.page.evaluate(() => { const m = document.getElementById('smTarget'); return !m.hidden && parseFloat(m.style.left) > 0; }), 'the target marker on the bar', 5 * SLOW);
-    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinLabel']]) {
+    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinCycleLabel']]) {
      const before = await t.page.textContent(label);
      await t.key(code);
      await t.until(async () => (await t.page.textContent(label)) !== before, `${code} to change ${label}`, 5 * SLOW);
@@ -859,7 +861,7 @@ const JOURNEYS = [
     // takes the step of spin off again.
     await t.key('KeyS'); await t.key('KeyS'); await t.key('KeyW'); await t.key('KeyW');
     await t.page.keyboard.press('Shift+KeyX');
-    if (await t.page.textContent('#spinLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
+    if (await t.page.textContent('#spinCycleLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
    });
    await t.step('Escape cancels a swing before the distance is set, with no stroke', async () => {
     await t.key('Space');
@@ -869,11 +871,8 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
-    // The round screen keeps the cameras in the Esc list; anywhere else, the strip.
-    const hud = await t.hud1();
-    for (const id of ['overview', 'playerView', 'greenView', 'playerView']) {
-     if (hud) { await t.chrome(); await t.page.click(`#pauseCams [data-proxy=${id}]`); } else await t.page.click(`#${id}`);
-    }
+    // The cameras are in the Esc list.
+    for (const cam of ['overview', 'player', 'green', 'player']) { await t.chrome(); await t.page.click(`#pauseCams [data-cam=${cam}]`); }
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
     await t.swing();
@@ -882,8 +881,8 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
-    // The round screen has no Swing button: the meter is what comes back.
-    if (!await t.page.evaluate(() => !!document.getElementById(getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' ? 'swingMeter' : 'swing').offsetParent)) throw new Error('the shot button did not come back');
+    // There is no Swing button: the meter is what comes back.
+    if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the Swing Meter did not come back');
     // The swing's marks clear once the ball stops; the three numbers stay
     // (14 October 2026).
     if (await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter kept the last swing after the ball stopped');
@@ -1511,7 +1510,7 @@ const JOURNEYS = [
     if (ids[0] !== 'stroke' || !ids.includes('line') && !ids.includes('lateral')) throw new Error(`offered ${ids.join(', ')}`);
     if (r.options.some(o => o.penalty !== 1)) throw new Error('water relief is one stroke, whichever option');
     if (!(await barUp())) throw new Error('the relief bar did not appear');
-    if (!(await t.page.evaluate(() => document.getElementById('swing').disabled))) throw new Error('a shot could be taken before relief');
+    if (await t.page.evaluate(() => window.lab.state().canSwing)) throw new Error('a shot could be taken before relief');
    });
    await t.step('the choice survives a reload', async () => {
     await t.page.reload();
@@ -1699,7 +1698,7 @@ const JOURNEYS = [
    // The owner's report (16 October 2026): once closed, there was no way back.
    await t.step('closed, the range controls come back from the view bar', async () => {
     await t.closePanel('Range controls');
-    if (await t.hud1()) await t.page.click('#rhTools [data-hud=range]'); else await t.page.click('#rangeControls');
+    await t.page.click('#rhTools [data-hud=range]');
     await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
    });
    await t.step('a ball at the 100 target lands on a green', async () => {
@@ -2018,23 +2017,23 @@ const JOURNEYS = [
     if (shown.tiles || shown.fold) throw new Error(`still showing: ${JSON.stringify(shown)}`);
    });
    await t.step('aim by tapping the course', async () => {
-    const before = await t.page.textContent('#aimOutput');
+    const before = await t.read('@aim');
     const box = await t.page.locator('#scene').boundingBox();
     // Off to one side of the middle of the screen, which is fairway or rough
     // on any hole -- the point is only that the aim moves.
     await t.page.touchscreen.tap(box.x + box.width * 0.62, box.y + box.height * 0.45);
-    await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
+    await t.until(async () => (await t.read('@aim')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
    });
    await touchAiming(t);
    let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
-    // The Swing button starts the meter; mid-swing the whole screen is the tap
+    // A tap on the bar starts the meter; mid-swing the whole screen is the tap
     // target, so the next two taps land anywhere.
     // A putt is two taps, so the third is only made while a swing still waits.
     // The marker starts from the far left (14 October 2026), so the distance tap
     // waits for it to pass the strike line and the strike comes on its way back.
-    await tap(await t.hud1() ? '#smBar' : '#swing');
+    await tap('#smBar');
     await t.page.waitForTimeout(800);
     await tap('#swingCatcher');
     await t.page.waitForTimeout(300);
@@ -2061,7 +2060,7 @@ const JOURNEYS = [
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
-     await tap(await t.hud1() ? '#smBar' : '#swing');
+     await tap('#smBar');
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
@@ -2255,9 +2254,9 @@ const JOURNEYS = [
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
-    for (const sel of ['.bottom-area', '#swing', '#swingMeter', '#shapeControl', '.meter-button', '.aim-control', '#aimRange', '#monState'])
+    for (const sel of ['.bottom-area', '#swingMeter', '#shapeControl', '.meter-button', '#monState'])
      if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of await t.hud1() ? ['#monitorPanel', '#monArm', '#club', '#lieReadout'] : ['#monitorPanel', '#monClub', '#monReconnect', '#monArm', '#monLie'])
+    for (const sel of ['#monitorPanel', '#monArm', '#club', '#lieReadout'])
      if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
     if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
    });
@@ -2277,7 +2276,6 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
     if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
-    if (!(await t.hud1()) && !await shown('#shotPanel')) throw new Error('the shot panel is not showing');
     const carry = await t.page.textContent('#shotTiles [data-field=carry]');
     if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });
@@ -2310,8 +2308,7 @@ const JOURNEYS = [
    });
    await t.step('the Armed switch in the window brings back the shot controls', async () => {
     await t.page.click('#monArm');
-    const hud = await t.hud1();
-    await t.until(() => shown(hud ? '#swingMeter' : '#swing'), 'the shot button (or, on the round screen, the meter) to come back', 5 * SLOW);
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter to come back', 5 * SLOW);
     if (!await shown('#swingMeter')) throw new Error('the Swing Meter did not come back');
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
     if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
@@ -2433,8 +2430,6 @@ const JOURNEYS = [
    await t.step('the main menu has a way to the launch monitor', async () => {
     const bad = await t.page.evaluate(unreachableControls, '#menuMonitor');
     if (bad.length) throw new Error(bad.join('; '));
-    // The phone's camera button belongs to play; it once floated over the menu.
-    if (await t.page.evaluate(() => !!document.getElementById('camButton').offsetParent)) throw new Error('the camera button shows on the main menu');
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).tap();
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel', 5 * SLOW);
    });

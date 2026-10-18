@@ -307,10 +307,10 @@
  /* ------------------------------------- challenges, the week, saved courses */
  /* (ui-menu-screens.js places them; PROJECT_HANDOFF *The 1.0 lobby*.) */
  body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root){display:block}
- body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root,.wk-root)>.panel-lead{display:none}
- body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root,.wk-root)>[data-panel-action]{width:auto;left:auto}
- #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-hero,.wk-week,.wk-row,.course-card,.lib-new,.lib-name,.lib-code){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
- #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.wk-row,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>.panel-lead{display:none}
+ body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>[data-panel-action]{width:auto;left:auto}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-hero,.wk-week,.course-card,.lib-new,.lib-name,.lib-code){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  /* Challenges: the week's banner; categories (3), cards (5), detail (4). */
  #drawer .ch{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);grid-template-areas:"week week week" "cats cards detail";gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .ch>.chal-week-row{grid-area:week;display:block;margin:0}

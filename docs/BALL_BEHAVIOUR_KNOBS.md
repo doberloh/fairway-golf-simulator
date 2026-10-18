@@ -239,7 +239,7 @@ Swing Meter* says so.
 | `strikeEffect` | what a miss does: at the zone's edge 1.25° off line and 5° of spin axis, growing to four times that. **Early is right, late is left**, for everyone |
 | `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |
 | `shapedLaunch` heights | Low −4°, High +4° launch; near the green a wedge's Bump & run is 55% of its launch on half its spin, Flop +10° |
-| `SPIN_SCALE` | the spin dial: −1 is 75% of the club's spin, +1 to +3 add a tenth each |
+| `SPIN_SCALE` | the spin setting (X, the Spin box): −1 is 75% of the club's spin, +1 to +3 add a tenth each |
 | `HEIGHT_SPIN`, `KIND_SPIN` | **the guard that a ball with no spin added never comes back**: High and Flop carry less of the club's spin, and the pitching and lob wedges carry 95% and 85% on the meter. Found by sweeping, not chosen; `tests/swing-meter.test.mjs` sweeps the corner where a come-back was ever found. Raising any of these can break that rule |
 | `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 80% (72% until 14 October 2026). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
 | `RUN_UP` | the marker starts at the bar's left edge and runs this far (the miss area, 0.3 bar lengths) to the strike line; taps before it are ignored |

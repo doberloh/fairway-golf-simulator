@@ -48,9 +48,8 @@
  #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control)::before{
   content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
 
- /* The old chrome the round no longer shows. */
+ /* The top bar shows only as the pause list; the bottom bars hand their pieces to the round screen. */
  #app[data-mode=play]:not(.rh-paused) .topbar{display:none}
- #world[data-mode=play] :is(.course-info,.weather,.view-tools,.cam-button,#bottomHints,.aim-control,.aim-distance-control,#swing,.spin-dial,.club-control>label,.club-select>svg,.club-select>i){display:none!important}
  #world[data-mode=play] :is(.bottom-area,.shot-controls){display:contents!important}
 
  /* ---------------------------------------------------------------- the layer */
@@ -122,7 +121,6 @@
  #world[data-mode=play] .shot-controls .lie-readout{position:absolute;left:44px;bottom:164px;z-index:7;zoom:var(--hud-z,1);isolation:isolate;display:flex;align-items:center;gap:8px;height:34px;padding:0 16px;font-size:17px;font-weight:700;letter-spacing:.1em;color:#fff;text-transform:uppercase;white-space:nowrap}
  #world[data-mode=play] .shot-controls .lie-readout>span{font-size:14px;color:var(--soft)}
  #world[data-mode=play] .shot-controls .lie-readout.penalty{color:#ffb3a8}
- #world[data-mode=play] .shot-controls .lie-readout .read-note{display:none}
 
  /* A monitor connected but not armed: a chip above the lie, with its switch. */
  #world[data-mode=play] .shot-controls>.mon-state:not([hidden]){position:absolute;left:44px;bottom:208px;z-index:7;zoom:var(--hud-z,1);isolation:isolate;display:grid;gap:2px;max-width:420px;padding:8px 18px;color:#fff}
@@ -358,12 +356,12 @@
  /* Round 13 (frame c-studio): no old top bar or tools tray over the studio
     -- its pause (Esc, or Menu in the tool column) holds what they did. */
  #app[data-mode=studio] .topbar{display:none}
- #world[data-mode=studio] :is(.view-tools,.cam-button,.map-expand){display:none!important}
+ #world[data-mode=studio] :is(.map-expand){display:none!important}
  /* The map as the round has it, bottom right, the tool column above it. */
  #world[data-mode=studio]:not(.aim-view) .minimap{left:auto;right:30px;top:auto;bottom:30px;width:214px;height:342px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
  #world[data-mode=studio]:not(.aim-view) .minimap #map{height:100%;min-height:0}
  #world[data-mode=studio] .minimap .map-header{padding:6px 12px 4px;font-size:15px;letter-spacing:.14em;color:var(--soft);font-weight:700}
- #world[data-mode=studio] .minimap .map-reading,#world[data-mode=studio] .minimap .hud-head{display:none!important}
+ #world[data-mode=studio] .minimap .map-reading{display:none!important}
  #world[data-mode=studio]:not(.aim-view) .minimap .map-footer{display:flex;justify-content:flex-end;padding:4px 12px 6px;font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #world[data-mode=studio]:not(.aim-view) .minimap .map-footer>*{display:none}
  #world[data-mode=studio]:not(.aim-view) .minimap .map-footer::after{content:"M · BIG MAP"}
@@ -372,7 +370,6 @@
  #world[data-mode=studio] :is(#studioSlab,#studioChip,#studioKeys){position:absolute;z-index:8;zoom:var(--hud-z,1);color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #app.hud-hidden :is(#studioSlab,#studioChip,#studioKeys){display:none!important}
  /* The old course card and weather give way to the slab and the chip. */
- #world[data-mode=studio]>:is(.course-info,.weather){display:none}
  #studioSlab{left:30px;top:24px;display:flex;height:66px;pointer-events:none}
  #studioSlab>b{width:69px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg);font-size:40px;font-weight:800;font-style:italic;color:var(--on-hot)}
  #studioSlab>span{display:grid;align-content:center;gap:4px;padding:0 30px 0 22px;background:var(--panel);transform:skewX(-12deg)}
@@ -518,10 +515,9 @@
  #world[data-mode=play] .shape-control .shape-pick{height:28px;min-height:0;padding:0 4px;border:0;background:none;box-shadow:none;transform:none}
  #world[data-mode=play] .shape-control .shape-pick::before{display:none}
  #world[data-mode=play] .shape-control .shape-pick+.shape-pick{border-left:0}
- #world[data-mode=play] .shape-control .shape-pick+.shape-pick:not(.spin-dial)::before,#world[data-mode=play] .shape-control .spin-cycle::before{display:inline;content:"\00b7";position:static;margin-right:8px;background:none;transform:none;color:var(--soft)}
+ #world[data-mode=play] .shape-control .shape-pick+.shape-pick[class]::before,#world[data-mode=play] .shape-control .spin-cycle::before{display:inline;content:"\00b7";position:static;margin-right:8px;background:none;transform:none;color:var(--soft)}
  #world[data-mode=play] .shape-control .shape-pick small{display:none}
  #world[data-mode=play] .shape-control .shape-pick strong{font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
- #world[data-mode=play] .shape-control .spin-dial{display:none}
  #world[data-mode=play] .shape-control .spin-cycle{display:flex!important;align-items:center}
  #world[data-mode=play] .shape-control .spin-cycle strong::before{content:"SPIN "}
  /* The launch numbers while the ball is up. */
@@ -599,7 +595,7 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
  #world[data-mode=play] .shape-control::before,#world[data-mode=play] .shape-control::after{display:none}
  #world[data-mode=play] .shape-control .shape-pick{position:relative;isolation:isolate;display:flex!important;align-items:center;gap:10px;height:37px;padding:0 20px;color:#fff}
  #world[data-mode=play] .shape-control .shape-pick::before{display:block!important;content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #world[data-mode=play] .shape-control .shape-pick+.shape-pick:not(.spin-dial)::before,#world[data-mode=play] .shape-control .spin-cycle::before{content:"";position:absolute;inset:0;z-index:-1;margin:0;background:var(--panel);transform:skewX(-12deg);color:inherit}
+ #world[data-mode=play] .shape-control .shape-pick+.shape-pick[class]::before,#world[data-mode=play] .shape-control .spin-cycle::before{content:"";position:absolute;inset:0;z-index:-1;margin:0;background:var(--panel);transform:skewX(-12deg);color:inherit}
  #world[data-mode=play] .shape-control .shape-pick small{display:contents;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--soft);font-style:normal}
  #world[data-mode=play] .shape-control .shape-pick strong{order:2;font-size:19px;padding-right:.16em}
  #world[data-mode=play] .shape-control .shape-pick kbd{order:3;padding:0 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.4 "Saira Condensed",var(--font-ui),sans-serif;color:var(--soft)}
@@ -628,3 +624,7 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
  #world .club-keys{display:none}
  #world .club-control>.dd-list{position:absolute;left:0;bottom:calc(100% + 8px);width:260px;margin:0;font-size:15px;z-index:40}
 }
+
+/* NO FULL SCREEN WHERE IT CANNOT HAPPEN (main.js toggleFullscreen): an iPhone's
+   Safari has no element fullscreen, so its buttons go. */
+#app.no-fullscreen :is(#rhTools [data-tool=full],#studioTools [data-tool=full],#pauseCams [data-cam=full]){display:none!important}

@@ -289,5 +289,4 @@
 #splash .sp-tip>span{font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--sp-hot,#facc15)}
 #splash .sp-tip>p{margin:0;font:600 14px/1.35 var(--font-ui);color:#fff}
 #splash .sp-ver{position:absolute;right:40px;bottom:34px;font-size:13px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.4)}
-#splash .splash-label{display:none}
 @media (max-width:560px){#splash .sp-tip{left:16px;bottom:56px;width:calc(100vw - 32px)}#splash .sp-ver{right:16px;bottom:24px}}

@@ -176,7 +176,7 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | index.html | Static app shell, canvas and primary HUD element IDs |
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
-| src/layout.js | The MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world. It was the saved draggable/resizable HUD layout until 17 October 2026, when the 1.0 interface fixed the layout (*The 1.0 round screen*); the grips, drags and saved places (`fairway-layout-v2`, deleted once on start) are gone, and `reset`/`setVariant` are kept as no-ops |
+| src/layout.js | The MEASURED space the default layout fits into: writes --controls-top onto #world (the weather panel, course card and camera strip it also measured went with the old interface, 18 October 2026: *The old interface, removed*). It was the saved draggable/resizable HUD layout until 17 October 2026, when the 1.0 interface fixed the layout (*The 1.0 round screen*); the grips, drags and saved places (`fairway-layout-v2`, deleted once on start) are gone, and `reset`/`setVariant` are kept as no-ops |
 | src/round-hud.js, src/round-hud.css | The 1.0 round screen: what each corner piece says (hole slab, conditions, golfer cards, club panel, keys, ball light) and how large it is drawn (`hudScale`), and where each sits. Pure module with a Node test; the stylesheet only applies in play and off a phone |
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
@@ -826,17 +826,18 @@ phone the two of them covered most of the course, and the card needed its own
 **On a phone** (below 560 px wide OR below 500 px tall, both ways up) the top
 bar is the menu button, the hole, the chip of whoever is up with a count of the
 others, the clock's gear and a **Tools** button (`#barTools`); the shot controls are
-the shot line, the club, the power and the shot button; three number tiles run
-along the top beside the wind (and, held sideways, beside the camera button
-too) -- the foot of a phone has 16 px between the controls and the map, and the
+the shot line, the club and the Swing Meter's bar (a tap on it starts the swing); three
+number tiles run along the top beside the wind -- the foot of a phone has 16 px between the controls and the map, and the
 top has room now the course card is not shown in play;
-the camera strip folds behind `#camButton` (class `cams-open` on `#world`,
-closed by picking a camera, tapping elsewhere or Escape); the map sits in the
+the cameras are the pause list's camera row (the camera strip and the
+`#camButton` it once folded behind went with the old interface, 18 October
+2026); the map sits in the
 bottom-right corner with the aim pad under it. The tee picker, the aim arrows
 and the Swing Meter button leave the phone's panel; the curve, height and spin
 pickers stay as one row of 46 px buttons, spin a single button that steps round
 like X (the desktop's - / + pair is under a thumb's width), and held sideways
-`#clubHint` goes so the Swing button keeps its height -- `npm run smoke`'s
+`#clubHint` went so the old Swing button kept its height (the button itself
+went with the old interface, 18 October 2026) -- `npm run smoke`'s
 *every control a round needs is a thumb wide* caught both on 14 October 2026.
 
 **The safe area is read, not assumed.** The viewport asks for
@@ -848,22 +849,21 @@ inset, and the inset is zero on anything that is not a phone. The top bar pads
 its sides the same way. The status bar stays `black`, not translucent: with
 `black` the page starts below it, and nothing needs to go under it.
 
-`createLayout` still writes measurements onto `#world` as CSS variables, a
-frame after any watched element resizes:
+`createLayout` still writes one measurement onto `#world` as a CSS variable, a
+frame after any watched element resizes (`--weather-bottom`, `--weather-w`,
+`--card-bottom` and `--tools-bottom` went with the pieces they measured, 18
+October 2026; nothing read them any more):
 
 | variable | what it is |
 |---|---|
 | `--controls-top` | the top of whatever bar has taken the foot of the screen: the drop, free-flight or scramble bar. The map sits above it while exploring |
-| `--weather-bottom` | the bottom of the weather panel; the phone hangs the camera button, and a phone held sideways the map, under it |
-| `--weather-w` | the weather panel's width; a phone held sideways sets the camera button beside it |
-| `--card-bottom`, `--tools-bottom` | the course card and the camera strip, still measured, no longer read by the play layout |
 
 **Written a frame later, not inside the ResizeObserver.** Changing a variable
 inside the callback that resizes an observed element trips Chrome's
 "ResizeObserver loop completed with undelivered notifications", which is an
 ERROR event -- and the smoke test fails on error events, correctly.
 
-**Every rule skipped `.hud-custom`** (until 17 October 2026, when nothing could be dragged any more). A panel the player dragged kept their
+**Every rule skipped `.hud-custom`** (until 17 October 2026, when nothing could be dragged any more; the `.hud-custom`, grip and title-bar rules left behind were swept out of style.css on 18 October 2026). A panel the player dragged kept their
 geometry. **The saved layout key went to `fairway-layout-v2`** with the redraw:
 a position saved for the old bottom bar would have parked the new panel across
 the course. Everyone starts from the new defaults once.
@@ -886,8 +886,8 @@ and stayed there. New tool windows also open fitted to the screen now
 
 **A ball in the air clears the screen** (`in-flight` on `#world`, set from
 `flight` every frame, so a shot, a replay, a skip and a settle all agree). The
-camera strip, the camera button, the aim pad and the keyboard hints fade over
-0.2 s -- a placed number, quick enough not to feel like a delay. The shot
+aim pad fades over 0.2 s (the camera strip, camera button and keyboard hints
+that faded with it are gone) -- a placed number, quick enough not to feel like a delay. The shot
 controls and the launch monitor window do not fade: since 13 October 2026 they
 shrink at once to the shot line, the one section of them that stays, because
 the line is Skip and the live readout (between 10 and 13 October they went
@@ -1053,14 +1053,15 @@ A faint logo bottom right.
 **Gone from the round:** the top bar, the shot controls window, the weather
 window, the camera strip, the Swing button (the bar is the tap target, and
 Space), the aim buttons and the typed aim distance (arrows and the map aim;
-the typed distance has no home yet), temperature and the weather words (in the
-pause list's conditions line).
+the typed distance has no home), temperature and the weather words (in the
+pause list's conditions line). Since 18 October 2026 they are gone from the
+page as well, with their code and styles (*The old interface, removed*).
 
 **Esc opens the top bar as a pause list** until phase 3's pause screen: the
 same elements, laid out as rows (`#app.rh-paused .topbar`), plus Resume, the
 tee picker and the Swing Meter button (moved there from the shot controls;
-both were already hidden on a phone), a row of camera buttons (they press the
-camera strip's own, `data-proxy`) and the conditions. Any press in it closes
+both were already hidden on a phone), a row of camera buttons (`#pauseCams`, `data-cam`: each calls the camera
+itself; until 18 October 2026 they pressed the hidden camera strip's buttons) and the conditions. Any press in it closes
 it, except the clock and the tee picker, which are worked in place. While it is
 up the game's keys are ignored; the round itself does not stop. **Smoke
 journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
@@ -1146,6 +1147,51 @@ restyled controls carry text nodes that cannot be counter-skewed, so the
 slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
 box itself stays upright, and the text with it -- the kit's rule (only the
 colour leans) by another route.
+
+### The old interface, removed (18 October 2026)
+
+The round screen hid the old pieces with `display:none` from round 13 on; on
+18 October 2026 the owner had them taken out: the course card (`#courseTitle`,
+`#courseSubtitle`), the weather box, the phone's camera button and the camera
+strip (`.view-tools`: player, overview, free flight, green, flyover, range
+controls, Tools, full screen), the aim box (`#aimOutput`, the arrows, the typed
+`#aimRange`, Aim at pin), the spin dial's - / + pair, the Swing button and the
+keyboard-hints row, with their code (main.js, layout.js) and their styles. The
+club box's hidden "IN THE BAG" label and flag icon went too.
+
+**Hidden was not unused.** Four jobs still ran through the hidden pieces and
+now run without them:
+
+- The tool columns and R pressed the hidden Range controls and Full screen
+  buttons; they call `toggleRangeBox()` and `toggleFullscreen()`. Where an
+  iPhone has no fullscreen, `#app.no-fullscreen` hides every Full screen
+  button (round-hud.css).
+- The pause list's cameras pressed the strip's buttons through `data-proxy`;
+  they are `data-cam` and call `cameraMode` (or the flyover) themselves. **The
+  hole flyover's only way in is this row's Flyover.**
+- `setWindArrow` returned early when the old wind arrow was missing, and the
+  round screen's wind chip takes its bearing from the same function: removing
+  the arrow alone would have frozen the chip. It writes only the chip now.
+- The smoke journeys read the aim from the aim box. `updateAim` writes it on
+  `#world` as `data-aim` (degrees) and `data-aim-yards` (smoke `t.read('@aim')`,
+  `t.read('@aimYards')`); `lab.state()` gives `canSwing`, `pinAt` and `ballAt`
+  for the checks that read the Swing button's disabled state and Aim at pin.
+
+Also gone because only the hidden pieces showed them: the skins value of the
+hole being played (it was in the course card's subtitle; the round screen does
+not show it) and the controller line in the hints row.
+
+**THE STYLE SWEEP KEPT EVERY SURVIVING RULE EXACTLY AS STRONG.** The rules were
+removed with a CSS parser, not by hand: a selector naming a removed class or id
+went, a rule left with no selectors went, `:is()` lost the removed arguments,
+and a media query left empty went. A second pass removed every class and id no
+longer named anywhere in the page, the code or the tests (the drag grips and
+title bars, `.hud-custom`, the old shot groups and live tiles, the old splash,
+the utility bar, about 40 names). **`:not(.dead)` was not simply dropped**: it
+weighs one class in the cascade, so dropping it would have let other rules win
+ties they used to lose. It became `[class]` (or `[id]` on an id), which every
+element it could match passes and which weighs the same. About 22 KB of rules
+went in all.
 
 ## The 1.0 sounds (wired in 17 October 2026)
 
@@ -1591,13 +1637,13 @@ nothing got you exact. Four pieces fix that, each with a rule.
   above it, which moved with the bar for free; with the shot panel on the left
   and the shot button in it, the pad went to the other thumb, and it now hides
   itself wherever the panel hides (the "where it hides" rules). Phones only:
-  everywhere else the aim arrows are in the panel. Its buttons are disabled by
-  the same test that gates them, `canNudgeAim()`, set in `updateHUD` beside the
-  swing button.
+  everywhere else the arrow keys, the mouse and the big map aim (the old
+  panel's aim arrows went with the old interface, 18 October 2026). Its buttons are disabled by
+  the same test that gates them, `canNudgeAim()`, set in `updateHUD`.
 - **Nudges are half a degree and a yard a tap** (`AIM_TAP_DEGREES`,
   `AIM_TAP_YARDS`). "Further" moves `aimRange` for a full shot, but for a putt
   it moves POWER, because a putt's length comes from its power and the roll
-  preview ignores `aimRange`. `holdToRepeat` drives the pad and the bar's
+  preview ignores `aimRange`. `holdToRepeat` drives the pad's
   arrows: the press is exactly one tap, and a hold past 0.35 s repeats at a
   rate climbing from 3 to 24 taps a second. A pointer's own `click` is
   ignored because its press already stepped; a click with `detail` 0 is a
@@ -1657,8 +1703,9 @@ apart by its touch points -- only over http(s), and never inside the installed
 app (`display-mode: standalone`, or Safari's own `navigator.standalone`).
 
 **Checked by** `touchAiming` in both phone journeys -- a tap on the pad turns
-exactly half a degree, further is exactly a yard, the pin button matches the
-bar's Aim at pin, a held arrow sweeps and stops when the finger lifts, the
+exactly half a degree, further is exactly a yard, the pin button aims at the pin's
+own angle and yards (worked out from `lab.state()`'s `pinAt` and `ballAt`;
+the bar's Aim at pin it was once checked against is gone), a held arrow sweeps and stops when the finger lifts, the
 thumbnail opens the big map, a pinch zooms it, a tap on it aims, Done puts it
 away unzoomed -- and a probe that walks outward from the middle of every
 control a round needs and fails anything under 44 px to a finger that is not

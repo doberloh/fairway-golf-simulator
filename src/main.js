@@ -1087,7 +1087,7 @@ function loadCourse(){
  round.placeTee(course.tees);view.setPutting(round.putting);latest=null;showStandingResult();setUpTurn();updateExplorer();requestAnimationFrame(updateExplorer);save();
 }
 function updateExplorer(){
- const free=view.config.mode==='free';$('holeFlyover').setAttribute('aria-label',tour?'Stop hole flyover':'Hole flyover');$('holeFlyover').title=tour?'Stop hole flyover':'Hole flyover';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;$('freeView').classList.toggle('selected',free);$('playerView').classList.toggle('selected',view.config.mode==='player');$('overview').classList.toggle('selected',view.config.mode==='overview');if($('greenView'))$('greenView').classList.toggle('selected',view.config.mode==='green');
+ const free=view.config.mode==='free';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;
  $('mapTitle').textContent=round.endless?`HOLE ${round.hole+1} OVERVIEW`:['free','overview'].includes(view.config.mode)?`${world.holes.length} HOLE COURSE`:`HOLE ${(flight?.replay?view.course.hole:round.hole)+1} OVERVIEW`;
  // The title says when the map is not showing the whole thing. Without it a
  // zoomed map that was left zoomed reads as a generation bug -- half a hole.
@@ -1231,12 +1231,7 @@ function updateHUD(){
  // types it, and cannot do anything with it. The code behind the copy button is
  // the thing actually worth having, and the biome moves down to the subtitle so
  // the card still says where in the world you are.
- $('courseTitle').textContent=playingCourseName();$('barCourse').textContent=playingCourseName();
- // In skins, what the hole being played is worth once skins have carried to
- // it -- the holes before it decide that (skins.js).
- const worth=round.mode==='skins'&&!rangeMode?skins(round.cards,round.hole).worth:1;
- $('courseSubtitle').textContent=(rangeMode?'500 yards · practise anything'
-  :round.endless?`Endless run · ${course.bio.name}`:course.bio.name)+(worth>1?` · ${skinsText(worth)} on this hole`:'');
+ $('barCourse').textContent=playingCourseName();
  // A range has no hole number, no par and no pin position for the week. It does
  // have a distance, and that one is real -- it follows the green slider.
  // No leading zero: "01" read as "O1" in the old serif, and a hole number is
@@ -1287,8 +1282,8 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
- $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||!!round.relief||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Swing<small>or press <kbd>SPACE</kbd></small></span>';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();setWindArrow();
+ for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();
  if($('shotControls')){
   // The light is driven by the DEVICE; which window shows is driven by `armed`,
   // which is the only state where the manual controls genuinely do nothing --
@@ -1301,9 +1296,8 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   $('world').classList.toggle('meter-mode',meterMode());
   drawMonitorState(state);
   if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
-  if($('bottomHints'))$('bottomHints').hidden=armed;
  }
- $('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=hud1?clubPanel(clubs[$('club').value]).line:$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
+ $('clubHint').textContent=hud1?clubPanel(clubs[$('club').value]).line:$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
  redrawMap();const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
   // Says why when it is off. "Nothing to take back yet" on a fresh tee is a
   // different answer from "finish the shot first", and a dimmed button with no
@@ -1317,9 +1311,6 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
  // way back to them once closed -- there was none, so a closed window stayed
  // closed until the range was left and entered again.
  if($('rangeTool'))$('rangeTool').hidden=!rangeMode;
- // And one on the view bar, always in sight, because the tray's button was
- // still a menu away and the owner could not find it (16 October 2026).
- if($('rangeControls'))$('rangeControls').hidden=!rangeMode;
  // Putting mode is forced to hole-out on a practice ground, so this would edit
  // a setting for the NEXT round while appearing to change where you are. A
  // dedicated putting mode is the plan; until then it is simply not offered.
@@ -1331,7 +1322,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
 // A putt is previewed by running the shot, not by describing it. Everything else
 // keeps a straight target line, which is what an aim line means for a ball that
 // is about to be in the air.
-function updateAim(syncRange=true){const c=clubs[$('club').value];
+function updateAim(){const c=clubs[$('club').value];
  // NO PUTT PREVIEW (the owner's call, 14 October 2026). A putt used to draw the
  // path the ball would roll, break and all, which read the green for you. Now a
  // putt is a straight line to where you aim, for every way of playing, and the
@@ -1345,7 +1336,9 @@ function updateAim(syncRange=true){const c=clubs[$('club').value];
  const track=armed?null:shapeTrack(c,range);
  // A putt's line lies on the green, 15 mm up, like the preview line did.
  if(track)view.setAimPath(track,range,.1);else view.setAim(aim,range,putt?.015:.1);
- $('aimOutput').textContent=aim.toFixed(1)+'°';if(syncRange!==false)$('aimRange').value=(range/YARD).toFixed(1);
+ // THE AIM, READABLE: the angle and the aim point's distance, on #world for the
+ // smoke journeys (the old aim box that showed them is gone).
+ $('world').dataset.aim=aim.toFixed(1);$('world').dataset.aimYards=(range/YARD).toFixed(1);
  if(putt)drawLie();
  drawMeterScale();
 }
@@ -1566,13 +1559,11 @@ function drawShapeControls(){
  const putt=c.code==='PT',short=isShortGame(),locked=putt||!!swing||!!flight;
  $('curveLabel').textContent=curveName(shotShape.curve);
  $('heightLabel').textContent=heightName(shotShape.height,short);
- $('spinLabel').textContent=$('spinCycleLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
+ $('spinCycleLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
  $('pickSpin').setAttribute('aria-label',`Spin: ${spinName(shotShape.spin)}. Tap to change`);
  $('pickCurve').setAttribute('aria-label',`Curve: ${curveName(shotShape.curve)}. Press S to change`);
  $('pickHeight').setAttribute('aria-label',`Height: ${heightName(shotShape.height,short)}. Press W to change`);
  $('pickCurve').disabled=$('pickHeight').disabled=$('pickSpin').disabled=locked;
- $('spinDown').disabled=locked||shotShape.spin<=SPIN_STEPS[0];
- $('spinUp').disabled=locked||shotShape.spin>=SPIN_STEPS.at(-1);
  $('shapeControl').classList.toggle('putt',putt);
  $('shapeControl').classList.toggle('spun',shotShape.spin>0);
  $('meterLabel').textContent=difficultyOf(golferDifficulty()).label;
@@ -1603,16 +1594,13 @@ function drawLie(){
 // Pointer DOWN, not click, so a touch counts the moment the finger lands.
 function bindSwingInput(){
  const press=e=>{if(e.button!==0)return;e.preventDefault();meterPress(e.timeStamp);};
- $('swing').addEventListener('pointerdown',press);
  $('smBar').addEventListener('pointerdown',press);
  $('swingCatcher').addEventListener('pointerdown',press);
  $('pickCurve').onclick=()=>stepShape('curve',1);
  $('pickHeight').onclick=()=>stepShape('height',1);
- // On a phone the dial is one button that steps round, like X: a pair of
- // small - and + buttons is under a thumb's width.
+ // Spin is one button that steps round, like X: a pair of small - and +
+ // buttons was under a thumb's width.
  $('pickSpin').onclick=()=>stepShape('spin',1);
- $('spinUp').onclick=()=>stepShape('spin',1,false);
- $('spinDown').onclick=()=>stepShape('spin',-1,false);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelSwing();});
  // The words under the bar say Space or Tap by the screen, which can change.
  addEventListener('resize',()=>drawMeter(performance.now()));
@@ -2357,14 +2345,12 @@ function placeTiles(){
  });
  if(!free.length)return;
  if(phone){
-  // Across the top, from the left edge to what holds the top-right corner --
-  // the wind, and held sideways the camera button beside it -- starting past
-  // the play window if, held sideways, it runs up to the top.
-  const corner=[w.querySelector('.weather'),$('camButton')].filter(shown).map(rel);
-  const y=corner.length?Math.min(...corner.map(r=>r.t)):10;
+  // Across the top, from the left edge to the right, starting past the play
+  // window if, held sideways, it runs up to the top.
+  const y=10;
   const h=home?rel(home):null;
   const x0=h?(h.t<y+60?h.r+gap:h.l):10;
-  const right=Math.min(W-10,...corner.filter(r=>r.t<y+50).map(r=>r.l-gap));
+  const right=W-10;
   const each=Math.max(48,Math.min(132,(right-x0-gap*(free.length-1))/free.length));
   free.forEach((t,i)=>{t.style.width=each+'px';t.style.left=x0+i*(each+gap)+'px';t.style.top=y+'px';});
   return;
@@ -2741,8 +2727,7 @@ function beginDrop(){
  // free drop should make for them.
  if(round.relief){toast('Choose where to take relief first.');return;}
  if(flight||round.holeComplete||round.scrambleSelection||round.candidates.length){toast('Finish this shot or choose the team lie first.');return;}
- // A DROP PUTS THE TOOLS WINDOW AWAY, the way it already hides the camera bar
- // (`.dropping .view-tools`). The drop is where Sim drop is pressed, so the
+ // A DROP PUTS THE TOOLS WINDOW AWAY. The drop is where Sim drop is pressed, so the
  // Tools window was always open at this moment -- and on a phone held sideways
  // it sat squarely on the drop bar, over "Place ball", the one button needed
  // next. Found by the smoke test's phone journey, which could not reach it.
@@ -4115,7 +4100,7 @@ function hudInsets(now){
  // phone the second, the panel, map and aim pad all at the foot. Treating the
  // phone's panel as a side panel pushed the markers into a sliver between it
  // and the map, and the cap below then let them sit on top of it anyway.
- for(const el of [...document.querySelectorAll('.bottom-area,.monitor-panel,.minimap,.view-tools,.aim-pad')]){
+ for(const el of [...document.querySelectorAll('.bottom-area,.monitor-panel,.minimap,.aim-pad')]){
   if(!showing(el))continue;
   const r=el.getBoundingClientRect();
   if(r.height>sr.height*.6){
@@ -4135,14 +4120,13 @@ function hudInsets(now){
  hudInsetsCache=ins;
  return ins;
 }
+// The wind's bearing on screen, for the round screen's wind chip.
 function setWindArrow(){
- const el=$('windArrow');if(!el)return;
+ const hud=$('roundHud');if(!hud)return;
  const wind=settings.windDirection||0;
  let bearing=-wind;
  try{bearing=view.cameraHeading()-wind;}catch{}
- el.style.transform='';
- el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
- $('roundHud')?.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+ hud.style.setProperty('--wind',bearing.toFixed(1)+'deg');
 }
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
@@ -4549,11 +4533,12 @@ function openToolsBox(){
   render:body=>{tray.hidden=false;body.append(tray);},
   onClose:()=>{tray.hidden=true;document.querySelector('.bottom-area').append(tray);}});
 }
-function syncTools(){
- const b=$('toolsButton');
- if(b)b.classList.toggle('selected',popups?.isOpen('tools'));
- const r=$('rangeControls');if(r)r.classList.toggle('selected',!!popups?.isOpen('range'));
-}
+// The range's controls, open or closed: the tool column, R, and the Esc list.
+function toggleRangeBox(){if(popups?.isOpen('range'))closeRangeBox();else openPanel('range');}
+// NO FULL SCREEN WHERE IT CANNOT HAPPEN: an iPhone's Safari has no element
+// fullscreen at all, so its tool button hides there (#app.no-fullscreen); added
+// to the home screen the game already opens without Safari's bars.
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}}
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
  if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;}
@@ -6155,7 +6140,6 @@ function drawMonitorState(state){
    :'Armed is off: the Swing Meter is yours';
  }
  for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armSwitch;el.disabled=!monitorConnected;}
- $('clubSource').textContent='';
 }
 // WHERE THE BRIDGE IS, remembered per device once a connection succeeds. With
 // nothing remembered: a page the bridge served itself -- plain http, which is
@@ -6336,7 +6320,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   e.preventDefault();e.stopImmediatePropagation();
  },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
- $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
+ $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={
@@ -6564,7 +6548,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    ({offset,past})=>window.lab.batch({feet:options.feet??10,offsets:[offset],pasts:[past],bearings:[options.bearing??0]})[0].holed,
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
-  state:()=>({inFlight:!!flight,
+  state:()=>({inFlight:!!flight,canSwing:canSwing(),pinAt:course?.pin?{x:course.pin.x,z:course.pin.z}:null,ballAt:round?.position?{x:round.position.x,z:round.position.z}:null,
    // THE SWING IN PROGRESS, on the input clock (`event.timeStamp`): when it
    // started and how long the marker takes per bar length, so the smoke test can
    // time a tap the way a player does -- on the clock, not on a frame, which on a
@@ -6791,29 +6775,17 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuChallenges').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}challengeSetup=true;openPanel('round');};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}weeklySetup=true;openPanel('round');};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
- $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();rangePlaced=true;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
- holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
+ $('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));
  $('padPin').onclick=()=>{if(canNudgeAim())setAimPoint(course.pin);};
  $('mapExpand').onclick=()=>setAimView(!aimViewOpen);$('aimViewDone').onclick=()=>setAimView(false);
- $('holeFlyover').onclick=()=>tour?stopTour():startTour();
- // The tools button had no handler at all: openToolsBox existed and nothing
- // ever called it, so clicking Tools did nothing in any mode.
- $('toolsButton').onclick=openToolsBox;
- if($('rangeControls'))$('rangeControls').onclick=()=>{if(popups?.isOpen('range'))closeRangeBox();else openPanel('range');};
- $('playerView').onclick=()=>cameraMode('player');$('freeView').onclick=()=>cameraMode(view.config.mode==='free'?'player':'free');$('exitExplorer').onclick=()=>cameraMode('player');$('exploreHole').onchange=()=>{const hole=Number($('exploreHole').value);stopTour();view.flyToHole(hole);updateExplorer();};$('overview').onclick=()=>cameraMode(view.config.mode==='overview'?'player':'overview');
- // The green view had no button of its own and was reachable only from a picker
- // in the camera settings -- a view you are looking THROUGH, hidden inside a
- // panel of things you set once. It joins the other three cameras, and toggles
- // back the same way they do.
- $('greenView').onclick=()=>cameraMode(view.config.mode==='green'?'player':'green');
+ $('exitExplorer').onclick=()=>cameraMode('player');$('exploreHole').onchange=()=>{const hole=Number($('exploreHole').value);stopTour();view.flyToHole(hole);updateExplorer();};
  // NO FULLSCREEN BUTTON WHERE FULLSCREEN CANNOT HAPPEN. An iPhone's Safari has no
  // element fullscreen at all -- `requestFullscreen` does not exist there -- so
  // the button did nothing, silently. Added to the home screen the game already
  // opens without Safari's bars, which is the fullscreen an iPhone offers.
- if(!document.fullscreenEnabled)$('fullscreen').hidden=true;
- $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}};
+ $('app').classList.toggle('no-fullscreen',!document.fullscreenEnabled);
  // THE WHOLE COURSE, ON THE CLIPBOARD, with no trip through the library. The
  // button used to copy the SEED, which is not enough to rebuild a course --
  // every setting that shapes it would be missing, so pasting it somewhere grew
@@ -6851,12 +6823,12 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The round screen's Esc key, for a mouse; the pause list's own buttons close
  // it once they have done their job -- all but the clock and the tee picker,
  // which are worked in place.
- $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))$('rangeControls').click();};
+ $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))toggleRangeBox();};
  // The tool column: each button presses its own key, so it does exactly what
  // the key does in every state the key already handles.
  // The studio's tool column is made later (ui-studio.js studioHud), so it is
  // heard from #world.
- $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')$('fullscreen').click();else if(t==='menu')toggleStudioPause();});
+ $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')toggleFullscreen();else if(t==='menu')toggleStudioPause();});
  // THE 1.0 DROP-DOWN on every select a player sees (round 14, ui-dropdown.js):
  // the sheets, the tool windows, the pause list. Not the seats' and the
  // lobby's own pickers (arrows over a see-through select), nor the club (its
@@ -6868,7 +6840,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
   const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
-  else if(t==='range')$('rangeControls').click();else if(t==='full')$('fullscreen').click();else if(t==='menu')setPause(true);};
+  else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
  // ROUND 14 (frames c-aim2, c-club, c-flight2): Skip stands where curve,
  // height and spin were, at the bottom centre, not above the meter; and the
@@ -6878,7 +6850,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The whole club box opens it (its code, name, carry and keys), not only the name.
  document.querySelector('.club-control')?.addEventListener('click',e=>{if(!e.target.closest('.club-select,.dd-list'))$('club').__dd?.open();});
  // The pause list's cameras are the camera strip's own buttons, pressed for you.
- $('pauseCams').onclick=e=>{const b=e.target.closest('[data-proxy]');if(b)$(b.dataset.proxy)?.click();};
+ // The pause list's cameras (the old camera strip they once pressed is gone): each toggles back to the
+ // player's view the way its key does; Flyover starts or stops the hole flyover.
+ $('pauseCams').onclick=e=>{const c=e.target.closest('[data-cam]')?.dataset.cam,m=view.config.mode;if(!c)return;
+  if(c==='player')cameraMode('player');else if(c==='full')toggleFullscreen();else if(c==='flyover'){if(tour)stopTour();else startTour();}
+  else cameraMode(m===c?'player':c);};
  $('pauseResume').onclick=()=>setPause(false);
  $('shotChoice').onclick=cycleShotChoice;
  document.querySelector('.topbar').addEventListener('click',e=>{
@@ -6887,13 +6863,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(!b||b.closest('.sim-time,.clock-pop,.tee-control,.rh-pause-choice'))return;
   setPause(false);
  });
- // Tools from the top bar, where a phone keeps it; the camera strip folds
- // behind one button on a phone and closes again once a camera is picked.
+ // Tools from the top bar, where a phone keeps it.
  $('barTools').onclick=openToolsBox;
- const setCams=open=>{$('world').classList.toggle('cams-open',open);$('camButton').setAttribute('aria-expanded',String(open));};
- $('camButton').onclick=e=>{e.stopPropagation();setCams(!$('world').classList.contains('cams-open'));};
- document.querySelector('.view-tools').addEventListener('click',e=>{if(e.target.closest('.tool'))setCams(false);});
- document.addEventListener('pointerdown',e=>{if($('world').classList.contains('cams-open')&&!e.target.closest('.view-tools,#camButton'))setCams(false);});
  // THE MONITOR, from the play screen: arm it or put it down -- the switch in
  // the launch monitor window and the one on the shot controls' strip are the
  // same switch as the one in Connect monitor -- and reconnect it.
@@ -7027,10 +6998,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // not see and the scorecard in front of them needed a second -- found by the
  // browser smoke test pressing Escape once and seeing nothing change. The tool
  // window is left where it was, for when the panel is gone.
- if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)toggleRangeBox();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
   // R on the studio's settings grows the landscape (round 13), unless a word is
   // being typed (the seed). Flying, R stays up: the flying keys say so.
@@ -7165,7 +7135,7 @@ function tick(now){
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');
- if(!!pad!==gamepadActive){gamepadActive=!!pad;$('inputStatus').innerHTML=pad?'<i data-lucide="gamepad-2"></i> Controller connected <span class="tiny-dot"></span> Ready to play':'<i data-lucide="keyboard"></i> Mouse & keyboard <span class="tiny-dot"></span> Ready to play';icon();}
+ if(!!pad!==gamepadActive)gamepadActive=!!pad;
  const pressed=i=>pad?.buttons[i]?.pressed&&!gamepadLast[i];
  if(pad&&focusScope()){menuPad(pad,pressed,now);gamepadLast=pad.buttons.map(b=>b.pressed);}
  else if(pad){if(pressed(9)&&hud1&&appMode==='play'&&!panel){setPause(true);gamepadLast=pad.buttons.map(b=>b.pressed);}if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
@@ -7348,7 +7318,7 @@ try{
  try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
  adoptDeviceBag();syncClubs();delete settings.flightProfile;
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
- bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
+ bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:icon});icon();requestAnimationFrame(tick);
  openMenu();
  if(!profiles)showWelcome();
  // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry

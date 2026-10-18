@@ -20,11 +20,10 @@
  #world[data-mode=play]{--hud1:1}
  #world[data-mode=play] :is(#roundHud,.club-control,.lie-readout,.shape-control,.shot-panel,.swing-meter,.monitor-panel,.minimap,.flag-label,.aim-label,.aim-pad){font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
 
- /* The old chrome goes, as on a big screen. */
+ /* As on a big screen: the top bar only as the pause list, the bottom bars handing over their pieces. */
  #app[data-mode=play]:not(.rh-paused) .topbar{display:none!important}
- #world[data-mode=play] :is(.course-info,.weather,.view-tools,.cam-button,#bottomHints,.aim-control,.aim-distance-control,#swing,.spin-dial,.club-control>label,.club-select>svg,.club-select>i){display:none!important}
  #world[data-mode=play] :is(.bottom-area,.shot-controls){display:contents!important}
- #world[data-mode=play].in-flight :is(.club-control,.shot-controls .lie-readout,.shape-control,.shot-controls>.mon-state,.aim-pad,.rh-menu){display:none!important}
+ #world[data-mode=play].in-flight :is(.club-control,.shot-controls .lie-readout,.shape-control,.shot-controls>.mon-state,.aim-pad){display:none!important}
  #world[data-mode=play]:not(.rh-tiles) .shot-tiles{display:none!important}
 
  /* The layer of new pieces. */
@@ -96,7 +95,6 @@
  /* The lie, the shot's shape, the club. */
  #world[data-mode=play] .shot-controls .lie-readout{position:absolute;left:16px;bottom:156px;z-index:7;isolation:isolate;display:flex;align-items:center;gap:6px;height:28px;padding:0 12px!important;font-size:12px;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;white-space:nowrap}
  #world[data-mode=play] .shot-controls .lie-readout::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #world[data-mode=play] .shot-controls .lie-readout .read-note{display:none}
  #world[data-mode=play] .shape-control{position:absolute;left:16px;bottom:112px;z-index:8;display:flex!important;gap:6px;padding:0!important;border:0;flex:none}
  #world[data-mode=play] .shape-control.putt,#world[data-mode=play].monitor-armed .shape-control{display:none!important}
  #world[data-mode=play] .shape-pick{position:relative;isolation:isolate;display:flex!important;align-items:center;gap:5px;height:36px;min-width:44px;padding:0 10px!important;border:0;background:none;color:#fff;font-size:14px;font-weight:800;font-style:italic;flex-direction:row}
