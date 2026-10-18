@@ -1375,7 +1375,7 @@ hidden), the scorecard's next-hole countdown and match line are slanted
 panels, card names and captions wrap. A seat's name is centred by an unseen
 triangle balancing the real one (`.player-who .dd-field::after`).
 Challenges' group got its own compact seat row (`.ch-group .seat`): the old
-player-row grid had squashed its pickers to nothing.
+player-row grid had squashed its pickers to nothing. **A band that sits over scrolling rows is solid**: `--panel` is see-through, so the settings help band (`.st-help`, sticky at the foot) lays it over a dark base.
 
 **#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
 `sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
