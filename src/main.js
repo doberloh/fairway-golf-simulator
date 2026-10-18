@@ -49,7 +49,7 @@ import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,st
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
-import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
+import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
@@ -4222,8 +4222,9 @@ function applyHudPalette(screen=panel==='round'&&lobbyBiome?'lobby':appMode==='p
 }
 // The pieces' size: the 1280 canvas's scale inside #app (round-hud.js hudScale).
 // --sheet-z is the same size for what sits outside #app and its Text size zoom
-// (the sheets): the round screen's scale times the Text size.
-function applyHudScale(){const t=currentTextSize()/100,z=hudScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
+// (the sheets): the round screen's scale times the Text size. Both at the
+// compact size (round-hud.js COMPACT).
+function applyHudScale(){const t=currentTextSize()/100,z=compactScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
 const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
 const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
 function drawRoundHud(){

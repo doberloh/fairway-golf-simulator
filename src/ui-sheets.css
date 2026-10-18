@@ -33,7 +33,7 @@
  /* The header band: the screen's name, its eyebrow, and Esc. */
  body:not(:has(#app[data-mode=studio])) #drawer .drawer-header{align-items:flex-end;min-height:40px;margin:0 0 24px}
  body:not(:has(#app[data-mode=studio])) #drawer .drawer-header h2{font-size:36px;font-weight:800;font-style:italic;letter-spacing:.02em;line-height:1;text-transform:uppercase}
- body:not(:has(#app[data-mode=studio])) #drawer .drawer-header .eyebrow{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ body:not(:has(#app[data-mode=studio])) #drawer .drawer-header .eyebrow{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer{position:relative;width:auto;height:36px;padding:0 16px 0 52px;border:0;border-radius:0;background:none;color:#e6e8ff}
  body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer::before{content:"ESC";position:absolute;left:8px;top:6px;padding:2px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  body:not(:has(#app[data-mode=studio])) #drawer #closeDrawer::after{content:"BACK";font:700 16px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
@@ -42,14 +42,14 @@
  /* The content: wide, the type the design's. */
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent{max-width:none;padding:0 4px 0 0;font-size:15px;color:#fff}
  body:not(:has(#app[data-mode=studio])) #drawer :is(.panel-intro,.note,.tip,.research-label){font-family:var(--font-ui);font-size:13px!important;line-height:1.5;color:var(--soft)!important}
- body:not(:has(#app[data-mode=studio])) #drawer h3{font-size:13px;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
+ body:not(:has(#app[data-mode=studio])) #drawer h3{font-size:14px;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
 
  /* Each control is a slanted panel; its contents stand straight. */
  body:not(:has(#app[data-mode=studio])) #drawer .control-card{position:relative;isolation:isolate;margin:0 0 8px;padding:14px 30px;border:0;border-radius:0;background:none}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card:has(input:checked)::before{box-shadow:inset 0 0 0 2px var(--a1)}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card:focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
- body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.field{font-size:13px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
+ body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.field{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card>label.check{font-size:16px;color:#fff;font-weight:700}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card select,body:not(:has(#app[data-mode=studio])) #drawer .control-card input:not([type=checkbox]):not([type=radio]):not([type=range]){font:800 italic 18px/1.2 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:0}
  body:not(:has(#app[data-mode=studio])) #drawer .control-card option{font:15px var(--font-ui);color:#111;background:#fff}
@@ -73,13 +73,13 @@
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root{display:block}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-lead,body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-section.lb-emptied{display:none!important}
  body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
- body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:13px;white-space:nowrap}
+ body:not(:has(#app[data-mode=studio])) #drawer[data-panel=round] #drawerContent.lb-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:14px;white-space:nowrap}
  #drawer .lb{display:grid;grid-template-columns:3fr 5fr 4fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .lb-col{display:grid;gap:8px;align-content:start;min-width:0}
  #drawer .lb-saved{grid-column:1/-1;display:grid;gap:8px;min-width:0}
- #drawer .lb .lb-head{margin:0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb .lb-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lb-format>.lb-head:not(:first-child){margin-top:16px}
- #drawer .lb-label{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2}
+ #drawer .lb-label{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2}
  /* Every block in the lobby is a slanted panel with upright contents. */
  #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.add-player,#roundSurprise,#roundStudio,#roundManage,#roundDelete,#applyGroup,.course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
  #drawer .lb :is(.lb-pic,.lb-facts,.lb-pick,.lb-note,.lb-tees,.player-row,.lb-tile,.course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -88,10 +88,10 @@
  #drawer .lb-pic{height:150px;overflow:hidden}
  #drawer .lb-pic::before{background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 42%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 42% 100%)!important}
  #drawer .lb-pic::after{content:"";position:absolute;left:-8%;right:-8%;top:30%;height:30%;z-index:-1;background:radial-gradient(60% 100% at 30% 100%,color-mix(in srgb,var(--a1) 60%,#0d2210) 0 60%,transparent 61%),radial-gradient(50% 90% at 78% 100%,color-mix(in srgb,var(--a1) 45%,#0d2210) 0 60%,transparent 61%);transform:skewX(-12deg)}
- #drawer .lb-pic span{position:absolute;left:26px;bottom:12px;font-size:13px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+ #drawer .lb-pic span{position:absolute;left:26px;bottom:12px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
  #drawer .lb-facts{display:grid;gap:6px;padding:14px 28px}
  #drawer .lb-facts strong{font-size:26px;font-weight:800;font-style:italic;line-height:1;color:#fff;overflow-wrap:anywhere}
- #drawer .lb-facts small{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb-facts small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lb-course>button{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:48px;min-height:48px;margin:0;padding:0 28px;font-size:16px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#fff}
  #drawer .lb-course>button::before{background:var(--panel)!important}
  #drawer .lb-course>button svg{width:18px;height:18px;color:var(--a1)}
@@ -102,7 +102,7 @@
  /* A picker: label and line on the left, ◀ value ▶ on the right, the real drop-down see-through over the value. */
  #drawer .lb-pick{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:6px 24px}
  #drawer .lb-k{display:grid;gap:2px;flex:1 1 0;min-width:0}
- #drawer .lb-sub{font-size:11px;letter-spacing:.04em;font-weight:700;color:#fff;opacity:.75}
+ #drawer .lb-sub{font-size:14px;letter-spacing:.04em;font-weight:700;color:#fff;opacity:.75}
  #drawer .lb-v{display:flex;flex:none;align-items:center;gap:6px;max-width:70%}
  #drawer .lb-sel{position:relative;display:block;min-width:0}
  #drawer .lb-val{display:block;padding-right:4px;font-size:18px;font-weight:800;font-style:italic;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
@@ -128,7 +128,7 @@
  #drawer .lb .player-who>select{width:100%;height:32px;min-height:32px;padding:0 4px 0 0;border:0;border-radius:0;background:transparent;color:#fff;font:800 italic 24px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;appearance:none;cursor:pointer}
  #drawer .lb .player-who>select option{font:15px var(--font-ui);text-transform:none;color:#111;background:#fff}
  #drawer .lb .player-who>input{height:34px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
- #drawer .lb .player-sub{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lb .player-sub{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lb .player-row>select{height:32px;min-height:32px;padding:0 8px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em}
  #drawer .lb .player-row>select option{color:#111;background:#fff}
  #drawer .lb .drop-player{width:36px;height:36px;min-height:36px;border:0;background:none;color:var(--soft)}
@@ -155,7 +155,7 @@
  #drawer .lb-tile:focus-visible{outline:none}
  #drawer .lb-tile:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .lb-tile:disabled{opacity:.4}
- #drawer .lb-format>:is(#formatNote,#roundPuttingNote){margin:0;padding:0 8px;font-family:var(--font-ui);font-size:12px!important;line-height:1.4;color:var(--soft)!important}
+ #drawer .lb-format>:is(#formatNote,#roundPuttingNote){margin:0;padding:0 8px;font-family:var(--font-ui);font-size:14px!important;line-height:1.4;color:var(--soft)!important}
  #drawer .lb-format>#roundPutting-distances{padding:0 8px}
  /* Saved rounds along the foot: a card each, two to a row. */
  #drawer .lb-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -186,7 +186,7 @@
  #drawer .lm-col{display:grid;gap:8px;align-content:start;min-width:0}
  #drawer .lm-foot{grid-column:1/-1;min-width:0;columns:2;column-gap:32px}
  #drawer .lm-foot>*{break-inside:avoid}
- #drawer .lm .lm-head{margin:0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm .lm-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}
  #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .lm-step{display:flex;align-items:center;gap:18px;min-height:88px;padding:8px 32px}
@@ -195,7 +195,7 @@
  #drawer .lm-what{display:grid;gap:4px;flex:1;min-width:0}
  #drawer .lm-what strong{font-size:22px;font-weight:800;font-style:italic;line-height:1.1;color:#fff}
  #drawer .lm-what span{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.3;color:#fff;opacity:.9}
- #drawer .lm-tick{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft);white-space:nowrap}
+ #drawer .lm-tick{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft);white-space:nowrap}
  #drawer .lm-step.done .lm-tick{color:#4ade80}
  #drawer .lm-arm{display:flex;align-items:center;min-height:56px;padding:0 32px}
  #drawer .lm-arm.on::before{box-shadow:inset 0 0 0 3px var(--hot)}
@@ -210,9 +210,9 @@
  #drawer .lm-light[data-state=red] i{background:#f87171;box-shadow:0 0 0 7px rgba(248,113,113,.25)}
  #drawer .lm-light[data-state=green]::before{box-shadow:inset 0 0 0 3px #4ade80}
  #drawer .lm-light strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;color:#fff}
- #drawer .lm-light span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-light span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 32px}
- #drawer .lm-k{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-k{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm-v{min-width:0;font-size:18px;font-weight:800;font-style:italic;color:#fff;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .lm-v.ok{color:#4ade80}
  #drawer .lm-address .lm-v{flex:1;overflow:visible}
@@ -223,10 +223,10 @@
  #drawer .lm-buttons>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))!important}
  #drawer .lm-buttons>button.primary{color:var(--on-hot)}
  #drawer .lm-status>:is(#jsonError,#monitorStatus){margin:0;padding:0 8px}
- #drawer .lm-json{padding:0 8px;font-family:var(--font-ui);font-size:13px;color:var(--soft)}
+ #drawer .lm-json{padding:0 8px;font-family:var(--font-ui);font-size:14px;color:var(--soft)}
  #drawer .lm-json textarea{width:100%;min-height:150px;font:12px/1.4 ui-monospace,monospace}
- #drawer .lm-foot :is(p,li){font-family:var(--font-ui);font-size:13px;line-height:1.5;color:var(--soft)}
- #drawer .lm-foot h3{margin:8px 0;font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ #drawer .lm-foot :is(p,li){font-family:var(--font-ui);font-size:14px;line-height:1.5;color:var(--soft)}
+ #drawer .lm-foot h3{margin:8px 0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
 
  /* ------------------------------------------------------------ my profile */
  /* MY PROFILE, THE HUB (ui-profile-hub.js sorts the old page into it): the
@@ -238,7 +238,7 @@
  #drawer .ph .ph-chips{position:fixed;top:24px;left:340px;right:220px;z-index:3;display:flex;flex-wrap:nowrap;gap:8px;margin:0;padding:0;border:0;overflow:hidden}
  #drawer .ph .ph-chips>.panel-tab{display:flex;align-items:center;gap:8px;height:40px;padding:0 18px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap}
  #drawer .ph .ph-chips img{width:24px;height:24px}
- #drawer .ph .ph-chips small{font-size:11px;font-style:normal;letter-spacing:.12em;opacity:.75}
+ #drawer .ph .ph-chips small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.75}
  #drawer .ph-side,#drawer .ph-main{display:grid;gap:8px;align-content:start;min-width:0}
  #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
  #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -246,20 +246,20 @@
  #drawer .ph .profile-id{display:flex;align-items:center;gap:16px;min-height:104px;padding:12px 32px}
  #drawer .ph .profile-id .profile-avatar{width:68px;height:68px}
  #drawer .ph .profile-id h3{margin:0;font-size:36px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff;text-transform:uppercase}
- #drawer .ph .profile-id .golfer-title{display:block;margin-top:6px;font-size:13px;font-style:normal;letter-spacing:.16em;font-weight:700;color:var(--soft);text-transform:uppercase}
- #drawer .ph .profile-id .profile-tag{font-size:11px;letter-spacing:.12em;vertical-align:middle}
- #drawer .ph .profile-id .profile-actions button{height:32px;min-height:32px;padding:0 12px;font-size:13px}
+ #drawer .ph .profile-id .golfer-title{display:block;margin-top:6px;font-size:14px;font-style:normal;letter-spacing:.16em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .profile-id .profile-tag{font-size:14px;letter-spacing:.12em;vertical-align:middle}
+ #drawer .ph .profile-id .profile-actions button{height:32px;min-height:32px;padding:0 12px;font-size:14px}
  #drawer .ph .profile-level{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:88px;padding:12px 32px}
- #drawer .ph .profile-level small{grid-column:1/-1;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-level small{grid-column:1/-1;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
  #drawer .ph .profile-level strong::before{content:"LV "}
- #drawer .ph .profile-level span{font-size:13px;letter-spacing:.08em;font-weight:700;color:var(--soft);text-align:right}
+ #drawer .ph .profile-level span{font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft);text-align:right}
  #drawer .ph .level-bar{grid-column:1/-1;display:block;height:8px;background:rgba(255,255,255,.14);border-radius:0}
  #drawer .ph .level-bar b{display:block;height:100%;background:var(--hot);border-radius:0}
  #drawer .ph .profile-hcp{display:grid;gap:4px;min-height:88px;align-content:center;padding:12px 32px}
- #drawer .ph .profile-hcp small,#drawer .ph .ph-since small{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-hcp small,#drawer .ph .ph-since small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .profile-hcp strong{font-size:48px;font-weight:800;font-style:italic;line-height:1;color:#fff}
- #drawer .ph .profile-hcp span{font-family:var(--font-ui);font-size:12px;color:var(--soft)}
+ #drawer .ph .profile-hcp span{font-family:var(--font-ui);font-size:14px;color:var(--soft)}
  #drawer .ph .ph-since{display:grid;gap:6px;min-height:72px;align-content:center;padding:12px 32px}
  #drawer .ph .ph-since strong{font-size:22px;font-weight:800;font-style:italic;color:#fff}
  #drawer .ph[data-tab=Locker] .ph-side>:not(.ph-preview),#drawer .ph:not([data-tab=Locker]) .ph-side>.ph-preview{display:none}
@@ -267,24 +267,24 @@
  #drawer .ph .ph-who{display:flex;align-items:center;gap:16px;min-height:96px;padding:12px 32px}
  #drawer .ph .ph-who .ph-ball{width:64px;height:64px}
  #drawer .ph .ph-who strong{display:block;font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff}
- #drawer .ph :is(.ph-who,.ph-round-what,.ph-next-what) small{display:block;margin-top:4px;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph :is(.ph-who,.ph-round-what,.ph-next-what) small{display:block;margin-top:4px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .ph-tracer{display:grid;place-items:center;min-height:80px;padding:8px 32px}
  #drawer .ph .ph-tracer svg{width:100%;height:64px}
  #drawer .ph .ph-worn{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 32px}
- #drawer .ph .ph-worn span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-worn span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .ph-worn b{font-size:17px;font-weight:800;font-style:italic;color:#fff}
  /* The tabs and the panes. */
  #drawer .ph .ph-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:0;border:0}
- #drawer .ph .ph-tabs>.panel-tab{height:40px;padding:0 18px;font-size:13px}
+ #drawer .ph .ph-tabs>.panel-tab{height:40px;padding:0 18px;font-size:14px}
  #drawer .ph .ph-pane{min-width:0}
- #drawer .ph .ph-pane>h3,#drawer .ph h4{margin:16px 0 8px;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-pane>h3,#drawer .ph h4{margin:16px 0 8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .ph-pane>h3:first-child,#drawer .ph-tab-locker>h3{margin-top:0}
  /* Overview. */
  #drawer .ph .ph-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
  #drawer .ph .ph-tile{display:grid;gap:6px;min-height:88px;align-content:center;padding:12px 26px}
  #drawer .ph .ph-tile strong{font-size:34px;font-weight:800;font-style:italic;line-height:1;color:#fff;white-space:nowrap}
  #drawer .ph .ph-tile strong small{margin-left:4px;font-size:15px;font-style:normal;letter-spacing:.06em;color:var(--soft)}
- #drawer .ph .ph-tile span{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-tile span{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .ph .ph-rounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  #drawer .ph .ph-round{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:6px}
  #drawer .ph .ph-round-pic{height:72px;background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 45%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 45%);transform:skewX(-12deg)}
@@ -294,17 +294,17 @@
  #drawer .ph .ph-next{display:flex;align-items:center;gap:20px;min-height:80px;margin-top:16px;padding:8px 32px}
  #drawer .ph .ph-next .level-bar{flex:1}
  #drawer .ph .ph-next-what strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
- #drawer .ph .ph-next>small{flex:none;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-next>small{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  /* Locker: the kinds down the side, the grid beside them. */
  #drawer .ph .ph-tab-locker{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,6fr);gap:8px 16px;align-items:start}
  #drawer .ph .ph-tab-locker>h3{display:none}
  #drawer .ph .ph-tab-locker>*{grid-column:2}
  #drawer .ph .ph-tab-locker>.ph-kinds{grid-column:1;grid-row:1/span 20;display:grid;gap:8px;margin:0;padding:0;border:0}
  #drawer .ph .profile-id>div>small{display:none}
- #drawer .ph .ph-kinds .look-count{margin-left:auto;font-size:13px;font-style:normal;letter-spacing:.08em;opacity:.8}
+ #drawer .ph .ph-kinds .look-count{margin-left:auto;font-size:14px;font-style:normal;letter-spacing:.08em;opacity:.8}
  #drawer .ph .ph-kinds>.panel-tab{justify-content:flex-start;height:48px;padding:0 20px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.04em}
  #drawer .ph .look-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
- #drawer .ph .look-item{position:relative;isolation:isolate;min-height:96px;border:0;border-radius:0;background:none;color:#fff;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+ #drawer .ph .look-item{position:relative;isolation:isolate;min-height:96px;border:0;border-radius:0;background:none;color:#fff;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
  #drawer .ph .look-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .ph .look-item.on::before{background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 0 3px var(--hot)}
  #drawer .ph .look-item.on{color:var(--on-hot)}
@@ -314,7 +314,7 @@
  #drawer .ph .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
  #drawer .ph .stat-tile{padding:12px 24px}
  #drawer .ph .stat-tile strong{font-size:24px;font-weight:800;font-style:italic;color:#fff}
- #drawer .ph .stat-tile span{font-size:11px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .stat-tile span{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .ph .achievement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;list-style:none}
  #drawer .ph .achievement{padding:12px 28px}
  #drawer .ph .achievement:not(.earned){opacity:.6}
@@ -336,7 +336,7 @@
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-lead{display:none}
  body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs{position:fixed;left:60px;bottom:32px;z-index:3;margin:0;flex-wrap:nowrap}
- body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:13px;white-space:nowrap}
+ body:not(:has(#app[data-mode=studio])) #drawer #drawerContent.st-root>.panel-tabs>.panel-tab{height:40px;padding:0 14px;font-size:14px;white-space:nowrap}
  #drawer .st-cats{display:grid;gap:8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .st-cat{position:relative;isolation:isolate;display:flex;align-items:center;height:48px;min-height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-align:left}
  #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -347,7 +347,7 @@
  #drawer .st-cat:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
  body:not(:has(#app[data-mode=studio])) #drawer .st-groups{columns:2;column-gap:32px}
  body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section{display:block!important;break-inside:avoid;margin:0 0 16px;columns:auto!important}
- body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section>h3{display:block;margin:0 0 8px;font-size:13px;letter-spacing:.16em;color:var(--hot)}
+ body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section>h3{display:block;margin:0 0 8px;font-size:14px;letter-spacing:.16em;color:var(--hot)}
  body:not(:has(#app[data-mode=studio])) #drawer .st-groups>.panel-section[data-title=Overview]>h3:empty{display:none}
  /* One group alone flows its own rows into the two columns. */
  body:not(:has(#app[data-mode=studio])) #drawer .st-groups:has(>.panel-section:only-child){columns:1}
@@ -378,7 +378,7 @@
  body:not(:has(#app[data-mode=studio])) #drawer .st-groups .control-card>.field-error:empty{display:none}
  #drawer .st-help{position:sticky;bottom:0;z-index:2;display:grid;gap:6px;margin-top:8px;padding:16px 36px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--panel) 92%,black);box-shadow:0 -12px 24px rgba(4,8,12,.6);transform:skewX(-12deg)}
- #drawer .st-help-k{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
+ #drawer .st-help-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
  #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
 
  /* ------------------------------------- challenges, the week, saved courses */
@@ -393,17 +393,17 @@
  #drawer .ch>.chal-week-row{grid-area:week;display:block;margin:0}
  #drawer .ch .chal-week{display:flex;flex-direction:row;align-items:center;gap:20px;width:100%;min-height:56px;padding:0 36px;color:var(--on-hot)}
  #drawer .ch .chal-week::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- #drawer .ch .chal-week small{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--on-hot);opacity:.85;text-transform:uppercase}
+ #drawer .ch .chal-week small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--on-hot);opacity:.85;text-transform:uppercase}
  #drawer .ch .chal-week small:last-child{margin-left:auto}
  #drawer .ch .chal-week b{font-size:24px;font-weight:800;font-style:italic;text-transform:uppercase}
  #drawer .ch .chal-week.on::before{box-shadow:0 0 0 3px var(--hot)}
  #drawer .ch>.chal-tabs{grid-area:cats;display:grid;gap:8px;margin:0;padding:0;border:0;overflow:visible}
  #drawer .ch>.chal-tabs>.panel-tab{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 24px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em}
- #drawer .ch>.chal-tabs>.panel-tab small{font-size:13px;font-style:normal;letter-spacing:.08em}
+ #drawer .ch>.chal-tabs>.panel-tab small{font-size:14px;font-style:normal;letter-spacing:.08em}
  #drawer .ch>.chal-cards:not(.chal-week-row){grid-area:cards;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
  #drawer .ch .chal-card:not(.chal-week){display:grid;gap:6px;align-content:center;min-height:104px;padding:14px 32px;color:#fff}
  #drawer .ch .chal-card:not(.chal-week) b{font-size:20px;font-weight:800;font-style:italic;text-transform:uppercase}
- #drawer .ch .chal-card:not(.chal-week) small{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ch .chal-card:not(.chal-week) small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .ch .chal-card.on:not(.chal-week)::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .ch .chal-card:focus-visible{outline:none}
  #drawer .ch .chal-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
@@ -412,13 +412,13 @@
  #drawer .ch-detail>h3{margin:0;padding:16px 36px 8px;font-size:30px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff!important;text-transform:uppercase}
  #drawer .ch-detail>h3::before{bottom:-1px!important}
  #drawer .ch-detail>p{margin:0;padding:0 8px;font-family:var(--font-ui);font-size:15px;line-height:1.4;color:#fff}
- #drawer .ch-detail>p.note{font-size:13px;color:var(--soft)}
+ #drawer .ch-detail>p.note{font-size:14px;color:var(--soft)}
  #drawer .ch-detail>ul.medal-asks{display:grid;gap:8px;margin:0;padding:0;list-style:none}
- #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
  #drawer .ch-detail>ul.medal-asks>li b{color:#fff;text-transform:uppercase}
  #drawer .ch-detail>ul.medal-asks>li span{margin-left:auto;font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;color:#fff;text-align:right}
  #drawer .ch-group{display:grid;gap:8px;margin-top:16px}
- #drawer .ch-group>h3{margin:0;font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ #drawer .ch-group>h3{margin:0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
  /* The course of the week: the picture and earlier weeks (7), the facts (5). */
  #drawer .wk{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .wk-left,#drawer .wk-right{display:grid;gap:8px;align-content:start;min-width:0}
@@ -427,18 +427,18 @@
  #drawer .wk-hero::after{content:"";position:absolute;left:-10%;right:-10%;top:32%;height:26%;z-index:-1;background:radial-gradient(55% 100% at 28% 100%,color-mix(in srgb,var(--p1) 55%,#2a1d0a) 0 60%,transparent 61%),radial-gradient(45% 90% at 76% 100%,color-mix(in srgb,var(--p1) 40%,#2a1d0a) 0 60%,transparent 61%);transform:skewX(-12deg)}
  #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:16px;font-weight:800;font-style:italic;letter-spacing:.16em;transform:skewX(-12deg)}
  #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
- #drawer .wk h4{margin:8px 0;font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .wk h4{margin:8px 0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
  #drawer .wk-week{display:grid;gap:4px;min-height:64px;align-content:center;padding:10px 28px}
  #drawer .wk-week strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}
- #drawer .wk-week small{font-size:12px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .wk-week small{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
  #drawer .wk-group{display:grid;gap:6px;margin-bottom:8px}
  #drawer .wk-group h4{margin:0 0 2px}
  #drawer .wk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 32px}
- #drawer .wk-row span{font-size:13px;letter-spacing:.14em;font-weight:700;color:#fff}
+ #drawer .wk-row span{font-size:14px;letter-spacing:.14em;font-weight:700;color:#fff}
  #drawer .wk-row b{font-size:20px;font-weight:800;font-style:italic;color:#fff}
  #drawer .wk-right>:is(h3,p){margin:8px 0 0}
- #drawer .wk-right>h3{font-size:13px;letter-spacing:.16em;color:var(--soft)}
+ #drawer .wk-right>h3{font-size:14px;letter-spacing:.16em;color:var(--soft)}
  /* Saved courses: the shelf (8) and the chosen course (4). */
  body:not(:has(#app[data-mode=studio])) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:16px 32px;align-items:start;columns:auto!important}
  #drawer .lib-courses>:not(.lib-shelf):not(.lib-detail){grid-column:1}
@@ -448,10 +448,10 @@
  #drawer .lib-shelf>.course-card::before{top:100px}
  #drawer .lib-shelf>.course-card .course-pic{display:block;position:relative;height:96px;margin-bottom:4px;overflow:hidden}
  #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
- #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:12px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+ #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
  #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
  #drawer .lib-shelf>.course-card .course-meta strong{font-size:20px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- #drawer .lib-shelf>.course-card .course-meta span{font-size:12px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .lib-shelf>.course-card .course-meta span{font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .lib-shelf>.course-card .course-flag{display:none}
  #drawer .lib-shelf>.course-card>.course-actions{display:none}
  #drawer .lib-shelf>.course-card.on::before,#drawer .lib-shelf>.course-card.on .course-pic::before{box-shadow:0 0 0 3px var(--hot)}
@@ -464,11 +464,11 @@
  #drawer .lib-detail{grid-column:2;grid-row:1/span 4;display:grid;gap:8px;align-content:start;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .lib-name{display:grid;gap:6px;padding:16px 36px}
  #drawer .lib-name strong{font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-transform:uppercase}
- #drawer .lib-name small{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .lib-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .lib-code{display:grid;gap:8px;padding:16px 36px}
- #drawer .lib-code span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lib-code span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lib-code code{display:block;padding:8px 10px;background:rgba(0,0,0,.35);font:15px "IBM Plex Mono",ui-monospace,monospace;color:#e8ecff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- #drawer .lib-detail>.course-flag{padding:0 8px;font-size:12px;color:var(--soft)}
+ #drawer .lib-detail>.course-flag{padding:0 8px;font-size:14px;color:var(--soft)}
  #drawer .lib-detail>.course-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
  #drawer .lib-detail>.course-actions>button{position:relative;isolation:isolate;height:44px;min-height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  #drawer .lib-detail>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -489,13 +489,13 @@
  body:has(#app[data-mode=studio]) #drawer[data-panel=course] .drawer-header h2{font-size:28px;font-weight:800;font-style:italic;text-transform:uppercase}
  body:has(#app[data-mode=studio]) #drawer #drawerContent.sd-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,6fr) minmax(0,3fr);grid-template-areas:"tabs lead side" "tabs body side";grid-template-rows:auto 1fr;gap:8px 28px;max-width:none;align-items:start}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-lead{grid-area:lead;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
- body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-lead>.panel-intro{flex-basis:100%;margin:0;font-size:13px;color:var(--soft)}
+ body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-lead>.panel-intro{flex-basis:100%;margin:0;font-size:14px;color:var(--soft)}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs{grid-area:tabs;display:grid;gap:8px;margin:0;padding:0;border:0;position:sticky;top:0}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs>.panel-tab{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 22px;border:0;border-radius:0;background:none;color:#fff;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs>.panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs>.panel-tab.active{color:var(--on-hot)}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs>.panel-tab.active::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs .sd-count{font-size:13px;font-style:normal;letter-spacing:.08em;opacity:.8}
+ body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-tabs .sd-count{font-size:14px;font-style:normal;letter-spacing:.08em;opacity:.8}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-section{grid-area:body;min-width:0;columns:auto!important}
  body:has(#app[data-mode=studio]) #drawer .sd-root>.panel-section>h3{display:none}
  body:has(#app[data-mode=studio]) #drawer .sd-root .control-card,body:has(#app[data-mode=studio]) #drawer .sd-root .control-group{position:relative;isolation:isolate;margin:0 0 6px;padding:4px 24px 4px 30px;border:0;border-radius:0;background:none;box-shadow:none;break-inside:avoid}
@@ -519,18 +519,18 @@
  #drawer .sd-root label.toggle>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked{background:var(--a1)}
  #drawer .sd-root label.toggle>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
- body:has(#app[data-mode=studio]) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;border-radius:50%;font-size:12px}
+ body:has(#app[data-mode=studio]) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;border-radius:50%;font-size:14px}
  /* The right-hand column. */
  #drawer .sd-side{grid-area:side;display:grid;gap:8px;align-content:start;position:sticky;top:0;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sd-side :is(.sd-state,.sd-row,.sd-help){position:relative;isolation:isolate}
  #drawer .sd-side :is(.sd-state,.sd-row,.sd-help)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .sd-state{display:grid;gap:6px;padding:14px 26px}
- #drawer .sd-k{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .sd-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .sd-state.stale .sd-k{color:var(--hot)}
  #drawer .sd-state strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
- #drawer .sd-list{display:grid;gap:3px;font-size:12px;letter-spacing:.08em;font-weight:700;color:var(--soft)}
+ #drawer .sd-list{display:grid;gap:3px;font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft)}
  #drawer .sd-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 26px}
- #drawer .sd-row span{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .sd-row span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .sd-row b{font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .sd-help{display:grid;gap:6px;padding:14px 26px}
  #drawer .sd-help .sd-k{color:var(--hot)}
@@ -559,7 +559,7 @@
  .rh-results{display:grid;gap:14px;margin:0 0 22px}
  .rh-results h2{display:grid;gap:4px;margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  .rh-results h2 small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700}
- .rh-results h3{margin:6px 0 4px;font-size:13px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
  .rh-res-stand{display:grid;gap:8px;max-width:640px}
  .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;height:64px;padding:0 26px}
  .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -575,7 +575,7 @@
  .rh-res-row.win .rh-res-score small.under{color:var(--on-hot)}
  .rh-res-golfers{display:grid;gap:6px;max-width:640px}
  .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
- .rh-res-xp small{grid-column:2/-1;font-size:13px;letter-spacing:.14em;color:var(--soft)}
+ .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
  .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
  .rh-res-bar b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
  .rh-res-actions{display:flex;gap:10px;flex-wrap:wrap}

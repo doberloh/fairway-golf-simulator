@@ -964,9 +964,13 @@ screen shape to them.
   degrees (about 115 on 16:9, giving 74.6 px columns; narrower on taller
   screens, because a taller sheet leans further). Every box starts and ends on
   a column edge: place it with `place(grid, column, span, y)`, never by eye.
-- **Sizes:** panels padded 16 top and bottom, 36 at the sides; rows 48, list
-  items 56, tiles 96; type 13 (labels, capitals), 18 (body), 24 (values), 36
-  (titles), 56 (hero numbers); a label above its value.
+- **Sizes:** the pieces are written at round 9's sizes -- panels padded 16
+  top and bottom, 36 at the sides; rows 48, list items 56, tiles 96; type 13
+  (labels, written 14 since round 13), 18 (body), 24 (values), 36 (titles), 56
+  (hero numbers) -- and **drawn at seven tenths of them** (round 13, the
+  owner: "everything 40-50% smaller"; `COMPACT` in round-hud.js): margins
+  about 40, rows 34, text 10 / 13 / 17 / 25 / 39, against the round-13
+  mockups' 40, 32, 10 / 13 / 16 / 24 / 36. A label above its value.
 - **Selection** is an outline that follows the slanted shape (drop shadows of
   the box), and the current tab is filled. No inner boxes.
 - **Colours come from the biome** (`ui` in each biome record): in a round the
@@ -1066,7 +1070,8 @@ carries `--hud1:1` there so main.js asks the same question (`hud1`, read on
 each `updateHUD`). A phone keeps today's round screen until phase 5.
 
 **Size.** Every piece is laid out in design pixels and zoomed by `--hud-z`
-(`hudScale`): the 1280 canvas's scale, but never wider than the screen over
+(`compactScale`: `hudScale` times `COMPACT`, 0.7, round 13), and the sheets by
+`--sheet-z` (the same times the Text size). `hudScale` is the 1280 canvas's scale, but never wider than the screen over
 `ROUND_MIN_WIDTH` (1160, PLACED: the room the club panel and the meter need
 side by side), never below 0.75. **The Text size barely enlarges the round
 screen on 16:9** -- the pieces already span it at 100%, so it can add about a

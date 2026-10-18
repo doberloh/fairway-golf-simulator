@@ -121,3 +121,13 @@ test('round complete: places with ties, XP earned this round, the handicap line'
  assert.equal(handicapLine(null, null, 1), '1 MORE ROUND FOR A HANDICAP');
  assert.equal(handicapLine(null, null, 0), '');
 });
+
+// Round 13's compact rules: everything at seven tenths of round 9's sizes
+// (margins 60 -> 42, rows 48 -> 34, titles 36 -> 25), the Text size on top.
+test('the compact scale is seven tenths of the round screen scale', async () => {
+ const {COMPACT, compactScale} = await import('../src/round-hud.js');
+ assert.equal(COMPACT, 0.7);
+ assert.ok(Math.abs(compactScale(1280, 720) - 0.7) < 1e-9);
+ assert.ok(Math.abs(compactScale(1920, 1080) - 1.05) < 1e-9);
+ assert.ok(compactScale(1920, 1080, 1.25) * 1.25 > compactScale(1920, 1080), "the Text size still draws it larger");
+});

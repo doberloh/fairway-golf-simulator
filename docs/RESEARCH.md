@@ -8629,6 +8629,13 @@ that leaves the Text size about **+10%** on the round screen (1920 x 1080 at
 The tests check, at seven screen sizes and four Text sizes, that the club and
 the meter never meet and the slab and the cards never meet.
 
+**Round 13 drew it all at 0.7** (`COMPACT`, 17 October 2026): the owner
+asked for everything 40-50% smaller, and the round-13 mockups set margins
+40, rows 32 and text 10 / 13 / 16 / 24 / 36 against round 9's 60, 48 and 13 /
+18 / 24 / 36 / 56. Those ratios run 0.64 to 0.77; 0.7 sits in the middle
+(area 0.49, so "about half"), and the smallest labels were written up from
+13 to 14 px so they draw at about 10. PLACED: one factor, not per-piece sizes.
+
 **Shot moments' timings (phase 2, 17 October 2026).** The pop-up shot card holds
 **6 s** and fades over **0.6 s** (`CARD_HOLD_MS`, `CARD_FADE_MS`): PLACED, long
 enough to read three numbers from the mat, gone before the next golfer has

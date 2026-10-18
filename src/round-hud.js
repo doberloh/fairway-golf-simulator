@@ -127,6 +127,14 @@ export function ballLight(state, who) {
 // the same rule. Never below 0.75: a small window keeps them readable and
 // lets them crowd rather than shrink to nothing (PLACED).
 export const MIN_HUD_SCALE = .75, ROUND_MIN_WIDTH = 1160;
+// THE COMPACT RULES (round 13, the owner, 17 October 2026: "everything 40-50%
+// smaller"). The pieces were drawn to round 9's sizes -- margins 60, rows 48,
+// text 13 / 18 / 24 / 36 / 56 -- and round 13 settled on margins 40, rows 32,
+// text 10 / 13 / 16 / 24 / 36: two thirds to seven tenths of each. Everything
+// is drawn at COMPACT of hudScale, so the area shrinks by about half and the
+// course gets the room back. The Text size still multiplies it.
+export const COMPACT = 0.7;
+export const compactScale = (width, height, zoom = 1) => hudScale(width, height, zoom) * COMPACT;
 export function hudScale(width, height, zoom = 1) {
  const z = zoom > 0 ? zoom : 1, f = canvasFrame({width, height, zoom: z});
  const across = width > 0 ? width / ROUND_MIN_WIDTH / z : f.scale;
