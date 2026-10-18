@@ -4294,12 +4294,22 @@ let allNumbers=false,shotChoice=loadChoice(),shotCard=null;
 // THE CARD POINTS AT THE APEX, AND FADES AS THE CAMERA COMES BACK (the owner,
 // 18 October 2026): it comes up as the camera pulls back to show the whole
 // shot line, an arrow from its edge to the line's highest point, and when the
-// camera flies in to the next shot it fades rather than vanishing. A shot
-// whose line is never shown (skipped, or the review camera off) points at
-// where the ball came to rest.
+// camera flies in to the next shot it fades rather than vanishing. It sits
+// ABOVE the point, the arrow down to it (below only where the top of the
+// screen leaves no room). A shot whose line is never shown (skipped, or the
+// review camera off) points at where the ball came to rest. Beside the total,
+// a second big number: what is left to the pin -- feet inside 10 m, as the
+// flag marker counts (PLACED), and IN THE HOLE once it drops; not on the range.
 function nextShotCard(){if(shotCard?.resting){if(!shotCard.fadeAt)shotCard.fadeAt=performance.now();}else showShotCard(cardRecord());}
 // The highest point of a shot's flight, in the hole's own coordinates.
 function apexOf(points){let top=null;for(const p of points||[])if(!top||p.y>top.y)top=p;return top?{x:top.x,y:top.y,z:top.z}:null;}
+// The yards left to the pin from where the ball finished, as the card's second big number.
+function toPinBig(record){
+ if(rangeMode||!record?.result?.end||!course?.pin)return '';
+ if(record.result.holed)return '<div class="rh-sc-big pin"><b>IN</b><span>THE HOLE</span></div>';
+ const m=Math.hypot(record.result.end.x-course.pin.x,record.result.end.z-course.pin.z),feet=m<10;
+ return `<div class="rh-sc-big pin"><b>${feet?(m/.3048).toFixed(0):Math.round(m/YARD)}</b><span>${feet?'FT':'YDS'} TO PIN</span></div>`;
+}
 function showShotCard(record,resting=false,point=null){
  const el=$('shotCard');if(!el)return;
  const d=shotDisplay({range:rangeMode,choice:shotChoice,putt:!!record?.putting,all:allNumbers});
@@ -4307,7 +4317,7 @@ function showShotCard(record,resting=false,point=null){
  const cells=shotGrid(record,{fields:[CARD_MAIN,...CARD_ROW],columns:0}).cells,main=cells[0],row=cells.slice(1);
  const end=record.result?.end;if(!end||!main)return;
  el.innerHTML=`<div class="rh-sc-tab"><span>${escape(cardTab(record.player,record.club))}</span></div>`
-  +`<div class="rh-sc-body"><div class="rh-sc-main"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>`
+  +`<div class="rh-sc-body"><div class="rh-sc-main"><div class="rh-sc-big"><b>${escape(main.value)}</b><span>${escape(main.unit||'')}</span></div>${toPinBig(record)}</div>`
   +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
   +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div><i class="rh-sc-ptr" aria-hidden="true"></i>';
  shotCard={at:performance.now(),point:point||{x:end.x,y:course.height(end.x,end.z)+1,z:end.z},hole:round.hole,resting,fadeAt:0};
@@ -4324,20 +4334,20 @@ function placeShotCard(now){
  if(p.phase==='gone'){hideShotCard();return;}
  const q=view.project(shotCard.point);
  if(!q.visible){el.style.visibility='hidden';return;}
- // Beside the point, to its right -- or to its left where the map and tool
- // column would be under it. Kept clear of the club and the meter below: a
- // short shot rests low on the screen, and the card sat on the meter (seen
- // 17 October 2026).
- const w=$('world'),wr=w.getBoundingClientRect(),z=Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1;
- const s=(el.getBoundingClientRect().width/(el.offsetWidth||1))||z,h=el.offsetHeight*s;
- const y=Math.max(.42*h+12,Math.min(q.y,w.clientHeight-300*z));
- el.classList.remove('flip');el.style.left=q.x+'px';el.style.top=y+'px';
- let r=el.getBoundingClientRect();const gap=r.left-wr.left-q.x;
- const mapLeft=(document.querySelector('#world .minimap')?.getBoundingClientRect().left??wr.right)-wr.left;
- if(r.right-wr.left>Math.min(mapLeft,w.clientWidth)-8){el.classList.add('flip');el.style.left=Math.max(0,q.x-2*gap-r.width)+'px';r=el.getBoundingClientRect();}
- // The arrow: from the card's near edge, at the height it is pinned to, out to
- // the point -- drawn inside the scaled card, so lengths are divided back.
- const flip=el.classList.contains('flip'),ex=(flip?r.right:r.left)-wr.left,ey=y,vx=q.x-ex,vy=q.y-ey;
+ // Above the point, centred on it (the stylesheet hangs the card's foot a gap
+ // above `top`); below it only where the top of the screen leaves no room.
+ // Kept inside the screen and clear of the map and tool column on the right.
+ const w=$('world'),wr=w.getBoundingClientRect();
+ const s=(el.getBoundingClientRect().width/(el.offsetWidth||1))||1,cw=el.offsetWidth*s,ch=el.offsetHeight*s;
+ const mapLeft=Math.min(w.clientWidth,(document.querySelector('#world .minimap')?.getBoundingClientRect().left??wr.right)-wr.left);
+ const below=q.y-ch-50*s<8;el.classList.toggle('below',below);
+ el.style.left=Math.max(cw/2+8,Math.min(q.x,mapLeft-cw/2-8))+'px';el.style.top=q.y+'px';
+ const r=el.getBoundingClientRect(),body=el.querySelector('.rh-sc-body')?.getBoundingClientRect()||r;
+ // The arrow: from the card's near edge, under (or over) the point as far as
+ // the card reaches, to the point -- drawn inside the scaled card, so lengths
+ // are divided back.
+ const ex=Math.max(body.left+24*s,Math.min(q.x+wr.left,body.right-24*s))-wr.left,ey=(below?r.top:body.bottom)-wr.top,vx=q.x-ex,vy=q.y-ey;
+ el.style.setProperty('--px',((ex-(r.left-wr.left))/s).toFixed(1)+'px');
  el.style.setProperty('--py',((ey-(r.top-wr.top))/s).toFixed(1)+'px');
  el.style.setProperty('--pl',(Math.hypot(vx,vy)/s).toFixed(1)+'px');
  el.style.setProperty('--pa',(Math.atan2(vy,vx)*180/Math.PI).toFixed(1)+'deg');

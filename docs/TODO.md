@@ -40,8 +40,10 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 - [ ] **Three fixes of 18 October 2026: built; `npm test` and the build pass;
   not seen.** (1) The seats' Plays with / Swings bars follow the seat's lean,
   in every golfers step (Play, the course of the week, Endless, the range,
-  Challenges' group); (2) the shot card has an arrow to the shot line's apex,
-  comes up as the camera pulls back and fades as it flies in; (3) every
+  Challenges' group); (2) the shot card hangs above the shot line's apex with an
+  arrow down to it, comes up as the camera pulls back and fades as it flies
+  in, shows apex in place of offline, and has a second big number, the
+  yards left to the pin (feet inside 10 m, PLACED); (3) every
   setting's info i sits right after its name (a new layout rule,
   PROJECT_HANDOFF *Info icons*). **To check:** the seats at 16:9 and a phone;
   a drive with the review camera on (the card and arrow, the flip near the

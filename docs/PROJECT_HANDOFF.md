@@ -1169,10 +1169,15 @@ colour leans) by another route.
 the whole shot line (the moment the ball stops), with an arrow from its near
 edge to the line's highest point (`apexOf` over the flight's points), and when
 the camera flies in to the next shot it fades over `CARD_FADE_MS` (600 ms)
-instead of vanishing. It sits right of the point, or left where the map and
-tool column would be under it (class `flip`), and stays clear of the club and
-meter below; the arrow's length and angle are worked out each frame from where
-the card had to sit, so it always reaches the point. A shot whose line is
+instead of vanishing. It hangs ABOVE the point, centred on it, the arrow down
+from its foot (class `below` puts it under the point only where the top of the
+screen has no room), kept inside the screen and clear of the map and tool
+column; the arrow's start, length and angle are worked out each frame from
+where the card had to sit, so it always reaches the point. Its numbers: the
+total and, as a second big number, what is left to the pin (feet inside 10 m,
+as the flag marker counts -- PLACED; IN THE HOLE once it drops; not on the
+range), then carry, ball speed and apex (apex replaced offline, the owner, 18
+October 2026: the card points at the top of the line). A shot whose line is
 never shown (skipped, or the review camera off) points at where the ball came
 to rest. A new hole hides it at once.
 

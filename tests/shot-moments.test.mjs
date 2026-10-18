@@ -9,7 +9,7 @@ test('on a course the numbers pop up on a card; on the range tiles stay', () => 
  assert.equal(shotDisplay({range: true}).kind, 'tiles');
  assert.equal(shotDisplay({range: true}).stays, true);
  assert.equal(shotDisplay({range: true}).lit, 'carry');
- assert.deepEqual(shotDisplay({}).row, ['carry', 'ballSpeed', 'offline']);
+ assert.deepEqual(shotDisplay({}).row, ['carry', 'ballSpeed', 'apex']);
 });
 
 test('the player\'s choice wins, and Tab shows every number', () => {
