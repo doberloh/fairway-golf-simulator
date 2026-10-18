@@ -1274,6 +1274,29 @@ is outlined (a ticked box no longer outlines its row); drop-downs in the
 sheets, windows and dialogues are drawn in the 1.0 style with a dark list
 (the open list is the browser's own, PLACED).
 
+**THE WIDE-SCREEN RULE (round 14, 17 October 2026).** Round 13 was checked
+only at 1280 x 720; the owner's window is about 1.92:1 and showed chopped
+corners and a cut BACK. **A leaning picture is an exact shape, never a skewed
+layer in a box that hides its overflow** -- that box cut two corners off the
+parallelogram (the "chopped corners" on the Play cards and the week's
+picture). A picture's `::before` is widened by half its lean each side
+(`inset:0 calc(var(--lean) * -.5)`) and cut with
+`clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)`,
+where `--lean` is its height x tan 12 degrees (0.2126): the same shape a
+centred `skewX(-12deg)` gives, so it lines up with the skewed panels under
+it, and the image itself is not sheared. **A clip-path cuts box-shadows**, so
+a selected picture is outlined with `filter:var(--trace)` (four
+drop-shadows, defined on #drawer), which follows the shape. **Grids gain
+columns instead of stretching:** the course cards are
+`repeat(auto-fill,minmax(280px,1fr))` in the sheet's units -- 5 across at
+16:9, 6 at 1.92, 7 at 21:9, 5 at 4:3 (checked in the browser pane); the
+Endless landscapes (240) and the saved-course shelf (280) the same way. **A
+scroll box is padded by the lean** of what leans inside it (half the tallest
+shape's height x 0.2126): `.sx-scroll` 20, `.sx-saved` 20, `.wk` 24.
+The check that finds a clipped shape and an off-screen piece is a few lines
+of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
+4:3 and both phone shapes after any sheet change.
+
 **#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
 `sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
 the `*-root` marks first. Without that, Help opened blank after Play, under

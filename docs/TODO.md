@@ -86,6 +86,12 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Wide-screen rule (round 14, item 0): built; seen in the browser pane**
+  -- Play at 1280 x 720, 1382 x 720 (1.92), 1680 x 720 (21:9) and 1024 x 768
+  (4:3): 5, 6, 7 and 5 cards across; a page script found nothing off the
+  screen and no clipped leaning shape on the eight menu screens at 1382 x 720
+  (with the sheet scale raised to 0.9, as a larger Text size would). The full
+  pass of every screen at every size is in the round 14 report.
 - [ ] **Phones get the 1.0 sheets and dialogs (round 13): built, seen in the
   browser pane at 390 x 844** (Play steps 1 to 4, Endless, the course of the
   week, Challenges, the studio's settings, Saved courses, My profile,

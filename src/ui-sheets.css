@@ -28,7 +28,7 @@
     (the round screen's scale times the Text size, set on the root by main.js),
     and given the old variables here. Found on 17 October 2026, when the first
     look showed the sheets in the old green. */
- #drawer{--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
+ #drawer{--trace:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot));--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
  body:has(#app[data-mode]) #drawer:not([hidden]){left:0;right:0;top:0;bottom:0;width:auto;height:auto;min-height:0;max-height:none;padding:24px 60px 88px;zoom:var(--sheet-z,1);border:0;border-radius:0;background:linear-gradient(90deg,rgba(4,8,12,.9),rgba(4,8,12,.8));backdrop-filter:blur(6px);box-shadow:none;animation:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
 
  /* The header band: the screen's name, its eyebrow, and Esc. */
@@ -336,11 +336,11 @@
  body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:16px 32px;align-items:start;columns:auto!important}
  #drawer .lib-courses>:not(.lib-shelf):not(.lib-detail){grid-column:1}
  #drawer .lib-courses>h3,#drawer .lib-courses>.control-card:not(:has(>:not([hidden]))){display:none}
- #drawer .lib-shelf{grid-column:1;grid-row:1/span 4;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-shelf{grid-column:1;grid-row:1/span 4;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px 8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .lib-shelf>.course-card{display:grid;align-content:start;gap:0;margin:0;padding:0;cursor:pointer;color:#fff}
  #drawer .lib-shelf>.course-card::before{top:100px}
- #drawer .lib-shelf>.course-card .course-pic{display:block;position:relative;height:96px;margin-bottom:4px;overflow:hidden}
- #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card .course-pic{--lean:20.4px;display:block;position:relative;isolation:isolate;height:96px;margin-bottom:4px}
+ #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
  #drawer .lib-shelf>.course-card .course-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
  #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
@@ -348,7 +348,8 @@
  #drawer .lib-shelf>.course-card .course-meta span{font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .lib-shelf>.course-card .course-flag{display:none}
  #drawer .lib-shelf>.course-card>.course-actions{display:none}
- #drawer .lib-shelf>.course-card.on::before,#drawer .lib-shelf>.course-card.on .course-pic::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .lib-shelf>.course-card.on::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .lib-shelf>.course-card.on .course-pic{filter:var(--trace)}
  #drawer .lib-shelf>.course-card:focus-visible{outline:none}
  #drawer .lib-shelf>.course-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .lib-new{display:grid;place-items:center;align-content:center;gap:4px;min-height:196px;margin:0;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
@@ -437,14 +438,14 @@
  #drawer .sd-root .option-grid.sd-lands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
  #drawer .sd-root .sd-lands>.option{display:grid;gap:4px;height:auto;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase;text-align:left;cursor:pointer}
  #drawer .sd-root .sd-lands>.option>.swatch{display:none}
- #drawer .sd-root .sd-pic{position:relative;isolation:isolate;display:block;height:57px;overflow:hidden}
- #drawer .sd-root .sd-pic::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sd-root .sd-pic{--lean:12.1px;position:relative;isolation:isolate;display:block;height:57px}
+ #drawer .sd-root .sd-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.06);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .sd-root .sd-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .sd-root .sd-lands>.option{position:relative;isolation:isolate}
- #drawer .sd-root .sd-lands>.option.active .sd-pic::before{box-shadow:inset 0 0 0 3px var(--a1)}
+ #drawer .sd-root .sd-lands>.option.active .sd-pic{filter:drop-shadow(3px 0 0 var(--a1)) drop-shadow(-3px 0 0 var(--a1)) drop-shadow(0 3px 0 var(--a1)) drop-shadow(0 -3px 0 var(--a1))}
  #drawer .sd-root .sd-lands>.option.active{color:var(--a1)}
  #drawer .sd-root .sd-lands>.option:focus-visible{outline:none}
- #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic{filter:var(--trace)}
  #drawer .sd-root .control-label{margin:6px 0 2px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
  #drawer .sd-root label.field:has(>select#footprint){display:none}
  #drawer .sd-root .footprint-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}
@@ -507,22 +508,24 @@
  #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-help,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .sx :is(.lb-pick,.seat):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
  /* A picture: the course from above, under a slanted window. */
- #drawer .sx-pic{position:relative;isolation:isolate;display:block;height:130px;overflow:hidden}
- #drawer .sx-pic::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
+ #drawer .sx-pic{--lean:27.6px;position:relative;isolation:isolate;display:block;height:130px}
+ #drawer .sx-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.05);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .sx-pic.has-picture::before{background:var(--pic) center/cover}
  #drawer .sx-pic>b{position:absolute;inset:0;display:grid;place-items:center;font-size:60px;font-weight:800;font-style:italic;color:var(--a1)}
  /* 1 · Course: five cards across, scrolling; the line along the foot. */
- #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 22px 4px 4px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
- #drawer .sx-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px 12px}
+ #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 22px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 12px}
  #drawer .sx-card{display:grid;gap:4px;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
  #drawer .sx-cap{display:grid;gap:3px;align-content:center;min-height:64px;padding:8px 24px}
  #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:skewX(-12deg)}
  #drawer .sx-cap strong{font-size:21px;font-weight:800;font-style:italic;line-height:1.1;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  #drawer .sx-cap small{font-size:13px;letter-spacing:.1em;font-weight:700;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .sx-cap small i{font-style:normal;color:var(--hot)}
- #drawer .sx-card.on :is(.sx-pic,.sx-cap)::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card.on .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card.on .sx-pic,#drawer .sx-land.on .sx-pic{filter:var(--trace)}
  #drawer .sx-card:focus-visible{outline:none}
- #drawer .sx-card:focus-visible :is(.sx-pic,.sx-cap)::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card:focus-visible .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card:focus-visible .sx-pic{filter:var(--trace)}
  #drawer .sx-line{display:flex;align-items:center;gap:24px;min-height:48px;margin-top:14px;padding:0 30px}
  #drawer .sx-facts{display:flex;align-items:baseline;gap:20px;min-width:0;flex:1}
  #drawer .sx-facts strong{font-size:22px;font-weight:800;font-style:italic;white-space:nowrap}
@@ -531,7 +534,7 @@
  #drawer .sx-line>button::before{display:none}
  #drawer .sx-line>#roundDelete{color:#ff8a7a}
  #drawer .sx-line>button svg{width:14px;height:14px}
- #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;scrollbar-width:thin}
+ #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 20px;scrollbar-width:thin}
  #drawer .sx-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
  #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
  #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
@@ -608,14 +611,13 @@
 
  /* Endless: the landscapes (7 columns' worth) beside the run (5). */
  #drawer .sx-endless{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:8px 30px;align-items:start}
- #drawer .sx-lands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+ #drawer .sx-lands{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
  #drawer .sx-land{display:grid;gap:4px;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer;text-align:left}
- #drawer .sx-land .sx-pic{height:94px}
+ #drawer .sx-land .sx-pic{--lean:20px;height:94px}
  #drawer .sx-land-name{position:relative;isolation:isolate;display:flex;align-items:center;height:38px;padding:0 22px;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap;overflow:hidden}
  #drawer .sx-land-name::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .sx-land.on .sx-land-name{color:var(--on-hot)}
  #drawer .sx-land.on .sx-land-name::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- #drawer .sx-land.on .sx-pic::before{box-shadow:0 0 0 3px var(--hot)}
  #drawer .sx-land.sx-any{grid-column:1/-1}
  #drawer .sx-land.sx-any:not(.on) .sx-land-name::before{background:rgba(255,255,255,.05)}
  #drawer .sx-land:focus-visible{outline:none}
@@ -630,9 +632,9 @@
 
  /* The course of the week on one screen (round 13, frame c-cotw): the picture
     (7 columns) and eight fact tiles (5), the earlier weeks along the foot. */
- #drawer .wk{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:'hero facts' 'weeks weeks';gap:14px 30px;align-items:start}
- #drawer .wk-hero{grid-area:hero;position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:430px;padding:26px 48px;overflow:hidden}
- #drawer .wk-hero::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .wk{padding:0 24px;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:'hero facts' 'weeks weeks';gap:14px 30px;align-items:start}
+ #drawer .wk-hero{--lean:91.4px;grid-area:hero;position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:430px;padding:26px 48px}
+ #drawer .wk-hero::before{content:'';position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:var(--panel);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .wk-hero.has-picture::before{background:var(--pic) center/cover}
  #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.14em;transform:skewX(-12deg)}
  #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
@@ -648,7 +650,7 @@
  #drawer .wk h4{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
  #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
  #drawer .wk-week{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;align-items:stretch}
- #drawer .wk-week .wk-week-pic{height:64px}
+ #drawer .wk-week .wk-week-pic{--lean:13.6px;height:64px}
  #drawer .wk-week-cap{position:relative;isolation:isolate;display:grid;gap:2px;align-content:center;padding:6px 18px}
  #drawer .wk-week-cap::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #drawer .wk-week-cap strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}
