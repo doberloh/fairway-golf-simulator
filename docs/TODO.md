@@ -86,6 +86,15 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Tiny course models on every card (round 14, item 1): built; seen in the
+  browser pane at 1280 x 720** on Play, Endless (nine landscapes), the course
+  of the week (picture and earlier weeks) and Saved courses, two of them
+  enlarged. Not seen: the sway on the selected card, the studio's landscape
+  pictures, a phone, frame cost (no profile run; renderer and frame cost are on
+  the ask list). **Not built: the B flyover** for the course of the week's
+  picture and the course about to play -- a capture of the real course the
+  first time it is built or saved, stored and played back; they show the tiny
+  model meanwhile. PLACED: the relief and trees are a per-landscape rule.
 - [ ] **Wide-screen rule (round 14, item 0): built; seen in the browser pane**
   -- Play at 1280 x 720, 1382 x 720 (1.92), 1680 x 720 (21:9) and 1024 x 768
   (4:3): 5, 6, 7 and 5 cards across; a page script found nothing off the

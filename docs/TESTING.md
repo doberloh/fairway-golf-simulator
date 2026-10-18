@@ -171,7 +171,10 @@ the courses several suites share.
   settings screen). `ui-studio` (what counts as a changed studio setting, how
   a change reads, and the schema reading clean against itself).
   `ui-range-controls` (the range window's session table reads the report's
-  club table: balls, average carry, spread). `course-picture` (a course's
+  club table: balls, average carry, spread). `model-framing` (round 14: the tiny course models -- five landscapes x four
+  box shapes, the box always full of ground and every tee and green in view at
+  both ends of the sway; each landscape's trees; the same course, the same
+  model). `course-picture` (a course's
   picture lays out every hole, the same course the same way, fills its frame
   and draws inside it). `endless` also checks a run pinned to a landscape (every hole in it, the
   plain seed unchanged). `round-tees` (each golfer starts from their own tee,

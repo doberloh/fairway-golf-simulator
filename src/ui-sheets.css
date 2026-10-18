@@ -511,6 +511,9 @@
  #drawer .sx-pic{--lean:27.6px;position:relative;isolation:isolate;display:block;height:130px}
  #drawer .sx-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.05);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
  #drawer .sx-pic.has-picture::before{background:var(--pic) center/cover}
+ /* The tiny 3D model (round 14, model-cards.js): a canvas over the flat
+    drawing, cut to the same leaning shape. */
+ #drawer .model-pic{position:absolute;top:0;left:calc(var(--lean,0px) * -.5);width:calc(100% + var(--lean,0px));height:100%;z-index:-1;clip-path:polygon(var(--lean,0px) 0,100% 0,calc(100% - var(--lean,0px)) 100%,0 100%);pointer-events:none}
  #drawer .sx-pic>b{position:absolute;inset:0;display:grid;place-items:center;font-size:60px;font-weight:800;font-style:italic;color:var(--a1)}
  /* 1 · Course: five cards across, scrolling; the line along the foot. */
  #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 22px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}

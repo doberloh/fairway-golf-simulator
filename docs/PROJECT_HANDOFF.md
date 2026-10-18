@@ -1443,6 +1443,31 @@ own numbers -- and `recordRangeShot` refreshes it in place
 (`updateRangeSession`) rather than redrawing the window, so a slider being
 dragged keeps its place.
 
+**Card pictures are tiny 3D models** (round 14; `course-model.js`,
+`model-framing.js`, `model-cards.js`). Every card picture -- Play, the
+Endless landscapes, saved courses, the course of the week and its earlier
+weeks, the studio's landscapes -- gets the flat drawing at once
+(`pictureQueue`) and then a low-detail model of the whole course over it
+(`cardPictures` in main.js does both). The holes are the real ones
+(`layoutFor`); the ground relief and trees are a seeded per-landscape rule
+(PLACED, RESEARCH *The tiny course models*). **One renderer:** the game's
+(`view.renderer`) draws each model into one multisampled render target,
+read back into a 2D canvas in the card -- never a WebGL context per card
+(browsers drop the oldest past about sixteen: that would be the game's). The
+game's render target, clear colour and autoClear are put back after each
+draw. **Colours are display values:** three converts colour space and tone
+maps only when drawing to the screen, so the model's colours are set raw
+(`LinearSRGBColorSpace` with sRGB numbers) and the pixels copied as they
+are; its lights are pi times the mockup's (the mockup ran three r128, whose
+lights carried a hidden pi -- the first draw came out dark). The canvas sits
+under the card's leaning shape, cut by the same clip-path (`.model-pic`).
+Only the selected card (`.on`, `.active` or `aria-pressed`) sways, at up
+to 30 frames a second; models are made one per timer tick (about 50-100 ms
+each, on the main thread: the relief is a formula, so there is no worker).
+**Not built: the B flyover** for the big pictures (the course of the week,
+the course about to play): those show the tiny model, as the brief allows
+until a capture exists.
+
 **Course pictures are drawn from the plan** (`src/course-picture.js`, round
 13): the holes come from `generateCourse` and are routed by `routeHoles`, as
 `generateWorld` does, so the picture is the course; no terrain is built (a nine

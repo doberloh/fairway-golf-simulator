@@ -8691,3 +8691,30 @@ birdie and bogey 3-6 dB quieter; the XP count, sparse pings with an echo, sits
 about 18 dB under the old `fill`. This is the balance the owner approved in the
 mockup; whether it holds in the game, over ambience and on a projector's
 speakers, has not been heard (TODO).
+
+
+## The tiny course models (round 14, 17 October 2026)
+
+**What is real and what is placed.** The holes on a card's model are the
+course's own: `layoutFor` (generateCourse + routeHoles, the generator's
+routing) gives every tee, centre line, green, bunker and pond, scaled so the
+course fits a 200 x 120 plan. **PLACED:** the ground is a seeded relief
+(three sine terms per landscape, amplitude 4 for Island to 13 for Mountain:
+the mockup's `RELIEF14`), flattened along the holes and dug into a bed under
+each pond, not the generated terrain; the trees are a per-landscape rule
+(cones for PNW, Mountain and Redwood; round for Midwest, Links and Autumn;
+palms for Island; cacti for Desert; pale dead trees and pumpkins for Haunted
+Hollow), up to 0.3-1.5 times 880 trees for a nine (1,360 for an eighteen), kept
+off the holes and the water and thicker beyond the course -- not the real
+planting. Fairways are drawn at least 5.6 model units wide (36 m x 1.3 at the
+plan's scale) and greens at least 3.4 in radius, wider than true so they read
+at card size (PLACED). Reason: building the real landscape takes seconds and a
+card must show at once; a model takes 50-100 ms (Node, the framing test).
+
+**Framing** (the mockup's, checked by tests/model-framing.test.mjs on the
+game's courses): tilt sin(e) = (course width / depth) / box aspect, held to
+0.6-0.82 (37-55 degrees); the camera as close as every tee, green and
+mid-line allows with 6 units of room at both ends of a +-0.08 rad sway; then
+in by 5% steps until rays through the box's edge all land on the land (which
+runs 140 units past the plan across and 115 front and back). 20 of 20 boxes
+pass for five landscapes x four shapes (186 x 92, 197 x 66, 96 x 52, 16:9).
