@@ -38,14 +38,14 @@ October 2026): seven phases, a stop for the owner's look after each. The rules
 are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
 
 - [ ] **The hidden old interface removed (18 October 2026): built; `npm test`
-  1000/1000 and the build pass; not seen in a browser, and the smoke journeys
-  not run** (they were changed to read the 1.0 pieces). Gone from the page,
+  1000/1000, the build, and all 37 smoke journeys pass** (run on the real GPU
+  in 13 small batches the same day; the journeys were changed to read the 1.0
+  pieces). Not seen by a person. Gone from the page,
   the code and the styles: the course card, the weather box, the camera
   button and strip, the aim box, the spin dial's pair, the Swing button, the
   hints row and the club box's hidden label, plus about 40 class names nothing
   used (the drag grips, `.hud-custom`, old shot groups, the old splash);
-  PROJECT_HANDOFF *The old interface, removed*. **To check:** `npm run smoke`,
-  every journey; by hand, the Esc list's cameras (Player, Overview, Free
+  PROJECT_HANDOFF *The old interface, removed*. **To check** by hand: the Esc list's cameras (Player, Overview, Free
   flight, Green, Flyover, Full screen), the tool column's Range and Full
   screen, R on the range, the wind chip's arrow turning with the camera, a
   phone's aim pad. **For the owner:** the skins value of the hole being

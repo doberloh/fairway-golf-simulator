@@ -198,7 +198,8 @@ the courses several suites share.
   (17 October 2026). On a phone the journeys tap the Swing Meter's bar (there
   is no Swing button), and reach Tools through the menu list;
   the 44 px thumb check covers the new pieces. All 37 journeys pass on the
-  real GPU (17 October 2026, overnight).
+  real GPU (17 October 2026, overnight; again on 18 October 2026, in 13 small
+  batches, after the hidden old interface was removed).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 

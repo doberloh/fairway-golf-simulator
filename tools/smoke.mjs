@@ -1685,7 +1685,7 @@ const JOURNEYS = [
 
  {
   name: 'range-greens',
-  what: 'the range: its controls reopen from the view bar, a ball finishes on the 100 target green, the putt and chip stations play on the short-game green, a slope regrows it, and the session exports as CSV and PDF',
+  what: 'the range: its controls reopen from the tool column, a ball finishes on the 100 target green, the putt and chip stations play on the short-game green, a slope regrows it, and the session exports as CSV and PDF',
   async run(t) {
    await menuReady(t);
    const range = () => t.page.evaluate(() => window.lab.state().range);
@@ -1696,10 +1696,10 @@ const JOURNEYS = [
     await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, open by themselves', 5 * SLOW);
    });
    // The owner's report (16 October 2026): once closed, there was no way back.
-   await t.step('closed, the range controls come back from the view bar', async () => {
+   await t.step('closed, the range controls come back from the tool column', async () => {
     await t.closePanel('Range controls');
     await t.page.click('#rhTools [data-hud=range]');
-    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the tool column', 5 * SLOW);
    });
    await t.step('a ball at the 100 target lands on a green', async () => {
     // Its number from the centre mat, turned 19 degrees left (range.js). A
