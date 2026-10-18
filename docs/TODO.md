@@ -86,6 +86,13 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **The locker's single highlight; one 1.0 drop-down for every select
+  (round 14, items 5-6): built; seen in the browser pane at 1280 x 720** -- the
+  locker's worn ball traced with its name ticked; the title list opened by
+  click and by Enter, Arrow Down onto locked titles, Escape closing only the
+  list; Graphics' Quality and Frame cap; a seat's name. Not seen: picking a
+  title (the test golfer has none unlocked), a touch, a phone, the tool
+  windows' and pause list's selects. The bag (#club) is item 7.
 - [ ] **Course of the week and Endless in two steps; seats where nothing clips
   (round 14, items 2-4): built; seen in the browser pane at 1280 x 720** -- the
   week's step 1 (Next only) and Golfers (Play · the course); Endless step 1

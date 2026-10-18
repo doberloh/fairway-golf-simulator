@@ -367,8 +367,10 @@ between everyone on this device, main first. Down the left: the player, their
 level and how far into it, their sim handicap, and how long they have played.
 On the right, six tabs: **Overview** (eight headline numbers, the last three
 rounds and the next thing a level unlocks), **Locker** (your look: the kinds
-down the side with how many you have, the grid, and what you wear now on the
-left), **Achievements**, **Stats**, **Bag** and **History**. Any player can be made the main
+down the side with how many you have, the grid -- what you wear is outlined in
+yellow, its name ticked -- and what you wear now on the left; your title is
+chosen from a list grouped by where each title comes from, with how to earn
+the ones still locked), **Achievements**, **Stats**, **Bag** and **History**. Any player can be made the main
 profile, renamed, or removed with their history (it asks twice). The main
 profile cannot be removed until someone else is main.
 

@@ -61,6 +61,8 @@ import {buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
 import {createModelCards} from './model-cards.js';
+import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
+import './ui-dropdown.css';
 import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
@@ -4614,8 +4616,10 @@ function lookPicker(profile){
  else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').filter(r=>!SECRET_FLOURISHES.has(r.id)||profile.achievements?.ace).map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
  else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
-  const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
-  body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`level ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
+  // Round 14: the 1.0 drop-down (ui-dropdown.js) reads the level or the
+  // achievement on the right, and how to earn a locked one.
+  const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''} data-right="${escape(why.toUpperCase())}" data-earn="${escape(why.toUpperCase())}">${escape(r.name)}</option>`;
+  body=`<label class="field">Title, under your name<select id="wearTitle" data-dd-label="Title" aria-label="Title, under your name"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`LV ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
  else body=`<div class="look-grid balls">${rewardsOf('ball').map(r=>item(r,`<img class="ball-avatar" src="${ballPicture(r.id)}" alt="">`)).join('')}</div>`;
  return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${[...WEARABLE,'flourish'].map(tab).join('')}</div>${body}`;
 }
@@ -6749,6 +6753,11 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The studio's tool column is made later (ui-studio.js studioHud), so it is
  // heard from #world.
  $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')$('fullscreen').click();else if(t==='menu')toggleStudioPause();});
+ // THE 1.0 DROP-DOWN on every select a player sees (round 14, ui-dropdown.js):
+ // the sheets, the tool windows, the pause list. Not the seats' and the
+ // lobby's own pickers (arrows over a see-through select), nor the club (its
+ // box is the field: the bag, below).
+ dropdownEverywhere([$('drawer'),$('app')],{skip:'.lb-sel>select,.seat-val>select,#club'});
  // A seat's picker arrows (round 14): step its select and say so, as a change.
  document.addEventListener('click',e=>{const a=e.target.closest?.('.seat-arrow');if(!a)return;const sel=a.closest('.seat-pick')?.querySelector('select');if(!sel||!sel.options.length)return;e.preventDefault();sel.selectedIndex=(sel.selectedIndex+Number(a.dataset.step)+sel.options.length)%sel.options.length;sel.dispatchEvent(new Event('change',{bubbles:true}));});
  document.addEventListener('change',e=>{const sel=e.target.closest?.('.seat-val>select');const b=sel?.parentElement.querySelector('b');if(b)b.textContent=(sel.selectedOptions[0]?.textContent||'').toUpperCase();});

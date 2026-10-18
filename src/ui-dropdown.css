@@ -1,0 +1,52 @@
+/* THE 1.0 DROP-DOWN (round 14, ui-dropdown.js; frames c-locker-title, c-club).
+   The closed field is a slanted row: its label, the value in the italic
+   capitals and a triangle in the biome's colour. The list opens under it
+   (above it, for the bag), leaning with its column: group headers in the hot
+   colour, each choice a slanted row, the current one filled with a tick, the
+   cursor traced in yellow, locked ones dimmed with how to earn them, a number
+   or note right-aligned. Sized in em: 16px in a sheet, smaller in a tool
+   window. The native select lies under it, see-through. */
+.dd{position:relative;display:inline-grid;gap:4px;min-width:0;font-size:16px;vertical-align:middle}
+.dd-native{position:absolute!important;left:0;top:0;width:1px!important;height:1px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;opacity:0!important;pointer-events:none!important;overflow:hidden}
+.dd-field{position:relative;isolation:isolate;display:flex;align-items:center;gap:.6em;min-width:0;height:2.15em;min-height:0;margin:0;padding:0 1.1em;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 1em/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-align:left;cursor:pointer}
+.dd-field::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.32);transform:skewX(-12deg)}
+.dd-field:hover::before{background:color-mix(in srgb,var(--a1,#7a7) 22%,rgba(0,0,0,.32))}
+.dd-field:focus-visible{outline:none}
+.dd-field:focus-visible::before,.dd-open>.dd-field::before{box-shadow:inset 0 0 0 2px var(--hot,#fd5)}
+.dd-k{font:700 .8em/1 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal;letter-spacing:.14em;color:var(--soft,#9ab)}
+.dd-v{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.dd-tri{color:var(--a1,#8c8);font-style:normal;font-size:.8em}
+.dd-open .dd-tri{transform:scaleY(-1)}
+.dd-list{display:grid;gap:3px;min-width:100%;max-height:min(22em,60vh);overflow:hidden auto;margin:.2em 0 0 .75em;padding:2px 14px 4px 10px;scrollbar-width:thin;scrollbar-color:var(--a1,#8c8) rgba(255,255,255,.12)}
+.dd-up .dd-list,.dd-list.dd-up{margin:0 0 .2em .75em}
+.dd-group{margin:.5em 0 .1em .5em;font:700 .65em/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--hot,#fd5);text-transform:uppercase}
+.dd-item{position:relative;isolation:isolate;display:flex;align-items:center;gap:.7em;min-height:1.9em;padding:0 1em;color:#fff;cursor:pointer}
+.dd-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);transform:skewX(-12deg)}
+.dd-t{font:800 italic .85em/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;white-space:nowrap}
+.dd-t i{font-style:normal}
+.dd-r{margin-left:auto;padding-left:1em;font:700 .6em/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft,#9ab);text-align:right;text-transform:uppercase;white-space:nowrap}
+.dd-item.on{color:var(--on-hot,#111)}
+.dd-item.on::before{background:linear-gradient(135deg,var(--a1,#8c8),var(--a2,#5a5))}
+.dd-item.on .dd-r{color:var(--on-hot,#111)}
+.dd-item.cur{filter:drop-shadow(2px 0 0 var(--hot,#fd5)) drop-shadow(-2px 0 0 var(--hot,#fd5)) drop-shadow(0 2px 0 var(--hot,#fd5)) drop-shadow(0 -2px 0 var(--hot,#fd5))}
+.dd-item.dd-locked{opacity:.45;cursor:default}
+.dd-item.dd-locked.cur{opacity:.7}
+/* In a sheet's field row the label is the row's own: the field is the value. */
+#drawer label.field:has(>.dd){display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px}
+#drawer label.field>.dd{flex:0 1 auto;max-width:60%}
+#drawer label.field>.dd>.dd-list{position:static}
+/* The locker's title: its words as a heading over a full-width field (frame
+   c-locker-title). */
+#drawer .ph label.field:has(>.dd){display:grid;justify-content:stretch;gap:6px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+#drawer .ph label.field>.dd{max-width:none;width:100%}
+/* A seat's name is the drop-down's value, drawn as the seat's name. */
+#drawer .player-who>.dd{width:100%}
+#drawer .player-who>.dd>.dd-field{justify-content:center;height:auto;padding:2px 1em}
+#drawer .player-who>.dd>.dd-field::before{background:none}
+#drawer .player-who>.dd>.dd-field:hover::before{background:rgba(255,255,255,.06)}
+#drawer .player-who>.dd .dd-v{flex:0 1 auto;text-align:center;font-size:34px;line-height:1.1}
+#drawer .player-who.nm-20>.dd .dd-v{font-size:29px}
+#drawer .player-who.nm-17>.dd .dd-v{font-size:24px}
+#drawer .player-who.nm-15>.dd .dd-v{font-size:21px}
+/* In a tool window and the pause list, smaller. */
+#app .dd{font-size:13px}

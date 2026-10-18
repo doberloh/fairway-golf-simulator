@@ -1272,7 +1272,38 @@ leaning panel's corners are not clipped by the scroll box (the review's
 "cut-off edges"); Settings shows every group with no tabs; only the focused row
 is outlined (a ticked box no longer outlines its row); drop-downs in the
 sheets, windows and dialogues are drawn in the 1.0 style with a dark list
-(the open list is the browser's own, PLACED).
+(round 13 left the open list the browser's own, PLACED; round 14 replaced it -- *The 1.0 drop-down*, below).
+
+**The 1.0 drop-down** (round 14, `src/ui-dropdown.js`, `ui-dropdown.css`;
+frames c-locker-title and c-club): the closed field (label, value, triangle)
+and the list opening under it -- group headers, locked choices dimmed with how
+to earn them (`data-earn` on the option), the current one filled with a tick,
+the cursor traced, a note right-aligned (`data-right`). **The native select
+stays**, see-through and 1 px under the field (`.dd-native`): it keeps its id,
+value and change handler, a choice is written to it and a `change`
+dispatched, and the journeys' `selectOption` still works. **Keys:** the module
+adds a window capture listener when it loads -- before main.js's -- and while
+a list is open it takes every key (arrows, Enter, Escape close only the list),
+so the game's focus arrows and Escape-closes-the-sheet never see them.
+`dropdownEverywhere([#drawer, #app])` gives it to every select a player can
+see, also ones drawn later (a MutationObserver, at most once a frame -- and
+**a hidden tab or the browser pane pauses frames**, so a fresh select gets its
+field on the next frame); it skips selects with `display:none` (the hidden
+pickers: `#roundMode`, the team selects, `#footprint` under its tiles), the
+lobby's and the seats' own arrow pickers (`.lb-sel`, `.seat-val`) and
+`#club` (its box is the field: the bag, round 14 item 7). **The selects it
+covers** (round 14 sweep): the locker's title (`#wearTitle`), a seat's golfer
+(`who0-3`), Graphics (`gfxQuality`, `gfxFrameCap`), the studio's holes
+(`courseHoles`), the bag's owner (`bagOwner`), turf (`turfFirmness`),
+putting (`puttingMode`), shot mode (`shotMode`), the range's green
+(`rangeStationGreen`), the round's rules (`roundOB`, `roundPuttingMode`,
+`roundMonLie`, `roundTee`), Endless's goal (`endlessGoal`, where not an
+arrow picker), the pause's tee (`activeTee`), the monitor's club
+(`monClub`), free flight's hole (`exploreHole`), and each settings row
+drawn from the schema. **The locker** (frame c-locker): one highlight -- what
+is worn is traced in yellow round its own leaning edge (`filter:var(--trace)`
+on the skewed tile), its name yellow with a tick; the gradient fill and ring
+that made two highlights are gone.
 
 **THE WIDE-SCREEN RULE (round 14, 17 October 2026).** Round 13 was checked
 only at 1280 x 720; the owner's window is about 1.92:1 and showed chopped

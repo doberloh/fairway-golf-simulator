@@ -171,7 +171,7 @@ the courses several suites share.
   settings screen). `ui-studio` (what counts as a changed studio setting, how
   a change reads, and the schema reading clean against itself).
   `ui-range-controls` (the range window's session table reads the report's
-  club table: balls, average carry, spread). `model-framing` (round 14: the tiny course models -- five landscapes x four
+  club table: balls, average carry, spread). `ui-dropdown` (round 14: the 1.0 drop-down's rows -- groups, locked choices, notes -- and its cursor). `model-framing` (round 14: the tiny course models -- five landscapes x four
   box shapes, the box always full of ground and every tee and green in view at
   both ends of the sway; each landscape's trees; the same course, the same
   model). `course-picture` (a course's
