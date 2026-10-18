@@ -1793,17 +1793,12 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
      && document.getElementById('generating')?.hidden !== false), 'the studio landscape', 120 * SLOW);
    });
-   // The bar and every panel are both pinned to the bottom of the course, and
-   // until 12 October 2026 the bar sat over the panel's lowest rows. main.js
-   // lifts it above an open panel (*THE STUDIO BAR RIDES ABOVE*) and folds it to
-   // icons where the room above is short. Checked as geometry -- the bar clear
-   // of the panel and inside the course -- plus every bar button clickable,
-   // because a scrolled panel's own controls are clipped on purpose and would
-   // read as covered.
-   // Round 13: on a big screen the settings are the whole-screen sheet, the
-   // same as from the menu, with their own Back and Grow this landscape; the
-   // bar steps aside. A phone keeps the strip and the lifted bar.
-   await t.step('the studio bar clears an open panel, desktop to phone', async () => {
+   // The studio's settings, desktop to phone (round 13): the whole-screen
+   // sheet, the same as from the menu, with its own Back and Grow this
+   // landscape, the studio bar stepped aside. Until round 13 the settings left
+   // a strip for the bar and this checked the bar cleared them (PROJECT_HANDOFF
+   // *THE STUDIO BAR RIDES ABOVE*).
+   await t.step('the studio settings are the sheet, desktop to phone', async () => {
     const was = t.page.viewportSize();
     await t.page.click('#studioSettings');
     await t.until(() => t.drawerOpen(), 'the settings panel', 5 * SLOW);
@@ -1811,34 +1806,13 @@ const JOURNEYS = [
     for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 720], [844, 390], [390, 844]]) {
      await t.page.setViewportSize({width: w, height: h});
      await t.page.waitForTimeout(600 * SLOW);
-     const big = w > 560 && h > 500;
-     if (big) {
-      const sheet = await t.page.evaluate(() => ({bar: getComputedStyle(document.getElementById('studioBar')).display,
-       grow: !!document.getElementById('growStudio')}));
-      const bad = await t.page.evaluate(unreachableControls, '#growStudio, #closeDrawer');
-      const notes = [...(sheet.bar !== 'none' ? ['the studio bar shows over the settings sheet'] : []),
-       ...(!sheet.grow ? ['the sheet has no Grow this landscape'] : []),
-       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
-      console.log(`     ${`${w}x${h}`.padEnd(10)} sheet       ${notes.length ? notes.join('; ') : 'fine'}`);
-      if (notes.length) problems.push(`${w}x${h}`);
-      continue;
-     }
-     const fit = await t.page.evaluate(() => {
-      const bar = document.getElementById('studioBar').getBoundingClientRect();
-      const panel = document.getElementById('drawer').getBoundingClientRect();
-      const world = document.getElementById('world').getBoundingClientRect();
-      // The settings take the play area but for a strip holding the bar (15
-      // October 2026): `spare` is the course still showing besides that strip.
-      return {gap: Math.round(panel.top - bar.bottom), above: Math.round(bar.top - world.top),
-       spare: Math.round((panel.top - world.top) - (bar.height + 28) + (world.bottom - panel.bottom)),
-       compact: document.getElementById('studioBar').classList.contains('compact')};
-     });
-     const bad = await t.page.evaluate(unreachableControls, '#studioBar button, #closeDrawer');
-     const notes = [...(fit.gap < 0 ? [`the bar overlaps the panel by ${-fit.gap}px`] : []),
-      ...(Math.abs(fit.spare) > 2 ? [`the settings leave ${fit.spare}px of course showing`] : []),
-      ...(fit.above < 0 ? [`the bar runs ${-fit.above}px off the top of the course`] : []),
+     const sheet = await t.page.evaluate(() => ({bar: getComputedStyle(document.getElementById('studioBar')).display,
+      grow: !!document.getElementById('growStudio')}));
+     const bad = await t.page.evaluate(unreachableControls, '#growStudio, #closeDrawer');
+     const notes = [...(sheet.bar !== 'none' ? ['the studio bar shows over the settings sheet'] : []),
+      ...(!sheet.grow ? ['the sheet has no Grow this landscape'] : []),
       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
-     console.log(`     ${`${w}x${h}`.padEnd(10)} ${fit.compact ? 'icons only' : 'full bar  '}  ${notes.length ? notes.join('; ') : 'fine'}`);
+     console.log(`     ${`${w}x${h}`.padEnd(10)} ${notes.length ? notes.join('; ') : 'fine'}`);
      if (notes.length) problems.push(`${w}x${h}`);
     }
     if (was) await t.page.setViewportSize(was);
@@ -1846,7 +1820,7 @@ const JOURNEYS = [
     // And back down to the foot of the course once the panel goes.
     await t.until(() => t.page.evaluate(() => document.getElementById('studioBar').style.getPropertyValue('--panel-lift') === '0px'),
      'the studio bar to come back down', 2 * SLOW);
-    if (problems.length) throw new Error(`the studio bar and the panel collide at ${problems.join(', ')}`);
+    if (problems.length) throw new Error(`the studio settings are not the sheet at ${problems.join(', ')}`);
    });
    await t.step('save it', async () => {
     await t.page.click('#studioSave');

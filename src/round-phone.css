@@ -187,6 +187,22 @@
  #app.rh-paused .topbar .rh-pause-cond{font-size:11px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #app.rh-paused .topbar :is(.tee-control,.meter-button) :is(svg,i,label,small){font-size:11px}
  #app.rh-paused .topbar .tee-control select{appearance:none;border:0;background:none;color:#fff;font:800 italic 17px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ /* Round 13: Tools and Players & round as words on one row (the icon and the
+    golfer's letter went), and the time of day named as on a big screen. */
+ #app.rh-paused .topbar :is(#barTools,.avatar){flex-direction:row!important;justify-content:flex-start}
+ #app.rh-paused .topbar #barTools>:is(svg,i),#app.rh-paused .topbar .avatar>*{display:none!important}
+ #app.rh-paused .topbar #barTools{font-size:0!important}
+ #app.rh-paused .topbar #barTools::after{font-size:17px}
+ #app.rh-paused .topbar .avatar{background:none!important;color:#fff!important}
+ /* Their words are ::after, which the touch rule (style.css, a bigger tap
+    area) positions over the whole button: put them back in the row. The
+    golfer's letter goes by a selector heavy enough to beat the row rule. */
+ #app.rh-paused .topbar :is(#barTools,.avatar)::after{position:static!important;inset:auto!important}
+ #app.rh-paused .topbar #barTools~.avatar{font-size:0!important}
+ #app.rh-paused .topbar #barTools~.avatar::after{font-size:17px}
+ #app.rh-paused .topbar .sim-time-row{display:flex;align-items:center;gap:12px;width:100%}
+ #app.rh-paused .topbar .sim-time-row::before{content:"Time of day";color:var(--soft);font-size:11px;letter-spacing:.14em;font-style:normal;font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar #clockButton{margin-left:auto;color:var(--a1)}
 }
 
 /* HELD UPRIGHT: the same pieces, stacked as the upright mockup has them. */

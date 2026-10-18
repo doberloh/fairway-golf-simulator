@@ -247,7 +247,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
-- Course studio's Settings sheet fills the play area under a strip the same observer sizes for the bar -- on a phone; on a big screen the studio's windows are the menu's sheets and the bar steps aside. [COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA] [THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS]
+- The studio's windows are the menu's sheets on every screen and the bar steps aside while one is open; the old strip under the bar is retired. [THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS]
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 - The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]
 - The bridge's accepted club codes come from `CLUB_KINDS`; a typed list once dropped the connection on any non-stock club. [passes on every club a bag can hold]

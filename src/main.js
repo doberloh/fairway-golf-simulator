@@ -6145,13 +6145,11 @@ function bind(){
   const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');
    bar.classList.remove('compact');
    let room='';
-   // Not on a big screen (round 13): there the settings are the whole-screen
-   // sheet with its own Grow this landscape, and the bar steps aside.
-   if(!bar.hidden&&!d.hidden&&d.dataset.panel==='course'&&d.offsetHeight&&!matchMedia('(min-width:561px) and (min-height:501px)').matches){
-    const box=d.getBoundingClientRect(),k=box.height/d.offsetHeight||1;
-    const block=box.top-(parseFloat(getComputedStyle(d).top)||0)*k;
-    room=Math.round(($('world').getBoundingClientRect().top-block)/k+bar.offsetHeight+28)+'px';
-   }
+   // RETIRED IN ROUND 13: the settings no longer leave a strip for the bar.
+   // On every screen they are the whole-screen sheet with their own Grow this
+   // landscape, and the bar steps aside while any sheet is open (ui-sheets.css,
+   // round-hud.css); `room` stays empty, which also clears a strip an older
+   // build left on the element.
    if(d.style.top!==room)d.style.top=room;
    if(bar.hidden)return;
    const by=d.hidden?0:d.offsetHeight;

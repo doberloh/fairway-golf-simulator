@@ -28,8 +28,9 @@
    size and zoomed by --sheet-z. The card is a column of rows -- the title in
    a panel, the words as a line, a typed name in an outlined row, each choice
    a row with its line under it, the main one filled -- leaning as one block
-   (main.js watchWindows -> leanAsOne). */
-@media (min-width:561px) and (min-height:501px){
+   (main.js watchWindows -> leanAsOne). On a phone too since round 13, at
+   the phone's own scale (PHONES, at the end). */
+@media all{
  body>.version-notice{background:rgba(5,8,6,.55);backdrop-filter:none}
  body>.version-notice>:is(div,form){width:660px;max-width:calc(100vw / var(--sheet-z,1) - 60px);display:grid;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;zoom:var(--sheet-z,1);color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;text-align:left}
  body>.version-notice :is(.leave-options,.version-actions){display:contents}
@@ -160,7 +161,7 @@
 }
 
 /* SHOTS (frame c-dialogs3): the shot list as a window of rows. Outside #app. */
-@media (min-width:561px) and (min-height:501px){
+@media all{
  body>.shot-list:not([hidden]){background:rgba(5,8,6,.55)}
  body>.shot-list .shot-list-inner{zoom:var(--sheet-z,1);border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  body>.shot-list .shot-list-head{position:relative;isolation:isolate;padding:12px 34px;border:0}
@@ -214,3 +215,22 @@
  #world.aim-view #aimViewDone{display:flex;align-items:center;gap:8px;text-transform:uppercase;min-height:0;height:auto;padding:0;border:0;border-radius:0;background:none;color:#fff;font:inherit;letter-spacing:inherit;cursor:pointer}
  #world.aim-view #aimViewDone .avb-close{display:inline;flex:none;color:#fff}
 }
+
+/* PHONES (round 13): the dialogs and the shot list as on a big screen, drawn
+   at the round screen's scale without the compact step, as the sheets are. */
+@media (max-width:560px),(max-height:500px){
+ body>.version-notice>:is(div,form),body>.shot-list .shot-list-inner{zoom:calc(var(--sheet-z,1) / .7)}
+}
+
+/* GROWING THE LANDSCAPE (round 13, the sweep): the wait is a 1.0 window on
+   every screen -- a slanted panel under the biome's line, the title in the
+   italic capitals, the bar as a slanted track in the biome's colour. */
+#generating{background:rgba(5,8,6,.55);backdrop-filter:blur(4px)}
+#generating>div{position:relative;isolation:isolate;align-items:flex-start;max-width:none;width:min(460px,calc(100vw - 48px));padding:22px 40px;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;text-align:left}
+#generating>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel,#1f2a22);border-top:4px solid var(--a1,#8fc79c);transform:skewX(-12deg)}
+#generating strong{font-size:26px;font-weight:800;font-style:italic;line-height:1.05;text-transform:uppercase}
+#generating small{font-family:var(--font-ui);font-size:14px;color:var(--soft,#9ab)}
+#generating .generating-spin{border-color:rgba(255,255,255,.18);border-top-color:var(--a1,#8fc79c)}
+#generating .generating-track{height:10px;border-radius:0;background:rgba(255,255,255,.12);transform:skewX(-12deg)}
+#generating .generating-track>i{border-radius:0;background:var(--a1,#8fc79c)}
+#generating .generating-phase{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:13px!important;font-weight:700;letter-spacing:.14em;color:var(--soft,#9ab)!important}

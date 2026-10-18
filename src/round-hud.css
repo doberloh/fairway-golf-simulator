@@ -392,7 +392,6 @@
  body:has(#world[data-mode=studio]) #studioBar>button:focus-visible::before{box-shadow:0 0 0 3px var(--hot)}
  /* Folded to icons where the room is short, as before. */
  body:has(#world[data-mode=studio]) #studioBar.compact>button{font-size:0;padding:0 14px}
- body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display:none!important}
 }
 
 /* THE 1.0 RANGE CONTROLS (ui-range-controls.js; mockup r10 'range-ctl'): two
@@ -558,3 +557,9 @@
  #app.rh-paused .topbar :is(.tee-control,.meter-button,.rh-pause-choice){min-height:42px}
  #app.rh-paused .topbar .rh-pause-cond{min-height:44px;font-size:17px}
 }
+
+/* While any sheet is open in the studio the bar steps aside, on every screen
+   (round 13): the sheet has its own Back, and the settings their own Grow
+   this landscape (PROJECT_HANDOFF *THE STUDIO'S WINDOWS ARE THE MENU'S
+   SHEETS*). */
+body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display:none!important}
