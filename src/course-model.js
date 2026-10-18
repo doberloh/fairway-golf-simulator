@@ -50,6 +50,26 @@ const PLAN_W = 200, PLAN_D = 120, N = 24;
 // land round a 200 x 120 plan).
 const LAND_X = 140, LAND_Z = 115, CELL = 3.75;
 
+// LIT ONCE, WHEN THE MODEL IS MADE. The models draw with the game's own
+// renderer while the menu is on screen, so they must not need a lit shader:
+// a Lambert or Standard program compiled then is a visible stutter (the smoke
+// journey ball-light-shaders caught five as the Endless sheet opened). Each
+// face is shaded here by a sky and a sun -- the same light the mockup's
+// hemisphere and directional lights gave -- and drawn unlit
+// (MeshBasicMaterial). Cheaper per frame, too.
+const SUN = (() => { const v = [-70, 120, 90], l = Math.hypot(...v); return v.map(x => x / l); })();
+export function shadeOf(nx, ny, nz) {
+ const l = Math.hypot(nx, ny, nz) || 1;
+ nx /= l; ny /= l; nz /= l;
+ if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+ const sky = .58 + .3 * ny, sun = Math.max(0, nx * SUN[0] + ny * SUN[1] + nz * SUN[2]);
+ return Math.min(1.12, sky * .62 + sun * .52);
+}
+const faceShade = (a, b, c) => {
+ const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+ return shadeOf(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+};
+
 const hashSeed = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) % 2147483646 + 1; };
 const rng = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
 const hexRGB = hex => { const n = parseInt(hex.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
@@ -113,7 +133,7 @@ export function modelData(plan) {
  let top = -1e9;
  for (let j = 0; j <= NZ; j++) for (let i = 0; i <= NX; i++) { const v = hgt(-EXW + i * DX, -EXD + j * DZ); H[j * (NX + 1) + i] = v; top = Math.max(top, v); }
  const ground = {pos: [], col: []}, over = {pos: [], col: []}, wat = {pos: [], col: []};
- const tri = (o, a, bb, c, colr) => { o.pos.push(...a, ...bb, ...c); for (let k = 0; k < 3; k++) o.col.push(...colr); };
+ const tri = (o, a, bb, c, colr) => { o.pos.push(...a, ...bb, ...c); const k = faceShade(a, bb, c), lit = colr.map(v => Math.min(1, v * k)); for (let q = 0; q < 3; q++) o.col.push(...lit); };
  const P3 = (i, j) => [-EXW + i * DX, H[j * (NX + 1) + i], -EXD + j * DZ];
  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
   const p00 = P3(i, j), p10 = P3(i + 1, j), p01 = P3(i, j + 1), p11 = P3(i + 1, j + 1);
@@ -185,17 +205,29 @@ export function buildCourseModel(T, d, {hot = '#facc15'} = {}) {
   return new T.Mesh(geo, mat);
  };
  const group = new T.Group();
- group.add(mesh(d.ground, new T.MeshLambertMaterial({vertexColors: true})));
- group.add(mesh(d.over, new T.MeshLambertMaterial({vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4})));
- group.add(mesh(d.water, new T.MeshLambertMaterial({vertexColors: true, side: T.DoubleSide})));
+ group.add(mesh(d.ground, new T.MeshBasicMaterial({vertexColors: true})));
+ group.add(mesh(d.over, new T.MeshBasicMaterial({vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4})));
+ group.add(mesh(d.water, new T.MeshBasicMaterial({vertexColors: true, side: T.DoubleSide})));
+ // A solid's faces shaded into its own vertex colours (flat: one colour a face),
+ // so an instance's colour multiplies them.
+ const shaded = (geo, rgb = [1, 1, 1]) => {
+  const g = geo.toNonIndexed(), p = g.getAttribute('position'), col = [];
+  for (let i = 0; i < p.count; i += 3) {
+   const a = [p.getX(i), p.getY(i), p.getZ(i)], b = [p.getX(i + 1), p.getY(i + 1), p.getZ(i + 1)], c = [p.getX(i + 2), p.getY(i + 2), p.getZ(i + 2)], k = faceShade(a, b, c);
+   for (let q = 0; q < 3; q++) col.push(...rgb.map(v => Math.min(1, v * k)));
+  }
+  g.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+  return g;
+ };
+ const unlit = (o = {}) => new T.MeshBasicMaterial({vertexColors: true, ...o});
  const kind = d.kind;
  const crownG = kind === 'cone' ? new T.ConeGeometry(1.6, 4.4, 6) : kind === 'palm' ? new T.ConeGeometry(2.3, .9, 7) : kind === 'cactus' ? new T.CylinderGeometry(.32, .36, 2.2, 6) : kind === 'dead' ? new T.ConeGeometry(.7, 3.8, 4) : new T.IcosahedronGeometry(1.9, 0);
  crownG.translate(0, kind === 'cone' ? 3.6 : kind === 'palm' ? 4.6 : kind === 'cactus' ? 1.1 : kind === 'dead' ? 2.6 : 3.1, 0);
  const trunkG = new T.CylinderGeometry(.22, .32, kind === 'palm' ? 4.6 : 2.2, 5);
  trunkG.translate(0, kind === 'palm' ? 2.3 : 1.1, 0);
  const n = Math.max(1, d.trees.length);
- const crowns = new T.InstancedMesh(crownG, new T.MeshLambertMaterial({color: 0xffffff, flatShading: true}), n);
- const trunks = new T.InstancedMesh(trunkG, new T.MeshLambertMaterial({color: colour(hexRGB('#5a3d24'))}), kind === 'cactus' ? 1 : n);
+ const crowns = new T.InstancedMesh(shaded(crownG), unlit(), n);
+ const trunks = new T.InstancedMesh(shaded(trunkG, hexRGB('#5a3d24')), unlit(), kind === 'cactus' ? 1 : n);
  const M = new T.Matrix4(), Q = new T.Quaternion(), Y = new T.Vector3(0, 1, 0), V = new T.Vector3(), S = new T.Vector3();
  d.trees.forEach((t, k) => {
   M.compose(V.set(t.x, t.y - .2, t.z), Q.setFromAxisAngle(Y, t.turn), S.set(t.s, t.s * (kind === 'dead' ? 1.2 : 1), t.s));
@@ -206,22 +238,18 @@ export function buildCourseModel(T, d, {hot = '#facc15'} = {}) {
  if (kind === 'cactus') trunks.setMatrixAt(0, new T.Matrix4().makeScale(0, 0, 0));
  group.add(crowns, trunks);
  if (d.pumpkins.length) {
-  const pk = new T.InstancedMesh(new T.IcosahedronGeometry(.9, 0), new T.MeshLambertMaterial({color: colour(hexRGB('#e8761e')), flatShading: true}), d.pumpkins.length);
+  const pk = new T.InstancedMesh(shaded(new T.IcosahedronGeometry(.9, 0), hexRGB('#e8761e')), unlit(), d.pumpkins.length);
   d.pumpkins.forEach((p, k) => { M.compose(V.set(p.x, p.y, p.z), Q.setFromAxisAngle(Y, p.turn), S.set(p.s, p.s * .75, p.s)); pk.setMatrixAt(k, M); });
   group.add(pk);
  }
  // A flag on every green, in the landscape's hot colour.
  const poleG = new T.CylinderGeometry(.1, .1, 4.2, 4); poleG.translate(0, 2.1, 0);
  const flagG = new T.BoxGeometry(1.7, 1, .08); flagG.translate(.85, 3.7, 0);
- const poleM = new T.MeshLambertMaterial({color: 0xffffff}), flagM = new T.MeshLambertMaterial({color: colour(hexRGB(/^#[0-9a-f]{6}$/i.test(hot) ? hot : '#facc15'))});
- for (const f of d.flags) { const p = new T.Mesh(poleG, poleM), fl = new T.Mesh(flagG, flagM); p.position.set(...f); fl.position.set(...f); group.add(p, fl); }
+ const poleS = shaded(poleG), flagS = shaded(flagG, hexRGB(/^#[0-9a-f]{6}$/i.test(hot) ? hot : '#facc15')), m0 = unlit();
+ for (const f of d.flags) { const p = new T.Mesh(poleS, m0), fl = new T.Mesh(flagS, m0); p.position.set(...f); fl.position.set(...f); group.add(p, fl); }
  group.position.set(-d.centre[0], 0, -d.centre[1]);
  const pivot = new T.Group(); pivot.add(group);
  const scene = new T.Scene(); scene.add(pivot);
- // Lit in display values (no colour conversion on the way out). Light is pi
- // times the mockup's (three r128 there; today's lights carry no hidden pi), so
- // flat ground in sun comes out about its own colour.
- scene.add(new T.HemisphereLight(0xffffff, 0x6a7258, .55 * Math.PI));
- const sun = new T.DirectionalLight(0xfff4e0, .75 * Math.PI); sun.position.set(-70, 120, 90); scene.add(sun);
+ // No lights: every face carries its light (shadeOf, above).
  return {scene, pivot, dispose: () => scene.traverse(o => { o.geometry?.dispose?.(); o.material?.dispose?.(); })};
 }

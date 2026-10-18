@@ -547,7 +547,7 @@
  #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
  #drawer .sx-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
  /* 2 · Golfers: four seats. */
- #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+ #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
  #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
  #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
  #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
@@ -823,8 +823,8 @@
    edges; every side-by-side layout stacks, tiles go two to a row, and a row
    of choices that will not fit scrolls sideways. */
 @media (max-width:560px),(max-height:500px){
- body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 16px 84px;zoom:calc(var(--sheet-z,1) / .7)}
- body:has(#app[data-mode]) #drawer #drawerContent{padding:0}
+ body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 2px 84px;zoom:calc(var(--sheet-z,1) / .7)}
+ body:has(#app[data-mode]) #drawer #drawerContent{padding:0 22px}
  body:has(#app[data-mode]) #drawer .drawer-header{margin:0 0 12px}
  /* Steps: under the title, scrolling sideways when they will not fit; the
     content starts at the top; no keyboard keys on a touch screen. */
@@ -842,11 +842,15 @@
  /* Side by side becomes one column. */
  body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch,.rs-range,.hp){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
  body:has(#app[data-mode]) #drawer :is(.wk,.ch)>*{grid-area:auto!important}
- body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr)}
+ body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0 26px}
  body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
  /* Tiles two to a row. */
  body:has(#app[data-mode]) #drawer :is(.sx-formats,.sx-lands,.wk-facts,.wk-weeks,.ph-tiles,.ph-rounds,.stat-grid,.profile-bag,.lib-shelf,.chal-cards,.wk-rules,.achievement-list,.lm-buttons,.sd-lands,.footprint-icons){grid-template-columns:repeat(2,minmax(0,1fr))!important}
  body:has(#app[data-mode]) #drawer .sx-saved .course-list{grid-template-columns:minmax(0,1fr)}
+ body:has(#app[data-mode]) #drawer .sx-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body:has(#app[data-mode]) #drawer :is(.sx-page,.sx-scroll,.sx-pages){min-width:0;max-width:100%}
+ body:has(#app[data-mode]) #drawer .sx-line{flex-wrap:wrap;gap:6px 18px;min-height:0;padding:8px 26px}
+ body:has(#app[data-mode]) #drawer .sx-facts{flex-wrap:wrap;gap:4px 14px}
  body:has(#app[data-mode]) #drawer .ph .look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
  /* Settings: the categories as a sideways row over the settings. */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root{grid-template-columns:minmax(0,1fr)}

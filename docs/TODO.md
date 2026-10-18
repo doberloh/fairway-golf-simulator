@@ -140,8 +140,14 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   -- Play at 1280 x 720, 1382 x 720 (1.92), 1680 x 720 (21:9) and 1024 x 768
   (4:3): 5, 6, 7 and 5 cards across; a page script found nothing off the
   screen and no clipped leaning shape on the eight menu screens at 1382 x 720
-  (with the sheet scale raised to 0.9, as a larger Text size would). The full
-  pass of every screen at every size is in the round 14 report.
+  (with the sheet scale raised to 0.9, as a larger Text size would). **The
+  full pass, after items 1-10:** the page script over every menu screen and
+  every step (Play, Endless, the week, Challenges, the range, the studio,
+  Saved courses, My profile, Graphics, Help) at 1280 x 720, 1382 x 720,
+  1680 x 720, 1024 x 768, 844 x 390 and 390 x 844 -- nothing off the screen,
+  no leaning shape clipped, after three fixes it found (the seats' gutter;
+  the phone gutter; the phone's card grid); Play and the round looked at in
+  the pane at 21:9 and 4:3 (nothing of the round off the screen at 4:3).
 - [ ] **Phones get the 1.0 sheets and dialogs (round 13): built, seen in the
   browser pane at 390 x 844** (Play steps 1 to 4, Endless, the course of the
   week, Challenges, the studio's settings, Saved courses, My profile,

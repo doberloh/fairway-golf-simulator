@@ -1346,7 +1346,7 @@ columns instead of stretching:** the course cards are
 16:9, 6 at 1.92, 7 at 21:9, 5 at 4:3 (checked in the browser pane); the
 Endless landscapes (240) and the saved-course shelf (280) the same way. **A
 scroll box is padded by the lean** of what leans inside it (half the tallest
-shape's height x 0.2126): `.sx-scroll` 20, `.sx-saved` 20, `.wk` 24.
+shape's height x 0.2126): `.sx-scroll` 20, `.sx-saved` 20, `.wk` 24, the seats' row 20 (a seat is about 400 tall: its lean overran the sheet's 26 by 13). **On a phone** the sheet's gutter is the lean too (`#drawerContent` 22, the seats 26; it was 0, and every shape poked 3-19 past it), and the course cards go two to a row at whatever width fits (at the desktop minimum two cards were wider than an upright phone).
 The check that finds a clipped shape and an off-screen piece is a few lines
 of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
 4:3 and both phone shapes after any sheet change.
@@ -1523,8 +1523,12 @@ game's render target, clear colour and autoClear are put back after each
 draw. **Colours are display values:** three converts colour space and tone
 maps only when drawing to the screen, so the model's colours are set raw
 (`LinearSRGBColorSpace` with sRGB numbers) and the pixels copied as they
-are; its lights are pi times the mockup's (the mockup ran three r128, whose
-lights carried a hidden pi -- the first draw came out dark). The canvas sits
+are. **The models are unlit** (`MeshBasicMaterial`; every face shaded once by a
+sky and a sun when the model is made, course-model.js `shadeOf`): lit
+materials drawn on the game's renderer while the menu is up compiled five
+Lambert programs in view as the Endless sheet opened -- a stutter the
+`ball-light-shaders` journey caught. (Before that, lights at the mockup's
+strength came out dark: three r128's lights carried a hidden pi.) The canvas sits
 under the card's leaning shape, cut by the same clip-path (`.model-pic`).
 Only the selected card (`.on`, `.active` or `aria-pressed`) sways, at up
 to 30 frames a second; models are made one per timer tick (about 50-100 ms
