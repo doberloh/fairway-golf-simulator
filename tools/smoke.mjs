@@ -1654,8 +1654,8 @@ const JOURNEYS = [
    // Every panel the in-round menu offers, opened and closed. Found by the
    // label the player reads in the top menu.
    // Menu label -> the title of the window it opens. Not always the same:
-   // Help opens as "Welcome to Fairway".
-   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Welcome to Fairway']]) {
+   // Help opens as "Keys & help" (round 14, frame c-help).
+   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Keys & help']]) {
     await t.step(`menu → ${entry}`, async () => {
      await t.menuItem(entry);
      await t.until(async () => !!(await t.panelShowing(title)), `a window called "${title}"`, 5 * SLOW);

@@ -86,6 +86,12 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Keys & help (round 14, item 10): built; seen in the browser pane at
+  1280 x 720** (The essentials with their keys on the right; Explore the
+  course). Not seen: the other five pages, a controller, a phone (one column
+  there). The help text is today's, one topic a page (the frame's eleven
+  topics would need new writing: not done); the free-flight line no longer
+  names the bird icon.
 - [ ] **Driving range setup in steps (round 14, item 9): built; seen in the
   browser pane at 1280 x 720** (step 2: hit from, targets, the session note;
   Open the driving range on it). Not seen: a session opened from the short

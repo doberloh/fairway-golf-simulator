@@ -12,6 +12,7 @@
 import {stepSheet} from './ui-steps.js';
 
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const sectionsOf = root => [...root.querySelectorAll(':scope>.panel-section,:scope>.panel-columns>.panel-section')];
 
 // CHALLENGES: the challenge of the week as a banner across the top; the
@@ -119,5 +120,41 @@ export function buildLibrary(root, {codeOf, onNew, pick, onPick, doc = globalThi
  if (cards.length) choose(cards.find(c => c.querySelector('[data-play]').dataset.play === pick) || cards[0]);
  else side.remove();
  root.classList.add('lib-root');
+ return true;
+}
+
+// KEYS & HELP (round 14, frame c-help): the topics down the left -- the panel's
+// own tab buttons, so they keep their names -- the page in the middle as short
+// paragraphs under "N OF M" and its title, and that page's keys on the right.
+// The words are today's help text, one topic a page. `keys` is {topic title:
+// [[key, what]]}; the essentials' own key list (`.help-shortcuts`) is read from
+// its page and shown on the right instead of in the text.
+export function buildHelp(root, {keys = {}, doc = globalThis.document} = {}) {
+ const tabs = root.querySelector(':scope>.panel-tabs'), sections = [...root.querySelectorAll(':scope>.panel-section')];
+ if (!tabs || !sections.length || root.querySelector('.hp')) return false;
+ const hp = make(doc, 'div', 'hp');
+ const page = make(doc, 'section', 'hp-page'), head = make(doc, 'div', 'hp-head', '<small></small><strong></strong>');
+ const side = make(doc, 'aside', 'hp-keys');
+ tabs.classList.add('hp-topics');
+ tabs.setAttribute('aria-orientation', 'vertical');
+ page.append(head, ...sections);
+ hp.append(tabs, page, side);
+ root.querySelector(':scope>.panel-lead')?.classList.add('hp-lead');
+ root.append(hp);
+ root.classList.add('hp-root');
+ // The essentials' grid of keys becomes their keys column.
+ const grid = root.querySelector('.help-shortcuts');
+ const own = grid ? [...grid.querySelectorAll('kbd')].map(k => [k.textContent.replace(/\s*\/\s*/g, ' '), k.nextElementSibling?.textContent || '']) : [];
+ if (grid) grid.hidden = true;
+ const paint = () => {
+  const i = Math.max(0, sections.findIndex(s => !s.hidden)), s = sections[i], title = s.dataset.title || '';
+  head.querySelector('small').textContent = `${i + 1} OF ${sections.length}`;
+  head.querySelector('strong').textContent = title.toUpperCase();
+  const list = keys[title] || (s.contains(grid) ? own : []);
+  side.innerHTML = `<h4>${list.length ? 'KEYS ON THIS PAGE' : 'NO KEYS ON THIS PAGE'}</h4>` + list.map(([k, w]) => `<div class="hp-key"><kbd>${esc(k)}</kbd><span>${esc(String(w).toUpperCase())}</span></div>`).join('');
+  page.scrollTop = 0;
+ };
+ tabs.addEventListener('click', () => setTimeout(paint));
+ paint();
  return true;
 }

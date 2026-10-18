@@ -188,7 +188,9 @@ Saved and exported rounds record which course generator built them. When a Fairw
 
 Water and out-of-bounds still incur one penalty stroke and replay from the previous lie. This simplified stroke-and-distance rule applies to water; lateral-drop and full tournament rules are not implemented.
 
-**Settings.** From the main menu, **Camera & bay**, **Graphics** and **Sound** open as one settings screen: the categories down the left (Launch monitor and Help & controls are there too), every setting of the one you chose in rows -- a switch, a choice with ▶, or a bar you slide -- and, at the foot, one line on the setting you are on (press ? to see every explanation in place). In a round they open as small windows instead.
+**Settings.** From the main menu, **Camera & bay**, **Graphics** and **Sound** open as one settings screen: the categories down the left (Launch monitor and Help & controls are there too), every setting of the one you chose in rows -- a switch, a choice (its list opens under it; every list in the game works the same way: arrows, Enter, Escape, or a click), or a bar you slide -- and, at the foot, one line on the setting you are on (press ? to see every explanation in place). In a round they open as small windows instead.
+
+**Keys & help** (Help & controls) has a layout of its own: the topics down the left, a page of help in the middle, and that page's keys on the right.
 
 **Camera & bay** is on the main menu as well as in the tools tray, and everything in it stays on this device — it survives a reload, and it is never carried inside a course or a round you share.
 

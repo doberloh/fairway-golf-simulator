@@ -1286,6 +1286,17 @@ is outlined (a ticked box no longer outlines its row); drop-downs in the
 sheets, windows and dialogues are drawn in the 1.0 style with a dark list
 (round 13 left the open list the browser's own, PLACED; round 14 replaced it -- *The 1.0 drop-down*, below).
 
+**Keys & help** (round 14, frame c-help; ui-menu-screens.js `buildHelp`): the
+help panel keeps its seven topics and their words (one `<h3>` each, so
+`groupPanelContent` still makes a tab and a section per topic) and is laid out
+as topics down the left -- the same tab buttons, upright, so the journeys
+still press them by name -- the page in the middle under "N OF M" and its
+title, scrolling with its bar in the gutter, and that page's keys on the
+right (main.js `HELP_KEYS`; the essentials read their own `.help-shortcuts`
+list, which is hidden in the text). The settings layout (ui-settings.js) skips
+Help now, though its category list still links to it. The sheet's title is
+"Keys & help" (it was "Welcome to Fairway").
+
 **The 1.0 drop-down** (round 14, `src/ui-dropdown.js`, `ui-dropdown.css`;
 frames c-locker-title and c-club): the closed field (label, value, triangle)
 and the list opening under it -- group headers, locked choices dimmed with how

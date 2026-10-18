@@ -40,7 +40,9 @@ export function buildSettings(root, {current, open, doc = globalThis.document} =
  // each settings screen replaces and every other sheet clears.
  root.stFocus = null;
  if (!root.stWired) { root.stWired = true; root.addEventListener('focusin', e => root.stFocus?.(e)); }
- if (!SETTINGS_SCREENS.has(current) || root.querySelector('.st-cats')) return false;
+ // Keys & help has its own layout since round 14 (ui-menu-screens.js buildHelp,
+ // frame c-help); the settings list still links to it.
+ if (!SETTINGS_SCREENS.has(current) || current === 'help' || root.querySelector('.st-cats')) return false;
  const cats = make(doc, 'nav', 'st-cats');
  cats.setAttribute('aria-label', 'Settings');
  for (const [name, label] of SETTINGS_CATEGORIES) {
