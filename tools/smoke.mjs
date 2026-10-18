@@ -773,7 +773,7 @@ const JOURNEYS = [
     ['Camera & bay', []],
     ['Graphics', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
-    ['Driving range', ['The green', 'Who is hitting']],
+    ['Driving range', ['The range', 'Golfers']],
     ['Endless', ['Golfers', 'Landscape']],
     ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
    ];

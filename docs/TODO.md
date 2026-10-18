@@ -86,6 +86,13 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   (the journeys read them to tell the old screen from the new; removing them
   is a cleanup with the journeys). style.css still carries the old rules
   under the 1.0 ones; they go with that markup.
+- [ ] **Driving range setup in steps (round 14, item 9): built; seen in the
+  browser pane at 1280 x 720** (step 2: hit from, targets, the session note;
+  Open the driving range on it). Not seen: a session opened from the short
+  game or putting (Hit from applied after the range opens), a slope chosen
+  here, the live Apply to this session, a phone. PLACED: no Aim at or Wind
+  rows. The journeys menu-panels, range, range-greens, sound and the phone
+  menu pass.
 - [ ] **Start splash (round 14, item 8): built; seen in the browser pane at
   1280 x 720** (Desert week: bands, wordmark, the bar at "Growing the first
   hole · 30%", a tip, "v1.0.0 · WEEK 42 · DESERT"). Not seen: a phone, another

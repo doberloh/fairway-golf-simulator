@@ -351,3 +351,21 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  });
  return sheet;
 }
+
+// THE DRIVING RANGE, STEP BY STEP (round 14, frame c-range2; the old two tabs
+// are gone): 1 Golfers -- the same seats as everywhere; 2 The range -- where
+// to hit from, the targets, and the session so far. Open the range (Apply to
+// this session, once in it) is on the last step only. main.js renders the two
+// sections (`.rs-golfers`, `.rs-range`) and what they do.
+export function buildRangeSetup(root, {step = 0, onStep, doc = globalThis.document} = {}) {
+ const golfers = root.querySelector('.rs-golfers'), range = root.querySelector('.rs-range');
+ if (!golfers || !range || root.querySelector('.sx')) return null;
+ golfers.className = 'sx-body sx-golfers rs-golfers';
+ range.className = 'sx-body rs-range';
+ for (const s of root.querySelectorAll(':scope>.panel-section,:scope>.panel-lead,:scope>.panel-tabs,:scope>p')) s.classList.add('sx-emptied');
+ return stepSheet(root, {
+  steps: [{label: 'Golfers', page: golfers}, {label: 'The range', page: range}],
+  index: step, finish: root.querySelector('#rangeGo'), onStep,
+  hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
+ });
+}

@@ -54,7 +54,7 @@ import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
-import {buildLobby,buildEndlessSetup,nameSize} from './ui-lobby.js';
+import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
@@ -3692,7 +3692,7 @@ let studioSetup=false;
 // The range gets the same courtesy the other modes get: a chance to set the
 // group and the distance BEFORE the world is built, rather than walking in and
 // discovering the settings are somewhere else.
-let rangeSetup=false;
+let rangeSetup=false,rangeSetupHit='mats',rangeSetupStep=0;
 // Endless gets one too. It has no course to choose -- every hole is grown from
 // the run's own seed -- so this panel is the round half only: format, tees,
 // putting and who is playing.
@@ -3968,7 +3968,7 @@ function wireFormatFields(){
  $('roundMode').onchange=formatNote;formatNote();
  return formatNote;
 }
-function openRangePanel(){rangeSetup=true;openPanel('round');}
+function openRangePanel(){rangeSetup=true;rangeSetupStep=0;openPanel('round');}
 function openEndlessPanel(){endlessSetup=true;openPanel('round');}
 // The map's pan and zoom, and the one place that redraws it outside the frame
 // loop. Stored on the canvas so every drawMap call site inherits it -- which is
@@ -5251,17 +5251,36 @@ function renderPanel(name,content){
   content.innerHTML=`<p>${live
    ? 'Change who is practising. This applies straight away and does not touch the shots already recorded.'
    : 'Set your group and where the green sits, then open the range. Nothing is built until you say so.'}</p>`
-   +`<h3>The green</h3><label class="field">Green distance (yd)<input id="rangeSetupGreen" type="number" min="${GREEN_RANGE[0]}" max="${GREEN_RANGE[1]}" step="0.33" value="${Math.round(rangeGreenYards(settings))}"></label>`
-   +`<h3>Who is hitting</h3><div class="players-list" id="playerRows"></div>`
+   // ROUND 14 (frame c-range2): two steps, Golfers and The range -- where to
+   // hit from, the targets, and the last session (ui-lobby.js buildRangeSetup).
+   // The range's own settings are kept on the device (range.js), so they are
+   // set here before it opens; Hit from is applied once it has.
+   +`<section class="rs-golfers"><h3>Who is hitting</h3><div class="players-list" id="playerRows"></div>`
    +`<p class="note">Each golfer's shots are recorded separately. The card shows who is up; click it to change.</p>`
-   +`<p class="field-error" id="roundError"></p>`
+   +`<p class="field-error" id="roundError"></p></section>`
+   +`<section class="rs-range"><div class="rs-col"><h3>Hit from</h3><div class="rs-hit" role="group" aria-label="Hit from">${[['mats','The mats','Full shots at the greens and flags'],['chip','Short game','Chips and pitches to the short-game green'],['putt','Putting','Putts on a green you shape']].map(([k,t,w])=>`<button type="button" class="rs-hit-pick${rangeSetupHit===k?' on':''}" data-hit="${k}" aria-pressed="${rangeSetupHit===k}"><strong>${t}</strong><small>${w}</small></button>`).join('')}</div>`
+   +`<div class="rs-note"><span>The range</span><p>500 yards deep and dead flat, the same every visit, so shots a week apart compare.</p></div></div>`
+   +`<div class="rs-col"><h3>Targets</h3>${slider('rangeSetupGreen','Centre green',Math.round(rangeGreenYards(settings)),GREEN_RANGE[0],GREEN_RANGE[1],' yd',5)}`
+   +`<label class="field">Slope<select id="rangeSetupSlope" aria-label="Centre green slope">${SLOPES.map(k=>`<option value="${k}"${(rangeGreensPref.centre?.slope??'flat')===k?' selected':''}>${SLOPE_NAMES[k]}</option>`).join('')}</select></label>`
+   +`${slider('rangeSetupContour','Contour',rangeGreensPref.centre?.contour??CONTOUR.def??40,CONTOUR.min,CONTOUR.max,'',CONTOUR.step)}`
+   +`${slider('rangeSetupLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}</div>`
+   +`<div class="rs-col"><h3>${rangeShots.length?`This session · ${rangeShots.length} ball${rangeShots.length===1?'':'s'}`:'Last session'}</h3>${rangeShots.length?sessionRows(clubTable(rangeShots)).slice(0,6).map(r=>`<div class="rs-club"><b>${escape(r.club)}</b><span>${r.n}</span><b>${escape(r.carry)}</b><span>${escape(r.spread)}</span></div>`).join(''):'<p class="note">No balls hit yet on this visit.</p>'}`
+   +`<div class="rs-note"><span>Save a session</span><p>Every ball is kept. Export the session as a spreadsheet or a PDF from the range controls (Tab).</p></div></div></section>`
    +`<button class="primary" data-panel-action id="rangeGo">${live?'Apply to this session':'Open the driving range'} <i data-lucide="arrow-right"></i></button>`;
   groupEditor('playerRows',round.players);
+  for(const b of content.querySelectorAll('[data-hit]'))b.onclick=()=>{rangeSetupHit=b.dataset.hit;for(const x of content.querySelectorAll('[data-hit]')){x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));}};
   $('rangeGo').onclick=()=>{
    let players;
    try{players=readDraft();}catch(e){$('roundError').textContent=e.message;return;}
    const green=Math.min(GREEN_RANGE[1],Math.max(GREEN_RANGE[0],Number($('rangeSetupGreen').value)||DEFAULT_GREEN_YARDS));
+   // The targets: kept on the device, read when the range opens.
+   const slope=$('rangeSetupSlope')?.value,contour=Number($('rangeSetupContour')?.value),hit=rangeSetupHit;
+   const shape={...(slope?{slope}:{}),...(Number.isFinite(contour)?{contour}:{})};
+   shotLinePref=saveShotLines(Number($('rangeSetupLines')?.value??shotLinePref));
    if(live){
+    view.setShotHistory?.(visibleTrails());
+    if(Object.keys(shape).length&&(shape.slope!==rangeGreensPref.centre?.slope||shape.contour!==rangeGreensPref.centre?.contour))setRangeSetup('centre',shape);
+    if(hit!==rangeStation.mode)setRangeStation({mode:hit});
     // APPLIED IN PLACE. Shots already recorded keep the index they were hit
     // under, and the list shows the name recorded with them, so dropping a
     // player never silently swallows their session.
@@ -5275,7 +5294,8 @@ function renderPanel(name,content){
    }else{
     rangeSetup=false;closePanel();
     try{round.setPlayers(players,course?.tees);}catch{ /* a fresh Round is built below anyway */ }
-    enterRange({green});
+    if(Object.keys(shape).length){rangeGreensPref=saveRangeSetup({...rangeGreensPref,centre:{...rangeGreensPref.centre,...shape}});settings.rangeCentre=rangeGreensPref.centre;}
+    enterRange({green}).then(()=>{if(hit!=='mats')setRangeStation({mode:hit});});
    }
   };
  }else if(name==='round'){
@@ -5780,6 +5800,8 @@ function renderPanel(name,content){
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
   if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
  }
+ // The driving range in two steps (ui-lobby.js), once the panel has its sections.
+ if(name==='round'&&(rangeSetup||rangeMode))buildRangeSetup(content,{step:rangeSetupStep,onStep:i=>{rangeSetupStep=i;}});
  if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup){
   // Endless, step by step (ui-lobby.js): the landscapes as drawn pictures, the
   // goal, the golfers, the format; the best run from the main golfer's history.

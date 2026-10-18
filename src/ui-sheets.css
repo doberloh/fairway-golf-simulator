@@ -684,6 +684,33 @@
  #drawer .wk-week-cap strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}
  #drawer .wk-week-cap small{font-size:13px;letter-spacing:.1em;font-weight:700;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #drawer .wk-group .wk-rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px;margin-top:16px}
+ /* THE DRIVING RANGE SET-UP, STEP 2 (round 14, frame c-range2): where to hit
+    from, the targets, and the session, in three columns. */
+ #drawer .rs-range{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 30px;align-items:start}
+ #drawer .rs-col{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .rs-col>h3{margin:0 0 2px;font-size:14px;letter-spacing:.16em;color:var(--soft)}
+ #drawer .rs-hit{display:grid;gap:8px}
+ #drawer .rs-hit-pick{position:relative;isolation:isolate;display:grid;gap:4px;justify-items:start;min-height:68px;padding:10px 30px;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
+ #drawer .rs-hit-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-hit-pick strong{font:800 italic 24px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .rs-hit-pick small{font:600 15px/1.3 var(--font-ui);color:var(--soft)}
+ #drawer .rs-hit-pick.on{color:var(--on-hot)}
+ #drawer .rs-hit-pick.on small{color:var(--on-hot);opacity:.85}
+ #drawer .rs-hit-pick.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .rs-hit-pick:focus-visible{outline:none}
+ #drawer .rs-hit-pick:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .rs-note{position:relative;isolation:isolate;display:grid;gap:4px;margin-top:8px;padding:12px 30px}
+ #drawer .rs-note::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-note>span{font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
+ #drawer .rs-note>p{margin:0;font:600 15px/1.35 var(--font-ui);color:#fff}
+ #drawer .rs-col>label.field{position:relative;isolation:isolate;margin:0;padding:6px 28px}
+ #drawer .rs-col>label.field::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-club{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 50px 90px 56px;align-items:center;height:42px;padding:0 28px;font:700 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.06em}
+ #drawer .rs-club::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-club b{font-size:18px;font-weight:800;font-style:italic}
+ #drawer .rs-club>:not(:first-child){text-align:right}
+ #drawer .rs-club span{color:var(--soft)}
+
  /* THE SCORECARD between holes: the whole screen, the finished hole's number
     flashing, and the paper card's marks -- a circle round a birdie, two round
     an eagle, a square round a bogey, two round worse (celebration.js). */
@@ -783,7 +810,7 @@
  body:has(#app[data-mode]) #drawer:has(.sx-foot) [data-panel-action]:not(.sx-foot *){left:16px;right:16px}
  body:has(#app[data-mode]) #drawer:has([data-panel-action]:not(.sx-foot *):not([hidden])){padding-bottom:150px}
  /* Side by side becomes one column. */
- body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
+ body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch,.rs-range){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
  body:has(#app[data-mode]) #drawer :is(.wk,.ch)>*{grid-area:auto!important}
  body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr)}
  body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
