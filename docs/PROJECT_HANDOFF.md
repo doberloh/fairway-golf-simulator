@@ -1316,6 +1316,16 @@ choice on the page redraws it, so the tab shown lives in main.js
 (`profileHubTab`). On the Locker tab the left stack swaps to what is worn now
 (the locker mockup's live preview), by CSS on `.ph[data-tab]`.
 
+**Windows lean as one block** (round 13, `src/ui-windows.js`, `ui-windows.css`):
+every row draws its own slanted background, and `leanAsOne` sets `--wy` (the
+row's distance from the column's middle) so CSS moves the row across by
+`tan 12° x --wy` -- where a sheet leaning about that middle line would put it.
+The edges become one straight slant and the text stays upright. Leaning each
+row about its own middle made the zigzag the owner called jagged. The round's
+pause is two such windows (the list; the round), the studio has its own
+(`toggleStudioPause`, Esc while flying: back to the view, studio settings,
+regenerate, save, settings, leave), built by `makeWindow`.
+
 **Pause is the mockup's two columns** (the Esc list; third pass, 17 October
 2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
 Help & controls and Main menu as tall rows, the settings as four half-width

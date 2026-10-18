@@ -21,6 +21,7 @@ import './round-hud.css';
 import './ui-screens.css';
 import './ui-sheets.css';
 import './round-phone.css';
+import './ui-windows.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -59,6 +60,7 @@ import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildLibrary} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
+import {leanAsOne,makeWindow} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
@@ -3390,6 +3392,7 @@ function shortfall(){
  return got?`Landscape rebuilt. Only ${got} of ${want} channels found room on this ground.`:`Landscape rebuilt. This ground was too steep for the channels you asked for.`;
 }
 function setMode(mode){
+ if(mode!=='studio'){$('studioPause')?.remove();$('world')?.classList.remove('studio-paused');}
  const was=appMode;
  appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');applyHudPalette();
  // NO AIM LINE IN THE STUDIO. Nobody is about to hit, and a white line running
@@ -3444,6 +3447,25 @@ async function continueRound(){
  });
  setMode('play');closePanel();
  if(staleGenerator){staleGenerator=false;showVersionNotice();}
+}
+// THE STUDIO'S PAUSE (round 13, frame c-pause): Esc while flying. Every mode
+// has one. Rows press the studio's own buttons, so they do what those do.
+function toggleStudioPause(show){
+ let w=$('studioPause');
+ const on=show??(!w||w.hidden);
+ if(w)w.remove();
+ if(!on||appMode!=='studio'){$('world').classList.remove('studio-paused');return;}
+ const n=studioDirty?studioChanges().length:0;
+ w=makeWindow({id:'studioPause',title:'Paused',line:`Course studio · ${settings.seed}`,rows:[
+  {id:'back',label:'Back to the view',key:'Esc',hot:true,act:()=>toggleStudioPause(false)},
+  {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
+  {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
+  {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
+  {id:'graphics',label:'Settings',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
+  {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
+ ]});
+ $('world').append(w);$('world').classList.add('studio-paused');
+ requestAnimationFrame(()=>{leanAsOne([...w.children]);w.querySelector('button')?.focus();});
 }
 function updateStudioState(){
  if(appMode!=='studio')return;
@@ -4328,7 +4350,9 @@ function setPause(on){
  const app=$('app');
  if(on&&(!hud1||appMode!=='play'))return;
  app.classList.toggle('rh-paused',!!on);
- if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();}
+ if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();
+  // One leaning block each (round 13, ui-windows.js): the list and the round.
+  requestAnimationFrame(()=>{const tb=document.querySelector('.topbar');leanAsOne(['#pauseHead','#pauseResume','#scoreNav','#barTools','.avatar','#dropHelp','#dropMenu','#dropGraphics','#dropSound','#dropLibrary','.connection','.sim-time'].map(q=>tb.querySelector(q)));leanAsOne([...tb.querySelectorAll('.rh-pause-stand>div,.rh-pause-extra .tee-control,.rh-pause-extra .meter-button,.rh-pause-choice,.rh-pause-cond')]);});}
  else toggleClockPop(false);
 }
 // ARROWS AND A CONTROLLER IN THE MENUS (phase 3; ui-focus.js). On the main menu
@@ -6857,7 +6881,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)$('rangeControls').click();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
   // ? in a settings window or a sheet shows every control's explanation (ui-screens.css).
   if(e.key==='?'&&document.activeElement?.closest?.('.popup,#drawer')){e.preventDefault();e.stopPropagation();$('app').classList.toggle('rh-help');return;}

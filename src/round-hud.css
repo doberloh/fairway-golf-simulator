@@ -520,3 +520,26 @@
 /* Off the round screen's query (a phone) the new pieces stay out of the way
    until the phone's own layout takes them (round-phone.css). */
 @container app (max-width:560px) or (max-height:500px){.rh-tools,.rh-launch,.sm-skip{display:none!important}}
+
+/* THE PAUSE AS A WINDOW (round 13, frame c-pause): the compact rows of one
+   window that leans as one block -- every row turns about the column's middle
+   line (ui-windows.js leanAsOne sets --wy) -- the title in a panel with where
+   you are on it, Resume filled. What the frame's six rows leave out sits in a
+   second window beside it: the standings, the tee, the meter, shot numbers,
+   cameras and conditions (PLACED). */
+@container app (min-width:561px) and (min-height:501px){
+ #app[data-mode=play].rh-paused .topbar{grid-template-columns:repeat(4,minmax(0,117px)) minmax(0,520px);justify-content:start;align-content:start;gap:8px 8px;padding:120px 40px 40px 170px;background:rgba(5,8,6,.55)}
+ /* tan 12 degrees: a row above the middle moves right by that much of its height above it. */
+ #app.rh-paused .topbar :is(.rh-pause-head,.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.sim-time,.rh-resume,.rh-pause-stand>div,.tee-control,.meter-button,.rh-pause-choice,.rh-pause-cond){translate:calc(var(--wy,0px) * .2126) 0}
+ #app.rh-paused .topbar .rh-pause-head{position:relative;isolation:isolate;display:grid;gap:4px;margin:0 0 4px;padding:12px 34px}
+ #app.rh-paused .topbar .rh-pause-head::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-pause-head strong{font-size:31px}
+ #app.rh-paused .topbar .rh-pause-head small{display:block;font-size:14px}
+ #app.rh-paused .topbar :is(.rh-resume,#scoreNav,#barTools,.avatar,#dropHelp,#dropMenu){height:52px;padding:0 34px!important;font-size:21px!important}
+ #app.rh-paused .topbar .avatar::after{font-size:21px}
+ #app.rh-paused .topbar :is(#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time){height:38px;font-size:14px!important}
+ #app.rh-paused .topbar .rh-pause-extra{margin-left:52px;padding-top:0;gap:6px}
+ #app[data-mode=play].rh-paused .topbar .rh-pause-stand>div{height:46px}
+ #app.rh-paused .topbar :is(.tee-control,.meter-button,.rh-pause-choice){min-height:42px}
+ #app.rh-paused .topbar .rh-pause-cond{min-height:44px;font-size:17px}
+}

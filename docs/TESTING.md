@@ -155,7 +155,8 @@ the courses several suites share.
   On a big screen the flight check now expects no flight panel, Skip in the
   meter's title (`#smSkip`) and the launch strip; the range journey opens
   Range controls from the tool column (`#rhTools [data-hud=range]`).
-  `ui-focus` (phase 3: arrows and a controller -- every button reachable from
+  `ui-windows` (each row of a window is moved by its distance from the
+  column's middle). `ui-focus` (phase 3: arrows and a controller -- every button reachable from
   every other in the menus' layouts, none a dead end, down goes to the next
   row, a single line wraps, the keys and pad directions). `ui-lobby` (the
   1.0 lobby: a picker's value and line are cut from the drop-down's own

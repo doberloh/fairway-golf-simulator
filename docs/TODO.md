@@ -71,6 +71,11 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   course of the week and saved courses not looked at. The course studio's
   sheet is unchanged. The pause screen (two columns) and settings' help on
   demand are not yet seen.
+- [ ] **Pause in every mode, round 13 (frame c-pause): built, seen in the
+  browser pane at 1280 x 720** (a round; the course studio). The windows lean
+  as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
+  a controller in the studio pause. PLACED: the round's pause keeps all its
+  rows and a second window for the round (the frame has six rows).
 - [ ] **Round screen, round 13: built to frames c-aim, c-first and c-flight,
   seen in the browser pane at 1280 x 720** (at rest with the aim point shown
   first, and one shot in flight). Not seen: a putt, a monitor shot's strip,

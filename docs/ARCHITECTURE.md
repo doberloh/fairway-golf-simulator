@@ -119,6 +119,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/ui-studio.js` -- 1.0 course studio: the slab, "N settings changed" chip and keys while flying; the settings sheet's category counts, changed dots and what-changed column; `settingsChanges` tested in tests/ui-studio.test.mjs
 - `src/ui-range-controls.js` -- 1.0 range controls: the range window's controls sorted into two columns by its own headings, the session-by-club table (from range-report.js `clubTable`), the lab row; tests/ui-range-controls.test.mjs
 - `src/course-picture.js` -- a course's picture drawn top-down from its own routing (generateCourse + routeHoles, no terrain) in the biome's map colours; `pictureQueue` fills a list one picture per idle moment; tests/course-picture.test.mjs
+- `src/ui-windows.js`, `src/ui-windows.css` -- the 1.0 windows: `makeWindow` (title, line, rows) and `leanAsOne`, which lines a column's rows up as one leaning block; tests/ui-windows.test.mjs
 - `src/ui-sheets.css` -- the sheets (#drawer, outside #app) as 1.0 screens: full screen, slanted control stacks, the lobby on the grid; the scorecard and round complete
 - `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks
