@@ -1244,6 +1244,21 @@ week's card opens its own setup (it is stroke play at fixed settings); the
 mockup's Goal and Holes rows are not there (the lobby has no goal, and the
 course decides its holes); "your best" on a course is not shown.
 
+**#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
+`sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
+the `*-root` marks first. Without that, Help opened blank after Play, under
+Play's rule hiding the old sections (found by menu-panels).
+
+**Endless is three steps** (`buildEndlessSetup`): Landscape -- the biomes as
+pictures (each drawn from a fixed sample course), or Any -- with the goal
+(none or Sudden death, `#endlessGoal`) and the main golfer's best run;
+Golfers; Format and rules (the mockup's two steps had nowhere for them,
+PLACED). Its start button shows on every step (`finishAlways`). **A run's
+landscape rides in its seed** as `~<biome>` (endless.js `runLandscape`,
+`landscapeSeed`): saved and replayed runs keep it, and a seed without one --
+every run before -- grows exactly what it did (the fingerprint is unchanged,
+no version bump). A pinned run never adopts the menu's showcase hole.
+
 **Each golfer has their own tee** (round 13; `game.js` `teeOf`): a player may
 carry `tee` and starts every hole from it; one without plays from the round's
 tee (`#roundTee`, still there, hidden). The tee is remembered on the
@@ -1310,8 +1325,9 @@ windows and keep their own layout.
 banner, the group tabs (`.chal-tabs`) down the left, the cards in two
 columns and the detail section (with the group under it) on the right; the
 panel's own section tabs go, and `#challengeGo` is moved out of them first.
-The week gets `weeklyBlocks` (picture, earlier weeks from `weekKey` of past
-dates, fact rows) and its format and group under the facts. Saved courses
+The week is two steps since round 13 (frame c-cotw): one screen -- `weeklyBlocks`'s picture,
+eight fact tiles and the earlier weeks with their pictures -- and Golfers
+(the seats, tees and rules; PLACED, the frame has only Play). Saved courses
 keep their tabs; Your courses becomes a shelf whose chosen card's own
 `.course-actions` are moved into the right column (and back when another is
 chosen), with the course code from `exportCourse`. **A `:is()` list takes the

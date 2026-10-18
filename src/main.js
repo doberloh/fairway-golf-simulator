@@ -53,7 +53,7 @@ import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
-import {buildLobby} from './ui-lobby.js';
+import {buildLobby,buildEndlessSetup} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
@@ -64,7 +64,7 @@ import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
-import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
+import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -307,7 +307,7 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
-let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,lobbyStep=0,lobbySaved=false,studioSheet=null,studioChangeList=[];
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,lobbyStep=0,endlessStep=0,weeklyStep=0,endlessLandscape='any',endlessGoal='',lobbySaved=false,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -4422,7 +4422,7 @@ function syncTools(){
 }
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
- if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;}
+ if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -4686,19 +4686,25 @@ const coursePic=(biome,id)=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span cl
 // picture with the week and the course's name, the four weeks before with the
 // main golfer's best on each, and the facts as rows.
 function weeklyBlocks(s,w,me,best,ever){
- const day=864e5,now=Date.now(),b=BIOMES[s.biome],ui=b?.ui||{};
+ // ONE SCREEN (round 13, frame c-cotw): the picture with the week and the
+ // course's name, eight fact tiles beside it, the four weeks before along the
+ // foot, each with its picture and the main golfer's best. No long scroll.
+ const day=864e5,now=Date.now(),b=BIOMES[s.biome],plan=planCourse(s);
  const earlier=[1,2,3,4].map(i=>{const d=new Date(now-i*7*day),k=weekKey(d),bb=BIOMES[weeklyBiome(d)];
-  return `<div class="wk-week"><strong>WEEK ${isoWeek(d).week}</strong><small>${escape((bb?.name||'').toUpperCase())} · ${me?.weekly?.[k]??'—'}</small></div>`;}).join('');
+  return `<div class="wk-week" data-week-ago="${i}"><span class="sx-pic wk-week-pic"></span><span class="wk-week-cap"><strong>WEEK ${isoWeek(d).week}</strong><small>${escape((bb?.name||'').toUpperCase())} · ${me?.weekly?.[k]??'—'}</small></span></div>`;}).join('');
  const toMonday=((8-new Date(now).getDay())%7)||7,next=BIOMES[weeklyBiome(new Date(now+toMonday*day))];
- const row=(k,v)=>`<div class="wk-row"><span>${k}</span><b>${v}</b></div>`;
- const group=(label,rows)=>`<div class="wk-group"><h4>${label}</h4>${rows.join('')}</div>`;
- return `<div class="wk-hero" style="--p1:${ui.a1||'#fcd34d'};--p2:${ui.a2||'#b45309'}"><span class="wk-tag">WEEK ${w.week} · ${escape((b?.name||s.biome).toUpperCase())}</span><strong>${escape(suggestCourseName(s).toUpperCase())}</strong></div>`
+ const tile=(k,v,sub='',hot=false)=>`<div class="wk-tile${hot?' hot':''}"><span>${k}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+ return `<div class="wk-hero"><span class="wk-tag">WEEK ${w.week} · ${escape((b?.name||s.biome).toUpperCase())}</span><strong>${escape(suggestCourseName(s).toUpperCase())}</strong></div>`
   +`<div class="wk-earlier"><h4>EARLIER WEEKS</h4><div class="wk-weeks">${earlier}</div></div>`
   +`<div class="wk-facts">`
-  +group('THE COURSE',[row('HOLES','18'),row('SETTINGS','THE DEFAULTS'),row('FORMAT','STROKE PLAY')])
-  +group('YOUR WEEK',[row('BEST THIS WEEK',best??'—'),row('BEST ON ANY WEEK',ever??'—')])
-  +group('XP',[row('FIRST FINISH',best!=null?'DONE \u2713':`+${WEEKLY_XP.first}`),row('BEAT YOUR BEST',`+${WEEKLY_XP.best}`)])
-  +group('NEXT COURSE',[row(`IN ${toMonday} DAY${toMonday===1?'':'S'}`,escape((next?.name||'').toUpperCase()))])
+  +tile('HOLES',`${plan.holes.length} · PAR ${plan.par}`)
+  +tile('LENGTH',`${Math.round(plan.yards).toLocaleString()} YDS`)
+  +tile('BEST THIS WEEK',best??'—')
+  +tile('BEST ON ANY WEEK',ever??'—')
+  +tile('FIRST FINISH',best!=null?'DONE \u2713':`+${WEEKLY_XP.first} XP`)
+  +tile('BEAT YOUR BEST',`+${WEEKLY_XP.best} XP`)
+  +tile('FORMAT','STROKE PLAY')
+  +tile('NEXT COURSE',escape((next?.name||'').toUpperCase()),`IN ${toMonday} DAY${toMonday===1?'':'S'}`,true)
   +`</div>`;
 }
 // A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
@@ -4805,6 +4811,10 @@ function showWelcome(){
  };
 }
 function renderPanel(name,content){
+ // #drawerContent outlives every sheet, so the marks a 1.0 layout leaves on it
+ // (lb-root, sx-root, st-root...) are cleared before the next sheet draws: Help
+ // once opened blank after Play, under Play's rule hiding the old sections.
+ for(const c of [...content.classList])if(c.endsWith('-root'))content.classList.remove(c);
  if(name==='profile'){renderProfile(content);return;}
  if(name==='challenge'){renderChallengeResult(content);return;}
  if(name==='library'){
@@ -5150,6 +5160,9 @@ function renderPanel(name,content){
    +`<h3>Format &amp; tees</h3>${formatFields({match:false})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
    +`<p class="field-error" id="roundError"></p>`
+   // The run's goal (round 13): none, or Sudden death -- the challenge's own
+   // goal, a real run that ends at the first bogey (round-goals.js).
+   +`<label class="field">Goal<select id="endlessGoal"><option value="" ${endlessGoal?'':'selected'}>None · play as long as you like</option><option value="suddendeath" ${endlessGoal==='suddendeath'?'selected':''}>Sudden death · out at your first bogey</option></select></label>`
    +`<button class="primary" data-panel-action id="endlessGo">Start an endless run <i data-lucide="arrow-right"></i></button>`;
   const formatNote=wireFormatFields();
   groupEditor('playerRows',round.players,formatNote);
@@ -5158,9 +5171,11 @@ function renderPanel(name,content){
    // Validated HERE rather than inside `buildEndless`: the overlay must not go
    // up over a group that is about to be rejected.
    let group;
-   try{group=readGroup();new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
+   endlessGoal=$('endlessGoal')?.value||'';
+   try{group={...readGroup(),...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
    endlessSetup=false;closePanel();
-   await startEndless(group);
+   if(endlessGoal)goalSummary=null;
+   await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
    toast('Endless: hole out and the next one grows.');
   };
  }else if(name==='round'&&(rangeSetup||rangeMode)){
@@ -5693,10 +5708,22 @@ function renderPanel(name,content){
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
   if(name==='round'&&challengeSetup)buildChallenges(content);
-  else if(name==='round'&&weeklySetup){buildWeekly(content);const hero=content.querySelector('.wk-hero');if(hero)pictureQueue([{el:hero,settings:weeklySettings()}],720,360);}
+  else if(name==='round'&&weeklySetup){buildWeekly(content,{step:weeklyStep,onStep:i=>{weeklyStep=i;}});const hero=content.querySelector('.wk-hero');const day=864e5;if(hero)pictureQueue([{el:hero,settings:weeklySettings()},...[...content.querySelectorAll('[data-week-ago] .wk-week-pic')].map(el=>({el,settings:weeklySettings(new Date(Date.now()-Number(el.closest('[data-week-ago]').dataset.weekAgo)*7*day))}))],720,360);}
   else if(name==='library')buildLibrary(content,{codeOf:id=>exportCourse(findCourse(id)),onNew:()=>{closePanel();openStudioSetup();},pick:libraryPick,onPick:id=>{libraryPick=id;}});
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
   if(name==='library')pictureQueue([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
+ }
+ if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup){
+  // Endless, step by step (ui-lobby.js): the landscapes as drawn pictures, the
+  // goal, the golfers, the format; the best run from the main golfer's history.
+  const me=mainProfile(profiles),runs=(me?.rounds||[]).filter(r=>r.endless).map(r=>({r,t:roundTotals(r)})).filter(x=>x.t.played>0).sort((a,b)=>b.t.played-a.t.played||a.t.rel-b.t.rel);
+  const top=runs[0];
+  buildEndlessSetup(content,{
+   landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),
+   landscape:endlessLandscape,onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},
+   best:top?{line:`${top.t.played} HOLE${top.t.played===1?'':'S'} · ${toParText(top.t.rel)}`,sub:profileWhen(top.r.started).toUpperCase()}:null,
+   pictures:pictureQueue,step:endlessStep,onStep:i=>{endlessStep=i;},
+  });
  }
  if(name==='round'){
   // Play, step by step (ui-lobby.js): every saved course and the course of the

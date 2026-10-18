@@ -71,12 +71,20 @@ are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
   course of the week and saved courses not looked at. The course studio's
   sheet is unchanged. The pause screen (two columns) and settings' help on
   demand are not yet seen.
+- [ ] **Course of the week on one screen (round 13): built to frame c-cotw,
+  seen in the browser pane at 1280 x 720.** Not seen: a week with bests. PLACED:
+  a second step, Golfers, holds the group, tees and rules.
+- [ ] **Endless, step by step (round 13): built to frame c-endless, seen in
+  the browser pane at 1280 x 720** (step 1). Not seen: a pinned-landscape run
+  played, Sudden death from here, steps 2 and 3. PLACED: a third step for
+  format and rules; the mockup's Length, Greens and Wind rows are not there
+  (no such run settings).
 - [ ] **Play, step by step (round 13): built to frames c-play1 to c-play4,
   seen in the browser pane at 1280 x 720** (17 October 2026; src/ui-lobby.js,
   ui-steps.js). Each golfer has their own tee (game.js `teeOf`). Not seen: four
   golfers, the saved rounds view, a long course name, a phone, the steps from
   a controller. The smoke journeys were updated (the steps by name) but not
-  yet run when the card went busy. PLACED: no Goal or Holes rows; the course
+  since run and passing. PLACED: no Goal or Holes rows; the course
   of the week's card opens its own setup; the scorecard's yards are the
   round's tee.
 - [ ] **1.0 launch monitor setup: built to the mockup, seen in the browser

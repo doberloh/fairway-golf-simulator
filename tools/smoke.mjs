@@ -759,7 +759,7 @@ const JOURNEYS = [
     ['Graphics', ['Overview', 'Reading the ground', 'Costs a frame']],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The green', 'Who is hitting']],
-    ['Endless', ['Format & tees', 'Your group']],
+    ['Endless', ['Golfers', 'Format', 'Landscape']],
     ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
    ];
    for (const [entry, tabs] of PANELS) {
@@ -2357,7 +2357,7 @@ const JOURNEYS = [
    });
    await t.step('a group of two: the first golfer on the Swing Meter, left-handed; the second on the monitor', async () => {
     await fromMenu(t, 'Endless');
-    await t.press('Your group');
+    await t.press('Golfers'); // the Endless steps (round 13)
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     // The "plays with" and hand choices are there: a bridge has connected.

@@ -21,7 +21,9 @@ export const clampStep = (i, n) => Math.max(0, Math.min(n - 1, Number.isInteger(
 // `finish` the main button for the last step (moved into the foot), or null.
 // `hints` [[key, words]]. `onStep(i)` hears every change (main.js keeps it, so
 // a redrawn sheet opens where it was).
-export function stepSheet(root, {steps, index = 0, finish = null, hints = [], onStep, doc = globalThis.document} = {}) {
+// `finishAlways`: the main button shows on every step (a setup with nothing
+// that must be chosen, like Endless), Next beside it until the last.
+export function stepSheet(root, {steps, index = 0, finish = null, finishAlways = false, hints = [], onStep, doc = globalThis.document} = {}) {
  const sx = make(doc, 'div', 'sx');
  const bar = make(doc, 'nav', 'sx-steps');
  bar.setAttribute('aria-label', 'Steps');
@@ -52,7 +54,7 @@ export function stepSheet(root, {steps, index = 0, finish = null, hints = [], on
   const last = i === steps.length - 1;
   next.hidden = last;
   if (!last) next.innerHTML = `Next <small>${esc(steps[i + 1].label.toUpperCase())}</small>`;
-  if (finish) finish.hidden = !last;
+  if (finish) finish.hidden = !last && !finishAlways;
   steps[i].onShow?.();
   onStep?.(i);
  }

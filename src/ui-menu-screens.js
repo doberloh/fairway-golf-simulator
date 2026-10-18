@@ -9,6 +9,8 @@
 // Not in the course studio, whose sheet keeps the old layout (ui-sheets.css
 // does not reach it there).
 
+import {stepSheet} from './ui-steps.js';
+
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const sectionsOf = root => [...root.querySelectorAll(':scope>.panel-section,:scope>.panel-columns>.panel-section')];
 
@@ -40,27 +42,29 @@ export function buildChallenges(root, doc = globalThis.document) {
  return true;
 }
 
-// THE COURSE OF THE WEEK: the big picture with the week and the course's name
-// and the earlier weeks under it on the left; the course, your week, the XP
-// and the next course as rows on the right, then the tees and the group
-// (PLACED: the mockup has neither; a round needs them). main.js writes the
-// mockup's own blocks (.wk-hero, .wk-earlier, .wk-facts).
-export function buildWeekly(root, doc = globalThis.document) {
+// THE COURSE OF THE WEEK (round 13, frame c-cotw), on one screen: the picture
+// with the week and the course's name (7 columns), eight fact tiles (5), the
+// earlier weeks along the foot. A second step holds the golfers and the tees
+// and rules (PLACED: the frame has only Play; a round needs a group). Play shows
+// on both steps. main.js writes the frame's own blocks (`weeklyBlocks`).
+export function buildWeekly(root, {step = 0, onStep, doc = globalThis.document} = {}) {
  const hero = root.querySelector('.wk-hero'), earlier = root.querySelector('.wk-earlier'), facts = root.querySelector('.wk-facts');
- if (!hero || !facts || root.querySelector('.wk')) return false;
- const wk = make(doc, 'div', 'wk');
- const left = make(doc, 'section', 'wk-left'), right = make(doc, 'section', 'wk-right');
- left.append(hero); if (earlier) left.append(earlier);
- right.append(facts);
- for (const s of sectionsOf(root)) { right.append(...s.childNodes); s.remove(); }
- root.querySelector(':scope>.panel-columns')?.remove();
+ if (!hero || !facts || root.querySelector('.sx')) return false;
+ const p1 = make(doc, 'section', 'sx-body wk');
+ p1.append(hero, facts);
+ if (earlier) p1.append(earlier);
+ const p2 = make(doc, 'section', 'sx-body sx-golfers wk-group');
+ p2.append(make(doc, 'h3', 'sx-head', 'WHO\u2019S PLAYING \u00b7 1 TO 4'));
+ const rows = root.querySelector('#playerRows'); if (rows) p2.append(rows);
+ const rules = make(doc, 'div', 'wk-rules');
+ for (const s of sectionsOf(root)) for (const n of [...s.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3' && n.id !== 'playerRows') rules.append(n);
+ p2.append(rules);
+ for (const s of sectionsOf(root)) s.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
  const go = root.querySelector('#weeklyGo');
- const tabs = root.querySelector(':scope>.panel-tabs');
- if (tabs) { if (go) root.append(go); tabs.remove(); }
- for (const n of root.querySelectorAll(':scope>.panel-lead')) n.remove();
- wk.append(left, right);
- root.append(wk);
- root.classList.add('wk-root');
+ stepSheet(root, {steps: [{label: 'This week', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: go, finishAlways: true, onStep,
+  hints: [['Enter', 'Play'], ['Esc', 'Back']], doc});
  return true;
 }
 

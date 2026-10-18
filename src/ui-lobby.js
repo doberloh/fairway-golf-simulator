@@ -97,6 +97,104 @@ function card(doc, {name, line, tag, best, kind}) {
  return {b, pic};
 }
 
+// The format as cards in front of the real drop-down. Returns {tiles, paint}.
+export function formatCards(doc, mode) {
+ const tiles = make(doc, 'div', 'sx-formats');
+ const paint = () => { for (const b of tiles.querySelectorAll('button')) { const on = b.dataset.mode === mode.value; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
+ for (const o of [...mode.options].sort((a, b) => FORMAT_ORDER.indexOf(a.value) - FORMAT_ORDER.indexOf(b.value))) {
+  const [line1, who] = FORMAT_CARD[o.value] || [o.textContent, ''];
+  const b = make(doc, 'button', 'sx-format-card', `<strong>${esc(FORMAT_TILE[o.value] || o.textContent)}</strong><span>${esc(line1)}</span><small>${esc(who)}</small>`);
+  b.type = 'button'; b.dataset.mode = o.value; b.disabled = mode.disabled;
+  b.setAttribute('aria-label', `Format: ${o.textContent}`);
+  b.onclick = () => { mode.value = o.value; fire(mode); };
+  tiles.append(b);
+ }
+ tiles.dataset.count = String(tiles.children.length);
+ mode.addEventListener('change', paint);
+ paint();
+ return {tiles, paint};
+}
+
+// The house rules as pickers, putting's distances and what the putting choice
+// means; the round's own tee drop-down kept, hidden (each golfer has a tee).
+export function rulesColumn(doc, q) {
+ const rules = make(doc, 'div', 'sx-rules-col');
+ rules.append(make(doc, 'h3', 'sx-head', 'HOUSE RULES'));
+ const putting = q('roundPuttingMode'), ob = q('roundOB'), lie = q('roundMonLie');
+ if (putting) rules.append(picker(doc, putting, 'PUTTING'));
+ const dist = q('roundPutting-distances'); if (dist) rules.append(dist);
+ if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
+ if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
+ const help = make(doc, 'div', 'sx-help', '<span class="sx-help-k">PUTTING</span>');
+ const puttNote = q('roundPuttingNote'); if (puttNote) help.append(puttNote);
+ rules.append(help);
+ const tee = q('roundTee'); if (tee) { tee.hidden = true; rules.append(tee); }
+ return rules;
+}
+
+// ENDLESS, STEP BY STEP (mockup `r13('c-endless')`): 1 Landscape -- the
+// landscapes as a grid of drawn pictures, or Any (a new one each hole), with
+// the goal and your best run beside them; 2 Golfers; 3 Format and rules (the
+// mockup's two steps had nowhere for these, PLACED). The start button shows on
+// every step: a run needs nothing chosen to begin.
+// `opts`: landscapes [{key, name, settings}], landscape, onLandscape(key),
+// goal, best {line, sub} or null, pictures, step, onStep.
+export function buildEndlessSetup(root, opts = {}, doc = globalThis.document) {
+ const q = id => root.querySelector('#' + id);
+ const mode = q('roundMode');
+ if (!mode || root.querySelector('.sx')) return null;
+ const page = cls => make(doc, 'section', 'sx-body ' + cls);
+ const p1 = page('sx-endless');
+ const grid = make(doc, 'div', 'sx-lands');
+ const queue = [], cards = [];
+ const paint = key => { for (const b of cards) { const on = b.dataset.land === key; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
+ for (const l of opts.landscapes || []) {
+  const b = make(doc, 'button', 'sx-land');
+  b.type = 'button'; b.dataset.land = l.key;
+  const pic = make(doc, 'span', 'sx-pic');
+  b.append(pic, make(doc, 'span', 'sx-land-name', esc(l.name.toUpperCase())));
+  b.onclick = () => { opts.onLandscape?.(l.key); paint(l.key); };
+  grid.append(b); cards.push(b); queue.push({el: pic, settings: l.settings});
+ }
+ const any = make(doc, 'button', 'sx-land sx-any', '<span class="sx-land-name">ANY · A NEW ONE EACH HOLE</span>');
+ any.type = 'button'; any.dataset.land = 'any';
+ any.onclick = () => { opts.onLandscape?.('any'); paint('any'); };
+ grid.append(any); cards.push(any);
+ const side = make(doc, 'div', 'sx-endless-side');
+ side.append(make(doc, 'h3', 'sx-head', 'THE RUN'));
+ const goal = q('endlessGoal');
+ if (goal) side.append(picker(doc, goal, 'GOAL', {words: t => ({value: t.split(' · ')[0], sub: t.split(' · ')[1] || ''})}));
+ if (opts.best) side.append(make(doc, 'div', 'sx-best', `<span class="sx-help-k">YOUR BEST RUN</span><strong>${esc(opts.best.line)}</strong><small>${esc(opts.best.sub || '')}</small>`));
+ const lands = make(doc, 'div', 'sx-lands-col');
+ lands.append(make(doc, 'h3', 'sx-head', 'LANDSCAPE'), grid);
+ p1.append(lands, side);
+ paint(opts.landscape || 'any');
+ opts.pictures?.(queue, 200, 90);
+
+ const p2 = page('sx-golfers');
+ p2.append(make(doc, 'h3', 'sx-head', 'WHO’S PLAYING · 1 TO 4'));
+ const rows = q('playerRows'); if (rows) p2.append(rows);
+
+ const p3 = page('sx-rules sx-endless-rules');
+ const left = make(doc, 'div', 'sx-rules-col');
+ const {tiles} = formatCards(doc, mode);
+ left.append(make(doc, 'h3', 'sx-head', 'FORMAT'), tiles);
+ const note = q('formatNote'); if (note) left.append(note);
+ mode.hidden = true; left.append(mode);
+ p3.append(left, rulesColumn(doc, q));
+ const err = q('roundError'); if (err) p3.append(err);
+
+ for (const s of root.querySelectorAll('.panel-section')) s.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
+ const go = q('endlessGo');
+ return stepSheet(root, {
+  steps: [{label: 'Landscape', page: p1}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3}],
+  index: opts.step ?? 0, finish: go, finishAlways: true, onStep: opts.onStep,
+  hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
+ });
+}
+
 // `opts`: courses [{id, name, settings, line, best}], weekly {name, line,
 // settings} or null, onWeekly(), pictures(items, w, h), step, onStep(i),
 // golferLine(seatEl) for the summary.
@@ -173,16 +271,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
 
  // 3 · FORMAT.
  const p3 = page('sx-format');
- const tiles = make(doc, 'div', 'sx-formats');
- const paintFormats = () => { for (const b of tiles.querySelectorAll('button')) { const on = b.dataset.mode === mode.value; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
- for (const o of [...mode.options].sort((a, b) => FORMAT_ORDER.indexOf(a.value) - FORMAT_ORDER.indexOf(b.value))) {
-  const [line1, who] = FORMAT_CARD[o.value] || [o.textContent, ''];
-  const b = make(doc, 'button', 'sx-format-card', `<strong>${esc(FORMAT_TILE[o.value] || o.textContent)}</strong><span>${esc(line1)}</span><small>${esc(who)}</small>`);
-  b.type = 'button'; b.dataset.mode = o.value; b.disabled = mode.disabled;
-  b.setAttribute('aria-label', `Format: ${o.textContent}`);
-  b.onclick = () => { mode.value = o.value; fire(mode); };
-  tiles.append(b);
- }
+ const {tiles, paint: paintFormats} = formatCards(doc, mode);
  const teams = make(doc, 'div', 'sx-teams');
  const paintTeams = () => {
   const on = TEAM_FORMATS.has(mode.value);
@@ -208,27 +297,16 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   }
   teams.append(cols);
  };
- mode.addEventListener('change', () => { paintFormats(); paintTeams(); });
+ mode.addEventListener('change', paintTeams);
  mode.hidden = true;
  const note = q('formatNote');
  p3.append(make(doc, 'h3', 'sx-head', 'HOW ARE YOU PLAYING'), tiles);
  if (note) p3.append(note);
  p3.append(teams, mode);
- paintFormats();
 
  // 4 · RULES, and what you are about to play.
  const p4 = page('sx-rules');
- const rules = make(doc, 'div', 'sx-rules-col');
- rules.append(make(doc, 'h3', 'sx-head', 'HOUSE RULES'));
- const putting = q('roundPuttingMode'), ob = q('roundOB'), lie = q('roundMonLie');
- if (putting) rules.append(picker(doc, putting, 'PUTTING'));
- const dist = q('roundPutting-distances'); if (dist) rules.append(dist);
- if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
- if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
- const help = make(doc, 'div', 'sx-help', '<span class="sx-help-k">PUTTING</span>');
- const puttNote = q('roundPuttingNote'); if (puttNote) help.append(puttNote);
- rules.append(help);
- const tee = q('roundTee'); if (tee) { tee.hidden = true; rules.append(tee); }
+ const rules = rulesColumn(doc, q);
  const sum = make(doc, 'div', 'sx-summary');
  const paintSummary = () => {
   const c = courses.find(x => x.id === course.value);
