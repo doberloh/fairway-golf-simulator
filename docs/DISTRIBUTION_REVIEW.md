@@ -1233,3 +1233,11 @@ passed on its rerun. After the `PARTS` fix the seven journeys that draw course
 cards passed again, and the cards were seen drawing with no warning. **Not seen
 by a person:** most of the 1.0 interface in play (TODO lists each screen and
 what it was seen at), the new sounds, a phone, a real launch monitor.
+
+**The website was redeployed live after the release**, at the owner's word,
+from its own repository's branch `website-1-0` (its 1.0 rework, not yet merged
+there): `/play/` serves this release's `Fairway.html` byte for byte (sha256
+`df9a8d47…`, fetched from the live URL with a cache-busting query), and the
+Download buttons resolve through `releases/latest` to the v0.9 zips. The
+packaged Windows server was run from its unzipped download before publishing
+and served the page byte for byte, on spare ports (19922/19921).
