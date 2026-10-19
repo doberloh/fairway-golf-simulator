@@ -39,6 +39,8 @@ the change that made it stale, not a follow-up.
 
 - **[COMMAND_CHEAT_SHEET.md](COMMAND_CHEAT_SHEET.md)** — every build, test,
   measurement, release and capture command on one page.
+- **CAPTURE.md** -- how the website's pictures and clips are made: the scripts,
+  4K stills and frame-by-frame 4K60 clips, GPU batches, and the traps.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and
   cannot see, which formats and groups the round tests play, every smoke

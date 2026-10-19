@@ -133,6 +133,10 @@ the courses several suites share.
   `auto-resolution`, `ui-scale`, `roll-hop`.
 - **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
   `projector`, `course-map`, `green-map`, `shot-views`, `shot-data`.
+- **The capture tools** -- `capture-mux` (the MP4 and WebM files the clip
+  recorder writes hold together: boxes and elements fill the file, the frame
+  tables name every frame, key frames marked; docs/CAPTURE.md). Whether a clip
+  plays is checked in a browser at the end of every recording.
 - **The 1.0 interface** (branch `ui-1-0`, from phase 0) -- `ui-layout` (the
   canvas for 16:9, 16:10, 4:3 and 21:9, the bands, the leaning sheet's corners
   on the 60 px margins at every height, columns that never overlap, the canvas

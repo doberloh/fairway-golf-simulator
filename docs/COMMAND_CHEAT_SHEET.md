@@ -74,14 +74,17 @@ Environment settings it reads: `FAIRWAY_TCP_PORT`, `FAIRWAY_HTTP_PORT`,
 
 ## Pictures and clips of the game
 
-Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points. Heavy on the graphics card: ask the owner first.
+Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points. Heavy on the graphics card: ask the owner first, and run small batches. **docs/CAPTURE.md** has the whole story (quality, batches, traps).
 
 | Command | What it does |
 | --- | --- |
-| `node tools/capture/build-hooked.mjs` | Builds a copy of the game with the hooks the capture scripts need (required before the three below). `SWAP="src/physics.js=<file>"` builds it with another version of a source file, for a before/after without editing src/ |
-| `node tools/capture/gallery.mjs [name…]` | Retakes the landscape pictures (all of them, or just the ones named) |
-| `node tools/capture/features.mjs [name…]` | Retakes the feature screenshots |
-| `node tools/capture/clips.mjs [name…]` | Re-records the background clips |
+| `node tools/capture/build-hooked.mjs` | Builds a copy of the game with the hooks the capture scripts need (required before the scripts below). `SWAP="src/physics.js=<file>"` builds it with another version of a source file, for a before/after without editing src/ |
+| `node tools/capture/times.mjs [landscape…]` | Every landscape at morning, noon, golden hour and floodlit night, no interface: 4K PNG masters (drawn at 7680x4320) and website JPEGs |
+| `node tools/capture/screens.mjs [screen…]` | The 1.0 interface, screen by screen, at 4K |
+| `node tools/capture/clips.mjs [clip…]` | The clips, recorded frame by frame at 3840x2160 and 60 fps: an 80 Mbit/s MP4 master and the website's 1080p WebM, each checked to play |
+| `node tools/capture/angles.mjs <biome> <seed> [holes]` | Small test pictures from many views, for choosing a camera |
+| `node tools/capture/contact-sheet.mjs <folder>` / `frame-grab.mjs <video> <s>` | One image of a whole set; one frame of a clip |
+| `node tools/capture/gallery.mjs` / `features.mjs [name…]` | The 0.x website's pictures (superseded by times and screens) |
 
 ## Sounds
 
