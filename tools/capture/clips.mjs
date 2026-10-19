@@ -48,9 +48,13 @@ export const CLIPS = [
  {name: 'midwest-afternoon', biome: 'midwest', seed: 'MEADOW', hole: 1, when: 'afternoon', seconds: 9,
   keys: [{fromPin: 230, around: -5, height: 20, pitch: -9}, {fromPin: 140, around: 0, height: 17, pitch: -10},
    {fromPin: 60, around: 5, height: 12, pitch: -11}]},
+ // Re-routed 19 October 2026: the first route (62 m out, 16 m up, swinging from
+ // 40 degrees one side of the tee line to 40 the other) flew through a fir's
+ // crown half a second in. This one swings round the clean view times.mjs
+ // picked for Redwood's stills (70 m out, 22 m up, 210 degrees round).
  {name: 'giant-redwood-afternoon', biome: 'redwood', seed: 'GIANT', hole: 1, when: 'afternoon', seconds: 9,
-  keys: [{fromPin: 62, around: -40, height: 16, pitch: -12}, {fromPin: 56, around: 0, height: 15, pitch: -12},
-   {fromPin: 62, around: 40, height: 16, pitch: -12}]},
+  keys: [{fromPin: 72, around: 190, height: 22, pitch: -14}, {fromPin: 68, around: 210, height: 21, pitch: -14},
+   {fromPin: 72, around: 230, height: 22, pitch: -14}]},
  {name: 'desert-tee-shot', biome: 'desert', seed: 'MESA', hole: 2, hour: 10.5, seconds: 7,
   shot: {speed: 67, vla: 11.5, hla: .5, spin: 2700, spinAxis: -2}},
  {name: 'night-floodlit', biome: 'pnw', seed: 'CEDAR', hole: 2, hour: 21.5, flood: true, seconds: 12,
@@ -86,22 +90,42 @@ try {
    // A flyover hides the ball as well: at dusk the glow ball is a bright dot on the tee.
    if (!s.ui) for (const o of [v.aimLine, v.aimRing, v.ballRing, ...(s.shot ? [] : [v.ball, v.ballHalo])]) if (o) o.visible = false;
   }, [{...s, at: s.hour ?? hourFor(s.biome, s.when)}]);
-  // The path: sample the keyed poses through lab.camera, then smooth the height.
+  // THE PATH (fixed 19 October 2026 -- every flyover until then shook). The
+  // keyed poses are placed through lab.camera, but the pose is read back from
+  // the camera itself, never from what lab.camera RETURNS: that is rounded to
+  // 0.1 m and 0.1 degree for reading, and a path built from rounded poses turns
+  // in a stop-start rhythm (four frames still, three at triple speed, about
+  // eight times a second; measured on links-golden, docs/CAPTURE.md *Traps*).
+  // Then every channel is smoothed, the height kept clear of the ground by
+  // pushing the curve up and smoothing again rather than by a hard floor (a
+  // hard `max` put the ground's bumps back as kinks), and the frames are
+  // interpolated with a Catmull-Rom curve rather than straight lines between
+  // samples, so speed never jumps from one sample to the next.
   if (s.keys) await p.evaluate(([s]) => {
-   const N = 240, lerp = (a, b, t) => a + (b - a) * t, poses = [];
+   const N = 240, lerp = (a, b, t) => a + (b - a) * t, poses = [], v = window.__view;
    const at = t => { const k = s.keys, f = t * (k.length - 1), i = Math.min(k.length - 2, Math.floor(f)), u = f - i, o = {};
     for (const key of new Set([...Object.keys(k[i]), ...Object.keys(k[i + 1])])) o[key] = typeof k[i][key] === 'number' ? lerp(k[i][key], k[i + 1][key], u) : k[i][key];
     return o; };
-   for (let i = 0; i <= N; i++) poses.push(window.lab.camera(at(i / N)));
-   const ys = poses.map(q => q.y);
-   for (let pass = 0; pass < 3; pass++) for (let i = 0; i <= N; i++) { let sum = 0, n = 0; for (let j = Math.max(0, i - 20); j <= Math.min(N, i + 20); j++) { sum += ys[j]; n++; } poses[i].y = Math.max(ys[i] - 3, sum / n); }
-   for (let i = 1; i <= N; i++) { while (poses[i].yaw - poses[i - 1].yaw > 180) poses[i].yaw -= 360; while (poses[i].yaw - poses[i - 1].yaw < -180) poses[i].yaw += 360; }
+   for (let i = 0; i <= N; i++) {
+    window.lab.camera(at(i / N));
+    poses.push({x: v.targetPos.x, y: v.targetPos.y, z: v.targetPos.z, yaw: v.freeYaw, pitch: v.freePitch});
+   }
+   for (let i = 1; i <= N; i++) { while (poses[i].yaw - poses[i - 1].yaw > Math.PI) poses[i].yaw -= 2 * Math.PI; while (poses[i].yaw - poses[i - 1].yaw < -Math.PI) poses[i].yaw += 2 * Math.PI; }
+   const smooth = (key, r) => { const a = poses.map(q => q[key]);
+    for (let i = 0; i <= N; i++) { let sum = 0, n = 0; for (let j = Math.max(0, i - r); j <= Math.min(N, i + r); j++) { sum += a[j]; n++; } poses[i][key] = sum / n; } };
+   // Height: never more than about 3 m under the ground-following height.
+   const floor = poses.map(q => q.y - 3);
+   for (let pass = 0; pass < 3; pass++) smooth('y', 20);
+   for (let pass = 0; pass < 4; pass++) { for (let i = 0; i <= N; i++) poses[i].y = Math.max(poses[i].y, floor[i]); smooth('y', 10); }
+   for (const key of ['x', 'z', 'yaw', 'pitch']) for (let pass = 0; pass < 2; pass++) smooth(key, 6);
    window.__path = poses;
-   // The pose at a share t of the clip, eased in and out.
+   // The pose at a share t of the clip, eased in and out, on a Catmull-Rom
+   // curve through the samples.
+   const cr = (p0, p1, p2, p3, u) => .5 * (2 * p1 + (p2 - p0) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (3 * p1 - p0 - 3 * p2 + p3) * u * u * u);
    window.__poseAt = t => {
-    const N = poses.length - 1, e = t * t * (3 - 2 * t) * .3 + t * .7, f = e * N, i = Math.min(N - 1, Math.floor(f)), u = f - i;
-    const a = poses[i], c = poses[i + 1], L = k => a[k] + (c[k] - a[k]) * u;
-    window.__view.placeCamera({x: L('x'), y: L('y'), z: L('z')}, L('yaw') * Math.PI / 180, L('pitch') * Math.PI / 180);
+    const e = t * t * (3 - 2 * t) * .3 + t * .7, f = e * N, i = Math.min(N - 1, Math.floor(f)), u = f - i;
+    const P = j => poses[Math.max(0, Math.min(N, j))], C = k => cr(P(i - 1)[k], P(i)[k], P(i + 1)[k], P(i + 2)[k], u);
+    v.placeCamera({x: C('x'), y: C('y'), z: C('z')}, C('yaw'), C('pitch'));
    };
    window.__poseAt(0);
   }, [s]);

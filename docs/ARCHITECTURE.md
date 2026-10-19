@@ -137,7 +137,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
-- `tools/capture/` -- pictures and clips of the game, 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`; docs/CAPTURE.md); `tools/landing-report/` -- the owner's local reports
+- `tools/capture/` -- pictures and clips of the game, 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`), and `motion.mjs`, which measures a clip's camera shake from its frames (docs/CAPTURE.md); `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
 - `tools/github-protect.mjs` -- the repository's GitHub protections
 - `tests/*.test.mjs` -- the regression suites (`round-matrix` plays every format with every group; `challenge-virtual` plays every challenge through the ball model with `tests/virtual-golfer.mjs`, a Swing Meter golfer in Node); `bench/*.json` -- saved baselines. docs/TESTING.md maps what is tested and how

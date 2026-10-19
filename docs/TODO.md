@@ -662,6 +662,20 @@ are in the archived section of the same name.
 
 # Done
 
+## Smooth flyovers (19 October)
+
+- [x] **Every flyover clip shook, and now does not.** The owner saw it on all
+  the website's clips. `clips.mjs` built each camera path from what
+  `lab.camera` returns, which is rounded to 0.1 m and 0.1 degree, so the
+  camera turned stop-start about eight times a second. It now reads the exact
+  pose back from the camera, smooths every channel and interpolates on a
+  Catmull-Rom curve; Giant Redwood has a new route (the old one flew through a
+  fir). All ten flyovers re-recorded: jitter 0.03-0.24 px before, 0.005-0.011
+  after (Midwest 0.018, a tree passing close), measured by the new
+  `tools/capture/motion.mjs` (CAPTURE.md *Traps*, RESEARCH *Every flyover
+  shook*). The website's branch carries them as `<name>-smooth`, deployed
+  as a preview only.
+
 ## Release 0.9 (18 October)
 
 - [x] **v0.9 published**, "Fairway 0.9 (beta)", at the owner's request: the

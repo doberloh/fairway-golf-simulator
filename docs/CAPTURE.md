@@ -17,7 +17,7 @@ week).
 
 ## The scripts
 
-All of them except `contact-sheet.mjs` and `frame-grab.mjs` need the capture
+All of them except `contact-sheet.mjs`, `frame-grab.mjs` and `motion.mjs` need the capture
 build first: `node tools/capture/build-hooked.mjs` writes
 `bench/shots/dist-exp/index.html`, the real game plus three handles the scripts
 drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
@@ -32,6 +32,7 @@ drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
 | `angles.mjs <biome> <seed> [holes]` | Small test pictures of one landscape from twelve views per hole, and a contact sheet: for **choosing a camera** before a 4K set | 1280x720, about a second a view |
 | `contact-sheet.mjs <folder> [columns]` | Every picture in a folder as one image (`_contact.jpg`), to look a set over | -- |
 | `frame-grab.mjs <video> <seconds>` | One frame of a recording as a JPEG, to check a clip without a player | the video's own size |
+| `motion.mjs <video.webm> [band] [--frames]` | **How smoothly the camera moves**, from the frames themselves: the jitter in each frame's shift against its neighbours, in pixels at 480 wide. CPU only. A band on the distant horizon (`74-130` on most clips) sees only the camera turning | a number per direction; a smooth flyover measures under about 0.012 |
 
 `capture.mjs` is what they share (the browser, the game on Ultra with automatic
 resolution off, the capture golfers, `saveStill`, `hourFor`, `gpuGate`);
@@ -101,7 +102,8 @@ memory *GPU runs in small batches*).
   tee looking at a hillside; twelve small views per hole and a contact sheet
   found clean ones in a minute each.
 - **Look at the contact sheet** of every set before using it, and at a few frames
-  of every clip (`frame-grab.mjs`) -- the interface clip once ended before the
+  of every clip (`frame-grab.mjs`), and measure every flyover (`motion.mjs`):
+  a camera can look fine in one still and shake in motion -- the interface clip once ended before the
   shot card came up and had to be made longer.
 
 ## From here to the website
@@ -126,6 +128,23 @@ Pages, styles and deploys are that repository's business (its AGENTS.md and
 docs/DEPLOYING.md); nothing of the website is added back here.
 
 ## Traps found while building them
+
+- **Never build a camera path from what `lab.camera` returns** (found 19 October
+  2026, after the owner saw every website flyover shake). It returns the pose
+  rounded to 0.1 m and 0.1 degree, for reading; the flyovers were built from
+  those numbers, so the camera turned in a stop-start rhythm -- about four
+  frames still, then three at triple speed, eight times a second -- in every
+  clip since the first set (the 0.x live recordings too). `clips.mjs` now places
+  each keyed pose with `lab.camera` and reads the exact pose back from the
+  camera (`__view.targetPos`, `freeYaw`, `freePitch`), smooths every channel,
+  and interpolates frames on a Catmull-Rom curve. Measured on the frames
+  themselves (the distant horizon's frame-to-frame shift against its own
+  running average): links-golden's sideways jitter fell from 0.055 to 0.007 px
+  and its up-and-down from 0.032 to 0.003 px at 480 wide (`motion.mjs`); all
+  ten flyovers were re-recorded: 0.005-0.011 px each (Midwest 0.018, where a
+  tree passes close to the lens -- real motion) against 0.03-0.24 before.
+  Giant Redwood was also re-routed: its old route flew through a fir's crown
+  half a second in, which `motion.mjs --worst` showed as one big jump.
 
 - **The capture golfers must be stored in the profile store's current format**
   (version 3). An older one is upgraded on load, and the upgrade announces "New:
