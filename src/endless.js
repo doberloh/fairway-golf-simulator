@@ -13,6 +13,7 @@
 
 import {randomSettings, DEFAULT_COURSE} from './settings-schema.js';
 import {turfConfig} from './turf.js';
+import {BIOMES} from './biomes.js';
 
 function rng(seed) {
  let a = 2166136261;
@@ -49,11 +50,24 @@ export function pickShape(r) {
 // The look is deliberately the menu backdrop's: heavy planting, a pond's worth
 // of water, and none of the things that only make sense across a whole property
 // -- houses lining a street, a river running through several holes.
+// A RUN IN ONE LANDSCAPE (round 13): the Endless setup lets the player pick a
+// landscape, and the pick rides in the run's seed as `~<biome>` -- so a saved or
+// replayed run keeps it, and a seed without one (every run before this) grows
+// exactly the holes it always did.
+export const LANDSCAPE_MARK = '~';
+export function runLandscape(runSeed) {
+ const m = String(runSeed || '').match(/~([a-z]+)$/);
+ return m && BIOMES[m[1]] ? m[1] : null;
+}
+export const landscapeSeed = (seed, biome) => (BIOMES[biome] ? `${seed}${LANDSCAPE_MARK}${biome}` : seed);
+
 export function endlessHole(runSeed, index) {
  const r = rng(`${runSeed}#${index}`);
  const shape = pickShape(r);
+ const pinned = runLandscape(runSeed);
  return {
   ...randomSettings(r),
+  ...(pinned ? {biome: pinned} : {}),
   seed: `${runSeed}-${index + 1}`,
   holes: 1,
   courseYards: Math.round(shape.lo + r() * (shape.hi - shape.lo)),

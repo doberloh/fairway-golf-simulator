@@ -74,6 +74,28 @@ test('no module that imports three as T declares anything else called T', () => 
  assert.deepEqual(found, [], `a local T shadows three.js for its whole function:\n  ${found.join('\n  ')}`);
 });
 
+// AND `T` IS NEVER HANDED ON WHOLE. The bundler keeps only the names read off
+// the namespace (`T.Mesh`); passing `T` itself as a value means it can no
+// longer tell, and keeps ALL of three.js. model-cards.js did that (18 October
+// 2026, found in the 0.9 release check): about 147 KB more page, and three's
+// file loaders with three dead fetch() calls in a file that must make no
+// request. Pass a named object instead (model-cards.js `PARTS`).
+const T_AS_VALUE = /(?:[(,[]\s*|\.\.\.|[=:]\s*)T\s*(?=[,)\]};]|$)/gm;
+
+test('no module that imports three as T hands T itself on as a value', () => {
+ const found = [];
+ for (const file of threeModules) {
+  const code = codeOnly(fs.readFileSync(path.join(SRC, file), 'utf8'));
+  for (const hit of code.matchAll(T_AS_VALUE)) {
+   const line = code.slice(0, hit.index).split('\n').length;
+   found.push(`src/${file}:${line}  ${code.split('\n')[line - 1].trim().slice(0, 100)}`);
+  }
+ }
+ assert.deepEqual(found, [], `the whole of three.js would be bundled:\n  ${found.join('\n  ')}`);
+ assert.equal([...'built: buildCourseModel(T, data, {hot: hot()}); c.cam = frameModel(T, m.data, w / h);'.matchAll(T_AS_VALUE)].length, 2, 'the check goes red on the code that motivated it');
+ assert.equal([...'new T.Mesh(g, m); const x = T.DoubleSide; f(a, T.Vector3);'.matchAll(T_AS_VALUE)].length, 0, 'and stays quiet on names read off T');
+});
+
 test('the scan would have caught the bug that motivated it', () => {
  // The check is only worth something if it goes red on the real thing.
  const original = 'const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z);\n'

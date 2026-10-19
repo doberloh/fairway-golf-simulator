@@ -187,9 +187,13 @@ class Trip {
  // ------------------------------------------------------------- doing
  // By the name a player reads, among the things actually on screen.
  async press(name) {
-  const target = this.page.getByRole('button', {name, exact: true}).or(this.page.getByRole('tab', {name, exact: true}))
+  const find = () => this.page.getByRole('button', {name, exact: true}).or(this.page.getByRole('tab', {name, exact: true}))
    .filter({visible: true}).first();
-  await target.click({timeout: 10000 * SLOW});
+  // A step sheet's main button (Start the run, Play...) is on its last step
+  // since round 14: a player not seeing it goes through the steps, so do that.
+  if (!await find().count() && await this.page.locator('#drawer .sx-steps .sx-step').filter({visible: true}).count())
+   await this.page.locator('#drawer .sx-steps .sx-step').last().click();
+  await find().click({timeout: 10000 * SLOW});
  }
 
  // A PRESS THAT STARTS A ROUND counts if the round starts. Playwright's click
@@ -223,24 +227,53 @@ class Trip {
  // copes with a software frame taking most of a second.
  async hold(code, readout, seconds = 5 * SLOW) {
   await this.page.evaluate(() => document.activeElement?.blur?.());
-  const before = await this.page.textContent(readout);
+  const before = await this.read(readout);
   await this.page.keyboard.down(code);
   try {
-   await this.until(async () => (await this.page.textContent(readout)) !== before, `holding ${code} to move ${readout}`, seconds);
+   await this.until(async () => (await this.read(readout)) !== before, `holding ${code} to move ${readout}`, seconds);
   } finally { await this.page.keyboard.up(code); }
-  return {before, after: await this.page.textContent(readout)};
+  return {before, after: await this.read(readout)};
+ }
+ // A reading: an element's text, or, for `@name`, #world's data-name -- the aim's
+ // angle (`@aim`) and the aim point's yards (`@aimYards`), which no box shows as
+ // a number since the old aim box went (18 October 2026).
+ read(readout) {
+  if (readout.startsWith('@')) return this.page.evaluate(k => document.getElementById('world').dataset[k] ?? '', readout.slice(1));
+  return this.page.textContent(readout);
  }
 
  // THE TOOLS BUTTON IS A TOGGLE. A second press closes the tray, which the
  // first draft of this found by pressing it twice and then waiting thirty
  // seconds for a Mulligan button that had just been put away. So it is opened
  // only if it is shut, and then the tool is pressed.
+ // THE TOP BAR'S CONTROLS, WHEREVER THIS SCREEN KEEPS THEM (17 October 2026).
+ // In a round on anything bigger than a phone, the 1.0 round screen has no top
+ // bar: Escape opens its controls as the pause list (round-hud.css), and the
+ // list closes itself once one of them is pressed -- all but the clock and the
+ // tee picker, which are worked in place. Everywhere else the bar is there to
+ // click. `chrome` makes them clickable either way.
+ async hud1() { return this.page.evaluate(() => getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1'); }
+ async paused() { return this.page.evaluate(() => document.getElementById('app').classList.contains('rh-paused')); }
+ async chrome() {
+  if (!await this.hud1() || await this.paused()) return;
+  await this.page.evaluate(() => document.activeElement?.blur?.());
+  await this.page.keyboard.press('Escape');
+  await this.until(() => this.paused(), 'the pause list', 5 * SLOW);
+ }
+ async unpause() { if (await this.paused()) await this.page.click('#pauseResume'); }
+ // An entry in the in-round menu: under Menu in the top bar on a phone, in the
+ // pause list everywhere else.
+ async menuItem(name) {
+  await this.chrome();
+  if (!await this.page.locator('#menuDrop').isVisible()) await this.page.click('#menuNav');
+  await this.page.locator('#menuDrop').getByRole('menuitem', {name}).click();
+ }
+
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
-   // Whichever Tools button this screen shows: the camera strip's on a
-   // laptop, the top bar's on a phone, where the strip folds away.
-   const bar = this.page.locator('#barTools');
-   await (await bar.isVisible() ? bar : this.page.locator('#toolsButton')).click();
+   // The top bar's Tools button (`chrome` brings the bar up first).
+   await this.chrome();
+   await this.page.locator('#barTools').click();
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
   // An id, or a selector for a tray button that has none (`[data-panel="bag"]`).
@@ -366,7 +399,7 @@ const menuReady = t => t.step('menu ready', () =>
 // The course, its seed and the hole, as the screen names them.
 const whereAmI = page => page.evaluate(() => {
  const map = document.getElementById('map');
- return {seed: map?.dataset.courseSeed || null, course: document.getElementById('courseTitle')?.textContent?.trim() || null,
+ return {seed: map?.dataset.courseSeed || null, course: document.getElementById('barCourse')?.textContent?.trim() || null,
   hole: document.getElementById('holeNumber')?.textContent?.trim() || null};
 }).catch(() => ({}));
 const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
@@ -385,6 +418,8 @@ function unreachableControls(scope = '#world button, #world input, #world select
   if (seen.has(b)) continue; seen.add(b);
   const r = b.getBoundingClientRect(), cs = getComputedStyle(b);
   if (!r.width || !r.height || cs.visibility === 'hidden' || b.closest('[hidden]') || b.disabled) continue;
+  // A select under a 1.0 drop-down (round 14) is not the control: its field is.
+  if (b.classList.contains('dd-native')) continue;
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   const label = b.id ? '#' + b.id : (b.getAttribute('aria-label') || b.textContent || b.tagName).trim().replace(/\s+/g, ' ').slice(0, 40);
   if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) { out.push(`${label} is off screen`); continue; }
@@ -475,8 +510,8 @@ class JourneyFailed extends Error {
 // journeys, run after a tap on the course has aimed once.
 async function touchAiming(t) {
  const aimNow = () => t.page.evaluate(() => ({
-  aim: parseFloat(document.getElementById('aimOutput').textContent),
-  reach: parseFloat(document.getElementById('aimRange').value),
+  aim: parseFloat(document.getElementById('world').dataset.aim),
+  reach: parseFloat(document.getElementById('world').dataset.aimYards),
  }));
  const pad = name => t.page.locator('#aimPad').getByRole('button', {name, exact: true});
  await t.step('the aim pad: half a degree a tap, a yard further, and the pin', async () => {
@@ -488,17 +523,15 @@ async function touchAiming(t) {
   await pad('Aim further').tap();
   now = await aimNow();
   if (Math.abs(now.reach - was.reach - 1) > 0.051) throw new Error(`one tap further moved the target ${(now.reach - was.reach).toFixed(2)} yd, not 1`);
+  await pad('Aim right').tap();
   await pad('Aim at the pin').tap();
   now = await aimNow();
-  // The same answer as the "Aim at pin" button a laptop has in its shot bar.
-  // That one is hidden on a phone, so it is pressed through the page -- as a
-  // yardstick for the pad, not as something a player on a phone could reach.
-  // (The card's DISTANCE is no yardstick: it is the tee yardage, measured
-  // along the hole, not the straight line to the pin.)
-  await pad('Aim right').tap();
-  await t.page.evaluate(() => document.getElementById('aimAtPin').click());
-  const bar = await aimNow();
-  if (bar.aim !== now.aim || bar.reach !== now.reach) throw new Error(`the pad aimed at ${now.aim} deg, ${now.reach} yd; the bar's Aim at pin at ${bar.aim} deg, ${bar.reach} yd`);
+  // The aim point now sits on the pin: the angle and the straight-line yards
+  // from the ball, worked out from the course itself. (The card's DISTANCE is
+  // no yardstick: it is the tee yardage, measured along the hole.)
+  const pin = await t.page.evaluate(() => { const s = window.lab.state(); const p = s.pinAt, b = s.ballAt; return p && b ? {aim: Math.atan2(p.x - b.x, p.z - b.z) * 180 / Math.PI, reach: Math.hypot(p.x - b.x, p.z - b.z) / 0.9144} : null; });
+  if (!pin) throw new Error('lab.state() has no pin or ball to check the pad against');
+  if (Math.abs(now.aim - pin.aim) > 0.06 || Math.abs(now.reach - pin.reach) > 0.06) throw new Error(`the pad aimed at ${now.aim} deg, ${now.reach} yd; the pin is at ${pin.aim.toFixed(1)} deg, ${pin.reach.toFixed(1)} yd`);
  });
  await t.step('held, the pad sweeps -- and stops when the finger lifts', async () => {
   const box = await pad('Aim left').boundingBox();
@@ -546,7 +579,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button:not(.hud-grip):not(.hud-size), #shotToggle, #camButton, #aimPad button, #club, #pickCurve, #pickHeight, #pickSpin, #swing, #mapExpand');
+  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #mapExpand');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -654,37 +687,46 @@ async function flightScreenOnce(t, phone) {
   const gone = s => { const e = document.querySelector(s); if (!e) return true; const c = getComputedStyle(e); return c.visibility === 'hidden' || c.display === 'none' || !e.offsetParent || Number(c.opacity) === 0; };
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
-   panel: gone('#shapeControl') && gone('#bottomHints'),
+   panel: gone('#shapeControl'),
    // On the Swing Meter the meter stays up through the flight with carry,
    // total and apex, and the floating tiles are gone (14 October 2026).
    meterMode: document.getElementById('world').classList.contains('meter-mode'),
    meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
-   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), swing: gone('#swing'), strip: gone('.view-tools'), pad: gone('#aimPad'),
-   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('.weather'),
+   tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), pad: gone('#aimPad'),
+   // The round screen's wind is in the conditions under the hole.
+   numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('#rhSubs [data-sub=wind]'),
    // The panel's header, where Skip and the flight's state live; its tiles
    // may be folded away on a phone, the header never is.
    head: document.querySelector('#shotPanel .sp-head')?.textContent || '',
    live: !!document.getElementById('liveShotSpeed'),
+   // Round 13 on a big screen: no flight panel; Skip in the meter's title, the
+   // launch numbers in a strip above it.
+   roundScreen: getComputedStyle(document.getElementById('world')).getPropertyValue('--hud1').trim() === '1' && !document.querySelector('.rh-launch')?.closest('[hidden]') && getComputedStyle(document.querySelector('.rh-tools') || document.body).display !== 'none',
+   meterSkip: !gone('#smSkip'),
   };
  });
  const bad = [];
  if (!state.flag) bad.push('the playing area is not marked in-flight');
- if (!state.club || !state.swing) bad.push('the club or the shot button is still showing');
- if (!state.strip) bad.push('the camera strip is still showing');
+ if (!state.club) bad.push('the club is still showing');
  if (!state.pad) bad.push('the aim pad is still showing');
  // Since 10 October 2026 the shot controls go at every size: the numbers they
  // used to keep through a flight are in the shot panel, whose line is all that
  // is left of the window (13 October 2026).
  if (!state.panel) bad.push('the shot controls are still showing');
- if (state.numbers) bad.push('the shot panel went, and it carries the flight');
+ if (state.numbers && !state.roundScreen) bad.push('the shot panel went, and it carries the flight');
+ if (state.roundScreen && !state.numbers) bad.push('the old flight panel is back on the round screen');
+ if (state.roundScreen && state.meterMode && !state.meterSkip) bad.push('Skip is not in the meter\'s title');
  if (state.map) bad.push('the map went, and it should follow the ball');
  if (state.wind) bad.push('the wind went');
- if (!/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
+ if (!state.roundScreen && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
  if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
  if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
- const skip = await t.page.evaluate(unreachableControls, '#skipFlight');
+ // Round 13: on the round screen Skip is in the meter's title (with a monitor
+ // there is no button: Enter skips).
+ const skipSel = state.roundScreen ? (state.meterMode ? '#smSkip' : null) : '#skipFlight';
+ const skip = skipSel ? await t.page.evaluate(unreachableControls, skipSel) : [];
  if (skip.length) throw new Error(`Skip cannot be pressed: ${skip.join('; ')}`);
 }
 
@@ -731,11 +773,11 @@ const JOURNEYS = [
     ['Saved courses', ['Your courses', 'Save a course', 'Import & export']],
     ['My profile', []],
     ['Camera & bay', []],
-    ['Graphics', ['Overview', 'Reading the ground', 'Costs a frame']],
+    ['Graphics', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
-    ['Driving range', ['The green', 'Who is hitting']],
-    ['Endless', ['Format & tees', 'Your group']],
-    ['Play', ['Your course', 'Format & tees', 'Your group', 'Saved rounds']],
+    ['Driving range', ['The range', 'Golfers']],
+    ['Endless', ['Golfers', 'Landscape']],
+    ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
    ];
    for (const [entry, tabs] of PANELS) {
     await t.step(`open "${entry}"`, async () => {
@@ -779,8 +821,8 @@ const JOURNEYS = [
     await t.key('KeyQ');
    });
    await t.step('aim with ← and →', async () => {
-    await t.hold('ArrowLeft', '#aimOutput');
-    await t.hold('ArrowRight', '#aimOutput');
+    await t.hold('ArrowLeft', '@aim');
+    await t.hold('ArrowRight', '@aim');
    });
    // Up and down move the aim point further and shorter (the power slider went
    // with the Swing Meter, 14 October 2026). Down, so a tee shot near the end
@@ -790,9 +832,9 @@ const JOURNEYS = [
    // back to back with no frame between -- exactly the tap a slow machine used
    // to lose, and exactly what this harness's first draft took for a broken
    // control. The game now owes that tap to the next frame.
-   for (const [code, readout, what] of [['ArrowLeft', '#aimOutput', 'aim'], ['ArrowDown', '#aimRange', 'the aim point']]) {
+   for (const [code, readout, what] of [['ArrowLeft', '@aim', 'aim'], ['ArrowDown', '@aimYards', 'the aim point']]) {
     await t.step(`an instant ${code} tap still moves ${what}`, async () => {
-     const read = () => readout === '#aimRange' ? t.page.inputValue(readout) : t.page.textContent(readout);
+     const read = () => t.read(readout);
      const before = await read();
      await t.key(code);
      await t.until(async () => (await read()) !== before,
@@ -810,7 +852,7 @@ const JOURNEYS = [
     if (!/LIE/.test(await t.page.textContent('#lieReadout'))) throw new Error('the lie readout is empty');
     // Phase 2: the target marker is on the bar, inside it.
     await t.until(() => t.page.evaluate(() => { const m = document.getElementById('smTarget'); return !m.hidden && parseFloat(m.style.left) > 0; }), 'the target marker on the bar', 5 * SLOW);
-    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinLabel']]) {
+    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinCycleLabel']]) {
      const before = await t.page.textContent(label);
      await t.key(code);
      await t.until(async () => (await t.page.textContent(label)) !== before, `${code} to change ${label}`, 5 * SLOW);
@@ -819,7 +861,7 @@ const JOURNEYS = [
     // takes the step of spin off again.
     await t.key('KeyS'); await t.key('KeyS'); await t.key('KeyW'); await t.key('KeyW');
     await t.page.keyboard.press('Shift+KeyX');
-    if (await t.page.textContent('#spinLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
+    if (await t.page.textContent('#spinCycleLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
    });
    await t.step('Escape cancels a swing before the distance is set, with no stroke', async () => {
     await t.key('Space');
@@ -829,7 +871,8 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
-    for (const id of ['overview', 'playerView', 'greenView', 'playerView']) await t.page.click(`#${id}`);
+    // The cameras are in the Esc list.
+    for (const cam of ['overview', 'player', 'green', 'player']) { await t.chrome(); await t.page.click(`#pauseCams [data-cam=${cam}]`); }
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
     await t.swing();
@@ -838,7 +881,8 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await t.until(() => t.page.evaluate(() => !document.getElementById('world').classList.contains('in-flight')), 'the screen to come back', 5 * SLOW);
-    if (!await t.page.evaluate(() => !!document.getElementById('swing').offsetParent)) throw new Error('the shot button did not come back');
+    // There is no Swing button: the meter is what comes back.
+    if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the Swing Meter did not come back');
     // The swing's marks clear once the ball stops; the three numbers stay
     // (14 October 2026).
     if (await t.page.evaluate(() => !document.getElementById('smPower').hidden)) throw new Error('the meter kept the last swing after the ball stopped');
@@ -1161,6 +1205,7 @@ const JOURNEYS = [
    });
    const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
    await t.step('Floodlight the course, from the clock: no freeze', async () => {
+    await t.chrome();
     await t.page.click('#clockButton');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
     await box.scrollIntoViewIfNeeded();
@@ -1174,13 +1219,13 @@ const JOURNEYS = [
     const worst = await watch;
     if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
     await t.page.click('#clockButton');
+    await t.unpause();
    });
    await t.step('the lamps nearest the shot cast shadows', async () => {
     await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
    });
    const flip = async on => {
-    await t.page.click('#menuNav');
-    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.menuItem('Graphics & performance');
     await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
     // It lives on the window's "Costs a frame" tab.
     await t.press('Costs a frame');
@@ -1207,9 +1252,9 @@ const JOURNEYS = [
    const named = (s, n) => s?.profiles.find(p => p.name === n);
    const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
    const groupPanel = async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
    };
    await t.step('the welcome is up, over the menu', () =>
     t.until(() => t.page.evaluate(() => document.getElementById('welcome')?.hidden === false && !document.getElementById('splash')), 'the welcome', 60 * SLOW));
@@ -1298,8 +1343,7 @@ const JOURNEYS = [
     await t.closeDrawer().catch(() => {});
    });
    await t.step('the profile page shows both players', async () => {
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     // Leaving asks whether to keep the round. The history keeps it either way:
     // it was written hole by hole, not on the way out.
     await t.until(() => t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false), 'the leave question', 10 * SLOW);
@@ -1318,6 +1362,7 @@ const JOURNEYS = [
    // kept.
    await t.step('My profile: the look picker shows what is earned and saves a choice', async () => {
     if (!await t.page.evaluate(() => !!document.querySelector('#drawerContent .profile-id img.ball-avatar'))) throw new Error('no ball picture on the profile');
+    await t.press('Locker'); // the look is the hub's Locker tab (1.0, 17 October 2026)
     await t.page.click('[data-look-tab="tracer"]');
     await t.until(() => t.page.evaluate(() => !!document.querySelector('.look-item.on')), 'the tracer list', 5 * SLOW);
     const view = await t.page.evaluate(() => ({on: document.querySelector('.look-item.on')?.textContent, locked: document.querySelectorAll('.look-item.locked').length, open: [...document.querySelectorAll('.look-item:not(.on):not(.locked)')].map(b => b.dataset.wear)}));
@@ -1332,6 +1377,7 @@ const JOURNEYS = [
    });
    await t.step('Replay this course grows the same run again', async () => {
     const seed = main(await stored()).rounds[0].course.seed;
+    await t.press('History'); // the round history is the hub's History tab
     await t.press('Replay this course');
     await t.until(() => t.page.evaluate(s => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round?.seed === s && !JSON.parse(localStorage.getItem('fairway-round-v1')).round.cards[0].some(Number.isFinite) && document.getElementById('app').dataset.mode === 'play', seed),
      `a fresh run on seed ${seed}`, 120 * SLOW);
@@ -1356,6 +1402,7 @@ const JOURNEYS = [
    await t.step("My profile → Edit Smoke's bag", async () => {
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    await t.press('Bag'); // the bag is the hub's Bag tab
     await t.press("Edit Smoke's bag");
     await t.until(() => t.page.locator('#bagList').isVisible().catch(() => false), 'the bag editor', 5 * SLOW);
     if (await rows().count() !== 8) throw new Error(`a new golfer's bag has ${await rows().count()} clubs, not the stock eight`);
@@ -1395,9 +1442,9 @@ const JOURNEYS = [
     if (got.join() !== want.join()) throw new Error(`the club picker reads ${got.join(', ')}`);
    });
    await t.step('a second golfer joins, and their bag is edited in the round', async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     await t.page.click('#applyGroup');
@@ -1463,7 +1510,7 @@ const JOURNEYS = [
     if (ids[0] !== 'stroke' || !ids.includes('line') && !ids.includes('lateral')) throw new Error(`offered ${ids.join(', ')}`);
     if (r.options.some(o => o.penalty !== 1)) throw new Error('water relief is one stroke, whichever option');
     if (!(await barUp())) throw new Error('the relief bar did not appear');
-    if (!(await t.page.evaluate(() => document.getElementById('swing').disabled))) throw new Error('a shot could be taken before relief');
+    if (await t.page.evaluate(() => window.lab.state().canSwing)) throw new Error('a shot could be taken before relief');
    });
    await t.step('the choice survives a reload', async () => {
     await t.page.reload();
@@ -1482,10 +1529,10 @@ const JOURNEYS = [
     if (after.strokes[0] !== 4) throw new Error(`strokes read ${after.strokes[0]}, want 4`);
     if (await barUp()) throw new Error('the relief bar stayed up');
    });
-   await t.step('Local Rule E-5, chosen in Format & tees, offers the two-stroke drop', async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+   await t.step('Local Rule E-5, chosen in the Rules step, offers the two-stroke drop', async () => {
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
-    await t.press('Format & tees');
+    await t.press('Rules'); // the Play steps (round 13)
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
@@ -1500,13 +1547,13 @@ const JOURNEYS = [
     } else if ((await saved()).strokes[0] !== before + 2) throw new Error('with no fairway to drop on, stroke and distance should have applied');
    });
    await t.step('a player backup saves, and restores a player into this device', async () => {
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     await t.until(() => t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false), 'the leave question', 10 * SLOW);
     await t.page.click('#leaveDiscard');
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('app').dataset.mode === 'menu'), 'the main menu', 60 * SLOW);
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 5 * SLOW);
+    await t.press('History'); // the backup is on the hub's History tab
     const [download] = await Promise.all([t.page.waitForEvent('download'), t.page.click('#profilesExport')]);
     const file = JSON.parse(await (await import('node:fs/promises')).readFile(await download.path(), 'utf8'));
     if (file.kind !== 'fairway-profiles' || !file.profiles.some(p => p.name === 'Smoke')) throw new Error('the backup does not hold the players');
@@ -1606,11 +1653,10 @@ const JOURNEYS = [
    // Every panel the in-round menu offers, opened and closed. Found by the
    // label the player reads in the top menu.
    // Menu label -> the title of the window it opens. Not always the same:
-   // Help opens as "Welcome to Fairway".
-   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Welcome to Fairway']]) {
+   // Help opens as "Keys & help" (round 14, frame c-help).
+   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Keys & help']]) {
     await t.step(`menu → ${entry}`, async () => {
-     await t.page.click('#menuNav');
-     await t.page.locator('#menuDrop').getByRole('menuitem', {name: entry}).click();
+     await t.menuItem(entry);
      await t.until(async () => !!(await t.panelShowing(title)), `a window called "${title}"`, 5 * SLOW);
      await t.closePanel(title);
     });
@@ -1639,7 +1685,7 @@ const JOURNEYS = [
 
  {
   name: 'range-greens',
-  what: 'the range: its controls reopen from the view bar, a ball finishes on the 100 target green, the putt and chip stations play on the short-game green, a slope regrows it, and the session exports as CSV and PDF',
+  what: 'the range: its controls reopen from the tool column, a ball finishes on the 100 target green, the putt and chip stations play on the short-game green, a slope regrows it, and the session exports as CSV and PDF',
   async run(t) {
    await menuReady(t);
    const range = () => t.page.evaluate(() => window.lab.state().range);
@@ -1650,10 +1696,10 @@ const JOURNEYS = [
     await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, open by themselves', 5 * SLOW);
    });
    // The owner's report (16 October 2026): once closed, there was no way back.
-   await t.step('closed, the range controls come back from the view bar', async () => {
+   await t.step('closed, the range controls come back from the tool column', async () => {
     await t.closePanel('Range controls');
-    await t.page.click('#rangeControls');
-    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the view bar', 5 * SLOW);
+    await t.page.click('#rhTools [data-hud=range]');
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls from the tool column', 5 * SLOW);
    });
    await t.step('a ball at the 100 target lands on a green', async () => {
     // Its number from the centre mat, turned 19 degrees left (range.js). A
@@ -1752,14 +1798,12 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.getElementById('world')?.dataset.mode === 'studio'
      && document.getElementById('generating')?.hidden !== false), 'the studio landscape', 120 * SLOW);
    });
-   // The bar and every panel are both pinned to the bottom of the course, and
-   // until 12 October 2026 the bar sat over the panel's lowest rows. main.js
-   // lifts it above an open panel (*THE STUDIO BAR RIDES ABOVE*) and folds it to
-   // icons where the room above is short. Checked as geometry -- the bar clear
-   // of the panel and inside the course -- plus every bar button clickable,
-   // because a scrolled panel's own controls are clipped on purpose and would
-   // read as covered.
-   await t.step('the studio bar clears an open panel, desktop to phone', async () => {
+   // The studio's settings, desktop to phone (round 13): the whole-screen
+   // sheet, the same as from the menu, with its own Back and Grow this
+   // landscape, the studio bar stepped aside. Until round 13 the settings left
+   // a strip for the bar and this checked the bar cleared them (PROJECT_HANDOFF
+   // *THE STUDIO BAR RIDES ABOVE*).
+   await t.step('the studio settings are the sheet, desktop to phone', async () => {
     const was = t.page.viewportSize();
     await t.page.click('#studioSettings');
     await t.until(() => t.drawerOpen(), 'the settings panel', 5 * SLOW);
@@ -1767,22 +1811,13 @@ const JOURNEYS = [
     for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 720], [844, 390], [390, 844]]) {
      await t.page.setViewportSize({width: w, height: h});
      await t.page.waitForTimeout(600 * SLOW);
-     const fit = await t.page.evaluate(() => {
-      const bar = document.getElementById('studioBar').getBoundingClientRect();
-      const panel = document.getElementById('drawer').getBoundingClientRect();
-      const world = document.getElementById('world').getBoundingClientRect();
-      // The settings take the play area but for a strip holding the bar (15
-      // October 2026): `spare` is the course still showing besides that strip.
-      return {gap: Math.round(panel.top - bar.bottom), above: Math.round(bar.top - world.top),
-       spare: Math.round((panel.top - world.top) - (bar.height + 28) + (world.bottom - panel.bottom)),
-       compact: document.getElementById('studioBar').classList.contains('compact')};
-     });
-     const bad = await t.page.evaluate(unreachableControls, '#studioBar button, #closeDrawer');
-     const notes = [...(fit.gap < 0 ? [`the bar overlaps the panel by ${-fit.gap}px`] : []),
-      ...(Math.abs(fit.spare) > 2 ? [`the settings leave ${fit.spare}px of course showing`] : []),
-      ...(fit.above < 0 ? [`the bar runs ${-fit.above}px off the top of the course`] : []),
+     const sheet = await t.page.evaluate(() => ({bar: getComputedStyle(document.getElementById('studioBar')).display,
+      grow: !!document.getElementById('growStudio')}));
+     const bad = await t.page.evaluate(unreachableControls, '#growStudio, #closeDrawer');
+     const notes = [...(sheet.bar !== 'none' ? ['the studio bar shows over the settings sheet'] : []),
+      ...(!sheet.grow ? ['the sheet has no Grow this landscape'] : []),
       ...(bad.length ? [`${bad.length} unreachable -- ${bad.join('; ')}`] : [])];
-     console.log(`     ${`${w}x${h}`.padEnd(10)} ${fit.compact ? 'icons only' : 'full bar  '}  ${notes.length ? notes.join('; ') : 'fine'}`);
+     console.log(`     ${`${w}x${h}`.padEnd(10)} ${notes.length ? notes.join('; ') : 'fine'}`);
      if (notes.length) problems.push(`${w}x${h}`);
     }
     if (was) await t.page.setViewportSize(was);
@@ -1790,7 +1825,7 @@ const JOURNEYS = [
     // And back down to the foot of the course once the panel goes.
     await t.until(() => t.page.evaluate(() => document.getElementById('studioBar').style.getPropertyValue('--panel-lift') === '0px'),
      'the studio bar to come back down', 2 * SLOW);
-    if (problems.length) throw new Error(`the studio bar and the panel collide at ${problems.join(', ')}`);
+    if (problems.length) throw new Error(`the studio settings are not the sheet at ${problems.join(', ')}`);
    });
    await t.step('save it', async () => {
     await t.page.click('#studioSave');
@@ -1937,8 +1972,7 @@ const JOURNEYS = [
    await t.step('the play screen at 150% on 1920x1080', () => play('1920x1080 at 150%'));
    await t.step('200% on 2560x1440, set in Graphics', async () => {
     await t.page.setViewportSize({width: 2560, height: 1440});
-    await t.page.click('#menuNav');
-    await t.page.locator('#menuDrop').getByRole('menuitem', {name: 'Graphics & performance'}).click();
+    await t.menuItem('Graphics & performance');
     await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
     await t.page.$eval('#gfxTextSize', el => { el.value = 200; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); });
     await t.until(async () => Math.abs((await zoom()) - 2) < .01, 'the interface at 200%', 5 * SLOW);
@@ -1969,6 +2003,8 @@ const JOURNEYS = [
    const tap = sel => t.page.tap(sel);
    await t.step('Endless → Start an endless run', async () => {
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    // Round 14: the run starts from the Golfers step.
+    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
@@ -1981,23 +2017,23 @@ const JOURNEYS = [
     if (shown.tiles || shown.fold) throw new Error(`still showing: ${JSON.stringify(shown)}`);
    });
    await t.step('aim by tapping the course', async () => {
-    const before = await t.page.textContent('#aimOutput');
+    const before = await t.read('@aim');
     const box = await t.page.locator('#scene').boundingBox();
     // Off to one side of the middle of the screen, which is fairway or rough
     // on any hole -- the point is only that the aim moves.
     await t.page.touchscreen.tap(box.x + box.width * 0.62, box.y + box.height * 0.45);
-    await t.until(async () => (await t.page.textContent('#aimOutput')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
+    await t.until(async () => (await t.read('@aim')) !== before, 'a tap on the course to move the aim', 5 * SLOW);
    });
    await touchAiming(t);
    let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
-    // The Swing button starts the meter; mid-swing the whole screen is the tap
+    // A tap on the bar starts the meter; mid-swing the whole screen is the tap
     // target, so the next two taps land anywhere.
     // A putt is two taps, so the third is only made while a swing still waits.
     // The marker starts from the far left (14 October 2026), so the distance tap
     // waits for it to pass the strike line and the strike comes on its way back.
-    await tap('#swing');
+    await tap('#smBar');
     await t.page.waitForTimeout(800);
     await tap('#swingCatcher');
     await t.page.waitForTimeout(300);
@@ -2013,7 +2049,7 @@ const JOURNEYS = [
    await t.step('the shot button, then Skip', swing);
    await t.step('drop beside the pin, through the tools', async () => {
     await reliefFirst(t, tap);
-    await tap('#barTools');
+    await t.chrome(); await tap('#barTools');
     await t.until(() => t.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools', 5 * SLOW);
     await tap('#simDrop');
     await tap('#dropAtGreen');
@@ -2024,7 +2060,7 @@ const JOURNEYS = [
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
-     await tap('#swing');
+     await tap('#smBar');
      await tapOnTarget(t);
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#skipFlight').tap({timeout: 10000 * SLOW}).catch(() => {});
@@ -2209,6 +2245,7 @@ const JOURNEYS = [
     await t.inPlay();
    });
    await t.step('connect the bridge and arm the monitor', async () => {
+    await t.chrome();
     await t.page.getByRole('button', {name: 'Connect monitor'}).click();
     await t.press('Connect bridge');
     await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
@@ -2217,9 +2254,9 @@ const JOURNEYS = [
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
-    for (const sel of ['.bottom-area', '#swing', '#swingMeter', '#shapeControl', '.meter-button', '.aim-control', '#aimRange', '#monState'])
+    for (const sel of ['.bottom-area', '#swingMeter', '#shapeControl', '.meter-button', '#monState'])
      if (await shown(sel)) throw new Error(`${sel} still shows with the monitor armed`);
-    for (const sel of ['#monitorPanel', '#monClub', '#monReconnect', '#monArm', '#monLie'])
+    for (const sel of ['#monitorPanel', '#monArm', '#club', '#lieReadout'])
      if (!await shown(sel)) throw new Error(`${sel} is missing from the launch monitor window`);
     if (await shown('#monByHand')) throw new Error('Hit by hand is back; the Armed switch replaced it');
    });
@@ -2239,7 +2276,6 @@ const JOURNEYS = [
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'the shot to finish', 30 * SLOW);
     if (!acks.some(a => a.requestId === 'smoke-1' && a.accepted)) throw new Error(`the game did not accept the shot: ${JSON.stringify(acks)}`);
-    if (!await shown('#shotPanel')) throw new Error('the shot panel is not showing');
     const carry = await t.page.textContent('#shotTiles [data-field=carry]');
     if (!/\d+\s*yd/.test(carry) || !/CARRY/.test(carry)) throw new Error(`the carry tile reads "${carry}"`);
    });
@@ -2272,7 +2308,7 @@ const JOURNEYS = [
    });
    await t.step('the Armed switch in the window brings back the shot controls', async () => {
     await t.page.click('#monArm');
-    await t.until(() => shown('#swing'), 'the shot button to come back', 5 * SLOW);
+    await t.until(() => shown('#swingMeter'), 'the Swing Meter to come back', 5 * SLOW);
     if (!await shown('#swingMeter')) throw new Error('the Swing Meter did not come back');
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window stayed after disarming');
     if (!await shown('#monState')) throw new Error('the strip to re-arm the monitor is missing from the shot controls');
@@ -2310,9 +2346,9 @@ const JOURNEYS = [
    const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
     BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
    const groupPanel = async () => {
-    await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Your group');
+    await t.press('Golfers'); // the Play steps (round 13)
    };
    await menuReady(t);
    await t.step('connect and arm from the main menu', async () => {
@@ -2324,7 +2360,7 @@ const JOURNEYS = [
    });
    await t.step('a group of two: the first golfer on the Swing Meter, left-handed; the second on the monitor', async () => {
     await fromMenu(t, 'Endless');
-    await t.press('Your group');
+    await t.press('Golfers'); // the Endless steps (round 13)
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     // The "plays with" and hand choices are there: a bridge has connected.
@@ -2394,8 +2430,6 @@ const JOURNEYS = [
    await t.step('the main menu has a way to the launch monitor', async () => {
     const bad = await t.page.evaluate(unreachableControls, '#menuMonitor');
     if (bad.length) throw new Error(bad.join('; '));
-    // The phone's camera button belongs to play; it once floated over the menu.
-    if (await t.page.evaluate(() => !!document.getElementById('camButton').offsetParent)) throw new Error('the camera button shows on the main menu');
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Launch monitor'}).tap();
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel', 5 * SLOW);
    });
@@ -2412,10 +2446,12 @@ const JOURNEYS = [
    });
    await t.step('into a round: the shot panel says Ready, and Tools has the monitor too', async () => {
     await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
+    // Round 14: the run starts from the Golfers step.
+    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
-    await t.page.tap('#barTools');
+    await t.chrome(); await t.page.tap('#barTools');
     await t.page.getByRole('button', {name: 'Launch monitor', exact: true}).tap();
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
     await t.key('Escape');
@@ -2493,7 +2529,7 @@ const JOURNEYS = [
    // From the main menu to a challenge's Start, by its tab and card.
    const open = async (tab, id) => {
     if (!(await t.page.evaluate(() => !document.getElementById('mainMenu').hidden))) {
-     await t.page.click('#menuNav');await t.page.click('#dropMenu');
+     await t.menuItem('Main menu');
      await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
     }
     await fromMenu(t, 'Challenges');
@@ -2630,7 +2666,7 @@ const JOURNEYS = [
    const bar = re => t.page.evaluate(src => !document.getElementById('challengeBar').hidden && new RegExp(src).test(document.getElementById('challengeBar').textContent), re.source);
    // Leaving a real round (a goal round is one) asks first: leave it unsaved.
    const toMenu = async () => {
-    await t.page.click('#menuNav');await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     const leave = t.page.getByRole('button', {name: /Leave without saving/});
     await leave.waitFor({timeout: 3000 * SLOW}).then(() => leave.click(), () => {});
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
@@ -2756,7 +2792,8 @@ const JOURNEYS = [
    await t.step('the panel, then play it', async () => {
     await fromMenu(t, 'Course of the week');
     await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
-    await t.page.click('#weeklyGo');
+    // Round 14: Play is on the Golfers step; press goes there first.
+    await t.press('Play the course of the week');
     await t.inPlay(180 * SLOW);
    });
    await t.step('eighteen holes, and the saved round knows its week', async () => {
@@ -2787,6 +2824,7 @@ const JOURNEYS = [
    await t.step('at level 1, Sky has a padlock and cannot be put on', async () => {
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.press('Locker');
     await t.page.click('[data-look-tab="tracer"]');
     await t.page.waitForSelector(skyItem, {timeout: 10000 * SLOW});
     const v = await t.page.evaluate(sel => { const b = document.querySelector(sel); return {locked: b.classList.contains('locked'), lock: !!b.querySelector('.look-lock'), disabled: b.disabled, wear: b.dataset.wear || null}; }, skyItem);
@@ -2826,13 +2864,13 @@ const JOURNEYS = [
    await t.step('now Sky goes on, and is kept', async () => {
     await t.until(() => t.page.evaluate(() => document.getElementById('levelUp')?.hidden !== false), 'the banner to go', 15 * SLOW);
     if (await t.drawerOpen()) await t.closeDrawer().catch(() => {});
-    await t.page.click('#menuNav');
-    await t.page.click('#dropMenu');
+    await t.menuItem('Main menu');
     // Leaving a round with a hole played asks whether to keep it.
     if (await t.page.waitForSelector('#leaveNotice:not([hidden])', {timeout: 5000 * SLOW}).then(() => true, () => false)) await t.page.click('#leaveDiscard');
     await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden && document.getElementById('generating')?.hidden !== false), 'the main menu', 60 * SLOW);
     await fromMenu(t, 'My profile');
     await t.until(() => t.drawerOpen(), 'the profile', 10 * SLOW);
+    await t.press('Locker');
     await t.page.click('[data-look-tab="tracer"]');
     await t.page.click('[data-wear="tracer:sky"]', {timeout: 10000 * SLOW});
     await t.until(async () => (await stored()).worn?.tracer === 'sky', 'Sky to be saved', 10 * SLOW);
@@ -2856,6 +2894,7 @@ const JOURNEYS = [
     if (!/FAIRWAY MASTER/.test(v.level || '')) throw new Error(`the level reads ${v.level}`);
     // Thirteen from the spec and five for the challenges (16 October 2026).
     if (v.ach !== 18 || v.earned !== 1) throw new Error(`${v.ach} achievements listed, ${v.earned} earned`);
+    await t.press('Locker'); // the look is the hub's Locker tab (1.0, 17 October 2026)
    });
    for (const [tab, wear, key, val] of [['frame', '[data-wear="frame:legend"]', 'frame', 'legend'], ['skin', '[data-wear="skin:neon"]', 'skin', 'neon'], ['ball', '[data-wear="ball:galaxy"]', 'ball', 'galaxy'], ['tracer', '[data-wear="tracer:aurora"]', 'tracer', 'aurora']]) {
     await t.step(`the ${tab} tab: put one on, and it is kept`, async () => {

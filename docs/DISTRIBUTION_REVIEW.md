@@ -156,7 +156,9 @@ The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
 64 KB in total**: Kenney house colour atlases (`colormap` plus three
 variations), CC0. Kenney's licence text states the content is free to use in
 personal, educational **and commercial** projects, with credit appreciated and
-not required. Quaternius ships the CC0 1.0 dedication.
+not required. Quaternius ships the CC0 1.0 dedication. (From 17 October 2026
+the page also carries two font files, about 35 KB, under the SIL Open Font
+License: see *No fonts ship* below, now *One font ships*.)
 
 Everything else imported is **geometry with its materials stripped at ingest**
 and repainted from the biome palette. Verified this pass rather than assumed:
@@ -166,10 +168,14 @@ and repainted from the biome palette. Verified this pass rather than assumed:
   bark maps, and no bark image is taken because trunks are painted.
 - **No ez-tree leaf sprite ships.** `broadleaf` appears 14 times in the build as
   a species *family* name, not as the sprite file.
-- **No fonts ship.** `--font-display` and `--font-ui` are system stacks
-  (Georgia / Times New Roman, Inter / system sans). No `@font-face` anywhere, so
-  no font binary is distributed and naming a face in a CSS stack distributes
-  nothing.
+- **One font ships, from the `ui-1-0` branch (17 October 2026) on.** Until
+  then none did: `--font-display` and `--font-ui` are system stacks and there
+  was no `@font-face`. The 1.0 interface embeds **Saira Condensed** (SIL Open
+  Font License 1.1), two woff2 files -- Bold and ExtraBold, Latin only, about
+  35 KB -- inlined into the page as `data:` URLs, so nothing is fetched. The
+  licence travels in `src/fonts/OFL.txt` and THIRD_PARTY_NOTICES.txt
+  (addendum of 17 October 2026, below). The old interface still uses the
+  system stacks.
 - **No audio files ship.** The game has sound from 13 October 2026, but every
   sound is synthesised in the browser by its own code (`src/sound.js`,
   `src/audio.js`): no recording, no asset, nothing to license. About 52 KB of
@@ -1131,3 +1137,99 @@ preview: the owner asked for the live site): `/play/` serves this release's
 and its four Download buttons resolve through `releases/latest` to the v0.8.3
 zips. The packaged Windows server was run from its unzipped download before
 publishing and served the page byte for byte, on spare ports (19922/19921).
+
+## Addendum, 17 October 2026: the 1.0 interface's typeface (branch `ui-1-0`, phase 0)
+
+**A font ships for the first time.** Phase 0 of the 1.0 interface embeds
+**Saira Condensed**, the typeface the owner approved in the mockups, under the
+**SIL Open Font License 1.1**: Bold (700) and ExtraBold (800), Latin subset,
+woff2, 17,808 and 17,984 bytes, unmodified as Google Fonts distributes them
+(taken from `@fontsource/saira-condensed` 5.3.0, which repackages Google Fonts
+version 12; the package itself is not a dependency -- the two files are copied
+into `src/fonts/` with the licence beside them). The OFL allows bundling with
+software, commercial use included, on two conditions that matter here: the
+licence must travel with the font (it is in `src/fonts/OFL.txt`, which the
+source archive carries, and in THIRD_PARTY_NOTICES.txt, which every zip
+carries), and a modified version may not use the Reserved Font Name "Saira"
+(the files are not modified).
+
+The family has **no italic**: the slanted numbers in the design are the
+browser's own slant of the upright faces, as they were in the mockups. Only
+two weights ship; a 600 asked for falls to 700.
+
+**Still no request.** `src/ui-kit.css` names the files by relative path and the
+build inlines them as `data:font/woff2` URLs (Vite's `assetsInlineLimit`), so
+the portable file makes no network request; checked in the built page (two
+`@font-face` rules, both `data:`). Characters outside the Latin subset (the
+macrons in "rēlā", the arrow glyphs) fall back to the system face, glyph by
+glyph. The built page is **17,271,965 bytes, +58 KB** on 0.8.3 (the fonts
+base64-encoded, the kit's stylesheet, and the licence text, which Help's
+notices carry; the kit's modules are not imported yet, so not in the page);
+the plan had guessed 130 KB. Nothing is drawn in the new face yet -- phase 0 adds the face and the
+kit; phase 1 is the first screen to use them.
+
+**The rest of the overnight build (phases 1-5, same branch, same night).** No
+dependency, font or asset was added after the typeface: the round screen,
+shot moments, menus and focus are the game's own CSS and JavaScript, and the
+chiptune (`src/chiptune.js`) is synthesised and not even in the page yet (it is
+not imported; the sound lab inlines it into its local listening page). The
+built page is **17,329,584 bytes, +116 KB on 0.8.3** with everything on the
+branch. Its one `fetch(` is still Vite's module-preload helper, which never
+runs in the single file (THIRD_PARTY_NOTICES, *Vite 8.3.0 module-preload
+helper*). **Smoke on the branch: 37 of 37 journeys** on the real GPU, later
+the same night (the owner allowed the graphics card while asleep), so the
+zero-request rule held through every journey, the served and bridge ones
+included.
+
+
+## Round 14: the start splash's data in the page (17 October 2026)
+
+The built page carries one more small inline script in its head,
+`window.__FAIRWAY_SPLASH__` (vite.config.js `fairway-splash`): the nine
+landscapes' palettes and names, the package version, and two date functions
+from weekly.js, about 3 KB. It needs no network and no storage, so the file
+still opens offline from a file URL. Nothing else about the single file
+changed.
+
+## Addendum, 18 October 2026: v0.9
+
+**v0.9** is published at the owner's request ("build and release v0.9 to both
+github and live website"), as "Fairway 0.9 (beta)", tag `v0.9`, not a
+pre-release, the same four zip names, from the merge of `release-0.9` into
+`main`, with its notes in `docs/releases/v0.9.md` in that commit. It carries
+the whole `ui-1-0` journey (the 1.0 interface on every screen, the start
+splash, the tiny course models, the new sounds, the old interface removed)
+plus the release branch: the capture tools for the website, the 1.0 icons and
+version 0.9.0. **`GENERATOR_VERSION` is still 36, `SCHEMA_VERSION` still 11
+and `PROFILE_VERSION` still 3**; the biome fingerprint is unchanged, and the
+page's `fairway-versions` tag still reads `generator=36 schema=11`, so saved
+rounds and course codes from 0.8.3 carry over untouched.
+
+**The package version is 0.9.0** (package.json and its lockfile): the start
+splash prints it, and it had said 1.0.0 since the first commit. The bridge's
+banner carries the same number.
+
+**One font, no other new dependency.** Saira Condensed (OFL 1.1, two woff2
+files, inlined as `data:` URLs) is the only addition since 0.8.3, recorded in
+the typeface addendum above and in THIRD_PARTY_NOTICES. The icons in
+`public/` and `index.html` are redrawn by `tools/make-icons.mjs` in the
+splash's colours: still the project's own drawing, no third-party image.
+
+**The page makes no request, and carries one `fetch(` again.** Counting
+`fetch(` in the release build against 0.8.3's found four against one: the
+course-model cards passed three.js's namespace to a helper as a value, so the
+bundler kept all of three.js, its file loaders included. Dead code -- every
+smoke journey enforces zero requests and passed -- but 147 KB of page and
+network code the single file had never carried. Fixed before release
+(model-cards.js `PARTS`; tests/three-namespace.test.mjs now refuses it): the
+one `fetch(` left is Vite's module-preload helper, as before. The built page
+is **17,561,146 bytes (7.21 MB gzipped), +348 KB on 0.8.3**: the interface's
+stylesheets and modules, the fonts and the splash data.
+
+**Checked:** `npm test` 1004 of 1004. **Smoke: 37 of 37 journeys** on the real
+GPU, in seven small batches; `ball-light-hole-out` failed once (a lit shader
+built during the hole-out flyover, the intermittent open item in TODO) and
+passed on its rerun. After the `PARTS` fix the seven journeys that draw course
+cards passed again, and the cards were seen drawing with no warning. **Not seen
+by a person:** most of the 1.0 interface in play (TODO lists each screen and
+what it was seen at), the new sounds, a phone, a real launch monitor.

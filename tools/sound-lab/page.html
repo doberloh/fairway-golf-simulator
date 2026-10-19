@@ -85,11 +85,8 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 <h2>4. Trees and rocks</h2>
 <div class="grid" id="solid"></div>
 
-<h2>5. Score stings</h2>
-<p class="muted">One per score, played as the hole-out banner lands. Signed off on the marimba; the buttons below still play the whole set in each instrument, for the record.</p>
-<div class="row" id="scoreAll" style="margin-bottom:10px"></div>
-<div class="grid" id="scores"></div>
-<h3 style="margin-top:20px">The cup</h3>
+<h2>5. The cup</h2>
+<p class="muted">The score stings left this page with the marimba (deleted 17 October 2026): they are chiptune now, in stings.html and chiptune.html.</p>
 <div class="grid" id="extra"></div>
 
 <h2>6. Also done this round, in the game</h2>
@@ -126,9 +123,15 @@ table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px
 
 <script type="module">
 /*SYNTH*/
+// The 1.0 interface's chiptune (src/chiptune.js), in a scope of its own so its
+// names cannot meet sound.js's.
+const CHIP=(()=>{
+/*CHIP*/
+return {playChip,CHIP_MOMENTS,CHIP_INTERFACE,CHIP_LEVELS};
+})();
 
 // tools/sound-lab/check.mjs renders every sound offline through this.
-window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,score,waterPlayer,WATERS,WATER_FOR,STRIKES,IMPACTS,SCORES,INSTRUMENTS,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz,METER_EVENTS,METER_VOICES,meterEvent,meterVoice,XP_SOUNDS,xpSound,CHIP_TAKES,CHIP_FINAL,chipSting};
+window.soundLab={createSoundLab,createAmbience,strike,impact,bounces,waterPlayer,WATERS,WATER_FOR,STRIKES,IMPACTS,SCORES,SCENES,KNOBS,dolbear,airCutoff,treeCricketHz,METER_EVENTS,METER_VOICES,meterEvent,meterVoice,XP_SOUNDS,xpSound,CHIP_TAKES,CHIP_FINAL,chipSting,...CHIP};
 
 // ------------------------------------------------------------ the page
 // v2, v3, v4 for rounds 2-4: each time the owner's sliders are baked into the
@@ -203,13 +206,12 @@ function card(kind,id,def,host){
  c.append(el('h3',{},def.label),el('small',{},def.note));
  const takes=el('div',{class:'takes'});
  const play=(n=1)=>{ensure();for(let i=0;i<n;i++)setTimeout(()=>fire(),i*(isStrike?1100:700));};
- const isScore=kind==='scores';
- const fire=()=>isScore?score(lab,id,{take:st.take,knobs:st.knobs}):isStrike?strike(lab,id,{take:st.take,speed:st.speed??def.speed[2],knobs:st.knobs}):impact(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});
+ const fire=()=>isStrike?strike(lab,id,{take:st.take,speed:st.speed??def.speed[2],knobs:st.knobs}):impact(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});
  for(const [k,t]of Object.entries(def.takes)){const b=el('button',{class:'take'+(st.take===k?' on':''),onclick:()=>{st.take=k;save();takes.querySelectorAll('.take').forEach(x=>x.classList.toggle('on',x===b));play();}},el('b',{},k),t.name);takes.append(b);}
  c.append(takes);
  const slider=(label,min,max,step,get,set,fmt)=>{const inp=el('input',{type:'range',min,max,step,value:get()}),out=el('span',{},fmt(get()));inp.oninput=()=>{set(+inp.value);out.textContent=fmt(+inp.value);save();};return el('label',{class:'sl'},el('span',{},label),out,inp);};
  if(isStrike)c.append(slider('Head speed',def.speed[0],def.speed[1],1,()=>st.speed??def.speed[2],v=>st.speed=v,v=>`${v} mph`));
- else if(!isScore&&def.group!=='extra'){c.append(slider(def.group==='solid'?'Ball speed':'Landing speed',4,90,1,()=>st.speed??35,v=>st.speed=v,v=>`${v} mph`));
+ else if(def.group!=='extra'){c.append(slider(def.group==='solid'?'Ball speed':'Landing speed',4,90,1,()=>st.speed??35,v=>st.speed=v,v=>`${v} mph`));
   c.append(slider('Distance from camera',3,150,1,()=>st.dist??12,v=>st.dist=v,v=>`${v} m`));}
  const row=el('div',{class:'row'},el('button',{class:'act',onclick:()=>play()},'Play'),el('button',{class:'sec',onclick:()=>play(3)},'Play 3'));
  if(def.bounce)row.append(el('button',{class:'sec',onclick:()=>{ensure();bounces(lab,id,{take:st.take,speed:mph(st.speed??35),dist:st.dist??12,knobs:st.knobs});}},'Bounces'));
@@ -223,8 +225,6 @@ function card(kind,id,def,host){
  return c;
 }
 for(const [id,def]of Object.entries(STRIKES))card('strikes',id,def,$('#strikes'));
-for(const [id,def]of Object.entries(SCORES))card('scores',id,def,$('#scores'));
-for(const [k,ins]of Object.entries(INSTRUMENTS))$('#scoreAll').append(el('button',{class:'sec',onclick:()=>{ensure();Object.keys(SCORES).forEach((id,i)=>setTimeout(()=>score(lab,id,{take:k,knobs:saved.scores?.[id]?.knobs||{}}),i*2600));}},`All scores: ${ins.name.split(':')[0]}`));
 for(const [id,def]of Object.entries(IMPACTS))card('impacts',id,def,$('#'+({turf:'turf',water:'turf',solid:'solid',extra:'extra'}[def.group])));
 document.querySelectorAll('textarea[data-note]').forEach(t=>{t.value=saved.notes?.[t.dataset.note]||'';t.oninput=()=>{(saved.notes||(saved.notes={}))[t.dataset.note]=t.value;save();};});
 

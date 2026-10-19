@@ -551,9 +551,6 @@ export const FINAL={
   // moves nothing: the brick take has no thump. Kept, as heard.
   water:['A',{texture:3.4,body:1.95,pitch:.83,length:1.65}],flagstick:['A',{length:.4,click:3.95,pitch:.76}],
   house:['B',{pitch:.66,length:.3,click:.25,body:2.05,texture:1.95}]},
- // The score stings: the marimba (A) for every score, the top three a little
- // lower, and the ace with more mallet.
- scores:{ace:['A',{click:2.15,pitch:.8}],albatross:['A',{pitch:.8}],eagle:['A',{pitch:.8}],birdie:['A'],par:['A'],bogey:['A'],double:['A'],worse:['A']},
 };
 // The cup was signed off in round 3 and touched again in round 4: fold both.
 FINAL.impacts.cup[1]={...FINAL.impacts.cup[1],length:1.55*.95};
@@ -565,17 +562,16 @@ for(const [group,table] of [[STRIKES,FINAL.strikes],[IMPACTS,FINAL.impacts]])
  }
 
 // ---------------------------------------------------------------- scores
-// A short musical sting when a hole is finished (round 3), one per score and
-// three instruments to choose between -- one instrument for all of them, so
-// the set sounds like one game. Good scores rise and brighten, par settles,
-// bogeys fall and soften; nothing mocks. No crowd (the owner). Notes are MIDI
-// numbers in C major, times in seconds, velocities 0-1. PLACED.
+// The hole-out stings began as marimba (round 3), became chiptune jingles on
+// 14 October 2026 (CHIP_FINAL, below), and with the 1.0 interface the score
+// moments the owner picked play its family C tunes (chiptune.js; audio.js
+// decides which). THE MARIMBA IS DELETED: the owner chose "Delete" over
+// keeping it as an option (16 October 2026) and asked for the new sounds to be
+// wired in (17 October 2026). What stays here is each score's name and its tune
+// as notes -- MIDI numbers in C major, times in seconds, velocities 0-1,
+// PLACED in round 3 -- because the stings report's chip takes A-C still play
+// them. Good scores rise and brighten, par settles, bogeys fall; nothing mocks.
 const midi=n=>440*Math.pow(2,(n-69)/12);
-export const INSTRUMENTS={
- A:{name:'Marimba: wooden and warm',modes:f=>[[f,.22,1],[4*f,.05,.32],[9.9*f,.012,.1]],mallet:.25},
- B:{name:'Bells: bright and glassy',modes:f=>[[f,.75,1],[2.76*f,.28,.28],[5.4*f,.1,.12],[f*1.002,.75,.4]],mallet:.12},
- C:{name:'Soft electric piano',modes:f=>[[f,.6,1],[f*1.004,.6,.6],[2*f,.3,.35],[3*f,.12,.12],[7.1*f,.025,.15]],mallet:.06},
-};
 const arp=(notes,step,vel=.8,t0=0)=>notes.map((n,i)=>[t0+i*step,n,vel]);
 const chord=(notes,t,vel)=>notes.map(n=>[t,n,vel]);
 const sparkle=(n,t0,t1)=>Array.from({length:n},()=>[R(t0,t1),pick([96,98,100,103,105,108]),R(.2,.4)]);
@@ -589,11 +585,6 @@ export const SCORES={
  double:{label:'Double bogey',notes:()=>[[0,75,.5],[.2,72,.45],[.42,68,.4]]},
  worse:{label:'Triple bogey or worse',notes:()=>[[0,72,.45],[.2,71,.4],[.4,70,.38],[.62,69,.36]]},
 };
-for(const s of Object.values(SCORES)){s.note='';s.knobs=['level','pitch','length','bright','click'];s.takes=Object.fromEntries(Object.entries(INSTRUMENTS).map(([k,v])=>[k,{name:v.name,instrument:k}]));}
-for(const [id,[take,knobs={}]] of Object.entries(FINAL.scores)){
- const t=SCORES[id].takes[take];
- SCORES[id].takes={A:{name:`Signed off (${t.name})`,instrument:take,base:knobs}};SCORES[id].final=true;
-}
 // Which sting a finished hole plays: the same names as scoring.js's
 // holeScoreName. A decimal-putting score has no name; it plays the nearest
 // whole score's sting rather than falling through to "worse".
@@ -602,23 +593,6 @@ export const scoreSting=(strokes,par)=>{
  const d=Math.round(strokes-par);
  return d<=-3?'albatross':d===-2?'eagle':d===-1?'birdie':d===0?'par':d===1?'bogey':d===2?'double':'worse';
 };
-export function score(lab,name,{take='A',knobs={},at}={}){
- const T=SCORES[name].takes[take]||SCORES[name].takes.A;
- const I=INSTRUMENTS[T.instrument||take]||INSTRUMENTS.A,t=(at??lab.ctx.currentTime)+.05;
- knobs=mergeKnobs(T.base,knobs);
- const dest=place(lab,{dist:10,wet:.35,until:t+5});
- // Level 0.14: at 0.32 the hole-in-one peaked 5 dB over full scale and every
- // sting averaged louder than a drive (check.mjs, 13 October 2026).
- const x=kit(lab,dest,t,.14,knobs);
- for(const [dt,n,vel] of SCORES[name].notes()){
-  const f=midi(n);
-  x.ring(dt,I.modes(f),{amp:vel});
-  x.hiss(dt,{type:'bandpass',f:Math.min(f*3,9000),q:1,dur:.006,attack:.0005,amp:I.mallet*vel,role:'click',fixed:true});
- }
- lab.sweep();
- return t;
-}
-
 // Play one impact. `speed` is the ball's speed into the surface, m/s.
 export function impact(lab,what,{take='A',speed=15,knobs={},pan=0,dist=12,at}={}){
  const I=IMPACTS[what],T=I.takes[take]||I.takes.A,t=(at??lab.ctx.currentTime)+.03;
@@ -1333,9 +1307,11 @@ export function xpSound(lab,id,{take='A',knobs={},at}={}){
 // a drum; quick arpeggios, dry, no ring. Four takes, the same four for every
 // score so the set sounds like one game, and the owner picks in the stings
 // report (tools/sound-lab/stings.html). The owner chose take D, the game
-// jingles, for every score on 14 October 2026 (CHIP_FINAL, below); from then
-// the game plays these and the marimba stings above are kept only for the
-// report's comparison. PLACED by ear.
+// jingles, for every score on 14 October 2026 (CHIP_FINAL, below). Since the
+// 1.0 interface (17 October 2026) the game plays family C (chiptune.js) for
+// hole in one, eagle, birdie, par and bogey, and these jingles only for the
+// scores family C has no tune for: albatross, double bogey and worse (PLACED;
+// audio.js). PLACED by ear.
 const pulseCache=new WeakMap();
 // A pulse wave of a given duty from its Fourier series: 50% is the square,
 // 25% and 12.5% the thinner, buzzier voices old consoles had.
@@ -1385,8 +1361,8 @@ export const CHIP_TAKES={
  D:{name:'Game jingles: new, bouncier tunes with bass and drum'},
 };
 // THE OWNER'S PICK (14 October 2026, "Hole-out sting notes"): take D for every
-// score, with their sliders -- length 70%, pitch 63%, brightness 120%. A score
-// missing from here would play the marimba; none is.
+// score, with their sliders -- length 70%, pitch 63%, brightness 120%. Every
+// score has one (the marimba it once fell back to is deleted).
 const CHIP_PICK=['D',{length:.7,pitch:.63,bright:1.2}];
 export const CHIP_FINAL=Object.fromEntries(Object.keys(SCORES).map(id=>[id,CHIP_PICK]));
 export function chipSting(lab,name,{take='A',knobs={},at}={}){

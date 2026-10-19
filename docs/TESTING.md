@@ -133,6 +133,77 @@ the courses several suites share.
   `auto-resolution`, `ui-scale`, `roll-hop`.
 - **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
   `projector`, `course-map`, `green-map`, `shot-views`, `shot-data`.
+- **The capture tools** -- `capture-mux` (the MP4 and WebM files the clip
+  recorder writes hold together: boxes and elements fill the file, the frame
+  tables name every frame, key frames marked; docs/CAPTURE.md). Whether a clip
+  plays is checked in a browser at the end of every recording.
+- **The 1.0 interface** (branch `ui-1-0`, from phase 0) -- `ui-layout` (the
+  canvas for 16:9, 16:10, 4:3 and 21:9, the bands, the leaning sheet's corners
+  on the 60 px margins at every height, columns that never overlap, the canvas
+  filling the screen at every Text size and its 1024 floor), `ui-palette`
+  (every biome has a complete palette and no two share one, readable text over
+  a light and a dark picture, which biome each screen wears, the menus
+  following the week), `ui-kit` (every class `uk-` and every rule scoped to
+  `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
+  rules, the two font files are local woff2 with their licence, text escaped).
+  `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
+  club, scores with a real minus, golfer cards, keys, the ball light -- and
+  how large they are drawn: the club panel and the meter, and the slab and the
+  cards, never meet at any tested size or Text size).
+  `shot-moments` (phase 2: the card on a course and tiles on the range, the
+  player's choice and Tab winning, a putt popping no card, the card's hold and
+  fade, the range's eight tiles being real fields, the choice kept per device;
+  birdie or better earning the band, every banner under two seconds with the
+  next turn announced as it leaves, the paper card's marks), and `round-hud`'s
+  round-complete helpers (places with ties, XP this round, the handicap line).
+  Round 14: the reachability and thumb checks skip a select under a 1.0
+  drop-down (`.dd-native`: its field is the control) and measure the whole
+  club box (`.club-control`, which opens the bag) rather than `#club`.
+  On a big screen the flight check now expects no flight panel, Skip in the
+  meter's title (`#smSkip`) and the launch strip; the range journey opens
+  Range controls from the tool column (`#rhTools [data-hud=range]`).
+  `hud-places` (the map and the shot numbers once dragged: a place is a
+  fraction of the playing area and comes back the same, a drag past the edge
+  and a place from a wider window are held on screen, bad saves are
+  dropped, an empty set removes the key).
+  `ui-windows` (each row of a window is moved by its distance from the
+  column's middle). `ui-focus` (phase 3: arrows and a controller -- every button reachable from
+  every other in the menus' layouts, none a dead end, down goes to the next
+  row, a single line wraps, the keys and pad directions). `ui-lobby` (the
+  1.0 lobby: a picker's value and line are cut from the drop-down's own
+  option text, every out-of-bounds rule reads as its short name, every format
+  has a tile). `ui-monitor-setup` (the setup screen's steps tick in order
+  and never ahead of the bridge, the ball light's words match the round
+  screen's, the last shot in mph, degrees and rpm). `ui-profile-hub` (every
+  heading the old profile page writes has a hub tab; the overview's eight
+  numbers and their dashes). The `profile`, `bag`, `look` and `level-up`
+  journeys press the hub's Locker, Bag and History tabs before reaching in.
+  `ui-settings` (the category list opens known sheets and holds every
+  settings screen). `ui-studio` (what counts as a changed studio setting, how
+  a change reads, and the schema reading clean against itself).
+  `ui-range-controls` (the range window's session table reads the report's
+  club table: balls, average carry, spread). `ui-dropdown` (round 14: the 1.0 drop-down's rows -- groups, locked choices, notes -- and its cursor). `model-framing` (round 14: the tiny course models -- five landscapes x four
+  box shapes, the box always full of ground and every tee and green in view at
+  both ends of the sway; each landscape's trees; the same course, the same
+  model). `course-picture` (a course's
+  picture lays out every hole, the same course the same way, fills its frame
+  and draws inside it). `endless` also checks a run pinned to a landscape (every hole in it, the
+  plain seed unchanged). `round-tees` (each golfer starts from their own tee,
+  falls back to the round's, joins at their own, and keeps it through a save).
+  `chiptune` (phase 4: every tune well formed, the plan's eight moments, none
+  longer than 7 s, interface sounds under 1.2 s, the score-to-moment rule, and
+  the player never scheduling in the past). `sound` also holds the wiring
+  (17 October 2026): the marimba stings are gone (no `INSTRUMENTS`, no
+  `score`, no `FINAL.scores`), and the owner's signed-off list
+  (`CHIP_SIGNED_OFF`) is exactly the moments and interface sounds there are.
+  The kit is on no screen yet; the round screen is (in play, off a phone), and
+  the smoke journeys reach the top bar's controls through `t.chrome()` /
+  `t.menuItem()`, which open the Esc list where the round screen hides the bar
+  (17 October 2026). On a phone the journeys tap the Swing Meter's bar (there
+  is no Swing button), and reach Tools through the menu list;
+  the 44 px thumb check covers the new pieces. All 37 journeys pass on the
+  real GPU (17 October 2026, overnight; again on 18 October 2026, in 13 small
+  batches, after the hidden old interface was removed).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
   (Report a problem), `sound`.
 
@@ -153,9 +224,11 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
-| `range`, `range-greens`, `studio` | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows and saves a course |
+| `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
-| `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch |
+| `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |
+| (round 14) every journey | `press(name)` goes to an open step sheet's last step first when the button is not on screen -- the start buttons (Start an endless run, Play the course of the week) are on the Golfers step now, as a player would find them |
+| `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch (since round 13 the menu journeys on a phone open the 1.0 sheets, laid out for a phone) |
 | `no-late-shaders`, `ball-light-shaders`, `ball-light-hole-out`, `floodlit-night`, `no-swallowed-errors`, `sound` | no stalls, no hidden errors, lights and sound |
 
 **What the smoke test does not play:** a whole multi-golfer round to its last

@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { execSync } from 'node:child_process';
-import { GENERATOR_VERSION, SCHEMA_VERSION } from './src/settings-schema.js';
+import { readFileSync } from 'node:fs';
+import { GENERATOR_VERSION, SCHEMA_VERSION, BIOME_KEYS } from './src/settings-schema.js';
+import { BIOMES } from './src/biomes.js';
+import { weekIndex, isoWeek } from './src/weekly.js';
 
 // A NAME FOR EACH BUILD, SO A BUG REPORT CAN BE TIED TO A TREE.
 //
@@ -33,8 +36,21 @@ const versions = {
   transformIndexHtml: () => [{tag: 'meta', attrs: {name: 'fairway-versions', content: `generator=${GENERATOR_VERSION} schema=${SCHEMA_VERSION}`}, injectTo: 'head-prepend'}],
 };
 
+// THE START SPLASH'S COLOURS, BEFORE ANYTHING LOADS (round 14, frame c-splash).
+// The splash is drawn in the course of the week's colours, and it shows before
+// a line of the game has run -- so the page carries what it needs: every
+// landscape's palette and name in the game's week order, the version, and the
+// week arithmetic itself (weekly.js's own functions, written in as source), so
+// the splash can never disagree with the week the game then shows. The inline
+// script after #splash in index.html reads it.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const splash = {
+  name: 'fairway-splash',
+  transformIndexHtml: () => [{tag: 'script', children: `window.__FAIRWAY_SPLASH__=(()=>{const DAY=86400000;return {keys:${JSON.stringify(BIOME_KEYS)},ui:${JSON.stringify(Object.fromEntries(BIOME_KEYS.map(k => [k, {...BIOMES[k].ui, name: BIOMES[k].name}])))},version:${JSON.stringify(pkg.version)},weekIndex:${weekIndex.toString()},isoWeek:${isoWeek.toString()}};})();`, injectTo: 'head-prepend'}],
+};
+
 export default defineConfig({
-  plugins: [versions, viteSingleFile()],
+  plugins: [versions, splash, viteSingleFile()],
   define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString()})},
   build: {target: 'es2022', assetsInlineLimit: 10000000},
   server: {port: 5173},

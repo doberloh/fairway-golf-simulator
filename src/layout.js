@@ -1,278 +1,27 @@
 import {uiZoom} from './ui-scale.js';
-// Every HUD panel moves and resizes, all the time.
+// THE PLAY SCREEN'S MEASURED SPACE.
 //
-// This used to be a MODE. You pressed "Arrange UI", dashed outlines appeared over
-// seven panels, you dragged them, you pressed Done. Which meant the answer to
-// "can I move this?" was no, until you remembered the mode existed and went
-// looking for it -- while the tool windows beside them dragged whenever you felt
-// like it. Two behaviours for the same question.
+// Until 17 October 2026 every HUD panel moved and resized at all times: a
+// title bar to drag, a corner to pull, positions saved per device under
+// 'fairway-layout-v2'. The 1.0 interface fixed the layout (the owner's call,
+// UI_1_0_PLAN 5.1): the round's pieces sit where the design puts them
+// (round-hud.css), and a phone keeps its fixed layout until phase 5. So the
+// grips, the drags and the saved places are gone, and a place saved before is
+// deleted once rather than left to be read by something later. (The map and
+// the Tab shot numbers became movable again on 18 October 2026, by their own
+// code: hud-places.js and main.js *THE MAP AND THE SHOT NUMBERS MOVE*.)
 //
-// So the handles are live at all times, like a tool window's. Arrange mode is
-// gone entirely -- once nothing was gated behind it, a button promising a mode
-// you must enter to arrange things was the misconception the change removed.
-// What it hosted, Reset, moved to the tools tray beside the other reset.
-//
-// WHY A GRIP AND NOT THE WHOLE PANEL. These are not inert boxes. The map is
-// click-to-aim and drag-to-pan, the shot controls are sliders and a swing
-// button, the card is clickable. Making the panel itself draggable would take
-// those gestures away from the controls that own them. A tool window solves this
-// with a title bar you drag; each panel gets the same thing in miniature.
-//
-// Geometry is stored as fractions of the playing area, never pixels -- a panel
-// parked in a corner on a 4K monitor would otherwise be off-screen the next time
-// the game opened in a smaller window.
+// What is left is the measuring the default layout always needed: where the
+// controls' top edge is, written onto #world as --controls-top for the
+// stylesheet to place other things by. (The weather, course card and camera
+// strip it once also measured went with the old interface, 18 October 2026.)
 
-// The third field marks the panels whose title bar must go LAST in the markup
-// (see the bar's own comment below); every other panel has it first.
-const sections = [
- ['.course-info', 'Course card'],
- ['.weather', 'Weather', 'last'],
- ['.minimap', 'Course map'],
- ['.bottom-area', 'Shot controls'],
- // The Swing Meter's bar (14 October 2026), shown while a Swing Meter shot is
- // waiting to be hit.
- ['.swing-meter', 'Swing Meter'],
- // The shot panel ('.shot-panel', "Shot data") was a panel here from 10 to 13
- // October 2026, the only one placed per way of playing ('per-mode', which
- // nothing uses now). It became a line inside the window you play from
- // (main.js, *THE SHOT PANEL*); a position saved for it is simply never read.
- // The launch monitor's window, shown in place of the shot controls while a
- // monitor is armed (main.js, *THE LAUNCH MONITOR WINDOW*).
- ['.monitor-panel', 'Launch monitor'],
- ['.view-tools', 'Tools tray'],
- ['#exploreBar', 'Flight controls', 'last'],
-];
-// v2 since the play screen was redrawn on 26 September: the shot controls went
-// from a bar along the bottom to a panel down the left, and a position saved
-// for the bar would park the panel across the course. Everyone starts again
-// from the new defaults once; nothing else was stored under this key.
-const KEY = 'fairway-layout-v2';
-// Lucide's grip-horizontal, the icon a tool window's title bar carries. Inline
-// rather than a data-lucide placeholder, because these bars are built once at
-// start-up and nothing would come back to swap a placeholder for the icon.
-const GRIP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
- + '<circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/>'
- + '<circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/></svg>';
-const MIN_W = 90, MIN_H = 45;
-const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const OLD_KEY = 'fairway-layout-v2';
 
 export function createLayout(world) {
- let saved = {};
- try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
- const entries = sections
-  .map(([selector, name, place, modes]) => ({el: world.querySelector(selector), name, selector, last: place === 'last', perMode: modes === 'per-mode'}))
-  .filter(e => e.el);
-
- const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} };
- const area = () => ({w: world.clientWidth, h: world.clientHeight});
- // SCREEN PIXELS OVER THE ZOOM. A box's on-screen measurements are in screen
- // pixels; the positions written back are in the app's CSS pixels, which Text
- // size (ui-scale.js) makes `zoom` screen pixels each. At 100% they agree.
- const rect = e => {
-  const a = e.el.getBoundingClientRect(), b = world.getBoundingClientRect(), z = uiZoom();
-  return {x: (a.left - b.left) / z, y: (a.top - b.top) / z, w: a.width / z, h: a.height / z};
- };
-
- function apply(e, r) {
-  const {w, h} = area();
-  r.w = clamp(r.w, Math.min(MIN_W, w), w);
-  r.h = clamp(r.h, MIN_H, h);
-  // A panel cannot be pushed off the playing area entirely: there is nothing on
-  // screen to tell you which way to drag it back.
-  r.x = clamp(r.x, 0, Math.max(0, w - r.w));
-  r.y = clamp(r.y, 0, Math.max(0, h - r.h));
-  e.el.classList.add('hud-custom');
-  Object.assign(e.el.style, {
-   left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px',
-   right: 'auto', bottom: 'auto', maxWidth: 'none',
-  });
-  return r;
- }
- // A PLACE PER WAY OF PLAYING, for the panels that want one. The shot panel can
- // sit in one spot while you play by hand and another with a monitor armed --
- // the owner asked for the two modes to be tuned separately. Playing by hand
- // keeps the plain selector as its key, so places saved before the split are
- // the hand places; the monitor's are stored as 'selector@monitor'.
- let variant = 'hand';
- const keyOf = e => e.perMode && variant !== 'hand' ? `${e.selector}@${variant}` : e.selector;
- // Undoes a placement without touching anything else written on the element's
- // style -- the shot panel carries --tiles there, which removing the whole
- // style attribute used to sweep away with the position.
- const PLACED = ['left', 'top', 'width', 'height', 'right', 'bottom', 'max-width'];
- const unplace = e => { e.el.classList.remove('hud-custom'); for (const p of PLACED) e.el.style.removeProperty(p); };
- function store(e, r) {
-  const {w, h} = area();
-  saved[keyOf(e)] = {x: r.x / w, y: r.y / h, w: r.w / w, h: r.h / h};
-  persist();
- }
-
- // Move and release are listened for on the WINDOW, not the handle. Pointer
- // capture is requested as well, but the drag must not depend on it: capture is
- // lost when an element is re-rendered or the browser decides a gesture has
- // started, and a drag that stops tracking halfway leaves a panel stuck under
- // the cursor. The previous version depended on it and did exactly that.
- function grab(e, handle, resizing) {
-  let from = null;
-  const move = ev => {
-   if (!from) return;
-   const z = uiZoom(), r = {...from.r}, dx = (ev.clientX - from.x) / z, dy = (ev.clientY - from.y) / z;
-   if (resizing) { r.w += dx; r.h += dy; } else { r.x += dx; r.y += dy; }
-   apply(e, r);
-  };
-  const done = () => {
-   if (!from) return;
-   from = null;
-   e.el.classList.remove('hud-dragging');
-   world.classList.remove('hud-arranging');
-   store(e, rect(e));
-   window.removeEventListener('pointermove', move);
-   window.removeEventListener('pointerup', done);
-   window.removeEventListener('pointercancel', done);
-  };
-  handle.onpointerdown = ev => {
-   if (ev.button) return;
-   ev.preventDefault(); ev.stopPropagation();
-   from = {r: rect(e), x: ev.clientX, y: ev.clientY};
-   try { handle.setPointerCapture(ev.pointerId); } catch {}
-   e.el.classList.add('hud-dragging');
-   // While one panel is being dragged every grip shows, so you can see what you
-   // are lining it up against.
-   world.classList.add('hud-arranging');
-   window.addEventListener('pointermove', move);
-   window.addEventListener('pointerup', done);
-   window.addEventListener('pointercancel', done);
-  };
-  // A mouse drag is not the only way anyone moves a panel.
-  handle.onkeydown = ev => {
-   if (!ev.key.startsWith('Arrow')) return;
-   ev.preventDefault(); ev.stopPropagation();
-   const r = rect(e), step = ev.shiftKey ? 1 : 10;
-   const dx = ev.key === 'ArrowRight' ? step : ev.key === 'ArrowLeft' ? -step : 0;
-   const dy = ev.key === 'ArrowDown' ? step : ev.key === 'ArrowUp' ? -step : 0;
-   if (resizing) { r.w += dx; r.h += dy; } else { r.x += dx; r.y += dy; }
-   store(e, apply(e, r));
-  };
- }
-
- for (const e of entries) {
-  // INSIDE the panel, not an overlay tracking it from the outside. An overlay
-  // has to be re-synced every time the panel changes size on its own -- and
-  // these do, constantly: the card grows a line, the result panel fills in --
-  // so an always-visible overlay would spend half its life in the wrong place.
-  const grip = document.createElement('button');
-  grip.type = 'button';
-  grip.className = 'hud-grip';
-  grip.title = `Move ${e.name}`;
-  grip.setAttribute('aria-label', `Move ${e.name}. Arrow keys to nudge.`);
-  const size = document.createElement('button');
-  size.type = 'button';
-  size.className = 'hud-size';
-  size.title = `Resize ${e.name}`;
-  size.setAttribute('aria-label', `Resize ${e.name}. Arrow keys to adjust.`);
-  // THE SAME TITLE BAR A TOOL WINDOW HAS (popups.js): the grip icon and the
-  // panel's name, the whole width of the top, grabbed anywhere along it. The
-  // corner grip stays for the phone layout, where a bar on every panel would
-  // cost more height than a phone has; the stylesheet shows one or the other.
-  const head = document.createElement('div');
-  head.className = 'hud-head';
-  const move = document.createElement('button');
-  move.type = 'button';
-  move.className = 'hud-move';
-  move.title = `Move ${e.name}`;
-  move.setAttribute('aria-label', `Move ${e.name}. Arrow keys to nudge.`);
-  move.innerHTML = GRIP_ICON + `<span>${e.name}</span>`;
-  head.append(move);
-  e.el.classList.add('hud-titled');
-  // FIRST in the panel, so it is at the top however the panel is laid out --
-  // except the weather and the flight controls, whose contents the stylesheet
-  // picks out by position (`.weather>div:nth-child(2)`,
-  // `.explore-bar>div:first-child`): a bar put first there shifted every one of
-  // them by one. Those two go LAST and are lifted with `order:-1`, which works
-  // only while the panel is a flex box -- and they are one moved or not.
-  // Lifting every panel that way was the first version, and it put the shot
-  // controls' bar at the BOTTOM once the player moved that panel: the shot
-  // controls are a flex column only in their default place
-  // (`.bottom-area:not(.hud-custom)`), a plain block once moved (6 October).
-  const seat = () => { if (!e.last) { if (e.el.firstElementChild !== head) e.el.prepend(head); } else if (e.el.lastElementChild !== head) e.el.append(head); };
-  e.el.append(grip, size);
-  seat();
-  grab(e, grip, false);
-  grab(e, move, false);
-  grab(e, size, true);
-
-  // THE HANDLES HAVE TO SURVIVE innerHTML. `#shotResult` is rebuilt wholesale on
-  // every shot and `#exploreBar` on every mode change, which silently swept the
-  // handles away and left exactly those panels unmovable -- the two that are
-  // rebuilt most often, so the failure looked intermittent rather than total.
-  //
-  // Self-healing rather than a re-append at each call site: there are several
-  // places that rewrite a panel and more will be added, and the one that forgets
-  // is the one nobody notices. Re-appending fires this observer once more, whose
-  // check then passes, so it settles rather than looping.
-  new MutationObserver(() => {
-   if (!e.el.contains(grip) || !e.el.contains(size)) e.el.append(grip, size);
-   // Settles: once seated, moving it again is a no-op and fires nothing.
-   seat();
-  }).observe(e.el, {childList: true});
- }
-
- function restore() {
-  for (const e of entries) {
-   const r = saved[keyOf(e)];
-   if (r && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(r[k]))) {
-    const {w, h} = area();
-    apply(e, {x: r.x * w, y: r.y * h, w: r.w * w, h: r.h * h});
-   }
-  }
- }
- function reset() {
-  saved = {}; persist();
-  for (const e of entries) unplace(e);
-  pads();
- }
- new ResizeObserver(restore).observe(world);
- restore();
-
- // THE SPACE THE DEFAULT LAYOUT HAS TO FIT IN, MEASURED RATHER THAN GUESSED.
- //
- // The default positions used to be pixel constants: the camera bar 147 px from
- // the top, the map 270 px from the bottom -- a guess at the height of the shot
- // controls -- and the course card allowed the whole screen height less 190 px,
- // which forgot the top bar and the controls altogether. On a 1920x1080 screen
- // the guesses held. On a 1366x768 laptop the map, pinned from the bottom, rose
- // straight into the camera bar, pinned from the top, and hid all five camera
- // buttons; the card ran under the shot controls; and on a phone held sideways
- // the shot button was off the screen. Every layout rule answered to WIDTH, and
- // every one of those failures was about HEIGHT.
- //
- // So the stylesheet is told where things actually are, as variables on the
- // playing area, and positions the panels from those:
- //
- //   --controls-top   the top edge of whatever bar sits at the bottom -- the
- //                    shot controls, or the drop, free-flight or scramble bar
- //                    when one of those has taken over
- //   --weather-bottom the bottom edge of the weather panel
- //   --card-bottom    the bottom edge of the course card, which the phone
- //                    layout stacks the camera row and the weather under
- //   --weather-w      the weather panel's width, which a phone held sideways
- //                    sets its camera button beside
- //   --tools-bottom   the bottom edge of the camera bar, which a phone held
- //                    sideways hangs the map from. The first cut of that
- //                    layout GUESSED the row at 44 px; it is about 60, and the
- //                    map sat 11 px over it, hiding a grip. Measured now.
- //
- // A panel the player has dragged is left out of the sums: it is theirs, and
- // wherever they put it is no guide to where the defaults should go.
- //
- // Written a frame LATER, not inside the observer. The card's height depends on
- // --controls-top, and the card is observed; changing a variable inside the
- // callback that resizes an observed element trips Chrome's "ResizeObserver loop
- // completed with undelivered notifications", which is an error event -- and an
- // error event fails the browser smoke test, correctly.
+ try { localStorage.removeItem(OLD_KEY); } catch {}
  const bottomBars = ['.bottom-area', '#exploreBar', '#dropBar', '#pickBar']
   .map(s => world.querySelector(s)).filter(Boolean);
- const weather = world.querySelector('.weather'), card = world.querySelector('.course-info');
- const tools = world.querySelector('.view-tools');
  const written = {};
  const write = (name, px) => {
   const v = Math.round(px) + 'px';
@@ -280,52 +29,21 @@ export function createLayout(world) {
   written[name] = v;
   world.style.setProperty(name, v);
  };
- // Each panel's own padding, for its title bar to reach the edges over
- // (style.css, *The title bar*). Read, never written: the bar does not change a
- // panel's padding, so measuring it cannot feed back. A panel laid out in a row
- // is marked so its bar can take a line of its own.
- function pads() {
-  for (const e of entries) {
-   const c = getComputedStyle(e.el);
-   e.el.style.setProperty('--hud-pt', c.paddingTop);
-   e.el.style.setProperty('--hud-pr', c.paddingRight);
-   e.el.style.setProperty('--hud-pl', c.paddingLeft);
-   e.el.style.setProperty('--hud-gap', c.rowGap === 'normal' ? '0px' : c.rowGap);
-   e.el.classList.toggle('hud-row', c.display.includes('flex') && c.flexDirection.startsWith('row'));
-  }
- }
- const shown = el => el && !el.classList.contains('hud-custom') && el.offsetWidth > 0 && el.offsetHeight > 0;
+ const shown = el => el && el.offsetWidth > 0 && el.offsetHeight > 0;
  let pending = 0;
+ // SCREEN PIXELS OVER THE ZOOM. A box's on-screen measurements are in screen
+ // pixels; the values written are in the app's CSS pixels, which Text size
+ // (ui-scale.js) makes `zoom` screen pixels each. At 100% they agree.
  function measure() {
   pending = 0;
-  pads();
   const top = world.getBoundingClientRect().top, h = world.clientHeight, z = uiZoom();
   const bars = bottomBars.filter(shown).map(b => (b.getBoundingClientRect().top - top) / z);
   write('--controls-top', bars.length ? Math.min(...bars) : h - 16);
-  if (shown(weather)) {
-   write('--weather-bottom', (weather.getBoundingClientRect().bottom - top) / z);
-   // A phone held sideways puts its camera button beside the wind, and the
-   // wind's width is its reading plus a unit -- measured, not guessed.
-   write('--weather-w', weather.offsetWidth);
-  }
-  if (shown(card)) write('--card-bottom', (card.getBoundingClientRect().bottom - top) / z);
- if (shown(tools)) write('--tools-bottom', (tools.getBoundingClientRect().bottom - top) / z);
  }
  const soon = () => { if (!pending) pending = requestAnimationFrame(measure); };
  const watch = new ResizeObserver(soon);
- for (const el of [world, weather, card, tools, ...bottomBars]) if (el) watch.observe(el);
+ for (const el of [world, ...bottomBars]) watch.observe(el);
  measure();
- // Only `reset` is left. There is no arranging MODE to toggle and no editing
- // state to report -- every panel drags and resizes whenever you like, so the
- // answer to "are we arranging?" was permanently yes and every caller asking it
- // has been removed.
- // Switching ways of playing puts each per-mode panel where it was left for
- // that mode, or back at its default if it never was moved there.
- function setVariant(v) {
-  if (v === variant) return;
-  variant = v;
-  for (const e of entries) if (e.perMode) unplace(e);
-  restore();
- }
- return {reset, setVariant};
+ // Kept so callers need not know the drags are gone; neither has anything left to do.
+ return {reset() {}, setVariant() {}};
 }

@@ -99,7 +99,7 @@ const DEFAULTS = {
  cover: 'grass',    // what the near-field ground cover reads as
  waterTint: '#478fbf', // the water surface colour
  waterMurk: .48,    // how far you can see into it
- mapWater: '#e0e5d5', // the course map's background beyond the land
+ mapWater: '#1e281c', // the course map's background beyond the land (dark since round 13; was paper, #e0e5d5)
  warm: false,       // house walls in warm tones
  arid: false,       // house surroundings without lawn
  // Ground shader, by name rather than by index into an array.
@@ -230,11 +230,35 @@ const PALETTES = {
  haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#3c2856',semi:'#553c7c',fairway:'#7f55b8',fringe:'#9270c6',green:'#86c24f',tree:'#2a2030',sky:'#a4949a',sand:'#b9b2a6',water:'#1f3d2e',rock:'#4f4a58',altitude:200,temperature:9,treeKind:'oak',sun:10}
 };
 
+// THE INTERFACE WEARS THE BIOME (the 1.0 interface, approved 17 October 2026).
+// One layout everywhere; these six colours are what changes. `panel` is the
+// slanted box (see-through, over the course), `a1` and `a2` the two ends of a
+// highlighted box's gradient, `hot` the selection outline, the level tag and
+// anything that must jump out, `soft` the small capital labels, and `onHot`
+// the text written on `a1`/`a2`/`hot`. Red for under par is NOT here: it is
+// the same in every biome (ui-palette.js). Taken from the approved mockups.
+//
+// There is deliberately no default. A biome without its own palette would wear
+// another's and nobody would notice; tests/ui-palette.test.mjs refuses it, and
+// checks every palette's text is readable. A look, not ground: no
+// GENERATOR_VERSION bump, and the fingerprint does not hash it.
+const INTERFACE = {
+ pnw:      {panel: 'rgba(9,30,28,.88)',  a1: '#5eead4', a2: '#0f766e', hot: '#fde68a', soft: '#a7d8cf', onHot: '#062320'},
+ desert:   {panel: 'rgba(48,24,12,.88)', a1: '#fcd34d', a2: '#ea580c', hot: '#ffffff', soft: '#f1c9a5', onHot: '#2a1406'},
+ mountain: {panel: 'rgba(15,23,42,.88)', a1: '#93c5fd', a2: '#2563eb', hot: '#fcd34d', soft: '#b3c6e6', onHot: '#0b1530'},
+ links:    {panel: 'rgba(22,34,22,.88)', a1: '#d9f99d', a2: '#65a30d', hot: '#fef08a', soft: '#c5d8b0', onHot: '#142010'},
+ midwest:  {panel: 'rgba(10,34,18,.88)', a1: '#4ade80', a2: '#15803d', hot: '#facc15', soft: '#a7d7b4', onHot: '#08240f'},
+ island:   {panel: 'rgba(6,30,46,.88)',  a1: '#22d3ee', a2: '#0891b2', hot: '#ff8fa3', soft: '#a5d8e6', onHot: '#04202e'},
+ redwood:  {panel: 'rgba(36,12,14,.88)', a1: '#f87171', a2: '#9f1239', hot: '#fde68a', soft: '#e6b3b3', onHot: '#2a0a0e'},
+ autumn:   {panel: 'rgba(40,24,8,.88)',  a1: '#fbbf24', a2: '#c2410c', hot: '#ffffff', soft: '#ecc9a0', onHot: '#2a1606'},
+ haunted:  {panel: 'rgba(26,12,42,.9)',  a1: '#c084fc', a2: '#7c3aed', hot: '#fb923c', soft: '#cdb4f0', onHot: '#1a0a2e'},
+};
+
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged
 // field by field, because a biome that sets one of them means all of it.
 export const BIOMES = Object.fromEntries(Object.entries(PALETTES).map(([key, palette]) => {
  const traits = TRAITS[key] || {};
- return [key, {...DEFAULTS, ...palette, ...traits, key}];
+ return [key, {...DEFAULTS, ...palette, ...traits, ui: INTERFACE[key], key}];
 }));
 
 // The stream bank colour, still reachable by its old name so streams.js and the

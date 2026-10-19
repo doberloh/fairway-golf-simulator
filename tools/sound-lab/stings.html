@@ -36,8 +36,8 @@ textarea{width:100%;min-height:40px;resize:vertical;background:var(--bg);color:v
 <h1>Hole-out stings, chiptune</h1>
 <p class="muted">Built <span id="built"></span> on branch <code>swing-meter</code>. Round 1 signed off: take D, the game jingles, with your sliders, for every score; it plays in the game. The takes and sliders here start from it.</p>
 <div class="note"><p><b>What this is.</b> The short tune when a hole is finished -- one for each score from a hole in one to a triple bogey or worse -- reworked as chiptune, the old game-console sound: square and thin pulse waves, a triangle bass, a noise drum, quick and dry. Four takes. A, B and C play the tunes you already know on chip voices; D is new, bouncier game jingles.</p>
-<p><b>Pick one take for all of them</b> at the top, so the set sounds like one game, and nudge the sliders. If one score wants a different take, change it on its card. <b>Current</b> on each card plays the marimba you have now, to compare. <b>Play them all</b> runs from the worst to the best. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
-<div class="row"><button class="act" id="start">Start sound</button><button class="act" id="all">Play them all</button><button class="sec" id="allCurrent">All, current marimba</button></div>
+<p><b>Pick one take for all of them</b> at the top, so the set sounds like one game, and nudge the sliders. If one score wants a different take, change it on its card. (The marimba they replaced was deleted on 17 October 2026.) <b>Play them all</b> runs from the worst to the best. When you are done, <b>Copy my notes</b> and paste it back.</p></div>
+<div class="row"><button class="act" id="start">Start sound</button><button class="act" id="all">Play them all</button></div>
 
 <h2>The take for every sting</h2>
 <div class="card" id="global"></div>
@@ -63,7 +63,6 @@ $('#start').onclick=ensure;
 const ORDER=['worse','double','bogey','par','birdie','eagle','albatross','ace'];
 const takeFor=id=>saved.over[id]||saved.all;
 const playChip=(id,at)=>{ensure();chipSting(lab,id,{take:takeFor(id),knobs:saved.knobs,at});};
-const playCurrent=(id,at)=>{ensure();score(lab,id,{at});};
 
 // The take for all, and the sliders, shared by every sting.
 {const g=$('#global'),list=el('div',{class:'takes'});
@@ -82,12 +81,11 @@ for(const id of [...ORDER].reverse()){
  for(const k of Object.keys(CHIP_TAKES))sel.append(el('option',{value:k},`Take ${k}`));
  sel.value=saved.over[id]||'';
  sel.onchange=()=>{if(sel.value)saved.over[id]=sel.value;else delete saved.over[id];save();playChip(id);};
- c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>playChip(id)},'Play'),el('button',{class:'sec',onclick:()=>playCurrent(id)},'Current'),sel));
+ c.append(el('div',{class:'row'},el('button',{class:'act',onclick:()=>playChip(id)},'Play'),sel));
  const ta=el('textarea',{placeholder:'Notes'});ta.value=saved.notes[id]||'';ta.oninput=()=>{saved.notes[id]=ta.value;save();};c.append(ta);
  $('#cards').append(c);
 }
 $('#all').onclick=()=>{ensure();ORDER.forEach((id,i)=>playChip(id,ctx.currentTime+i*1.9));};
-$('#allCurrent').onclick=()=>{ensure();ORDER.forEach((id,i)=>playCurrent(id,ctx.currentTime+i*2.2));};
 
 $('#copy').onclick=async()=>{
  const notes=Object.fromEntries(Object.entries(saved.notes).filter(([,v])=>v));

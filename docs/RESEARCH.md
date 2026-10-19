@@ -1347,7 +1347,7 @@ Both bearings are `atan2(x, z)`. They agree with each other perfectly, which is 
 
 Two complaints, three causes.
 
-**The white surround.** `mapWater` is the colour *beyond* the generated land — sea on the island biome, a pale `#e0e5d5` on the other seven — and it is laid down as the base coat for the whole canvas. On the full-course map the terrain tile paints over all of it, so that pale default only ever showed outside the world rectangle and nobody looked twice. Hole view draws no such tile, so the base coat *was* the surround: a hole on paper, ringed in near-white. In hole view it is the biome's own rough now, with a `mapGround` override for a biome that ever wants something else.
+**The white surround.** `mapWater` is the colour *beyond* the generated land — sea on the island biome, a pale `#e0e5d5` on the other seven (a dark `#1e281c` since round 13, 17 October 2026: the big map in the studio showed the pale surround as wide white bands beside the course; PLACED, to sit with the 1.0 panels) — and it is laid down as the base coat for the whole canvas. On the full-course map the terrain tile paints over all of it, so that pale default only ever showed outside the world rectangle and nobody looked twice. Hole view draws no such tile, so the base coat *was* the surround: a hole on paper, ringed in near-white. In hole view it is the biome's own rough now, with a `mapGround` override for a biome that ever wants something else.
 
 **The green went soft at high resolution**, and that was two things stacking. The contour tile is baked at 96x96, which is generous at hole scale where the green is a smudge and about four screen pixels per texel once the map frames the green; it is 256 there, built once per green and cached. Underneath that, the canvas backing store was hardcoded at `clientWidth x 2` rather than the display's own ratio, so anything sharper than 2x was already being upscaled by the compositor before the tile was magnified on top of it. Device ratio now, capped at 3. `mapPixels` divides by whatever ratio it finds, so pointer input followed without a change.
 
@@ -5395,6 +5395,20 @@ times after on four different courses. GPU only.
 
 ## F4: automatic resolution (30 September)
 
+**18 October 2026: the menus stepped it down before play.** The smoke journey
+`text-size` failed now and then with the course drawn at 64% or 54% of the
+screen's pixels on Low (75% expected). A startup trace (an Endless run at 150%
+text, every frame, long task and canvas width for 7 s from the end of the
+loading screen, three runs) found the canvas already one step down (1224 of
+1440 px) at the first frame of play in all three, sharpening at 4.3-4.5 s;
+in the 1.5 s before play there were 7-10 long tasks of 50-194 ms: the Endless
+sheet building its course pictures and tiny models. Frames under 200 ms count
+as slow, so the menu's own work stepped the resolution down, and the loading
+screen held the step into the round; two steps meant about 8 s blurred.
+**Fix:** frames are not judged while a menu or a sheet is up (as the loading
+screen already was). After it, three runs out of three started at 1440 px and
+stayed; `text-size` passed three times running.
+
 Branch `frame-and-lights`. `src/auto-resolution.js` (the decision, pure and
 unit-tested), `autoResolutionFrame` in `src/main.js` (feeding it),
 `setResolutionScale` / `pixelCeiling` in `src/renderer.js` (applying it).
@@ -5798,7 +5812,9 @@ rēlā's supported device list is not on those pages; nothing here claims one.
 
 The website's gallery, feature pictures and background clips are taken with `tools/capture/`. What the website claims, and the decisions about its own build, media storage and background reel, moved with it to its own repository on 7 October 2026; what is here is how the pictures are made, because the tools that make them are here.
 
-**How the media was made.** No video encoder exists in this toolchain (no ffmpeg), so the clips are recorded inside the browser: the game's own canvas into `captureStream(30)` and `MediaRecorder` as WebM VP9 at 6 Mbit/s, 1920x1080, 7 to 12 seconds. Camera flights are keyed poses through `lab.camera`, sampled 240 times, with the height smoothed over a 40-sample window (never more than 3 m below the ground-following height) so the camera does not bob over every dune, and eased in and out. The tee shot is a launch-monitor shot through the real shot path (67 m/s, 11.5 deg, 2,700 rpm). Stills are rendered at 3840x2160 and saved at 2560x1440 (JPEG quality 88-90), with 960x540 thumbnails, scaled in the browser by repeated halving (there is no image library here either; one big reduction samples too few pixels and brings the jagged edges back). Everything is captured on Ultra with automatic resolution off, and `tools/capture/capture.mjs` refuses to save a picture that is not.
+**How the media is made since the 1.0 retake (18 October 2026)**: docs/CAPTURE.md has the whole of it. In numbers: stills are drawn at 7680x4320 (a 3840x2160 page at density 2 on Ultra) and halved to a 3840x2160 PNG master, four samples a pixel, with 2560 and 960 wide JPEGs (quality 0.90 and 0.84); interface screenshots are a 1920x1080 page at density 2, so exactly 3840x2160. Clips are recorded frame by frame -- the page's clock stepped 1/60 s at a time, so every frame is drawn in full however long it takes -- and encoded in the page with WebCodecs (no ffmpeg here; the capture browser offers H.264, VP9 and AV1 at 3840x2160, 60 fps, in software, no HEVC) into a 3840x2160 H.264 MP4 at 80 Mbit/s and a 1920x1080 VP9 WebM at 8 Mbit/s, wrapped by the project's own MP4 and WebM writers. Measured on the RTX 4090: a 9 s clip about 35 s, the 15 s interface clip about 4 minutes, a landscape at four times about 70 s. Times of day: morning is the sun 18 degrees up, golden 5, noon the middle of the day, night 10 PM with the floodlights (`hourFor`).
+
+**How the 0.x media was made (1 October)**, superseded above and kept for the reasoning. No video encoder exists in this toolchain (no ffmpeg), so the clips were recorded live inside the browser: the game's own canvas into `captureStream(30)` and `MediaRecorder` as WebM VP9 at 6 Mbit/s, 1920x1080, 7 to 12 seconds -- and a slow frame was a stutter, which is what the frame-by-frame recorder fixed. Camera flights are keyed poses through `lab.camera`, sampled 240 times, with the height smoothed over a 40-sample window (never more than 3 m below the ground-following height) so the camera does not bob over every dune, and eased in and out. The tee shot is a launch-monitor shot through the real shot path (67 m/s, 11.5 deg, 2,700 rpm). Stills are rendered at 3840x2160 and saved at 2560x1440 (JPEG quality 88-90), with 960x540 thumbnails, scaled in the browser by repeated halving (there is no image library here either; one big reduction samples too few pixels and brings the jagged edges back). Everything is captured on Ultra with automatic resolution off, and `tools/capture/capture.mjs` refuses to save a picture that is not.
 
 **The first set was drawn at 1x, and looked it** (retaken 2 October, after the owner said the pictures looked low resolution and maybe not Ultra). Ultra WAS on -- 6144 shadow maps, confirmed in the page -- but the game never draws more pixels than the screen's pixel density allows (`pixelCeiling`: the lesser of `devicePixelRatio` and the tier's ratio, 2 on Ultra), and the capture page had density 1. So a 1600x900 capture was a 1600x900 render with no smoothing beyond the antialiasing, saved at JPEG quality 80, and its thumbnails were then shown at twice their size on a high-density screen. The fix is a density-2 capture page: a 1920x1080 page renders 3840x2160 on the real GPU (an RTX 4090, still 60 frames a second) and is scaled down. The clips are recorded at density 1 on purpose, because they are recorded from the canvas itself and the canvas has to be the video's size. File names changed with the retake, to the landscape's name (`links-golden.jpg`) rather than the course name its seed grows (`north-sea-links-golden.jpg`); the site shows only landscape names, at the owner's request.
 
@@ -7844,8 +7860,10 @@ echo and a noise drum, and new game jingles. **The owner chose take D, the game
 jingles, for every score** (`CHIP_FINAL`), at length 0.7, pitch 0.63 and
 brightness 1.2: a square lead, a triangle bass and a noise drum, the whole
 pitched down by about eight semitones and shortened to 70%, its low-pass at
-about 3,500 Hz. They replace the marimba stings in play (which stay in the
-code for comparison). Pulse waves are built from their Fourier series (40
+about 3,500 Hz. They replaced the marimba stings in play; the marimba stayed in
+the code for comparison until 17 October 2026, when it was deleted and family C
+took over five of the scores (*The 1.0 interface's sounds, wired in*, below).
+Pulse waves are built from their Fourier series (40
 harmonics). As played they peak at -15 dB for a hole in one or albatross and
 about -18 dB for the rest (`tools/sound-lab/check.mjs`, its "final" rows). The
 marimba they replace peaked at about -7 dB for a hole in one, -17 for a birdie
@@ -8568,3 +8586,155 @@ and no draws. NOT MEASURED: the software-rasteriser arm (`--only weak`), left
 alone because a CPU-only smoke run took the owner's machine down on 13
 October; nor any real weak laptop (TODO, *A real phone, an iPad and a weak
 laptop*).
+
+## The 1.0 interface: palettes, contrast and the canvas (17 October 2026)
+
+Phase 0 of the 1.0 interface (branch `ui-1-0`; PROJECT_HANDOFF *The 1.0
+interface: layout rules*). The layout numbers -- 12 degrees, 60 px margins, 14
+px gutters, the bands, the type sizes -- are the owner's, settled in the
+mockup rounds, not measured. What has a number of its own:
+
+**The nine palettes' contrast**, by the WCAG 2 contrast ratio (REFERENCES,
+*The 1.0 interface*), with the see-through panel laid over white (the worst
+case for light text) and over black. The thresholds are WCAG 2.1's AA minimum,
+**4.5** for ordinary text and **3** for large text (24 px, or about 18.7 px
+bold); 3 is used only for the under-par scores, which are always 24 px or
+more. Over white, every palette passes with room:
+
+| Biome | white | label | accent | hot | under par | on hot | on accent (light end) | on accent (dark end) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Pacific Northwest | 12.2 | 7.8 | 8.2 | 9.8 | 4.5 | 13.3 | 11.2 | 3.0 |
+| Desert | 11.7 | 7.6 | 8.1 | 11.7 | 4.3 | 17.5 | 12.1 | 4.9 |
+| Mountain | 12.7 | 7.3 | 7.0 | 8.8 | 4.6 | 12.5 | 10.0 | 3.5 |
+| Links | 11.4 | 7.5 | 9.8 | 9.8 | 4.2 | 14.5 | 14.5 | 5.5 |
+| Midwest | 11.8 | 7.3 | 6.8 | 7.7 | 4.3 | 10.8 | 9.5 | 3.3 |
+| Island | 12.0 | 7.8 | 6.6 | 5.6 | 4.4 | 7.8 | 9.3 | 4.6 |
+| Giant Redwood | 13.5 | 7.3 | 4.9 | 10.8 | 4.9 | 14.7 | 6.6 | **2.3** |
+| Autumn | 12.0 | 7.7 | 7.2 | 12.0 | 4.4 | 17.3 | 10.4 | 3.3 |
+| Haunted Hollow | 14.4 | 7.8 | 5.5 | 6.4 | 5.3 | 8.2 | 7.1 | 3.3 |
+
+The last column is not tested: a highlighted box is a gradient from the
+accent `a1` to the darker `a2`, and text sits at the light end in the approved
+mockups. Giant Redwood's 2.3 there fails even the large-text figure, so a
+screen must not put text at the dark end (TODO, *The 1.0 interface*).
+Separately, Giant Redwood's and Haunted Hollow's accent is almost the shared
+under-par red (contrast 1.0 between them), so an under-par score is written
+only on a panel.
+
+**The canvas floor for the Text size: 1024 design pixels, PLACED** (125% on a
+16:9 canvas). At 1024 x 576 the 16:9 grid's columns are 55.8 px; at 1024 x 768
+(4:3) 52 px. Chosen as the narrowest a 12-column screen drawn for 1280 plausibly
+survives; no screen has been laid out at it yet.
+
+**The typeface's weight in the page: +58 KB** (17,213,640 to 17,271,965
+bytes): the two woff2 files (17,808 and 17,984 bytes) base64-encoded, the
+kit's stylesheet, and about 5 KB of licence text in Help's notices. The plan's
+estimate was 130 KB, made for four weights including italics the family does
+not have.
+
+**The round screen's size (phase 1, 17 October 2026).** Every piece of the
+round screen is laid out in design pixels for the 1280 canvas and zoomed by
+`hudScale` (round-hud.js). Two numbers there are PLACED, not measured: the
+pieces are never drawn smaller than **0.75** (a small window crowds rather than
+shrinks to nothing), and never wider than the screen over **1160 design
+pixels** (`ROUND_MIN_WIDTH`): along the foot the club panel reaches about 368
+(30 margin, 86 code block, 22 + 200 name, 30) and the centred meter is 400, so
+the two need 368 + 8 + 400 / 2 on each side of the middle. On a 16:9 screen
+that leaves the Text size about **+10%** on the round screen (1920 x 1080 at
+125%: pieces drawn 1.66 screen pixels per design pixel, against 1.5 at 100%).
+The tests check, at seven screen sizes and four Text sizes, that the club and
+the meter never meet and the slab and the cards never meet.
+
+**Round 13 drew it all at 0.7** (`COMPACT`, 17 October 2026): the owner
+asked for everything 40-50% smaller, and the round-13 mockups set margins
+40, rows 32 and text 10 / 13 / 16 / 24 / 36 against round 9's 60, 48 and 13 /
+18 / 24 / 36 / 56. Those ratios run 0.64 to 0.77; 0.7 sits in the middle
+(area 0.49, so "about half"), and the smallest labels were written up from
+13 to 14 px so they draw at about 10. PLACED: one factor, not per-piece sizes.
+
+**Shot moments' timings (phase 2, 17 October 2026).** The pop-up shot card holds
+**6 s** and fades over **0.6 s** (`CARD_HOLD_MS`, `CARD_FADE_MS`): PLACED, long
+enough to read three numbers from the mat, gone before the next golfer has
+usually picked a club. Since 18 October 2026 that timing is only a skipped
+shot's: a card shown as the ball rests stays exactly as long as the rest hold
+(3 s, or 4.5 s with the shot-line review, `SHOT_HOLD_SECONDS`,
+`REVIEW_HOLD_SECONDS`) and goes as the camera moves on -- the owner saw it
+sitting on the next address. The hole-out band's **0.2 s in, 1.5 s hold, 0.3 s out**
+is the approved mockup's (*Big but brief*); the quiet strip's **0.15 / 1.3 /
+0.25 s** is PLACED to sit under it. The old banner held 2.7 s.
+
+
+## The 1.0 interface's sounds, wired in (17 October 2026)
+
+**What plays.** The owner picked, in the 1.0 mockups, the prog-metal chiptune
+in a clean tone, family C ("a half-time groove with an echoing lead"), with a
+melody of its own per moment, and the clean interface set; then said "you can
+also wire all the new sounds i agreed on" (17 October 2026, the overnight
+build). `src/chiptune.js` plays them, ported note for note from the approved
+mockup page (`docs/reports/ui-1-0/mockups/index.html`, local). In the game:
+hole in one, eagle, birdie, par and bogey play family C; **albatross, double
+bogey and worse keep the 14 October jingle**, because family C has no tune for
+them (PLACED: an albatross could take the eagle's tune or the ace's, a double
+the bogey's). A new level and the XP bar filling play family C's level-up and
+XP tunes in place of the XP popup's signed-off `levelUp` and `fill` takes (its
+`gain` take stays: family C has nothing for it). Round complete plays the
+first time a round's results open. The interface sounds play on menu moves
+(arrows, d-pad), presses on the main menu and the Esc list, Escape out of the
+Esc list or a panel, the map's green-reading buttons, a locked look in the
+locker, and the monitor's ball light turning Ready while armed. Interface
+sounds closer than 45 ms are skipped rather than stacked (PLACED).
+
+**The marimba is deleted** (`INSTRUMENTS`, `score()` and `FINAL.scores`), as
+the owner chose on 16 October ("Delete", no option). Each score's name and its
+round-3 tune as notes stay in `SCORES`: the stings report's chip takes A-C play
+them.
+
+**Levels** (`tools/sound-lab/check.mjs`, limiter off, `CHIP_LEVELS` 0.32 for
+the moments and 0.22 for the interface; PLACED from the mockup, where the owner
+heard them at one master level). Peak / RMS dB:
+
+| Sound | Peak | RMS | Length s |
+|---|---|---|---|
+| Hole in one | -6.8 | -25.4 | 4.8 |
+| Eagle | -9.5 | -27.9 | 3.8 |
+| Birdie | -11.2 | -39.3 | 2.4 |
+| Par | -14.9 | -38.2 | 2.0 |
+| Bogey | -19.2 | -42.7 | 3.1 |
+| Level up | -7.5 | -26.9 | 4.4 |
+| Round complete | -6.0 | -25.8 | 4.7 |
+| XP counting | -19.7 | -48.6 | 1.4 |
+| Interface (six) | -14.6 to -31.5 | -37 to -58 | 0.1-0.5 |
+
+Against the 14 October jingles they replace (RMS about -31 for a hole in one,
+-36 for a birdie, -36 for a bogey) the big moments are 4-6 dB louder and
+birdie and bogey 3-6 dB quieter; the XP count, sparse pings with an echo, sits
+about 18 dB under the old `fill`. This is the balance the owner approved in the
+mockup; whether it holds in the game, over ambience and on a projector's
+speakers, has not been heard (TODO).
+
+
+## The tiny course models (round 14, 17 October 2026)
+
+**What is real and what is placed.** The holes on a card's model are the
+course's own: `layoutFor` (generateCourse + routeHoles, the generator's
+routing) gives every tee, centre line, green, bunker and pond, scaled so the
+course fits a 200 x 120 plan. **PLACED:** the ground is a seeded relief
+(three sine terms per landscape, amplitude 4 for Island to 13 for Mountain:
+the mockup's `RELIEF14`), flattened along the holes and dug into a bed under
+each pond, not the generated terrain; the trees are a per-landscape rule
+(cones for PNW, Mountain and Redwood; round for Midwest, Links and Autumn;
+palms for Island; cacti for Desert; pale dead trees and pumpkins for Haunted
+Hollow), up to 0.3-1.5 times 880 trees for a nine (1,360 for an eighteen), kept
+off the holes and the water and thicker beyond the course -- not the real
+planting. Fairways are drawn at least 5.6 model units wide (36 m x 1.3 at the
+plan's scale) and greens at least 3.4 in radius, wider than true so they read
+at card size (PLACED). Reason: building the real landscape takes seconds and a
+card must show at once; a model takes 50-100 ms (Node, the framing test).
+
+**Framing** (the mockup's, checked by tests/model-framing.test.mjs on the
+game's courses): tilt sin(e) = (course width / depth) / box aspect, held to
+0.6-0.82 (37-55 degrees); the camera as close as every tee, green and
+mid-line allows with 6 units of room at both ends of a +-0.08 rad sway; then
+in by 5% steps until rays through the box's edge all land on the land (which
+runs 140 units past the plan across and 115 front and back). 20 of 20 boxes
+pass for five landscapes x four shapes (186 x 92, 197 x 66, 96 x 52, 16:9).

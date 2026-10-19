@@ -203,3 +203,18 @@ test('the menu backdrop can be adopted as hole one without regrowing it', () => 
  assert.notEqual(endlessSettings(endlessHole(seed, 0)).seed, endlessSettings(endlessHole(seed, 1)).seed);
  assert.notDeepEqual(endlessHole(seed, 0), endlessHole(seed, 1));
 });
+
+// A run in one landscape (round 13): the pick rides in the seed, every hole of
+// the run is in it, and a seed without a pick grows exactly what it did.
+test('a run pinned to a landscape keeps it on every hole; an unpinned seed is unchanged', async () => {
+ const {runLandscape, landscapeSeed} = await import('../src/endless.js');
+ const seed = landscapeSeed('HORIZON-1234', 'desert');
+ assert.equal(seed, 'HORIZON-1234~desert');
+ assert.equal(runLandscape(seed), 'desert');
+ for (let i = 0; i < 6; i++) assert.equal(endlessHole(seed, i).biome, 'desert');
+ assert.equal(runLandscape('HORIZON-1234'), null);
+ assert.equal(landscapeSeed('HORIZON-1234', 'nowhere'), 'HORIZON-1234');
+ const plain = endlessHole('HORIZON-1234', 3), again = endlessHole('HORIZON-1234', 3);
+ assert.deepEqual(plain, again);
+ assert.ok(seed.length <= 40, 'a round seed is at most 40 characters');
+});

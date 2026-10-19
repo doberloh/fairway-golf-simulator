@@ -31,6 +31,314 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The 1.0 interface (branch `ui-1-0`)
+
+The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17
+October 2026): seven phases, a stop for the owner's look after each. The rules
+are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
+
+- [ ] **Three fixes of 18 October 2026: built; seen in the browser pane at
+  1600 x 900** (the seat's pickers leaning with it on Play's Golfers; a drive's
+  card above the apex with its arrow, YDS TOTAL and YDS TO PIN, ball speed,
+  backspin and apex, gone when the camera came back; all 47 info icons on the
+  studio's pages measured 8 px after their names). Smoke, run in small
+  batches: all 37 journeys pass. (text-size failed now and then before a
+  startup fix the same day: the menus' card drawing stepped the automatic
+  resolution down before a round began -- RESEARCH *F4*, the 18 October note.) (1) The seats' Plays with / Swings bars follow the seat's lean,
+  in every golfers step (Play, the course of the week, Endless, the range,
+  Challenges' group); (2) the shot card hangs above the shot line's apex with an
+  arrow down to it, comes up as the camera pulls back and fades as it flies
+  in, shows ball speed, backspin and apex underneath, and has a second big number, the
+  yards left to the pin (feet inside 10 m, PLACED); (3) every
+  setting's info i sits right after its name (a new layout rule,
+  PROJECT_HANDOFF *Info icons*). **To check:** the seats on a phone and in
+  the other golfers steps; the card below the apex where the top of the
+  screen has no room, its fade caught mid-way, a drive with the review camera
+  off, a holed shot (IN THE HOLE).
+- [ ] **The hidden old interface removed (18 October 2026): built; `npm test`
+  1000/1000, the build, and all 37 smoke journeys pass** (run on the real GPU
+  in 13 small batches the same day; the journeys were changed to read the 1.0
+  pieces). Not seen by a person. Gone from the page,
+  the code and the styles: the course card, the weather box, the camera
+  button and strip, the aim box, the spin dial's pair, the Swing button, the
+  hints row and the club box's hidden label, plus about 40 class names nothing
+  used (the drag grips, `.hud-custom`, old shot groups, the old splash);
+  PROJECT_HANDOFF *The old interface, removed*. **To check** by hand: the Esc list's cameras (Player, Overview, Free
+  flight, Green, Flyover, Full screen), the tool column's Range and Full
+  screen, R on the range, the wind chip's arrow turning with the camera, a
+  phone's aim pad. **For the owner:** the skins value of the hole being
+  played was only in the hidden course card, so the round screen does not
+  show it.
+- [ ] **The owner's fix list of 18 October 2026: built; seen only in scripted
+  screenshots at 1920 x 1080** (Playwright on the built file; nobody has
+  played it). Seat names centred and whole; the putting description gone
+  everywhere; cut italic and "..." fixed across the sheets (captions wrap);
+  notes, the map's expand button, the scorecard's countdown and match line no
+  longer rounded, and no "MAKE IT YOURS" over the scorecard; the shot card up
+  only while the ball rests; a new hole quiet until the turn box goes, then
+  the yards fade in; no blur past the XP card, level-up band or growing
+  window; pause: course line centred over the left column only, a player
+  icon on Players & round; the map and tools above the corner logo; the menu
+  wordmark up 20; the Tab tiles about 45% smaller with the units clear; the
+  ball light growing with its words; the range's targets as 1.0 sliders;
+  Challenges' group as compact seat rows. **To check:** the ball light with a
+  real bridge and a monitor armed (seen only faked, and the meter was still
+  drawn under it in the fake), the scorecard countdown between holes (not
+  captured), the turn box with two to four golfers, every size but 1920 x
+  1080 for the round screen, phones.
+- [ ] **The map and the Tab shot numbers move again (18 October 2026): built;
+  dragged only by script at 1920 x 1080** (moved, kept through a resize to
+  1280 x 720, a double-click put the map back). Not seen: by hand with a
+  mouse or a finger on a touch screen, the range (its tiles start top right),
+  the big map (M) after a move, the Tools window's Reset. PLACED: only those
+  two move; no resizing.
+- [ ] **Text on the dark end of a highlighted box is weak** (contrast 2.3 to
+  5.5, lowest on Giant Redwood; the test does not check it). Phase 1 and 3
+  screens keep text on the light end, or the gradient changes.
+- [ ] **Phase 1 (the round screen): seen at 1280 x 720 and 1920 x 1080, not
+  on the projector** (17 October 2026, overnight, the owner having allowed
+  the graphics card for the night). Seen in the browser pane and the smoke
+  screenshots: the hole slab, conditions, one golfer's card, the map, the
+  club panel, the shape chips, the meter, the pin tag, the quiet hole-out
+  strip, the Esc list (fixed: it overflowed 720, Resume sat mid-list, the
+  monitor row and Players row lost their words), the main menu and its arrow
+  keys (fixed: Enter did nothing; the focused row was not lit), the shot card
+  (fixed: a short shot's card sat on the meter), and with a monitor armed
+  (fixed: a relief panel covered the Armed switch; stray tiles in the corner).
+  The smoke
+  journeys pass, every one of the 37 (their top-bar steps go through the Esc
+  list; the camera and flight checks read the round screen). **Not seen:** the
+  projector, 16:10, 4:3 and an iPad, two to four golfer cards and their
+  frames, a long club name, a meter skin, the ball light with a monitor armed
+  (its journeys pass), the range with R.
+- [ ] **Pause in every mode, round 13 (frame c-pause): built, seen in the
+  browser pane at 1280 x 720** (a round; the course studio). The windows lean
+  as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
+  a controller in the studio pause. PLACED: the round's pause keeps all its
+  rows and a second window for the round (the frame has six rows).
+- [ ] **Keys & help (round 14, item 10): built; seen in the browser pane at
+  1280 x 720** (The essentials with their keys on the right; Explore the
+  course). Not seen: the other five pages, a controller, a phone (one column
+  there). The help text is today's, one topic a page (the frame's eleven
+  topics would need new writing: not done); the free-flight line no longer
+  names the bird icon.
+- [ ] **Driving range setup in steps (round 14, item 9): built; seen in the
+  browser pane at 1280 x 720** (step 2: hit from, targets, the session note;
+  Open the driving range on it). Not seen: a session opened from the short
+  game or putting (Hit from applied after the range opens), a slope chosen
+  here, the live Apply to this session, a phone. PLACED: no Aim at or Wind
+  rows. The journeys menu-panels, range, range-greens, sound and the phone
+  menu pass.
+- [ ] **Start splash (round 14, item 8): built; seen in the browser pane at
+  1280 x 720** (Desert week: bands, wordmark, the bar at "Growing the first
+  hole · 30%", a tip, "v1.0.0 · WEEK 42 · DESERT"). Not seen: a phone, another
+  week's colours, the file opened from disk. The journeys boot, home-screen
+  (three) and no-swallowed-errors pass.
+- [ ] **Round screen, round 14 (item 7): built; seen in the browser pane at
+  1280 x 720** -- at rest (nothing above the meter, the three boxes under it,
+  the club box with Q E and its triangle), the bag opened and a club picked
+  from it, Q back, and one shot in flight (launch strip, the meter counting,
+  Skip at the bottom centre). Not seen: the monitor armed (the boxes hiding
+  for the ball light), 21:9 and 4:3, a phone's bag (the phone journeys pass).
+  The out-of-reach words above the meter are gone with the head; the bar's
+  hatch still shows the reach.
+- [ ] **The locker's single highlight; one 1.0 drop-down for every select
+  (round 14, items 5-6): built; seen in the browser pane at 1280 x 720** -- the
+  locker's worn ball traced with its name ticked; the title list opened by
+  click and by Enter, Arrow Down onto locked titles, Escape closing only the
+  list; Graphics' Quality and Frame cap; a seat's name. Not seen: picking a
+  title (the test golfer has none unlocked), a touch, a phone, the tool
+  windows' and pause list's selects. The bag (#club) is item 7.
+- [ ] **Course of the week and Endless in two steps; seats where nothing clips
+  (round 14, items 2-4): built; seen in the browser pane at 1280 x 720** -- the
+  week's step 1 (Next only) and Golfers (Play · the course); Endless step 1
+  (Next only, format and rules under THE RUN) and Golfers (Start the run ·
+  Hole 1); Play's seats with Plays with / Swings as value lines and an arrow
+  stepping one. Not seen: a profile with a long name (nameSize is unit-tested),
+  the range's seats, a phone. Differs from the frames: the week's Golfers step
+  keeps its rules under the seats (c-cotw2 shows seats only).
+- [ ] **Tiny course models on every card (round 14, item 1): built; seen in the
+  browser pane at 1280 x 720** on Play, Endless (nine landscapes), the course
+  of the week (picture and earlier weeks) and Saved courses, two of them
+  enlarged. Not seen: the sway on the selected card, the studio's landscape
+  pictures, a phone, frame cost (no profile run; renderer and frame cost are on
+  the ask list). **Not built: the B flyover** for the course of the week's
+  picture and the course about to play -- a capture of the real course the
+  first time it is built or saved, stored and played back; they show the tiny
+  model meanwhile. PLACED: the relief and trees are a per-landscape rule.
+- [ ] **Wide-screen rule (round 14, item 0): built; seen in the browser pane**
+  -- Play at 1280 x 720, 1382 x 720 (1.92), 1680 x 720 (21:9) and 1024 x 768
+  (4:3): 5, 6, 7 and 5 cards across; a page script found nothing off the
+  screen and no clipped leaning shape on the eight menu screens at 1382 x 720
+  (with the sheet scale raised to 0.9, as a larger Text size would). **The
+  full pass, after items 1-10:** the page script over every menu screen and
+  every step (Play, Endless, the week, Challenges, the range, the studio,
+  Saved courses, My profile, Graphics, Help) at 1280 x 720, 1382 x 720,
+  1680 x 720, 1024 x 768, 844 x 390 and 390 x 844 -- nothing off the screen,
+  no leaning shape clipped, after three fixes it found (the seats' gutter;
+  the phone gutter; the phone's card grid); Play and the round looked at in
+  the pane at 21:9 and 4:3 (nothing of the round off the screen at 4:3).
+- [ ] **Phones get the 1.0 sheets and dialogs (round 13): built, seen in the
+  browser pane at 390 x 844** (Play steps 1 to 4, Endless, the course of the
+  week, Challenges, the studio's settings, Saved courses, My profile,
+  Graphics, the round's pause) **and 844 x 390** (Play, the studio's settings,
+  My profile). Not seen: a real phone, Help, Sound, Camera & bay, Launch
+  monitor and the scorecard on a phone, the Leave and welcome dialogs on a
+  phone. The driving range setup was rebuilt in steps in round 14 (its
+  entry above); not seen on a phone.
+- [ ] **Course studio, round 13: built to frames c-studio-set and c-studio,
+  seen in the browser pane at 1280 x 720** (the settings from the menu and in
+  the studio, Landscape and Routing, Desert changing the colours, a changed
+  slider with its dot and one outline, R regrowing, the flying view, the big
+  map). Not seen: every category, a controller on the sheet, Save course and
+  the other windows in the studio, a phone (unchanged). PLACED: R regrows only
+  from the sheet (R flies up); the tool column is Big map, Full screen and Menu
+  (no camera, green or shots over a landscape with no ball); Leave studio stays
+  on the bar where the frame has Play it (on a phone too, the bar steps aside
+  while a sheet is open); the whole-course map's surround is
+  dark now (biomes.js mapWater).
+- [ ] **The big map, round 13: built to frame c-bigmap.** M opens and closes
+  it. Seen in the browser pane at 1280 x 720 on a tee shot (M to open and
+  close, Heat on and off). Not seen: aiming by a click on it, a putt with the
+  reading layers drawn, a drop or free flight on it, a phone (unchanged; the
+  phone journeys pass).
+- [ ] **Windows, round 13: built to frames c-dialogs1-3, c-xp and c-free,
+  seen in the browser pane at 1280 x 720** (Leave without saving, the keys,
+  a toast, the XP card, the level-up band, free flight; the XP card and band
+  were shown by hand, not earned). Not seen: Take relief, the sim drop, the
+  scramble pick, the version notice, the welcome, the time of day, the shot
+  list, a phone. A toast and the XP card at the same moment overlap a little.
+- [ ] **Round screen, round 13: built to frames c-aim, c-first and c-flight,
+  seen in the browser pane at 1280 x 720** (at rest with the aim point shown
+  first -- retired 18 October 2026, a new hole now starts quiet -- and one
+  shot in flight). Not seen: a putt, a monitor shot's strip,
+  the tools column on the range, 4:3, a phone (keeps its own layout). PLACED:
+  plays-like left the round screen; Menu added to the tool column; Fly is V
+  (the mockup's F is down in free flight).
+- [ ] **Play, step by step (round 13): built to frames c-play1 to c-play4,
+  seen in the browser pane at 1280 x 720** (17 October 2026; src/ui-lobby.js,
+  ui-steps.js). Each golfer has their own tee (game.js `teeOf`). Not seen: four
+  golfers, the saved rounds view, a long course name, a phone, the steps from
+  a controller. The smoke journeys press the steps by name, and pass. PLACED: no Goal or Holes rows; the course
+  of the week's card opens its own setup; the scorecard's yards are the
+  round's tee.
+- [ ] **1.0 launch monitor setup: built to the mockup, seen in the browser
+  pane at 1280 x 720 with no bridge** (17 October 2026, third pass;
+  src/ui-monitor-setup.js). Not seen: the steps ticking and the light going
+  green with a real connector (the monitor, mixed-group and bridge-bundle
+  journeys drive it), a phone. PLACED: Connect bridge keeps its words (the
+  mockup says Reconnect; the journeys press it by name), the address is the
+  editable box, the last shot is the last of any kind, the connector notes
+  sit along the foot.
+- [ ] **1.0 My profile hub: built to the mockups, seen in the browser pane at
+  1280 x 720** (Overview, Locker, Stats, History; 17 October 2026, third pass;
+  src/ui-profile-hub.js). Not seen: two or more golfers (the chips in the
+  header band), a golfer with rounds (recent-round cards, the history), the
+  rename and remove buttons in the new stack, a phone. PLACED: locked looks
+  keep full colour with a padlock and their level (the owner's 15 October rule,
+  which the smoke checks) rather than dimmed as drawn; the recent-round cards
+  show the landscape's colours, not a picture; the tab shown is remembered
+  while the game is open, and coming back from the bag editor opens Bag.
+- [ ] **1.0 settings: built to the mockup, seen in the browser pane at 1280 x
+  720** (Graphics, Camera & bay, Sound from the menu; 17 October 2026, third
+  pass; src/ui-settings.js). Not seen: the help line following a real
+  keyboard or controller focus (checked by a synthetic focus event: the pane
+  had no window focus), ? showing every note in place, the switches and
+  segment bars driven by arrows, a phone. PLACED: the categories are the five
+  sheets there are, not the mockup's seven; the tool windows in a round keep
+  their own layout.
+- [ ] **1.0 challenges, course of the week, saved courses: built to the
+  mockups, seen in the browser pane at 1280 x 720** (17 October 2026, third
+  pass; src/ui-menu-screens.js). Not seen: a challenge with medals won, a
+  head-to-head's group, the share box after Copy code, renaming on the shelf,
+  the week with bests recorded, a phone, the studio's own Saved courses (old
+  layout there). PLACED: the challenge's group sits under its detail; the
+  week's tees and group sit under its facts; the week's length is not shown
+  (only a grown course knows it); course pictures are the landscape's
+  colours; saved courses has no Saved rounds tab or Open in studio button
+  (rounds stay in the lobby; the studio opens courses from its own bar).
+- [ ] **1.0 course studio: built to the mockups, seen in the browser pane at
+  1280 x 720** (flying and with Settings open, one slider moved: the dot, the
+  column, the chip; 17 October 2026, third pass; src/ui-studio.js). Not seen:
+  regenerating from the chip, a phone (the old bar and sheet there), 4:3, the
+  Show all descriptions mode in the new rows, a warned slider's bubble in the
+  new rows. PLACED: the map stays where the studio has it (right, as in a
+  round) rather than the mockup's left; the bar keeps Leave studio where the
+  mockup has Play it; no key letters on the bar -- R flies up in the studio,
+  so the mockup's "R regenerate" would lie; the studio bar stays where the
+  owner's 15 October layout puts it over an open sheet (a strip above it), not
+  in a footer band, because the sheet's geometry and its smoke check depend
+  on it and it was no obstacle; eight categories, not the mockup's nine (water
+  is one group here).
+- [ ] **1.0 range controls: built to the mockup, seen in the browser pane at
+  1280 x 720** (two columns, segment bars, the session table empty; 17
+  October 2026, third pass; src/ui-range-controls.js). Not seen: the table
+  filling after balls, two golfers' rows, Chip and Putt's own controls in the
+  new layout, a phone (the window is one column when narrow). PLACED: still a
+  window over the range rather than the mockup's full sheet (a green is set
+  while looking at it, and balls are hit with it open), now 720 wide; the
+  mockup's green firmness and speed pickers are not here (no such range
+  setting yet), and Lab tools is one row that opens the Lab window.
+- [ ] **1.0 pause: built to the mockup, seen in the browser pane at 1280 x
+  720** (one golfer, Endless; 17 October 2026, third pass). Not seen: two to
+  four golfers in the standings, the range's pause, 4:3, a controller moving
+  down the new order. PLACED: the mockup's six rows hold eleven things here
+  -- Tools stands for Camera & bay (it opens the tools tray), Main menu for
+  Save & leave (it asks to save), the settings are four half-width chips
+  under the rows rather than one Settings row, and the time of day stays (the
+  mockup has no clock).
+- [ ] **A lit shader built during a hole-out flyover once** (17 October 2026,
+  smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
+  on two reruns with other seeds). Course-dependent, not the interface: find
+  which material the flyover meets that the warm-up missed.
+- [ ] **Phase 2 (shot moments) is built and not seen** (17 October 2026,
+  overnight). Look at: the shot card after a drive (where it sits, the fade),
+  Tab for every number, the range's tiles and the cards moved left, the Esc
+  list's *Shot numbers* choice, a birdie's band and a par's strip (and the
+  next golfer's turn coming in as it leaves), the scorecard's marks and the
+  flashing hole, and round complete. Not built: the XP flying to the golfer's
+  card, the scorecard's leaning columns, *Play again* with the same group, the
+  round's three highlights (longest drive, closest approach).
+- [ ] **Phase 3 (menus and windows) is partly built and not seen** (17
+  October 2026, overnight). Built: arrows and a controller on the main menu
+  and the Esc list (ui-focus.js), the main menu as the title screen with the
+  golfer card, the standings in the Esc list, and the 1.0 colours and type on
+  every panel and window through the old variables. **Not rebuilt on the kit**
+  (each keeps its old layout, restyled; the lobby, monitor setup and profile
+  hub, settings, challenges, course of the week and saved courses,
+  the course studio, the range controls and pause since rebuilt): and the small windows. Look at the main menu at 16:9, 16:10,
+  4:3 and on an iPad, drive it with arrows and a controller, and open every
+  panel to check the restyle reads.
+- [ ] **Phase 4 (sounds): wired in, NOT HEARD IN THE GAME.** Family C (clean)
+  now plays for hole in one, eagle, birdie, par and bogey, a new level, XP
+  counting and round complete, and the interface set on menu moves, presses,
+  Escape, the green-reading buttons, a locked look and the monitor turning
+  Ready; the marimba stings are deleted (17 October 2026, at the owner's word,
+  given directly to the planning session: "you can also wire all the new
+  sounds i agreed on"). An albatross, a double bogey and worse keep the 14
+  October jingle (PLACED). Levels were measured, not heard (RESEARCH *The 1.0
+  interface's sounds, wired in*): the big moments run 4-6 dB louder than the
+  old jingles, birdie and bogey 3-6 dB quieter, the XP count much quieter.
+  **To check:** play a round with sound on -- hole a birdie, a par, a bogey,
+  level up, finish a round -- and drive the main menu and the Esc list with
+  arrows; on the projector's speakers if you can. Say what's too loud or too
+  quiet and `CHIP_LEVELS` (chiptune.js) moves.
+- [ ] **Phase 5 (phones and screen shapes): built, seen in the browser pane at
+  844 x 390 and 390 x 844, not on a real phone** (17 October 2026, overnight).
+  The phone round screen sideways and upright (src/round-phone.css), the
+  slanted aim pad, swinging by tapping the bar, the MENU chip and the pause
+  list as one column, the phone main menu with rows leaning one by one. The
+  phone smoke journeys pass (they tap the bar now). Not seen: a real iPhone's
+  Safari and safe areas, a phone with two or more golfers, the ball light on a
+  phone, the sheets on a phone (unchanged, old layout).
+- [ ] **The Text size barely enlarges the round screen on 16:9** (about a
+  tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
+  The owner's call whether that is right for the bay.
+- [ ] **The typed aim distance has no home on the round screen** (arrows and
+  the map still aim). Decide in phase 3 whether it comes back.
+- [ ] **The canvas's 1024 floor for the Text size is PLACED** (ui-layout.js
+  `MIN_CANVAS_WIDTH`): the first screen that overflows at 125% moves it.
+
 ## Found on GitHub
 
 - [ ] **The smoke step fails on GitHub, in `endless-round`.** The tests
@@ -341,7 +649,74 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## Release 0.9 (18 October)
+
+- [ ] **Owner: play 0.9 and look over the 1.0 website.** Released from the
+  merge of `release-0.9` (the `ui-1-0` journey and the capture tools) into
+  `main`; the website was redeployed live from its branch `website-1-0`
+  (that repository; not merged there). What was checked is in
+  DISTRIBUTION_REVIEW, *v0.9*. Not seen by a person: the 1.0 interface in a
+  real round on this machine, the sounds, a phone. The smoke's
+  `ball-light-hole-out` failed once in the release run and passed on a rerun
+  (the intermittent entry above).
+
 # Done
+
+## Release 0.9 (18 October)
+
+- [x] **v0.9 published**, "Fairway 0.9 (beta)", at the owner's request: the
+  1.0 interface on every screen, the start splash, the course models, the new
+  sounds and icons. Generator 36, schema 11, profile 3, all unchanged; the
+  package version is now 0.9.0 (the splash prints it). Notes:
+  `docs/releases/v0.9.md`. `npm test` 1004, smoke 37 of 37 (one rerun). The
+  release check found the course-model cards bundling all of three.js (four
+  `fetch(` instead of one, 147 KB); fixed before release (PROJECT_HANDOFF
+  *Never hand `T` itself on as a value*).
+- [x] **Capture tools for the 1.0 website** (docs/CAPTURE.md): every landscape
+  at four times of day with no interface, the interface screen by screen, and
+  clips recorded frame by frame at 4K60, plus a putting screen; the website was
+  rebuilt from them in its own repository.
+
+## The 1.0 interface (branch `ui-1-0`)
+
+- [x] **Phase 0 (foundations) is built and not seen.** The typeface, the nine
+  palettes, `ui-layout.js`, `ui-palette.js` and the kit are on the branch with
+  their tests (17 October 2026), but no screen uses them, so nothing of it has
+  been looked at in a browser: the font's look at 700/800 and its browser
+  slant, the kit's pieces, and `canvasFrame` on a real screen are unseen. The
+  first look is phase 1's round screen. **Phase 1 waits for the owner's
+  go-ahead.**
+  Closed 18 October 2026: untrue now. Every 1.0 screen since phase 1 is built on the typeface, the palettes, `ui-layout.js` and the kit, and they have been looked at in the browser pane through rounds 13 and 14; phase 1 went ahead the same night.
+- [x] **Phase 3, second pass: the sheets as 1.0 screens** (17 October 2026,
+  seen in the browser pane at 1280 x 720 and 1024 x 768: the lobby, My
+  profile, challenges, launch monitor). Restyled on the grid, not rebuilt on
+  the kit (the lobby and launch monitor setup since rebuilt to their
+  mockups, below);
+  course of the week and saved courses not looked at. The course studio's
+  sheet is unchanged. The pause screen (two columns) and settings' help on
+  demand are not yet seen.
+  Closed 18 October 2026: superseded. Round 13 rebuilt every sheet to its frame (the course of the week, saved courses and the course studio included) and round 14 rebuilt them again; their own entries above hold what is not yet seen.
+- [x] **Round 13 sweep: what still showed the old interface.** Converted and
+  seen at 1280 x 720: the Tools list and the tool windows (Turf settings
+  opened), the wait while a landscape grows (shown by hand). Converted, not
+  seen: the turn card between golfers. Still old, each needing a mockup: the
+  driving range setup (tabs, old player rows), the Help sheet's body (not
+  looked at this pass). Still in the page but hidden on every screen: the old
+  view strip, keys hints, aim control, Swing button, course card and weather
+  (the journeys read them to tell the old screen from the new; removing them
+  is a cleanup with the journeys). style.css still carries the old rules
+  under the 1.0 ones; they go with that markup.
+  Closed 18 October 2026: the two screens it left (the driving range setup and the Help body) were mocked and built in round 14, and the hidden old pieces and style.css's old rules were removed (the entry above, *The hidden old interface removed*).
+- [x] **Course of the week on one screen (round 13): built to frame c-cotw,
+  seen in the browser pane at 1280 x 720.** Not seen: a week with bests. PLACED:
+  a second step, Golfers, holds the group, tees and rules.
+  Closed 18 October 2026: superseded by round 14's two steps (*Course of the week and Endless in two steps*, above).
+- [x] **Endless, step by step (round 13): built to frame c-endless, seen in
+  the browser pane at 1280 x 720** (step 1). Not seen: a pinned-landscape run
+  played, Sudden death from here, steps 2 and 3. PLACED: a third step for
+  format and rules; the mockup's Length, Greens and Wind rows are not there
+  (no such run settings).
+  Closed 18 October 2026: superseded by round 14's two steps; the format and rules now sit under THE RUN on step 1 (*Course of the week and Endless in two steps*, above).
 
 ## Release 0.8.3 (16 October)
 

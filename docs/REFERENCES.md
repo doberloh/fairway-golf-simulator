@@ -617,3 +617,21 @@ skins; these describe how it is played.
 - Stymie, "What is a skins game in golf?" -- https://stymie.golf/glossary/skins -- through a search summary: lowest score alone wins, ties carry; settle handicap strokes before the first carry. Followed for the rule; strokes left out.
 - GolfLink, "Golf skins game: everything you need to know" -- https://www.golflink.com/golf-rules/golf-skins-game-everything-you-need-to-know -- through a search summary: skins left after the last hole are split, played off, or settled by the group's own rule. The basis for calling "unclaimed" a placed choice.
 - 18Birdies help, "Skins" -- https://help.18birdies.com/article/57-skins -- through a search summary: an app's settings for carryovers, handicap strokes and the last hole. Compared, not followed.
+
+## The 1.0 interface (17 October 2026)
+
+Read for RESEARCH.md *The 1.0 interface: palettes, contrast and the canvas*.
+
+- W3C, Web Content Accessibility Guidelines 2.1, success criterion 1.4.3
+  Contrast (Minimum) -- https://www.w3.org/TR/WCAG21/#contrast-minimum -- 4.5:1
+  for text, 3:1 for large text (18 point, or 14 point bold: 24 px, about 18.7
+  px bold), the thresholds in `src/ui-palette.js`. The ratio itself is the
+  definition already cited under *Meter skins and colour blindness*.
+  **Recalled, not fetched this session**; the figures are the well-known AA
+  ones and a check against the page is owed.
+- Google Fonts, Saira Condensed --
+  https://github.com/google/fonts/tree/main/ofl/sairacondensed -- the family
+  (upright weights 100-900, no italic) and its SIL Open Font License 1.1. The
+  files were taken from the npm package `@fontsource/saira-condensed` 5.3.0,
+  whose `metadata.json` lists `"styles": ["normal"]` and Google Fonts version
+  12, and whose `LICENSE` is the OFL text shipped in `src/fonts/OFL.txt`.

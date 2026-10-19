@@ -90,6 +90,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/achievements.js` -- the achievements, their rules and counts; `src/weekly.js` -- the course of the week and the challenge of the week from the date; `src/challenges.js` -- the challenges as one table (27), their medals and records (the skins record too), the Challenge Course; `src/challenge-play.js` -- a challenge being played: turns, what a ball scores, the results; `src/challenge-spots.js` -- where its balls go and which hole it uses
 - `src/flourishes.js` -- the hole-out flourishes, drawn flat on a canvas over the cup
 - `src/sound.js` -- every sound, synthesised (no recordings); `src/audio.js` -- when the game plays each one, the Sound window's settings
+- `src/chiptune.js` -- the 1.0 interface's chiptune (prog metal, clean, family C): the moments and interface sounds as data, and their player; wired in through audio.js (17 October 2026), the marimba stings deleted
 
 **Drawing it**
 - `src/renderer.js` -- the three.js scene, ball, cup, flag, cameras, maps
@@ -106,7 +107,28 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **The interface**
 - `index.html` -- the app shell and its element IDs; `src/main.js` -- app state, controls, shot orchestration, the frame loop
-- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, draggable panels, the Text size zoom
+- `src/style.css`, `src/layout.js`, `src/ui-scale.js` -- styling, the measured space the default layout fits (panels no longer drag; the map and the Tab shot numbers do, `hud-places.js`), the Text size zoom. The old interface's hidden pieces and their styles were removed on 18 October 2026: four jobs still ran through them (PROJECT_HANDOFF *Hidden was not unused*). Layout rules added that day: rows follow a tall box's lean, and the info i goes with its name (PROJECT_HANDOFF *A full-width row inside a tall leaning box*, *Info icons*)
+- `src/round-hud.js`, `src/round-hud.css` -- the 1.0 round screen (in play, off a phone): what each corner piece says and how large, and where it sits; Esc opens the top bar as a pause list; round complete's standings
+- `src/round-phone.css` -- the 1.0 round screen on a phone, sideways and upright (the slanted aim pad, the tapped meter, a MENU chip), and the phone's main menu rows
+- `src/ui-steps.js` -- step-by-step setup sheets (round 13): the steps along the top, one step's content centred, keys and Back / Next along the foot, the screen's main button on the last step
+- `src/ui-lobby.js` -- Endless in two steps (landscape pictures beside the run: goal, format, rules, best run; golfers), `nameSize` for a seat's name and Play in four steps (course cards with pictures, golfer seats with their own tees, format cards with teams, rules and a summary), moving the round panel's own controls into them; tests/ui-lobby.test.mjs
+- `src/ui-monitor-setup.js` -- 1.0 launch monitor setup: moves the monitor panel's controls into the mockup's three ticked steps and status column; `monitorSteps`, `monitorLight`, `lastShotLine` tested in tests/ui-monitor-setup.test.mjs
+- `src/ui-profile-hub.js` -- 1.0 My profile hub: sorts the old profile page by its headings into six tabs, golfer chips in the header, the left stack; `tabOfHeading`, `overviewTiles` tested in tests/ui-profile-hub.test.mjs
+- `src/ui-settings.js` -- 1.0 settings: Camera & bay, Graphics and Sound from the menu get the category list, all groups as rows, and the focused row's help line; tests/ui-settings.test.mjs
+- `src/ui-menu-screens.js` -- (round 14) also `buildHelp`: keys & help as topics, page and that page's keys -- 1.0 challenges (banner, categories, cards, detail), course of the week (picture, earlier weeks, fact rows) and saved courses (shelf and chosen-course column): the old sheets' nodes placed on the mockups' grids
+- `src/ui-studio.js` -- 1.0 course studio: the slab, "N settings changed" chip, keys and tool column while flying; the settings sheet (one screen from the menu and in the studio: landscapes as pictures)'s category counts, changed dots and what-changed column; `settingsChanges` tested in tests/ui-studio.test.mjs
+- `src/ui-range-controls.js` -- 1.0 range controls: the range window's controls sorted into two columns by its own headings, the session-by-club table (from range-report.js `clubTable`), the lab row; tests/ui-range-controls.test.mjs
+- `src/ui-dropdown.js`, `src/ui-dropdown.css` -- the 1.0 drop-down over a native select (which stays, see-through, for its id, value and handlers); `dropdownEverywhere` gives it to every select a player sees; tests/ui-dropdown.test.mjs
+- `src/course-model.js` -- the tiny 3D model of a whole course for its card: `modelPlan` (the real holes from `layoutFor`, in model units), `modelData` (pure: ground, holes, water, trees, flags as arrays), `buildCourseModel` (a three.js scene)
+- `src/model-framing.js` -- frames a tiny model in its box (pure, three.js handed in): tilt from the box's shape, as close as every tee and green allows, the box always full of ground; tests/model-framing.test.mjs
+- `src/model-cards.js` -- draws the tiny models into the cards with the game's own renderer (one offscreen target, read back into a 2D canvas per card), one model per timer tick, the selected card first and the only one that sways
+- `src/course-picture.js` -- a course's picture drawn top-down from its own routing (generateCourse + routeHoles, no terrain) in the biome's map colours; `pictureQueue` fills a list one picture per idle moment; tests/course-picture.test.mjs
+- `src/ui-windows.js`, `src/ui-windows.css` -- the 1.0 windows: `makeWindow` (title, line, rows) and `leanAsOne`, which lines a column's rows up as one leaning block; tests/ui-windows.test.mjs
+- `src/ui-sheets.css` -- the sheets (#drawer, outside #app) as 1.0 screens: full screen, slanted control stacks, the lobby on the grid; the scorecard and round complete
+- `src/ui-focus.js`, `src/ui-screens.css` -- the 1.0 menus: arrows and a controller between buttons (main menu, Esc list), the main menu's title-screen look and golfer card, and the 1.0 colours and type carried into every panel and window
+- `src/hud-places.js` -- where the map and the Tab shot numbers sit once the player has dragged them (fractions of the playing area, kept per device, held on screen); main.js drags and draws them
+- `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks
+- The 1.0 interface (branch `ui-1-0`; phase 0): `src/ui-layout.js` -- the design canvas, bands and 12-column leaning grid, and the canvas with the Text size; `src/ui-palette.js` -- which biome's colours a screen wears, and the contrast check; `src/ui-kit.js`, `src/ui-kit.css` -- the building kit and the `@font-face` rules; `src/fonts/` -- Saira Condensed (OFL), inlined by the build
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API
 
 **Outside the game**
@@ -115,7 +137,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
-- `tools/capture/` -- pictures and clips of the game; `tools/landing-report/` -- the owner's local reports
+- `tools/capture/` -- pictures and clips of the game, 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`; docs/CAPTURE.md); `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
 - `tools/github-protect.mjs` -- the repository's GitHub protections
 - `tests/*.test.mjs` -- the regression suites (`round-matrix` plays every format with every group; `challenge-virtual` plays every challenge through the ball model with `tests/virtual-golfer.mjs`, a Swing Meter golfer in Node); `bench/*.json` -- saved baselines. docs/TESTING.md maps what is tested and how
@@ -206,6 +228,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Rendering the scene a second time redraws every shadow map unless `shadowMap.autoUpdate` is off around it; the god rays and the pond probes switch it off. [A SECOND RENDER REDRAWS EVERY SHADOW MAP]
 - The god rays draw through their own override material and only with the sun in shot; the loading screen's frame warms them, and only solid things go in their mask. [THE GOD RAYS ARE WARMED]
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
+- Never pass `T` itself as a value: the bundler then keeps all of three.js, file loaders and their fetch() included. [Never hand `T` itself on as a value]
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
@@ -215,7 +238,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
-- The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler. [THE SPLASH LIVES]
+- The splash lives in `index.html`; `dismissSplash()` runs after `openMenu()` and in the fatal handler; its week colours come from `window.__FAIRWAY_SPLASH__`, written in by vite.config.js from biomes.js and weekly.js. [THE SPLASH LIVES]
 - An unset clock hour is null and reads as midnight; only a world build replaces it, so a round that keeps its world sets the hour itself (`roundHour`). [The menu borrows the clock]
 - `appMode` changes only through `setMode`; generation controls only in the studio, course choice only in play. [Application modes]
 - A saved graphics record beats a new default; raise `GREEN_READ_GEN` to move everyone. [A SAVED GRAPHICS RECORD]
@@ -230,10 +253,15 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
-- Course studio's Settings sheet fills the play area under a strip the same observer sizes for the bar. [COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA]
+- A leaning picture is an exact clip-path shape (never a skewed layer in an overflow-hidden box), outlined with `--trace`; grids gain columns as the screen widens; scroll boxes are padded by the lean. [THE WIDE-SCREEN RULE]
+- The studio's windows are the menu's sheets on every screen and the bar steps aside while one is open; the old strip under the bar is retired. [THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS]
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 - The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]
 - The bridge's accepted club codes come from `CLUB_KINDS`; a typed list once dropped the connection on any non-stock club. [passes on every club a bag can hold]
+- 1.0 sheets: #drawer and the notices are outside #app -- no app query, palette, Text size zoom or `--hud-z` reaches them; ui-sheets.css uses @media and `--sheet-z`. [THE SHEETS ARE OUTSIDE #app]
+- 1.0 round screen: the shot controls are `display:contents`, so a new child lands loose unless round-hud.css places it; labels the frame loop positions scale by transform, never zoom; an author `display` beats `[hidden]`. [THE SHOT CONTROLS ARE `display:contents`]
+- 1.0 interface: skewing a parent and straightening a coloured child leaves the block upright -- only text and pictures are straightened. [SKEWING A PARENT AND STRAIGHTENING]
+- 1.0 interface: a short shared class name silently restyles another screen; every kit class is `uk-`, every rule scoped to `.uk`. The canvas root inside `#app` scales by `drawn / zoom`, never `drawn`. [A SHORT SHARED CLASS NAME], [The canvas and the Text size]
 
 **Saving and players**
 - Four stores, each for one thing: the round slot, saved rounds, saved courses, profiles. [Saving: one slot, two libraries]

@@ -1,0 +1,928 @@
+/* THE 1.0 SCREENS THAT OPEN AS SHEETS (phase 3, second pass, 17 October 2026;
+   PROJECT_HANDOFF *The 1.0 menus and windows*).
+
+   Every sheet (#drawer: the lobby, My profile with the Look locker, saved
+   courses, challenges, the course of the week, launch monitor setup, help...)
+   opens as a full 1.0 screen: the header band with the screen's name and Esc,
+   the content on the 12-column grid, each control its own slanted panel in a
+   stack (a tall box would lean too far -- the layout rules' "a slanted panel
+   with text is at most 120 tall; taller content is a stack of panels on one
+   left edge"), and the screen's main button bottom right, in the gradient.
+
+   RESTYLED, NOT REWRITTEN. The sheets are still built by main.js's
+   renderPanel and laid out by groupPanelContent, so every id, label and
+   handler the smoke journeys press is the same; this stylesheet only places
+   and dresses them. Where a screen's sections should all show at once (the
+   lobby: course, golfers, format and rules side by side), its tabs stay as
+   "jump to" chips -- they still work, and the journeys still press them.
+
+   On every screen since round 13 (the owner: "the old UI still shows on
+   phone screens"): a phone gets the same sheets, laid out in one column by
+   the PHONES block at the end of this file. In the studio too
+   (PROJECT_HANDOFF, THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS). */
+
+@media all{
+ /* THE SHEET IS OUTSIDE #app (a child of body), so neither the app's size
+    query, the palette set on the page root nor #app's Text size zoom reaches
+    it through #app: it is matched by the screen's size, scaled by --sheet-z
+    (the round screen's scale times the Text size, set on the root by main.js),
+    and given the old variables here. Found on 17 October 2026, when the first
+    look showed the sheets in the old green. */
+ #drawer{--trace:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot));--glass:var(--panel,rgba(15,28,20,.66));--glass-raised:color-mix(in srgb,var(--panel,#1a2a20) 82%,white);--accent:var(--a1,rgba(86,140,101,.92));--accent-ink:var(--on-hot,#eaf5e4);--font-display:"Saira Condensed",var(--font-ui)}
+ body:has(#app[data-mode]) #drawer:not([hidden]){left:0;right:0;top:0;bottom:0;width:auto;height:auto;min-height:0;max-height:none;padding:24px 60px 88px;zoom:var(--sheet-z,1);border:0;border-radius:0;background:linear-gradient(90deg,rgba(4,8,12,.9),rgba(4,8,12,.8));backdrop-filter:blur(6px);box-shadow:none;animation:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+
+ /* The header band: the screen's name, its eyebrow, and Esc. */
+ body:has(#app[data-mode]) #drawer .drawer-header{align-items:flex-end;min-height:40px;margin:0 0 24px}
+ body:has(#app[data-mode]) #drawer .drawer-header h2{font-size:36px;font-weight:800;font-style:italic;letter-spacing:.02em;line-height:1;text-transform:uppercase}
+ body:has(#app[data-mode]) #drawer .drawer-header .eyebrow{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ body:has(#app[data-mode]) #drawer #closeDrawer{position:relative;width:auto;height:36px;padding:0 16px 0 52px;border:0;border-radius:0;background:none;color:#e6e8ff}
+ body:has(#app[data-mode]) #drawer #closeDrawer::before{content:"ESC";position:absolute;left:8px;top:6px;padding:2px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ body:has(#app[data-mode]) #drawer #closeDrawer::after{content:"BACK";font:700 16px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
+ body:has(#app[data-mode]) #drawer #closeDrawer svg{display:none}
+
+ /* The content: wide, the type the design's. */
+ /* Room at both sides for the slant: a leaning panel's corners reach past its
+    box, and the scrolling content clipped them ("cut-off edges" in the
+    owner's review, 17 October 2026). */
+ body:has(#app[data-mode]) #drawer #drawerContent{max-width:none;padding:0 26px;font-size:15px;color:#fff}
+ body:has(#app[data-mode]) #drawer :is(.panel-intro,.note,.tip,.research-label){font-family:var(--font-ui);font-size:13px!important;line-height:1.5;color:var(--soft)!important}
+ /* A note is words under a thin bar, not the old rounded field box (the
+    owner's "rounded edge" calls, 17 and 18 October 2026). */
+ body:has(#app[data-mode]) #drawer .profile-tag{border-radius:0}
+ body:has(#app[data-mode]) #drawer .note:empty{display:none}
+ body:has(#app[data-mode]) #drawer .note{border-radius:0;background:none;border:0;border-left:3px solid rgba(255,255,255,.22);padding:2px 0 2px 12px}
+ body:has(#app[data-mode]) #drawer h3{font-size:14px;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
+
+ /* Each control is a slanted panel; its contents stand straight. */
+ body:has(#app[data-mode]) #drawer .control-card{position:relative;isolation:isolate;margin:0 0 8px;padding:14px 30px;border:0;border-radius:0;background:none}
+ body:has(#app[data-mode]) #drawer .control-card::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode]) #drawer .control-card:focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ body:has(#app[data-mode]) #drawer .control-card>label.field{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;font-weight:700}
+ body:has(#app[data-mode]) #drawer .control-card>label.check{font-size:16px;color:#fff;font-weight:700}
+ body:has(#app[data-mode]) #drawer .control-card select,body:has(#app[data-mode]) #drawer .control-card input:not([type=checkbox]):not([type=radio]):not([type=range]){font:800 italic 18px/1.2 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:0}
+ body:has(#app[data-mode]) #drawer .control-card option{font:15px var(--font-ui);color:#111;background:#fff}
+
+ /* The screen's main button, bottom right, in the footer band. */
+ body:has(#app[data-mode]) #drawer [data-panel-action]{position:fixed;right:60px;bottom:24px;z-index:3;height:56px;min-width:240px;padding:0 40px;font-size:24px!important}
+
+ /* Tabs: slanted chips under the header; the current one filled. */
+ body:has(#app[data-mode]) #drawer .panel-tabs{gap:8px;margin:0 0 20px;padding:0;border:0}
+ body:has(#app[data-mode]) #drawer .panel-tab{height:40px;padding:0 18px;font-size:14px}
+
+ #drawer .lb-label{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2}
+ #drawer .lb-pick{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:6px 24px}
+ #drawer .lb-k{display:grid;gap:2px;flex:1 1 0;min-width:0}
+ #drawer .lb-sub{font-size:14px;letter-spacing:.04em;font-weight:700;color:#fff;opacity:.75}
+ #drawer .lb-v{display:flex;flex:none;align-items:center;gap:6px;max-width:70%}
+ #drawer .lb-sel{position:relative;display:block;min-width:0}
+ #drawer .lb-val{display:block;padding-right:.2em;font-size:18px;font-weight:800;font-style:italic;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+ #drawer .lb-sel>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+ #drawer .lb-sel>select option{color:#111;background:#fff}
+ #drawer .lb-arrow{flex:none;width:28px;height:36px;min-height:36px;padding:0;border:0;border-radius:0;background:none;color:var(--a1);font-size:14px;line-height:1}
+ #drawer .lb-arrow:hover:not(:disabled){color:var(--hot)}
+ #drawer .lb-arrow:disabled{opacity:.3}
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent{display:grid;grid-template-columns:3fr 5fr 4fr;grid-template-areas:"lead lead lead" "tabs tabs tabs" "course group format" "saved saved saved";gap:0 32px;align-content:start}
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent>.panel-lead{grid-area:lead}
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent>.panel-tabs{grid-area:tabs}
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent>.panel-section{display:block!important;columns:auto;min-width:0}
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent>.panel-section>h3{display:block;margin:0 0 10px}
+ body:has(#app[data-mode]) #drawer[data-panel=round] .panel-section[data-title="Your course"]{grid-area:course}
+ body:has(#app[data-mode]) #drawer[data-panel=round] .panel-section[data-title="Your group"]{grid-area:group}
+ body:has(#app[data-mode]) #drawer[data-panel=round] .panel-section[data-title="Format & tees"]{grid-area:format}
+ body:has(#app[data-mode]) #drawer[data-panel=round] .panel-section[data-title="Saved rounds"]{grid-area:saved;margin-top:24px}
+ /* The endless and range setups have no course column: two columns. */
+ body:has(#app[data-mode]) #drawer[data-panel=round] #drawerContent:not(:has(.panel-section[data-title="Your course"])){grid-template-columns:7fr 5fr;grid-template-areas:"lead lead" "tabs tabs" "group format" "saved saved"}
+
+ /* ------------------------------------------------- launch monitor setup */
+ /* LAUNCH MONITOR SETUP (ui-monitor-setup.js moves its controls into .lm):
+    the mockup's two halves -- three numbered steps and the Arm switch on the
+    left, the status on the right -- and what the old panel said about
+    connectors along the foot (PLACED). */
+ body:has(#app[data-mode]) #drawer[data-panel=monitor] #drawerContent.lm-root>:is(.panel-lead,.panel-section,.panel-columns,.panel-tabs){display:none!important}
+ #drawer .lm{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .lm-col{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .lm-foot{grid-column:1/-1;min-width:0;columns:2;column-gap:32px}
+ #drawer .lm-foot>*{break-inside:avoid}
+ #drawer .lm .lm-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}
+ #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lm-step{display:flex;align-items:center;gap:18px;min-height:88px;padding:8px 32px}
+ #drawer .lm-n{flex:none;display:grid;place-items:center;min-width:40px;height:40px;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:28px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .lm-step:not(.done) .lm-n{background:rgba(255,255,255,.14);color:#fff}
+ #drawer .lm-what{display:grid;gap:4px;flex:1;min-width:0}
+ #drawer .lm-what strong{font-size:22px;font-weight:800;font-style:italic;line-height:1.1;color:#fff}
+ #drawer .lm-what span{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.3;color:#fff;opacity:.9}
+ #drawer .lm-tick{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft);white-space:nowrap}
+ #drawer .lm-step.done .lm-tick{color:#4ade80}
+ #drawer .lm-arm{display:flex;align-items:center;min-height:56px;padding:0 32px}
+ #drawer .lm-arm.on::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lm-arm>label{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;gap:16px;width:100%;margin:0;font-family:var(--font-ui);font-size:17px;font-weight:600;color:#fff}
+ #drawer .lm-arm input[type=checkbox]{width:22px;height:22px;accent-color:var(--hot)}
+ #drawer .lm-arm input:disabled{opacity:.4}
+ #drawer .lm-light{display:grid;grid-template-columns:auto minmax(0,1fr);align-content:center;gap:4px 18px;min-height:88px;padding:8px 32px}
+ #drawer .lm-light i{grid-row:1/3;align-self:center}
+ #drawer .lm-light i{flex:none;width:22px;height:22px;border-radius:50%;background:#6b7280}
+ #drawer .lm-light[data-state=green] i{background:#4ade80;box-shadow:0 0 0 7px rgba(74,222,128,.25)}
+ #drawer .lm-light[data-state=amber] i{background:#fbbf24;box-shadow:0 0 0 7px rgba(251,191,36,.25)}
+ #drawer .lm-light[data-state=red] i{background:#f87171;box-shadow:0 0 0 7px rgba(248,113,113,.25)}
+ #drawer .lm-light[data-state=green]::before{box-shadow:inset 0 0 0 3px #4ade80}
+ #drawer .lm-light strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .lm-light span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 32px}
+ #drawer .lm-k{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lm-v{min-width:0;font-size:18px;font-weight:800;font-style:italic;color:#fff;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .lm-v.ok{color:#4ade80}
+ #drawer .lm-address .lm-v{flex:1;overflow:visible}
+ #drawer .lm-address input{width:100%;height:34px;padding:0 8px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;text-align:right}
+ #drawer .lm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lm-buttons>button{width:100%;height:48px;min-height:48px;margin:0;padding:0 16px;font-size:17px!important;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#fff}
+ #drawer .lm-buttons>button::before{background:var(--panel)!important}
+ #drawer .lm-buttons>button.primary::before{background:linear-gradient(135deg,var(--a1),var(--a2))!important}
+ #drawer .lm-buttons>button.primary{color:var(--on-hot)}
+ #drawer .lm-status>:is(#jsonError,#monitorStatus){margin:0;padding:0 8px}
+ #drawer .lm-json{padding:0 8px;font-family:var(--font-ui);font-size:14px;color:var(--soft)}
+ #drawer .lm-json textarea{width:100%;min-height:150px;font:12px/1.4 ui-monospace,monospace}
+ #drawer .lm-foot :is(p,li){font-family:var(--font-ui);font-size:14px;line-height:1.5;color:var(--soft)}
+ #drawer .lm-foot h3{margin:8px 0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
+
+ /* ------------------------------------------------------------ my profile */
+ /* MY PROFILE, THE HUB (ui-profile-hub.js sorts the old page into it): the
+    golfers as chips in the header band, the left stack (4 columns) and six
+    tabs on the right (8). On the Locker tab the left stack shows what is worn
+    instead of the level and handicap, as the locker mockup does. */
+ #drawer .ph-root{display:block}
+ #drawer .ph{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .ph .ph-chips{position:fixed;top:24px;left:340px;right:220px;z-index:3;display:flex;flex-wrap:nowrap;gap:8px;margin:0;padding:0;border:0;overflow:hidden}
+ #drawer .ph .ph-chips>.panel-tab{display:flex;align-items:center;gap:8px;height:40px;padding:0 18px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em;white-space:nowrap}
+ #drawer .ph .ph-chips img{width:24px;height:24px}
+ #drawer .ph .ph-chips small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.75}
+ #drawer .ph-side,#drawer .ph-main{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
+ #drawer .ph :is(.profile-id,.profile-rename,.profile-level,.profile-hcp,.ph-since,.ph-tile,.ph-round-what,.ph-next,.ph-who,.ph-tracer,.ph-worn,.stat-tile,.achievement,.profile-bag>span)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ /* The left stack. */
+ #drawer .ph .profile-id{display:flex;align-items:center;gap:16px;min-height:104px;padding:12px 32px}
+ #drawer .ph .profile-id .profile-avatar{width:68px;height:68px}
+ #drawer .ph .profile-id h3{margin:0;font-size:36px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff;text-transform:uppercase}
+ #drawer .ph .profile-id .golfer-title{display:block;margin-top:6px;font-size:14px;font-style:normal;letter-spacing:.16em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .profile-id .profile-tag{border-radius:0;font-size:14px;letter-spacing:.12em;vertical-align:middle}
+ #drawer .ph .profile-id .profile-actions button{height:32px;min-height:32px;padding:0 12px;font-size:14px}
+ #drawer .ph .profile-level{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:88px;padding:12px 32px}
+ #drawer .ph .profile-level small{grid-column:1/-1;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
+ #drawer .ph .profile-level strong::before{content:"LV "}
+ #drawer .ph .profile-level span{font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft);text-align:right}
+ #drawer .ph .level-bar{grid-column:1/-1;display:block;height:8px;background:rgba(255,255,255,.14);border-radius:0}
+ #drawer .ph .level-bar b{display:block;height:100%;background:var(--hot);border-radius:0}
+ #drawer .ph .profile-hcp{display:grid;gap:4px;min-height:88px;align-content:center;padding:12px 32px}
+ #drawer .ph .profile-hcp small,#drawer .ph .ph-since small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .profile-hcp strong{font-size:48px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .ph .profile-hcp span{font-family:var(--font-ui);font-size:14px;color:var(--soft)}
+ #drawer .ph .ph-since{display:grid;gap:6px;min-height:72px;align-content:center;padding:12px 32px}
+ #drawer .ph .ph-since strong{font-size:22px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph[data-tab=Locker] .ph-side>:not(.ph-preview),#drawer .ph:not([data-tab=Locker]) .ph-side>.ph-preview{display:none}
+ #drawer .ph .ph-preview{display:grid;gap:8px}
+ #drawer .ph .ph-who{display:flex;align-items:center;gap:16px;min-height:96px;padding:12px 32px}
+ #drawer .ph .ph-who .ph-ball{width:64px;height:64px}
+ #drawer .ph .ph-who strong{display:block;font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff}
+ #drawer .ph :is(.ph-who,.ph-round-what,.ph-next-what) small{display:block;margin-top:4px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-tracer{display:grid;place-items:center;min-height:80px;padding:8px 32px}
+ #drawer .ph .ph-tracer svg{width:100%;height:64px}
+ #drawer .ph .ph-worn{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 32px}
+ #drawer .ph .ph-worn span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-worn b{font-size:17px;font-weight:800;font-style:italic;color:#fff}
+ /* The tabs and the panes. */
+ #drawer .ph .ph-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:0;border:0}
+ #drawer .ph .ph-tabs>.panel-tab{height:40px;padding:0 18px;font-size:14px}
+ #drawer .ph .ph-pane{min-width:0}
+ #drawer .ph .ph-pane>h3,#drawer .ph h4{margin:16px 0 8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-pane>h3:first-child,#drawer .ph-tab-locker>h3{margin-top:0}
+ /* Overview. */
+ #drawer .ph .ph-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #drawer .ph .ph-tile{display:grid;gap:6px;min-height:88px;align-content:center;padding:12px 26px}
+ #drawer .ph .ph-tile strong{font-size:34px;font-weight:800;font-style:italic;line-height:1;color:#fff;white-space:nowrap}
+ #drawer .ph .ph-tile strong small{margin-left:4px;font-size:15px;font-style:normal;letter-spacing:.06em;color:var(--soft)}
+ #drawer .ph .ph-tile span{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .ph .ph-rounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ #drawer .ph .ph-round{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:6px}
+ #drawer .ph .ph-round-pic{height:72px;background:linear-gradient(180deg,color-mix(in srgb,var(--a2) 55%,#cfe8ff) 0 45%,color-mix(in srgb,var(--a1) 70%,#1d3b22) 45%);transform:skewX(-12deg)}
+ #drawer .ph .ph-round-what{grid-column:2/-1;grid-row:1;display:grid;align-content:center;min-height:72px;padding:8px 64px 8px 24px}
+ #drawer .ph .ph-round-what strong{font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .ph .ph-round>b{grid-column:3;grid-row:1;z-index:1;padding-right:24px;font-size:24px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .ph-next{display:flex;align-items:center;gap:20px;min-height:80px;margin-top:16px;padding:8px 32px}
+ #drawer .ph .ph-next .level-bar{flex:1}
+ #drawer .ph .ph-next-what strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .ph-next>small{flex:none;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ /* Locker: the kinds down the side, the grid beside them. */
+ #drawer .ph .ph-tab-locker{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,6fr);gap:8px 16px;align-items:start}
+ #drawer .ph .ph-tab-locker>h3{display:none}
+ #drawer .ph .ph-tab-locker>*{grid-column:2}
+ #drawer .ph .ph-tab-locker>.ph-kinds{grid-column:1;grid-row:1/span 20;display:grid;gap:8px;margin:0;padding:0;border:0}
+ #drawer .ph .profile-id>div>small{display:none}
+ #drawer .ph .ph-kinds .look-count{margin-left:auto;font-size:14px;font-style:normal;letter-spacing:.08em;opacity:.8}
+ #drawer .ph .ph-kinds>.panel-tab{justify-content:flex-start;height:48px;padding:0 20px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.04em}
+ #drawer .ph .look-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+ #drawer .ph .look-item{position:relative;isolation:isolate;min-height:96px;border:0;border-radius:0;background:none;color:#fff;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+ #drawer .ph .look-item::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ /* ONE HIGHLIGHT (round 14, frame c-locker): what you wear is traced in
+    yellow round its own leaning edge (a drop-shadow on the skewed shape), its
+    name in yellow with a tick; no second fill. Keyboard focus traces in white. */
+ #drawer .ph .look-item.on{filter:var(--trace)}
+ #drawer .ph .look-item.on>span{color:var(--hot)}
+ #drawer .ph .look-item.on>span::before{content:"\2713\00a0"}
+ #drawer .ph .look-item:focus-visible{outline:none;filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff)}
+ #drawer .ph .look-item.on:focus-visible{filter:var(--trace) drop-shadow(0 0 2px #fff)}
+ /* Stats, achievements, bag, history: the old blocks as panels. */
+ #drawer .ph .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ #drawer .ph .stat-tile{padding:12px 24px}
+ #drawer .ph .stat-tile strong{font-size:24px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .ph .stat-tile span{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ph .achievement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;list-style:none}
+ #drawer .ph .achievement{padding:12px 28px}
+ #drawer .ph .achievement:not(.earned){opacity:.6}
+ #drawer .ph .achievement.earned::before{box-shadow:inset 0 0 0 2px var(--hot)}
+ #drawer .ph .profile-bag{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #drawer .ph .profile-bag>span{display:flex;justify-content:space-between;padding:12px 24px;font-size:15px;font-weight:700;color:#fff}
+ #drawer .ph .profile-bag b{font-style:italic}
+
+ /* ------------------------------------------------------------- settings */
+ /* SETTINGS (ui-settings.js): Camera & bay, Graphics and Sound from the menu
+    as one screen -- the categories down the left (3 columns), every group of
+    the open one at once in two columns of rows (9), the help line for the
+    focused row at the foot of the screen. Each control is a row: what it is
+    on the left, the real control on the right -- a tick box drawn as an
+    ON/OFF switch, a drop-down as ◀ value ▶, a slider as a segment bar. The
+    tabs went in round 13: every group shows, the page scrolls. */
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:0 32px;align-content:start;align-items:start}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-lead{display:none}
+ /* No tabs: every group shows at once and the page scrolls (round 13). */
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-tabs{display:none!important}
+ #drawer .st-cats{display:grid;gap:8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-cat{position:relative;isolation:isolate;display:flex;align-items:center;height:48px;min-height:48px;margin:0;padding:0 28px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.02em;text-align:left}
+ #drawer .st-cat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .st-cat.on{color:var(--on-hot)}
+ #drawer .st-cat.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .st-cat:hover:not(.on)::before{background:color-mix(in srgb,var(--a1) 30%,var(--panel))}
+ #drawer .st-cat:focus-visible{outline:none}
+ #drawer .st-cat:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ body:has(#app[data-mode]) #drawer .st-groups{columns:2;column-gap:32px}
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section{display:block!important;break-inside:avoid;margin:0 0 16px;columns:auto!important}
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section>h3{display:block;margin:0 0 8px;font-size:14px;letter-spacing:.16em;color:var(--hot)}
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section[data-title=Overview]>h3:empty{display:none}
+ /* One group alone flows its own rows into the two columns. */
+ body:has(#app[data-mode]) #drawer .st-groups:has(>.panel-section:only-child){columns:1}
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section:only-child{columns:2!important;column-gap:32px}
+ /* A row: the label left, the control right. */
+ body:has(#app[data-mode]) #drawer .st-groups .control-card{display:block;min-height:48px;margin:0 0 8px;padding:6px 28px;break-inside:avoid}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field>select{flex:0 1 auto;width:auto;max-width:60%;height:34px;padding:0 26px 0 10px;border:0;border-radius:0;background:rgba(0,0,0,.25) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M0 0l10 5-10 5z' fill='%23ffffff'/%3E%3C/svg%3E") no-repeat right 9px center;color:#fff;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;appearance:none;cursor:pointer}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field:has(input[type=range]){display:grid;grid-template-columns:1fr auto;grid-template-areas:"what value" "bar bar";gap:6px 12px}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field>output{grid-area:value;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.field>input[type=range]{grid-area:bar;width:100%;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
+ #drawer :is(.st-groups,.rs-col) input[type=range]::-webkit-slider-runnable-track{height:20px;background:linear-gradient(90deg,var(--a1) var(--fill,0%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);mask:repeating-linear-gradient(90deg,#000 0 12px,transparent 12px 15px);transform:skewX(-12deg)}
+ #drawer :is(.st-groups,.rs-col) input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:20px;background:var(--hot)}
+ #drawer :is(.st-groups,.rs-col) input[type=range]:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+ #drawer :is(.st-groups,.rs-col) input[type=range]::-moz-range-track{height:20px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 12px,transparent 12px 15px)}
+ #drawer :is(.st-groups,.rs-col) input[type=range]::-moz-range-progress{height:20px;background:repeating-linear-gradient(90deg,var(--a1) 0 12px,transparent 12px 15px)}
+ #drawer .st-groups input[type=range]::-moz-range-thumb{width:12px;height:24px;border:0;border-radius:0;background:var(--hot)}
+ /* A tick box as an ON/OFF switch, on the right of its words. */
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>label.check{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff}
+ #drawer .st-groups label.check>input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
+ #drawer .st-groups label.check>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
+ #drawer .st-groups label.check>input[type=checkbox]:checked{background:var(--a1)}
+ #drawer .st-groups label.check>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
+ #drawer .st-groups label.check>input[type=checkbox]:disabled{opacity:.4;cursor:default}
+ #drawer .st-groups label.check>input[type=checkbox]:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+ /* The notes move to the help line (? shows them all in place). */
+ body:has(#app[data-mode]):not(:has(#app.rh-help)) #drawer .st-groups .control-card>:is(.note,p.tip,.research-label){display:none}
+ body:has(#app[data-mode]) #drawer .st-groups .control-card>.field-error:empty{display:none}
+ /* Solid: the panel colour is see-through, and the rows scrolling under the
+    band showed through it (18 October 2026). */
+ #drawer .st-help{position:sticky;bottom:0;z-index:2;display:grid;gap:6px;margin-top:8px;padding:16px 36px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;box-shadow:0 -12px 24px rgba(4,8,12,.6);transform:skewX(-12deg)}
+ #drawer .st-help-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
+ #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
+
+ /* ------------------------------------- challenges, the week, saved courses */
+ /* (ui-menu-screens.js places them; PROJECT_HANDOFF *The 1.0 lobby*.) */
+ body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root){display:block}
+ body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>.panel-lead{display:none}
+ body:has(#app[data-mode]) #drawer #drawerContent:is(.ch-root)>[data-panel-action]{width:auto;left:auto}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-hero,.wk-week,.course-card,.lib-new,.lib-name,.lib-code){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer :is(.ch,.wk,.lib-root) :where(.chal-card,.ch-detail>h3,.ch-detail>ul.medal-asks>li,.wk-week,.course-card,.lib-new,.lib-name,.lib-code)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ /* Challenges: the week's banner; categories (3), cards (5), detail (4). */
+ #drawer .ch{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);grid-template-areas:"week week week" "cats cards detail";gap:16px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .ch>.chal-week-row{grid-area:week;display:block;margin:0}
+ #drawer .ch .chal-week{display:flex;flex-direction:row;align-items:center;gap:20px;width:100%;min-height:56px;padding:0 36px;color:var(--on-hot)}
+ #drawer .ch .chal-week::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .ch .chal-week small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--on-hot);opacity:.85;text-transform:uppercase}
+ #drawer .ch .chal-week small:last-child{margin-left:auto}
+ #drawer .ch .chal-week b{font-size:24px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #drawer .ch .chal-week.on::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .ch>.chal-tabs{grid-area:cats;display:grid;gap:8px;margin:0;padding:0;border:0;overflow:visible}
+ #drawer .ch>.chal-tabs>.panel-tab{display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 24px;font-size:17px;font-weight:800;font-style:italic;letter-spacing:.02em}
+ #drawer .ch>.chal-tabs>.panel-tab small{font-size:14px;font-style:normal;letter-spacing:.08em}
+ #drawer .ch>.chal-cards:not(.chal-week-row){grid-area:cards;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+ #drawer .ch .chal-card:not(.chal-week){display:grid;gap:6px;align-content:center;min-height:104px;padding:14px 32px;color:#fff}
+ #drawer .ch .chal-card:not(.chal-week) b{font-size:20px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #drawer .ch .chal-card:not(.chal-week) small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .ch .chal-card.on:not(.chal-week)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .ch .chal-card:focus-visible{outline:none}
+ #drawer .ch .chal-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .ch .medal-pips i{width:14px;height:14px}
+ #drawer .ch-detail{grid-area:detail;display:grid;gap:8px;align-content:start;min-width:0}
+ body:has(#app[data-mode]) #drawer .ch-detail>h3{margin:0;padding:16px 36px 8px;font-size:30px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff!important;text-transform:uppercase}
+ #drawer .ch-detail>h3::before{bottom:-1px!important}
+ #drawer .ch-detail>p{margin:0;padding:0 8px;font-family:var(--font-ui);font-size:15px;line-height:1.4;color:#fff}
+ #drawer .ch-detail>p.note{font-size:14px;color:var(--soft)}
+ #drawer .ch-detail>ul.medal-asks{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+ #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .ch-detail>ul.medal-asks>li b{color:#fff;text-transform:uppercase}
+ #drawer .ch-detail>ul.medal-asks>li span{margin-left:auto;font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;color:#fff;text-align:right}
+ #drawer .ch-group{display:grid;gap:8px;margin-top:16px}
+ #drawer .ch-group>h3{margin:0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
+ /* A golfer in a challenge's group: one slanted row -- the ball, the name (the
+    drop-down) over title and level, the tee -- and, once a monitor has been
+    seen, the two pickers side by side under it. Round 13's player-row grid
+    had squashed the pickers to nothing and floated the name (the owner's "cut
+    off text", 18 October 2026). No team: a challenge has none. */
+ #drawer .ch-group #playerRows{display:grid;gap:8px}
+ #drawer .ch-group .seat{position:relative;isolation:isolate;display:grid;grid-template-columns:52px minmax(0,1fr) auto 32px;grid-template-areas:"mark who tees drop" "picks picks picks picks";align-items:center;gap:8px 14px;margin:0;padding:10px 30px;border:0;border-radius:0;background:none}
+ #drawer .ch-group .seat:not(.play){grid-template-areas:"mark who tees drop"}
+ #drawer .ch-group .seat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .ch-group .seat .player-mark{grid-area:mark;display:grid;place-items:center}
+ #drawer .ch-group .seat .player-dot{display:none}
+ #drawer .ch-group .seat .player-mark :is(img,.seat-guest){width:46px;height:46px;border-radius:50%}
+ #drawer .ch-group .seat .seat-guest{display:grid;place-items:center;border:2px dashed rgba(255,255,255,.35);font-size:24px;color:rgba(255,255,255,.6)}
+ #drawer .ch-group .seat .player-who{grid-area:who;display:grid;justify-items:start;gap:2px;min-width:0;text-align:left}
+ #drawer .ch-group .seat .player-who>.dd{width:auto;max-width:100%}
+ #drawer .ch-group .seat .player-who>.dd>.dd-field{justify-content:flex-start;padding:0 .4em 0 0}
+ #drawer .ch-group .seat .player-who>.dd>.dd-field::after{display:none}
+ #drawer .ch-group .seat .player-who>.dd .dd-v{font-size:26px!important;text-align:left}
+ #drawer .ch-group .seat .player-who>input{width:100%;height:32px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .ch-group .seat :is(.player-sub,.player-hcp){font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);white-space:nowrap}
+ #drawer .ch-group .seat .seat-tees{grid-area:tees}
+ #drawer .ch-group .seat :is(.drop-player,.drop-spacer){grid-area:drop}
+ #drawer .ch-group .seat .drop-player{width:32px;height:32px;min-height:32px;padding:0;border:0;background:none;color:var(--soft)}
+ #drawer .ch-group .seat>:is(select[id^=team],.dd:has(>select[id^=team])){display:none}
+ #drawer .ch-group .seat .seat-pick{grid-row:2;min-width:0}
+ #drawer .ch-group .seat .seat-pick:has(select[id^=input]){grid-column:1/3}
+ #drawer .ch-group .seat .seat-pick:has(select[id^=hand]){grid-column:3/5}
+ #drawer .ch-group .add-player{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .ch-group .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .ch-group .add-player svg{width:18px;height:18px}
+ /* The course of the week: the picture and earlier weeks (7), the facts (5). */
+ /* Saved courses: the shelf (8) and the chosen course (4). */
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:16px 32px;align-items:start;columns:auto!important}
+ #drawer .lib-courses>:not(.lib-shelf):not(.lib-detail){grid-column:1}
+ #drawer .lib-courses>h3,#drawer .lib-courses>.control-card:not(:has(>:not([hidden]))){display:none}
+ #drawer .lib-shelf{grid-column:1;grid-row:1/span 4;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px 8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-shelf>.course-card{display:grid;align-content:start;gap:0;margin:0;padding:0;cursor:pointer;color:#fff}
+ #drawer .lib-shelf>.course-card::before{top:100px}
+ #drawer .lib-shelf>.course-card .course-pic{--lean:20.4px;display:block;position:relative;isolation:isolate;height:96px;margin-bottom:4px}
+ #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card .course-pic.has-picture::before{background:var(--pic) center/cover}
+ #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+ #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
+ #drawer .lib-shelf>.course-card .course-meta strong{font-size:20px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #drawer .lib-shelf>.course-card .course-meta span{font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .lib-shelf>.course-card .course-flag{display:none}
+ #drawer .lib-shelf>.course-card>.course-actions{display:none}
+ #drawer .lib-shelf>.course-card.on::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .lib-shelf>.course-card.on .course-pic{filter:var(--trace)}
+ #drawer .lib-shelf>.course-card:focus-visible{outline:none}
+ #drawer .lib-shelf>.course-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lib-new{display:grid;place-items:center;align-content:center;gap:4px;min-height:196px;margin:0;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-new::before{background:rgba(255,255,255,.05)!important}
+ #drawer .lib-new b{font-size:56px;font-weight:800;line-height:1;color:var(--a1)}
+ #drawer .lib-new span{font-size:20px;font-weight:800;font-style:italic}
+ #drawer .lib-detail{grid-column:2;grid-row:1/span 4;display:grid;gap:8px;align-content:start;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-name{display:grid;gap:6px;padding:16px 36px}
+ #drawer .lib-name strong{font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-transform:uppercase}
+ #drawer .lib-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .lib-code{display:grid;gap:8px;padding:16px 36px}
+ #drawer .lib-code span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .lib-code code{display:block;padding:8px 10px;background:rgba(0,0,0,.35);font:15px "IBM Plex Mono",ui-monospace,monospace;color:#e8ecff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .lib-detail>.course-flag{padding:0 8px;font-size:14px;color:var(--soft)}
+ #drawer .lib-detail>.course-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .lib-detail>.course-actions>button{position:relative;isolation:isolate;height:44px;min-height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .lib-detail>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lib-detail>.course-actions>button[data-play]{grid-column:1/-1;height:56px;font-size:24px;color:var(--on-hot)}
+ #drawer .lib-detail>.course-actions>button[data-play]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .lib-detail>.course-actions>button[data-remove]{color:#ff8a7a}
+ #drawer .lib-detail>.course-actions>button:focus-visible{outline:none}
+ #drawer .lib-detail>.course-actions>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+
+ /* ---------------------------------------------- the studio's settings */
+ /* IN THE STUDIO (ui-studio.js; mockup r10 'studio-set'): the sheet keeps the
+    play area the observer gives it, and inside it the categories run down the
+    left (with how many settings each holds), the category's rows in the
+    middle -- the name, a segment bar, the value, a dot on a row changed since
+    the last regrow -- and what has changed, the facts and the focused row's
+    help on the right. */
+ body:has(#drawerContent.sd-root) #drawer #drawerContent.sd-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,6fr) minmax(0,3fr);grid-template-areas:"tabs lead side" "tabs body side";grid-template-rows:auto 1fr;gap:8px 28px;max-width:none;align-items:start}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-lead{grid-area:lead;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-lead>.panel-intro{flex-basis:100%;margin:0;font-size:14px;color:var(--soft)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs{grid-area:tabs;display:grid;gap:8px;margin:0;padding:0;border:0;position:sticky;top:0}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 22px;border:0;border-radius:0;background:none;color:#fff;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab.active{color:var(--on-hot)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs>.panel-tab.active::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-tabs .sd-count{font-size:14px;font-style:normal;letter-spacing:.08em;opacity:.8}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-section{grid-area:body;min-width:0;columns:auto!important}
+ body:has(#drawerContent.sd-root) #drawer .sd-root>.panel-section>h3{display:none}
+ body:has(#drawerContent.sd-root) #drawer .sd-root .control-card,body:has(#drawerContent.sd-root) #drawer .sd-root .control-group{position:relative;isolation:isolate;margin:0 0 6px;padding:4px 24px 4px 30px;border:0;border-radius:0;background:none;box-shadow:none;break-inside:avoid}
+ body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root :is(.control-card,.control-group).sd-changed::after{content:"";position:absolute;left:12px;top:18px;width:8px;height:8px;border-radius:50%;background:var(--hot)}
+ /* A slider row: the name with its i, the segment bar, the value. */
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range]){display:grid;grid-template-columns:minmax(0,1fr) 200px 104px;align-items:center;gap:4px 12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{order:2;width:100%;height:18px;margin:0;appearance:none;background:transparent;cursor:pointer}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>output{order:3;text-align:right;font:800 italic 17px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>.warn-note{order:4;grid-column:1/-1}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>input[type=range]{grid-column:2}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:3}
+ #drawer .sd-root input[type=range]::-webkit-slider-runnable-track{height:18px;background:linear-gradient(90deg,var(--a1) var(--fill,50%),rgba(255,255,255,.14) 0);-webkit-mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);mask:repeating-linear-gradient(90deg,#000 0 8px,transparent 8px 11px);transform:skewX(-12deg)}
+ #drawer .sd-root input[type=range]::-webkit-slider-thumb{appearance:none;width:4px;height:18px;background:var(--hot)}
+ #drawer .sd-root :is(input,select):focus-visible{outline:none}
+ #drawer .sd-root label.field.danger>output{color:#ff8a7a}
+ /* A choice row: name left, the list right; a switch row likewise. */
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field:has(>select){display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff;text-transform:none;letter-spacing:0}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.field>select{max-width:55%;height:34px;min-height:34px;padding:0 28px 0 10px;line-height:normal;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ body:has(#drawerContent.sd-root) #drawer .sd-root label.toggle{display:inline-flex;flex-direction:row-reverse;align-items:center;gap:12px;min-height:36px;font-family:var(--font-ui);font-size:15px;font-weight:600;color:#fff}
+ #drawer .sd-root label.toggle>input[type=checkbox]{position:relative;width:60px;height:24px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
+ #drawer .sd-root label.toggle>input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft);transform:skewX(12deg)}
+ #drawer .sd-root label.toggle>input[type=checkbox]:checked{background:var(--a1)}
+ #drawer .sd-root label.toggle>input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
+ body:has(#drawerContent.sd-root) #drawer .sd-root .hint{width:22px;height:22px;min-height:22px;margin:0;border-radius:50%;font-size:14px;flex:none}
+ /* THE i GOES WITH ITS NAME (PROJECT_HANDOFF *Info icons*): the name and its i are one piece, the i 8 px after
+    the last word and centred on it, in every kind of row; a name too long for its room ends in ... before the i. */
+ #drawer .field-name{display:inline-flex;align-items:center;gap:8px;min-width:0}
+ #drawer .field-name>.hint{margin:0;flex:none}
+ /* The right-hand column. */
+ #drawer .sd-side{grid-area:side;display:grid;gap:8px;align-content:start;position:sticky;top:0;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sd-side :is(.sd-state,.sd-row,.sd-help){position:relative;isolation:isolate}
+ #drawer .sd-side :is(.sd-state,.sd-row,.sd-help)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sd-state{display:grid;gap:6px;padding:14px 26px}
+ #drawer .sd-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .sd-state.stale .sd-k{color:var(--hot)}
+ #drawer .sd-state strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .sd-list{display:grid;gap:3px;font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft)}
+ #drawer .sd-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 26px}
+ #drawer .sd-row span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .sd-row b{padding-right:.16em;font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sd-help{display:grid;gap:6px;padding:14px 26px}
+ #drawer .sd-help .sd-k{color:var(--hot)}
+ #drawer .sd-help-v{font-family:var(--font-ui);font-size:14px;font-weight:600;line-height:1.35;color:#fff}
+ /* ROUND 13 (frame c-studio-set): one screen from the menu and in the studio.
+    Surroundings as pictures three to a row, the footprints as slanted tiles
+    (their drop-down hidden: the tiles set it), the course plan and the seed
+    as rows like the rest. */
+ #drawer .sd-root .option-grid.sd-lands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}
+ #drawer .sd-root .sd-lands>.option{display:grid;gap:4px;height:auto;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase;text-align:left;cursor:pointer}
+ #drawer .sd-root .sd-lands>.option>.swatch{display:none}
+ #drawer .sd-root .sd-pic{--lean:12.1px;position:relative;isolation:isolate;display:block;height:57px}
+ #drawer .sd-root .sd-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.06);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
+ #drawer .sd-root .sd-pic.has-picture::before{background:var(--pic) center/cover}
+ #drawer .sd-root .sd-lands>.option{position:relative;isolation:isolate}
+ #drawer .sd-root .sd-lands>.option.active .sd-pic{filter:drop-shadow(3px 0 0 var(--a1)) drop-shadow(-3px 0 0 var(--a1)) drop-shadow(0 3px 0 var(--a1)) drop-shadow(0 -3px 0 var(--a1))}
+ #drawer .sd-root .sd-lands>.option.active{color:var(--a1)}
+ #drawer .sd-root .sd-lands>.option:focus-visible{outline:none}
+ #drawer .sd-root .sd-lands>.option:focus-visible .sd-pic{filter:var(--trace)}
+ #drawer .sd-root .control-label{margin:6px 0 2px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #drawer .sd-root label.field:has(>select#footprint){display:none}
+ #drawer .sd-root .footprint-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}
+ #drawer .sd-root .footprint-icons button{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:0;border-radius:0;background:none;color:#fff;font:700 12px/1.1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase}
+ #drawer .sd-root .footprint-icons button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sd-root .footprint-icons button[aria-pressed=true]{color:var(--on-hot)}
+ #drawer .sd-root .footprint-icons button[aria-pressed=true]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sd-root .footprint-icons button svg{stroke:currentColor}
+ #drawer .sd-root .footprint-icons button:focus-visible{outline:none}
+ #drawer .sd-root .footprint-icons button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sd-root .course-plan{align-items:stretch;padding:10px 24px 10px 30px;border:0;border-radius:0;background:none;color:#fff}
+ #drawer .sd-root .course-plan .plan-summary{font:800 italic 18px "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sd-root .course-plan .plan-summary :is(em,small,span){font-style:normal;font-size:13px;letter-spacing:.1em;color:var(--soft)}
+ #drawer .sd-root .plan-card{font:700 13px "Saira Condensed",var(--font-ui),sans-serif;color:#fff}
+ #drawer .sd-root .plan-card :is(th,td){border-color:rgba(255,255,255,.1);background:none}
+ #drawer .sd-root label.plan-exact{display:flex;align-items:center;justify-content:space-between;gap:12px;font:600 15px var(--font-ui);color:#fff;text-transform:none;letter-spacing:0}
+ #drawer .sd-root label.plan-exact>input{width:120px;height:34px;padding:0 10px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sd-root label.field:has(>input#seed){display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;margin:0;font:600 15px var(--font-ui);color:#fff;text-transform:none;letter-spacing:0}
+ #drawer .sd-root label.field>input#seed{flex:1;max-width:55%;height:34px;padding:0 10px;border:0;border-radius:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .sd-root .field-action{display:inline-flex;align-items:center;gap:6px;margin:4px 0 6px auto;height:30px;padding:0 14px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;transform:skewX(-12deg)}
+ #drawer .sd-root .field-action>*{transform:skewX(12deg)}
+ #drawer [data-panel-action] kbd{margin-left:10px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal}
+
+ /* ------------------------------------------------- step-by-step setups */
+ /* STEP SHEETS (ui-steps.js; round 13): the steps across the top of the
+    sheet, the step's content centred, the keys and Back / Next along the foot.
+    Written at round 9's sizes and drawn at --sheet-z (COMPACT), like every
+    sheet: the mockup's 26-tall step chips are 36 here, its 32 rows 46. */
+ body:has(#app[data-mode]) #drawer:has(.sx-root) .drawer-header h2{font-size:24px}
+ body:has(#app[data-mode]) #drawer #drawerContent.sx-root{display:flex;flex-direction:column;min-height:100%}
+ body:has(#app[data-mode]) #drawer #drawerContent.sx-root>:is(.panel-lead,.panel-tabs,.panel-section,.panel-columns,.sx-emptied){display:none!important}
+ #drawer .sx{flex:1;display:flex;flex-direction:column;min-height:0;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+ #drawer .sx-steps{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px}
+ #drawer .sx-step{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;height:36px;min-height:36px;padding:0 20px;border:0;border-radius:0;background:none;color:var(--soft);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;white-space:nowrap}
+ #drawer .sx-step::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
+ #drawer .sx-step.done{color:#fff}
+ #drawer .sx-step.done::before{background:var(--panel)}
+ #drawer .sx-step.on{color:var(--on-hot)}
+ #drawer .sx-step.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-step:focus-visible{outline:none}
+ #drawer .sx-step:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-pages{flex:1;display:grid;align-content:center;min-height:0}
+ #drawer .sx-page[hidden]{display:none!important}
+ #drawer .sx-head{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
+ #drawer .sx-foot{position:fixed;left:60px;right:60px;bottom:24px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none}
+ #drawer .sx-foot>*{pointer-events:auto}
+ #drawer .sx-keys{display:flex;gap:16px;font-size:14px;letter-spacing:.1em;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase}
+ #drawer .sx-keys kbd{margin-right:6px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .sx-btns{display:flex;gap:12px}
+ #drawer .sx-btns>button{position:relative!important;inset:auto!important;isolation:isolate;display:flex;align-items:baseline;gap:10px;height:44px;min-height:44px;min-width:0;margin:0;padding:0 30px;border:0;border-radius:0;background:none;color:#fff;font:800 italic 20px/44px "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;white-space:nowrap}
+ #drawer .sx-btns>button[hidden]{display:none!important}
+ #drawer .sx-btns>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .sx-btns>:is(.sx-next,[data-panel-action]){color:var(--on-hot)}
+ #drawer .sx-btns>:is(.sx-next,[data-panel-action])::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-btns small{font-size:14px;font-style:normal;letter-spacing:.12em;opacity:.8}
+ #drawer .sx-btns>button:focus-visible{outline:none}
+ #drawer .sx-btns>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* Every block in a step is a slanted panel. */
+ #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card){position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+ #drawer .sx :where(.sx-cap,.sx-line,.lb-pick,.seat,.sx-format-card,.sx-team,.sx-sum-name,.sx-sum-golfers,.sx-saved .course-card)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx :is(.lb-pick,.seat):focus-within::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* A picture: the course from above, under a slanted window. */
+ #drawer .sx-pic{--lean:27.6px;position:relative;isolation:isolate;display:block;height:130px}
+ #drawer .sx-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:rgba(255,255,255,.05);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
+ #drawer .sx-pic.has-picture::before{background:var(--pic) center/cover}
+ /* The tiny 3D model (round 14, model-cards.js): a canvas over the flat
+    drawing, cut to the same leaning shape. */
+ #drawer .model-pic{position:absolute;top:0;left:calc(var(--lean,0px) * -.5);width:calc(100% + var(--lean,0px));height:100%;z-index:-1;clip-path:polygon(var(--lean,0px) 0,100% 0,calc(100% - var(--lean,0px)) 100%,0 100%);pointer-events:none}
+ #drawer .sx-pic>b{position:absolute;inset:0;display:grid;place-items:center;font-size:60px;font-weight:800;font-style:italic;color:var(--a1)}
+ /* 1 · Course: five cards across, scrolling; the line along the foot. */
+ #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 22px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 12px}
+ #drawer .sx-card{display:grid;gap:4px;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
+ #drawer .sx-cap{display:grid;gap:3px;align-content:center;min-height:64px;padding:8px 24px}
+ #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:skewX(-12deg)}
+ /* A card's name and line wrap rather than end in "..." (the owner, 18
+    October 2026: "cut off text"); the row grows to the tallest. */
+ #drawer .sx-cap strong{padding-right:.16em;font-size:21px;font-weight:800;font-style:italic;line-height:1.05;text-transform:uppercase}
+ #drawer .sx-cap small{font-size:13px;line-height:1.25;letter-spacing:.1em;font-weight:700;color:var(--soft)}
+ #drawer .sx-cap small i{font-style:normal;color:var(--hot)}
+ #drawer .sx-card.on .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card.on .sx-pic,#drawer .sx-land.on .sx-pic{filter:var(--trace)}
+ #drawer .sx-card:focus-visible{outline:none}
+ #drawer .sx-card:focus-visible .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
+ #drawer .sx-card:focus-visible .sx-pic{filter:var(--trace)}
+ #drawer .sx-line{display:flex;align-items:center;gap:24px;min-height:48px;margin-top:14px;padding:0 30px}
+ #drawer .sx-facts{display:flex;align-items:baseline;gap:20px;min-width:0;flex:1}
+ #drawer .sx-facts strong{font-size:22px;font-weight:800;font-style:italic;white-space:nowrap}
+ #drawer .sx-facts small{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-line>button{height:32px;min-height:32px;margin:0;padding:0 8px;border:0;background:none;color:var(--hot);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;width:auto}
+ #drawer .sx-line>button::before{display:none}
+ #drawer .sx-line>#roundDelete{color:#ff8a7a}
+ #drawer .sx-line>button svg{width:14px;height:14px}
+ #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 20px;scrollbar-width:thin}
+ #drawer .sx-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
+ #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
+ #drawer .sx-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
+ /* 2 · Golfers: four seats. */
+ #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
+ #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
+ #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
+ #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
+ #drawer .sx-golfers .seat .player-dot{width:56px;height:6px;border-radius:0}
+ #drawer .sx-golfers .seat .player-mark :is(img,.seat-guest){width:86px;height:86px;border-radius:50%}
+ #drawer .sx-golfers .seat .seat-guest{display:grid;place-items:center;border:3px dashed rgba(255,255,255,.35);font-size:44px;color:rgba(255,255,255,.6)}
+ #drawer .sx-golfers .seat .player-who{display:grid;justify-items:center;gap:4px;width:100%}
+ #drawer .sx-golfers .seat .player-who>select{width:100%;height:40px;min-height:40px;padding:0 4px;border:0;background:transparent;color:#fff;font:800 italic 32px/1 "Saira Condensed",var(--font-ui),sans-serif;text-align:center;text-align-last:center;text-transform:uppercase;appearance:none;cursor:pointer}
+ #drawer .sx-golfers .seat .player-who>select option{font:15px var(--font-ui);color:#111;background:#fff;text-transform:none}
+ #drawer .sx-golfers .seat .player-who>input{width:100%;height:36px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 20px "Saira Condensed",var(--font-ui),sans-serif;text-align:center}
+ #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .seat-tees{display:flex;gap:6px}
+ #drawer .seat-tee{position:relative;isolation:isolate;display:flex;align-items:center;gap:5px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft);font:800 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em}
+ #drawer .seat-tee::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .seat-tee[aria-pressed=true]{color:#111}
+ #drawer .seat-tee[aria-pressed=true]::before{background:#fff}
+ #drawer .seat-tee i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+ #drawer .sx-golfers .seat>select[id^=team]{display:none}
+ /* ROUND 14 (frame c-play2l): nothing in a seat is clipped. A picker is its
+    label on a line, then its value on a full-width line with an arrow at each
+    end; the select lies see-through over the value (a click opens it). The
+    name steps down 34 / 29 / 24 / 21 here (the mockup's 24 / 20 / 17 / 15 at
+    the compact size, ui-lobby.js nameSize) and ends in ...; the title has its
+    own line and ends in ... too. */
+ #drawer .seat-pick{display:grid;gap:4px;width:100%;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase;text-align:left}
+ #drawer .seat-line{position:relative;isolation:isolate;display:grid;grid-template-columns:30px minmax(0,1fr) 30px;align-items:center;height:36px}
+ #drawer .seat-line::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.28);transform:skewX(-12deg)}
+ #drawer .seat-arrow{height:36px;min-height:0;padding:0;border:0;background:none;color:var(--a1);font-size:13px;cursor:pointer}
+ #drawer .seat-val{position:relative;min-width:0;text-align:center}
+ #drawer .seat-val>b{display:block;padding:0 .16em;font:800 italic 17px/36px "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .seat-val>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+ #drawer .seat-val>select option{color:#111;background:#fff;text-transform:none}
+ #drawer .seat:focus-within .seat-line:has(select:focus-visible)::before{box-shadow:inset 0 0 0 2px var(--hot)}
+ #drawer .sx-golfers .seat .player-who>select{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-golfers .seat .player-who.nm-24>select{font-size:34px}
+ #drawer .sx-golfers .seat .player-who.nm-20>select{font-size:29px}
+ #drawer .sx-golfers .seat .player-who.nm-17>select{font-size:24px}
+ #drawer .sx-golfers .seat .player-who.nm-15>select{font-size:21px}
+ #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #drawer .sx-golfers .seat .drop-player{width:36px;height:36px;min-height:36px;margin-top:auto;border:0;background:none;color:var(--soft)}
+ #drawer .sx-golfers .add-player{position:relative;isolation:isolate;display:grid;place-items:center;align-content:center;gap:10px;min-height:400px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 22px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .sx-golfers .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.05);transform:skewX(-12deg)}
+ #drawer .sx-golfers .add-player svg{width:44px;height:44px;padding:16px;border:3px dashed rgba(255,255,255,.35);border-radius:50%;box-sizing:content-box;color:rgba(255,255,255,.6)}
+ #drawer .sx-golfers>#applyGroup{justify-self:start;width:auto;margin-top:14px}
+ /* 3 · Format: four cards, the teams under them. */
+ #drawer .sx-formats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+ #drawer .sx-format-card{display:grid;align-content:start;gap:8px;min-height:168px;margin:0;padding:16px 30px;color:#fff;text-align:left;cursor:pointer}
+ #drawer .sx-format-card strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
+ #drawer .sx-format-card span{font-family:var(--font-ui);font-size:16px;line-height:1.35;color:var(--soft)}
+ #drawer .sx-format-card small{margin-top:auto;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-format-card.on{color:var(--on-hot)}
+ #drawer .sx-format-card.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-format-card.on :is(span,small){color:var(--on-hot)}
+ #drawer .sx-format-card:disabled{opacity:.45}
+ #drawer .sx-format-card:focus-visible{outline:none}
+ #drawer .sx-format-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-format>#formatNote{margin:12px 0 0;padding:0 8px}
+ #drawer .sx-teams{margin-top:22px;max-width:58%}
+ #drawer .sx-team-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ #drawer .sx-team{display:grid;gap:8px;align-content:start;min-height:120px;padding:14px 30px}
+ #drawer .sx-team-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-team-golfer{display:flex;align-items:center;gap:10px;min-height:36px;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 21px "Saira Condensed",var(--font-ui),sans-serif;text-align:left}
+ #drawer .sx-team-golfer :is(img,.player-dot){width:30px;height:30px;border-radius:50%}
+ #drawer .sx-team-golfer .player-dot{display:none}
+ #drawer .sx-team-golfer small{margin-left:auto;font-size:13px;font-style:normal;letter-spacing:.12em;color:var(--soft)}
+ /* 4 · Rules and the summary, side by side. */
+ #drawer .sx-rules{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 30px;align-items:start}
+ #drawer .sx-rules-col,#drawer .sx-summary{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .sx-rules .lb-pick{min-height:56px;padding:6px 28px}
+ #drawer .sx-rules #roundPutting-distances{padding:0 8px}
+ #drawer .sx-help-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
+ #drawer .sx-sum-pic{height:186px}
+ #drawer .sx-sum-name{display:grid;gap:6px;padding:14px 30px}
+ #drawer .sx-sum-name strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
+ #drawer .sx-sum-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .sx-sum-golfers{display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 30px}
+ #drawer .sx-sum-golfer{display:flex;align-items:center;gap:8px}
+ #drawer .sx-sum-golfer :is(img){width:30px;height:30px;border-radius:50%}
+ #drawer .sx-sum-golfer .player-dot{display:none}
+ #drawer .sx-sum-golfer strong{font-size:18px;font-weight:800;font-style:italic}
+ #drawer .sx-sum-golfer small{font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .sx-rules>#roundError{grid-column:1/-1;margin:0}
+ #drawer .lb-pick{position:relative;isolation:isolate}
+
+ /* Endless: the landscapes (7 columns' worth) beside the run (5). */
+ #drawer .sx-endless{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:8px 30px;align-items:start}
+ #drawer .sx-lands{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+ #drawer .sx-land{display:grid;gap:4px;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer;text-align:left}
+ #drawer .sx-land .sx-pic{--lean:20px;height:94px}
+ #drawer .sx-land-name{position:relative;isolation:isolate;display:flex;align-items:center;height:38px;padding:0 22px;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
+ #drawer .sx-land-name::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-land.on .sx-land-name{color:var(--on-hot)}
+ #drawer .sx-land.on .sx-land-name::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .sx-land.sx-any{grid-column:1/-1}
+ #drawer .sx-land.sx-any:not(.on) .sx-land-name::before{background:rgba(255,255,255,.05)}
+ #drawer .sx-land:focus-visible{outline:none}
+ #drawer .sx-land:focus-visible .sx-land-name::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-endless-side{display:grid;gap:8px;align-content:start}
+ #drawer .sx-best{position:relative;isolation:isolate;display:grid;gap:6px;margin-top:14px;padding:14px 30px}
+ #drawer .sx-best::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-best strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
+ #drawer .sx-best small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .sx-endless-rules .sx-formats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #drawer .sx-endless-rules .sx-format-card{min-height:140px}
+
+ /* The course of the week on one screen (round 13, frame c-cotw): the picture
+    (7 columns) and eight fact tiles (5), the earlier weeks along the foot. */
+ #drawer .wk{padding:0 24px;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:'hero facts' 'weeks weeks';gap:14px 30px;align-items:start}
+ #drawer .wk-hero{--lean:91.4px;grid-area:hero;position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:430px;padding:26px 48px}
+ #drawer .wk-hero::before{content:'';position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;background:var(--panel);clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)}
+ #drawer .wk-hero.has-picture::before{background:var(--pic) center/cover}
+ #drawer .wk-tag{align-self:flex-start;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:17px;font-weight:800;font-style:italic;letter-spacing:.14em;transform:skewX(-12deg)}
+ #drawer .wk-hero strong{font-size:64px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-shadow:0 3px 14px rgba(0,0,0,.6)}
+ #drawer .wk-facts{grid-area:facts;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ #drawer .wk-tile{position:relative;isolation:isolate;display:grid;gap:4px;align-content:center;min-height:98px;padding:10px 30px}
+ #drawer .wk-tile::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .wk-tile.hot::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .wk-tile span{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .wk-tile b{font-size:27px;font-weight:800;font-style:italic;line-height:1.05;color:#fff}
+ #drawer .wk-tile small{font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
+ #drawer .wk-tile.hot :is(span,b,small){color:var(--on-hot)}
+ #drawer .wk-earlier{grid-area:weeks;max-width:58%}
+ #drawer .wk h4{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ #drawer .wk-weeks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+ #drawer .wk-week{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px;align-items:stretch}
+ #drawer .wk-week .wk-week-pic{--lean:13.6px;height:64px}
+ /* Each earlier week is its picture and its caption, each its own whole
+    leaning shape (round 14, frame c-cotw1): no panel behind the pair. */
+ #drawer .wk .wk-week::before{display:none}
+ #drawer .wk-week-cap{position:relative;isolation:isolate;display:grid;gap:2px;align-content:center;padding:6px 18px}
+ #drawer .wk-week-cap::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .wk-week-cap strong{font-size:18px;font-weight:800;font-style:italic;color:#fff}
+ #drawer .wk-week-cap small{font-size:13px;line-height:1.2;letter-spacing:.1em;font-weight:700;color:var(--soft)}
+ #drawer .wk-group .wk-rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 18px;margin-top:16px}
+ /* KEYS & HELP (round 14, frame c-help; ui-menu-screens.js buildHelp): the
+    topics down the left (the panel's tab buttons, upright), the page in the
+    middle as short paragraphs under N OF M and its title, scrolling with its
+    bar in the gutter, and that page's keys on the right. */
+ body:has(#app[data-mode]) #drawer #drawerContent.hp-root>.hp-lead{display:none}
+ #drawer .hp{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,6fr) minmax(0,3fr);gap:0 30px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ body:has(#app[data-mode]) #drawer .hp>.hp-topics{display:grid!important;gap:6px;margin:0;padding:0;border:0}
+ body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab{display:flex;align-items:center;justify-content:flex-start;height:44px;padding:0 24px;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;color:#fff}
+ body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab::before{background:var(--panel)}
+ body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab.active{color:var(--on-hot)}
+ body:has(#app[data-mode]) #drawer .hp>.hp-topics>.panel-tab.active::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .hp-page{display:grid;gap:8px;align-content:start;max-height:calc(100vh / var(--sheet-z,1) - 230px);overflow:auto;padding:0 26px 0 22px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .hp-head{position:relative;isolation:isolate;display:grid;gap:4px;padding:12px 30px}
+ #drawer .hp-head::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .hp-head small{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .hp-head strong{font-size:36px;font-weight:800;font-style:italic;line-height:1}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section{display:grid;gap:8px;columns:auto!important}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section[hidden]{display:none!important}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section>h3{display:none}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section>:is(p,ul,.control-card,.note){position:relative;isolation:isolate;margin:0;padding:12px 30px;font:600 17px/1.45 var(--font-ui);color:#fff}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section>:is(p,ul,.control-card,.note)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode]) #drawer .hp-page>.panel-section>.note{font-size:15px!important;color:var(--soft)!important}
+ #drawer .hp-page a{color:var(--a1)}
+ #drawer .hp-keys{display:grid;gap:6px;align-content:start}
+ #drawer .hp-keys h4{margin:0 0 4px;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .hp-key{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;min-height:40px;padding:0 24px}
+ #drawer .hp-key::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .hp-key kbd{flex:none;padding:1px 7px;border:2px solid currentColor;border-radius:4px;font:700 14px/1.3 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;white-space:nowrap}
+ #drawer .hp-key span{font-size:13px;letter-spacing:.12em;font-weight:700;color:#fff}
+
+ /* THE DRIVING RANGE SET-UP, STEP 2 (round 14, frame c-range2): where to hit
+    from, the targets, and the session, in three columns. */
+ #drawer .rs-range{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 30px;align-items:start}
+ #drawer .rs-col{display:grid;gap:8px;align-content:start;min-width:0}
+ #drawer .rs-col>h3{margin:0 0 2px;font-size:14px;letter-spacing:.16em;color:var(--soft)}
+ #drawer .rs-hit{display:grid;gap:8px}
+ #drawer .rs-hit-pick{position:relative;isolation:isolate;display:grid;gap:4px;justify-items:start;min-height:68px;padding:10px 30px;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
+ #drawer .rs-hit-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-hit-pick strong{font:800 italic 24px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ #drawer .rs-hit-pick small{font:600 15px/1.3 var(--font-ui);color:var(--soft)}
+ #drawer .rs-hit-pick.on{color:var(--on-hot)}
+ #drawer .rs-hit-pick.on small{color:var(--on-hot);opacity:.85}
+ #drawer .rs-hit-pick.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .rs-hit-pick:focus-visible{outline:none}
+ #drawer .rs-hit-pick:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .rs-note{position:relative;isolation:isolate;display:grid;gap:4px;margin-top:8px;padding:12px 30px}
+ #drawer .rs-note::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-note>span{font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.16em;color:var(--hot);text-transform:uppercase}
+ #drawer .rs-note>p{margin:0;font:600 15px/1.35 var(--font-ui);color:#fff}
+ #drawer .rs-col>label.field{position:relative;isolation:isolate;margin:0;padding:6px 28px}
+ /* The targets read like every other 1.0 control (the owner, 18 October
+    2026: the old small labels and thin sliders): the label in the spaced
+    capitals, the value in the italic, the slider a segment bar. */
+ #drawer .rs-col>label.field{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"what value" "bar bar";align-items:center;gap:6px 12px;min-height:46px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #drawer .rs-col>label.field>output{grid-area:value;padding-right:.12em;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:0;color:#fff;text-transform:none}
+ #drawer .rs-col>label.field>input[type=range]{grid-area:bar;width:100%;height:20px;margin:0;appearance:none;background:transparent;cursor:pointer}
+ #drawer .rs-col>label.field>.dd{grid-row:1;grid-column:2;max-width:none}
+ #drawer .rs-col>label.field::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-club{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 50px 90px 56px;align-items:center;height:42px;padding:0 28px;font:700 15px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.06em}
+ #drawer .rs-club::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .rs-club b{font-size:18px;font-weight:800;font-style:italic}
+ #drawer .rs-club>:not(:first-child){text-align:right}
+ #drawer .rs-club span{color:var(--soft)}
+
+ /* THE SCORECARD between holes: the whole screen, the finished hole's number
+    flashing, and the paper card's marks -- a circle round a birdie, two round
+    an eagle, a square round a bogey, two round worse (celebration.js). */
+ body:has(#app[data-mode=play]) #drawer[data-panel=score]{top:0;height:auto;max-height:none;min-height:0;padding:28px 60px 24px;border:0;background:rgba(4,8,12,.9);backdrop-filter:blur(6px);box-shadow:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;zoom:var(--sheet-z,1)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .drawer-header :is(h2,#drawerTitle){font-size:36px;font-weight:800;font-style:italic;text-transform:uppercase}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table{font-size:20px;font-weight:700}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td){padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th{color:var(--soft);letter-spacing:.1em;font-size:15px}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td):first-child{background:var(--panel)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table tr.current{background:color-mix(in srgb,var(--a2) 25%,transparent)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th.rh-done{background:var(--hot);color:var(--on-hot)}
+ @media (prefers-reduced-motion:no-preference){body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th.rh-done{animation:rhHoleFlash 1s steps(1,end) infinite}}
+ @keyframes rhHoleFlash{50%{background:transparent;color:var(--hot)}}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td[class^=mk-]{position:relative}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td[class^=mk-]::after{content:"";position:absolute;left:50%;top:50%;width:1.55em;height:1.55em;transform:translate(-50%,-50%);border:2px solid currentColor;pointer-events:none}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td:is(.mk-b,.mk-e)::after{border-radius:50%;color:var(--under)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td.mk-e::after{box-shadow:0 0 0 3px rgba(4,8,12,.9),0 0 0 5px var(--under)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table td.mk-d::after{box-shadow:0 0 0 3px rgba(4,8,12,.9),0 0 0 5px currentColor}
+
+ /* No eyebrow over the card, and the next-hole countdown and the match line
+    as slanted panels, not the old rounded boxes (the owner, 18 October 2026). */
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .drawer-header .eyebrow{display:none}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] :is(.hole-advance,.match-status){position:relative;isolation:isolate;border:0;border-radius:0;background:none}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] :is(.hole-advance,.match-status)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance{padding:12px 30px}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance p{font-size:17px;letter-spacing:.06em;color:#fff}
+ /* ROUND COMPLETE, at the head of the final card. */
+ .rh-results{display:grid;gap:14px;margin:0 0 22px}
+ .rh-results h2{display:grid;gap:4px;margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ .rh-results h2 small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700}
+ .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ .rh-res-stand{display:grid;gap:8px;max-width:640px}
+ .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;height:64px;padding:0 26px}
+ .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-res-row.win{height:88px;color:var(--on-hot)}
+ .rh-res-row.win::before{background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 0 3px var(--hot)}
+ .rh-res-pos{width:28px;font-size:34px;font-weight:800;font-style:italic}
+ .rh-res-pic :is(img,.chip-dot){width:48px;height:48px;display:grid;place-items:center;border-radius:50%}
+ .rh-res-row.win .rh-res-pic :is(img,.chip-dot){width:64px;height:64px}
+ .rh-res-name{flex:1;font-size:28px;font-weight:800;font-style:italic}
+ .rh-res-score{font-size:36px;font-weight:800;font-style:italic}
+ .rh-res-score small{margin-left:8px;font-size:20px}
+ .rh-res-score small.under{color:var(--under)}
+ .rh-res-row.win .rh-res-score small.under{color:var(--on-hot)}
+ .rh-res-golfers{display:grid;gap:6px;max-width:640px}
+ .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
+ .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
+ .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
+ .rh-res-bar b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
+ .rh-res-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+
+ /* Headings, the main and other buttons and the tabs, as in ui-screens.css, for
+    the sheet and the dialogues, which sit outside #app. */
+ :is(#drawer,.popup,.version-notice,.shot-list-inner) :is(h2,.drawer-header h2){font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;text-transform:uppercase;letter-spacing:.01em}
+ #drawer h3,body>.version-notice h3{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.16em;color:var(--soft)}
+ :is(#drawer,.popup) .eyebrow{color:var(--soft)}
+ .drawer,.popup{border-radius:0;border-color:transparent;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+ .popup .popup-head{border-bottom:3px solid var(--a1)}
+ .drawer{border-top:4px solid var(--a1)}
+ /* The main button leans in the biome's gradient; the others lean plain. */
+ #drawer button.primary,body>.version-notice button.primary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+ #drawer button.primary::before,body>.version-notice button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ #drawer button.secondary,body>.version-notice button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
+ #drawer button.secondary::before,body>.version-notice button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #drawer button:is(.primary,.secondary):focus-visible,body>.version-notice button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ /* Tabs: slanted, the current one filled. */
+ #drawer .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+ #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
+ #drawer .panel-tab.active{background:none;color:var(--on-hot)}
+ #drawer .panel-tab.active::before{background:var(--a1)}
+}
+
+/* DROP-DOWNS IN THE 1.0 STYLE, EVERYWHERE (round 13, the owner: "drop-down
+   menus don't follow the style"): a closed drop-down is a dark slanted-feeling
+   box in the italic capitals with a ▾, and its list is dark too. Since round
+   14 every select a player sees is the drawn 1.0 drop-down (ui-dropdown.js):
+   these rules now dress only a select left native (data-dd="off"). */
+:is(#drawer,.popup,.version-notice) select:not([hidden]):not(.lb-sel>select):not(.player-who>select){appearance:none;-webkit-appearance:none;border:0;border-radius:0;background:rgba(0,0,0,.32) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23ffffff'/%3E%3C/svg%3E") no-repeat right 10px center;padding-right:28px;color:#fff;font-family:'Saira Condensed',var(--font-ui),sans-serif;font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase;box-shadow:inset 0 -2px 0 var(--a1,#4ade80)}
+:is(#drawer,.popup,.version-notice) select:focus-visible{outline:2px solid var(--hot,#fd5);outline-offset:1px}
+:is(#drawer,.popup,.version-notice) select option,:is(#drawer,.popup,.version-notice) select optgroup{background:#15191d;color:#fff;font-family:var(--font-ui);font-style:normal;font-weight:600;text-transform:none}
+:is(#drawer,.popup,.version-notice) select option:checked{background:var(--a2,#166534);color:#fff}
+
+/* PHONES (round 13, the owner: "the old UI still shows on phone screens"):
+   the same sheets, laid out for a phone. Drawn at the round screen's scale
+   without the compact step (a thumb needs the room), padded to the phone's
+   edges; every side-by-side layout stacks, tiles go two to a row, and a row
+   of choices that will not fit scrolls sideways. */
+@media (max-width:560px),(max-height:500px){
+ body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 2px 84px;zoom:calc(var(--sheet-z,1) / .7)}
+ body:has(#app[data-mode]) #drawer #drawerContent{padding:0 22px}
+ body:has(#app[data-mode]) #drawer .drawer-header{margin:0 0 12px}
+ /* Steps: under the title, scrolling sideways when they will not fit; the
+    content starts at the top; no keyboard keys on a touch screen. */
+ body:has(#app[data-mode]) #drawer .sx-steps{position:static;transform:none;margin:0 0 14px;max-width:100%;overflow-x:auto;padding:2px 10px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer .sx-steps>*{flex:none}
+ body:has(#app[data-mode]) #drawer .sx-pages{align-content:start}
+ body:has(#app[data-mode]) #drawer .sx-keys{display:none}
+ body:has(#app[data-mode]) #drawer .sx-foot{left:16px;right:16px;bottom:12px;justify-content:flex-end}
+ body:has(#app[data-mode]) #drawer [data-panel-action]{right:16px;bottom:12px;min-width:0}
+ /* A sheet with its main button AND steps (Endless, the course of the week):
+    Back and Next stand above the main button rather than beside it. */
+ body:has(#app[data-mode]) #drawer:has([data-panel-action]:not(.sx-foot *):not([hidden])) .sx-foot{bottom:76px}
+ body:has(#app[data-mode]) #drawer:has(.sx-foot) [data-panel-action]:not(.sx-foot *){left:16px;right:16px}
+ body:has(#app[data-mode]) #drawer:has([data-panel-action]:not(.sx-foot *):not([hidden])){padding-bottom:150px}
+ /* Side by side becomes one column. */
+ body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch,.rs-range,.hp){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
+ body:has(#app[data-mode]) #drawer :is(.wk,.ch)>*{grid-area:auto!important}
+ body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0 26px}
+ body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
+ /* Tiles two to a row. */
+ body:has(#app[data-mode]) #drawer :is(.sx-formats,.sx-lands,.wk-facts,.wk-weeks,.ph-tiles,.ph-rounds,.stat-grid,.profile-bag,.lib-shelf,.chal-cards,.wk-rules,.achievement-list,.lm-buttons,.sd-lands,.footprint-icons){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body:has(#app[data-mode]) #drawer .sx-saved .course-list{grid-template-columns:minmax(0,1fr)}
+ body:has(#app[data-mode]) #drawer .sx-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body:has(#app[data-mode]) #drawer :is(.sx-page,.sx-scroll,.sx-pages){min-width:0;max-width:100%}
+ body:has(#app[data-mode]) #drawer .sx-line{flex-wrap:wrap;gap:6px 18px;min-height:0;padding:8px 26px}
+ body:has(#app[data-mode]) #drawer .sx-facts{flex-wrap:wrap;gap:4px 14px}
+ body:has(#app[data-mode]) #drawer .ph .look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ /* Settings: the categories as a sideways row over the settings. */
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root{grid-template-columns:minmax(0,1fr)}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>*{grid-column:1!important;grid-row:auto!important}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{position:static;display:flex;overflow-x:auto;gap:8px;margin:0 0 12px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats>*{flex:none}
+ body:has(#app[data-mode]) #drawer .st-groups{columns:1}
+ /* Saved courses: the shelf, then the course picked. */
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){grid-template-columns:minmax(0,1fr)!important}
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses>*{grid-column:1!important;grid-row:auto!important}
+ /* The studio's settings: the categories as a sideways row, the rows, then
+    what has changed. */
+ body:has(#app[data-mode]) #drawer #drawerContent.sd-root{display:flex!important;flex-direction:column;align-items:stretch;gap:8px}
+ body:has(#app[data-mode]) #drawer #drawerContent.sd-root>.panel-tabs{order:-1;flex:none}
+ body:has(#app[data-mode]) #drawer .sd-root>.panel-tabs{display:flex!important;flex-wrap:nowrap;overflow-x:auto;position:static;scrollbar-width:none;padding:0 10px}
+ body:has(#app[data-mode]) #drawer .sd-root>.panel-tabs>.panel-tab{flex:none;gap:10px}
+ body:has(#app[data-mode]) #drawer .sd-side{position:static}
+ body:has(#app[data-mode]) #drawer .sd-root label.field:has(>input[type=range]){grid-template-columns:minmax(0,1fr) 22px 96px}
+ body:has(#app[data-mode]) #drawer .sd-root label.field>input[type=range]{grid-column:1/3;grid-row:2}
+ body:has(#app[data-mode]) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:3;grid-row:2}
+}

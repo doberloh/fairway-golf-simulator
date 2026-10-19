@@ -16,6 +16,12 @@ import {planCourse,planScorecard,enabledTees,playCameraMode,aimDelta} from './co
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
 import './style.css';
+import './ui-kit.css';
+import './round-hud.css';
+import './ui-screens.css';
+import './ui-sheets.css';
+import './round-phone.css';
+import './ui-windows.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
@@ -31,23 +37,40 @@ import {newPlay,turn,playBall,results,ballFacts,progressText} from './challenge-
 import {holeAdapter,planChallenge,playContext} from './challenge-spots.js';
 import {goalStatus} from './round-goals.js';
 import {skins,decidedHoles,skinsWinner,holeSkinLine,skinsStatus,skinsText} from './skins.js';
-import {isoWeek,weekIndex,weekKey,weeklySettings,recordWeekly,bestEverWeekly,WEEKLY_XP,weeklyChallenge,challengeWeekKey,recordChallengeWeek,WEEKLY_CHALLENGE_XP} from './weekly.js';
+import {isoWeek,weekIndex,weekKey,weeklySettings,weeklyBiome,recordWeekly,bestEverWeekly,WEEKLY_XP,weeklyChallenge,challengeWeekKey,recordChallengeWeek,WEEKLY_CHALLENGE_XP} from './weekly.js';
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
+import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
 import {createPopups} from './popups.js';
 import {suggestCourseName} from './course-names.js';
 import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,standardFields,moveField,liveRecord,COLUMN_CHOICES,maxFields,DEFAULT_COLUMNS} from './shot-data.js';
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
+import {holeSlab,conditions,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
+import {screenPalette,paletteVars} from './ui-palette.js';
+import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
+import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
+import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.js';
+import {buildMonitorSetup} from './ui-monitor-setup.js';
+import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
+import {buildSettings} from './ui-settings.js';
+import {buildChallenges,buildWeekly,buildLibrary,buildHelp} from './ui-menu-screens.js';
+import {pictureQueue} from './course-picture.js';
+import {createModelCards} from './model-cards.js';
+import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
+import './ui-dropdown.css';
+import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
+import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
+import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
-import {endlessHole,newRunSeed,endlessSettings} from './endless.js';
+import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
 import {ROLL_HOP,createRollHop,seedFor} from './roll-hop.js';
 import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
@@ -56,7 +79,8 @@ import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
 import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines,centreSetup,shortSetup,shapes,loadRangeSetup,saveRangeSetup,SLOPES,SLOPE_NAMES,TILT,CONTOUR,greenById,activeGreen,setActiveGreen,nearestGreen,moveCup,chipSpot,puttSpot,CHIP_YARDS,PUTT_FEET} from './range.js';
-import {sessionCsv,sessionReport} from './range-report.js';
+import {sessionCsv,sessionReport,clubTable} from './range-report.js';
+import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
 import {reliefOptions,crossingPoint,OB_RULES} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope} from './settings-schema.js';
@@ -201,7 +225,7 @@ function currentTextSize(){return effectiveTextSize(graphics.textSize,view?.conf
 // in its own pixels (2560 at 200% and 1920 at 150% are both 1280 wide), so its
 // resize watcher never fires, and the pixel ratio -- which carries the zoom --
 // would keep the old one.
-function applyUiScale(){applyTextSize(currentTextSize());view?.resize?.();textSizeNote();}
+function applyUiScale(){applyTextSize(currentTextSize());applyHudScale();view?.resize?.();textSizeNote();}
 function textSizeNote(){
  const n=document.getElementById('gfxTextNote');if(!n)return;
  const cam=view?.config??loadCamera(),now=currentTextSize();
@@ -230,7 +254,9 @@ const playerPutting=()=>savedPutting||round.putting;
 // Hands the choice back and forgets it -- called once on the way out of practice.
 const restorePutting=()=>{const p=playerPutting();savedPutting=null;return p;};
 const PUTTING_MODES=`<option value="holeout">Hole out · make every putt</option><option value="dartboard">Dartboard · 1, 2 or 3 putts</option><option value="decimal">Decimal · distance-based putts</option>`;
-const PUTTING_NOTES={holeout:'Make the ball in the cup. No gimme radius. The 107.95 mm cup has a recessed liner and the ball is 42.67 mm across. The camera you have set up stays as it is.',dartboard:'Inside the first circle: 1 putt. Between the first and second: 2 putts. From the second through the third circle: 3 putts. Beyond the outer circle is also capped at 3. Circles are drawn only on the green.',decimal:'Inside the first circle: 1.00 putt. Between circles, the score increases linearly: halfway from 1 to 2 is 1.50 putts, halfway from 2 to 3 is 2.50. Beyond the last circle is capped at 3.00. Scores retain two decimal places. In scramble, choose the team result before the putts are added.'};
+// What each putting mode means is not explained on screen: the option's own
+// words say it (the owner, 18 October 2026: "the putting description is not
+// needed anywhere").
 // Distance fields for either surface. `id` prefixes them so the round panel and
 // the putting panel can both be in the DOM without colliding.
 const puttingFields=(id,p)=>['one','two','three'].map((key,i)=>`<label class="field">${i+1}-putt distance (yd)<input id="${id}-${key}" type="number" min=".1" max="100" step=".1" value="${p[key]}"></label>`).join('');
@@ -288,6 +314,14 @@ try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.o
 // so changing one never forgets the other.
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
+// The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
+// CARD PICTURES (round 14): the flat drawing at once (course-picture.js), then
+// the tiny 3D model over it when its turn comes (model-cards.js).
+let modelCards=null;
+// Each help page's keys (round 14, frame c-help); the essentials read their own list.
+const HELP_KEYS={'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
+const cardPictures=(items,w,h)=>{pictureQueue(items,w,h);modelCards?.queue(items);};
+let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',libraryPick=null,lobbyStep=0,endlessStep=0,weeklyStep=0,endlessLandscape='any',endlessGoal='',lobbySaved=false,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
 // nothing at all -- at 60 fps a human tap spans several frames and always
@@ -569,7 +603,7 @@ function placeForTurn(from=null){
  // Bingo Bango Bongo: every golfer's ball where it lies (the engine keeps them).
  if(c.def.order==='holes'){const st=c.play,tee=st.spots[Math.min(st.h,st.spots.length-1)];round.positions=round.players.map((_,s)=>{const q=st.pos?.[s]||tee;return {x:q.x,z:q.z};});}
  if(p)round.positions[seat]={x:p.x,z:p.z};
- else if(!rangeMode){const tee=course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
+ else if(!rangeMode){const tee=course.tees[round.teeOf(seat)]||course.tees[round.tee]||Object.values(course.tees)[0];round.positions[seat]={x:tee.x,z:tee.z};}
  round.active=seat;round.teePlaced=true;round.strokes[seat]=c.def.order==='spotOut'||c.def.order==='holes'?t.strokes:0;
  const at=round.positions[seat];
  c.aimAt=t.target?{x:t.target.x,z:t.target.z}:t.zone?{...t.zone}:typeof t.call==='number'?{x:at.x,z:at.z+t.call*YARD}:null;
@@ -838,8 +872,8 @@ function showXpGain(){
  const bar=el.querySelector('.xp-bar b'),badge=el.querySelector('.level-badge');
  const steps=[];for(let l=from.level;l<to.level;l++)steps.push({w:100,next:l+1});steps.push({w:pct(to)});
  let i=0;const run=()=>{const s=steps[i++];if(!s)return;
-  bar.style.transition=`width ${XP_FILL_MS}ms cubic-bezier(.3,.7,.3,1)`;bar.style.width=s.w+'%';gameAudio?.xpSound?.('fill');
-  if(s.next)setTimeout(()=>{badge.textContent=s.next;el.classList.add('levelled');gameAudio?.xpSound?.('levelUp');
+  bar.style.transition=`width ${XP_FILL_MS}ms cubic-bezier(.3,.7,.3,1)`;bar.style.width=s.w+'%';gameAudio?.moment?.('xp');
+  if(s.next)setTimeout(()=>{badge.textContent=s.next;el.classList.add('levelled');gameAudio?.moment?.('level');
    setTimeout(()=>{bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;run();},XP_LEVEL_HOLD);},XP_FILL_MS+XP_LEVEL_AT);};
  el.classList.remove('levelled');
  setTimeout(run,XP_FILL_AT);
@@ -965,7 +999,7 @@ function syncClubs(){
  const key=JSON.stringify(Object.entries(clubs).map(([id,c])=>[id,c.label]));
  if(key===clubPicker)return;
  clubPicker=key;
- const was=$('club').value,options=Object.entries(clubs).map(([id,c])=>`<option value="${id}">${escape(c.label)}</option>`).join('');
+ const was=$('club').value,options=Object.entries(clubs).map(([id,c])=>`<option value="${id}" data-lead="${escape(String(c.code||'').toUpperCase())}" data-right="${c.code==='PT'?'':Math.round(c.carry)}">${escape(c.label)}</option>`).join('');
  $('club').innerHTML=options;$('monClub').innerHTML=options;
  $('club').value=clubs[was]?was:Object.keys(clubs)[0];$('monClub').value=$('club').value;
 }
@@ -1053,7 +1087,7 @@ function loadCourse(){
  round.placeTee(course.tees);view.setPutting(round.putting);latest=null;showStandingResult();setUpTurn();updateExplorer();requestAnimationFrame(updateExplorer);save();
 }
 function updateExplorer(){
- const free=view.config.mode==='free';$('holeFlyover').setAttribute('aria-label',tour?'Stop hole flyover':'Hole flyover');$('holeFlyover').title=tour?'Stop hole flyover':'Hole flyover';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;$('freeView').classList.toggle('selected',free);$('playerView').classList.toggle('selected',view.config.mode==='player');$('overview').classList.toggle('selected',view.config.mode==='overview');if($('greenView'))$('greenView').classList.toggle('selected',view.config.mode==='green');
+ const free=view.config.mode==='free';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;
  $('mapTitle').textContent=round.endless?`HOLE ${round.hole+1} OVERVIEW`:['free','overview'].includes(view.config.mode)?`${world.holes.length} HOLE COURSE`:`HOLE ${(flight?.replay?view.course.hole:round.hole)+1} OVERVIEW`;
  // The title says when the map is not showing the whole thing. Without it a
  // zoomed map that was left zoomed reads as a generation bug -- half a hole.
@@ -1173,7 +1207,7 @@ function toggleKeysHelp(on=$('keysHelp').hidden){
  if(on)$('keysUpDown').textContent='Aim point further / shorter';
 }
 function updateHUD(){
- syncArmed();
+ syncArmed();if(panel==='monitor')monitorSetup?.paint();
  const pinText=distance()<10?`${(distance()/.3048).toFixed(1)} ft`:`${Math.round(distance()/YARD)} yd`;if($('explorePin'))$('explorePin').textContent=pinText+' to hole';$('activeTee').value=round.tee;$('activeTee').disabled=!!flight||!!dropState||round.holeComplete;$('replayShot').disabled=appMode!=='play'||!lastShot||!!flight||!!dropState;for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']]){
   const el=$(id);if(!el)continue;
   // Reading is off on a FLAT range green: the grid paints one colour and the
@@ -1197,12 +1231,7 @@ function updateHUD(){
  // types it, and cannot do anything with it. The code behind the copy button is
  // the thing actually worth having, and the biome moves down to the subtitle so
  // the card still says where in the world you are.
- $('courseTitle').textContent=playingCourseName();$('barCourse').textContent=playingCourseName();
- // In skins, what the hole being played is worth once skins have carried to
- // it -- the holes before it decide that (skins.js).
- const worth=round.mode==='skins'&&!rangeMode?skins(round.cards,round.hole).worth:1;
- $('courseSubtitle').textContent=(rangeMode?'500 yards · practise anything'
-  :round.endless?`Endless run · ${course.bio.name}`:course.bio.name)+(worth>1?` · ${skinsText(worth)} on this hole`:'');
+ $('barCourse').textContent=playingCourseName();
  // A range has no hole number, no par and no pin position for the week. It does
  // have a distance, and that one is real -- it follows the green slider.
  // No leading zero: "01" read as "O1" in the old serif, and a hole number is
@@ -1229,7 +1258,9 @@ function updateHUD(){
  const initial=p.name[0]?.toUpperCase()||'P',chip=playerColour(round.active);
  for(const el of [$('playerInitial'),document.querySelector('.header-right .avatar')]){
   if(!el)continue;
-  el.textContent=initial;el.style.background=chip;el.style.color=PLAYER_INK;
+  // The bar's chip keeps its player icon beside the letter (the pause list
+  // shows the icon, not the letter: the owner, 18 October 2026).
+  (el.querySelector('.av-letter')||el).textContent=initial;el.style.background=chip;el.style.color=PLAYER_INK;
  }
  void p;
  // THE CHIP SAYS WHAT IT OPENS. There is no scorecard on a practice ground, so
@@ -1238,7 +1269,7 @@ function updateHUD(){
  // THE LINE IN THE SHOT PANEL says only that the hole or the round is over.
  // Between shots the score chip says whose shot it is.
  if(!flight)$('playerTurn').textContent=round.finished?'Round complete':round.holeComplete?'Hole complete':'';
- drawScoreChips();
+ drawScoreChips();drawRoundHud();
  const lie=course.surface(round.position.x,round.position.z);ballOnGreen=lie==='green';
  view.setPinOut?.(ballOnGreen);
  // THE MAP FOLLOWS THE BALL ONTO THE GREEN. Framed on the green it also paints
@@ -1251,8 +1282,8 @@ function updateHUD(){
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
 $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
- $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();$('windSpeed').textContent=settings.wind;setWindArrow();$('weatherText').textContent=settings.wind===0?'Perfectly still':settings.wind<8?'A gentle crosswind':'Play the breeze';$('temperature').textContent=Math.round(course.bio.temperature*9/5+32)+'°';
- $('swing').disabled=!!flight||round.holeComplete||round.scrambleSelection||!!round.relief||armed||!!dropState||!$('versionNotice').hidden;for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();$('swing').innerHTML=armed?'<i data-lucide="radio"></i><span>Monitor armed<small>Waiting for your shot</small></span>':'<i data-lucide="arrow-up-right"></i><span>Swing<small>or press <kbd>SPACE</kbd></small></span>';
+ $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();setWindArrow();
+ for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();
  if($('shotControls')){
   // The light is driven by the DEVICE; which window shows is driven by `armed`,
   // which is the only state where the manual controls genuinely do nothing --
@@ -1265,9 +1296,8 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
   $('world').classList.toggle('meter-mode',meterMode());
   drawMonitorState(state);
   if($('monClub').value!==$('club').value)$('monClub').value=$('club').value;
-  if($('bottomHints'))$('bottomHints').hidden=armed;
  }
- $('aimOutput').textContent=`${aim.toFixed(1)}°`;$('clubHint').textContent=$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
+ $('clubHint').textContent=hud1?clubPanel(clubs[$('club').value]).line:$('club').value==='putter'?`${clubs.putter.carry} yd roll · Stimp 10 reference`:`${clubs[$('club').value].carry} yd carry`;drawShapeControls();drawLie();drawMeterScale();
  redrawMap();const playing=appMode==='play';if($('mulligan')){$('mulligan').disabled=!playing||!round.canMulligan()||!!flight||!!dropState;
   // Says why when it is off. "Nothing to take back yet" on a fresh tee is a
   // different answer from "finish the shot first", and a dimmed button with no
@@ -1281,9 +1311,6 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
  // way back to them once closed -- there was none, so a closed window stayed
  // closed until the range was left and entered again.
  if($('rangeTool'))$('rangeTool').hidden=!rangeMode;
- // And one on the view bar, always in sight, because the tray's button was
- // still a menu away and the owner could not find it (16 October 2026).
- if($('rangeControls'))$('rangeControls').hidden=!rangeMode;
  // Putting mode is forced to hole-out on a practice ground, so this would edit
  // a setting for the NEXT round while appearing to change where you are. A
  // dedicated putting mode is the plan; until then it is simply not offered.
@@ -1295,7 +1322,7 @@ $('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0]
 // A putt is previewed by running the shot, not by describing it. Everything else
 // keeps a straight target line, which is what an aim line means for a ball that
 // is about to be in the air.
-function updateAim(syncRange=true){const c=clubs[$('club').value];
+function updateAim(){const c=clubs[$('club').value];
  // NO PUTT PREVIEW (the owner's call, 14 October 2026). A putt used to draw the
  // path the ball would roll, break and all, which read the green for you. Now a
  // putt is a straight line to where you aim, for every way of playing, and the
@@ -1309,7 +1336,9 @@ function updateAim(syncRange=true){const c=clubs[$('club').value];
  const track=armed?null:shapeTrack(c,range);
  // A putt's line lies on the green, 15 mm up, like the preview line did.
  if(track)view.setAimPath(track,range,.1);else view.setAim(aim,range,putt?.015:.1);
- $('aimOutput').textContent=aim.toFixed(1)+'°';if(syncRange!==false)$('aimRange').value=(range/YARD).toFixed(1);
+ // THE AIM, READABLE: the angle and the aim point's distance, on #world for the
+ // smoke journeys (the old aim box that showed them is gone).
+ $('world').dataset.aim=aim.toFixed(1);$('world').dataset.aimYards=(range/YARD).toFixed(1);
  if(putt)drawLie();
  drawMeterScale();
 }
@@ -1430,6 +1459,8 @@ function drawMeter(t,last=null){
  else if(swing)hint.innerHTML=swing.power==null?'Tap to set the distance <span class="sm-esc"><kbd>Esc</kbd> cancels</span>':'Tap on the strike line';
  else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
+ // The 1.0 round screen has no Swing button: the bar is what you tap or click.
+ else if(hud1)hint.innerHTML=matchMedia('(pointer:coarse)').matches?'Tap the bar to swing':'<kbd>SPACE</kbd> or click the bar';
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
  box.classList.toggle('perfect',!!(flashing&&meterFlash.perfect));
  box.dataset.stage=swing?(swing.power==null?'power':'strike'):'ready';
@@ -1528,13 +1559,11 @@ function drawShapeControls(){
  const putt=c.code==='PT',short=isShortGame(),locked=putt||!!swing||!!flight;
  $('curveLabel').textContent=curveName(shotShape.curve);
  $('heightLabel').textContent=heightName(shotShape.height,short);
- $('spinLabel').textContent=$('spinCycleLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
+ $('spinCycleLabel').textContent=shotShape.spin>0?'+'+shotShape.spin:String(shotShape.spin);
  $('pickSpin').setAttribute('aria-label',`Spin: ${spinName(shotShape.spin)}. Tap to change`);
  $('pickCurve').setAttribute('aria-label',`Curve: ${curveName(shotShape.curve)}. Press S to change`);
  $('pickHeight').setAttribute('aria-label',`Height: ${heightName(shotShape.height,short)}. Press W to change`);
  $('pickCurve').disabled=$('pickHeight').disabled=$('pickSpin').disabled=locked;
- $('spinDown').disabled=locked||shotShape.spin<=SPIN_STEPS[0];
- $('spinUp').disabled=locked||shotShape.spin>=SPIN_STEPS.at(-1);
  $('shapeControl').classList.toggle('putt',putt);
  $('shapeControl').classList.toggle('spun',shotShape.spin>0);
  $('meterLabel').textContent=difficultyOf(golferDifficulty()).label;
@@ -1565,16 +1594,13 @@ function drawLie(){
 // Pointer DOWN, not click, so a touch counts the moment the finger lands.
 function bindSwingInput(){
  const press=e=>{if(e.button!==0)return;e.preventDefault();meterPress(e.timeStamp);};
- $('swing').addEventListener('pointerdown',press);
  $('smBar').addEventListener('pointerdown',press);
  $('swingCatcher').addEventListener('pointerdown',press);
  $('pickCurve').onclick=()=>stepShape('curve',1);
  $('pickHeight').onclick=()=>stepShape('height',1);
- // On a phone the dial is one button that steps round, like X: a pair of
- // small - and + buttons is under a thumb's width.
+ // Spin is one button that steps round, like X: a pair of small - and +
+ // buttons was under a thumb's width.
  $('pickSpin').onclick=()=>stepShape('spin',1);
- $('spinUp').onclick=()=>stepShape('spin',1,false);
- $('spinDown').onclick=()=>stepShape('spin',-1,false);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelSwing();});
  // The words under the bar say Space or Tap by the screen, which can change.
  addEventListener('resize',()=>drawMeter(performance.now()));
@@ -1606,6 +1632,14 @@ let reachHeldFor=0;
 // pin's distance is what a player sees on arriving at the ball. How long the
 // aim label stays after the last touch is placed, not measured.
 let aimTouchedAt=-Infinity;
+// A NEW HOLE STARTS QUIET (the owner, 18 October 2026, replacing round 13's
+// aim point first): no distance to the pin and no aim point while the box
+// naming who is up is on screen, then the distance to the hole fades in.
+// Quiet from the moment the hole is set up, while the loading screen is up,
+// while the turn box shows, and -- if that box has not come yet -- for up to
+// HOLE_QUIET_WAIT after the loading screen goes (PLACED: the box waits for a
+// hole-out banner, so it can come late; past that the distances show).
+let holeQuietKey='',holeQuietFrom=null,turnFlashHole='';const HOLE_QUIET_WAIT=3000;
 // WHETHER THE GOLFER HAS PLACED THE CIRCLE this turn: its distance (a click,
 // ↑ ↓, the pad, the distance box) or its direction (← →). Changing club moves
 // a circle nobody placed to the new club's carry down the fairway; one placed by
@@ -1675,7 +1709,9 @@ function setAimView(on){
  resetMapNav();
  if(on)$('aimViewHint').textContent=dropState?'Tap to place the ball · pinch to zoom'
   :['free','overview'].includes(view.config.mode)?'Tap to fly there · pinch to zoom':'Tap to aim · pinch to zoom';
- updateExplorer();
+ // The big screen's foot names the same thing as a key chip (frame c-bigmap).
+ if(on)$('aimViewClick').textContent=dropState?'Place the ball':['free','overview'].includes(view.config.mode)?'Fly there':'Aim here';
+ updateExplorer();drawRoundHud();
 }
 
 function takeShot(data=null,struck=null){
@@ -1747,7 +1783,7 @@ function finishShot(){
   view.setShotHistory?.(visibleTrails());
   setUpRangeTurn();
   if(fromReview)view.flyCamera(round.position,aim,{from:fromReview});
-  showRangeResult();
+  showRangeResult();if(hud1)nextShotCard();
   view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
   save();sendPlayer();
   return;
@@ -1859,7 +1895,7 @@ function skinsBannerLine(){
  const text=holeSkinLine(e,round.players.map(p=>p.name),round.hole,!round.endless&&round.hole+1>=round.holes);
  return `<span class="hole-out-skin">${e.winner!==null?`<i style="background:${playerColour(e.winner)}"></i>`:''}${escape(text)}</span>`;
 }
-let holeOutTimer=null,holeOutAt=-1e9;
+let holeOutTimer=0,holeOutLeave=0,holeOutAt=-1e9;
 function announceHoleOut(before,{chipIn=false}={}){
  const seats=round.players.map((_,i)=>i).filter(i=>!before[i]&&Number.isFinite(round.cards[i]?.[round.hole]));
  if(!seats.length)return;
@@ -1869,9 +1905,9 @@ function announceHoleOut(before,{chipIn=false}={}){
  // Who, only when there is more than one golfer to tell apart. A scramble
  // score belongs to the team, so the team is named.
  const who=round.players.length<2?'':round.mode==='scramble'?`Team ${round.players[seat].team}`:round.players[seat].name;
- const tint=parTint(label.rel,1),el=$('holeOut');
+ const tint=parTint(label.rel,1),el=$('holeOut'),cele=hud1?celebrationFor(score,course.par,{chipIn}):null;
  el.innerHTML='<canvas class="hole-out-ball" width="72" height="72" aria-hidden="true"></canvas>'+(who?`<span class="hole-out-who"><i style="background:${playerColour(seat)}"></i>${escape(who)}</span>`:'')
-  +`<strong class="hole-out-name">${escape(label.name)}</strong>`
+  +`<strong class="hole-out-name">${escape(cele?cele.name:label.name)}</strong>`
   +`<span class="hole-out-line">${scoreText(score)} ${score===1?'stroke':'strokes'} · Par ${course.par}<b data-side="${label.side}"${tint?` style="background:${tint}"`:''}>${parText(label.rel)}</b></span>`
   +skinsBannerLine();
  // Restart the animation even when the banner is already up: hidden, reflow, shown.
@@ -1882,7 +1918,13 @@ function announceHoleOut(before,{chipIn=false}={}){
  {const prof=profileOf(round.players[seat]),gir=prof?.rounds.find(e=>e.id===round.uid)?.card?.[round.hole]?.gir;
   const lv=prof?levelOf(prof.xp).level:1,id=prof&&flourishFor({score,par:course.par,chipIn},lv);
   if(id){const pin=course.pin;playFlourish($('flourish'),id,()=>view.screenPoint?.(pin),{gold:goldFlourishes(lv)});}}
- clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;},2700);
+ // On the round screen (celebration.js): the full-width band for a birdie or
+ // better, a quiet strip otherwise, two seconds at most, and the next turn is
+ // announced as it starts to leave.
+ el.classList.toggle('rh-band',!!cele?.big);el.classList.toggle('rh-quiet',!!cele&&!cele.big);el.classList.remove('leaving');
+ if(cele){const t=cele.timing;el.style.setProperty('--b-in',t.in+'ms');el.style.setProperty('--b-hold',t.hold+'ms');el.style.setProperty('--b-out',t.out+'ms');
+  clearTimeout(holeOutLeave);holeOutLeave=setTimeout(()=>el.classList.add('leaving'),turnAfter(t));}
+ clearTimeout(holeOutTimer);holeOutTimer=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},cele?bannerLength(cele.timing):2700);
 }
 // THE CLOSE-UP (spec 7.3): the golfer's ball beside the score, turning slowly
 // while the banner is up -- drawn from the finish's own rule a frame at a time,
@@ -1895,6 +1937,7 @@ function spinHoleOutBall(canvas,finish){
  draw(t0);
 }
 function renderResult(event){
+ if(hud1)nextShotCard();
  const r=latest.result,s=latest.shot;const title=round.finished?'Round complete':round.holeComplete?'Hole complete':event.holed?'In the hole!':r.lipped?'Lipped out!':event.putts?`${scoreText(event.putts)} putts awarded`:r.hazard?r.hazard:'Shot information';
  let html=`<h3>${title}</h3>${event.complete?holeCard(event):''}<p>${r.hazard?(r.hazard==='Water'?'In a penalty area. Choose your relief at the foot of the screen.':'Out of bounds.'):event.putts?`${scoreText(event.putts)} automatic putts added · ${round.putting.mode==='decimal'?'decimal':'dartboard'} putting.`:''}</p>`.replace('<p></p>','')+gridHTML();
  // The choice is made ON THE COURSE now: every ball is drawn where it lies and
@@ -2100,6 +2143,8 @@ function recordRangeShot(result){
   // for a shot still on the field this costs nothing at all.
   replay:lastShot,
  });
+ // The range controls' session table, if the window is open (ui-range-controls.js).
+ updateRangeSession(document,{rows:sessionRows(clubTable(rangeShots)),balls:rangeShots.length,golfers:new Set(rangeShots.map(s=>s.player??0)).size});
  // Past the tracer window the row would be the only thing keeping a ~660-point
  // flight alive, and a session has no end. The payload is dropped and the row
  // goes summary-only; the numbers, which are what the list is for, all stay.
@@ -2281,7 +2326,9 @@ function drawTiles(record){
  placeTiles();
 }
 function placeTiles(){
- const box=$('shotTiles'),w=$('world');if(!box||!w||!box.offsetParent)return;
+ const box=$('shotTiles'),w=$('world');if(!box||!w)return;
+ if(hud1){for(const t of box.children){t.style.left=t.style.top=t.style.width=t.style.minWidth='';}return;}
+ if(!box.offsetParent)return;
  const W=w.clientWidth,H=w.clientHeight,z=uiZoom(),wr=w.getBoundingClientRect(),gap=6;
  const rel=el=>{const r=el.getBoundingClientRect();return {l:(r.left-wr.left)/z,t:(r.top-wr.top)/z,r:(r.right-wr.left)/z,b:(r.bottom-wr.top)/z};};
  const shown=el=>el&&!el.hidden&&el.offsetParent&&el.getBoundingClientRect().width>0;
@@ -2298,14 +2345,12 @@ function placeTiles(){
  });
  if(!free.length)return;
  if(phone){
-  // Across the top, from the left edge to what holds the top-right corner --
-  // the wind, and held sideways the camera button beside it -- starting past
-  // the play window if, held sideways, it runs up to the top.
-  const corner=[w.querySelector('.weather'),$('camButton')].filter(shown).map(rel);
-  const y=corner.length?Math.min(...corner.map(r=>r.t)):10;
+  // Across the top, from the left edge to the right, starting past the play
+  // window if, held sideways, it runs up to the top.
+  const y=10;
   const h=home?rel(home):null;
   const x0=h?(h.t<y+60?h.r+gap:h.l):10;
-  const right=Math.min(W-10,...corner.filter(r=>r.t<y+50).map(r=>r.l-gap));
+  const right=W-10;
   const each=Math.max(48,Math.min(132,(right-x0-gap*(free.length-1))/free.length));
   free.forEach((t,i)=>{t.style.width=each+'px';t.style.left=x0+i*(each+gap)+'px';t.style.top=y+'px';});
   return;
@@ -2333,12 +2378,73 @@ function placeTiles(){
   for(const t of row){t.style.left=x+'px';t.style.top=y+'px';x+=t.offsetWidth+gap;}
  });
 }
+// THE MAP AND THE SHOT NUMBERS MOVE (the owner, 18 October 2026: "I want to be
+// able to move at least the map and the shot data around"; hud-places.js). On
+// the 1.0 round screen the map is dragged by its title, the shot numbers (Tab)
+// anywhere on them; a double-click puts either back, and Reset in the Tools
+// window puts both back. Not over the big map (M), not on a phone (which
+// keeps its own layout), not in the studio. A place is kept per device.
+let hudPlaces=loadPlaces(),hudPlacesKey='',hudPlacesAt=0;
+const placeable=()=>({map:document.querySelector('#world .minimap'),tiles:$('shotTiles')});
+function movableNow(k){const w=$('world');return !!w&&hud1&&appMode==='play'&&!w.classList.contains('aim-view')&&(k!=='tiles'||w.classList.contains('rh-tiles'));}
+// Puts a piece's top-left corner at (left, top) screen pixels from the playing
+// area's corner, whatever zoom it is drawn at: one trial move measures how far
+// a CSS pixel of its `left` moves it on screen.
+function setPiecePos(el,left,top){
+ const wr=$('world').getBoundingClientRect();
+ el.style.right='auto';el.style.bottom='auto';el.style.transform='none';
+ el.style.left='0px';el.style.top='0px';const a=el.getBoundingClientRect();
+ el.style.left='100px';el.style.top='100px';const b=el.getBoundingClientRect();
+ const kx=(b.left-a.left)/100||1,ky=(b.top-a.top)/100||1;
+ el.style.left=((left-(a.left-wr.left))/kx).toFixed(1)+'px';el.style.top=((top-(a.top-wr.top))/ky).toFixed(1)+'px';
+}
+function clearPiecePos(el){for(const k of ['left','top','right','bottom','transform'])el.style[k]='';delete el.dataset.placed;}
+function drawHudPlaces(force=false){
+ const w=$('world');if(!w)return;const wr=w.getBoundingClientRect();
+ const key=JSON.stringify([hudPlaces,hud1,appMode,w.classList.contains('aim-view'),w.classList.contains('rh-tiles'),Math.round(wr.width),Math.round(wr.height)]);
+ if(!force&&key===hudPlacesKey)return;hudPlacesKey=key;
+ for(const [k,el] of Object.entries(placeable())){
+  if(!el)continue;const place=hudPlaces[k];
+  if(!place||!movableNow(k)){if(el.dataset.placed)clearPiecePos(el);continue;}
+  clearPiecePos(el);const r=el.getBoundingClientRect();if(!r.width)continue;
+  const at=placeIn(place,{w:r.width,h:r.height},{w:wr.width,h:wr.height});
+  setPiecePos(el,at.left,at.top);el.dataset.placed='1';
+ }
+}
+function resetHudPlaces(k){hudPlaces=savePlaces(k?{...hudPlaces,[k]:undefined}:{});drawHudPlaces(true);}
+function dragPiece(k,e){
+ if(!movableNow(k)||e.button)return;
+ const el=placeable()[k],w=$('world');if(!el)return;
+ e.preventDefault();
+ const wr=w.getBoundingClientRect(),r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top,sx=e.clientX,sy=e.clientY;let moved=false;
+ const move=ev=>{
+  if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<4)return;
+  moved=true;el.classList.add('dragging');
+  const c=clampBox({left:ev.clientX-wr.left-dx,top:ev.clientY-wr.top-dy,w:r.width,h:r.height},{w:wr.width,h:wr.height},8);
+  setPiecePos(el,c.left,c.top);el.dataset.placed='1';
+ };
+ const up=()=>{
+  removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+  el.classList.remove('dragging');if(!moved)return;
+  const now=el.getBoundingClientRect();
+  hudPlaces=savePlaces({...hudPlaces,[k]:placeFrom({left:now.left-wr.left,top:now.top-wr.top,w:now.width,h:now.height},{w:wr.width,h:wr.height})});
+  hudPlacesKey='';
+ };
+ addEventListener('pointermove',move);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+}
+{
+ const head=document.querySelector('#world .minimap .map-header'),tiles=$('shotTiles');
+ head?.addEventListener('pointerdown',e=>{if(!e.target.closest('button'))dragPiece('map',e);});
+ head?.addEventListener('dblclick',e=>{if(!e.target.closest('button')&&movableNow('map'))resetHudPlaces('map');});
+ tiles?.addEventListener('pointerdown',e=>{if(hud1)dragPiece('tiles',e);});
+ tiles?.addEventListener('dblclick',()=>{if(movableNow('tiles'))resetHudPlaces('tiles');});
+}
 // DRAGGING A TILE: anywhere on it, mouse or finger, kept within the playing
 // area. A press that never moves is not a drag and saves nothing.
 {
  const box=$('shotTiles');
  box?.addEventListener('pointerdown',ev=>{
-  const t=ev.target.closest('.shot-tile');if(!t||ev.button)return;
+  const t=ev.target.closest('.shot-tile');if(!t||ev.button||hud1)return;
   ev.preventDefault();
   const w=$('world'),z=uiZoom(),sx=ev.clientX,sy=ev.clientY,ox=t.offsetLeft,oy=t.offsetTop;let moved=false;
   const move=e=>{
@@ -2431,6 +2537,9 @@ function drawPanelState(){
  const flying=!!flight;
  panel.classList.toggle('flying',flying);
  $('skipFlight').hidden=!flying;
+ // Round 13: the flight panel is gone from the round screen; Skip is in the
+ // meter's title row instead.
+ if($('smSkip'))$('smSkip').hidden=!flying;
  if(!flying){$('flightLabel').textContent='LAST SHOT';return;}
  if(flight.replay||flight.endHold)return;
  $('flightLabel').textContent=flight.result?.puttStroke?'BALL ROLLING':'BALL IN FLIGHT';
@@ -2482,7 +2591,7 @@ function setUpRangeTurn(pick=false){
   p=st.next??(st.mode==='chip'?chipSpot(course,st.green,st.yards,st.n):puttSpot(course,st.green,st.feet,st.n));
  }
  st.next=null;
- if(!p){const tee=course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
+ if(!p){const tee=course.tees[round.teeOf(round.active)]||course.tees[round.tee]||Object.values(course.tees)[0];p={x:tee.x,z:tee.z};}
  round.positions[round.active]={x:p.x,z:p.z};round.teePlaced=true;
  shotShape={...DEFAULT_SHAPE};cancelSwing();rangePlaced=aimTurned=false;
  const toPin=Math.hypot(course.pin.x-p.x,course.pin.z-p.z);
@@ -2542,7 +2651,7 @@ function renderBag(content){
  $('saveBag').onclick=()=>{try{
   setProfileBag(profiles,owner.id,read());syncClubs();updateHUD();updateAim();sendPlayer();
   toast(`${owner.name}'s bag is saved.`);
-  if(bagReturn==='profile'){bagReturn=null;viewingProfile=owner.id;openPanel('profile');}else renderBag(content);
+  if(bagReturn==='profile'){bagReturn=null;viewingProfile=owner.id;profileHubTab='Bag';openPanel('profile');}else renderBag(content);
  }catch(e){$('playError').textContent=e.message;}};
  $('resetBag').onclick=()=>{list.innerHTML=stockBag().map(row).join('');icon();rows().forEach(wire);count();};
 }
@@ -2608,8 +2717,8 @@ function openPlaySettings(name,content){
   content.innerHTML=`<p>The ground everything lands on. These apply immediately to every shot source.</p><h3>Turf & roll</h3>${slider('greenStimp','Green speed · Stimp',settings.turf.stimp,6,15,' ft',.5)}${slider('fairwayRoll','Fairway roll',settings.turf.fairway,30,180,'%')}${slider('semiRoll','Semi-rough roll',settings.turf.semi,30,180,'%')}${slider('roughRoll','Rough roll',settings.turf.rough,30,180,'%')}<label class="field">Green firmness<select id="turfFirmness">${FIRMNESS_NAMES.map(n=>`<option value="${n}"${firmnessName(settings.turf.firmness)===n?' selected':''}>${n}</option>`).join('')}</select></label><p class="note">Green firmness is not green speed. It decides what a ball does the moment it lands — how high it bounces and whether it holds — while the roll settings decide what it does once it is already rolling. A green can be quick and soft, or slow and baked hard.</p><p class="note"><strong>It is named for what it touches.</strong> Green firmness is measured in inches of penetration by a greens instrument, so it moves greens and their collars and nothing else — a fairway or rough keeps one landing behaviour and is set to run with the roll sliders above.</p><p class="note">100% is standard turf. Higher roll values mean less resistance. Stimp is the distance, in feet, a standard release rolls on a level green.</p><button class="primary" id="saveFlight">Save turf settings</button>`;
   $('saveFlight').onclick=()=>{settings.turf=turfConfig({stimp:Number($('greenStimp').value),fairway:Number($('fairwayRoll').value),semi:Number($('semiRoll').value),rough:Number($('roughRoll').value),firmness:$('turfFirmness')?.value});save();updateAim();closePanel();toast('Turf conditions saved.');};
  }else{
-  const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><div class="note" id="puttingExplanation"></div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
-  const explain=()=>{const m=$('puttingMode').value;$('putting-distances').hidden=m==='holeout';$('puttingExplanation').textContent=PUTTING_NOTES[m];};$('puttingMode').onchange=explain;explain();
+  const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
+  const explain=()=>{const m=$('puttingMode').value;$('putting-distances').hidden=m==='holeout';};$('puttingMode').onchange=explain;explain();
   $('savePutting').onclick=()=>{try{puttingGuard();applyPutting(readPutting('putting'));save();updateHUD();closePanel();toast('Putting mode saved. Existing scores stay as recorded.');}catch(e){$('playError').textContent=e.message;}};
  }
 }
@@ -2618,8 +2727,7 @@ function beginDrop(){
  // free drop should make for them.
  if(round.relief){toast('Choose where to take relief first.');return;}
  if(flight||round.holeComplete||round.scrambleSelection||round.candidates.length){toast('Finish this shot or choose the team lie first.');return;}
- // A DROP PUTS THE TOOLS WINDOW AWAY, the way it already hides the camera bar
- // (`.dropping .view-tools`). The drop is where Sim drop is pressed, so the
+ // A DROP PUTS THE TOOLS WINDOW AWAY. The drop is where Sim drop is pressed, so the
  // Tools window was always open at this moment -- and on a phone held sideways
  // it sat squarely on the drop bar, over "Place ball", the one button needed
  // next. Found by the smoke test's phone journey, which could not reach it.
@@ -2923,6 +3031,8 @@ function renderRangePanel(content){
   +`<h4 class="range-head">This session</h4>${slider('rangeLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}<label class="check"><input type="checkbox" id="rangeDispersion"${showDispersion?' checked':''}> Dispersion on the map</label><div id="dispersionLegend"></div>`
   +`<div class="split"><button class="secondary" id="rangeCsv"${rangeShots.length?'':' disabled'}><i data-lucide="sheet"></i> Export CSV</button><button class="secondary" id="rangePdf"${rangeShots.length?'':' disabled'}><i data-lucide="file-text"></i> PDF report</button></div>`
   +`<p class="note">The CSV is every shot's numbers, for a spreadsheet. The PDF report adds each club's averages and spread, a chart of where the full shots went, the short game, and every shot. Shot lines are the tracers left on the field; zero clears them.</p></div>`;
+ // The 1.0 layout: two columns, the session by club, the lab tools (ui-range-controls.js).
+ buildRangeControls(content,{rows:sessionRows(clubTable(rangeShots)),balls:rangeShots.length,golfers:new Set(rangeShots.map(s=>s.player??0)).size,openLab:()=>openPanel('lab')});
  content.scrollTop=keep;
  for(const b of content.querySelectorAll('[data-station]'))b.onclick=()=>setRangeStation({mode:b.dataset.station});
  const on=(id,ev,fn)=>{const el=content.querySelector('#'+id);if(el)el[ev]=fn;};
@@ -3269,7 +3379,8 @@ async function whileGenerating(label,work,quiet=false){
  // screen paint before the first block of work.
  await nextFrame();
  try{
-  const result=await work(report=>{if(!quiet)setProgress(report&&{...report,done:report.done*GROWING_SHARE});});
+  // Behind the start splash (quiet), the same report moves its bar (round 14).
+  const result=await work(report=>{if(!quiet)setProgress(report&&{...report,done:report.done*GROWING_SHARE});else if(report)globalThis.__splashStep?.('Growing the first hole',.3+.55*report.done);});
   // The graphics card's share of the wait, behind the overlay rather than as a
   // frozen first frame after it (GolfView.ready).
   //
@@ -3348,8 +3459,9 @@ function shortfall(){
  return got?`Landscape rebuilt. Only ${got} of ${want} channels found room on this ground.`:`Landscape rebuilt. This ground was too steep for the channels you asked for.`;
 }
 function setMode(mode){
+ if(mode!=='studio'){$('studioPause')?.remove();$('world')?.classList.remove('studio-paused');}
  const was=appMode;
- appMode=mode;$('world').dataset.mode=mode;
+ appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');applyHudPalette();
  // NO AIM LINE IN THE STUDIO. Nobody is about to hit, and a white line running
  // off the first tee read as part of the course being shaped. Building a world
  // makes a fresh, visible line, so the studio hides it every time it enters;
@@ -3403,9 +3515,30 @@ async function continueRound(){
  setMode('play');closePanel();
  if(staleGenerator){staleGenerator=false;showVersionNotice();}
 }
+// THE STUDIO'S PAUSE (round 13, frame c-pause): Esc while flying. Every mode
+// has one. Rows press the studio's own buttons, so they do what those do.
+function toggleStudioPause(show){
+ let w=$('studioPause');
+ const on=show??(!w||w.hidden);
+ if(w)w.remove();
+ if(!on||appMode!=='studio'){$('world').classList.remove('studio-paused');return;}
+ const n=studioDirty?studioChanges().length:0;
+ w=makeWindow({id:'studioPause',title:'Paused',line:`Course studio · ${settings.seed}`,rows:[
+  {id:'back',label:'Back to the view',key:'Esc',hot:true,act:()=>toggleStudioPause(false)},
+  {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
+  {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
+  {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
+  {id:'graphics',label:'Settings',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
+  {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
+ ]});
+ $('world').append(w);$('world').classList.add('studio-paused');
+ requestAnimationFrame(()=>{leanAsOne([...w.children]);w.querySelector('button')?.focus();});
+}
 function updateStudioState(){
  if(appMode!=='studio')return;
  const el=$('studioState');el.classList.toggle('dirty',studioDirty);
+ studioHud($('world'));
+ paintStudioHud({facts:{biome:BIOMES[settings.biome]?.name||settings.biome,holes:settings.holes},changes:studioDirty?studioChanges():[],regenerate:()=>$('studioRegenerate').click()});
  el.textContent=studioDirty?'Settings changed — regenerate to see them.':panel?'Close the settings panel to fly around with W A S D.':'Fly around with W A S D. Drag to look.';
 }
 // A studio landscape lives only in memory until it is saved, so anything that
@@ -3586,7 +3719,25 @@ async function returnToMenu(){
 // the overlay (whileGenerating waits for them to run smoothly) rather than on
 // screen.
 const growBackdrop=()=>whileGenerating('Growing a hole…',async report=>{leaveBackdrop();await loadMenuBackdrop(report);openMenu();});
-function markStudioDirty(){if(appMode==='studio'&&!studioDirty){studioDirty=true;updateStudioState();}}
+function markStudioDirty(){if(appMode!=='studio')return;studioDirty=true;studioRepaint();}
+// The 1.0 studio's changed list, slab, chip and right-hand column, redrawn at
+// most once a frame however many inputs a slider fires (ui-studio.js).
+function studioRepaint(){if(studioRepaint.q)return;studioRepaint.q=requestAnimationFrame(()=>{studioRepaint.q=0;studioSheet?.paint();updateStudioState();});}
+// What the settings panel says now against the landscape as grown. With the
+// panel closed its controls are gone, so the last list stands until the
+// landscape is regrown.
+function studioChanges(){
+ if(panel!=='course'||!$('courseHoles'))return studioChangeList;
+ const read=k=>{const el=$(k);return !el?undefined:el.type==='checkbox'?el.checked:el.value;};
+ const list=settingsChanges(SETTINGS,settings,read);
+ const add=(key,label,from,to)=>{if(String(from)!==String(to))list.push({key,label,from,to,unit:''});};
+ add('courseHoles','Holes',settings.holes,Number($('courseHoles').value));
+ if($('seed'))add('seed','Seed',settings.seed,$('seed').value.trim()||'EVERGREEN');
+ if(studioBiome)add('biome','Landscape',BIOMES[settings.biome]?.name||settings.biome,BIOMES[studioBiome]?.name||studioBiome);
+ if($('footprint'))add('footprint','Footprint',settings.footprint,$('footprint').value);
+ studioChangeList=list;
+ return list;
+}
 // Studio keeps a throwaway round alive so the renderer, camera and map keep
 // working; the play HUD is simply hidden.
 // Opening the studio from the menu asks what to grow before growing anything.
@@ -3598,7 +3749,7 @@ let studioSetup=false;
 // The range gets the same courtesy the other modes get: a chance to set the
 // group and the distance BEFORE the world is built, rather than walking in and
 // discovering the settings are somewhere else.
-let rangeSetup=false;
+let rangeSetup=false,rangeSetupHit='mats',rangeSetupStep=0;
 // Endless gets one too. It has no course to choose -- every hole is grown from
 // the run's own seed -- so this panel is the round half only: format, tees,
 // putting and who is playing.
@@ -3634,7 +3785,7 @@ async function enterStudio(){
   await prepareWorld(report);
   loadCourse();
  });
- setMode('studio');studioDirty=false;
+ setMode('studio');studioDirty=false;studioChangeList=[];updateStudioState();
  // Land flying, not behind the settings panel. Keys are ignored while a panel
  // is open -- they have to be, the seed field is a text input -- so opening one
  // here meant the studio always started with its camera parked.
@@ -3646,7 +3797,7 @@ async function regenerateStudio(){
  await whileGenerating('Growing your landscape…',async report=>{
   challenge=null;round=new Round({players:round.players,mode:'stroke',holes:settings.holes,tee:round.tee,putting:round.putting});
   await prepareWorld(report);
-  loadCourse();studioDirty=false;setMode('studio');
+  loadCourse();studioDirty=false;studioChangeList=[];setMode('studio');updateStudioState();
   cameraMode('free');view.flyToHole(0);updateExplorer();
  });
  toast(shortfall()||'Landscape rebuilt.');
@@ -3735,6 +3886,8 @@ let groupDraft=null;
 // "PLAYS WITH" AND THE HAND are only asked once a launch monitor has ever
 // connected on this device (spec Q14): until then everyone is on the Swing
 // Meter and the hand is something only a monitor is told.
+// The tee sets' own colours, for the dots on a golfer's tee buttons.
+const TEE_DOT={blue:'#2b5fb4',white:'#f4f1e8',red:'#b8322b'};
 const bridgeSeen=()=>{if(monitorConnected)return true;try{return !!localStorage.getItem(BRIDGE_KEY);}catch{return false;}};
 function groupEditor(hostId,start,onChange){
  const host=$(hostId);if(!host)return null;
@@ -3747,7 +3900,7 @@ function groupEditor(hostId,start,onChange){
  // applied (`readDraft`). A golfer from a save older than profiles is matched by
  // name, and becomes a new player if nobody on this device has that name.
  const draft=start.map(p=>{const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
-  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',seat:p.id};});
+  return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',tee:p.tee||prof?.tee||null,seat:p.id};});
  groupDraft=draft;
  const NEW='__new';
  const paint=()=>{
@@ -3758,18 +3911,28 @@ function groupEditor(hostId,start,onChange){
   // The dot is shown where the group is BUILT, not only where it is scored:
   // otherwise the first time anyone sees a golfer's colour is a tracer over a
   // fairway, with nothing on screen tying it to a name.
-  host.innerHTML=draft.map((p,i)=>`<div class="player-row${bridgeSeen()?' play':''}">`
-   // The colour and the golfer's ball share the first column: as a cell of
-   // their own, the ball pushed the name box into the team's narrow column.
-   +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${p.profile&&findProfile(profiles,p.profile)?ballAvatar(findProfile(profiles,p.profile),'tiny'):''}</span>`
-   +`<div class="player-who"><select id="who${i}" aria-label="Player ${i+1}">`
-   +everyone.filter(q=>!taken(i).has(q.id)).map(q=>`<option value="${q.id}" ${q.id===p.profile?'selected':''}>${escape(q.name)} · Level ${levelOf(q.xp).level}</option>`).join('')
+  // A SEAT EACH (round 13): the colour, the ball in its frame, who it is (the
+  // picker), title, level and handicap, the golfer's own tee, and -- once a
+  // monitor has been seen -- what they play with and which hand they swing.
+  const teeOf=p=>p.tee||round.tee||'blue';
+  const seatPick=(label,id,aria,opts,value)=>`<div class="seat-pick"><span class="seat-k">${label}</span><span class="seat-line"><button type="button" class="seat-arrow" data-step="-1" tabindex="-1" aria-hidden="true">◀</button><span class="seat-val"><b>${escape((opts.find(o=>o[0]===value)||opts[0])[1].toUpperCase())}</b><select id="${id}" aria-label="${aria}">${opts.map(([v,t])=>`<option value="${v}" ${v===value?"selected":""}>${t}</option>`).join("")}</select></span><button type="button" class="seat-arrow" data-step="1" tabindex="-1" aria-hidden="true">▶</button></span></div>`;
+  host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
+   return `<div class="player-row seat${bridgeSeen()?' play':''}" data-seat="${i}">`
+   +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${q?ballAvatar(q,'tiny'):'<span class="seat-guest" aria-hidden="true">+</span>'}</span>`
+   +`<div class="player-who ${nameSize(q?q.name:(p.name||"New player"))}"><select id="who${i}" aria-label="Player ${i+1}">`
+   +everyone.filter(o=>!taken(i).has(o.id)).map(o=>`<option value="${o.id}" ${o.id===p.profile?'selected':''}>${escape(o.name)}</option>`).join('')
    +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
    +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
+   // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
+   +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
    +`</div>`
+   +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${['blue','white','red'].map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeOf(p)===t}" aria-label="${t[0].toUpperCase()+t.slice(1)} tees"><i style="background:${TEE_DOT[t]}"></i>${t[0].toUpperCase()}</button>`).join('')}</span>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
-   +(bridgeSeen()?`<select id="input${i}" aria-label="Player ${i+1} plays with"><option value="monitor" ${p.input!=='meter'?'selected':''}>Launch monitor</option><option value="meter" ${p.input==='meter'?'selected':''}>Swing Meter</option></select>`
-    +`<select id="hand${i}" aria-label="Player ${i+1} handedness"><option ${p.hand==='RH'?'selected':''}>RH</option><option ${p.hand==='LH'?'selected':''}>LH</option></select>`:'')
+   // Round 14 (frame c-play2l): each picker a label line, then its value on a
+   // full-width line with an arrow at each end; the select is still there,
+   // see-through over the value, so a click (or a test) can open it.
+   +(bridgeSeen()?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing Meter"]],p.input==="meter"?"meter":"monitor")
+    +seatPick("Swings",`hand${i}`,`Player ${i+1} handedness`,[["RH","Right"],["LH","Left"]],p.hand==="LH"?"LH":"RH"):'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
    // had no remove button at all, so the only way to drop the first name was to
@@ -3777,13 +3940,14 @@ function groupEditor(hostId,start,onChange){
    // row aligned with the others.
    +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name||'player '+(i+1))}"><i data-lucide="trash-2"></i></button>`
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
-   +`</div>`).join('')
+   +`</div>`;}).join('')
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
-  icon();
+  icon();leanSeatRows(host);
+  if(!host.leanWatch){host.leanWatch=new ResizeObserver(()=>leanSeatRows(host));host.leanWatch.observe(host);}
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
-    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';}
+    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';p.tee=q?.tee||p.tee;}
     paint();onChange?.();
     if(v===NEW)$('name'+i)?.focus();
    };
@@ -3792,6 +3956,7 @@ function groupEditor(hostId,start,onChange){
    if($('hand'+i))$('hand'+i).onchange=e=>{p.hand=e.target.value;};
    if($('input'+i))$('input'+i).onchange=e=>{p.input=e.target.value;};
   });
+  host.querySelectorAll('[data-seat-tee]').forEach(b=>b.onclick=()=>{const p=draft[Number(b.closest('[data-seat]').dataset.seat)];p.tee=b.dataset.seatTee;paint();onChange?.();});
   host.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{
    draft.splice(Number(b.dataset.drop),1);paint();onChange?.();});
   const add=host.querySelector('[data-add]');
@@ -3799,7 +3964,7 @@ function groupEditor(hostId,start,onChange){
   // player when everyone on the device is already playing.
   if(add)add.onclick=()=>{
    const used=new Set(draft.map(q=>q.profile)),free=everyone.find(q=>!used.has(q.id));
-   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:free?.hand||'RH',input:free?.input||'monitor',seat:undefined});
+   draft.push({profile:free?.id??null,name:free?.name??'',team:draft.length%2?'B':'A',hand:free?.hand||'RH',input:free?.input||'monitor',tee:free?.tee||null,seat:undefined});
    paint();onChange?.();
    if(!free)$('name'+(draft.length-1))?.focus();};
  };
@@ -3823,8 +3988,8 @@ function readDraft(){
   let prof=r.prof;
   if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
   // Remembered for the next group this golfer joins.
-  setProfilePlay(profiles,prof.id,{hand:r.hand,input:r.input});
-  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',seat:r.seat};
+  setProfilePlay(profiles,prof.id,{hand:r.hand,input:r.input,tee:r.tee});
+  return {name:prof.name,profile:prof.id,team:r.team,hand:r.hand,input:r.input==='meter'?'meter':'monitor',...(r.tee?{tee:r.tee}:{}),seat:r.seat};
  });
 }
 // What each format is called in Saved rounds and a golfer's history.
@@ -3837,7 +4002,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div><p class="note" id="roundPuttingNote"></p>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${enabledTees(settings).map(t=>`<option value="${t}" ${round.tee===t?'selected':''}>${t[0].toUpperCase()+t.slice(1)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -3847,7 +4012,7 @@ function wireFormatFields(){
  $('roundPuttingMode').value=playerPutting().mode;
  // Applied as it is changed. A button here would have been a third place to
  // press Save for one setting, and both panels already have a primary action.
- const puttNote=()=>{const m=$('roundPuttingMode').value;$('roundPutting-distances').hidden=m==='holeout';$('roundPuttingNote').textContent=PUTTING_NOTES[m];};
+ const puttNote=()=>{const m=$('roundPuttingMode').value;$('roundPutting-distances').hidden=m==='holeout';};
  const puttApply=()=>{try{puttingGuard();applyPutting(readPutting('roundPutting'));save();updateHUD();$('roundError').textContent='';}catch(e){$('roundError').textContent=e.message;toast(e.message);}};
  puttNote();$('roundPuttingMode').onchange=()=>{puttNote();puttApply();};
  for(const k of ['one','two','three'])$('roundPutting-'+k).onchange=puttApply;
@@ -3861,7 +4026,7 @@ function wireFormatFields(){
  $('roundMode').onchange=formatNote;formatNote();
  return formatNote;
 }
-function openRangePanel(){rangeSetup=true;openPanel('round');}
+function openRangePanel(){rangeSetup=true;rangeSetupStep=0;openPanel('round');}
 function openEndlessPanel(){endlessSetup=true;openPanel('round');}
 // The map's pan and zoom, and the one place that redraws it outside the frame
 // loop. Stored on the canvas so every drawMap call site inherits it -- which is
@@ -3936,7 +4101,7 @@ function hudInsets(now){
  // phone the second, the panel, map and aim pad all at the foot. Treating the
  // phone's panel as a side panel pushed the markers into a sliver between it
  // and the map, and the cap below then let them sit on top of it anyway.
- for(const el of [...document.querySelectorAll('.bottom-area,.monitor-panel,.minimap,.view-tools,.aim-pad')]){
+ for(const el of [...document.querySelectorAll('.bottom-area,.monitor-panel,.minimap,.aim-pad')]){
   if(!showing(el))continue;
   const r=el.getBoundingClientRect();
   if(r.height>sr.height*.6){
@@ -3956,19 +4121,19 @@ function hudInsets(now){
  hudInsetsCache=ins;
  return ins;
 }
+// The wind's bearing on screen, for the round screen's wind chip.
 function setWindArrow(){
- const el=$('windArrow');if(!el)return;
+ const hud=$('roundHud');if(!hud)return;
  const wind=settings.windDirection||0;
  let bearing=-wind;
  try{bearing=view.cameraHeading()-wind;}catch{}
- el.style.transform='';
- el.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+ hud.style.setProperty('--wind',bearing.toFixed(1)+'deg');
 }
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
 }
-function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
+function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
 // to feel like a pause. Putts are excluded: one is over before the hold would be.
@@ -4073,8 +4238,8 @@ function flashTurn(tries=0){
  // After someone holes out, the turn passes while their hole-out banner (or a
  // level-up) is still up: wait for it, then name who is up -- the two used to
  // sit on top of each other (smoke, 15 October 2026).
- if(!$('holeOut')?.hidden||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),300);return;}
- lastTurn=key;
+ if((!$('holeOut')?.hidden&&!$('holeOut').classList.contains('leaving'))||!$('levelUp')?.hidden){if(tries<50)setTimeout(()=>flashTurn(tries+1),150);return;}
+ lastTurn=key;turnFlashHole=`${round.uid}:${round.hole}`;
  const p=round.player,{rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played);
  const shot=round.mode==='scramble'?round.stroke:(round.strokes?.[i]||0)+1;
  el.innerHTML=`<small>${round.players.length>1?'UP NOW':`HOLE ${round.hole+1}`}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong>${`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`}<span>Shot ${scoreText(shot)}</span></div>`;
@@ -4108,6 +4273,247 @@ function drawScoreChips(){
    +`<span class="chip-name">${escape(p.name)}</span>${score?`<b${tint?` style="background:${tint}"`:''}>${escape(score)}</b>`:''}${note?`<small>${escape(note)}</small>`:''}`
    +(up&&others>0?`<span class="chip-more">+${others}</span>`:'')+`</button>`;
  }).join('');
+}
+// THE 1.0 ROUND SCREEN (phase 1 of the 1.0 interface, 17 October 2026;
+// PROJECT_HANDOFF *The 1.0 round screen*). round-hud.js says what each piece
+// says, round-hud.css where it sits. The stylesheet decides where it is on --
+// in play, and not on a phone, which keeps today's screen until phase 5 -- and
+// says so with --hud1 on #world; `hud1` is that answer, read once per HUD
+// update rather than every frame.
+let hud1=false,hudBiome='';
+// THE SHOT NUMBERS ON THE ROUND SCREEN (phase 2; shot-display.js): a card that
+// pops up where the ball came to rest and fades, or tiles that stay -- the
+// course's way and the range's, unless the player chose (the Esc list). Tab
+// shows every number, as tiles, until pressed again.
+// WHEN THE CARD IS UP (the owner, 18 October 2026): from the moment the ball
+// comes to rest (as the camera pulls back to show the shot's line) until the
+// camera goes to the next shot, fading as it goes -- it had stayed six seconds
+// into the next address and sat on the meter. A skipped shot never rests on screen, so its card shows as the
+// next shot is set up and fades as before.
+let allNumbers=false,shotChoice=loadChoice(),shotCard=null;
+// THE CARD POINTS AT THE APEX, AND FADES AS THE CAMERA COMES BACK (the owner,
+// 18 October 2026): it comes up as the camera pulls back to show the whole
+// shot line, an arrow from its edge to the line's highest point, and when the
+// camera flies in to the next shot it fades rather than vanishing. It sits
+// ABOVE the point, the arrow down to it (below only where the top of the
+// screen leaves no room). A shot whose line is never shown (skipped, or the
+// review camera off) points at where the ball came to rest. Beside the total,
+// a second big number: what is left to the pin -- feet inside 10 m, as the
+// flag marker counts (PLACED), and IN THE HOLE once it drops; not on the range.
+function nextShotCard(){if(shotCard?.resting){if(!shotCard.fadeAt)shotCard.fadeAt=performance.now();}else showShotCard(cardRecord());}
+// The highest point of a shot's flight, in the hole's own coordinates.
+function apexOf(points){let top=null;for(const p of points||[])if(!top||p.y>top.y)top=p;return top?{x:top.x,y:top.y,z:top.z}:null;}
+// The yards left to the pin from where the ball finished, as the card's second big number.
+function toPinBig(record){
+ if(rangeMode||!record?.result?.end||!course?.pin)return '';
+ if(record.result.holed)return '<div class="rh-sc-big pin"><b>IN</b><span>THE HOLE</span></div>';
+ const m=Math.hypot(record.result.end.x-course.pin.x,record.result.end.z-course.pin.z),feet=m<10;
+ return `<div class="rh-sc-big pin"><b>${feet?(m/.3048).toFixed(0):Math.round(m/YARD)}</b><span>${feet?'FT':'YDS'} TO PIN</span></div>`;
+}
+function showShotCard(record,resting=false,point=null){
+ const el=$('shotCard');if(!el)return;
+ const d=shotDisplay({range:rangeMode,choice:shotChoice,putt:!!record?.putting,all:allNumbers});
+ if(!hud1||!record||d.kind!=='card'){hideShotCard();return;}
+ const cells=shotGrid(record,{fields:[CARD_MAIN,...CARD_ROW],columns:0}).cells,main=cells[0],row=cells.slice(1);
+ const end=record.result?.end;if(!end||!main)return;
+ el.innerHTML=`<div class="rh-sc-tab"><span>${escape(cardTab(record.player,record.club))}</span></div>`
+  +`<div class="rh-sc-body"><div class="rh-sc-main"><div class="rh-sc-big"><b>${escape(main.value)}</b><span>${/ft/i.test(main.unit||'')?'FT':'YDS'} TOTAL</span></div>${toPinBig(record)}</div>`
+  +`<div class="rh-sc-row">${row.map(r=>`<div><b>${escape(r.value)}${r.unit?`<small>${escape(r.unit)}</small>`:''}</b><span>${escape(r.label.toUpperCase())}</span></div>`).join('')}</div></div>`
+  +'<div class="rh-sc-hint"><kbd>TAB</kbd>ALL NUMBERS</div><i class="rh-sc-ptr" aria-hidden="true"></i>';
+ shotCard={at:performance.now(),point:point||{x:end.x,y:course.height(end.x,end.z)+1,z:end.z},hole:round.hole,resting,fadeAt:0};
+ el.style.opacity='1';el.hidden=false;
+}
+function hideShotCard(){shotCard=null;const el=$('shotCard');if(el)el.hidden=true;}
+// Every frame while it is up: where the ball is on screen, and how faded.
+function placeShotCard(now){
+ if(!shotCard)return;
+ const el=$('shotCard');
+ if(!hud1||(flight&&!flight.reviewing)||swing||round.hole!==shotCard.hole){hideShotCard();return;}
+ const p=shotCard.fadeAt?(now-shotCard.fadeAt>=CARD_FADE_MS?{phase:'gone',fade:1}:{phase:'fading',fade:(now-shotCard.fadeAt)/CARD_FADE_MS})
+  :shotCard.resting?{phase:'shown',fade:0}:cardPhase(shotCard.at,now);
+ if(p.phase==='gone'){hideShotCard();return;}
+ const q=view.project(shotCard.point);
+ if(!q.visible){el.style.visibility='hidden';return;}
+ // Above the point, centred on it (the stylesheet hangs the card's foot a gap
+ // above `top`); below it only where the top of the screen leaves no room.
+ // Kept inside the screen and clear of the map and tool column on the right.
+ const w=$('world'),wr=w.getBoundingClientRect();
+ const s=(el.getBoundingClientRect().width/(el.offsetWidth||1))||1,cw=el.offsetWidth*s,ch=el.offsetHeight*s;
+ const mapLeft=Math.min(w.clientWidth,(document.querySelector('#world .minimap')?.getBoundingClientRect().left??wr.right)-wr.left);
+ const below=q.y-ch-50*s<8;el.classList.toggle('below',below);
+ el.style.left=Math.max(cw/2+8,Math.min(q.x,mapLeft-cw/2-8))+'px';el.style.top=q.y+'px';
+ const r=el.getBoundingClientRect(),body=el.querySelector('.rh-sc-body')?.getBoundingClientRect()||r;
+ // The arrow: from the card's near edge, under (or over) the point as far as
+ // the card reaches, to the point -- drawn inside the scaled card, so lengths
+ // are divided back.
+ const ex=Math.max(body.left+24*s,Math.min(q.x+wr.left,body.right-24*s))-wr.left,ey=(below?r.top:body.bottom)-wr.top,vx=q.x-ex,vy=q.y-ey;
+ el.style.setProperty('--px',((ex-(r.left-wr.left))/s).toFixed(1)+'px');
+ el.style.setProperty('--py',((ey-(r.top-wr.top))/s).toFixed(1)+'px');
+ el.style.setProperty('--pl',(Math.hypot(vx,vy)/s).toFixed(1)+'px');
+ el.style.setProperty('--pa',(Math.atan2(vy,vx)*180/Math.PI).toFixed(1)+'deg');
+ el.style.visibility='visible';
+ el.style.opacity=String(1-p.fade);
+}
+function cycleShotChoice(){
+ shotChoice=saveChoice(CHOICES[(CHOICES.indexOf(shotChoice)+1)%CHOICES.length]);
+ drawRoundHud();toast(`Shot numbers: ${CHOICE_NAMES[shotChoice]}.`);
+}
+const hudOn=()=>getComputedStyle($('world')).getPropertyValue('--hud1').trim()==='1';
+// The course's colours, on #app so the pause list (the top bar) wears them too.
+// The lobby wears the course being chosen (`lobbyBiome`, while it is open).
+function applyHudPalette(screen=(panel==='round'||panel==='course')&&lobbyBiome?'lobby':appMode==='play'?(rangeMode?'range':'round'):appMode==='studio'?'studio':'menu'){
+ const p=screenPalette({screen,course:{biome:course?.bio?.key},chosen:{biome:screen==='lobby'?lobbyBiome:settings?.biome}});
+ if(p.biome===hudBiome)return;hudBiome=p.biome;
+ for(const [k,v] of Object.entries(paletteVars(p)))document.documentElement.style.setProperty(k,v);
+}
+// The pieces' size: the 1280 canvas's scale inside #app (round-hud.js hudScale).
+// --sheet-z is the same size for what sits outside #app and its Text size zoom
+// (the sheets): the round screen's scale times the Text size. Both at the
+// compact size (round-hud.js COMPACT).
+function applyHudScale(){const t=currentTextSize()/100,z=compactScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
+const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
+const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
+function drawRoundHud(){
+ hud1=hudOn();
+ if(!course||!round)return;
+ applyHudPalette();
+ if(!hud1)return;
+ const c=clubs[$('club').value],putt=c?.code==='PT'||!!ballOnGreen;
+ // The hole slab.
+ const s=rangeMode?holeSlab({range:true,yards:distance()/YARD,green:rangeGreenLabel(activeGreen(course))})
+  :holeSlab({hole:round.hole,par:course.par,yards:course.tees[round.teeOf(round.active)]?.yards??course.tees[round.tee]?.yards??course.routeLength/YARD,course:playingCourseName(),pin:pinBandFor(round.hole)});
+ setHtml($('rhHole'),`<div class="rh-n"><span>${escape(s.number)}</span></div><div class="rh-f"><div><div class="rh-a">${escape(s.name)}${s.pin?`<i>${escape(s.pin)}</i>`:''}</div><div class="rh-b">${escape(s.line[0])}<i>/</i>${escape(s.line[1])}</div></div></div>`);
+ // The big map's header: the hole's line, the aim and the pin (frame c-bigmap).
+ setHtml($('mapFacts'),aimViewOpen?escape([...s.line,!flight&&aimPoint?`AIM ${Math.round(aimRange/YARD)}`:'',`PIN ${Math.round(distance()/YARD)}`].filter(Boolean).join(' · ')):'');
+ // THE WIND, alone at the top centre (round 13: the hole panel stands alone at
+ // the top left; the rise to the hole went to the pin's marker).
+ const rise=course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z);
+ setHtml($('rhSubs'),conditions({wind:settings.wind,playsLike:putt?null:playsLikeYards,rise,putting:putt}).filter(k=>k.id==='wind').map(k=>({...k,unit:'MPH WIND'})).map(k=>
+  `<div class="rh-sub" data-sub="${k.id}"><span>${k.id==='wind'?WIND_SVG:''}${escape(k.value)}${k.unit?` <small>${escape(k.unit)}</small>`:''}</span></div>`).join(''));
+ // The golfer cards.
+ const k=round.mode==='skins'&&!rangeMode?skins(round.cards,decidedHoles(round)):null;
+ const cards=golferCards(round.players.map((p,i)=>{
+  const prof=profileOf(p),lv=prof?levelOf(prof.xp):null,look=prof?looksOf(prof):null;
+  const up=i===round.active,{rel,played}=rangeMode?{rel:0,played:0}:toPar(i);
+  let note=rangeMode?'':round.done?.[i]?'In':'';
+  if(k)note=[skinsText(k.won[i]),note].filter(Boolean).join(' · ');
+  return {name:p.name,level:lv?.level,title:look?titleName(look.title)||badgeName(lv.level):'',into:lv?.into,need:lv?.need,rel,played,note,
+   ...(rangeMode?{score:{text:up?`SHOT ${practiceShots+1}`:'',under:false}}:{})};
+ }),round.active);
+ setHtml($('rhCards'),cards.map(g=>{
+  const p=round.players[g.seat],prof=profileOf(p),l=prof?looksOf(prof):null;
+  const pic=l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(g.seat)};color:${PLAYER_INK}">${escape(g.name[0]||'P')}</span>`;
+  const lv=g.level!=null?`LV ${g.level}`:'',seat=`<i class="rh-seat" style="background:${playerColour(g.seat)}"></i>`;
+  const label=rangeMode?(g.up?`${p.name}, hitting. Open ${p.name}'s shots`:`Hand the mat to ${p.name}`):`${p.name}, ${g.score==='E'?'even par':g.score}. Open the scorecard`;
+  const score=`<span class="rh-score${g.under?' under':''}">${escape(g.score)}</span>`;
+  return g.up
+   ?`<button type="button" class="rh-card up" data-player="${g.seat}" aria-label="${escape(label)}"><span><span class="rh-pic">${pic}</span><span class="rh-stack"><span class="rh-who">${escape(g.name)}${seat}</span><span class="rh-ttl">${escape(g.title)}${lv?`<b>${lv}</b>`:''}</span>${g.xp!=null&&lv?`<span class="rh-xp"><b style="width:${(g.xp*100).toFixed(1)}%"></b></span>`:''}</span>${score}</span></button>`
+   :`<button type="button" class="rh-card" data-player="${g.seat}" aria-label="${escape(label)}"><span><span class="rh-pic">${pic}</span><span class="rh-who">${escape(g.name)}${seat}${lv?`<span class="rh-lv">${lv}</span>`:''}</span>${g.note?`<span class="rh-note">${escape(g.note)}</span>`:''}${score}</span></button>`;
+ }).join(''));
+ // The keys along the foot, and the club's code in its block.
+ // THE TOOL COLUMN (round 13, frame c-aim): above the map, standing straight,
+ // each tool with its key -- in place of the old icon tray and the keys row.
+ // Each does what its key does. Menu is there for a mouse (PLACED).
+ const TOOL_ICON={cam:'<path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/>',fly:'<path d="M3 12h13M12 6l6 6-6 6"/>',green:'<path d="M4 18l8-12 8 12z"/>',shots:'<path d="M4 6h16M4 12h16M4 18h10"/>',full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',range:'<path d="M4 20h16M7 16l5-10 5 10"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'};
+ const tools=[['cam','CAMERA','C'],['fly','FLY','V'],['green','GREEN','G'],['shots','SHOTS','TAB'],...(rangeMode?[['range','RANGE','R']]:[]),['full','FULL SCREEN','F11'],['menu','MENU','ESC']];
+ setHtml($('rhTools'),tools.map(([id,label,key])=>`<button type="button" data-tool="${id}"${id==='range'?' data-hud="range"':''} aria-label="${label[0]+label.slice(1).toLowerCase()} (${key})"><svg viewBox="0 0 24 24" aria-hidden="true">${TOOL_ICON[id]}</svg><span>${label}</span><kbd>${key}</kbd></button>`).join(''));
+ setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
+  ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
+ const cc=document.querySelector('.club-control');if(cc)cc.dataset.code=clubPanel(c).code;
+ $('club').__dd?.refresh();
+ const shown=shotDisplay({range:rangeMode,choice:shotChoice,putt:false,all:allNumbers});
+ $('world').classList.toggle('rh-tiles',shown.kind==='tiles');$('world').classList.toggle('rh-range',!!rangeMode);
+ if($('shotChoiceLabel'))$('shotChoiceLabel').textContent=CHOICE_NAMES[shotChoice];
+ if(document.getElementById('app').classList.contains('rh-paused'))drawPauseInfo();
+}
+// ROUND COMPLETE (phase 2), at the head of the final scorecard on the round
+// screen: the standings with the winner in the course's colours, what each
+// golfer earned and where their level stands, and the handicap the round
+// moved. The card itself follows underneath.
+// Round complete plays its family C tune the first time a round's results open.
+let roundSoundFor=null;
+function roundCompleteHtml(){
+ const scramble=round.mode==='scramble',par=roundPars().reduce((a,b)=>a+b,0);
+ const entries=scramble?[...new Set(round.players.map(p=>p.team))].map(t=>({name:'Team '+t,total:sumScores(round.teamCards[t]),seat:round.players.findIndex(p=>p.team===t)}))
+  :round.players.map((p,i)=>({name:p.name,total:sumScores(round.cards[i]),seat:i}));
+ const pic=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(round.players[i]?.name?.[0]||'P')}</span>`;};
+ const rows=standings(entries).map(r=>{const sc=parScore(r.total-par);
+  return `<div class="rh-res-row${r.win?' win':''}"><span class="rh-res-pos">${r.place??'—'}</span><span class="rh-res-pic">${pic(r.seat)}</span><span class="rh-res-name">${escape(r.name.toUpperCase())}${r.win?' \u00b7 WINS':''}</span><span class="rh-res-score">${Number.isFinite(r.total)?scoreText(r.total):'—'}<small class="${sc.under?'under':''}">${escape(sc.text)}</small></span></div>`;}).join('');
+ const golfers=round.players.map((p,i)=>{const prof=profileOf(p);if(!prof)return '';
+  const xp=xpThisRound(prof.xpLog,round.uid),lv=levelOf(prof.xp),now=profileSummary(prof).handicap,was=profileSummary({...prof,rounds:(prof.rounds||[]).filter(r=>r.id!==round.uid)}).handicap;
+  return `<div class="rh-res-xp"><span>${escape(p.name.toUpperCase())}</span><span class="rh-res-bar"><b style="width:${(lv.need?Math.min(1,lv.into/lv.need)*100:0).toFixed(1)}%"></b></span><span>+${xp} XP \u00b7 LV ${lv.level}</span><small>${escape(handicapLine(was.index,now.index,now.needed))}</small></div>`;}).join('');
+ return `<section class="rh-results"><h2>Round complete<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></h2>`
+  +`<div class="rh-res-stand">${rows}</div>${golfers?`<div class="rh-res-golfers"><h3>XP and handicap</h3>${golfers}</div>`:''}`
+  +'<div class="rh-res-actions"><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button><button type="button" class="primary" id="resMenu">Main menu</button></div></section>';
+}
+// PAUSE (Escape), until phase 3's pause screen: the top bar's own controls,
+// laid out as a list over the course (round-hud.css), so every one keeps its
+// id, its name and its handler.
+function drawPauseInfo(){
+ const where=rangeMode?'Driving range':`${playingCourseName()} · Hole ${round.hole+1} · Par ${course.par}`;
+ $('pauseWhere').textContent=where;
+ // The standings beside the list: each golfer, how far through, against par.
+ // Each row the golfer's ball in its frame. Where you are is said once, in the
+ // PAUSED panel over the left column (the owner, 18 October 2026).
+ const ball=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-stand-ball'):`<i class="rh-stand-dot" style="background:${playerColour(i)}"></i>`;};
+ setHtml($('pauseStand'),rangeMode?'':round.players.map((p,i)=>{const {rel,played}=toPar(i),sc=parScore(rel,played),thru=(round.cards[i]||[]).filter(Number.isFinite).length;
+  return `<div${i===round.active?' class="up"':''}>${ball(i)}<span>${escape(p.name)}</span><small>${thru?`THRU ${thru}`:'ON THE TEE'}</small><b${sc.under?' class="under"':''}>${escape(sc.text)}</b></div>`;}).join(''));
+ $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
+}
+function setPause(on){
+ const app=$('app');
+ if(on&&(!hud1||appMode!=='play'))return;
+ app.classList.toggle('rh-paused',!!on);
+ if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();
+  // One leaning block each (round 13, ui-windows.js): the list and the round.
+  requestAnimationFrame(()=>{const tb=document.querySelector('.topbar');leanAsOne(['#pauseHead','#pauseResume','#scoreNav','#barTools','.avatar','#dropHelp','#dropMenu','#dropGraphics','#dropSound','#dropLibrary','.connection','.sim-time'].map(q=>tb.querySelector(q)));leanAsOne([...tb.querySelectorAll('.rh-pause-stand>div,.rh-pause-extra .tee-control,.rh-pause-extra .meter-button,.rh-pause-choice,.rh-pause-cond')]);});}
+ else toggleClockPop(false);
+}
+// ARROWS AND A CONTROLLER IN THE MENUS (phase 3; ui-focus.js). On the main menu
+// and the Esc list the arrows -- or a controller's d-pad or stick -- move between
+// the buttons the way a console menu does; Enter, Space or the pad's A presses
+// one, and B (or Escape) backs out of the Esc list. A text box, a slider or a
+// drop-down keeps its own arrows.
+function focusScope(){
+ if(document.getElementById('app').classList.contains('rh-paused'))return document.querySelector('.topbar');
+ // An open sheet (the lobby, My profile, saved courses...) is a 1.0 screen too.
+ if(panel&&!$('drawer').hidden&&$('welcome').hidden&&$('leaveNotice').hidden)return $('drawer');
+ if(appMode==='menu'&&!$('mainMenu').hidden&&!panel&&$('welcome').hidden&&$('leaveNotice').hidden&&$('versionNotice').hidden)return $('mainMenu');
+ return null;
+}
+function moveFocus(dir){
+ const scope=focusScope();if(!scope)return false;
+ const els=[...scope.querySelectorAll('button,select,a[href]')].filter(el=>!el.disabled&&el.offsetParent!==null&&el.getBoundingClientRect().width>0);
+ if(!els.length)return false;
+ const rects=els.map(el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top,w:r.width,h:r.height};});
+ const from=els.indexOf(document.activeElement);
+ els[from<0?0:nextFocus(rects,from,dir)].focus();
+ gameAudio?.ui?.('move');
+ return true;
+}
+let padNavAt=0;
+function menuPad(pad,pressed,now){
+ const dir=dirOfPad(pad);
+ if(dir){if(now-padNavAt>220){padNavAt=now;moveFocus(dir);}}else padNavAt=0;
+ if(pressed(0))document.activeElement?.click?.();
+ if(pressed(1)||pressed(9)){if(document.getElementById('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');}
+  // B backs out of an open sheet, as it did before sheets joined the menus.
+  else if(pressed(1)&&panel){closePanel();gameAudio?.ui?.('back');}}
+}
+// THE MENUS' SOUNDS (1.0 interface, 17 October 2026): a press on the main menu
+// or the Esc list -- a click, Enter, Space or the pad's A -- selects, and a
+// locked look in the locker answers with the sour chug. Captured, so the sound
+// is not lost when the press swaps the screen away.
+document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(!b)return;const scope=focusScope();if(scope&&scope.contains(b))gameAudio?.ui?.('select');},true);
+document.addEventListener('pointerdown',e=>{if(e.target.closest?.('.look-item.locked'))gameAudio?.ui?.('locked');},true);
+// A golfer's card or chip: on the range it hands the mat over (or, for whoever
+// is hitting, opens their shots); on a course it opens the scorecard.
+function pickGolfer(i){
+ if(rangeMode){
+  if(i===round.active||round.players.length<2){openShotList(round.active);return;}
+  round.active=i;updateHUD();toast(`${round.player.name} is up.`);return;
+ }
+ guardStudio(()=>openPanel('score'));
 }
 // While a panel is open the surrounding chrome softens so it is obvious where
 // the focus is. The course itself is left sharp on purpose.
@@ -4161,12 +4567,28 @@ function openToolsBox(){
   render:body=>{tray.hidden=false;body.append(tray);},
   onClose:()=>{tray.hidden=true;document.querySelector('.bottom-area').append(tray);}});
 }
-function syncTools(){
- const b=$('toolsButton');
- if(b)b.classList.toggle('selected',popups?.isOpen('tools'));
- const r=$('rangeControls');if(r)r.classList.toggle('selected',!!popups?.isOpen('range'));
+// The range's controls, open or closed: the tool column, R, and the Esc list.
+function toggleRangeBox(){if(popups?.isOpen('range'))closeRangeBox();else openPanel('range');}
+// NO FULL SCREEN WHERE IT CANNOT HAPPEN: an iPhone's Safari has no element
+// fullscreen at all, so its tool button hides there (#app.no-fullscreen); added
+// to the home screen the game already opens without Safari's bars.
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}}
+// THE PICKERS FOLLOW THE SEAT'S LEAN (the owner, 18 October 2026). A seat is a
+// tall panel leaning 12 degrees about its middle, so a full-width row low in it
+// slides left with the panel's edge and one high in it slides right -- the way
+// the round 14 frames lean the whole sheet. Measured in layout pixels (offsets
+// ignore the Text size zoom and the slide itself), again whenever the seats
+// resize or first appear.
+const SEAT_LEAN=Math.tan(12*Math.PI/180);
+function leanSeatRows(root){
+ for(const seat of root.querySelectorAll('.seat'))for(const el of seat.querySelectorAll('.seat-pick')){
+  let y=el.offsetHeight/2,n=el;while(n&&n!==seat){y+=n.offsetTop;n=n.offsetParent;}
+  el.style.translate=n===seat&&seat.clientHeight?`${(-(y-seat.clientHeight/2)*SEAT_LEAN).toFixed(1)}px 0`:'';
+ }
 }
 function openSheet(name){stopTour();
+ // Play opens on its first step from the menu, on Golfers during a round.
+ if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -4180,8 +4602,8 @@ function openSheet(name){stopTour();
 // rest -- setting up a round, the scorecard, the studio -- are once-a-round
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
-const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:330,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Welcome to Fairway',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
+const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:720,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
+const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Your next round',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing Meter',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -4297,7 +4719,7 @@ const FLOURISH_WHEN={'sparkle-par':'When you make a par','confetti-birdie':'When
 // A small padlock on what is not earned yet; its colours still show.
 const LOCK='<svg class="look-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none"/></svg>';
 function lookPicker(profile){
- const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter',flourish:'Flourishes'})[k]}</button>`;
+ const look=looksOf(profile),lv=look.level,tab=k=>`<button class="panel-tab${lookTab===k?' active':''}" role="tab" aria-selected="${lookTab===k}" data-look-tab="${k}">${({ball:'Ball',tracer:'Tracer',title:'Title',frame:'Frame',skin:'Meter',flourish:'Flourishes'})[k]}${(l=>` <small class="look-count">${l.filter(r=>r.level<=lv).length}/${l.length}</small>`)(rewardsOf(k).filter(r=>!SECRET_FLOURISHES.has(r.id)))}</button>`;
  const item=(r,inner,kind=r.kind)=>{const has=r.level<=lv,on=look[kind]===r.id;
   return `<button class="look-item${on?' on':''}${has?'':' locked'}" ${has?`data-wear="${kind}:${r.id}"`:'disabled'} aria-pressed="${on}" title="${has?escape(r.name):`${escape(r.name)}: level ${r.level}`}">${has?'':LOCK}${inner}<span>${escape(r.name)}</span>${has?'':`<small>Level ${r.level}</small>`}</button>`;};
  let body;
@@ -4306,8 +4728,10 @@ function lookPicker(profile){
  else if(lookTab==='flourish')body=`<canvas class="flourish-preview" id="flourishPreview" aria-hidden="true"></canvas><div class="look-grid flourishes">${rewardsOf('flourish').filter(r=>!SECRET_FLOURISHES.has(r.id)||profile.achievements?.ace).map(r=>{const has=r.level<=lv;return `<button class="look-item${has?' on':' locked'}" data-flourish-preview="${r.id}" title="Watch it">${has?'':LOCK}<b>${escape(r.name)}</b><span>${escape(FLOURISH_WHEN[r.id]||'')}</span><small>${has?'Earned · tap to watch':`Level ${r.level} · tap to watch`}</small></button>`;}).join('')}</div><p class="research-label">Flourishes play over the cup when you hole out, once earned -- the rarest that fits the hole. They make no sound.</p>`;
  else if(lookTab==='skin')body=`<div class="look-grid">${rewardsOf('skin').map(r=>{const s=METER_SKINS[r.id];return item(r,`<i class="skin-swatch" style="--sm-track:${s.track};--sm-edge:${s.edge};--sm-zone:${s.zone};--sm-perfect:${s.perfect};--sm-target:${s.target}"><b class="z"></b><b class="p"></b><b class="t"></b></i>`);}).join('')}</div><p class="research-label">The Swing Meter's look on your turns. The zones and the timing are the same in every skin.</p>`;
  else if(lookTab==='title'){const titles=rewardsOf('title'),earned=profile.achievements||{};
-  const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''}>${escape(r.name)}${has?'':` (${why})`}</option>`;
-  body=`<label class="field">Title, under your name<select id="wearTitle"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`level ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
+  // Round 14: the 1.0 drop-down (ui-dropdown.js) reads the level or the
+  // achievement on the right, and how to earn a locked one.
+  const opt=(r,has,why)=>`<option value="${r.id}" ${has?'':'disabled'} ${look.title===r.id?'selected':''} data-right="${escape(why.toUpperCase())}" data-earn="${escape(why.toUpperCase())}">${escape(r.name)}</option>`;
+  body=`<label class="field">Title, under your name<select id="wearTitle" data-dd-label="Title" aria-label="Title, under your name"><option value="">None</option><optgroup label="From levels">${titles.map(r=>opt(r,r.level<=lv,`LV ${r.level}`)).join('')}</optgroup><optgroup label="From achievements">${ACHIEVEMENT_TITLES.map(r=>opt(r,!!earned[r.achievement],achievement(r.achievement).name)).join('')}</optgroup></select></label>`;}
  else body=`<div class="look-grid balls">${rewardsOf('ball').map(r=>item(r,`<img class="ball-avatar" src="${ballPicture(r.id)}" alt="">`)).join('')}</div>`;
  return `<h3>Your look</h3><div class="panel-tabs look-tabs" role="tablist" aria-label="Your look">${[...WEARABLE,'flourish'].map(tab).join('')}</div>${body}`;
 }
@@ -4360,7 +4784,9 @@ function renderProfile(content){
   +`<h3>Back up &amp; move</h3><p class="note">Players live in this browser on this device, and the game opened from the download, from the server and on a phone each keep their own. A backup file holds everyone; restoring it adds to the players already here and never removes any.</p>`
   +`<div class="profile-actions profile-backup"><button class="secondary" id="profilesExport"><i data-lucide="download"></i> Save a backup file</button><button class="secondary" id="profilesImport"><i data-lucide="upload"></i> Restore from a backup</button></div><p class="field-error" id="backupError"></p>`
   +`<p class="research-label">Every golfer in a group is a profile, picked in the group setup; a new player gets one the moment they join. The sim handicap follows the World Handicap System: every finished 9 or 18 hole round becomes a score differential, holes are capped at net double bogey, and the index is the average of the best 8 of the last 20. Fairway's courses have never been rated, so each is rated from its length alone, the way the USGA's yardage formula rates a course; its hazards, slopes and greens are not counted. Scramble scores belong to the team and stay out of the totals. Profiles live in this browser on this device.</p>`
+  +hubBlocks(profile,s,lv)
   +`</div>`;
+ buildProfileHub(content.querySelector('.profile'),{tab:profileHubTab,onTab:t=>{profileHubTab=t;}});
  icon();
  const fail=e=>{const el=$('profileError');if(el)el.textContent=e.message;};
  $('profilesExport').onclick=()=>{try{download('fairway-players.json',exportProfiles(profiles),'application/json');toast(`Saved ${profiles.profiles.length} player${profiles.profiles.length===1?'':'s'} to a backup file.`);}catch(e){fail(e);}};
@@ -4403,6 +4829,52 @@ function renderProfile(content){
   $('profileNameInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape'){renamingProfile=false;openPanel('profile');}};
  }
 }
+// THE 1.0 HUB'S OWN BLOCKS (ui-profile-hub.js sorts the rest of the page into
+// its tabs): how long they have played, the overview's eight numbers, last
+// three rounds and next unlock, and the locker's view of what is worn.
+function hubBlocks(profile,s,lv){
+ const tiles=overviewTiles(s,scoreText).map(t=>`<div class="ph-tile"><strong>${escape(t.value)}${t.unit?` <small>${t.unit}</small>`:''}</strong><span>${t.label}</span></div>`).join('');
+ const recent=s.history.slice(0,3).map(r=>{const t=roundTotals(r),of=r.endless?`ENDLESS · ${t.played}`:`${profileWhen(r.started).toUpperCase()} · ${r.holes}`;
+  return `<div class="ph-round"><span class="ph-round-pic" data-biome="${escape(r.course?.settings?.biome||'')}"></span><span class="ph-round-what"><strong>${escape((r.course?.name||'A course').toUpperCase())}</strong><small>${escape(of)}</small></span><b>${escape(toParText(t.rel))}</b></div>`;}).join('');
+ const next=unlocksBetween(lv.level,lv.level+100)[0],share=lv.need?Math.min(1,lv.into/lv.need):0;
+ const unlock=next?`<div class="ph-next"><span class="ph-next-what"><small>NEXT UNLOCK · LV ${next.level}</small><strong>${escape(next.name.toUpperCase())} ${escape((KIND_NAMES[next.kind]||next.kind).toUpperCase())}</strong></span><i class="level-bar"><b style="width:${(share*100).toFixed(1)}%"></b></i><small>${next.level===lv.level+1?`${(lv.need-lv.into).toLocaleString()} XP TO GO`:`LEVEL ${next.level}`}</small></div>`:'';
+ const look=looksOf(profile),worn=(kind,id)=>escape((reward(kind,id)?.name||'—').toUpperCase());
+ const preview=`<div class="ph-preview"><div class="ph-who">${ballAvatar(profile,'ph-ball')}<span><strong>${escape(profile.name.toUpperCase())}</strong><small>${escape((titleName(look.title)||badgeName(lv.level)).toUpperCase())} · LV ${lv.level}</small></span></div>`
+  +`<div class="ph-tracer">${tracerPreview(look.tracer)}</div>`
+  +[['BALL','ball',look.ball],['FRAME','frame',look.frame],['TRACER','tracer',look.tracer],['METER','skin',look.skin]].map(([k,kind,id])=>`<div class="ph-worn"><span>${k}</span><b>${worn(kind,id)}</b></div>`).join('')+`</div>`;
+ return `<div class="ph-since"><small>PLAYING SINCE ${escape(profileWhen(s.created).toUpperCase()||'TODAY')}</small><strong>${s.roundsPlayed} ROUND${s.roundsPlayed===1?'':'S'} · ${s.holes} HOLE${s.holes===1?'':'S'}</strong></div>`
+  +`<div class="ph-overview"><div class="ph-tiles">${tiles}</div><h4>RECENT ROUNDS</h4>${recent?`<div class="ph-rounds">${recent}</div>`:'<p class="note">No rounds yet. Finish a hole and it shows up here.</p>'}${unlock}</div>`
+  +preview;
+}
+// A PICTURE OF A COURSE, until there is a real one: a panel in its
+// landscape's two colours, named (the 1.0 saved courses shelf). Hidden
+// outside the 1.0 sheets.
+const coursePic=(biome,id)=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span class="course-pic"${id?` data-course="${escape(id)}"`:''} style="--p1:${ui.a1||'#4ade80'};--p2:${ui.a2||'#166534'}" aria-hidden="true"><span>${escape((b?.name||biome||'').toUpperCase())}</span></span>`;};
+// THE COURSE OF THE WEEK'S OWN BLOCKS (ui-menu-screens.js buildWeekly): the
+// picture with the week and the course's name, the four weeks before with the
+// main golfer's best on each, and the facts as rows.
+function weeklyBlocks(s,w,me,best,ever){
+ // ONE SCREEN (round 13, frame c-cotw): the picture with the week and the
+ // course's name, eight fact tiles beside it, the four weeks before along the
+ // foot, each with its picture and the main golfer's best. No long scroll.
+ const day=864e5,now=Date.now(),b=BIOMES[s.biome],plan=planCourse(s);
+ const earlier=[1,2,3,4].map(i=>{const d=new Date(now-i*7*day),k=weekKey(d),bb=BIOMES[weeklyBiome(d)];
+  return `<div class="wk-week" data-week-ago="${i}"><span class="sx-pic wk-week-pic"></span><span class="wk-week-cap"><strong>WEEK ${isoWeek(d).week}</strong><small>${escape((bb?.name||'').toUpperCase())} · ${me?.weekly?.[k]??'—'}</small></span></div>`;}).join('');
+ const toMonday=((8-new Date(now).getDay())%7)||7,next=BIOMES[weeklyBiome(new Date(now+toMonday*day))];
+ const tile=(k,v,sub='',hot=false)=>`<div class="wk-tile${hot?' hot':''}"><span>${k}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+ return `<div class="wk-hero"><span class="wk-tag">WEEK ${w.week} · ${escape((b?.name||s.biome).toUpperCase())}</span><strong>${escape(suggestCourseName(s).toUpperCase())}</strong></div>`
+  +`<div class="wk-earlier"><h4>EARLIER WEEKS</h4><div class="wk-weeks">${earlier}</div></div>`
+  +`<div class="wk-facts">`
+  +tile('HOLES',`${plan.holes.length} · PAR ${plan.par}`)
+  +tile('LENGTH',`${Math.round(plan.yards).toLocaleString()} YDS`)
+  +tile('BEST THIS WEEK',best??'—')
+  +tile('BEST ON ANY WEEK',ever??'—')
+  +tile('FIRST FINISH',best!=null?'DONE \u2713':`+${WEEKLY_XP.first} XP`)
+  +tile('BEAT YOUR BEST',`+${WEEKLY_XP.best} XP`)
+  +tile('FORMAT','STROKE PLAY')
+  +tile('NEXT COURSE',escape((next?.name||'').toUpperCase()),`IN ${toMonday} DAY${toMonday===1?'':'S'}`,true)
+  +`</div>`;
+}
 // A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
 // in a round waiting behind Continue, and in an open group editor. A golfer is
 // that profile by id, or -- in a save from before ids -- by the old name.
@@ -4426,11 +4898,24 @@ function updateMenuWeekly(){
  el.textContent=`Week ${w.week} · ${BIOMES[s.biome]?.name||s.biome} · stroke play${best?` · your best ${best}`:''}`;
 }
 function updateMenuProfile(){
- updateMenuWeekly();
+ updateMenuWeekly();drawMenuCard();
  const note=$('menuProfileNote'),m=mainProfile(profiles);if(!note)return;
  if(!m){note.textContent='Stats, rounds, handicap';return;}
  const h=profileSummary(m).handicap,others=profiles.profiles.length-1;
  note.textContent=(h.index===null?`${m.name} · stats and rounds`:`${m.name} · sim handicap ${hcpText(h.index)}`)+(others?` · +${others} player${others===1?'':'s'}`:'');
+}
+// THE MAIN MENU'S GOLFER CARD (phase 3): the main golfer's ball in its frame,
+// name, title and level, how far into the level, and the challenge of the
+// week. Nothing without a profile.
+function drawMenuCard(){
+ const el=$('menuCard');if(!el)return;
+ const m=mainProfile(profiles);if(!m){el.hidden=true;return;}
+ const l=looksOf(m),lv=levelOf(m.xp),wk=weeklyChallenge(),def=wk?challengeDef(wk.id):null;
+ const title=titleName(l.title)||badgeName(lv.level),share=lv.need?Math.min(1,lv.into/lv.need):0;
+ el.hidden=false;
+ el.innerHTML=`<div class="rh-mc-top"><span class="rh-mc-pic">${framedPicture(l.ball,l.frame,'rh-ballpic')}</span><div><strong>${escape(m.name.toUpperCase())}</strong><small>${escape(title.toUpperCase())} <b>LV ${lv.level}</b></small></div></div>`
+  +`<div class="rh-mc-xp"><div><span>LEVEL ${lv.level}</span><span>${lv.into.toLocaleString()} / ${lv.need.toLocaleString()} XP</span></div><i><b style="width:${(share*100).toFixed(1)}%"></b></i></div>`
+  +(def?`<div class="rh-mc-week"><small>CHALLENGE OF THE WEEK</small><strong>${escape(String(def.name||'').toUpperCase())}</strong></div>`:'');
 }
 // "REPLAY THIS COURSE": the same ground, a fresh card. A course comes back from
 // the settings it was grown from, an endless run from its seed; the group and
@@ -4494,6 +4979,10 @@ function showWelcome(){
  };
 }
 function renderPanel(name,content){
+ // #drawerContent outlives every sheet, so the marks a 1.0 layout leaves on it
+ // (lb-root, sx-root, st-root...) are cleared before the next sheet draws: Help
+ // once opened blank after Play, under Play's rule hiding the old sections.
+ for(const c of [...content.classList])if(c.endsWith('-root'))content.classList.remove(c);
  if(name==='profile'){renderProfile(content);return;}
  if(name==='challenge'){renderChallengeResult(content);return;}
  if(name==='library'){
@@ -4506,7 +4995,7 @@ function renderPanel(name,content){
   // is how every other list action here works; the tab you were on is kept.
   const card=c=>renamingCourse===c.id
    ?`<div class="course-card"><label class="field course-rename">Rename this course<input id="renameCourseInput" maxlength="${MAX_NAME}" value="${escape(c.name)}"></label><div class="course-actions"><button class="secondary" data-rename-save="${c.id}">Save name</button><button class="secondary" data-rename-cancel="1">Cancel</button></div></div>`
-   :`<div class="course-card"><div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Get code</button><button data-remove="${c.id}">Delete</button></div></div>`;
+   :`<div class="course-card">${coursePic(c.settings.biome,c.id)}<div class="course-meta"><strong>${escape(c.name)}</strong><span>${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)} · ${Math.round(c.settings.courseYards)} yd · seed ${escape(c.settings.seed)}</span>${c.generator!==GENERATOR_VERSION?'<em class="course-flag">Built by a different generator — its landscape may not match how it was designed.</em>':''}</div><div class="course-actions"><button data-play="${c.id}">Play</button><button data-rename="${c.id}">Rename</button><button data-share="${c.id}">Copy code</button><button data-remove="${c.id}">Delete</button></div></div>`;
   content.innerHTML=`<p>Save a landscape you like, then play it again later or pass it to someone else. A course keeps its landscape only — players, format and tees are chosen when you play, so the same course suits any group.</p>
   <p class="field-error" id="libraryError"></p>
   <h3>Your courses</h3>
@@ -4614,6 +5103,11 @@ function renderPanel(name,content){
   // bounds, units and help text. Only the handful of controls that are not a
   // plain slider are written out by hand.
   const hint=k=>`<button type="button" class="hint" data-tip="${k}" aria-expanded="false" aria-controls="tip-${k}" aria-label="What ${FIELD[k].label} changes">i</button>`;
+  // THE i GOES WITH ITS NAME (the owner, 18 October 2026): the setting's name and
+  // its i are one piece, so the i sits right after the words in every kind of
+  // row. Loose, the i was a row item of its own and landed mid-row in a list
+  // row and beside the slider in a slider row. (PROJECT_HANDOFF *Info icons*.)
+  const named=(text,k)=>`<span class="field-name">${text}${hint(k)}</span>`;
   const tip=k=>`<p class="tip" id="tip-${k}" hidden>${escape(FIELD[k].tip)}</p>`;
   // Every kind the schema can hold renders here. Naming one toggle as a special
   // case is how `residentialOB` shipped as a 0-100 slider that nothing read.
@@ -4627,20 +5121,20 @@ function renderPanel(name,content){
   // appear underneath a heading that supplies its missing noun. Move a field
   // out of its box and it goes back to saying what it is.
   const control=(k,short)=>{const f=FIELD[k],text=short&&f.short?f.short:f.label;
-   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${text}</label>${hint(k)}`;
+   if(f.kind==='toggle')return `<label class="toggle"><input id="${k}" type="checkbox" ${settings[k]?'checked':''}> ${named(text,k)}</label>`;
    // A choice is a list, not a slider. Without this branch a choice field with no
    // bespoke renderer above fell through to the range control below and came out
    // as a slider with no min, no max and a word where its value should be.
-   if(f.kind==='choice')return `<label class="field">${text}${hint(k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
+   if(f.kind==='choice')return `<label class="field">${named(text,k)}<select id="${k}">${f.options.map(o=>`<option value="${o}" ${String(settings[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></label>`;
    // A field with `warn` in the schema turns red past its threshold, and says
    // why in a bubble that pops out over the panel when the slider is let go
    // (wired below, after the panel is drawn). Opening the panel on a value
    // already past it shows the red alone.
    const warned=f.warn&&settings[k]>f.warn.above;
-   return `<label class="field${f.warn?' warns':''}${warned?' danger':''}">${text}${hint(k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" hidden>${escape(f.warn.text)}</span>`:''}</label>`;};
+   return `<label class="field${f.warn?' warns':''}${warned?' danger':''}">${named(text,k)}<output id="${k}Value">${settings[k]}${f.unit||''}</output><input type="range" id="${k}" aria-label="${f.label}" min="${bound(f.min,settings)}" max="${bound(f.max,settings)}" value="${settings[k]}" step="${f.step||1}" data-unit="${f.unit||''}">${f.warn?`<span class="warn-note" id="warn-${k}" role="status" hidden>${escape(f.warn.text)}</span>`:''}</label>`;};
   const holes=settings.holes===18?18:9;
   const custom={
-   holes:()=>`<label class="field">${FIELD.holes.label}${hint('holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
+   holes:()=>`<label class="field">${named(FIELD.holes.label,'holes')}<select id="courseHoles"><option value="9" ${holes===9?'selected':''}>9 holes</option><option value="18" ${holes===18?'selected':''}>18 holes</option></select></label>`,
    // ONE BOX. The slider set a number, a second field set the same number
    // again, and a third element reported what that number produced -- three
    // controls for one decision, with the answer furthest from the hand that
@@ -4648,13 +5142,13 @@ function renderPanel(name,content){
    // now, and the card is the whole card rather than a par count.
    courseYards:()=>`<div class="course-plan" id="coursePlan" aria-live="polite">
     <div class="plan-summary" id="planSummary"></div>
-    <label class="field plan-slider">${FIELD.courseYards.label}${hint('courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
+    <label class="field plan-slider">${named(FIELD.courseYards.label,'courseYards')}<output id="courseYardsValue">${settings.courseYards} yd</output><input type="range" id="courseYards" aria-label="${FIELD.courseYards.label}" min="${holes*110}" max="${holes*470}" value="${settings.courseYards}" step="10" data-unit=" yd"></label>
     <label class="field plan-exact">Exact yardage<input type="number" id="courseYardsNumber" min="${holes*110}" max="${holes*470}" step="10" value="${settings.courseYards}"></label>
     <div class="plan-card-wrap"><table class="plan-card" id="planCard"></table></div>
    </div>`,
-   seed:()=>`<label class="field">${FIELD.seed.label}${hint('seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
-   biome:()=>`<p class="control-label">${FIELD.biome.label}${hint('biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
-   footprint:()=>`<label class="field">${FIELD.footprint.label}${hint('footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
+   seed:()=>`<label class="field">${named(FIELD.seed.label,'seed')}<input id="seed" maxlength="50" value="${escape(settings.seed)}"></label><button class="secondary field-action" id="randomSeed"><i data-lucide="shuffle"></i> Surprise me</button>`,
+   biome:()=>`<p class="control-label">${named(FIELD.biome.label,'biome')}</p><div class="option-grid">${Object.entries(BIOMES).map(([key,b])=>`<button class="option ${studioBiome===key?'active':''}" data-biome="${key}"><span class="swatch" style="--swatch:${b.rough}"></span>${b.name}</button>`).join('')}</div>`,
+   footprint:()=>`<label class="field">${named(FIELD.footprint.label,'footprint')}<select id="footprint">${Object.entries(FOOTPRINTS).map(([v,label])=>`<option value="${v}" ${settings.footprint===v?'selected':''}>${label}</option>`).join('')}</select></label><div class="footprint-icons">${Object.entries(FOOTPRINTS).map(([key,label])=>`<button type="button" data-footprint="${key}" aria-label="${label} layout" aria-pressed="${settings.footprint===key}" title="${label}">${footprintIcon(key)}<span>${label}</span></button>`).join('')}</div>`,
   };
   // FIELDS THAT ARE ONE DECISION GO IN ONE BOX. The panel renders a card per
   // schema entry, which is right for most of them and wrong wherever a control
@@ -4711,7 +5205,9 @@ function renderPanel(name,content){
    }).join('');
    return `<h3>${label}</h3>${note?`<p class="research-label">${note}</p>`:''}${body}`;
   };
-  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape a landscape, then press Regenerate on the bar above to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p>${studioSetup?'<button class="primary" data-panel-action id="growStudio"><i data-lucide="mountain"></i> Grow this landscape</button>':''}<div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
+  // ONE SCREEN, from the menu or in the studio (round 13): the same words and
+  // the same Grow this landscape (R) -- in the studio it regrows this one.
+  content.innerHTML=`<p>${studioSetup?'Choose the landscape you want, then grow it. Nothing is built until you say so.':'Shape the landscape, then grow it again to see it. Nothing rebuilds on its own, because a course takes a few seconds to grow.'}</p><button class="primary" data-panel-action id="growStudio" aria-label="Grow this landscape"><i data-lucide="mountain"></i> Grow this landscape <kbd>R</kbd></button><div class="split"><button class="secondary" id="openLibrary"><i data-lucide="library"></i> Saved courses</button><button class="secondary" id="toggleTips">Show all descriptions</button></div><p class="field-error" id="studioError"></p>${CATEGORIES.map(group).join('')}`;
   content.querySelectorAll('.hint').forEach(b=>b.onclick=e=>{e.preventDefault();const box=$('tip-'+b.dataset.tip),show=box.hidden;box.hidden=!show;b.setAttribute('aria-expanded',String(show));});
   // Past a field's `warn.above` (the green slope slider, past 75%): red while
   // dragging, then a bubble saying why, and a toast once, when the slider is
@@ -4754,11 +5250,14 @@ function renderPanel(name,content){
   $('toggleTips').onclick=()=>{tipsOpen=!tipsOpen;content.querySelectorAll('.tip').forEach(t=>t.hidden=!tipsOpen);content.querySelectorAll('.hint').forEach(b=>b.setAttribute('aria-expanded',String(tipsOpen)));$('toggleTips').textContent=tipsOpen?'Hide all descriptions':'Show all descriptions';};
   $('openLibrary').onclick=()=>openPanel('library');
   // Setup only: apply what was chosen, then build once and enter the studio.
-  if(studioSetup)$('growStudio').onclick=()=>{if(!applyStudioSettings())return;studioSetup=false;closePanel();enterStudio();};
+  // In the studio, regrow: regenerateStudio reads the controls before its first
+  // await, so the sheet can close straight after.
+  $('growStudio').onclick=()=>{if(studioSetup){if(!applyStudioSettings())return;studioSetup=false;closePanel();enterStudio();}else{regenerateStudio();closePanel();}};
   // Any change to a generation control marks the landscape stale; nothing
   // regenerates on its own, because a rebuild is seconds of frozen tab.
   content.addEventListener('input',markStudioDirty);content.addEventListener('change',markStudioDirty);
-  document.querySelectorAll('[data-biome]').forEach(b=>b.onclick=()=>{studioBiome=b.dataset.biome;markStudioDirty();document.querySelectorAll('[data-biome]').forEach(x=>x.classList.toggle('active',x===b));});
+  // The sheet wears the colours of the landscape being shaped (round 13).
+  document.querySelectorAll('[data-biome]').forEach(b=>b.onclick=()=>{studioBiome=b.dataset.biome;lobbyBiome=studioBiome;applyHudPalette();markStudioDirty();document.querySelectorAll('[data-biome]').forEach(x=>x.classList.toggle('active',x===b));});
   // THE CARD BEFORE THE COURSE. `planScorecard` runs the same hole skeleton
   // the builder runs, over the same seeded stream, so every yardage here is
   // the yardage that gets built -- checked to within the rounding.
@@ -4814,12 +5313,12 @@ function renderPanel(name,content){
   // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
   // just the group and the format, and what it is.
   const s=weeklySettings(),w=isoWeek(),me=mainProfile(profiles),best=me?.weekly?.[weekKey()],ever=bestEverWeekly(me);
-  content.innerHTML=`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
+  content.innerHTML=weeklyBlocks(s,w,me,best,ever)+`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
    +(me?`<p class="note">${escape(me.name)}: best this week ${best??'—'} · best on any week's course ${ever??'—'}. The first round you finish each week earns ${WEEKLY_XP.first} XP, and beating your best that week ${WEEKLY_XP.best} more.</p>`:'')
    +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
    +`<p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="weeklyGo">Play the course of the week <i data-lucide="arrow-right"></i></button>`;
+   +`<button class="primary" data-panel-action id="weeklyGo" aria-label="Play the course of the week">Play <small>${escape(suggestCourseName(weeklySettings()).toUpperCase())}</small></button>`;
   const formatNote=wireFormatFields();
   groupEditor('playerRows',round.players,formatNote);
   $('weeklyGo').onclick=async()=>{
@@ -4839,7 +5338,10 @@ function renderPanel(name,content){
    +`<h3>Format &amp; tees</h3>${formatFields({match:false})}`
    +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
    +`<p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="endlessGo">Start an endless run <i data-lucide="arrow-right"></i></button>`;
+   // The run's goal (round 13): none, or Sudden death -- the challenge's own
+   // goal, a real run that ends at the first bogey (round-goals.js).
+   +`<label class="field">Goal<select id="endlessGoal"><option value="" ${endlessGoal?'':'selected'}>None · play as long as you like</option><option value="suddendeath" ${endlessGoal==='suddendeath'?'selected':''}>Sudden death · out at your first bogey</option></select></label>`
+   +`<button class="primary" data-panel-action id="endlessGo" aria-label="Start an endless run">Start the run <small>HOLE 1</small></button>`;
   const formatNote=wireFormatFields();
   groupEditor('playerRows',round.players,formatNote);
   $('endlessGo').onclick=async()=>{
@@ -4847,9 +5349,11 @@ function renderPanel(name,content){
    // Validated HERE rather than inside `buildEndless`: the overlay must not go
    // up over a group that is about to be rejected.
    let group;
-   try{group=readGroup();new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
+   endlessGoal=$('endlessGoal')?.value||'';
+   try{group={...readGroup(),...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
    endlessSetup=false;closePanel();
-   await startEndless(group);
+   if(endlessGoal)goalSummary=null;
+   await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
    toast('Endless: hole out and the next one grows.');
   };
  }else if(name==='round'&&(rangeSetup||rangeMode)){
@@ -4862,17 +5366,36 @@ function renderPanel(name,content){
   content.innerHTML=`<p>${live
    ? 'Change who is practising. This applies straight away and does not touch the shots already recorded.'
    : 'Set your group and where the green sits, then open the range. Nothing is built until you say so.'}</p>`
-   +`<h3>The green</h3><label class="field">Green distance (yd)<input id="rangeSetupGreen" type="number" min="${GREEN_RANGE[0]}" max="${GREEN_RANGE[1]}" step="0.33" value="${Math.round(rangeGreenYards(settings))}"></label>`
-   +`<h3>Who is hitting</h3><div class="players-list" id="playerRows"></div>`
+   // ROUND 14 (frame c-range2): two steps, Golfers and The range -- where to
+   // hit from, the targets, and the last session (ui-lobby.js buildRangeSetup).
+   // The range's own settings are kept on the device (range.js), so they are
+   // set here before it opens; Hit from is applied once it has.
+   +`<section class="rs-golfers"><h3>Who is hitting</h3><div class="players-list" id="playerRows"></div>`
    +`<p class="note">Each golfer's shots are recorded separately. The card shows who is up; click it to change.</p>`
-   +`<p class="field-error" id="roundError"></p>`
+   +`<p class="field-error" id="roundError"></p></section>`
+   +`<section class="rs-range"><div class="rs-col"><h3>Hit from</h3><div class="rs-hit" role="group" aria-label="Hit from">${[['mats','The mats','Full shots at the greens and flags'],['chip','Short game','Chips and pitches to the short-game green'],['putt','Putting','Putts on a green you shape']].map(([k,t,w])=>`<button type="button" class="rs-hit-pick${rangeSetupHit===k?' on':''}" data-hit="${k}" aria-pressed="${rangeSetupHit===k}"><strong>${t}</strong><small>${w}</small></button>`).join('')}</div>`
+   +`<div class="rs-note"><span>The range</span><p>500 yards deep and dead flat, the same every visit, so shots a week apart compare.</p></div></div>`
+   +`<div class="rs-col"><h3>Targets</h3>${slider('rangeSetupGreen','Centre green',Math.round(rangeGreenYards(settings)),GREEN_RANGE[0],GREEN_RANGE[1],' yd',5)}`
+   +`<label class="field">Slope<select id="rangeSetupSlope" aria-label="Centre green slope">${SLOPES.map(k=>`<option value="${k}"${(rangeGreensPref.centre?.slope??'flat')===k?' selected':''}>${SLOPE_NAMES[k]}</option>`).join('')}</select></label>`
+   +`${slider('rangeSetupContour','Contour',rangeGreensPref.centre?.contour??CONTOUR.def??40,CONTOUR.min,CONTOUR.max,'',CONTOUR.step)}`
+   +`${slider('rangeSetupLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}</div>`
+   +`<div class="rs-col"><h3>${rangeShots.length?`This session · ${rangeShots.length} ball${rangeShots.length===1?'':'s'}`:'Last session'}</h3>${rangeShots.length?sessionRows(clubTable(rangeShots)).slice(0,6).map(r=>`<div class="rs-club"><b>${escape(r.club)}</b><span>${r.n}</span><b>${escape(r.carry)}</b><span>${escape(r.spread)}</span></div>`).join(''):'<p class="note">No balls hit yet on this visit.</p>'}`
+   +`<div class="rs-note"><span>Save a session</span><p>Every ball is kept. Export the session as a spreadsheet or a PDF from the range controls (Tab).</p></div></div></section>`
    +`<button class="primary" data-panel-action id="rangeGo">${live?'Apply to this session':'Open the driving range'} <i data-lucide="arrow-right"></i></button>`;
   groupEditor('playerRows',round.players);
+  for(const b of content.querySelectorAll('[data-hit]'))b.onclick=()=>{rangeSetupHit=b.dataset.hit;for(const x of content.querySelectorAll('[data-hit]')){x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));}};
   $('rangeGo').onclick=()=>{
    let players;
    try{players=readDraft();}catch(e){$('roundError').textContent=e.message;return;}
    const green=Math.min(GREEN_RANGE[1],Math.max(GREEN_RANGE[0],Number($('rangeSetupGreen').value)||DEFAULT_GREEN_YARDS));
+   // The targets: kept on the device, read when the range opens.
+   const slope=$('rangeSetupSlope')?.value,contour=Number($('rangeSetupContour')?.value),hit=rangeSetupHit;
+   const shape={...(slope?{slope}:{}),...(Number.isFinite(contour)?{contour}:{})};
+   shotLinePref=saveShotLines(Number($('rangeSetupLines')?.value??shotLinePref));
    if(live){
+    view.setShotHistory?.(visibleTrails());
+    if(Object.keys(shape).length&&(shape.slope!==rangeGreensPref.centre?.slope||shape.contour!==rangeGreensPref.centre?.contour))setRangeSetup('centre',shape);
+    if(hit!==rangeStation.mode)setRangeStation({mode:hit});
     // APPLIED IN PLACE. Shots already recorded keep the index they were hit
     // under, and the list shows the name recorded with them, so dropping a
     // player never silently swallows their session.
@@ -4886,7 +5409,8 @@ function renderPanel(name,content){
    }else{
     rangeSetup=false;closePanel();
     try{round.setPlayers(players,course?.tees);}catch{ /* a fresh Round is built below anyway */ }
-    enterRange({green});
+    if(Object.keys(shape).length){rangeGreensPref=saveRangeSetup({...rangeGreensPref,centre:{...rangeGreensPref.centre,...shape}});settings.rangeCentre=rangeGreensPref.centre;}
+    enterRange({green}).then(()=>{if(hit!=='mats')setRangeStation({mode:hit});});
    }
   };
  }else if(name==='round'){
@@ -5328,14 +5852,15 @@ function renderPanel(name,content){
   if(sk)status=skinsStatus(round.players.map(p=>p.name),sk,{finished:round.finished,holes:round.holes});
   const skinCell=g=>{const e=sk.perHole[g];return !e?'<td>—</td>':e.winner===null?'<td class="skin-carry" title="Tied: carried to the next hole">→</td>':`<td title="${escape(round.players[e.winner].name)}"><span class="player-dot" style="background:${playerColour(e.winner)}"></span>${e.value}</td>`;};
   const skinsRow=sk?`<tr class="skins-row"><td>Skins</td>${pars.map((_,h)=>skinCell(from+h)).join('')}<td>${sk.won.reduce((a,b)=>a+b,0)}</td><td>${sk.carry?`${sk.carry} carried`:''}</td></tr>`:'';
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h;return `<td>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
+  if(round.finished&&hud1&&round.mode!=='match'){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();}
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']]),...(sk?[['Skins','',...allPars.map((_,h)=>{const e=sk.perHole[h];return !e?'':e.winner===null?'carried':`${round.players[e.winner].name} ${e.value}`;}),sk.won.reduce((a,b)=>a+b,0),sk.carry?`${sk.carry} carried`:'']]:[])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
-  content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Validate & play sample shot</button>`;
-  $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
+  content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
+  $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();monitorSetup?.paint();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
-  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><div class="help-shortcuts"><kbd>Click</kbd><span>Aim at a point on the course or map</span><kbd>← / →</kbd><span>Fine tune your aim</span><kbd>↑ / ↓</kbd><span>Aim further or shorter</span><kbd>Space</kbd><span>Swing: start, set the distance, strike</span><kbd>S / W / X</kbd><span>Curve, height and spin</span><kbd>Q / E</kbd><span>Change club</span><kbd>C</kbd><span>Toggle overview camera</span><kbd>Enter</kbd><span>Finish the shot animation</span><kbd>Escape</kbd><span>Close a panel</span></div><h3>Explore the course</h3><p>Press V or the bird icon for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
+  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><div class="help-shortcuts"><kbd>Click</kbd><span>Aim at a point on the course or map</span><kbd>← / →</kbd><span>Fine tune your aim</span><kbd>↑ / ↓</kbd><span>Aim further or shorter</span><kbd>Space</kbd><span>Swing: start, set the distance, strike</span><kbd>S / W / X</kbd><span>Curve, height and spin</span><kbd>Q / E</kbd><span>Change club</span><kbd>C</kbd><span>Toggle overview camera</span><kbd>Enter</kbd><span>Finish the shot animation</span><kbd>Escape</kbd><span>Close a panel</span></div><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
   // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
   //
   // It sits in Help because that is where a person goes when something is
@@ -5367,6 +5892,61 @@ function renderPanel(name,content){
  // turned two tall panels into one long scroll -- and a mode dialogue that
  // scrolls where its neighbours tab reads as a different, worse screen.
  groupPanelContent(content,name==='round'||name==='library',name);
+ // The 1.0 lobby: the same controls, moved into the mockup's three columns,
+ // wearing the colours of the course being chosen (ui-lobby.js).
+ lobbyBiome=null;
+ // Launch monitor setup the same way: three steps and the status (ui-monitor-setup.js).
+ monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
+ // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
+ if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
+ // The studio's settings, from the menu or in the studio -- one screen:
+ // categories, rows, what has changed, the landscapes as pictures, in the
+ // colours of the landscape being shaped (ui-studio.js).
+ studioSheet=name==='course'&&content.id==='drawerContent'
+  ?buildStudioSheet(content,{changes:studioChanges,facts:()=>({holes:Number($('courseHoles')?.value)||settings.holes,yards:Number($('courseYards')?.value)||settings.courseYards,seed:$('seed')?.value||settings.seed}),
+   setup:()=>studioSetup,landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'STUDIO-'+key,biome:key,holes:9}})),pictures:cardPictures}):null;
+ if(studioSheet){lobbyBiome=studioBiome||settings.biome;applyHudPalette();}
+ // Challenges, the course of the week and saved courses, the same way
+ // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
+ if(content.id==='drawerContent'&&appMode!=='studio'){
+  if(name==='round'&&challengeSetup)buildChallenges(content);
+  else if(name==='round'&&weeklySetup){buildWeekly(content,{step:weeklyStep,onStep:i=>{weeklyStep=i;}});const hero=content.querySelector('.wk-hero');const day=864e5;if(hero)cardPictures([{el:hero,settings:weeklySettings()},...[...content.querySelectorAll('[data-week-ago] .wk-week-pic')].map(el=>({el,settings:weeklySettings(new Date(Date.now()-Number(el.closest('[data-week-ago]').dataset.weekAgo)*7*day))}))],720,360);}
+  else if(name==='library')buildLibrary(content,{codeOf:id=>exportCourse(findCourse(id)),onNew:()=>{closePanel();openStudioSetup();},pick:libraryPick,onPick:id=>{libraryPick=id;}});
+  // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
+  if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
+ }
+ // Keys & help: topics, the page, its keys (round 14, ui-menu-screens.js).
+ if(name==='help'&&content.id==='drawerContent')buildHelp(content,{keys:HELP_KEYS});
+ // The driving range in two steps (ui-lobby.js), once the panel has its sections.
+ if(name==='round'&&(rangeSetup||rangeMode))buildRangeSetup(content,{step:rangeSetupStep,onStep:i=>{rangeSetupStep=i;}});
+ if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup){
+  // Endless, step by step (ui-lobby.js): the landscapes as drawn pictures, the
+  // goal, the golfers, the format; the best run from the main golfer's history.
+  const me=mainProfile(profiles),runs=(me?.rounds||[]).filter(r=>r.endless).map(r=>({r,t:roundTotals(r)})).filter(x=>x.t.played>0).sort((a,b)=>b.t.played-a.t.played||a.t.rel-b.t.rel);
+  const top=runs[0];
+  buildEndlessSetup(content,{
+   landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),
+   landscape:endlessLandscape,onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},
+   best:top?{line:`${top.t.played} HOLE${top.t.played===1?'':'S'} · ${toParText(top.t.rel)}`,sub:profileWhen(top.r.started).toUpperCase()}:null,
+   pictures:cardPictures,step:endlessStep,onStep:i=>{endlessStep=i;},
+  });
+ }
+ if(name==='round'){
+  // Play, step by step (ui-lobby.js): every saved course and the course of the
+  // week as cards with pictures, each with its biome, holes, par and length.
+  const biomeName=b=>(BIOMES[b]?.name||b||'').toUpperCase();
+  const lineOf=st=>{const p=planCourse(st);return `${biomeName(st.biome)} · ${p.holes.length} HOLES · PAR ${p.par} · ${Math.round(p.yards).toLocaleString()} YDS`;};
+  const ws=weeklySettings(),wk=isoWeek();
+  buildLobby(content,{
+   courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
+   weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
+   onWeekly:()=>{lobbyStep=0;weeklySetup=true;openPanel('round');},
+   pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
+   onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();},
+   golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
+    return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;},
+  });
+ }
  wireSliders(content);icon();
 }
 
@@ -5581,7 +6161,11 @@ const MONITOR_WORDS={
 // separately for each (shot-data.js) -- except on a phone, which has one set.
 const playMode=()=>armed?'monitor':'hand';
 let gridArmed=false;
+// The ball light turning Ready while armed plays the monitor-ready chug, once
+// per change (1.0 interface sounds, 17 October 2026).
+let lastMonState=null;
 function drawMonitorState(state){
+ if(state==='green'&&lastMonState!=='green'&&armed)gameAudio?.ui?.('ready');lastMonState=state;
  const box=$('monState'),win=$('monitorPanel');if(!box||!win)return;
  // THE SHOT LINE GOES WITH THE WINDOW YOU PLAY FROM (*THE SHOT PANEL*): under
  // the light and its words in the monitor's window, under the monitor strip --
@@ -5589,7 +6173,7 @@ function drawMonitorState(state){
  if(armed!==gridArmed){
   gridArmed=armed;layout?.setVariant(playMode());
   const line=$('shotPanel');
-  if(line)(armed?$('monText'):box).after(line);
+  if(line)(armed&&!hud1?$('monText'):box).after(line);
  }
  // Arming switches to the monitor's own set of tiles, and their places.
  syncTileSet();
@@ -5608,7 +6192,6 @@ function drawMonitorState(state){
    :'Armed is off: the Swing Meter is yours';
  }
  for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armSwitch;el.disabled=!monitorConnected;}
- $('clubSource').textContent='';
 }
 // WHERE THE BRIDGE IS, remembered per device once a connection succeeds. With
 // nothing remembered: a page the bridge served itself -- plain http, which is
@@ -5635,7 +6218,7 @@ function connectBridge(url){
  try{const parsed=new URL(url);if(!['ws:','wss:'].includes(parsed.protocol))throw Error('Use a ws:// or wss:// bridge address.');ws=new WebSocket(url);const socket=ws;const timer=setTimeout(()=>{if(socket.readyState===0){socket.close();toast('Bridge timed out. Start the local bridge, then reconnect.');}},6000);
  ws.onopen=()=>{clearTimeout(timer);seenShots.clear();try{localStorage.setItem(BRIDGE_KEY,url);}catch{}setConnection(true);sendPlayer();if(panel==='monitor')openPanel('monitor');toast('Bridge connected. Arm the monitor when you are ready.');};
  ws.onclose=()=>{clearTimeout(timer);if(ws===socket){ws=null;setConnection(false);if(panel==='monitor')openPanel('monitor');}};ws.onerror=()=>toast('Could not reach the bridge. Check that it is running on this computer.');
- ws.onmessage=e=>{let msg;try{msg=JSON.parse(e.data);if(msg.type==='status'){monitorDevice=msg.deviceConnected?(msg.device??{ready:false,ballDetected:false}):null;updateHUD();if(panel==='monitor')$('monitorStatus').textContent=msg.deviceConnected?'Launch-monitor connector connected.':'Bridge connected; waiting for a device connector.';return;}if(msg.type==='shot'){const d=parseLaunchMessage(msg.payload),key=d?.device+':'+d?.id;let accepted=false,reason='Monitor is not armed.';if(!d)reason='No ball data.';else if(seenShots.has(key))reason='Duplicate shot.';else if(armed){accepted=takeShot(d);reason=accepted?'Shot accepted.':'Simulator busy; retry after current shot or hole.';if(accepted){seenShots.add(key);if(seenShots.size>1000)seenShots.delete(seenShots.values().next().value);}}socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted,reason}));if(!accepted)toast(reason);sendPlayer();}}catch(error){if(msg?.requestId)socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted:false,reason:error.message}));toast('Invalid monitor message: '+error.message);}};
+ ws.onmessage=e=>{let msg;try{msg=JSON.parse(e.data);if(msg.type==='status'){monitorDevice=msg.deviceConnected?(msg.device??{ready:false,ballDetected:false}):null;updateHUD();if(panel==='monitor'){$('monitorStatus').textContent=msg.deviceConnected?'Launch-monitor connector connected.':'Bridge connected; waiting for a device connector.';monitorSetup?.paint();}return;}if(msg.type==='shot'){const d=parseLaunchMessage(msg.payload),key=d?.device+':'+d?.id;let accepted=false,reason='Monitor is not armed.';if(!d)reason='No ball data.';else if(seenShots.has(key))reason='Duplicate shot.';else if(armed){accepted=takeShot(d);reason=accepted?'Shot accepted.':'Simulator busy; retry after current shot or hole.';if(accepted){seenShots.add(key);if(seenShots.size>1000)seenShots.delete(seenShots.values().next().value);}}socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted,reason}));if(!accepted)toast(reason);sendPlayer();}}catch(error){if(msg?.requestId)socket.send(JSON.stringify({type:'ack',requestId:msg.requestId,accepted:false,reason:error.message}));toast('Invalid monitor message: '+error.message);}};
  }catch(e){toast(e.message);ws=null;}
 }
 function followClub(){
@@ -5657,7 +6240,7 @@ function bind(){
  // so it was already soft before the green tile was magnified on top of it.
  // Capped at 3 because the gain above that is invisible and the fill cost is
  // not. `mapPixels` divides by the ratio it finds, so pointer input follows.
- new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1),3),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
+ new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1)*(hud1?Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1:1),4),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
  // The course card's menu button is gone from every mode -- the card reports the
  // hole, and a second way into the menu sitting on top of it was clutter beside
  // the nav that already does the job.
@@ -5716,11 +6299,11 @@ function bind(){
   const lift=()=>{pending=0;const bar=$('studioBar'),d=$('drawer');
    bar.classList.remove('compact');
    let room='';
-   if(!bar.hidden&&!d.hidden&&d.dataset.panel==='course'&&d.offsetHeight){
-    const box=d.getBoundingClientRect(),k=box.height/d.offsetHeight||1;
-    const block=box.top-(parseFloat(getComputedStyle(d).top)||0)*k;
-    room=Math.round(($('world').getBoundingClientRect().top-block)/k+bar.offsetHeight+28)+'px';
-   }
+   // RETIRED IN ROUND 13: the settings no longer leave a strip for the bar.
+   // On every screen they are the whole-screen sheet with their own Grow this
+   // landscape, and the bar steps aside while any sheet is open (ui-sheets.css,
+   // round-hud.css); `room` stays empty, which also clears a strip an older
+   // build left on the element.
    if(d.style.top!==room)d.style.top=room;
    if(bar.hidden)return;
    const by=d.hidden?0:d.offsetHeight;
@@ -5773,7 +6356,7 @@ function bind(){
  };
  $('replayShot').onclick=()=>replayShot();
  for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']])
-  $(id).onclick=()=>{view.config[key]=!view.config[key];view.setGreenReading();updateHUD();save();};
+  $(id).onclick=()=>{gameAudio?.ui?.('toggle');view.config[key]=!view.config[key];view.setGreenReading();updateHUD();save();};
 $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;const pristine=round.strokes.every(n=>n===0)&&Object.values(round.scrambleShots).every(n=>n===0)&&!round.candidates.length;round.tee=$('activeTee').value;if(pristine){round.teePlaced=false;round.placeTee(course.tees);setUpTurn();}else{updateHUD();toast('Tee preference saved for the next hole.');}save();};$('pickPrev').onclick=()=>stepPick(-1);$('pickNext').onclick=()=>stepPick(1);
  $('reliefTake').onclick=()=>{const o=reliefList[reliefChoice];if(o)takeReliefOption(o);};
  $('reliefCloser').onclick=()=>moveReliefBack(-10*YARD);$('reliefFurther').onclick=()=>moveReliefBack(10*YARD);
@@ -5789,7 +6372,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   e.preventDefault();e.stopImmediatePropagation();
  },true);
  $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
- $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{layout.reset();resetTilePlaces();toast('Panels put back where they started.');};$('toolsButton').onclick=openToolsBox;$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
+ $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={
@@ -6017,7 +6600,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    ({offset,past})=>window.lab.batch({feet:options.feet??10,offsets:[offset],pasts:[past],bearings:[options.bearing??0]})[0].holed,
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
-  state:()=>({inFlight:!!flight,
+  state:()=>({inFlight:!!flight,canSwing:canSwing(),pinAt:course?.pin?{x:course.pin.x,z:course.pin.z}:null,ballAt:round?.position?{x:round.position.x,z:round.position.z}:null,
    // THE SWING IN PROGRESS, on the input clock (`event.timeStamp`): when it
    // started and how long the marker takes per bar length, so the smoke test can
    // time a tap the way a player does -- on the clock, not on a frame, which on a
@@ -6244,29 +6827,17 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
  };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuChallenges').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}challengeSetup=true;openPanel('round');};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}weeklySetup=true;openPanel('round');};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
- $('aimAtPin').onclick=()=>{if(!flight)setAimPoint(course.pin);};$('aimRange').oninput=()=>{if(flight)return;touchAim();rangePlaced=true;const value=Number($('aimRange').value);if(!Number.isFinite(value)||value<=0)return;aimRange=clamp(value,.1,2000)*YARD;updateAim(false);};$('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
- holdToRepeat($('aimLeft'),n=>nudgeAim(-1,n));holdToRepeat($('aimRight'),n=>nudgeAim(1,n));
+ $('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));
  $('padPin').onclick=()=>{if(canNudgeAim())setAimPoint(course.pin);};
  $('mapExpand').onclick=()=>setAimView(!aimViewOpen);$('aimViewDone').onclick=()=>setAimView(false);
- $('holeFlyover').onclick=()=>tour?stopTour():startTour();
- // The tools button had no handler at all: openToolsBox existed and nothing
- // ever called it, so clicking Tools did nothing in any mode.
- $('toolsButton').onclick=openToolsBox;
- if($('rangeControls'))$('rangeControls').onclick=()=>{if(popups?.isOpen('range'))closeRangeBox();else openPanel('range');};
- $('playerView').onclick=()=>cameraMode('player');$('freeView').onclick=()=>cameraMode(view.config.mode==='free'?'player':'free');$('exitExplorer').onclick=()=>cameraMode('player');$('exploreHole').onchange=()=>{const hole=Number($('exploreHole').value);stopTour();view.flyToHole(hole);updateExplorer();};$('overview').onclick=()=>cameraMode(view.config.mode==='overview'?'player':'overview');
- // The green view had no button of its own and was reachable only from a picker
- // in the camera settings -- a view you are looking THROUGH, hidden inside a
- // panel of things you set once. It joins the other three cameras, and toggles
- // back the same way they do.
- $('greenView').onclick=()=>cameraMode(view.config.mode==='green'?'player':'green');
+ $('exitExplorer').onclick=()=>cameraMode('player');$('exploreHole').onchange=()=>{const hole=Number($('exploreHole').value);stopTour();view.flyToHole(hole);updateExplorer();};
  // NO FULLSCREEN BUTTON WHERE FULLSCREEN CANNOT HAPPEN. An iPhone's Safari has no
  // element fullscreen at all -- `requestFullscreen` does not exist there -- so
  // the button did nothing, silently. Added to the home screen the game already
  // opens without Safari's bars, which is the fullscreen an iPhone offers.
- if(!document.fullscreenEnabled)$('fullscreen').hidden=true;
- $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser view.');}};
+ $('app').classList.toggle('no-fullscreen',!document.fullscreenEnabled);
  // THE WHOLE COURSE, ON THE CLIPBOARD, with no trip through the library. The
  // button used to copy the SEED, which is not enough to rebuild a course --
  // every setting that shapes it would be missing, so pasting it somewhere grew
@@ -6298,20 +6869,54 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // THE SCORE CHIPS open the scorecard, or on a practice ground pick who hits.
  $('scoreChips').onclick=e=>{
   const chip=e.target.closest('.score-chip');if(!chip)return;
-  const i=Number(chip.dataset.player);
-  if(rangeMode){
-   if(i===round.active||round.players.length<2){openShotList(round.active);return;}
-   round.active=i;updateHUD();toast(`${round.player.name} is up.`);return;
-  }
-  guardStudio(()=>openPanel('score'));
+  pickGolfer(Number(chip.dataset.player));
  };
- // Tools from the top bar, where a phone keeps it; the camera strip folds
- // behind one button on a phone and closes again once a camera is picked.
+ $('rhCards').onclick=e=>{const card=e.target.closest('.rh-card');if(card)pickGolfer(Number(card.dataset.player));};
+ // The round screen's Esc key, for a mouse; the pause list's own buttons close
+ // it once they have done their job -- all but the clock and the tee picker,
+ // which are worked in place.
+ $('rhKeys').onclick=e=>{if(e.target.closest('[data-hud=pause]'))setPause(true);if(e.target.closest('[data-hud=range]'))toggleRangeBox();};
+ // The tool column: each button presses its own key, so it does exactly what
+ // the key does in every state the key already handles.
+ // The studio's tool column is made later (ui-studio.js studioHud), so it is
+ // heard from #world.
+ $('world').addEventListener('click',e=>{const t=e.target.closest?.('#studioTools [data-tool]')?.dataset.tool;if(t==='map')setAimView(!aimViewOpen);else if(t==='full')toggleFullscreen();else if(t==='menu')toggleStudioPause();});
+ // THE 1.0 DROP-DOWN on every select a player sees (round 14, ui-dropdown.js):
+ // the sheets, the tool windows, the pause list. Not the seats' and the
+ // lobby's own pickers (arrows over a see-through select), nor the club (its
+ // box is the field: the bag, below).
+ dropdownEverywhere([$('drawer'),$('app')],{skip:'.lb-sel>select,.seat-val>select,#club'});
+ // A seat's picker arrows (round 14): step its select and say so, as a change.
+ document.addEventListener('click',e=>{const a=e.target.closest?.('.seat-arrow');if(!a)return;const sel=a.closest('.seat-pick')?.querySelector('select');if(!sel||!sel.options.length)return;e.preventDefault();sel.selectedIndex=(sel.selectedIndex+Number(a.dataset.step)+sel.options.length)%sel.options.length;sel.dispatchEvent(new Event('change',{bubbles:true}));});
+ document.addEventListener('change',e=>{const sel=e.target.closest?.('.seat-val>select');const b=sel?.parentElement.querySelector('b');if(b)b.textContent=(sel.selectedOptions[0]?.textContent||'').toUpperCase();});
+ $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
+  const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
+  if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
+  else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);};
+ if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
+ // ROUND 14 (frames c-aim2, c-club, c-flight2): Skip stands where curve,
+ // height and spin were, at the bottom centre, not above the meter; and the
+ // club box opens the bag, upwards, as the 1.0 drop-down.
+ if($('smSkip'))$('world').append($('smSkip'));
+ dropdown($('club'),{field:document.querySelector('.club-control .club-select'),up:true,head:'Your bag · Q E or click'});
+ // The whole club box opens it (its code, name, carry and keys), not only the name.
+ document.querySelector('.club-control')?.addEventListener('click',e=>{if(!e.target.closest('.club-select,.dd-list'))$('club').__dd?.open();});
+ // The pause list's cameras are the camera strip's own buttons, pressed for you.
+ // The pause list's cameras (the old camera strip they once pressed is gone): each toggles back to the
+ // player's view the way its key does; Flyover starts or stops the hole flyover.
+ $('pauseCams').onclick=e=>{const c=e.target.closest('[data-cam]')?.dataset.cam,m=view.config.mode;if(!c)return;
+  if(c==='player')cameraMode('player');else if(c==='full')toggleFullscreen();else if(c==='flyover'){if(tour)stopTour();else startTour();}
+  else cameraMode(m===c?'player':c);};
+ $('pauseResume').onclick=()=>setPause(false);
+ $('shotChoice').onclick=cycleShotChoice;
+ document.querySelector('.topbar').addEventListener('click',e=>{
+  if(!$('app').classList.contains('rh-paused'))return;
+  const b=e.target.closest('button,a');
+  if(!b||b.closest('.sim-time,.clock-pop,.tee-control,.rh-pause-choice'))return;
+  setPause(false);
+ });
+ // Tools from the top bar, where a phone keeps it.
  $('barTools').onclick=openToolsBox;
- const setCams=open=>{$('world').classList.toggle('cams-open',open);$('camButton').setAttribute('aria-expanded',String(open));};
- $('camButton').onclick=e=>{e.stopPropagation();setCams(!$('world').classList.contains('cams-open'));};
- document.querySelector('.view-tools').addEventListener('click',e=>{if(e.target.closest('.tool'))setCams(false);});
- document.addEventListener('pointerdown',e=>{if($('world').classList.contains('cams-open')&&!e.target.closest('.view-tools,#camButton'))setCams(false);});
  // THE MONITOR, from the play screen: arm it or put it down -- the switch in
  // the launch monitor window and the one on the shot controls' strip are the
  // same switch as the one in Connect monitor -- and reconnect it.
@@ -6445,10 +7050,22 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // not see and the scorecard in front of them needed a second -- found by the
  // browser smoke test pressing Escape once and seeing nothing change. The tool
  // window is left where it was, for when the panel is gone.
- if(e.code==='Escape'&&$('world').classList.contains('cams-open')){$('world').classList.remove('cams-open');return;}
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();closePanel();return;}if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter')finishShot();if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)toggleRangeBox();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
+  // R on the studio's settings grows the landscape (round 13), unless a word is
+  // being typed (the seed). Flying, R stays up: the flying keys say so.
+  if(e.code==='KeyR'&&panel==='course'&&!e.repeat&&$('growStudio')&&!$('drawer').hidden){const t=document.activeElement;if(!(t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&!['range','checkbox','radio'].includes(t.type))))){e.preventDefault();e.stopPropagation();$('growStudio').click();return;}}
+  // M in the studio opens the big map, as in a round.
+  if(e.code==='KeyM'&&appMode==='studio'&&!panel&&!e.repeat&&!$('world').classList.contains('studio-paused')){e.preventDefault();setAimView(!aimViewOpen);return;}
+  // ? in a settings window or a sheet shows every control's explanation (ui-screens.css).
+  if(e.key==='?'&&document.activeElement?.closest?.('.popup,#drawer')){e.preventDefault();e.stopPropagation();$('app').classList.toggle('rh-help');return;}
+  // Enter and Space press the focused button there. The game's own handler
+  // cancels both (they swing and finish a shot), which left a menu driven by
+  // arrows with no way to choose (seen 17 October 2026).
+  if(!dir&&['Enter','NumpadEnter','Space'].includes(e.code)){const s=focusScope(),b=document.activeElement;if(s&&b?.tagName==='BUTTON'&&s.contains(b)){e.preventDefault();e.stopPropagation();b.click();}return;}
+  if(!dir)return;const t=document.activeElement;if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName))return;if(moveFocus(dir)){e.preventDefault();e.stopPropagation();}},true);
  window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());window.addEventListener('beforeunload',save);
  window.addEventListener('gamepadconnected',e=>toast('Controller connected: '+e.gamepad.id));
 }
@@ -6555,7 +7172,13 @@ function autoResolutionFrame(now,interval){
  if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
  const key=graphics.quality+':'+view.pixelCeiling();
  if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
- if(document.hidden||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ // NOT JUDGED IN THE MENUS (18 October 2026): a menu or an open sheet is busy
+ // drawing its own cards -- course pictures and the tiny models, 50-190 ms of
+ // script at a time -- and those stutters said nothing about what the course
+ // costs to draw, yet stepped the resolution down, so a round began blurred and
+ // took four to eight seconds to sharpen (the text-size journey caught it). The
+ // menus, a sheet and the loading screen hold the step; play judges it.
+ if(document.hidden||appMode!=='play'||panel||$('generating')?.hidden===false){autoRes.hold(now);return;}
  const scale=autoRes.sample(interval,now,graphics.frameCap);
  if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
 }
@@ -6570,9 +7193,10 @@ function tick(now){
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
  updateClock();
  const pad=navigator.getGamepads?.()?.find?.(p=>p&&p.mapping==='standard');
- if(!!pad!==gamepadActive){gamepadActive=!!pad;$('inputStatus').innerHTML=pad?'<i data-lucide="gamepad-2"></i> Controller connected <span class="tiny-dot"></span> Ready to play':'<i data-lucide="keyboard"></i> Mouse & keyboard <span class="tiny-dot"></span> Ready to play';icon();}
+ if(!!pad!==gamepadActive)gamepadActive=!!pad;
  const pressed=i=>pad?.buttons[i]?.pressed&&!gamepadLast[i];
- if(pad){if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
+ if(pad&&focusScope()){menuPad(pad,pressed,now);gamepadLast=pad.buttons.map(b=>b.pressed);}
+ else if(pad){if(pressed(9)&&hud1&&appMode==='play'&&!panel){setPause(true);gamepadLast=pad.buttons.map(b=>b.pressed);}if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
  if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
  if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
@@ -6624,7 +7248,7 @@ function tick(now){
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
@@ -6648,6 +7272,9 @@ function tick(now){
  // hidden when the flag is not in view.
  const pin=course.pin,pinTop={x:pin.x,y:course.height(pin.x,pin.z)+(ballOnGreen?.2:6),z:pin.z};
  const flagEl=$('flagLabel');
+ placeShotCard(now);
+ // The moved map and shot numbers, kept in place as the screen changes.
+ if(now-hudPlacesAt>200){hudPlacesAt=now;drawHudPlaces();}
  // The narrow-screen rule hides this marker, which is right everywhere except
  // on the green, where it is the only distance there is. The class is what
  // lets the stylesheet tell those two apart.
@@ -6664,6 +7291,15 @@ function tick(now){
   flagEl.style.visibility=label.visible&&worldLabels?'visible':'hidden';
   flagEl.classList.remove('edge');
  }
+ // THE LAUNCH NUMBERS (round 13, frame c-flight): a thin strip above the meter
+ // while the ball is in the air, fading as it lands -- gone before the next shot.
+ {const ls=$('rhLaunch'),sh=latest?.shot;
+  const on=!!(ls&&hud1&&flight&&!flight.replay&&sh&&Number.isFinite(sh.speed)&&!flight.result?.puttStroke&&flight.elapsed<(flight.result?.hang||0));
+  if(ls){if(on&&ls.launchFor!==flight){ls.launchFor=flight;const axis=Number(sh.spinAxis)||0;
+    ls.innerHTML=[[(sh.speed/MPH).toFixed(1),'MPH'],[(Number(sh.vla)||0).toFixed(1)+'°','LAUNCH'],[Math.round(Number(sh.spin)||0),'RPM'],[Math.abs(axis).toFixed(1)+(axis<0?' L':axis>0?' R':''),'AXIS']].map(([v,k])=>`<span><b>${v}</b><small>${k}</small></span>`).join('');}
+   ls.classList.toggle('on',on);}}
+ // The rise to the hole, beside its distance (round 13: it left the top left).
+ if($('pinRise')){const r=(course.height(pin.x,pin.z)-course.height(round.position.x,round.position.z))*3.28084;setHtml($('pinRise'),`${r<-.5?'↘':r>.5?'↗':'→'} ${Math.abs(r).toFixed(0)} FT`);}
  // THE AIM POINT, read where you are looking rather than in a bar at the bottom.
  // Lower than the pin's marker (3 m against 6) because it marks a spot on the
  // ground, not a flag, and a label floating at flag height over bare fairway
@@ -6680,8 +7316,12 @@ function tick(now){
   // While the player is aiming the pin's label has faded out, so there is no
   // pile for the 8 m rule to prevent; it applies only at rest. Without this the
   // aim label vanished as the aim crossed the pin (owner, 11 October 2026).
+  const holeKey=`${round.uid}:${round.hole}`;
+  if(holeQuietKey!==holeKey){holeQuietKey=holeKey;holeQuietFrom=null;}
+  if(holeQuietFrom===null&&appMode==='play'&&$('generating')?.hidden!==false)holeQuietFrom=now;
+  const quiet=!rangeMode&&!tour&&(holeQuietFrom===null||!$('turnFlash')?.hidden||(turnFlashHole!==holeKey&&now-holeQuietFrom<HOLE_QUIET_WAIT));
   const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
-  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState;
+  const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState&&!quiet;
   $('aimLabel').hidden=!show;
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
   // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"
@@ -6690,9 +7330,9 @@ function tick(now){
   // stops the two change back. The stylesheet does the fading.
   const aiming=show&&recent;
   $('aimLabel').classList.toggle('faded',!aiming);
-  flagEl.classList.toggle('faded',aiming);
+  flagEl.classList.toggle('faded',aiming||quiet);
   if(show){
-   const q=view.project({x:a.x,y:course.height(a.x,a.z)+3,z:a.z});
+   const q=view.project({x:a.x,y:course.height(a.x,a.z)+.15,z:a.z});
    $('aimLabel').style.left=q.x+'px';$('aimLabel').style.top=q.y+'px';
    $('aimLabel').style.visibility=q.visible?'visible':'hidden';
    const d=Math.hypot(a.x-round.position.x,a.z-round.position.z);
@@ -6709,10 +7349,23 @@ function tick(now){
   }
  }
 }
+// The old windows, dressed as 1.0 windows by ui-windows.css, lean as one block
+// whenever they open or redraw (ui-windows.js).
+watchWindows([
+ {el:$('leaveNotice'),rows:()=>[...document.querySelectorAll('#leaveNotice .leave-card>:not(.leave-options),#leaveNotice .leave-options>button')]},
+ {el:$('versionNotice'),rows:()=>[...document.querySelectorAll('#versionNotice>div>:not(.version-actions),#versionNotice .version-actions>button')]},
+ {el:$('welcome'),rows:()=>[...document.querySelectorAll('#welcomeForm>*')]},
+ {el:$('reliefBar'),rows:()=>[...document.querySelectorAll('#reliefBar>:not(.relief-options),#reliefOptions>button')]},
+ {el:$('dropBar'),rows:()=>[...document.querySelectorAll('#dropBar>*')]},
+ {el:$('pickBar'),rows:()=>[...document.querySelectorAll('#pickBar>*')]},
+]);
 try{
  // Text size first: the view measures its canvas as it is built.
  applyUiScale();addEventListener('resize',applyUiScale);
+ globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
+ globalThis.__splashStep?.('Growing the first hole',.3);
+ modelCards=createModelCards({renderer:()=>view?.renderer,hot:()=>getComputedStyle(document.documentElement).getPropertyValue('--hot').trim()});addEventListener('resize',()=>modelCards?.refit());
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
@@ -6723,7 +7376,7 @@ try{
  try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
  adoptDeviceBag();syncClubs();delete settings.flightProfile;
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
- bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:()=>{icon();syncTools();}});icon();requestAnimationFrame(tick);
+ bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:icon});icon();requestAnimationFrame(tick);
  openMenu();
  if(!profiles)showWelcome();
  // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry
@@ -6733,6 +7386,8 @@ try{
  // player sees (the owner). So the loop runs and the menu opens under the
  // splash, and it fades only once frames come steadily, or after two seconds
  // whatever happens, so a slow machine is never kept on a black screen.
+ globalThis.__splashStep?.('Ready',.95);
  await smoothFrames();
+ globalThis.__splashStep?.('Ready',1);
  dismissSplash();
 }catch(e){console.error(e);dismissSplash();$('world').innerHTML=`<div class="fatal"><div><h1>Let’s get you on the course.</h1><p>This simulator needs WebGL 2. Enable hardware acceleration or open it in a current Chrome, Edge, Firefox, or Safari browser.</p><p>${escape(e.message)}</p></div></div>`;}

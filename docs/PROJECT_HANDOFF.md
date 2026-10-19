@@ -129,7 +129,7 @@ The renderer and everything patched into it. A change to any of these can move a
 | src/gen-pool.js | The workers that compute the ground grid's heights while a course generates (B2). Every call resolves to null rather than failing, which sends the grid back to the main thread |
 | src/textures.js (windMaterial) | Everything that moves in the wind, in one vertex patch. **Trunks bend now, and that is safe only because the bend grows with the square of height**: under a centimetre at 3 m up a 60 m trunk, so the trunk the physics collides with and the one drawn agree wherever a ball can be. A lever that moved the base, or a much larger bend, would let a ball visibly pass through a trunk or bounce off air. Shadows do not sway (three's depth material does not carry the patch). A procedural tree's pieces carry a per-instance `treeRoot`; **any per-instance attribute a wind material reads must also be packed by `instance-cull.js`**, which reorders instance buffers as the view changes -- it packs matrices, colours and `treeRoot` and nothing else, and an unpacked attribute silently pairs one tree's leaves with another tree's root |
 | src/course-plan.js (greens) | `greenContour` is the putting surface: a per-green recipe (`greenRecipe`, drawn from the seed and the hole and cached per hole object in a WeakMap) of character, tilt and false front. **The recipe must depend only on the seed and the hole**, never on call order or on settings other than through the comparisons made at call time: the generation workers regenerate the world on their own and must build the same greens. `greenPedestal` (raised and punchbowl greens) is added to the green's height inside the terrain blend in `course.js`'s `height`, NOT into `greenContour` -- it is constant over the putting surface, so the pin chooser and the green-reading overlay, which read the contour, never see it |
-| src/auto-resolution.js | Automatic resolution (F4): which fraction of the tier's pixels to draw, from the frame intervals it is fed. Pure, so `tests/auto-resolution.test.mjs` drives it with a pretend machine. `main.js` feeds it and `GolfView.setResolutionScale` applies it; **`applyQuality` keeps the current scale, so anything else that sets the pixel ratio must go through `setResolutionScale`** or the two will fight. The scale is only ever at or below 1: it may draw fewer pixels than the tier, never more |
+| src/auto-resolution.js | Automatic resolution (F4): which fraction of the tier's pixels to draw, from the frame intervals it is fed. Pure, so `tests/auto-resolution.test.mjs` drives it with a pretend machine. `main.js` feeds it and `GolfView.setResolutionScale` applies it; **`applyQuality` keeps the current scale, so anything else that sets the pixel ratio must go through `setResolutionScale`** or the two will fight. The scale is only ever at or below 1: it may draw fewer pixels than the tier, never more. **It judges play only**: the menus, an open sheet and the loading screen hold the step (`autoResolutionFrame`), because a menu drawing its course pictures and tiny models stutters for reasons that have nothing to do with what the course costs -- until 18 October 2026 that stepped the resolution down before a round even started, and the round began blurred (RESEARCH, *F4*, the 18 October note) |
 | src/ground.js (HOLE_ATLAS) and texture units | **Every lit fragment shader may use at most 16 texture units, and the ground's is the hungriest**: 7 data textures, the mist's water field, the toon ramp, the sun's shadow map(s) (3 on High and Ultra), and one per shadow-casting floodlight. Over 16 the program fails to link and THE GROUND DISAPPEARS -- shipped once, at night with the lights on. The four per-hole tables are one texture (`HOLE_ATLAS`, a 35-texel row per hole: route, tees, cups, hazards); add a per-hole value there, not as a new texture. `tests/flood-shadows.test.mjs` counts the ground's samplers and fails if a tier's `floodShadows` would leave no unit spare -- if it fails after you add a texture, lower that tier's count or pack something |
 | src/main.js (the first frames, behind a cover) | **What gets built is first drawn under a cover, never on screen.** The first real frames of a new scene carry one-off costs nothing earlier can reach (the first render with a moving camera, the cull's first sort, the grass ring): 117-217 ms on Ultra. So the splash fades only after `smoothFrames` (three frames under 40 ms, at most 2 s) with the menu already open beneath it, and `whileGenerating` holds its overlay the same way (at most 1 s). The menu reached from a round opens INSIDE that wait (`growBackdrop`). Anything new that opens a scene must do the same, or its first frames are a stutter on the first thing the player sees. The smoke harness's `menuReady` waits for the splash to be gone for the same reason |
 | src/renderer.js (compiled where it is drawn) | **Every pre-compile must bind the render target the frame really draws into (`asDrawn`)**, because three picks a program's version partly from it (tone mapping, colour space). Ultra draws the scene into bloom's target; every warm-up compiled with the screen bound, so on Ultra they built versions no frame used and the first switch of the floodlights built every lit program for real in one frame -- 12-16 s frozen on nine holes, 26 s on eighteen, nothing on High, which has no bloom. `withStandIns` and `ready` go through `asDrawn`; a new warm-up must too. The `floodlit-night` smoke journey fails if switching the lights on freezes for more than half a second |
@@ -176,10 +176,15 @@ What a player touches. `main.js` is large and its DOM paths are not covered by t
 | index.html | Static app shell, canvas and primary HUD element IDs |
 | src/main.js | App state, controls/drawers, shot orchestration, monitor connection, save validation, animation loop |
 | src/style.css | Responsive interface, custom HUD layout, studio previews |
-| src/layout.js | Saved draggable/resizable HUD layout (a panel marked per-mode keeps a place for playing by hand and one for an armed monitor, `setVariant`; the shot panel was the only one, and since 13 October 2026 none is), and the MEASURED space the default layout fits into: writes --controls-top, --weather-bottom, --card-bottom and --tools-bottom onto #world |
+| src/layout.js | The MEASURED space the default layout fits into: writes --controls-top onto #world (the weather panel, course card and camera strip it also measured went with the old interface, 18 October 2026: *The old interface, removed*). It was the saved draggable/resizable HUD layout until 17 October 2026, when the 1.0 interface fixed the layout (*The 1.0 round screen*); the grips, drags and saved places (`fairway-layout-v2`, deleted once on start) are gone, and `reset`/`setVariant` are kept as no-ops |
+| src/round-hud.js, src/round-hud.css | The 1.0 round screen: what each corner piece says (hole slab, conditions, golfer cards, club panel, keys, ball light) and how large it is drawn (`hudScale`), and where each sits. Pure module with a Node test; the stylesheet only applies in play and off a phone |
 | src/diagnostic.js | The block a tester pastes into a bug report: build stamp, device, GPU, frame rate and the last few errors. Assembled on demand, copied to the clipboard, NEVER transmitted |
 | src/popups.js | Tools that stay out on the course -- yardage book, green grid, camera controls -- beside the shot rather than over it |
 | src/lab.js | Measurement arithmetic — shot/drop planning, the launch solver, slope and outcome readouts — that the `window.lab` console API drives. No world and no presets; the bench is the driving range |
+| src/ui-layout.js | The 1.0 interface's layout rules as arithmetic: the design canvas for a screen shape (1280 x 720/800/960), the header/content/footer bands, the 12-column grid on the leaning sheet (`gridFor`), and the canvas on a screen with the Text size (`canvasFrame`). Pure; *The 1.0 interface: layout rules* |
+| src/ui-palette.js | Which biome's colours a screen wears (`screenBiome`: the course in play, the course being chosen, or the course of the week), the shared under-par red, and the contrast check every palette passes. Pure |
+| src/ui-kit.js, src/ui-kit.css | The 1.0 interface's building kit: root, sheet, `place`, panel, row, item, tile, stack, switch, picker, segment slider, tabs, chip, level tag, key hint, as HTML strings; every class `uk-`, every rule scoped to `.uk`. Also the `@font-face` rules. Built, tested, not yet used by any screen (phase 0) |
+| src/fonts/ | Saira Condensed 700 and 800, Latin, woff2, with `OFL.txt`; inlined into the page by the build |
 
 ### Outside the game
 
@@ -199,7 +204,7 @@ None of this ships inside `dist/index.html`. The bake tools are the exception in
 | tools/tree-spacing.mjs | How close trees actually stand, measured against how wide their crowns are |
 | tools/fetch-references.py | Pulls reference photographs from Wikimedia Commons into a scratch folder. REFERENCES, not assets: nothing derived from them is a copy |
 | tools/package_release.py | Verified source/portable ZIP packaging and checksums |
-| tools/make-icons.mjs | Draws the home-screen icons in `public/` from the brandmark path, through Playwright. Rerun only if the mark changes |
+| tools/make-icons.mjs | Draws the home-screen icons in `public/` from the brandmark path, through Playwright, in the 1.0 splash's colours (leaning green band, white flag, yellow dot). Rerun only if the mark changes; it prints the tab icon for index.html. The website copies the PNGs and manifest into its `site/play/` |
 | public/ | Copied beside the page by the build: home-screen icons and `manifest.webmanifest`, for a HOSTED copy. The manifest is linked only over http(s) |
 | tools/release.mjs | What `npm run release` runs: finds a Python under any of its three names, then runs the packager ONCE and exits with its code. A shell `||` chain cannot tell a missing interpreter from a failed packaging, which would hide the refusals the packager exists to make |
 
@@ -249,7 +254,9 @@ While the menu is up the scene shows a **one-hole showcase** with the camera cir
 
 Studio keeps a throwaway single-player Round alive so the renderer, camera, map and surface queries all keep working — only the play HUD is hidden. It opens in free flight with no panel over it: keys are ignored while a panel is open, which they must be because the seed field is a text input, so auto-opening the settings panel meant the studio always started with its camera parked. That throwaway Round is also why leaving matters — `guardStudio` wraps every route out (both nav tabs, the brand, Leave studio and the course-info menu) and offers save, discard or stay. It treats the landscape as saved when any library course was generated from exactly these settings, so a course loaded from the library and left alone does not nag. Nothing regenerates on a slider change: a rebuild is seconds of frozen tab, so edits set `studioDirty` and the studio bar says so until **Regenerate**.
 
-**COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA** (the owner, 15 October 2026): `.drawer[data-panel=course]` runs from the top of `#world` to the bottom, and in the studio the same observer below sets its `top` to where the course starts plus the bar's full height plus 28 px -- measured from the sheet's own box, because the sheet's containing block is the page, not `#world` (the first version wrote the bar's height alone and slid the sheet under the top bar), so the bar sits in a strip above it, exactly where the lift puts it, and never goes `compact`. With no bar (the setup sheet over the menu) it goes to the top. Only this panel; the owner chose to leave every other window alone. The `studio` smoke journey checks the sheet leaves no course showing besides that strip, desktop to phone.
+**SINCE ROUND 13 (17 October 2026), THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS, on every screen** (the owner: the studio settings "look exactly the same" from the menu and in the studio, "only the picture behind differs"). ui-sheets.css's guard was `body:not(:has(#app[data-mode=studio]))`; it is `body:has(#app[data-mode])` now -- the same weight (one id, one attribute, one element), so no rule beside it changed which wins -- and the studio sheet's own rules are scoped to `body:has(#drawerContent.sd-root)`, wherever it opens. `buildStudioSheet` runs for the `course` panel in every mode; `#growStudio` (Grow this landscape, R) is on it in every mode (in the studio it calls `regenerateStudio`, which reads the controls before its first await, then closes the sheet); the studio bar is `display:none` while any sheet is open (round-hud.css, outside any query), and the lift below no longer sets the sheet's `top` at all (a phone kept the strip for one pass; with the phone's sheets zoomed the strip pushed the bar off the top, and the `studio` journey caught it). **The rejection below (hiding the bar) is answered, not overturned:** Regenerate is on the sheet itself now. The two paragraphs below are history. **R flies up in the studio**, so R regrows only from the sheet (PLACED; the frame put R on the chip and the bar too).
+
+**COURSE STUDIO'S SETTINGS TAKE THE PLAY AREA** (the owner, 15 October 2026; RETIRED in round 13, above): `.drawer[data-panel=course]` runs from the top of `#world` to the bottom, and in the studio the same observer below sets its `top` to where the course starts plus the bar's full height plus 28 px -- measured from the sheet's own box, because the sheet's containing block is the page, not `#world` (the first version wrote the bar's height alone and slid the sheet under the top bar), so the bar sits in a strip above it, exactly where the lift puts it, and never goes `compact`. With no bar (the setup sheet over the menu) it goes to the top. Only this panel; the owner chose to leave every other window alone. The `studio` smoke journey checks the sheet leaves no course showing besides that strip, desktop to phone.
 
 **THE STUDIO BAR RIDES ABOVE AN OPEN PANEL.** The bar and every panel (`#drawer`) are both pinned to the bottom of the course, the bar one layer up, so until 12 October 2026 any panel opened in the studio had its lowest rows and buttons under the bar. A ResizeObserver in main.js (on `#world`, `#drawer` and the bar, written a frame later as layout.js does) sets `--panel-lift` on the bar to the open panel's height; where the room left above the panel cannot hold the bar plus 26 px — a phone on its side — it adds `compact`, which drops the caption and the button words (the words stay in the DOM as accessible names). **Rejected:** hiding the bar while a panel is open, because Regenerate is the button the Settings panel tells you to press and must be in reach beside the sliders. The bar also takes `width:max-content`: centred with `left:50%`, an absolute box shrinks to half the screen, which stacked its four buttons one per row on a phone held upright. The `studio` smoke journey opens Settings at five sizes and fails if the bar overlaps the panel, leaves the course, or has a button that cannot be clicked. **What breaks if this is lost:** a panel's bottom row is unreachable in the studio, which no play-screen check sees. `applyStudioSettings` reads every rendered control and validates the whole object before a rebuild starts, so a bad combination is refused in milliseconds rather than after ten seconds of terrain.
 
@@ -257,7 +264,7 @@ Studio keeps a throwaway single-player Round alive so the renderer, camera, map 
 
 ## Data flow and units
 
-**THE SPLASH LIVES IN `index.html`, NOT IN SCRIPT.** Boot builds the renderer, restores a saved round and grows the menu backdrop before `openMenu()` stamps a mode on the shell, and until that stamp lands the play HUD is what is on screen over an empty canvas. Anything script builds arrives after the span it is supposed to cover. `dismissSplash()` runs after `openMenu()` AND in the fatal handler -- drop the second call and a WebGL failure shows a black screen with the explanation hidden behind it.
+**THE SPLASH LIVES IN `index.html`, NOT IN SCRIPT.** Boot builds the renderer, restores a saved round and grows the menu backdrop before `openMenu()` stamps a mode on the shell, and until that stamp lands the play HUD is what is on screen over an empty canvas. Anything script builds arrives after the span it is supposed to cover. `dismissSplash()` runs after `openMenu()` AND in the fatal handler -- drop the second call and a WebGL failure shows a black screen with the explanation hidden behind it. **Since round 14 it wears the course of the week before a line of the game runs** (frame c-splash): the build writes `window.__FAIRWAY_SPLASH__` into the head (vite.config.js `fairway-splash`: every landscape's palette and name in `BIOME_KEYS` order, the package version, and weekly.js's own `weekIndex` and `isoWeek` written in as source inside a closure that carries their `DAY`), and the inline script after `#splash` picks the week's colours from it -- so the splash cannot disagree with the week the game shows. **Change `weekIndex`/`isoWeek` and keep them self-contained** (only `DAY` beside them), or the page's copy breaks. main.js moves the bar through `window.__splashStep(words, share)`: starting the renderer, then the menu backdrop's own progress (`whileGenerating` in quiet mode), then Ready.
 
 **CAMERA MOVES FLY; THEY DO NOT CUT.** `setCamera` snapped whenever the move exceeded sixty metres, which is every move worth watching. `view.flyCamera(p, aim)` resolves the destination by calling `setCamera` itself -- there is one definition of where the play camera stands and a second copy would drift -- then flies there along a path from `makeCameraFlight`. While `camFlight` is set the renderer drives the camera outright and the damping is switched off, because a spring and a path fight each other and round off the path's ends. `setCamera` and `follow` both clear it: an explicit reposition wins, and a ball in the air outranks a camera move.
 
@@ -585,7 +592,7 @@ Two things to keep in mind if you touch this:
 
 Everything a biome decides lives in `src/biomes.js`: `DEFAULTS` holds every field (the count used to be written here and drifted; read the object), `TRAITS` lists only what each biome does differently, and the two are merged once. A biome that says nothing behaves like the old generic case.
 
-To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry and a traits entry, and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
+To add one: add the key to `BIOME_KEYS` in settings-schema, add a palette entry, a traits entry and an interface palette (`INTERFACE`: the six colours the 1.0 interface wears on that biome's courses; `tests/ui-palette.test.mjs` refuses a biome without one, or one whose text is unreadable -- *The 1.0 interface: layout rules*), and add its species to `FAMILY_OF` in mesh-assets.js if it introduces any. Nothing else in the generator should need editing — and if it does, that is a field missing from the record rather than a conditional to write.
 
 **Three per-biome tables still live outside the record**, and Haunted Hollow (9 October) had to touch all three: the course-name word lists in `src/course-names.js` (a test fails if a biome has none, and every word is searched with "golf" first -- see the denylist test), the fog profile in `src/mist.js` `PROFILES` (**no test: a biome missing from it silently takes Midwest's fog**), and `tools/fixtures.mjs` / `tools/profile.mjs`, which list biomes by hand so a new one is not measured until it is added. The per-biome grass texture density in `textures.js` falls back to 1, which is fine.
 
@@ -730,7 +737,7 @@ the website's build**, which refuses a game without it.
 
 **TWO BIOMES MAY SHARE A FIRST WORD OR A SECOND WORD, NEVER BOTH.** The word lists in `course-names.js` overlap on purpose, because cedar and hollow each genuinely belong in more than one landscape -- but an overlap in both halves means the same name can come out of two different places. "Cedar Hollow" was reachable from the Pacific Northwest and the Midwest. `tests/course-names.test.mjs` checks this against the LISTS rather than a sample, because a sample that happens not to collide is not the rule.
 
-**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the Tools window's Copy course code and the library's Get code go through it.
+**COPYING NEEDS THE OLD WAY AS A FALLBACK.** `navigator.clipboard` requires a secure context AND a focused document, and it REJECTS rather than prompting when it is not -- which is every embedded preview and any window that lost focus between the click and the promise. `copyText()` falls back to `execCommand('copy')` through an off-screen textarea; off-screen rather than `display:none`, because a hidden element cannot be selected and the copy silently does nothing. Both the Tools window's Copy course code and the library's Copy code (once Get code) go through it.
 
 **PLAY AND COURSE STUDIO ARE WAYS IN, so `syncNav` hides them from the top-bar menu once you are in one.** Offering "Play" to somebody already playing means starting a different round from what looks like a settings menu, and "Course studio" mid-round is a guarded exit dressed as a nav item. Main menu stays, and is where both of them live.
 
@@ -766,7 +773,7 @@ THE TRAP, and it cost a broken build: `layout.sync()` had a comment saying “se
 
 **Sim drop and Putting options are disabled on the range.** A practice ground has no round to drop into and no penalty to avoid, and its putting mode is forced to hole-out — the putting panel would have edited the setting for your NEXT round while appearing to change where you are. Mulligan already disabled itself there because `round.history` never fills. A dedicated putting mode is planned; until then it is simply not offered. **Both carry the reason in their `title`**, as the three reading toggles do: a dimmed control with no explanation reads as broken, and "where is putting?" on a practice ground is a reasonable thing to go looking for. The putting button's title is otherwise the current mode, so the range case replaces it rather than adding to it.
 
-**Every HUD panel moves and resizes at all times, not inside a mode.** Arranging used to be a MODE — press *Arrange UI*, dashed outlines appear over seven panels, drag, press Done — which meant the answer to "can I move this?" was no until you remembered the mode existed, while the tool windows beside them dragged whenever you liked. Two behaviours for the same question. `createLayout` now gives each panel a live grip and resize corner. Arrange mode has since been deleted outright -- once nothing was gated behind it, a button promising a mode you enter to arrange things was the misconception the change removed; *Reset panel layout* moved to the tools tray. It works in play, free flight, the studio, the range and the menu backdrop with no per-mode code.
+**RETIRED 17 October 2026: the round's layout is fixed** (UI_1_0_PLAN 5.1, the owner's call; *The 1.0 round screen*) -- **except the map and the shot numbers, movable again since 18 October 2026** (the owner: "I want to be able to move at least the map and the shot data around"). `src/hud-places.js` (pure, tested) keeps each piece's top-left corner as a fraction of the playing area under `fairway-hud-places-v1`, held on screen when drawn; main.js *THE MAP AND THE SHOT NUMBERS MOVE* drags the map by its `.map-header` (not its buttons) and the Tab tiles (`#shotTiles`, the block, not each tile) anywhere, and redraws the places every 200 ms when the screen, the big map or Tab changes. **It places a zoomed piece by measuring, not by arithmetic**: `setPiecePos` moves the piece 100 CSS px once and reads how far it went on screen, so the HUD zoom, the Text size and any margin need no formula. Double-click resets one; the Tools window's *Reset map and shot number places* (`#resetLayout`) both. Only on the 1.0 round screen (`hud1`, play mode, not `aim-view`): a phone and the studio keep their places. PLACED: no resizing, and no other piece moves. The history below is kept because it says why a title bar and not the whole panel, which still holds for tool windows. **Every HUD panel moved and resized at all times, not inside a mode.** Arranging used to be a MODE — press *Arrange UI*, dashed outlines appear over seven panels, drag, press Done — which meant the answer to "can I move this?" was no until you remembered the mode existed, while the tool windows beside them dragged whenever you liked. Two behaviours for the same question. `createLayout` now gives each panel a live grip and resize corner. Arrange mode has since been deleted outright -- once nothing was gated behind it, a button promising a mode you enter to arrange things was the misconception the change removed; *Reset panel layout* moved to the tools tray. It works in play, free flight, the studio, the range and the menu backdrop with no per-mode code.
 
 **A title bar, not the whole panel (5 October).** Every HUD panel now carries the same bar a tool window has (`.hud-head`, built in `layout.js`), and on a phone the old corner grip instead. Three traps found building it. **The bar goes FIRST in a panel's markup, except on the weather and the flight controls**, which the stylesheet picks contents out of by position (`.weather>div:nth-child(2)`, `.explore-bar>div:first-child`): there a bar put first shifted every one of them, and the wind readout collapsed onto one line, so those two are marked `'last'` in `sections` and lifted to the top with `order:-1`. That lift only works while a panel is a flex box. The first version lifted every panel that way, and it failed twice: the course card is a plain block, so its bar sat mid-card over the word "Links"; and the shot controls are a flex column only in their default place (`.bottom-area:not(.hud-custom)`), so the moment a player MOVED that panel its bar dropped to the bottom (6 October). A new panel goes first unless something picks its contents out by position -- and then it has to stay a flex box moved or not. And it is a real row pulled over the panel's padding with negative margins (padding measured per panel into `--hud-pt/-pr/-pl` by `pads()`), not drawn in a deepened top border: that needed no measuring, but any panel with overflow hidden or auto clips its border area, which is the map, the course card and every panel once resized, and the bar vanished. The shot-controls column is see-through, so its bar brings its own glass and joins the card under it. The bar cost that column 37px, which at 1280x720 pushed the last-shot fold button under the keyboard hints (`hud-reachable` caught it); below 760px of height the sections pack 8px top and bottom instead of 13px.
 
@@ -819,17 +826,18 @@ phone the two of them covered most of the course, and the card needed its own
 **On a phone** (below 560 px wide OR below 500 px tall, both ways up) the top
 bar is the menu button, the hole, the chip of whoever is up with a count of the
 others, the clock's gear and a **Tools** button (`#barTools`); the shot controls are
-the shot line, the club, the power and the shot button; three number tiles run
-along the top beside the wind (and, held sideways, beside the camera button
-too) -- the foot of a phone has 16 px between the controls and the map, and the
+the shot line, the club and the Swing Meter's bar (a tap on it starts the swing); three
+number tiles run along the top beside the wind -- the foot of a phone has 16 px between the controls and the map, and the
 top has room now the course card is not shown in play;
-the camera strip folds behind `#camButton` (class `cams-open` on `#world`,
-closed by picking a camera, tapping elsewhere or Escape); the map sits in the
+the cameras are the pause list's camera row (the camera strip and the
+`#camButton` it once folded behind went with the old interface, 18 October
+2026); the map sits in the
 bottom-right corner with the aim pad under it. The tee picker, the aim arrows
 and the Swing Meter button leave the phone's panel; the curve, height and spin
 pickers stay as one row of 46 px buttons, spin a single button that steps round
 like X (the desktop's - / + pair is under a thumb's width), and held sideways
-`#clubHint` goes so the Swing button keeps its height -- `npm run smoke`'s
+`#clubHint` went so the old Swing button kept its height (the button itself
+went with the old interface, 18 October 2026) -- `npm run smoke`'s
 *every control a round needs is a thumb wide* caught both on 14 October 2026.
 
 **The safe area is read, not assumed.** The viewport asks for
@@ -841,22 +849,21 @@ inset, and the inset is zero on anything that is not a phone. The top bar pads
 its sides the same way. The status bar stays `black`, not translucent: with
 `black` the page starts below it, and nothing needs to go under it.
 
-`createLayout` still writes measurements onto `#world` as CSS variables, a
-frame after any watched element resizes:
+`createLayout` still writes one measurement onto `#world` as a CSS variable, a
+frame after any watched element resizes (`--weather-bottom`, `--weather-w`,
+`--card-bottom` and `--tools-bottom` went with the pieces they measured, 18
+October 2026; nothing read them any more):
 
 | variable | what it is |
 |---|---|
 | `--controls-top` | the top of whatever bar has taken the foot of the screen: the drop, free-flight or scramble bar. The map sits above it while exploring |
-| `--weather-bottom` | the bottom of the weather panel; the phone hangs the camera button, and a phone held sideways the map, under it |
-| `--weather-w` | the weather panel's width; a phone held sideways sets the camera button beside it |
-| `--card-bottom`, `--tools-bottom` | the course card and the camera strip, still measured, no longer read by the play layout |
 
 **Written a frame later, not inside the ResizeObserver.** Changing a variable
 inside the callback that resizes an observed element trips Chrome's
 "ResizeObserver loop completed with undelivered notifications", which is an
 ERROR event -- and the smoke test fails on error events, correctly.
 
-**Every rule skips `.hud-custom`.** A panel the player dragged keeps their
+**Every rule skipped `.hud-custom`** (until 17 October 2026, when nothing could be dragged any more; the `.hud-custom`, grip and title-bar rules left behind were swept out of style.css on 18 October 2026). A panel the player dragged kept their
 geometry. **The saved layout key went to `fairway-layout-v2`** with the redraw:
 a position saved for the old bottom bar would have parked the new panel across
 the course. Everyone starts from the new defaults once.
@@ -879,8 +886,8 @@ and stayed there. New tool windows also open fitted to the screen now
 
 **A ball in the air clears the screen** (`in-flight` on `#world`, set from
 `flight` every frame, so a shot, a replay, a skip and a settle all agree). The
-camera strip, the camera button, the aim pad and the keyboard hints fade over
-0.2 s -- a placed number, quick enough not to feel like a delay. The shot
+aim pad fades over 0.2 s (the camera strip, camera button and keyboard hints
+that faded with it are gone) -- a placed number, quick enough not to feel like a delay. The shot
 controls and the launch monitor window do not fade: since 13 October 2026 they
 shrink at once to the shot line, the one section of them that stays, because
 the line is Skip and the live readout (between 10 and 13 October they went
@@ -931,6 +938,727 @@ a phone held sideways 56% folded and 44% open, upright 65% and 54%. NOT re-measu
 only EMULATES a phone -- a real iPhone's Safari, its safe-area insets (zero in
 emulation) and a real phone's GPU are still checked by hand.
 
+## The 1.0 interface: layout rules
+
+The interface is being rebuilt on branch `ui-1-0` (approved 17 October 2026
+after twelve rounds of mockups; the plan and the mockups are the owner's local
+`docs/reports/UI_1_0_PLAN.md` and `docs/reports/ui-1-0/`). Phase 0 laid the
+foundations and changed nothing a player sees: the typeface, the palettes, the
+layout arithmetic and the kit. The rules below are what every rebuilt screen
+keeps; `src/ui-layout.js` holds them as numbers and its test holds every
+screen shape to them.
+
+- **One slant, 12 degrees.** The coloured box leans; text and pictures inside
+  it stand straight (`uk-p` is skewed -12, its wrapper `uk-pi` +12).
+- **A design canvas 1280 wide, as tall as the screen's shape needs**: 720 on
+  16:9, 800 on 16:10, 960 on 4:3, scaled to fill the screen. Wider than 16:9 the
+  canvas widens (21:9 is 1680 x 720); taller screens get room, never bars.
+  Narrower than 4:3 (an upright phone) is `narrow`, with no sheet: phones lean
+  row by row and are phase 5.
+- **Bands:** header 24 to 64, content 96 to 104 above the bottom, footer 80
+  from the bottom and 56 tall.
+- **The content leans as one sheet** about its middle line; the boxes in it
+  never lean on their own. So every left edge in a column lies on one slanted
+  line and every gap is the same from top to bottom.
+- **Twelve columns, 14 apart, measured along the middle line.** The column
+  width comes from the sheet's height so the leaning corners land exactly on
+  60 px margins: the middle-line margin is 60 + half the sheet height x tan 12
+  degrees (about 115 on 16:9, giving 74.6 px columns; narrower on taller
+  screens, because a taller sheet leans further). Every box starts and ends on
+  a column edge: place it with `place(grid, column, span, y)`, never by eye.
+- **Sizes:** the pieces are written at round 9's sizes -- panels padded 16
+  top and bottom, 36 at the sides; rows 48, list items 56, tiles 96; type 13
+  (labels, written 14 since round 13), 18 (body), 24 (values), 36 (titles), 56
+  (hero numbers) -- and **drawn at seven tenths of them** (round 13, the
+  owner: "everything 40-50% smaller"; `COMPACT` in round-hud.js): margins
+  about 40, rows 34, text 10 / 13 / 17 / 25 / 39, against the round-13
+  mockups' 40, 32, 10 / 13 / 16 / 24 / 36. A label above its value.
+- **Selection** is an outline that follows the slanted shape (drop shadows of
+  the box), and the current tab is filled. No inner boxes.
+- **A full-width row inside a tall leaning box follows the box's lean** (the
+  owner, 18 October 2026: the seats' Plays with / Swings bars sat upright in a
+  leaning seat). A row is slid sideways by its height above or below the box's
+  middle x tan 12 degrees -- left below the middle, right above -- so its ends
+  stay parallel to the box's edges, as everything does on the leaning sheet.
+  For the seats it is measured in main.js `leanSeatRows` (layout offsets, so
+  the Text size zoom and the slide itself do not count), again whenever the
+  seats resize. Centred things (the name, the ball, the tees) need nothing.
+- **Info icons: the i goes with its name** (the owner, 18 October 2026: "put
+  them all in places that make sense"). A setting's name and its i are one
+  piece (`.field-name`, main.js `named`): the i is 8 px after the last word,
+  centred on it, 22 px round, in every kind of row -- a slider row, a list
+  row, a switch row, a heading. Never a row item of its own (loose, it landed
+  mid-row in a list row and beside the bar in a slider row), never beside the
+  control. Pressing it opens that setting's note under the row; it never
+  changes the setting (a button inside a label does not activate the label).
+- **Colours come from the biome** (`ui` in each biome record): in a round the
+  course's, in the lobby and studio the course being chosen, everywhere else
+  the course of the week, so the menus change colour every Monday. Red for
+  under par is one colour everywhere (`UNDER_PAR`). Every palette passes a
+  contrast check over a white and a black picture: 4.5 for ordinary text, 3
+  only for the large under-par numbers. **Not checked, and weak:** text on the
+  dark end of a highlighted box's gradient (`onHot` on `a2`) is 2.3 to 5.5,
+  lowest on Giant Redwood; it reads in the mockups because the text sits on the
+  light end, and a screen that puts text at the dark end must not. Giant
+  Redwood's and Haunted Hollow's accent `a1` is almost the under-par red
+  (contrast 1.0), so an under-par score is never written on an accent.
+- **The typeface** is Saira Condensed, 700 and 800, inlined (DISTRIBUTION_REVIEW,
+  *Addendum, 17 October 2026*). It has no italic: the slanted numbers are the
+  browser's slant, which **the old stylesheet turns off page-wide**
+  (`:root{font-synthesis:none}`); `.uk` turns it back on for style only. Without
+  that the hero numbers come out upright and nothing errors.
+
+**The canvas and the Text size.** `canvasFrame({width, height, zoom})` takes
+the screen in CSS pixels and the Text size. At 100% the canvas fills the
+screen (`drawn`: each design pixel is drawn 1.5 CSS pixels on a 1920 x 1080
+screen, 0.8 on a 1024 x 768 one). The Text size
+multiplies that, and the canvas gives up design room by the same factor so it
+still fills the screen exactly -- the rule the Text size has always followed,
+"laid out as a window z times smaller". Scaling the 1280 canvas up instead
+would run it off the screen; scaling it to fit regardless would make the Text
+size do nothing. **PLACED:** the canvas never gets narrower than 1024 design
+pixels (125% on 16:9); past that a larger Text size still enlarges the old
+interface but not the canvas. The canvas root goes inside `#app`, which the
+stylesheet already zooms, so the root's own transform is `drawn / zoom`
+(`scale`), never `drawn` -- applying both multiplies the Text size twice. A
+pointer's design position is `(clientX - root left) / drawn`. Not yet wired:
+phase 1 is the first screen on the canvas.
+
+**SKEWING A PARENT AND STRAIGHTENING A COLOURED CHILD MAKES AN UPRIGHT BLOCK.**
+Found in the mockups when the sheet started leaning as one: a coloured box
+inside the leaning sheet, given the straightening skew so its text would
+stand up, came out as an upright rectangle -- the two skews cancel on the
+colour as well as the text, so the slant vanished from exactly the boxes that
+should show it, with nothing wrong in the markup. Inside the sheet the panel
+itself does not transform (`.uk-sheet .uk-p{transform:none}`), only its
+contents are straightened, and the straightening wrappers (`uk-pi`, `uk-u`)
+never carry a colour. `tests/ui-kit.test.mjs` refuses a background on them.
+
+**A SHORT SHARED CLASS NAME SILENTLY RESTYLES ANOTHER SCREEN.** In the mockups
+a highlight class called `hl` written for one screen restyled boxes on
+another that happened to use the same name, and nothing said so; the
+stylesheet the kit sits beside is 180 KB of short names. So every kit class
+starts `uk-` and every kit rule is scoped to `.uk`; `tests/ui-kit.test.mjs`
+refuses either slipping. Keep new screens' own classes prefixed the same way.
+
+## The 1.0 round screen
+
+Phase 1 of the 1.0 interface (17 October 2026, branch `ui-1-0`).
+`src/round-hud.js` decides what each piece says, `src/round-hud.css` where it
+sits, `drawRoundHud` in main.js fills it on every `updateHUD`. **Built without
+being seen**: the owner allowed the browser pane for this phase, then asked for
+the phases to run overnight with nothing on the graphics card, so none of it has
+been looked at (TODO, *The 1.0 interface*).
+
+**Where everything went.** Hole slab (number in the biome's gradient, course
+name and pin, "PAR 4 / 412 YDS") top left, and under it the conditions (wind
+with its arrow, plays like, the rise in feet). Golfer cards top right: the
+golfer up gets the big card (ball in frame ring, title, level tag, XP bar,
+score), everyone else a plate; a card does what a score chip does
+(`pickGolfer`). The map down the right, straight, under the cards. The club
+bottom left (the hot block holds the code, the real `#club` select is the
+name), the keys under it (the Esc one clickable; on the range an R key opens
+the range controls). The lie line and, when a monitor is connected but not
+armed, its strip above the club. The shape chips above the meter, the Swing
+Meter bottom middle; with a monitor armed the meter gives way to the ball light
+(the monitor window, restyled: its word, who is up, the Armed switch, Reconnect
+only once the device is lost). The pin tag is the flag label, restyled. The
+last-shot line keeps a place under the conditions until phase 2's shot card.
+A faint logo bottom right.
+
+**Gone from the round:** the top bar, the shot controls window, the weather
+window, the camera strip, the Swing button (the bar is the tap target, and
+Space), the aim buttons and the typed aim distance (arrows and the map aim;
+the typed distance has no home), temperature and the weather words (in the
+pause list's conditions line). Since 18 October 2026 they are gone from the
+page as well, with their code and styles (*The old interface, removed*).
+
+**Esc opens the top bar as a pause list** until phase 3's pause screen: the
+same elements, laid out as rows (`#app.rh-paused .topbar`), plus Resume, the
+tee picker and the Swing Meter button (moved there from the shot controls;
+both were already hidden on a phone), a row of camera buttons (`#pauseCams`, `data-cam`: each calls the camera
+itself; until 18 October 2026 they pressed the hidden camera strip's buttons) and the conditions. Any press in it closes
+it, except the clock and the tee picker, which are worked in place. While it is
+up the game's keys are ignored; the round itself does not stop. **Smoke
+journeys reach top-bar controls through `t.chrome()` and `t.menuItem()`**,
+which open the list where the round screen hides the bar.
+
+**Phones (phase 5, 17 October 2026) have their own round screen** (`src/round-phone.css`, the phone query): the same pieces at the phone's real size, sideways and upright as the round-12 mockups place them -- the hole top left, golfer chips top right, a small straight map, the slanted three-by-three aim pad (the old pad's buttons, so their names and the hold-to-sweep still work), the club bottom left, a narrow Swing Meter you tap to swing (no Swing button), a MENU chip in place of Escape that opens the same pause list as one scrolling column. #world carries `--hud1` in the phone query too, so main.js treats a phone as the round screen; `phoneScreen()` still says it is a phone. Touch targets are 44 px (the phone journeys check it: the club picker was 36 tall until they did). On a phone the main menu's rows lean one by one, one height, two columns sideways. **Since round 13 the sheets and dialogs are the 1.0 ones on a phone too** (the owner: "the old UI still shows on phone screens"): ui-sheets.css's big-screen gate became `@media all`, and its PHONES block at the end lays them out for a phone -- drawn at `--sheet-z / .7` (the round screen's scale without the compact step: 0.525 made rows too small to tap), the step chips under the title and scrolling sideways, no keyboard keys, every side-by-side layout one column, tiles two to a row, the studio's settings a plain flex column (as a grid its tab row sized to nothing and the tabs sat over the text). ui-windows.css does the same for Leave, the version notice, the welcome and the shot list. **A new sheet layout needs a line in that PHONES block**, or it arrives on a phone at its desktop width. In the phone pause, Tools and Players & round are words in `::after`, which the touch rule (style.css, a bigger tap area) positions over the whole button -- round-phone.css puts them back with `position:static`. **Only in play and off a phone.** Every rule sits inside the inverse of the
+phone query (`min-width:561px and min-height:501px` on `#app`), and #world
+carries `--hud1:1` there so main.js asks the same question (`hud1`, read on
+each `updateHUD`). A phone keeps today's round screen until phase 5.
+
+**Size.** Every piece is laid out in design pixels and zoomed by `--hud-z`
+(`compactScale`: `hudScale` times `COMPACT`, 0.7, round 13), and the sheets by
+`--sheet-z` (the same times the Text size). `hudScale` is the 1280 canvas's scale, but never wider than the screen over
+`ROUND_MIN_WIDTH` (1160, PLACED: the room the club panel and the meter need
+side by side), never below 0.75. **The Text size barely enlarges the round
+screen on 16:9** -- the pieces already span it at 100%, so it can add about a
+tenth; on taller and wider shapes the same. That is a departure from "the Text
+size still multiplies it" and is the owner's to overrule. The map's canvas is
+drawn at the device pixel ratio times the zoom so it stays sharp.
+
+**ENTER AND SPACE IN A MENU.** The game's keydown handler cancels Enter and
+Space (they swing and finish a shot) in every mode, so a menu driven by arrows
+could not choose anything; the focus listener presses the focused button
+itself while `focusScope()` names a screen. **The Esc list is a three-column
+grid on the old top bar** (`#app.rh-paused .topbar`): the old bar's
+`align-items:center` centred each column until `align-items:start`, and its
+own width rules shrink the monitor label to nothing, so the list overrides
+both. **The shot card is kept clear of the foot and the map** in
+`placeShotCard`, or a short shot's card covers the meter.
+
+**THE SHOT CONTROLS ARE `display:contents`**, so the children they kept (the
+club, the lie, the shape chips, the monitor strip, the shot line) can be pinned
+where the design puts them without moving them in the markup -- ids, handlers
+and the phone's layout untouched. The trap: **any new child of `.shot-controls`
+lands loose at the top left of the course** unless round-hud.css gives it a
+place or hides it.
+
+**A LABEL THE FRAME LOOP POSITIONS IS SCALED BY `transform`/`scale`, NEVER
+`zoom`.** The flag and aim labels get inline `left`/`top` every frame;
+`zoom` would multiply those too and throw the label off its flag.
+
+**AN AUTHOR `display` BEATS `[hidden]`.** Every restyled piece that is hidden
+by the attribute (the monitor window, the monitor strip) needs its own
+`[hidden]{display:none}` or a `:not([hidden])`, or it shows when it should not.
+
+**Shot moments (phase 2, 17 October 2026; also not seen).** `src/shot-display.js`
+says which numbers show: on a course a **card** pops up beside where the ball
+came to rest (`#shotCard`, placed every frame by `placeShotCard`, scaled by
+transform like the flag label) with the total large and carry, ball speed and
+offline under it. **When it is up** (the owner, 18 October 2026): from the
+moment the ball rests (`flight.reviewing` set, the shot-line review or the
+plain hold) until `finishShot` sets up the next shot (`nextShotCard` hides a
+`resting` card); it used to hold 6 s into the next address and sat on the
+meter. Only a skipped shot, which never rests on screen, still shows its card
+as the next shot is set up and fades after 6 s (`CARD_HOLD_MS`, PLACED); on the range
+the **tiles** stay, in a fixed grid top right with carry lit, and the golfer
+cards move under the hole slab. **Tab** shows every number as tiles until
+pressed again (the keys list moved to ? and the Esc list's Help). The player's
+choice -- automatic, always the card, always tiles -- is the Esc list's *Shot
+numbers* row, kept per device under `fairway-shot-display-v1`. On the round
+screen `placeTiles` clears the tiles' inline places and returns, and tiles
+do not drag: the stylesheet lays them out. `src/celebration.js` says which
+**banner** a hole-out earns: the full-width band in the course's gradient for a
+birdie or better (any hole in one), a quiet strip otherwise, in / hold / out
+200 / 1500 / 300 ms and never past two seconds, by test; the banner gets
+`leaving` as it starts to go and `flashTurn` names the next golfer then,
+not after. The XP flying to the card is not built. The **scorecard** between
+holes fills the screen in the course's colours, the finished hole's number
+flashing (`th.rh-done`), each score marked as on paper (`paperMark`: a
+circle round a birdie, two round an eagle, a square round a bogey, two round
+worse); its columns do not lean -- the cells are text, not wrappers, and a
+leaning table with upright numbers needs them rebuilt. **Round complete**
+(`roundCompleteHtml`, at the head of the final card, not in match play):
+standings with ties sharing a place and the winner in the gradient, each
+golfer's XP this round (`xpThisRound`, the ledger entries keyed to the
+round), level, and the handicap the round moved (`handicapLine`: the
+profile summary with and without this round); New round, Save card, Main
+menu. "Play again with the same group" and the round's three highlights are
+not built.
+
+**A COLOURED BOX WITH TEXT IT CANNOT WRAP LEANS BY A PSEUDO-ELEMENT.** The
+restyled controls carry text nodes that cannot be counter-skewed, so the
+slanted panel is a `::before` behind them (`isolation:isolate` on the box), the
+box itself stays upright, and the text with it -- the kit's rule (only the
+colour leans) by another route.
+
+**THE SHOT CARD POINTS AT THE APEX** (the owner, 18 October 2026; main.js
+*THE CARD POINTS AT THE APEX*). It comes up as the camera pulls back to show
+the whole shot line (the moment the ball stops), with an arrow from its near
+edge to the line's highest point (`apexOf` over the flight's points), and when
+the camera flies in to the next shot it fades over `CARD_FADE_MS` (600 ms)
+instead of vanishing. It hangs ABOVE the point, centred on it, the arrow down
+from its foot (class `below` puts it under the point only where the top of the
+screen has no room), kept inside the screen and clear of the map and tool
+column; the arrow's start, length and angle are worked out each frame from
+where the card had to sit, so it always reaches the point. Its numbers: the
+total (labelled YDS TOTAL, the owner) and, as a second big number, what is left to the pin (feet inside 10 m,
+as the flag marker counts -- PLACED; IN THE HOLE once it drops; not on the
+range), then ball speed, backspin and apex, in that order (the owner, 18 October
+2026; carry and offline left the row). A shot whose line is
+never shown (skipped, or the review camera off) points at where the ball came
+to rest. A new hole hides it at once.
+
+### The old interface, removed (18 October 2026)
+
+The round screen hid the old pieces with `display:none` from round 13 on; on
+18 October 2026 the owner had them taken out: the course card (`#courseTitle`,
+`#courseSubtitle`), the weather box, the phone's camera button and the camera
+strip (`.view-tools`: player, overview, free flight, green, flyover, range
+controls, Tools, full screen), the aim box (`#aimOutput`, the arrows, the typed
+`#aimRange`, Aim at pin), the spin dial's - / + pair, the Swing button and the
+keyboard-hints row, with their code (main.js, layout.js) and their styles. The
+club box's hidden "IN THE BAG" label and flag icon went too.
+
+**Hidden was not unused.** Four jobs still ran through the hidden pieces and
+now run without them:
+
+- The tool columns and R pressed the hidden Range controls and Full screen
+  buttons; they call `toggleRangeBox()` and `toggleFullscreen()`. Where an
+  iPhone has no fullscreen, `#app.no-fullscreen` hides every Full screen
+  button (round-hud.css).
+- The pause list's cameras pressed the strip's buttons through `data-proxy`;
+  they are `data-cam` and call `cameraMode` (or the flyover) themselves. **The
+  hole flyover's only way in is this row's Flyover.**
+- `setWindArrow` returned early when the old wind arrow was missing, and the
+  round screen's wind chip takes its bearing from the same function: removing
+  the arrow alone would have frozen the chip. It writes only the chip now.
+- The smoke journeys read the aim from the aim box. `updateAim` writes it on
+  `#world` as `data-aim` (degrees) and `data-aim-yards` (smoke `t.read('@aim')`,
+  `t.read('@aimYards')`); `lab.state()` gives `canSwing`, `pinAt` and `ballAt`
+  for the checks that read the Swing button's disabled state and Aim at pin.
+
+Also gone because only the hidden pieces showed them: the skins value of the
+hole being played (it was in the course card's subtitle; the round screen does
+not show it) and the controller line in the hints row.
+
+**THE STYLE SWEEP KEPT EVERY SURVIVING RULE EXACTLY AS STRONG.** The rules were
+removed with a CSS parser, not by hand: a selector naming a removed class or id
+went, a rule left with no selectors went, `:is()` lost the removed arguments,
+and a media query left empty went. A second pass removed every class and id no
+longer named anywhere in the page, the code or the tests (the drag grips and
+title bars, `.hud-custom`, the old shot groups and live tiles, the old splash,
+the utility bar, about 40 names). **`:not(.dead)` was not simply dropped**: it
+weighs one class in the cascade, so dropping it would have let other rules win
+ties they used to lose. It became `[class]` (or `[id]` on an id), which every
+element it could match passes and which weighs the same. About 22 KB of rules
+went in all.
+
+## The 1.0 sounds (wired in 17 October 2026)
+
+Phase 4 of the 1.0 interface (17 October 2026). `src/chiptune.js` holds the
+family C tunes the owner picked in the mockups (prog metal, clean tone,
+half-time grooves with an echoing lead) for hole in one, eagle, birdie, par,
+bogey, level up, round complete and XP counting, and the six interface sounds
+(menu move, select, back, toggle, locked, monitor ready), as event lists in
+sixteenth notes, with the player ported from the mockup (`playChip`: pulse
+guitars and leads, triangle bass, noise drums, a dotted-eighth echo; never
+scheduled in the past; its noise is a fixed sequence so a tune sounds the same
+twice). **They are wired in** (the owner: "you can also wire all the new
+sounds i agreed on", 17 October 2026; `CHIP_SIGNED_OFF` records it). audio.js
+plays them: `score` sends hole in one, eagle, birdie, par and bogey to family
+C and albatross, double bogey and worse to the 14 October jingle (`CHIP_FINAL`;
+PLACED, family C has no tune for them); `moment('level' | 'xp' | 'round')`;
+`ui('move' | 'select' | 'back' | 'toggle' | 'locked' | 'ready')`, with
+interface sounds within 45 ms of the last skipped. main.js calls them from the
+XP popup (fill and level-up; its `gain` take stays), the results (round
+complete, once per round), `moveFocus`, a captured click on the main menu or
+Esc list, Escape, the green-reading buttons, a pointerdown on a locked look and
+`drawMonitorState` turning green while armed. Levels are `CHIP_LEVELS`
+(0.32 / 0.22), measured by check.mjs. **The marimba stings are deleted**
+(`INSTRUMENTS`, `score()`, `FINAL.scores`); `SCORES` keeps each score's name and
+notes for the stings report. TRAP: the sound-lab main page inlines chiptune.js
+inside a function scope (`/*CHIP*/`), because pasted beside sound.js its short
+names (`L`, `D`, `B`, `noise`, `pulse`) would collide.
+
+## The 1.0 menus and windows
+
+Phase 3 of the 1.0 interface (17 October 2026, branch `ui-1-0`; **not seen**,
+like phases 1 and 2). Off a phone only, like the round screen.
+
+**Arrows and a controller** (`src/ui-focus.js`, tested): on the main menu and
+the Esc list, the arrows -- or a controller's d-pad or left stick -- move the
+focus to the button in that direction (nearest along it, sideways distance
+counting double; a single column or row wraps), Enter or the pad's A presses
+it, B or Start backs out of the Esc list, and Start pauses a round. A capturing
+keydown listener takes the arrows before the game does, but only while
+`focusScope()` names a screen; a text box, slider or drop-down keeps its own.
+The test walks every layout the menus use: every button reachable from every
+other, none a dead end. **The panels and tool windows are not on it yet** --
+they keep Tab.
+
+**The main menu** is the approved title screen by restyling the old markup
+(`src/ui-screens.css`): the logo top left, one list down the left (each tile a
+slanted row; the focused one, or Play when nothing is focused, in the
+gradient), the links under it, the main golfer's card on the right
+(`drawMenuCard`: ball in frame, name, title and level, XP into the level, the
+challenge of the week), the keys at the foot. Menus wear the course of the
+week's palette, the studio its own landscape's, a round its course's
+(`applyHudPalette`, on every `setMode`).
+
+**Every other panel and window is restyled, not rebuilt.** The old stylesheet's
+own variables are set from the palette for everything under #app (`--glass`
+is the panel colour, `--accent` the light end of the gradient with `--on-hot`
+text, `--font-display` Saira Condensed), so the sheets, tool windows and
+dialogues take the biome's colours and the typeface; the main buttons and tabs
+lean (pseudo-element), headings are the italic capitals. Their layouts are the
+old ones (the lobby, monitor setup, profile hub, settings, challenges, course of the week, saved courses, the studio, the range controls and pause since rebuilt, below):
+challenges, course of the week, saved courses, studio, launch monitor setup
+and range controls of the plan are **not rebuilt on the kit** (TODO). **The
+Esc list gains the standings**: each golfer, how far through, against par.
+
+**THE SHEETS ARE OUTSIDE #app.** `#drawer` (every sheet: the lobby, My profile,
+saved courses, challenges, the course of the week, launch monitor setup, help,
+the scorecard) and the dialogues (`.version-notice`: the welcome, leave and
+version notices) are children of body. So nothing keyed on #app reaches them:
+not the app's container queries, not the palette (now set on the page root,
+`applyHudPalette`), not #app's Text size zoom, and not `--hud-z`. Their 1.0
+rules are in `src/ui-sheets.css`, matched by `@media` on the screen's size,
+scaled by `--sheet-z` (the round screen's scale times the Text size, on the
+root), with the old variables mapped to the palette there. Found by the first
+look on 17 October 2026: the sheets were still green, and the phase 2
+scorecard and round-complete styles, written under the app's query, had never
+applied at all (moved to ui-sheets.css).
+
+**The sheets as 1.0 screens (17 October 2026, second pass).** Full screen,
+the header band (the screen's name, Esc back), each control a slanted panel
+in a stack, the main button (`[data-panel-action]`) bottom right in the
+gradient, tabs as slanted chips. The other sheets keep their tabs: My
+profile is the hub with the Look locker as a tab, as designed. Not in the
+course studio, whose sheet takes the play area. An open sheet is in
+`focusScope` (arrows, menu sounds; B closes it).
+
+**Play is four steps** (round 13, 17 October 2026; `src/ui-lobby.js` on
+`src/ui-steps.js`). The owner reversed the one-screen lobby ("multiple menus
+again"): 1 Course -- every saved course and the course of the week as cards
+with their pictures (course-picture.js), then Surprise me and New in studio;
+the line along the foot names the chosen course, and its saved rounds open
+from there (they were the lobby's own tab); 2 Golfers -- a seat each, with
+the golfer's own tee; 3 Format -- four cards, the teams under them for match
+play and scramble (a golfer's chip moves them across); 4 Rules -- putting,
+out of bounds and the lie penalty with help, and what you are about to play.
+The steps along the top are buttons named by their label ("Golfers"), and
+the screen opens on Course from the menu and on Golfers during a round
+(`lobbyStep`, kept across redraws, like `lobbySaved`). **Moved, not rebuilt**
+as before: renderPanel writes the old lobby and `buildLobby` sorts its nodes
+into the steps; every id the journeys use is the old one. **A step sheet's
+foot holds the screen's main button**: `[data-panel-action]` is moved into
+`.sx-btns` and shown only on the last step. **PLACED:** the course of the
+week's card opens its own setup (it is stroke play at fixed settings); the
+mockup's Goal and Holes rows are not there (the lobby has no goal, and the
+course decides its holes); "your best" on a course is not shown.
+
+**The round screen, round 13** (frames c-aim, c-first, c-flight). The hole
+panel stands alone top left; the wind (`#rhSubs`, only its wind chip now) is
+at the top centre; the rise to the hole moved into the pin's marker
+(`#pinRise`). **Both markers are one build**: a slanted pill over a stem and an
+arrow whose tip is on the point -- `translate(-50%,-100%)` with the tip at the
+box's bottom centre, the aim marker projected at the ground (+0.15 m, it was
++3 m: "off centre and too high"). **A new hole starts quiet** (the owner, 18
+October 2026; round 13 showed the aim point first, `aimIntroUntil`, retired):
+no pin distance and no aim marker while the loading screen or the turn box
+(`#turnFlash`) is up, or for up to `HOLE_QUIET_WAIT` (3 s, PLACED) after the
+loading screen if the box has not come yet (it waits for a hole-out banner);
+then the flag label fades in (its `.faded` transition). `flashTurn` records
+`turnFlashHole`; not on the range or during a tour. **The flight panel is gone** from the round screen (`#shotPanel`
+hidden; it stays on a phone): the meter counts carry, total and apex through
+the flight (as it already did), and the launch numbers are `#rhLaunch`, shown
+while the ball is in the air (`flight.elapsed < result.hang`) and faded at
+landing. **Round 14** (frames c-aim2, c-club, c-flight2, c-aim-mon): nothing
+above the meter (`.sm-head` hidden: the title line and the out-of-reach words
+went; the bar's hatch still shows the reach); the meter is 543 wide, 80 up;
+curve, height and spin are `#shapeControl` as three boxes under it, 29 up,
+each label, value and key (the small labels are `display:contents` so their
+kbd can be ordered after the value); in flight `#smSkip` stands there instead
+-- **moved out of the meter's head into #world at boot**, because the head is
+hidden; with the monitor panel showing (`:has(.monitor-panel:not([hidden]))`)
+the boxes hide, PLACED (the monitor measures the shape). The club box shows
+Q and E with CLUB (`.club-keys`) and the club's name as the 1.0 drop-down's
+value (`.club-select .dd-v`, refreshed in drawRoundHud, since Q/E set
+`#club` without an event); a click anywhere on the box opens the bag
+upwards (`dropdown(#club, {field: .club-select, up: true})`, the options
+carrying `data-lead` = code and `data-right` = carry). An out-of-reach rule
+(`:has(.swing-meter.out-of-reach) .shape-control`) lifts the boxes and is
+overridden by name. The map is at the bottom right and `#rhTools` stands above
+it: each tool presses its own key (a synthetic keydown), so it does what the
+key does in every state. The keys row (`#rhKeys`) is hidden; Menu in the
+column is the mouse's way to pause (PLACED). **PLACED:** plays-like is no
+longer on the round screen.
+
+**Sheet polish (round 13):** the sheet body has 26 px at both sides so a
+leaning panel's corners are not clipped by the scroll box (the review's
+"cut-off edges"); Settings shows every group with no tabs; only the focused row
+is outlined (a ticked box no longer outlines its row); drop-downs in the
+sheets, windows and dialogues are drawn in the 1.0 style with a dark list
+(round 13 left the open list the browser's own, PLACED; round 14 replaced it -- *The 1.0 drop-down*, below).
+
+**Keys & help** (round 14, frame c-help; ui-menu-screens.js `buildHelp`): the
+help panel keeps its seven topics and their words (one `<h3>` each, so
+`groupPanelContent` still makes a tab and a section per topic) and is laid out
+as topics down the left -- the same tab buttons, upright, so the journeys
+still press them by name -- the page in the middle under "N OF M" and its
+title, scrolling with its bar in the gutter, and that page's keys on the
+right (main.js `HELP_KEYS`; the essentials read their own `.help-shortcuts`
+list, which is hidden in the text). The settings layout (ui-settings.js) skips
+Help now, though its category list still links to it. The sheet's title is
+"Keys & help" (it was "Welcome to Fairway").
+
+**The 1.0 drop-down** (round 14, `src/ui-dropdown.js`, `ui-dropdown.css`;
+frames c-locker-title and c-club): the closed field (label, value, triangle)
+and the list opening under it -- group headers, locked choices dimmed with how
+to earn them (`data-earn` on the option), the current one filled with a tick,
+the cursor traced, a note right-aligned (`data-right`). **The native select
+stays**, see-through and 1 px under the field (`.dd-native`): it keeps its id,
+value and change handler, a choice is written to it and a `change`
+dispatched, and the journeys' `selectOption` still works. **Keys:** the module
+adds a window capture listener when it loads -- before main.js's -- and while
+a list is open it takes every key (arrows, Enter, Escape close only the list),
+so the game's focus arrows and Escape-closes-the-sheet never see them.
+`dropdownEverywhere([#drawer, #app])` gives it to every select a player can
+see, also ones drawn later (a MutationObserver, at most once a frame -- and
+**a hidden tab or the browser pane pauses frames**, so a fresh select gets its
+field on the next frame); it skips selects with `display:none` (the hidden
+pickers: `#roundMode`, the team selects, `#footprint` under its tiles), the
+lobby's and the seats' own arrow pickers (`.lb-sel`, `.seat-val`) and
+`#club` (its box is the field: the bag, round 14 item 7). **The selects it
+covers** (round 14 sweep): the locker's title (`#wearTitle`), a seat's golfer
+(`who0-3`), Graphics (`gfxQuality`, `gfxFrameCap`), the studio's holes
+(`courseHoles`), the bag's owner (`bagOwner`), turf (`turfFirmness`),
+putting (`puttingMode`), shot mode (`shotMode`), the range's green
+(`rangeStationGreen`), the round's rules (`roundOB`, `roundPuttingMode`,
+`roundMonLie`, `roundTee`), Endless's goal (`endlessGoal`, where not an
+arrow picker), the pause's tee (`activeTee`), the monitor's club
+(`monClub`), free flight's hole (`exploreHole`), and each settings row
+drawn from the schema. **The locker** (frame c-locker): one highlight -- what
+is worn is traced in yellow round its own leaning edge (`filter:var(--trace)`
+on the skewed tile), its name yellow with a tick; the gradient fill and ring
+that made two highlights are gone.
+
+**THE WIDE-SCREEN RULE (round 14, 17 October 2026).** Round 13 was checked
+only at 1280 x 720; the owner's window is about 1.92:1 and showed chopped
+corners and a cut BACK. **A leaning picture is an exact shape, never a skewed
+layer in a box that hides its overflow** -- that box cut two corners off the
+parallelogram (the "chopped corners" on the Play cards and the week's
+picture). A picture's `::before` is widened by half its lean each side
+(`inset:0 calc(var(--lean) * -.5)`) and cut with
+`clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%)`,
+where `--lean` is its height x tan 12 degrees (0.2126): the same shape a
+centred `skewX(-12deg)` gives, so it lines up with the skewed panels under
+it, and the image itself is not sheared. **A clip-path cuts box-shadows**, so
+a selected picture is outlined with `filter:var(--trace)` (four
+drop-shadows, defined on #drawer), which follows the shape. **Grids gain
+columns instead of stretching:** the course cards are
+`repeat(auto-fill,minmax(280px,1fr))` in the sheet's units -- 5 across at
+16:9, 6 at 1.92, 7 at 21:9, 5 at 4:3 (checked in the browser pane); the
+Endless landscapes (240) and the saved-course shelf (280) the same way. **A
+scroll box is padded by the lean** of what leans inside it (half the tallest
+shape's height x 0.2126): `.sx-scroll` 20, `.sx-saved` 20, `.wk` 24, the seats' row 20 (a seat is about 400 tall: its lean overran the sheet's 26 by 13). **On a phone** the sheet's gutter is the lean too (`#drawerContent` 22, the seats 26; it was 0, and every shape poked 3-19 past it), and the course cards go two to a row at whatever width fits (at the desktop minimum two cards were wider than an upright phone).
+The check that finds a clipped shape and an off-screen piece is a few lines
+of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
+4:3 and both phone shapes after any sheet change.
+
+**THE OWNER'S FIX LIST (18 October 2026)** added four rules the page script
+now checks (`CUT`, `ITALIC`, `SLANTCUT`, `BLUR`, `ROUND`; the round 14 report
+has the script). **Heavy italic in a box that hides its overflow loses the
+lean of its last letter** ("DUSTI", "STRAIGHI"): such text gets
+`padding-right` of about 0.15 em, or the box does not hide its overflow. **A
+box whose `::before` is the skewed panel must not hide its overflow** -- it
+cuts the panel's own corners (the Endless landscape names, the pause screen's
+half-width chips). **No backdrop blur behind a slanted panel**: the blur is
+the rectangle's, so it showed past both slanted ends (the XP card, the
+level-up band, the growing window; `backdrop-filter:none`). **Nothing rounded,
+nothing "..."**: a note is words beside a thin bar (`.note`, empty ones
+hidden), the scorecard's next-hole countdown and match line are slanted
+panels, card names and captions wrap. A seat's name is centred by an unseen
+triangle balancing the real one (`.player-who .dd-field::after`).
+Challenges' group got its own compact seat row (`.ch-group .seat`): the old
+player-row grid had squashed its pickers to nothing. **A band that sits over scrolling rows is solid**: `--panel` is see-through, so the settings help band (`.st-help`, sticky at the foot) lays it over a dark base.
+
+**#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
+`sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
+the `*-root` marks first. Without that, Help opened blank after Play, under
+Play's rule hiding the old sections (found by menu-panels).
+
+**Endless is two steps** (`buildEndlessSetup`, round 14, frames c-endlessx and
+c-endless2): Landscape -- the biomes as pictures, or Any -- with THE RUN
+beside them: the goal (none or Sudden death, `#endlessGoal`), the format
+cards, the house rules and the main golfer's best run (PLACED: the frames
+have nowhere for format and rules); then Golfers. **The start button is on the
+Golfers step only** (round 14: "the Play button appears only on the last step";
+the course of the week the same, *Play · <course>*). Its accessible name is
+still *Start an endless run* (`aria-label`; the journeys press it), its words
+*Start the run · Hole 1*. The journeys' `press` goes to a step sheet's last
+step when the button it wants is not on screen, as a player would.
+**Seats** (round 14, frame c-play2l): *Plays with* and *Swings* are a label line
+and a value line with an arrow at each end (`seatPick` in main.js; the select
+lies see-through over the value, so a click -- or a test's selectOption --
+still opens it, and the arrows dispatch its change); the name steps down
+34 / 29 / 24 / 21 by its length (ui-lobby.js `nameSize`) and ends in "...";
+the title has a line of its own. **A run's
+landscape rides in its seed** as `~<biome>` (endless.js `runLandscape`,
+`landscapeSeed`): saved and replayed runs keep it, and a seed without one --
+every run before -- grows exactly what it did (the fingerprint is unchanged,
+no version bump). A pinned run never adopts the menu's showcase hole.
+
+**Each golfer has their own tee** (round 13; `game.js` `teeOf`): a player may
+carry `tee` and starts every hole from it; one without plays from the round's
+tee (`#roundTee`, still there, hidden). The tee is remembered on the
+profile (`setProfilePlay`), rides through saves and the group editor, and
+names the yards on the hole panel for whoever is up. **PLACED:** the
+scorecard's yards row and the profile's hole record still show the round's
+tee.
+
+**Launch monitor setup is the mockup's layout the same way**
+(`src/ui-monitor-setup.js`): three numbered steps on the left, ticked from
+the game's own state (bridge connected; a device talking; armed -- a step
+is never done ahead of the bridge), with the moved Arm switch under them;
+the status on the right -- the ball light, bridge and device rows, the
+address box, the last shot, Connect bridge and Try a sample shot (its JSON
+folded under *Edit the sample shot*). `monitorSetup.paint()` redraws it on
+a status message, the Arm switch and every `updateHUD` while it is open. The
+old notes and connector list run along the foot (PLACED).
+
+**My profile is the hub** (`src/ui-profile-hub.js`): the golfers' chips (the old
+`.profile-switch`) fixed in the header band; the left stack (who, level and
+bar, sim handicap, playing since); six tabs. `renderProfile` still writes the
+old page and adds the hub's own blocks (`hubBlocks`: `.ph-since`,
+`.ph-overview`, `.ph-preview`); `buildProfileHub` sorts the rest by heading
+(`tabOfHeading`) -- **a new heading on the profile page needs a line in
+`SECTION_TAB`, or its section lands on whichever tab came before it**. Every
+choice on the page redraws it, so the tab shown lives in main.js
+(`profileHubTab`). On the Locker tab the left stack swaps to what is worn now
+(the locker mockup's live preview), by CSS on `.ph[data-tab]`.
+
+**Windows lean as one block** (round 13, `src/ui-windows.js`, `ui-windows.css`):
+every row draws its own slanted background, and `leanAsOne` sets `--wy` (the
+row's distance from the column's middle) so CSS moves the row across by
+`tan 12° x --wy` -- where a sheet leaning about that middle line would put it.
+The edges become one straight slant and the text stays upright. Leaning each
+row about its own middle made the zigzag the owner called jagged. The round's
+pause is two such windows (the list; the round), the studio has its own
+(`toggleStudioPause`, Esc while flying: back to the view, studio settings,
+regenerate, save, settings, leave), built by `makeWindow`.
+
+**The old windows are dressed, not rebuilt** (round 13, frames c-dialogs1-3,
+c-xp, c-free). Leave this round, the version notice, the welcome, Take
+relief, the sim drop and the scramble pick keep their markup and IDs (smoke
+presses them); `ui-windows.css` draws them as windows, and `watchWindows`
+(main.js boot) re-runs `leanAsOne` whenever one is shown or its rows are
+redrawn -- **a new row in one of them needs nothing; a new window needs a
+line in that list, or its rows lean one by one**. The relief, drop and pick
+windows stand right of centre, so the ball and the drop stay in view. The
+toast is a pill under the wind, the XP card sits top centre, level up is a
+band across the screen, the keys list is a window of chips, the time of day
+and the shot list are dark windows. Free flight is a pill top left (the
+hole picker under it), its keys as chips along the bottom with Return to
+ball, and every round piece but the map hidden (`#world.exploring`). The wait while a landscape grows (`#generating`, every screen) is a
+window too: a slanted panel under the biome's line, its bar a slanted track. The
+Tools list and every tool window (popups.js) have slanted rows on a solid
+panel, and the card naming whose turn it is (`#turnFlash`) is a slanted panel
+(ui-windows.css, the sweep).
+
+**Pause is the mockup's two columns** (the Esc list; third pass, 17 October
+2026): PAUSED, Resume in the gradient, then Scorecard, Tools, Players & round,
+Help & controls and Main menu as tall rows, the settings as four half-width
+chips (Graphics, Sound, Saved courses, Connect monitor) and the time of day;
+the course, hole and par once, centred under PAUSED over the left column
+(18 October 2026: it also headed the standings, `.rh-pause-k`, removed); on
+the right the standings (each golfer's ball in its frame), the tee, the Swing Meter, shot numbers, cameras and the
+conditions as a row. **The list's own containers are `display:contents`**
+(`.header-right`, `nav`, `.menu-wrap`, `#menuDrop`) so every row is a grid
+item of the top bar, placed by explicit rows; **but `.sim-time` is ALSO a
+`.menu-wrap`** -- caught by the first look, when its box vanished and its
+slanted panel, positioned against the whole top bar, became one giant red
+shape behind the screen. The selector is `.menu-wrap:not(.sim-time)`. Resume
+never had its gradient: the shared row rule's `:is()` holds ids and
+outranked `.rh-resume` (fixed by id). **Settings: help on
+demand.** In the tool windows each control's explanation shows while it has the
+focus, and ? (with the focus in a window or a sheet) shows them all
+(`#app.rh-help`).
+
+**Settings is one screen from the menu** (`src/ui-settings.js`, 17 October
+2026, third pass): Camera & bay, Graphics and Sound opened as sheets get the
+category list down the left (Camera & bay, Graphics, Sound, Launch monitor,
+Help & controls -- each opens its own sheet; the mockup's Display, Controls,
+Data & backup and About map onto these, PLACED), every group shown at once in
+two columns of rows (no tabs since round 13), and the help line at the foot for the focused row. CSS
+only turns the real controls into rows: a tick box is drawn as an ON/OFF
+switch (`appearance:none`), a drop-down as a value with ▶, a slider as a
+segment bar filled to `--fill` (the track is masked into segments). **One
+focus listener for good:** #drawerContent outlives every sheet, so
+`buildSettings` wires `focusin` once and swaps `root.stFocus`; adding a
+listener per render piled them up. In a round the same panels are tool
+windows and keep their own layout.
+
+**Challenges, the course of the week and saved courses** follow
+(`src/ui-menu-screens.js`, same night): challenges put the week's card as a
+banner, the group tabs (`.chal-tabs`) down the left, the cards in two
+columns and the detail section (with the group under it) on the right; the
+panel's own section tabs go, and `#challengeGo` is moved out of them first.
+The week is two steps since round 13 (frame c-cotw): one screen -- `weeklyBlocks`'s picture,
+eight fact tiles and the earlier weeks with their pictures -- and Golfers
+(the seats, tees and rules; PLACED, the frame has only Play). Saved courses
+keep their tabs; Your courses becomes a shelf whose chosen card's own
+`.course-actions` are moved into the right column (and back when another is
+chosen), with the course code from `exportCourse`. **A `:is()` list takes the
+specificity of its MOST specific member**: the shared panel rule once listed
+`.ch-detail>ul.medal-asks>li` inside `:is()` and so outranked every
+per-piece rule after it (the week banner lost its gradient); it is `:where()`
+now. None of this runs in the studio (`appMode!=='studio'`), whose sheet
+keeps the old layout.
+
+**The course studio** (`src/ui-studio.js`): flying, `#studioSlab`,
+`#studioChip` and `#studioKeys` (made once in #world) replace the old course
+card and weather there, and the studio bar becomes the action bar, bottom
+left. **#studioBar IS A CHILD OF BODY**, like the sheets: its 1.0 rules are in
+round-hud.css under `@media`, not the app's container query (the first try
+put them in the query and nothing changed). Its geometry is untouched -- the
+observer still lifts it over an open sheet, and the studio journey's checks
+still hold. With Settings open (`studioSheet`), the tabs are the category
+list with counts, each row a name, a segment bar and the value, and
+`.sd-side` lists `studioChanges()` -- every schema control on the page
+against `settings`, plus holes, seed, landscape and footprint -- with the
+facts and the focused row's tip. With the sheet closed the last list stands
+(`studioChangeList`) until a regrow clears it. `markStudioDirty` now redraws
+through `studioRepaint`, at most once a frame: the panel's input listeners
+pile up one per render (an old habit of this panel), so a redraw per event
+would multiply.
+
+**The range controls** (`src/ui-range-controls.js`) stay a tool window (`POPUP_SIZE.range` now 720 wide)
+and sort `.range-box`'s runs by its own `h4` headings into two columns
+(one when the window is narrower than 560, a container query on the window's
+body). The session table is `clubTable` from range-report.js -- the report's
+own numbers -- and `recordRangeShot` refreshes it in place
+(`updateRangeSession`) rather than redrawing the window, so a slider being
+dragged keeps its place.
+
+**Card pictures are tiny 3D models** (round 14; `course-model.js`,
+`model-framing.js`, `model-cards.js`). Every card picture -- Play, the
+Endless landscapes, saved courses, the course of the week and its earlier
+weeks, the studio's landscapes -- gets the flat drawing at once
+(`pictureQueue`) and then a low-detail model of the whole course over it
+(`cardPictures` in main.js does both). The holes are the real ones
+(`layoutFor`); the ground relief and trees are a seeded per-landscape rule
+(PLACED, RESEARCH *The tiny course models*). **One renderer:** the game's
+(`view.renderer`) draws each model into one multisampled render target,
+read back into a 2D canvas in the card -- never a WebGL context per card
+(browsers drop the oldest past about sixteen: that would be the game's). The
+game's render target, clear colour and autoClear are put back after each
+draw. **Colours are display values:** three converts colour space and tone
+maps only when drawing to the screen, so the model's colours are set raw
+(`LinearSRGBColorSpace` with sRGB numbers) and the pixels copied as they
+are. **The models are unlit** (`MeshBasicMaterial`; every face shaded once by a
+sky and a sun when the model is made, course-model.js `shadeOf`): lit
+materials drawn on the game's renderer while the menu is up compiled five
+Lambert programs in view as the Endless sheet opened -- a stutter the
+`ball-light-shaders` journey caught. (Before that, lights at the mockup's
+strength came out dark: three r128's lights carried a hidden pi.) The canvas sits
+under the card's leaning shape, cut by the same clip-path (`.model-pic`).
+Only the selected card (`.on`, `.active` or `aria-pressed`) sways, at up
+to 30 frames a second; models are made one per timer tick (about 50-100 ms
+each, on the main thread: the relief is a formula, so there is no worker).
+**Not built: the B flyover** for the big pictures (the course of the week,
+the course about to play): those show the tiny model, as the brief allows
+until a capture exists.
+
+**Course pictures are drawn from the plan** (`src/course-picture.js`, round
+13): the holes come from `generateCourse` and are routed by `routeHoles`, as
+`generateWorld` does, so the picture is the course; no terrain is built (a nine
+is tens of milliseconds, an eighteen about a tenth of a second). Drawn like
+`drawMap` in the biome's `mapTurf`, with each hole's line stroked at least a
+few pixels wide so a small card still reads. `pictureQueue` draws a list one
+at a time in idle moments and hands each element `--pic`, which the CSS puts
+under its slanted shape. **If routing changes, the pictures change with it**
+-- they are not stored.
+
+**`#app>*` RESETS THE OLD VARIABLES.** A rule in style.css that sets
+`--glass` or `--accent` on a deeper element still wins there; one that
+reads them gets the palette. `--accent` is now the LIGHT end of the gradient
+and its text `--on-hot` -- the dark end (`--a2`) under light text fails the
+contrast check on Giant Redwood (*The 1.0 interface: layout rules*).
+
 ## Playing by touch
 
 A tap on the course aims wherever the finger lands, and at 200 yards a
@@ -942,13 +1670,13 @@ nothing got you exact. Four pieces fix that, each with a rule.
   above it, which moved with the bar for free; with the shot panel on the left
   and the shot button in it, the pad went to the other thumb, and it now hides
   itself wherever the panel hides (the "where it hides" rules). Phones only:
-  everywhere else the aim arrows are in the panel. Its buttons are disabled by
-  the same test that gates them, `canNudgeAim()`, set in `updateHUD` beside the
-  swing button.
+  everywhere else the arrow keys, the mouse and the big map aim (the old
+  panel's aim arrows went with the old interface, 18 October 2026). Its buttons are disabled by
+  the same test that gates them, `canNudgeAim()`, set in `updateHUD`.
 - **Nudges are half a degree and a yard a tap** (`AIM_TAP_DEGREES`,
   `AIM_TAP_YARDS`). "Further" moves `aimRange` for a full shot, but for a putt
   it moves POWER, because a putt's length comes from its power and the roll
-  preview ignores `aimRange`. `holdToRepeat` drives the pad and the bar's
+  preview ignores `aimRange`. `holdToRepeat` drives the pad's
   arrows: the press is exactly one tap, and a hold past 0.35 s repeats at a
   rate climbing from 3 to 24 taps a second. A pointer's own `click` is
   ignored because its press already stepped; a click with `detail` 0 is a
@@ -956,7 +1684,14 @@ nothing got you exact. Four pieces fix that, each with a rule.
   press and the click both step: every tap moves twice.** `contextmenu` is
   cancelled, because a long press on Android opens one and ends the sweep.
 - **The big map is the SAME canvas**, with `aim-view` on `#world` laying the
-  `.minimap` panel over the course. Its rules are `!important` because a
+  `.minimap` panel over the course. On a big screen it is the round-13 window
+  (frame c-bigmap, `ui-windows.css`): centred, 62.5% x 89% of the screen and
+  NOT zoomed (only its header and foot take `--hud-z`), the rest dimmed by a
+  box shadow; `#mapFacts` (hole line, aim, pin) is filled by `drawRoundHud`
+  only while it is open; the green-reading buttons show their names; the
+  foot's keys are `.avb-keys` and `#aimViewDone` reads *M Close* there and
+  *Done* on a phone (its accessible name stays Done: the phone journey
+  presses it by name). M toggles it in play, not while a ball flies. Its rules are `!important` because a
   player may have dragged or sized the map, and those positions are inline
   styles. `setAimView` resets the zoom both ways -- a zoom chosen on the big
   map means nothing on a thumbnail. **A touch tap on the thumbnail opens it
@@ -1001,8 +1736,9 @@ apart by its touch points -- only over http(s), and never inside the installed
 app (`display-mode: standalone`, or Safari's own `navigator.standalone`).
 
 **Checked by** `touchAiming` in both phone journeys -- a tap on the pad turns
-exactly half a degree, further is exactly a yard, the pin button matches the
-bar's Aim at pin, a held arrow sweeps and stops when the finger lifts, the
+exactly half a degree, further is exactly a yard, the pin button aims at the pin's
+own angle and yards (worked out from `lab.state()`'s `pinAt` and `ballAt`;
+the bar's Aim at pin it was once checked against is gone), a held arrow sweeps and stops when the finger lifts, the
 thumbnail opens the big map, a pinch zooms it, a tap on it aims, Done puts it
 away unzoomed -- and a probe that walks outward from the middle of every
 control a round needs and fails anything under 44 px to a finger that is not
@@ -1096,13 +1832,13 @@ REJECTED: re-simulating from the five launch numbers. It would have been exact a
 
 The CSS has to undo `.drawer .primary`, which sets `width:100%` and `margin-top:18px` for a full-bleed button at the foot of a sheet. Inherited in the tab row those made the action fill its own line and push the tabs off it entirely — which is what the first version shipped, and what a screenshot caught rather than the DOM assertions, since every structural check passed while it looked wrong.
 
-**Every variant of the round panel is tabbed, including the range.** The range setup dialogue had a green-distance field before any heading and one `<h3>` after it, so it came out as a single scroll where its neighbours tab. It now opens with `<h3>The green</h3>`, giving two named sections, and `groupPanelContent(content, name==='round')` forces tabs for all three variants rather than only endless.
+**Every variant of the round panel is tabbed, including the range** -- SUPERSEDED for the range in round 14: its setup is two steps (ui-lobby.js `buildRangeSetup`, frame c-range2), built from main.js's `.rs-golfers` and `.rs-range` sections **after** `groupPanelContent` has folded the content into its sections (built inside the branch, the steps were folded away and the sheet came up empty). The history: the range setup dialogue had a green-distance field before any heading and one `<h3>` after it, so it came out as a single scroll where its neighbours tab; it then opened with `<h3>The green</h3>`, giving two named sections, and `groupPanelContent(content, name==='round')` forces tabs for all three variants rather than only endless.
 
 **Tabs come from heading count, and the endless panel had to ask.** `groupPanelContent` tabs a panel at `TAB_THRESHOLD` (3) `<h3>` sections and lays fewer out as columns. Endless has two, each a full sheet on its own, so it arrived as one long scroll. The function takes a `tabAlways` argument — passed as `endlessSetup&&name==='round'` at the single call site — which lowers the threshold to 2 for that render only. It is an argument rather than a flag on the element because the same `content` node is reused by every panel and a stale dataset value would silently tab the next one.
 
 **The panel title follows the variant, not the key.** `panelTitle(name)` reads *Driving range*, *Endless run* or *Your next round* for the one `round` key. All four used to read "Your next round", which was wrong on three of them.
 
-**One putting setting, two surfaces, and a copy held apart from practice rounds.** The round panel's *Format & tees* section renders the mode select and the 1/2/3-putt distance fields inline — it used to be a button in *Your group* that opened the putting panel, which was a second click to reach one setting and put it under the wrong heading. `PUTTING_MODES`, `PUTTING_NOTES`, `puttingFields(id,p)`, `readPutting(id)`, `applyPutting(cfg)` and `puttingGuard()` in `main.js` are the shared pieces; the round panel and the tools-tray *Putting options* panel both build from them, so the option list and the explanatory notes have one definition. The round-panel fields apply on change with no save button of their own; the tray panel keeps its *Apply putting mode* button because it is a popup the player dismisses.
+**One putting setting, two surfaces, and a copy held apart from practice rounds.** The round panel's *Format & tees* section renders the mode select and the 1/2/3-putt distance fields inline — it used to be a button in *Your group* that opened the putting panel, which was a second click to reach one setting and put it under the wrong heading. `PUTTING_MODES`, `puttingFields(id,p)`, `readPutting(id)`, `applyPutting(cfg)` and `puttingGuard()` in `main.js` are the shared pieces; the round panel and the tools-tray *Putting options* panel both build from them, so the option list has one definition. (The explanatory notes, `PUTTING_NOTES`, are gone: "the putting description is not needed anywhere", the owner, 18 October 2026; each option's own words say it.) The round-panel fields apply on change with no save button of their own; the tray panel keeps its *Apply putting mode* button because it is a popup the player dismisses.
 
 **The range must not eat the choice.** It builds a throwaway `Round` forced to `{mode:'holeout'}`, and that round used to be the only copy of the setting: a visit to the range silently reset a player's Dartboard or Decimal mode, and *Start fresh round* from inside the range carried hole-out into the new round. `savedPutting` now holds the player's own choice across practice. `rememberPutting()` captures it on the way in (guarded on `!rangeMode&&!labMode`, so lab→range does not overwrite it), `playerPutting()` is what both surfaces read and edit, `applyPutting` writes to `savedPutting` while practice is live and to `round.putting` otherwise, and `restorePutting()` hands it back and forgets it — called from `restoreCourse()` on the way out and from `buildRoundOn()` for a round started from inside practice.
 
@@ -1136,7 +1872,7 @@ Physics is research-informed, not hardware-calibrated commercial simulation: mid
 - `fairway-round-v1` localStorage stores `{version, schema, generator, settings, round, camera}`. Round serialization includes bounded undo history. Export/import provides portable JSON.
 - `fairway-courses-v1` stores the named course library as `{version, courses:[{id, name, created, schema, generator, settings}]}`. A record holds **generation settings only** — `courseSettings` strips turf, club yardages, flight profile and art style, so a shared course never carries the author's own gear, and never a round, a lie or a score. A course's stored `generator` is preserved rather than refreshed on load: that is what lets the library flag a course whose landscape no longer matches how it was designed. One unreadable entry is skipped rather than discarding the whole library.
 - Export codes are `FW1.<base64url payload>.<checksum>`. The payload carries the schema version, the generator version, the name, and **only the settings that differ from the defaults**, which keeps a typical code a few hundred characters rather than eight hundred. Base64 is UTF-8 safe because names are free text. On import the checksum catches a truncated paste, an older schema is migrated, and a *newer* schema is refused outright rather than guessed at.
-- `fairway-layout-v1` stores independent relative panel positions/sizes. Do not reset a user's layout just to improve a screenshot.
+- `fairway-layout-v1`, then `-v2`, stored relative panel positions and sizes until the layout was fixed on 17 October 2026; `layout.js` deletes `-v2` once on start, and nothing reads either. `fairway-hud-places-v1` (18 October 2026) holds only the map's and the Tab tiles' places (`hud-places.js`).
 - Last-shot replay is not persisted. Geometry/functions are regenerated from settings and seed rather than serialized.
 - The live `settings` object starts as `{...DEFAULT_COURSE, style:'cartoon'}`. It was a hand-written partial copy holding 11 of the 38 keys, which was invisible until something read it before a course had been loaded: Course studio renders each control straight from it, so the 27 missing keys drew `undefined` captions over sliders the browser had silently parked at the midpoint of their range — spacing read 37 where its default is 18. Never write a second copy of a default.
 - `src/settings-schema.js` is the single source of truth for every generated-course setting: default, bounds, step, unit, category, help text and kind. Defaults (`DEFAULT_COURSE`), validation (`validateSettings`), migration (`migrateSettings`), the world rebuild key and the studio sliders all derive from it. **Adding a generation setting means adding one schema entry** — not a default here, a slider there and a bounds list somewhere else, which is how the previous hand-written validator drifted. The studio panel renders itself from `CATEGORIES` and `SETTINGS`: group headings, order, labels, bounds, step, unit and the help text behind each hint button. Only `holes`, `courseYards`, `seed`, `biome`, `footprint` and `homes` are written by hand, because they are not plain sliders; everything else appears automatically. A test asserts every setting lands in exactly one rendered category, so a new entry cannot be added and silently never shown. Round validates its own serialized state separately. Add matching GPU parameters if a setting changes surfaces.
@@ -1863,6 +2599,15 @@ function. It was found by `tools/smoke.mjs` dropping a ball beside the pin.
 module that imports three as `T`**, and calls `projectMarker` directly. If you
 need a name for the top of something, it is `top`.
 
+**Never hand `T` itself on as a value** (18 October 2026). The bundler keeps
+only the names read off the namespace (`T.Mesh`); `buildCourseModel(T, ...)`
+in model-cards.js made it keep ALL of three.js -- about 147 KB of page, and
+three's file loaders, whose three `fetch(` calls are dead code in a file that
+must make no request (DISTRIBUTION_REVIEW counts them). Found by counting
+`fetch(` in the 0.9 build against 0.8.3's. Pass a named object instead
+(model-cards.js `PARTS`); the same test refuses `T` as an argument, entry,
+spread or assignment.
+
 ## Escape closes what is in front; an arrow tap is owed to the next frame
 
 **Escape's order is: shot list, menu dropdown, clock, leave notice, OPEN PANEL,
@@ -2065,7 +2810,7 @@ The overlay closes on its backdrop, its close button, and Escape — the Escape 
 
 ## The range gets a setup dialogue, like every other mode
 
-`openRangePanel()` sets `rangeSetup` and opens the **round** panel, which renders a practice-group variant: who is hitting, and how far away the green is. The course picker, format, tees and putting mode all belong to a round and none of them mean anything on a range, so that branch drops them. **The element ids match the round panel's**, so anything reading those fields works unchanged.
+`openRangePanel()` sets `rangeSetup` and opens the **round** panel, which renders a practice-group variant: who is hitting, and (round 14) the range -- hit from, the centre green's distance, slope and contour, the shot lines kept, and the session so far. The targets are the range's device-kept preferences (`saveRangeSetup`, `saveShotLines`), written before the range opens; **Hit from is applied after it opens** (`enterRange` always starts on the mats), and in a live session each change goes through `setRangeSetup` / `setRangeStation`, which rebuild or move what they must. PLACED: the frame's Aim at and Wind rows are not there (aiming picks the target; the range has no wind setting). The course picker, format, tees and putting mode all belong to a round and none of them mean anything on a range, so that branch drops them. **The element ids match the round panel's**, so anything reading those fields works unchanged.
 
 The same branch serves twice. Opened from the menu it says **"Open the driving range"** and builds the world on commit. Opened from the avatar while already practising it says **"Apply to this session"**, changes the group in place, and touches nothing else — which is the gap that existed before: the group could be carried INTO the range but never edited once there, because the only thing that committed player edits was "Start fresh round", and that leaves.
 

@@ -1,0 +1,88 @@
+/* THE 1.0 INTERFACE KIT (phase 0: foundations; nothing uses it yet).
+
+   The typeface and the building blocks every rebuilt screen is made of. The
+   rules are in src/ui-layout.js and PROJECT_HANDOFF *The 1.0 interface: layout
+   rules*; the builders are src/ui-kit.js.
+
+   EVERY RULE HERE IS SCOPED TO `.uk` AND EVERY CLASS STARTS `uk-`. The mockups
+   lost an afternoon to a short shared class name (`hl`) that silently restyled
+   another screen; this stylesheet sits beside 180 KB of the old one, so a
+   name like `.row` or `.on` here would do the same to the game.
+   tests/ui-kit.test.mjs refuses an unscoped rule.
+
+   THE COLOURED BOX LEANS; WHAT IS INSIDE IT STANDS STRAIGHT. A panel is skewed
+   -12 degrees and its inner wrapper (`uk-pi`) +12, so text and pictures are
+   upright. The wrapper must never carry a colour: straightening a coloured
+   child inside a leaning parent makes an upright block, which is exactly the
+   bug the mockups hit when the sheet started leaning as one. The test refuses
+   a background on `uk-pi` and `uk-u`. */
+
+/* Saira Condensed (SIL Open Font License 1.1; src/fonts/OFL.txt). Only the two
+   weights the design uses, Latin only, inlined into the single file by the
+   build: nothing is fetched. The family has no italic; the slanted numbers are
+   the browser's slant of these, which is what the approved mockups showed. */
+@font-face{font-family:"Saira Condensed";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/saira-condensed-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Saira Condensed";font-style:normal;font-weight:800;font-display:swap;src:url("./fonts/saira-condensed-latin-800-normal.woff2") format("woff2")}
+
+/* The root. The palette arrives inline from ui-palette.js `paletteVars`; the
+   values here are Pacific Northwest's, so a root built without one is still
+   readable. font-synthesis: the old stylesheet turns it off for the whole
+   page, and without it the italic numbers would come out upright. */
+.uk{--panel:rgba(9,30,28,.88);--a1:#5eead4;--a2:#0f766e;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--under:#ff6b81;
+ font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;line-height:1.2}
+.uk.uk-canvas{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
+.uk .uk-abs{position:absolute}
+
+/* The content band, leaning as one sheet about its middle line. */
+.uk .uk-sheet{position:absolute;left:0;transform:skewX(-12deg);transform-origin:0 50%}
+.uk .uk-sheet .uk-p{transform:none}
+.uk .uk-sheet .uk-u{transform:skewX(12deg);transform-origin:0 50%}
+
+/* Panels: 16 top and bottom, 36 at the sides. */
+.uk .uk-p{position:relative;background:var(--panel);padding:16px 36px;transform:skewX(-12deg)}
+.uk .uk-pi{transform:skewX(12deg);min-width:0}
+.uk .uk-p.uk-hl{background:linear-gradient(135deg,var(--a1),var(--a2));color:var(--on-hot)}
+.uk .uk-p.uk-hl .uk-label,.uk .uk-p.uk-hl .uk-unit{color:var(--on-hot);opacity:.8}
+.uk .uk-p.uk-ghost{background:rgba(255,255,255,.05)}
+/* Selection: an outline that follows the slanted shape (drop shadows of the
+   box itself, so it leans with it), never an inner box. */
+.uk .uk-p.uk-on{filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+/* Heights: rows 48, list items 56, tiles 96. */
+.uk .uk-p.uk-row,.uk .uk-p.uk-item{padding:0 36px}
+.uk .uk-p.uk-row{height:48px}
+.uk .uk-p.uk-item{height:56px}
+.uk .uk-p.uk-row>.uk-pi,.uk .uk-p.uk-item>.uk-pi{height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.uk .uk-p.uk-tile{height:96px}
+.uk .uk-p.uk-tile>.uk-pi{height:100%;display:grid;align-content:center;gap:6px}
+.uk .uk-stk{display:grid;gap:8px;align-content:start}
+
+/* Type: 13 labels (capitals, spaced), 18 body, 24 values, 36 titles, 56 hero
+   numbers. A label sits above its value. */
+.uk .uk-label{font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--soft);line-height:1.2;text-transform:uppercase}
+.uk .uk-body{font-size:18px;font-weight:700;line-height:1.3}
+.uk .uk-value{font-size:24px;font-weight:800;font-style:italic;line-height:1.1}
+.uk .uk-title{font-size:36px;font-weight:800;font-style:italic;line-height:1}
+.uk .uk-hero{font-size:56px;font-weight:800;font-style:italic;line-height:1}
+.uk .uk-unit{font-size:15px;font-style:normal;color:var(--soft);margin-left:4px;letter-spacing:.06em}
+.uk .uk-under{color:var(--under)}
+.uk .uk-hotc{color:var(--hot)}
+
+/* Small slanted pieces: the level tag, chips, switches, segment bars, pickers. */
+.uk .uk-lv{display:inline-block;background:var(--hot);color:var(--on-hot);font-size:15px;font-weight:800;font-style:italic;padding:0 8px;transform:skewX(-12deg)}
+.uk .uk-chip{display:inline-flex;align-items:center;height:28px;padding:0 12px;background:var(--panel);transform:skewX(-12deg)}
+.uk .uk-chip>span{transform:skewX(12deg);font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.uk .uk-chip.uk-hl{background:var(--hot);color:var(--on-hot)}
+.uk .uk-sw{display:inline-block;width:56px;height:24px;transform:skewX(-12deg);background:rgba(255,255,255,.14);position:relative;flex:none}
+.uk .uk-sw>i{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:800;letter-spacing:.1em;font-style:normal;color:var(--soft);transform:skewX(12deg)}
+.uk .uk-sw.uk-sw-on{background:var(--a1)}
+.uk .uk-sw.uk-sw-on>i{color:var(--on-hot)}
+.uk .uk-seg{display:flex;gap:3px}
+.uk .uk-seg>b{width:10px;height:20px;transform:skewX(-12deg);background:rgba(255,255,255,.14)}
+.uk .uk-seg>b.uk-seg-on{background:var(--a1)}
+.uk .uk-pick{font-size:17px;font-weight:800;font-style:italic;white-space:nowrap}
+.uk .uk-pick>.uk-arrow{color:var(--a1);font-style:normal}
+.uk .uk-tabs{display:flex;gap:8px}
+.uk .uk-tabs>.uk-p{height:40px;padding:0 18px}
+.uk .uk-tabs>.uk-p>.uk-pi{height:100%;display:flex;align-items:center}
+.uk .uk-tabs .uk-label{color:inherit}
+.uk .uk-key{display:inline-grid;place-items:center;min-width:28px;height:26px;border:2px solid currentColor;border-radius:4px;padding:0 6px;font-size:14px;margin-right:5px;background:rgba(0,0,0,.35)}

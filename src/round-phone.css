@@ -1,0 +1,265 @@
+/* THE 1.0 ROUND SCREEN ON A PHONE (phase 5 of the 1.0 interface, 17 October
+   2026; the approved mockups' round 12, `r12` in the mockup page).
+
+   A phone is drawn at its own size in CSS pixels -- 844 x 390 sideways,
+   390 x 844 upright -- with 16 px margins (12 upright), touch targets of at
+   least 44 px and no label under 11 px. The same pieces as the big screen
+   (round-hud.css), smaller and placed for a thumb: the hole top left, the
+   golfers top right, the map under them, the slanted aim pad bottom right,
+   the club bottom left, the Swing Meter between them -- tapped to swing, so
+   the big Swing button goes -- and a MENU chip in place of Escape, which a
+   phone does not have, opening the same pause list.
+
+   Inside the phone query style.css uses (max-width 560 or max-height 500 on
+   #app). #world carries --hud1 here too, so main.js treats a phone as the
+   round screen (`hud1`); `phoneScreen()` still says it is a phone. The old
+   phone layout's rules (style.css) are overridden piece by piece, with
+   !important where they used it. */
+
+@container app (max-width:560px) or (max-height:500px){
+ #world[data-mode=play]{--hud1:1}
+ #world[data-mode=play] :is(#roundHud,.club-control,.lie-readout,.shape-control,.shot-panel,.swing-meter,.monitor-panel,.minimap,.flag-label,.aim-label,.aim-pad){font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
+
+ /* As on a big screen: the top bar only as the pause list, the bottom bars handing over their pieces. */
+ #app[data-mode=play]:not(.rh-paused) .topbar{display:none!important}
+ #world[data-mode=play] :is(.bottom-area,.shot-controls){display:contents!important}
+ #world[data-mode=play].in-flight :is(.club-control,.shot-controls .lie-readout,.shape-control,.shot-controls>.mon-state,.aim-pad){display:none!important}
+ #world[data-mode=play]:not(.rh-tiles) .shot-tiles{display:none!important}
+
+ /* The layer of new pieces. */
+ #world[data-mode=play] #roundHud{display:block;position:absolute;inset:0;z-index:7;pointer-events:none;color:#fff}
+ #app.hud-hidden #roundHud{display:none}
+ #world[data-mode=play] .rh-keys,#world[data-mode=play] .rh-logo{display:none}
+
+ /* The hole slab, small. */
+ .rh-hole{position:absolute;left:16px;top:12px;display:flex;height:52px}
+ .rh-hole .rh-n{width:56px;display:grid;place-items:center;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
+ .rh-hole .rh-n>span{transform:skewX(12deg);font-size:34px;font-weight:800;font-style:italic;line-height:1;color:var(--on-hot)}
+ .rh-hole .rh-f{display:grid;align-content:center;padding:4px 18px;background:var(--panel);transform:skewX(-12deg)}
+ .rh-hole .rh-f>div{transform:skewX(12deg)}
+ .rh-hole .rh-a{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+ .rh-hole .rh-a i{display:none}
+ .rh-hole .rh-b{font-size:20px;font-weight:800;font-style:italic;line-height:1.05;white-space:nowrap}
+ .rh-hole .rh-b i{color:var(--hot);margin:0 5px;font-style:normal}
+
+ /* The conditions: wind and plays like, as chips. */
+ .rh-subs{position:absolute;left:28px;top:72px;display:flex;gap:6px}
+ .rh-sub{height:32px;display:flex;align-items:center;padding:0 12px;background:var(--panel);transform:skewX(-12deg)}
+ .rh-sub[data-sub=rise]{display:none}
+ .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:5px;font-size:16px;font-weight:800;font-style:italic}
+ .rh-sub small{font-size:11px;letter-spacing:.1em;color:var(--soft);font-style:normal;font-weight:700}
+ .rh-sub svg{width:16px;height:16px;stroke:var(--a1);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;transform:rotate(var(--wind,0deg))}
+
+ /* The golfers: a row of chips, the one up with name and level. */
+ .rh-cards{position:absolute;right:16px;top:12px;display:flex;flex-direction:row-reverse;align-items:center;gap:6px}
+ .rh-card{pointer-events:auto;position:relative;display:flex;align-items:center;min-width:44px;height:36px;padding:0 12px;border:0;color:#fff;background:var(--panel);transform:skewX(-12deg);cursor:pointer}
+ .rh-card>span{transform:skewX(12deg);display:flex;align-items:center;gap:6px}
+ .rh-card .rh-pic{display:grid;place-items:center}
+ .rh-card .rh-pic :is(img,.chip-dot){width:22px;height:22px}
+ .rh-card .rh-pic .chip-dot{display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800}
+ .rh-card:not(.up) .rh-who,.rh-card .rh-note,.rh-card .rh-seat,.rh-card .rh-ttl,.rh-card .rh-xp{display:none}
+ .rh-card .rh-score{font-size:15px;font-weight:800;font-style:italic}
+ .rh-card .rh-score.under{color:var(--under)}
+ .rh-card.up{order:-1;height:44px;box-shadow:inset 0 0 0 2px var(--hot)}
+ .rh-card.up .rh-pic :is(img,.chip-dot){width:28px;height:28px}
+ .rh-card.up .rh-stack{display:flex;align-items:baseline;gap:6px}
+ .rh-card.up .rh-who{font-size:16px;font-weight:800;font-style:italic;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+ .rh-card.up .rh-score{font-size:18px}
+
+ /* The menu: a chip, since there is no Escape on a phone. */
+ #world[data-mode=play] .rh-keys{display:block;position:absolute;left:50%;top:12px;transform:translateX(-50%)}
+ #world[data-mode=play] .rh-keys>:not([data-hud=pause]){display:none}
+ #world[data-mode=play] .rh-keys [data-hud=pause]{pointer-events:auto;position:relative;isolation:isolate;display:flex;align-items:center;height:36px;min-width:72px;padding:0 14px;border:0;background:none;color:#fff;font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em}
+ #world[data-mode=play] .rh-keys [data-hud=pause]::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .rh-keys [data-hud=pause] kbd{display:none}
+
+ /* The map, small and straight. */
+ #world[data-mode=play]:not(.aim-view) .minimap{left:auto!important;right:16px!important;top:66px!important;bottom:auto!important;width:140px!important;height:160px!important;display:grid!important;grid-template-rows:auto minmax(0,1fr);border:0;border-top:3px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:none;color:#fff;zoom:1}
+ #world[data-mode=play]:not(.aim-view) .minimap :is(.map-footer,.map-reading){display:none!important}
+ #world[data-mode=play]:not(.aim-view) .minimap .map-header{padding:3px 8px;font-size:11px;letter-spacing:.1em;color:var(--soft);font-weight:700}
+ #world[data-mode=play]:not(.aim-view) .minimap #map{height:100%!important;min-height:0}
+
+ /* The pin tag. */
+ #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(.66);transform-origin:50% 100%;text-shadow:none}
+ #world[data-mode=play] .flag-label:not(.edge)>span,#world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
+ #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
+ #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .flag-label:not(.edge) #pinUnit{font-size:0}
+
+ /* The last shot, one line under the conditions, with Skip. */
+ #world[data-mode=play] .shot-controls>.shot-panel{position:absolute;left:16px;top:112px;z-index:7;isolation:isolate;width:250px;max-height:80px;overflow:hidden;padding:6px 18px;color:#fff;font-size:12px}
+ #world[data-mode=play] .shot-controls>.shot-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-panel .shot-result{display:none}
+ #world[data-mode=play] .shot-panel #skipFlight{min-height:36px;padding:0 14px}
+
+ /* The lie, the shot's shape, the club. */
+ #world[data-mode=play] .shot-controls .lie-readout{position:absolute;left:16px;bottom:156px;z-index:7;isolation:isolate;display:flex;align-items:center;gap:6px;height:28px;padding:0 12px!important;font-size:12px;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;white-space:nowrap}
+ #world[data-mode=play] .shot-controls .lie-readout::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shape-control{position:absolute;left:16px;bottom:112px;z-index:8;display:flex!important;gap:6px;padding:0!important;border:0;flex:none}
+ #world[data-mode=play] .shape-control.putt,#world[data-mode=play].monitor-armed .shape-control{display:none!important}
+ #world[data-mode=play] .shape-pick{position:relative;isolation:isolate;display:flex!important;align-items:center;gap:5px;height:36px;min-width:44px;padding:0 10px!important;border:0;background:none;color:#fff;font-size:14px;font-weight:800;font-style:italic;flex-direction:row}
+ #world[data-mode=play] .shape-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .shape-pick small{order:-1;font-size:10px;font-style:normal;color:var(--soft);letter-spacing:.12em;font-weight:700}
+ #world[data-mode=play] .shape-pick small kbd{display:none}
+ #world[data-mode=play] .shape-pick strong{text-transform:uppercase;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #world[data-mode=play] .club-control{position:absolute;left:16px;bottom:16px;z-index:7;display:flex!important;align-items:stretch;height:52px;min-width:0;padding:0!important;border:0;flex:none}
+ #world[data-mode=play] .club-control::before{content:"";width:52px;flex:none;background:var(--hot);transform:skewX(-12deg)}
+ #world[data-mode=play] .club-control::after{content:attr(data-code);position:absolute;left:0;top:0;width:52px;height:52px;display:grid;place-items:center;color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;pointer-events:none}
+ #world[data-mode=play] .club-control .club-select{position:relative;isolation:isolate;display:grid;align-content:start;margin:0!important;padding:0 18px 0 14px;border:0;background:none}
+ #world[data-mode=play] .club-control .club-select::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .club-control select{appearance:none;-webkit-appearance:none;width:auto;max-width:150px;min-width:64px;min-height:44px;margin:0;padding:0;border:0;background:none;color:#fff;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+ #world[data-mode=play] .club-control option{font:16px var(--font-ui);text-transform:none;color:#111;background:#fff}
+ /* Round 14: the club's name is the 1.0 drop-down's value (ui-dropdown.js), a
+    thumb tall; a tap opens the bag upwards. */
+ #world[data-mode=play] .club-control .club-select{display:flex!important;align-items:flex-start;gap:6px;min-height:52px;min-width:96px;padding-top:6px;cursor:pointer}
+ #world[data-mode=play] .club-control .dd-v{max-width:150px;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #world[data-mode=play] .club-control .dd-tri{color:var(--a1);font-size:13px}
+ #world[data-mode=play] .club-control #clubHint{position:absolute;left:66px;bottom:6px;margin:0;font-size:11px!important;letter-spacing:.1em;color:var(--soft);font-weight:700;text-transform:uppercase;white-space:nowrap}
+
+ /* The Swing Meter: narrow, its bar tall enough to tap. */
+ #world[data-mode=play] .swing-meter{left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:300px!important;transform:translateX(-50%);padding:0!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff}
+ #world[data-mode=play] .swing-meter .sm-head{margin-bottom:14px;font-size:12px;font-weight:800;font-style:italic;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+ #world[data-mode=play] .swing-meter .sm-title{font-size:12px;color:#fff;text-transform:uppercase}
+ #world[data-mode=play] .swing-meter .sm-hint{color:var(--hot);text-transform:uppercase}
+ #world[data-mode=play] .swing-meter .sm-bar{height:40px;border:0;border-radius:0;transform:skewX(-12deg);pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 3px var(--panel)}
+ #world[data-mode=play] .swing-meter .sm-ticks span b{bottom:calc(100% + 5px);transform:translateX(-50%) skewX(12deg);font-size:11px;font-weight:700;color:#e8ecff}
+ #world[data-mode=play] .swing-meter .sm-ticks span small{display:none}
+ #world[data-mode=play] .swing-meter .sm-ticks span.full{border-left:3px solid var(--hot)}
+ #world[data-mode=play] .swing-meter .sm-ticks span.strike{display:none}
+ #world[data-mode=play] .swing-meter .sm-ticks span.over{background:repeating-linear-gradient(90deg,rgba(255,140,40,.55) 0 6px,rgba(255,140,40,.3) 6px 10px)}
+ #world[data-mode=play] .swing-meter .sm-marker{width:6px;margin-left:-3px;border-radius:0}
+ #world[data-mode=play] .swing-meter .sm-result{margin-top:4px;padding-top:0;border:0}
+ #world[data-mode=play] .swing-meter .sm-result strong{font-size:15px;font-weight:800;font-style:italic;color:#fff}
+ #world[data-mode=play] .swing-meter .sm-result>span>span{font-size:11px;color:var(--soft)}
+
+ /* The aim pad: three by three, slanted, the flag in the middle. */
+ #world[data-mode=play] .aim-pad{display:grid!important;position:absolute;left:auto!important;right:16px!important;top:auto!important;bottom:12px!important;z-index:8;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important}
+ #world[data-mode=play] .aim-pad button{position:relative;isolation:isolate;width:44px!important;height:44px!important;border:0!important;border-radius:0!important;background:none!important;color:var(--a1)!important;box-shadow:none!important}
+ #world[data-mode=play] .aim-pad button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .aim-pad .pad-pin{color:var(--on-hot)!important}
+ #world[data-mode=play] .aim-pad .pad-pin::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+
+ /* The ball light, with a monitor armed: across the foot. */
+ #world[data-mode=play] .monitor-panel:not([hidden]){left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:auto!important;max-width:300px;transform:translateX(-50%);isolation:isolate;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 18px!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;animation:none}
+ #world[data-mode=play] .monitor-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px var(--light,var(--a1))}
+ #world[data-mode=play] .monitor-panel[data-monitor=green]{--light:#4ade80}
+ #world[data-mode=play] .monitor-panel[data-monitor=amber]{--light:#fbbf24}
+ #world[data-mode=play] .monitor-panel[data-monitor=red]{--light:#f87171}
+ #world[data-mode=play] .monitor-panel :is(.lie-readout,.mon-club){display:none!important}
+ #world[data-mode=play] .monitor-panel #monTitle{font-size:22px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #world[data-mode=play] .monitor-panel .mon-text{font-size:11px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+
+ /* The shot card, smaller. */
+ #world[data-mode=play] .rh-shot-card{position:absolute;z-index:9;width:430px;display:grid;pointer-events:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:translate(-50%,calc(-100% - 30px)) scale(.62);transform-origin:50% 100%;transition:opacity .2s linear}
+ #world[data-mode=play] .rh-shot-card.below{transform:translate(-50%,30px) scale(.62);transform-origin:50% 0}
+ #world[data-mode=play] .rh-shot-card[hidden]{display:none}
+ .rh-shot-card .rh-sc-tab{justify-self:start;margin-left:14px;padding:2px 16px;background:var(--hot);transform:skewX(-12deg)}
+ .rh-shot-card .rh-sc-tab>span{display:block;transform:skewX(12deg);font-size:18px;font-weight:800;font-style:italic;color:var(--on-hot);white-space:nowrap}
+ .rh-shot-card .rh-sc-body{position:relative;isolation:isolate}
+
+ /* The arrow to the apex (main.js *THE CARD POINTS AT THE APEX*): from the card's foot, under the point as
+    far as the card reaches, down to the point; where it starts, its length and its angle come from main.js,
+    so it reaches the point wherever the card had to sit. */
+ .rh-shot-card .rh-sc-ptr{position:absolute;left:var(--px,50%);top:var(--py,100%);width:var(--pl,36px);height:3px;margin-top:-1.5px;background:var(--hot);transform-origin:0 50%;transform:rotate(var(--pa,90deg));pointer-events:none}
+ .rh-shot-card .rh-sc-ptr::after{content:"";position:absolute;right:-3px;top:50%;transform:translateY(-50%);border-left:12px solid var(--hot);border-top:7px solid transparent;border-bottom:7px solid transparent}
+ .rh-shot-card .rh-sc-body::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .rh-shot-card .rh-sc-main{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:8px 26px 4px}
+ /* Two big numbers: the total, and what is left to the pin. */
+ .rh-shot-card .rh-sc-big{display:flex;align-items:baseline;gap:8px;min-width:0}
+ .rh-shot-card .rh-sc-main b{font-size:72px;font-weight:800;font-style:italic;line-height:.95}
+ .rh-shot-card .rh-sc-big.pin b{color:var(--hot)}
+ .rh-shot-card .rh-sc-big span{max-width:4.5em;line-height:1.05}
+ .rh-shot-card .rh-sc-main span{font-size:22px;color:var(--soft);font-weight:700}
+ .rh-shot-card .rh-sc-row{display:grid;grid-template-columns:repeat(3,1fr);padding:4px 10px 12px}
+ .rh-shot-card .rh-sc-row>div{display:grid;justify-items:center}
+ .rh-shot-card .rh-sc-row b{font-size:28px;font-weight:800;font-style:italic}
+ .rh-shot-card .rh-sc-row span{font-size:12px;letter-spacing:.14em;color:var(--soft);font-weight:700}
+ .rh-shot-card .rh-sc-hint{display:none}
+
+ /* THE PAUSE LIST on a phone: the top bar's controls, one column, scrolling. */
+ #app[data-mode=play].rh-paused .topbar{position:absolute;inset:0;z-index:95;height:auto;display:flex!important;flex-direction:column;align-items:stretch;gap:6px;padding:16px 20px 24px;overflow:auto;background:rgba(4,8,12,.9);border:0;backdrop-filter:blur(4px);filter:none;opacity:1;pointer-events:auto;color:#fff}
+ #app.rh-paused .topbar :is(.brand,.hole-strip,#menuNav,.mode-pill,.divider,.sim-time-label,[data-panel=help],.rh-pause-cams){display:none!important}
+ #app.rh-paused .topbar :is(.rh-pause-head,.rh-pause-extra){display:grid;gap:6px}
+ #app.rh-paused .topbar .rh-pause-head strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ #app.rh-paused .topbar .rh-pause-head small{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar :is(nav,.header-right){display:grid!important;gap:6px;margin:0}
+ #app.rh-paused .topbar .menu-wrap{position:static}
+ #app.rh-paused .topbar #menuDrop{position:static;display:grid!important;gap:6px;padding:0;margin:0;border:0;background:none;box-shadow:none;backdrop-filter:none;min-width:0;transform:none}
+ #app.rh-paused .topbar .menu-drop-line{display:none}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice){position:relative;isolation:isolate;display:flex!important;align-items:center;gap:10px;width:100%;min-height:44px;height:auto;margin:0;padding:6px 22px;border:0;border-radius:0;background:none!important;box-shadow:none;color:#fff!important;font:800 italic 17px/1.1 "Saira Condensed",var(--font-ui),sans-serif!important;text-transform:uppercase;text-align:left;filter:none}
+ #app.rh-paused .topbar :is(.menu-drop-item,#scoreNav,#barTools,.connection,.avatar,.meter-button,.rh-resume,.sim-time,.tee-control,.rh-pause-choice)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-resume{order:-1;color:var(--on-hot)!important}
+ #app.rh-paused .topbar .rh-resume::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #app.rh-paused .topbar .rh-resume kbd{display:none}
+ #app.rh-paused .topbar #barTools::after{content:"Tools"}
+ #app.rh-paused .topbar .avatar{font-size:0!important}
+ #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:17px}
+ #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:17px!important}
+ #app.rh-paused .topbar .rh-pause-stand>div{position:relative;isolation:isolate;display:flex;gap:10px;align-items:center;min-height:36px;padding:0 18px;font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase}
+ #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #app.rh-paused .topbar .rh-pause-stand small{font-size:11px;color:var(--soft);font-style:normal}
+ #app.rh-paused .topbar .rh-pause-cond{font-size:11px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar :is(.tee-control,.meter-button) :is(svg,i,label,small){font-size:11px}
+ #app.rh-paused .topbar .tee-control select{appearance:none;border:0;background:none;color:#fff;font:800 italic 17px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ /* Round 13: Tools and Players & round as words on one row (the icon and the
+    golfer's letter went), and the time of day named as on a big screen. */
+ #app.rh-paused .topbar :is(#barTools,.avatar){flex-direction:row!important;justify-content:flex-start}
+ #app.rh-paused .topbar #barTools>:is(svg,i),#app.rh-paused .topbar .avatar>*{display:none!important}
+ #app.rh-paused .topbar #barTools{font-size:0!important}
+ #app.rh-paused .topbar #barTools::after{font-size:17px}
+ #app.rh-paused .topbar .avatar{background:none!important;color:#fff!important}
+ /* Their words are ::after, which the touch rule (style.css, a bigger tap
+    area) positions over the whole button: put them back in the row. The
+    golfer's letter goes by a selector heavy enough to beat the row rule. */
+ #app.rh-paused .topbar :is(#barTools,.avatar)::after{position:static!important;inset:auto!important}
+ #app.rh-paused .topbar #barTools~.avatar{font-size:0!important}
+ #app.rh-paused .topbar #barTools~.avatar::after{font-size:17px}
+ #app.rh-paused .topbar .sim-time-row{display:flex;align-items:center;gap:12px;width:100%}
+ #app.rh-paused .topbar .sim-time-row::before{content:"Time of day";color:var(--soft);font-size:11px;letter-spacing:.14em;font-style:normal;font-weight:700;text-transform:uppercase}
+ #app.rh-paused .topbar #clockButton{margin-left:auto;color:var(--a1)}
+}
+
+/* HELD UPRIGHT: the same pieces, stacked as the upright mockup has them. */
+@container app (max-width:560px) and (min-height:501px){
+ .rh-hole{left:12px}
+ .rh-subs{left:auto;right:12px;top:18px}
+ .rh-sub[data-sub=plays]{display:none}
+ .rh-cards{left:18px;right:auto;top:76px;flex-direction:row}
+ #world[data-mode=play] .rh-keys{left:12px;top:auto;bottom:12px;transform:none}
+ #world[data-mode=play]:not(.aim-view) .minimap{right:12px!important;top:132px!important;width:120px!important;height:150px!important}
+ #world[data-mode=play] .shot-controls>.shot-panel{left:12px;top:132px;width:220px}
+ #world[data-mode=play] .shot-controls .lie-readout{left:12px;bottom:308px}
+ #world[data-mode=play] .shape-control{left:18px;bottom:262px}
+ #world[data-mode=play] .swing-meter{width:362px!important;bottom:156px!important}
+ #world[data-mode=play] .monitor-panel:not([hidden]){bottom:156px!important;max-width:362px}
+ #world[data-mode=play] .club-control{left:12px;bottom:66px}
+ #world[data-mode=play] .aim-pad{right:12px!important;bottom:12px!important}
+}
+
+/* THE MAIN MENU ON A PHONE: one row per choice, each row leaning on its own
+   and all one height -- a whole leaning sheet would cross a narrow screen
+   (the layout rules, round 12). Two columns of rows when held sideways. The
+   rows are the menu's own buttons, restyled; their names do not change. */
+@container app (max-width:560px) or (max-height:500px){
+ .main-menu:not(.menu-behind){background:linear-gradient(180deg,rgba(4,8,12,.6),rgba(4,8,12,.82))}
+ .main-menu .menu-brand{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style}
+ .main-menu .menu-modes{display:grid!important;grid-template-columns:1fr;gap:6px;width:100%;max-width:420px}
+ .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
+ .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ .main-menu .menu-tile.primary :is(strong,small),.main-menu .menu-tile:is(:hover,:focus) :is(strong,small){color:var(--on-hot)}
+ .main-menu .menu-tile :is(i,svg){display:none}
+ .main-menu .menu-tile strong{font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
+ .main-menu .menu-tile small{font-size:11px;letter-spacing:.1em;color:var(--soft);opacity:1;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .main-menu .menu-link{position:relative;isolation:isolate;min-height:44px;padding:0 12px;border-radius:0;opacity:1;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+ .main-menu .menu-link::before{content:"";position:absolute;inset:4px 0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+}
+@container app (max-height:500px){
+ .main-menu .menu-modes{grid-template-columns:1fr 1fr;max-width:640px}
+ .main-menu .menu-tile{height:44px}
+}
+
+/* The pause standings' heading and ball pictures on a phone (17 October 2026). */
+@container app (max-width:560px) or (max-height:500px){
+ #app.rh-paused .topbar .rh-pause-stand :is(.rh-stand-ball,.rh-stand-dot){display:block;flex:none;width:22px;height:22px;border-radius:50%}
+}

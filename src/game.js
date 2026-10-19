@@ -23,6 +23,8 @@ function upgradeSave(data){
  if(rest.mode!=='stroke')throw Error('Invalid saved skins game.');
  return {...rest,mode:'skins'};
 }
+// A golfer's tee, when they carry one, is one of the three sets.
+const validTee=p=>p.tee===undefined||p.tee===null||['blue','white','red'].includes(p.tee);
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -37,7 +39,7 @@ export class Round{
  constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
-  if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
+  if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
   if(mode==='match'&&new Set(players.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   // SKINS (skins.js) is every golfer for themselves, so it needs two to four.
   if(mode==='skins'&&players.length<2)throw Error('Skins is for two to four golfers.');
@@ -91,7 +93,11 @@ export class Round{
  // The next golfer who has not holed out, IN PLAYING ORDER. -1 when everyone is
  // in, which is what tells the caller the hole is over.
  nextInOrder(){const id=(this.order||this.players.map(p=>p.id)).find(i=>!this.done[i]);return id===undefined?-1:id;}
- placeTee(tees){if(this.teePlaced)return;const name=tees[this.tee]?this.tee:Object.keys(tees)[0],t=tees[name];this.tee=name;this.positions=this.players.map(()=>({x:t.x,z:t.z}));this.teePlaced=true;}
+ // EACH GOLFER'S OWN TEE (round 13, 17 October 2026): a golfer may carry `tee`,
+ // and plays every hole from it; one without plays from the round's. A course
+ // without that tee set falls back to the round's, then to the first there is.
+ teeOf(seat){return this.players[seat]?.tee||this.tee;}
+ placeTee(tees){if(this.teePlaced)return;const name=tees[this.tee]?this.tee:Object.keys(tees)[0];this.tee=name;this.positions=this.players.map((_,i)=>{const t=tees[this.teeOf(i)]||tees[name];return {x:t.x,z:t.z};});this.teePlaced=true;}
  // Change the group WITHOUT restarting. Every per-player array is resized in
  // step, matched by position: a golfer who stays keeps their scorecard, their
  // strokes on this hole and where their ball is sitting.
@@ -105,7 +111,7 @@ export class Round{
  // somebody means, and it is why the button asks on a round in progress.
  setPlayers(next,tees){
   if(!Array.isArray(next)||next.length<1||next.length>4)throw Error('Choose 1–4 players.');
-  if(!next.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)))throw Error('Invalid player.');
+  if(!next.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
   if(this.mode==='match'&&new Set(next.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   if(this.mode==='skins'&&next.length<2)throw Error('Skins is for two to four golfers.');
   const tee=tees&&tees[this.tee];
@@ -126,7 +132,7 @@ export class Round{
   this.strokes=take(this.strokes,()=>0);
   this.puttStrokes=take(this.puttStrokes,()=>0);
   this.done=take(this.done,()=>false);
-  this.positions=take(this.positions,()=>tee?{x:tee.x,z:tee.z}:{x:0,z:0});
+  this.positions=from.map((seat,i)=>{if(seat>=0)return this.positions[seat];const own=tees&&tees[next[i].tee]||tee;return own?{x:own.x,z:own.z}:{x:0,z:0};});
   // `seat` is an instruction to this method, not part of a golfer. Spreading it
   // through would persist it into every save and then be read back as a seat in
   // a group that has since changed.
@@ -136,7 +142,7 @@ export class Round{
   // `input` is how this golfer plays (playsWith, below): it rides through a
   // group change mid-round, so switching a golfer to the Swing Meter or back
   // to the monitor is just applying the group again.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),id:i}));
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),...(p.tee?{tee:p.tee}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,

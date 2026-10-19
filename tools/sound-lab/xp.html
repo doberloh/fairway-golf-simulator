@@ -106,7 +106,7 @@ let busy=false;
 const says=t=>$('#demoSays').textContent=t;
 function demo(items,fromLevel,fromPct,toPct,levels,sting){
  if(busy)return;busy=true;ensure();
- if(sting){const c=CHIP_FINAL[sting];if(c)chipSting(lab,sting,{take:c[0],knobs:c[1]});else score(lab,sting);says(`The hole-out sting (${SCORES[sting].label}) and its banner first...`);}
+ if(sting){const c=CHIP_FINAL[sting];chipSting(lab,sting,{take:c[0],knobs:c[1]});says(`The hole-out sting (${SCORES[sting].label}) and its banner first...`);}
  setTimeout(()=>popup(items,fromLevel,fromPct,toPct,levels),sting?XP_AFTER_STING:0);
 }
 function popup(items,fromLevel,fromPct,toPct,levels){
