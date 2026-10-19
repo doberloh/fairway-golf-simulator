@@ -1190,3 +1190,46 @@ landscapes' palettes and names, the package version, and two date functions
 from weekly.js, about 3 KB. It needs no network and no storage, so the file
 still opens offline from a file URL. Nothing else about the single file
 changed.
+
+## Addendum, 18 October 2026: v0.9
+
+**v0.9** is published at the owner's request ("build and release v0.9 to both
+github and live website"), as "Fairway 0.9 (beta)", tag `v0.9`, not a
+pre-release, the same four zip names, from the merge of `release-0.9` into
+`main`, with its notes in `docs/releases/v0.9.md` in that commit. It carries
+the whole `ui-1-0` journey (the 1.0 interface on every screen, the start
+splash, the tiny course models, the new sounds, the old interface removed)
+plus the release branch: the capture tools for the website, the 1.0 icons and
+version 0.9.0. **`GENERATOR_VERSION` is still 36, `SCHEMA_VERSION` still 11
+and `PROFILE_VERSION` still 3**; the biome fingerprint is unchanged, and the
+page's `fairway-versions` tag still reads `generator=36 schema=11`, so saved
+rounds and course codes from 0.8.3 carry over untouched.
+
+**The package version is 0.9.0** (package.json and its lockfile): the start
+splash prints it, and it had said 1.0.0 since the first commit. The bridge's
+banner carries the same number.
+
+**One font, no other new dependency.** Saira Condensed (OFL 1.1, two woff2
+files, inlined as `data:` URLs) is the only addition since 0.8.3, recorded in
+the typeface addendum above and in THIRD_PARTY_NOTICES. The icons in
+`public/` and `index.html` are redrawn by `tools/make-icons.mjs` in the
+splash's colours: still the project's own drawing, no third-party image.
+
+**The page makes no request, and carries one `fetch(` again.** Counting
+`fetch(` in the release build against 0.8.3's found four against one: the
+course-model cards passed three.js's namespace to a helper as a value, so the
+bundler kept all of three.js, its file loaders included. Dead code -- every
+smoke journey enforces zero requests and passed -- but 147 KB of page and
+network code the single file had never carried. Fixed before release
+(model-cards.js `PARTS`; tests/three-namespace.test.mjs now refuses it): the
+one `fetch(` left is Vite's module-preload helper, as before. The built page
+is **17,561,146 bytes (7.21 MB gzipped), +348 KB on 0.8.3**: the interface's
+stylesheets and modules, the fonts and the splash data.
+
+**Checked:** `npm test` 1004 of 1004. **Smoke: 37 of 37 journeys** on the real
+GPU, in seven small batches; `ball-light-hole-out` failed once (a lit shader
+built during the hole-out flyover, the intermittent open item in TODO) and
+passed on its rerun. After the `PARTS` fix the seven journeys that draw course
+cards passed again, and the cards were seen drawing with no warning. **Not seen
+by a person:** most of the 1.0 interface in play (TODO lists each screen and
+what it was seen at), the new sounds, a phone, a real launch monitor.

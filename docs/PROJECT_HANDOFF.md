@@ -2599,6 +2599,15 @@ function. It was found by `tools/smoke.mjs` dropping a ball beside the pin.
 module that imports three as `T`**, and calls `projectMarker` directly. If you
 need a name for the top of something, it is `top`.
 
+**Never hand `T` itself on as a value** (18 October 2026). The bundler keeps
+only the names read off the namespace (`T.Mesh`); `buildCourseModel(T, ...)`
+in model-cards.js made it keep ALL of three.js -- about 147 KB of page, and
+three's file loaders, whose three `fetch(` calls are dead code in a file that
+must make no request (DISTRIBUTION_REVIEW counts them). Found by counting
+`fetch(` in the 0.9 build against 0.8.3's. Pass a named object instead
+(model-cards.js `PARTS`); the same test refuses `T` as an argument, entry,
+spread or assignment.
+
 ## Escape closes what is in front; an arrow tap is owed to the next frame
 
 **Escape's order is: shot list, menu dropdown, clock, leave notice, OPEN PANEL,

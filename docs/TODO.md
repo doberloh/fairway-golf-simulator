@@ -649,7 +649,33 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## Release 0.9 (18 October)
+
+- [ ] **Owner: play 0.9 and look over the 1.0 website.** Released from the
+  merge of `release-0.9` (the `ui-1-0` journey and the capture tools) into
+  `main`; the website was redeployed live from its branch `website-1-0`
+  (that repository; not merged there). What was checked is in
+  DISTRIBUTION_REVIEW, *v0.9*. Not seen by a person: the 1.0 interface in a
+  real round on this machine, the sounds, a phone. The smoke's
+  `ball-light-hole-out` failed once in the release run and passed on a rerun
+  (the intermittent entry above).
+
 # Done
+
+## Release 0.9 (18 October)
+
+- [x] **v0.9 published**, "Fairway 0.9 (beta)", at the owner's request: the
+  1.0 interface on every screen, the start splash, the course models, the new
+  sounds and icons. Generator 36, schema 11, profile 3, all unchanged; the
+  package version is now 0.9.0 (the splash prints it). Notes:
+  `docs/releases/v0.9.md`. `npm test` 1004, smoke 37 of 37 (one rerun). The
+  release check found the course-model cards bundling all of three.js (four
+  `fetch(` instead of one, 147 KB); fixed before release (PROJECT_HANDOFF
+  *Never hand `T` itself on as a value*).
+- [x] **Capture tools for the 1.0 website** (docs/CAPTURE.md): every landscape
+  at four times of day with no interface, the interface screen by screen, and
+  clips recorded frame by frame at 4K60, plus a putting screen; the website was
+  rebuilt from them in its own repository.
 
 ## The 1.0 interface (branch `ui-1-0`)
 

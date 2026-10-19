@@ -22,6 +22,19 @@ import {layoutFor} from './course-picture.js';
 import {modelPlan, modelData, buildCourseModel} from './course-model.js';
 import {frameModel, SWAY} from './model-framing.js';
 
+// WHAT THE MODEL CODE IS HANDED OF THREE, BY NAME -- never the namespace `T`
+// itself. Passing `T` as a value made the bundler keep ALL of three.js (it can
+// no longer tell which parts are used), file loaders and their fetch() calls
+// included: 0.9's page carried three dead fetch() paths 0.8.3 had not (found
+// 18 October 2026, release check). course-model.js and model-framing.js take
+// `T` as an argument so their test can hand them three in Node; a name they
+// start using must be added here, or the cards throw.
+const PARTS = {BoxGeometry: T.BoxGeometry, BufferGeometry: T.BufferGeometry, Color: T.Color, ConeGeometry: T.ConeGeometry,
+ CylinderGeometry: T.CylinderGeometry, DoubleSide: T.DoubleSide, Float32BufferAttribute: T.Float32BufferAttribute, Group: T.Group,
+ IcosahedronGeometry: T.IcosahedronGeometry, InstancedMesh: T.InstancedMesh, LinearSRGBColorSpace: T.LinearSRGBColorSpace,
+ Matrix4: T.Matrix4, Mesh: T.Mesh, MeshBasicMaterial: T.MeshBasicMaterial, PerspectiveCamera: T.PerspectiveCamera, Plane: T.Plane,
+ Quaternion: T.Quaternion, Raycaster: T.Raycaster, Scene: T.Scene, Vector2: T.Vector2, Vector3: T.Vector3};
+
 const MAX_W = 1024, MAX_H = 640, PERIOD = 16000;
 const keyOf = s => JSON.stringify([s.seed, s.biome, s.holes, s.courseYards, s.footprint, s.spacing, s.doglegs, s.fairwayWidth, s.par3s]);
 
@@ -37,7 +50,7 @@ export function createModelCards({renderer, hot = () => '#facc15', doc = globalT
   if (!m) {
    if (models.size > 24) { const [k0, m0] = models.entries().next().value; m0.built?.dispose(); models.delete(k0); }
    const data = modelData(modelPlan(layoutFor(settings)));
-   m = {data, built: buildCourseModel(T, data, {hot: hot()})};
+   m = {data, built: buildCourseModel(PARTS, data, {hot: hot()})};
    models.set(k, m);
   }
   return m;
@@ -56,7 +69,7 @@ export function createModelCards({renderer, hot = () => '#facc15', doc = globalT
   const cssW = box.width + lean * (box.width / (c.el.offsetWidth || box.width));
   const w = Math.min(MAX_W, Math.round(cssW * k)), h = Math.min(MAX_H, Math.round(box.height * k));
   const m = modelFor(c.settings);
-  if (!c.cam || c.w !== w || c.h !== h) { c.cam = frameModel(T, m.data, w / h); c.w = w; c.h = h; }
+  if (!c.cam || c.w !== w || c.h !== h) { c.cam = frameModel(PARTS, m.data, w / h); c.w = w; c.h = h; }
   if (!c.canvas) {
    c.canvas = doc.createElement('canvas'); c.canvas.className = 'model-pic'; c.canvas.setAttribute('aria-hidden', 'true');
    c.el.append(c.canvas); c.el.classList.add('has-model');

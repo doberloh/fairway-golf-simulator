@@ -228,6 +228,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Rendering the scene a second time redraws every shadow map unless `shadowMap.autoUpdate` is off around it; the god rays and the pond probes switch it off. [A SECOND RENDER REDRAWS EVERY SHADOW MAP]
 - The god rays draw through their own override material and only with the sun in shot; the loading screen's frame warms them, and only solid things go in their mask. [THE GOD RAYS ARE WARMED]
 - `T` is three.js; a local variable named `T` breaks its whole function. [`T` is three.js]
+- Never pass `T` itself as a value: the bundler then keeps all of three.js, file loaders and their fetch() included. [Never hand `T` itself on as a value]
 - Never make a PMREMGenerator per refresh; take a kept one from `pmremFor`, one per cube size, or every 6 degrees of sun recompiles its shaders. [THE PMREM GENERATORS ARE KEPT]
 - No test loads renderer.js: open the game in a browser after changing it or ground.js. [A TEST SUITE CANNOT SEE]
 - Slow frames every 200 ms are the machine, not the game; time them and re-run in a fresh browser before blaming content. [A HITCH THAT COMES EVERY 200 MS]
