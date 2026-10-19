@@ -26,7 +26,7 @@ drive it through (`__view`, `__takeShot`, `__play`), added while bundling so
 | Script | Makes | Quality |
 | --- | --- | --- |
 | `times.mjs [landscape…]` | Every landscape at **morning, noon, golden hour and floodlit night**, no interface, no ball, no aim line, one camera per landscape so the four line up: `times/<landscape>-<time>` | 7680x4320 drawn, halved to a **3840x2160 PNG master**; 2560 and 960 JPEGs |
-| `screens.mjs [screen…]` | **The 1.0 interface**: main menu, Play's steps, course of the week, challenges, Endless, saved courses, profile and locker, launch monitor, graphics, a round, the shot card, the big map, pause, scorecard, a floodlit night, Haunted Hollow, the driving range, the course studio: `screens/<name>` | a 1920x1080 page at density 2, so the interface is laid out as on a 1080p screen and drawn at **3840x2160 (PNG master)**; 2560 and 960 JPEGs |
+| `screens.mjs [screen…]` | **The 1.0 interface**: main menu, Play's steps, course of the week, challenges, Endless, saved courses, profile and locker, launch monitor, graphics, a round, the shot card, a putt being read (slope grid and heat map on; it fails rather than saves if the tee shot misses the green), the big map, pause, scorecard, a floodlit night, Haunted Hollow, the driving range, the course studio: `screens/<name>` | a 1920x1080 page at density 2, so the interface is laid out as on a 1080p screen and drawn at **3840x2160 (PNG master)**; 2560 and 960 JPEGs |
 | `clips.mjs [clip…]` | Camera flights over each landscape, a tee shot, a floodlit night, Haunted Hollow at dusk, and a drive **with the round screen on**: `video/<name>.webm` + `.jpg` poster, `video/master/<name>.mp4` | **3840x2160 at 60 fps, recorded frame by frame**: an 80 Mbit/s H.264 MP4 master (for editing) and a 1920x1080, 8 Mbit/s VP9 WebM for the website |
 | `gallery.mjs`, `features.mjs` | The 0.x website's pictures (two times of day per landscape; the old interface's feature shots) | 3840x2160 drawn, 2560 JPEG; kept for reference, superseded by `times.mjs` and `screens.mjs` |
 | `angles.mjs <biome> <seed> [holes]` | Small test pictures of one landscape from twelve views per hole, and a contact sheet: for **choosing a camera** before a 4K set | 1280x720, about a second a view |
@@ -103,6 +103,27 @@ memory *GPU runs in small batches*).
 - **Look at the contact sheet** of every set before using it, and at a few frames
   of every clip (`frame-grab.mjs`) -- the interface clip once ended before the
   shot card came up and had to be made longer.
+
+## From here to the website
+
+The 1.0 website was redone this way (18 October 2026), and it is the way to
+do the next retake:
+
+1. **Here**: rebuild the capture build, take the set in small batches, look at
+   the contact sheets and a few frames of each clip.
+2. **In `../fairway-website`, on a branch of its own**: copy the chosen files
+   into `site/media/` under new names -- the 1.0 set lives in `landscapes/`
+   (from `times/`), `screens/` (from `screens/`, the `.jpg` and `-thumb.jpg`)
+   and `clips/` (from `video/`, the `.webm` and `.jpg`; the MP4 masters stay
+   here). Name them in the pages: the front page's markup, and the lists in
+   `media.html`'s script.
+3. `npm run site -- --game ../fairway/dist/index.html` there checks every file
+   the pages name; look at it at desktop width and 390 px.
+4. The website goes live only from a published release (`npm run deploy`
+   there, after the owner asks), so the demo matches what the site shows.
+
+Pages, styles and deploys are that repository's business (its AGENTS.md and
+docs/DEPLOYING.md); nothing of the website is added back here.
 
 ## Traps found while building them
 

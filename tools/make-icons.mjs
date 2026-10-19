@@ -6,8 +6,14 @@
 //
 // The flag is the same stroked path as the brandmark in index.html -- the
 // project's own drawing, so nothing here needs a credit. The one addition is a
-// light-green dot at the flag's foot: the full stop from the "fairway."
-// wordmark, sitting where a ball would.
+// dot at the flag's foot: the full stop from the "fairway." wordmark, sitting
+// where a ball would.
+//
+// THE 1.0 LOOK (18 October 2026, for the 1.0 release and website): the start
+// splash's colours -- a near-black ground, a leaning green band and a thin
+// bright stripe beside it (both at the interface's -12 degrees), the flag in
+// white and the dot in the splash's yellow. Until then: a plain green tile, a
+// cream flag and a light-green dot.
 //
 // Rendered by the headless browser Playwright already provides for the smoke
 // test and the profiler, so no image library is added to the project just to
@@ -58,9 +64,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
 fs.mkdirSync(OUT, {recursive: true});
 
-// The game's own colours: the theme green and the deep ground behind it, the
-// cream the HUD writes in, and the brand dot's light green.
-const DEEP = '#0f2419', THEME = '#234d3a', CREAM = '#eef3e6', DOT = '#a8c98a';
+// The splash's own colours (ui-windows.css #splash, its fallbacks): the green
+// band's two ends, the dark ground, white, and the hot yellow of the dot.
+const DEEP = '#07100a', THEME = '#12291b', A1 = '#4ade80', A2 = '#166534', INK = '#ffffff', DOT = '#facc15';
 
 // The mark's own extent inside its 32-unit box is 4 to 25 across and 6 to
 // 27.6 down, so its middle sits 1.5 units left of the box's middle and 0.8
@@ -73,10 +79,15 @@ const svg = (size, scale) => {
  const box = size * scale, off = (size - box) / 2;
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-   <stop offset="0" stop-color="${THEME}"/><stop offset="1" stop-color="${DEEP}"/></linearGradient></defs>
+   <stop offset="0" stop-color="${THEME}"/><stop offset="1" stop-color="${DEEP}"/></linearGradient>
+   <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${A1}"/><stop offset="1" stop-color="${A2}"/></linearGradient></defs>
   <rect width="${size}" height="${size}" fill="url(#g)"/>
+  <g transform="translate(${size / 2} 0) skewX(-12) translate(${-size / 2} 0)">
+   <rect x="${size * -.04}" y="${-size * .1}" width="${size * .56}" height="${size * 1.2}" fill="url(#b)" opacity=".34"/>
+   <rect x="${size * .82}" y="${-size * .1}" width="${size * .045}" height="${size * 1.2}" fill="${A1}" opacity=".5"/>
+  </g>
   <g transform="translate(${off} ${off}) scale(${box / 32}) translate(1.5 -0.8)">
-   <path d="M8 26V6l17 5-17 6M4 27h12" fill="none" stroke="${CREAM}" stroke-width="2.2"
+   <path d="M8 26V6l17 5-17 6M4 27h12" fill="none" stroke="${INK}" stroke-width="2.2"
     stroke-linecap="round" stroke-linejoin="round"/>
    <circle cx="21.5" cy="25.6" r="1.9" fill="${DOT}"/>
   </g></svg>`;
@@ -114,8 +125,8 @@ const manifest = {
  // under the notch until the HUD is taught to keep clear of it.
  display: 'standalone',
  orientation: 'any',
- background_color: '#0b160f',
- theme_color: '#234d3a',
+ background_color: '#07100a',
+ theme_color: '#12291b',
  icons: [
   {src: dataUrl('icon-192.png'), sizes: '192x192', type: 'image/png'},
   {src: dataUrl('icon-512.png'), sizes: '512x512', type: 'image/png'},

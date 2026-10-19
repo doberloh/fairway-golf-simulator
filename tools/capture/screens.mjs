@@ -17,8 +17,8 @@ const click = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
 const step = (p, label) => p.evaluate(l => { const b = [...document.querySelectorAll('#drawer .sx-steps .sx-step')].find(x => x.getAttribute('aria-label') === l || x.textContent.trim().toUpperCase().endsWith(l.toUpperCase())); if (!b) throw Error('no step ' + l); b.click(); }, label);
 const pressText = (p, text) => p.getByRole('button', {name: text, exact: true}).filter({visible: true}).first().click({timeout: 15000});
 // A course in play, at a time of day, the opening flyover over.
-async function round(p, {biome = 'desert', seed = 'MESA', hole = 2, when = 'afternoon', hour = null} = {}) {
- await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome, holes: 9, seed}, GROUP]);
+async function round(p, {biome = 'desert', seed = 'MESA', hole = 2, when = 'afternoon', hour = null, group = GROUP} = {}) {
+ await p.evaluate(([c, g]) => window.lab.course(c, g), [{biome, holes: 9, seed}, group]);
  await p.evaluate(h => window.lab.hole(h), hole);
  await p.evaluate(at => { const v = window.__view; v.daylight.hour = at; v.daylight.rate = 0; }, hour ?? hourFor(biome, when));
  await wait(p, 9000);
@@ -57,6 +57,18 @@ export const SCREENS = [
  {name: 'pause', go: async p => { await round(p); await p.keyboard.press('Escape'); await wait(p, 1200); }},
  {name: 'scorecard', go: async p => { await round(p); await p.keyboard.press('Escape'); await wait(p, 800); await click(p, 'scoreNav'); await wait(p, 1800); }},
  {name: 'night-round', go: async p => { await round(p, {biome: 'links', seed: 'DUNE', hole: 3, hour: 21.5}); await p.evaluate(() => window.__view.setFloodlights(true)); await wait(p, 4000); }},
+ // A putt being read (added for the website's greens panel): one golfer, a
+ // 7-iron onto Links' 176-yard par 3, then the slope grid and the heat map on.
+ // Fails rather than saving if the ball misses the green.
+ {name: 'putting', go: async p => {
+  await round(p, {biome: 'links', seed: 'DUNE', hole: 3, when: 'afternoon', group: {...GROUP, players: GROUP.players.slice(0, 1)}});
+  await p.evaluate(s => window.__takeShot(s), {speed: 54.5, vla: 16.5, hla: 0, spin: 6900, spinAxis: 0});
+  await wait(p, 2000);
+  await p.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 30000}); await wait(p, 4000);
+  if (!await p.evaluate(() => window.lab.state().camera.onGreen)) throw Error('the tee shot missed the green');
+  await p.evaluate(() => { for (const id of ['readSlope', 'readHeat']) document.getElementById(id).click(); });
+  await wait(p, 2500);
+ }},
  {name: 'haunted-round', go: async p => { await round(p, {biome: 'haunted', seed: 'GLOAMING', hole: 1, hour: 18.6}); }},
  {name: 'driving-range', go: async p => {
   await click(p, 'menuRange'); await wait(p, 1200);

@@ -204,7 +204,7 @@ None of this ships inside `dist/index.html`. The bake tools are the exception in
 | tools/tree-spacing.mjs | How close trees actually stand, measured against how wide their crowns are |
 | tools/fetch-references.py | Pulls reference photographs from Wikimedia Commons into a scratch folder. REFERENCES, not assets: nothing derived from them is a copy |
 | tools/package_release.py | Verified source/portable ZIP packaging and checksums |
-| tools/make-icons.mjs | Draws the home-screen icons in `public/` from the brandmark path, through Playwright. Rerun only if the mark changes |
+| tools/make-icons.mjs | Draws the home-screen icons in `public/` from the brandmark path, through Playwright, in the 1.0 splash's colours (leaning green band, white flag, yellow dot). Rerun only if the mark changes; it prints the tab icon for index.html. The website copies the PNGs and manifest into its `site/play/` |
 | public/ | Copied beside the page by the build: home-screen icons and `manifest.webmanifest`, for a HOSTED copy. The manifest is linked only over http(s) |
 | tools/release.mjs | What `npm run release` runs: finds a Python under any of its three names, then runs the packager ONCE and exits with its code. A shell `||` chain cannot tell a missing interpreter from a failed packaging, which would hide the refusals the packager exists to make |
 

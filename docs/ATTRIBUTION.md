@@ -136,8 +136,9 @@ after changing the model selection in `PICK`.
 ## Icons
 
 The home-screen and tab icons in `public/` and `index.html` are the project's
-own flag mark -- the brandmark path already in the page, plus a dot -- drawn by
-`tools/make-icons.mjs`. No third-party image is used.
+own flag mark -- the brandmark path already in the page, plus a dot, over the
+start splash's leaning green band since the 1.0 look (18 October 2026) -- drawn
+by `tools/make-icons.mjs`. No third-party image is used.
 
 ## Trade marks
 
