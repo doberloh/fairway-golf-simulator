@@ -51,7 +51,9 @@ const splash = {
 
 export default defineConfig({
   plugins: [versions, splash, viteSingleFile()],
-  define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString()})},
+  // `version` is package.json's: a friend's challenge (rival.js) is only played
+  // on the version it was made on, so a release must bump it.
+  define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString(), version: pkg.version})},
   build: {target: 'es2022', assetsInlineLimit: 10000000},
   server: {port: 5173},
 });

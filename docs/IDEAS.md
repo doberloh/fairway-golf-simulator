@@ -37,16 +37,6 @@ often has the how-to already worked out.
 - **A tournament weekend.** Four rounds on one course against a field of
   computer opponents, with a leaderboard and a cut. Needs computer opponents
   first. Large. (Claude, 16 October 2026)
-- **Challenge a friend by code.** A course code that also carries your score,
-  hole by hole, so a friend plays the same course against your card -- and,
-  with your shots in it, against your ball's tracer. No server: a code to
-  paste, like the course codes. The cheap answer to "two people in different
-  houses". Medium. (Claude, 16 October 2026)
-- **Networked multiplayer.** Two people in different houses, or several in one
-  bay? The second is nearly free. For the first, a generator bump would cost a
-  match rather than a saved round, so the handshake must refuse a version
-  mismatch. A local feasibility study exists (`docs/reports/MULTIPLAYER_FEASIBILITY.md`).
-  Large. (was: both entries under *Networked multiplayer*)
 - **Tees per golfer.** Each golfer plays their own tee, with mixed-tee scoring
   and the CSVs to match. Medium. (was: *Per-player tee choice*)
 
@@ -158,4 +148,7 @@ several of these play differently as well as look different.
 
 ## Turned down
 
-Nothing yet. One line each: the idea, when, and the owner's reason.
+One line each: the idea, when, and the owner's reason.
+
+- **Leaderboards for the course of the week** (20 October 2026). Scrapped by the owner after seeing the three ways to do it: friends' scores swapped as codes, a public board on the website (a service to run and moderate), or the game posting scores itself (breaks "nothing ever sent anywhere").
+- **Networked multiplayer** (20 October 2026). The owner wanted it with no servers of their own; across the internet that still needs an address-check service, or a relay for about one connection in ten, and Netlify cannot be the relay (no lasting connections; a free site over its limit is suspended for the month). The owner picked *Challenge a friend by code* instead (now built, TODO *Challenge a friend*) and does not expect to ask again. The study is `docs/reports/MULTIPLAYER_FEASIBILITY.md` (local); RESEARCH *Challenge a friend* has the Netlify sources.

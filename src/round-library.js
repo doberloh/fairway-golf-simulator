@@ -1,5 +1,6 @@
 import {SCHEMA_VERSION, GENERATOR_VERSION, validateSettings, migrateSettings} from './settings-schema.js';
 import {Round} from './game.js';
+import {normaliseShots} from './rival.js';
 
 // Rounds in progress, kept on this device.
 //
@@ -61,6 +62,7 @@ function normalise(raw) {
   settings,
   round: raw.round,
   camera: raw.camera && typeof raw.camera === 'object' ? raw.camera : null,
+  shots: normaliseShots(raw.shots),
   // Summarised on the way out so a list can be drawn without rebuilding every
   // round it holds.
   summary: summarise(round, settings),
@@ -98,7 +100,7 @@ export function listRounds() {
 export function findRound(id) { return listRounds().find(r => r.id === id) || null; }
 
 // `record` is main.js's own save record: {settings, round, camera, generator}.
-export function saveRound({id, name, settings, round, camera, generator = GENERATOR_VERSION} = {}) {
+export function saveRound({id, name, settings, round, camera, shots, generator = GENERATOR_VERSION} = {}) {
  if (!round) throw Error('There is no round to save.');
  const entry = {
   id: id || newId(),
@@ -112,6 +114,8 @@ export function saveRound({id, name, settings, round, camera, generator = GENERA
   settings: validateSettings(settings),
   round,
   camera: camera || null,
+  // The shots behind the cards, for a friend's challenge (rival.js).
+  shots: normaliseShots(shots),
  };
  // Validate before storing rather than after, so a round that cannot be
  // restored is never written in the first place.

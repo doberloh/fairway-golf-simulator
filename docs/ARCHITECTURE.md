@@ -83,7 +83,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
 - `src/range.js` -- the driving range (a hand-built hole): its greens as a list (centre, six targets, short game), their slopes and cups, chip and putt spots; `src/endless.js` -- endless runs
 - `src/range-report.js`, `src/pdf.js` -- the range session as a CSV and a PDF report; a hand-written PDF, no dependency
-- `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes
+- `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes; `src/rival.js` -- a friend's challenge: the shot grid, the round's shot log, the challenge code, the card comparison
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
 - `src/rewards.js` -- what each level unlocks (one table), what a golfer wears, and the tracer styles; `src/ball-finishes.js` -- the ball finishes, one colour rule each for the 3D ball and its picture
@@ -207,6 +207,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Rounds with a goal are real rounds (`round.goal`); the goal never changes play, and a sudden-death run is never finished. [Rounds with a goal are real rounds]
 - The course of the week is the date plus `DEFAULT_COURSE`, `BIOME_KEYS` order and the generator; changing any changes it on every copy. [The course of the week is the date]
 - The challenge of the week is the date plus `WEEKLY_POOLS`; a pool row is never edited once shipped -- a new pool starts at a future week. [The challenge of the week is the date]
+- A friend's challenge plays only on the same version (package.json plus commit) and re-flies its shots: `gridShot` stays before `simulateShot`, and anything new `simulateShot` reads must travel in the code. [A friend's challenge is the version]
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
 
 **Physics**

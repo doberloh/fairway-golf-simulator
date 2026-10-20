@@ -635,3 +635,34 @@ Read for RESEARCH.md *The 1.0 interface: palettes, contrast and the canvas*.
   files were taken from the npm package `@fontsource/saira-condensed` 5.3.0,
   whose `metadata.json` lists `"styles": ["normal"]` and Google Fonts version
   12, and whose `LICENSE` is the OFL text shipped in `src/fonts/OFL.txt`.
+
+## Challenge a friend (20 October 2026)
+
+Read for RESEARCH.md *Challenge a friend: codes, shots flown again, and no
+servers*: whether Netlify could relay online play. **All read through web
+search summaries, not fetched**; worth opening before relying on them.
+
+- Netlify Support Forums, "Does Netlify support websocket programming" --
+  https://answers.netlify.com/t/does-netlify-support-websocket-programming/4213
+  -- and "Socket.io is not working in next js app on netlify" --
+  https://answers.netlify.com/t/socket-io-is-not-working-in-next-js-app-on-netlify/87342
+  -- WebSockets are not supported; functions answer requests and are not
+  persistently running.
+- Netlify Support Forums, "Does Netlify support Websocket proxying" --
+  https://answers.netlify.com/t/does-netlify-support-websocket-proxying/11230
+  -- proxying WebSockets is not supported and was not on the roadmap (the
+  thread's date unclear).
+- Netlify blog, "Web sockets in a serverless world" --
+  https://www.netlify.com/blog/web-sockets-in-a-serverless-world.md -- calls
+  serverless WebSockets a contradiction in terms.
+- Netlify changelog, "Netlify pricing update: introducing credit-based plans"
+  -- https://www.netlify.com/changelog/netlify-pricing-update-introducing-credit-based-plans/
+  -- the Free plan's 300 credits a month (since September 2025).
+- Netlify blog, "Introducing Netlify free plan" --
+  https://www.netlify.com/blog/introducing-netlify-free-plan/ -- a free site
+  over its limits is suspended for the rest of the calendar month. Its older
+  figure of 125,000 function calls a month predates the credit plans and was
+  not used.
+- Read and not used: withorb.com, toolradar.com and makerkit.dev pricing pages
+  -- third-party, disagreeing on how many credits a function costs (5 or 10
+  per GB-hour).

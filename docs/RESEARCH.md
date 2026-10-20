@@ -8740,3 +8740,75 @@ mid-line allows with 6 units of room at both ends of a +-0.08 rad sway; then
 in by 5% steps until rays through the box's edge all land on the land (which
 runs 140 units past the plan across and 115 front and back). 20 of 20 boxes
 pass for five landscapes x four shapes (186 x 92, 197 x 66, 96 x 52, 16:9).
+
+## Challenge a friend: codes, shots flown again, and no servers (20 October 2026)
+
+`src/rival.js`; the owner's decisions and the code's layout are in
+PROJECT_HANDOFF *A friend's challenge*. What was measured and what was placed:
+
+**No server can be Netlify (searched, not fetched).** Before this was chosen
+the owner asked whether Netlify, which hosts the website, could relay online
+play. It cannot: Netlify's functions answer one request and stop, and the
+forum answers say WebSockets are neither served nor proxied; Netlify's own
+blog calls serverless WebSockets a contradiction. It could only be a polling
+mailbox, which is a server on the website's account, and a free site over its
+monthly allowance (300 credits since the credit plans of September 2025) is
+suspended for the rest of the month -- the website and its Download buttons
+with it. Sources in REFERENCES, *Challenge a friend*; read through search
+summaries only, so worth a fetch before anyone relies on them. **Recalled,
+not measured or sourced:** that about one home connection in ten cannot be
+reached directly and needs a relay (said to the owner as a rough figure).
+
+**What a code costs.** Measured with a crude bot (aim at the pin, no misses
+modelled) on seed `MEASURE`, the default course at 18 holes: 139 shots.
+
+| a shot carried as | characters a shot | 18 holes (139 shots) | scaled to 85 shots |
+| --- | --- | --- | --- |
+| its path, thinned to within 5 cm | 126 | about 18,000 | about 11,000 |
+| its path, within 10 cm | 84 | 12,203 | about 7,500 |
+| its path, within 20 cm | 72 | 10,564 | about 6,600 |
+| its launch numbers (chosen) | 21 | 3,400 | about 2,300 |
+
+The card and course alone are 524 characters. Thinning kept 20, 12 and 10
+points a shot of 304 recorded. **Paths were built first and REJECTED** the same
+day: they work across versions, but a round past 7,000 characters is too long
+for some chat apps (Discord takes 2,000 a message). The owner then made the
+same-version rule, which is what lets launch numbers stand in for the flight
+(below). 85 shots is a round in the high eighties, scaled from the per-shot
+figure, not measured.
+
+**Exact or nothing.** One part in a thousand of launch speed moves a drive's
+finish about 304 mm, and the model's error grows roughly linearly with an
+amplification of about one (the September multiplayer study, measured by
+perturbing launch speed). So a launch number rounded when the code is made is
+a different shot. Instead every shot is rounded BEFORE it is flown
+(`gridShot`): **PLACED** steps of 0.01 m/s, 0.01 degree (launch, direction,
+spin axis), 0.001 degree of aim, 1 rpm and 1 mm. For scale, a monitor's 0.1
+mph is 0.045 m/s and its angles come in tenths, so a monitor's numbers land on
+the grid unchanged, and a Swing Meter shot moves by less than any readout
+shows. Checked: a shot read back from its numbers flies to the same bit on a
+flat test ground (`rival.test.mjs`), and eight shots over two holes of a
+70-tree course in 12 mph of wind, grown again from the code's settings, all
+stop on the same millimetre.
+
+**Still not guaranteed across machines.** Two engines that agree to fourteen
+places can fall either side of a lip or a branch (the same study). Each shot
+carries its finish to the millimetre; a re-flown shot that ends more than 5 cm
+from it (**PLACED**) has its line drawn on to the true finish. The card is
+carried whole, so the result never depends on it. How often it happens is
+unmeasured: it needs two different machines.
+
+**Placed rules** the owner did not set, each overrulable: only stroke play, 9
+or 18 holes (the card is strokes; a 3-hole round is a legacy save); a golfer
+"played on a launch monitor" if any of their shots that round came off it,
+else the Swing Meter; at most 40 shots a hole and 50,000 characters a code
+(guards against a damaged code, not limits a round meets); the 20 newest
+pasted challenges kept; the friend's shots drawn white, dashed 1.2 m on and
+off, whatever the shot-lines setting. **Set by the owner (20 October):** card
+and flights both; total strokes decide it, each hole's winner shown; the
+rules shown, not forced; the same version or no challenge.
+
+**The version is package.json's plus the build's commit.** package.json said
+1.0.0 from this repository's first commit until it became 0.9.0 (b7131e2), so
+the releases before 0.9 all called themselves the same thing; the commit
+tells releases apart, and every copy of one download shares it.

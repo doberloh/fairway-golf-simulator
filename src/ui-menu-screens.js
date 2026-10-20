@@ -70,6 +70,29 @@ export function buildWeekly(root, {step = 0, onStep, doc = globalThis.document} 
  return true;
 }
 
+// A FRIEND'S CHALLENGE (rival.js, 20 October 2026): the course of the week's
+// two steps, for a pasted code -- 1 the code and what it holds (the card, the
+// course, the rules they played), 2 the golfers, their rules and Play. No
+// mockup exists for it; PLACED on the course of the week's frames.
+export function buildFriend(root, {step = 0, onStep, doc = globalThis.document} = {}) {
+ const secs = sectionsOf(root), first = secs.find(s => s.dataset.title === 'The challenge');
+ if (!first || root.querySelector('.sx')) return false;
+ const p1 = make(doc, 'section', 'sx-body fr');
+ for (const n of [...first.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3') p1.append(n);
+ const p2 = make(doc, 'section', 'sx-body sx-golfers wk-group');
+ p2.append(make(doc, 'h3', 'sx-head', 'WHO’S PLAYING · 1 TO 4'));
+ const rows = root.querySelector('#playerRows'); if (rows) p2.append(rows);
+ const rules = make(doc, 'div', 'wk-rules');
+ for (const s of secs) if (s !== first) for (const n of [...s.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3' && n.id !== 'playerRows') rules.append(n);
+ p2.append(rules);
+ for (const s of secs) s.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
+ root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
+ stepSheet(root, {steps: [{label: 'The challenge', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: root.querySelector('#rivalGo'), onStep,
+  hints: [['Enter', 'Next'], ['Esc', 'Back']], doc});
+ return true;
+}
+
 // SAVED COURSES: the courses as a shelf of picture-and-caption cards, with a
 // card to start a new one in the studio; the chosen course's name, code and
 // buttons (Play, Copy code, Rename, Delete) in a column on the right. The

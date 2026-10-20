@@ -61,7 +61,10 @@ Other round suites pin one behaviour each with a hand-written card:
 sim drops), `honours` (playing order, golfers added, removed and reordered),
 `relief` (water and out of bounds under the Rules), `skins`, `mixed-groups`
 (monitor and Swing Meter golfers together), `endless`, `round-library` and
-`course-library` (saving), `weekly`, `challenges`.
+`course-library` (saving), `weekly`, `challenges`, `rival` (a friend's
+challenge: the code made and read, refused when cut short, altered or from
+another version, the comparison, and shots read back from a code flying to the
+same millimetre on a freshly grown course with trees and wind).
 
 **`tests/challenge-matrix.test.mjs` plays every challenge with every group of
 one to four** -- the 34 that are plays (the two rounds are in the round
@@ -114,7 +117,7 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `player-colours`, `bag`,
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `rival`, `player-colours`, `bag`,
   `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
@@ -224,6 +227,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
+| `friend-challenge` | a friend's challenge made in Node with the page's version (`window.lab.version`), pasted on Play's card and read, its nine-hole round started, the save remembering it and logging a shot, and the scorecard showing the friend's row. **Written 20 October 2026, not yet run** (it needs the graphics card) |
 | `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows and saves a course |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |

@@ -59,7 +59,7 @@ import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {buildSettings} from './ui-settings.js';
-import {buildChallenges,buildWeekly,buildLibrary,buildHelp} from './ui-menu-screens.js';
+import {buildChallenges,buildWeekly,buildFriend,buildLibrary,buildHelp} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
 import {createModelCards} from './model-cards.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
@@ -68,7 +68,8 @@ import {leanAsOne,makeWindow,watchWindows} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
-import {buildLabel,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
+import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
+import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
 import {shotProfile,drawSideView,drawPlanView} from './shot-views.js';
@@ -114,6 +115,26 @@ const onGreen=()=>{
 };
 // Every tracer played on this hole, and whether the hole-summary orbit is up.
 let holeTrails=[],holeSummary=0,summaryCamera=null;
+// THE ROUND'S SHOTS, for a friend's challenge (rival.js): every ball struck on
+// a course, as numbers that fly again exactly. Kept beside the round -- not in
+// it, or each of the thirty mulligan snapshots would carry a copy -- and tied
+// to it by its uid, so a log from another round is never sent under this one.
+let shotLog={uid:'',list:[]};
+const roundShots=()=>shotLog.uid===round.uid?shotLog.list:[];
+// The version a challenge is made and played on (vite.config.js): package.json's
+// version and the build's commit. The commit is what tells two releases apart
+// for certain -- package.json's version has not been bumped at every release --
+// and every copy of one release download shares it. A build with no git (from
+// a source archive) has the version alone.
+const GAME_VERSION=(b=>b.version?(b.commit?`${b.version}+${b.commit}`:b.version):null)(buildStamp());
+// A FRIEND'S CHALLENGE this round is played against, read once from the
+// device's list and its shots flown again per hole as they are needed.
+let rivalCache={id:'',rival:null,holes:new Map()};
+function activeRival(){
+ const id=round?.rival||'';
+ if(rivalCache.id!==id)rivalCache={id,rival:id?findRival(id):null,holes:new Map()};
+ return rivalCache.rival;
+}
 // How many tracers the player wants left on the field behind them.
 let shotLinePref=loadShotLines();
 // WHICH SHOT THE 2D VIEWS ARE SHOWING. Follows the last shot on its own, so the
@@ -160,7 +181,31 @@ function pushTrail(points,player=round.active){
 }
 // The tail the setting asks for. Zero is a real answer -- a clear field -- and
 // `setShotHistory` hides every line before it draws, so passing [] clears them.
-const visibleTrails=()=>shotLinePref?holeTrails.slice(-shotLinePref):[];
+const visibleTrails=()=>[...rivalTrails(),...(shotLinePref?holeTrails.slice(-shotLinePref):[])];
+// A FRIEND'S SHOTS ON THIS HOLE (rival.js), flown again here exactly as they
+// were flown there: the same version of Fairway, the same course, their turf,
+// their flagstick and floodlights. Drawn as a white dashed line under the
+// player's own, whatever the shot-lines setting, because racing them is the
+// point of the round. A shot that comes out differently here (a lip, a
+// branch) still ends where their ball stopped.
+const RIVAL_LINE={colours:['#ffffff'],dash:[1.2,1.2]};
+function rivalTrails(){
+ const rival=activeRival();
+ if(!rival||!course||rangeMode||round.endless||!rival.shots[round.hole])return [];
+ const h=round.hole;
+ if(!rivalCache.holes.has(h)){
+  const wind=localWind(settings,course.rotation),turf={...settings.turf,...rival.rules.turf};
+  rivalCache.holes.set(h,rival.shots[h].map(s=>{
+   const f=shotFrom(s);
+   let points=[];
+   try{const r=simulateShot(f.shot,course,{wind,altitude:course.bio.altitude,temperature:course.bio.temperature,turf,poles:f.poles?view.poles:null,flagsticks:{current:f.flagstick}});
+    points=r.points.map(p=>({x:p.x,y:p.y,z:p.z}));
+    if(Math.hypot(r.end.x-f.end.x,r.end.z-f.end.z)>.05)points.push({x:f.end.x,y:course.height(f.end.x,f.end.z),z:f.end.z});}catch{}
+   return {points,shape:RIVAL_LINE};
+  }));
+ }
+ return rivalCache.holes.get(h);
+}
 // THE FIVE NUMBERS A LAUNCH MONITOR SENDS, and the only five this simulator
 // needs: ball speed, launch angle, launch direction, spin rate, spin axis.
 // Everything else a Garmin R50 reports is about the CLUB, and the club never
@@ -1019,7 +1064,7 @@ function adoptDeviceBag(){
 // from it was a driving range, the course studio included. A range is not a
 // course and is never what a save should record, so the stored copy is the one
 // taken on the way in.
-function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:GENERATOR_VERSION,settings:round.endless?{...DEFAULT_COURSE,seed:settings.seed||'EVERGREEN',...playScope(settings)}:courseOnly(savedCourse??settings),round:round.toJSON(),camera:flight?.replay?flight.camera:roundCamera()};}
+function saveRecord(){return {version:2,schema:SCHEMA_VERSION,generator:GENERATOR_VERSION,settings:round.endless?{...DEFAULT_COURSE,seed:settings.seed||'EVERGREEN',...playScope(settings)}:courseOnly(savedCourse??settings),round:round.toJSON(),camera:flight?.replay?flight.camera:roundCamera(),shots:roundShots()};}
 // The generator version belongs in this key, so a build whose generator changed
 // rebuilds the world even when every setting and the seed are identical. Shared
 // with the menu backdrop, which needs to build its world under the key
@@ -1084,7 +1129,7 @@ function loadCourse(){
  // What the hole was worth is recorded now, because the landscape behind it is
  // thrown away the moment the next one grows and the scorecard still needs par.
  round.pars[round.hole]=course.par;
- round.placeTee(course.tees);view.setPutting(round.putting);latest=null;showStandingResult();setUpTurn();updateExplorer();requestAnimationFrame(updateExplorer);save();
+ round.placeTee(course.tees);view.setPutting(round.putting);latest=null;showStandingResult();setUpTurn();if(activeRival())view.setShotHistory?.(visibleTrails());updateExplorer();requestAnimationFrame(updateExplorer);save();
 }
 function updateExplorer(){
  const free=view.config.mode==='free';$('world').dataset.artDirection=settings.style;$('map').setAttribute('aria-label',free||view.config.mode==='overview'?'Whole course map; click to fly':'Hole map; click to aim');$('world').classList.toggle('exploring',free);$('exploreBar').hidden=!free;
@@ -1736,7 +1781,12 @@ function takeShot(data=null,struck=null){
  const factor=onMat()?1:lieFactor(lie);let launch,lieRecord=null;
  if(data)({launch,lie:lieRecord}=monitorLie(data,lie,{on:round.monitorLie,range:onMat()}));
  else{launch=struck.shot;if(factor<1)lieRecord={surface:lie,factor,before:struck.before};}
- const shot={origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})};
+ // ON THE GRID (rival.js `gridShot`, 20 October 2026): every number the ball is
+ // flown on is rounded first -- to 0.01 m/s, 0.01 degree, 0.001 degree of aim,
+ // 1 rpm, 1 mm -- so a friend's challenge can carry the shot exactly and fly it
+ // again. Far finer than a monitor reports (0.1 mph is 0.045 m/s), so nothing
+ // shown changes and no ball data is invented.
+ const shot=gridShot({origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})});
  const wind=localWind(settings,course.rotation);
  const result=simulateShot(shot,course,{wind,altitude:course.bio.altitude,temperature:course.bio.temperature,turf:settings.turf,
   // Only when they are actually standing lit on the course. The whole
@@ -1746,7 +1796,7 @@ function takeShot(data=null,struck=null){
   // This hole's flagstick is in unless the ball is on the green (setPinOut) or
   // the putter is in hand (liftFlag): exactly when it is drawn standing.
   flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';lastShot.poles=!!view.floodlit;showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -1788,6 +1838,9 @@ function finishShot(){
   save();sendPlayer();
   return;
  }
+ // THE SHOT, FOR A FRIEND'S CHALLENGE (rival.js): as it was flown, with what it
+ // met and where it stopped. Not an endless run's: it has no card to send.
+ if(!round.endless&&lastShot){if(shotLog.uid!==round.uid)shotLog={uid:round.uid,list:[]};recordShot(shotLog.list,{hole:round.hole,seat:round.active,shot:lastShot.shot,end:result.end,flagstick:!lastShot.pinOut,poles:!!lastShot.poles});}
  // WHERE IT LAST CROSSED THE EDGE of the water or the boundary, found on the
  // ball's own path (relief.js). A ball stopped by a house that is out of bounds
  // never crossed the boundary line; the house is the edge, and it is where it
@@ -1825,6 +1878,12 @@ function replayShot(record=lastShot,label='LAST SHOT REPLAY'){
  flight={result:record.result,elapsed:0,index:0,replay:true,camera,aim:record.aim,origin:record.shot.origin,record};
  view.config.follow=true;view.setHole(worldHole(record.hole),true);flight.tv=shotCameraPlan(record.result,view.course);gameAudio?.strike({kind:record.kind,ballMs:record.shot.speed,monitor:!!record.typed});view.setPutting(round.putting);view.setBall(record.shot.origin);view.setCamera(record.shot.origin,record.aim,true);view.setTrail([]);view.hitEffects(record.shot.origin,record.aim,view.course.surface(record.shot.origin.x,record.shot.origin.z),record.shot.speed);view.aimLine.visible=false;view.aimRing.visible=false;view.lowerFlag?.();showLiveResult();$('flightLabel').textContent=label;updateExplorer();updateHUD();
 }
+// The friend's score on this hole, under the golfer's own (rival.js).
+function rivalHoleLine(event){
+ const r=activeRival(),t=r?.card?.[round.hole];
+ if(!Number.isFinite(t)||!Number.isFinite(event.score))return '';
+ return `<span class="hole-summary-rival">${escape(r.name)} made ${scoreText(t)} · ${event.score<t?'hole won':event.score>t?'hole lost':'halved'}</span>`;
+}
 // Strokes, what that is called, and how it moved the round -- the three things
 // worth reading in the second after a ball drops.
 function holeCard(event){
@@ -1833,7 +1892,7 @@ function holeCard(event){
  const tint=parTint(rel,1);
  return `<div class="hole-summary">`
   +`<div class="hole-summary-score"><strong>${scoreText(event.score)}</strong><small>${event.score===1?'STROKE':'STROKES'}</small></div>`
-  +`<div class="hole-summary-detail"><strong>${escape(name||'')}</strong><span>Par ${course.par} · ${scoreText(event.puttingTotal)} ${event.puttingTotal===1?'putt':'putts'}</span></div>`
+  +`<div class="hole-summary-detail"><strong>${escape(name||'')}</strong><span>Par ${course.par} · ${scoreText(event.puttingTotal)} ${event.puttingTotal===1?'putt':'putts'}</span>${rivalHoleLine(event)}</div>`
   +`<div class="hole-summary-par" data-side="${parSide(rel,1)}"${tint?` style="background:${tint}"`:''}>${parText(rel)}</div>`
   +`</div>`;
 }
@@ -2012,7 +2071,7 @@ function startHoleSummary(){
  summaryCamera={...view.config};
  holeSummary=0;
  view.setTrail([]);
- view.setShotHistory(holeTrails);
+ view.setShotHistory([...rivalTrails(),...holeTrails]);
  view.ball.visible=false;view.ballRing.visible=false;view.aimLine.visible=false;view.aimRing.visible=false;
  view.summaryOrbit(0);
 }
@@ -3753,7 +3812,7 @@ let rangeSetup=false,rangeSetupHit='mats',rangeSetupStep=0;
 // Endless gets one too. It has no course to choose -- every hole is grown from
 // the run's own seed -- so this panel is the round half only: format, tees,
 // putting and who is playing.
-let endlessSetup=false,weeklySetup=false,challengeSetup=false,challengePick='closest';
+let endlessSetup=false,weeklySetup=false,challengeSetup=false,challengePick='closest',rivalSetup=false,rivalStep=0,rivalPick='';
 function openStudioSetup(){
  // Leave the range behind BEFORE the panel renders. The studio grows
  // landscapes and a range is not one, and the panel has to show the course's
@@ -3833,7 +3892,7 @@ function resumeRound(id){
    const next=Round.restore(rec.round);
    await whileGenerating('Rebuilding your course…',async report=>{
     leaveBackdrop();pendingRound=null;staleGenerator=false;
-    challenge=null;round=next;settings=next.endless?endlessFor(next.seed,next.hole,rec.settings):{...settings,...rec.settings};
+    challenge=null;round=next;shotLog={uid:next.uid,list:normaliseShots(rec.shots)};settings=next.endless?endlessFor(next.seed,next.hole,rec.settings):{...settings,...rec.settings};
     applyPlaySettings();
     await prepareWorld(report);
     loadCourse();
@@ -4028,6 +4087,8 @@ function wireFormatFields(){
 }
 function openRangePanel(){rangeSetup=true;rangeSetupStep=0;openPanel('round');}
 function openEndlessPanel(){endlessSetup=true;openPanel('round');}
+// A friend's challenge (rival.js), opened on the code it names, or the newest.
+function openFriendSetup(id=''){if(id)rivalPick=id;rivalStep=0;lobbyStep=0;rivalSetup=true;openPanel('round');}
 // The map's pan and zoom, and the one place that redraws it outside the frame
 // loop. Stored on the canvas so every drawMap call site inherits it -- which is
 // what makes this work identically in play, free flight, the studio and the
@@ -4133,7 +4194,7 @@ function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
 }
-function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
+function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup||rivalSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;rivalSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
 // to feel like a pause. Putts are excluded: one is over before the hold would be.
@@ -4426,6 +4487,46 @@ function drawRoundHud(){
  if($('shotChoiceLabel'))$('shotChoiceLabel').textContent=CHOICE_NAMES[shotChoice];
  if(document.getElementById('app').classList.contains('rh-paused'))drawPauseInfo();
 }
+// A FRIEND'S CHALLENGE, BOTH ENDS (rival.js, 20 October 2026).
+//
+// What a golfer played with: the monitor if any of their shots this round came
+// off it, otherwise the Swing Meter; a round resumed from a save has no record
+// of that, and falls back to how the golfer is set to play.
+function inputOf(seat){
+ let seen=null;
+ for(const [k,v] of shotInputs){const [uid,,s]=k.split(':');if(uid===round.uid&&Number(s)===seat){if(v==='monitor')return 'monitor';seen=v;}}
+ return seen||playsWith(round.players[seat]);
+}
+// Whether this round's cards can be sent: stroke play, a whole course, finished.
+const canSendCards=()=>round.finished&&round.mode==='stroke'&&!round.endless&&[9,18].includes(round.holes)&&!rangeMode&&!challenge;
+function rivalCodeFor(seat){
+ const p=round.players[seat];
+ return makeRivalCode({name:p.name,course:playingCourseName(),version:GAME_VERSION,settings,holes:round.holes,pars:roundPars(),card:round.cards[seat],putts:round.puttCards[seat],
+  rules:rulesOf(round,seat,settings,inputOf(seat)),log:roundShots(),seat,day:new Date().toISOString().slice(0,10),weekly:round.weekly});
+}
+// The setup's account of a pasted challenge: the score to beat, the course,
+// how many of their shots will be drawn, and the rules they played.
+function rivalDetail(r,problem){
+ const total=sumScores(r.card),par=(r.pars||[]).reduce((a,b)=>a+b,0),shots=r.shots.flat().length;
+ return `<div class="fr-detail"><p><b>${escape(r.name)} shot ${scoreText(total)}${par?` (${parText(total-par)})`:''}</b> on ${escape(r.course)}, ${r.holes} holes${r.day?`, ${escape(r.day)}`:''}. ${shots?`All ${shots} of their shots are drawn on the course as you play.`:'The code carries no shots, so only their card is shown.'}</p>`
+  +`<dl class="fr-rules">${describeRules(r.rules).map(([k,v])=>`<dt>${escape(k)}</dt><dd>${escape(v)}</dd>`).join('')}</dl>`
+  +`<p class="note">You play under your own rules, set on the next step; the result says where they differed from ${escape(r.name)}’s.</p>`
+  +(problem?`<p class="field-error">${escape(problem)}</p>`:'')+'</div>';
+}
+// At the end of a round against a friend's card: each golfer against it, the
+// holes won and lost, and where the rules differed from theirs.
+function rivalResultHtml(){
+ const r=activeRival();if(!r)return '';
+ const rows=round.players.map((p,i)=>{const c=compareCards(r.card,round.cards[i]),diff=rulesDiff(r.rules,rulesOf(round,i,settings,inputOf(i)),r.name);
+  return `<div class="rh-res-xp"><span>${escape(compareText(c,r.name,p.name).toUpperCase())}</span><small>${escape(holesText(c))}${diff.length?' · '+escape(diff.join(' ')):''}</small></div>`;}).join('');
+ return `<div class="rh-res-golfers rh-res-rival"><h3>Against ${escape(r.name)}’s card · ${scoreText(sumScores(r.card))}</h3>${rows}</div>`;
+}
+// Each golfer against the card, in a line: "Alex: 2 ahead of Sam after 7".
+function rivalLines(){
+ const r=activeRival();if(!r)return [];
+ return round.players.map((p,i)=>{const c=compareCards(r.card,round.cards[i]);return c.finished?compareText(c,r.name,p.name):`${p.name}: ${compareText(c,r.name)}`;});
+}
+
 // ROUND COMPLETE (phase 2), at the head of the final scorecard on the round
 // screen: the standings with the winner in the course's colours, what each
 // golfer earned and where their level stands, and the handicap the round
@@ -4443,7 +4544,8 @@ function roundCompleteHtml(){
   const xp=xpThisRound(prof.xpLog,round.uid),lv=levelOf(prof.xp),now=profileSummary(prof).handicap,was=profileSummary({...prof,rounds:(prof.rounds||[]).filter(r=>r.id!==round.uid)}).handicap;
   return `<div class="rh-res-xp"><span>${escape(p.name.toUpperCase())}</span><span class="rh-res-bar"><b style="width:${(lv.need?Math.min(1,lv.into/lv.need)*100:0).toFixed(1)}%"></b></span><span>+${xp} XP \u00b7 LV ${lv.level}</span><small>${escape(handicapLine(was.index,now.index,now.needed))}</small></div>`;}).join('');
  return `<section class="rh-results"><h2>Round complete<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></h2>`
-  +`<div class="rh-res-stand">${rows}</div>${golfers?`<div class="rh-res-golfers"><h3>XP and handicap</h3>${golfers}</div>`:''}`
+  +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}${golfers?`<div class="rh-res-golfers"><h3>XP and handicap</h3>${golfers}</div>`:''}`
+  +(canSendCards()?`<div class="rh-res-golfers rh-res-share"><h3>Challenge a friend</h3><p class="note">Send a card as a code: the course, the score on every hole and every shot. Your friend plays the same course on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">Send ${escape(p.name)}’s card</button>`).join('')}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
   +'<div class="rh-res-actions"><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button><button type="button" class="primary" id="resMenu">Main menu</button></div></section>';
 }
 // PAUSE (Escape), until phase 3's pause screen: the top bar's own controls,
@@ -4588,7 +4690,7 @@ function leanSeatRows(root){
 }
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
- if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;}
+ if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -4611,6 +4713,7 @@ const panelTitle=name=>name!=='round'?PANEL_TITLES[name]
  :(rangeSetup||rangeMode)?'Driving range'
  :endlessSetup?'Endless run'
  :weeklySetup?'Course of the week'
+ :rivalSetup?'A friend’s challenge'
  :challengeSetup?'Challenges'
  :PANEL_TITLES.round;
 
@@ -5031,7 +5134,10 @@ function renderPanel(name,content){
   // sections -- which blurs whatever was focused, so focusing now does nothing.
   if($('renameCourseInput')){requestAnimationFrame(()=>{const el=$('renameCourseInput');if(el){el.focus();el.select();}});
    $('renameCourseInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();content.querySelector('[data-rename-save]')?.click();}if(e.key==='Escape'){renamingCourse=null;openPanel('library');}};}
-  $('importCourseCode').onclick=()=>{try{$('libraryError').textContent='';const rec=importCourse($('courseCode').value);const saved=saveCourse(rec);openPanel('library');toast(`Imported “${saved.name}”.`);}catch(e){fail(e);}};
+  $('importCourseCode').onclick=()=>{try{$('libraryError').textContent='';
+   // A friend's challenge pasted here is taken where it belongs (rival.js).
+   if(isRivalCode($('courseCode').value)){const r=saveRival($('courseCode').value);openFriendSetup(r.id);toast(`That is ${r.name}’s challenge: ${r.course}.`);return;}
+  const rec=importCourse($('courseCode').value);const saved=saveCourse(rec);openPanel('library');toast(`Imported “${saved.name}”.`);}catch(e){fail(e);}};
   content.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{deleteCourse(b.dataset.remove);openPanel('library');toast('Course deleted.');});
   content.querySelectorAll('[data-share]').forEach(b=>b.onclick=async()=>{const c=findCourse(b.dataset.share);if(!c)return;const code=exportCourse(c);$('shareBlock').hidden=false;$('shareCode').value=code;$('shareCode').focus();$('shareCode').select();if(await copyText(code))toast('Course code copied.');else toast('Course code ready — copy it from the box.');});
   content.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{
@@ -5309,6 +5415,39 @@ function renderPanel(name,content){
   $('footprint').onchange=()=>document.querySelectorAll('[data-footprint]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.footprint===$('footprint').value)));
 }else if(name==='round'&&challengeSetup){
   renderChallengeSetup(content);
+ }else if(name==='round'&&rivalSetup){
+  // A FRIEND'S CHALLENGE (rival.js): paste a code, see what it holds -- their
+  // card, the course, the rules they played -- then the group, as for the
+  // course of the week. Stroke play: the card is strokes. The group's own rules
+  // are theirs to choose (the owner, 20 October 2026); the result names where
+  // they differed. Every code pasted here is kept, newest first.
+  const list=listRivals(),pick=list.find(r=>r.id===rivalPick)||list[0]||null;rivalPick=pick?.id||'';
+  const problem=pick?rivalProblem(pick,{version:GAME_VERSION}):'';
+  content.innerHTML=`<h3>The challenge</h3>`
+   +`<div class="code-import fr-code"><label class="field">Paste a challenge code<textarea id="rivalPaste" rows="3" spellcheck="false" autocapitalize="off" placeholder="FWC1.…"></textarea></label>`
+   +`<button class="secondary" id="rivalRead">Read the code</button><button class="secondary" id="rivalOpenFile">Open a challenge file</button><input id="rivalFile" type="file" accept=".txt,text/plain" hidden></div><p class="field-error" id="rivalError"></p>`
+   +(list.length?`<div class="fr-list">${list.map(r=>`<button type="button" class="secondary fr-card${r.id===rivalPick?' on':''}" data-rival="${r.id}" aria-pressed="${r.id===rivalPick}"><strong>${escape(r.name)} · ${scoreText(sumScores(r.card))}</strong><small>${escape(r.course)} · ${r.holes} holes${r.day?` · ${escape(r.day)}`:''}</small></button>`).join('')}</div>`:'')
+   +(pick?rivalDetail(pick,problem):`<p class="note">At the end of a stroke-play round, a friend can send their card as a code: the course, their score on every hole, and every shot they hit. Paste it here to play the same course against them, with their shots drawn on each hole. You both need the same version of Fairway (this is ${escape(GAME_VERSION||'an unstamped build')}).</p>`)
+   +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
+   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
+   +`<p class="field-error" id="roundError"></p>`
+   +`<button class="primary" data-panel-action id="rivalGo" aria-label="Play the friend’s challenge"${pick&&!problem?'':' disabled'}>Play <small>${pick?escape(pick.course.toUpperCase()):'NO CHALLENGE YET'}</small></button>`;
+  const formatNote=wireFormatFields();
+  groupEditor('playerRows',round.players,formatNote);
+  const take=code=>{try{const r=saveRival(code);rivalPick=r.id;rivalStep=0;openPanel('round');toast(`${r.name}’s challenge: ${r.course}.`);}catch(e){$('rivalError').textContent=e.message;}};
+  $('rivalRead').onclick=()=>take($('rivalPaste').value);
+  $('rivalOpenFile').onclick=()=>$('rivalFile').click();
+  $('rivalFile').onchange=async()=>{const f=$('rivalFile').files[0];if(!f)return;if(f.size>100000){$('rivalError').textContent='That file is too big to be a Fairway challenge.';return;}take(await f.text());};
+  content.querySelectorAll('[data-rival]').forEach(b=>b.onclick=()=>{rivalPick=b.dataset.rival;openPanel('round');});
+  $('rivalGo').onclick=async()=>{
+   if(flight){toast('Finish the current shot first.');return;}
+   if(!pick||problem)return;
+   let group;
+   try{group={...readGroup(),mode:'stroke',rival:pick.id};new Round({...group,holes:pick.holes});}catch(e){$('roundError').textContent=e.message;return;}
+   rivalSetup=false;closePanel();
+   await startRoundOn(pick.settings,group,pick.course);
+   toast(`${pick.name}’s challenge: ${scoreText(sumScores(pick.card))} to beat.`);
+  };
  }else if(name==='round'&&weeklySetup){
   // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
   // just the group and the format, and what it is.
@@ -5551,7 +5690,7 @@ function renderPanel(name,content){
     let next=Round.restore(d.round);
     if(next.holes===3)next=new Round({players:next.players,mode:next.mode,holes:9,gimme:next.gimme});
     const apply=()=>{
-     challenge=null;round=next;
+     challenge=null;round=next;shotLog={uid:next.uid,list:normaliseShots(d.shots)};
      // AN ENDLESS SAVE CARRIES NO COURSE. `saveRecord` writes a placeholder for
      // it, because an endless run is a seed and a hole number rather than a
      // landscape, and the hole is grown back from those two. `resumeRound`
@@ -5851,10 +5990,23 @@ function renderPanel(name,content){
   const sk=round.mode==='skins'?skins(round.cards,decidedHoles(round)):null;
   if(sk)status=skinsStatus(round.players.map(p=>p.name),sk,{finished:round.finished,holes:round.holes});
   const skinCell=g=>{const e=sk.perHole[g];return !e?'<td>—</td>':e.winner===null?'<td class="skin-carry" title="Tied: carried to the next hole">→</td>':`<td title="${escape(round.players[e.winner].name)}"><span class="player-dot" style="background:${playerColour(e.winner)}"></span>${e.value}</td>`;};
+  // A FRIEND'S CARD (rival.js): their row under the golfers, in the white of
+  // their shot lines, and where each golfer stands against it.
+  const rv=round.endless?null:activeRival();
+  const rivalRow=rv?`<tr class="rival-row"><td><span class="player-dot" style="background:#ffffff"></span>${escape(rv.name)}’s card</td>${pars.map((_,h)=>{const v=rv.card[from+h],mk=paperMark(v,pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${Number.isFinite(v)?scoreText(v):'—'}</td>`;}).join('')}<td>${scoreText(sumScores(rv.card))}</td>${(rel=>`<td class="to-par" data-side="${parSide(rel,true)}">${parText(rel)}</td>`)(sumScores(rv.card)-allPars.reduce((a,b)=>a+b,0))}</tr>`:'';
   const skinsRow=sk?`<tr class="skins-row"><td>Skins</td>${pars.map((_,h)=>skinCell(from+h)).join('')}<td>${sk.won.reduce((a,b)=>a+b,0)}</td><td>${sk.carry?`${sk.carry} carried`:''}</td></tr>`:'';
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}${rv?`<p class="rival-status">${rivalLines().map(escape).join(' · ')}</p>`:''}<p>${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}${rivalRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
-  if(round.finished&&hud1&&round.mode!=='match'){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();}
+  if(round.finished&&hud1&&round.mode!=='match'){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();
+   // Challenge a friend: the code is copied and shown, and can be saved as a
+   // file for an app that will not take a message that long.
+   content.querySelectorAll('[data-rival-seat]').forEach(b=>b.onclick=async()=>{
+    try{const seat=Number(b.dataset.rivalSeat),who=round.players[seat].name,code=rivalCodeFor(seat),out=$('rivalCodeOut');
+     out.hidden=false;out.value=code;$('rivalSaveFile').hidden=false;
+     $('rivalSaveFile').onclick=()=>download(`Fairway challenge - ${who.replace(/[^A-Za-z0-9 _-]/g,'')||'golfer'}.txt`,code,'text/plain');
+     out.focus();out.select();
+     toast(await copyText(code)?`${who}’s challenge copied: ${code.length.toLocaleString()} characters to send.`:'Challenge code ready: copy it from the box.');
+    }catch(e){toast(e.message);}});}
   if($('pauseAdvance'))$('pauseAdvance').onclick=()=>{cancelAdvance();$('autoAdvanceLabel').textContent='Automatic advance paused';$('pauseAdvance').disabled=true;};if($('nextHoleScore'))$('nextHoleScore').onclick=()=>{advanceHole();};$('downloadScore').onclick=()=>{const rows=[['Player','Team',...allPars.map((_,h)=>'Hole '+(h+1)),'Total','+/-'],['Par','',...allPars,allPars.reduce((a,b)=>a+b,0),'E'],...teeRows.map(t=>[t.name+' yards','',...t.yards,t.yards.reduce((a,b)=>a+b,0),'']),...round.players.flatMap((p,i)=>[[p.name,p.team,...allPars.map((_,h)=>round.cards[i][h]??''),sumScores(round.cards[i]),(({rel,played})=>played?parText(rel):'')(toPar(i))],[p.name+' putts',p.team,...allPars.map((_,h)=>round.puttCards[i][h]??''),sumScores(round.puttCards[i]),'']]),...(sk?[['Skins','',...allPars.map((_,h)=>{const e=sk.perHole[h];return !e?'':e.winner===null?'carried':`${round.players[e.winner].name} ${e.value}`;}),sk.won.reduce((a,b)=>a+b,0),sk.carry?`${sk.carry} carried`:'']]:[])];download('fairway-scorecard.csv',rows.map(r=>r.map(v=>'"'+String(v).replace(/^[=+@-]/,"'"+'$&').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
  }else if(name==='monitor'){
   content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
@@ -5910,6 +6062,7 @@ function renderPanel(name,content){
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
   if(name==='round'&&challengeSetup)buildChallenges(content);
+  else if(name==='round'&&rivalSetup)buildFriend(content,{step:rivalStep,onStep:i=>{rivalStep=i;}});
   else if(name==='round'&&weeklySetup){buildWeekly(content,{step:weeklyStep,onStep:i=>{weeklyStep=i;}});const hero=content.querySelector('.wk-hero');const day=864e5;if(hero)cardPictures([{el:hero,settings:weeklySettings()},...[...content.querySelectorAll('[data-week-ago] .wk-week-pic')].map(el=>({el,settings:weeklySettings(new Date(Date.now()-Number(el.closest('[data-week-ago]').dataset.weekAgo)*7*day))}))],720,360);}
   else if(name==='library')buildLibrary(content,{codeOf:id=>exportCourse(findCourse(id)),onNew:()=>{closePanel();openStudioSetup();},pick:libraryPick,onPick:id=>{libraryPick=id;}});
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
@@ -5919,7 +6072,7 @@ function renderPanel(name,content){
  if(name==='help'&&content.id==='drawerContent')buildHelp(content,{keys:HELP_KEYS});
  // The driving range in two steps (ui-lobby.js), once the panel has its sections.
  if(name==='round'&&(rangeSetup||rangeMode))buildRangeSetup(content,{step:rangeSetupStep,onStep:i=>{rangeSetupStep=i;}});
- if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup){
+ if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup&&!rivalSetup){
   // Endless, step by step (ui-lobby.js): the landscapes as drawn pictures, the
   // goal, the golfers, the format; the best run from the main golfer's history.
   const me=mainProfile(profiles),runs=(me?.rounds||[]).filter(r=>r.endless).map(r=>({r,t:roundTotals(r)})).filter(x=>x.t.played>0).sort((a,b)=>b.t.played-a.t.played||a.t.rel-b.t.rel);
@@ -5941,6 +6094,8 @@ function renderPanel(name,content){
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
    onWeekly:()=>{lobbyStep=0;weeklySetup=true;openPanel('round');},
+   friend:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT'}))(listRivals()[0]),
+   onFriend:openFriendSetup,
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
    onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();},
    golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
@@ -6343,6 +6498,8 @@ function bind(){
   cancelAdvance();
   const keptTrails=holeTrails.slice(0,-1),keptShots=Math.max(0,practiceShots-1);
   if(!round.mulligan())return;
+  // The shot's record for a friend's challenge goes back with it.
+  if(shotLog.uid===round.uid&&shotLog.list.at(-1)?.hole===round.hole)takeBackShot(shotLog.list);
   // The ball taken back belongs to whoever is up again now.
   // ...and so does any XP it earned (progression.js `takeBack`); the hole's own
   // XP follows the card on the next save.
@@ -6376,6 +6533,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.
  window.lab={
+  // The version a friend's challenge must match (smoke journey friend-challenge).
+  version:GAME_VERSION,
   // THE BENCH IS THE DRIVING RANGE. The lab used to be its own mode with its own
   // flat green; that mode is gone and the range does the job -- it is flat, its
   // green moves to a stated number, and Lab tools sets its firmness and speed.
@@ -7373,7 +7532,7 @@ try{
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.
- try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
+ try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);shotLog={uid:pendingRound.uid,list:normaliseShots(d.shots)};settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
  adoptDeviceBag();syncClubs();delete settings.flightProfile;
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
  bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:icon});icon();requestAnimationFrame(tick);

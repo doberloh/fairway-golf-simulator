@@ -660,6 +660,39 @@ are in the archived section of the same name.
   `ball-light-hole-out` failed once in the release run and passed on a rerun
   (the intermittent entry above).
 
+## Challenge a friend (branch `challenge-a-friend`, 20 October)
+
+The owner's pick from IDEAS.md, decided with them on 20 October: a finished
+stroke-play card, its course and every shot as a code; the friend plays the
+same course against it, the challenger's shots drawn on each hole; total
+strokes decide it, each hole's winner shown; the rules are shown, not forced;
+and only on the same version of Fairway. `src/rival.js`, wired in main.js
+(PROJECT_HANDOFF *A friend's challenge*; RESEARCH *Challenge a friend*).
+
+- [ ] **Built, not seen working: play it.** Nobody has played any of it in the
+  game; the Node tests (`tests/rival.test.mjs`) cover the code, the comparison
+  and shots flown again on a real course, and the build is clean. To check, on
+  one machine: finish a 9-hole stroke round, press *Send <name>'s card* under
+  Round complete (the code is copied; *Save as a file* saves it); then Play →
+  *A friend's challenge*, paste it, *Read the code*, play it. Look for: the
+  white dashed lines of their shots on each hole from the first tee; their row
+  in italics on the scorecard and the line above it ("2 ahead of Sam after
+  7"); "Sam made 4 · hole won" in the hole-out card; *Against Sam's card* in
+  Round complete, with any rules that differed. Also paste the code into Saved
+  courses' course code box (it should open the challenge), and try one from a
+  different build (it should be refused, naming both versions).
+- [ ] **Run the smoke journey `friend-challenge`** (written, never run: it uses
+  the graphics card). It pastes a code made in Node, starts the round, checks
+  the save remembers the challenge and logs a shot, and opens the scorecard.
+- [ ] **The shot lines may not look right.** Placed without a mockup: white,
+  dashed 1.2 m on and off, drawn whatever the shot-lines setting says, under
+  the player's own lines. The setup screen and the card on Play step 1 are also
+  placed on the course of the week's frames, not designed.
+- [ ] **Leftovers, if wanted:** the downloaded scorecard (CSV) has no row for
+  the friend's card; a friend's round on a code made from the course of the
+  week does not count as the course of the week; and there is no way to delete
+  a kept challenge (the 20 newest are kept, the oldest drop off).
+
 # Done
 
 ## Smooth flyovers (19 October)

@@ -347,6 +347,16 @@ A bar beside the shot controls says which challenge, who is up, which ball (a kn
 
 The ones that count up show how far along you are. An achievement shows in the XP popup when it is earned; one that brings a title says so. Rounds count when they are finished -- an endless run never is. Nothing before achievements arrived is counted back.
 
+## Challenge a friend
+
+**Send your card.** When a stroke-play round of 9 or 18 holes is finished, Round complete has a *Send <name>'s card* button for each golfer. It copies a challenge code: the course, that golfer's score on every hole, the rules they played under, and every shot they hit. About 2,300 characters for a typical 18 holes -- paste it into a message, or press *Save as a file* for an app that will not take one that long.
+
+**Play a friend's card.** On Play, the first step has an *A friend's challenge* card (it names the newest one you have). Paste the code and press *Read the code*, or open the file. You see their score, the course, and their rules; then pick your group and your own rules, and play. Codes pasted into Saved courses' course code box come here too. The last 20 challenges are kept, so a round against one can be saved and resumed.
+
+**As you play** their shots are drawn on each hole as white dashed lines, flown again exactly as they were hit. The scorecard has their card as a row in italics, with where each of your golfers stands ("2 ahead of Sam after 7"); each hole-out says what they made there; and Round complete says who won on total strokes, the holes won, lost and halved, and any rule you played differently from them.
+
+**Both of you need the same version of Fairway.** Shots are flown again on your machine, and a different version can fly them somewhere else, so a code from another version is refused with both versions named. Every new release ends the challenges made on the one before.
+
 ## Your profile
 
 **The first time Fairway opens in a browser, it asks your name.** That makes

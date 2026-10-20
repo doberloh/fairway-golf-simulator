@@ -2805,6 +2805,49 @@ const JOURNEYS = [
    });
   },
  },
+ // A FRIEND'S CHALLENGE (rival.js, 20 October 2026): a code made in Node from
+ // two shots on hole 1, pasted on Play's friend card; the setup reads it, the
+ // round it starts remembers it, and its scorecard carries the friend's row.
+ // Making a code at the end of a round, and the shots drawn on the course, are
+ // still to be looked at by eye.
+ {
+  name: 'friend-challenge',
+  what: 'a friend’s challenge: a pasted code is read and kept, its round starts on its course and remembers it, and the scorecard shows the friend’s card',
+  async run(t) {
+   const {makeRivalCode} = await import('../src/rival.js');
+   const {DEFAULT_COURSE} = await import('../src/settings-schema.js');
+   const shot = [1, 0, 0, 0, 6500, 1400, 0, 3000, 0, 0, 180000];
+   await menuReady(t);
+   // The page's own version: package.json's and the build's commit.
+   const version = await t.page.evaluate(() => window.lab.version);
+   const code = makeRivalCode({name: 'Sam', course: 'Smoke Links', version, settings: {...DEFAULT_COURSE, seed: 'SMOKE-FRIEND', holes: 9}, holes: 9,
+    pars: [4, 4, 3, 5, 4, 4, 3, 5, 4], card: [4, 5, 3, 5, 4, 4, 3, 6, 4],
+    rules: {tee: 'blue', putting: {mode: 'holeout', one: 3, two: 10, three: 20}, ob: 'stroke', lie: true, input: 'meter', turf: {}},
+    log: [{hole: 0, seat: 0, s: shot}, {hole: 0, seat: 0, s: [1, 0, 180000, 0, 3000, 2800, 0, 7000, 0, 500, 260000]}]});
+   await t.step('Play → A friend’s challenge, paste the code', async () => {
+    await fromMenu(t, 'Play');
+    await t.press('A friend’s challenge');
+    await t.page.fill('#rivalPaste', code);
+    await t.press('Read the code');
+    await t.until(async () => /Sam shot 38/.test(await t.page.textContent('#drawerContent')), 'the challenge read', 10 * SLOW);
+   });
+   await t.step('play it: nine holes that remember the challenge', async () => {
+    await t.pressToPlay('Play the friend’s challenge');
+    const hole = await t.page.textContent('#holeNumber');
+    if (!/\/9/.test(hole)) throw new Error(`the hole counter reads ${hole}`);
+    const saved = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null'));
+    if (!/^f[a-z0-9]+$/.test(saved?.round?.rival || '')) throw new Error(`the saved round's challenge is ${saved?.round?.rival}`);
+    await t.shot();
+    const after = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null'));
+    if (after?.shots?.length !== 1) throw new Error(`the saved round logged ${after?.shots?.length} shots`);
+   });
+   await t.step('the scorecard carries Sam’s card', async () => {
+    await t.page.getByRole('button', {name: /Open the scorecard/}).first().click();
+    await t.until(() => t.drawerOpen(), 'the scorecard', 5 * SLOW);
+    await t.until(async () => /Sam.s card/.test(await t.page.textContent('#drawerContent').catch(() => '')), 'the friend’s row', 10 * SLOW);
+   });
+  },
+ },
  // LEVELLING UP, PLAYED (15 October 2026). The owner cannot reach most rewards
  // without weeks of play, so this golfer starts five XP short of level 2, which
  // brings the Sky tracer. Before: Sky is shown with a padlock and cannot be put

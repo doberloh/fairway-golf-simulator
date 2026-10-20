@@ -55,7 +55,8 @@ export function renameCourse(id,name){
 // free text.
 const toB64=s=>{const bytes=new TextEncoder().encode(s);let bin='';for(const b of bytes)bin+=String.fromCharCode(b);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
 const fromB64=c=>{const bin=atob(c.replace(/-/g,'+').replace(/_/g,'/'));return new TextDecoder().decode(Uint8Array.from(bin,ch=>ch.charCodeAt(0)));};
-const checksum=s=>{let a=2166136261;for(let i=0;i<s.length;i++){a^=s.charCodeAt(i);a=Math.imul(a,16777619);}return (a>>>0).toString(36).padStart(7,'0').slice(-6);};
+// Exported for challenge codes (rival.js), which are checked the same way.
+export const checksum=s=>{let a=2166136261;for(let i=0;i<s.length;i++){a^=s.charCodeAt(i);a=Math.imul(a,16777619);}return (a>>>0).toString(36).padStart(7,'0').slice(-6);};
 
 export function exportCourse(record){
  const settings=validateSettings(record?.settings||{});

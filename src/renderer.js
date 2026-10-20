@@ -2211,7 +2211,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // its colours and its shape, held still: a dash stays a dash and a zigzag a
    // zigzag. (It was the seat colour, per spec 7.4, until the owner asked for
    // the golfer's choice everywhere, 15 October 2026.)
-   const shape=summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
+   // `shape` overrides the golfer's style: a friend's challenge draws its
+   // shots in one look of its own (main.js `rivalTrails`).
+   const shape=trail?.shape||summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
    let world=kept.map(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];});
    if(shape.jag)world=jagged(world,shape.jag,i+1);
    const cols=new Float32Array(world.length*3);for(let k=0;k<world.length;k++)cols.set(linear(stopColour(stops,k/Math.max(1,world.length-1))),k*3);
