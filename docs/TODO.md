@@ -664,6 +664,12 @@ per category.
   course, Endless's Landscape. Not seen: Roll another course pressed, a
   friend's code pasted into the saved step's box, Surprise me teed off from
   Play by a person, the cards on a phone.
+- [ ] **V2 category 2, Challenges' own row: built, seen in the capture build.**
+  Seen: the menu with six rows, the three steps, a head-to-head's Golfers
+  saying two to four, the fixed rules with Start, a challenge started from
+  Rules and its pause list without Golfers & rules. Smoke: challenge,
+  challenge-week, challenge-more pass. Not seen: the steps on a phone, a
+  head-to-head played by two from the steps (the journey uses `lab.challenge`).
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
 phases, run on one branch with a commit each; the owner's decisions: a shorter

@@ -15,34 +15,64 @@ const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cl
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const sectionsOf = root => [...root.querySelectorAll(':scope>.panel-section,:scope>.panel-columns>.panel-section')];
 
-// CHALLENGES: the challenge of the week as a banner across the top; the
-// categories down the left with their medals; the tab's challenges as cards in
-// two columns; the chosen one's detail -- how it plays, what each medal asks,
-// your record -- on the right, with the group under it (PLACED: the mockup
-// draws no group; a challenge needs one).
-export function buildChallenges(root, doc = globalThis.document) {
+// CHALLENGES, IN THREE STEPS (UI/UX pass V2, 21 October 2026; the owner:
+// Challenges "have their own main row back ... keep the same menu flow the
+// best we can", with "a golfers tab, but rules ... set so that all users have
+// the same experience"). The steps Play has, in its sheet:
+//   1 Challenge  the challenge of the week as a banner across the top; the
+//                categories down the left with their medals; the tab's
+//                challenges as cards in two columns; the chosen one's detail --
+//                how it plays, what each medal asks, your record -- on the right.
+//   2 Golfers    the seats, as Play's.
+//   3 Rules      the rules every challenge plays (challenges.js
+//                CHALLENGE_RULE_ROWS), shown and not chosen, and what you are
+//                about to play; Start on this step.
+// `opts`: rules [[name, value, line]], who (the seats' heading), summary()
+// -> {name, line, golfers: [html]}, step, onStep(i).
+export function buildChallenges(root, {rules = [], who = 'WHO’S PLAYING · 1 TO 4', summary, step = 0, onStep, doc = globalThis.document} = {}) {
  const week = root.querySelector('.chal-week-row'), cats = root.querySelector('.chal-tabs');
  const cards = [...root.querySelectorAll('.chal-cards')].find(c => !c.classList.contains('chal-week-row'));
- if (!week || !cats || !cards || root.querySelector('.ch')) return false;
+ if (!week || !cats || !cards || root.querySelector('.ch')) return null;
+ const page = cls => make(doc, 'section', 'sx-body ' + cls);
  const ch = make(doc, 'div', 'ch');
- const detail = make(doc, 'section', 'ch-detail'), group = make(doc, 'section', 'ch-group');
+ const detail = make(doc, 'section', 'ch-detail');
  const [, about, players] = sectionsOf(root);
- if (about) detail.append(...about.childNodes);
- if (players) group.append(...players.childNodes);
- // The start button is the screen's main button (bottom right, fixed).
+ // The start button, before its section goes: it is the last step's main button.
  const go = root.querySelector('#challengeGo');
+ if (about) detail.append(...about.childNodes);
  ch.append(week, cats, cards, detail);
- detail.append(group);
+ const p1 = page('ch-page'); p1.append(ch);
+ // 2 · Golfers: Play's seats.
+ const p2 = page('sx-golfers ch-golfers');
+ p2.append(make(doc, 'h3', 'sx-head', esc(who)));
+ const err = root.querySelector('#roundError');
+ if (players) for (const n of [...players.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3' && n !== err) p2.append(n);
+ // 3 · Rules: fixed, as rows with their value and no arrows.
+ const p3 = page('sx-rules');
+ const col = make(doc, 'div', 'sx-rules-col');
+ col.append(make(doc, 'h3', 'sx-head', 'THE SAME RULES FOR EVERYONE'));
+ for (const [k, v, sub] of rules) col.append(make(doc, 'div', 'lb-pick lb-fixed', `<span class="lb-k"><span class="lb-label">${esc(k)}</span><span class="lb-sub">${esc(sub)}</span></span><span class="lb-v"><span class="lb-val">${esc(v)}</span></span>`));
+ col.append(make(doc, 'p', 'note sx-fixed', 'A challenge is the same test on every copy of Fairway, so its rules are not yours to change: your house rules come back in your next round.'));
+ const sum = make(doc, 'div', 'sx-summary');
+ const paintSummary = () => {
+  const s = summary?.() || {};
+  sum.textContent = '';
+  sum.append(make(doc, 'h3', 'sx-head', 'YOU’RE ABOUT TO PLAY'),
+   make(doc, 'div', 'sx-sum-name', `<strong>${esc(String(s.name || '').toUpperCase())}</strong><small>${esc(String(s.line || '').toUpperCase())}</small>`));
+  const g = make(doc, 'div', 'sx-sum-golfers');
+  for (const h of s.golfers || []) g.append(make(doc, 'span', 'sx-sum-golfer', h));
+  sum.append(g);
+ };
+ p3.append(col, sum);
  for (const s of sectionsOf(root)) s.remove();
  root.querySelector(':scope>.panel-columns')?.remove();
- // The section tabs are gone with their sections; the main button stays.
- const tabs = root.querySelector(':scope>.panel-tabs:not(.chal-tabs)');
- if (tabs) { if (go) root.append(go); tabs.remove(); }
- root.append(ch);
- // The keys along the foot, as on every other setup screen (UI/UX pass).
- root.append(make(doc, 'div', 'sx-foot ch-foot', '<div class="sx-keys"><span><kbd>↑ ↓</kbd>Choose</span><span><kbd>Enter</kbd>Start</span><span><kbd>Esc</kbd>Back</span></div>'));
- root.classList.add('ch-root');
- return true;
+ root.querySelector(':scope>.panel-tabs:not(.chal-tabs)')?.remove();
+ root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
+ return stepSheet(root, {
+  steps: [{label: 'Challenge', page: p1}, {label: 'Golfers', page: p2}, {label: 'Rules', page: p3, onShow: paintSummary}],
+  index: step, finish: go, onStep, alert: err,
+  hints: [['↑ ↓', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
+ });
 }
 
 // SAVED COURSES: the courses as a shelf of cards, each the picture and its

@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CHALLENGES, GROUPS, challenge, challengesIn, medalOf, medalTargets, better, recordChallenge, normaliseRecords, normaliseMedals,
- medalsFromRecords, recordScore, feetText, scoreText, targetText, isUpAndDown, MEDAL_TOTAL, challengeCourseSettings, CHALLENGE_SEED} from '../src/challenges.js';
+ medalsFromRecords, recordScore, feetText, scoreText, targetText, isUpAndDown, MEDAL_TOTAL, challengeCourseSettings, CHALLENGE_SEED, CHALLENGE_RULES, challengeGroup, CHALLENGE_RULE_ROWS} from '../src/challenges.js';
 import {rewardsOf} from '../src/rewards.js';
 
 const ORDERS = ['turns', 'streak', 'spotOut', 'knockout', 'holes', 'round'], PLAYS = ['max', 'min', 'sum', 'mean', 'updown', 'knockout', 'points', 'round'];
@@ -151,4 +151,20 @@ test('a head-to-head records wins and games', () => {
  assert.equal(scoreText(challenge('par3s'), .0423), '4.2% of the length');
  recordChallenge(prof, 'par3s', .04234);
  assert.equal(prof.challenges.par3s.best, .042, 'a share keeps three places');
+});
+
+test('a challenge plays the same rules for everyone (UI/UX pass V2)', () => {
+ const g = challengeGroup([{name: 'Alex', tee: 'red'}, {name: 'Sam', tee: 'white'}]);
+ // A golfer's own tee and the house rules do not follow them in.
+ assert.deepEqual(g.players.map(p => p.tee), ['blue', 'blue']);
+ assert.equal(g.mode, 'stroke');
+ assert.equal(g.outOfBounds, 'stroke');
+ assert.equal(g.monitorLie, true);
+ assert.equal(CHALLENGE_RULES.putting, 'holeout');
+ // The Rules step says what is played.
+ const row = k => CHALLENGE_RULE_ROWS.find(r => r[0] === k)?.[1];
+ assert.equal(row('TEES'), CHALLENGE_RULES.tee.toUpperCase());
+ assert.equal(row('PUTTING'), 'HOLE OUT');
+ assert.equal(row('LIE PENALTY'), CHALLENGE_RULES.monitorLie ? 'ON' : 'OFF');
+ assert.ok(Object.isFrozen(CHALLENGE_RULES));
 });

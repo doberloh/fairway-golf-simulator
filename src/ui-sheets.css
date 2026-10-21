@@ -346,38 +346,12 @@
  #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
  #drawer .ch-detail>ul.medal-asks>li b{color:#fff;text-transform:uppercase}
  #drawer .ch-detail>ul.medal-asks>li span{margin-left:auto;font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;color:#fff;text-align:right}
- #drawer .ch-group{display:grid;gap:8px;margin-top:16px}
- #drawer .ch-group>h3{margin:0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
- /* A golfer in a challenge's group: one slanted row -- the ball, the name (the
-    drop-down) over title and level, the tee -- and, once a monitor has been
-    seen, the two pickers side by side under it. Round 13's player-row grid
-    had squashed the pickers to nothing and floated the name (the owner's "cut
-    off text", 18 October 2026). No team: a challenge has none. */
- #drawer .ch-group #playerRows{display:grid;gap:8px}
- #drawer .ch-group .seat{position:relative;isolation:isolate;display:grid;grid-template-columns:52px minmax(0,1fr) auto 32px;grid-template-areas:"mark who tees drop" "picks picks picks picks";align-items:center;gap:8px 14px;margin:0;padding:10px 30px;border:0;border-radius:0;background:none}
- #drawer .ch-group .seat:not(.play){grid-template-areas:"mark who tees drop"}
- #drawer .ch-group .seat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #drawer .ch-group .seat .player-mark{grid-area:mark;display:grid;place-items:center}
- #drawer .ch-group .seat .player-dot{display:none}
- #drawer .ch-group .seat .player-mark :is(img,.seat-guest){width:46px;height:46px;border-radius:50%}
- #drawer .ch-group .seat .seat-guest{display:grid;place-items:center;border:2px dashed rgba(255,255,255,.35);font-size:24px;color:rgba(255,255,255,.6)}
- #drawer .ch-group .seat .player-who{grid-area:who;display:grid;justify-items:start;gap:2px;min-width:0;text-align:left}
- #drawer .ch-group .seat .player-who>.dd{width:auto;max-width:100%}
- #drawer .ch-group .seat .player-who>.dd>.dd-field{justify-content:flex-start;padding:0 .4em 0 0}
- #drawer .ch-group .seat .player-who>.dd>.dd-field::after{display:none}
- #drawer .ch-group .seat .player-who>.dd .dd-v{font-size:26px!important;text-align:left}
- #drawer .ch-group .seat .player-who>input{width:100%;height:32px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
- #drawer .ch-group .seat :is(.player-sub,.player-hcp){font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);white-space:nowrap}
- #drawer .ch-group .seat .seat-tees{grid-area:tees}
- #drawer .ch-group .seat :is(.drop-player,.drop-spacer){grid-area:drop}
- #drawer .ch-group .seat .drop-player{width:32px;height:32px;min-height:32px;padding:0;border:0;background:none;color:var(--soft)}
- #drawer .ch-group .seat>:is(select[id^=team],.dd:has(>select[id^=team])){display:none}
- #drawer .ch-group .seat .seat-pick{grid-row:2;min-width:0}
- #drawer .ch-group .seat .seat-pick:has(select[id^=input]){grid-column:1/3}
- #drawer .ch-group .seat .seat-pick:has(select[id^=hand]){grid-column:3/5}
- #drawer .ch-group .add-player{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .ch-group .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
- #drawer .ch-group .add-player svg{width:18px;height:18px}
+ /* Challenges' Golfers step (UI/UX pass V2) uses Play's seats; the tee is the
+    same for everyone in a challenge and there are no teams, so neither shows. */
+ #drawer .ch-golfers .seat :is(.seat-tees,select[id^=team],.dd:has(>select[id^=team])){display:none}
+ /* A fixed rule on Challenges' Rules step: the value, no arrows. */
+ #drawer .lb-fixed .lb-v{padding:0 10px}
+ #drawer .ch-page>.ch{padding:0 24px}
  /* The course of the week: the picture and earlier weeks (7), the facts (5). */
  /* Saved courses: the shelf across the sheet. The chosen course's column went
     on 20 October 2026; each card carries its own buttons as icons along its

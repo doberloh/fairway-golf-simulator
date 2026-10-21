@@ -421,6 +421,17 @@ const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
 // the week and Challenges are cards on Play's first step, not menu rows.
 // Play's game types (UI/UX pass V2): a journey names the card it takes.
 const VIA_PLAY = {'Endless': 'Endless', 'Course of the week': 'Course of the week', 'Surprise me': 'Surprise me', 'Saved course': 'Saved course', 'Friend challenge': 'Friend challenge'};
+// The challenges' tabs and cards are on the first step, Challenge: a journey
+// that left it for Golfers (a head-to-head refused alone) goes back first.
+async function chalClick(t, sel) {
+ if (!await t.page.locator(sel).first().isVisible().catch(() => false)) await t.page.locator('#drawer .sx-step[aria-label="Challenge"]').click({timeout: 10000 * SLOW});
+ await t.page.click(sel);
+}
+// A challenge's Start is on its last step, Rules (UI/UX pass V2): go there, then start.
+async function challengeGo(t) {
+ await t.page.locator('#drawer .sx-step[aria-label="Rules"]').click({timeout: 10000 * SLOW});
+ await t.page.click('#challengeGo', {timeout: 10000 * SLOW});
+}
 async function fromMenu(t, entry, press = 'click') {
  if (!VIA_PLAY[entry]) return t.page.locator('#mainMenu').getByRole('button', {name: entry}).first()[press]();
  await t.page.locator('#mainMenu').getByRole('button', {name: 'Play'}).first()[press]();
@@ -2564,10 +2575,9 @@ const JOURNEYS = [
      await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
     }
     await fromMenu(t, 'Challenges');
-    await t.page.click(`[data-chal-tab="${tab}"]`);
-    await t.page.click(`[data-challenge="${id}"]`);
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, `[data-chal-tab="${tab}"]`);
+    await chalClick(t, `[data-challenge="${id}"]`);
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
    };
    await t.step('Challenges → seven tabs, all 36, none locked, the old record already a medal', async () => {
@@ -2575,7 +2585,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
     let cards = 0;
     for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
-     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await chalClick(t, `[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
      // The challenge of the week's card sits above the tabs, on every one: count the tab's own.
      cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
@@ -2586,10 +2596,9 @@ const JOURNEYS = [
     if (m?.closest !== 3) throw new Error(`the 9-foot record from before medals is not a gold: ${JSON.stringify(m)}`);
    });
    await t.step('closest to the pin starts on a par 3 of the Challenge Course, with the bar', async () => {
-    await t.page.click('[data-chal-tab="approach"]');
-    await t.page.click('[data-challenge="closest"]');
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="approach"]');
+    await chalClick(t, '[data-challenge="closest"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Ball 1 of 5/), 'the challenge bar on ball 1', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error(`the challenge is on a par ${await t.page.textContent('#holePar')}`);
@@ -2665,7 +2674,7 @@ const JOURNEYS = [
     await t.page.waitForSelector('[data-chal-week]', {timeout: 10000 * SLOW});
     await t.page.click('[data-chal-week]');
     await t.until(() => t.page.evaluate(() => /This week:/.test(document.querySelector('#drawerContent h3')?.textContent || '')), 'the week\'s details', 10 * SLOW);
-    await t.page.click('#challengeGo');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/This week/), 'the bar says this week', 20 * SLOW);
     const s = await t.page.evaluate(() => window.lab.state().challenge);
@@ -2707,23 +2716,22 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
     let cards = 0;
     for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
-     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await chalClick(t, `[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
      cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
     }
     if (cards !== 36) throw new Error(`${cards} challenge cards`);
    });
    await t.step('a head-to-head alone is refused, with the reason', async () => {
-    await t.page.click('[data-chal-tab="versus"]');
-    await t.page.click('[data-challenge="shootout"]');
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="versus"]');
+    await chalClick(t, '[data-challenge="shootout"]');
+    await challengeGo(t);
     await t.until(() => t.page.evaluate(() => /two to four/.test(document.getElementById('roundError')?.textContent || '')), 'the refusal', 10 * SLOW);
    });
    await t.step('Every par 3 starts on a par 3 and moves to the next after a ball', async () => {
-    await t.page.click('[data-chal-tab="approach"]');
-    await t.page.click('[data-challenge="par3s"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="approach"]');
+    await chalClick(t, '[data-challenge="par3s"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Ball 1 of 7/), 'the bar on ball 1 of 7', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error('not on a par 3');
@@ -2745,9 +2753,9 @@ const JOURNEYS = [
    await t.step('Bogey-free nine starts as a real round: it saves, with the goal on the bar', async () => {
     await toMenu();
     await fromMenu(t, 'Challenges');
-    await t.page.click('[data-chal-tab="rounds"]');
-    await t.page.click('[data-challenge="bogeyfree"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="rounds"]');
+    await chalClick(t, '[data-challenge="bogeyfree"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Bogey-free nine/), 'the goal on the bar', 20 * SLOW);
     await t.shot();
@@ -2756,9 +2764,9 @@ const JOURNEYS = [
    await t.step('Sudden death starts an endless run with its goal', async () => {
     await toMenu();
     await fromMenu(t, 'Challenges');
-    await t.page.click('[data-chal-tab="rounds"]');
-    await t.page.click('[data-challenge="suddendeath"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="rounds"]');
+    await chalClick(t, '[data-challenge="suddendeath"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Sudden death/), 'the goal on the bar', 20 * SLOW);
     const g = await t.page.evaluate(() => window.lab.state().goal);

@@ -32,7 +32,7 @@ import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,r
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
-import {CHALLENGES,GROUPS,MEDALS,challenge as challengeDef,challengesIn,recordChallenge,recordScore,scoreText as challengeScoreText,targetText,medalTargets,medalsFromRecords,challengeCourseSettings,CHALLENGE_COURSE_NAME,MEDAL_TOTAL,isVersus,medalOf} from './challenges.js';
+import {CHALLENGES,GROUPS,MEDALS,challenge as challengeDef,challengesIn,recordChallenge,recordScore,scoreText as challengeScoreText,targetText,medalTargets,medalsFromRecords,challengeCourseSettings,CHALLENGE_COURSE_NAME,MEDAL_TOTAL,isVersus,medalOf,challengeGroup,CHALLENGE_RULE_ROWS} from './challenges.js';
 import {newPlay,turn,playBall,results,ballFacts,progressText} from './challenge-play.js';
 import {holeAdapter,planChallenge,playContext} from './challenge-spots.js';
 import {goalStatus} from './round-goals.js';
@@ -367,7 +367,7 @@ let modelCards=null;
 // Each help page's keys (round 14, frame c-help); the essentials read their own list.
 const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
 const cardPictures=(items,w,h)=>{pictureQueue(items,w,h);modelCards?.queue(items);};
-let lobbySheet=null,lobbyCourse='',lobbyKeep=false,lobbyOpenStep=null;
+let challengeSheet=null,lobbySheet=null,lobbyCourse='',lobbyKeep=false,lobbyOpenStep=null;
 // WHAT PLAY IS SET UP FOR (UI/UX pass V2): the game type chosen on its first
 // step -- 'weekly', 'endless', 'saved', 'friend' or 'surprise' -- and, for
 // Surprise me, the course already rolled, so Rules can show what you will play.
@@ -748,7 +748,7 @@ function renderChallengeResult(content){
 // THE CHALLENGES SCREEN: a tab for each group, a card for each challenge with
 // its medals and the best, and under them the chosen one -- how it plays, what
 // each medal asks, the group, Start. Nothing is locked.
-let challengeTab='tee',challengeWeekPick=false;
+let challengeTab='tee',challengeWeekPick=false,challengeStep=0,challengeShown=null;
 // The week's challenge, as its card and the screen say it: which, where, and
 // the main golfer's best and medal this week.
 function weekChallengeInfo(me){
@@ -776,6 +776,7 @@ function renderChallengeSetup(content){
   :def.goal==='bogeyfree'?`A real nine-hole round on ${CHALLENGE_COURSE_NAME}'s nine: it saves, goes in your history, counts for your handicap and earns round XP, with the medals on top.`
   :def.who==='group'?`For two to four golfers, on ${CHALLENGE_COURSE_NAME}. It is won, not medalled; your record is games won.`
   :`On ${CHALLENGE_COURSE_NAME}, the same holes for everyone.`;
+ challengeShown={name:def.name,line:challengeWeekPick?`This week · ${week.where}`:def.where==='range'?'On the driving range':def.goal==='suddendeath'?'An endless run on new holes':`On ${CHALLENGE_COURSE_NAME}`,group:def.who==='group'};
  const mine=!me?'':challengeWeekPick?(week.best?`${me.name}'s best this week: ${week.best}.`:`${me.name} has not played it this week.`):challengeRecordText(me,def.id);
  content.innerHTML=`<div class="chal-cards chal-week-row">${weekCard}</div>`
   +`<div class="panel-tabs chal-tabs" role="tablist" aria-label="Challenges">${GROUPS.map(tab).join('')}</div>`
@@ -792,9 +793,10 @@ function renderChallengeSetup(content){
  $('challengeGo').onclick=async()=>{
   if(flight){toast('Finish the current shot first.');return;}
   let group;
-  try{const g=readDraft();group={players:g,mode:'stroke',tee:round.tee||'blue'};new Round(group);}
+  // The same rules for everyone (challenges.js CHALLENGE_RULES), not the house rules.
+  try{group=challengeGroup(readDraft());new Round(group);}
   catch(e){$('roundError').textContent=e.message;return;}
-  if(def.who==='group'&&group.players.length<2){$('roundError').textContent=`${def.name} is for two to four golfers: add someone to the group.`;return;}
+  if(def.who==='group'&&group.players.length<2){$('roundError').textContent=`${def.name} is for two to four golfers: add someone to the group.`;challengeSheet?.go(1);return;}
   challengeSetup=false;closePanel();
   if(def.where==='round'){try{await startGoalRound(def,group);}catch(e){toast(e.message);}return;}
   try{await startChallenge(def.id,group,{week:challengeWeekPick});}catch(e){toast(e.message);}
@@ -1336,6 +1338,8 @@ function updateHUD(){
   // shows the icon, not the letter: the owner, 18 October 2026).
   (el.querySelector('.av-letter')||el).textContent=initial;el.style.background=chip;el.style.color=PLAYER_INK;
  }
+ // No Golfers & rules row inside a challenge: its group and rules are set (UI/UX pass V2).
+ {const av=document.querySelector('.header-right .avatar');if(av)av.style.display=challenge?'none':'';}
  void p;
  // THE CHIP SAYS WHAT IT OPENS. There is no scorecard on a practice ground, so
  // the same button becomes the way into that golfer's shot data.
@@ -4240,6 +4244,11 @@ function weeklyPage(sec){
  if(hero)cardPictures([{el:hero,settings:weeklySettings()},...[...sec.querySelectorAll('[data-week-ago] .wk-week-pic')].map(el=>({el,settings:weeklySettings(new Date(Date.now()-Number(el.closest('[data-week-ago]').dataset.weekAgo)*7*day))}))],720,360);
  return sec;
 }
+// A seat as a summary names it: the golfer's mark, name and tee.
+function seatLine(seat){
+ const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=challengeSetup?'':seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
+ return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;
+}
 async function startWeeklyRound(base){
  if(flight){toast('Finish the current shot first.');return;}
  const s=weeklySettings(),w=isoWeek();
@@ -4903,7 +4912,7 @@ function leanSeatRows(root){
 }
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
- if(name==='round'&&panel!=='round'){lobbyStep=lobbyOpenStep??(appMode==='play'?1:0);lobbyOpenStep=null;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
+ if(name==='round'&&panel!=='round'){challengeStep=0;lobbyStep=lobbyOpenStep??(appMode==='play'?1:0);lobbyOpenStep=null;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -6220,7 +6229,11 @@ function renderPanel(name,content){
  // Challenges, the course of the week and saved courses, the same way
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
-  if(name==='round'&&challengeSetup)buildChallenges(content);
+  // Challenges in three steps, as Play (ui-menu-screens.js): the challenge, the golfers, the fixed rules.
+  if(name==='round'&&challengeSetup)challengeSheet=buildChallenges(content,{rules:CHALLENGE_RULE_ROWS,
+   who:challengeShown?.group?'WHO’S PLAYING · 2 TO 4':'WHO’S PLAYING · 1 TO 4',
+   summary:()=>({name:challengeShown?.name,line:challengeShown?.line,golfers:[...content.querySelectorAll('#playerRows .seat')].map(seatLine)}),
+   step:challengeStep,onStep:i=>{challengeStep=i;}});
   else if(name==='library')buildLibrary(content,{onNew:()=>{closePanel();openStudioSetup();}});
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
   if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
@@ -6247,8 +6260,7 @@ function renderPanel(name,content){
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
    onCourse:v=>{lobbyCourse=v;lobbyBiome=v==='weekly'?ws.biome:v==='endless'?(endlessLandscape==='any'?null:endlessLandscape):v==='friend'?listRivals().find(r=>r.id===rivalPick)?.settings?.biome??null:v==='surprise'?lobbySurprise?.biome??null:listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();const del=$('roundDelete');if(del)del.hidden=!findCourse(v);
     const go=$('startRound');if(go){const say={weekly:['Play <small>THE COURSE OF THE WEEK</small>','Play the course of the week'],endless:['Start the run <small>HOLE 1</small>','Start an endless run'],friend:['Play <small>THE FRIEND’S CARD</small>','Play the friend’s challenge'],surprise:['Tee off <small>A NEW NINE</small>','Tee off on the surprise course']}[v]||['Tee off <small>HOLE 1</small>','Tee off'];go.innerHTML=say[0];go.setAttribute('aria-label',say[1]);}},
-   golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
-    return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;},
+   golferLine:seatLine,
   });
  }
  wireSliders(content);icon();
@@ -6709,7 +6721,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // smoke test can play a head-to-head, which needs two golfers. `players`
   // like the group editor's ({name, team, hand}).
   challenge:(id,players,{week=false}={})=>{const def=challengeDef(id);if(!def)throw Error(`No challenge called ${id}.`);
-   const group={players,mode:'stroke',tee:'blue'};new Round(group);
+   const group=challengeGroup(players);new Round(group);
    if(def.who==='group'&&players.length<2)throw Error(`${def.name} is for two to four golfers.`);
    return def.where==='round'?startGoalRound(def,group):startChallenge(id,group,{week});},
   course:(overrides={},group)=>startRoundOn({...DEFAULT_COURSE,...overrides},

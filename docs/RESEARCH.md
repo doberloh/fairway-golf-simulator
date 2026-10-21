@@ -8109,6 +8109,16 @@ No outside source. Every number here is PLACED -- set by Claude for the owner's
 plan of 16 October 2026 (a local report, `docs/reports/CHALLENGES_PLAN.md`),
 not taken from any published figure -- and the owner may overrule any of it.
 
+**The rules every challenge plays** (UI/UX pass V2, 21 October 2026;
+challenges.js `CHALLENGE_RULES`). The owner asked that "all users have the
+same experience"; which rules was left to the build, so it is PLACED: stroke
+play, the blue tees for every golfer, every putt holed, out of bounds by the
+Rules of Golf (stroke and distance) and the lie penalty on -- Round's own
+defaults, taken because they are what a new copy of Fairway plays. Before
+this a challenge took the player's saved house rules (out of bounds, lie
+penalty) and the tee of the round before it, so two players' medals could
+be different tests.
+
 **The pay** (progression.js `CHALLENGE_PAY`). Set against a round: an
 18-hole round earns roughly 450-700 XP in about an hour, a short challenge
 takes 3-5 minutes. First bronze, silver, gold 25 / 50 / 100, once each ever
