@@ -134,7 +134,10 @@ the courses several suites share.
   `three-namespace`, `flood-shadows`, `instance-cull`, `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`.
-- **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
+- **Cameras and maps** -- `waterways-tours` also checks `treeBlocksView` (a tree on
+  the line or filling the frame near the camera is cleared, one behind the ball,
+  behind the camera, far off to the side, or under the line is not);
+  `camera-flight`, `approach-camera`, `tv-camera`,
   `camera-orbit` (the drag round the green and aim point views: no turn
   leaves the view as it was, a turn keeps distance and height, the tilt stops
   at 5 and 85 degrees and turns back at once, the wheel stops at a third and

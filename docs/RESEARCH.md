@@ -8816,3 +8816,16 @@ rules shown, not forced; the same version or no challenge.
 1.0.0 from this repository's first commit until it became 0.9.0 (b7131e2), so
 the releases before 0.9 all called themselves the same thing; the commit
 tells releases apart, and every copy of one download shares it.
+
+## Trees cleared from the play camera's view (21 October 2026, UI/UX pass)
+
+PLACED, not measured against any source: a tree is hidden from the play
+camera when it is within 30 m along the line to the ball (or to the point
+looked at) and either within its crown radius x 1.2 + 1 m of that line, or --
+when its crown would span a fifth of the picture (crown radius x 1.5 over the
+distance > 0.2) -- within the picture's width, tan 42 degrees = 0.9 of the
+distance (a 16:9 frame at 53 degrees vertical is about 85 degrees across). The
+tree must reach the line: its top (height x 1.1) above it and its foot less
+than 2 m under. Found on the audit's Midwest seed AUDIT hole 1 (an oak of
+radius 4.8 m 22 m out, 26 degrees left of the look) and the Challenge Course's
+third. Drawing only; the ball still meets the trunk.

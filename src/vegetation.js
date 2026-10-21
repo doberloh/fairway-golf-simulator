@@ -1,4 +1,4 @@
-import {cameraInsideTree} from './camera-tours.js';
+import {cameraInsideTree,treeBlocksView} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
@@ -267,15 +267,22 @@ function addSpecies(view,kind,trees){
  instance(leafGeo,materials.leaf,leafMatrices,leafColors);
  }
 export function addVegetation(view){
- view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
+ view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
  // An instance is drawn unless the camera is standing inside that tree.
  view.clearCameraTrees=()=>{
   // The vegetation tests build a view with no camera -- they only ever look
   // at the geometry -- so this has to be safe to call without one.
   if(!view.camera)return;
-  if(last.distanceToSquared(view.camera.position)<.04)return;
-  last.copy(view.camera.position);
-  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)));
+  // The point looked at counts too: a turned aim brings other trees into the way.
+  const look=view.look??view.camera.position,mode=view.config?.mode;
+  const moved=last.distanceToSquared(view.camera.position)+(lastLook.distanceToSquared(look));
+  if(moved<.04)return;
+  last.copy(view.camera.position);lastLook.copy(look);
+  // Trees between the play camera and what it looks at go too (camera-tours.js
+  // treeBlocksView) -- not in free flight or the overview, where trees are the view.
+  const clearView=mode&&mode!=='free'&&mode!=='overview';
+  const target=view.ball?.visible?view.ball.position:look;
+  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)||(clearView&&(treeBlocksView(view.camera.position,target,t)||treeBlocksView(view.camera.position,look,t)))));
   for(const batch of view.treeInstances){
    let changed=false;const culled=view.cull?.has(batch.mesh);
    batch.owners.forEach((t,i)=>{

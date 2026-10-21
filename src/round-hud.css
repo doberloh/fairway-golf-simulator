@@ -98,6 +98,11 @@
  .rh-card .rh-score{font-size:26px;font-weight:800;font-style:italic}
  .rh-card .rh-score.under{color:var(--under)}
  .rh-card .rh-note{font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;font-style:normal}
+ /* A plate with a note (skins: "2 SKINS · IN") grows to keep the whole name
+    (UI/UX pass, 21 October 2026: JORDAN read JORDA). */
+ .rh-card:not(.up):has(.rh-note){width:auto;min-width:250px;max-width:360px}
+ .rh-card:not(.up):has(.rh-note) .rh-who{flex:0 1 auto}
+ .rh-card:not(.up) .rh-note{white-space:nowrap;margin-left:auto}
  .rh-card .rh-pic{flex:none;display:grid;place-items:center;width:34px;height:34px}
  .rh-card .rh-pic :is(img,.chip-dot){width:30px;height:30px}
  .rh-card .rh-pic .chip-dot{display:grid;place-items:center;border-radius:50%;font-size:16px;font-weight:800}

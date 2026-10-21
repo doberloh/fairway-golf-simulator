@@ -138,3 +138,19 @@ test('the flyover never flies through the ground or the trees',()=>{
 test('camera/tree clearance hides an enclosing canopy but preserves distant and overhead trees',()=>{
  const tree={x:20,z:30,y:5,h:18,r:5};assert(cameraInsideTree(new T.Vector3(20,15,30),tree));assert(cameraInsideTree(new T.Vector3(28,18,30),tree));assert(!cameraInsideTree(new T.Vector3(50,15,30),tree));assert(!cameraInsideTree(new T.Vector3(20,40,30),tree));assert(!cameraInsideTree(new T.Vector3(20,0,30),tree));
 });
+
+test('a tree in the way of the ball is cleared from the view, one beside it is not', async () => {
+ const {treeBlocksView} = await import('../src/camera-tours.js');
+ const cam = {x: 0, y: 8, z: 0}, ball = {x: 0, y: 0, z: 24};
+ // On the line, near the camera, tall enough to cross it.
+ assert(treeBlocksView(cam, ball, {x: 0, z: 8, y: 0, h: 14, r: 3}));
+ // Behind the ball, or behind the camera: not in the way.
+ assert(!treeBlocksView(cam, ball, {x: 0, z: 30, y: 0, h: 14, r: 3}));
+ assert(!treeBlocksView(cam, ball, {x: 0, z: -5, y: 0, h: 14, r: 3}));
+ // Well off to the side, far out: not in the way.
+ assert(!treeBlocksView(cam, {x: 0, y: 0, z: 60}, {x: 25, z: 40, y: 0, h: 14, r: 3}));
+ // Close beside the camera it fills the frame: cleared.
+ assert(treeBlocksView(cam, ball, {x: 4, z: 6, y: 0, h: 14, r: 2}));
+ // A bush under the line does not reach it.
+ assert(!treeBlocksView(cam, ball, {x: 0, z: 8, y: 0, h: 1, r: 1}));
+});

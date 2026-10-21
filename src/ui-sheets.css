@@ -965,6 +965,10 @@
  body:has(#app[data-mode]) #drawer .sx-steps{position:static;transform:none;margin:0 0 14px;max-width:100%;overflow-x:auto;padding:2px 10px;scrollbar-width:none}
  body:has(#app[data-mode]) #drawer .sx-steps>*{flex:none}
  body:has(#app[data-mode]) #drawer .sx-pages{align-content:start}
+ /* The cards scroll with the sheet on a phone, which keeps room for the foot
+    (UI/UX pass, 21 October 2026: in their own short scroll box the second row
+    sat under NEXT and lost its captions). */
+ body:has(#app[data-mode]) #drawer .sx-scroll{max-height:none;overflow:visible}
  body:has(#app[data-mode]) #drawer .sx-keys{display:none}
  body:has(#app[data-mode]) #drawer .sx-foot{left:16px;right:16px;bottom:12px;justify-content:flex-end}
  body:has(#app[data-mode]) #drawer [data-panel-action]{right:16px;bottom:12px;min-width:0}
@@ -987,9 +991,11 @@
  body:has(#app[data-mode]) #drawer .sx-facts{flex-wrap:wrap;gap:4px 14px}
  body:has(#app[data-mode]) #drawer .ph .look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
  /* Settings: the categories as a sideways row over the settings. */
- body:has(#app[data-mode]) #drawer #drawerContent.st-root{grid-template-columns:minmax(0,1fr)}
+ /* A column, not a grid, on a phone (UI/UX pass, 21 October 2026): in the grid the
+    category row and the first settings row overlapped by 27 px. */
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:flex!important;flex-direction:column;align-items:stretch;gap:0}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>*{grid-column:1!important;grid-row:auto!important}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{position:static;display:flex;overflow-x:auto;gap:8px;margin:0 0 12px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{position:static;display:flex;flex:none;overflow-x:auto;gap:8px;margin:0 0 12px;padding:2px 12px;scrollbar-width:none}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats>*{flex:none}
  body:has(#app[data-mode]) #drawer .st-groups{columns:1}
  /* Saved courses: the shelf, then the course picked. */

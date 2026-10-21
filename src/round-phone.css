@@ -228,8 +228,11 @@
 /* HELD UPRIGHT: the same pieces, stacked as the upright mockup has them. */
 @container app (max-width:560px) and (min-height:501px){
  .rh-hole{left:12px}
- .rh-subs{left:auto;right:12px;top:18px}
- .rh-sub[data-sub=plays]{display:none}
+ /* The wind under the hole, right of the golfers (UI/UX pass, 21 October 2026:
+    at the top it covered the hole's name and yards); the camera's name gives
+    way here. */
+ .rh-subs{left:auto;right:12px;top:76px}
+ .rh-sub[data-sub=plays],.rh-sub[data-sub=cam]{display:none}
  .rh-cards{left:18px;right:auto;top:76px;flex-direction:row}
  #world[data-mode=play] .rh-keys{left:12px;top:auto;bottom:12px;transform:none}
  #world[data-mode=play]:not(.aim-view) .minimap{right:12px!important;top:132px!important;width:120px!important;height:150px!important}
@@ -280,4 +283,13 @@
  #world .xp-gain .xp-bar,#world .xp-gain .xp-bar b,#world .xp-gain .level-badge{border-radius:0}
  #world[data-mode=play] .shot-panel #skipFlight{border-radius:0;border:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:skewX(-12deg)}
  #world[data-mode=play] .shot-panel #skipFlight>*{transform:skewX(12deg)}
+}
+
+/* The swing strip on a phone: its first key only, so it clears the yard marks. */
+@container app (max-width:560px) or (max-height:500px){
+ #world[data-mode=play] .swing-meter .sm-key:not(:first-child){display:none}
+}
+/* Upright, the XP popup sits under the golfers, not over the hole. */
+@container app (max-width:560px) and (min-height:501px){
+ #world .xp-gain{top:128px}
 }

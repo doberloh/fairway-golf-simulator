@@ -663,6 +663,16 @@ green everywhere, and every mode but the range under one Play.
   and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
   tool labels' new names read in a real round by a person, the main menu's
   hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 6, cameras and phones: built, seen in the capture build.**
+  Seen: both blocked tees clear, the overview without clouds, the aim ring
+  whole, the phone settings rows below their tabs, the upright wind under the
+  hole. Smoke: no-late-shaders, ball-light-shaders, ball-light-hole-out,
+  floodlit-night, challenge, look, hud-reachable, menu-panels (both phones),
+  endless-round, skins pass; fingerprint unchanged. Not run: `npm run profile`
+  (renderer.js and vegetation.js changed: the per-frame tree check and the
+  clouds' visibility; ask before running it). Not seen by a person: trees
+  vanishing as the camera turns -- watch for crowns popping in and out beside
+  the tee.
 - [ ] **Phase 5, old pieces to 1.0: built, seen in the capture build.** Seen:
   Saved courses empty with its two cards, Help's essentials, Report a problem
   with the toast over the sheet, credits rows, the launch monitor's switch and

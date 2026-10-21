@@ -859,7 +859,9 @@ export class GolfView{
   // The team's balls during a scramble selection. Built empty; `build` runs on
   // every course, so the pool has to be reset with the scene it lives in.
   this.pickBalls=[];this.pickGroup=new T.Group();add(this.pickGroup);
-  this.aimRing=add(new T.Mesh(new T.RingGeometry(2.5,2.7,64),new T.MeshBasicMaterial({color:'#fff4cd',side:T.DoubleSide})));this.aimRing.rotation.x=-Math.PI/2;
+  // Drawn over the ground (UI/UX pass, 21 October 2026): flat on uneven ground the
+  // terrain cut it into a broken arc, worst from the aim point view above it.
+  this.aimRing=add(new T.Mesh(new T.RingGeometry(2.5,2.7,64),new T.MeshBasicMaterial({color:'#fff4cd',side:T.DoubleSide,depthTest:false,transparent:true,opacity:.95})));this.aimRing.rotation.x=-Math.PI/2;this.aimRing.renderOrder=5;
   if(this.config.mode==='free'){const pose=playerCameraPose(this.course,this.course.tee,0,this.config);this.camera.position.set(pose.eye.x,pose.eye.y,pose.eye.z);this.look.set(pose.target.x,pose.target.y,pose.target.z);this.wasFree=false;}this.setHole(holeIndex,true);this.renderer.shadowMap.needsUpdate=true;
   // Real clouds in the sky, and the discs they shade the ground with. Built
   // before material registration, because every lit material reads the discs.
@@ -2539,7 +2541,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // pond with no reflector from a sheet of glass, so it runs whatever else is
   // happening -- including while the ball is in the air.
   if(this.waterTime)this.waterTime.value+=dt*(this.waterSpeed??1);
-  this.clouds?.update(dt);
+  // No clouds in the overview: it stands above them, and they hid the course.
+  if(this.clouds){this.clouds.group.visible=this.config.mode!=='overview';this.clouds.update(dt);}
   this.updateDaylight(dt);
   // The ball's light is the ball's neighbour, not its child (see its note in
   // `build`): it follows, and is dark while the ball is hidden.
