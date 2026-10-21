@@ -2,10 +2,13 @@
 // lobby goes back to a sequence of menus; mockups `r13('c-play1')` to
 // `('c-play4')`, PROJECT_HANDOFF *The 1.0 lobby*).
 //
-//   1 Course   your courses as cards with their pictures (course-picture.js),
-//              the course of the week first, then Surprise me and New in
-//              studio; the line along the foot names the chosen course, and
-//              its saved rounds open from there.
+//   1 Game     what you are playing, as six cards (UI/UX pass V2): the
+//              course of the week, Endless, a saved course, a friend's
+//              challenge, Surprise me, New course in studio; the saved rounds
+//              open from the foot.
+//   + its own  The week (the week's page: picture, facts, earlier weeks),
+//              Landscape (Endless), Course (your shelf and an import box) or
+//              The challenge (the friend's code); Surprise me has none.
 //   2 Golfers  a seat each: the ball, name, title, level and handicap, the
 //              golfer's own tee, and how they play and swing.
 //   3 Format   four cards; the teams appear for match play and scramble.
@@ -93,7 +96,7 @@ export function courseFacts(text) {
 function card(doc, {name, line, tag, best, kind}) {
  const b = make(doc, 'button', 'sx-card' + (kind ? ' sx-' + kind : ''));
  b.type = 'button';
- const mark = {surprise: '?', studio: '+', friend: 'VS', run: '∞', challenges: '★'}[kind];
+ const mark = {surprise: '?', studio: '+', friend: 'VS', run: '∞', challenges: '★', saved: '↓'}[kind];
  const pic = make(doc, 'span', 'sx-pic', mark ? `<b>${mark}</b>` : '');
  const cap = make(doc, 'span', 'sx-cap', `${tag ? `<em>${esc(tag)}</em>` : ''}<strong>${esc(name)}</strong><small>${esc(line)}${best ? ` · <i>${esc(best)}</i>` : ''}</small>`);
  b.append(pic, cap);
@@ -173,10 +176,17 @@ export function landscapePage(doc, e, q) {
  return p;
 }
 
-// `opts`: courses [{id, name, settings, line, best}], friend {name, line} and
-// onFriend() (a friend's challenge, rival.js), weekly {name, line,
-// settings} or null, onWeekly(), pictures(items, w, h), step, onStep(i),
-// golferLine(seatEl) for the summary.
+// PLAY'S GAME TYPES, in the order of their cards, and each one's own step
+// (none for Surprise me). Pure: playSteps(game) is the labels Play shows.
+export const GAME_TYPES = ['weekly', 'endless', 'saved', 'friend', 'surprise'];
+export const GAME_STEP = {weekly: 'The week', endless: 'Landscape', saved: 'Course', friend: 'The challenge', surprise: null};
+export const playSteps = game => ['Game', ...(GAME_STEP[game] ? [GAME_STEP[game]] : []), 'Golfers', 'Format', 'Rules'];
+
+// `opts`: game (the type), onGame(type), courses [{id, name, settings, line,
+// best}], weekly {name, line, tag, settings, page(section)} or null, friend
+// {name, line, ready} (a friend's challenge, rival.js), endless (see
+// landscapePage), surprise {name, line, settings} (the course rolled for
+// Surprise me), pictures(items, w, h), step, onStep(i), golferLine(seatEl).
 export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const q = id => root.querySelector('#' + id);
  const course = q('roundCourse'), mode = q('roundMode');
@@ -185,93 +195,104 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const {courses = [], weekly = null, pictures} = opts;
  const page = cls => make(doc, 'section', 'sx-body ' + cls);
 
- // 1 · COURSE.
- const p1 = page('sx-course');
- const grid = make(doc, 'div', 'sx-cards');
- const scroll = make(doc, 'div', 'sx-scroll');
- scroll.append(grid);
+ // 1 · GAME, then the game's own step (UI/UX pass V2, 21 October 2026; the
+ // owner: "after clicking play ... the user should be presented with a set of
+ // game type options ... then go through the same steps to start a round").
+ // Six cards: the course of the week (its page of facts next), Endless (the
+ // landscape next), a saved course (your shelf and an import box next), a
+ // friend's challenge (the code next), Surprise me (a course rolled now, shown
+ // on the last step) and New course in studio (leaves for the studio). Then
+ // Golfers, Format and Rules for every one of them.
+ //
+ // `opts.game` is the type; the course drop-down holds `weekly`, `endless`,
+ // `friend`, `surprise` or a saved course's id. A card calls onGame(type) and
+ // main.js redraws Play on the type's own step.
+ const game = opts.game || 'weekly';
+ const p1 = page('sx-course sx-game');
+ const grid = make(doc, 'div', 'sx-cards sx-games');
  const queue = [];
- const cardFor = new Map();
- // THE COURSE OF THE WEEK IS A COURSE YOU CHOOSE HERE (UI/UX pass, 21 October
- // 2026), the drop-down's `weekly` option, and the one chosen on a first launch
- // (the owner's call): it used to open a setup screen of its own, and with no
- // saved course Play had nothing chosen at all.
- if (weekly) {
-  const {b, pic} = card(doc, {name: weekly.name, line: weekly.line, tag: 'COURSE OF THE WEEK'});
-  b.setAttribute('aria-label', `Course of the week: ${weekly.name}`);
-  b.dataset.course = 'weekly';
-  b.onclick = () => { course.value = 'weekly'; fire(course); };
-  grid.append(b); queue.push({el: pic, settings: weekly.settings}); cardFor.set('weekly', b);
- }
- // EVERY WAY TO PLAY IS A CARD HERE (UI/UX pass, 21 October 2026; the owner:
- // one menu entry, no duplicated flows): Endless and a friend's challenge are
- // kinds of round chosen on this step (the drop-down's `endless` / `friend`),
- // each adding its own step; Challenges opens its board, a game of its own.
- const kindCard = (value, name, line, tag, kind, label) => {
-  const {b} = card(doc, {name, line, tag, kind});
-  b.setAttribute('aria-label', label); b.dataset.course = value;
-  b.onclick = () => { course.value = value; fire(course); };
-  grid.append(b); cardFor.set(value, b);
- };
- if (opts.endless) kindCard('endless', 'ENDLESS', 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', 'A RUN', 'run', 'Endless');
- if (opts.friend) kindCard('friend', opts.friend.name, opts.friend.line, 'A FRIEND’S CHALLENGE', 'friend', 'A friend’s challenge');
- if (opts.onChallenges) {
-  const {b} = card(doc, {name: 'CHALLENGES', line: opts.challengesLine || 'SINGLE SHOTS FOR MEDALS', tag: 'MEDALS', kind: 'challenges'});
-  b.setAttribute('aria-label', 'Challenges'); b.onclick = () => opts.onChallenges();
+ const typeCard = (k, {name, line, tag, cls, label, settings}) => {
+  const {b, pic} = card(doc, {name, line, tag, kind: cls});
+  b.setAttribute('aria-label', label); b.dataset.game = k;
+  b.classList.toggle('on', k === game); b.setAttribute('aria-pressed', String(k === game));
+  b.onclick = () => opts.onGame?.(k);
   grid.append(b);
- }
- for (const c of courses) {
-  const {b, pic} = card(doc, {name: c.name, line: c.line, best: c.best});
-  b.dataset.course = c.id;
-  b.onclick = () => { course.value = c.id; fire(course); };
-  grid.append(b); queue.push({el: pic, settings: c.settings}); cardFor.set(c.id, b);
- }
- const surprise = q('roundSurprise'), studio = q('roundStudio');
- if (surprise) {
-  const {b} = card(doc, {name: 'SURPRISE ME', line: 'A NEW NINE, RANDOM SETTINGS', kind: 'surprise'});
-  b.setAttribute('aria-label', 'Surprise me & play'); b.onclick = () => surprise.click();
-  surprise.hidden = true; grid.append(b, surprise);
- }
+  if (settings) queue.push({el: pic, settings});
+ };
+ if (weekly) typeCard('weekly', {name: 'COURSE OF THE WEEK', line: weekly.name.toUpperCase(), tag: weekly.tag, label: 'Course of the week', settings: weekly.settings});
+ if (opts.endless) typeCard('endless', {name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', tag: 'A RUN', cls: 'run', label: 'Endless'});
+ typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} OF YOURS · OR IMPORT A CODE` : 'IMPORT A CODE A FRIEND SENT', tag: 'YOUR SHELF', cls: courses.length ? '' : 'saved', label: 'Saved course', settings: courses[0]?.settings});
+ if (opts.friend) typeCard('friend', {name: 'FRIEND CHALLENGE', line: opts.friend.line, tag: opts.friend.name, cls: 'friend', label: 'Friend challenge'});
+ typeCard('surprise', {name: 'SURPRISE ME', line: 'A NEW NINE FROM RANDOM SETTINGS', tag: 'NEW', cls: 'surprise', label: 'Surprise me', settings: opts.surprise?.settings});
+ const studio = q('roundStudio'), surprise = q('roundSurprise');
  if (studio) {
-  const {b} = card(doc, {name: 'NEW IN STUDIO', line: 'SHAPE YOUR OWN', kind: 'studio'});
-  b.setAttribute('aria-label', 'Course studio'); b.onclick = () => studio.click();
+  const {b} = card(doc, {name: 'NEW COURSE IN STUDIO', line: 'SHAPE YOUR OWN, THEN PLAY IT', tag: 'COURSE STUDIO', kind: 'studio'});
+  b.setAttribute('aria-label', 'New course in studio'); b.dataset.game = 'studio';
+  b.onclick = () => studio.click();
   studio.hidden = true; grid.append(b, studio);
  }
- const line = make(doc, 'div', 'sx-line');
- const facts = make(doc, 'span', 'sx-facts');
+ if (surprise) { surprise.hidden = true; grid.append(surprise); }
+ // The saved rounds open from the foot of this step: resuming one is a way to
+ // play too, whatever its course.
+ const gamesScroll = make(doc, 'div', 'sx-scroll');
+ gamesScroll.append(grid);
+ const line = make(doc, 'div', 'sx-line sx-line-end');
  const roundsBtn = make(doc, 'button', 'sx-rounds-btn');
  roundsBtn.type = 'button';
- line.append(facts, roundsBtn);
- for (const id of ['roundManage', 'roundDelete']) { const b = q(id); if (b) { b.classList.add('sx-small'); line.append(b); } }
- // The saved rounds, open from the line (they were the lobby's own tab).
+ line.append(roundsBtn);
  const saved = make(doc, 'div', 'sx-saved');
  const oldSaved = sectionOf('Saved rounds');
  if (oldSaved) saved.append(...[...oldSaved.childNodes].filter(n => n.tagName !== 'H3'));
  saved.hidden = !opts.savedOpen;
- scroll.hidden = !saved.hidden;
+ gamesScroll.hidden = !saved.hidden;
  const nRounds = saved.querySelectorAll('.course-card').length;
- const paintRounds = () => { roundsBtn.textContent = saved.hidden ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'BACK TO THE COURSES ▸'; };
- roundsBtn.onclick = () => { saved.hidden = !saved.hidden; scroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
+ const paintRounds = () => { roundsBtn.textContent = saved.hidden ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'BACK TO THE GAMES ▸'; };
+ roundsBtn.onclick = () => { saved.hidden = !saved.hidden; gamesScroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
  paintRounds();
- // What is chosen: a saved course, the week, or nothing.
+ // No saved rounds, no button for them.
+ line.hidden = !nRounds && saved.hidden;
+ p1.append(make(doc, 'h3', 'sx-head', 'WHAT ARE YOU PLAYING'), gamesScroll, saved, line);
+
+ // The saved course's step: the shelf as cards, the chosen one named along the
+ // foot with Manage and Delete, and a box for a code someone sent.
+ const pSaved = page('sx-course sx-shelf');
+ const cardFor = new Map();
+ const sgrid = make(doc, 'div', 'sx-cards');
+ const shelf = make(doc, 'div', 'sx-scroll');
+ shelf.append(sgrid);
+ for (const c of courses) {
+  const {b, pic} = card(doc, {name: c.name, line: c.line, best: c.best});
+  b.dataset.course = c.id;
+  b.onclick = () => { course.value = c.id; fire(course); };
+  sgrid.append(b); cardFor.set(c.id, b);
+  if (game === 'saved') queue.push({el: pic, settings: c.settings});
+ }
+ const facts = make(doc, 'span', 'sx-facts');
+ const sline = make(doc, 'div', 'sx-line');
+ sline.append(facts);
+ for (const id of ['roundManage', 'roundDelete']) { const b = q(id); if (b) { b.classList.add('sx-small'); sline.append(b); } }
+ if (courses.length) pSaved.append(make(doc, 'h3', 'sx-head', 'YOUR COURSES'), shelf, sline);
+ const imp = q('lobbyImport');
+ if (imp) pSaved.append(make(doc, 'h3', 'sx-head', courses.length ? 'OR IMPORT A COURSE CODE' : 'IMPORT A COURSE CODE'), imp);
+ if (!courses.length) pSaved.append(make(doc, 'p', 'note sx-shelf-note', 'No saved courses yet. Paste a code a friend sent, or go back and make one with New course in studio.'));
+
+ // What is chosen.
  const chosen = () => course.value === 'weekly' && weekly ? {id: 'weekly', name: weekly.name, line: weekly.line, settings: weekly.settings, fixed: true}
   : course.value === 'endless' && opts.endless ? {id: 'endless', name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE'}
   : course.value === 'friend' && opts.friend ? {id: 'friend', name: opts.friend.name, line: opts.friend.line, fixed: true, ready: opts.friend.ready}
+  : course.value === 'surprise' && opts.surprise ? {id: 'surprise', name: opts.surprise.name, line: opts.surprise.line, settings: opts.surprise.settings}
   : courses.find(x => x.id === course.value);
- // A kind with a step of its own redraws Play with that step (main.js).
- const kindOf = v => v === 'endless' || v === 'friend' ? v : 'course';
- course.addEventListener('change', () => { if (kindOf(course.value) !== (opts.kind || 'course')) opts.onKind?.(course.value); });
  const paintCourse = () => {
   for (const [id, b] of cardFor) { b.classList.toggle('on', id === course.value); b.setAttribute('aria-pressed', String(id === course.value)); }
   const c = chosen();
-  facts.innerHTML = c ? `<strong>${esc(c.name.toUpperCase())}</strong><small>${esc(c.line)}${c.best ? ` · ${esc(c.best)}` : ''}</small>` : '<strong>NO SAVED COURSES</strong><small>PLAY THE COURSE OF THE WEEK, LET FAIRWAY SURPRISE YOU, OR SHAPE ONE IN THE STUDIO</small>';
+  facts.innerHTML = c ? `<strong>${esc(c.name.toUpperCase())}</strong><small>${esc(c.line)}${c.best ? ` · ${esc(c.best)}` : ''}</small>` : '<strong>CHOOSE A COURSE</strong><small>OR IMPORT ONE BELOW</small>';
   opts.onCourse?.(course.value);
   lockFormat?.();
  };
  let lockFormat = null;
  course.addEventListener('change', paintCourse);
  course.hidden = true;
- p1.append(make(doc, 'h3', 'sx-head', 'WHAT ARE YOU PLAYING'), scroll, saved, line, course);
+ p1.append(course);
  paintCourse();
  pictures?.(queue, 240, 110);
 
@@ -338,6 +359,12 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   if (c) pictures?.([{el: pic, settings: c.settings}], 480, 150);
   const fmt = mode.options[mode.selectedIndex]?.textContent.split(' · ')[0] || '';
   sum.append(make(doc, 'div', 'sx-sum-name', c ? `<strong>${esc(c.name.toUpperCase())}</strong><small>${esc(c.line)} · ${esc(fmt.toUpperCase())}</small>` : '<strong>CHOOSE A COURSE</strong><small>STEP 1</small>'));
+  // Surprise me's course was rolled when it was chosen: another can be rolled here.
+  if (c?.id === 'surprise' && opts.surprise?.onRoll) {
+   const roll = make(doc, 'button', 'sx-roll', 'ROLL ANOTHER COURSE ▸');
+   roll.type = 'button'; roll.onclick = opts.surprise.onRoll;
+   sum.append(roll);
+  }
   const who = make(doc, 'div', 'sx-sum-golfers');
   for (const s of root.querySelectorAll('#playerRows .seat')) who.append(make(doc, 'span', 'sx-sum-golfer', opts.golferLine?.(s) || ''));
   sum.append(who);
@@ -364,19 +391,25 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   const apply = p2.querySelector('#applyGroup');
   // The house rules come too: out of bounds, the lie penalty and putting can change mid-round.
   p2.append(rules);
-  const away = make(doc, 'div', 'sx-emptied'); away.hidden = true; away.append(p1, p3, p4); root.append(away);
+  const away = make(doc, 'div', 'sx-emptied'); away.hidden = true; away.append(p1, pSaved, p3, p4); root.append(away);
   if (apply) { apply.className = 'primary'; apply.textContent = 'Apply to this round'; }
   const one = stepSheet(root, {steps: [{label: 'Golfers', page: p2}], finish: apply, alert: err, hints: [['Esc', 'Back to the round']], doc});
   root.classList.add('sx-one-step');
   return one;
  }
- const steps = [{label: 'Course', page: p1, done: () => !!chosen()}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}];
- if (opts.kind === 'endless' && opts.endless) steps.splice(1, 0, {label: 'Landscape', page: landscapePage(doc, opts.endless, q)});
- if (opts.kind === 'friend') {
-  const sec = sectionOf('The challenge'), fp = page('fr');
-  if (sec) for (const n of [...sec.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3') fp.append(n);
-  steps.splice(1, 0, {label: 'The challenge', page: fp, done: () => !!opts.friend?.ready});
- }
+ // The game's own step goes second; Surprise me has none (its course is shown
+ // on Rules, where it can be rolled again).
+ const own = game === 'weekly' && weekly?.page ? {label: GAME_STEP.weekly, page: weekly.page(page('wk'))}
+  : game === 'endless' && opts.endless ? {label: GAME_STEP.endless, page: landscapePage(doc, opts.endless, q)}
+  : game === 'saved' ? {label: GAME_STEP.saved, page: pSaved, done: () => !!chosen()}
+  : game === 'friend' ? (() => {
+   const sec = sectionOf('The challenge'), fp = page('fr');
+   if (sec) for (const n of [...sec.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3') fp.append(n);
+   return {label: GAME_STEP.friend, page: fp, done: () => !!opts.friend?.ready};
+  })() : null;
+ const steps = [{label: 'Game', page: p1}, ...(own ? [own] : []), {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}];
+ // A step not in this game keeps its controls in the page, put away.
+ if (own?.page !== pSaved) { const away = make(doc, 'div', 'sx-emptied'); away.hidden = true; away.append(pSaved); root.append(away); }
  const sheet = stepSheet(root, {
   steps,
   index: opts.step ?? 0, finish: start, onStep: opts.onStep, alert: err,

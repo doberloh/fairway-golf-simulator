@@ -419,7 +419,8 @@ const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
 };
 // EVERY MODE BUT THE RANGE IS IN PLAY (21 October 2026): Endless, the course of
 // the week and Challenges are cards on Play's first step, not menu rows.
-const VIA_PLAY = {'Endless': 'Endless', 'Course of the week': 'Course of the week', 'Challenges': 'Challenges'};
+// Play's game types (UI/UX pass V2): a journey names the card it takes.
+const VIA_PLAY = {'Endless': 'Endless', 'Course of the week': 'Course of the week', 'Surprise me': 'Surprise me', 'Saved course': 'Saved course', 'Friend challenge': 'Friend challenge'};
 async function fromMenu(t, entry, press = 'click') {
  if (!VIA_PLAY[entry]) return t.page.locator('#mainMenu').getByRole('button', {name: entry}).first()[press]();
  await t.page.locator('#mainMenu').getByRole('button', {name: 'Play'}).first()[press]();
@@ -796,7 +797,8 @@ const JOURNEYS = [
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The range', 'Golfers']],
     ['Endless', ['Golfers', 'Landscape']],
-    ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
+    // Play remembers the game type chosen last (Endless, just above): these steps are in every one.
+    ['Play', ['Golfers', 'Format', 'Rules', 'Game']],
    ];
    for (const [entry, tabs] of PANELS) {
     await t.step(`open "${entry}"`, async () => {
@@ -1046,9 +1048,9 @@ const JOURNEYS = [
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play, on Ultra', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off, on Ultra', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('no lit shader is built during the arrival', async () => {
@@ -1152,9 +1154,9 @@ const JOURNEYS = [
   prepare: page => JOURNEYS.find(j => j.name === 'ball-light-shaders').prepare(page),
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('drop beside the pin', async () => {
@@ -1215,9 +1217,9 @@ const JOURNEYS = [
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('it starts at midday with the floodlights off', async () => {
@@ -1628,14 +1630,14 @@ const JOURNEYS = [
 
  {
   name: 'surprise-round',
-  what: 'Play → Surprise me & play builds a nine-hole course, and every in-round tool opens',
+  what: 'Play → Surprise me → Tee off builds a nine-hole course, and every in-round tool opens',
   async run(t) {
    await menuReady(t);
    // The button that died once already, along with "Start fresh round" and
    // the course picker, while the panel looked completely normal.
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('it is a nine-hole course, on hole one', async () => {
@@ -2855,8 +2857,7 @@ const JOURNEYS = [
     rules: {tee: 'blue', putting: {mode: 'holeout', one: 3, two: 10, three: 20}, ob: 'stroke', lie: true, input: 'meter', turf: {}},
     log: [{hole: 0, seat: 0, s: shot}, {hole: 0, seat: 0, s: [1, 0, 180000, 0, 3000, 2800, 0, 7000, 0, 500, 260000]}]});
    await t.step('Play → A friend’s challenge, paste the code', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('A friend’s challenge');
+    await fromMenu(t, 'Friend challenge');
     await t.page.fill('#rivalPaste', code);
     await t.press('Read the code');
     await t.until(async () => /Sam shot 38/.test(await t.page.textContent('#drawerContent')), 'the challenge read', 10 * SLOW);

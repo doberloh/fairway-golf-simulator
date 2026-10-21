@@ -651,6 +651,20 @@ are in the archived section of the same name.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 
+**V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
+game types with the week's page back; Challenges a row of their own with a
+Golfers step and rules the same for everyone; shot tiles on the left by
+default; the view cleared of rocks and the rest, not only trees). One commit
+per category.
+
+- [ ] **V2 category 1, Play's game types: built, seen in the capture build.**
+  Seen: the six cards, The week (picture, tiles, earlier weeks), the saved
+  course's shelf after two codes imported on the step itself, the empty shelf
+  with its import box, Surprise me's Rules with its picture and Roll another
+  course, Endless's Landscape. Not seen: Roll another course pressed, a
+  friend's code pasted into the saved step's box, Surprise me teed off from
+  Play by a person, the cards on a phone.
+
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
 phases, run on one branch with a commit each; the owner's decisions: a shorter
 pause list, the course of the week as the first-launch default, floating

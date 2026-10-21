@@ -612,6 +612,21 @@
  #drawer .sx-line>button::before{display:none}
  #drawer .sx-line>#roundDelete{color:#ff8a7a}
  #drawer .sx-line>button svg{width:14px;height:14px}
+ /* 1 · Game (UI/UX pass V2): six game types, three across in two even rows
+    (a free grid left New in studio alone on a row of its own); the saved
+    rounds' button alone at the foot, on the right. */
+ #drawer .sx-games{grid-template-columns:repeat(3,minmax(0,1fr))}
+ @media (max-width:900px){#drawer .sx-games{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ #drawer .sx-line-end{justify-content:flex-end}
+ #drawer .sx-line-end::before{display:none}
+ /* The saved course's step: the shelf, the chosen course's line, the code box. */
+ #drawer .sx-shelf>.code-import{margin:6px 30px 0 20px}
+ #drawer .sx-shelf>.code-import textarea{min-height:52px}
+ #drawer .sx-shelf>.sx-line+.sx-head{margin-top:22px}
+ #drawer .sx-shelf>.sx-shelf-note{margin:10px 30px 0;color:var(--soft)}
+ /* Surprise me on Rules: roll another course. */
+ #drawer .sx-roll{justify-self:start;width:auto;height:34px;min-height:34px;margin:0;padding:0 8px;border:0;background:none;color:var(--hot);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase}
+ #drawer .sx-roll::before{display:none}
  #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 20px;scrollbar-width:thin}
  #drawer .sx-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
  #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
