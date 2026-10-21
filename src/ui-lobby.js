@@ -365,6 +365,20 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  // Teams follow the golfers as seats are added, removed and moved.
  const rows = q('playerRows');
  if (rows && globalThis.MutationObserver) new MutationObserver(() => paintTeams()).observe(rows, {childList: true});
+ // GOLFERS & RULES, MID-ROUND (UI/UX pass, 21 October 2026): mid-round the panel
+ // is the seats and Apply, not the four steps of a new round with a small
+ // "Apply to this session" under them. The other steps' controls stay in the
+ // page, put away, because their handlers read them.
+ if (opts.midRound) {
+  const apply = p2.querySelector('#applyGroup');
+  // The house rules come too: out of bounds, the lie penalty and putting can change mid-round.
+  p2.append(make(doc, 'h3', 'sx-head', 'HOUSE RULES'), rules);
+  const away = make(doc, 'div', 'sx-emptied'); away.hidden = true; away.append(p1, p3, p4); root.append(away);
+  if (apply) { apply.className = 'primary'; apply.textContent = 'Apply to this round'; }
+  const one = stepSheet(root, {steps: [{label: 'Golfers', page: p2}], finish: apply, alert: err, hints: [['Esc', 'Back to the round']], doc});
+  root.classList.add('sx-one-step');
+  return one;
+ }
  const sheet = stepSheet(root, {
   steps: [{label: 'Course', page: p1, done: () => !!chosen()}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}],
   index: opts.step ?? 0, finish: start, onStep: opts.onStep, alert: err,

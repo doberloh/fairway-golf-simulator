@@ -300,3 +300,21 @@
 #splash .sp-tip>p{margin:0;font:600 14px/1.35 var(--font-ui);color:#fff}
 #splash .sp-ver{position:absolute;right:40px;bottom:34px;font-size:13px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.4)}
 @media (max-width:560px){#splash .sp-tip{left:16px;bottom:56px;width:calc(100vw - 32px)}#splash .sp-ver{right:16px;bottom:24px}}
+
+/* ---------------------------------------------- the round's Settings window */
+/* One window, a tab per kind of setting (main.js renderSettingsWindow;
+   ui-settings.js SETTINGS_TABS). The tabs wrap in two rows of slanted chips. */
+.popup[data-popup=settings] .sw-tabs{display:flex;flex-wrap:wrap;gap:6px 4px;padding:4px 4px 12px;border-bottom:2px solid rgba(255,255,255,.08);margin-bottom:10px}
+.popup[data-popup=settings] .sw-tab{position:relative;isolation:isolate;height:30px;min-height:30px;padding:0 12px;border:0;border-radius:0;background:none;color:var(--soft,#9ab);font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.popup[data-popup=settings] .sw-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.07);transform:skewX(-12deg)}
+.popup[data-popup=settings] .sw-tab.on{color:var(--on-hot,#111)}
+.popup[data-popup=settings] .sw-tab.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+.popup[data-popup=settings] .sw-tab:focus-visible{outline:none}
+.popup[data-popup=settings] .sw-tab:focus-visible::before{box-shadow:inset 0 0 0 2px var(--hot,#fd5)}
+.popup[data-popup=settings] .sw-body .clock-pop{position:static;display:block;width:auto;margin:0;box-shadow:none;border:0;background:none}
+.popup[data-popup=settings] .sw-choice{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+.popup[data-popup=settings] .sw-choice>span{flex-basis:100%;font:700 12px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft,#9ab)}
+.popup[data-popup=settings] .sw-pick{height:30px;padding:0 12px;border:0;border-radius:0;background:rgba(255,255,255,.08);color:#fff;font:700 13px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;cursor:pointer}
+.popup[data-popup=settings] .sw-pick.on{background:var(--a1);color:var(--on-hot,#111)}
+/* The setup moved to Settings; Tools keeps the shot's own tools. */
+#toolsTray .in-settings{display:none!important}

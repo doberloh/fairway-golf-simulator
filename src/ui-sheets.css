@@ -534,6 +534,8 @@
  #drawer .sx-step.missing{color:#ffb27a}
  #drawer .sx-step.missing::before{box-shadow:inset 0 0 0 2px #ffb27a}
  #drawer .sx-step.on{color:var(--on-hot)}
+ /* A one-step sheet (Golfers in this round) has no step bar. */
+ #drawer .sx-one-step .sx-steps{display:none}
  #drawer .sx-step.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
  #drawer .sx-step:focus-visible{outline:none}
  #drawer .sx-step:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}

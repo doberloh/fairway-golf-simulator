@@ -663,6 +663,15 @@ green everywhere, and every mode but the range under one Play.
   and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
   tool labels' new names read in a real round by a person, the main menu's
   hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 3, pause and settings: built, seen in the capture build.** Seen:
+  the six-row pause list, the Settings window and every tab (the time of day
+  needed a fix: the clock closed itself), Tools by T, Golfers & rules, the range
+  arriving with its controls closed. Smoke: menu-panels (all three sizes),
+  endless-round, floodlit-night, sound, relief, bag, profile, mixed-group,
+  range, range-greens, text-size, no-swallowed-errors, hud-reachable, monitor,
+  monitor-phone, challenge, challenge-week, challenge-more, look, weekly,
+  surprise-round, studio pass. Not seen by a person: whether the window's tabs
+  are where a player looks for each setting; the Settings window on a phone.
 - [ ] **Phase 2, end of hole and round: built, seen in two played rounds.**
   Seen: a stroke-play tie (headline, card, TIED rows, one row of buttons,
   readable share buttons) and a no-skins skins round; under par green on the

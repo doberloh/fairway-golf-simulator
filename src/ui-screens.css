@@ -45,6 +45,8 @@
  .main-menu .menu-tile:focus :is(strong,small),.main-menu .menu-modes:not(:focus-within) .menu-tile.primary:not([hidden]) :is(strong,small){color:var(--on-hot)}
  .main-menu .menu-tile:focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
  .main-menu .menu-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+ /* Three links since 21 October 2026: Settings, Launch monitor, Help. */
+ .main-menu .menu-link[hidden]{display:none}
  .main-menu .menu-link{position:relative;isolation:isolate;height:32px;padding:0 14px;border-radius:0;opacity:1;color:#fff;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
  .main-menu .menu-link::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
  .main-menu .menu-link:is(:hover,:focus-visible)::before{background:var(--a1)}

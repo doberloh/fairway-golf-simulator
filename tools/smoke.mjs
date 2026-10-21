@@ -269,11 +269,23 @@ class Trip {
   await this.page.locator('#menuDrop').getByRole('menuitem', {name}).click();
  }
 
+ // THE SETTINGS WINDOW (21 October 2026): Settings in the pause list, then a tab.
+ async settings(tab) {
+  if (!await this.page.locator('.popup[data-popup=settings]').isVisible().catch(() => false)) {
+   await this.chrome();
+   if (!await this.page.locator('#pauseSettings').isVisible()) await this.page.click('#menuNav');
+   await this.page.click('#pauseSettings');
+   await this.until(() => this.page.locator('.popup[data-popup=settings]').isVisible(), 'the Settings window', 5 * SLOW);
+  }
+  await this.page.click(`.popup[data-popup=settings] [data-sw="${tab}"]`);
+ }
+
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
-   // The top bar's Tools button (`chrome` brings the bar up first).
-   await this.chrome();
-   await this.page.locator('#barTools').click();
+   // T on the round screen (the pause list lost its Tools row, 21 October
+   // 2026); the pause list's Tools row on a phone, which keeps it.
+   if (await this.hud1()) { await this.unpause(); await this.key('KeyT'); }
+   else { await this.chrome(); await this.page.locator('#barTools').click(); }
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
   // An id, or a selector for a tray button that has none (`[data-panel="bag"]`).
@@ -772,8 +784,7 @@ const JOURNEYS = [
    const PANELS = [
     ['Saved courses', ['Your courses', 'Save a course', 'Import & export']],
     ['My profile', []],
-    ['Camera & bay', []],
-    ['Graphics', []],
+    ['Settings', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The range', 'Golfers']],
     ['Endless', ['Golfers', 'Landscape']],
@@ -871,8 +882,12 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
-    // The cameras are in the Esc list.
-    for (const cam of ['overview', 'player', 'green', 'player']) { await t.chrome(); await t.page.click(`#pauseCams [data-cam=${cam}]`); }
+    // The keys (the pause list's camera chips went on 21 October 2026): C the
+    // overview and back, G the aim point, the green, and back.
+    for (const [code, want] of [['KeyC', 'overview'], ['KeyC', 'player'], ['KeyG', 'target'], ['KeyG', 'green'], ['KeyG', 'player']]) {
+     await t.key(code);
+     await t.until(async () => (await t.page.evaluate(() => window.lab.view())) === want, `${code} to the ${want} camera`, 5 * SLOW);
+    }
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
     await t.swing();
@@ -1205,8 +1220,7 @@ const JOURNEYS = [
    });
    const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
    await t.step('Floodlight the course, from the clock: no freeze', async () => {
-    await t.chrome();
-    await t.page.click('#clockButton');
+    await t.settings('time');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
     await box.scrollIntoViewIfNeeded();
     // Every frame for three seconds from the click.
@@ -1218,15 +1232,14 @@ const JOURNEYS = [
     await box.setChecked(true);
     const worst = await watch;
     if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
-    await t.page.click('#clockButton');
+    await t.closePanel('Settings');
     await t.unpause();
    });
    await t.step('the lamps nearest the shot cast shadows', async () => {
     await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
    });
    const flip = async on => {
-    await t.menuItem('Graphics & performance');
-    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    await t.settings('graphics');
     // It lives on the window's "Costs a frame" tab.
     await t.press('Costs a frame');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight shadows'});
@@ -1234,7 +1247,7 @@ const JOURNEYS = [
     await box.setChecked(on);
     // The new programs are built before the switch lands, so it takes a moment.
     await t.until(async () => (await casting()) === (on ? 3 : 0), `floodlight shadows ${on ? 'on' : 'off'}`, 20 * SLOW);
-    await t.closePanel('Graphics & performance');
+    await t.closePanel('Settings');
    };
    await t.step('Graphics → Floodlight shadows off', () => flip(false));
    await t.step('and on again', () => flip(true));
@@ -1252,9 +1265,9 @@ const JOURNEYS = [
    const named = (s, n) => s?.profiles.find(p => p.name === n);
    const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
    const groupPanel = async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
    };
    await t.step('the welcome is up, over the menu', () =>
     t.until(() => t.page.evaluate(() => document.getElementById('welcome')?.hidden === false && !document.getElementById('splash')), 'the welcome', 60 * SLOW));
@@ -1442,9 +1455,9 @@ const JOURNEYS = [
     if (got.join() !== want.join()) throw new Error(`the club picker reads ${got.join(', ')}`);
    });
    await t.step('a second golfer joins, and their bag is edited in the round', async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     await t.page.click('#applyGroup');
@@ -1530,9 +1543,9 @@ const JOURNEYS = [
     if (await barUp()) throw new Error('the relief bar stayed up');
    });
    await t.step('Local Rule E-5, chosen in the Rules step, offers the two-stroke drop', async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
-    await t.press('Rules'); // the Play steps (round 13)
+    // The house rules are on the Golfers & rules screen itself (21 October 2026).
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
@@ -1654,7 +1667,7 @@ const JOURNEYS = [
    // label the player reads in the top menu.
    // Menu label -> the title of the window it opens. Not always the same:
    // Help opens as "Keys & help" (round 14, frame c-help).
-   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Keys & help']]) {
+   for (const [entry, title] of [['Settings', 'Settings'], ['Help & controls', 'Keys & help']]) {
     await t.step(`menu → ${entry}`, async () => {
      await t.menuItem(entry);
      await t.until(async () => !!(await t.panelShowing(title)), `a window called "${title}"`, 5 * SLOW);
@@ -1693,7 +1706,9 @@ const JOURNEYS = [
     await fromMenu(t, 'Driving range');
     await t.press('Open the driving range');
     await t.inPlay(120 * SLOW);
-    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, open by themselves', 5 * SLOW);
+    // They no longer open by themselves (21 October 2026): R opens them.
+    await t.key('KeyR');
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, from R', 5 * SLOW);
    });
    // The owner's report (16 October 2026): once closed, there was no way back.
    await t.step('closed, the range controls come back from the tool column', async () => {
@@ -1765,8 +1780,10 @@ const JOURNEYS = [
   async run(t) {
    await menuReady(t);
    await t.step('Sound → its window, from the menu', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Sound', exact: true}).click();
-    await t.until(async () => !!(await t.panelShowing('Sound')), 'the sound window', 5 * SLOW);
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Settings', exact: true}).click();
+    await t.until(() => t.drawerOpen(), 'the settings screen', 5 * SLOW);
+    await t.page.locator('#drawer .st-cat', {hasText: 'SOUND'}).click();
+    await t.until(async () => !!(await t.panelShowing('Sound')), 'the sound settings', 5 * SLOW);
    });
    await t.step('the volume and the switch are kept', async () => {
     await t.page.locator('#sndMaster').evaluate(el => { el.value = '40'; el.dispatchEvent(new Event('input', {bubbles: true})); });
@@ -1977,11 +1994,10 @@ const JOURNEYS = [
    await t.step('the play screen at 150% on 1920x1080', () => play('1920x1080 at 150%'));
    await t.step('200% on 2560x1440, set in Graphics', async () => {
     await t.page.setViewportSize({width: 2560, height: 1440});
-    await t.menuItem('Graphics & performance');
-    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    await t.settings('graphics');
     await t.page.$eval('#gfxTextSize', el => { el.value = 200; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); });
     await t.until(async () => Math.abs((await zoom()) - 2) < .01, 'the interface at 200%', 5 * SLOW);
-    await t.closePanel('Graphics & performance');
+    await t.closePanel('Settings');
     await play('2560x1440 at 200%');
    });
    await t.step('the same 200% on a 1080p screen is held to 150%', async () => {
@@ -2250,8 +2266,8 @@ const JOURNEYS = [
     await t.inPlay();
    });
    await t.step('connect the bridge and arm the monitor', async () => {
-    await t.chrome();
-    await t.page.getByRole('button', {name: 'Connect monitor'}).click();
+    // Settings → Launch monitor (the pause list's Connect monitor row went, 21 October 2026).
+    await t.settings('monitor');
     await t.press('Connect bridge');
     await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
     await t.page.getByLabel(/Arm monitor/).check();
@@ -2351,9 +2367,9 @@ const JOURNEYS = [
    const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
     BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
    const groupPanel = async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
    };
    await menuReady(t);
    await t.step('connect and arm from the main menu', async () => {
@@ -2456,8 +2472,8 @@ const JOURNEYS = [
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
-    await t.chrome(); await t.page.tap('#barTools');
-    await t.page.getByRole('button', {name: 'Launch monitor', exact: true}).tap();
+    // Settings → Launch monitor (it left Tools for Settings, 21 October 2026).
+    await t.settings('monitor');
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
     await t.key('Escape');
    });

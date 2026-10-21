@@ -262,7 +262,7 @@
  #app.rh-paused .topbar .rh-resume kbd{margin-left:auto;font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal;padding:2px 6px;border:2px solid currentColor;border-radius:4px}
  #app.rh-paused .topbar #barTools::after{content:"Tools"}
  #app.rh-paused .topbar .avatar{font-size:0!important;background:none!important;color:#fff!important}
- #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:20px}
+ #app.rh-paused .topbar .avatar::after{content:"Golfers & rules";font-size:20px}
  #app.rh-paused .topbar [data-panel=help]{display:none}
  #app.rh-paused .topbar .connection .status-dot{flex:none}
  #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:19px!important;width:auto!important}
@@ -488,11 +488,18 @@
  #app.rh-paused .topbar .rh-pause-head small{display:none}
  #app.rh-paused .topbar .rh-resume{grid-column:1/5;grid-row:2;height:56px}
  #app.rh-paused .topbar #scoreNav{grid-column:1/5;grid-row:3}
- #app.rh-paused .topbar #barTools{grid-column:1/5;grid-row:4}
- #app.rh-paused .topbar .avatar{grid-column:1/5;grid-row:5}
+ /* SIX ROWS (UI/UX pass, 21 October 2026; the owner: cut it down): Resume,
+    Scorecard, Golfers & rules, Settings (one window over the course, with
+    a tab for each kind of setting), Help, Main menu. Tools (T), the cameras
+    (the tool column), the tee (each golfer's seat), the meter's difficulty,
+    the shot numbers, graphics, sound, the clock and the monitor all moved to
+    Settings or the tool column; saved courses left the round. */
+ #app.rh-paused .topbar .avatar{grid-column:1/5;grid-row:4}
+ #app.rh-paused .topbar #pauseSettings{grid-column:1/5;grid-row:5}
  #app.rh-paused .topbar #dropHelp{grid-column:1/5;grid-row:6}
  #app.rh-paused .topbar #dropMenu{grid-column:1/5;grid-row:7}
- #app.rh-paused .topbar :is(#scoreNav,#barTools,.avatar,#dropHelp,#dropMenu){height:56px;font-size:24px!important}
+ #app.rh-paused .topbar :is(#scoreNav,.avatar,#pauseSettings,#dropHelp,#dropMenu){height:56px;font-size:24px!important}
+ #app.rh-paused .topbar :is(#barTools,#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time,.tee-control,.meter-button,.rh-pause-choice,.rh-pause-cams){display:none!important}
  #app.rh-paused .topbar #dropGraphics{grid-column:1/3;grid-row:8}
  #app.rh-paused .topbar #dropSound{grid-column:3/5;grid-row:8}
  #app.rh-paused .topbar #dropLibrary{grid-column:1/3;grid-row:9}

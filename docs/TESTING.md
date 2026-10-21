@@ -153,6 +153,11 @@ the courses several suites share.
   following the week), `ui-kit` (every class `uk-` and every rule scoped to
   `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
   rules, the two font files are local woff2 with their licence, text escaped).
+  `ui-settings` also checks every in-round setting is a tab of the one
+  Settings window and only the monitor opens a screen. The smoke harness reaches
+  settings through `t.settings(tab)` (pause → Settings → the tab), Tools with T
+  on the round screen (the pause list's Tools row on a phone), the cameras with
+  C and G, and the mid-round group through *Golfers & rules*.
   `keys` (UI/UX pass: every key listed once, Tab is the numbers and ? the
   list, each tool's key matches, the swing strip by input, main.js answers each
   key, and a step passed without what it needs is not ticked).

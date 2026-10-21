@@ -183,6 +183,9 @@
  #app[data-mode=play].rh-paused .topbar{position:absolute;inset:0;z-index:95;height:auto;display:flex!important;flex-direction:column;align-items:stretch;gap:6px;padding:16px 20px 24px;overflow:auto;background:rgba(4,8,12,.9);border:0;backdrop-filter:blur(4px);filter:none;opacity:1;pointer-events:auto;color:#fff}
  #app.rh-paused .topbar :is(.brand,.hole-strip,#menuNav,.mode-pill,.divider,.sim-time-label,[data-panel=help],.rh-pause-cams){display:none!important}
  #app.rh-paused .topbar :is(.rh-pause-head,.rh-pause-extra){display:grid;gap:6px}
+ /* Six rows on a phone too (UI/UX pass): the rest is in Settings. */
+ #app.rh-paused .topbar :is(#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time,.tee-control,.meter-button,.rh-pause-choice,.rh-pause-cams){display:none!important}
+ /* A phone keeps Tools here: it has no tool column. */
  #app.rh-paused .topbar .rh-pause-head strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  #app.rh-paused .topbar .rh-pause-head small{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #app.rh-paused .topbar :is(nav,.header-right){display:grid!important;gap:6px;margin:0}
@@ -196,7 +199,7 @@
  #app.rh-paused .topbar .rh-resume kbd{display:none}
  #app.rh-paused .topbar #barTools::after{content:"Tools"}
  #app.rh-paused .topbar .avatar{font-size:0!important}
- #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:17px}
+ #app.rh-paused .topbar .avatar::after{content:"Golfers & rules";font-size:17px}
  #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:17px!important}
  #app.rh-paused .topbar .rh-pause-stand>div{position:relative;isolation:isolate;display:flex;gap:10px;align-items:center;min-height:36px;padding:0 18px;font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase}
  #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}

@@ -59,7 +59,7 @@ import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js'
 import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
-import {buildSettings} from './ui-settings.js';
+import {SETTINGS_TABS,WINDOW_SETTINGS,buildSettings} from './ui-settings.js';
 import {buildChallenges,buildWeekly,buildFriend,buildLibrary,buildHelp} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
 import {createModelCards} from './model-cards.js';
@@ -2997,8 +2997,9 @@ async function enterRange(options={}){
  rangeGreenPref=rangeGreenYards(course.settings);
  // A range challenge (challenges.js) opens no range tools: it says what to do itself.
  if(options.challenge)return;
- openRangeBox();
- toast(`Range open · green at ${Math.round(rangeGreenPref)} yd`);
+ // Not opened by itself (UI/UX pass, 21 October 2026): it covered the field
+ // the moment you arrived. R or the RANGE tool opens it.
+ toast(`Range open · green at ${Math.round(rangeGreenPref)} yd · R for the range controls`);
 }
 let rangeMode=false;
 // THE CHALLENGE IN PLAY (Phase 7; challenges.js): closest to the pin, long
@@ -3634,7 +3635,7 @@ function toggleStudioPause(show){
   {id:'settings',label:'Studio settings',sub:n?`${n} change${n===1?'':'s'}`:'',act:()=>{toggleStudioPause(false);$('studioSettings').click();}},
   {id:'regenerate',label:'Regenerate',act:()=>{toggleStudioPause(false);$('studioRegenerate').click();}},
   {id:'save',label:'Save course',act:()=>{toggleStudioPause(false);$('studioSave').click();}},
-  {id:'graphics',label:'Settings',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
+  {id:'graphics',label:'Graphics & sound',act:()=>{toggleStudioPause(false);openPanel('graphics');}},
   {id:'leave',label:'Leave studio',act:()=>{toggleStudioPause(false);$('studioExit').click();}},
  ]});
  $('world').append(w);$('world').classList.add('studio-paused');
@@ -4556,7 +4557,7 @@ function drawRoundHud(){
  // THE TOOL COLUMN (round 13, frame c-aim): above the map, standing straight,
  // each tool with its key -- in place of the old icon tray and the keys row.
  // Each does what its key does. Menu is there for a mouse (PLACED).
- const TOOL_ICON={cam:'<path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/>',fly:'<path d="M3 12h13M12 6l6 6-6 6"/>',green:'<path d="M4 18l8-12 8 12z"/>',shots:'<path d="M4 6h16M4 12h16M4 18h10"/>',full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',range:'<path d="M4 20h16M7 16l5-10 5 10"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'};
+ const TOOL_ICON={cam:'<path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/>',fly:'<path d="M3 12h13M12 6l6 6-6 6"/>',green:'<path d="M4 18l8-12 8 12z"/>',shots:'<path d="M4 6h16M4 12h16M4 18h10"/>',full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',range:'<path d="M4 20h16M7 16l5-10 5 10"/>',tools:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'};
  // From the one key table (keys.js), so a tool's name and key match the ? list and Help.
  const tools=toolsFor({range:rangeMode}).map(t=>[t.id,t.label,t.key]);
  setHtml($('rhTools'),tools.map(([id,label,key])=>`<button type="button" data-tool="${id}"${id==='range'?' data-hud="range"':''} aria-label="${label[0]+label.slice(1).toLowerCase()} (${key})"><svg viewBox="0 0 24 24" aria-hidden="true">${TOOL_ICON[id]}</svg><span>${label}</span><kbd>${key}</kbd></button>`).join(''));
@@ -4739,6 +4740,7 @@ function openPanel(name){
 // A tool window renders exactly what the sheet would have rendered, so nothing
 // about a panel has to know which host it landed in.
 function openTool(name){
+ if(WINDOW_SETTINGS.has(name)){openSettingsWindow(name);return;}
  stopTour();
  if(dropState)cancelDrop();
  
@@ -4749,6 +4751,32 @@ function openTool(name){
  // The bag tool opens on whoever is up; the profile page names its own golfer.
  if(name==='bag'){bagOwner=null;bagReturn=null;}
  popups.open(name,{title:panelTitle(name),...POPUP_SIZE[name],render:body=>renderPanel(name,body)});
+}
+// THE SETTINGS WINDOW (ui-settings.js SETTINGS_TABS): a tab per kind of
+// setting, the chosen one drawn by the panel's own renderPanel. A panel that
+// redraws itself (openPanel(same name)) lands here again and redraws in place.
+let settingsTab='camera';
+function openSettingsWindow(tab=settingsTab){
+ if(tab==='monitor'){popups?.close('settings');openSheet('monitor');return;}
+ settingsTab=WINDOW_SETTINGS.has(tab)?tab:'camera';
+ stopTour();if(dropState)cancelDrop();closePanel();keys.clear();
+ popups.open('settings',{title:'Settings',width:470,height:620,render:renderSettingsWindow,onClose:homeClockPop});
+}
+// The time of day is the top bar's popover, lent to the window and given back.
+function homeClockPop(){const pop=$('clockPop'),home=$('clockButton')?.closest('.sim-time');if(pop&&home&&pop.parentElement!==home){home.append(pop);pop.hidden=true;}}
+function renderSettingsWindow(body){
+ homeClockPop();
+ body.innerHTML=`<nav class="sw-tabs" aria-label="Settings">${SETTINGS_TABS.map(([k,l])=>`<button type="button" class="sw-tab${k===settingsTab?' on':''}" data-sw="${k}" aria-pressed="${k===settingsTab}">${escape(l)}</button>`).join('')}</nav><div class="sw-body"></div>`;
+ body.querySelectorAll('[data-sw]').forEach(b=>b.onclick=()=>openSettingsWindow(b.dataset.sw));
+ const host=body.querySelector('.sw-body');
+ if(settingsTab==='time'){const pop=$('clockPop');if(view?.daylight&&view.daylight.hour!==null){host.append(pop);pop.hidden=false;buildClockPop();}else host.innerHTML='<p class="note">The time of day is set once a course is out.</p>';}
+ else{
+  if(settingsTab==='shotdata')host.insertAdjacentHTML('beforeend',`<div class="sw-choice"><span>SHOT NUMBERS</span>${CHOICES.map(c=>`<button type="button" class="sw-pick${c===shotChoice?' on':''}" data-choice="${c}">${escape(CHOICE_NAMES[c])}</button>`).join('')}</div>`);
+  const panelHost=document.createElement('div');host.append(panelHost);
+  renderPanel(settingsTab,panelHost);
+  host.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{shotChoice=saveChoice(b.dataset.choice);drawRoundHud();openSettingsWindow('shotdata');});
+ }
+ icon();
 }
 // The tools box is the old utility bar, rehoused. Its buttons are *moved* into
 // the window rather than rebuilt, so their ids, their handlers and everything
@@ -4812,6 +4840,7 @@ const panelTitle=name=>name!=='round'?PANEL_TITLES[name]
  :weeklySetup?'Course of the week'
  :rivalSetup?'A friend’s challenge'
  :challengeSetup?'Challenges'
+ :(appMode==='play'&&!menuBackdrop)?'Golfers & rules'
  :PANEL_TITLES.round;
 
 // Builds one panel's controls into whichever host is showing it. Nothing in
@@ -5683,7 +5712,7 @@ function renderPanel(name,content){
   // underneath it -- otherwise it still reads "Remove Alex? Press again" after
   // Alex has been added back, and the next press does something else entirely.
   const disarmApply=()=>{const el=$('applyGroup');if(!el||!el.dataset.armed)return;
-   delete el.dataset.armed;el.textContent='Apply to this session';};
+   delete el.dataset.armed;el.textContent='Apply to this round';};
   groupEditor('playerRows',round.players,()=>{formatNote?.();disarmApply();});
   $('roundStudio').onclick=()=>enterStudio();
   if($('roundManage'))$('roundManage').onclick=()=>openPanel('library');
@@ -6207,7 +6236,7 @@ function renderPanel(name,content){
   const biomeName=b=>(BIOMES[b]?.name||b||'').toUpperCase();
   const lineOf=st=>{const p=planCourse(st);return `${biomeName(st.biome)} · ${p.holes.length} HOLES · PAR ${p.par} · ${Math.round(p.yards).toLocaleString()} YDS`;};
   const ws=weeklySettings(),wk=isoWeek();
-  lobbySheet=buildLobby(content,{
+  lobbySheet=buildLobby(content,{midRound:appMode==='play'&&!menuBackdrop&&!rangeMode,
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
    friend:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT'}))(listRivals()[0]),
@@ -6602,7 +6631,7 @@ function bind(){
  for(const [id,name] of [['dropLibrary','library'],['dropGraphics','graphics'],['dropSound','sound'],['dropHelp','help']])
   $(id).onclick=()=>{closeMenuDrop();openPanel(name);};
  $('menuNav').onclick=e=>{e.stopPropagation();toggleMenuDrop();};
- document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&!e.target.closest('.sim-time'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=closePanel;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
+ document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&e.target.isConnected&&!e.target.closest('.sim-time,.popup[data-popup=settings]'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=closePanel;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
  // A MULLIGAN TAKES BACK ONE SHOT, AND ONE TRACER WITH IT.
  //
  // `holeTrails.pop()` before `loadCourse()` did nothing at all: `loadCourse`
@@ -7174,7 +7203,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  $('rhTools').onclick=e=>{const b=e.target.closest('[data-tool]');if(!b)return;const t=b.dataset.tool;
   const key=code=>window.dispatchEvent(new KeyboardEvent('keydown',{code,key:code==='Tab'?'Tab':code.slice(3).toLowerCase(),bubbles:true}));
   if(t==='cam')key('KeyC');else if(t==='fly')key('KeyV');else if(t==='green')key('KeyG');else if(t==='shots')key('Tab');
-  else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);};
+  else if(t==='range')toggleRangeBox();else if(t==='full')toggleFullscreen();else if(t==='menu')setPause(true);else if(t==='tools')openToolsBox();};
+ // THE PAUSE LIST'S SETTINGS ROW: the one window in a round, the screen elsewhere.
+ $('pauseSettings').onclick=()=>{setPause(false);closeMenuDrop();if(appMode==='play'&&popups)openSettingsWindow();else openPanel('camera');};
  if($('smSkip'))$('smSkip').onclick=()=>$('skipFlight').click();
  // ROUND 14 (frames c-aim2, c-club, c-flight2): Skip stands where curve,
  // height and spin were, at the bottom centre, not above the meter; and the
@@ -7199,6 +7230,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  });
  // Tools from the top bar, where a phone keeps it.
  $('barTools').onclick=openToolsBox;
+ $('toolsSettings').onclick=()=>{popups?.close('tools');openSettingsWindow();};
  // THE MONITOR, from the play screen: arm it or put it down -- the switch in
  // the launch monitor window and the one on the shot controls' strip are the
  // same switch as the one in Connect monitor -- and reconnect it.
@@ -7348,7 +7380,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // window is left where it was, for when the panel is gone.
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
  if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
- if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter'){if(!$('nextHoleBar').hidden)$('nextHoleBar').click();else finishShot();}if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)toggleRangeBox();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
+ if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter'){if(!$('nextHoleBar').hidden)$('nextHoleBar').click();else finishShot();}if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyT'&&!flight)openToolsBox();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)toggleRangeBox();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
   // R on the studio's settings grows the landscape (round 13), unless a word is
   // being typed (the seed). Flying, R stays up: the flying keys say so.
