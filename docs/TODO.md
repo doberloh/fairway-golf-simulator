@@ -680,10 +680,10 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   7"); "Sam made 4 · hole won" in the hole-out card; *Against Sam's card* in
   Round complete, with any rules that differed. Also paste the code into Saved
   courses' course code box (it should open the challenge), and try one from a
-  different build (it should be refused, naming both versions).
-- [ ] **Run the smoke journey `friend-challenge`** (written, never run: it uses
-  the graphics card). It pastes a code made in Node, starts the round, checks
-  the save remembers the challenge and logs a shot, and opens the scorecard.
+  different build (it should be refused, naming both versions). The smoke
+  journey `friend-challenge` passed on the real GPU on 20 October (paste, read,
+  round started and remembered, a shot logged, the friend's row on the
+  scorecard), but it takes no picture, so none of it has been looked at.
 - [ ] **The shot lines may not look right.** Placed without a mockup: white,
   dashed 1.2 m on and off, drawn whatever the shot-lines setting says, under
   the player's own lines. The setup screen and the card on Play step 1 are also
