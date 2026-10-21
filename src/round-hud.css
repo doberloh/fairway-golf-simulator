@@ -535,7 +535,20 @@
  #world[data-mode=play] .swing-meter .sm-skip kbd{padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 12px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  /* At rest the meter's own hint ("SPACE or click the bar") gives way to the
     pill; a warning (out of reach) keeps the row and lifts the pill above it. */
- #world[data-mode=play] .swing-meter[data-stage=ready]:not(.out-of-reach) .sm-hint{display:none}
+ /* At rest the hint row is the strip of keys a first-timer needs (UI/UX pass,
+    21 October 2026: nothing named the swing key). It sits clear of the yard
+    marks over the bar. */
+ #world[data-mode=play] .swing-meter[data-stage=ready]:not(.out-of-reach) .sm-hint{display:flex;flex-wrap:wrap;gap:4px 14px;color:#fff;font-size:13px;letter-spacing:.1em;font-style:normal}
+ #world[data-mode=play] .swing-meter .sm-key{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+ #world[data-mode=play] .swing-meter .sm-key kbd{color:var(--hot);font-size:12px}
+ /* The first swing, coached (main.js drawCoach): over the meter, once per device. */
+ #world[data-mode=play] .swing-coach{position:absolute;left:50%;bottom:200px;z-index:8;transform:translateX(-50%);zoom:var(--hud-z,1);display:grid;gap:6px;padding:14px 30px;color:#fff;isolation:isolate;pointer-events:none;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #world[data-mode=play] .swing-coach::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);box-shadow:inset 0 0 0 3px var(--hot);transform:skewX(-12deg)}
+ #world[data-mode=play] .swing-coach[hidden]{display:none}
+ #world[data-mode=play] .swing-coach strong{font-size:20px;font-weight:800;font-style:italic;color:var(--hot)}
+ #world[data-mode=play] .swing-coach ol{margin:0;padding-left:22px;display:grid;gap:2px;font-size:17px;font-weight:700}
+ #world[data-mode=play] .swing-coach small{font-size:13px;letter-spacing:.1em;color:var(--soft)}
+ #world[data-mode=play] .swing-coach kbd{padding:0 4px;border:1.5px solid currentColor;border-radius:3px;font:inherit}
  #world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{bottom:183px}
  #world[data-mode=play] .shape-control{left:calc(50% + 200px);bottom:151px;transform:translateX(-100%);display:flex;align-items:center;gap:0;height:28px;padding:0 14px;isolation:isolate}
  #world[data-mode=play] .shape-control::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -617,7 +630,13 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
    are 37 tall, 29 up. */
 @container app (min-width:561px) and (min-height:501px){
  #world[data-mode=play] .swing-meter{bottom:80px;width:543px}
- #world[data-mode=play] .swing-meter .sm-head{display:none!important}
+ /* The head row is only its hint now: the swing strip at rest, the meter's own
+    words during a swing ("tap to set the distance"), over the yard marks.
+    Hidden in flight, where the launch numbers have that place (UI/UX pass,
+    21 October 2026: the row was hidden outright, so nothing named Space). */
+ #world[data-mode=play] .swing-meter .sm-head{position:absolute;left:0;right:0;bottom:calc(100% + 30px);display:flex!important;justify-content:center;margin:0;min-height:0}
+ #world[data-mode=play] .swing-meter .sm-head>:not(.sm-hint){display:none!important}
+ #world[data-mode=play].in-flight .swing-meter .sm-head{display:none!important}
  #world[data-mode=play] .rh-launch{bottom:204px}
  #world[data-mode=play] .shape-control,#world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{left:50%;bottom:29px;transform:translateX(-50%);height:auto;padding:0;gap:7px;isolation:auto}
  #world[data-mode=play] .shape-control::before,#world[data-mode=play] .shape-control::after{display:none}

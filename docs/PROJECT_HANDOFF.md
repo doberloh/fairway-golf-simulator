@@ -1323,7 +1323,16 @@ course studio, whose sheet takes the play area. An open sheet is in
 `focusScope` (arrows, menu sounds; B closes it).
 
 **Play is four steps** (round 13, 17 October 2026; `src/ui-lobby.js` on
-`src/ui-steps.js`). The owner reversed the one-screen lobby ("multiple menus
+`src/ui-steps.js`). **The course of the week is a course in Play** (UI/UX
+pass, 21 October 2026): the course drop-down's first option is `weekly`, its
+card selects it, Play opens on it when nothing else is saved (the owner's
+call: a fresh browser had nothing chosen, the step bar still ticked COURSE, and
+Tee off printed a grey line nobody saw), the format locks to stroke play
+(`lockFormat` in buildLobby), and Tee off goes through `startWeeklyRound`,
+the same function the week's own screen uses. **A step is ticked only when it
+is done** (`stepMarks`, a step's `done()`; a passed step without it is marked
+`missing`), and a sheet's error line sits in its foot beside the buttons
+(`alert`). The owner reversed the one-screen lobby ("multiple menus
 again"): 1 Course -- every saved course and the course of the week as cards
 with their pictures (course-picture.js), then Surprise me and New in studio;
 the line along the foot names the chosen course, and its saved rounds open
@@ -2261,6 +2270,8 @@ is made).
 CAUTION when editing the mode-hiding rules: they are long selector LISTS where the `#world[data-mode=…]` prefix belongs to each item individually. Inserting `.aim-label` after a comma made it a bare selector and `display:none!important` in every mode — the element measured 0×0 and looked like a projection bug. The give-away is a computed `display:none` on something whose own rule says `flex`.
 
 **THE KEYBOARD SHORTCUTS OF 10 OCTOBER 2026** follow GSPro's where they can: **A** resets the aim to what the turn started with (`resetAim`, through `defaultAim`, which `setUpTurn` now calls too, so the two can never disagree; by hand on the green it resets the putt's power as well), **I/K** change club beside Q/E, **H** hides everything over the course (`hud-hidden` on `#app`: the top bar and every child of `#world` but the canvas, the toast and the key list; H or Escape brings it back), **Tab** lists the keys (`#keysHelp`; its ↑ ↓ line says Power or Aim point by mode), and **G** steps the camera to the aim point, the green, and back to the ball. GSPro uses F3 for that; F3 is the browser's Find. The aim-point view is a camera mode of its own (`target`, renderer.js `setCamera`), 34 m short of the aim ring along the line from the ball and 22 m up, both placed; with no ring drawn it falls back to the view from the ball. Rejected: a rangefinder (GSPro's R), turned down by the owner.
+
+**ONE KEY TABLE** (UI/UX pass, 21 October 2026): `src/keys.js` holds every key a round answers to (`ROUND_KEYS`), the tool column (`TOOLS`, named after what they do: OVERVIEW C, VIEWS G, NUMBERS Tab) and the swing strip (`swingStrip`). The ? list, Help's essentials page (`HELP_KEYS['The essentials']`) and `drawRoundHud`'s tools are drawn from it; before, the ? list still said "Tab: this list" after Tab became the shot numbers and Help missed half the keys. tests/keys.test.mjs checks main.js answers each key. **The meter's head row is its hint again** on the round screen, placed over the yard marks (it was `display:none`, so nothing on screen named Space): the strip at rest, the meter's prompts in a swing, hidden in flight where the launch numbers sit. **The first-swing coach** (`drawCoach`) shows the three taps until a swing is released on this device (`fairway-coach-v1` in localStorage, not on a profile).
 
 **THE AIM AND PIN LABELS TAKE TURNS** (10 October 2026). The flag marker is the one at rest; the player moving the aim -- `touchAim()`, called from every input path and from nothing that sets aim up on its own -- fades it (`.faded`) and fades the aim marker in, for `AIM_LABEL_HOLD` after the last touch: 1 s (placed) until 20 October 2026, then 3 s at the owner's request -- the label was gone before it could be read. The marker also says what the aim point leaves to the hole (`leaveText`, round-hud.js), added the same day. It closes the TODO "The flag marker and the aim marker overlap on screen", which they did from the tee at 1280x720 and 1366x768: the 8 m rule only stopped the two POINTS coinciding, never the two LABELS. The 8 m rule now applies only at rest: while aiming the pin's label is faded, and the rule had made the aim label vanish as the aim crossed the pin (owner, 11 October). Rejected: moving one label aside, which still leaves two numbers to read at a glance, and the owner asked for the turn-taking.
 

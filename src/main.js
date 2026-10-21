@@ -51,6 +51,7 @@ import {SHOT_FIELDS,FIELD_GROUPS,fieldById,shotGrid,loadShotData,saveShotData,st
 import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
+import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
 import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
@@ -364,8 +365,9 @@ let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,
 // the tiny 3D model over it when its turn comes (model-cards.js).
 let modelCards=null;
 // Each help page's keys (round 14, frame c-help); the essentials read their own list.
-const HELP_KEYS={'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
+const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
 const cardPictures=(items,w,h)=>{pictureQueue(items,w,h);modelCards?.queue(items);};
+let lobbySheet=null,lobbyCourse='';
 let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',lobbyStep=0,endlessStep=0,weeklyStep=0,endlessLandscape='any',endlessGoal='',lobbySaved=false,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
@@ -1249,7 +1251,7 @@ function toggleHud(on=!$('app').classList.contains('hud-hidden')){
 function toggleKeysHelp(on=$('keysHelp').hidden){
  const box=$('keysHelp');if(!box)return;
  box.hidden=!on;
- if(on)$('keysUpDown').textContent='Aim point further / shorter';
+
 }
 function updateHUD(){
  syncArmed();if(panel==='monitor')monitorSetup?.paint();
@@ -1457,6 +1459,7 @@ function releaseSwing(){
  const sw=swing;swing=null;$('swingCatcher').hidden=true;$('world').classList.remove('swinging');
  lastSwing={...sw,player:round.player?.name,hole:round.hole};
  const out=swingLaunch(sw,sw.ctx);
+ markCoached();
  gameAudio?.meterStop();
  if(sw.accuracy)gameAudio?.meterSound(sw.duff?'duff':out.strike.perfect?'perfect':out.strike.miss<=1?'zone':'miss');
  meterFlash={text:strikeWords(out.strike,sw.ctx.club.code==='PT'),perfect:out.strike.perfect,until:performance.now()+1800};
@@ -1505,10 +1508,30 @@ function drawMeter(t,last=null){
  else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
  // The 1.0 round screen has no Swing button: the bar is what you tap or click.
- else if(hud1)hint.innerHTML=matchMedia('(pointer:coarse)').matches?'Tap the bar to swing':'<kbd>SPACE</kbd> or click the bar';
+ // At rest it is the strip of keys a first-timer needs (keys.js swingStrip).
+ else if(hud1){const html=swingStripHtml();if(hint.innerHTML!==html)hint.innerHTML=html;}
  else hint.innerHTML=phoneScreen()||matchMedia('(pointer:coarse)').matches?'Tap <b>Swing</b> to start':'Press <kbd>SPACE</kbd> to start';
  box.classList.toggle('perfect',!!(flashing&&meterFlash.perfect));
  box.dataset.stage=swing?(swing.power==null?'power':'strike'):'ready';
+}
+// THE SWING STRIP (UI/UX pass, 21 October 2026): Space, the arrows and ? beside
+// the meter at rest, or "tap the bar" on a touch screen. The first-timer could
+// not find the swing key: nothing on the round screen named it.
+function swingStripHtml(){
+ const touch=matchMedia('(pointer:coarse)').matches;
+ return swingStrip({touch,putting:!!ballOnGreen}).map(([k,w])=>touch?`${escape(k)} ${escape(w)}`:`<span class="sm-key"><kbd>${escape(k)}</kbd>${escape(w)}</span>`).join('');
+}
+// THE FIRST SWING, COACHED (UI/UX pass): the three taps spelled out over the
+// meter until this device has seen one swing taken with it. Kept per device in
+// localStorage, not on a profile: it is about this screen and these keys.
+const COACH_KEY='fairway-coach-v1';
+function coachSeen(){try{return localStorage.getItem(COACH_KEY)==='1';}catch{return true;}}
+function markCoached(){try{localStorage.setItem(COACH_KEY,'1');}catch{}const c=$('swingCoach');if(c)c.hidden=true;}
+function drawCoach(){
+ const c=$('swingCoach');if(!c)return;
+ const on=hud1&&appMode==='play'&&!menuBackdrop&&!armed&&!coachSeen()&&!$('swingMeter').hidden&&!flight&&!panel;
+ if(on&&!c.innerHTML)c.innerHTML=`<strong>YOUR FIRST SWING</strong><ol>${COACH_STEPS.map(t=>`<li>${escape(t)}</li>`).join('')}</ol><small><kbd>SPACE</kbd> or click the bar · <kbd>?</kbd> every key</small>`;
+ if(c.hidden===on)c.hidden=!on;
 }
 // The still parts: whether the meter shows at all, the yard (or foot) marks for
 // this club and shape, the strike zone, and the hatched end the lie takes away.
@@ -3560,7 +3583,12 @@ function openMenu(){
  // still waiting behind the backdrop.
  $('menuContinue').hidden=appMode==='studio'||(menuBackdrop&&!pendingRound);
  updateMenuProfile();
- $('menuNote').textContent=listCourses().length?'':'No saved courses yet. Shape one in Course studio, or let Play surprise you.';
+ // MENU NOTE RETIRED (UI/UX pass, 21 October 2026): "No saved courses yet" was
+ // written only when the menu was built, so it outlived the courses being saved;
+ // and Play opens on the course of the week now, so there is nothing to explain.
+ $('menuNote').textContent='';
+ // One lit row: Play is the main button only when there is no round to continue.
+ $('menuPlay').classList.toggle('primary',$('menuContinue').hidden);
  // XP IS NEW (Phase 4): the main golfer is told once, here; everyone else on
  // their own My profile page.
  {const m=mainProfile(profiles);if(m?.xpNew){delete m.xpNew;storeProfiles(profiles);toast('New: XP and levels. '+XP_NEW_TEXT);}}
@@ -4109,6 +4137,18 @@ function wireFormatFields(){
  $('roundMode').onchange=formatNote;formatNote();
  return formatNote;
 }
+// THE COURSE OF THE WEEK'S ROUND, for a group: stroke play, 18 holes, the
+// week's key on the round so its best is kept. Throws on a group the round
+// refuses, before anything is torn down.
+async function startWeeklyRound(base){
+ if(flight){toast('Finish the current shot first.');return;}
+ const s=weeklySettings(),w=isoWeek();
+ const group={...base,mode:'stroke',weekly:weekKey()};new Round({...group,holes:18});
+ weeklySetup=false;closePanel();
+ const name=`${suggestCourseName(s)} · Week ${w.week}`;
+ await startRoundOn(s,group,name);
+ toast(`The course of the week: ${name}.`);
+}
 function openRangePanel(){rangeSetup=true;rangeSetupStep=0;openPanel('round');}
 function openEndlessPanel(){endlessSetup=true;openPanel('round');}
 // A friend's challenge (rival.js), opened on the code it names, or the newest.
@@ -4501,7 +4541,8 @@ function drawRoundHud(){
  // each tool with its key -- in place of the old icon tray and the keys row.
  // Each does what its key does. Menu is there for a mouse (PLACED).
  const TOOL_ICON={cam:'<path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/>',fly:'<path d="M3 12h13M12 6l6 6-6 6"/>',green:'<path d="M4 18l8-12 8 12z"/>',shots:'<path d="M4 6h16M4 12h16M4 18h10"/>',full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',range:'<path d="M4 20h16M7 16l5-10 5 10"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>'};
- const tools=[['cam','CAMERA','C'],['fly','FLY','V'],['green','GREEN','G'],['shots','SHOTS','TAB'],...(rangeMode?[['range','RANGE','R']]:[]),['full','FULL SCREEN','F11'],['menu','MENU','ESC']];
+ // From the one key table (keys.js), so a tool's name and key match the ? list and Help.
+ const tools=toolsFor({range:rangeMode}).map(t=>[t.id,t.label,t.key]);
  setHtml($('rhTools'),tools.map(([id,label,key])=>`<button type="button" data-tool="${id}"${id==='range'?' data-hud="range"':''} aria-label="${label[0]+label.slice(1).toLowerCase()} (${key})"><svg viewBox="0 0 24 24" aria-hidden="true">${TOOL_ICON[id]}</svg><span>${label}</span><kbd>${key}</kbd></button>`).join(''));
  setHtml($('rhKeys'),keyHints({putting:putt,monitor:armed,range:rangeMode}).map(h=>h.key==='ESC'||h.key==='R'
   ?`<button type="button" data-hud="${h.key==='R'?'range':'pause'}"><kbd>${h.key}</kbd>${h.text}</button>`:`<span><kbd>${h.key}</kbd>${h.text}</span>`).join(''));
@@ -5050,7 +5091,9 @@ function drawMenuCard(){
  el.hidden=false;
  el.innerHTML=`<div class="rh-mc-top"><span class="rh-mc-pic">${framedPicture(l.ball,l.frame,'rh-ballpic')}</span><div><strong>${escape(m.name.toUpperCase())}</strong><small>${escape(title.toUpperCase())} <b>LV ${lv.level}</b></small></div></div>`
   +`<div class="rh-mc-xp"><div><span>LEVEL ${lv.level}</span><span>${lv.into.toLocaleString()} / ${lv.need.toLocaleString()} XP</span></div><i><b style="width:${(share*100).toFixed(1)}%"></b></i></div>`
-  +(def?`<div class="rh-mc-week"><small>CHALLENGE OF THE WEEK</small><strong>${escape(String(def.name||'').toUpperCase())}</strong></div>`:'');
+  +(def?`<button type="button" class="rh-mc-week" id="menuWeekCard" aria-label="Challenge of the week: ${escape(def.name||'')}. Open it"><small>CHALLENGE OF THE WEEK</small><strong>${escape(String(def.name||'').toUpperCase())}</strong></button>`:'');
+ // The week's card is a way in, not a label (UI/UX pass, 21 October 2026).
+ if($('menuWeekCard'))$('menuWeekCard').onclick=()=>$('menuChallenges')?.click();
 }
 // "REPLAY THIS COURSE": the same ground, a fresh card. A course comes back from
 // the settings it was grown from, an endless run from its seed; the group and
@@ -5500,12 +5543,7 @@ function renderPanel(name,content){
   groupEditor('playerRows',round.players,formatNote);
   $('weeklyGo').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
-   let group;
-   try{group={...readGroup(),mode:'stroke',weekly:weekKey()};new Round({...group,holes:18});}catch(e){$('roundError').textContent=e.message;return;}
-   weeklySetup=false;closePanel();
-   const name=`${suggestCourseName(s)} · Week ${w.week}`;
-   await startRoundOn(s,group,name);
-   toast(`The course of the week: ${name}.`);
+   try{await startWeeklyRound(readGroup());}catch(e){$('roundError').textContent=e.message;}
   };
  }else if(name==='round'&&endlessSetup){
   // NO COURSE PICKER. Endless grows each hole as you finish the last one, so a
@@ -5597,7 +5635,7 @@ function renderPanel(name,content){
   const playingNow=appMode==='play'&&!rangeMode&&!menuBackdrop;
   content.innerHTML=`<p>Pick a course, invite a few friends, and make a day of it. Courses are shaped in Course studio; a course decides the landscape and its hole count, and everything below is yours to choose.</p>
   <h3>Your course</h3>
-  <label class="field">Course<select id="roundCourse">${library.length?library.map(c=>`<option value="${c.id}">${escape(c.name)} · ${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)}</option>`).join(''):'<option value="">No saved courses yet</option>'}</select></label>
+  <label class="field">Course<select id="roundCourse">${appMode==='play'?'':`<option value="weekly">${escape(suggestCourseName(weeklySettings()))} · 18 holes · the course of the week</option>`}${library.map(c=>`<option value="${c.id}">${escape(c.name)} · ${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)}</option>`).join('')}${library.length||appMode!=='play'?'':'<option value="">No saved courses yet</option>'}</select></label>
   ${library.length?'':'<p class="note">Shape one in Course studio, or let Fairway surprise you below.</p>'}
   <div class="split"><button class="secondary" id="roundStudio"><i data-lucide="mountain"></i> Course studio</button><button class="secondary" id="roundSurprise"><i data-lucide="shuffle"></i> Surprise me &amp; play</button></div>
   ${library.length?'<div class="split"><button class="secondary" id="roundManage"><i data-lucide="library"></i> Manage &amp; share courses</button><button class="secondary danger" id="roundDelete"><i data-lucide="trash-2"></i> Delete this course</button></div>':''}
@@ -5612,6 +5650,10 @@ function renderPanel(name,content){
    :'<button class="secondary" id="exportRound" disabled title="There is no round in progress — open one from above, or start a round first.">Export the round you are playing</button>'}
   <button class="secondary" id="importRound"><i data-lucide="upload"></i> Import a round from a file</button>
   <input id="importFile" type="file" accept="application/json" hidden>`;
+  // WHICH COURSE PLAY OPENS ON: the one chosen last time this session, else
+  // the first saved course, else the course of the week (the owner, 21 October
+  // 2026: a first launch has the week ready, so Tee off just works).
+  {const sel=$('roundCourse'),ok=v=>[...sel.options].some(o=>o.value===v&&v);sel.value=ok(lobbyCourse)?lobbyCourse:ok(library[0]?.id)?library[0].id:ok('weekly')?'weekly':sel.options[0]?.value||'';}
   const formatNote=wireFormatFields();
   // A primed Apply button goes back to itself the moment the group changes
   // underneath it -- otherwise it still reads "Remove Alex? Press again" after
@@ -5695,8 +5737,10 @@ function renderPanel(name,content){
   // start a round from here, and they go through `guardRound` to do it.
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
+   if($('roundCourse').value==='weekly'){try{await startWeeklyRound(readGroup());}catch(e){$('roundError').textContent=e.message;}return;}
    const chosen=findCourse($('roundCourse').value);
-   if(!chosen){$('roundError').textContent='Choose a course first, or use Surprise me. Courses are shaped in Course studio.';return;}
+   // Said where it is seen (the foot, beside Tee off), and back to step 1.
+   if(!chosen){$('roundError').textContent='Choose a course first: the course of the week, one of yours, or Surprise me.';lobbySheet?.go(0);return;}
    try{await startRoundOn(chosen.settings,readGroup(),chosen.name);toast(`Your round on “${chosen.name}” is ready.`);}catch(e){$('roundError').textContent=e.message;}
   };
   wireRoundCards(content);
@@ -6061,7 +6105,7 @@ function renderPanel(name,content){
   content.innerHTML=`<p>Bring real ball data into your browser with an Open Connect v1 compatible connector.</p><p class="note">The included local bridge receives TCP shots on port 1921 and relays them to this browser. Start it with <code>npm run bridge</code>, then point your device’s connector at this computer.</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><h3>Compatible connector ecosystem</h3><ul><li><a href="https://github.com/PiTracLM/PiTrac" target="_blank" rel="noopener">PiTrac</a> · Open source camera monitor</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" target="_blank" rel="noopener">Garmin R10 community connector</a></li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" target="_blank" rel="noopener">Rapsodo MLM2PRO connector</a></li><li><a href="https://github.com/OpenSkyPlus/OpenSkyPlus" target="_blank" rel="noopener">OpenSkyPlus</a> · Community integrations</li></ul><p class="research-label">Compatibility is at the protocol level; hardware has not been tested here. Vendor software, licenses, OS support, and connector configuration still apply. Browsers cannot directly accept TCP or proprietary Bluetooth protocols.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
   $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();monitorSetup?.paint();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
-  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><div class="help-shortcuts"><kbd>Click</kbd><span>Aim at a point on the course or map</span><kbd>← / →</kbd><span>Fine tune your aim</span><kbd>↑ / ↓</kbd><span>Aim further or shorter</span><kbd>Space</kbd><span>Swing: start, set the distance, strike</span><kbd>S / W / X</kbd><span>Curve, height and spin</span><kbd>Q / E</kbd><span>Change club</span><kbd>C</kbd><span>Toggle overview camera</span><kbd>Enter</kbd><span>Finish the shot animation</span><kbd>Escape</kbd><span>Close a panel</span></div><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
+  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><p>Aim, choose a club, swing. Click anywhere on the course or the map to aim there, or turn the aim with the arrow keys; the floating marker says how far the spot is and what it leaves to the hole.</p><p>The Swing Meter is three taps of <kbd>Space</kbd> (or clicks on the bar): the first starts the swing, the second stops the marker at the distance you want, and the third, back on the strike line, decides how straight it goes. A putt is two taps.</p><p>Every key is on the right, and in a round <kbd>?</kbd> shows them over the course. <kbd>Esc</kbd> pauses.</p><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p>The built <strong>index.html</strong> includes its scripts, styles, and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
   // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
   //
   // It sits in Help because that is where a person goes when something is
@@ -6139,14 +6183,13 @@ function renderPanel(name,content){
   const biomeName=b=>(BIOMES[b]?.name||b||'').toUpperCase();
   const lineOf=st=>{const p=planCourse(st);return `${biomeName(st.biome)} · ${p.holes.length} HOLES · PAR ${p.par} · ${Math.round(p.yards).toLocaleString()} YDS`;};
   const ws=weeklySettings(),wk=isoWeek();
-  buildLobby(content,{
+  lobbySheet=buildLobby(content,{
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
-   onWeekly:()=>{lobbyStep=0;weeklySetup=true;openPanel('round');},
    friend:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT'}))(listRivals()[0]),
    onFriend:openFriendSetup,
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
-   onCourse:v=>{lobbyBiome=listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();},
+   onCourse:v=>{lobbyCourse=v;lobbyBiome=v==='weekly'?ws.biome:listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();const del=$('roundDelete');if(del)del.hidden=!findCourse(v);},
    golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
     return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;},
   });
@@ -6467,6 +6510,8 @@ function bind(){
  $('menuCourses').onclick=()=>openPanel('library');
  $('menuProfile').onclick=()=>{renamingProfile=false;viewingProfile=profiles?.main??null;openPanel('profile');};
  $('menuHelp').onclick=()=>openPanel('help');
+ // The row under the pointer takes the focus, so one row is lit, never two.
+ document.querySelectorAll('#mainMenu .menu-tile').forEach(b=>b.addEventListener('pointerenter',()=>{if(!b.hidden&&document.activeElement!==b)b.focus({preventScroll:true});}));
  $('menuCamera').onclick=()=>openPanel('camera');
  $('menuMonitor').onclick=()=>openPanel('monitor');
  $('menuGraphics').onclick=()=>openPanel('graphics');
@@ -6474,6 +6519,8 @@ function bind(){
  $('studioSettings').onclick=()=>panel==='course'?closePanel():openPanel('course');
  $('studioRegenerate').onclick=()=>regenerateStudio();
  $('studioSave').onclick=()=>{if(panel)closePanel();askCourseName();};
+ // THE KEY LIST (?), from the one table (keys.js).
+ {const dl=$('keysHelp')?.querySelector('dl');if(dl)dl.innerHTML=ROUND_KEYS.map(k=>`<div><dt>${k.keys.map(c=>`<kbd>${escape(c)}</kbd>`).join('')}</dt><dd>${escape(k.words)}</dd></div>`).join('');}
  $('studioExit').onclick=()=>returnToMenu();
  // THE STUDIO BAR RIDES ABOVE AN OPEN PANEL. Both are pinned to the bottom of
  // the course, the bar one layer up, so until 12 October 2026 any panel opened
@@ -7425,6 +7472,7 @@ function tick(now){
  if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
  // THE SWING METER moves on the clock, not on frames (swing-meter.js); this only
  // draws where it is and lets the clock finish a swing nobody tapped.
+ drawCoach();
  if(swing){meterAdvance(swing,now);if(swing.done)releaseSwing();else{drawMeter(now);gameAudio?.meterMove(markerAt(swing,now),swing.power==null?'power':'strike');if(!swing.overSounded&&inOverswing(swing,now)){swing.overSounded=true;gameAudio?.meterSound('overswing');}}}
  // Once per rendered frame, whether or not the aim block above ran: a tap is
  // owed to the next frame that can use it, not saved up behind an open panel.

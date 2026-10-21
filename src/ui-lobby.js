@@ -220,11 +220,16 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  scroll.append(grid);
  const queue = [];
  const cardFor = new Map();
+ // THE COURSE OF THE WEEK IS A COURSE YOU CHOOSE HERE (UI/UX pass, 21 October
+ // 2026), the drop-down's `weekly` option, and the one chosen on a first launch
+ // (the owner's call): it used to open a setup screen of its own, and with no
+ // saved course Play had nothing chosen at all.
  if (weekly) {
   const {b, pic} = card(doc, {name: weekly.name, line: weekly.line, tag: 'COURSE OF THE WEEK'});
   b.setAttribute('aria-label', `Course of the week: ${weekly.name}`);
-  b.onclick = () => opts.onWeekly?.();
-  grid.append(b); queue.push({el: pic, settings: weekly.settings});
+  b.dataset.course = 'weekly';
+  b.onclick = () => { course.value = 'weekly'; fire(course); };
+  grid.append(b); queue.push({el: pic, settings: weekly.settings}); cardFor.set('weekly', b);
  }
  if (opts.friend) {
   const {b} = card(doc, {name: opts.friend.name, line: opts.friend.line, tag: 'A FRIEND’S CHALLENGE', kind: 'friend'});
@@ -265,15 +270,19 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const paintRounds = () => { roundsBtn.textContent = saved.hidden ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'BACK TO THE COURSES ▸'; };
  roundsBtn.onclick = () => { saved.hidden = !saved.hidden; scroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
  paintRounds();
+ // What is chosen: a saved course, the week, or nothing.
+ const chosen = () => course.value === 'weekly' && weekly ? {id: 'weekly', name: weekly.name, line: weekly.line, settings: weekly.settings, fixed: true} : courses.find(x => x.id === course.value);
  const paintCourse = () => {
   for (const [id, b] of cardFor) { b.classList.toggle('on', id === course.value); b.setAttribute('aria-pressed', String(id === course.value)); }
-  const c = courses.find(x => x.id === course.value);
+  const c = chosen();
   facts.innerHTML = c ? `<strong>${esc(c.name.toUpperCase())}</strong><small>${esc(c.line)}${c.best ? ` · ${esc(c.best)}` : ''}</small>` : '<strong>NO SAVED COURSES</strong><small>PLAY THE COURSE OF THE WEEK, LET FAIRWAY SURPRISE YOU, OR SHAPE ONE IN THE STUDIO</small>';
   opts.onCourse?.(course.value);
+  lockFormat?.();
  };
+ let lockFormat = null;
  course.addEventListener('change', paintCourse);
  course.hidden = true;
- p1.append(make(doc, 'h3', 'sx-head', `YOUR COURSES · ${courses.length + (weekly ? 1 : 0)}`), scroll, saved, line, course);
+ p1.append(make(doc, 'h3', 'sx-head', courses.length ? `THE COURSE OF THE WEEK AND YOUR ${courses.length} COURSE${courses.length === 1 ? '' : 'S'}` : 'CHOOSE A COURSE'), scroll, saved, line, course);
  paintCourse();
  pictures?.(queue, 240, 110);
 
@@ -313,8 +322,17 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  mode.addEventListener('change', paintTeams);
  mode.hidden = true;
  const note = q('formatNote');
- p3.append(make(doc, 'h3', 'sx-head', 'HOW ARE YOU PLAYING'), tiles);
+ // The week is stroke play for everyone: the other formats are shown, not chosen.
+ const fixedNote = make(doc, 'p', 'note sx-fixed', 'The course of the week is stroke play: everyone plays the same 18 holes, so every card compares.');
+ lockFormat = () => {
+  const fixed = !!chosen()?.fixed;
+  if (fixed && mode.value !== 'stroke') { mode.value = 'stroke'; fire(mode); }
+  for (const b of tiles.querySelectorAll('button')) b.disabled = mode.disabled || (fixed && b.dataset.mode !== 'stroke');
+  fixedNote.hidden = !fixed;
+ };
+ p3.append(make(doc, 'h3', 'sx-head', 'HOW ARE YOU PLAYING'), tiles, fixedNote);
  if (note) p3.append(note);
+ lockFormat();
  p3.append(teams, mode);
 
  // 4 · RULES, and what you are about to play.
@@ -322,7 +340,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const rules = rulesColumn(doc, q);
  const sum = make(doc, 'div', 'sx-summary');
  const paintSummary = () => {
-  const c = courses.find(x => x.id === course.value);
+  const c = chosen();
   sum.textContent = '';
   sum.append(make(doc, 'h3', 'sx-head', 'YOU’RE ABOUT TO PLAY'));
   const pic = make(doc, 'span', 'sx-pic sx-sum-pic');
@@ -336,7 +354,6 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  };
  const err = q('roundError');
  p4.append(rules, sum);
- if (err) p4.append(err);
 
  // Everything the old sections held that has not found a step is put away.
  for (const s of root.querySelectorAll('.panel-section')) s.classList.add('sx-emptied');
@@ -349,8 +366,8 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  const rows = q('playerRows');
  if (rows && globalThis.MutationObserver) new MutationObserver(() => paintTeams()).observe(rows, {childList: true});
  const sheet = stepSheet(root, {
-  steps: [{label: 'Course', page: p1}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}],
-  index: opts.step ?? 0, finish: start, onStep: opts.onStep,
+  steps: [{label: 'Course', page: p1, done: () => !!chosen()}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}],
+  index: opts.step ?? 0, finish: start, onStep: opts.onStep, alert: err,
   hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
  return sheet;

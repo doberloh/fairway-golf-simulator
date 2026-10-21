@@ -153,6 +153,9 @@ the courses several suites share.
   following the week), `ui-kit` (every class `uk-` and every rule scoped to
   `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
   rules, the two font files are local woff2 with their licence, text escaped).
+  `keys` (UI/UX pass: every key listed once, Tab is the numbers and ? the
+  list, each tool's key matches, the swing strip by input, main.js answers each
+  key, and a step passed without what it needs is not ticked).
   `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
   club, scores with a real minus, golfer cards, keys, the ball light, the
   camera's name beside the wind, the aim point's distance left to the hole -- and

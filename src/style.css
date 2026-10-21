@@ -1538,3 +1538,5 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 
 /* A friend's challenge on the scorecard (rival.js): their row in italics under the golfers, and where each golfer stands against it. */
 .rival-status{margin:6px 0;font-weight:700;color:var(--ink)}.score-table .rival-row td{font-style:italic;opacity:.85}.hole-summary-rival{color:var(--ink-faint)}
+
+.swing-coach[hidden]{display:none}.swing-coach{display:none}

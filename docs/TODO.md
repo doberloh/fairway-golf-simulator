@@ -649,6 +649,21 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
+phases, run on one branch with a commit each; the owner's decisions: a shorter
+pause list, the course of the week as the first-launch default, floating
+windows kept for settings better adjusted while seeing the course, under par
+green everywhere, and every mode but the range under one Play.
+
+- [ ] **Phase 1, the first ten minutes: built, seen in a fresh browser.**
+  Play opens on the course of the week and Tee off starts it (checked: a fresh
+  browser pressed straight through to a round); the swing strip over the meter
+  and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
+  tool labels' new names read in a real round by a person, the main menu's
+  hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+
 ## Release 0.9.1 (20 October)
 
 - [ ] **Owner: play 0.9.1, which went out unplayed.** Released from the merge

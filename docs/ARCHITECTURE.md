@@ -129,6 +129,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/hud-places.js` -- where the map and the Tab shot numbers sit once the player has dragged them (fractions of the playing area, kept per device, held on screen); main.js drags and draws them
 - `src/shot-display.js`, `src/celebration.js` -- the 1.0 shot moments: the pop-up shot card or the tiles, and for how long; which banner a hole-out earns (two seconds at most), and the paper scorecard's marks
 - The 1.0 interface (branch `ui-1-0`; phase 0): `src/ui-layout.js` -- the design canvas, bands and 12-column leaning grid, and the canvas with the Text size; `src/ui-palette.js` -- which biome's colours a screen wears, and the contrast check; `src/ui-kit.js`, `src/ui-kit.css` -- the building kit and the `@font-face` rules; `src/fonts/` -- Saira Condensed (OFL), inlined by the build
+- `src/keys.js` -- every key a round answers to, the tool column and the swing strip, one table for the ? list, Help and the tools; tests/keys.test.mjs
 - `src/popups.js` -- tools beside the shot; `src/diagnostic.js` -- Report a problem; `src/lab.js` -- the `window.lab` console API
 
 **Outside the game**
