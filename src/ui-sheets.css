@@ -751,6 +751,17 @@
     box, the challenges kept as a row of buttons, the chosen one's card and
     rules. PLACED on the course of the week's frames; no mockup exists. */
  #drawer .fr{display:grid;gap:14px;align-content:start}
+ /* A CODE BOX IN THE SHEET'S STYLE (UI/UX pass, 21 October 2026): the friend's
+    code and Saved courses' import were the old rounded box with small buttons.
+    Now a slanted panel holding a dark well, the buttons in a row under it. */
+ #drawer .code-import{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,max-content));gap:10px;margin:0;padding:16px 30px;border:0;border-radius:0;background:none;overflow:visible}
+ #drawer .code-import::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .code-import>.field{grid-column:1/-1;margin:0;padding:0;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #drawer .code-import textarea{display:block;width:100%;min-height:72px;margin-top:8px;padding:10px 12px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#e8ecff;font:14px "IBM Plex Mono",ui-monospace,monospace;text-transform:none;letter-spacing:0}
+ #drawer .code-import>button{width:auto;height:40px;min-height:40px;margin:0;padding:0 22px;border-radius:0}
+ /* The kind cards (Endless, a friend, Challenges, Surprise me, New in studio)
+    take a whole cell like any course card. */
+ #drawer .sx-cards>.sx-card{min-width:0}
  #drawer .fr-list{display:flex;flex-wrap:wrap;gap:8px}
  #drawer .fr-card{display:grid;gap:2px;text-align:left}
  #drawer .fr-card small{font-size:12px;color:var(--soft)}

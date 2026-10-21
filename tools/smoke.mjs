@@ -417,7 +417,15 @@ const whereAmI = page => page.evaluate(() => {
 const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
  if (await t.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false)) await press('#reliefTake');
 };
-const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {name: entry}).first().click();
+// EVERY MODE BUT THE RANGE IS IN PLAY (21 October 2026): Endless, the course of
+// the week and Challenges are cards on Play's first step, not menu rows.
+const VIA_PLAY = {'Endless': 'Endless', 'Course of the week': 'Course of the week', 'Challenges': 'Challenges'};
+async function fromMenu(t, entry, press = 'click') {
+ if (!VIA_PLAY[entry]) return t.page.locator('#mainMenu').getByRole('button', {name: entry}).first()[press]();
+ await t.page.locator('#mainMenu').getByRole('button', {name: 'Play'}).first()[press]();
+ await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+ await t.page.locator(`#drawer .sx-card[aria-label^="${VIA_PLAY[entry]}"]`).first()[press]();
+}
 
 // Every control on the play screen that a player can see must be one a player
 // can click. Checked by asking the browser what is actually under the centre of
@@ -2023,9 +2031,9 @@ const JOURNEYS = [
    await menuReady(t);
    const tap = sel => t.page.tap(sel);
    await t.step('Endless → Start an endless run', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
-    // Round 14: the run starts from the Golfers step.
-    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
+    await fromMenu(t, 'Endless', 'tap');
+    // Endless is a kind of round in Play (21 October 2026): it starts from the last step, Rules.
+    await t.page.locator('#drawer .sx-steps .sx-step').last().tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
@@ -2466,9 +2474,9 @@ const JOURNEYS = [
     await t.key('Escape');
    });
    await t.step('into a round: the shot panel says Ready, and Tools has the monitor too', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
-    // Round 14: the run starts from the Golfers step.
-    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
+    await fromMenu(t, 'Endless', 'tap');
+    // Endless is a kind of round in Play (21 October 2026): it starts from the last step, Rules.
+    await t.page.locator('#drawer .sx-steps .sx-step').last().tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
@@ -2812,7 +2820,8 @@ const JOURNEYS = [
    });
    await t.step('the panel, then play it', async () => {
     await fromMenu(t, 'Course of the week');
-    await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
+    // The week is a course chosen in Play now: its line names the week.
+    await t.until(async () => /WEEK [0-9]+/.test(await t.page.textContent('#drawerContent')), 'Play on the week', 10 * SLOW);
     // Round 14: Play is on the Golfers step; press goes there first.
     await t.press('Play the course of the week');
     await t.inPlay(180 * SLOW);

@@ -663,6 +663,17 @@ green everywhere, and every mode but the range under one Play.
   and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
   tool labels' new names read in a real round by a person, the main menu's
   hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 4, one Play for every mode: built, seen in the capture build.**
+  Seen: the menu with five rows, Play's seven cards, Endless's Landscape step,
+  a friend's The challenge step, the week locking the format, Challenges with
+  its keys footer and the list on the chosen challenge's tab. Smoke:
+  endless-round, weekly, friend-challenge, challenge, challenge-week,
+  challenge-more, skins, level-up, menu-panels (three sizes), hud-reachable,
+  monitor-phone, boot, no-late-shaders, ball-light-shaders,
+  ball-light-hole-out, profile, bag, relief, mixed-group pass. Not seen by a
+  person: a friend's code read on the new step end to end (the smoke journey
+  does it), Play on a phone with seven cards, Endless's start button now on
+  the last step.
 - [ ] **Phase 3, pause and settings: built, seen in the capture build.** Seen:
   the six-row pause list, the Settings window and every tab (the time of day
   needed a fix: the clock closed itself), Tools by T, Golfers & rules, the range

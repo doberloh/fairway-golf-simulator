@@ -56,11 +56,11 @@ import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
-import {buildLobby,buildEndlessSetup,buildRangeSetup,nameSize} from './ui-lobby.js';
+import {buildLobby,buildRangeSetup,nameSize} from './ui-lobby.js';
 import {buildMonitorSetup} from './ui-monitor-setup.js';
 import {buildProfileHub,overviewTiles} from './ui-profile-hub.js';
 import {SETTINGS_TABS,WINDOW_SETTINGS,buildSettings} from './ui-settings.js';
-import {buildChallenges,buildWeekly,buildFriend,buildLibrary,buildHelp} from './ui-menu-screens.js';
+import {buildChallenges,buildLibrary,buildHelp} from './ui-menu-screens.js';
 import {pictureQueue} from './course-picture.js';
 import {createModelCards} from './model-cards.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
@@ -367,7 +367,7 @@ let modelCards=null;
 // Each help page's keys (round 14, frame c-help); the essentials read their own list.
 const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
 const cardPictures=(items,w,h)=>{pictureQueue(items,w,h);modelCards?.queue(items);};
-let lobbySheet=null,lobbyCourse='';
+let lobbySheet=null,lobbyCourse='',lobbyKeep=false,lobbyOpenStep=null;
 let lobbyBiome=null,monitorSetup=null,profileHubTab='Overview',lobbyStep=0,endlessStep=0,weeklyStep=0,endlessLandscape='any',endlessGoal='',lobbySaved=false,studioSheet=null,studioChangeList=[];
 // A TAP THAT NO FRAME SAW. Aim and power move while an arrow is held, read once
 // per frame, so a key pressed and released between two frames used to do
@@ -752,6 +752,9 @@ function renderChallengeSetup(content){
  const me=mainProfile(profiles);if(settleMedals(me))storeProfiles(profiles);
  if(!challengeDef(challengePick))challengePick=CHALLENGES[0].id;
  if(!GROUPS.some(g=>g.id===challengeTab))challengeTab=challengeDef(challengePick).group;
+ // The list shows the chosen challenge's own tab, so the detail and the list
+ // agree (UI/UX pass, 21 October 2026: it showed Closest to the pin beside Off the tee).
+ if(!challengeWeekPick&&challengeDef(challengePick).group!==challengeTab)challengeTab=challengeDef(challengePick).group;
  const week=weekChallengeInfo(me);
  const def=challengeWeekPick?week.def:challengeDef(challengePick),medals=me?.medals||{},have=g=>challengesIn(g).reduce((a,c)=>a+(medals[c.id]||0),0);
  const weekCard=`<button class="chal-card chal-week${challengeWeekPick?' on':''}" data-chal-week aria-pressed="${challengeWeekPick}"><small>Challenge of the week · until Sunday</small><b>${escape(week.def.name)}</b>${MEDAL_PIPS(week.rec?.medal||0)}<small>${escape(week.where)}${week.best?` · your best this week ${escape(week.best)}`:''}</small></button>`;
@@ -773,7 +776,7 @@ function renderChallengeSetup(content){
   +(def.medals?`<ul class="medal-asks">${asks}</ul>`:'')+`${mine?`<p class="note">${escape(mine)}</p>`:''}`
   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>`
   +`<button class="primary" data-panel-action id="challengeGo">Start ${escape(def.name)} <i data-lucide="arrow-right"></i></button>`
-  +`<p class="note">Skins is a round format now: choose it under <em>Format</em> when you start a round from Play.</p>`;
+  +'';
  content.querySelectorAll('[data-chal-tab]').forEach(b=>b.onclick=()=>{challengeTab=b.dataset.chalTab;challengePick=challengesIn(challengeTab)[0].id;challengeWeekPick=false;openPanel('round');});
  content.querySelectorAll('[data-challenge]').forEach(b=>b.onclick=()=>{challengePick=b.dataset.challenge;challengeWeekPick=false;openPanel('round');});
  content.querySelector('[data-chal-week]').onclick=()=>{challengeWeekPick=true;openPanel('round');};
@@ -4157,6 +4160,53 @@ function wireFormatFields(){
 // THE COURSE OF THE WEEK'S ROUND, for a group: stroke play, 18 holes, the
 // week's key on the round so its best is kept. Throws on a group the round
 // refuses, before anything is torn down.
+// The main golfer's longest endless run, for Endless's step in Play.
+function endlessBest(){
+ const me=mainProfile(profiles),runs=(me?.rounds||[]).filter(r=>r.endless).map(r=>({r,t:roundTotals(r)})).filter(x=>x.t.played>0).sort((a,b)=>b.t.played-a.t.played||a.t.rel-b.t.rel);
+ const top=runs[0];
+ return top?{line:`${top.t.played} HOLE${top.t.played===1?'':'S'} · ${toParText(top.t.rel)}`,sub:profileWhen(top.r.started).toUpperCase()}:null;
+}
+// A FRIEND'S CHALLENGE, PLAY'S STEP (rival.js): paste a code, see what it
+// holds -- their card, the course, the rules they played -- before the golfers.
+// Every code pasted here is kept, newest first.
+function friendStepHtml(){
+ const list=listRivals(),pick=list.find(r=>r.id===rivalPick)||list[0]||null;rivalPick=pick?.id||'';
+ const problem=pick?rivalProblem(pick,{version:GAME_VERSION}):'';
+ return `<h3>The challenge</h3>`
+  +`<div class="code-import fr-code"><label class="field">Paste a challenge code<textarea id="rivalPaste" rows="3" spellcheck="false" autocapitalize="off" placeholder="FWC1.…"></textarea></label>`
+  +`<button class="secondary" id="rivalRead">Read the code</button><button class="secondary" id="rivalOpenFile">Open a challenge file</button><input id="rivalFile" type="file" accept=".txt,text/plain" hidden></div><p class="field-error" id="rivalError"></p>`
+  +(list.length?`<div class="fr-list">${list.map(r=>`<button type="button" class="secondary fr-card${r.id===rivalPick?' on':''}" data-rival="${r.id}" aria-pressed="${r.id===rivalPick}"><strong>${escape(r.name)} · ${scoreText(sumScores(r.card))}</strong><small>${escape(r.course)} · ${r.holes} holes${r.day?` · ${escape(r.day)}`:''}</small></button>`).join('')}</div>`:'')
+  +(pick?rivalDetail(pick,problem):`<p class="note">At the end of a stroke-play round, a friend can send their card as a code: the course, their score on every hole, and every shot they hit. Paste it here to play the same course against them, with their shots drawn on each hole. You both need the same version of Fairway (this is ${escape(GAME_VERSION||'an unstamped build')}).</p>`);
+}
+function wireFriendStep(){
+ const take=code=>{try{const r=saveRival(code);rivalPick=r.id;lobbyKeep=true;lobbyStep=1;openPanel('round');toast(`${r.name}’s challenge: ${r.course}.`);}catch(e){$('rivalError').textContent=e.message;}};
+ $('rivalRead').onclick=()=>take($('rivalPaste').value);
+ $('rivalOpenFile').onclick=()=>$('rivalFile').click();
+ $('rivalFile').onchange=async()=>{const f=$('rivalFile').files[0];if(!f)return;if(f.size>100000){$('rivalError').textContent='That file is too big to be a Fairway challenge.';return;}take(await f.text());};
+ document.querySelectorAll('#drawerContent [data-rival]').forEach(b=>b.onclick=()=>{rivalPick=b.dataset.rival;lobbyKeep=true;lobbyStep=1;openPanel('round');});
+}
+// AN ENDLESS RUN FOR A GROUP: the goal (none or sudden death) and the
+// landscape chosen on Play's Landscape step. Throws before anything goes.
+async function startEndlessRun(base){
+ if(flight){toast('Finish the current shot first.');return;}
+ endlessGoal=$('endlessGoal')?.value||'';
+ const group={...base,...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});
+ endlessSetup=false;closePanel();
+ if(endlessGoal)goalSummary=null;
+ await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
+ toast('Endless: hole out and the next one grows.');
+}
+// A FRIEND'S CHALLENGE FOR A GROUP: stroke play against their card.
+async function startRivalRound(base){
+ if(flight){toast('Finish the current shot first.');return;}
+ const pick=listRivals().find(r=>r.id===rivalPick);
+ if(!pick)throw Error('Paste the code your friend sent first.');
+ const problem=rivalProblem(pick,{version:GAME_VERSION});if(problem)throw Error(problem);
+ const group={...base,mode:'stroke',rival:pick.id};new Round({...group,holes:pick.holes});
+ rivalSetup=false;closePanel();
+ await startRoundOn(pick.settings,group,pick.course);
+ toast(`${pick.name}’s challenge: ${scoreText(sumScores(pick.card))} to beat.`);
+}
 async function startWeeklyRound(base){
  if(flight){toast('Finish the current shot first.');return;}
  const s=weeklySettings(),w=isoWeek();
@@ -4167,9 +4217,13 @@ async function startWeeklyRound(base){
  toast(`The course of the week: ${name}.`);
 }
 function openRangePanel(){rangeSetup=true;rangeSetupStep=0;openPanel('round');}
-function openEndlessPanel(){endlessSetup=true;openPanel('round');}
+// ONE PLAY FOR EVERY MODE (UI/UX pass, 21 October 2026): Endless, the course
+// of the week and a friend's challenge are kinds chosen on Play's first step
+// (lobbyCourse), each going straight to its own step.
+function openPlayOn(kind,step=0){lobbyCourse=kind;lobbyKeep=false;panel=null;closePanel();lobbyStep=step;lobbyOpenStep=step;openPanel('round');}
+function openEndlessPanel(){openPlayOn('endless',1);}
 // A friend's challenge (rival.js), opened on the code it names, or the newest.
-function openFriendSetup(id=''){if(id)rivalPick=id;rivalStep=0;lobbyStep=0;rivalSetup=true;openPanel('round');}
+function openFriendSetup(id=''){if(id)rivalPick=id;openPlayOn('friend',1);}
 // The map's pan and zoom, and the one place that redraws it outside the frame
 // loop. Stored on the canvas so every drawMap call site inherits it -- which is
 // what makes this work identically in play, free flight, the studio and the
@@ -4815,7 +4869,7 @@ function leanSeatRows(root){
 }
 function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
- if(name==='round'&&panel!=='round'){lobbyStep=appMode==='play'?1:0;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
+ if(name==='round'&&panel!=='round'){lobbyStep=lobbyOpenStep??(appMode==='play'?1:0);lobbyOpenStep=null;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
  if(name!=='score')cancelAdvance();
  if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
@@ -5079,31 +5133,6 @@ function hubBlocks(profile,s,lv){
 // landscape's two colours, named (the 1.0 saved courses shelf). Hidden
 // outside the 1.0 sheets.
 const coursePic=(biome,id)=>{const b=BIOMES[biome],ui=b?.ui||{};return `<span class="course-pic"${id?` data-course="${escape(id)}"`:''} style="--p1:${ui.a1||'#4ade80'};--p2:${ui.a2||'#166534'}" aria-hidden="true"><span>${escape((b?.name||biome||'').toUpperCase())}</span></span>`;};
-// THE COURSE OF THE WEEK'S OWN BLOCKS (ui-menu-screens.js buildWeekly): the
-// picture with the week and the course's name, the four weeks before with the
-// main golfer's best on each, and the facts as rows.
-function weeklyBlocks(s,w,me,best,ever){
- // ONE SCREEN (round 13, frame c-cotw): the picture with the week and the
- // course's name, eight fact tiles beside it, the four weeks before along the
- // foot, each with its picture and the main golfer's best. No long scroll.
- const day=864e5,now=Date.now(),b=BIOMES[s.biome],plan=planCourse(s);
- const earlier=[1,2,3,4].map(i=>{const d=new Date(now-i*7*day),k=weekKey(d),bb=BIOMES[weeklyBiome(d)];
-  return `<div class="wk-week" data-week-ago="${i}"><span class="sx-pic wk-week-pic"></span><span class="wk-week-cap"><strong>WEEK ${isoWeek(d).week}</strong><small>${escape((bb?.name||'').toUpperCase())} · ${me?.weekly?.[k]??'—'}</small></span></div>`;}).join('');
- const toMonday=((8-new Date(now).getDay())%7)||7,next=BIOMES[weeklyBiome(new Date(now+toMonday*day))];
- const tile=(k,v,sub='',hot=false)=>`<div class="wk-tile${hot?' hot':''}"><span>${k}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
- return `<div class="wk-hero"><span class="wk-tag">WEEK ${w.week} · ${escape((b?.name||s.biome).toUpperCase())}</span><strong>${escape(suggestCourseName(s).toUpperCase())}</strong></div>`
-  +`<div class="wk-earlier"><h4>EARLIER WEEKS</h4><div class="wk-weeks">${earlier}</div></div>`
-  +`<div class="wk-facts">`
-  +tile('HOLES',`${plan.holes.length} · PAR ${plan.par}`)
-  +tile('LENGTH',`${Math.round(plan.yards).toLocaleString()} YDS`)
-  +tile('BEST THIS WEEK',best??'—')
-  +tile('BEST ON ANY WEEK',ever??'—')
-  +tile('FIRST FINISH',best!=null?'DONE \u2713':`+${WEEKLY_XP.first} XP`)
-  +tile('BEAT YOUR BEST',`+${WEEKLY_XP.best} XP`)
-  +tile('FORMAT','STROKE PLAY')
-  +tile('NEXT COURSE',escape((next?.name||'').toUpperCase()),`IN ${toMonday} DAY${toMonday===1?'':'S'}`,true)
-  +`</div>`;
-}
 // A RENAMED PROFILE IS RENAMED EVERYWHERE IT IS PLAYING: in the round on screen,
 // in a round waiting behind Continue, and in an open group editor. A golfer is
 // that profile by id, or -- in a save from before ids -- by the old name.
@@ -5146,7 +5175,7 @@ function drawMenuCard(){
   +`<div class="rh-mc-xp"><div><span>LEVEL ${lv.level}</span><span>${lv.into.toLocaleString()} / ${lv.need.toLocaleString()} XP</span></div><i><b style="width:${(share*100).toFixed(1)}%"></b></i></div>`
   +(def?`<button type="button" class="rh-mc-week" id="menuWeekCard" aria-label="Challenge of the week: ${escape(def.name||'')}. Open it"><small>CHALLENGE OF THE WEEK</small><strong>${escape(String(def.name||'').toUpperCase())}</strong></button>`:'');
  // The week's card is a way in, not a label (UI/UX pass, 21 October 2026).
- if($('menuWeekCard'))$('menuWeekCard').onclick=()=>$('menuChallenges')?.click();
+ if($('menuWeekCard'))$('menuWeekCard').onclick=()=>{if(flight)return;challengeSetup=true;openPanel('round');};
 }
 // "REPLAY THIS COURSE": the same ground, a fresh card. A course comes back from
 // the settings it was grown from, an endless run from its seed; the group and
@@ -5549,81 +5578,9 @@ function renderPanel(name,content){
   $('footprint').onchange=()=>document.querySelectorAll('[data-footprint]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.footprint===$('footprint').value)));
 }else if(name==='round'&&challengeSetup){
   renderChallengeSetup(content);
- }else if(name==='round'&&rivalSetup){
-  // A FRIEND'S CHALLENGE (rival.js): paste a code, see what it holds -- their
-  // card, the course, the rules they played -- then the group, as for the
-  // course of the week. Stroke play: the card is strokes. The group's own rules
-  // are theirs to choose (the owner, 20 October 2026); the result names where
-  // they differed. Every code pasted here is kept, newest first.
-  const list=listRivals(),pick=list.find(r=>r.id===rivalPick)||list[0]||null;rivalPick=pick?.id||'';
-  const problem=pick?rivalProblem(pick,{version:GAME_VERSION}):'';
-  content.innerHTML=`<h3>The challenge</h3>`
-   +`<div class="code-import fr-code"><label class="field">Paste a challenge code<textarea id="rivalPaste" rows="3" spellcheck="false" autocapitalize="off" placeholder="FWC1.…"></textarea></label>`
-   +`<button class="secondary" id="rivalRead">Read the code</button><button class="secondary" id="rivalOpenFile">Open a challenge file</button><input id="rivalFile" type="file" accept=".txt,text/plain" hidden></div><p class="field-error" id="rivalError"></p>`
-   +(list.length?`<div class="fr-list">${list.map(r=>`<button type="button" class="secondary fr-card${r.id===rivalPick?' on':''}" data-rival="${r.id}" aria-pressed="${r.id===rivalPick}"><strong>${escape(r.name)} · ${scoreText(sumScores(r.card))}</strong><small>${escape(r.course)} · ${r.holes} holes${r.day?` · ${escape(r.day)}`:''}</small></button>`).join('')}</div>`:'')
-   +(pick?rivalDetail(pick,problem):`<p class="note">At the end of a stroke-play round, a friend can send their card as a code: the course, their score on every hole, and every shot they hit. Paste it here to play the same course against them, with their shots drawn on each hole. You both need the same version of Fairway (this is ${escape(GAME_VERSION||'an unstamped build')}).</p>`)
-   +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
-   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
-   +`<p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="rivalGo" aria-label="Play the friend’s challenge"${pick&&!problem?'':' disabled'}>Play <small>${pick?escape(pick.course.toUpperCase()):'NO CHALLENGE YET'}</small></button>`;
-  const formatNote=wireFormatFields();
-  groupEditor('playerRows',round.players,formatNote);
-  const take=code=>{try{const r=saveRival(code);rivalPick=r.id;rivalStep=0;openPanel('round');toast(`${r.name}’s challenge: ${r.course}.`);}catch(e){$('rivalError').textContent=e.message;}};
-  $('rivalRead').onclick=()=>take($('rivalPaste').value);
-  $('rivalOpenFile').onclick=()=>$('rivalFile').click();
-  $('rivalFile').onchange=async()=>{const f=$('rivalFile').files[0];if(!f)return;if(f.size>100000){$('rivalError').textContent='That file is too big to be a Fairway challenge.';return;}take(await f.text());};
-  content.querySelectorAll('[data-rival]').forEach(b=>b.onclick=()=>{rivalPick=b.dataset.rival;openPanel('round');});
-  $('rivalGo').onclick=async()=>{
-   if(flight){toast('Finish the current shot first.');return;}
-   if(!pick||problem)return;
-   let group;
-   try{group={...readGroup(),mode:'stroke',rival:pick.id};new Round({...group,holes:pick.holes});}catch(e){$('roundError').textContent=e.message;return;}
-   rivalSetup=false;closePanel();
-   await startRoundOn(pick.settings,group,pick.course);
-   toast(`${pick.name}’s challenge: ${scoreText(sumScores(pick.card))} to beat.`);
-  };
- }else if(name==='round'&&weeklySetup){
-  // THE COURSE OF THE WEEK (Phase 7): no course picker -- the week chose it --
-  // just the group and the format, and what it is.
-  const s=weeklySettings(),w=isoWeek(),me=mainProfile(profiles),best=me?.weekly?.[weekKey()],ever=bestEverWeekly(me);
-  content.innerHTML=weeklyBlocks(s,w,me,best,ever)+`<p><b>Week ${w.week}, ${w.year}: ${escape(BIOMES[s.biome]?.name||s.biome)}.</b> Eighteen holes of stroke play at the default settings, the same on every copy of Fairway built with course generator ${GENERATOR_VERSION}. A new course every Monday, in the next landscape.</p>`
-   +(me?`<p class="note">${escape(me.name)}: best this week ${best??'—'} · best on any week's course ${ever??'—'}. The first round you finish each week earns ${WEEKLY_XP.first} XP, and beating your best that week ${WEEKLY_XP.best} more.</p>`:'')
-   +`<h3>Format &amp; tees</h3>${formatFields({strokeOnly:true})}`
-   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
-   +`<p class="field-error" id="roundError"></p>`
-   +`<button class="primary" data-panel-action id="weeklyGo" aria-label="Play the course of the week">Play <small>${escape(suggestCourseName(weeklySettings()).toUpperCase())}</small></button>`;
-  const formatNote=wireFormatFields();
-  groupEditor('playerRows',round.players,formatNote);
-  $('weeklyGo').onclick=async()=>{
-   if(flight){toast('Finish the current shot first.');return;}
-   try{await startWeeklyRound(readGroup());}catch(e){$('roundError').textContent=e.message;}
-  };
- }else if(name==='round'&&endlessSetup){
-  // NO COURSE PICKER. Endless grows each hole as you finish the last one, so a
-  // course to play would be a course it immediately throws away. What is left is
-  // exactly the round half of the round panel, built from the same helpers.
-  content.innerHTML=`<p>A run with no last hole. Each green you hole out on grows the next tee. Set your group and how you are playing, then go.</p>`
-   +`<h3>Format &amp; tees</h3>${formatFields({match:false})}`
-   +`<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p>`
-   +`<p class="field-error" id="roundError"></p>`
-   // The run's goal (round 13): none, or Sudden death -- the challenge's own
-   // goal, a real run that ends at the first bogey (round-goals.js).
-   +`<label class="field">Goal<select id="endlessGoal"><option value="" ${endlessGoal?'':'selected'}>None · play as long as you like</option><option value="suddendeath" ${endlessGoal==='suddendeath'?'selected':''}>Sudden death · out at your first bogey</option></select></label>`
-   +`<button class="primary" data-panel-action id="endlessGo" aria-label="Start an endless run">Start the run <small>HOLE 1</small></button>`;
-  const formatNote=wireFormatFields();
-  groupEditor('playerRows',round.players,formatNote);
-  $('endlessGo').onclick=async()=>{
-   if(flight){toast('Finish the current shot first.');return;}
-   // Validated HERE rather than inside `buildEndless`: the overlay must not go
-   // up over a group that is about to be rejected.
-   let group;
-   endlessGoal=$('endlessGoal')?.value||'';
-   try{group={...readGroup(),...(endlessGoal?{mode:'stroke',goal:endlessGoal}:{})};new Round({...group,endless:true});}catch(e){$('roundError').textContent=e.message;return;}
-   endlessSetup=false;closePanel();
-   if(endlessGoal)goalSummary=null;
-   await startEndless(group,endlessLandscape!=='any'?landscapeSeed(newRunSeed(),endlessLandscape):undefined);
-   toast('Endless: hole out and the next one grows.');
-  };
+ // The friend's challenge, the course of the week and Endless had setup
+ // screens of their own until 21 October 2026 (UI/UX pass): each is a kind of
+ // round chosen on Play's first step now (the lobby below).
  }else if(name==='round'&&(rangeSetup||rangeMode)){
   // A PRACTICE GROUP, not a round. The course picker, format, tees and putting
   // mode all belong to a round and none of them mean anything on a range, so
@@ -5686,14 +5643,18 @@ function renderPanel(name,content){
   // A round you could export: one actually being played, not the showcase hole
   // behind the menu and not a practice ground.
   const playingNow=appMode==='play'&&!rangeMode&&!menuBackdrop;
+  // The kind of round Play is set up for: a course (saved or the week), an
+  // endless run, or a friend's challenge -- each of the last two with a step.
+  const lobbyKind=playingNow?'course':lobbyCourse==='endless'?'endless':lobbyCourse==='friend'?'friend':'course';
   content.innerHTML=`<p>Pick a course, invite a few friends, and make a day of it. Courses are shaped in Course studio; a course decides the landscape and its hole count, and everything below is yours to choose.</p>
   <h3>Your course</h3>
-  <label class="field">Course<select id="roundCourse">${appMode==='play'?'':`<option value="weekly">${escape(suggestCourseName(weeklySettings()))} · 18 holes · the course of the week</option>`}${library.map(c=>`<option value="${c.id}">${escape(c.name)} · ${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)}</option>`).join('')}${library.length||appMode!=='play'?'':'<option value="">No saved courses yet</option>'}</select></label>
+  <label class="field">Course<select id="roundCourse">${appMode==='play'?'':`<option value="weekly">${escape(suggestCourseName(weeklySettings()))} · 18 holes · the course of the week</option><option value="endless">Endless · one hole after another</option><option value="friend">A friend’s challenge</option>`}${library.map(c=>`<option value="${c.id}">${escape(c.name)} · ${c.settings.holes} holes · ${escape(BIOMES[c.settings.biome]?.name||c.settings.biome)}</option>`).join('')}${library.length||appMode!=='play'?'':'<option value="">No saved courses yet</option>'}</select></label>
   ${library.length?'':'<p class="note">Shape one in Course studio, or let Fairway surprise you below.</p>'}
   <div class="split"><button class="secondary" id="roundStudio"><i data-lucide="mountain"></i> Course studio</button><button class="secondary" id="roundSurprise"><i data-lucide="shuffle"></i> Surprise me &amp; play</button></div>
   ${library.length?'<div class="split"><button class="secondary" id="roundManage"><i data-lucide="library"></i> Manage &amp; share courses</button><button class="secondary danger" id="roundDelete"><i data-lucide="trash-2"></i> Delete this course</button></div>':''}
   <p class="research-label">Surprise me builds a fresh nine-hole course from randomised settings and tees straight off. Save it afterwards from Course studio if you want to keep it.</p>
-  <h3>Format &amp; tees</h3>${formatFields()}<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>${(appMode==='play'&&!rangeMode)?'<button class="secondary" id="applyGroup">Apply to this session</button>':''}${playingNow?'':'<button class="primary" data-panel-action id="startRound">Start fresh round <i data-lucide="arrow-right"></i></button>'}
+  ${lobbyKind==='friend'?friendStepHtml():''}${lobbyKind==='endless'?`<label class="field">Goal<select id="endlessGoal"><option value="" ${endlessGoal?'':'selected'}>None · play as long as you like</option><option value="suddendeath" ${endlessGoal==='suddendeath'?'selected':''}>Sudden death · out at your first bogey</option></select></label>`:''}
+  <h3>Format &amp; tees</h3>${formatFields({match:lobbyKind!=='endless'})}<h3>Your group</h3><div class="players-list" id="playerRows"></div><p id="formatNote" class="note"></p><p class="field-error" id="roundError"></p>${(appMode==='play'&&!rangeMode)?'<button class="secondary" id="applyGroup">Apply to this session</button>':''}${playingNow?'':'<button class="primary" data-panel-action id="startRound">Start fresh round <i data-lucide="arrow-right"></i></button>'}
   <h3>Saved rounds</h3>
   ${roundCards()}
   <p class="field-error" id="roundsError"></p>
@@ -5713,7 +5674,9 @@ function renderPanel(name,content){
   // Alex has been added back, and the next press does something else entirely.
   const disarmApply=()=>{const el=$('applyGroup');if(!el||!el.dataset.armed)return;
    delete el.dataset.armed;el.textContent='Apply to this round';};
-  groupEditor('playerRows',round.players,()=>{formatNote?.();disarmApply();});
+  const start=lobbyKeep&&groupDraft?.length?groupDraft.map(p=>({profile:p.profile,name:p.name,team:p.team,hand:p.hand,input:p.input,tee:p.tee,id:p.seat})):round.players;lobbyKeep=false;
+  groupEditor('playerRows',start,()=>{formatNote?.();disarmApply();});
+  if(lobbyKind==='friend')wireFriendStep();
   $('roundStudio').onclick=()=>enterStudio();
   if($('roundManage'))$('roundManage').onclick=()=>openPanel('library');
   // Two taps rather than a browser confirm: deleting a course cannot be undone.
@@ -5790,7 +5753,8 @@ function renderPanel(name,content){
   // start a round from here, and they go through `guardRound` to do it.
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
-   if($('roundCourse').value==='weekly'){try{await startWeeklyRound(readGroup());}catch(e){$('roundError').textContent=e.message;}return;}
+   const kind=$('roundCourse').value;
+   if(kind==='weekly'||kind==='endless'||kind==='friend'){try{await (kind==='weekly'?startWeeklyRound:kind==='endless'?startEndlessRun:startRivalRound)(readGroup());}catch(e){$('roundError').textContent=e.message;if(kind==='friend')lobbySheet?.go(1);}return;}
    const chosen=findCourse($('roundCourse').value);
    // Said where it is seen (the foot, beside Tee off), and back to step 1.
    if(!chosen){$('roundError').textContent='Choose a course first: the course of the week, one of yours, or Surprise me.';lobbySheet?.go(0);return;}
@@ -6208,8 +6172,6 @@ function renderPanel(name,content){
  // (ui-menu-screens.js) -- not in the studio, whose sheet keeps its layout.
  if(content.id==='drawerContent'&&appMode!=='studio'){
   if(name==='round'&&challengeSetup)buildChallenges(content);
-  else if(name==='round'&&rivalSetup)buildFriend(content,{step:rivalStep,onStep:i=>{rivalStep=i;}});
-  else if(name==='round'&&weeklySetup){buildWeekly(content,{step:weeklyStep,onStep:i=>{weeklyStep=i;}});const hero=content.querySelector('.wk-hero');const day=864e5;if(hero)cardPictures([{el:hero,settings:weeklySettings()},...[...content.querySelectorAll('[data-week-ago] .wk-week-pic')].map(el=>({el,settings:weeklySettings(new Date(Date.now()-Number(el.closest('[data-week-ago]').dataset.weekAgo)*7*day))}))],720,360);}
   else if(name==='library')buildLibrary(content,{onNew:()=>{closePanel();openStudioSetup();}});
   // Each saved course's picture, drawn from its plan, a card at a time (course-picture.js).
   if(name==='library')cardPictures([...content.querySelectorAll('.course-pic[data-course]')].map(el=>({el,settings:findCourse(el.dataset.course)?.settings})).filter(x=>x.settings),240,96);
@@ -6218,18 +6180,6 @@ function renderPanel(name,content){
  if(name==='help'&&content.id==='drawerContent')buildHelp(content,{keys:HELP_KEYS});
  // The driving range in two steps (ui-lobby.js), once the panel has its sections.
  if(name==='round'&&(rangeSetup||rangeMode))buildRangeSetup(content,{step:rangeSetupStep,onStep:i=>{rangeSetupStep=i;}});
- if(name==='round'&&endlessSetup&&!rangeSetup&&!weeklySetup&&!challengeSetup&&!rivalSetup){
-  // Endless, step by step (ui-lobby.js): the landscapes as drawn pictures, the
-  // goal, the golfers, the format; the best run from the main golfer's history.
-  const me=mainProfile(profiles),runs=(me?.rounds||[]).filter(r=>r.endless).map(r=>({r,t:roundTotals(r)})).filter(x=>x.t.played>0).sort((a,b)=>b.t.played-a.t.played||a.t.rel-b.t.rel);
-  const top=runs[0];
-  buildEndlessSetup(content,{
-   landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),
-   landscape:endlessLandscape,onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},
-   best:top?{line:`${top.t.played} HOLE${top.t.played===1?'':'S'} · ${toParText(top.t.rel)}`,sub:profileWhen(top.r.started).toUpperCase()}:null,
-   pictures:cardPictures,step:endlessStep,onStep:i=>{endlessStep=i;},
-  });
- }
  if(name==='round'){
   // Play, step by step (ui-lobby.js): every saved course and the course of the
   // week as cards with pictures, each with its biome, holes, par and length.
@@ -6239,10 +6189,16 @@ function renderPanel(name,content){
   lobbySheet=buildLobby(content,{midRound:appMode==='play'&&!menuBackdrop&&!rangeMode,
    courses:listCourses().map(c=>({id:c.id,name:c.name,settings:c.settings,line:lineOf(c.settings)})),
    weekly:appMode==='play'?null:{name:suggestCourseName(ws),line:`WEEK ${wk.week} · ${lineOf(ws)}`,settings:ws},
-   friend:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT'}))(listRivals()[0]),
-   onFriend:openFriendSetup,
+   kind:appMode==='play'?'course':lobbyCourse==='endless'?'endless':lobbyCourse==='friend'?'friend':'course',
+   friend:appMode==='play'?null:(r=>({name:r?`${r.name.toUpperCase()} · ${scoreText(sumScores(r.card))}`:'PLAY A FRIEND’S CARD',line:r?`${r.course.toUpperCase()} · ${r.holes} HOLES`:'PASTE THE CODE THEY SENT',ready:!!r&&!rivalProblem(r,{version:GAME_VERSION})}))(listRivals().find(x=>x.id===rivalPick)||listRivals()[0]),
+   endless:appMode==='play'?null:{landscapes:Object.entries(BIOMES).map(([key,b])=>({key,name:b.name,settings:{seed:'ENDLESS-'+key,biome:key,holes:9}})),landscape:endlessLandscape,
+    onLandscape:k=>{endlessLandscape=k;lobbyBiome=k==='any'?null:k;applyHudPalette();},best:endlessBest(),pictures:cardPictures},
+   onKind:v=>{lobbyCourse=v;lobbyKeep=true;lobbyStep=v==='endless'||v==='friend'?1:0;openPanel('round');},
+   onChallenges:appMode==='play'?null:()=>{lobbyKeep=false;challengeSetup=true;openPanel('round');},
+   challengesLine:(()=>{const n=$('menuChallengesNote')?.textContent||'';return n.toUpperCase()||'SINGLE SHOTS FOR MEDALS';})(),
    pictures:cardPictures,step:lobbyStep,onStep:i=>{lobbyStep=i;},savedOpen:lobbySaved,onSaved:o=>{lobbySaved=o;},
-   onCourse:v=>{lobbyCourse=v;lobbyBiome=v==='weekly'?ws.biome:listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();const del=$('roundDelete');if(del)del.hidden=!findCourse(v);},
+   onCourse:v=>{lobbyCourse=v;lobbyBiome=v==='weekly'?ws.biome:v==='endless'?(endlessLandscape==='any'?null:endlessLandscape):v==='friend'?listRivals().find(r=>r.id===rivalPick)?.settings?.biome??null:listCourses().find(c=>c.id===v)?.settings?.biome??null;applyHudPalette();const del=$('roundDelete');if(del)del.hidden=!findCourse(v);
+    const go=$('startRound');if(go){const say={weekly:['Play <small>THE COURSE OF THE WEEK</small>','Play the course of the week'],endless:['Start the run <small>HOLE 1</small>','Start an endless run'],friend:['Play <small>THE FRIEND’S CARD</small>','Play the friend’s challenge']}[v]||['Tee off <small>HOLE 1</small>','Tee off'];go.innerHTML=say[0];go.setAttribute('aria-label',say[1]);}},
    golferLine:seat=>{const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
     return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;},
   });
@@ -7137,7 +7093,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    return {groups,heaviest:meshes.slice(0,12),count:meshes.length,cull:view.cull?.stats()??null,ready:view.readyTimes??null};
   },
   reading:(on=true)=>{view.config.greenGrid=on;view.config.greenFlow=on;view.config.greenHeat=on;view.setGreenReading();updateHUD();return window.lab.state().reading;},
- };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuChallenges').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}challengeSetup=true;openPanel('round');};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}weeklySetup=true;openPanel('round');};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
+ };$('menuEndless').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openEndlessPanel();};$('menuChallenges').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}challengeSetup=true;openPanel('round');};$('menuWeekly').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}openPlayOn('weekly',0);};$('resetPopups').onclick=()=>{popups.reset();toast('Tool windows moved back to where they start.');};
  $('club').onchange=()=>{followClub();updateAim();updateHUD();sendPlayer();};
  holdToRepeat($('padLeft'),n=>nudgeAim(-1,n));holdToRepeat($('padRight'),n=>nudgeAim(1,n));
  holdToRepeat($('padFar'),n=>nudgeReach(1,n));holdToRepeat($('padNear'),n=>nudgeReach(-1,n));

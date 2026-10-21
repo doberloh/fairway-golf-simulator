@@ -39,57 +39,9 @@ export function buildChallenges(root, doc = globalThis.document) {
  const tabs = root.querySelector(':scope>.panel-tabs:not(.chal-tabs)');
  if (tabs) { if (go) root.append(go); tabs.remove(); }
  root.append(ch);
+ // The keys along the foot, as on every other setup screen (UI/UX pass).
+ root.append(make(doc, 'div', 'sx-foot ch-foot', '<div class="sx-keys"><span><kbd>↑ ↓</kbd>Choose</span><span><kbd>Enter</kbd>Start</span><span><kbd>Esc</kbd>Back</span></div>'));
  root.classList.add('ch-root');
- return true;
-}
-
-// THE COURSE OF THE WEEK (round 13, frame c-cotw), on one screen: the picture
-// with the week and the course's name (7 columns), eight fact tiles (5), the
-// earlier weeks along the foot. A second step holds the golfers and the tees
-// and rules (PLACED: the frame has only Play; a round needs a group). Play shows
-// on both steps. main.js writes the frame's own blocks (`weeklyBlocks`).
-export function buildWeekly(root, {step = 0, onStep, doc = globalThis.document} = {}) {
- const hero = root.querySelector('.wk-hero'), earlier = root.querySelector('.wk-earlier'), facts = root.querySelector('.wk-facts');
- if (!hero || !facts || root.querySelector('.sx')) return false;
- const p1 = make(doc, 'section', 'sx-body wk');
- p1.append(hero, facts);
- if (earlier) p1.append(earlier);
- const p2 = make(doc, 'section', 'sx-body sx-golfers wk-group');
- p2.append(make(doc, 'h3', 'sx-head', 'WHO\u2019S PLAYING \u00b7 1 TO 4'));
- const rows = root.querySelector('#playerRows'); if (rows) p2.append(rows);
- const rules = make(doc, 'div', 'wk-rules');
- for (const s of sectionsOf(root)) for (const n of [...s.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3' && n.id !== 'playerRows') rules.append(n);
- p2.append(rules);
- for (const s of sectionsOf(root)) s.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
- const go = root.querySelector('#weeklyGo');
- // Round 14 (frames c-cotw1, c-cotw2): Play only on the Golfers step.
- stepSheet(root, {steps: [{label: 'This week', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: go, onStep,
-  hints: [['Enter', 'Next'], ['Esc', 'Back']], doc});
- return true;
-}
-
-// A FRIEND'S CHALLENGE (rival.js, 20 October 2026): the course of the week's
-// two steps, for a pasted code -- 1 the code and what it holds (the card, the
-// course, the rules they played), 2 the golfers, their rules and Play. No
-// mockup exists for it; PLACED on the course of the week's frames.
-export function buildFriend(root, {step = 0, onStep, doc = globalThis.document} = {}) {
- const secs = sectionsOf(root), first = secs.find(s => s.dataset.title === 'The challenge');
- if (!first || root.querySelector('.sx')) return false;
- const p1 = make(doc, 'section', 'sx-body fr');
- for (const n of [...first.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3') p1.append(n);
- const p2 = make(doc, 'section', 'sx-body sx-golfers wk-group');
- p2.append(make(doc, 'h3', 'sx-head', 'WHO’S PLAYING · 1 TO 4'));
- const rows = root.querySelector('#playerRows'); if (rows) p2.append(rows);
- const rules = make(doc, 'div', 'wk-rules');
- for (const s of secs) if (s !== first) for (const n of [...s.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3' && n.id !== 'playerRows') rules.append(n);
- p2.append(rules);
- for (const s of secs) s.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
- stepSheet(root, {steps: [{label: 'The challenge', page: p1}, {label: 'Golfers', page: p2}], index: step, finish: root.querySelector('#rivalGo'), onStep,
-  hints: [['Enter', 'Next'], ['Esc', 'Back']], doc});
  return true;
 }
 

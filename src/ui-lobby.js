@@ -87,11 +87,14 @@ export function courseFacts(text) {
  return {name: parts[0] || '', holes: parts[1] || '', biome: parts[2] || ''};
 }
 
-// A course card: the picture, then the caption. `pic` gets the drawing.
+// A course card: the picture, then the caption. `pic` gets the drawing. Its
+// kind becomes a class `sx-<kind>`: never a name a step already uses (an
+// Endless card called `sx-endless` took the Endless step's two-column grid).
 function card(doc, {name, line, tag, best, kind}) {
  const b = make(doc, 'button', 'sx-card' + (kind ? ' sx-' + kind : ''));
  b.type = 'button';
- const pic = make(doc, 'span', 'sx-pic', kind === 'surprise' ? '<b>?</b>' : kind === 'studio' ? '<b>+</b>' : kind === 'friend' ? '<b>VS</b>' : '');
+ const mark = {surprise: '?', studio: '+', friend: 'VS', run: '∞', challenges: '★'}[kind];
+ const pic = make(doc, 'span', 'sx-pic', mark ? `<b>${mark}</b>` : '');
  const cap = make(doc, 'span', 'sx-cap', `${tag ? `<em>${esc(tag)}</em>` : ''}<strong>${esc(name)}</strong><small>${esc(line)}${best ? ` · <i>${esc(best)}</i>` : ''}</small>`);
  b.append(pic, cap);
  return {b, pic};
@@ -137,68 +140,37 @@ export function nameSize(name) {
  return n <= 9 ? 'nm-24' : n <= 12 ? 'nm-20' : n <= 15 ? 'nm-17' : 'nm-15';
 }
 
-// ENDLESS, STEP BY STEP (mockup `r13('c-endless')`): 1 Landscape -- the
-// landscapes as a grid of drawn pictures, or Any (a new one each hole), with
-// the goal and your best run beside them; 2 Golfers; 3 Format and rules (the
-// mockup's two steps had nowhere for these, PLACED). The start button shows on
-// every step: a run needs nothing chosen to begin.
-// `opts`: landscapes [{key, name, settings}], landscape, onLandscape(key),
-// goal, best {line, sub} or null, pictures, step, onStep.
-export function buildEndlessSetup(root, opts = {}, doc = globalThis.document) {
- const q = id => root.querySelector('#' + id);
- const mode = q('roundMode');
- if (!mode || root.querySelector('.sx')) return null;
- const page = cls => make(doc, 'section', 'sx-body ' + cls);
- const p1 = page('sx-endless');
+// ENDLESS'S OWN STEP IN PLAY (UI/UX pass, 21 October 2026): the landscapes as
+// drawn pictures or Any, and THE RUN -- the goal and your best run. `e`:
+// landscapes [{key, name, settings}], landscape, onLandscape(key), best, pictures.
+export function landscapePage(doc, e, q) {
+ const p = make(doc, 'section', 'sx-body sx-endless');
  const grid = make(doc, 'div', 'sx-lands');
  const queue = [], cards = [];
  const paint = key => { for (const b of cards) { const on = b.dataset.land === key; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
- for (const l of opts.landscapes || []) {
+ for (const l of e.landscapes || []) {
   const b = make(doc, 'button', 'sx-land');
   b.type = 'button'; b.dataset.land = l.key;
   const pic = make(doc, 'span', 'sx-pic');
   b.append(pic, make(doc, 'span', 'sx-land-name', esc(l.name.toUpperCase())));
-  b.onclick = () => { opts.onLandscape?.(l.key); paint(l.key); };
+  b.onclick = () => { e.onLandscape?.(l.key); paint(l.key); };
   grid.append(b); cards.push(b); queue.push({el: pic, settings: l.settings});
  }
  const any = make(doc, 'button', 'sx-land sx-any', '<span class="sx-land-name">ANY · A NEW ONE EACH HOLE</span>');
  any.type = 'button'; any.dataset.land = 'any';
- any.onclick = () => { opts.onLandscape?.('any'); paint('any'); };
+ any.onclick = () => { e.onLandscape?.('any'); paint('any'); };
  grid.append(any); cards.push(any);
  const side = make(doc, 'div', 'sx-endless-side');
  side.append(make(doc, 'h3', 'sx-head', 'THE RUN'));
  const goal = q('endlessGoal');
  if (goal) side.append(picker(doc, goal, 'GOAL', {words: t => ({value: t.split(' · ')[0], sub: t.split(' · ')[1] || ''})}));
- if (opts.best) side.append(make(doc, 'div', 'sx-best', `<span class="sx-help-k">YOUR BEST RUN</span><strong>${esc(opts.best.line)}</strong><small>${esc(opts.best.sub || '')}</small>`));
+ if (e.best) side.append(make(doc, 'div', 'sx-best', `<span class="sx-help-k">YOUR BEST RUN</span><strong>${esc(e.best.line)}</strong><small>${esc(e.best.sub || '')}</small>`));
  const lands = make(doc, 'div', 'sx-lands-col');
  lands.append(make(doc, 'h3', 'sx-head', 'LANDSCAPE'), grid);
- p1.append(lands, side);
- paint(opts.landscape || 'any');
- opts.pictures?.(queue, 200, 90);
-
- const p2 = page('sx-golfers');
- p2.append(make(doc, 'h3', 'sx-head', 'WHO’S PLAYING · 1 TO 4'));
- const rows = q('playerRows'); if (rows) p2.append(rows);
-
- // Round 14: two steps (the frames c-endlessx, c-endless2). The format and
- // the house rules, the old third step, go under THE RUN (PLACED: the frames
- // have nowhere for them).
- const {tiles} = formatCards(doc, mode);
- side.append(make(doc, 'h3', 'sx-head', 'FORMAT'), tiles);
- const note = q('formatNote'); if (note) side.append(note);
- mode.hidden = true; side.append(mode);
- side.append(rulesColumn(doc, q));
- const err = q('roundError'); if (err) p2.append(err);
-
- for (const s of root.querySelectorAll('.panel-section')) s.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
- root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
- const go = q('endlessGo');
- return stepSheet(root, {
-  steps: [{label: 'Landscape', page: p1}, {label: 'Golfers', page: p2}],
-  index: opts.step ?? 0, finish: go, onStep: opts.onStep,
-  hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
- });
+ p.append(lands, side);
+ paint(e.landscape || 'any');
+ e.pictures?.(queue, 200, 90);
+ return p;
 }
 
 // `opts`: courses [{id, name, settings, line, best}], friend {name, line} and
@@ -231,10 +203,21 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   b.onclick = () => { course.value = 'weekly'; fire(course); };
   grid.append(b); queue.push({el: pic, settings: weekly.settings}); cardFor.set('weekly', b);
  }
- if (opts.friend) {
-  const {b} = card(doc, {name: opts.friend.name, line: opts.friend.line, tag: 'A FRIEND’S CHALLENGE', kind: 'friend'});
-  b.setAttribute('aria-label', 'A friend’s challenge');
-  b.onclick = () => opts.onFriend?.();
+ // EVERY WAY TO PLAY IS A CARD HERE (UI/UX pass, 21 October 2026; the owner:
+ // one menu entry, no duplicated flows): Endless and a friend's challenge are
+ // kinds of round chosen on this step (the drop-down's `endless` / `friend`),
+ // each adding its own step; Challenges opens its board, a game of its own.
+ const kindCard = (value, name, line, tag, kind, label) => {
+  const {b} = card(doc, {name, line, tag, kind});
+  b.setAttribute('aria-label', label); b.dataset.course = value;
+  b.onclick = () => { course.value = value; fire(course); };
+  grid.append(b); cardFor.set(value, b);
+ };
+ if (opts.endless) kindCard('endless', 'ENDLESS', 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', 'A RUN', 'run', 'Endless');
+ if (opts.friend) kindCard('friend', opts.friend.name, opts.friend.line, 'A FRIEND’S CHALLENGE', 'friend', 'A friend’s challenge');
+ if (opts.onChallenges) {
+  const {b} = card(doc, {name: 'CHALLENGES', line: opts.challengesLine || 'SINGLE SHOTS FOR MEDALS', tag: 'MEDALS', kind: 'challenges'});
+  b.setAttribute('aria-label', 'Challenges'); b.onclick = () => opts.onChallenges();
   grid.append(b);
  }
  for (const c of courses) {
@@ -271,7 +254,13 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  roundsBtn.onclick = () => { saved.hidden = !saved.hidden; scroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
  paintRounds();
  // What is chosen: a saved course, the week, or nothing.
- const chosen = () => course.value === 'weekly' && weekly ? {id: 'weekly', name: weekly.name, line: weekly.line, settings: weekly.settings, fixed: true} : courses.find(x => x.id === course.value);
+ const chosen = () => course.value === 'weekly' && weekly ? {id: 'weekly', name: weekly.name, line: weekly.line, settings: weekly.settings, fixed: true}
+  : course.value === 'endless' && opts.endless ? {id: 'endless', name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE'}
+  : course.value === 'friend' && opts.friend ? {id: 'friend', name: opts.friend.name, line: opts.friend.line, fixed: true, ready: opts.friend.ready}
+  : courses.find(x => x.id === course.value);
+ // A kind with a step of its own redraws Play with that step (main.js).
+ const kindOf = v => v === 'endless' || v === 'friend' ? v : 'course';
+ course.addEventListener('change', () => { if (kindOf(course.value) !== (opts.kind || 'course')) opts.onKind?.(course.value); });
  const paintCourse = () => {
   for (const [id, b] of cardFor) { b.classList.toggle('on', id === course.value); b.setAttribute('aria-pressed', String(id === course.value)); }
   const c = chosen();
@@ -282,7 +271,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  let lockFormat = null;
  course.addEventListener('change', paintCourse);
  course.hidden = true;
- p1.append(make(doc, 'h3', 'sx-head', courses.length ? `THE COURSE OF THE WEEK AND YOUR ${courses.length} COURSE${courses.length === 1 ? '' : 'S'}` : 'CHOOSE A COURSE'), scroll, saved, line, course);
+ p1.append(make(doc, 'h3', 'sx-head', 'WHAT ARE YOU PLAYING'), scroll, saved, line, course);
  paintCourse();
  pictures?.(queue, 240, 110);
 
@@ -323,12 +312,13 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  mode.hidden = true;
  const note = q('formatNote');
  // The week is stroke play for everyone: the other formats are shown, not chosen.
- const fixedNote = make(doc, 'p', 'note sx-fixed', 'The course of the week is stroke play: everyone plays the same 18 holes, so every card compares.');
+ const fixedNote = make(doc, 'p', 'note sx-fixed', '');
  lockFormat = () => {
   const fixed = !!chosen()?.fixed;
   if (fixed && mode.value !== 'stroke') { mode.value = 'stroke'; fire(mode); }
   for (const b of tiles.querySelectorAll('button')) b.disabled = mode.disabled || (fixed && b.dataset.mode !== 'stroke');
   fixedNote.hidden = !fixed;
+  fixedNote.textContent = course.value === 'friend' ? 'A friend’s challenge is stroke play: their card is strokes.' : 'The course of the week is stroke play: everyone plays the same 18 holes, so every card compares.';
  };
  p3.append(make(doc, 'h3', 'sx-head', 'HOW ARE YOU PLAYING'), tiles, fixedNote);
  if (note) p3.append(note);
@@ -360,7 +350,8 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  root.querySelector(':scope>.panel-tabs')?.classList.add('sx-emptied');
  root.querySelector(':scope>.panel-lead')?.classList.add('sx-emptied');
  const start = q('startRound');
- if (start) start.innerHTML = 'Tee off <small>HOLE 1</small>';
+ // main.js names the main button by the kind chosen (Tee off, Start the run...).
+ if (start && !start.getAttribute('aria-label')) start.innerHTML = 'Tee off <small>HOLE 1</small>';
 
  // Teams follow the golfers as seats are added, removed and moved.
  const rows = q('playerRows');
@@ -379,8 +370,15 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   root.classList.add('sx-one-step');
   return one;
  }
+ const steps = [{label: 'Course', page: p1, done: () => !!chosen()}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}];
+ if (opts.kind === 'endless' && opts.endless) steps.splice(1, 0, {label: 'Landscape', page: landscapePage(doc, opts.endless, q)});
+ if (opts.kind === 'friend') {
+  const sec = sectionOf('The challenge'), fp = page('fr');
+  if (sec) for (const n of [...sec.childNodes]) if (n.nodeType === 1 && n.tagName !== 'H3') fp.append(n);
+  steps.splice(1, 0, {label: 'The challenge', page: fp, done: () => !!opts.friend?.ready});
+ }
  const sheet = stepSheet(root, {
-  steps: [{label: 'Course', page: p1, done: () => !!chosen()}, {label: 'Golfers', page: p2}, {label: 'Format', page: p3, onShow: paintTeams}, {label: 'Rules', page: p4, onShow: paintSummary}],
+  steps,
   index: opts.step ?? 0, finish: start, onStep: opts.onStep, alert: err,
   hints: [['← →', 'Choose'], ['Enter', 'Next'], ['Esc', 'Back']], doc,
  });
