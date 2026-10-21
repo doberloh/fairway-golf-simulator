@@ -1552,7 +1552,9 @@ function coachSeen(){try{return localStorage.getItem(COACH_KEY)==='1';}catch{ret
 function markCoached(){try{localStorage.setItem(COACH_KEY,'1');}catch{}const c=$('swingCoach');if(c)c.hidden=true;}
 function drawCoach(){
  const c=$('swingCoach');if(!c)return;
- const on=hud1&&appMode==='play'&&!menuBackdrop&&!armed&&!coachSeen()&&!$('swingMeter').hidden&&!flight&&!panel;
+ // Only on the shot itself: not in free flight or another view, not under the
+ // key list or the Tab numbers.
+ const on=hud1&&appMode==='play'&&!menuBackdrop&&!armed&&!coachSeen()&&!$('swingMeter').hidden&&!flight&&!panel&&view.config.mode==='player'&&!allNumbers&&$('keysHelp').hidden;
  if(on&&!c.innerHTML)c.innerHTML=`<strong>YOUR FIRST SWING</strong><ol>${COACH_STEPS.map(t=>`<li>${escape(t)}</li>`).join('')}</ol><small><kbd>SPACE</kbd> or click the bar · <kbd>?</kbd> every key</small>`;
  if(c.hidden===on)c.hidden=!on;
 }

@@ -554,7 +554,7 @@
  #world[data-mode=play] .swing-meter .sm-key{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
  #world[data-mode=play] .swing-meter .sm-key kbd{color:var(--hot);font-size:12px}
  /* The first swing, coached (main.js drawCoach): over the meter, once per device. */
- #world[data-mode=play] .swing-coach{position:absolute;left:50%;bottom:200px;z-index:8;transform:translateX(-50%);zoom:var(--hud-z,1);display:grid;gap:6px;padding:14px 30px;color:#fff;isolation:isolate;pointer-events:none;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #world[data-mode=play] .swing-coach{position:absolute;left:50%;bottom:262px;z-index:8;transform:translateX(-50%);zoom:var(--hud-z,1);display:grid;gap:6px;padding:14px 30px;color:#fff;isolation:isolate;pointer-events:none;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #world[data-mode=play] .swing-coach::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);box-shadow:inset 0 0 0 3px var(--hot);transform:skewX(-12deg)}
  #world[data-mode=play] .swing-coach[hidden]{display:none}
  #world[data-mode=play] .swing-coach strong{font-size:20px;font-weight:800;font-style:italic;color:var(--hot)}
