@@ -663,6 +663,14 @@ green everywhere, and every mode but the range under one Play.
   and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
   tool labels' new names read in a real round by a person, the main menu's
   hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 5, old pieces to 1.0: built, seen in the capture build.** Seen:
+  Saved courses empty with its two cards, Help's essentials, Report a problem
+  with the toast over the sheet, credits rows, the launch monitor's switch and
+  rows, profile stats and achievements. Smoke: menu-panels, studio, monitor,
+  profile, no-swallowed-errors pass. Not seen: the studio slab's new mark and
+  footer, free flight's Jump to green with its value, the phone XP popup and
+  Skip. Left: the launch monitor's "Compatible connector ecosystem" heading
+  sits under the left column's prose, away from its list on the right.
 - [ ] **Phase 4, one Play for every mode: built, seen in the capture build.**
   Seen: the menu with five rows, Play's seven cards, Endless's Landscape step,
   a friend's The challenge step, the week locking the format, Challenges with

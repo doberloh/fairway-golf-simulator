@@ -57,7 +57,8 @@ const STUDIO_TOOLS = [
 export function studioHud(world, doc = globalThis.document) {
  let slab = doc.getElementById('studioSlab');
  if (!slab) {
-  slab = make(doc, 'div', 'sd-slab', '<b>S</b><span><strong>COURSE STUDIO</strong><small></small></span>');
+  // A mountain, not a letter: an italic S read as a 5 (UI/UX pass, 21 October 2026).
+  slab = make(doc, 'div', 'sd-slab', '<b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20 9 8l4 6 3-4 6 10z" fill="currentColor"/></svg></b><span><strong>COURSE STUDIO</strong><small></small></span>');
   slab.id = 'studioSlab';
   const chip = make(doc, 'button', 'sd-chip', '<span class="sd-chip-n"></span><span class="sd-chip-go">REGENERATE</span>');
   chip.id = 'studioChip'; chip.type = 'button'; chip.hidden = true;
@@ -119,6 +120,8 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
  side.append(help);
  root.append(side);
  root.classList.add('sd-root');
+ // The keys along the foot, as on every other sheet (UI/UX pass).
+ if (!root.querySelector('.sd-foot')) root.append(make(doc, 'div', 'sx-foot sd-foot', '<div class="sx-keys"><span><kbd>R</kbd>Grow this landscape</span><span><kbd>Esc</kbd>Back</span></div>'));
 
  // The focused row's help: its own tip (the schema's text).
  root.stFocus = e => {

@@ -269,3 +269,15 @@
 @container app (max-width:560px) or (max-height:500px){
  #app.rh-paused .topbar .rh-pause-stand :is(.rh-stand-ball,.rh-stand-dot){display:block;flex:none;width:22px;height:22px;border-radius:50%}
 }
+
+/* PHONE PIECES IN THE 1.0 STYLE (UI/UX pass, 21 October 2026): the XP popup and
+   the in-flight Skip were the old rounded pieces on a phone. */
+@container app (max-width:560px) or (max-height:500px){
+ #world .xp-gain{top:auto;bottom:auto;left:12px;right:auto;top:56px;transform:none;width:min(320px,calc(100% - 24px));padding:10px 22px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .xp-gain .xp-top b{font-size:24px;font-weight:800;font-style:italic;color:var(--hot)}
+ #world .xp-gain .xp-items li{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+ #world .xp-gain .xp-bar,#world .xp-gain .xp-bar b,#world .xp-gain .level-badge{border-radius:0}
+ #world[data-mode=play] .shot-panel #skipFlight{border-radius:0;border:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-panel #skipFlight>*{transform:skewX(12deg)}
+}

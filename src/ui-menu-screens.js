@@ -62,8 +62,13 @@ export function buildLibrary(root, {onNew, doc = globalThis.document} = {}) {
  for (const c of list.querySelectorAll(':scope>.course-card')) shelf.append(c);
  const add = make(doc, 'button', 'lib-new', '<b>+</b><span>NEW IN STUDIO</span>');
  add.type = 'button'; add.onclick = () => onNew?.();
- shelf.append(add);
+ // IMPORT, AS A CARD (UI/UX pass, 21 October 2026): an empty library was a line
+ // of small text and a squashed card; a code to paste is the other way in.
+ const imp = make(doc, 'button', 'lib-new lib-import', '<b>⇩</b><span>IMPORT A CODE</span>');
+ imp.type = 'button'; imp.onclick = () => [...root.querySelectorAll('.panel-tab')].find(t => /import/i.test(t.textContent))?.click();
+ shelf.append(add, imp);
  list.replaceWith(shelf);
+ const empty = section.querySelector('.lib-empty'); if (empty) shelf.before(empty);
  section.classList.add('lib-courses');
  root.classList.add('lib-root');
  return true;
