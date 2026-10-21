@@ -672,8 +672,9 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 - [ ] **Built, not seen working: play it.** Nobody has played any of it in the
   game; the Node tests (`tests/rival.test.mjs`) cover the code, the comparison
   and shots flown again on a real course, and the build is clean. To check, on
-  one machine: finish a 9-hole stroke round, press *Send <name>'s card* under
-  Round complete (the code is copied; *Save as a file* saves it); then Play →
+  one machine: finish a 9-hole stroke round, press *Challenge a friend* under
+  Round complete (one golfer: the code is copied at once; several: press the
+  golfer's card; *Save as a file* saves it); then Play →
   *A friend's challenge*, paste it, *Read the code*, play it. Look for: the
   white dashed lines of their shots on each hole from the first tee; their row
   in italics on the scorecard and the line above it ("2 ahead of Sam after
@@ -688,6 +689,27 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   dashed 1.2 m on and off, drawn whatever the shot-lines setting says, under
   the player's own lines. The setup screen and the card on Play step 1 are also
   placed on the course of the week's frames, not designed.
+- [ ] **The owner's ten fixes of 20 October: built, none seen in the game.**
+  Nothing here was run in a browser (no GPU work was asked for); `npm test`
+  (with the new `camera-orbit` suite and two `round-hud` tests) and the build
+  pass. To check, on the branch: (1) the studio's *Save course* (bar and Esc
+  list) opens a box -- name, *Save*, *Go back*; Enter saves, Escape goes back.
+  (2) After a hole-out, close the scorecard: *NEXT HOLE · n* (Enter) at the
+  bottom middle, not shown until the scorecard has opened once; *FINAL
+  SCORECARD* after the last hole. (3) Round complete: title, the card, the
+  standings with XP / level / handicap on each row (and a scramble team's
+  golfers named), one row of buttons; *Challenge a friend* opens the code box.
+  (4) A small CAM box beside the wind naming the view; it changes with C, G, V
+  and a flyover. (5) In the aim point and green views (G), drag to turn round
+  the spot, wheel to zoom, a plain click still aims; the turn resets when the
+  view changes. Look for the camera fighting the drag or dipping under the
+  ground. (6) The aim point's label stays 3 s after the aim stops. (7) "N YDS
+  TO HOLE" after the aim point's rise. (8) Play's course cards and Endless's
+  landscapes: picture and caption as one leaning shape, one outline when
+  chosen; the 3D model still fills the picture. (9) Saved courses: one shape
+  per card, no double lean. (10) Saved courses' icons: Play, Rename, Copy
+  code (the code box under the shelf), Delete twice. Also check a phone, and
+  that the rightmost Play card's corner is not cut at 16:9 and 21:9.
 - [ ] **Leftovers, if wanted:** the downloaded scorecard (CSV) has no row for
   the friend's card; a friend's round on a code made from the course of the
   week does not count as the course of the week; and there is no way to delete

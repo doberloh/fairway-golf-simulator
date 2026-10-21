@@ -1827,28 +1827,33 @@ const JOURNEYS = [
      'the studio bar to come back down', 2 * SLOW);
     if (problems.length) throw new Error(`the studio settings are not the sheet at ${problems.join(', ')}`);
    });
+   let name = '';
    await t.step('save it', async () => {
     await t.page.click('#studioSave');
-    // Saving opens Saved courses with the name already filled in, so a player
-    // can accept it with one click.
-    await t.until(() => t.drawerOpen(), 'the save panel', 5 * SLOW);
-    await t.press('Save a course');
-    // Scoped to the open panel: the leave-without-saving dialogue carries a
-    // name box with the same label, hidden, and matching both is an error.
-    const name = await t.page.locator('#drawerContent').getByLabel('Name this course').inputValue();
+    // Save course asks for the name in a box over the landscape (20 October
+    // 2026; it used to open Saved courses), filled in already, so a player
+    // can accept it with one press.
+    await t.until(() => t.page.locator('#leaveNotice').isVisible(), 'the name box', 5 * SLOW);
+    name = await t.page.inputValue('#leaveName');
     if (!name.trim()) throw new Error('the name box was not pre-filled');
-    await t.press('Save this landscape');
+    if (await t.page.locator('#leaveDiscard').isVisible()) throw new Error('the name box offers to leave without saving');
+    await t.page.click('#leaveSave');
+    await t.until(async () => !await t.page.locator('#leaveNotice').isVisible(), 'the name box to close', 5 * SLOW);
+   });
+   await t.step('leave the studio', async () => {
+    // Saved, so leaving asks nothing.
+    await t.page.click('#studioExit');
+    await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
+   });
+   await t.step('it is in Saved courses', async () => {
     // Checked the way a player would check it -- is it in Saved courses, by
     // the name it was given -- rather than by reading storage. The first draft
     // read localStorage, got the format wrong, and failed a save that worked.
-    await t.press('Your courses');
+    await fromMenu(t, 'Saved courses');
+    await t.until(() => t.drawerOpen(), 'Saved courses', 5 * SLOW);
     await t.until(() => t.page.locator('#drawerContent').getByText(name, {exact: true}).first().isVisible().catch(() => false),
      `"${name}" to be listed in Your courses`, 5 * SLOW);
     await t.closeDrawer();
-   });
-   await t.step('leave the studio', async () => {
-    await t.page.click('#studioExit');
-    await t.until(async () => (await t.mode()) === 'menu', 'the menu', 10 * SLOW);
    });
   },
  },

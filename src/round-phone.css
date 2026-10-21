@@ -46,6 +46,9 @@
  .rh-subs{position:absolute;left:28px;top:72px;display:flex;gap:6px}
  .rh-sub{height:32px;display:flex;align-items:center;padding:0 12px;background:var(--panel);transform:skewX(-12deg)}
  .rh-sub[data-sub=rise]{display:none}
+ .rh-sub[data-sub=cam]{height:26px;padding:0 9px}
+ .rh-sub[data-sub=cam]>span{font-size:13px;gap:4px}
+ .rh-sub[data-sub=cam] small{font-size:10px}
  .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:5px;font-size:16px;font-weight:800;font-style:italic}
  .rh-sub small{font-size:11px;letter-spacing:.1em;color:var(--soft);font-style:normal;font-weight:700}
  .rh-sub svg{width:16px;height:16px;stroke:var(--a1);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;transform:rotate(var(--wind,0deg))}

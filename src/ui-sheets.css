@@ -373,46 +373,49 @@
  #drawer .ch-group .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
  #drawer .ch-group .add-player svg{width:18px;height:18px}
  /* The course of the week: the picture and earlier weeks (7), the facts (5). */
- /* Saved courses: the shelf (8) and the chosen course (4). */
- body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:16px 32px;align-items:start;columns:auto!important}
- #drawer .lib-courses>:not(.lib-shelf):not(.lib-detail){grid-column:1}
+ /* Saved courses: the shelf across the sheet. The chosen course's column went
+    on 20 October 2026; each card carries its own buttons as icons along its
+    foot (ui-menu-screens.js buildLibrary). */
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;columns:auto!important}
  #drawer .lib-courses>h3,#drawer .lib-courses>.control-card:not(:has(>:not([hidden]))){display:none}
- #drawer .lib-shelf{grid-column:1;grid-row:1/span 4;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px 8px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
- #drawer .lib-shelf>.course-card{display:grid;align-content:start;gap:0;margin:0;padding:0;cursor:pointer;color:#fff}
- #drawer .lib-shelf>.course-card::before{top:100px}
- #drawer .lib-shelf>.course-card .course-pic{--lean:20.4px;display:block;position:relative;isolation:isolate;height:96px;margin-bottom:4px}
- #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -.5);z-index:-1;clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%);transform:skewX(-12deg)}
+ #drawer .lib-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px 12px;padding:0 12px;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .lib-shelf>.course-card{display:grid;grid-template-rows:auto 1fr auto;gap:0;margin:0;padding:0;color:#fff}
+ /* ONE SHAPE, NOT TWO (the owner, 20 October 2026: "weird shapes"). The
+    picture's own layer was cut to the lean AND skewed, so it leaned twice, and
+    the caption's panel leaned about its own middle, so its edges started a
+    lean's width from the picture's. Now the picture leans from its foot (its
+    layer widened by a whole lean to the right) and the caption's panel from its
+    head (transform-origin at its top), so the two edges are one straight line
+    and the card reads as one button. */
+ #drawer .lib-shelf>.course-card:has(>.course-pic)::before{top:96px;transform-origin:0 0}
+ #drawer .lib-shelf>.course-card .course-pic{--lean:20.4px;display:block;position:relative;isolation:isolate;height:96px;margin:0}
+ #drawer .lib-shelf>.course-card .course-pic::before{content:"";position:absolute;inset:0 calc(var(--lean) * -1) 0 0;z-index:-1;clip-path:polygon(var(--lean) 0,100% 0,calc(100% - var(--lean)) 100%,0 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--p2) 50%,#cfe8ff) 0 44%,color-mix(in srgb,var(--p1) 70%,#1d3b22) 44%)}
  #drawer .lib-shelf>.course-card .course-pic.has-picture::before{background:var(--pic) center/cover}
+ #drawer .lib-shelf>.course-card .course-pic>.model-pic{left:0}
  #drawer .lib-shelf>.course-card .course-pic>span{position:absolute;left:22px;bottom:8px;font-size:14px;letter-spacing:.16em;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6)}
- #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;min-height:96px;align-content:center;padding:12px 28px}
- #drawer .lib-shelf>.course-card .course-meta strong{font-size:20px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #drawer .lib-shelf>.course-card .course-meta{display:grid;gap:3px;align-content:start;padding:12px 24px 8px 20px}
+ #drawer .lib-shelf>.course-card .course-meta strong{padding-right:.16em;font-size:20px;font-weight:800;font-style:italic;line-height:1.05;color:#fff;text-transform:uppercase}
  #drawer .lib-shelf>.course-card .course-meta span{font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);text-transform:uppercase}
- #drawer .lib-shelf>.course-card .course-flag{display:none}
- #drawer .lib-shelf>.course-card>.course-actions{display:none}
- #drawer .lib-shelf>.course-card.on::before{box-shadow:0 0 0 3px var(--hot)}
- #drawer .lib-shelf>.course-card.on .course-pic{filter:var(--trace)}
- #drawer .lib-shelf>.course-card:focus-visible{outline:none}
- #drawer .lib-shelf>.course-card:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lib-shelf>.course-card .course-flag{display:block;font-size:13px;font-style:normal;line-height:1.2;color:#ffb27a}
+ /* The card's buttons: small leaning icons, Play first in the biome's
+    gradient, Delete at the far end (it asks twice, main.js). Their words stay
+    for a screen reader and the tooltip. */
+ #drawer .lib-shelf>.course-card>.course-actions{display:flex;align-items:center;gap:8px;padding:0 22px 12px 8px}
+ #drawer .lib-shelf>.course-card>.course-actions>button{position:relative;isolation:isolate;display:grid;place-items:center;width:42px;height:32px;min-height:32px;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer}
+ #drawer .lib-shelf>.course-card>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
+ #drawer .lib-shelf>.course-card>.course-actions>button>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ #drawer .lib-shelf>.course-card>.course-actions>button svg{width:17px;height:17px}
+ #drawer .lib-shelf>.course-card>.course-actions>button[data-play]{width:62px;color:var(--on-hot)}
+ #drawer .lib-shelf>.course-card>.course-actions>button[data-play]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
+ #drawer .lib-shelf>.course-card>.course-actions>button[data-remove]{margin-left:auto;color:#ff8a7a}
+ #drawer .lib-shelf>.course-card>.course-actions>button[data-remove][data-armed="1"]{color:#fff}
+ #drawer .lib-shelf>.course-card>.course-actions>button[data-remove][data-armed="1"]::before{background:#b8402f}
+ #drawer .lib-shelf>.course-card>.course-actions>button:is(:hover,:focus-visible){outline:none}
+ #drawer .lib-shelf>.course-card>.course-actions>button:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 2px var(--hot)}
  #drawer .lib-new{display:grid;place-items:center;align-content:center;gap:4px;min-height:196px;margin:0;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #drawer .lib-new::before{background:rgba(255,255,255,.05)!important}
  #drawer .lib-new b{font-size:56px;font-weight:800;line-height:1;color:var(--a1)}
  #drawer .lib-new span{font-size:20px;font-weight:800;font-style:italic}
- #drawer .lib-detail{grid-column:2;grid-row:1/span 4;display:grid;gap:8px;align-content:start;font-family:"Saira Condensed",var(--font-ui),sans-serif}
- #drawer .lib-name{display:grid;gap:6px;padding:16px 36px}
- #drawer .lib-name strong{font-size:32px;font-weight:800;font-style:italic;line-height:1;color:#fff;text-transform:uppercase}
- #drawer .lib-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
- #drawer .lib-code{display:grid;gap:8px;padding:16px 36px}
- #drawer .lib-code span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
- #drawer .lib-code code{display:block;padding:8px 10px;background:rgba(0,0,0,.35);font:15px "IBM Plex Mono",ui-monospace,monospace;color:#e8ecff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- #drawer .lib-detail>.course-flag{padding:0 8px;font-size:14px;color:var(--soft)}
- #drawer .lib-detail>.course-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
- #drawer .lib-detail>.course-actions>button{position:relative;isolation:isolate;height:44px;min-height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .lib-detail>.course-actions>button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #drawer .lib-detail>.course-actions>button[data-play]{grid-column:1/-1;height:56px;font-size:24px;color:var(--on-hot)}
- #drawer .lib-detail>.course-actions>button[data-play]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
- #drawer .lib-detail>.course-actions>button[data-remove]{color:#ff8a7a}
- #drawer .lib-detail>.course-actions>button:focus-visible{outline:none}
- #drawer .lib-detail>.course-actions>button:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
 
  /* ---------------------------------------------- the studio's settings */
  /* IN THE STUDIO (ui-studio.js; mockup r10 'studio-set'): the sheet keeps the
@@ -559,10 +562,23 @@
     drawing, cut to the same leaning shape. */
  #drawer .model-pic{position:absolute;top:0;left:calc(var(--lean,0px) * -.5);width:calc(100% + var(--lean,0px));height:100%;z-index:-1;clip-path:polygon(var(--lean,0px) 0,100% 0,calc(100% - var(--lean,0px)) 100%,0 100%);pointer-events:none}
  #drawer .sx-pic>b{position:absolute;inset:0;display:grid;place-items:center;font-size:60px;font-weight:800;font-style:italic;color:var(--a1)}
+ /* A PICTURE OVER ITS CAPTION IS ONE SHAPE (the owner, 20 October 2026: make
+    it clear they are one button). Leaning each about its own middle, the
+    picture's foot and the caption's head started a lean apart and the card
+    zig-zagged. The picture leans from its foot instead (its layer widened by a
+    whole lean to the right), the caption from its head, so the edges run on
+    as one line; the card's outline is one parallelogram leaning about the
+    seam (130 px down). The right overhang is the picture's whole lean, which
+    is why .sx-scroll is padded 30 on that side. */
+ #drawer :is(.sx-card,.sx-land)>.sx-pic::before{inset:0 calc(var(--lean) * -1) 0 0}
+ #drawer :is(.sx-card,.sx-land)>.sx-pic>.model-pic{left:0}
+ #drawer .sx-card>.sx-cap::before,#drawer .sx-land>.sx-pic+.sx-land-name::before{transform-origin:0 0}
+ #drawer .sx-card::after{content:"";position:absolute;inset:0;transform-origin:0 130px;transform:skewX(-12deg);pointer-events:none}
+ #drawer .sx-card:is(.on,:focus-visible)::after{box-shadow:0 0 0 3px var(--hot)}
  /* 1 · Course: five cards across, scrolling; the line along the foot. */
- #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 22px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
+ #drawer .sx-scroll{max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:6px 30px 6px 20px;scrollbar-width:thin;scrollbar-color:var(--a1) rgba(255,255,255,.12)}
  #drawer .sx-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 12px}
- #drawer .sx-card{display:grid;gap:4px;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
+ #drawer .sx-card{position:relative;isolation:isolate;display:grid;grid-template-rows:auto 1fr;gap:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;text-align:left;cursor:pointer}
  #drawer .sx-cap{display:grid;gap:3px;align-content:center;min-height:64px;padding:8px 24px}
  #drawer .sx-cap em{justify-self:start;padding:0 8px;background:var(--hot);color:var(--on-hot);font-size:13px;font-style:normal;font-weight:800;letter-spacing:.1em;transform:skewX(-12deg)}
  /* A card's name and line wrap rather than end in "..." (the owner, 18
@@ -570,11 +586,8 @@
  #drawer .sx-cap strong{padding-right:.16em;font-size:21px;font-weight:800;font-style:italic;line-height:1.05;text-transform:uppercase}
  #drawer .sx-cap small{font-size:13px;line-height:1.25;letter-spacing:.1em;font-weight:700;color:var(--soft)}
  #drawer .sx-cap small i{font-style:normal;color:var(--hot)}
- #drawer .sx-card.on .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
- #drawer .sx-card.on .sx-pic,#drawer .sx-land.on .sx-pic{filter:var(--trace)}
+ #drawer .sx-land.on .sx-pic{filter:var(--trace)}
  #drawer .sx-card:focus-visible{outline:none}
- #drawer .sx-card:focus-visible .sx-cap::before{box-shadow:0 0 0 3px var(--hot)}
- #drawer .sx-card:focus-visible .sx-pic{filter:var(--trace)}
  #drawer .sx-line{display:flex;align-items:center;gap:24px;min-height:48px;margin-top:14px;padding:0 30px}
  #drawer .sx-facts{display:flex;align-items:baseline;gap:20px;min-width:0;flex:1}
  #drawer .sx-facts strong{font-size:22px;font-weight:800;font-style:italic;white-space:nowrap}
@@ -661,7 +674,7 @@
  #drawer .sx-rules .lb-pick{min-height:56px;padding:6px 28px}
  #drawer .sx-rules #roundPutting-distances{padding:0 8px}
  #drawer .sx-help-k{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--hot)}
- #drawer .sx-sum-pic{height:186px}
+ #drawer .sx-sum-pic{--lean:39.5px;height:186px}
  #drawer .sx-sum-name{display:grid;gap:6px;padding:14px 30px}
  #drawer .sx-sum-name strong{font-size:30px;font-weight:800;font-style:italic;line-height:1}
  #drawer .sx-sum-name small{font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
@@ -677,7 +690,7 @@
  /* Endless: the landscapes (7 columns' worth) beside the run (5). */
  #drawer .sx-endless{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:8px 30px;align-items:start}
  #drawer .sx-lands{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
- #drawer .sx-land{display:grid;gap:4px;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer;text-align:left}
+ #drawer .sx-land{display:grid;gap:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;cursor:pointer;text-align:left}
  #drawer .sx-land .sx-pic{--lean:20px;height:94px}
  #drawer .sx-land-name{position:relative;isolation:isolate;display:flex;align-items:center;height:38px;padding:0 22px;font-size:18px;font-weight:800;font-style:italic;text-transform:uppercase;white-space:nowrap}
  #drawer .sx-land-name::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -831,14 +844,23 @@
  .rh-results h2 small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700}
  .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
  .rh-res-stand{display:grid;gap:8px;max-width:640px}
- .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;height:64px;padding:0 26px}
+ .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;min-height:64px;padding:8px 26px}
  .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- .rh-res-row.win{height:88px;color:var(--on-hot)}
+ .rh-res-row.win{min-height:80px;color:var(--on-hot)}
  .rh-res-row.win::before{background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 0 0 3px var(--hot)}
  .rh-res-pos{width:28px;font-size:34px;font-weight:800;font-style:italic}
  .rh-res-pic :is(img,.chip-dot){width:48px;height:48px;display:grid;place-items:center;border-radius:50%}
  .rh-res-row.win .rh-res-pic :is(img,.chip-dot){width:64px;height:64px}
- .rh-res-name{flex:1;font-size:28px;font-weight:800;font-style:italic}
+ .rh-res-who{flex:1;display:grid;gap:4px;min-width:0}
+ .rh-res-name{font-size:28px;font-weight:800;font-style:italic;line-height:1.05}
+ /* What each golfer earned, on their own row (owner, 20 October 2026). */
+ .rh-res-gain{display:flex;align-items:center;gap:10px;font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);white-space:nowrap}
+ .rh-res-gain>b{font-weight:800}
+ .rh-res-gain .rh-res-bar{width:90px;flex:none}
+ .rh-res-row.win .rh-res-gain{color:var(--on-hot)}
+ .rh-res-row.win .rh-res-bar{background:rgba(0,0,0,.18)}
+ .rh-res-row.win .rh-res-bar b{background:var(--on-hot)}
+ .rh-results .score-table-wrap{margin:0}
  .rh-res-score{font-size:36px;font-weight:800;font-style:italic}
  .rh-res-score small{margin-left:8px;font-size:20px}
  .rh-res-score small.under{color:var(--under)}
@@ -846,6 +868,9 @@
  .rh-res-golfers{display:grid;gap:6px;max-width:640px}
  .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
  .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
+ .rh-res-share{display:grid;gap:8px;max-width:640px}
+ .rh-res-share[hidden]{display:none}
+ .rh-res-seats{display:flex;gap:10px;flex-wrap:wrap}
  .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
  .rh-res-bar b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
  .rh-res-actions{display:flex;gap:10px;flex-wrap:wrap}

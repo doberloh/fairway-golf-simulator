@@ -135,7 +135,11 @@ the courses several suites share.
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`.
 - **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
-  `projector`, `course-map`, `green-map`, `shot-views`, `shot-data`.
+  `camera-orbit` (the drag round the green and aim point views: no turn
+  leaves the view as it was, a turn keeps distance and height, the tilt stops
+  at 5 and 85 degrees and turns back at once, the wheel stops at a third and
+  two and a half times as far), `projector`, `course-map`, `green-map`,
+  `shot-views`, `shot-data`.
 - **The capture tools** -- `capture-mux` (the MP4 and WebM files the clip
   recorder writes hold together: boxes and elements fill the file, the frame
   tables name every frame, key frames marked; docs/CAPTURE.md). Whether a clip
@@ -150,7 +154,8 @@ the courses several suites share.
   `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
   rules, the two font files are local woff2 with their licence, text escaped).
   `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
-  club, scores with a real minus, golfer cards, keys, the ball light -- and
+  club, scores with a real minus, golfer cards, keys, the ball light, the
+  camera's name beside the wind, the aim point's distance left to the hole -- and
   how large they are drawn: the club panel and the meter, and the slab and the
   cards, never meet at any tested size or Text size).
   `shot-moments` (phase 2: the card on a course and tiles on the range, the
@@ -228,7 +233,7 @@ without the graphics card (much slower; it once crashed this machine -- ask).
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
 | `challenge`, `challenge-week`, `weekly` | the Challenges screen's seven tabs and 36 cards, closest to the pin to its results with nothing saved as a round, a putting challenge holing out, a range one on the range, a long drive; the challenge of the week from its card to a ball played, nothing saved as a round; `challenge-more`: seven tabs and 36 cards, Every par 3 moving from hole to hole, a head-to-head refused alone and played by two, Bogey-free nine and Sudden death started as real rounds that save; the course of the week |
 | `friend-challenge` | a friend's challenge made in Node with the page's version (`window.lab.version`), pasted on Play's card and read, its nine-hole round started, the save remembering it and logging a shot, and the scorecard showing the friend's row. Passed on the real GPU on 20 October 2026, in 16 s |
-| `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows and saves a course |
+| `range`, `range-greens`, `studio` (round 13: the settings are the whole-screen sheet with Grow this landscape and no bar, desktop to phone) | the driving range; `range-greens`: Range controls closed and reopened from the view bar, a ball finishing on the 100 target's green, the putt and chip stations on the short-game green, a slope that regrows it and can be read, and the CSV and PDF downloads; Course studio grows a course and saves it through the name box (20 October 2026), and it is listed in Saved courses from the menu |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs |
 | `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |
 | (round 14) every journey | `press(name)` goes to an open step sheet's last step first when the button is not on screen -- the start buttons (Start an endless run, Play the course of the week) are on the Golfers step now, as a player would find them |

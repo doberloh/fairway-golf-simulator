@@ -99,7 +99,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/instance-cull.js`, `src/occlusion.js`, `src/owner-atlas.js` -- drawing only what is seen, soft shade, ground ownership
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
 - `src/green-reading.js`, `src/green-map.js`, `src/course-map.js` -- reading a green, the maps
-- `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras, flyovers, the simulator bay
+- `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras (and the turn a drag gives the green and aim point views, `stepOrbit`), flyovers, the simulator bay
 - `src/tv-camera.js` -- a full shot filmed by a tee camera and a landing camera, and the whole-shot view after it
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
@@ -115,7 +115,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/ui-monitor-setup.js` -- 1.0 launch monitor setup: moves the monitor panel's controls into the mockup's three ticked steps and status column; `monitorSteps`, `monitorLight`, `lastShotLine` tested in tests/ui-monitor-setup.test.mjs
 - `src/ui-profile-hub.js` -- 1.0 My profile hub: sorts the old profile page by its headings into six tabs, golfer chips in the header, the left stack; `tabOfHeading`, `overviewTiles` tested in tests/ui-profile-hub.test.mjs
 - `src/ui-settings.js` -- 1.0 settings: Camera & bay, Graphics and Sound from the menu get the category list, all groups as rows, and the focused row's help line; tests/ui-settings.test.mjs
-- `src/ui-menu-screens.js` -- (round 14) also `buildHelp`: keys & help as topics, page and that page's keys -- 1.0 challenges (banner, categories, cards, detail), course of the week (picture, earlier weeks, fact rows) and saved courses (shelf and chosen-course column): the old sheets' nodes placed on the mockups' grids
+- `src/ui-menu-screens.js` -- (round 14) also `buildHelp`: keys & help as topics, page and that page's keys -- 1.0 challenges (banner, categories, cards, detail), course of the week (picture, earlier weeks, fact rows) and saved courses (a shelf of cards, each with its own buttons as icons): the old sheets' nodes placed on the mockups' grids
 - `src/ui-studio.js` -- 1.0 course studio: the slab, "N settings changed" chip, keys and tool column while flying; the settings sheet (one screen from the menu and in the studio: landscapes as pictures)'s category counts, changed dots and what-changed column; `settingsChanges` tested in tests/ui-studio.test.mjs
 - `src/ui-range-controls.js` -- 1.0 range controls: the range window's controls sorted into two columns by its own headings, the session-by-club table (from range-report.js `clubTable`), the lab row; tests/ui-range-controls.test.mjs
 - `src/ui-dropdown.js`, `src/ui-dropdown.css` -- the 1.0 drop-down over a native select (which stays, see-through, for its id, value and handlers); `dropdownEverywhere` gives it to every select a player sees; tests/ui-dropdown.test.mjs
@@ -254,7 +254,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
-- A leaning picture is an exact clip-path shape (never a skewed layer in an overflow-hidden box), outlined with `--trace`; grids gain columns as the screen widens; scroll boxes are padded by the lean. [THE WIDE-SCREEN RULE]
+- A leaning picture is an exact clip-path shape (never a skewed layer in an overflow-hidden box, never clipped and skewed both), outlined with `--trace`; a picture over its caption leans from its foot and the caption from its head, one shape; grids gain columns as the screen widens; scroll boxes are padded by the lean. [THE WIDE-SCREEN RULE], [A picture over its caption is one shape]
 - The studio's windows are the menu's sheets on every screen and the bar steps aside while one is open; the old strip under the bar is retired. [THE STUDIO'S WINDOWS ARE THE MENU'S SHEETS]
 - The shot panel draws one record; in flight it is read at the flight's clock, and `refreshShotGrid` swaps the grid only, never what `renderResult` wrote above it. [READ AT THE FLIGHT'S CLOCK], [REPLACES THE GRID ONLY]
 - The shot line is one element that `drawMonitorState` moves between the shot controls and the launch monitor window; JS learns "phone" from the stylesheet's `--phone`, never by measuring. [back inside the play window], [Where an unmoved tile sits]

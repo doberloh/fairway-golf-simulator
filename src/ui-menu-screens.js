@@ -93,55 +93,26 @@ export function buildFriend(root, {step = 0, onStep, doc = globalThis.document} 
  return true;
 }
 
-// SAVED COURSES: the courses as a shelf of picture-and-caption cards, with a
-// card to start a new one in the studio; the chosen course's name, code and
-// buttons (Play, Copy code, Rename, Delete) in a column on the right. The
-// buttons are the chosen card's own, moved there and back as the choice
-// changes. The tabs stay: Save a course and Import & export are theirs.
-// `codeOf(id)` is the course's code; `onNew()` opens the studio.
-export function buildLibrary(root, {codeOf, onNew, pick, onPick, doc = globalThis.document} = {}) {
+// SAVED COURSES: the courses as a shelf of cards, each the picture and its
+// caption as one leaning shape with the course's own buttons -- Play, Rename,
+// Copy code, Delete -- as small icons along its foot, and a card to start a
+// new one in the studio. Until 20 October 2026 a card was chosen and its
+// buttons moved to a column on the right with the name and the code; the owner
+// asked for them on the card, so the column went (the code shows under the
+// shelf when Copy code is pressed). The tabs stay: Save a course and Import &
+// export are theirs. `onNew()` opens the studio.
+export function buildLibrary(root, {onNew, doc = globalThis.document} = {}) {
  const list = root.querySelector('.panel-section[data-title="Your courses"] .course-list');
  if (!list || root.querySelector('.lib-shelf')) return false;
  const section = list.closest('.panel-section');
  const shelf = make(doc, 'div', 'lib-shelf');
- const side = make(doc, 'aside', 'lib-detail');
- const cards = [...list.querySelectorAll(':scope>.course-card')].filter(c => c.querySelector('[data-play]'));
- const home = new Map(cards.map(c => [c, c.querySelector('.course-actions')]));
- const choose = card => {
-  for (const c of cards) {
-   c.classList.toggle('on', c === card);
-   c.setAttribute('aria-pressed', String(c === card));
-   const acts = home.get(c);
-   if (acts && c !== card && acts.parentElement !== c) c.append(acts);
-  }
-  const id = card.querySelector('[data-play]').dataset.play;
-  onPick?.(id);
-  side.innerHTML = '';
-  side.append(make(doc, 'div', 'lib-name', `<strong></strong><small></small>`));
-  side.querySelector('strong').textContent = card.querySelector('.course-meta strong')?.textContent || '';
-  side.querySelector('small').textContent = (card.querySelector('.course-meta span')?.textContent || '').toUpperCase();
-  const code = make(doc, 'div', 'lib-code', '<span>COURSE CODE</span><code></code>');
-  try { code.querySelector('code').textContent = codeOf?.(id) || ''; } catch { code.querySelector('code').textContent = ''; }
-  side.append(code);
-  const flag = card.querySelector('.course-flag'); if (flag) side.append(flag.cloneNode(true));
-  const acts = home.get(card); if (acts) side.append(acts);
- };
- for (const c of cards) {
-  c.tabIndex = 0;
-  c.addEventListener('click', e => { if (!e.target.closest('button,input,textarea')) choose(c); });
-  c.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); choose(c); } });
-  shelf.append(c);
- }
- // Cards being renamed are edit rows; they stay as they are, on the shelf.
+ // Every card, the ones being renamed (edit rows) as they are.
  for (const c of list.querySelectorAll(':scope>.course-card')) shelf.append(c);
  const add = make(doc, 'button', 'lib-new', '<b>+</b><span>NEW IN STUDIO</span>');
  add.type = 'button'; add.onclick = () => onNew?.();
  shelf.append(add);
  list.replaceWith(shelf);
  section.classList.add('lib-courses');
- section.append(side);
- if (cards.length) choose(cards.find(c => c.querySelector('[data-play]').dataset.play === pick) || cards[0]);
- else side.remove();
  root.classList.add('lib-root');
  return true;
 }

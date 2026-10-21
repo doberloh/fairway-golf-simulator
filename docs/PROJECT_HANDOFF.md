@@ -1154,11 +1154,20 @@ circle round a birdie, two round an eagle, a square round a bogey, two round
 worse); its columns do not lean -- the cells are text, not wrappers, and a
 leaning table with upright numbers needs them rebuilt. **Round complete**
 (`roundCompleteHtml`, at the head of the final card, not in match play):
-standings with ties sharing a place and the winner in the gradient, each
-golfer's XP this round (`xpThisRound`, the ledger entries keyed to the
-round), level, and the handicap the round moved (`handicapLine`: the
-profile summary with and without this round); New round, Save card, Main
-menu. "Play again with the same group" and the round's three highlights are
+the title, then **the card itself** -- the score panel moves its
+`.score-table-wrap` up under the title and removes what the results already
+say (the course line `.score-where`, the in-progress note, the friend's
+running line) and hides its own Download button, which Save card presses --
+then the standings with ties sharing a place and the winner in the gradient,
+**each golfer's gains on their own row** (XP this round from `xpThisRound`,
+the ledger entries keyed to the round; the level bar; the handicap the round
+moved, `handicapLine`: the profile summary with and without this round; a
+scramble team's row lists each of its golfers by name), then **one row of
+buttons**: Main menu, New round, Save card, and Challenge a friend, which
+opens the code box under the row (one golfer: sent at once; several: a
+button per golfer). Until 20 October 2026 the XP was a section of its own
+under the standings and each golfer had a send button in a section of its
+own, above the card; the owner found the screen too full. "Play again with the same group" and the round's three highlights are
 not built.
 
 **A COLOURED BOX WITH TEXT IT CANNOT WRAP LEANS BY A PSEUDO-ELEMENT.** The
@@ -1438,6 +1447,20 @@ columns instead of stretching:** the course cards are
 Endless landscapes (240) and the saved-course shelf (280) the same way. **A
 scroll box is padded by the lean** of what leans inside it (half the tallest
 shape's height x 0.2126): `.sx-scroll` 20, `.sx-saved` 20, `.wk` 24, the seats' row 20 (a seat is about 400 tall: its lean overran the sheet's 26 by 13). **On a phone** the sheet's gutter is the lean too (`#drawerContent` 22, the seats 26; it was 0, and every shape poked 3-19 past it), and the course cards go two to a row at whatever width fits (at the desktop minimum two cards were wider than an upright phone).
+**A picture over its caption is one shape** (20 October 2026, the owner's
+"weird shapes"; Play's course cards, Endless's landscapes, Saved courses).
+Each part leaning about its own middle made the picture's foot and the
+caption's head start a lean apart, so a card zig-zagged and read as two
+buttons; and the saved courses' picture layer was clipped to the lean AND
+skewed, so it leaned twice. Now the picture leans from its FOOT -- its layer
+widened by a whole lean to the right (`inset:0 calc(var(--lean) * -1) 0 0`),
+the 3D model's canvas too (`left:0`) -- and the caption's panel from its HEAD
+(`transform-origin:0 0`), so the two edges are one straight line. A card's
+outline is then one parallelogram skewed about the seam (`.sx-card::after`,
+`transform-origin:0 130px`), not a trace round each part. The card overhangs
+its box by the picture's whole lean on the right, so `.sx-scroll` is padded
+30 on that side. The summary's 186-tall picture had the card's 27.6 lean; it
+is 39.5. Never skew a layer that is already cut to its lean.
 The check that finds a clipped shape and an off-screen piece is a few lines
 of page script (the round 14 report has it); run it at 16:9, 1.92, 21:9,
 4:3 and both phone shapes after any sheet change.
@@ -1583,9 +1606,13 @@ panel's own section tabs go, and `#challengeGo` is moved out of them first.
 The week is two steps since round 13 (frame c-cotw): one screen -- `weeklyBlocks`'s picture,
 eight fact tiles and the earlier weeks with their pictures -- and Golfers
 (the seats, tees and rules; PLACED, the frame has only Play). Saved courses
-keep their tabs; Your courses becomes a shelf whose chosen card's own
-`.course-actions` are moved into the right column (and back when another is
-chosen), with the course code from `exportCourse`. **A `:is()` list takes the
+keep their tabs; Your courses becomes a shelf of cards across the sheet, each
+carrying its own `.course-actions` as small icons along its foot (Play,
+Rename, Copy code, Delete; their words kept for a screen reader and the
+tooltip). Until 20 October 2026 a card was chosen and its buttons moved into a
+right-hand column with its name and code; the owner asked for them on the
+card, so the column and the choosing went. **Delete asks twice** since then
+(`DELETE_ARM_MS`, 3 s, PLACED): a small icon beside Play is easy to hit. **A `:is()` list takes the
 specificity of its MOST specific member**: the shared panel rule once listed
 `.ch-detail>ul.medal-asks>li` inside `:is()` and so outranked every
 per-piece rule after it (the week banner lost its gradient); it is `:where()`
@@ -2235,7 +2262,7 @@ CAUTION when editing the mode-hiding rules: they are long selector LISTS where t
 
 **THE KEYBOARD SHORTCUTS OF 10 OCTOBER 2026** follow GSPro's where they can: **A** resets the aim to what the turn started with (`resetAim`, through `defaultAim`, which `setUpTurn` now calls too, so the two can never disagree; by hand on the green it resets the putt's power as well), **I/K** change club beside Q/E, **H** hides everything over the course (`hud-hidden` on `#app`: the top bar and every child of `#world` but the canvas, the toast and the key list; H or Escape brings it back), **Tab** lists the keys (`#keysHelp`; its ↑ ↓ line says Power or Aim point by mode), and **G** steps the camera to the aim point, the green, and back to the ball. GSPro uses F3 for that; F3 is the browser's Find. The aim-point view is a camera mode of its own (`target`, renderer.js `setCamera`), 34 m short of the aim ring along the line from the ball and 22 m up, both placed; with no ring drawn it falls back to the view from the ball. Rejected: a rangefinder (GSPro's R), turned down by the owner.
 
-**THE AIM AND PIN LABELS TAKE TURNS** (10 October 2026). The flag marker is the one at rest; the player moving the aim -- `touchAim()`, called from every input path and from nothing that sets aim up on its own -- fades it (`.faded`) and fades the aim marker in, for `AIM_LABEL_HOLD` (1 s, placed) after the last touch. It closes the TODO "The flag marker and the aim marker overlap on screen", which they did from the tee at 1280x720 and 1366x768: the 8 m rule only stopped the two POINTS coinciding, never the two LABELS. The 8 m rule now applies only at rest: while aiming the pin's label is faded, and the rule had made the aim label vanish as the aim crossed the pin (owner, 11 October). Rejected: moving one label aside, which still leaves two numbers to read at a glance, and the owner asked for the turn-taking.
+**THE AIM AND PIN LABELS TAKE TURNS** (10 October 2026). The flag marker is the one at rest; the player moving the aim -- `touchAim()`, called from every input path and from nothing that sets aim up on its own -- fades it (`.faded`) and fades the aim marker in, for `AIM_LABEL_HOLD` after the last touch: 1 s (placed) until 20 October 2026, then 3 s at the owner's request -- the label was gone before it could be read. The marker also says what the aim point leaves to the hole (`leaveText`, round-hud.js), added the same day. It closes the TODO "The flag marker and the aim marker overlap on screen", which they did from the tee at 1280x720 and 1366x768: the 8 m rule only stopped the two POINTS coinciding, never the two LABELS. The 8 m rule now applies only at rest: while aiming the pin's label is faded, and the rule had made the aim label vanish as the aim crossed the pin (owner, 11 October). Rejected: moving one label aside, which still leaves two numbers to read at a glance, and the owner asked for the turn-taking.
 
 **The pin distance was on screen twice** — once in `#flagLabel` beside the flag and once as `#bottomPin` in the strip above the shot bar. The strip's copy is gone. NOTE the loop that fed it: `for(const id of ['bottomPin','explorePin'])$(id).textContent=…` would have thrown on a null and taken every line of `updateHUD` below it, which is most of the HUD. `#explorePin` is a separate readout in the flight bar and shares the `.pin-readout` class, so `querySelector('.pin-readout')` finds THAT one first — worth knowing before concluding the removal failed.
 

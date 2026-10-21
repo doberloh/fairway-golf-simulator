@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {holeSlab, distanceText, riseText, conditions, clubPanel, parScore, golferCards, keyHints, ballLight, hudScale, standings, xpThisRound, handicapLine, MIN_HUD_SCALE, ROUND_MIN_WIDTH, YARD, FOOT} from '../src/round-hud.js';
+import {holeSlab, distanceText, cameraName, leaveText, CAMERA_NAMES, riseText, conditions, clubPanel, parScore, golferCards, keyHints, ballLight, hudScale, standings, xpThisRound, handicapLine, MIN_HUD_SCALE, ROUND_MIN_WIDTH, YARD, FOOT} from '../src/round-hud.js';
 import {CLUBS} from '../src/clubs.js';
 
 const MINUS = '−';
@@ -130,4 +130,19 @@ test('the compact scale is seven tenths of the round screen scale', async () => 
  assert.ok(Math.abs(compactScale(1280, 720) - 0.7) < 1e-9);
  assert.ok(Math.abs(compactScale(1920, 1080) - 1.05) < 1e-9);
  assert.ok(compactScale(1920, 1080, 1.25) * 1.25 > compactScale(1920, 1080), "the Text size still draws it larger");
+});
+
+test('the camera is named beside the wind: each view, the bay, a flyover', () => {
+ assert.equal(cameraName({mode: 'player'}), 'BEHIND BALL');
+ assert.equal(cameraName({mode: 'player', sim: true}), 'BAY VIEW');
+ assert.equal(cameraName({mode: 'target'}), 'AIM POINT');
+ assert.equal(cameraName({mode: 'green', sim: true}), 'GREEN');
+ assert.equal(cameraName({mode: 'overview', tour: true}), 'FLYOVER');
+ assert.equal(cameraName({mode: 'nonsense'}), CAMERA_NAMES.player);
+ assert.equal(cameraName(), 'BEHIND BALL');
+});
+
+test('what is left from the aim point to the hole: yards, or feet inside ten metres', () => {
+ assert.equal(leaveText(142 * YARD), '142 YDS TO HOLE');
+ assert.equal(leaveText(3), `${(3 / FOOT).toFixed(1)} FT TO HOLE`);
 });

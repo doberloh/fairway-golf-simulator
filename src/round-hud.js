@@ -54,6 +54,23 @@ export function conditions({wind = 0, playsLike = null, rise = 0, putting = fals
  return out;
 }
 
+// THE CAMERA, NAMED beside the wind (owner, 20 October 2026): which view the
+// player is looking through. A flyover overrides the view it left; the play
+// camera in a simulator bay is the bay's own view.
+export const CAMERA_NAMES = {player: 'BEHIND BALL', target: 'AIM POINT', green: 'GREEN', overview: 'OVERVIEW', free: 'FREE FLIGHT'};
+export function cameraName({mode = 'player', sim = false, tour = false} = {}) {
+ if (tour) return 'FLYOVER';
+ if (mode === 'player' && sim) return 'BAY VIEW';
+ return CAMERA_NAMES[mode] || CAMERA_NAMES.player;
+}
+
+// What is left from the aim point to the hole, under the aim point's own
+// distance (owner, 20 October 2026): "142 YDS TO HOLE", feet inside ten metres.
+export function leaveText(metres) {
+ const d = distanceText(metres);
+ return `${d.value} ${d.unit} TO HOLE`;
+}
+
 // The club panel: the code in the hot block, the club's own name, and what a
 // full swing does with it.
 export function clubPanel(club) {
