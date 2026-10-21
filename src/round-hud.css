@@ -30,6 +30,16 @@
    panels (ui-kit.css), reached another way. Class names here start `rh-`. */
 
 #roundHud,.rh-pause-head,.rh-pause-extra,.rh-shot-card,.topbar>.rh-resume{display:none}
+/* NEXT HOLE, on the course once the scorecard is closed after a hole-out
+   (owner, 20 October 2026): bottom middle, where the meter was, in the
+   biome's gradient. Phone and wide screen alike, zoomed with the pieces. */
+.next-hole-bar{position:absolute;left:0;right:0;bottom:56px;z-index:8;width:max-content;margin:0 auto;padding:0;border:0;background:none;color:var(--on-hot,#111);font:800 italic 26px/1 "Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;text-transform:uppercase;cursor:pointer;isolation:isolate;zoom:var(--hud-z,1)}
+.next-hole-bar[hidden],#app.hud-hidden .next-hole-bar,#world:not([data-mode=play]) .next-hole-bar{display:none}
+.next-hole-bar::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1,#8fd0ff),var(--a2,#5aa8e0));transform:skewX(-12deg);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.next-hole-bar>span{display:flex;align-items:center;gap:14px;padding:14px 34px}
+.next-hole-bar kbd{font:700 12px/1 var(--font-ui);font-style:normal;letter-spacing:.1em;padding:4px 7px;border:0;border-radius:0;background:rgba(0,0,0,.18);color:inherit}
+.next-hole-bar:is(:hover,:focus-visible){outline:none}
+.next-hole-bar:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot,#fd5),0 10px 30px rgba(0,0,0,.35)}
 /* The bar's golfer chip holds its letter and a player icon; the pause list
    shows the icon, the chip the letter (the owner, 18 October 2026). */
 .avatar .av-icon{display:none}
@@ -73,6 +83,11 @@
  .rh-sub>span{transform:skewX(12deg);display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;font-style:italic}
  .rh-sub small{font-size:15px;letter-spacing:.14em;color:var(--soft);font-style:normal;font-weight:700}
  .rh-sub svg{width:26px;height:26px;stroke:var(--a1);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;transform:rotate(var(--wind,0deg))}
+ /* The camera's name, a smaller box beside the wind (owner, 20 October 2026). */
+ .rh-subs{align-items:center}
+ .rh-sub[data-sub=cam]{height:32px;padding:0 12px}
+ .rh-sub[data-sub=cam]>span{font-size:16px;gap:6px}
+ .rh-sub[data-sub=cam] small{font-size:12px}
 
  /* The golfer cards. */
  .rh-cards{position:absolute;right:30px;top:24px;width:340px;display:grid;gap:6px;justify-items:end}
@@ -201,6 +216,7 @@
  #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>small{order:0;margin:0;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label)>small::after{display:none}
  #world[data-mode=play] :is(.flag-label:not(.edge),.aim-label) .aim-rise{margin-left:8px;color:#fff;letter-spacing:.06em}
+ #world[data-mode=play] .aim-label .aim-leave{color:var(--hot,#fd5)}
  #world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
  /* On the green the pin's marker clamps to the edge and points at the cup, as before. */
  #world[data-mode=play] .flag-label.edge{scale:var(--hud-z,1);transform-origin:50% 100%}

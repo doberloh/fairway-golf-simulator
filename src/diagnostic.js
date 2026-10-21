@@ -30,9 +30,9 @@ export function buildStamp() {
  try {
   // eslint-disable-next-line no-undef
   const b = typeof __FAIRWAY_BUILD__ === 'undefined' ? null : __FAIRWAY_BUILD__;
-  if (!b || typeof b !== 'object') return {commit: null, built: null, source: 'unstamped'};
-  return {commit: b.commit ?? null, built: b.built ?? null, source: b.commit ? 'git' : 'clock'};
- } catch { return {commit: null, built: null, source: 'unstamped'}; }
+  if (!b || typeof b !== 'object') return {commit: null, built: null, version: null, source: 'unstamped'};
+  return {commit: b.commit ?? null, built: b.built ?? null, version: b.version ?? null, source: b.commit ? 'git' : 'clock'};
+ } catch { return {commit: null, built: null, version: null, source: 'unstamped'}; }
 }
 
 // A build the tester can name in one short string. The commit is what ties a

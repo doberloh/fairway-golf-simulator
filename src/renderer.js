@@ -49,7 +49,7 @@ import {solarState,defaultHour,advance,loadDaylight,saveDaylight,localHour,starR
 import {random,greenRadius,fairwayWidth,ovalRadius,hazardProfile,TEE_PAD,TEE_APRON,TEE_MARKER_INSET} from './course.js';
 import {addVegetation} from './vegetation.js';
 import {cullInstances} from './instance-cull.js';
-import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose} from './camera.js';
+import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
@@ -410,7 +410,7 @@ export class GolfView{
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
-  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};this.sway={value:1};
+  this.scene=new T.Scene();this.camera=new T.PerspectiveCamera(53,1,.15,20000);this.look=new T.Vector3();this.targetPos=new T.Vector3();this.targetLook=new T.Vector3();this.config={...loadCamera()};this.freeYaw=0;this.freePitch=-.32;this.orbit={yaw:0,pitch:0,zoom:1};this.orbitAt=null;this.raycaster=new T.Raycaster();this.targets=[];this.elapsed=0;this.foliageTime={value:0};this.breeze={value:1};this.sway={value:1};
   // The bearing the wind blows TOWARD, as a unit vector in world XZ -- the same
   // convention `shot-visuals.js` and `clouds.js` already use.
   this.windVec={value:new T.Vector2(0,1)};this.resources=[];this.resize();new ResizeObserver(()=>this.resize()).observe(canvas.parentElement);
@@ -2211,7 +2211,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // its colours and its shape, held still: a dash stays a dash and a zigzag a
    // zigzag. (It was the seat colour, per spec 7.4, until the owner asked for
    // the golfer's choice everywhere, 15 October 2026.)
-   const shape=summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
+   // `shape` overrides the golfer's style: a friend's challenge draws its
+   // shots in one look of its own (main.js `rivalTrails`).
+   const shape=trail?.shape||summaryStyle(trail?.style),stops=shape.colours||[SHOT_LINE_COLOR];
    let world=kept.map(p=>{const v=this.course.toWorld(p);return [v.x,p.y,v.z];});
    if(shape.jag)world=jagged(world,shape.jag,i+1);
    const cols=new Float32Array(world.length*3);for(let k=0;k<world.length;k++)cols.set(linear(stopColour(stops,k/Math.max(1,world.length-1))),k*3);
@@ -2285,17 +2287,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  hitEffects(p,aim,lie,speed){this.effects.hit(p,aim,lie,speed);}
  setCamera(p,aim,instant=false){
-  this.camFlight=null;this.tv=null;this.trackingBall=false;const c=this.config,h=this.course;
+  this.camFlight=null;this.tv=null;this.trackingBall=false;this.orbitAt=null;const c=this.config,h=this.course;
   if(c.mode==='free'){if(!this.wasFree){this.targetPos.copy(this.camera.position);this.freeYaw=Math.atan2(this.look.x-this.camera.position.x,this.look.z-this.camera.position.z);this.freePitch=Math.asin(T.MathUtils.clamp((this.look.y-this.camera.position.y)/Math.max(.001,this.look.distanceTo(this.camera.position)),-1,1));this.wasFree=true;}this.updateFreeLook();return;}
   this.wasFree=false;
   if(c.mode==='overview'){this.targetPos.set(-this.world.halfX*.4,Math.max(this.world.halfX/Math.min(1,this.camera.aspect),this.world.halfZ)*2.8,-this.world.halfZ*1.1);this.targetLook.set(0,0,40);}
-  else if(c.mode==='green'){const q=h.worldPin;this.targetPos.set(q.x+28,h.height(h.pin.x,h.pin.z)+21,q.z+34);this.targetLook.set(q.x,h.height(h.pin.x,h.pin.z),q.z);}
+  else if(c.mode==='green'){const q=h.worldPin;this.aimOrbit({x:q.x,y:h.height(h.pin.x,h.pin.z),z:q.z},{x:28,y:21,z:34});}
   // THE AIM POINT VIEW (G, 10 October 2026): the landing area, looked down on
   // from short of it along the line from the ball, the way GSPro's F3 shows
   // where a shot is going. Placed numbers: 34 m back, 22 m up. With no aim ring
   // drawn (a putt by hand, a hole just finished) there is no point to look at,
   // and it falls back to the view from the ball below.
-  else if(c.mode==='target'&&this.aimRing.visible){const a=this.aimRing.position,b=this.ball.position,dx=a.x-b.x,dz=a.z-b.z,l=Math.hypot(dx,dz)||1;this.targetPos.set(a.x-dx/l*34,a.y+22,a.z-dz/l*34);this.targetLook.set(a.x,a.y,a.z);}
+  else if(c.mode==='target'&&this.aimRing.visible){const a=this.aimRing.position,b=this.ball.position,dx=a.x-b.x,dz=a.z-b.z,l=Math.hypot(dx,dz)||1;this.aimOrbit({x:a.x,y:a.y,z:a.z},{x:-dx/l*34,y:22,z:-dz/l*34});}
   // THE RIG, not the raw config. In simulator mode the height, the setback and
   // the field of view come from the bay's measurements instead of the sliders,
   // and the lateral offset is forced to zero -- a golfer stands behind the ball,
@@ -2345,6 +2347,13 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  cancelFlight(){this.camFlight=null;}
  updateFreeLook(){this.targetLook.copy(this.targetPos).add(new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch)).multiplyScalar(100));}
+ // The green and aim point views stand at an offset from the point they look
+ // at, turned by the player's drag (camera.js stepOrbit). `orbitAt` is set only
+ // while one of them is the view, so a drag elsewhere finds nothing to turn.
+ aimOrbit(look,offset){this.orbitAt={look,offset};const e=orbitEye(look,offset,this.orbit);this.targetPos.set(e.x,e.y,e.z);this.targetLook.set(look.x,look.y,look.z);}
+ orbitBy(dx,dy,zoom=1){if(!this.orbitAt)return false;this.orbit=stepOrbit(this.orbit,this.orbitAt.offset,{yaw:-dx*.006,pitch:dy*.004,zoom});const e=orbitEye(this.orbitAt.look,this.orbitAt.offset,this.orbit);this.targetPos.set(e.x,e.y,e.z);return true;}
+ resetOrbit(){this.orbit={yaw:0,pitch:0,zoom:1};}
+ canOrbit(){return !!this.orbitAt&&['green','target'].includes(this.config.mode)&&!this.camFlight&&!this.tv;}
  rotateFree(dx,dy){this.freeYaw-=dx*.004;this.freePitch=T.MathUtils.clamp(this.freePitch-dy*.003,-1.48,1.48);this.updateFreeLook();}
  moveFree(dt,forward,right,up,fast=false){const speed=this.config.freeSpeed*(fast?3:1)*dt,dir=new T.Vector3(Math.sin(this.freeYaw)*Math.cos(this.freePitch),Math.sin(this.freePitch),Math.cos(this.freeYaw)*Math.cos(this.freePitch));this.targetPos.addScaledVector(dir,forward*speed);this.targetPos.x-=Math.cos(this.freeYaw)*right*speed;this.targetPos.z+=Math.sin(this.freeYaw)*right*speed;this.targetPos.y+=up*speed;this.targetPos.x=T.MathUtils.clamp(this.targetPos.x,-this.world.halfX-400,this.world.halfX+400);this.targetPos.z=T.MathUtils.clamp(this.targetPos.z,-this.world.halfZ-400,this.world.halfZ+400);this.targetPos.y=T.MathUtils.clamp(this.targetPos.y,Math.max(this.world.waterLevel+1,this.world.height(this.targetPos.x,this.targetPos.z)+(this.config.freeFloor??1.2)),1800);this.updateFreeLook();}
  // The free camera put exactly somewhere, for measurements and screenshots that

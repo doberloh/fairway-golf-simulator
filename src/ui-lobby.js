@@ -91,7 +91,7 @@ export function courseFacts(text) {
 function card(doc, {name, line, tag, best, kind}) {
  const b = make(doc, 'button', 'sx-card' + (kind ? ' sx-' + kind : ''));
  b.type = 'button';
- const pic = make(doc, 'span', 'sx-pic', kind === 'surprise' ? '<b>?</b>' : kind === 'studio' ? '<b>+</b>' : '');
+ const pic = make(doc, 'span', 'sx-pic', kind === 'surprise' ? '<b>?</b>' : kind === 'studio' ? '<b>+</b>' : kind === 'friend' ? '<b>VS</b>' : '');
  const cap = make(doc, 'span', 'sx-cap', `${tag ? `<em>${esc(tag)}</em>` : ''}<strong>${esc(name)}</strong><small>${esc(line)}${best ? ` · <i>${esc(best)}</i>` : ''}</small>`);
  b.append(pic, cap);
  return {b, pic};
@@ -201,7 +201,8 @@ export function buildEndlessSetup(root, opts = {}, doc = globalThis.document) {
  });
 }
 
-// `opts`: courses [{id, name, settings, line, best}], weekly {name, line,
+// `opts`: courses [{id, name, settings, line, best}], friend {name, line} and
+// onFriend() (a friend's challenge, rival.js), weekly {name, line,
 // settings} or null, onWeekly(), pictures(items, w, h), step, onStep(i),
 // golferLine(seatEl) for the summary.
 export function buildLobby(root, opts = {}, doc = globalThis.document) {
@@ -224,6 +225,12 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   b.setAttribute('aria-label', `Course of the week: ${weekly.name}`);
   b.onclick = () => opts.onWeekly?.();
   grid.append(b); queue.push({el: pic, settings: weekly.settings});
+ }
+ if (opts.friend) {
+  const {b} = card(doc, {name: opts.friend.name, line: opts.friend.line, tag: 'A FRIEND’S CHALLENGE', kind: 'friend'});
+  b.setAttribute('aria-label', 'A friend’s challenge');
+  b.onclick = () => opts.onFriend?.();
+  grid.append(b);
  }
  for (const c of courses) {
   const {b, pic} = card(doc, {name: c.name, line: c.line, best: c.best});

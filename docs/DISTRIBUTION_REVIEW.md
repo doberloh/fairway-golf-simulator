@@ -1241,3 +1241,40 @@ there): `/play/` serves this release's `Fairway.html` byte for byte (sha256
 Download buttons resolve through `releases/latest` to the v0.9 zips. The
 packaged Windows server was run from its unzipped download before publishing
 and served the page byte for byte, on spare ports (19922/19921).
+
+## Addendum, 20 October 2026: v0.9.1
+
+**v0.9.1** is published at the owner's request ("merge this all in, generate a
+new release 0.9.1, generate release notes and push to github, then push to the
+live website with the new game version"), as "Fairway 0.9.1 (beta)", tag
+`v0.9.1`, not a pre-release, the same four zip names, from the merge of
+`release-0.9.1` into `main`, with its notes in `docs/releases/v0.9.1.md` in
+that commit. It carries the `challenge-a-friend` journey (a finished card,
+its course and every shot as a code, `src/rival.js`; the owner's ten fixes
+from testing 0.9) and the flyover-camera tools merged after 0.9.
+**`GENERATOR_VERSION` is still 36, `SCHEMA_VERSION` still 11 and
+`PROFILE_VERSION` still 3**; `node tools/biome-fingerprint.mjs --check` says
+every biome is unchanged, and the page's `fairway-versions` tag still reads
+`generator=36 schema=11`. A saved round gains two optional fields, `rival` (the
+challenge it is played against) and `shots` (its shot log); a round saved by
+0.9 has neither and loads as before.
+
+**The package version is 0.9.1** (package.json and its lockfile). **A
+friend's challenge code names the version and commit it was made on** and is
+refused by any other build, by design (PROJECT_HANDOFF *A friend's challenge is
+the version*), so codes made on 0.9.1 play only on 0.9.1.
+
+**No new dependency, no request.** The page still carries one `fetch(` (Vite's
+module-preload helper) and makes no network request. The built page is
+**17,586,096 bytes (7.23 MB gzipped), +25 KB on 0.9**: rival.js and the
+interface changes. The zips: Windows 48.2 MB, macOS Apple silicon 34.1 MB,
+macOS Intel 36.4 MB, Linux 44.8 MB, each 8 verified files.
+
+**Checked:** `npm test` 1022 of 1022 and the build; the biome fingerprint.
+The `friend-challenge` smoke journey passed on the real GPU on 20 October,
+before the ten fixes. **No smoke run and no browser look after the ten
+fixes**: the graphics card was in use (the owner's machine) and no GPU run was
+asked for, so the save box, the Next hole button, the new Round complete, the
+camera name and turn, the aim label and the card shapes reach players
+unplayed (TODO, *Challenge a friend*, lists what to check). The studio
+journey was rewritten for the save box and has not run.

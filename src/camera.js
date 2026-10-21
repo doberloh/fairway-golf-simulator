@@ -45,6 +45,29 @@ export function puttAimPose(hole,p,aim){
  return {eye:hole.toWorld({...e,y:eyeY}),target:hole.toWorld({...t,y:hole.height(t.x,t.z)})};
 }
 
+// TURNING ROUND THE AIM POINT OR THE GREEN (owner, 20 October 2026). Those two
+// views look at a point from a set offset (renderer.js setCamera); a drag turns
+// that offset round the point, tips it up or down, and the wheel moves it in or
+// out. The turn is kept as three numbers on top of the view's own offset, so the
+// aim point view still faces down the line from the ball as the aim moves, and
+// it goes back to nothing when the view changes. PLACED: between 5 and 85
+// degrees above the ground, from a third as far to two and a half times as far.
+export const ORBIT={minElevation:5,maxElevation:85,minZoom:.35,maxZoom:2.5};
+const elevationOf=o=>Math.atan2(o.y,Math.hypot(o.x,o.z));
+export function stepOrbit(orbit,offset,{yaw=0,pitch=0,zoom=1}={}){
+ const el=elevationOf(offset),lo=ORBIT.minElevation*Math.PI/180,hi=ORBIT.maxElevation*Math.PI/180;
+ return {
+  yaw:(orbit?.yaw||0)+yaw,
+  pitch:Math.min(hi-el,Math.max(lo-el,(orbit?.pitch||0)+pitch)),
+  zoom:Math.min(ORBIT.maxZoom,Math.max(ORBIT.minZoom,(orbit?.zoom||1)*zoom)),
+ };
+}
+export function orbitEye(look,offset,orbit){
+ const r=Math.hypot(offset.x,offset.y,offset.z)*(orbit?.zoom||1);
+ const el=elevationOf(offset)+(orbit?.pitch||0),bearing=Math.atan2(offset.x,offset.z)+(orbit?.yaw||0);
+ return {x:look.x+Math.sin(bearing)*Math.cos(el)*r,y:look.y+Math.sin(el)*r,z:look.z+Math.cos(bearing)*Math.cos(el)*r};
+}
+
 // Shared camera math; a lateral offset translates both eye and target equally.
 export function playerCameraPose(hole,p,aim,config){
  const a=aim*Math.PI/180,dx=Math.sin(a),dz=Math.cos(a),rx=Math.cos(a),rz=-Math.sin(a),y=hole.height(p.x,p.z);
