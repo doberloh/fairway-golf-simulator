@@ -663,6 +663,13 @@ green everywhere, and every mode but the range under one Play.
   and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
   tool labels' new names read in a real round by a person, the main menu's
   hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 2, end of hole and round: built, seen in two played rounds.**
+  Seen: a stroke-play tie (headline, card, TIED rows, one row of buttons,
+  readable share buttons) and a no-skins skins round; under par green on the
+  card. Not seen: match play's Round complete, a scramble's, the grouped XP
+  popup with real golfers holing out close together (the audit places balls at
+  the cup), the popup's new place in a real round, a level-up crossing inside
+  the grouped popup.
 
 ## Release 0.9.1 (20 October)
 

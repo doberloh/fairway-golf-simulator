@@ -52,7 +52,7 @@ import {projectorFov,standForFov,aspectName} from './projector.js';
 import {loadCamera,saveCamera,cameraRig,DEFAULT_CAMERA} from './camera-prefs.js';
 import {effectiveTextSize,applyTextSize,maxTextSize,uiZoom,TEXT_SIZE} from './ui-scale.js';
 import {ROUND_KEYS,toolsFor,helpKeys,swingStrip,COACH_STEPS} from './keys.js';
-import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine} from './round-hud.js';
+import {holeSlab,conditions,cameraName,leaveText,clubPanel,golferCards,keyHints,hudScale,compactScale,parScore,standings,xpThisRound,handicapLine,roundResult} from './round-hud.js';
 import {screenPalette,paletteVars} from './ui-palette.js';
 import {shotDisplay,cardPhase,cardTab,loadChoice,saveChoice,CHOICES,CHOICE_NAMES,CARD_MAIN,CARD_ROW,CARD_FADE_MS} from './shot-display.js';
 import {celebrationFor,paperMark,turnAfter,bannerLength} from './celebration.js';
@@ -905,6 +905,11 @@ function showXpGain(){
  if(xpTimer||!xpQueue.length)return;
  const sting=XP_AFTER_STING-(performance.now()-holeOutAt);
  if($('holeOut')&&!$('holeOut').hidden&&sting>0){xpTimer=setTimeout(()=>{xpTimer=null;showXpGain();},sting);return;}
+ // SEVERAL GOLFERS AT ONCE, ONE POPUP (UI/UX pass, 21 October 2026): with three
+ // golfers the popups queued one after another, about three and a half seconds
+ // each, and the scorecard waited for all of them. Gains waiting together now
+ // show together: a line each, the bars filling side by side.
+ if(xpQueue.length>1&&$('xpGain')){showXpGroup(xpQueue.splice(0));return;}
  const g=xpQueue.shift(),el=$('xpGain');if(!el)return;g.shown=true;
  const from=levelOf(g.before),to=levelOf(g.after),pct=l=>Math.round(l.into/l.need*100);
  const multNote=g.mult!==1?`<li class="xp-mult"><span>${g.mult>1?'Hard':'Easy'} ×${g.mult}</span></li>`:'';
@@ -926,6 +931,17 @@ function showXpGain(){
  setTimeout(run,XP_FILL_AT);
  const levels=steps.length-1;
  xpTimer=setTimeout(()=>{el.hidden=true;xpTimer=null;showXpGain();showLevelUp();},XP_FILL_AT+steps.length*XP_FILL_MS+levels*(XP_LEVEL_AT+XP_LEVEL_HOLD)+XP_LINGER);
+}
+function showXpGroup(gs){
+ const el=$('xpGain');for(const g of gs)g.shown=true;
+ const pct=l=>Math.round(l.into/l.need*100);
+ el.innerHTML=`<div class="xp-top"><b>+${gs.reduce((n,g)=>n+g.gained,0)} XP</b><span>THIS HOLE</span></div><ul class="xp-group">${gs.map(g=>{const to=levelOf(g.after),from=levelOf(g.before);
+  return `<li><span class="xp-who">${escape(g.name)}</span><b>+${g.gained}</b><i class="level-badge">${to.level}</i><span class="xp-bar"><b style="width:${to.level>from.level?0:pct(from)}%" data-to="${pct(to)}"></b></span>${to.level>from.level?'<em>LEVEL UP</em>':''}</li>`;}).join('')}</ul>`;
+ el.dataset.shown=String((Number(el.dataset.shown)||0)+1);
+ el.classList.remove('levelled');el.hidden=true;void el.offsetWidth;el.hidden=false;
+ gameAudio?.xpSound?.('gain');
+ setTimeout(()=>{for(const b of el.querySelectorAll('.xp-bar b')){b.style.transition=`width ${XP_FILL_MS}ms cubic-bezier(.3,.7,.3,1)`;b.style.width=b.dataset.to+'%';}gameAudio?.moment?.('xp');},XP_FILL_AT);
+ xpTimer=setTimeout(()=>{el.hidden=true;xpTimer=null;showXpGain();showLevelUp();},XP_FILL_AT+XP_FILL_MS+XP_LINGER);
 }
 // THE LEVEL-UP BANNER waits for the hole-out banner, so the score is read first.
 const levelUps=[];let levelUpTimer=null;
@@ -4611,11 +4627,19 @@ function roundCompleteHtml(){
  const gain=(i,named)=>{const p=round.players[i],prof=profileOf(p);if(!prof)return '';
   const xp=xpThisRound(prof.xpLog,round.uid),lv=levelOf(prof.xp),now=profileSummary(prof).handicap,was=profileSummary({...prof,rounds:(prof.rounds||[]).filter(r=>r.id!==round.uid)}).handicap,hcp=handicapLine(was.index,now.index,now.needed);
   return `<span class="rh-res-gain">${named?`<b>${escape(p.name.toUpperCase())}</b>`:''}<span class="rh-res-bar"><b style="width:${(lv.need?Math.min(1,lv.into/lv.need)*100:0).toFixed(1)}%"></b></span><span>+${xp} XP \u00b7 LV ${lv.level}${hcp?` \u00b7 ${hcp.includes('\u2192')?'HCP ':''}${escape(hcp)}`:''}</span></span>`;};
- const rows=standings(entries).map(r=>{const sc=parScore(r.total-par);
+ // BY THE FORMAT (round-hud.js roundResult): skins ranked by skins won, match
+ // play by the team, a tie called a tie.
+ const k=round.mode==='skins'?skins(round.cards,decidedHoles(round)):null;
+ const diff=round.mode==='match'?round.match.A-round.match.B:0;
+ const res=roundResult({mode:round.mode,entries:round.mode==='match'?round.players.map((p,i)=>({name:p.name,total:sumScores(round.cards[i]),seat:i,team:p.team})):entries,
+  skinsWon:k?.won,carry:k?.carry||0,match:round.mode==='match'?{A:round.match.A,B:round.match.B,holesLeft:diff?round.holes-round.hole-1:0}:null});
+ const rows=res.rows.map(r=>{const sc=parScore(r.total-par);
   const seats=scramble?round.players.map((p,i)=>p.team===round.players[r.seat]?.team?i:-1).filter(i=>i>=0):[r.seat];
-  return `<div class="rh-res-row${r.win?' win':''}"><span class="rh-res-pos">${r.place??'—'}</span><span class="rh-res-pic">${pic(r.seat)}</span><span class="rh-res-who"><span class="rh-res-name">${escape(r.name.toUpperCase())}${r.win?' \u00b7 WINS':''}</span>${seats.map(i=>gain(i,scramble)).join('')}</span><span class="rh-res-score">${Number.isFinite(r.total)?scoreText(r.total):'—'}<small class="${sc.under?'under':''}">${escape(sc.text)}</small></span></div>`;}).join('');
+  const strokes=Number.isFinite(r.total)?scoreText(r.total):'—';
+  const big=round.mode==='skins'?r.measure:strokes;
+  return `<div class="rh-res-row${r.win?' win':''}${r.tie?' tie':''}"><span class="rh-res-pos">${r.place??'—'}</span><span class="rh-res-pic">${pic(r.seat)}</span><span class="rh-res-who"><span class="rh-res-name">${escape(r.name.toUpperCase())}${r.win?' \u00b7 WINS':r.tie?' \u00b7 TIED':''}${round.mode==='match'?` <i>${escape(r.measure)}</i>`:''}</span>${seats.map(i=>gain(i,scramble)).join('')}</span><span class="rh-res-score">${escape(big)}<small class="${sc.under?'under':''}">${round.mode==='skins'?`${escape(strokes)} · `:''}${escape(sc.text)}</small></span></div>`;}).join('');
  const share=canSendCards();
- return `<section class="rh-results"><h2>Round complete<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></h2>`
+ return `<section class="rh-results"><div class="rh-res-head"><h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match'}[round.mode]||'Stroke play')} \u00b7 ${round.holes} holes</small></div>`
   +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
@@ -6077,16 +6101,16 @@ function renderPanel(name,content){
   const rv=round.endless?null:activeRival();
   const rivalRow=rv?`<tr class="rival-row"><td><span class="player-dot" style="background:#ffffff"></span>${escape(rv.name)}’s card</td>${pars.map((_,h)=>{const v=rv.card[from+h],mk=paperMark(v,pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${Number.isFinite(v)?scoreText(v):'—'}</td>`;}).join('')}<td>${scoreText(sumScores(rv.card))}</td>${(rel=>`<td class="to-par" data-side="${parSide(rel,true)}">${parText(rel)}</td>`)(sumScores(rv.card)-allPars.reduce((a,b)=>a+b,0))}</tr>`:'';
   const skinsRow=sk?`<tr class="skins-row"><td>Skins</td>${pars.map((_,h)=>skinCell(from+h)).join('')}<td>${sk.won.reduce((a,b)=>a+b,0)}</td><td>${sk.carry?`${sk.carry} carried`:''}</td></tr>`:'';
-  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}${rv?`<p class="rival-status">${rivalLines().map(escape).join(' · ')}</p>`:''}<p class="score-where">${round.endless?`Endless · seed ${escape(round.seed)}`:escape(course.bio.name)} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}${rivalRow}</tbody></table></div><p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
+  content.innerHTML=`${status?`<div class="match-status">${escape(status)}</div>`:''}${rv?`<p class="rival-status">${rivalLines().map(escape).join(' · ')}</p>`:''}<p class="score-where">${round.endless?`Endless · seed ${escape(round.seed)}`:escape(playingCourseName())} · ${{scramble:'Team scramble',match:'Best-ball match',skins:'Skins'}[round.mode]||'Stroke play'} · ${round.finished?'Final scores':'Hole '+(round.hole+1)}</p>${round.endless&&from>0?`<p class="research-label">Showing the last ${ENDLESS_WINDOW} holes. Total and +/- cover all ${round.pars.length}.</p>`:''}<div class="score-table-wrap"><table class="score-table"><thead><tr><th>Hole</th>${pars.map((_,h)=>`<th${round.holeComplete&&from+h===round.hole?' class="rh-done"':''}>${hcol(h)}</th>`).join('')}<th>Total</th><th>+/-</th></tr><tr><th>Par</th>${pars.map(p=>`<td>${p||'—'}</td>`).join('')}<td>${allPars.reduce((a,b)=>a+b,0)}</td><td>E</td></tr>${teeRows.map(t=>`<tr class="yardage-row"><th><span class="tee-dot ${t.name}"></span>${t.name} yd</th>${t.yards.map(y=>`<td>${y}</td>`).join('')}<td>${t.yards.reduce((a,b)=>a+b,0)}</td><td></td></tr>`).join('')}</thead><tbody>${round.players.map((p,i)=>`<tr class="${round.active===i?'current':''}"><td><span class="player-dot" style="background:${playerColour(i)}"></span>${escape(p.name)}${['match','scramble'].includes(round.mode)?' · '+p.team:''}${(t=>t?`<small class="golfer-title">${escape(t)}</small>`:'')(titleName(seatLooks(i).title))}</td>${pars.map((_,h)=>{const g=from+h,mk=paperMark(round.cards[i][g],pars[h]);return `<td${mk?` class="mk-${mk}"`:''}>${round.cards[i][g]!==undefined?scoreText(round.cards[i][g]):(g===round.hole&&round.strokes[i]>0?scoreText(round.strokes[i])+'*':'—')}</td>`;}).join('')}<td>${scoreText(sumScores(round.cards[i]))}</td>${(({rel,played})=>`<td class="to-par" data-side="${parSide(rel,played)}"${parTint(rel,played)?` style="background:${parTint(rel,played)}"`:''}>${played?parText(rel):'—'}</td>`)(toPar(i))}</tr><tr class="putts-row"><td>Putts</td>${pars.map((_,h)=>`<td>${round.puttCards[i][from+h]!==undefined?scoreText(round.puttCards[i][from+h]):'—'}</td>`).join('')}<td>${scoreText(sumScores(round.puttCards[i]))}</td><td></td></tr>`).join('')}${skinsRow}${rivalRow}</tbody></table></div>${!round.holeComplete&&!round.finished&&round.strokes.some(n=>n>0)?`<p class="research-label">* Hole in progress. Totals include completed holes. ${round.mode==='scramble'?'Teammates share one score.':''}</p>`:round.mode==='scramble'?'<p class="research-label">Teammates share one score.</p>':''}${round.scrambleSelection?'<h3>Choose your team’s lie</h3><p>Close this card: every ball the team hit is on the course, and the bar at the foot of the screen steps between them.</p>':''}${round.holeComplete&&!round.finished?'<div class="hole-advance"><p id="autoAdvanceLabel">Hole complete</p><button class="secondary" id="pauseAdvance">Stay on scorecard</button><button class="primary" id="nextHoleScore">Next hole now →</button></div>':''}<button class="secondary" id="downloadScore">Download scorecard</button>`;
 
-  if(round.finished&&hud1&&round.mode!=='match'){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();
+  if(round.finished&&hud1){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());$('drawerTitle').textContent='Round complete';if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();
    // THE CARD FIRST: the table goes under the title, and what the results
    // already say -- the course line, the in-progress note, the friend's running
    // line, a second download button -- leaves (owner, 20 October 2026). The
    // download button stays in the page, hidden, because Save card presses it.
    const res=content.querySelector('.rh-results'),wrap=content.querySelector('.score-table-wrap');
-   if(res&&wrap)res.querySelector('h2').after(wrap);
-   content.querySelectorAll(':scope>:is(.score-where,.research-label,.rival-status)').forEach(n=>n.remove());
+   if(res&&wrap)res.querySelector('.rh-res-head').after(wrap);
+   content.querySelectorAll(':scope>:is(.score-where,.research-label,.rival-status,.match-status)').forEach(n=>n.remove());
    $('downloadScore').hidden=true;
    // Challenge a friend: the code is copied and shown, and can be saved as a
    // file for an app that will not take a message that long. One golfer's
@@ -6225,7 +6249,9 @@ const CONTROL='label.check,label.field,.control-group,p.control-label';
 // showed most once descriptions moved INSIDE that card -- the card then looked
 // complete with a piece of its own control stranded underneath it.
 const ATTACHED='P.note,.research-label,.field-error,.course-plan,.option-grid,.footprint-icons,.field-action';
-const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,textarea';
+// .rh-results: Round complete holds the card itself and drops the status line,
+// so without it the section had nothing wide and flowed into columns.
+const WIDE='.score-table-wrap,.course-list,.players-list,.help-shortcuts,.match-status,.rh-results,textarea';
 // What stays pinned above the sections: the sentence explaining the panel and
 // the actions that apply to all of it.
 const LEAD='.panel-intro,button,.split,.field-error';
@@ -7534,7 +7560,8 @@ function tick(now){
  // drawn by `ready` itself as soon as the programs are done.
  if(!view.readying)view.render(dt);
  setWindArrow();
- const worldLabels=!flight&&view.config.mode!=='free';
+ // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
+ const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;
  // ON THE GREEN THE MARKER IS THE ONLY DISTANCE THERE IS, because the
  // flagstick has been pulled and there is nothing left out there to judge
  // against. So it stops being a thing floating over the pin that can drift off

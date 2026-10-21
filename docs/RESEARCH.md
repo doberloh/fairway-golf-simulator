@@ -8619,9 +8619,13 @@ The last column is not tested: a highlighted box is a gradient from the
 accent `a1` to the darker `a2`, and text sits at the light end in the approved
 mockups. Giant Redwood's 2.3 there fails even the large-text figure, so a
 screen must not put text at the dark end (TODO, *The 1.0 interface*).
-Separately, Giant Redwood's and Haunted Hollow's accent is almost the shared
+Separately, Giant Redwood's and Haunted Hollow's accent was almost the shared
 under-par red (contrast 1.0 between them), so an under-par score is written
-only on a panel.
+only on a panel. **Since 21 October 2026 under par is green** (`#6ee38c`, the
+owner's call, to match the scorecard): against each biome's accent it measures
+1.04 (Autumn) to 1.72 (Giant Redwood) -- every accent is about as bright -- so
+the same rule holds, and it passes the panel check (3, large text) in every
+biome (tests/ui-palette.test.mjs).
 
 **The canvas floor for the Text size: 1024 design pixels, PLACED** (125% on a
 16:9 canvas). At 1024 x 576 the 16:9 grid's columns are 55.8 px; at 1024 x 768

@@ -996,15 +996,18 @@ screen shape to them.
   changes the setting (a button inside a label does not activate the label).
 - **Colours come from the biome** (`ui` in each biome record): in a round the
   course's, in the lobby and studio the course being chosen, everywhere else
-  the course of the week, so the menus change colour every Monday. Red for
-  under par is one colour everywhere (`UNDER_PAR`). Every palette passes a
+  the course of the week, so the menus change colour every Monday. Under par
+  is one colour everywhere (`UNDER_PAR`): green since 21 October 2026, the
+  owner's call, to match the scorecard's to-par cells (it was a pink-red on the
+  round screen while the card showed under par green and over par red). Every palette passes a
   contrast check over a white and a black picture: 4.5 for ordinary text, 3
   only for the large under-par numbers. **Not checked, and weak:** text on the
   dark end of a highlighted box's gradient (`onHot` on `a2`) is 2.3 to 5.5,
   lowest on Giant Redwood; it reads in the mockups because the text sits on the
-  light end, and a screen that puts text at the dark end must not. Giant
-  Redwood's and Haunted Hollow's accent `a1` is almost the under-par red
-  (contrast 1.0), so an under-par score is never written on an accent.
+  light end, and a screen that puts text at the dark end must not. Every
+  biome's accent `a1` is close to the under-par green in brightness (contrast
+  1.04 to 1.72, measured 21 October 2026), so an under-par score is never
+  written on an accent.
 - **The typeface** is Saira Condensed, 700 and 800, inlined (DISTRIBUTION_REVIEW,
   *Addendum, 17 October 2026*). It has no italic: the slanted numbers are the
   browser's slant, which **the old stylesheet turns off page-wide**
@@ -1153,8 +1156,13 @@ flashing (`th.rh-done`), each score marked as on paper (`paperMark`: a
 circle round a birdie, two round an eagle, a square round a bogey, two round
 worse); its columns do not lean -- the cells are text, not wrappers, and a
 leaning table with upright numbers needs them rebuilt. **Round complete**
-(`roundCompleteHtml`, at the head of the final card, not in match play):
-the title, then **the card itself** -- the score panel moves its
+(`roundCompleteHtml`, at the head of the final card, in every format since
+21 October 2026, match play included; the sheet is titled Round complete): **the
+result as a headline by the format** (round-hud.js `roundResult`: stroke and
+scramble by total with a tie called a tie, skins by skins won -- it ranked
+skins by strokes and called the stroke leaders winners while its own line said
+no skin was won -- and match play by the team, "TEAM B WINS / 3 & 2"), then
+**the card itself** -- the score panel moves its
 `.score-table-wrap` up under the title and removes what the results already
 say (the course line `.score-where`, the in-progress note, the friend's
 running line) and hides its own Download button, which Save card presses --
@@ -1163,7 +1171,8 @@ then the standings with ties sharing a place and the winner in the gradient,
 the ledger entries keyed to the round; the level bar; the handicap the round
 moved, `handicapLine`: the profile summary with and without this round; a
 scramble team's row lists each of its golfers by name), then **one row of
-buttons**: Main menu, New round, Save card, and Challenge a friend, which
+buttons** (a sheet's buttons are full width, so the row's own rule names them
+`width:auto`; in 0.9.1 they stacked as four bars): Main menu, New round, Save card, and Challenge a friend, which
 opens the code box under the row (one golfer: sent at once; several: a
 button per golfer). Until 20 October 2026 the XP was a section of its own
 under the standings and each golfer had a send button in a section of its
@@ -2727,6 +2736,8 @@ Anything downstream of impact is fair game: how the ball flies, how it bounces, 
 **Frames are their own reward** (15 October 2026; until then a frame was a badge's). The table has kind `frame`: each badge's frame at its level (same id), nine plain colours at level 1 (`plain-*`), fourteen animated at higher levels. `FRAMES` holds each one's look: two metal stops, or `solid`, or `anim` (spin, flames, sparkle, water, leaves, lightning) with three colours that `frameAttr` hands to style.css as `--f1..--f3` and `data-anim`; the movement is a registered `--frame-turn` angle and a flicker or twinkle filter, still for reduced motion. The level-up banner leaves out a badge's own frame (it would repeat the badge). Plain colours from the start too: eight solid balls (`solid-*` in ball-finishes.js) and eight plain tracers. **Locked items are not greyed** -- full colour, a padlock (`LOCK`) and the level. The tracer tab draws each style as a small SVG flight (`tracerPreview`: its colours, head, core, dash, zigzag, glints, moving); the **Flourishes** tab lists each with `FLOURISH_WHEN` and plays it on its own canvas through `playFlourish`.
 
 **Frames, meter skins and flourishes** (Phase 6, 14 October 2026; rewards.js, flourishes.js). A frame is a BADGE worn (`REWARD_KIND.frame = 'badge'`); an empty choice means the newest badge earned (`wornItem` -> `highestBadge`). `framedPicture` draws it as the picture's own padding over a conic gradient of the badge's two stops (`FRAMES`); Fairway Master's turns by a CSS `@property` angle. The level chip (`levelBadge`) is filled with the highest badge's gradient and ink. **Meter skins are data, not stylesheets**: `METER_SKINS` holds each skin's colours, `applyMeterSkin` sets them on #swingMeter as `--sm-*` custom properties for the golfer up (from `updateHUD`), and the stylesheet reads them with Classic as the fallback -- so a skin can never move a zone. The overswing border and a target out of range keep their own colours (`.sm-target:not(.out)`). **tests/rewards.test.mjs holds every skin legible**: the zone composited over the track's `base`, the perfect band and the target, separated by luminance contrast (zone vs track and band vs zone at least 1.5, target vs track at least 3) in normal vision and simulated deuteranopia and protanopia -- a new skin that fails is refused, not eyeballed. **Flourishes are 2D, on purpose**: a canvas overlay (#flourish) drawn for a few seconds, anchored each frame at `view.screenPoint(course.pin)` -- a projection, nothing drawn in the scene -- with **every particle drawn relative to it** (spawned about zero, shifted to the cup each frame), so a burst follows the cup as the camera pulls back; launched at the cup's first screen place and left there, a burst that began with the cup off screen flew out of view and drew nothing (smoke, 15 October 2026, once in eight runs) -- so they build no shader and cost no 3D frame time. `flourishFor` picks the rarest earned for the hole (ace, chip-in, eagle, birdie, par save, any hole-out); chip-in is passed from `finishShot` (holed from off the green, not the tee shot); a par save reads the hole's `gir` from the golfer's card. Reduced motion skips them; one plays at a time. **The overlay has no z-index and follows the course canvas in the page**, so every panel and banner draws over it; with a z-index it drew bursts over the shot controls. The smoke journey `look` holes out at level 50 and checks pixels were drawn.
+
+**Gains waiting together are one popup** (UI/UX pass, 21 October 2026): `showXpGain` takes every queued gain at once when there are several (`showXpGroup`: a line per golfer, the bars filling side by side) -- three golfers' popups queued at about 3.4 s each and the scorecard waited for all of them. On the round screen the popup sits top left under the hole panel (ui-windows.css), off the line of play. **A finished hole has no floating distance**: `worldLabels` is false once `round.holeComplete` ("0.0 FEET TO HOLE" read on after the ball dropped). **The scorecard names the course** (`playingCourseName`, not the biome) and shows "* Hole in progress" only while one is. **A WIDE child keeps a section in one column**: Round complete moves the table inside `.rh-results` and removes the status line, which left its section with nothing in `WIDE` and laid the results out in overlapping columns, so `.rh-results` is in `WIDE` (main.js groupPanelContent).
 
 **The XP popup reports what `award` paid** (14 October 2026). `award` returns the change it made, and `syncProfile` / `recordProfileShot` turn each positive change into labelled lines (`holeXpParts`, `shotXpParts` in progression.js -- the same parts the totals are summed from, so the words and the numbers cannot disagree) and hand them to `queueXpGain` with the XP before. Gains for the same golfer that arrive before the popup shows merge; popups queue. The bar animates from `levelOf(before)` to `levelOf(after)`, running over once per level crossed. Lines are shown before the multiplier, with the multiplier as its own line; the total is what was paid. **One sound at a time** (the owner, same day): the popup waits `XP_AFTER_STING` (1.6 s) after the hole-out banner appears, past the longest chiptune sting (about 1.05 s) -- it waited for the whole banner until the owner found the screen still for too long; the fill starts `XP_FILL_AT` after the gain; on a level-up the bar holds at the top for `XP_LEVEL_AT`, the level-up sound plays alone for `XP_LEVEL_HOLD`, and only then does the next fill start; the big level-up banner waits for the popup and its queue to clear. The report's demo (tools/sound-lab/xp.html) copies the same constants -- keep them in step. Sounds: `gameAudio.xpSound` (gain, fill, levelUp), the owner's picks since 14 October 2026 (`XP_FINAL` in sound.js), held to them by tests/sound.test.mjs. **The hole-out stings are chiptune** (signed off 14 October 2026): `gameAudio.score` plays a score's chiptune sting (`chipSting`) from `CHIP_FINAL` -- take D, the game jingles, for every score, with the owner's sliders -- and falls back to the marimba `score` only for a score missing from it, which tests/sound.test.mjs forbids. The marimba stings and the other three chip takes stay in sound.js for the stings report's comparison; they are not played.
 

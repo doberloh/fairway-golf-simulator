@@ -166,7 +166,9 @@ the courses several suites share.
   fade, the range's eight tiles being real fields, the choice kept per device;
   birdie or better earning the band, every banner under two seconds with the
   next turn announced as it leaves, the paper card's marks), and `round-hud`'s
-  round-complete helpers (places with ties, XP this round, the handicap line).
+  round-complete helpers (places with ties, XP this round, the handicap line,
+  and `roundResult`: a tie called a tie, skins ranked by skins won, match play
+  by the team and its margin).
   Round 14: the reachability and thumb checks skip a select under a 1.0
   drop-down (`.dd-native`: its field is the control) and measure the whole
   club box (`.club-control`, which opens the bag) rather than `#club`.

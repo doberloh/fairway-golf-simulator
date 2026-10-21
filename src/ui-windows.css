@@ -110,6 +110,16 @@
  #world .xp-gain .xp-bar{flex:1;height:7px;border-radius:0;background:rgba(255,255,255,.14)}
  #world .xp-gain .xp-bar b{border-radius:0;background:var(--hot)}
  #world .xp-gain .xp-level small{font-size:13px;letter-spacing:.1em;color:var(--soft)}
+ /* OFF THE LINE OF PLAY (UI/UX pass, 21 October 2026): under the hole panel,
+    top left, not over the middle of the view the next golfer hits into. */
+ #world .xp-gain{left:30px;top:150px;transform:none}
+ #world .xp-gain .xp-group{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+ #world .xp-gain .xp-group li{display:grid;grid-template-columns:minmax(0,1fr) auto auto 110px;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+ #world .xp-gain .xp-group li b{font-size:18px;font-style:italic;color:var(--hot)}
+ #world .xp-gain .xp-group li em{grid-column:1/-1;font-style:normal;color:var(--hot);font-size:13px}
+ #world .xp-gain .xp-group .xp-bar{display:block;position:relative;height:7px}
+ #world .xp-gain .xp-group .xp-bar b{position:absolute;inset:0 auto 0 0}
+ #world .xp-gain .xp-who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
  /* LEVEL UP (frame c-xp): a band across the whole screen in the gradient. */
  #world .level-up{left:-60px;right:-60px;top:40%;transform:translateY(-50%);zoom:var(--hud-z,1);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;height:136px;padding:0 120px;border:0;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;background:none;box-shadow:none;color:var(--on-hot);font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
