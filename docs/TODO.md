@@ -649,6 +649,16 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## Release 0.9.1 (20 October)
+
+- [ ] **Owner: play 0.9.1, which went out unplayed.** Released from the merge
+  of `release-0.9.1` (the `challenge-a-friend` journey) into `main`, and the
+  website redeployed so its demo is 0.9.1. No smoke run and no look in a
+  browser after the owner's ten fixes (the graphics card was busy, and no GPU
+  run was asked for): the checklist is under *Challenge a friend*, *The
+  owner's ten fixes*. The studio smoke journey was rewritten for the save box
+  and has not run. What was checked is in DISTRIBUTION_REVIEW, *v0.9.1*.
+
 ## Release 0.9 (18 October)
 
 - [ ] **Owner: play 0.9 and look over the 1.0 website.** Released from the
@@ -716,6 +726,17 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Release 0.9.1 (20 October)
+
+- [x] **v0.9.1 published**, "Fairway 0.9.1 (beta)", at the owner's request:
+  challenge a friend, and the ten fixes from testing 0.9 (the studio's save
+  box, a Next hole button, Round complete with the card first, the camera's
+  name and a turn round the aim point and green views, the aim label's hold
+  and its distance to the hole, one-piece course cards, saved courses' icon
+  buttons). Generator 36, schema 11, profile 3, all unchanged; the package
+  version is 0.9.1. Notes: `docs/releases/v0.9.1.md`. `npm test` 1022; no
+  smoke after the fixes.
 
 ## Smooth flyovers (19 October)
 
