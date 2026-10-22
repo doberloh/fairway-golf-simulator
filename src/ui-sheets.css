@@ -1158,4 +1158,9 @@
     row its three parts squeezed into columns of five short lines). */
  #drawer .ch .chal-week{flex-direction:column;align-items:flex-start;gap:2px;padding:10px 28px}
  #drawer .ch .chal-week small:last-child{margin-left:0}
+ /* My profile's golfer chips: fixed in the header band between 340 px from
+    the left and 220 px from the right, which on a 390 px phone is no room at
+    all -- they were not shown (found fixing the tabs). At the top of the
+    page here, ahead of the tabs, wrapping. */
+ #drawer .ph .ph-chips{position:static;order:-2;flex-wrap:wrap;overflow:visible}
 }

@@ -1586,7 +1586,10 @@ the tabs head the page** (audit 5, 22 October 2026: stacked, they came after
 the three who/level cards and below the first screen): ui-sheets.css opens
 `.ph-main` with `display:contents` so `.ph-tabs` can take `order:-1` ahead of
 the left stack and the panes `order:1` after it, and a tab's click runs
-`bringIntoView` on its pane.
+`bringIntoView` on its pane. Under 560 px wide the golfers' chips leave the
+header band (fixed between 340 px from the left and 220 px from the right:
+no room on a 390 px phone, so they were not shown) for the top of the page,
+ahead of the tabs (`order:-2`).
 
 **Windows lean as one block** (round 13, `src/ui-windows.js`, `ui-windows.css`):
 every row draws its own slanted background, and `leanAsOne` sets `--wy` (the

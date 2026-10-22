@@ -702,6 +702,8 @@ per change; audit 6 looks at each.
 - [ ] **The meter's Out of reach words follow the aim** (found looking at the
   marker: after a drive the sand wedge at 47 yd said Out of reach, left over
   from the old aim). Built; **seen** in the capture build after the same drive.
+- [ ] **My profile's golfer chips on an upright phone** (found fixing the
+  tabs: no room in the header band, not shown). Built; **seen** at 390x844.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
