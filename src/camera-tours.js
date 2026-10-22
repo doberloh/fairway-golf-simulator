@@ -30,6 +30,12 @@ export function treeBlocksView(camera,target,t){
  const lineY=camera.y+(target.y-camera.y)*u;
  return t.y+t.h*1.1>lineY&&t.y<lineY+2;
 }
+// ANYTHING ELSE IN THE WAY (UI/UX pass V2, the owner: "extend to rocks and
+// other things that could get in between the tee and camera"): a boulder, a
+// log or stump, a house, a pumpkin or headstone is put to the same test as a
+// tree, as the shape it reads -- its middle, its base, half its width as the
+// radius and its height. Pure.
+export const viewBlocker=(x,y,z,width,height)=>({x,y,z,r:Math.max(.2,width/2),h:Math.max(.2,height)});
 export function cameraInsideTree(camera,t){const radius=t.r*1.9+1.5;return Math.hypot(camera.x-t.x,camera.z-t.z)<radius&&camera.y>t.y-.5&&camera.y<t.y+t.h*1.18+2;}
 // The hole flyover.
 //

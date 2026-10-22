@@ -1,4 +1,4 @@
-import {cameraInsideTree,treeBlocksView} from './camera-tours.js';
+import {cameraInsideTree,treeBlocksView,viewBlocker} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
@@ -8,6 +8,17 @@ import {GROUND_PLANTS} from './species.js';
 import {launchCorridors,blocksLaunch} from './course.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
+
+// EVERYTHING THE VIEW CLEARS BESIDES TREES (UI/UX pass V2): a batch is one
+// instanced mesh with, for each instance, the object it belongs to as
+// `viewBlocker` reads it -- the same object for every part of one house, so
+// a house goes whole. clearCameraTrees tests each object once. Exported for
+// homes.js and haunts.js.
+export function addViewBlockers(view,mesh,matrices,owners){
+ if(!mesh||!owners?.length)return;
+ const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
+ (view.viewBlockers||=[]).push({mesh,matrices,owners,hidden});
+}
 const UP=new T.Vector3(0,1,0);
 function barkTexture(kind){const c=document.createElement('canvas');c.width=128;c.height=256;const ctx=c.getContext('2d'),rng=random('bark-'+kind);ctx.fillStyle='#b7b3a5';ctx.fillRect(0,0,128,256);for(let i=0;i<220;i++){const v=80+rng()*95;ctx.fillStyle=`rgb(${v},${v},${v})`;const x=rng()*128,y=rng()*256;ctx.fillRect(x,y,kind==='palm'||kind==='hala'?16+rng()*60:1+rng()*3,kind==='palm'||kind==='hala'?1+rng()*2:5+rng()*40);}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,5);return t;}
 function texture(kind){
@@ -267,7 +278,7 @@ function addSpecies(view,kind,trees){
  instance(leafGeo,materials.leaf,leafMatrices,leafColors);
  }
 export function addVegetation(view){
- view.treeInstances=[];let last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
+ view.treeInstances=[];view.viewBlockers=[];let last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
  // An instance is drawn unless the camera is standing inside that tree.
  view.clearCameraTrees=()=>{
   // The vegetation tests build a view with no camera -- they only ever look
@@ -279,11 +290,17 @@ export function addVegetation(view){
   if(moved<.04)return;
   last.copy(view.camera.position);lastLook.copy(look);
   // Trees between the play camera and what it looks at go too (camera-tours.js
-  // treeBlocksView) -- not in free flight or the overview, where trees are the view.
-  const clearView=mode&&mode!=='free'&&mode!=='overview';
+  // treeBlocksView) -- not in free flight or the overview, where trees are the
+  // view -- and so does anything else in the way (`viewBlockers`). The main
+  // menu's circling camera clears them too (`view.orbiting`, main.js): it
+  // sat inside a fir that filled the frame (audit 2).
+  const clearView=(mode&&mode!=='free'&&mode!=='overview')||!!view.orbiting;
   const target=view.ball?.visible?view.ball.position:look;
-  const hidden=new Set(view.world.trees.filter(t=>cameraInsideTree(view.camera.position,t)||(clearView&&(treeBlocksView(view.camera.position,target,t)||treeBlocksView(view.camera.position,look,t)))));
-  for(const batch of view.treeInstances){
+  const blocks=t=>cameraInsideTree(view.camera.position,t)||(clearView&&(treeBlocksView(view.camera.position,target,t)||treeBlocksView(view.camera.position,look,t)));
+  const hidden=new Set(view.world.trees.filter(blocks));
+  const others=new Set();for(const b of view.viewBlockers)for(const o of b.owners)others.add(o);
+  for(const o of others)if(blocks(o))hidden.add(o);
+  for(const batch of [...view.treeInstances,...view.viewBlockers]){
    let changed=false;const culled=view.cull?.has(batch.mesh);
    batch.owners.forEach((t,i)=>{
     const hide=hidden.has(t)?1:0;
@@ -380,7 +397,9 @@ function addDeadfall(view) {
   // `accent` is the cut face on a log and the moss on a boulder, so it follows
   // the family rather than being one colour for everything.
   const accent = family === 'mossrock' ? green : cut.clone().offsetHSL(0, 0, (rng() - .5) * .12);
-  entries.push({model, owner: null, matrix: dummy.matrix.clone(),
+  // As the view clears it: a log lies about three times as long as it is thick.
+  const owner = viewBlocker(x, world.height(x, z), z, size * (family === 'log' ? 3 : 1.2), size);
+  entries.push({model, owner, matrix: dummy.matrix.clone(),
    color: {bark: wood, leaf: green, stone: stone.clone().multiplyScalar(.8 + rng() * .35), dirt, accent}});
  }
  const materials = new Map();
@@ -388,7 +407,7 @@ function addDeadfall(view) {
   if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
   return materials.get(role);
  };
- instanceModels(group, entries, materialFor);
+ instanceModels(group, entries, materialFor, ({mesh, matrices, owners}) => addViewBlockers(view, mesh, matrices, owners));
 }
 
 function finishBlade(){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([-.5,-.5,0,.5,-.5,0,0,.5,.24,0,-.4,.12],3));g.setIndex([0,1,3,1,2,3,2,0,3]);g.computeVertexNormals();return g;}
@@ -405,9 +424,9 @@ function addGroundCover(view){
  const mat=(c,opts={})=>{const{flatShading,...toonOpts}=opts;
   return toon?new T.MeshToonMaterial({color:c,gradientMap:ramp,...toonOpts})
              :new T.MeshStandardMaterial({color:c,roughness:1,...opts});};
- const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);};
+ const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
- const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
+ const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),rockOwners=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
  // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
  // world, because a rock the generator does not know about is a rock physics
  // cannot collide with -- which is what they were until they moved. Placing
@@ -416,7 +435,7 @@ function addGroundCover(view){
   dummy.position.set(r.x,r.y+r.scale*.25,r.z);
   dummy.rotation.set(r.rot[0],r.rot[1],r.rot[2]);
   dummy.scale.set(r.sx,r.sy,r.sz);
-  dummy.updateMatrix();rocks[r.shape].push(dummy.matrix.clone());rockColors[r.shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
+  dummy.updateMatrix();rockOwners[r.shape].push(viewBlocker(r.x,r.y,r.z,2*Math.max(r.sx,r.sz),r.scale*.25+r.sy));rocks[r.shape].push(dummy.matrix.clone());rockColors[r.shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
  // A single icosahedron for every boulder is the other half of why scree reads
  // as one chunk repeated. Build a few distinct stones and deal rocks between
  // them; each gets its own material because instance() disposes the material it
@@ -427,7 +446,7 @@ function addGroundCover(view){
    const r=1+(real?.1:.26)*Math.sin(x*f1+z*f2+k)*Math.cos(y*f2-z*f1)+(real?.07:.17)*Math.cos(z*(f1+2.9)+x*f2-k*1.7);
    p.setXYZ(i,x*r,y*r,z*r);}
   stone.computeVertexNormals();
-  instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]);
+  addViewBlockers(view,instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]),rocks[k],rockOwners[k]);
  }
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
  for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}

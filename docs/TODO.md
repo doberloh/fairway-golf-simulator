@@ -689,6 +689,17 @@ per category.
   ? Explain pressed, the round-complete card at the new width (audit 3 looks),
   any of it on a phone. Left: the launch monitor's left foot still starts
   level with the status column's end, a gap under the arm row.
+- [ ] **V2 category 5, cameras and phones: built, seen in the capture build.**
+  Seen: boulders hidden with the camera behind them (probe), the upright
+  phone without the empty shot panel, Skip during a flight, the XP popup
+  under the map, and the upright menu that had the old Endless and Course of
+  the week rows back (fixed). Smoke: no-late-shaders, ball-light-shaders,
+  menu-panels on both phones, hud-reachable, floodlit-night,
+  ball-light-hole-out, boot, range pass; fingerprint unchanged. **Not run:
+  `npm run profile`** -- vegetation.js now tests every boulder, log, house and
+  prop when the camera moves (about ten minutes on the graphics card; ask
+  first). Not seen: a house or pumpkin cleared in play, the menu camera
+  clearing a fir (it needs the right showcase hole).
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
 phases, run on one branch with a commit each; the owner's decisions: a shorter

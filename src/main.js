@@ -2641,6 +2641,8 @@ function renderShotPanel(){
  // panel sits over the course, and every line it spends is course hidden.
  $('shotCaption').innerHTML=lead;
  box.innerHTML=gridHTML(record);
+ // Nothing hit yet: on a phone the panel stays away until there is a shot to show (round-phone.css).
+ $('world')?.classList.toggle('rh-no-shot',!record&&!(rangeMode&&!flight));
  sizePanel();
  drawPanelState();
 }
@@ -3397,10 +3399,12 @@ function orbitBackdrop(){
  view.targetPos.set(c.x+Math.sin(angle)*radius,ground+Math.max(55,h.length*.3),c.z+Math.cos(angle)*radius);
  view.targetLook.set(c.x,ground+8,c.z);
  view.camera.position.copy(view.targetPos);view.look.copy(view.targetLook);
+ // Trees and the rest in the way are cleared for this camera too (vegetation.js).
+ view.orbiting=true;
 }
 // Leaving the menu is the moment the real course gets built, so opening Fairway
 // never grows a course nobody asked for.
-function leaveBackdrop(){if(!menuBackdrop)return;menuBackdrop=false;worldKey='';restoreClock();}
+function leaveBackdrop(){view.orbiting=false;if(!menuBackdrop)return;menuBackdrop=false;worldKey='';restoreClock();}
 // THE WORDMARK STAYS WHEN A SHEET OPENS OVER THE MENU. Opening Saved courses or
 // Play from the main menu hid the menu outright, wordmark included, so a sheet
 // floated over a landscape with nothing on screen saying whose app this is --

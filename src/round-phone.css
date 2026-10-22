@@ -93,6 +93,10 @@
  #world[data-mode=play] .shot-controls>.shot-panel{position:absolute;left:16px;top:112px;z-index:7;isolation:isolate;width:250px;max-height:80px;overflow:hidden;padding:6px 18px;color:#fff;font-size:12px}
  #world[data-mode=play] .shot-controls>.shot-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play] .shot-panel .shot-result{display:none}
+ /* Before the first shot the panel only said "Nothing hit yet" in the old
+    shot panel, in the way under the wind (audits 1 and 2): it waits for a shot,
+    and still shows to carry Skip during a flight (UI/UX pass V2). */
+ #world[data-mode=play].rh-no-shot .shot-controls>.shot-panel:not(:has(#skipFlight:not([hidden]))){display:none}
  #world[data-mode=play] .shot-panel #skipFlight{min-height:36px;padding:0 14px}
 
  /* The lie, the shot's shape, the club. */
@@ -236,6 +240,8 @@
  .rh-cards{left:18px;right:auto;top:76px;flex-direction:row}
  #world[data-mode=play] .rh-keys{left:12px;top:auto;bottom:12px;transform:none}
  #world[data-mode=play]:not(.aim-view) .minimap{right:12px!important;top:132px!important;width:120px!important;height:150px!important}
+ /* The XP popup under the map, across the screen, not over the map (audit 2, UI/UX pass V2). */
+ #world .xp-gain{left:12px!important;right:12px!important;width:auto!important;top:296px!important;transform:none!important}
  #world[data-mode=play] .shot-controls>.shot-panel{left:12px;top:132px;width:220px}
  #world[data-mode=play] .shot-controls .lie-readout{left:12px;bottom:308px}
  #world[data-mode=play] .shape-control{left:18px;bottom:262px}
@@ -254,6 +260,8 @@
  .main-menu .menu-brand{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style}
  .main-menu .menu-modes{display:grid!important;grid-template-columns:1fr;gap:6px;width:100%;max-width:420px}
  .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
+ /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
+ .main-menu .menu-tile[hidden]{display:none!important}
  .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
  .main-menu .menu-tile.primary :is(strong,small),.main-menu .menu-tile:is(:hover,:focus) :is(strong,small){color:var(--on-hot)}

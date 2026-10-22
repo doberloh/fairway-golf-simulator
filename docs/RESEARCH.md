@@ -7808,6 +7808,15 @@ ground and into 2% rises and falls.
 
 ### The target marker
 
+**What the camera clears besides trees** (UI/UX pass V2, category 5). No
+outside source; PLACED: each object is tested as a crown would be -- a boulder
+its widest axis and its height, a log three times as long as it is thick, a
+house its footprint's longer side and 1.6 times its wall height (the roof), a
+pumpkin or headstone 1.2 times as wide as it is tall. Probed: on a mountain
+course 462 boulders, none hidden from its tees; with the camera 8 m behind
+each of five boulders (1.2 to 5 m tall), each was hidden, and none once the
+camera moved 40 m aside.
+
 **Where a turn starts aiming, when the club cannot get there** (UI/UX pass V2,
 21 October 2026). No outside source. When a full swing falls short of the
 default aim, the aim is pulled back along the fairway to the longest distance

@@ -154,3 +154,16 @@ test('a tree in the way of the ball is cleared from the view, one beside it is n
  // A bush under the line does not reach it.
  assert(!treeBlocksView(cam, ball, {x: 0, z: 8, y: 0, h: 1, r: 1}));
 });
+
+test('a boulder, a house or a log in the way is cleared like a tree; one under the line is not (UI/UX pass V2)', async () => {
+ const {treeBlocksView, viewBlocker} = await import('../src/camera-tours.js');
+ const cam = {x: 0, y: 3, z: 0}, ball = {x: 0, y: 0, z: 24};
+ // A boulder 2.5 m across and 3 m high, 6 m in front of a camera 3 m up.
+ assert(treeBlocksView(cam, ball, viewBlocker(0, 0, 6, 2.5, 3)));
+ // A house beside the line, close enough to fill the frame.
+ assert(treeBlocksView(cam, ball, viewBlocker(5, 0, 7, 10, 6)));
+ // A knee-high log on the line stays: it is under the sight line.
+ assert(!treeBlocksView({x: 0, y: 6, z: 0}, ball, viewBlocker(0, 0, 8, 3, .5)));
+ // The shape never collapses to nothing.
+ assert.ok(viewBlocker(0, 0, 0, 0, 0).r > 0);
+});

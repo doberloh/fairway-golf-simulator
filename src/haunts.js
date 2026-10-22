@@ -26,6 +26,8 @@ import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
 import {instanceModels} from './mesh-assets.js';
+import {addViewBlockers} from './vegetation.js';
+import {viewBlocker} from './camera-tours.js';
 
 const PUMPKIN = '#dc8424', STEM = '#4d5a2a', CAP_RED = '#b5352b', CAP_TAN = '#b39a72', STALK = '#ddd3bf';
 // The carved face, unlit: near-black by day, candle-orange after dark.
@@ -35,7 +37,7 @@ export function addHaunts(view) {
  const {world} = view, props = world.props || [], perHole = world.bio.ghosts || 0;
  if (!props.length && !perHole && !world.bio.bats && !world.bio.wisps) return null;
  const group = new T.Group(); group.name = 'Haunts'; view.group.add(group);
- drawProps(group, props);
+ drawProps(group, props, view);
  const lanterns = drawLanterns(group, props.filter(p => p.lantern));
  const ghosts = drawGhosts(group, world, perHole);
  const bats = drawBats(group, world, world.bio.bats || 0);
@@ -62,7 +64,7 @@ function propMatrix(p, dummy) {
  return dummy.matrix.clone();
 }
 
-function drawProps(group, props) {
+function drawProps(group, props, view) {
  if (!props.length) return;
  const dummy = new T.Object3D(); dummy.rotation.order = 'YXZ';
  const pumpkin = new T.Color(PUMPKIN), stem = new T.Color(STEM), stalk = new T.Color(STALK);
@@ -71,14 +73,14 @@ function drawProps(group, props) {
   const s = p.shade - .5;
   const accent = p.kind === 'pumpkin' ? pumpkin.clone().offsetHSL(s * .03, s * .1, s * .12)
    : (p.model.includes('tan') ? tan : red).clone().offsetHSL(0, s * .1, s * .1);
-  return {model: p.model, owner: null, matrix: propMatrix(p, dummy),
+  return {model: p.model, owner: viewBlocker(p.x, p.y, p.z, p.h * 1.2, p.h), matrix: propMatrix(p, dummy),
    color: {accent, leaf: stem, bark: stalk, stone: stalk, dirt: stem}};
  });
  const materials = new Map();
  instanceModels(group, entries, role => {
   if (!materials.has(role)) materials.set(role, new T.MeshToonMaterial({color: '#ffffff'}));
   return materials.get(role);
- });
+ }, ({mesh, matrices, owners}) => addViewBlockers(view, mesh, matrices, owners));
 }
 
 // A JACK-O'-LANTERN FACE, in the pumpkin model's own unit space: unit height,
