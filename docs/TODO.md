@@ -669,6 +669,10 @@ per change; audit 6 looks at each.
   which shows the shot numbers). Built; PLAYING already said R.
 - [ ] **Help's Made to travel names Fairway.html** (audit 5: it said
   index.html, the build's name, not the file in the download). Built.
+- [ ] **Esc goes back one step on a step sheet** (the owner's decision after
+  audit 5; the top-right Back the same). Built, tested in Node, probed in the
+  capture build: Format, Golfers, The week, Game, closed; Challenges' Rules
+  to Golfers by the Back button. Smoke's close helpers press until closed.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

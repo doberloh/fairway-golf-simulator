@@ -19,6 +19,12 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '
 // (passed without what it needs: numbered, marked) or todo. Pure.
 export const stepMarks = (steps, at) => steps.map((s, j) => j === at ? 'on' : j > at ? 'todo' : (s.done ? s.done() : true) ? 'done' : 'missing');
 export const clampStep = (i, n) => Math.max(0, Math.min(n - 1, Number.isInteger(i) ? i : 0));
+// ESC GOES BACK ONE STEP (the owner, 22 October 2026, after audit 5): the foot
+// says "Esc Back" beside a Back button, and Esc closed the whole sheet,
+// throwing away the golfers and format just picked. Where Esc takes step `at`:
+// the one before it, or null on the first step, where it closes the sheet as
+// before. Pure.
+export const escapeStep = at => at > 0 ? at - 1 : null;
 
 // `steps` [{label, page}] -- page an element holding that step's content.
 // `finish` the main button for the last step (moved into the foot), or null.
@@ -72,5 +78,9 @@ export function stepSheet(root, {steps, index = 0, finish = null, finishAlways =
  root.append(sx);
  root.classList.add('sx-root');
  go(index);
- return {go, repaint: () => go(at), get index() { return at; }};
+ // The sheet hangs on its root so the one Escape handler (main.js) can find
+ // whichever sheet is open without each screen wiring its own.
+ const api = {go, repaint: () => go(at), get index() { return at; }, back() { const i = escapeStep(at); if (i == null) return false; go(i); return true; }};
+ root.stepSheet = api;
+ return api;
 }

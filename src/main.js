@@ -4396,6 +4396,16 @@ function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
  return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
 }
+// BACK OUT OF A SHEET: Esc and the sheet's own "Esc Back" button, which must
+// do the same thing. A step sheet steps back first (ui-steps.js escapeStep,
+// the owner, 22 October 2026); only its first step closes it.
+function panelBack(){
+ // The sheet on show: a screen moved out of the way can keep its root in the
+ // drawer, hidden, and must not be stepped behind the one in front.
+ const sheet=[...$('drawer').querySelectorAll('.sx-root')].find(r=>r.getClientRects().length)?.stepSheet;
+ if(sheet?.back()){gameAudio?.ui?.('back');return;}
+ closePanel();
+}
 function closePanel(){if((rangeSetup||endlessSetup||weeklySetup||challengeSetup||rivalSetup)&&panel==='round'){rangeSetup=false;endlessSetup=false;weeklySetup=false;challengeSetup=false;rivalSetup=false;if(appMode==='menu')openMenu();}if(studioSetup&&panel==='course'){studioSetup=false;if(appMode==='menu')openMenu();}panel=null;if(lobbyBiome){lobbyBiome=null;applyHudPalette();}syncMenuOverlay();$('drawer').hidden=true;$('drawerBackdrop').hidden=true;setPanelFocus(false);syncNav();updateStudioState();}
 // How long the camera stays where the shot was struck before it goes after the
 // ball. Long enough to see it leave and the line start to form, short enough not
@@ -6674,7 +6684,7 @@ function bind(){
  for(const [id,name] of [['dropLibrary','library'],['dropGraphics','graphics'],['dropSound','sound'],['dropHelp','help']])
   $(id).onclick=()=>{closeMenuDrop();openPanel(name);};
  $('menuNav').onclick=e=>{e.stopPropagation();toggleMenuDrop();};
- document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&e.target.isConnected&&!e.target.closest('.sim-time,.popup[data-popup=settings]'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=closePanel;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
+ document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&e.target.isConnected&&!e.target.closest('.sim-time,.popup[data-popup=settings]'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=panelBack;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
  // A MULLIGAN TAKES BACK ONE SHOT, AND ONE TRACER WITH IT.
  //
  // `holeTrails.pop()` before `loadCourse()` did nothing at all: `loadCourse`
@@ -7422,7 +7432,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // browser smoke test pressing Escape once and seeing nothing change. The tool
  // window is left where it was, for when the panel is gone.
  if(e.code==='Escape'&&aimViewOpen){setAimView(false);return;}
- if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();closePanel();return;}
+ if(e.code==='Escape'&&panel){stopTour();if(dropState)cancelDrop();panelBack();return;}
  if(e.code==='Escape'&&!$('keysHelp').hidden){toggleKeysHelp(false);return;}if(e.code==='Escape'&&$('app').classList.contains('hud-hidden')){toggleHud(false);return;}if(e.code==='Escape'&&popups?.closeTop())return;if(e.code==='Escape'&&$('app').classList.contains('rh-paused')){setPause(false);gameAudio?.ui?.('back');return;}if(e.code==='Escape'&&appMode==='studio'&&!panel){toggleStudioPause();return;}if(e.code==='Escape'&&hud1&&appMode==='play'&&!tour&&!dropState&&!panel){setPause(true);gameAudio?.ui?.('select');return;}if(e.code==='Escape'){stopTour();if(dropState)cancelDrop();if(panel)gameAudio?.ui?.('back');closePanel();return;}if($('app').classList.contains('rh-paused'))return;if(dropState||panel||['TEXTAREA','SELECT'].includes(document.activeElement.tagName)||(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='range'))return;if(document.activeElement.type==='range'&&e.code.startsWith('Arrow'))return;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.code))e.preventDefault();keys.add(e.code);tapped.add(e.code);if(view.config.mode==='free'){if(appMode!=='play')return;if(e.code==='KeyV'||e.code==='KeyC')cameraMode('player');return;}if(appMode!=='play')return;if(e.repeat)return;if(e.code==='Tab'){e.preventDefault();if(hud1){allNumbers=!allNumbers;drawRoundHud();}else toggleKeysHelp();return;}if(e.code==='Slash'&&hud1){toggleKeysHelp();return;}if(e.code==='Space')meterPress(e.timeStamp);if(e.code==='KeyS')stepShape('curve',1);if(e.code==='KeyW')stepShape('height',1);if(e.code==='KeyX')stepShape('spin',e.shiftKey?-1:1);if(e.code==='Enter'){if(!$('nextHoleBar').hidden)$('nextHoleBar').click();else finishShot();}if(e.code==='KeyQ'||e.code==='KeyI')cycleClub(-1);if(e.code==='KeyE'||e.code==='KeyK')cycleClub(1);if(e.code==='KeyA')resetAim();if(e.code==='KeyT'&&!flight)openToolsBox();if(e.code==='KeyG')stepTargetCamera();if(e.code==='KeyR'&&rangeMode&&hud1)toggleRangeBox();if(e.code==='KeyH')toggleHud();if(e.code==='KeyV')cameraMode('free');if(e.code==='KeyM'&&!flight&&!tour)setAimView(!aimViewOpen);if(e.code==='KeyC')cameraMode(view.config.mode==='overview'?'player':'overview');});
  window.addEventListener('keydown',e=>{const dir=dirOfKey(e.code);
   // R on the studio's settings grows the landscape (round 13), unless a word is

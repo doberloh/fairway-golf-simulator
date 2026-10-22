@@ -165,7 +165,9 @@ the courses several suites share.
   C and G, and the mid-round group through *Golfers & rules*.
   `keys` (UI/UX pass: every key listed once, Tab is the numbers and ? the
   list, each tool's key matches, the swing strip by input, main.js answers each
-  key, and a step passed without what it needs is not ticked).
+  key, a step passed without what it needs is not ticked, and Esc on a step
+  sheet goes back one step, closing only from the first). The smoke harness's
+  `closePanel`/`closeDrawer` press Escape until the sheet is gone.
   `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
   club, scores with a real minus, golfer cards, keys, the ball light, the
   camera's name beside the wind, the aim point's distance left to the hole -- and

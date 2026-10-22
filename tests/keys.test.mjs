@@ -46,3 +46,10 @@ test('a step passed without what it needs is not ticked (Play with no course)', 
  assert.deepEqual(stepMarks(steps, 2), ['done', 'done', 'on']);
  assert.deepEqual(stepMarks(steps, 0), ['on', 'todo', 'todo']);
 });
+
+test('Esc on a step sheet goes back one step, and closes it only from the first', async () => {
+ const {escapeStep} = await import('../src/ui-steps.js');
+ assert.equal(escapeStep(3), 2);
+ assert.equal(escapeStep(1), 0);
+ assert.equal(escapeStep(0), null);
+});

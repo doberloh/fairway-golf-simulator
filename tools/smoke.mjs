@@ -324,7 +324,9 @@ class Trip {
  async closePanel(title) {
   const where = await this.panelShowing(title);
   if (where === 'window') await this.page.getByRole('button', {name: `Close ${title}`, exact: true}).click();
-  else await this.key('Escape');
+  // A step sheet backs out a step per Escape and closes from its first step
+  // (the owner, 22 October 2026), so press until it is gone.
+  else for (let i = 0; i < 6 && (await this.panelShowing(title)); i++) await this.key('Escape');
   await this.until(async () => !(await this.panelShowing(title)), `"${title}" to close`, 5 * SLOW);
  }
 
@@ -346,7 +348,8 @@ class Trip {
  }
 
  async closeDrawer() {
-  await this.key('Escape');
+  // One Escape per step on a step sheet (see closePanel).
+  for (let i = 0; i < 6 && (await this.drawerOpen()); i++) await this.key('Escape');
   await this.until(async () => !(await this.drawerOpen()), 'the panel to close', 5 * SLOW);
  }
 
