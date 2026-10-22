@@ -695,8 +695,8 @@ commit per category.
   ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
   from a file. That list's Export and Import buttons are now slanted rows too
   (seen in a fresh browser, 21 October: Import lit, Export dimmed with no round
-  to export). While the list is open the heading reads SAVED ROUNDS (built
-  and tested; not yet seen).
+  to export). While the list is open the heading reads SAVED ROUNDS (seen
+  in a fresh browser, 21 October).
 - [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
   (audit 4's leftovers): built, tested and **seen** in the capture build
   (21 October, once the card was free): the intro one line over the tabs, the
