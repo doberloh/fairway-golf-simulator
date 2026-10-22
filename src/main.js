@@ -1660,10 +1660,19 @@ function drawTarget(force=false){
   // On the zoomed bar: the share of the full swing over the zoom.
   if(t&&ctx.zoom<1){const s=t.share/ctx.zoom;t=t.out?t:s>1?{share:1,out:true}:{share:s,out:false};}
  }
- el.hidden=!t;if(!t)return;
+ // THE WORDS FOLLOW (audit 6 look, 22 October 2026): the line over the bar is
+ // written by drawMeter, which at rest runs only when something calls it. A
+ // new turn changes the club before the aim, so the target was briefly out of
+ // reach (a sand wedge still aimed 239 yd away), the line said "Out of reach:
+ // take more club", and when the aim came back to the pin at 47 yd the bar
+ // lost its red but the words stayed. A change of reach redraws them.
+ const was=box.classList.contains('out-of-reach');
+ el.hidden=!t;
+ box.classList.toggle('out-of-reach',!!t?.out);
+ if(was!==!!t?.out&&!swing)drawMeter(performance.now());
+ if(!t)return;
  el.style.left=barX(t.share)+'%';el.classList.toggle('out',t.out);
  el.title=t.out?'Out of reach: take more club':'Stop here to land in the circle';
- box.classList.toggle('out-of-reach',t.out);
 }
 // THE SHOT'S SHAPE: curve and height are separate choices (the owner's, 14
 // October 2026), and the spin dial adds spin a step at a time. All three reset
