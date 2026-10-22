@@ -689,6 +689,9 @@ per change; audit 6 looks at each.
   foot it covered the last rows -- at 1920x1080 too, found while fixing it).
   Built; **seen** at 1920x1080, 1366x768 and 844x390: no row covered
   (measured). Not seen upright.
+- [ ] **The step bar and settings categories wrap on an upright phone**
+  (audit 5: 5 Rules and LAUNCH MONITOR cut off). Built; **seen** at 390x844,
+  every chip inside the screen (measured).
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

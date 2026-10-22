@@ -1142,3 +1142,12 @@
 
 /* The studio slab's mountain mark. */
 #studioSlab>b svg{width:34px;height:34px;display:block}
+
+/* ON AN UPRIGHT PHONE THE STEPS AND THE SETTINGS CATEGORIES WRAP (audit 5,
+   22 October 2026). In one sideways-scrolling row Play showed steps 1 to 4
+   with 5 Rules cut off at the edge, and Settings "LAUNC", with nothing to
+   say the row moved. Two rows, like My profile's tabs, show every one. */
+@media (max-width:560px){
+ body:has(#app[data-mode]) #drawer .sx-steps{flex-wrap:wrap;overflow-x:visible;row-gap:6px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats{flex-wrap:wrap;overflow-x:visible;row-gap:8px}
+}
