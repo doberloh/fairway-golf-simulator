@@ -121,6 +121,10 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
  // second a key in the foot.
  const lib = root.querySelector('#openLibrary'), tips = root.querySelector('#toggleTips');
  lib?.closest('.split')?.classList.add('sx-emptied');
+ // "Choose the landscape you want, then grow it" sat as small prose over the
+ // settings (audit 3); NOT GROWN YET and Grow this landscape already say it.
+ const intro = [...root.querySelectorAll('p')].find(p => /Nothing (is built|rebuilds)/.test(p.textContent));
+ intro?.classList.add('sx-emptied');
  if (lib) { lib.className = 'sd-link'; lib.innerHTML = '<span>SAVED COURSES</span><b>OPEN ▸</b>'; side.append(lib); }
  const help = make(doc, 'div', 'sd-help', '<span class="sd-k"></span><span class="sd-help-v"></span>');
  side.append(help);

@@ -676,6 +676,11 @@ commit per category.
   the capture build.** Seen: rēlā's nine monitors in one box under the Arm
   switch, no gap. Smoke: monitor, monitor-phone pass. Not seen on a phone
   (the monitor screen opens at the top there; the box is further down).
+- [ ] **V3 category 5, polish from audit 3: built, seen in the capture
+  build.** Seen: step sheets from the top, the friend step's three rows, the
+  studio without its opening sentence, Reset camera as a row. Smoke:
+  menu-panels, studio, skins, friend-challenge pass. Not seen: Round
+  complete's rows at full width (audit 4 looks).
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
