@@ -357,9 +357,13 @@ export function targetShare({club, shape, short = false, lie, difficulty, metres
 // anything had been chosen). `fits(metres)` says whether a full swing reaches
 // an aim that far; the answer is the longest one that does, by halving the gap
 // `steps` times between `floor` and `max`, or `max` itself when it fits. It
-// assumes a longer aim never fits where a shorter one does not. Pure.
+// assumes a longer aim never fits where a shorter one does not. When not even
+// `floor` fits -- the ball model has no answer for this club here (audit 4: an
+// uphill Endless hole into a 10 mph wind put the aim 5 m in front of the tee) --
+// the answer is null, and the caller keeps its aim. Pure.
 export function longestReach(fits, max, {floor = 5, steps = 10} = {}) {
  if (!(max > floor) || fits(max)) return max;
+ if (!fits(floor)) return null;
  let lo = floor, hi = max;
  for (let i = 0; i < steps; i++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
  return lo;

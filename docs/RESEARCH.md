@@ -7848,7 +7848,9 @@ camera moved 40 m aside.
 default aim, the aim is pulled back along the fairway to the longest distance
 that fits (ten halvings, about 0.1% of the distance) and then to **98%** of
 it -- PLACED, so the marker starts just inside the full line rather than on
-it. Probed on one course: from the rough the driver's aim came back from 250
+it. When the ball model answers nothing for any distance, or less than **40%**
+of the club's carry (PLACED; audit 4 found an aim 5 m from the tee), the aim
+stays on the fairway at the stock carry and the meter says out of reach. Probed on one course: from the rough the driver's aim came back from 250
 to 220-224 yd.
 
 The blue mark on the bar (Phase 2, 14 October 2026) is the stop that lands the

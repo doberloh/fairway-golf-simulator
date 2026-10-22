@@ -681,6 +681,12 @@ commit per category.
   studio without its opening sentence, Reset camera as a row. Smoke:
   menu-panels, studio, skins, friend-challenge pass. Not seen: Round
   complete's rows at full width (audit 4 looks).
+- [ ] **Audit 4 found the default aim 5 m in front of the tee** on an uphill
+  Endless hole into a 10 mph wind (the V2 "never out of reach" rule fell to its
+  floor when the ball model answered nothing). Fixed in code (longestReach
+  returns null; under 40% of the carry is ignored), tested in Node. **Not seen
+  in the game**: the graphics card was in use when it was found; check an
+  uphill hole into the wind.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a

@@ -1259,7 +1259,9 @@ function defaultAim(){
   const fits=m=>{const pt=at(m),t=targetShare({...ctx,metres:Math.hypot(pt.x-p.x,pt.z-p.z),rise:course.height(pt.x,pt.z)-course.height(p.x,p.z),bearing:Math.atan2(pt.x-p.x,pt.z-p.z),
    wind:localWind(settings,course.rotation),altitude:course.bio.altitude,temperature:course.bio.temperature});return !t||!t.out;};
   const path=clubs[$('club').value].carry*YARD,reach=longestReach(fits,path);
-  if(reach<path){const pt=at(reach*.98);aim=Math.atan2(pt.x-p.x,pt.z-p.z)*180/Math.PI;aimRange=Math.hypot(pt.x-p.x,pt.z-p.z);}
+  // null, or under 40% of the club's carry (PLACED): the ball model has no sensible
+  // answer here, so the turn keeps the fairway aim and the meter says out of reach.
+  if(reach!=null&&reach<path&&reach>path*.4){const pt=at(reach*.98);aim=Math.atan2(pt.x-p.x,pt.z-p.z)*180/Math.PI;aimRange=Math.hypot(pt.x-p.x,pt.z-p.z);}
  }
  // A putt starts aimed at the hole, the whole distance, however it is struck:
  // off a monitor the device measures it, and on the Swing Meter the circle is

@@ -333,6 +333,10 @@ test('a turn never starts aimed beyond the club: the longest aim that fits (UI/U
  assert.ok(r <= 200 && r > 199.5, String(r));
  // An aim it reaches is left as it is.
  assert.equal(longestReach(fits, 150), 150);
- // Nothing fits: the floor.
- assert.equal(longestReach(() => false, 260, {floor: 5}), 5);
+ // Nothing fits, not even the floor: no answer, and the turn keeps its aim
+ // (audit 4 found it 5 m in front of the tee).
+ assert.equal(longestReach(() => false, 260, {floor: 5}), null);
+ // Only the shortest aims fit: the longest of them.
+ const near = longestReach(m => m <= 20, 260);
+ assert.ok(near > 19.5 && near <= 20, String(near));
 });
