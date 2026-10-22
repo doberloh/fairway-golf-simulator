@@ -707,6 +707,8 @@ per change; audit 6 looks at each.
 - [ ] **My profile's backup and bag buttons as slanted rows** (audit 5: old
   grey buttons; History's handicap paragraph a note). Built; **seen** at
   1920x1080.
+- [ ] **Save a course's Open course studio as a slanted row** (audit 5).
+  Built; **seen** at 1920x1080.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

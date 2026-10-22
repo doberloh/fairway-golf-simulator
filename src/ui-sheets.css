@@ -822,10 +822,12 @@
     "EXPORT EVERY COURSE TO A FILE" run out of its box over the next one). The
     saved rounds list's two rows (.sx-saved) are the same. On a narrow screen
     the two columns stack, code first. */
- #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.ph #profilesExport,.ph #profilesImport,.ph #profileBag){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
- #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.ph #profilesExport,.ph #profilesImport,.ph #profileBag)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
- #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.ph #profilesExport,.ph #profilesImport,.ph #profileBag):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
- #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.ph #profilesExport,.ph #profilesImport,.ph #profileBag) svg{width:16px;height:16px}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag) svg{width:16px;height:16px}
+ /* Save a course's Open course studio too (audit 5: an old grey button). */
+ #drawer .lib-root #libraryStudio{max-width:420px;margin-top:8px}
  /* My profile's file and bag buttons are the same rows (audit 5: old grey
     buttons on History and Bag), two to a line where they fit. */
  #drawer .ph :is(.profile-backup,.profile-actions:has(#profileBag)){display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;max-width:760px;margin-top:8px}
