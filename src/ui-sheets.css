@@ -1073,6 +1073,12 @@
  body:has(#app[data-mode]) #drawer .sx-line{flex-wrap:wrap;gap:6px 18px;min-height:0;padding:8px 26px}
  body:has(#app[data-mode]) #drawer .sx-facts{flex-wrap:wrap;gap:4px 14px}
  body:has(#app[data-mode]) #drawer .ph .look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ /* My profile's tabs head the page (audit 5: stacked, they came after the
+    three who/level cards, below the first screen with nothing to say they
+    were there). The right column opens up so the tabs can go first. */
+ body:has(#app[data-mode]) #drawer .ph>.ph-main{display:contents}
+ body:has(#app[data-mode]) #drawer .ph>.ph-main>.ph-tabs{order:-1}
+ body:has(#app[data-mode]) #drawer .ph>.ph-main>.ph-pane{order:1}
  /* Settings: the categories as a sideways row over the settings. */
  /* A column, not a grid, on a phone (UI/UX pass, 21 October 2026): in the grid the
     category row and the first settings row overlapped by 27 px. */

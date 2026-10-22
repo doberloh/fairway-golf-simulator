@@ -379,7 +379,8 @@ already finished stay in their history.
 **My profile** shows one player at a time; the names across the top switch
 between everyone on this device, main first. Down the left: the player, their
 level and how far into it, their sim handicap, and how long they have played.
-On the right, six tabs: **Overview** (eight headline numbers, the last three
+On the right (on a phone, at the top, and a tap brings the tab's page up),
+six tabs: **Overview** (eight headline numbers, the last three
 rounds and the next thing a level unlocks), **Locker** (your look: the kinds
 down the side with how many you have, the grid -- what you wear is outlined in
 yellow, its name ticked -- and what you wear now on the left; your title is

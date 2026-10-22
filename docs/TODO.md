@@ -683,6 +683,8 @@ per change; audit 6 looks at each.
   Continue, focused, and it put the ball back where it lay (pictured).
 - [ ] **A Help topic comes into view on a phone** (audit 5: its text began
   below the screen). Built; **seen** at 844x390 in the capture build.
+- [ ] **My profile's tabs head the page on a phone** (audit 5: below the
+  first screen). Built; **seen** at 844x390 (History brought up) and 390x844.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
