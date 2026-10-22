@@ -666,15 +666,16 @@ aim move.
   Main menu 1.5 s into a drive landed it 216 m out and asked to save.
 - [ ] **The small map stays whole after the big map** (audit 5: the hole in
   the top half, the rest dark, since audit 2). Built; probed in the capture
-  build (286 px tall before and after M, and with its pixels forced to 1 px).
-  Not yet pictured, nor in the studio.
+  build (286 px tall before and after M, and with its pixels forced to 1 px);
+  **pictured whole** in audit 6 after the big map. Not seen in the studio.
 - [ ] **The file buttons fit an upright phone** (audit 5: the words ran out
   of the boxes). Built; **seen** at 390x844 in the capture build (Saved
   courses' Import & export stacked, the saved rounds list's two rows).
 - [ ] **The range's Save a session note names R** (audit 5: it said Tab,
   which shows the shot numbers). Built; PLAYING already said R.
 - [ ] **Help's Made to travel names Fairway.html** (audit 5: it said
-  index.html, the build's name, not the file in the download). Built.
+  index.html, the build's name, not the file in the download). Built; **seen**
+  in audit 6 at three sizes.
 - [ ] **Esc goes back one step on a step sheet** (the owner's decision after
   audit 5; the top-right Back the same). Built, tested in Node, probed in the
   capture build: Format, Golfers, The week, Game, closed; Challenges' Rules
