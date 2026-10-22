@@ -275,8 +275,8 @@
     ON/OFF switch, a drop-down as ◀ value ▶, a slider as a segment bar. The
     tabs went in round 13: every group shows, the page scrolls. */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:0 32px;align-content:start;align-items:start}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0;display:grid;gap:24px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>:not(.st-side){grid-column:2}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-lead{display:none}
  /* No tabs: every group shows at once and the page scrolls (round 13). */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-tabs{display:none!important}
@@ -319,10 +319,14 @@
  /* The notes move to the help line (? shows them all in place). */
  body:has(#app[data-mode]):not(:has(#app.rh-help)) #drawer .st-groups .control-card>:is(.note,p.tip,.research-label){display:none}
  body:has(#app[data-mode]) #drawer .st-groups .control-card>.field-error:empty{display:none}
- /* Solid: the panel colour is see-through, and the rows scrolling under the
-    band showed through it (18 October 2026). */
- #drawer .st-help{position:sticky;bottom:0;z-index:2;display:grid;gap:6px;margin-top:8px;padding:16px 36px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
- #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;box-shadow:0 -12px 24px rgba(4,8,12,.6);transform:skewX(-12deg)}
+ /* THE HELP LINE UNDER THE CATEGORIES (audit 5, 22 October 2026). It was held
+    at the foot of the rows, over the end of the list until that was scrolled
+    -- Green definition cut in half under it at 1366x768 and at 1920x1080,
+    everything after Text size on a sideways phone. In the left column it
+    covers nothing; on a phone it comes after the rows (below). Solid, as it
+    was: the panel colour is see-through (18 October 2026). */
+ #drawer .st-help{position:relative;z-index:2;display:grid;gap:6px;padding:16px 28px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;transform:skewX(-12deg)}
  #drawer .st-help-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
  #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
 
@@ -1084,8 +1088,10 @@
     category row and the first settings row overlapped by 27 px. */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:flex!important;flex-direction:column;align-items:stretch;gap:0}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>*{grid-column:1!important;grid-row:auto!important}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{position:static;display:flex;flex:none;overflow-x:auto;gap:8px;margin:0 0 12px;padding:2px 12px;scrollbar-width:none}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats>*{flex:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side{display:contents}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root .st-help{order:9;margin-top:8px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats{position:static;display:flex;flex:none;overflow-x:auto;gap:8px;margin:0 0 12px;padding:2px 12px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats>*{flex:none}
  body:has(#app[data-mode]) #drawer .st-groups{columns:1}
  /* Saved courses: the shelf, then the course picked. */
  body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){grid-template-columns:minmax(0,1fr)!important}

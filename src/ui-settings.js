@@ -94,8 +94,13 @@ export function buildSettings(root, {current, open, doc = globalThis.document} =
   const fill = () => r.style.setProperty('--fill', ((r.value - r.min) / ((r.max - r.min) || 1) * 100).toFixed(1) + '%');
   r.addEventListener('input', fill); fill();
  }
- root.prepend(cats);
- root.append(groups, help);
+ // The help line sits under the categories, in the left column that travels
+ // with the page (audit 5, 22 October 2026: held at the foot of the rows it
+ // covered the end of the list on every screen; on a phone it follows them).
+ const side = make(doc, 'div', 'st-side');
+ side.append(cats, help);
+ root.prepend(side);
+ root.append(groups);
  root.classList.add('st-root');
  return true;
 }

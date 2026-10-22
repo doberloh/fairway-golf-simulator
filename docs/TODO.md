@@ -685,6 +685,10 @@ per change; audit 6 looks at each.
   below the screen). Built; **seen** at 844x390 in the capture build.
 - [ ] **My profile's tabs head the page on a phone** (audit 5: below the
   first screen). Built; **seen** at 844x390 (History brought up) and 390x844.
+- [ ] **Settings' help line under the categories** (audit 5: held at the
+  foot it covered the last rows -- at 1920x1080 too, found while fixing it).
+  Built; **seen** at 1920x1080, 1366x768 and 844x390: no row covered
+  (measured). Not seen upright.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

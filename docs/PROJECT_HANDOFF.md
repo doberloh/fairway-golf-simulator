@@ -1522,7 +1522,7 @@ hidden), the scorecard's next-hole countdown and match line are slanted
 panels, card names and captions wrap. A seat's name is centred by an unseen
 triangle balancing the real one (`.player-who .dd-field::after`).
 Challenges' group got its own compact seat row (`.ch-group .seat`): the old
-player-row grid had squashed its pickers to nothing. **A band that sits over scrolling rows is solid**: `--panel` is see-through, so the settings help band (`.st-help`, sticky at the foot) lays it over a dark base.
+player-row grid had squashed its pickers to nothing. **A band that sits over scrolling rows is solid**: `--panel` is see-through, so the settings help band (`.st-help`) lays it over a dark base. It is no longer over the rows: since audit 5 (22 October 2026) it sits under the categories in `.st-side`, the left column that travels with the page, because held sticky at the foot it covered the end of the list on every screen (Green definition cut in half at 1366x768 and at 1920x1080, everything after Text size on a sideways phone). On a phone `.st-side` is `display:contents` and the band takes `order:9`, after the rows.
 
 **#drawerContent KEEPS ITS CLASSES**: every 1.0 layout marks it (`lb-root`,
 `sx-root`, `st-root`...), and it outlives every sheet, so renderPanel clears
@@ -1636,7 +1636,7 @@ focus, and ? (with the focus in a window or a sheet) shows them all
 category list down the left (Camera & bay, Graphics, Sound, Launch monitor,
 Help & controls -- each opens its own sheet; the mockup's Display, Controls,
 Data & backup and About map onto these, PLACED), every group shown at once in
-two columns of rows (no tabs since round 13), and the help line at the foot for the focused row. CSS
+two columns of rows (no tabs since round 13), and the help line for the focused row under the categories (`.st-side`; after the rows on a phone). CSS
 only turns the real controls into rows: a tick box is drawn as an ON/OFF
 switch (`appearance:none`), a drop-down as a value with ▶, a slider as a
 segment bar filled to `--fill` (the track is masked into segments). **One
