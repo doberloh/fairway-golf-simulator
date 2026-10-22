@@ -728,6 +728,9 @@ aim move.
 - [ ] **New in studio and Import a code share one shelf cell** (audit 5:
   Import a code alone on a row with three courses). Built; **seen** with three
   courses and empty (measured); the closer icon spacing not yet pictured.
+- [ ] **A different sheet opens at its top** (audit 6: after a scrolled Help
+  page, My profile opened 328 px down). Built; probed at 844x390 (tabs at the
+  top again).
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

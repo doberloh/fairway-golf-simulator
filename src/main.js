@@ -4996,7 +4996,14 @@ function openSheet(name){stopTour();
  // Play opens on its first step from the menu, on Golfers during a round.
  if(name==='round'&&panel!=='round'){challengeStep=0;lobbyStep=lobbyOpenStep??(appMode==='play'?1:0);lobbyOpenStep=null;lobbySaved=false;endlessStep=0;weeklyStep=0;rivalStep=0;}
  if(name!=='score')cancelAdvance();
- if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;setPanelFocus(true);
+ // A DIFFERENT SHEET OPENS AT ITS TOP (audit 6, 22 October 2026): #drawerContent
+ // holds every sheet, and its scroll outlived the one scrolled -- after a Help
+ // topic had brought its page up on a phone, My profile opened 328 px down,
+ // its tabs above the screen. The same sheet redrawn keeps its place (the
+ // range controls keep theirs on purpose). Set once the drawer shows: a hidden
+ // element takes no scroll.
+ const fromTop=panel!==name||$('drawer').hidden;
+ if(dropState)cancelDrop();panel=name;syncMenuOverlay();keys.clear();$('drawer').dataset.panel=name;$('drawer').hidden=false;$('drawerBackdrop').hidden=false;if(fromTop)$('drawerContent').scrollTop=0;setPanelFocus(true);
  $('drawerTitle').textContent=panelTitle(name);
  syncNav();updateStudioState();
  renderPanel(name,$('drawerContent'));
