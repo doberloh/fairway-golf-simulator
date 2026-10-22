@@ -1154,4 +1154,8 @@
     columns even here, and its rows wrapped to six lines (found fixing the
     above). One column. */
  body:has(#app[data-mode]) #drawer .st-groups>.panel-section:only-child{columns:1!important}
+ /* The challenge of the week's banner reads top to bottom (audit 5: in one
+    row its three parts squeezed into columns of five short lines). */
+ #drawer .ch .chal-week{flex-direction:column;align-items:flex-start;gap:2px;padding:10px 28px}
+ #drawer .ch .chal-week small:last-child{margin-left:0}
 }
