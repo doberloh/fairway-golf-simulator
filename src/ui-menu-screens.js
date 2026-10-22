@@ -96,7 +96,13 @@ export function buildLibrary(root, {onNew, doc = globalThis.document} = {}) {
  // of small text and a squashed card; a code to paste is the other way in.
  const imp = make(doc, 'button', 'lib-new lib-import', '<b>⇩</b><span>IMPORT A CODE</span>');
  imp.type = 'button'; imp.onclick = () => [...root.querySelectorAll('.panel-tab')].find(t => /import/i.test(t.textContent))?.click();
- shelf.append(add, imp);
+ // THE TWO TOGETHER IN ONE PLACE ON THE SHELF (audit 5, 22 October 2026: with
+ // three courses the row of four was full and Import a code sat alone on a row
+ // of its own). ui-sheets.css stacks them in the one cell beside the courses,
+ // and sets them side by side, large, on an empty shelf.
+ const adds = make(doc, 'div', 'lib-adds');
+ adds.append(add, imp);
+ shelf.append(adds);
  list.replaceWith(shelf);
  const empty = section.querySelector('.lib-empty'); if (empty) shelf.before(empty);
  section.classList.add('lib-courses');

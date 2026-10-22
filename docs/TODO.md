@@ -720,6 +720,9 @@ per change; audit 6 looks at each.
   phone.
 - [ ] **The range's Golfers step says WHO'S PLAYING · 1 TO 4** (audit 5: it
   said WHO IS HITTING, the only place). Built; **seen** in the capture build.
+- [ ] **New in studio and Import a code share one shelf cell** (audit 5:
+  Import a code alone on a row with three courses). Built; **seen** with three
+  courses and empty (measured); the closer icon spacing not yet pictured.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

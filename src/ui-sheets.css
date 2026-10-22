@@ -416,6 +416,14 @@
  #drawer .lib-new::before{background:rgba(255,255,255,.05)!important}
  #drawer .lib-new b{font-size:56px;font-weight:800;line-height:1;color:var(--a1)}
  #drawer .lib-new span{font-size:20px;font-weight:800;font-style:italic}
+ /* New in studio and Import a code share one cell (ui-menu-screens.js
+    buildLibrary; audit 5: with three courses Import a code sat alone on a
+    row): stacked beside the courses, side by side on an empty shelf. */
+ #drawer .lib-adds{display:grid;gap:12px}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds{grid-template-rows:1fr 1fr}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds>.lib-new{min-height:0;grid-auto-flow:column;grid-template-columns:auto auto;justify-content:center;gap:14px}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds>.lib-new b{font-size:34px}
+ #drawer .lib-shelf:not(:has(>.course-card))>.lib-adds{grid-column:span 2;grid-template-columns:1fr 1fr}
 
  /* ---------------------------------------------- the studio's settings */
  /* IN THE STUDIO (ui-studio.js; mockup r10 'studio-set'): the sheet keeps the
