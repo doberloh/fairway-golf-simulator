@@ -249,10 +249,12 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  gamesScroll.hidden = !saved.hidden;
  const nRounds = saved.querySelectorAll('.course-card').length;
  // With none saved the button still shows: the list is also where a round file is imported.
- const paintRounds = () => { roundsBtn.textContent = !saved.hidden ? 'BACK TO THE GAMES ▸' : nRounds ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'SAVED ROUNDS · IMPORT A ROUND ▸'; };
+ // The step's heading says which of the two is showing (the owner, 21 October 2026).
+ const gameHead = make(doc, 'h3', 'sx-head');
+ const paintRounds = () => { gameHead.textContent = saved.hidden ? 'WHAT ARE YOU PLAYING' : 'SAVED ROUNDS'; roundsBtn.textContent = !saved.hidden ? 'BACK TO THE GAMES ▸' : nRounds ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'SAVED ROUNDS · IMPORT A ROUND ▸'; };
  roundsBtn.onclick = () => { saved.hidden = !saved.hidden; gamesScroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
  paintRounds();
- p1.append(make(doc, 'h3', 'sx-head', 'WHAT ARE YOU PLAYING'), gamesScroll, saved, line);
+ p1.append(gameHead, gamesScroll, saved, line);
 
  // The saved course's step: the shelf as cards, the chosen one named along the
  // foot with Manage and Delete, and a box for a code someone sent.
