@@ -1749,6 +1749,17 @@ nothing got you exact. Four pieces fix that, each with a rule.
   keyboard press on the focused button and counts once. **Symptom if the
   press and the click both step: every tap moves twice.** `contextmenu` is
   cancelled, because a long press on Android opens one and ends the sweep.
+- **The small map's canvas sits in its panel's stretching row** (round-hud.css,
+  play `auto minmax(0,1fr) auto auto`, studio `auto minmax(0,1fr) auto`; audit
+  5, 22 October 2026). The big map's bar is `display:none` outside the big map,
+  so it takes no row; with the old `auto auto 1fr auto` the canvas fell into an
+  AUTO row and took its height from its pixel shape. The page's 220x290 hid
+  that until the big map had been open: closing it left 1260x885, the canvas
+  came back 158 px tall in a 286 px space, and the resize observer locked that
+  in (the hole in the top half, the rest dark -- in every audit's pictures
+  since audit 2, unnoticed until audit 5). A canvas's height must never come
+  from its own `width`/`height` attributes: the observer writes those from the
+  box.
 - **The big map is the SAME canvas**, with `aim-view` on `#world` laying the
   `.minimap` panel over the course. On a big screen it is the round-13 window
   (frame c-bigmap, `ui-windows.css`): centred, 62.5% x 89% of the screen and
