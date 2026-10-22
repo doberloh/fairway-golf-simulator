@@ -870,6 +870,12 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 
 # Done
 
+## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+- [x] **The round matrix plays the course of the week and a friend's challenge**
+  (the owner asked for every mode in the simulated rounds): 36 weekly rounds of
+  18 holes and 24 friend rounds, checked hole by hole (tests/round-matrix).
+
 ## Release 0.9.1 (20 October)
 
 - [x] **v0.9.1 published**, "Fairway 0.9.1 (beta)", at the owner's request:

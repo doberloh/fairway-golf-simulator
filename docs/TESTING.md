@@ -46,6 +46,8 @@ and seed, so it can be replayed exactly.
 | Scramble | yes | yes | yes | yes | every split, one team of four included | yes |
 | Skins | refused | yes | yes | yes | all on one side, and split | yes |
 | Stroke with a goal | Sudden death (endless) and Bogey-free nine, 1-4 golfers, golfers coming and going; the goal checked after every hole and through saves |  |  |  |  |  |
+| Course of the week | 18 holes of stroke play, 1-4 golfers, every putting mode; the week kept through a save, and each golfer's best for the week (first finish, only a better round replaces it) |  |  |  |  |  |
+| A friend's challenge | 9 and 18 holes, 1-4 golfers against a friend's card; every golfer's comparison checked after every hole, the final line (beat, wins by, tied), the challenge kept through a save |  |  |  |  |  |
 
 Each under all three putting modes (hole out, dartboard, decimal), both
 out-of-bounds rules, over 3 holes, then 9 and 18 with group changes.
