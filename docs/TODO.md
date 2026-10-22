@@ -673,6 +673,10 @@ per change; audit 6 looks at each.
   audit 5; the top-right Back the same). Built, tested in Node, probed in the
   capture build: Format, Golfers, The week, Game, closed; Challenges' Rules
   to Golfers by the Back button. Smoke's close helpers press until closed.
+- [ ] **The monitor screen opened from Settings goes back to Settings on Esc**
+  (audit 5). Built; probed in the capture build: the menu's Settings and the
+  round's Settings window (on the tab it was on); straight from the main menu
+  Esc still closes it.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

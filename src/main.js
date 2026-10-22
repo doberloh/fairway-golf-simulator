@@ -4400,6 +4400,7 @@ function mapPixels(e){
 // do the same thing. A step sheet steps back first (ui-steps.js escapeStep,
 // the owner, 22 October 2026); only its first step closes it.
 function panelBack(){
+ if(panel==='monitor'&&monitorReturn){const back=monitorReturn;monitorReturn=null;gameAudio?.ui?.('back');back();return;}
  // The sheet on show: a screen moved out of the way can keep its root in the
  // drawer, hidden, and must not be stepped behind the one in front.
  const sheet=[...$('drawer').querySelectorAll('.sx-root')].find(r=>r.getClientRects().length)?.stepSheet;
@@ -4865,7 +4866,16 @@ function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el
  const out=$(el.id+'Value');
  if(out)out.textContent=el.value+(el.dataset.unit??'');
 }));}
+// THE MONITOR SCREEN OPENED FROM SETTINGS GOES BACK TO SETTINGS (audit 5,
+// 22 October 2026: Esc there closed everything). Settings' Launch monitor --
+// the main menu's settings list and the round's Settings window -- leaves the
+// way back here, after the screen is open; panelBack takes it. Opening any
+// other sheet ends it, and the routes straight to the monitor (the main menu
+// row, the connection chip) clear it. The monitor's own redraws (connect,
+// disconnect) open 'monitor' again and keep it.
+let monitorReturn=null;
 function openPanel(name){
+ if(name!=='monitor')monitorReturn=null;
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
 }
@@ -4889,7 +4899,7 @@ function openTool(name){
 // redraws itself (openPanel(same name)) lands here again and redraws in place.
 let settingsTab='camera';
 function openSettingsWindow(tab=settingsTab){
- if(tab==='monitor'){popups?.close('settings');openSheet('monitor');return;}
+ if(tab==='monitor'){popups?.close('settings');openSheet('monitor');monitorReturn=()=>openSettingsWindow(settingsTab);return;}
  settingsTab=WINDOW_SETTINGS.has(tab)?tab:'camera';
  stopTour();if(dropState)cancelDrop();closePanel();keys.clear();
  popups.open('settings',{title:'Settings',width:470,height:620,render:renderSettingsWindow,onClose:homeClockPop});
@@ -6255,7 +6265,7 @@ function renderPanel(name,content){
  // Launch monitor setup the same way: three steps and the status (ui-monitor-setup.js).
  monitorSetup=name==='monitor'?buildMonitorSetup(content,()=>({connected:monitorConnected,device:monitorDevice,armed:armSwitch,shot:latest?.shot})):null;
  // Camera & bay, Graphics and Sound from the menu: one settings screen (ui-settings.js).
- if(content.id==='drawerContent')buildSettings(content,{current:name,open:openPanel});
+ if(content.id==='drawerContent')buildSettings(content,{current:name,open:n=>{openPanel(n);if(n==='monitor')monitorReturn=()=>openPanel(name);}});
  // The studio's settings, from the menu or in the studio -- one screen:
  // categories, rows, what has changed, the landscapes as pictures, in the
  // colours of the landscape being shaped (ui-studio.js).
@@ -6621,7 +6631,7 @@ function bind(){
  // The row under the pointer takes the focus, so one row is lit, never two.
  document.querySelectorAll('#mainMenu .menu-tile').forEach(b=>b.addEventListener('pointerenter',()=>{if(!b.hidden&&document.activeElement!==b)b.focus({preventScroll:true});}));
  $('menuCamera').onclick=()=>openPanel('camera');
- $('menuMonitor').onclick=()=>openPanel('monitor');
+ $('menuMonitor').onclick=()=>{monitorReturn=null;openPanel('monitor');};
  $('menuGraphics').onclick=()=>openPanel('graphics');
  $('menuSound').onclick=()=>openPanel('sound');
  $('studioSettings').onclick=()=>panel==='course'?closePanel():openPanel('course');
@@ -6684,7 +6694,7 @@ function bind(){
  for(const [id,name] of [['dropLibrary','library'],['dropGraphics','graphics'],['dropSound','sound'],['dropHelp','help']])
   $(id).onclick=()=>{closeMenuDrop();openPanel(name);};
  $('menuNav').onclick=e=>{e.stopPropagation();toggleMenuDrop();};
- document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&e.target.isConnected&&!e.target.closest('.sim-time,.popup[data-popup=settings]'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=panelBack;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
+ document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>{monitorReturn=null;openPanel(b.dataset.panel);});$('clockButton').onclick=e=>{e.stopPropagation();toggleClockPop();};document.addEventListener('click',e=>{if(!$('clockPop').hidden&&e.target.isConnected&&!e.target.closest('.sim-time,.popup[data-popup=settings]'))toggleClockPop(false);if(!$('menuDrop').hidden&&!e.target.closest('.menu-wrap'))closeMenuDrop();});$('closeDrawer').onclick=panelBack;$('drawerBackdrop').onclick=closePanel;document.querySelector('.brand').onclick=e=>{e.preventDefault();returnToMenu();};bindSwingInput();$('skipFlight').onclick=finishShot;
  // A MULLIGAN TAKES BACK ONE SHOT, AND ONE TRACER WITH IT.
  //
  // `holeTrails.pop()` before `loadCourse()` did nothing at all: `loadCourse`

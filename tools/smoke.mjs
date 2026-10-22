@@ -280,6 +280,16 @@ class Trip {
   await this.page.click(`.popup[data-popup=settings] [data-sw="${tab}"]`);
  }
 
+ // Out of the monitor screen opened from the round's Settings window: Esc goes
+ // back to the window (22 October 2026), which is then closed too.
+ async leaveMonitor() {
+  await this.key('Escape');
+  const win = this.page.locator('.popup[data-popup=settings]');
+  await this.until(async () => !(await this.drawerOpen()), 'the monitor screen to close', 5 * SLOW);
+  if (await win.isVisible().catch(() => false)) await this.page.getByRole('button', {name: 'Close Settings', exact: true}).click();
+  await this.until(async () => !(await win.isVisible().catch(() => false)), 'the Settings window to close', 5 * SLOW);
+ }
+
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
    // T on the round screen (the pause list lost its Tools row, 21 October
@@ -2295,7 +2305,7 @@ const JOURNEYS = [
     await t.press('Connect bridge');
     await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
     await t.page.getByLabel(/Arm monitor/).check();
-    await t.key('Escape');
+    await t.leaveMonitor();
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
@@ -2499,7 +2509,7 @@ const JOURNEYS = [
     // Settings → Launch monitor (it left Tools for Settings, 21 October 2026).
     await t.settings('monitor');
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
-    await t.key('Escape');
+    await t.leaveMonitor();
    });
    await t.step('the address is remembered on this device', async () => {
     await t.page.reload();

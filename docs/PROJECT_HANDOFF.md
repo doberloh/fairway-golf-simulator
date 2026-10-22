@@ -1351,6 +1351,8 @@ course studio, whose sheet takes the play area. An open sheet is in
 
 **Esc goes back one step on a step sheet** (the owner, 22 October 2026, after audit 5: the foot said *Esc Back* beside a Back button, and Esc closed the whole sheet, throwing away the golfers and format just chosen). ui-steps.js `escapeStep` (pure, tests/keys.test.mjs) and the sheet's `back()`, hung on its root as `root.stepSheet`; main.js `panelBack` runs it for Esc AND the drawer's top-right *Esc Back* button (`#closeDrawer`), which must stay the same thing, and closes only from the first step. It asks the sheet ON SHOW (`getClientRects`): a screen moved out of the way can leave its root in the drawer. The smoke harness's `closePanel`/`closeDrawer` press Escape until the sheet is gone.
 
+**The monitor screen opened from Settings goes back to Settings** (audit 5, 22 October 2026: Esc there closed everything). main.js `monitorReturn`: Settings' Launch monitor -- the menu's settings list (`buildSettings`' `open`) and the round's Settings window (`openSettingsWindow('monitor')`) -- leaves the way back AFTER the screen is open, and `panelBack` takes it. Opening any other sheet clears it in `openPanel`; the straight routes (the main menu row, every `[data-panel]` button such as the connection chip) clear it first; the monitor's own redraws on connect and disconnect open `monitor` again and keep it. Smoke's `leaveMonitor` closes the window it comes back to.
+
 **Play is four steps** (round 13, 17 October 2026 -- since the V2 plan its first step is Game and each game type adds its own, *PLAY'S GAME TYPES*; `src/ui-lobby.js` on
 `src/ui-steps.js`). **The course of the week is a course in Play** (UI/UX
 pass, 21 October 2026): the course drop-down's first option is `weekly`, its

@@ -167,7 +167,9 @@ the courses several suites share.
   list, each tool's key matches, the swing strip by input, main.js answers each
   key, a step passed without what it needs is not ticked, and Esc on a step
   sheet goes back one step, closing only from the first). The smoke harness's
-  `closePanel`/`closeDrawer` press Escape until the sheet is gone.
+  `closePanel`/`closeDrawer` press Escape until the sheet is gone, and
+  `leaveMonitor` closes the Settings window that Esc in the monitor screen goes
+  back to.
   `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
   club, scores with a real minus, golfer cards, keys, the ball light, the
   camera's name beside the wind, the aim point's distance left to the hole -- and
