@@ -339,8 +339,17 @@
     smaller than round 13's (270 wide, not 440; numbers 28, not 44), the unit
     a space clear of its slanted number (the owner, 18 October 2026: "way too
     much space", "the units are overlapping the text"). */
- #world[data-mode=play]:not(.exploring).rh-tiles .shot-tiles{display:grid!important;position:absolute;inset:auto;left:50%;top:50%;right:auto;width:270px;transform:translate(-50%,-50%);grid-template-columns:1fr 1fr;gap:6px;zoom:var(--hud-z,1);z-index:9}
+ /* The shot numbers sit at the left edge, halfway down, by default (UI/UX pass
+    V2, the owner: "default them to the left side of the screen"); they were in
+    the middle, over the flag's yardage. A drag still puts them anywhere
+    (hud-places.js), and a double-click brings them back here. */
+ #world[data-mode=play]:not(.exploring).rh-tiles .shot-tiles{display:grid!important;position:absolute;inset:auto;left:30px;top:50%;right:auto;width:270px;transform:translateY(-50%);grid-template-columns:1fr 1fr;gap:6px;zoom:var(--hud-z,1);z-index:9}
  #world[data-mode=play]:not(.exploring).rh-tiles.rh-range .shot-tiles{left:auto;top:24px;right:30px;transform:none}
+ /* A CHALLENGE'S LINE (UI/UX pass V2): a slanted bar under the hole slab --
+    the challenge, then the ball -- in place of the small pill above it. */
+ #world[data-mode=play] .challenge-bar{zoom:var(--hud-z,1);top:128px;left:30px;max-width:none;gap:14px;height:40px;padding:0 24px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;isolation:isolate;color:#fff;font:700 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase}
+ #world[data-mode=play] .challenge-bar::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .challenge-bar b{font-size:18px;font-weight:800;font-style:italic;letter-spacing:.02em;color:var(--hot)}
  #world[data-mode=play].rh-tiles .shot-tile{position:relative;left:auto!important;top:auto!important;min-width:0;cursor:move;isolation:isolate;padding:6px 14px 7px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #world[data-mode=play].rh-tiles .shot-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play].rh-tiles .shot-tile[data-field=carry]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}

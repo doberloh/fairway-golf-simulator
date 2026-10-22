@@ -351,6 +351,20 @@ export function targetShare({club, shape, short = false, lie, difficulty, metres
  return share > 1 + 1e-6 ? {share: 1, out: true} : {share: Math.max(0, share), out: false};
 }
 
+// THE LONGEST AIM A CLUB REACHES (UI/UX pass V2, 21 October 2026: a turn
+// started aimed at a pin the club cannot carry to -- a short par 4 uphill
+// with the driver -- and the meter said "Out of reach: take more club" before
+// anything had been chosen). `fits(metres)` says whether a full swing reaches
+// an aim that far; the answer is the longest one that does, by halving the gap
+// `steps` times between `floor` and `max`, or `max` itself when it fits. It
+// assumes a longer aim never fits where a shorter one does not. Pure.
+export function longestReach(fits, max, {floor = 5, steps = 10} = {}) {
+ if (!(max > floor) || fits(max)) return max;
+ let lo = floor, hi = max;
+ for (let i = 0; i < steps; i++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+ return lo;
+}
+
 // THE WHOLE STRIKE: a finished swing, the club, the shot chosen and the lie,
 // into the numbers the ball leaves with. `lie` is the surface the ball sits on;
 // its speed share is taken off the speed the bar asked for.

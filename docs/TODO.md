@@ -670,6 +670,16 @@ per category.
   Rules and its pause list without Golfers & rules. Smoke: challenge,
   challenge-week, challenge-more pass. Not seen: the steps on a phone, a
   head-to-head played by two from the steps (the journey uses `lab.challenge`).
+- [ ] **V2 category 3, the round screen: built, seen in the capture build.**
+  Seen: the shot tiles at the left edge at 1920x1080 and 1366x768, the ?
+  list below the hole slab, free flight's pill and Jump to green each in one
+  row, the challenge bar under the hole slab with no turn plate; the default
+  aim from the rough probed at four places, none out of reach. Smoke:
+  hud-reachable, endless-round, challenge, look pass. Not seen by a person:
+  dragging the tiles from their new place and double-clicking them back; a
+  short uphill par 4 off the tee. The audit-2 note that free flight's header
+  was cut off by the screen's top was wrong -- the contact sheet's file label
+  covered it -- but its yardage and list did hang below their panels.
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
 phases, run on one branch with a commit each; the owner's decisions: a shorter

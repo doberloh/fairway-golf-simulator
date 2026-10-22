@@ -194,7 +194,8 @@ the courses several suites share.
   1.0 lobby: a picker's value and line are cut from the drop-down's own
   option text, every out-of-bounds rule reads as its short name, every format
   has a tile, and Play's steps for each game type: Game, its own step,
-  then Golfers, Format and Rules). `challenges` also holds a challenge's
+  then Golfers, Format and Rules). `swing-meter` also has `longestReach`,
+  the default aim pulled back to what a full swing carries. `challenges` also holds a challenge's
   group to the fixed rules (blue tees for all, stroke play, Rules of Golf, lie
   penalty on). `ui-monitor-setup` (the setup screen's steps tick in order
   and never ahead of the bridge, the ball light's words match the round

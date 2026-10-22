@@ -135,7 +135,7 @@
     jump to beside it; along the foot the keys as chips and V back to the
     ball. The bar's own box steps aside so its pieces sit on the screen. */
  #world .explore-bar{position:static;display:contents}
- #world .explore-bar>div:first-child{position:absolute;left:30px;top:28px;zoom:var(--hud-z,1);display:flex;align-items:center;gap:12px;height:42px;padding:0 22px;color:var(--on-hot);isolation:isolate}
+ #world .explore-bar>div:first-child{position:absolute;left:30px;top:28px;zoom:var(--hud-z,1);display:flex;flex-direction:row;white-space:nowrap;align-items:center;gap:12px;height:42px;padding:0 22px;color:var(--on-hot);isolation:isolate}
  #world .explore-bar>div:first-child::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
  #world .explore-bar>div:first-child .eyebrow{font-size:21px;font-weight:800;font-style:italic;letter-spacing:.02em;color:var(--on-hot)}
  #world .explore-bar>div:first-child .eyebrow::before{content:"";display:inline-block;width:11px;height:11px;margin-right:10px;border-radius:50%;background:var(--on-hot)}
@@ -143,7 +143,9 @@
  #world .explore-bar>div:first-child .pin-readout{font-size:16px;font-weight:800;font-style:italic;text-transform:uppercase;font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #world .explore-bar>div:first-child{font-family:"Saira Condensed",var(--font-ui),sans-serif}
  #world .explore-bar>label .dd{min-width:150px}
- #world .explore-bar>label{position:absolute;left:330px;top:28px;zoom:var(--hud-z,1);display:flex;align-items:center;gap:10px;height:42px;padding:0 20px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;isolation:isolate}
+ /* The old bar's column layout put the yardage and the list under their
+    panels (audit v3): one row, inside them. */
+ #world .explore-bar>label{position:absolute;left:330px;top:28px;zoom:var(--hud-z,1);display:flex;flex-direction:row;white-space:nowrap;align-items:center;gap:10px;height:42px;padding:0 20px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:var(--soft);text-transform:uppercase;isolation:isolate}
  #world .explore-bar>label::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world .explore-bar>label select{height:30px;border:0;background:rgba(0,0,0,.3);color:#fff;font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  #world .explore-bar .flight-instructions{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);zoom:var(--hud-z,1);display:flex!important;gap:7px}
@@ -156,7 +158,7 @@
  #world .explore-bar .fly-pad{display:none}
 
  /* KEYS (frame c-dialogs3): a window of key chips, two to a row. */
- #app .keys-help:not([hidden]){left:170px;top:96px;right:auto;bottom:auto;transform:none;zoom:var(--hud-z,1);width:740px;max-height:none;display:grid;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #app .keys-help:not([hidden]){left:170px;top:140px;right:auto;bottom:auto;transform:none;zoom:var(--hud-z,1);width:740px;max-height:none;display:grid;gap:8px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
  #app .keys-help>h3{position:relative;isolation:isolate;margin:0;padding:12px 34px;font-size:31px;font-weight:800;font-style:italic;color:#fff;text-transform:uppercase;letter-spacing:.01em}
  #app .keys-help>h3::before,#app .keys-help dl>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #app .keys-help dl{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0}

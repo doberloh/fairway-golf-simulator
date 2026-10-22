@@ -7808,6 +7808,14 @@ ground and into 2% rises and falls.
 
 ### The target marker
 
+**Where a turn starts aiming, when the club cannot get there** (UI/UX pass V2,
+21 October 2026). No outside source. When a full swing falls short of the
+default aim, the aim is pulled back along the fairway to the longest distance
+that fits (ten halvings, about 0.1% of the distance) and then to **98%** of
+it -- PLACED, so the marker starts just inside the full line rather than on
+it. Probed on one course: from the rough the driver's aim came back from 250
+to 220-224 yd.
+
 The blue mark on the bar (Phase 2, 14 October 2026) is the stop that lands the
 ball in the aim circle. It is `playsLike` -- the circle's distance scaled by how
 much shorter or longer a full swing of this club and shape reaches the circle's

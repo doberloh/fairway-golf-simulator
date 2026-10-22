@@ -41,7 +41,7 @@ import {isoWeek,weekIndex,weekKey,weeklySettings,weeklyBiome,recordWeekly,bestEv
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
@@ -1250,6 +1250,17 @@ function defaultAim(){
  // A challenge turn starts aimed at its target, zone or called carry (`aimAt`).
  const p=round.position,target=challenge?.aimAt||fairwayAim(course,p,clubs[$('club').value].carry*YARD);
  aim=Math.atan2(target.x-p.x,target.z-p.z)*180/Math.PI;aimRange=Math.hypot(target.x-p.x,target.z-p.z);
+ // NEVER AIMED OUT OF REACH (UI/UX pass V2): when even a full swing of this
+ // club falls short of that aim -- the pin of a short par 4 uphill, from the
+ // rough -- the turn starts at the club's reach along the fairway instead, so
+ // "Out of reach" is something chosen, not where the game put you.
+ if(!challenge?.aimAt&&$('club').value!=='putter'&&course?.pin){
+  const ctx=swingContext(),at=m=>fairwayAim(course,p,m);
+  const fits=m=>{const pt=at(m),t=targetShare({...ctx,metres:Math.hypot(pt.x-p.x,pt.z-p.z),rise:course.height(pt.x,pt.z)-course.height(p.x,p.z),bearing:Math.atan2(pt.x-p.x,pt.z-p.z),
+   wind:localWind(settings,course.rotation),altitude:course.bio.altitude,temperature:course.bio.temperature});return !t||!t.out;};
+  const path=clubs[$('club').value].carry*YARD,reach=longestReach(fits,path);
+  if(reach<path){const pt=at(reach*.98);aim=Math.atan2(pt.x-p.x,pt.z-p.z)*180/Math.PI;aimRange=Math.hypot(pt.x-p.x,pt.z-p.z);}
+ }
  // A putt starts aimed at the hole, the whole distance, however it is struck:
  // off a monitor the device measures it, and on the Swing Meter the circle is
  // the length the bar's target asks for (the putter's stock roll is only the
@@ -4465,7 +4476,8 @@ function golferMark(i){
 // menu, or while a team chooses its ball or a golfer their relief.
 let lastTurn='';
 function flashTurn(tries=0){
- const el=$('turnFlash');if(!el||menuBackdrop||rangeMode)return;
+ // Not in a challenge either: its bar under the hole says whose ball it is (UI/UX pass V2).
+ const el=$('turnFlash');if(!el||menuBackdrop||rangeMode||challenge)return;
  // A round's first turn is set up behind the loading screen: wait for it to
  // go (up to about 15 s) rather than flash where nobody can see.
  if(appMode!=='play'||$('generating')?.hidden===false){if(tries<50)setTimeout(()=>flashTurn(tries+1),300);return;}
