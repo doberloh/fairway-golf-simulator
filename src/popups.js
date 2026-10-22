@@ -119,6 +119,8 @@ export function createPopups(world, {onChange = () => {}} = {}) {
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title || id);
   el.innerHTML = `<header class="popup-head">`
    + `<button class="popup-move" aria-label="Move ${title || id}"><i data-lucide="grip-horizontal"></i><span>${title || id}</span></button>`
+   // ? explains every setting in the window (#app.rh-help, as the ? key does).
+   + `<button class="popup-explain" type="button" aria-pressed="false" aria-label="Explain every setting"><kbd>?</kbd>EXPLAIN</button>`
    + `<button class="popup-close" aria-label="Close ${title || id}"><i data-lucide="x"></i></button></header>`
    + `<div class="popup-body"></div><button class="popup-resize" aria-label="Resize ${title || id}"></button>`;
   world.append(el);
@@ -128,6 +130,7 @@ export function createPopups(world, {onChange = () => {}} = {}) {
   raise(p);
   el.addEventListener('pointerdown', () => raise(p));
   el.querySelector('.popup-close').onclick = () => hide(id);
+  el.querySelector('.popup-explain').onclick = e => { const app = document.getElementById('app'), on = !app?.classList.contains('rh-help'); app?.classList.toggle('rh-help', on); for (const b of document.querySelectorAll('.popup-explain')) b.setAttribute('aria-pressed', String(on)); e.currentTarget.blur(); };
   grab(p, el.querySelector('.popup-move'), false);
   grab(p, el.querySelector('.popup-resize'), true);
   render?.(p.body);

@@ -167,6 +167,8 @@ export function landscapePage(doc, e, q) {
  side.append(make(doc, 'h3', 'sx-head', 'THE RUN'));
  const goal = q('endlessGoal');
  if (goal) side.append(picker(doc, goal, 'GOAL', {words: t => ({value: t.split(' · ')[0], sub: t.split(' · ')[1] || ''})}));
+ // What a run is, so the column is not a lone picker (UI/UX pass V2).
+ side.append(make(doc, 'ul', 'sx-run-how', ['ONE HOLE AFTER ANOTHER, GROWN AS YOU GO', 'NO LAST HOLE: STOP WHEN YOU LIKE, PICK IT UP LATER', 'SUDDEN DEATH ENDS AT YOUR FIRST BOGEY'].map(t => `<li>${esc(t)}</li>`).join('')));
  if (e.best) side.append(make(doc, 'div', 'sx-best', `<span class="sx-help-k">YOUR BEST RUN</span><strong>${esc(e.best.line)}</strong><small>${esc(e.best.sub || '')}</small>`));
  const lands = make(doc, 'div', 'sx-lands-col');
  lands.append(make(doc, 'h3', 'sx-head', 'LANDSCAPE'), grid);

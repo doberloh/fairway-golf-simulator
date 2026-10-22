@@ -116,12 +116,19 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
  const row = label => { const r = make(doc, 'div', 'sd-row', `<span>${label}</span><b></b>`); side.append(r); return r.querySelector('b'); };
  side.append(state);
  const holes = row('HOLES'), yards = row('LENGTH'), seed = row('SEED');
+ // SAVED COURSES and SHOW ALL DESCRIPTIONS were two chips over the settings,
+ // tacked on (audits 1 and 2): the first is a row of this column now, the
+ // second a key in the foot.
+ const lib = root.querySelector('#openLibrary'), tips = root.querySelector('#toggleTips');
+ lib?.closest('.split')?.classList.add('sx-emptied');
+ if (lib) { lib.className = 'sd-link'; lib.innerHTML = '<span>SAVED COURSES</span><b>OPEN ▸</b>'; side.append(lib); }
  const help = make(doc, 'div', 'sd-help', '<span class="sd-k"></span><span class="sd-help-v"></span>');
  side.append(help);
  root.append(side);
  root.classList.add('sd-root');
  // The keys along the foot, as on every other sheet (UI/UX pass).
  if (!root.querySelector('.sd-foot')) root.append(make(doc, 'div', 'sx-foot sd-foot', '<div class="sx-keys"><span><kbd>R</kbd>Grow this landscape</span><span><kbd>Esc</kbd>Back</span></div>'));
+ if (tips) { tips.className = 'sd-tips'; tips.insertAdjacentHTML('afterbegin', '<kbd>?</kbd>'); root.querySelector('.sd-foot .sx-keys')?.append(tips); }
 
  // The focused row's help: its own tip (the schema's text).
  root.stFocus = e => {

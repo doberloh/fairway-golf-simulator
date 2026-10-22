@@ -680,6 +680,15 @@ per category.
   short uphill par 4 off the tee. The audit-2 note that free flight's header
   was cut off by the screen's top was wrong -- the contact sheet's file label
   covered it -- but its yardage and list did hang below their panels.
+- [ ] **V2 category 4, menus tidied: built, seen in the capture build.**
+  Seen: Import & export in two columns, the launch monitor's connectors under
+  their heading, the studio's Saved courses row and Show all descriptions in
+  the foot, a window's ? Explain before its close, the scorecard between holes
+  across the sheet with Download in the countdown's row, Endless's THE RUN.
+  Smoke: menu-panels, studio, monitor, skins, mixed-group pass. Not seen:
+  ? Explain pressed, the round-complete card at the new width (audit 3 looks),
+  any of it on a phone. Left: the launch monitor's left foot still starts
+  level with the status column's end, a gap under the arm row.
 
 The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
 phases, run on one branch with a commit each; the owner's decisions: a shorter

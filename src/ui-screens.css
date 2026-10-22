@@ -84,7 +84,12 @@
  #app:not(.rh-help) .popup-body .control-card>.note{display:none}
  .popup-body .control-card:focus-within>.note{display:block!important}
  .popup .popup-head{position:relative}
- .popup .popup-head::after{content:"? EXPLAIN";margin-left:auto;margin-right:40px;font:700 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft)}
+ /* ? is a button in the title bar, before the close (UI/UX pass V2: a
+    painted "? EXPLAIN" sat after the X and could not be clicked). */
+ .popup .popup-explain{display:flex;align-items:center;gap:6px;margin-left:auto;height:26px;padding:0 8px;border:0;background:none;color:var(--soft);font:700 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;cursor:pointer}
+ .popup .popup-explain kbd{padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 11px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
+ .popup .popup-explain[aria-pressed=true],.popup .popup-explain:is(:hover,:focus-visible){color:var(--hot)}
+ .popup .popup-explain+.popup-close{margin-left:4px}
 
  /* ---------------------------------------------------------------- the Esc list's standings */
  #app.rh-paused .topbar .rh-pause-stand{display:grid;gap:6px;margin-bottom:6px}
