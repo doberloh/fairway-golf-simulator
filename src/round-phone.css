@@ -84,6 +84,10 @@
 
  /* The pin tag. */
  #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(.66);transform-origin:50% 100%;text-shadow:none}
+ /* Over the folded shot line (z-index 7), not under it (audit 5: upright,
+    the line hid the top half of the yards). The marker takes no taps, so
+    the line under it still opens. */
+ #world[data-mode=play] .flag-label{z-index:8}
  #world[data-mode=play] .flag-label:not(.edge)>span,#world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
  #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
  #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}

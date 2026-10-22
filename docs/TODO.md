@@ -696,6 +696,9 @@ per change; audit 6 looks at each.
   wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
 - [ ] **The challenge of the week's banner stacks on an upright phone**
   (audit 5: three columns of five short lines). Built; **seen** at 390x844.
+- [ ] **On a phone the yards marker draws over the folded shot line** (audit
+  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
+  after a drive.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
