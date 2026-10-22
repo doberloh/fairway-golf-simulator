@@ -975,6 +975,11 @@
  .rh-res-score small.under{color:var(--under)}
  .rh-res-row.win .rh-res-score small.under{color:var(--on-hot)}
  .rh-res-golfers{display:grid;gap:6px;max-width:640px}
+ /* A challenge's results (main.js challengeResultHtml): the same rows, the
+    name in capitals, the medal pips and the result under it. */
+ .rh-chal .rh-res-name{text-transform:uppercase}
+ .rh-chal .rh-res-gain{font-size:15px;letter-spacing:.06em;color:#fff}
+ .rh-chal .rh-res-gain em{font-style:normal;color:var(--hot)}
  .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
  .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
  .rh-res-share{display:grid;gap:8px;max-width:640px}

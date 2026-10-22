@@ -731,13 +731,29 @@ function drawChallengeBar(){
  el.innerHTML=`<b>${c.week?'This week · ':''}${escape(c.def.name)}</b><span>${round.players.length>1&&!c.done?escape(round.player.name)+' · ':''}${escape(progressText(c.play))}</span>`;
 }
 const MEDAL_PIPS=m=>`<span class="medal-pips" aria-label="${m?MEDALS[m]:'No medal'}">${[1,2,3].map(k=>`<i class="m${k}${m>=k?' on':''}"></i>`).join('')}</span>`;
+// A golfer's ball in its frame, or their initial on their colour: Round
+// complete's rows and the challenge results both.
+function seatPicture(i){const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(round.players[i]?.name?.[0]||'P')}</span>`;}
+// THE RESULTS OF A CHALLENGE IN ROUND COMPLETE'S PIECES (audit 5, 22 October
+// 2026: a line of small print and three full-width bars, nothing like the end
+// of a round). The challenge as the headline, where it was played under it, a
+// slanted row for each golfer -- their ball, name, medal and result -- and
+// the same row of buttons. The words keep their case; the capitals are CSS.
+function challengeResultHtml({title,line='',where,rows,note='',actions}){
+ return `<section class="rh-results rh-chal"><div class="rh-res-head"><h2>${title}</h2>${line?`<strong>${line}</strong>`:''}<small>${where}</small></div>`
+  +`<div class="rh-res-stand">${rows.map(r=>`<div class="rh-res-row"><span class="rh-res-pic">${seatPicture(r.seat)}</span><span class="rh-res-who"><span class="rh-res-name">${escape(r.name)}</span><span class="rh-res-gain">${r.pips}<span>${r.text}</span></span></span></div>`).join('')}</div>`
+  +note+`<div class="rh-res-actions">${actions}</div></section>`;
+}
 function renderChallengeResult(content){
  const c=challenge;
  if(!c&&goalSummary){renderGoalResult(content);return;}
  if(!c?.summary){content.innerHTML='<p>No challenge has finished.</p>';return;}
- content.innerHTML=`<p>${c.week?'Challenge of the week: ':''}<b>${escape(c.def.name)}</b>${c.hole!=null?` on hole ${c.hole+1} of`:' on'} ${escape(c.name)}.</p><ul class="challenge-results">${c.summary.map(s=>`<li><span class="player-dot" style="background:${playerColour(s.seat)}"></span><b>${escape(s.name)}</b>${c.def.medals?MEDAL_PIPS(s.medal):''}<span>${escape(s.text)}${s.medal?` · ${MEDALS[s.medal].toLowerCase()}`:''}${s.best?' · <em>a new best</em>':''}${s.weekBest?' · <em>best this week</em>':''}</span></li>`).join('')}</ul>`
-  +(c.summary.some(s=>s.capped)?`<p class="note">Today's challenge XP for playing again is used up (${CHALLENGE_PAY.dayCap} a day). Medals and records still count, and first medals still pay.</p>`:'')
-  +`<div class="course-card-actions"><button class="primary" id="challengeAgain">Play it again</button><button class="secondary" id="challengeOthers">Other challenges</button><button class="secondary" id="challengeMenu">Main menu</button></div>`;
+ content.innerHTML=challengeResultHtml({title:escape(c.def.name),line:c.week?'Challenge of the week':'',
+  where:`${c.hole!=null?`Hole ${c.hole+1} · `:''}${escape(c.name)}`,
+  rows:c.summary.map(s=>({seat:s.seat,name:s.name,pips:c.def.medals?MEDAL_PIPS(s.medal):'',
+   text:`${escape(s.text)}${s.medal?` · ${MEDALS[s.medal].toLowerCase()}`:''}${s.best?' · <em>a new best</em>':''}${s.weekBest?' · <em>best this week</em>':''}`})),
+  note:c.summary.some(s=>s.capped)?`<p class="note">Today's challenge XP for playing again is used up (${CHALLENGE_PAY.dayCap} a day). Medals and records still count, and first medals still pay.</p>`:'',
+  actions:'<button type="button" class="primary" id="challengeAgain">Play it again</button><button type="button" class="secondary" id="challengeOthers">Other challenges</button><button type="button" class="secondary" id="challengeMenu">Main menu</button>'});
  $('challengeAgain').onclick=()=>{
   challenge={...c,uid:'c'+Date.now().toString(36),done:false,summary:null,play:newPlay(c.id,c.info)};
   closePanel();round.strokes=round.players.map(()=>0);placeForTurn();setUpTurn();
@@ -845,8 +861,11 @@ function goalBarText(){
 }
 function renderGoalResult(content){
  const g=goalSummary,def=g.def;
- content.innerHTML=`<p><b>${escape(def.name)}</b> is decided.${round?.goal==='suddendeath'&&round.uid===g.uid?' The run goes on if you want it to; nothing more counts for the goal.':''}</p><ul class="challenge-results">${g.rows.map(r=>`<li><span class="player-dot" style="background:${playerColour(r.seat)}"></span><b>${escape(r.name)}</b>${MEDAL_PIPS(r.medal)}<span>${escape(r.text)}${r.medal?` · ${MEDALS[r.medal].toLowerCase()}`:''}</span></li>`).join('')}</ul>`
-  +`<div class="course-card-actions"><button class="primary" id="goalAgain">Play it again</button><button class="secondary" id="challengeOthers">Other challenges</button><button class="secondary" id="challengeMenu">Main menu</button></div>`;
+ content.innerHTML=challengeResultHtml({title:escape(def.name),line:'Decided',
+  where:escape(playingCourseName()),
+  rows:g.rows.map(r=>({seat:r.seat,name:r.name,pips:MEDAL_PIPS(r.medal),text:`${escape(r.text)}${r.medal?` · ${MEDALS[r.medal].toLowerCase()}`:''}`})),
+  note:round?.goal==='suddendeath'&&round.uid===g.uid?'<p class="note">The run goes on if you want it to; nothing more counts for the goal.</p>':'',
+  actions:'<button type="button" class="primary" id="goalAgain">Play it again</button><button type="button" class="secondary" id="challengeOthers">Other challenges</button><button type="button" class="secondary" id="challengeMenu">Main menu</button>'});
  $('goalAgain').onclick=async()=>{closePanel();try{await startGoalRound(def,{...g.group,mode:'stroke'});}catch(e){toast(e.message);}};
  $('challengeOthers').onclick=()=>{challengeSetup=true;openPanel('round');};
  $('challengeMenu').onclick=()=>{closePanel();openMenu();};
@@ -4773,7 +4792,7 @@ function roundCompleteHtml(){
  const scramble=round.mode==='scramble',par=roundPars().reduce((a,b)=>a+b,0);
  const entries=scramble?[...new Set(round.players.map(p=>p.team))].map(t=>({name:'Team '+t,total:sumScores(round.teamCards[t]),seat:round.players.findIndex(p=>p.team===t)}))
   :round.players.map((p,i)=>({name:p.name,total:sumScores(round.cards[i]),seat:i}));
- const pic=i=>{const prof=profileOf(round.players[i]),l=prof?looksOf(prof):null;return l?framedPicture(l.ball,l.frame,'rh-ballpic'):`<span class="chip-dot" style="background:${playerColour(i)};color:${PLAYER_INK}">${escape(round.players[i]?.name?.[0]||'P')}</span>`;};
+ const pic=seatPicture;
  // One golfer's gains as a line: a level bar, +XP, the level, the handicap. A
  // team row lists each of its golfers, named.
  const gain=(i,named)=>{const p=round.players[i],prof=profileOf(p);if(!prof)return '';

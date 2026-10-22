@@ -709,6 +709,9 @@ per change; audit 6 looks at each.
   1920x1080.
 - [ ] **Save a course's Open course studio as a slanted row** (audit 5).
   Built; **seen** at 1920x1080.
+- [ ] **A challenge's results laid out like Round complete** (audit 5).
+  Built; **seen** in the capture build after closest to the pin for two. Not
+  seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
