@@ -657,7 +657,8 @@ row after Save and leave; Esc on a step sheet goes back one step). One commit
 per change; audit 6 looks at each.
 
 - [ ] **Main menu during a flight lands the ball first** (audit 5: the round
-  froze, the menu never came). Built; not yet seen in the game.
+  froze, the menu never came). Built; probed in the capture build: Esc and
+  Main menu 1.5 s into a drive landed it 216 m out and asked to save.
 - [ ] **The small map stays whole after the big map** (audit 5: the hole in
   the top half, the rest dark, since audit 2). Built; probed in the capture
   build (286 px tall before and after M, and with its pixels forced to 1 px).
@@ -677,6 +678,9 @@ per change; audit 6 looks at each.
   (audit 5). Built; probed in the capture build: the menu's Settings and the
   round's Settings window (on the tab it was on); straight from the main menu
   Esc still closes it.
+- [ ] **Continue after Save and leave** (the owner's decision after audit 5).
+  Built; probed in the capture build: after Save and leave the menu had
+  Continue, focused, and it put the ball back where it lay (pictured).
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

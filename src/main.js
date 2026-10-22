@@ -3848,7 +3848,10 @@ function guardRound(next){
  // Skipping to where it stops (Enter does the same) counts the shot, so the
  // round is worth saving and the question is asked.
  if(flight)finishShot();
- if(!roundWorthSaving())return next();
+ if(!roundWorthSaving())return next(false);
+ // `next` hears whether the round was saved: leaving for the menu keeps a saved
+ // one behind Continue (returnToMenu).
+ let kept=false;
  askBeforeLeaving({
   title:'Leave this round?',
   body:'Your round is only kept while you are playing it. Save it to pick up exactly where you left off — same lie, same scores.',
@@ -3856,12 +3859,12 @@ function guardRound(next){
   defaultName:suggestName(round,settings,BIOMES[settings.biome]?.title),
   saveHint:`Keep it in your saved rounds (up to ${MAX_ROUNDS})`,
   discardHint:'This round and its scores are gone',
-  onSave:value=>{const rec=saveRound({name:value,...saveRecord()});toast(`Saved “${rec.name}”. Resume it from Saved rounds.`);},
+  onSave:value=>{const rec=saveRound({name:value,...saveRecord()});kept=true;toast(`Saved “${rec.name}”. Resume it from Saved rounds.`);},
   // Only the ROUND guard clears the slot. Leaving the studio without saving
   // discards a landscape, which has nothing to do with the round waiting behind
   // Continue -- clearing it there would throw away someone else's work.
   onDiscard:clearSave,
-  next,
+  next:()=>next(kept),
  });
 }
 
@@ -3879,7 +3882,13 @@ async function returnToMenu(){
   pendingRound=null;
  };
  if(appMode==='studio')return guardStudio(async()=>{leave();await growBackdrop();});
- if(appMode==='play')return guardRound(async()=>{leave();await growBackdrop();});
+ // CONTINUE AFTER SAVE AND LEAVE (the owner, 22 October 2026, after audit 5).
+ // The round's slot is still on this device, and Continue offered it after a
+ // reload -- but leaving dropped it, so the menu had no Continue until then.
+ // A saved round waits behind Continue exactly as a reloaded one does: as the
+ // pending round, on the settings it was played on (the menu's showcase hole
+ // has its own and leaves them alone).
+ if(appMode==='play')return guardRound(async kept=>{const back=kept&&!rangeMode?round:null;leave();pendingRound=back;await growBackdrop();});
  leave();openMenu();
 }
 
