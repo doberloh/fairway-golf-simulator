@@ -718,6 +718,8 @@ per change; audit 6 looks at each.
   with three in Skins). Built; **seen** after a Skins round for three (at the
   foot on arrival, in place at the end) and a stroke round. Not seen on a
   phone.
+- [ ] **The range's Golfers step says WHO'S PLAYING · 1 TO 4** (audit 5: it
+  said WHO IS HITTING, the only place). Built; **seen** in the capture build.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

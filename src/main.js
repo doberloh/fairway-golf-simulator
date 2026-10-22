@@ -5720,7 +5720,7 @@ function renderPanel(name,content){
    // hit from, the targets, and the last session (ui-lobby.js buildRangeSetup).
    // The range's own settings are kept on the device (range.js), so they are
    // set here before it opens; Hit from is applied once it has.
-   +`<section class="rs-golfers"><h3>Who is hitting</h3><div class="players-list" id="playerRows"></div>`
+   +`<section class="rs-golfers"><h3>Who’s playing · 1 to 4</h3><div class="players-list" id="playerRows"></div>`
    +`<p class="note">Each golfer's shots are recorded separately. The card shows who is up; click it to change.</p>`
    +`<p class="field-error" id="roundError"></p></section>`
    +`<section class="rs-range"><div class="rs-col"><h3>Hit from</h3><div class="rs-hit" role="group" aria-label="Hit from">${[['mats','The mats','Full shots at the greens and flags'],['chip','Short game','Chips and pitches to the short-game green'],['putt','Putting','Putts on a green you shape']].map(([k,t,w])=>`<button type="button" class="rs-hit-pick${rangeSetupHit===k?' on':''}" data-hit="${k}" aria-pressed="${rangeSetupHit===k}"><strong>${t}</strong><small>${w}</small></button>`).join('')}</div>`
