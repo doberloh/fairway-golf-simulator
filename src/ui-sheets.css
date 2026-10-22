@@ -804,6 +804,14 @@
  #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import{grid-column:1;grid-row:1/span 4;grid-template-columns:minmax(0,1fr);justify-items:start}
  #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import>.field{justify-self:stretch}
  #drawer .lib-root .panel-section[data-title="Import & export"]>:is(.note,button){grid-column:2;margin:0;justify-self:stretch}
+ /* THE FILE BUTTONS AS ROWS (audit 4): slanted, the words in the accent, like
+    Reset camera -- they were the old grey buttons. */
+ #drawer .lib-root :is(#exportCourses,#importCourses){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:48px;min-height:48px;padding:0 22px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer .lib-root :is(#exportCourses,#importCourses)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer .lib-root :is(#exportCourses,#importCourses):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .lib-root :is(#exportCourses,#importCourses) svg{width:16px;height:16px}
+ /* The intro: one line in the sheet's quiet type over the tabs (audit 4: three lines of small prose). */
+ body:has(#app[data-mode]) #drawer .lib-root>.panel-lead>p.panel-intro{max-width:none;margin:0 0 4px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;font-size:14px!important;letter-spacing:.12em;text-transform:uppercase}
  /* The kind cards (Endless, a friend, Challenges, Surprise me, New in studio)
     take a whole cell like any course card. */
  #drawer .sx-cards>.sx-card{min-width:0}

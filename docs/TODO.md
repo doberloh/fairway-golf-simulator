@@ -687,6 +687,9 @@ commit per category.
   returns null; under 40% of the carry is ignored), tested in Node. **Not seen
   in the game**: the graphics card was in use when it was found; check an
   uphill hole into the wind.
+- [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
+  (audit 4's leftovers): built and tested, **not seen** -- no browser was
+  opened while the owner played. Look at Saved courses → Import & export.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
