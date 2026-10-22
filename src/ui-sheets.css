@@ -1000,6 +1000,11 @@
  /* Side by side becomes one column. */
  body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch,.rs-range,.hp){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
  body:has(#app[data-mode]) #drawer :is(.wk,.ch)>*{grid-area:auto!important}
+ /* The week's page on a phone (audit 3): its 430 px picture filled a landscape
+    phone and the name ran under the buttons; a strip, the facts under it. */
+ body:has(#app[data-mode]) #drawer .wk-hero{height:170px;padding:14px 34px}
+ body:has(#app[data-mode]) #drawer .wk-hero strong{font-size:36px}
+ body:has(#app[data-mode]) #drawer .wk-earlier{max-width:none}
  body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0 26px}
  body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
  /* Tiles two to a row. */

@@ -663,7 +663,9 @@ per category.
   with its import box, Surprise me's Rules with its picture and Roll another
   course, Endless's Landscape. Not seen: Roll another course pressed, a
   friend's code pasted into the saved step's box, Surprise me teed off from
-  Play by a person, the cards on a phone.
+  Play by a person, the cards on a phone. Audit 3 found The week's 430 px
+  picture filling a landscape phone, the name under the buttons: a 170 px strip
+  on phones now (seen at 844x390).
 - [ ] **V2 category 2, Challenges' own row: built, seen in the capture build.**
   Seen: the menu with six rows, the three steps, a head-to-head's Golfers
   saying two to four, the fixed rules with Start, a challenge started from
