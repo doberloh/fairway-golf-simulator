@@ -651,6 +651,20 @@ are in the archived section of the same name.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 
+**V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
+keeps the trees the play view cleared until it moves; no graphics profile until
+asked; stay on this branch; the launch monitor's supported list in one box; the
+pause list's Settings row offset; seats centred on their slant; no "Nothing hit
+yet" box anywhere; on a phone nothing covers the ball or the aim line). One
+commit per category.
+
+- [ ] **V3 category 1, phones: built, seen in the capture build.** Seen at
+  844x390 and 390x844: the ball above the meter and every row (measured and
+  pictured), no empty shot box, the sideways XP popup under the wind, the
+  sheet's foot on a solid band. Smoke: hud-reachable, menu-panels on both
+  phones, endless-round pass. Not seen: a putt or a pitch on a phone with the
+  lift (the green camera frames the ball differently), a real phone.
+
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
 Golfers step and rules the same for everyone; shot tiles on the left by

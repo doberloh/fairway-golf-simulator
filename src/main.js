@@ -2296,7 +2296,7 @@ function openShotList(index=round.active){
  $('shotListTitle').textContent=`${who} · ${mine.length} shot${mine.length===1?'':'s'}`;
  $('shotListSub').textContent=mine.length
   ? 'This session. Launch numbers are the shot that was fired, not a re-derivation.'
-  : 'Nothing hit yet this session.';
+  : 'No shots yet this session.';
  if(!mine.length){
   $('shotListBody').innerHTML=`<p class="empty">No shots recorded for ${escape(who)} yet.</p>`;
  }else{
@@ -2343,7 +2343,7 @@ function drawShotViews(){
  if(!record?.result?.points?.length){
   side.getContext('2d').clearRect(0,0,side.width,side.height);
   plan.getContext('2d').clearRect(0,0,plan.width,plan.height);
-  if(caption)caption.textContent='Nothing hit yet.';
+  if(caption)caption.textContent='Hit a shot to see it from the side and from above.';
   return;
  }
  // Height above where the ball was struck, as if the ground were flat
@@ -2601,7 +2601,7 @@ function dragPiece(k,e){
 function shotCaption(record=cardRecord()){
  // Short: it shares a line with the fold in the play window, and the tiles
  // already say there is nothing yet with their dashes.
- if(!record)return 'Nothing hit yet.';
+ if(!record)return '';
  const bits=[escape(record.player??'')];
  if(record.club)bits.push(escape(record.club));
  // The device's OWN name, as the shot carried it. This used to print the
@@ -2641,7 +2641,7 @@ function renderShotPanel(){
  // panel sits over the course, and every line it spends is course hidden.
  $('shotCaption').innerHTML=lead;
  box.innerHTML=gridHTML(record);
- // Nothing hit yet: on a phone the panel stays away until there is a shot to show (round-phone.css).
+ // With no shot to show the panel is not drawn at all (round-hud.css; the owner, UI/UX pass V3).
  $('world')?.classList.toggle('rh-no-shot',!record&&!(rangeMode&&!flight));
  sizePanel();
  drawPanelState();
@@ -2680,7 +2680,7 @@ function drawShotSummary(record=cardRecord()){
  const el=$('shotSummary');if(!el)return;
  const pick=id=>shotGrid(record,{fields:[id],columns:2}).cells[0];
  const carry=pick('carry'),total=pick('total');
- el.innerHTML=carry.blank?'<small>Nothing hit yet</small>':`${carry.value}<small> carry</small> · ${total.value}<small> total</small>`;
+ el.innerHTML=carry.blank?'':`${carry.value}<small> carry</small> · ${total.value}<small> total</small>`;
 }
 // EVERY FRAME OF A FLIGHT, the tiles that change are rewritten in place -- the
 // result group only, and only when what they print has changed. Rebuilding the
@@ -3595,7 +3595,7 @@ function shortfall(){
 function setMode(mode){
  if(mode!=='studio'){$('studioPause')?.remove();$('world')?.classList.remove('studio-paused');}
  const was=appMode;
- appMode=mode;$('world').dataset.mode=mode;if(mode!=='play')$('app').classList.remove('rh-paused');applyHudPalette();
+ appMode=mode;$('world').dataset.mode=mode;if(view)view.liftForPhone=mode==='play';if(mode!=='play')$('app').classList.remove('rh-paused');applyHudPalette();
  // NO AIM LINE IN THE STUDIO. Nobody is about to hit, and a white line running
  // off the first tee read as part of the course being shaped. Building a world
  // makes a fresh, visible line, so the studio hides it every time it enters;

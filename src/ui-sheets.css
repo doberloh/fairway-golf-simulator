@@ -991,6 +991,12 @@
  body:has(#app[data-mode]) #drawer .sx-scroll{max-height:none;overflow:visible}
  body:has(#app[data-mode]) #drawer .sx-keys{display:none}
  body:has(#app[data-mode]) #drawer .sx-foot{left:16px;right:16px;bottom:12px;justify-content:flex-end}
+ /* A BAND UNDER THE BUTTONS (UI/UX pass V3: on a sideways phone Start sat over
+    the lie penalty's value): the page scrolls under a solid strip, and the
+    padding below lets its last row come clear of it. */
+ body:has(#app[data-mode]) #drawer:not([hidden]):has(.sx-foot)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:72px;z-index:2;pointer-events:none;background:linear-gradient(to top,rgba(5,9,13,.97) 78%,rgba(5,9,13,0))}
+ body:has(#app[data-mode]) #drawer:not([hidden]):has([data-panel-action]:not(.sx-foot *):not([hidden]))::after{height:136px}
+ body:has(#app[data-mode]) #drawer [data-panel-action]:not(.sx-foot *){z-index:3}
  body:has(#app[data-mode]) #drawer [data-panel-action]{right:16px;bottom:12px;min-width:0}
  /* A sheet with its main button AND steps (Endless, the course of the week):
     Back and Next stand above the main button rather than beside it. */

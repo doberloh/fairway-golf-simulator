@@ -7808,6 +7808,14 @@ ground and into 2% rises and falls.
 
 ### The target marker
 
+**How far a phone's picture is lifted** (UI/UX pass V3). No outside source;
+PLACED from one course's measured layout: held sideways (844x390) the ball sat
+at 79% of the height and the meter began at 69%, so **20%** lifts it clear
+(ball at 59%); upright (390x844) the ball at 79%, and with the lie and shape
+rows under the ball the first control begins at 58%, so **24%** (ball at 55%).
+A shot whose camera frames the ball differently (a putt, a long pitch) is not
+measured.
+
 **What the camera clears besides trees** (UI/UX pass V2, category 5). No
 outside source; PLACED: each object is tested as a crown would be -- a boulder
 its widest axis and its height, a log three times as long as it is thick, a

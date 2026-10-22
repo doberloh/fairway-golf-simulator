@@ -300,6 +300,9 @@
  /* The floating number tiles show only when tiles are what the round screen
     shows (shot-display.js); otherwise they piled up unplaced in the corner. */
  #world[data-mode=play]:not(.rh-tiles) .shot-tiles{display:none!important}
+ /* NO "NOTHING HIT YET" BOX (the owner, V3): with no shot to show, the shot
+    panel is not drawn at all, at any size; during a flight it still carries Skip. */
+ #world[data-mode=play].rh-no-shot .shot-controls>.shot-panel:not(:has(#skipFlight:not([hidden]))){display:none!important}
 
  /* ================================================================ phase 2 */
  /* THE SHOT CARD: pops up beside where the ball came to rest, then fades

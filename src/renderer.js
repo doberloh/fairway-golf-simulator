@@ -1,4 +1,5 @@
 import {addHomes} from './homes.js';
+import {phoneLift,liftsView} from './phone-view.js';
 import {addStreams} from './streams.js';
 import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
 import {Line2} from 'three/addons/lines/Line2.js';
@@ -692,7 +693,13 @@ export class GolfView{
  // centre. Three shifts a frustum by `filmOffset` in units of its film width, so
  // the fraction is converted here -- and again on a resize, because the film
  // width follows the canvas's shape. Zero everywhere but the bay's player view.
- applyLensShift(){if(this.camera)this.camera.filmOffset=(this.lensShift||0)*this.camera.getFilmWidth();}
+ applyLensShift(){if(!this.camera)return;this.camera.filmOffset=(this.lensShift||0)*this.camera.getFilmWidth();
+  // ON A PHONE THE PICTURE IS LIFTED (phone-view.js) so the ball stands above
+  // the swing meter: the image slides up, the camera does not turn. main.js
+  // sets liftForPhone in play; a bay's own screen shape (screenAspect) is never lifted.
+  const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
+  this.liftMode=this.config?.mode;
+  if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
  disposeCourse(){if(!this.group)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
@@ -2572,7 +2579,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.camera.position.copy(q.eye);this.look.copy(q.look);
   if(q.done)this.camFlight=null;
  }
- const t=this.camFlight?0:1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.csm){
+ const t=this.camFlight?0:1-Math.exp(-dt*(this.config.mode==='free'?10:4));this.camera.position.lerp(this.targetPos,t);if(!['free','overview'].includes(this.config.mode))this.camera.position.y=Math.max(this.camera.position.y,this.world.height(this.camera.position.x,this.camera.position.z)+.35);this.look.lerp(this.targetLook,t);this.camera.lookAt(this.trackingBall?this.targetLook:this.look);const near=T.MathUtils.clamp((this.camera.position.y-this.world.height(this.camera.position.x,this.camera.position.z))*.015,.5,25);if(Math.abs(this.camera.near-near)>.1){this.camera.near=near;this.camera.updateProjectionMatrix();}this.sun.target.position.set(this.camera.position.x,this.world.height(this.camera.position.x,this.camera.position.z),this.camera.position.z+80);this.sun.position.copy(this.sun.target.position).addScaledVector(this.sunDir,420);this.clearCameraTrees?.();if(this.liftForPhone!==this.liftWas||this.liftMode!==this.config.mode){this.liftWas=this.liftForPhone;this.applyLensShift();}if(this.csm){
    // Zoomed all the way out, stretch the cascades over the whole course so every
    // tree keeps its shadow. Ultra only: the cost is resolution up close, and in
    // overview there is nothing up close to spend it on.
