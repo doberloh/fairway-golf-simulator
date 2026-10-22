@@ -644,7 +644,7 @@
  /* EXPORT AND IMPORT A ROUND as slanted rows in the accent, like Saved courses' file
     buttons and Reset camera (they were the old grey buttons). Export is dimmed
     when there is no round being played to export. */
- #drawer .sx-saved>:is(#exportRound,#importRound){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;justify-self:stretch;width:100%;max-width:560px;height:48px;min-height:48px;padding:0 22px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer .sx-saved>:is(#exportRound,#importRound){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;justify-self:stretch;width:100%;max-width:560px;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
  #drawer .sx-saved>:is(#exportRound,#importRound)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
  #drawer .sx-saved>:is(#exportRound,#importRound):not(:disabled):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .sx-saved>:is(#exportRound,#importRound):disabled{color:var(--soft);opacity:.55;cursor:default}
@@ -813,8 +813,12 @@
  #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import>.field{justify-self:stretch}
  #drawer .lib-root .panel-section[data-title="Import & export"]>:is(.note,button){grid-column:2;margin:0;justify-self:stretch}
  /* THE FILE BUTTONS AS ROWS (audit 4): slanted, the words in the accent, like
-    Reset camera -- they were the old grey buttons. */
- #drawer .lib-root :is(#exportCourses,#importCourses){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:48px;min-height:48px;padding:0 22px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    Reset camera -- they were the old grey buttons. At least 48 px and taller
+    when the words wrap (audit 5: a fixed 48 px on an upright phone let
+    "EXPORT EVERY COURSE TO A FILE" run out of its box over the next one). The
+    saved rounds list's two rows (.sx-saved) are the same. On a narrow screen
+    the two columns stack, code first. */
+ #drawer .lib-root :is(#exportCourses,#importCourses){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
  #drawer .lib-root :is(#exportCourses,#importCourses)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
  #drawer .lib-root :is(#exportCourses,#importCourses):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .lib-root :is(#exportCourses,#importCourses) svg{width:16px;height:16px}
@@ -1019,6 +1023,11 @@
    without the compact step (a thumb needs the room), padded to the phone's
    edges; every side-by-side layout stacks, tiles go two to a row, and a row
    of choices that will not fit scrolls sideways. */
+@media (max-width:560px){
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section[data-title="Import & export"]:not([hidden]){grid-template-columns:minmax(0,1fr)}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import{grid-row:auto}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>:is(.note,button){grid-column:1}
+}
 @media (max-width:560px),(max-height:500px){
  body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 2px 84px;zoom:calc(var(--sheet-z,1) / .7)}
  body:has(#app[data-mode]) #drawer #drawerContent{padding:0 22px}
