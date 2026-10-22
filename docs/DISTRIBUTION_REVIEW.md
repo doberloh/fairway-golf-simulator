@@ -283,7 +283,9 @@ ZIP is unpacked.
 commercial-use pass above raised and did not fix ("There is no trademark
 disclaimer anywhere in the product or the docs"). It is in the root README, in the portable
 archive's README and at the foot of ATTRIBUTION.md: the marks named -- GSPro,
-Garmin, Rapsodo, SkyTrak, PiTrac, Foresight, Trackman -- belong to their
+Garmin, Rapsodo, SkyTrak, PiTrac, Foresight, Trackman, and since the V3 pass
+rēlā, FlightScope, Full Swing, Square, Nova and GolfJoy (the launch monitor
+screen lists the monitors rēlā connects) -- belong to their
 owners, and no affiliation, endorsement, certification or hardware-
 compatibility guarantee is claimed. Naming them to describe compatibility is
 nominative use and continues; the gap was that nothing said so out loud.

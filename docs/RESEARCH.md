@@ -2812,6 +2812,20 @@ Open-source connector projects inspected for integration paths:
 | Rapsodo MLM2PRO | [springbok/MLM2PRO-GSPro-Connector](https://github.com/springbok/MLM2PRO-GSPro-Connector) | Accept its Open Connect output; no bundled device driver. |
 | OpenSkyPlus | [OpenSkyPlus/OpenSkyPlus](https://github.com/OpenSkyPlus/OpenSkyPlus) | Can receive an existing plugin's Open Connect output. OSP itself explicitly supports a limited set of monitors/apps; it is not universal hardware access. |
 
+**rēlā's supported monitors** (read 21 October 2026, for the Launch monitor
+screen's list, the owner's request). [rēlā's FAQ](https://docs.rela.golf/rela/faq/),
+its Device Requirements table, names SkyTrak, GC2, FlightScope Xi/X2, GolfJoy,
+Mevo+/Gen2, Square, Nova, Garmin R10, Full Swing KIT and Other; some need the
+vendor's own app on the same PC (FlightScope Xi/X2, GolfJoy). Taken: the names
+(`RELA_MONITORS`, ui-monitor-setup.js), with the makers' names added where
+they are certain (Foresight GC2, FlightScope Mevo+); "Other" left out because
+rēlā calls it "not a promise that every launch monitor will work". Read and
+not used: [the docs' front page](https://docs.rela.golf/) and
+[user guide](https://docs.rela.golf/rela/user-guide/), which have no list
+(the guide names three putting devices -- LagKing, Right Edge Putt Tracker,
+ROXOR JPutt Tracker -- and FSS needing Split Packets). None of these has been
+tried with Fairway.
+
 No physical launch monitor was available. Automated testing establishes framing, parsing, relay, readiness, origin checks, and acknowledgment behavior only. Actual device compatibility, licensing, connector installation, and firmware behavior must be checked on hardware. No claim of official vendor certification is made.
 
 ## Landscape and routing update

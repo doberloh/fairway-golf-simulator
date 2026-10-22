@@ -133,6 +133,6 @@ how to rebuild that program yourself). **ATTRIBUTION.md** credits the imported
 artwork, all of it CC0. The game's own notices are also inside Fairway.html,
 under **Help → Open source & credits**.
 
-GSPro, rēlā, Garmin, Rapsodo and PiTrac are named only to describe what
+GSPro, rēlā, Garmin, Rapsodo, PiTrac, Foresight, SkyTrak, FlightScope, Full Swing, Square, Nova and GolfJoy are named only to describe what
 Fairway can talk to. All trade marks belong to their owners, and no
 affiliation, endorsement or certification is claimed or implied.

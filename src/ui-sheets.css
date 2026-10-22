@@ -101,13 +101,18 @@
  body:has(#app[data-mode]) #drawer[data-panel=monitor] #drawerContent.lm-root>:is(.panel-lead,.panel-section,.panel-columns,.panel-tabs){display:none!important}
  #drawer .lm{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .lm-col{display:grid;gap:8px;align-content:start;min-width:0}
- #drawer .lm-foot{grid-column:1/-1;min-width:0;display:grid;grid-template-columns:1fr 1fr;column-gap:32px;align-content:start}
- /* What a launch monitor needs, left; the connectors under their own heading, right (UI/UX pass V2). */
- #drawer .lm-foot>:is(.panel-intro,.note){grid-column:1}
- #drawer .lm-foot>.panel-intro{grid-row:1}
- #drawer .lm-foot>.note{grid-row:2/span 2;align-self:start}
- #drawer .lm-foot>:is(h3,ul,.research-label){grid-column:2}
- #drawer .lm-foot>h3{grid-row:1}
+ #drawer .lm-foot{grid-column:1/-1;min-width:0}
+ /* THE MONITORS rēlā CONNECTS, ONE BOX (UI/UX pass V3, the owner): the names in
+    two columns in one slanted panel, how to set rēlā up under them; the box
+    sits under the Arm switch with the intro, in the steps column. */
+ #drawer .lm-steps>p{margin:4px 0 0;padding:0 8px;font-family:var(--font-ui);font-size:14px;line-height:1.45;color:var(--soft)}
+ #drawer .lm-works{position:relative;isolation:isolate;display:grid;gap:10px;margin-top:6px;padding:16px 36px 18px}
+ #drawer .lm-works::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lm-works>.lm-head{margin:0}
+ #drawer .lm-works>ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 20px;margin:0;padding:0;list-style:none}
+ #drawer .lm-works>ul>li{min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:none!important;font-size:16px;line-height:1.3;font-weight:800;font-style:italic;text-transform:uppercase;color:#fff}
+ #drawer .lm-works>ul>li::before{display:none!important}
+ #drawer .lm-works>.note{margin:0;font-family:var(--font-ui);font-size:13px;line-height:1.45;color:var(--soft)}
  #drawer .lm-foot>*{break-inside:avoid}
  #drawer .lm .lm-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}

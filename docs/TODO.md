@@ -672,6 +672,10 @@ commit per category.
 - [ ] **V3 category 3, free flight keeps the cleared trees until it moves:
   built, probed in the capture build** (2 hidden at a tee, 2 after V, 0 after
   flying). Not seen by a person flying away from a tee.
+- [ ] **V3 category 4, the launch monitor's list in one box: built, seen in
+  the capture build.** Seen: rēlā's nine monitors in one box under the Arm
+  switch, no gap. Smoke: monitor, monitor-phone pass. Not seen on a phone
+  (the monitor screen opens at the top there; the box is further down).
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
@@ -753,8 +757,8 @@ green everywhere, and every mode but the range under one Play.
   rows, profile stats and achievements. Smoke: menu-panels, studio, monitor,
   profile, no-swallowed-errors pass. Not seen: the studio slab's new mark and
   footer, free flight's Jump to green with its value, the phone XP popup and
-  Skip. Left: the launch monitor's "Compatible connector ecosystem" heading
-  sits under the left column's prose, away from its list on the right.
+  Skip. (The launch monitor's orphan connector heading is gone: V3 category 4
+  put rēlā's monitors in one box.)
 - [ ] **Phase 4, one Play for every mode: built, seen in the capture build.**
   Seen: the menu with five rows, Play's seven cards, Endless's Landscape step,
   a friend's The challenge step, the week locking the format, Challenges with

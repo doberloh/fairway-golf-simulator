@@ -19,6 +19,16 @@ const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cl
 const MPH = 0.44704;
 
 // The three steps and whether each is done. Pure.
+// THE LAUNCH MONITORS rēlā CONNECTS (UI/UX pass V3; the owner: "the connectable
+// ecosystem should just be every launch monitor that rela supports, and
+// combine into one box"). From rēlā's own FAQ, its Device Requirements table,
+// read 21 October 2026 (https://docs.rela.golf/rela/faq/; RESEARCH.md
+// *Launch-monitor interfaces*), in its words; "Other" (a community plugin) is
+// left out because rēlā itself says it is no promise a device works. Support
+// is rēlā's: none of these has been on a mat with Fairway.
+export const RELA_MONITORS = ['Foresight GC2', 'SkyTrak', 'FlightScope Mevo+ and Mevo Gen2', 'FlightScope Xi and X2', 'Garmin R10', 'Full Swing KIT', 'Square', 'Nova', 'GolfJoy'];
+export const RELA_DOCS = 'https://docs.rela.golf/';
+
 export function monitorSteps({connected = false, device = null, armed = false} = {}) {
  return [
   {n: 1, title: 'START THE SERVER', line: 'Open run_fairway_server from the download and keep its window open.', done: connected},
@@ -94,11 +104,18 @@ export function buildMonitorSetup(root, view, doc = globalThis.document) {
   if (n.closest('.lm')) continue;
   if (n.matches('h3,p,ul')) foot.append(n);
  }
+ // What it needs, then which monitors rēlā connects, as one box -- under the
+ // Arm switch, where the steps column ended short of the status column and left
+ // a gap (audits 2 and 3).
+ for (const n of [...foot.querySelectorAll(':scope>p')]) left.append(n);
+ const works = root.querySelector('.lm-works');
+ if (works) left.append(works);
 
  // A heading whose section was all moved away goes too.
  for (const h of foot.querySelectorAll(':scope>h3')) if (!h.nextElementSibling || h.nextElementSibling.tagName === 'H3') h.remove();
 
- lm.append(left, right, foot);
+ lm.append(left, right);
+ if (foot.children.length) lm.append(foot);
  root.classList.add('lm-root');
  root.append(lm);
 

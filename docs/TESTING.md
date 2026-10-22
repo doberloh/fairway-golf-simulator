@@ -203,7 +203,7 @@ the courses several suites share.
   group to the fixed rules (blue tees for all, stroke play, Rules of Golf, lie
   penalty on). `ui-monitor-setup` (the setup screen's steps tick in order
   and never ahead of the bridge, the ball light's words match the round
-  screen's, the last shot in mph, degrees and rpm). `ui-profile-hub` (every
+  screen's, the monitors listed are rēlā's, once each, the last shot in mph, degrees and rpm). `ui-profile-hub` (every
   heading the old profile page writes has a hub tab; the overview's eight
   numbers and their dashes). The `profile`, `bag`, `look` and `level-up`
   journeys press the hub's Locker, Bag and History tabs before reaching in.

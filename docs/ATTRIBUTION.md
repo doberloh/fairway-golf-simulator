@@ -142,8 +142,9 @@ by `tools/make-icons.mjs`. No third-party image is used.
 
 ## Trade marks
 
-**GSPro**, **Garmin**, **Rapsodo**, **SkyTrak**, **PiTrac**, **Foresight** and
-**Trackman** are named in this project, and in the software itself, only to
+**GSPro**, **rēlā**, **Garmin**, **Rapsodo**, **SkyTrak**, **PiTrac**,
+**Foresight**, **FlightScope**, **Full Swing**, **Square**, **Nova**, **GolfJoy**
+and **Trackman** are named in this project, and in the software itself, only to
 describe what Fairway can talk to or what a measurement was taken on. That is
 nominative use: a product may be named in order to say what it is compatible
 with.
