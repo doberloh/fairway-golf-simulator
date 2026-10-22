@@ -192,7 +192,7 @@ Water and out-of-bounds still incur one penalty stroke and replay from the previ
 
 **Settings.** From the main menu, **Camera & bay**, **Graphics** and **Sound** open as one settings screen: the categories down the left (Launch monitor and Help & controls are there too), every setting of the one you chose in rows -- a switch, a choice (its list opens under it; every list in the game works the same way: arrows, Enter, Escape, or a click), or a bar you slide -- and, at the foot, one line on the setting you are on (press ? to see every explanation in place). In a round they open as small windows instead; **? Explain** in a window's title bar, beside its close button, shows every explanation in it (so does the ? key).
 
-**Keys & help** (Help & controls) has a layout of its own: the topics down the left, a page of help in the middle, and that page's keys on the right.
+**Keys & help** (Help & controls) has a layout of its own: the topics down the left, a page of help in the middle, and that page's keys on the right. On a phone they stack, and picking a topic scrolls its page up into view.
 
 **Camera & bay** is the first tab of **Settings** (the main menu's *Settings*, or Settings in the pause list during a round), and everything in it stays on this device — it survives a reload, and it is never carried inside a course or a round you share.
 

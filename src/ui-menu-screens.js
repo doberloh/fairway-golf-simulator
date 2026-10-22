@@ -135,7 +135,20 @@ export function buildHelp(root, {keys = {}, doc = globalThis.document} = {}) {
   side.innerHTML = `<h4>${list.length ? 'KEYS ON THIS PAGE' : 'NO KEYS ON THIS PAGE'}</h4>` + list.map(([k, w]) => `<div class="hp-key"><kbd>${esc(k)}</kbd><span>${esc(String(w).toUpperCase())}</span></div>`).join('');
   page.scrollTop = 0;
  };
- tabs.addEventListener('click', () => setTimeout(paint));
+ tabs.addEventListener('click', () => setTimeout(() => { paint(); bringIntoView(page, doc); }));
  paint();
+ return true;
+}
+
+// A PICKED PAGE COMES INTO VIEW (audit 5, 22 October 2026). On a phone held
+// sideways the screens stack: Help's seven topics fill the first screen and
+// the topic's text starts just under its foot, so a tap lit a row and nothing
+// else moved. When what was picked starts in the bottom 80 px or lower, it is
+// scrolled up to the top. Help's topics and My profile's tabs use it.
+export function bringIntoView(el, doc = globalThis.document) {
+ const win = doc?.defaultView, top = el?.getBoundingClientRect?.().top;
+ if (!win || !Number.isFinite(top) || top < win.innerHeight - 80) return false;
+ const still = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ el.scrollIntoView?.({block: 'start', behavior: still ? 'auto' : 'smooth'});
  return true;
 }
