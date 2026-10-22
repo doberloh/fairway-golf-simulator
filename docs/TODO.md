@@ -664,6 +664,11 @@ commit per category.
   sheet's foot on a solid band. Smoke: hud-reachable, menu-panels on both
   phones, endless-round pass. Not seen: a putt or a pitch on a phone with the
   lift (the green camera frames the ball differently), a real phone.
+- [ ] **V3 category 2, seats and the pause list: built, seen in the capture
+  build.** Seen: seats centred on their lean in Play, Challenges, the range and
+  Golfers & rules mid-round; the six pause rows the same size and evenly
+  stepped (measured). Not seen: a seat with the launch-monitor pickers under
+  it (they lean with it too), phones.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a

@@ -627,6 +627,14 @@
  #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
  #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
  #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
+ /* ON CENTRE ON THE SLANT (the owner, UI/UX pass V3): a seat is a leaning panel, and
+    its ball, name, title and level sat on the panel's middle line -- left of the
+    panel's own centre at the top, right of it at the foot. The seat itself leans
+    now, so each piece is carried along the lean, and each piece is stood back
+    upright; the panel behind it no longer leans twice. */
+ #drawer .sx-golfers .seat{transform:skewX(-12deg)}
+ #drawer .sx-golfers .seat::before{transform:none!important}
+ #drawer .sx-golfers .seat>*{transform:skewX(12deg)}
  #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
  #drawer .sx-golfers .seat .player-dot{width:56px;height:6px;border-radius:0}
  #drawer .sx-golfers .seat .player-mark :is(img,.seat-guest){width:86px;height:86px;border-radius:50%}

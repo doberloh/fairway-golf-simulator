@@ -4779,7 +4779,7 @@ function setPause(on){
  app.classList.toggle('rh-paused',!!on);
  if(on){keys.clear();if(swing)cancelSwing(true);drawPauseInfo();$('pauseResume')?.focus();
   // One leaning block each (round 13, ui-windows.js): the list and the round.
-  requestAnimationFrame(()=>{const tb=document.querySelector('.topbar');leanAsOne(['#pauseHead','#pauseResume','#scoreNav','#barTools','.avatar','#dropHelp','#dropMenu','#dropGraphics','#dropSound','#dropLibrary','.connection','.sim-time'].map(q=>tb.querySelector(q)));leanAsOne([...tb.querySelectorAll('.rh-pause-stand>div,.rh-pause-extra .tee-control,.rh-pause-extra .meter-button,.rh-pause-choice,.rh-pause-cond')]);});}
+  requestAnimationFrame(()=>{const tb=document.querySelector('.topbar');leanAsOne(['#pauseHead','#pauseResume','#scoreNav','#barTools','.avatar','#pauseSettings','#dropHelp','#dropMenu','#dropGraphics','#dropSound','#dropLibrary','.connection','.sim-time'].map(q=>tb.querySelector(q)));leanAsOne([...tb.querySelectorAll('.rh-pause-stand>div,.rh-pause-extra .tee-control,.rh-pause-extra .meter-button,.rh-pause-choice,.rh-pause-cond')]);});}
  else toggleClockPop(false);
 }
 // ARROWS AND A CONTROLLER IN THE MENUS (phase 3; ui-focus.js). On the main menu

@@ -627,7 +627,7 @@
  /* Where you are, centred over the left column in its PAUSED panel, and only
     there (the owner, 18 October 2026; it was also over the standings). */
  #app.rh-paused .topbar .rh-pause-head{justify-items:center;text-align:center}
- #app.rh-paused .topbar :is(.rh-resume,#scoreNav,#barTools,.avatar,#dropHelp,#dropMenu){height:52px;padding:0 34px!important;font-size:21px!important}
+ #app.rh-paused .topbar :is(.rh-resume,#scoreNav,#barTools,.avatar,#pauseSettings,#dropHelp,#dropMenu){height:52px;padding:0 34px!important;font-size:21px!important}
  #app.rh-paused .topbar .avatar::after{font-size:21px}
  #app.rh-paused .topbar :is(#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time){height:38px;font-size:14px!important}
  #app.rh-paused .topbar .rh-pause-extra{margin-left:52px;padding-top:0;gap:6px}
