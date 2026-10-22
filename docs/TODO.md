@@ -712,6 +712,8 @@ per change; audit 6 looks at each.
 - [ ] **A challenge's results laid out like Round complete** (audit 5).
   Built; **seen** in the capture build after closest to the pin for two. Not
   seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
+- [ ] **Round complete's share note at a readable size** (audit 5: small print
+  over the card buttons; 13 px to 17 px). Built; **seen** after a stroke round.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

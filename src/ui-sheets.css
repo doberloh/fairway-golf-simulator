@@ -982,7 +982,7 @@
  .rh-chal .rh-res-gain em{font-style:normal;color:var(--hot)}
  .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
  .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
- .rh-res-share{display:grid;gap:8px;max-width:640px}
+ .rh-res-share{display:grid;gap:8px;max-width:900px}
  .rh-res-share[hidden]{display:none}
  .rh-res-seats{display:flex;gap:10px;flex-wrap:wrap}
  .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
@@ -992,6 +992,9 @@
  .rh-res-actions{display:flex;gap:12px;flex-wrap:wrap}
  #drawer .rh-results :is(.rh-res-actions,.rh-res-seats)>button{width:auto;flex:0 0 auto;min-width:190px;height:48px;min-height:48px;margin:0;padding:0 28px;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase}
  #drawer .rh-results .rh-res-share>button{width:auto;justify-self:start;padding:0 24px}
+ /* The share note at the size of the sheet's other notes (audit 5: small
+    print over the card buttons). */
+ body:has(#app[data-mode]) #drawer .rh-results .rh-res-share>.note{max-width:72ch;font-size:17px!important;line-height:1.45}
 
 
  /* Headings, the main and other buttons and the tabs, as in ui-screens.css, for
