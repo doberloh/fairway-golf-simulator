@@ -691,8 +691,10 @@ commit per category.
   uphill hole into the wind.
 - [ ] **Play's saved rounds button shows with none saved** (the owner, 21
   October: with no saved rounds the button hid, and with it Import a round from
-  a file). Built and tested; not seen in the game (no browser this time). Check
-  a fresh browser: Play shows SAVED ROUNDS · IMPORT A ROUND under the cards.
+  a file). Built, tested and **seen** in a fresh browser (21 October): SAVED
+  ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
+  from a file. Left: that list's Export and Import buttons are still the old grey
+  style.
 - [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
   (audit 4's leftovers): built, tested and **seen** in the capture build
   (21 October, once the card was free): the intro one line over the tabs, the
