@@ -692,6 +692,8 @@ per change; audit 6 looks at each.
 - [ ] **The step bar and settings categories wrap on an upright phone**
   (audit 5: 5 Rules and LAUNCH MONITOR cut off). Built; **seen** at 390x844,
   every chip inside the screen (measured).
+- [ ] **Camera & bay in one column on an upright phone** (found fixing the
+  wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

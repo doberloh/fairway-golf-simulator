@@ -1150,4 +1150,8 @@
 @media (max-width:560px){
  body:has(#app[data-mode]) #drawer .sx-steps{flex-wrap:wrap;overflow-x:visible;row-gap:6px}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats{flex-wrap:wrap;overflow-x:visible;row-gap:8px}
+ /* A settings page of one section (Camera & bay) split itself into two
+    columns even here, and its rows wrapped to six lines (found fixing the
+    above). One column. */
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section:only-child{columns:1!important}
 }

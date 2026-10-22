@@ -1426,7 +1426,7 @@ is outlined (a ticked box no longer outlines its row); drop-downs in the
 sheets, windows and dialogues are drawn in the 1.0 style with a dark list
 (round 13 left the open list the browser's own, PLACED; round 14 replaced it -- *The 1.0 drop-down*, below).
 
-**On an upright phone the step bar and the settings categories wrap** (audit 5, 22 October 2026; the last block of ui-sheets.css, under 560 px wide). In one sideways-scrolling row Play showed steps 1 to 4 with 5 Rules cut off at the edge and Settings showed "LAUNC", with nothing to say the row moved. Two rows, as My profile's tabs already did. A sideways phone keeps one row: it fits.
+**On an upright phone the step bar and the settings categories wrap** (audit 5, 22 October 2026; the last block of ui-sheets.css, under 560 px wide). In one sideways-scrolling row Play showed steps 1 to 4 with 5 Rules cut off at the edge and Settings showed "LAUNC", with nothing to say the row moved. Two rows, as My profile's tabs already did. A sideways phone keeps one row: it fits. The same block puts a one-section settings page (Camera & bay, whose `:only-child` rule asks for two columns) in one column: found while looking at the wrap, its rows had squeezed to six lines.
 
 **A picked page comes into view on a phone** (audit 5, 22 October 2026; ui-menu-screens.js `bringIntoView`): stacked on a sideways phone, Help's seven topics filled the first screen and the topic's text began 3 px below it, so a tap lit a row and nothing else moved. After a topic is picked, a page that starts in the bottom 80 px of the window or lower is scrolled to the top (no animation under reduced motion). It moves nothing on a big screen, where the page is beside the list.
 
