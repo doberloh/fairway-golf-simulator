@@ -248,11 +248,10 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  saved.hidden = !opts.savedOpen;
  gamesScroll.hidden = !saved.hidden;
  const nRounds = saved.querySelectorAll('.course-card').length;
- const paintRounds = () => { roundsBtn.textContent = saved.hidden ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'BACK TO THE GAMES ▸'; };
+ // With none saved the button still shows: the list is also where a round file is imported.
+ const paintRounds = () => { roundsBtn.textContent = !saved.hidden ? 'BACK TO THE GAMES ▸' : nRounds ? `${nRounds} SAVED ROUND${nRounds === 1 ? '' : 'S'} ▸` : 'SAVED ROUNDS · IMPORT A ROUND ▸'; };
  roundsBtn.onclick = () => { saved.hidden = !saved.hidden; gamesScroll.hidden = !saved.hidden; paintRounds(); opts.onSaved?.(!saved.hidden); };
  paintRounds();
- // No saved rounds, no button for them.
- line.hidden = !nRounds && saved.hidden;
  p1.append(make(doc, 'h3', 'sx-head', 'WHAT ARE YOU PLAYING'), gamesScroll, saved, line);
 
  // The saved course's step: the shelf as cards, the chosen one named along the

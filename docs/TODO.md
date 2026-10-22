@@ -689,6 +689,10 @@ commit per category.
   254, 259 and 245 yd, none out of reach, none near the tee. **The failing
   hole itself was not met again** (Endless holes are random): still check an
   uphill hole into the wind.
+- [ ] **Play's saved rounds button shows with none saved** (the owner, 21
+  October: with no saved rounds the button hid, and with it Import a round from
+  a file). Built and tested; not seen in the game (no browser this time). Check
+  a fresh browser: Play shows SAVED ROUNDS · IMPORT A ROUND under the cards.
 - [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
   (audit 4's leftovers): built, tested and **seen** in the capture build
   (21 October, once the card was free): the intro one line over the tabs, the
