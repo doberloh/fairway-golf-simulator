@@ -704,6 +704,9 @@ per change; audit 6 looks at each.
   from the old aim). Built; **seen** in the capture build after the same drive.
 - [ ] **My profile's golfer chips on an upright phone** (found fixing the
   tabs: no room in the header band, not shown). Built; **seen** at 390x844.
+- [ ] **My profile's backup and bag buttons as slanted rows** (audit 5: old
+  grey buttons; History's handicap paragraph a note). Built; **seen** at
+  1920x1080.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
