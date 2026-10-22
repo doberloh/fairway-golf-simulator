@@ -1,4 +1,4 @@
-import {cameraInsideTree,treeBlocksView,viewBlocker} from './camera-tours.js';
+import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
@@ -278,7 +278,7 @@ function addSpecies(view,kind,trees){
  instance(leafGeo,materials.leaf,leafMatrices,leafColors);
  }
 export function addVegetation(view){
- view.treeInstances=[];view.viewBlockers=[];let last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
+ view.treeInstances=[];view.viewBlockers=[];let lastHidden=new Set(),lastMode='',held=null,last=new T.Vector3(Infinity,Infinity,Infinity),lastLook=new T.Vector3(Infinity,Infinity,Infinity);const zero=new T.Matrix4().makeScale(0,0,0);
  // An instance is drawn unless the camera is standing inside that tree.
  view.clearCameraTrees=()=>{
   // The vegetation tests build a view with no camera -- they only ever look
@@ -288,6 +288,11 @@ export function addVegetation(view){
   const look=view.look??view.camera.position,mode=view.config?.mode;
   const moved=last.distanceToSquared(view.camera.position)+(lastLook.distanceToSquared(look));
   if(moved<.04)return;
+  // Into free flight from a play view: what was cleared stays cleared, from
+  // where the camera stood, until it moves (camera-tours.js keepsCleared).
+  if(mode==='free'&&lastMode&&lastMode!=='free'&&lastMode!=='overview'&&!view.orbiting)held={x:last.x,y:last.y,z:last.z,owners:lastHidden};
+  if(mode!=='free')held=null;
+  lastMode=mode;
   last.copy(view.camera.position);lastLook.copy(look);
   // Trees between the play camera and what it looks at go too (camera-tours.js
   // treeBlocksView) -- not in free flight or the overview, where trees are the
@@ -300,6 +305,8 @@ export function addVegetation(view){
   const hidden=new Set(view.world.trees.filter(blocks));
   const others=new Set();for(const b of view.viewBlockers)for(const o of b.owners)others.add(o);
   for(const o of others)if(blocks(o))hidden.add(o);
+  if(keepsCleared(held,view.camera.position))for(const o of held.owners)hidden.add(o);else held=null;
+  lastHidden=hidden;
   for(const batch of [...view.treeInstances,...view.viewBlockers]){
    let changed=false;const culled=view.cull?.has(batch.mesh);
    batch.owners.forEach((t,i)=>{

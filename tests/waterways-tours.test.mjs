@@ -167,3 +167,12 @@ test('a boulder, a house or a log in the way is cleared like a tree; one under t
  // The shape never collapses to nothing.
  assert.ok(viewBlocker(0, 0, 0, 0, 0).r > 0);
 });
+
+test('free flight keeps what the play view cleared until it has moved two metres (UI/UX pass V3)', async () => {
+ const {keepsCleared, HOLD_UNTIL_MOVED} = await import('../src/camera-tours.js');
+ const held = {x: 10, y: 5, z: 20};
+ assert.ok(keepsCleared(held, {x: 10, y: 5, z: 20}));
+ assert.ok(keepsCleared(held, {x: 11, y: 5, z: 20}));
+ assert.ok(!keepsCleared(held, {x: 10, y: 5, z: 20 + HOLD_UNTIL_MOVED + .1}));
+ assert.ok(!keepsCleared(null, {x: 0, y: 0, z: 0}));
+});

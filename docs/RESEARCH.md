@@ -7808,6 +7808,10 @@ ground and into 2% rises and falls.
 
 ### The target marker
 
+**How far free flight goes before the cleared trees come back** (UI/UX pass
+V3): two metres, PLACED -- about a second of slow flight, enough that the
+first frame is the play view and the first movement shows the course whole.
+
 **How far a phone's picture is lifted** (UI/UX pass V3). No outside source;
 PLACED from one course's measured layout: held sideways (844x390) the ball sat
 at 79% of the height and the meter began at 69%, so **20%** lifts it clear

@@ -669,6 +669,9 @@ commit per category.
   Golfers & rules mid-round; the six pause rows the same size and evenly
   stepped (measured). Not seen: a seat with the launch-monitor pickers under
   it (they lean with it too), phones.
+- [ ] **V3 category 3, free flight keeps the cleared trees until it moves:
+  built, probed in the capture build** (2 hidden at a tee, 2 after V, 0 after
+  flying). Not seen by a person flying away from a tee.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a

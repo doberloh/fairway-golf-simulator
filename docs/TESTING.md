@@ -198,7 +198,8 @@ the courses several suites share.
   the default aim pulled back to what a full swing carries. `phone-view` holds
   the phone's lift to the measured layouts and to the views that follow the
   ball. `waterways-tours`
-  holds a boulder, a house and a log to the same view test as a tree. `challenges` also holds a challenge's
+  holds a boulder, a house and a log to the same view test as a tree, and free
+  flight to the play view's clearing until it has moved two metres. `challenges` also holds a challenge's
   group to the fixed rules (blue tees for all, stroke play, Rules of Golf, lie
   penalty on). `ui-monitor-setup` (the setup screen's steps tick in order
   and never ahead of the bridge, the ball light's words match the round

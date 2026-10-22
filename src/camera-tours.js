@@ -36,6 +36,13 @@ export function treeBlocksView(camera,target,t){
 // tree, as the shape it reads -- its middle, its base, half its width as the
 // radius and its height. Pure.
 export const viewBlocker=(x,y,z,width,height)=>({x,y,z,r:Math.max(.2,width/2),h:Math.max(.2,height)});
+// FREE FLIGHT KEEPS WHAT THE PLAY VIEW CLEARED until it has moved (the owner,
+// UI/UX pass V3: "keep the trees hidden till moving"). Free flight starts where
+// the play camera stood, and a tree it had just hidden filled the first frame.
+// `held` is where free flight began; once the camera is HOLD_UNTIL_MOVED metres
+// from there, everything shows again. PLACED: two metres, about a second of slow flight. Pure.
+export const HOLD_UNTIL_MOVED=2;
+export const keepsCleared=(held,camera)=>!!held&&Math.hypot(camera.x-held.x,camera.y-held.y,camera.z-held.z)<HOLD_UNTIL_MOVED;
 export function cameraInsideTree(camera,t){const radius=t.r*1.9+1.5;return Math.hypot(camera.x-t.x,camera.z-t.z)<radius&&camera.y>t.y-.5&&camera.y<t.y+t.h*1.18+2;}
 // The hole flyover.
 //
