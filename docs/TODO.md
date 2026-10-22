@@ -651,6 +651,14 @@ are in the archived section of the same name.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 
+**V4 plan** (from audit 5, the owner's decisions of 22 October: a
+launch-monitor shot while paused may play behind the pause list; a Continue
+row after Save and leave; Esc on a step sheet goes back one step). One commit
+per change; audit 6 looks at each.
+
+- [ ] **Main menu during a flight lands the ball first** (audit 5: the round
+  froze, the menu never came). Built; not yet seen in the game.
+
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
 asked; stay on this branch; the launch monitor's supported list in one box; the

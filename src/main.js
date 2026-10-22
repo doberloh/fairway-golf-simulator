@@ -3841,6 +3841,13 @@ function roundWorthSaving(){
 }
 
 function guardRound(next){
+ // A BALL STILL IN THE AIR LANDS FIRST (audit 5, 22 October 2026). Leaving
+ // mid-flight used to skip this question -- nothing had landed yet, so the
+ // round looked unplayed -- and tore the round down under a flight that never
+ // ended: the menu never came and the next frame read a shot that was gone.
+ // Skipping to where it stops (Enter does the same) counts the shot, so the
+ // round is worth saving and the question is asked.
+ if(flight)finishShot();
  if(!roundWorthSaving())return next();
  askBeforeLeaving({
   title:'Leave this round?',
