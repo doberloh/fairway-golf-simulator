@@ -684,12 +684,15 @@ commit per category.
 - [ ] **Audit 4 found the default aim 5 m in front of the tee** on an uphill
   Endless hole into a 10 mph wind (the V2 "never out of reach" rule fell to its
   floor when the ball model answered nothing). Fixed in code (longestReach
-  returns null; under 40% of the carry is ignored), tested in Node. **Not seen
-  in the game**: the graphics card was in use when it was found; check an
+  returns null; under 40% of the carry is ignored), tested in Node. Probed
+  afterwards on three random Endless first holes: the driver's default aim
+  254, 259 and 245 yd, none out of reach, none near the tee. **The failing
+  hole itself was not met again** (Endless holes are random): still check an
   uphill hole into the wind.
 - [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
-  (audit 4's leftovers): built and tested, **not seen** -- no browser was
-  opened while the owner played. Look at Saved courses → Import & export.
+  (audit 4's leftovers): built, tested and **seen** in the capture build
+  (21 October, once the card was free): the intro one line over the tabs, the
+  two file buttons as slanted rows in the accent.
 
 **V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
 game types with the week's page back; Challenges a row of their own with a
