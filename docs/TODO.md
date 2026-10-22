@@ -714,6 +714,10 @@ per change; audit 6 looks at each.
   seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
 - [ ] **Round complete's share note at a readable size** (audit 5: small print
   over the card buttons; 13 px to 17 px). Built; **seen** after a stroke round.
+- [ ] **Round complete's buttons held in reach** (audit 5: below the screen
+  with three in Skins). Built; **seen** after a Skins round for three (at the
+  foot on arrival, in place at the end) and a stroke round. Not seen on a
+  phone.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until
