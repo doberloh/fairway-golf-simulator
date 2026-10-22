@@ -663,7 +663,8 @@ aim move.
 
 - [ ] **Main menu during a flight lands the ball first** (audit 5: the round
   froze, the menu never came). Built; probed in the capture build: Esc and
-  Main menu 1.5 s into a drive landed it 216 m out and asked to save.
+  Main menu 1.5 s into a drive landed it 216 m out and asked to save; audit
+  6's journey the same, with no page error.
 - [ ] **The small map stays whole after the big map** (audit 5: the hole in
   the top half, the rest dark, since audit 2). Built; probed in the capture
   build (286 px tall before and after M, and with its pixels forced to 1 px);
@@ -716,8 +717,8 @@ aim move.
 - [ ] **Save a course's Open course studio as a slanted row** (audit 5).
   Built; **seen** at 1920x1080.
 - [ ] **A challenge's results laid out like Round complete** (audit 5).
-  Built; **seen** in the capture build after closest to the pin for two. Not
-  seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
+  Built; **seen** in the capture build after closest to the pin for two, and
+  in audit 6's journey. Not seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
 - [ ] **Round complete's share note at a readable size** (audit 5: small print
   over the card buttons; 13 px to 17 px). Built; **seen** after a stroke round.
 - [ ] **Round complete's buttons held in reach** (audit 5: below the screen
