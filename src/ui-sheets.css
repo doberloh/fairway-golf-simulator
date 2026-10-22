@@ -641,6 +641,14 @@
  #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
  #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
  #drawer .sx-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
+ /* EXPORT AND IMPORT A ROUND as slanted rows in the accent, like Saved courses' file
+    buttons and Reset camera (they were the old grey buttons). Export is dimmed
+    when there is no round being played to export. */
+ #drawer .sx-saved>:is(#exportRound,#importRound){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;justify-self:stretch;width:100%;max-width:560px;height:48px;min-height:48px;padding:0 22px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer .sx-saved>:is(#exportRound,#importRound)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer .sx-saved>:is(#exportRound,#importRound):not(:disabled):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-saved>:is(#exportRound,#importRound):disabled{color:var(--soft);opacity:.55;cursor:default}
+ #drawer .sx-saved>:is(#exportRound,#importRound) svg{width:16px;height:16px}
  /* 2 · Golfers: four seats. */
  #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
  #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
