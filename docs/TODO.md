@@ -665,6 +665,8 @@ per change; audit 6 looks at each.
 - [ ] **The file buttons fit an upright phone** (audit 5: the words ran out
   of the boxes). Built; **seen** at 390x844 in the capture build (Saved
   courses' Import & export stacked, the saved rounds list's two rows).
+- [ ] **The range's Save a session note names R** (audit 5: it said Tab,
+  which shows the shot numbers). Built; PLAYING already said R.
 
 **V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
 keeps the trees the play view cleared until it moves; no graphics profile until

@@ -5673,7 +5673,7 @@ function renderPanel(name,content){
    +`${slider('rangeSetupContour','Contour',rangeGreensPref.centre?.contour??CONTOUR.def??40,CONTOUR.min,CONTOUR.max,'',CONTOUR.step)}`
    +`${slider('rangeSetupLines','Shot lines kept',shotLinePref,0,SHOT_LINE_MAX,'',1)}</div>`
    +`<div class="rs-col"><h3>${rangeShots.length?`This session · ${rangeShots.length} ball${rangeShots.length===1?'':'s'}`:'Last session'}</h3>${rangeShots.length?sessionRows(clubTable(rangeShots)).slice(0,6).map(r=>`<div class="rs-club"><b>${escape(r.club)}</b><span>${r.n}</span><b>${escape(r.carry)}</b><span>${escape(r.spread)}</span></div>`).join(''):'<p class="note">No balls hit yet on this visit.</p>'}`
-   +`<div class="rs-note"><span>Save a session</span><p>Every ball is kept. Export the session as a spreadsheet or a PDF from the range controls (Tab).</p></div></div></section>`
+   +`<div class="rs-note"><span>Save a session</span><p>Every ball is kept. Export the session as a spreadsheet or a PDF from the range controls (R).</p></div></div></section>`
    +`<button class="primary" data-panel-action id="rangeGo">${live?'Apply to this session':'Open the driving range'} <i data-lucide="arrow-right"></i></button>`;
   groupEditor('playerRows',round.players);
   for(const b of content.querySelectorAll('[data-hit]'))b.onclick=()=>{rangeSetupHit=b.dataset.hit;for(const x of content.querySelectorAll('[data-hit]')){x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));}};
