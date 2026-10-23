@@ -1280,3 +1280,43 @@ asked for, so the save box, the Next hole button, the new Round complete, the
 camera name and turn, the aim label and the card shapes reach players
 unplayed (TODO, *Challenge a friend*, lists what to check). The studio
 journey was rewritten for the save box and has not run.
+
+## Addendum, 22 October 2026: v0.9.2
+
+**v0.9.2** is published at the owner's request ("build 0.9.2 and release
+notes, push to github but not the website"), as "Fairway 0.9.2 (beta)", tag
+`v0.9.2`, not a pre-release, the same four zip names (and the source zip and
+checksums, as 0.9.1 had), from the merge of `release-0.9.2` into `main`, with
+its notes in `docs/releases/v0.9.2.md` in that commit. It carries the
+`ui-ux-pass` journey: seven interface audits and their fixes (one Play for
+every game type, Challenges' own row, Esc steps back, Continue after Save and
+leave, the round screen, the phone layouts with the picture lifted, the
+results in the 1.0 style, and the bugs the audits found). **`GENERATOR_VERSION`
+is still 36, `SCHEMA_VERSION` still 11 and `PROFILE_VERSION` still 3**;
+`node tools/biome-fingerprint.mjs --check` says every biome is unchanged, so
+courses grow as before and 0.9.1's saves load. **The package version is
+0.9.2.** A friend's challenge code names the version and commit it was made on
+(PROJECT_HANDOFF *A friend's challenge is the version*), so 0.9.1's codes do
+not play on 0.9.2 -- said in the notes.
+
+**The website is not redeployed** (the owner: "not the website"). Its Download
+buttons follow `releases/latest` and so serve the v0.9.2 zips at once; its
+browser demo and sample course code stay on 0.9.1 until it is deployed again
+from its own folder.
+
+**No new dependency, no request.** The page still carries one `fetch(` (Vite's
+module-preload helper) and makes no network request. The built page is
+**17,712,607 bytes (7.25 MB gzipped), +126 KB on 0.9.1**: the interface work.
+The zips: Windows 48.3 MB, macOS Apple silicon 34.1 MB, macOS Intel 36.5 MB,
+Linux 44.9 MB, each 8 verified files. The packaged Windows server was run from
+its unzipped download on spare ports (19922/19921) and served `Fairway.html`
+byte for byte (sha256 `38dbc82f…`), then stopped.
+
+**Checked:** `npm test` 1041 of 1041 and the build; the biome fingerprint;
+**the smoke run, 38 of 38 journeys on the real GPU** (22 October, on the
+interface as released; only the version and these notes changed after it); the
+**graphics profile**, the branch build against 0.9.1's main alternated group by
+group on the real GPU, every group but the software one: frame cost unchanged
+within noise. Audit 7 (364 screenshots at four screen sizes, no console
+errors) is the last look. **Not played by hand**: the owner is testing on a
+phone and a PC (TODO, *Release 0.9.2*).
