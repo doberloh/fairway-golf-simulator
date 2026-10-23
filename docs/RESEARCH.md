@@ -9114,3 +9114,24 @@ twice at both tees, steady. Two exact reductions followed:
   random points in view is exactly what all sixteen gave, for low and high suns
   (and fails when the packing is given the sun reversed); on its random skies
   it leaves out more than three clouds in sixteen on average.
+
+### Checkpoints 4 and 5: -18% and -21% (runs 12-15)
+
+`frame-ab` against the original build, Ultra, Redwood PROFILE, play camera,
+tees 1, 5 and 9, A B B A:
+
+| Build | Tee 1 GPU ms | Tee 5 | Tee 9 | Frame, mean of tees |
+| --- | --- | --- | --- | --- |
+| original | 6.61 | 3.21 | 5.41 | 5.08 ms |
+| + mist branch, clouds packed (run 12) | 5.73 | 2.58 | 4.31 | 4.20 (-16.2%) |
+| + no cloud test in shadow (run 13, checkpoint 4) | 5.66 | 2.55 | 4.28 | 4.17 (-18.1%) |
+| + middle cascade every 4th frame (run 15, checkpoint 5) | 5.28 | 2.50 | 4.29 | 4.02 (**-20.7%**) |
+
+The middle cascade every fourth frame was measured live first (run 14): -4
+to -6% at tee 1, -1 to -2% at tee 5, within noise at tee 9. The aerial tint
+measured as noise and was left. At checkpoint 5 the processor's frame is down
+45-63% and draws 31-35%; changed pixels 2.8-4.5% against 0.3-0.9% between two
+loads of one build, again only on wind, cloud drift and the map's dash.
+`npm test` (1043 tests) passes after updating `tests/three-namespace.test.mjs`'s
+stand-in for the renderer, which needed `cssSize`; the biome fingerprint is
+unchanged for every biome.

@@ -513,11 +513,12 @@ export class GolfView{
  // 6144 on Ultra holding most of the course's trees, for shadows that 100 m and
  // more away cannot change between two frames that anyone could see. Now the
  // nearest map -- the player's own surroundings, swaying trees and the ball --
- // is drawn every frame, the middle one (100-500 m) every other frame and the
- // far one (past 500 m) every fourth, on a frame the middle one skips: at most
- // two maps a frame, the middle at most one frame old and the far at most
- // three. Measured, every fourth instead of every other gave back another
- // 2-7% of an Ultra frame (RESEARCH.md, *Frame time on Ultra*).
+ // is drawn every frame, and the middle one (100-500 m) and the far one (past
+ // 500 m) every fourth frame each, on different frames: at most two maps a
+ // frame, neither more than three frames old (50 ms at 60 fps), for shadows
+ // where a tree's sway moves them less than a pixel. Measured, every fourth
+ // instead of every other gave back 2-7% of an Ultra frame for the far map and
+ // about as much again for the middle one (RESEARCH.md, *Frame time on Ultra*).
  //
  // A MAP NOT REDRAWN KEEPS ITS OWN MATRICES. Its pixels mean what they meant
  // from where it was drawn, so its shadow camera is not moved (fitCascadeDepth
@@ -537,7 +538,7 @@ export class GolfView{
   this.cascadeForce=false;
   csm.lights.forEach((light,i)=>{
    const s=light.shadow,sc=s.camera,last=light.userData.cascadeDir;
-   let draw=force||i===0||n<3||!s.map||!last||last.dot(dir)<CASCADE_SUN_TURN||(i===n-1?f%4===1:f%2===0);
+   let draw=force||i===0||n<3||!s.map||!last||last.dot(dir)<CASCADE_SUN_TURN||f%4===(i===n-1?1:3);
    if(!draw){
     const fr=csm.frustums[i];
     outer:for(const set of [fr.vertices.near,fr.vertices.far])for(const corner of set){

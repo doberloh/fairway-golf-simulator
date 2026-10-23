@@ -205,7 +205,7 @@ export const TIERS = {
   // back 4-7% of it (RESEARCH.md, *Frame time on Ultra*). The blur radius is
   // counted in texels, so it comes down by the same 1.5 to keep each shadow's
   // soft edge the same width on the ground. The far two keep 6144: they are
-  // drawn every other frame (scheduleCascades) and their texels are what
+  // drawn every fourth frame (scheduleCascades) and their texels are what
   // carries a shadow across the far hills.
   nearShadow: {size: 4096, radius: 2.67},
   // Fog must reach full density before the landscape's outer ring, which sits

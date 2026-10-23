@@ -612,7 +612,7 @@ are in the archived section of the same name.
   aim line, dispersion rings and the ball, and redraw on a new hole, on the
   range when its green changes, and on zoom and pan; distant shadows while the
   camera turns fast, follows a drive and cuts to a new hole (the far two
-  cascades are redrawn less often -- the middle every other frame, the far every fourth -- or at once when the view leaves
+  cascades are redrawn less often -- the middle and the far each every fourth frame -- or at once when the view leaves
   them). On Ultra, the shadows near the ball (the nearest map is 4096 now, its blur kept the same width): that they are as crisp as before, and do not crawl as the camera moves. Smoke journeys to ask for: all, or at least `hud-reachable`,
   `range`, `endless-round`, `phone-portrait`, `phone-landscape`. RESEARCH.md
   *Frame time on Ultra*.
