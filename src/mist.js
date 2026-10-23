@@ -295,6 +295,14 @@ vec3 applyMist(vec3 color){
  //   ERROR: 0:196: 'patch' : Illegal use of reserved word
  // A fragment shader that fails to compile does not draw and does not obviously
  // complain, so the scene just renders as flat sky. It cost an evening.
+ //
+ // ONLY WHILE THERE IS A SHEET OR WATER FOG TO SHAPE (the frame-rate goal, 23
+ // October 2026). Both are zero from about three hours after sunrise until
+ // sunset (daylight.js mistAmount), and the bank noise was still worked out on
+ // every pixel and multiplied by nothing: about a tenth of an Ultra frame on
+ // Redwood for the whole of a mid-morning round. The test is on two uniforms,
+ // so every pixel takes the same branch, and the picture is unchanged.
+ if(sheetDensity>0.||waterDensity>0.){
  float puff=mistFbm(vMistWorld.xz*.0032+vec2(mistTime*.004,mistTime*.0025));
  // Sharpened into banks. Raw fbm is too even to read as weather; pushing it
  // through a smoothstep gives fog with clear air between it.
@@ -305,6 +313,7 @@ vec3 applyMist(vec3 color){
  // standing behind it and not just its own surface.
  float wet=texture2D(waterField,vMistWorld.xz/waterExtent*.5+.5).r;
  depth+=mistDepth(yc,yf,len,waterScale)*waterDensity*wet*(.55+.75*puff);
+ }
  vec3 lit=mix(color,mistColor,clamp(1.-exp(-max(depth,0.)),0.,1.));
  if(aerialStrength>0.){
   // Toward the sun the air glows its colour; away from it, the sky's. Sharp,

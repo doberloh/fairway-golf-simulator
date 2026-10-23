@@ -56,7 +56,7 @@ import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
 import {makeGodRays} from './godrays.js';
-import {applyCloudShadows,cloudShadowUniforms} from './cloud-shadows.js';
+import {applyCloudShadows,cloudShadowUniforms,packCloudShadows,allCloudShadows} from './cloud-shadows.js';
 import {makeClouds,applyCloudFade} from './clouds.js';
 import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWaterField} from './mist.js';
 
@@ -278,6 +278,7 @@ const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // A sun moved further than this since a far map was drawn redraws it now
 // (scheduleCascades); a quarter of a degree is a minute of the clock.
 const CASCADE_SUN_TURN=Math.cos(.25*Math.PI/180);
+const cloudFrustum=new T.Frustum(),cloudScratch=new T.Matrix4();
 const snapScratch={m:new T.Matrix4(),i:new T.Matrix4(),o:new T.Vector3(),up:new T.Vector3(0,1,0),p:new T.Vector3()};
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
@@ -472,6 +473,20 @@ export class GolfView{
    if(sc.far!==far){sc.far=far;sc.updateProjectionMatrix();}
    light.shadow.bias=this.quality.shadowBias.constant*CASCADE_BASE_FAR/far;
   });
+ }
+ // THE CLOUD SHADOWS THIS FRAME CAN SHOW (cloud-shadows.js packCloudShadows).
+ // Receivers stand between the lowest and highest ground -- the course and the
+ // distant landscape -- and the tallest tree above it (redwoods reach 186 m;
+ // 250 m covers them, the ball and the floodlight poles), measured once a course.
+ packClouds(){
+  if(!this.receiverSpan){
+   let low=Infinity,high=-Infinity;
+   for(const m of [this.terrain,this.landscape]){const g=m?.geometry;if(!g)continue;if(!g.boundingBox)g.computeBoundingBox();const b=g.boundingBox.clone().applyMatrix4(m.matrixWorld);low=Math.min(low,b.min.y);high=Math.max(high,b.max.y);}
+   this.receiverSpan=isFinite(low)?{low:low-10,high:high+250}:{low:-1e4,high:1e4};
+  }
+  const cam=this.camera;cam.updateMatrixWorld();
+  cloudFrustum.setFromProjectionMatrix(cloudScratch.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse));
+  packCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades,this.cloudUniforms.cloudSun.value,cloudFrustum,this.receiverSpan.low,this.receiverSpan.high);
  }
  // THE NEAREST CASCADE'S OWN SIZE (graphics.js `nearShadow`, Ultra): CSM gives
  // every cascade one size, so the nearest map is reallocated at its own.
@@ -975,10 +990,9 @@ export class GolfView{
    this.cloudUniforms.cloudDepth.value=this.quality.clouds;
    this.cloudUniforms.cloudSun.value.copy(sunDir).normalize();
    this.clouds=makeClouds(this,world.seed);
-   // Share the vectors rather than copying them each frame: moving a cloud then
-   // updates the shadow it casts, with nothing to keep in step.
-   this.cloudUniforms.cloudDiscs.value=this.clouds.discs;
-   this.cloudUniforms.cloudFade.value=this.clouds.fades;
+   // Copied each frame, and only the clouds whose shadow can be seen
+   // (packCloudShadows, in render); every cloud until the first frame.
+   allCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades);this.receiverSpan=null;
    this.group.add(this.clouds.group);
   }else{this.cloudUniforms=null;this.clouds=null;}
   this.registerCascadeMaterials();
@@ -1566,6 +1580,9 @@ export class GolfView{
  // water keeps the same texture and its material is not touched.
  takeProbe(cam,pmrem,b,into=null){
   cam.position.set(b.center?.x??0,b.level+4,b.center?.z??0);
+  // Seen from the pond, not the camera: every cloud's shadow (the next frame
+  // packs them again).
+  if(this.cloudUniforms)allCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades);
   cam.update(this.renderer,this.scene);
   return pmrem.fromCubemap(this.waterCubeTarget.texture,into);
  }
@@ -2693,6 +2710,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
     for(const lamp of this.floodLamps||[])if(lamp.castShadow)lamp.shadow.needsUpdate=true;
    }
   }
+  if(this.cloudUniforms)this.packClouds();
   this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);

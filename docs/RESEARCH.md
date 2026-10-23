@@ -9060,3 +9060,57 @@ on Redwood, a third of it their shading and most of the rest their triangles --
 shadow twins. Fewer triangles per tree is the lever that is left, and that is
 new models: NOTED for the owner (lower-polygon grown trees, especially the
 redwoods' 13-53 thousand triangles each, for Blender), not done.
+
+### Checkpoint 3, and trees nearest-first, tried and rejected (runs 8-9)
+
+**Checkpoint 3** (commit f91cafe: the far cascade every fourth frame, Ultra's
+nearest map 4096 with its blur kept, the ground drawn last), `frame-ab` against
+the original build, play camera: graphics 6.62 -> 5.83 ms (tee 1, -12%), 3.22 ->
+2.80 (tee 5, -13%), 5.41 -> 4.59 (tee 9, -15%); draws -26 to -29%; triangles
+-21 to -23%; the frame 5.08 -> 4.41 ms on average, **-13.3%**. Changed pixels:
+2.1-3.9% against 0.1-0.7% between two loads of one build, every one of them on
+leaf and grass edges, the cloud's outline and the map's dash (the difference
+picture) -- the screenshots were taken at different moments of the wind -- and
+none on the ground's shadows, so the 4096 nearest map is not visible at this
+threshold.
+
+**Trees written nearest the camera first** (instance-cull.js: squares sorted
+by distance within each map group, so crowns in front would fill the depth
+buffer before the ones they hide) measured nothing: graphics 6.09 / 2.82 /
+4.60 ms against checkpoint 3's 5.83 / 2.80 / 4.59, inside the noise. So the
+card is not losing its time to shading hidden crowns; it is the triangles and
+their vertex work. Reverted; recorded so it is not tried again.
+
+### The trees' wind is cheap; the air on every pixel is not (runs 10-11)
+
+**Wind** (run 10): the trees' gust field is two octaves of hashed value noise
+per vertex, though it depends only on each tree's root. Patched to a constant
+gust, and separately to one octave, on every tree material (through each
+material's own `onBeforeCompile`, called with the material as `this`; run 7's
+attempt called it bare, the cascade wrapper threw, and that run is void):
+-1% to +1% at tees 1 and 9, twice each. Not the bottleneck; left alone.
+
+**The air** (run 11; diagnostics that removed the call from every patched
+material): the clouds' shadows, MAX_CLOUDS (16) disc tests on every lit pixel,
+-14 to -16% of the frame; the mist (three octaves of noise, two closed-form
+fog integrals, the water field, the aerial tint) -9 to -11%. Both repeated
+twice at both tees, steady. Two exact reductions followed:
+
+- **The mist's bank noise only while there is a bank** (mist.js): the sheet and
+  the water fog both have density zero from about three hours after sunrise
+  until sunset (`mistAmount` is 0 there), and the three octaves were computed
+  and multiplied by nothing. Now inside `if(sheetDensity>0.||waterDensity>0.)`,
+  a branch on uniforms that every pixel takes alike. The picture is unchanged;
+  the saving is there only when the sheet is gone -- a dawn or evening round
+  pays as before.
+- **Only the clouds whose shadow can fall in view** (cloud-shadows.js
+  `packCloudShadows`, renderer.js `packClouds`): a pixel's shade is the
+  darkest of the clouds' shadows on it, so each frame the clouds whose shadow
+  can reach the view frustum -- the cloud's disc swept down the sun's ray over
+  every height a receiver can have (the lowest ground to the highest plus 250
+  m) -- are packed to the front of the shader's arrays and `cloudCount` ends
+  the loop. The water probes, which look from the pond, put every cloud back
+  first (`allCloudShadows`). `tests/cloud-pack.test.mjs` checks the shade at
+  random points in view is exactly what all sixteen gave, for low and high suns
+  (and fails when the packing is given the sun reversed); on its random skies
+  it leaves out more than three clouds in sixteen on average.
