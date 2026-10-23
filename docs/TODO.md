@@ -651,18 +651,18 @@ are in the archived section of the same name.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 
-**V4 plan** (from audit 5, the owner's decisions of 22 October: a
-launch-monitor shot while paused may play behind the pause list; a Continue
-row after Save and leave; Esc on a step sheet goes back one step). One commit
-per change; audit 6 looks at each.
-
 **V5 plan** (the owner, 22 October, after audit 6: the leftovers, the upright
 saved course card, then audit 7).
 
 - [ ] **The empty shelf's Saved course card as wide as the rest on an upright
   phone** (the owner: much skinnier). It took the saved rounds list's class.
   Built; **seen** at 390x844 (measured: picture and words 154 px like the
-  others). **Smoke after the V4 changes (22 October):
+  others).
+
+**V4 plan** (from audit 5, the owner's decisions of 22 October: a
+launch-monitor shot while paused may play behind the pause list; a Continue
+row after Save and leave; Esc on a step sheet goes back one step). One commit
+per change; audit 6 looks at each. **Smoke after the V4 changes (22 October):
 37 of 38 journeys green; `phone-portrait` failed once** -- a tap on the course
 did not move the aim on a fresh Endless hole, the picture taken at the hole's
 arrival (no aim line yet) -- and passed 3 of 3 run on its own. Not explained:
