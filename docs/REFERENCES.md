@@ -666,3 +666,26 @@ search summaries, not fetched**; worth opening before relying on them.
 - Read and not used: withorb.com, toolradar.com and makerkit.dev pricing pages
   -- third-party, disagreeing on how many credits a function costs (5 or 10
   per GB-hour).
+
+## Devices for the frame tools (22 October 2026)
+
+Behind `tools/devices.mjs` and RESEARCH.md *Devices for the frame tools*. All
+peak or single-run figures; the device estimates they feed are PLACED.
+
+- hydrahost.com/nvidia/geforce-rtx-4090 and notebookcheck.net, *NVIDIA GeForce
+  RTX 4090 GPU Benchmarks and Specs* -- 82.58 TFLOPS FP32, 1,008 GB/s.
+- browser.geekbench.com/v6/cpu/164421 -- a Ryzen 9 7950X Geekbench 6
+  single-core run, 2994 (one upload, not an average).
+- cpu-monkey.com iGPU pages -- Adreno 740 1.74 TFLOPS, Intel UHD 620 0.38, Mali-G57
+  MP4 0.40, A17 Pro 2.15 (AIDA64-derived peaks); A15 (5-GPU) 1,713 GFLOPS from
+  its A15 comparison pages; i5-8250U Geekbench 6 single-core 1127.
+- nanoreview.net -- Apple M1 GPU 2.6 TFLOPS (Apple's figure), Radeon 780M
+  4.1-4.3 TFLOPS, Snapdragon 8 Gen 2 single-core 2004, Helio G85 single-core
+  420.
+- notebookcheck.net, *Mediatek Helio G85* -- Geekbench 6 single-core 408-432,
+  median 423; gizmochina.com -- an iQOO Neo 9 Pro (Snapdragon 8 Gen 2) at 2,012.
+- browser.geekbench.com uploads -- iPhone 13 (A15) single-core 2168-2307.
+- android-headunits.com/mali-g52-gpu -- Mali-G52 72-144 GFLOPS across
+  configurations; the low end was used for the MP2, which no source gave alone.
+- Read and not used: a forum post's 5.7 TFLOPS for the Adreno 750, which no
+  other source supported.
