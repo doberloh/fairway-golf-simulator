@@ -33,7 +33,7 @@ There is no complete authorship history or universal source-code comparison data
 | ws 8.21.3 | Optional Node bridge dependency | MIT; installed by `npm ci`, notice also shipped with source |
 | Mulberry32 | `src/course.js` | Tommy Ettinger's CC0 algorithm; bryc's JavaScript variant offers a public-domain dedication and MIT fallback. MIT fallback and credits retained |
 | Mapbox Earcut 3.0.2 | Embedded by Three.js polygon triangulation | ISC; Mapbox notice added, independent of Three's MIT notice |
-| Vite 8.3.0 / Rolldown 1.2.8 helpers | Small generated helpers in browser output | MIT; core helper notices added |
+| Vite 8.3.3 / Rolldown 1.2.15 helpers | Small generated helpers in browser output | MIT; core helper notices added |
 | ez-tree 1.1.0 | Build tool only; **its output geometry ships** | MIT. Runs at bake time in `tools/bake-trees.mjs`, never in the game. The trees it generates from our parameters go into `vendor/` and through the same ingest as the CC0 packs; credited in ATTRIBUTION.md with its notice vendored beside the output |
 | Playwright 1.63.0 (and playwright-core) | Build/measurement tool only | Apache-2.0. Drives a headless browser for `tools/profile.mjs` and `tools/gpu-probe.mjs`. Touches nothing that ships and is in neither archive |
 | Minimal AgX contrast approximation | Three.js shader chunk | Benjamin Wrensch / Missing Deadlines, MIT; notice added |
@@ -1320,3 +1320,38 @@ group on the real GPU, every group but the software one: frame cost unchanged
 within noise. Audit 7 (364 screenshots at four screen sizes, no console
 errors) is the last look. **Not played by hand**: the owner is testing on a
 phone and a PC (TODO, *Release 0.9.2*).
+
+## Addendum, 22 October 2026: Vite 8.3.3 (three Dependabot alerts)
+
+Pushing v0.9.2's `main` showed **three open Dependabot alerts, all on `vite`
+8.3.0** (development scope): GHSA-587h-7wmj-h5pm / CVE-2026-112942 (high,
+launch-editor's `fs.existsSync()` check bypassable on Windows),
+GHSA-r825-w8mm-5pxw / CVE-2026-112944 (medium, an editor's command-line flag
+misread, running a command) and GHSA-698v-4r3x-3vcv / CVE-2026-112943 (medium,
+`escapeCmdArgs()` not escaping `%` on Windows). All three are in the dev
+server's *open in editor* endpoint (launch-editor, vendored inside Vite),
+affect 8.3.0-8.3.2, and are fixed in 8.3.3. **None reaches a player**: the
+shipped page and the packaged server contain no launch-editor or
+`__open-in-editor` code (searched); the exposure was the owner's machine while
+`npm run dev` runs, through a hostile page making requests to it.
+
+**Vite is now 8.3.3**, pinned exactly, on branch `vite-security-fix`. It
+brings Rolldown 1.2.8 -> 1.2.15 and `@oxc-project/types` 0.149.0 -> 0.155.0
+(and Rolldown's platform bindings); no package added or removed, no licence
+changed, `docs/DEPENDENCY_INVENTORY.json` follows the lockfile, and
+THIRD_PARTY_NOTICES' two helper headings name the new versions (the helpers
+are the same MIT code). **The built page changed only in minification**:
+17,712,352 bytes against 17,712,607 (the notices name the new versions), the
+re-minified code equivalent rewrites by the
+newer bundler (`(1<<e|0)>>>0` to `1<<e>>>0`, `a?e:(b,e)` to `a||(b),e`); still
+one `fetch(` (the module-preload helper), no request. Checked: `npm test` 1041
+of 1041, the biome fingerprint unchanged, `vite` 8.3.3's dev server starting and
+serving the page. **Not run: the smoke journeys** (they need the graphics card,
+not asked for); a bundler change reaches every line of the page, so they should
+run before this is released.
+
+**Still reported by `npm audit`:** `braces` (via `vite-plugin-singlefile` 2.3.3
+-> `micromatch`), build-time only. Until October its only "fix" was a downgrade
+of the single-file plugin, rejected. **`vite-plugin-singlefile` 2.3.4 (17 October
+2026) replaces micromatch with picomatch** and so drops braces; not taken here
+(TODO, *Tools and code*).
