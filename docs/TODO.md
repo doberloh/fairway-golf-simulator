@@ -656,6 +656,15 @@ saved course card, then audit 7). Smoke after it: **38 of 38 green**. Audit 7
 (364 screenshots, no console errors) saw every entry below. The owner's call on
 Round complete's held buttons (22 October): **keep the narrow band**, though a
 third golfer's row shows beside it on a long Skins card until scrolled.
+**Graphics profile before the merge (22 October, the owner asked):** the branch
+build against main's (d7ec4e9), alternated group by group on the real GPU (an
+RTX 4090), every group but the software `weak` one (a software run took the PC
+down on 13 October). GPU time per frame unchanged within noise -- the largest
+rise 0.3 ms on the low overview; slightly fewer triangles where the view now
+hides what stands in front of the camera. Three outliers (island GPU, redwood
+and midwest CPU) were re-run twice per build and swing as widely on main.
+The 7 October baseline was not compared or re-saved: it predates most of the
+work since.
 
 - [ ] **The empty shelf's Saved course card as wide as the rest on an upright
   phone** (the owner: much skinnier). It took the saved rounds list's class.
