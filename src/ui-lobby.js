@@ -96,7 +96,11 @@ export function courseFacts(text) {
 function card(doc, {name, line, tag, best, kind}) {
  const b = make(doc, 'button', 'sx-card' + (kind ? ' sx-' + kind : ''));
  b.type = 'button';
- const mark = {surprise: '?', studio: '+', friend: 'VS', run: '∞', challenges: '★', saved: '↓'}[kind];
+ // A kind becomes the class `sx-<kind>`, so it must not be a class already in
+ // use: the empty shelf's card was kind `saved` -- `.sx-saved`, the saved
+ // rounds list -- and took that list's padding, so on an upright phone its
+ // picture and words sat 15 px in from each side (audit 6, the owner).
+ const mark = {surprise: '?', studio: '+', friend: 'VS', run: '∞', challenges: '★', 'empty-shelf': '↓'}[kind];
  const pic = make(doc, 'span', 'sx-pic', mark ? `<b>${mark}</b>` : '');
  const cap = make(doc, 'span', 'sx-cap', `${tag ? `<em>${esc(tag)}</em>` : ''}<strong>${esc(name)}</strong><small>${esc(line)}${best ? ` · <i>${esc(best)}</i>` : ''}</small>`);
  b.append(pic, cap);
@@ -223,7 +227,7 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
  };
  if (weekly) typeCard('weekly', {name: 'COURSE OF THE WEEK', line: weekly.name.toUpperCase(), tag: weekly.tag, label: 'Course of the week', settings: weekly.settings});
  if (opts.endless) typeCard('endless', {name: 'ENDLESS', line: 'ONE HOLE AFTER ANOTHER · NO LAST HOLE', tag: 'A RUN', cls: 'run', label: 'Endless'});
- typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} OF YOURS · OR IMPORT A CODE` : 'IMPORT A CODE A FRIEND SENT', tag: 'YOUR SHELF', cls: courses.length ? '' : 'saved', label: 'Saved course', settings: courses[0]?.settings});
+ typeCard('saved', {name: 'SAVED COURSE', line: courses.length ? `${courses.length} OF YOURS · OR IMPORT A CODE` : 'IMPORT A CODE A FRIEND SENT', tag: 'YOUR SHELF', cls: courses.length ? '' : 'empty-shelf', label: 'Saved course', settings: courses[0]?.settings});
  if (opts.friend) typeCard('friend', {name: 'FRIEND CHALLENGE', line: opts.friend.line, tag: opts.friend.name, cls: 'friend', label: 'Friend challenge'});
  typeCard('surprise', {name: 'SURPRISE ME', line: 'A NEW NINE FROM RANDOM SETTINGS', tag: 'NEW', cls: 'surprise', label: 'Surprise me', settings: opts.surprise?.settings});
  const studio = q('roundStudio'), surprise = q('roundSurprise');
