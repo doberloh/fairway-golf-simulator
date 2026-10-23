@@ -619,6 +619,17 @@ are in the archived section of the same name.
 
 ## Tools and code
 
+- [ ] **`vite-plugin-singlefile` 2.3.4 would clear the `braces` audit warning**
+  (found 22 October, looking into the vite alerts). 2.3.4 (17 October) swaps
+  micromatch for picomatch, so braces leaves the tree. Build-time only, but
+  it is the plugin the one-file build depends on: upgrading means a build, a
+  look at the page and the smoke run. Not done; the owner's call.
+- [ ] **Vite 8.3.3 on `vite-security-fix`: run the smoke journeys before
+  releasing it.** The three Dependabot alerts (launch-editor in the dev
+  server, never shipped) are fixed by it; the newer bundler re-minified the
+  page (equivalent rewrites, 256 bytes smaller). `npm test` and the
+  fingerprint pass; no browser run yet (DISTRIBUTION_REVIEW, *Vite 8.3.3*).
+
 - [ ] **The test suite's wall time** is set by its slowest file, six over 100 s.
   Underneath: `nearest` is 15% of a generation and walks all holes with no
   spatial rejection; a bounding box per hole would speed the tests, the bench
@@ -2833,9 +2844,10 @@ From the owner's checklist, on the branch `shot-views-and-studio-bar`.
   source-map-js` moved the lockfile to 1.2.2 within postcss's existing range;
   vite and postcss are unchanged, and `docs/DEPENDENCY_INVENTORY.json` follows
   (same licence, BSD-3-Clause, so THIRD_PARTY_NOTICES is untouched -- it names
-  only what ships). **Still open, and not fixable yet:** `npm audit` reports
+  only what ships). **Still open:** `npm audit` reports
   `braces` 3.0.3 (via `vite-plugin-singlefile` -> `micromatch`), build-time
-  only; 3.0.3 is the newest published version. GitHub closed its own alert on
+  only; 3.0.3 is the newest published version (fixable since 17 October: see
+  *Tools and code*, the single-file plugin 2.3.4). GitHub closed its own alert on
   it; `npm audit fix --force` would "fix" it by downgrading the single-file
   plugin to 0.9.0 -- **rejected**, that is the plugin the one-file build
   depends on.

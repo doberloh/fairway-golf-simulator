@@ -316,7 +316,7 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 
-## Vite 8.3.0 module-preload helper
+## Vite 8.3.3 module-preload helper
 
 A small Vite module-preload polyfill is emitted into the browser bundle.
 https://github.com/vitejs/vite
@@ -348,7 +348,7 @@ SOFTWARE.
 
 
 
-## Rolldown 1.2.8 generated runtime helpers
+## Rolldown 1.2.15 generated runtime helpers
 
 Small bundler interop/export helpers may be emitted into the browser bundle.
 https://github.com/rolldown/rolldown
