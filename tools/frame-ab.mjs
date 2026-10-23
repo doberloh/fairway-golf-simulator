@@ -186,6 +186,14 @@ if (B) {
  // CPU and GPU, which is what the frame waits on).
  const frame = tag => spotNames.reduce((t, n) => t + Math.max(summary[n][tag].cpu, summary[n][tag].gpu ?? 0), 0) / spotNames.length;
  console.log(`\n  frame, mean of spots: A ${frame('A').toFixed(2)} ms  B ${frame('B').toFixed(2)} ms  (${((frame('B') - frame('A')) / frame('A') * 100).toFixed(1)}%)`);
+ // The same with each spot's MEAN and its 95th percentile instead of its
+ // median (profile-probe.js says why): the average cost, and the heavy frame
+ // a display waits for.
+ const by = (tag, cpuKey, gpuKey) => spotNames.reduce((t, n) => t + Math.max(med(results[tag].map(r => r[n][cpuKey])) ?? 0, med(results[tag].map(r => r[n][gpuKey])) ?? 0), 0) / spotNames.length;
+ for (const [label, c, g] of [['mean', 'mean', 'gpuMean'], ['p95', 'p95', 'gpuP95']]) {
+  const a = by('A', c, g), b = by('B', c, g);
+  console.log(`  frame by ${label}: A ${a.toFixed(2)} ms  B ${b.toFixed(2)} ms  (${((b - a) / a * 100).toFixed(1)}%)`);
+ }
 }
 if (SHOTS) {
  console.log('\n  picture: share of pixels changed (summed RGB difference over 24)');

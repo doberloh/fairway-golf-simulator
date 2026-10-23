@@ -605,17 +605,23 @@ are in the archived section of the same name.
 ## Graphics
 
 - [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it and run
-  the smoke journeys.** Built and measured with `tools/frame-ab.mjs`, never
-  played by a person, no smoke run (it still needs asking). Check in the game:
-  the pin and aim labels follow the camera and fade as before; the wind arrow
-  turns with the camera; the hole map and the full map draw the course, the
-  aim line, dispersion rings and the ball, and redraw on a new hole, on the
+  the smoke journeys.** Measured with `tools/frame-ab.mjs` against the original
+  build: Ultra -21% on Redwood and Pacific Northwest, High -19%, Medium -7%,
+  Low -2% at the card (their processor -18 to -27%); the cheap-laptop and
+  budget-phone profiles -16% and -26% (RESEARCH.md *Frame time on Ultra*).
+  Never played by a person; no smoke run (it still needs asking). Check in the
+  game: the pin and aim labels follow the camera and fade as before; the wind
+  arrow turns with the camera; the hole map and the full map draw the course,
+  the aim line, dispersion rings and the ball, and redraw on a new hole, on the
   range when its green changes, and on zoom and pan; distant shadows while the
-  camera turns fast, follows a drive and cuts to a new hole (the far two
-  cascades are redrawn less often -- the middle and the far each every fourth frame -- or at once when the view leaves
-  them). On Ultra, the shadows near the ball (the nearest map is 4096 now, its blur kept the same width): that they are as crisp as before, and do not crawl as the camera moves. Smoke journeys to ask for: all, or at least `hud-reachable`,
-  `range`, `endless-round`, `phone-portrait`, `phone-landscape`. RESEARCH.md
-  *Frame time on Ultra*.
+  camera turns fast, follows a drive and cuts to a new hole (the middle and far
+  cascades are redrawn every fourth frame, or at once when the view leaves
+  them); on Ultra, the shadows near the ball (the nearest map is 4096 now, its
+  blur kept the same width) -- as crisp as before, not crawling as the camera
+  moves; cloud shadows drifting across the course, and the dawn mist (both now
+  skip work only where it cannot change a pixel). Smoke journeys to ask for:
+  all, or at least `hud-reachable`, `range`, `endless-round`,
+  `floodlit-night`, `phone-portrait`, `phone-landscape`.
 
 - [ ] **Profile the slower descent through the trees** -- `clearCameraTrees`
   does more work now the camera passes through canopies. About a minute for

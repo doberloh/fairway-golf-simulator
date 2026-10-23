@@ -9135,3 +9135,82 @@ loads of one build, again only on wind, cloud drift and the map's dash.
 `npm test` (1043 tests) passes after updating `tests/three-namespace.test.mjs`'s
 stand-in for the renderer, which needed `cssSize`; the biome fingerprint is
 unchanged for every biome.
+
+### Checkpoint 5 on other landscapes, tiers, devices and views (runs 16-23)
+
+`frame-ab`, checkpoint 5 against the original build, A B B A, play camera at
+tees 1, 5, 9 unless stated; "frame" is the slower of processor and card,
+averaged over the spots:
+
+| Case | Frame A -> B | Change | Notes |
+| --- | --- | --- | --- |
+| Ultra, Pacific Northwest | 1.89 -> 1.50 ms | **-20.8%** | GPU -16 to -20%, draws -30 to -33%, triangles -36% |
+| High, Redwood | 4.75 -> 3.84 | **-19.1%** | High shares Ultra's cascades and clouds |
+| Medium, Redwood | 2.44 -> 2.27 | -7.0% | processor -26% at tee 1; graphics -7% |
+| Low, Redwood | 1.75 -> 1.71 | -2.1% | processor -27% at tee 1; graphics -2% |
+| iPhone 13 profile (Medium, 844x390 at 3x, CPU x1.3) | 2.04 -> 1.96 | -3.5% | estimated device graphics 97 -> 96 ms at tee 1 |
+| weak laptop profile (Low, 1920x1080, CPU x2.7) | 5.10 -> 4.30 | -15.7% | tees 1 and 5; the processor sets this one |
+| budget Android profile (Low, 800x360 at 2x, CPU x7.1) | 27.4 -> 20.3 | -26.1% | tees 1 and 5; processor-bound |
+| Ultra, overview | 13.63 -> 12.46 GPU | -8.6% (frame -13%) | draws -30% |
+| Ultra, facing the sun | 3.84 -> 2.73 GPU | -29% (frame -55% CPU) | god rays in shot |
+
+**What carries down and what does not.** The processor work (page writes,
+canvas size, the map) helps every tier, and on the device profiles whose
+processor is slow -- the weak laptop and the budget phone -- it is most of
+the frame, which is where -16% and -26% come from. The graphics savings were
+all in passes Low and Medium do not have (cascades, cloud shadows, mist), so
+their card time moved only 2-7% (the ground drawn last, which every tier gets).
+
+**The device estimates are weakest where they matter most.** Scaled card
+time (`tools/devices.mjs`) is the card's TIME_ELAPSED, which includes waits
+for the processor when the page is processor-bound: under 7x throttling the
+original build's tee 1 read 29.9 ms of "card" time against 8.3 for the new
+one, because the old frame kept the card waiting on the page. Read the device
+rows for direction, never as milliseconds a phone would show.
+
+**Pictures.** Facing the sun, changed pixels (8.8% against 1.5-3.5% between
+loads) are all on swaying crowns against the sky and the cloud's outline. The
+overview's 18.5% is the camera, not the drawing: the overview camera is still
+easing into place when the screenshot is taken, so the course sits a few
+pixels apart between any two loads (6.9% between two loads of the same new
+build); trees, shadows and cloud shadows match. A screenshot of the overview
+needs the camera settled first -- left as a limit of `frame-ab --shots`.
+
+### Low and Medium: their one sun map (runs 24-25)
+
+Live variants on checkpoint 5, Redwood PROFILE, play camera, tees 1/5/9.
+Frozen, the single sun shadow map gave back 17-22% of Medium's graphics time
+and 17-26% of Low's; redrawn every other frame, Low -7 to -17% (Medium's
+reading was lost: several samples returned no graphics time -- the timer query
+came back empty -- and the others read flat). Hiding the planting took 58-68%
+of Low's frame: the same story as Ultra, the trees are the frame.
+
+**The sun map every other frame was built, measured and REVERTED** (runs
+26-27): redrawn every other frame while the sun's light had not moved, every
+frame otherwise. Against the original build it read Medium -6.9% and Low
+-2.8% -- the same as without it (-7.0%, -2.1%) -- though draws fell 20%. The
+reason is the frame it leaves: half the frames still draw the whole map, so the
+heavy frame, which is the one a display waits for, is exactly as heavy, and a
+median sits on whichever half is larger. It would lower the average only, at
+the price of shadows of swaying trees near the player updating at half rate.
+Not worth it. (Ultra's staggered cascades differ: there every frame draws two
+maps instead of three, so the heavy frame itself got lighter -- its 95th
+percentile graphics time fell 12-21% against the median's 20-22%.) This is
+why `frame-ab` now also reports each spot's mean and 95th percentile.
+
+### The final measurement (runs 28-29)
+
+**What the processor does now** (run 28, DevTools profile of the final build,
+play camera, 600 frames): the page is restyled once a frame for 0.03-0.06 ms
+(it was 2-3 times for 1.7 ms), and most of the processor's frame is inside
+WebGL's uniform uploads (uniformMatrix4fv about 1 ms) -- the page waiting for
+a card that is busy, which an uncapped, card-bound frame always shows and a
+display-paced one hides.
+
+**Final, against the original build** (run 29, frame-ab, Ultra, Redwood
+PROFILE, play camera, tees 1/5/9, A B B A): graphics -20% / -21% / -22%,
+processor -44% / -55% / -64%, draws -31 to -35%, triangles -25 to -28%. The
+frame (slower of processor and card) averaged over the tees: median 5.08 ->
+4.01 ms (**-21.1%**), mean 5.34 -> 3.99 ms (-25.3%), 95th percentile 9.80 ->
+5.10 ms (-48%) -- the old build's slow frames were the processor's (the map
+redrawn every fifth frame, the page restyled), and those are gone.
