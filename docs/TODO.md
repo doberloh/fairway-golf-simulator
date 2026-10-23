@@ -652,7 +652,10 @@ are in the archived section of the same name.
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 
 **V5 plan** (the owner, 22 October, after audit 6: the leftovers, the upright
-saved course card, then audit 7).
+saved course card, then audit 7). Smoke after it: **38 of 38 green**. Audit 7
+(364 screenshots, no console errors) saw every entry below. Open: the owner's
+call on Round complete's held buttons (the narrow band lets a third golfer's
+row show beside them on a long Skins card).
 
 - [ ] **The empty shelf's Saved course card as wide as the rest on an upright
   phone** (the owner: much skinnier). It took the saved rounds list's class.
