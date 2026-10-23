@@ -661,6 +661,9 @@ saved course card, then audit 7).
 - [ ] **A second golfer's Make main profile and Remove as slanted outlines**
   (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
   390x844.
+- [ ] **Upright, the folded shot line clear of the yards marker** (audit 6:
+  the marker sat over its arrow). 150 px between shots. Built; **seen** at
+  390x844 after a drive (line 12-162 px, marker from 171 px).
 
 **V4 plan** (from audit 5, the owner's decisions of 22 October: a
 launch-monitor shot while paused may play behind the pause list; a Continue

@@ -245,6 +245,12 @@
  /* The XP popup under the map, across the screen, not over the map (audit 2, UI/UX pass V2). */
  #world .xp-gain{left:12px!important;right:12px!important;width:auto!important;top:296px!important;transform:none!important}
  #world[data-mode=play] .shot-controls>.shot-panel{left:12px;top:132px;width:220px}
+ /* Folded, between shots, it holds only who hit what and its arrow: 150 px
+    keeps it clear of the yards marker and the aim line, which both stand in
+    the middle of the screen (audit 6: the marker sat over the arrow). In
+    flight it keeps its width for Skip. */
+ #world[data-mode=play]:not(.in-flight) .shot-controls>.shot-panel{width:150px}
+ #world[data-mode=play]:not(.in-flight) .shot-panel #shotCaption{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  /* The lie and the shot's shape sit straight above the meter, under the ball
     the picture lifts (phone-view.js): above it they crossed the aim line. */
  #world[data-mode=play] .shot-controls .lie-readout{left:12px;bottom:324px}
