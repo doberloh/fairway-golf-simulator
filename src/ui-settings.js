@@ -20,13 +20,34 @@ const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cl
 // The categories, in the mockup's order, as the sheets that hold them. The
 // mockup's Display, Controls, Data & backup and About are Camera & bay, Help &
 // controls, My profile's History and Help's credits here (PLACED).
+// Help & controls left the list on 21 October 2026 (UI/UX pass): it is not a
+// setting, and pressing it swapped to a screen without the list.
 export const SETTINGS_CATEGORIES = [
  ['camera', 'CAMERA & BAY'],
  ['graphics', 'GRAPHICS'],
  ['sound', 'SOUND'],
  ['monitor', 'LAUNCH MONITOR'],
- ['help', 'HELP & CONTROLS'],
 ];
+
+// IN A ROUND, ONE SETTINGS WINDOW (UI/UX pass, 21 October 2026; the owner:
+// floating windows are useful -- a camera is better adjusted while the ball is
+// in view). One window over the course with a tab per kind of setting, where
+// the pause list had a row or a chip for each and the Tools window repeated
+// half of them. Each tab is a panel renderPanel already draws (`time` is the
+// time-of-day popover, moved in; `monitor` opens its full screen, a setup).
+export const SETTINGS_TABS = [
+ ['camera', 'CAMERA'],
+ ['graphics', 'GRAPHICS'],
+ ['time', 'TIME OF DAY'],
+ ['shot', 'SWING METER'],
+ ['putting', 'PUTTING'],
+ ['shotdata', 'SHOT NUMBERS'],
+ ['flight', 'TURF'],
+ ['sound', 'SOUND'],
+ ['monitor', 'LAUNCH MONITOR'],
+];
+// The panels the window holds (every tab but the one that opens a screen).
+export const WINDOW_SETTINGS = new Set(SETTINGS_TABS.map(t => t[0]).filter(t => t !== 'monitor'));
 export const SETTINGS_SCREENS = new Set(['camera', 'graphics', 'sound']);
 
 // The help line for a row: its own note or tip, else what its label says.
@@ -73,8 +94,13 @@ export function buildSettings(root, {current, open, doc = globalThis.document} =
   const fill = () => r.style.setProperty('--fill', ((r.value - r.min) / ((r.max - r.min) || 1) * 100).toFixed(1) + '%');
   r.addEventListener('input', fill); fill();
  }
- root.prepend(cats);
- root.append(groups, help);
+ // The help line sits under the categories, in the left column that travels
+ // with the page (audit 5, 22 October 2026: held at the foot of the rows it
+ // covered the end of the list on every screen; on a phone it follows them).
+ const side = make(doc, 'div', 'st-side');
+ side.append(cats, help);
+ root.prepend(side);
+ root.append(groups);
  root.classList.add('st-root');
  return true;
 }

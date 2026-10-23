@@ -19,7 +19,10 @@ import {weeklyBiome} from './weekly.js';
 // Red for under par, the same in every biome: a score must read the same on
 // every course. Giant Redwood's own accent (#f87171) sits close to it, which is
 // why under-par numbers are only ever written on a panel, never on an accent.
-export const UNDER_PAR = '#ff6b81';
+// GREEN SINCE 21 OCTOBER 2026 (the owner: "green as on the scorecard"), whose
+// to-par cells were green under and red over while the round screen's scores
+// were pink-red under. One colour for under par everywhere now.
+export const UNDER_PAR = '#6ee38c';
 
 // The six colours every palette must name.
 export const PALETTE_KEYS = ['panel', 'a1', 'a2', 'hot', 'soft', 'onHot'];

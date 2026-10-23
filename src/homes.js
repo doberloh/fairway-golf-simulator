@@ -2,6 +2,8 @@ import * as T from 'three';
 import {familyModels,modelExtents,meshAtlas,atlasCount,instanceModels} from './mesh-assets.js';
 import {toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
+import {addViewBlockers} from './vegetation.js';
+import {viewBlocker} from './camera-tours.js';
 // Fairway homes. Sites must be dry, gently sloping rough, clear of tee and green
 // complexes and spaced from one another. Each house draws its own form, roof,
 // porch, garage, fence and garden from the same seeded stream, so a street reads
@@ -91,6 +93,8 @@ export function addHomes(view){
   if(!shared.has(variant))shared.set(variant,new T.MeshToonMaterial({map:meshAtlas(variant),color:'#ffffff'}));
   return shared.get(variant);
  };
- instanceModels(view.group,entries,materialFor);
+ // A house in the way of the camera goes whole, every part of it (UI/UX pass V2).
+ const shape=new Map(),of=h=>{if(!shape.has(h))shape.set(h,viewBlocker(h.x,h.y,h.z,Math.max(h.width,h.depth),h.height*1.6));return shape.get(h);};
+ instanceModels(view.group,entries,materialFor,({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners.map(h=>h?of(h):viewBlocker(0,-1e4,0,0,0))));
 }
 

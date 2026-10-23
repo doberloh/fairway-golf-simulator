@@ -649,6 +649,293 @@ are in the archived section of the same name.
   The plan, with its order and its traps, is in the archive. (was: *Fewer,
   smaller documents*)
 
+## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+**V5 plan** (the owner, 22 October, after audit 6: the leftovers, the upright
+saved course card, then audit 7). Smoke after it: **38 of 38 green**. Audit 7
+(364 screenshots, no console errors) saw every entry below. The owner's call on
+Round complete's held buttons (22 October): **keep the narrow band**, though a
+third golfer's row shows beside it on a long Skins card until scrolled.
+**Graphics profile before the merge (22 October, the owner asked):** the branch
+build against main's (d7ec4e9), alternated group by group on the real GPU (an
+RTX 4090), every group but the software `weak` one (a software run took the PC
+down on 13 October). GPU time per frame unchanged within noise -- the largest
+rise 0.3 ms on the low overview; slightly fewer triangles where the view now
+hides what stands in front of the camera. Three outliers (island GPU, redwood
+and midwest CPU) were re-run twice per build and swing as widely on main.
+The 7 October baseline was not compared or re-saved: it predates most of the
+work since.
+
+- [ ] **The empty shelf's Saved course card as wide as the rest on an upright
+  phone** (the owner: much skinnier). It took the saved rounds list's class.
+  Built; **seen** at 390x844 (measured: picture and words 154 px like the
+  others).
+- [ ] **A second golfer's Make main profile and Remove as slanted outlines**
+  (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
+  390x844.
+- [ ] **Upright, the folded shot line clear of the yards marker** (audit 6:
+  the marker sat over its arrow). 150 px between shots. Built; **seen** at
+  390x844 after a drive (line 12-162 px, marker from 171 px).
+- [ ] **Tool windows open clear of the HUD** (audit 6: the range controls over
+  the shot numbers and tool column). Built; **seen** on the range at
+  1920x1080 (left of the marker, under the golfer card) and 1366x768, the
+  round's Tools window and a sideways phone measured clear.
+- [ ] **The results' button band only as wide as the buttons, in the
+  landscape's colour** (seen on a Sudden death card: a stray dark bar across
+  the card). Built; **seen** on the Sudden death card. The goal card itself
+  (Sudden death to its end) **seen** in the new layout.
+- [ ] **On an upright phone a putt and a pitch keep the ball clear** (audit 6
+  could not check): **seen** -- ball 374 and 466 px, the lie row from 492. The
+  studio's map stays whole after the big map (303 px before and after).
+- [ ] **The XP popup hidden under an open sheet** (seen on the Sudden death
+  card: its lines ghosted behind the words). Built; **seen** on that card.
+
+**V4 plan** (from audit 5, the owner's decisions of 22 October: a
+launch-monitor shot while paused may play behind the pause list; a Continue
+row after Save and leave; Esc on a step sheet goes back one step). One commit
+per change; audit 6 looks at each. **Smoke after the V4 changes (22 October):
+37 of 38 journeys green; `phone-portrait` failed once** -- a tap on the course
+did not move the aim on a fresh Endless hole, the picture taken at the hole's
+arrival (no aim line yet) -- and passed 3 of 3 run on its own. Looked into after audit 6: 6 more runs
+alone all passed (9 of 9), and a probe of the arrival found the tap point on
+open course from the first frame (`view.pick` hits ground, no overlay, no
+sheet). Not explained; it may be timing under the full run's load. If it
+comes back, note which frame the tap lands on.
+
+- [ ] **Main menu during a flight lands the ball first** (audit 5: the round
+  froze, the menu never came). Built; probed in the capture build: Esc and
+  Main menu 1.5 s into a drive landed it 216 m out and asked to save; audit
+  6's journey the same, with no page error.
+- [ ] **The small map stays whole after the big map** (audit 5: the hole in
+  the top half, the rest dark, since audit 2). Built; probed in the capture
+  build (286 px tall before and after M, and with its pixels forced to 1 px);
+  **pictured whole** in audit 6 after the big map. Not seen in the studio.
+- [ ] **The file buttons fit an upright phone** (audit 5: the words ran out
+  of the boxes). Built; **seen** at 390x844 in the capture build (Saved
+  courses' Import & export stacked, the saved rounds list's two rows).
+- [ ] **The range's Save a session note names R** (audit 5: it said Tab,
+  which shows the shot numbers). Built; PLAYING already said R.
+- [ ] **Help's Made to travel names Fairway.html** (audit 5: it said
+  index.html, the build's name, not the file in the download). Built; **seen**
+  in audit 6 at three sizes.
+- [ ] **Esc goes back one step on a step sheet** (the owner's decision after
+  audit 5; the top-right Back the same). Built, tested in Node, probed in the
+  capture build: Format, Golfers, The week, Game, closed; Challenges' Rules
+  to Golfers by the Back button. Smoke's close helpers press until closed.
+- [ ] **The monitor screen opened from Settings goes back to Settings on Esc**
+  (audit 5). Built; probed in the capture build: the menu's Settings and the
+  round's Settings window (on the tab it was on); straight from the main menu
+  Esc still closes it.
+- [ ] **Continue after Save and leave** (the owner's decision after audit 5).
+  Built; probed in the capture build: after Save and leave the menu had
+  Continue, focused, and it put the ball back where it lay (pictured).
+- [ ] **A Help topic comes into view on a phone** (audit 5: its text began
+  below the screen). Built; **seen** at 844x390 in the capture build.
+- [ ] **My profile's tabs head the page on a phone** (audit 5: below the
+  first screen). Built; **seen** at 844x390 (History brought up) and 390x844.
+- [ ] **Settings' help line under the categories** (audit 5: held at the
+  foot it covered the last rows -- at 1920x1080 too, found while fixing it).
+  Built; **seen** at 1920x1080, 1366x768 and 844x390: no row covered
+  (measured). Not seen upright.
+- [ ] **The step bar and settings categories wrap on an upright phone**
+  (audit 5: 5 Rules and LAUNCH MONITOR cut off). Built; **seen** at 390x844,
+  every chip inside the screen (measured).
+- [ ] **Camera & bay in one column on an upright phone** (found fixing the
+  wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
+- [ ] **The challenge of the week's banner stacks on an upright phone**
+  (audit 5: three columns of five short lines). Built; **seen** at 390x844.
+- [ ] **On a phone the yards marker draws over the folded shot line** (audit
+  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
+  after a drive.
+- [ ] **The meter's Out of reach words follow the aim** (found looking at the
+  marker: after a drive the sand wedge at 47 yd said Out of reach, left over
+  from the old aim). Built; **seen** in the capture build after the same drive.
+- [ ] **My profile's golfer chips on an upright phone** (found fixing the
+  tabs: no room in the header band, not shown). Built; **seen** at 390x844.
+- [ ] **My profile's backup and bag buttons as slanted rows** (audit 5: old
+  grey buttons; History's handicap paragraph a note). Built; **seen** at
+  1920x1080.
+- [ ] **Save a course's Open course studio as a slanted row** (audit 5).
+  Built; **seen** at 1920x1080.
+- [ ] **A challenge's results laid out like Round complete** (audit 5).
+  Built; **seen** in the capture build after closest to the pin for two, and
+  in audit 6's journey. Not seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
+- [ ] **Round complete's share note at a readable size** (audit 5: small print
+  over the card buttons; 13 px to 17 px). Built; **seen** after a stroke round.
+- [ ] **Round complete's buttons held in reach** (audit 5: below the screen
+  with three in Skins). Built; **seen** after a Skins round for three (at the
+  foot on arrival, in place at the end) and a stroke round. Not seen on a
+  phone.
+- [ ] **The range's Golfers step says WHO'S PLAYING · 1 TO 4** (audit 5: it
+  said WHO IS HITTING, the only place). Built; **seen** in the capture build.
+- [ ] **New in studio and Import a code share one shelf cell** (audit 5:
+  Import a code alone on a row with three courses). Built; **seen** with three
+  courses and empty (measured); the closer icon spacing not yet pictured.
+- [ ] **A different sheet opens at its top** (audit 6: after a scrolled Help
+  page, My profile opened 328 px down). Built; probed at 844x390 (tabs at the
+  top again).
+
+**V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
+keeps the trees the play view cleared until it moves; no graphics profile until
+asked; stay on this branch; the launch monitor's supported list in one box; the
+pause list's Settings row offset; seats centred on their slant; no "Nothing hit
+yet" box anywhere; on a phone nothing covers the ball or the aim line). One
+commit per category.
+
+- [ ] **V3 category 1, phones: built, seen in the capture build.** Seen at
+  844x390 and 390x844: the ball above the meter and every row (measured and
+  pictured), no empty shot box, the sideways XP popup under the wind, the
+  sheet's foot on a solid band. Smoke: hud-reachable, menu-panels on both
+  phones, endless-round pass. Not seen: a putt or a pitch on a phone with the
+  lift (the green camera frames the ball differently), a real phone.
+- [ ] **V3 category 2, seats and the pause list: built, seen in the capture
+  build.** Seen: seats centred on their lean in Play, Challenges, the range and
+  Golfers & rules mid-round; the six pause rows the same size and evenly
+  stepped (measured). Not seen: a seat with the launch-monitor pickers under
+  it (they lean with it too), phones.
+- [ ] **V3 category 3, free flight keeps the cleared trees until it moves:
+  built, probed in the capture build** (2 hidden at a tee, 2 after V, 0 after
+  flying). Not seen by a person flying away from a tee.
+- [ ] **V3 category 4, the launch monitor's list in one box: built, seen in
+  the capture build.** Seen: rēlā's nine monitors in one box under the Arm
+  switch, no gap. Smoke: monitor, monitor-phone pass. Not seen on a phone
+  (the monitor screen opens at the top there; the box is further down).
+- [ ] **V3 category 5, polish from audit 3: built, seen in the capture
+  build.** Seen: step sheets from the top, the friend step's three rows, the
+  studio without its opening sentence, Reset camera as a row. Smoke:
+  menu-panels, studio, skins, friend-challenge pass. Not seen: Round
+  complete's rows at full width (audit 4 looks).
+- [ ] **Audit 4 found the default aim 5 m in front of the tee** on an uphill
+  Endless hole into a 10 mph wind (the V2 "never out of reach" rule fell to its
+  floor when the ball model answered nothing). Fixed in code (longestReach
+  returns null; under 40% of the carry is ignored), tested in Node. Probed
+  afterwards on three random Endless first holes: the driver's default aim
+  254, 259 and 245 yd, none out of reach, none near the tee. **The failing
+  hole itself was not met again** (Endless holes are random): still check an
+  uphill hole into the wind.
+- [ ] **Play's saved rounds button shows with none saved** (the owner, 21
+  October: with no saved rounds the button hid, and with it Import a round from
+  a file). Built, tested and **seen** in a fresh browser (21 October): SAVED
+  ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
+  from a file. That list's Export and Import buttons are now slanted rows too
+  (seen in a fresh browser, 21 October: Import lit, Export dimmed with no round
+  to export). While the list is open the heading reads SAVED ROUNDS (seen
+  in a fresh browser, 21 October).
+- [ ] **Saved courses: the file buttons as slanted rows, the intro one line**
+  (audit 4's leftovers): built, tested and **seen** in the capture build
+  (21 October, once the card was free): the intro one line over the tabs, the
+  two file buttons as slanted rows in the accent.
+
+**V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
+game types with the week's page back; Challenges a row of their own with a
+Golfers step and rules the same for everyone; shot tiles on the left by
+default; the view cleared of rocks and the rest, not only trees). One commit
+per category.
+
+- [ ] **V2 category 1, Play's game types: built, seen in the capture build.**
+  Seen: the six cards, The week (picture, tiles, earlier weeks), the saved
+  course's shelf after two codes imported on the step itself, the empty shelf
+  with its import box, Surprise me's Rules with its picture and Roll another
+  course, Endless's Landscape. Not seen: Roll another course pressed, a
+  friend's code pasted into the saved step's box, Surprise me teed off from
+  Play by a person, the cards on a phone. Audit 3 found The week's 430 px
+  picture filling a landscape phone, the name under the buttons: a 170 px strip
+  on phones now (seen at 844x390).
+- [ ] **V2 category 2, Challenges' own row: built, seen in the capture build.**
+  Seen: the menu with six rows, the three steps, a head-to-head's Golfers
+  saying two to four, the fixed rules with Start, a challenge started from
+  Rules and its pause list without Golfers & rules. Smoke: challenge,
+  challenge-week, challenge-more pass. Not seen: the steps on a phone, a
+  head-to-head played by two from the steps (the journey uses `lab.challenge`).
+- [ ] **V2 category 3, the round screen: built, seen in the capture build.**
+  Seen: the shot tiles at the left edge at 1920x1080 and 1366x768, the ?
+  list below the hole slab, free flight's pill and Jump to green each in one
+  row, the challenge bar under the hole slab with no turn plate; the default
+  aim from the rough probed at four places, none out of reach. Smoke:
+  hud-reachable, endless-round, challenge, look pass. Not seen by a person:
+  dragging the tiles from their new place and double-clicking them back; a
+  short uphill par 4 off the tee. The audit-2 note that free flight's header
+  was cut off by the screen's top was wrong -- the contact sheet's file label
+  covered it -- but its yardage and list did hang below their panels.
+- [ ] **V2 category 4, menus tidied: built, seen in the capture build.**
+  Seen: Import & export in two columns, the launch monitor's connectors under
+  their heading, the studio's Saved courses row and Show all descriptions in
+  the foot, a window's ? Explain before its close, the scorecard between holes
+  across the sheet with Download in the countdown's row, Endless's THE RUN.
+  Smoke: menu-panels, studio, monitor, skins, mixed-group pass. Not seen:
+  ? Explain pressed, the round-complete card at the new width (audit 3 looks),
+  any of it on a phone. Left: the launch monitor's left foot still starts
+  level with the status column's end, a gap under the arm row.
+- [ ] **V2 category 5, cameras and phones: built, seen in the capture build.**
+  Seen: boulders hidden with the camera behind them (probe), the upright
+  phone without the empty shot panel, Skip during a flight, the XP popup
+  under the map, and the upright menu that had the old Endless and Course of
+  the week rows back (fixed). Smoke: no-late-shaders, ball-light-shaders,
+  menu-panels on both phones, hud-reachable, floodlit-night,
+  ball-light-hole-out, boot, range pass; fingerprint unchanged. **Not run:
+  `npm run profile`** -- vegetation.js now tests every boulder, log, house and
+  prop when the camera moves (about ten minutes on the graphics card; ask
+  first). Not seen: a house or pumpkin cleared in play, the menu camera
+  clearing a fir (it needs the right showcase hole).
+
+The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
+phases, run on one branch with a commit each; the owner's decisions: a shorter
+pause list, the course of the week as the first-launch default, floating
+windows kept for settings better adjusted while seeing the course, under par
+green everywhere, and every mode but the range under one Play.
+
+- [ ] **Phase 1, the first ten minutes: built, seen in a fresh browser.**
+  Play opens on the course of the week and Tee off starts it (checked: a fresh
+  browser pressed straight through to a round); the swing strip over the meter
+  and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
+  tool labels' new names read in a real round by a person, the main menu's
+  hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- [ ] **Phase 6, cameras and phones: built, seen in the capture build.**
+  Seen: both blocked tees clear, the overview without clouds, the aim ring
+  whole, the phone settings rows below their tabs, the upright wind under the
+  hole. Smoke: no-late-shaders, ball-light-shaders, ball-light-hole-out,
+  floodlit-night, challenge, look, hud-reachable, menu-panels (both phones),
+  endless-round, skins pass; fingerprint unchanged. Not run: `npm run profile`
+  (renderer.js and vegetation.js changed: the per-frame tree check and the
+  clouds' visibility; ask before running it). Not seen by a person: trees
+  vanishing as the camera turns -- watch for crowns popping in and out beside
+  the tee.
+- [ ] **Phase 5, old pieces to 1.0: built, seen in the capture build.** Seen:
+  Saved courses empty with its two cards, Help's essentials, Report a problem
+  with the toast over the sheet, credits rows, the launch monitor's switch and
+  rows, profile stats and achievements. Smoke: menu-panels, studio, monitor,
+  profile, no-swallowed-errors pass. Not seen: the studio slab's new mark and
+  footer, free flight's Jump to green with its value, the phone XP popup and
+  Skip. (The launch monitor's orphan connector heading is gone: V3 category 4
+  put rēlā's monitors in one box.)
+- [ ] **Phase 4, one Play for every mode: built, seen in the capture build.**
+  Seen: the menu with five rows, Play's seven cards, Endless's Landscape step,
+  a friend's The challenge step, the week locking the format, Challenges with
+  its keys footer and the list on the chosen challenge's tab. Smoke:
+  endless-round, weekly, friend-challenge, challenge, challenge-week,
+  challenge-more, skins, level-up, menu-panels (three sizes), hud-reachable,
+  monitor-phone, boot, no-late-shaders, ball-light-shaders,
+  ball-light-hole-out, profile, bag, relief, mixed-group pass. Not seen by a
+  person: a friend's code read on the new step end to end (the smoke journey
+  does it), Play on a phone with seven cards, Endless's start button now on
+  the last step.
+- [ ] **Phase 3, pause and settings: built, seen in the capture build.** Seen:
+  the six-row pause list, the Settings window and every tab (the time of day
+  needed a fix: the clock closed itself), Tools by T, Golfers & rules, the range
+  arriving with its controls closed. Smoke: menu-panels (all three sizes),
+  endless-round, floodlit-night, sound, relief, bag, profile, mixed-group,
+  range, range-greens, text-size, no-swallowed-errors, hud-reachable, monitor,
+  monitor-phone, challenge, challenge-week, challenge-more, look, weekly,
+  surprise-round, studio pass. Not seen by a person: whether the window's tabs
+  are where a player looks for each setting; the Settings window on a phone.
+- [ ] **Phase 2, end of hole and round: built, seen in two played rounds.**
+  Seen: a stroke-play tie (headline, card, TIED rows, one row of buttons,
+  readable share buttons) and a no-skins skins round; under par green on the
+  card. Not seen: match play's Round complete, a scramble's, the grouped XP
+  popup with real golfers holing out close together (the audit places balls at
+  the cup), the popup's new place in a real round, a level-up crossing inside
+  the grouped popup.
+
 ## Release 0.9.1 (20 October)
 
 - [ ] **Owner: play 0.9.1, which went out unplayed.** Released from the merge
@@ -726,6 +1013,12 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+- [x] **The round matrix plays the course of the week and a friend's challenge**
+  (the owner asked for every mode in the simulated rounds): 36 weekly rounds of
+  18 holes and 24 friend rounds, checked hole by hole (tests/round-matrix).
 
 ## Release 0.9.1 (20 October)
 

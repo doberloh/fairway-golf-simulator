@@ -15,7 +15,16 @@ const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cl
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
 // Which step a sheet should open on, kept inside its bounds. Pure.
+// What each step chip shows when step `at` is open: on, done (ticked), missing
+// (passed without what it needs: numbered, marked) or todo. Pure.
+export const stepMarks = (steps, at) => steps.map((s, j) => j === at ? 'on' : j > at ? 'todo' : (s.done ? s.done() : true) ? 'done' : 'missing');
 export const clampStep = (i, n) => Math.max(0, Math.min(n - 1, Number.isInteger(i) ? i : 0));
+// ESC GOES BACK ONE STEP (the owner, 22 October 2026, after audit 5): the foot
+// says "Esc Back" beside a Back button, and Esc closed the whole sheet,
+// throwing away the golfers and format just picked. Where Esc takes step `at`:
+// the one before it, or null on the first step, where it closes the sheet as
+// before. Pure.
+export const escapeStep = at => at > 0 ? at - 1 : null;
 
 // `steps` [{label, page}] -- page an element holding that step's content.
 // `finish` the main button for the last step (moved into the foot), or null.
@@ -23,7 +32,11 @@ export const clampStep = (i, n) => Math.max(0, Math.min(n - 1, Number.isInteger(
 // a redrawn sheet opens where it was).
 // `finishAlways`: the main button shows on every step (a setup with nothing
 // that must be chosen, like Endless), Next beside it until the last.
-export function stepSheet(root, {steps, index = 0, finish = null, finishAlways = false, hints = [], onStep, doc = globalThis.document} = {}) {
+// A step's `done()` says whether it has what it needs: a step passed without
+// it is not ticked (UI/UX pass, 21 October 2026: Play ticked COURSE with no
+// course chosen, and Tee off then did nothing). `alert` is an element shown in
+// the foot beside the buttons -- the screen's error line, where it is seen.
+export function stepSheet(root, {steps, index = 0, finish = null, finishAlways = false, hints = [], onStep, alert = null, doc = globalThis.document} = {}) {
  const sx = make(doc, 'div', 'sx');
  const bar = make(doc, 'nav', 'sx-steps');
  bar.setAttribute('aria-label', 'Steps');
@@ -35,7 +48,7 @@ export function stepSheet(root, {steps, index = 0, finish = null, finishAlways =
  back.type = next.type = 'button';
  btns.append(back, next);
  if (finish) btns.append(finish);
- foot.append(keys, btns);
+ if (alert) { alert.classList.add('sx-alert'); foot.append(keys, alert, btns); } else foot.append(keys, btns);
  const chips = steps.map((s, i) => {
   const b = make(doc, 'button', 'sx-step', `<span class="sx-n">${i + 1}</span>${esc(s.label.toUpperCase())}`);
   b.type = 'button'; b.setAttribute('aria-label', s.label);
@@ -49,7 +62,8 @@ export function stepSheet(root, {steps, index = 0, finish = null, finishAlways =
  function go(i) {
   i = clampStep(i, steps.length);
   at = i;
-  steps.forEach((s, j) => { s.page.hidden = j !== i; chips[j].classList.toggle('on', j === i); chips[j].classList.toggle('done', j < i); chips[j].setAttribute('aria-current', j === i ? 'step' : 'false'); chips[j].querySelector('.sx-n').textContent = j < i ? '✓' : String(j + 1); });
+  const marks = stepMarks(steps, i);
+  steps.forEach((s, j) => { const ok = marks[j] === 'done'; s.page.hidden = j !== i; chips[j].classList.toggle('on', j === i); chips[j].classList.toggle('done', ok); chips[j].classList.toggle('missing', j < i && !ok); chips[j].setAttribute('aria-current', j === i ? 'step' : 'false'); chips[j].querySelector('.sx-n').textContent = ok ? '✓' : String(j + 1); });
   back.hidden = i === 0;
   const last = i === steps.length - 1;
   next.hidden = last;
@@ -64,5 +78,9 @@ export function stepSheet(root, {steps, index = 0, finish = null, finishAlways =
  root.append(sx);
  root.classList.add('sx-root');
  go(index);
- return {go, get index() { return at; }};
+ // The sheet hangs on its root so the one Escape handler (main.js) can find
+ // whichever sheet is open without each screen wiring its own.
+ const api = {go, repaint: () => go(at), get index() { return at; }, back() { const i = escapeStep(at); if (i == null) return false; go(i); return true; }};
+ root.stepSheet = api;
+ return api;
 }

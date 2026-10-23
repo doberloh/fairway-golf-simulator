@@ -2812,6 +2812,20 @@ Open-source connector projects inspected for integration paths:
 | Rapsodo MLM2PRO | [springbok/MLM2PRO-GSPro-Connector](https://github.com/springbok/MLM2PRO-GSPro-Connector) | Accept its Open Connect output; no bundled device driver. |
 | OpenSkyPlus | [OpenSkyPlus/OpenSkyPlus](https://github.com/OpenSkyPlus/OpenSkyPlus) | Can receive an existing plugin's Open Connect output. OSP itself explicitly supports a limited set of monitors/apps; it is not universal hardware access. |
 
+**rēlā's supported monitors** (read 21 October 2026, for the Launch monitor
+screen's list, the owner's request). [rēlā's FAQ](https://docs.rela.golf/rela/faq/),
+its Device Requirements table, names SkyTrak, GC2, FlightScope Xi/X2, GolfJoy,
+Mevo+/Gen2, Square, Nova, Garmin R10, Full Swing KIT and Other; some need the
+vendor's own app on the same PC (FlightScope Xi/X2, GolfJoy). Taken: the names
+(`RELA_MONITORS`, ui-monitor-setup.js), with the makers' names added where
+they are certain (Foresight GC2, FlightScope Mevo+); "Other" left out because
+rēlā calls it "not a promise that every launch monitor will work". Read and
+not used: [the docs' front page](https://docs.rela.golf/) and
+[user guide](https://docs.rela.golf/rela/user-guide/), which have no list
+(the guide names three putting devices -- LagKing, Right Edge Putt Tracker,
+ROXOR JPutt Tracker -- and FSS needing Split Packets). None of these has been
+tried with Fairway.
+
 No physical launch monitor was available. Automated testing establishes framing, parsing, relay, readiness, origin checks, and acknowledgment behavior only. Actual device compatibility, licensing, connector installation, and firmware behavior must be checked on hardware. No claim of official vendor certification is made.
 
 ## Landscape and routing update
@@ -7808,6 +7822,37 @@ ground and into 2% rises and falls.
 
 ### The target marker
 
+**How far free flight goes before the cleared trees come back** (UI/UX pass
+V3): two metres, PLACED -- about a second of slow flight, enough that the
+first frame is the play view and the first movement shows the course whole.
+
+**How far a phone's picture is lifted** (UI/UX pass V3). No outside source;
+PLACED from one course's measured layout: held sideways (844x390) the ball sat
+at 79% of the height and the meter began at 69%, so **20%** lifts it clear
+(ball at 59%); upright (390x844) the ball at 79%, and with the lie and shape
+rows under the ball the first control begins at 58%, so **24%** (ball at 55%).
+A shot whose camera frames the ball differently (a putt, a long pitch) is not
+measured.
+
+**What the camera clears besides trees** (UI/UX pass V2, category 5). No
+outside source; PLACED: each object is tested as a crown would be -- a boulder
+its widest axis and its height, a log three times as long as it is thick, a
+house its footprint's longer side and 1.6 times its wall height (the roof), a
+pumpkin or headstone 1.2 times as wide as it is tall. Probed: on a mountain
+course 462 boulders, none hidden from its tees; with the camera 8 m behind
+each of five boulders (1.2 to 5 m tall), each was hidden, and none once the
+camera moved 40 m aside.
+
+**Where a turn starts aiming, when the club cannot get there** (UI/UX pass V2,
+21 October 2026). No outside source. When a full swing falls short of the
+default aim, the aim is pulled back along the fairway to the longest distance
+that fits (ten halvings, about 0.1% of the distance) and then to **98%** of
+it -- PLACED, so the marker starts just inside the full line rather than on
+it. When the ball model answers nothing for any distance, or less than **40%**
+of the club's carry (PLACED; audit 4 found an aim 5 m from the tee), the aim
+stays on the fairway at the stock carry and the meter says out of reach. Probed on one course: from the rough the driver's aim came back from 250
+to 220-224 yd.
+
 The blue mark on the bar (Phase 2, 14 October 2026) is the stop that lands the
 ball in the aim circle. It is `playsLike` -- the circle's distance scaled by how
 much shorter or longer a full swing of this club and shape reaches the circle's
@@ -8108,6 +8153,16 @@ regulation. Flourishes: confetti 120-140 pieces, fireworks 70 sparks a burst,
 No outside source. Every number here is PLACED -- set by Claude for the owner's
 plan of 16 October 2026 (a local report, `docs/reports/CHALLENGES_PLAN.md`),
 not taken from any published figure -- and the owner may overrule any of it.
+
+**The rules every challenge plays** (UI/UX pass V2, 21 October 2026;
+challenges.js `CHALLENGE_RULES`). The owner asked that "all users have the
+same experience"; which rules was left to the build, so it is PLACED: stroke
+play, the blue tees for every golfer, every putt holed, out of bounds by the
+Rules of Golf (stroke and distance) and the lie penalty on -- Round's own
+defaults, taken because they are what a new copy of Fairway plays. Before
+this a challenge took the player's saved house rules (out of bounds, lie
+penalty) and the tee of the round before it, so two players' medals could
+be different tests.
 
 **The pay** (progression.js `CHALLENGE_PAY`). Set against a round: an
 18-hole round earns roughly 450-700 XP in about an hour, a short challenge
@@ -8619,9 +8674,13 @@ The last column is not tested: a highlighted box is a gradient from the
 accent `a1` to the darker `a2`, and text sits at the light end in the approved
 mockups. Giant Redwood's 2.3 there fails even the large-text figure, so a
 screen must not put text at the dark end (TODO, *The 1.0 interface*).
-Separately, Giant Redwood's and Haunted Hollow's accent is almost the shared
+Separately, Giant Redwood's and Haunted Hollow's accent was almost the shared
 under-par red (contrast 1.0 between them), so an under-par score is written
-only on a panel.
+only on a panel. **Since 21 October 2026 under par is green** (`#6ee38c`, the
+owner's call, to match the scorecard): against each biome's accent it measures
+1.04 (Autumn) to 1.72 (Giant Redwood) -- every accent is about as bright -- so
+the same rule holds, and it passes the panel check (3, large text) in every
+biome (tests/ui-palette.test.mjs).
 
 **The canvas floor for the Text size: 1024 design pixels, PLACED** (125% on a
 16:9 canvas). At 1024 x 576 the 16:9 grid's columns are 55.8 px; at 1024 x 768
@@ -8812,3 +8871,16 @@ rules shown, not forced; the same version or no challenge.
 1.0.0 from this repository's first commit until it became 0.9.0 (b7131e2), so
 the releases before 0.9 all called themselves the same thing; the commit
 tells releases apart, and every copy of one download shares it.
+
+## Trees cleared from the play camera's view (21 October 2026, UI/UX pass)
+
+PLACED, not measured against any source: a tree is hidden from the play
+camera when it is within 30 m along the line to the ball (or to the point
+looked at) and either within its crown radius x 1.2 + 1 m of that line, or --
+when its crown would span a fifth of the picture (crown radius x 1.5 over the
+distance > 0.2) -- within the picture's width, tan 42 degrees = 0.9 of the
+distance (a 16:9 frame at 53 degrees vertical is about 85 degrees across). The
+tree must reach the line: its top (height x 1.1) above it and its foot less
+than 2 m under. Found on the audit's Midwest seed AUDIT hole 1 (an oak of
+radius 4.8 m 22 m out, 26 degrees left of the look) and the Challenge Course's
+third. Drawing only; the ball still meets the trunk.

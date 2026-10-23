@@ -4,6 +4,8 @@ import {Round, FORMATS} from '../src/game.js';
 import {awardedPutts} from '../src/putting.js';
 import {skins, decidedHoles, skinsWinner} from '../src/skins.js';
 import {goalStatus} from '../src/round-goals.js';
+import {recordWeekly} from '../src/weekly.js';
+import {compareCards, compareText} from '../src/rival.js';
 
 // EVERY FORMAT, EVERY GROUP. The other round suites each pin one behaviour with
 // a hand-written card; this one plays whole rounds of every format with every
@@ -289,7 +291,7 @@ function expectedSkins(golfers, decided) {
 function playRound(cfg, seed) {
  const rand = random(seed);
  const players = cfg.teams.map((team, i) => ({name: NAMES[i], team}));
- let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, goal: cfg.goal || ''});
+ let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, goal: cfg.goal || '', weekly: cfg.weekly || '', rival: cfg.rival || ''});
  const ref = scorer(r);
  const why = `${cfg.mode}${cfg.endless ? ' (endless)' : ''}, ${cfg.teams.join('')}, ${cfg.holes} holes, ${cfg.putting} putting, seed ${seed}`;
  const holes = cfg.endless ? cfg.holes + 2 : cfg.holes;
@@ -298,6 +300,7 @@ function playRound(cfg, seed) {
   if (cfg.goal) r.pars[r.hole] = 4;
   r = playHole(r, ref, rand, cfg, why);
   if (cfg.goal) checkGoal(r, why, h);
+  cfg.onHole?.(r, h, why);
   if (r.mode === 'skins') {
    const got = skins(r.cards, decidedHoles(r)).won;
    assert.deepEqual(got, expectedSkins(ref.golfers, decidedHoles(r)), `${why}: skins after hole ${h + 1}`);
@@ -446,4 +449,71 @@ test('rounds with a goal: sudden death and bogey-free nine, every group', () => 
  assert.throws(() => new Round({players: p, mode: 'skins', endless: true, goal: 'suddendeath'}), /stroke play|two to four/);
  assert.throws(() => new Round({players: p, goal: 'nonsense'}), /goal/);
  assert.equal(new Round({players: p}).goal, '');
+});
+
+// THE COURSE OF THE WEEK AND A FRIEND'S CHALLENGE (UI/UX pass V3: the owner
+// asked for the simulated rounds to cover every mode, and these two were only
+// tested a piece at a time). Both are stroke play as main.js starts them
+// (startWeeklyRound, startRivalRound); what is theirs is checked here: the
+// week's round is eighteen holes that keep their week through saves and keep
+// each golfer's best for the week; a friend's challenge compares every
+// golfer's card with the friend's, hole by hole, against a count of its own.
+const total = card => cent(card.filter(Number.isFinite).reduce((a, b) => a + b, 0));
+
+test('the course of the week: eighteen holes of stroke play for every group, and each golfer\'s best for the week', () => {
+ const key = 'WEEK-2026-43@g1';
+ let played = 0;
+ for (let n = 1; n <= 4; n++) for (const putting of ['holeout', 'dartboard', 'decimal']) {
+  const profs = Array.from({length: n}, () => ({}));
+  for (const seed of SEEDS) {
+   const r = playRound({mode: 'stroke', teams: Array(n).fill('A'), endless: false, putting, holes: 18, changes: false, outOfBounds: 'stroke', weekly: key}, seed);
+   const why = `week, ${n} golfers, ${putting}, seed ${seed}`;
+   assert.equal(r.holes, 18, `${why}: eighteen holes`);
+   assert.equal(r.weekly, key, `${why}: the round remembers its week`);
+   assert.equal(Round.restore(JSON.parse(JSON.stringify(r))).weekly, key, `${why}: through a save`);
+   r.cards.forEach((card, i) => {
+    assert.equal(card.filter(Number.isFinite).length, 18, `${why}: golfer ${i + 1} has every hole`);
+    const score = total(card), was = profs[i].weekly?.[key];
+    const got = recordWeekly(profs[i], key, score);
+    // The first finish counts; after that only a better round replaces the best.
+    assert.equal(got.first, was === undefined, `${why}: first finish`);
+    assert.equal(got.better, was !== undefined && score < was, `${why}: a better round`);
+    assert.equal(profs[i].weekly[key], was === undefined ? score : Math.min(was, score), `${why}: the week's best`);
+   });
+   played++;
+  }
+ }
+ assert.equal(played, 4 * 3 * SEEDS.length);
+});
+
+test('a friend\'s challenge: every group against the friend\'s card, compared hole by hole', () => {
+ let played = 0;
+ for (const holes of [9, 18]) for (const seed of SEEDS) {
+  // The friend's card: one golfer's finished round on the same holes.
+  const friend = playRound({mode: 'stroke', teams: ['A'], endless: false, putting: 'holeout', holes, changes: false, outOfBounds: 'stroke'}, 100 + seed).cards[0];
+  for (let n = 1; n <= 4; n++) {
+   const cfg = {mode: 'stroke', teams: Array(n).fill('A'), endless: false, putting: 'holeout', holes, changes: false, outOfBounds: 'stroke', rival: 'fsimfriend',
+    // After every hole each golfer's line against the friend is what the cards say.
+    onHole: (r, h, why) => r.cards.forEach((card, i) => {
+     const cmp = compareCards(friend, card);
+     const both = friend.map((t, k) => [t, card[k]]).filter(([t, m]) => Number.isFinite(t) && Number.isFinite(m));
+     assert.equal(cmp.played, both.length, `${why}: golfer ${i + 1} holes compared after hole ${h + 1}`);
+     assert.equal(cmp.lead, cent(both.reduce((a, [t, m]) => a + t - m, 0)), `${why}: golfer ${i + 1}'s lead after hole ${h + 1}`);
+     assert.equal(cmp.won + cmp.lost + cmp.halved, both.length, `${why}: every compared hole won, lost or halved`);
+    })};
+   const r = playRound(cfg, seed);
+   assert.equal(r.rival, 'fsimfriend');
+   assert.equal(Round.restore(JSON.parse(JSON.stringify(r))).rival, 'fsimfriend', 'a friend’s challenge rides through a save');
+   r.cards.forEach((card, i) => {
+    const cmp = compareCards(friend, card), lead = cent(total(friend) - total(card));
+    assert.ok(cmp.finished, `${holes} holes, ${n} golfers, seed ${seed}: golfer ${i + 1}'s comparison is final`);
+    assert.equal(cmp.lead, lead);
+    // The line the scorecard prints says who won and by how much.
+    const line = compareText(cmp, 'Sam');
+    assert.match(line, lead > 0 ? /^You beat Sam by / : lead < 0 ? /^Sam wins by / : /^You tied with Sam$/);
+   });
+   played++;
+  }
+ }
+ assert.equal(played, 2 * SEEDS.length * 4);
 });

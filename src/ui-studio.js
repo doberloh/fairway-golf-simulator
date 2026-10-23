@@ -57,7 +57,8 @@ const STUDIO_TOOLS = [
 export function studioHud(world, doc = globalThis.document) {
  let slab = doc.getElementById('studioSlab');
  if (!slab) {
-  slab = make(doc, 'div', 'sd-slab', '<b>S</b><span><strong>COURSE STUDIO</strong><small></small></span>');
+  // A mountain, not a letter: an italic S read as a 5 (UI/UX pass, 21 October 2026).
+  slab = make(doc, 'div', 'sd-slab', '<b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20 9 8l4 6 3-4 6 10z" fill="currentColor"/></svg></b><span><strong>COURSE STUDIO</strong><small></small></span>');
   slab.id = 'studioSlab';
   const chip = make(doc, 'button', 'sd-chip', '<span class="sd-chip-n"></span><span class="sd-chip-go">REGENERATE</span>');
   chip.id = 'studioChip'; chip.type = 'button'; chip.hidden = true;
@@ -115,10 +116,23 @@ export function buildStudioSheet(root, {changes, facts, setup, landscapes = [], 
  const row = label => { const r = make(doc, 'div', 'sd-row', `<span>${label}</span><b></b>`); side.append(r); return r.querySelector('b'); };
  side.append(state);
  const holes = row('HOLES'), yards = row('LENGTH'), seed = row('SEED');
+ // SAVED COURSES and SHOW ALL DESCRIPTIONS were two chips over the settings,
+ // tacked on (audits 1 and 2): the first is a row of this column now, the
+ // second a key in the foot.
+ const lib = root.querySelector('#openLibrary'), tips = root.querySelector('#toggleTips');
+ lib?.closest('.split')?.classList.add('sx-emptied');
+ // "Choose the landscape you want, then grow it" sat as small prose over the
+ // settings (audit 3); NOT GROWN YET and Grow this landscape already say it.
+ const intro = [...root.querySelectorAll('p')].find(p => /Nothing (is built|rebuilds)/.test(p.textContent));
+ intro?.classList.add('sx-emptied');
+ if (lib) { lib.className = 'sd-link'; lib.innerHTML = '<span>SAVED COURSES</span><b>OPEN ▸</b>'; side.append(lib); }
  const help = make(doc, 'div', 'sd-help', '<span class="sd-k"></span><span class="sd-help-v"></span>');
  side.append(help);
  root.append(side);
  root.classList.add('sd-root');
+ // The keys along the foot, as on every other sheet (UI/UX pass).
+ if (!root.querySelector('.sd-foot')) root.append(make(doc, 'div', 'sx-foot sd-foot', '<div class="sx-keys"><span><kbd>R</kbd>Grow this landscape</span><span><kbd>Esc</kbd>Back</span></div>'));
+ if (tips) { tips.className = 'sd-tips'; tips.insertAdjacentHTML('afterbegin', '<kbd>?</kbd>'); root.querySelector('.sd-foot .sx-keys')?.append(tips); }
 
  // The focused row's help: its own tip (the schema's text).
  root.stFocus = e => {

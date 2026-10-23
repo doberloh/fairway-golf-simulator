@@ -84,6 +84,10 @@
 
  /* The pin tag. */
  #world[data-mode=play] .flag-label:not(.edge){display:grid;justify-items:center;transform:translate(-50%,-100%) scale(.66);transform-origin:50% 100%;text-shadow:none}
+ /* Over the folded shot line (z-index 7), not under it (audit 5: upright,
+    the line hid the top half of the yards). The marker takes no taps, so
+    the line under it still opens. */
+ #world[data-mode=play] .flag-label{z-index:8}
  #world[data-mode=play] .flag-label:not(.edge)>span,#world[data-mode=play] .flag-label:not(.edge) #playsLike{display:none}
  #world[data-mode=play] .flag-label:not(.edge)>strong{position:relative;isolation:isolate;display:flex;align-items:baseline;height:50px;padding:0 18px;font-size:40px;font-weight:800;font-style:italic;line-height:50px}
  #world[data-mode=play] .flag-label:not(.edge)>strong::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -93,6 +97,8 @@
  #world[data-mode=play] .shot-controls>.shot-panel{position:absolute;left:16px;top:112px;z-index:7;isolation:isolate;width:250px;max-height:80px;overflow:hidden;padding:6px 18px;color:#fff;font-size:12px}
  #world[data-mode=play] .shot-controls>.shot-panel::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play] .shot-panel .shot-result{display:none}
+ /* No "Nothing hit yet" box (the owner, V3): no shot, no panel; during a flight it still carries Skip. round-hud.css has the same for bigger screens. */
+ #world[data-mode=play].rh-no-shot .shot-controls>.shot-panel:not(:has(#skipFlight:not([hidden]))){display:none!important}
  #world[data-mode=play] .shot-panel #skipFlight{min-height:36px;padding:0 14px}
 
  /* The lie, the shot's shape, the club. */
@@ -183,6 +189,9 @@
  #app[data-mode=play].rh-paused .topbar{position:absolute;inset:0;z-index:95;height:auto;display:flex!important;flex-direction:column;align-items:stretch;gap:6px;padding:16px 20px 24px;overflow:auto;background:rgba(4,8,12,.9);border:0;backdrop-filter:blur(4px);filter:none;opacity:1;pointer-events:auto;color:#fff}
  #app.rh-paused .topbar :is(.brand,.hole-strip,#menuNav,.mode-pill,.divider,.sim-time-label,[data-panel=help],.rh-pause-cams){display:none!important}
  #app.rh-paused .topbar :is(.rh-pause-head,.rh-pause-extra){display:grid;gap:6px}
+ /* Six rows on a phone too (UI/UX pass): the rest is in Settings. */
+ #app.rh-paused .topbar :is(#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time,.tee-control,.meter-button,.rh-pause-choice,.rh-pause-cams){display:none!important}
+ /* A phone keeps Tools here: it has no tool column. */
  #app.rh-paused .topbar .rh-pause-head strong{font-size:40px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
  #app.rh-paused .topbar .rh-pause-head small{font-size:11px;letter-spacing:.14em;color:var(--soft);font-weight:700;text-transform:uppercase}
  #app.rh-paused .topbar :is(nav,.header-right){display:grid!important;gap:6px;margin:0}
@@ -196,7 +205,7 @@
  #app.rh-paused .topbar .rh-resume kbd{display:none}
  #app.rh-paused .topbar #barTools::after{content:"Tools"}
  #app.rh-paused .topbar .avatar{font-size:0!important}
- #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:17px}
+ #app.rh-paused .topbar .avatar::after{content:"Golfers & rules";font-size:17px}
  #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:17px!important}
  #app.rh-paused .topbar .rh-pause-stand>div{position:relative;isolation:isolate;display:flex;gap:10px;align-items:center;min-height:36px;padding:0 18px;font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase}
  #app.rh-paused .topbar .rh-pause-stand>div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -225,14 +234,27 @@
 /* HELD UPRIGHT: the same pieces, stacked as the upright mockup has them. */
 @container app (max-width:560px) and (min-height:501px){
  .rh-hole{left:12px}
- .rh-subs{left:auto;right:12px;top:18px}
- .rh-sub[data-sub=plays]{display:none}
+ /* The wind under the hole, right of the golfers (UI/UX pass, 21 October 2026:
+    at the top it covered the hole's name and yards); the camera's name gives
+    way here. */
+ .rh-subs{left:auto;right:12px;top:76px}
+ .rh-sub[data-sub=plays],.rh-sub[data-sub=cam]{display:none}
  .rh-cards{left:18px;right:auto;top:76px;flex-direction:row}
  #world[data-mode=play] .rh-keys{left:12px;top:auto;bottom:12px;transform:none}
  #world[data-mode=play]:not(.aim-view) .minimap{right:12px!important;top:132px!important;width:120px!important;height:150px!important}
+ /* The XP popup under the map, across the screen, not over the map (audit 2, UI/UX pass V2). */
+ #world .xp-gain{left:12px!important;right:12px!important;width:auto!important;top:296px!important;transform:none!important}
  #world[data-mode=play] .shot-controls>.shot-panel{left:12px;top:132px;width:220px}
- #world[data-mode=play] .shot-controls .lie-readout{left:12px;bottom:308px}
- #world[data-mode=play] .shape-control{left:18px;bottom:262px}
+ /* Folded, between shots, it holds only who hit what and its arrow: 150 px
+    keeps it clear of the yards marker and the aim line, which both stand in
+    the middle of the screen (audit 6: the marker sat over the arrow). In
+    flight it keeps its width for Skip. */
+ #world[data-mode=play]:not(.in-flight) .shot-controls>.shot-panel{width:150px}
+ #world[data-mode=play]:not(.in-flight) .shot-panel #shotCaption{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ /* The lie and the shot's shape sit straight above the meter, under the ball
+    the picture lifts (phone-view.js): above it they crossed the aim line. */
+ #world[data-mode=play] .shot-controls .lie-readout{left:12px;bottom:324px}
+ #world[data-mode=play] .shape-control{left:18px;bottom:272px}
  #world[data-mode=play] .swing-meter{width:362px!important;bottom:156px!important}
  #world[data-mode=play] .monitor-panel:not([hidden]){bottom:156px!important;max-width:362px}
  #world[data-mode=play] .club-control{left:12px;bottom:66px}
@@ -248,6 +270,8 @@
  .main-menu .menu-brand{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style}
  .main-menu .menu-modes{display:grid!important;grid-template-columns:1fr;gap:6px;width:100%;max-width:420px}
  .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
+ /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
+ .main-menu .menu-tile[hidden]{display:none!important}
  .main-menu .menu-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  .main-menu .menu-tile.primary::before,.main-menu .menu-tile:is(:hover,:focus)::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
  .main-menu .menu-tile.primary :is(strong,small),.main-menu .menu-tile:is(:hover,:focus) :is(strong,small){color:var(--on-hot)}
@@ -258,6 +282,11 @@
  .main-menu .menu-link::before{content:"";position:absolute;inset:4px 0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
 }
 @container app (max-height:500px){
+ /* Sideways the XP popup sat over the hole slab and the wind (audit 3): it goes
+    in the clear band under them on the left, narrower. */
+ #world .xp-gain{left:16px!important;right:auto!important;top:130px!important;width:300px!important;transform:none!important;zoom:.78}
+ /* ... and the folded shot panel it would cover steps out while it is up. */
+ #world:has(.xp-gain:not([hidden])) .shot-controls>.shot-panel{visibility:hidden}
  .main-menu .menu-modes{grid-template-columns:1fr 1fr;max-width:640px}
  .main-menu .menu-tile{height:44px}
 }
@@ -265,4 +294,25 @@
 /* The pause standings' heading and ball pictures on a phone (17 October 2026). */
 @container app (max-width:560px) or (max-height:500px){
  #app.rh-paused .topbar .rh-pause-stand :is(.rh-stand-ball,.rh-stand-dot){display:block;flex:none;width:22px;height:22px;border-radius:50%}
+}
+
+/* PHONE PIECES IN THE 1.0 STYLE (UI/UX pass, 21 October 2026): the XP popup and
+   the in-flight Skip were the old rounded pieces on a phone. */
+@container app (max-width:560px) or (max-height:500px){
+ #world .xp-gain{top:auto;bottom:auto;left:12px;right:auto;top:56px;transform:none;width:min(320px,calc(100% - 24px));padding:10px 22px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;isolation:isolate}
+ #world .xp-gain::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world .xp-gain .xp-top b{font-size:24px;font-weight:800;font-style:italic;color:var(--hot)}
+ #world .xp-gain .xp-items li{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+ #world .xp-gain .xp-bar,#world .xp-gain .xp-bar b,#world .xp-gain .level-badge{border-radius:0}
+ #world[data-mode=play] .shot-panel #skipFlight{border-radius:0;border:0;background:var(--a1);color:var(--on-hot);font:800 italic 15px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;transform:skewX(-12deg)}
+ #world[data-mode=play] .shot-panel #skipFlight>*{transform:skewX(12deg)}
+}
+
+/* The swing strip on a phone: its first key only, so it clears the yard marks. */
+@container app (max-width:560px) or (max-height:500px){
+ #world[data-mode=play] .swing-meter .sm-key:not(:first-child){display:none}
+}
+/* Upright, the XP popup sits under the golfers, not over the hole. */
+@container app (max-width:560px) and (min-height:501px){
+ #world .xp-gain{top:128px}
 }

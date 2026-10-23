@@ -182,3 +182,41 @@ export function handicapLine(before, after, needed = 0) {
  if (f(before) == null) return `FIRST HANDICAP ${f(after)}`;
  return `${f(before)} → ${f(after)}`;
 }
+
+// THE RESULT OF A FINISHED ROUND, BY ITS FORMAT (UI/UX pass, 21 October 2026).
+// Round complete ranked everyone by strokes and called every leader a winner:
+// a tie read "ALEX · WINS" and "SAM · WINS", and a skins round ranked by
+// strokes while its own line said nobody won a skin. Now the headline and the
+// order follow what the format counts.
+//   mode     'stroke' | 'scramble' | 'skins' | 'match'
+//   entries  [{name, total, seat, team?}] -- golfers, or teams for a scramble
+//   skinsWon [per entry] for skins; match {A, B, holesLeft} for match play
+// Returns {headline, line, rows: [{...entry, place, win, tie, measure}]}.
+export function roundResult({mode = 'stroke', entries = [], skinsWon = null, carry = 0, match = null} = {}) {
+ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 'S'}`;
+ if (mode === 'skins' && skinsWon) {
+  const rows = entries.map((e, i) => ({...e, skins: skinsWon[i] || 0}));
+  const most = Math.max(0, ...rows.map(r => r.skins));
+  const sorted = [...rows].sort((a, b) => b.skins - a.skins || (a.total ?? 1e9) - (b.total ?? 1e9));
+  const lead = sorted.filter(r => r.skins === most && most > 0);
+  const out = sorted.map(r => ({...r, place: 1 + sorted.findIndex(x => x.skins === r.skins), win: lead.length === 1 && r === lead[0], tie: lead.length > 1 && lead.includes(r), measure: plural(r.skins, 'SKIN')}));
+  const left = carry ? ` · ${plural(carry, 'SKIN')} UNCLAIMED` : '';
+  if (!most) return {headline: 'NO SKINS WON', line: `EVERY HOLE CARRIED${left}`, rows: out};
+  if (lead.length === 1) return {headline: `${String(lead[0].name).toUpperCase()} WINS THE SKINS`, line: `${plural(most, 'SKIN')}${left}`, rows: out};
+  return {headline: `${lead.map(r => String(r.name).toUpperCase()).join(' AND ')} TIE`, line: `${plural(most, 'SKIN')} EACH${left}`, rows: out};
+ }
+ if (mode === 'match' && match) {
+  const diff = (match.A || 0) - (match.B || 0), win = diff > 0 ? 'A' : diff < 0 ? 'B' : null;
+  const rows = [...entries].sort((a, b) => (a.team === win ? -1 : 0) - (b.team === win ? -1 : 0))
+   .map(e => ({...e, place: win ? (e.team === win ? 1 : 2) : 1, win: !!win && e.team === win, tie: !win, measure: `TEAM ${e.team}`}));
+  if (!win) return {headline: 'ALL SQUARE', line: 'THE MATCH IS HALVED', rows};
+  const margin = match.holesLeft ? `${Math.abs(diff)} & ${match.holesLeft}` : `${Math.abs(diff)} UP`;
+  return {headline: `TEAM ${win} WINS`, line: margin, rows};
+ }
+ const st = standings(entries);
+ const top = st.filter(r => r.place === 1);
+ const rows = st.map(r => ({...r, win: r.win && top.length === 1, tie: r.win && top.length > 1, measure: Number.isFinite(r.total) ? String(r.total) : '—'}));
+ if (!top.length) return {headline: 'ROUND COMPLETE', line: '', rows};
+ if (top.length === 1) return {headline: `${String(top[0].name).toUpperCase()} WINS`, line: `${top[0].total} STROKES`, rows};
+ return {headline: `${top.map(r => String(r.name).toUpperCase()).join(' AND ')} TIE`, line: `${top[0].total} STROKES EACH`, rows};
+}

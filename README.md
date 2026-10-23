@@ -155,6 +155,6 @@ Kenney and Quaternius model packs, all CC0 — and records what was taken from
 each. [docs/DISTRIBUTION_REVIEW.md](docs/DISTRIBUTION_REVIEW.md) is the dated
 provenance audit, including the commercial-use pass.
 
-GSPro, Garmin, Rapsodo and PiTrac are named in this project only to describe
+GSPro, rēlā, Garmin, Rapsodo, PiTrac, Foresight, SkyTrak, FlightScope, Full Swing, Square, Nova and GolfJoy are named in this project only to describe
 what it can talk to. All trade marks belong to their owners, and no
 affiliation, endorsement or certification is claimed or implied.

@@ -7,7 +7,7 @@ import {turfConfig} from '../src/turf.js';
 import {bagClubs, CLUB_KINDS, stockBag, spinForPower} from '../src/clubs.js';
 import {startSwing, tap, advance, markerAt, swingLaunch, shapedLaunch, strikeZone, strikeEffect, fullCarry,
  speedForCarry, carryShare, lieFactor, LIE_SPEED, DIFFICULTIES, OVERSWING, OVERSWING_CARRY, MISS_AT, RUN_UP,
- swingZoom, SWING_RANGES,
+ swingZoom, SWING_RANGES, longestReach,
  validShape, shortGame, heightName, puttFullRoll, SPIN_STEPS} from '../src/swing-meter.js';
 
 const clubs = bagClubs(stockBag());
@@ -324,4 +324,19 @@ test('a short full shot zooms the bar to a half or quarter swing, and carries wh
  assert.ok(quarter.rise > half.rise && half.rise > fullBar.rise);
  // The chip's wider strike zone follows the share of the club, not of the bar.
  assert.ok(strikeZone({difficulty: 'normal', power: .9, share: .9 * .25}).zone > strikeZone({difficulty: 'normal', power: .9}).zone);
+});
+
+test('a turn never starts aimed beyond the club: the longest aim that fits (UI/UX pass V2)', () => {
+ // A club that carries 200 m: an aim at a pin 260 m away comes back near 200.
+ const fits = m => m <= 200;
+ const r = longestReach(fits, 260);
+ assert.ok(r <= 200 && r > 199.5, String(r));
+ // An aim it reaches is left as it is.
+ assert.equal(longestReach(fits, 150), 150);
+ // Nothing fits, not even the floor: no answer, and the turn keeps its aim
+ // (audit 4 found it 5 m in front of the tee).
+ assert.equal(longestReach(() => false, 260, {floor: 5}), null);
+ // Only the shortest aims fit: the longest of them.
+ const near = longestReach(m => m <= 20, 260);
+ assert.ok(near > 19.5 && near <= 20, String(near));
 });

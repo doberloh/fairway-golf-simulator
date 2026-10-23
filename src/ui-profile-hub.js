@@ -15,6 +15,8 @@
 // sections, by their headings, into the tabs. The tab shown is kept by main.js
 // (`onTab`), because every choice on the page redraws it.
 
+import {bringIntoView} from './ui-menu-screens.js';
+
 const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 
 export const HUB_TABS = ['Overview', 'Locker', 'Achievements', 'Stats', 'Bag', 'History'];
@@ -92,7 +94,9 @@ export function buildProfileHub(page, {tab = 'Overview', onTab, doc = globalThis
  for (const t of HUB_TABS) {
   const b = make(doc, 'button', 'panel-tab', t);
   b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.hubTab = t;
-  b.onclick = () => { show(t); onTab?.(t); };
+  // On a phone the tabs head the page and the tab's content follows the who
+  // and level cards, so a tap brings it up (audit 5).
+  b.onclick = () => { show(t); onTab?.(t); bringIntoView(panes[t], doc); };
   tabs.append(b);
  }
  main.append(tabs, ...HUB_TABS.map(t => panes[t]));

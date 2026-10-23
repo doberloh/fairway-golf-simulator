@@ -101,7 +101,23 @@
  body:has(#app[data-mode]) #drawer[data-panel=monitor] #drawerContent.lm-root>:is(.panel-lead,.panel-section,.panel-columns,.panel-tabs){display:none!important}
  #drawer .lm{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px;align-items:start;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .lm-col{display:grid;gap:8px;align-content:start;min-width:0}
- #drawer .lm-foot{grid-column:1/-1;min-width:0;columns:2;column-gap:32px}
+ #drawer .lm-foot{grid-column:1/-1;min-width:0}
+ /* RESET CAMERA (audit 3): a slanted row in the sheet's style, its words in
+    the accent, where it was an old grey button among the rows. */
+ :is(#drawer,.popup) #resetCamera{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;width:100%;height:44px;min-height:44px;margin:0;padding:0 20px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ :is(#drawer,.popup) #resetCamera::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ :is(#drawer,.popup) #resetCamera:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* THE MONITORS rēlā CONNECTS, ONE BOX (UI/UX pass V3, the owner): the names in
+    two columns in one slanted panel, how to set rēlā up under them; the box
+    sits under the Arm switch with the intro, in the steps column. */
+ #drawer .lm-steps>p{margin:4px 0 0;padding:0 8px;font-family:var(--font-ui);font-size:14px;line-height:1.45;color:var(--soft)}
+ #drawer .lm-works{position:relative;isolation:isolate;display:grid;gap:10px;margin-top:6px;padding:16px 36px 18px}
+ #drawer .lm-works::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .lm-works>.lm-head{margin:0}
+ #drawer .lm-works>ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 20px;margin:0;padding:0;list-style:none}
+ #drawer .lm-works>ul>li{min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:none!important;font-size:16px;line-height:1.3;font-weight:800;font-style:italic;text-transform:uppercase;color:#fff}
+ #drawer .lm-works>ul>li::before{display:none!important}
+ #drawer .lm-works>.note{margin:0;font-family:var(--font-ui);font-size:13px;line-height:1.45;color:var(--soft)}
  #drawer .lm-foot>*{break-inside:avoid}
  #drawer .lm .lm-head{margin:0;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .lm :is(.lm-step,.lm-arm,.lm-light,.lm-row){position:relative;isolation:isolate}
@@ -117,7 +133,11 @@
  #drawer .lm-arm{display:flex;align-items:center;min-height:56px;padding:0 32px}
  #drawer .lm-arm.on::before{box-shadow:inset 0 0 0 3px var(--hot)}
  #drawer .lm-arm>label{display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;gap:16px;width:100%;margin:0;font-family:var(--font-ui);font-size:17px;font-weight:600;color:#fff}
- #drawer .lm-arm input[type=checkbox]{width:22px;height:22px;accent-color:var(--hot)}
+ /* Arm is a switch like every other ON / OFF in the settings (UI/UX pass). */
+ #drawer .lm-arm input[type=checkbox]{flex:none;position:relative;width:64px;height:26px;margin:0;appearance:none;background:rgba(255,255,255,.14);transform:skewX(-12deg);cursor:pointer}
+ #drawer .lm-arm input[type=checkbox]::after{content:"OFF";position:absolute;inset:0;display:grid;place-items:center;font:800 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:#fff;transform:skewX(12deg)}
+ #drawer .lm-arm input[type=checkbox]:checked{background:var(--a1)}
+ #drawer .lm-arm input[type=checkbox]:checked::after{content:"ON";color:var(--on-hot)}
  #drawer .lm-arm input:disabled{opacity:.4}
  #drawer .lm-light{display:grid;grid-template-columns:auto minmax(0,1fr);align-content:center;gap:4px 18px;min-height:88px;padding:8px 32px}
  #drawer .lm-light i{grid-row:1/3;align-self:center}
@@ -165,7 +185,13 @@
  #drawer .ph .profile-id h3{margin:0;font-size:36px!important;font-weight:800;font-style:italic;letter-spacing:0;line-height:1;color:#fff;text-transform:uppercase}
  #drawer .ph .profile-id .golfer-title{display:block;margin-top:6px;font-size:14px;font-style:normal;letter-spacing:.16em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .ph .profile-id .profile-tag{border-radius:0;font-size:14px;letter-spacing:.12em;vertical-align:middle}
- #drawer .ph .profile-id .profile-actions button{height:32px;min-height:32px;padding:0 12px;font-size:14px}
+ /* Make main profile and Remove <name>, beside a second golfer's name: small
+    slanted outlines in the accent like the other rows, Remove in the warning
+    red (audit 6: the last old grey buttons). */
+ #drawer .ph .profile-id .profile-actions button{position:relative;isolation:isolate;height:32px;min-height:32px;padding:0 14px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+ #drawer .ph .profile-id .profile-actions button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}
+ #drawer .ph .profile-id .profile-actions button:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px currentColor}
+ #drawer .ph .profile-id .profile-actions #profileDelete{color:#ff8a7a}
  #drawer .ph .profile-level{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:88px;padding:12px 32px}
  #drawer .ph .profile-level small{grid-column:1/-1;font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .ph .profile-level strong{display:inline-block;padding:0 10px;background:var(--hot);color:var(--on-hot);font-size:20px;font-weight:800;font-style:italic;transform:skewX(-12deg)}
@@ -237,7 +263,9 @@
  #drawer .ph .stat-tile strong{font-size:24px;font-weight:800;font-style:italic;color:#fff}
  #drawer .ph .stat-tile span{font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .ph .achievement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;list-style:none}
- #drawer .ph .achievement{padding:12px 28px}
+ #drawer .ph .achievement{display:grid;gap:3px;padding:12px 28px;font-family:var(--font-ui);font-size:14px;line-height:1.35;color:var(--soft)}
+ #drawer .ph .achievement>b{font:800 italic 19px/1.1 "Saira Condensed",var(--font-ui),sans-serif;color:#fff;text-transform:uppercase}
+ #drawer .ph .achievement :is(small,span,em){font-size:13px}
  #drawer .ph .achievement:not(.earned){opacity:.6}
  #drawer .ph .achievement.earned::before{box-shadow:inset 0 0 0 2px var(--hot)}
  #drawer .ph .profile-bag{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -253,8 +281,8 @@
     ON/OFF switch, a drop-down as ◀ value ▶, a slider as a segment bar. The
     tabs went in round 13: every group shows, the page scrolls. */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:0 32px;align-content:start;align-items:start}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>:not(.st-cats){grid-column:2}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side{grid-column:1;grid-row:1/-1;align-self:start;position:sticky;top:0;display:grid;gap:24px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>:not(.st-side){grid-column:2}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-lead{display:none}
  /* No tabs: every group shows at once and the page scrolls (round 13). */
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>.panel-tabs{display:none!important}
@@ -297,10 +325,14 @@
  /* The notes move to the help line (? shows them all in place). */
  body:has(#app[data-mode]):not(:has(#app.rh-help)) #drawer .st-groups .control-card>:is(.note,p.tip,.research-label){display:none}
  body:has(#app[data-mode]) #drawer .st-groups .control-card>.field-error:empty{display:none}
- /* Solid: the panel colour is see-through, and the rows scrolling under the
-    band showed through it (18 October 2026). */
- #drawer .st-help{position:sticky;bottom:0;z-index:2;display:grid;gap:6px;margin-top:8px;padding:16px 36px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
- #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;box-shadow:0 -12px 24px rgba(4,8,12,.6);transform:skewX(-12deg)}
+ /* THE HELP LINE UNDER THE CATEGORIES (audit 5, 22 October 2026). It was held
+    at the foot of the rows, over the end of the list until that was scrolled
+    -- Green definition cut in half under it at 1366x768 and at 1920x1080,
+    everything after Text size on a sideways phone. In the left column it
+    covers nothing; on a phone it comes after the rows (below). Solid, as it
+    was: the panel colour is see-through (18 October 2026). */
+ #drawer .st-help{position:relative;z-index:2;display:grid;gap:6px;padding:16px 28px;isolation:isolate;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #drawer .st-help::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(color-mix(in srgb,var(--panel) 92%,black),color-mix(in srgb,var(--panel) 92%,black)),#0c120e;transform:skewX(-12deg)}
  #drawer .st-help-k{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--hot)}
  #drawer .st-help-v{font-family:var(--font-ui);font-size:15px;font-weight:600;line-height:1.35;color:#fff}
 
@@ -340,38 +372,12 @@
  #drawer .ch-detail>ul.medal-asks>li{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 32px;font-size:14px;letter-spacing:.12em;font-weight:700;color:var(--soft)}
  #drawer .ch-detail>ul.medal-asks>li b{color:#fff;text-transform:uppercase}
  #drawer .ch-detail>ul.medal-asks>li span{margin-left:auto;font-size:15px;font-style:italic;letter-spacing:0;text-transform:none;color:#fff;text-align:right}
- #drawer .ch-group{display:grid;gap:8px;margin-top:16px}
- #drawer .ch-group>h3{margin:0;font-size:14px;letter-spacing:.16em;color:var(--soft)}
- /* A golfer in a challenge's group: one slanted row -- the ball, the name (the
-    drop-down) over title and level, the tee -- and, once a monitor has been
-    seen, the two pickers side by side under it. Round 13's player-row grid
-    had squashed the pickers to nothing and floated the name (the owner's "cut
-    off text", 18 October 2026). No team: a challenge has none. */
- #drawer .ch-group #playerRows{display:grid;gap:8px}
- #drawer .ch-group .seat{position:relative;isolation:isolate;display:grid;grid-template-columns:52px minmax(0,1fr) auto 32px;grid-template-areas:"mark who tees drop" "picks picks picks picks";align-items:center;gap:8px 14px;margin:0;padding:10px 30px;border:0;border-radius:0;background:none}
- #drawer .ch-group .seat:not(.play){grid-template-areas:"mark who tees drop"}
- #drawer .ch-group .seat::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
- #drawer .ch-group .seat .player-mark{grid-area:mark;display:grid;place-items:center}
- #drawer .ch-group .seat .player-dot{display:none}
- #drawer .ch-group .seat .player-mark :is(img,.seat-guest){width:46px;height:46px;border-radius:50%}
- #drawer .ch-group .seat .seat-guest{display:grid;place-items:center;border:2px dashed rgba(255,255,255,.35);font-size:24px;color:rgba(255,255,255,.6)}
- #drawer .ch-group .seat .player-who{grid-area:who;display:grid;justify-items:start;gap:2px;min-width:0;text-align:left}
- #drawer .ch-group .seat .player-who>.dd{width:auto;max-width:100%}
- #drawer .ch-group .seat .player-who>.dd>.dd-field{justify-content:flex-start;padding:0 .4em 0 0}
- #drawer .ch-group .seat .player-who>.dd>.dd-field::after{display:none}
- #drawer .ch-group .seat .player-who>.dd .dd-v{font-size:26px!important;text-align:left}
- #drawer .ch-group .seat .player-who>input{width:100%;height:32px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px "Saira Condensed",var(--font-ui),sans-serif}
- #drawer .ch-group .seat :is(.player-sub,.player-hcp){font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--soft);white-space:nowrap}
- #drawer .ch-group .seat .seat-tees{grid-area:tees}
- #drawer .ch-group .seat :is(.drop-player,.drop-spacer){grid-area:drop}
- #drawer .ch-group .seat .drop-player{width:32px;height:32px;min-height:32px;padding:0;border:0;background:none;color:var(--soft)}
- #drawer .ch-group .seat>:is(select[id^=team],.dd:has(>select[id^=team])){display:none}
- #drawer .ch-group .seat .seat-pick{grid-row:2;min-width:0}
- #drawer .ch-group .seat .seat-pick:has(select[id^=input]){grid-column:1/3}
- #drawer .ch-group .seat .seat-pick:has(select[id^=hand]){grid-column:3/5}
- #drawer .ch-group .add-player{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;height:44px;margin:0;border:0;border-radius:0;background:none;color:#fff;font:800 italic 18px "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
- #drawer .ch-group .add-player::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
- #drawer .ch-group .add-player svg{width:18px;height:18px}
+ /* Challenges' Golfers step (UI/UX pass V2) uses Play's seats; the tee is the
+    same for everyone in a challenge and there are no teams, so neither shows. */
+ #drawer .ch-golfers .seat :is(.seat-tees,select[id^=team],.dd:has(>select[id^=team])){display:none}
+ /* A fixed rule on Challenges' Rules step: the value, no arrows. */
+ #drawer .lb-fixed .lb-v{padding:0 10px}
+ #drawer .ch-page>.ch{padding:0 24px}
  /* The course of the week: the picture and earlier weeks (7), the facts (5). */
  /* Saved courses: the shelf across the sheet. The chosen course's column went
     on 20 October 2026; each card carries its own buttons as icons along its
@@ -416,6 +422,14 @@
  #drawer .lib-new::before{background:rgba(255,255,255,.05)!important}
  #drawer .lib-new b{font-size:56px;font-weight:800;line-height:1;color:var(--a1)}
  #drawer .lib-new span{font-size:20px;font-weight:800;font-style:italic}
+ /* New in studio and Import a code share one cell (ui-menu-screens.js
+    buildLibrary; audit 5: with three courses Import a code sat alone on a
+    row): stacked beside the courses, side by side on an empty shelf. */
+ #drawer .lib-adds{display:grid;gap:12px}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds{grid-template-rows:1fr 1fr}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds>.lib-new{min-height:0;grid-auto-flow:column;grid-template-columns:auto auto;justify-content:center;gap:14px}
+ #drawer .lib-shelf:has(>.course-card)>.lib-adds>.lib-new b{font-size:34px}
+ #drawer .lib-shelf:not(:has(>.course-card))>.lib-adds{grid-column:span 2;grid-template-columns:1fr 1fr}
 
  /* ---------------------------------------------- the studio's settings */
  /* IN THE STUDIO (ui-studio.js; mockup r10 'studio-set'): the sheet keeps the
@@ -472,6 +486,14 @@
  #drawer .sd-state.stale .sd-k{color:var(--hot)}
  #drawer .sd-state strong{font-size:20px;font-weight:800;font-style:italic;color:#fff}
  #drawer .sd-list{display:grid;gap:3px;font-size:14px;letter-spacing:.08em;font-weight:700;color:var(--soft)}
+ /* Saved courses as the column's last row, and Show all descriptions as a key in the foot (UI/UX pass V2). */
+ #drawer .sd-link{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;margin:0;padding:0 26px;border:0;background:none;color:#fff;cursor:pointer}
+ #drawer .sd-link::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sd-link span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
+ #drawer .sd-link b{font-size:16px;font-weight:800;font-style:italic;color:var(--hot)}
+ #drawer .sd-link:is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-keys>.sd-tips{display:inline-flex;align-items:center;gap:8px;width:auto;height:auto;min-height:0;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:uppercase;cursor:pointer}
+ #drawer .sx-keys>.sd-tips:is(:hover,:focus-visible){color:var(--hot)}
  #drawer .sd-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 26px}
  #drawer .sd-row span{font-size:14px;letter-spacing:.16em;font-weight:700;color:var(--soft)}
  #drawer .sd-row b{padding-right:.16em;font-size:18px;font-weight:800;font-style:italic;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -524,21 +546,35 @@
  body:has(#app[data-mode]) #drawer:has(.sx-root) .drawer-header h2{font-size:24px}
  body:has(#app[data-mode]) #drawer #drawerContent.sx-root{display:flex;flex-direction:column;min-height:100%}
  body:has(#app[data-mode]) #drawer #drawerContent.sx-root>:is(.panel-lead,.panel-tabs,.panel-section,.panel-columns,.sx-emptied){display:none!important}
+ /* Put away anywhere in a sheet, not only a step sheet (the studio is an sd-root). */
+ #drawer .sx-emptied{display:none!important}
  #drawer .sx{flex:1;display:flex;flex-direction:column;min-height:0;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #drawer .sx-steps{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px}
  #drawer .sx-step{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;height:36px;min-height:36px;padding:0 20px;border:0;border-radius:0;background:none;color:var(--soft);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;white-space:nowrap}
  #drawer .sx-step::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.06);transform:skewX(-12deg)}
  #drawer .sx-step.done{color:#fff}
  #drawer .sx-step.done::before{background:var(--panel)}
+ /* Passed without what it needs (ui-steps.js stepMarks): numbered, edged in the warning colour. */
+ #drawer .sx-step.missing{color:#ffb27a}
+ #drawer .sx-step.missing::before{box-shadow:inset 0 0 0 2px #ffb27a}
  #drawer .sx-step.on{color:var(--on-hot)}
+ /* A one-step sheet (Golfers in this round) has no step bar. */
+ #drawer .sx-one-step .sx-steps{display:none}
  #drawer .sx-step.on::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
  #drawer .sx-step:focus-visible{outline:none}
  #drawer .sx-step:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
- #drawer .sx-pages{flex:1;display:grid;align-content:center;min-height:0}
+ /* From the top, a little under the steps (audits 1 to 3: centred, a short page
+    sat low with empty space above it). */
+ #drawer .sx-pages{flex:1;display:grid;align-content:start;min-height:0;padding-top:min(6vh,56px)}
  #drawer .sx-page[hidden]{display:none!important}
  #drawer .sx-head{margin:0 0 8px;font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft);text-transform:uppercase}
  #drawer .sx-foot{position:fixed;left:60px;right:60px;bottom:24px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none}
  #drawer .sx-foot>*{pointer-events:auto}
+ /* The screen's error line, in the foot beside the buttons, where it is seen
+    (UI/UX pass, 21 October 2026: it was a grey line under the rules). */
+ #drawer .sx-foot .sx-alert{margin:0 0 0 auto;max-width:520px;padding:8px 22px;color:#fff;font:700 16px/1.25 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;position:relative;isolation:isolate}
+ #drawer .sx-foot .sx-alert::before{content:"";position:absolute;inset:0;z-index:-1;background:#9a3412;transform:skewX(-12deg)}
+ #drawer .sx-foot .sx-alert:empty{display:none}
  #drawer .sx-keys{display:flex;gap:16px;font-size:14px;letter-spacing:.1em;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase}
  #drawer .sx-keys kbd{margin-right:6px;padding:1px 6px;border:2px solid currentColor;border-radius:4px;font:700 13px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  #drawer .sx-btns{display:flex;gap:12px}
@@ -596,15 +632,53 @@
  #drawer .sx-line>button::before{display:none}
  #drawer .sx-line>#roundDelete{color:#ff8a7a}
  #drawer .sx-line>button svg{width:14px;height:14px}
+ /* 1 · Game (UI/UX pass V2): six game types, three across in two even rows
+    (a free grid left New in studio alone on a row of its own); the saved
+    rounds' button alone at the foot, on the right. */
+ #drawer .sx-games{grid-template-columns:repeat(3,minmax(0,1fr))}
+ @media (max-width:900px){#drawer .sx-games{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ #drawer .sx-line-end{justify-content:flex-end}
+ #drawer .sx-line-end::before{display:none}
+ /* The saved course's step: the shelf, the chosen course's line, the code box. */
+ #drawer :is(.sx-run-how,.fr-how){display:grid;gap:8px;margin:6px 0 0;padding:0;list-style:none}
+ /* The friend step's explanation, three short lines rather than one long one (audit 3). */
+ #drawer .fr-how{max-width:900px;margin-top:14px}
+ #drawer .fr-how>li{position:relative;isolation:isolate;display:flex;align-items:center;min-height:42px;padding:0 28px;font:600 15px var(--font-ui);color:#fff}
+ #drawer .fr-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-run-how>li{position:relative;isolation:isolate;display:flex;align-items:center;min-height:44px;padding:0 28px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;color:#fff}
+ #drawer .sx-run-how>li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .sx-shelf>.code-import{margin:6px 30px 0 20px}
+ #drawer .sx-shelf>.code-import textarea{min-height:52px}
+ #drawer .sx-shelf>.sx-line+.sx-head{margin-top:22px}
+ #drawer .sx-shelf>.sx-shelf-note{margin:10px 30px 0;color:var(--soft)}
+ /* Surprise me on Rules: roll another course. */
+ #drawer .sx-roll{justify-self:start;width:auto;height:34px;min-height:34px;margin:0;padding:0 8px;border:0;background:none;color:var(--hot);font:700 14px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.12em;text-transform:uppercase}
+ #drawer .sx-roll::before{display:none}
  #drawer .sx-saved{display:grid;gap:8px;max-height:calc(100vh / var(--sheet-z,1) - 330px);overflow:auto;padding:4px 20px;scrollbar-width:thin}
  #drawer .sx-saved .course-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
  #drawer .sx-saved .course-card{padding:12px 30px;margin:0}
  #drawer .sx-saved>:is(.note,.field-error){margin:0;padding:0 8px}
  #drawer .sx-saved>button{justify-self:start;width:auto;height:40px;min-height:40px;padding:0 24px}
+ /* EXPORT AND IMPORT A ROUND as slanted rows in the accent, like Saved courses' file
+    buttons and Reset camera (they were the old grey buttons). Export is dimmed
+    when there is no round being played to export. */
+ #drawer .sx-saved>:is(#exportRound,#importRound){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;justify-self:stretch;width:100%;max-width:560px;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer .sx-saved>:is(#exportRound,#importRound)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer .sx-saved>:is(#exportRound,#importRound):not(:disabled):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer .sx-saved>:is(#exportRound,#importRound):disabled{color:var(--soft);opacity:.55;cursor:default}
+ #drawer .sx-saved>:is(#exportRound,#importRound) svg{width:16px;height:16px}
  /* 2 · Golfers: four seats. */
  #drawer .sx-golfers #playerRows{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px}
  #drawer .sx-golfers .seat>*{grid-area:auto!important;grid-column:1!important}
  #drawer .sx-golfers .seat{display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important;justify-items:center;align-content:start;gap:8px;min-height:400px;margin:0;padding:18px 30px;text-align:center}
+ /* ON CENTRE ON THE SLANT (the owner, UI/UX pass V3): a seat is a leaning panel, and
+    its ball, name, title and level sat on the panel's middle line -- left of the
+    panel's own centre at the top, right of it at the foot. The seat itself leans
+    now, so each piece is carried along the lean, and each piece is stood back
+    upright; the panel behind it no longer leans twice. */
+ #drawer .sx-golfers .seat{transform:skewX(-12deg)}
+ #drawer .sx-golfers .seat::before{transform:none!important}
+ #drawer .sx-golfers .seat>*{transform:skewX(12deg)}
  #drawer .sx-golfers .seat .player-mark{display:grid;justify-items:center;gap:10px}
  #drawer .sx-golfers .seat .player-dot{width:56px;height:6px;border-radius:0}
  #drawer .sx-golfers .seat .player-mark :is(img,.seat-guest){width:86px;height:86px;border-radius:50%}
@@ -741,6 +815,41 @@
     box, the challenges kept as a row of buttons, the chosen one's card and
     rules. PLACED on the course of the week's frames; no mockup exists. */
  #drawer .fr{display:grid;gap:14px;align-content:start}
+ /* A CODE BOX IN THE SHEET'S STYLE (UI/UX pass, 21 October 2026): the friend's
+    code and Saved courses' import were the old rounded box with small buttons.
+    Now a slanted panel holding a dark well, the buttons in a row under it. */
+ #drawer .code-import{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,max-content));gap:10px;margin:0;padding:16px 30px;border:0;border-radius:0;background:none;overflow:visible}
+ #drawer .code-import::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #drawer .code-import>.field{grid-column:1/-1;margin:0;padding:0;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--soft);text-transform:uppercase}
+ #drawer .code-import textarea{display:block;width:100%;min-height:72px;margin-top:8px;padding:10px 12px;border:0;border-radius:0;background:rgba(0,0,0,.35);color:#e8ecff;font:14px "IBM Plex Mono",ui-monospace,monospace;text-transform:none;letter-spacing:0}
+ #drawer .code-import>button{width:auto;height:40px;min-height:40px;margin:0;padding:0 22px;border-radius:0}
+ /* IMPORT & EXPORT (UI/UX pass V2): the sheet's balanced columns cut the tab
+    into a row of pieces -- the code's label, its box, its button, a note, the
+    file buttons. Two columns instead: the code as one panel, the files beside. */
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section[data-title="Import & export"]:not([hidden]){display:grid!important;columns:auto!important;grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-auto-flow:dense;gap:12px 40px;align-items:start;max-width:1500px}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import{grid-column:1;grid-row:1/span 4;grid-template-columns:minmax(0,1fr);justify-items:start}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import>.field{justify-self:stretch}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>:is(.note,button){grid-column:2;margin:0;justify-self:stretch}
+ /* THE FILE BUTTONS AS ROWS (audit 4): slanted, the words in the accent, like
+    Reset camera -- they were the old grey buttons. At least 48 px and taller
+    when the words wrap (audit 5: a fixed 48 px on an upright phone let
+    "EXPORT EVERY COURSE TO A FILE" run out of its box over the next one). The
+    saved rounds list's two rows (.sx-saved) are the same. On a narrow screen
+    the two columns stack, code first. */
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag){position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:48px;padding:8px 22px;line-height:1.15;text-align:center;border:0;border-radius:0;background:none;box-shadow:none;color:var(--hot);font:800 italic 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag)::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--hot) 45%,transparent)}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag):is(:hover,:focus-visible)::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ #drawer :is(.lib-root #exportCourses,.lib-root #importCourses,.lib-root #libraryStudio,.ph #profilesExport,.ph #profilesImport,.ph #profileBag) svg{width:16px;height:16px}
+ /* Save a course's Open course studio too (audit 5: an old grey button). */
+ #drawer .lib-root #libraryStudio{max-width:420px;margin-top:8px}
+ /* My profile's file and bag buttons are the same rows (audit 5: old grey
+    buttons on History and Bag), two to a line where they fit. */
+ #drawer .ph :is(.profile-backup,.profile-actions:has(#profileBag)){display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;max-width:760px;margin-top:8px}
+ /* The intro: one line in the sheet's quiet type over the tabs (audit 4: three lines of small prose). */
+ body:has(#app[data-mode]) #drawer .lib-root>.panel-lead>p.panel-intro{max-width:none;margin:0 0 4px;font:700 14px "Saira Condensed",var(--font-ui),sans-serif;font-size:14px!important;letter-spacing:.12em;text-transform:uppercase}
+ /* The kind cards (Endless, a friend, Challenges, Surprise me, New in studio)
+    take a whole cell like any course card. */
+ #drawer .sx-cards>.sx-card{min-width:0}
  #drawer .fr-list{display:flex;flex-wrap:wrap;gap:8px}
  #drawer .fr-card{display:grid;gap:2px;text-align:left}
  #drawer .fr-card small{font-size:12px;color:var(--soft)}
@@ -817,7 +926,14 @@
     an eagle, a square round a bogey, two round worse (celebration.js). */
  body:has(#app[data-mode=play]) #drawer[data-panel=score]{top:0;height:auto;max-height:none;min-height:0;padding:28px 60px 24px;border:0;background:rgba(4,8,12,.9);backdrop-filter:blur(6px);box-shadow:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;zoom:var(--sheet-z,1)}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .drawer-header :is(h2,#drawerTitle){font-size:36px;font-weight:800;font-style:italic;text-transform:uppercase}
- body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table{font-size:20px;font-weight:700}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table{font-size:20px;font-weight:700;width:100%}
+ /* Across the sheet, the course line as its heading (UI/UX pass V2: the card
+    filled two thirds of it, under a line of small grey text). */
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table-wrap{width:100%}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] #drawerContent>.panel-section.panel-plain{max-width:none}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-where{margin:0 0 10px;font:700 15px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.14em;color:var(--hot);text-transform:uppercase}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance{display:flex;align-items:center;gap:10px}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance>p{margin:0 auto 0 0}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td){padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table th{color:var(--soft);letter-spacing:.1em;font-size:15px}
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table :is(th,td):first-child{background:var(--panel)}
@@ -840,10 +956,17 @@
  body:has(#app[data-mode=play]) #drawer[data-panel=score] .hole-advance p{font-size:17px;letter-spacing:.06em;color:#fff}
  /* ROUND COMPLETE, at the head of the final card. */
  .rh-results{display:grid;gap:14px;margin:0 0 22px}
- .rh-results h2{display:grid;gap:4px;margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
- .rh-results h2 small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700}
+ /* The result first (UI/UX pass, 21 October 2026): the headline says who won by
+    what the format counts (round-hud.js roundResult), the line under it how. */
+ .rh-res-head{display:grid;gap:4px}
+ .rh-results h2{margin:0;font-size:56px;font-weight:800;font-style:italic;line-height:1;text-transform:uppercase}
+ .rh-res-head strong{font-size:22px;font-weight:800;font-style:italic;color:var(--hot);letter-spacing:.04em}
+ .rh-res-head small{font-size:15px;font-style:normal;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
+ .rh-res-row.tie::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ .rh-res-name i{margin-left:8px;font-size:15px;font-style:normal;letter-spacing:.12em;color:var(--soft)}
  .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
- .rh-res-stand{display:grid;gap:8px;max-width:640px}
+ /* Across the card (audit 3: at 820 px the rows left its right half empty). */
+ .rh-res-stand{display:grid;gap:8px}
  .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;min-height:64px;padding:8px 26px}
  .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  .rh-res-row.win{min-height:80px;color:var(--on-hot)}
@@ -854,26 +977,43 @@
  .rh-res-who{flex:1;display:grid;gap:4px;min-width:0}
  .rh-res-name{font-size:28px;font-weight:800;font-style:italic;line-height:1.05}
  /* What each golfer earned, on their own row (owner, 20 October 2026). */
- .rh-res-gain{display:flex;align-items:center;gap:10px;font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft);white-space:nowrap}
+ .rh-res-gain{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:14px;letter-spacing:.1em;font-weight:700;color:var(--soft)}
  .rh-res-gain>b{font-weight:800}
  .rh-res-gain .rh-res-bar{width:90px;flex:none}
  .rh-res-row.win .rh-res-gain{color:var(--on-hot)}
  .rh-res-row.win .rh-res-bar{background:rgba(0,0,0,.18)}
  .rh-res-row.win .rh-res-bar b{background:var(--on-hot)}
  .rh-results .score-table-wrap{margin:0}
- .rh-res-score{font-size:36px;font-weight:800;font-style:italic}
+ .rh-res-score{flex:none;font-size:36px;font-weight:800;font-style:italic;white-space:nowrap}
  .rh-res-score small{margin-left:8px;font-size:20px}
  .rh-res-score small.under{color:var(--under)}
  .rh-res-row.win .rh-res-score small.under{color:var(--on-hot)}
  .rh-res-golfers{display:grid;gap:6px;max-width:640px}
+ /* A challenge's results (main.js challengeResultHtml): the same rows, the
+    name in capitals, the medal pips and the result under it. */
+ .rh-chal .rh-res-name{text-transform:uppercase}
+ .rh-chal .rh-res-gain{font-size:15px;letter-spacing:.06em;color:#fff}
+ .rh-chal .rh-res-gain em{font-style:normal;color:var(--hot)}
  .rh-res-xp{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:6px 14px;font-size:17px;font-weight:700}
  .rh-res-xp small{grid-column:2/-1;font-size:14px;letter-spacing:.14em;color:var(--soft)}
- .rh-res-share{display:grid;gap:8px;max-width:640px}
+ .rh-res-share{display:grid;gap:8px;max-width:900px}
  .rh-res-share[hidden]{display:none}
  .rh-res-seats{display:flex;gap:10px;flex-wrap:wrap}
  .rh-res-bar{height:8px;background:rgba(255,255,255,.14);position:relative}
  .rh-res-bar b{position:absolute;inset:0 auto 0 0;background:var(--hot)}
- .rh-res-actions{display:flex;gap:10px;flex-wrap:wrap}
+ /* ONE ROW OF BUTTONS: a sheet's buttons are full width by default, which
+    stacked these as four long bars (0.9.1). */
+ /* The buttons stay in reach (audit 5: with three golfers in Skins they were
+    below a 1920x1080 screen): held at the foot of the sheet on a solid band
+    while the card scrolls under them, back in place at the end. */
+ .rh-res-actions{display:flex;gap:12px;flex-wrap:wrap;position:sticky;bottom:0;z-index:3;justify-self:start;max-width:100%;padding:12px 24px 14px 0;background:linear-gradient(to top,color-mix(in srgb,var(--panel) 92%,black) 78%,transparent)}
+ /* The band only as wide as the buttons (audit 7 look: across the whole card
+    it read as a stray dark bar on a short card). */
+ #drawer .rh-results :is(.rh-res-actions,.rh-res-seats)>button{width:auto;flex:0 0 auto;min-width:190px;height:48px;min-height:48px;margin:0;padding:0 28px;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase}
+ #drawer .rh-results .rh-res-share>button{width:auto;justify-self:start;padding:0 24px}
+ /* The share note at the size of the sheet's other notes (audit 5: small
+    print over the card buttons). */
+ body:has(#app[data-mode]) #drawer .rh-results .rh-res-share>.note{max-width:72ch;font-size:17px!important;line-height:1.45}
 
 
  /* Headings, the main and other buttons and the tabs, as in ui-screens.css, for
@@ -889,7 +1029,14 @@
  #drawer button.primary::before,body>.version-notice button.primary::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2));transform:skewX(-12deg)}
  #drawer button.secondary,body>.version-notice button.secondary{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-weight:700;letter-spacing:.06em}
  #drawer button.secondary::before,body>.version-notice button.secondary::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.1);transform:skewX(-12deg)}
- #drawer button:is(.primary,.secondary):focus-visible,body>.version-notice button:is(.primary,.secondary):focus-visible{outline:none;filter:drop-shadow(3px 0 0 var(--hot)) drop-shadow(-3px 0 0 var(--hot)) drop-shadow(0 3px 0 var(--hot)) drop-shadow(0 -3px 0 var(--hot))}
+ /* Focus outlines the button's own slanted panel; it used to outline every
+    letter too (a filter), which left a small label unreadable. */
+ #drawer button:is(.primary,.secondary):focus-visible,body>.version-notice button:is(.primary,.secondary):focus-visible{outline:none}
+ #drawer button:is(.primary,.secondary):focus-visible::before,body>.version-notice button:is(.primary,.secondary):focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+ /* A sheet's plain buttons in the sheet's own type, never 11 px system text
+    (Stay on scorecard, Download scorecard, New round...). */
+ #drawer button.secondary{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-size:15px;text-transform:uppercase;min-height:38px}
+ body:has(#app[data-mode=play]) #drawer[data-panel=score] .score-table .yardage-row :is(th,td){font-size:14px}
  /* Tabs: slanted, the current one filled. */
  #drawer .panel-tab{position:relative;isolation:isolate;border:0;border-radius:0;background:none;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
  #drawer .panel-tab::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.08);transform:skewX(-12deg)}
@@ -912,6 +1059,11 @@
    without the compact step (a thumb needs the room), padded to the phone's
    edges; every side-by-side layout stacks, tiles go two to a row, and a row
    of choices that will not fit scrolls sideways. */
+@media (max-width:560px){
+ body:has(#app[data-mode]) #drawer .lib-root .panel-section[data-title="Import & export"]:not([hidden]){grid-template-columns:minmax(0,1fr)}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>.code-import{grid-row:auto}
+ #drawer .lib-root .panel-section[data-title="Import & export"]>:is(.note,button){grid-column:1}
+}
 @media (max-width:560px),(max-height:500px){
  body:has(#app[data-mode]) #drawer:not([hidden]){padding:12px 2px 84px;zoom:calc(var(--sheet-z,1) / .7)}
  body:has(#app[data-mode]) #drawer #drawerContent{padding:0 22px}
@@ -921,8 +1073,18 @@
  body:has(#app[data-mode]) #drawer .sx-steps{position:static;transform:none;margin:0 0 14px;max-width:100%;overflow-x:auto;padding:2px 10px;scrollbar-width:none}
  body:has(#app[data-mode]) #drawer .sx-steps>*{flex:none}
  body:has(#app[data-mode]) #drawer .sx-pages{align-content:start}
+ /* The cards scroll with the sheet on a phone, which keeps room for the foot
+    (UI/UX pass, 21 October 2026: in their own short scroll box the second row
+    sat under NEXT and lost its captions). */
+ body:has(#app[data-mode]) #drawer .sx-scroll{max-height:none;overflow:visible}
  body:has(#app[data-mode]) #drawer .sx-keys{display:none}
  body:has(#app[data-mode]) #drawer .sx-foot{left:16px;right:16px;bottom:12px;justify-content:flex-end}
+ /* A BAND UNDER THE BUTTONS (UI/UX pass V3: on a sideways phone Start sat over
+    the lie penalty's value): the page scrolls under a solid strip, and the
+    padding below lets its last row come clear of it. */
+ body:has(#app[data-mode]) #drawer:not([hidden]):has(.sx-foot)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:72px;z-index:2;pointer-events:none;background:linear-gradient(to top,rgba(5,9,13,.97) 78%,rgba(5,9,13,0))}
+ body:has(#app[data-mode]) #drawer:not([hidden]):has([data-panel-action]:not(.sx-foot *):not([hidden]))::after{height:136px}
+ body:has(#app[data-mode]) #drawer [data-panel-action]:not(.sx-foot *){z-index:3}
  body:has(#app[data-mode]) #drawer [data-panel-action]{right:16px;bottom:12px;min-width:0}
  /* A sheet with its main button AND steps (Endless, the course of the week):
     Back and Next stand above the main button rather than beside it. */
@@ -932,6 +1094,11 @@
  /* Side by side becomes one column. */
  body:has(#app[data-mode]) #drawer :is(.sx-rules,.sx-endless,.sx-team-cols,.lm,.ph,.ph-tab-locker,.wk,.ch,.rs-range,.hp){grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
  body:has(#app[data-mode]) #drawer :is(.wk,.ch)>*{grid-area:auto!important}
+ /* The week's page on a phone (audit 3): its 430 px picture filled a landscape
+    phone and the name ran under the buttons; a strip, the facts under it. */
+ body:has(#app[data-mode]) #drawer .wk-hero{height:170px;padding:14px 34px}
+ body:has(#app[data-mode]) #drawer .wk-hero strong{font-size:36px}
+ body:has(#app[data-mode]) #drawer .wk-earlier{max-width:none}
  body:has(#app[data-mode]) #drawer .sx-golfers #playerRows{grid-template-columns:minmax(0,1fr);padding:0 26px}
  body:has(#app[data-mode]) #drawer .sx-golfers .seat{min-height:0}
  /* Tiles two to a row. */
@@ -942,11 +1109,21 @@
  body:has(#app[data-mode]) #drawer .sx-line{flex-wrap:wrap;gap:6px 18px;min-height:0;padding:8px 26px}
  body:has(#app[data-mode]) #drawer .sx-facts{flex-wrap:wrap;gap:4px 14px}
  body:has(#app[data-mode]) #drawer .ph .look-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ /* My profile's tabs head the page (audit 5: stacked, they came after the
+    three who/level cards, below the first screen with nothing to say they
+    were there). The right column opens up so the tabs can go first. */
+ body:has(#app[data-mode]) #drawer .ph>.ph-main{display:contents}
+ body:has(#app[data-mode]) #drawer .ph>.ph-main>.ph-tabs{order:-1}
+ body:has(#app[data-mode]) #drawer .ph>.ph-main>.ph-pane{order:1}
  /* Settings: the categories as a sideways row over the settings. */
- body:has(#app[data-mode]) #drawer #drawerContent.st-root{grid-template-columns:minmax(0,1fr)}
+ /* A column, not a grid, on a phone (UI/UX pass, 21 October 2026): in the grid the
+    category row and the first settings row overlapped by 27 px. */
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root{display:flex!important;flex-direction:column;align-items:stretch;gap:0}
  body:has(#app[data-mode]) #drawer #drawerContent.st-root>*{grid-column:1!important;grid-row:auto!important}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats{position:static;display:flex;overflow-x:auto;gap:8px;margin:0 0 12px;scrollbar-width:none}
- body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-cats>*{flex:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side{display:contents}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root .st-help{order:9;margin-top:8px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats{position:static;display:flex;flex:none;overflow-x:auto;gap:8px;margin:0 0 12px;padding:2px 12px;scrollbar-width:none}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats>*{flex:none}
  body:has(#app[data-mode]) #drawer .st-groups{columns:1}
  /* Saved courses: the shelf, then the course picked. */
  body:has(#app[data-mode]) #drawer .lib-root .panel-section.lib-courses:not([hidden]){grid-template-columns:minmax(0,1fr)!important}
@@ -961,4 +1138,61 @@
  body:has(#app[data-mode]) #drawer .sd-root label.field:has(>input[type=range]){grid-template-columns:minmax(0,1fr) 22px 96px}
  body:has(#app[data-mode]) #drawer .sd-root label.field>input[type=range]{grid-column:1/3;grid-row:2}
  body:has(#app[data-mode]) #drawer .sd-root label.field:has(>input[type=range])>output{grid-column:3;grid-row:2}
+}
+
+/* PHASE 5 OF THE UI/UX PASS (21 October 2026): old pieces in the sheet style. */
+/* A control card whose only control is hidden draws nothing (Report a problem's
+   diagnostic box before it is filled left an empty slanted bar). */
+#drawer .control-card:not(:has(>:not([hidden]):not(.tip))){display:none}
+/* Help's licence fold-outs as rows of the page. */
+#drawer details{position:relative;isolation:isolate;margin:6px 0;padding:0}
+#drawer details>summary{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 26px;cursor:pointer;list-style:none;color:#fff;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+#drawer details>summary::-webkit-details-marker{display:none}
+#drawer details>summary::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer details>summary::after{content:"▸";margin-left:auto;color:var(--hot)}
+#drawer details[open]>summary::after{content:"▾"}
+#drawer details>summary:focus-visible{outline:none}
+#drawer details>summary:focus-visible::before{box-shadow:inset 0 0 0 3px var(--hot)}
+#drawer details .license-text{max-height:320px;overflow:auto;margin:8px 0 0;padding:12px 16px;background:rgba(0,0,0,.35);color:#cfd6e6;font:12px/1.5 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap}
+/* Saved courses: the empty line and the import card. */
+#drawer .lib-courses>.lib-empty{margin:0 0 8px;font-size:16px}
+#drawer .lib-new.lib-import b{color:var(--hot)}
+
+/* The launch monitor's connector list as rows, not a bullet list. */
+#drawer .lm ul{display:grid;gap:6px;margin:6px 0;padding:0;list-style:none}
+#drawer .lm li{position:relative;isolation:isolate;padding:10px 26px;font-size:15px;color:var(--soft)}
+#drawer .lm li::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer .lm li a{color:#fff;font-weight:700;text-decoration:none}
+#drawer .lm li a:is(:hover,:focus-visible){color:var(--hot)}
+
+/* My profile: the scoring box as a slanted panel, its words readable. */
+#drawer .score-types{position:relative;isolation:isolate;gap:8px;padding:16px 30px;border:0;border-radius:0;background:none}
+#drawer .score-types::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+#drawer .score-type{grid-template-columns:130px 1fr 34px;font:700 14px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+#drawer .score-type i{height:8px;border-radius:0;background:linear-gradient(90deg,var(--hot) var(--w),rgba(255,255,255,.1) var(--w))}
+#drawer .score-type strong{color:#fff;font-size:16px}
+
+/* The studio slab's mountain mark. */
+#studioSlab>b svg{width:34px;height:34px;display:block}
+
+/* ON AN UPRIGHT PHONE THE STEPS AND THE SETTINGS CATEGORIES WRAP (audit 5,
+   22 October 2026). In one sideways-scrolling row Play showed steps 1 to 4
+   with 5 Rules cut off at the edge, and Settings "LAUNC", with nothing to
+   say the row moved. Two rows, like My profile's tabs, show every one. */
+@media (max-width:560px){
+ body:has(#app[data-mode]) #drawer .sx-steps{flex-wrap:wrap;overflow-x:visible;row-gap:6px}
+ body:has(#app[data-mode]) #drawer #drawerContent.st-root>.st-side>.st-cats{flex-wrap:wrap;overflow-x:visible;row-gap:8px}
+ /* A settings page of one section (Camera & bay) split itself into two
+    columns even here, and its rows wrapped to six lines (found fixing the
+    above). One column. */
+ body:has(#app[data-mode]) #drawer .st-groups>.panel-section:only-child{columns:1!important}
+ /* The challenge of the week's banner reads top to bottom (audit 5: in one
+    row its three parts squeezed into columns of five short lines). */
+ #drawer .ch .chal-week{flex-direction:column;align-items:flex-start;gap:2px;padding:10px 28px}
+ #drawer .ch .chal-week small:last-child{margin-left:0}
+ /* My profile's golfer chips: fixed in the header band between 340 px from
+    the left and 220 px from the right, which on a 390 px phone is no room at
+    all -- they were not shown (found fixing the tabs). At the top of the
+    page here, ahead of the tabs, wrapping. */
+ #drawer .ph .ph-chips{position:static;order:-2;flex-wrap:wrap;overflow:visible}
 }

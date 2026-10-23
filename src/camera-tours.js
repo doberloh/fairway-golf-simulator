@@ -8,6 +8,41 @@ import {fairwayWidth, fairwayMiddle, teeAim, fairwayAim} from './course.js';
 // did: the LAUNCH CORRIDOR has to point where the shot actually goes, and
 // course.js cannot import this file -- this file imports course.js.
 export {fairwayMiddle, teeAim, fairwayAim};
+// A TREE IN THE WAY OF THE BALL (UI/UX pass, 21 October 2026): near the camera,
+// on the line from it to what it looks at, and tall enough to cross that line.
+// The tee camera stood behind a trunk (a Midwest first tee) or among firs (the
+// Challenge Course's third), and the player could not see the shot. Drawing
+// only: the tree is still there for the ball. PLACED: within 30 m of the
+// camera, the crown's radius plus a metre either side of the line.
+// The near cone is the picture's own width: a 16:9 frame at the play camera's
+// 53 degrees is about 85 degrees across, tan(42) = 0.9.
+export const VIEW_CLEAR_REACH=30,VIEW_CONE=.9,VIEW_BIG=.2;
+export function treeBlocksView(camera,target,t){
+ const dx=target.x-camera.x,dz=target.z-camera.z,len2=dx*dx+dz*dz;if(len2<1)return false;
+ const u=((t.x-camera.x)*dx+(t.z-camera.z)*dz)/len2;if(u<=0||u>=1)return false;
+ const along=u*Math.sqrt(len2);if(along>VIEW_CLEAR_REACH)return false;
+ const px=camera.x+dx*u,pz=camera.z+dz*u,off=Math.hypot(t.x-px,t.z-pz);
+  // A crown that would fill a fifth of the picture or more counts across the
+ // whole frame, not only on the line (VIEW_BIG: crown width over distance).
+ const big=t.r*1.5/Math.max(1,along)>VIEW_BIG;
+ const width=t.r*1.2+1+(big?along*VIEW_CONE:0);
+ if(off>width)return false;
+ const lineY=camera.y+(target.y-camera.y)*u;
+ return t.y+t.h*1.1>lineY&&t.y<lineY+2;
+}
+// ANYTHING ELSE IN THE WAY (UI/UX pass V2, the owner: "extend to rocks and
+// other things that could get in between the tee and camera"): a boulder, a
+// log or stump, a house, a pumpkin or headstone is put to the same test as a
+// tree, as the shape it reads -- its middle, its base, half its width as the
+// radius and its height. Pure.
+export const viewBlocker=(x,y,z,width,height)=>({x,y,z,r:Math.max(.2,width/2),h:Math.max(.2,height)});
+// FREE FLIGHT KEEPS WHAT THE PLAY VIEW CLEARED until it has moved (the owner,
+// UI/UX pass V3: "keep the trees hidden till moving"). Free flight starts where
+// the play camera stood, and a tree it had just hidden filled the first frame.
+// `held` is where free flight began; once the camera is HOLD_UNTIL_MOVED metres
+// from there, everything shows again. PLACED: two metres, about a second of slow flight. Pure.
+export const HOLD_UNTIL_MOVED=2;
+export const keepsCleared=(held,camera)=>!!held&&Math.hypot(camera.x-held.x,camera.y-held.y,camera.z-held.z)<HOLD_UNTIL_MOVED;
 export function cameraInsideTree(camera,t){const radius=t.r*1.9+1.5;return Math.hypot(camera.x-t.x,camera.z-t.z)<radius&&camera.y>t.y-.5&&camera.y<t.y+t.h*1.18+2;}
 // The hole flyover.
 //

@@ -28,7 +28,7 @@
    values here are Pacific Northwest's, so a root built without one is still
    readable. font-synthesis: the old stylesheet turns it off for the whole
    page, and without it the italic numbers would come out upright. */
-.uk{--panel:rgba(9,30,28,.88);--a1:#5eead4;--a2:#0f766e;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--under:#ff6b81;
+.uk{--panel:rgba(9,30,28,.88);--a1:#5eead4;--a2:#0f766e;--hot:#fde68a;--soft:#a7d8cf;--on-hot:#062320;--under:#6ee38c;
  font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;color:#fff;line-height:1.2}
 .uk.uk-canvas{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
 .uk .uk-abs{position:absolute}

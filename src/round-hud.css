@@ -98,6 +98,11 @@
  .rh-card .rh-score{font-size:26px;font-weight:800;font-style:italic}
  .rh-card .rh-score.under{color:var(--under)}
  .rh-card .rh-note{font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;font-style:normal}
+ /* A plate with a note (skins: "2 SKINS · IN") grows to keep the whole name
+    (UI/UX pass, 21 October 2026: JORDAN read JORDA). */
+ .rh-card:not(.up):has(.rh-note){width:auto;min-width:250px;max-width:360px}
+ .rh-card:not(.up):has(.rh-note) .rh-who{flex:0 1 auto}
+ .rh-card:not(.up) .rh-note{white-space:nowrap;margin-left:auto}
  .rh-card .rh-pic{flex:none;display:grid;place-items:center;width:34px;height:34px}
  .rh-card .rh-pic :is(img,.chip-dot){width:30px;height:30px}
  .rh-card .rh-pic .chip-dot{display:grid;place-items:center;border-radius:50%;font-size:16px;font-weight:800}
@@ -222,8 +227,15 @@
  #world[data-mode=play] .flag-label.edge{scale:var(--hud-z,1);transform-origin:50% 100%}
 
  /* ---------------------------------------------------------------- the map */
- /* The one straight panel: tall, down the right, under the golfer cards. */
- #world[data-mode=play]:not(.aim-view) .minimap{left:auto;right:30px;top:290px;bottom:80px;width:214px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
+ /* The one straight panel: tall, down the right, under the golfer cards.
+    THE CANVAS TAKES THE STRETCHING ROW (audit 5, 22 October 2026). The rows
+    were auto, auto, 1fr, auto -- but the big map's bar is display:none here,
+    so the canvas landed in the second, AUTO row and took its height from its
+    own pixel shape. That held while the shape was the page's 220x290; the big
+    map leaves it at its own (1260x885), the small map came back 158 px tall in
+    a 286 px space, and the resize observer then locked that in: the hole drawn
+    in the top half, the lower half empty. The studio's map had the same. */
+ #world[data-mode=play]:not(.aim-view) .minimap{left:auto;right:30px;top:290px;bottom:80px;width:214px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
  #world[data-mode=play]:not(.aim-view) .minimap #map{height:100%;min-height:0}
  #world[data-mode=play] .minimap .map-header{padding:6px 12px 4px;font-size:15px;letter-spacing:.14em;color:var(--soft);font-weight:700}
  #world[data-mode=play] .minimap .map-footer{padding:4px 12px 6px;font-size:14px;letter-spacing:.12em;color:var(--soft);font-weight:700;text-transform:uppercase}
@@ -262,7 +274,7 @@
  #app.rh-paused .topbar .rh-resume kbd{margin-left:auto;font:700 13px/1 "Saira Condensed",var(--font-ui),sans-serif;font-style:normal;padding:2px 6px;border:2px solid currentColor;border-radius:4px}
  #app.rh-paused .topbar #barTools::after{content:"Tools"}
  #app.rh-paused .topbar .avatar{font-size:0!important;background:none!important;color:#fff!important}
- #app.rh-paused .topbar .avatar::after{content:"Players & round";font-size:20px}
+ #app.rh-paused .topbar .avatar::after{content:"Golfers & rules";font-size:20px}
  #app.rh-paused .topbar [data-panel=help]{display:none}
  #app.rh-paused .topbar .connection .status-dot{flex:none}
  #app.rh-paused .topbar .connection #connectionLabel{display:inline!important;font-size:19px!important;width:auto!important}
@@ -295,6 +307,9 @@
  /* The floating number tiles show only when tiles are what the round screen
     shows (shot-display.js); otherwise they piled up unplaced in the corner. */
  #world[data-mode=play]:not(.rh-tiles) .shot-tiles{display:none!important}
+ /* NO "NOTHING HIT YET" BOX (the owner, V3): with no shot to show, the shot
+    panel is not drawn at all, at any size; during a flight it still carries Skip. */
+ #world[data-mode=play].rh-no-shot .shot-controls>.shot-panel:not(:has(#skipFlight:not([hidden]))){display:none!important}
 
  /* ================================================================ phase 2 */
  /* THE SHOT CARD: pops up beside where the ball came to rest, then fades
@@ -334,8 +349,17 @@
     smaller than round 13's (270 wide, not 440; numbers 28, not 44), the unit
     a space clear of its slanted number (the owner, 18 October 2026: "way too
     much space", "the units are overlapping the text"). */
- #world[data-mode=play]:not(.exploring).rh-tiles .shot-tiles{display:grid!important;position:absolute;inset:auto;left:50%;top:50%;right:auto;width:270px;transform:translate(-50%,-50%);grid-template-columns:1fr 1fr;gap:6px;zoom:var(--hud-z,1);z-index:9}
+ /* The shot numbers sit at the left edge, halfway down, by default (UI/UX pass
+    V2, the owner: "default them to the left side of the screen"); they were in
+    the middle, over the flag's yardage. A drag still puts them anywhere
+    (hud-places.js), and a double-click brings them back here. */
+ #world[data-mode=play]:not(.exploring).rh-tiles .shot-tiles{display:grid!important;position:absolute;inset:auto;left:30px;top:50%;right:auto;width:270px;transform:translateY(-50%);grid-template-columns:1fr 1fr;gap:6px;zoom:var(--hud-z,1);z-index:9}
  #world[data-mode=play]:not(.exploring).rh-tiles.rh-range .shot-tiles{left:auto;top:24px;right:30px;transform:none}
+ /* A CHALLENGE'S LINE (UI/UX pass V2): a slanted bar under the hole slab --
+    the challenge, then the ball -- in place of the small pill above it. */
+ #world[data-mode=play] .challenge-bar{zoom:var(--hud-z,1);top:128px;left:30px;max-width:none;gap:14px;height:40px;padding:0 24px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;isolation:isolate;color:#fff;font:700 16px "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase}
+ #world[data-mode=play] .challenge-bar::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
+ #world[data-mode=play] .challenge-bar b{font-size:18px;font-weight:800;font-style:italic;letter-spacing:.02em;color:var(--hot)}
  #world[data-mode=play].rh-tiles .shot-tile{position:relative;left:auto!important;top:auto!important;min-width:0;cursor:move;isolation:isolate;padding:6px 14px 7px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style}
  #world[data-mode=play].rh-tiles .shot-tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
  #world[data-mode=play].rh-tiles .shot-tile[data-field=carry]::before{background:linear-gradient(135deg,var(--a1),var(--a2))}
@@ -386,7 +410,7 @@
  #app[data-mode=studio] .topbar{display:none}
  #world[data-mode=studio] :is(.map-expand){display:none!important}
  /* The map as the round has it, bottom right, the tool column above it. */
- #world[data-mode=studio]:not(.aim-view) .minimap{left:auto;right:30px;top:auto;bottom:30px;width:214px;height:342px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
+ #world[data-mode=studio]:not(.aim-view) .minimap{left:auto;right:30px;top:auto;bottom:30px;width:214px;height:342px;zoom:var(--hud-z,1);display:grid;grid-template-rows:auto minmax(0,1fr) auto;border:0;border-top:4px solid var(--a1);border-radius:0;background:var(--panel);backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff}
  #world[data-mode=studio]:not(.aim-view) .minimap #map{height:100%;min-height:0}
  #world[data-mode=studio] .minimap .map-header{padding:6px 12px 4px;font-size:15px;letter-spacing:.14em;color:var(--soft);font-weight:700}
  #world[data-mode=studio] .minimap .map-reading{display:none!important}
@@ -488,11 +512,18 @@
  #app.rh-paused .topbar .rh-pause-head small{display:none}
  #app.rh-paused .topbar .rh-resume{grid-column:1/5;grid-row:2;height:56px}
  #app.rh-paused .topbar #scoreNav{grid-column:1/5;grid-row:3}
- #app.rh-paused .topbar #barTools{grid-column:1/5;grid-row:4}
- #app.rh-paused .topbar .avatar{grid-column:1/5;grid-row:5}
+ /* SIX ROWS (UI/UX pass, 21 October 2026; the owner: cut it down): Resume,
+    Scorecard, Golfers & rules, Settings (one window over the course, with
+    a tab for each kind of setting), Help, Main menu. Tools (T), the cameras
+    (the tool column), the tee (each golfer's seat), the meter's difficulty,
+    the shot numbers, graphics, sound, the clock and the monitor all moved to
+    Settings or the tool column; saved courses left the round. */
+ #app.rh-paused .topbar .avatar{grid-column:1/5;grid-row:4}
+ #app.rh-paused .topbar #pauseSettings{grid-column:1/5;grid-row:5}
  #app.rh-paused .topbar #dropHelp{grid-column:1/5;grid-row:6}
  #app.rh-paused .topbar #dropMenu{grid-column:1/5;grid-row:7}
- #app.rh-paused .topbar :is(#scoreNav,#barTools,.avatar,#dropHelp,#dropMenu){height:56px;font-size:24px!important}
+ #app.rh-paused .topbar :is(#scoreNav,.avatar,#pauseSettings,#dropHelp,#dropMenu){height:56px;font-size:24px!important}
+ #app.rh-paused .topbar :is(#barTools,#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time,.tee-control,.meter-button,.rh-pause-choice,.rh-pause-cams){display:none!important}
  #app.rh-paused .topbar #dropGraphics{grid-column:1/3;grid-row:8}
  #app.rh-paused .topbar #dropSound{grid-column:3/5;grid-row:8}
  #app.rh-paused .topbar #dropLibrary{grid-column:1/3;grid-row:9}
@@ -535,7 +566,20 @@
  #world[data-mode=play] .swing-meter .sm-skip kbd{padding:1px 5px;border:2px solid currentColor;border-radius:4px;font:700 12px/1.2 "Saira Condensed",var(--font-ui),sans-serif}
  /* At rest the meter's own hint ("SPACE or click the bar") gives way to the
     pill; a warning (out of reach) keeps the row and lifts the pill above it. */
- #world[data-mode=play] .swing-meter[data-stage=ready]:not(.out-of-reach) .sm-hint{display:none}
+ /* At rest the hint row is the strip of keys a first-timer needs (UI/UX pass,
+    21 October 2026: nothing named the swing key). It sits clear of the yard
+    marks over the bar. */
+ #world[data-mode=play] .swing-meter[data-stage=ready]:not(.out-of-reach) .sm-hint{display:flex;flex-wrap:wrap;gap:4px 14px;color:#fff;font-size:13px;letter-spacing:.1em;font-style:normal}
+ #world[data-mode=play] .swing-meter .sm-key{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+ #world[data-mode=play] .swing-meter .sm-key kbd{color:var(--hot);font-size:12px}
+ /* The first swing, coached (main.js drawCoach): over the meter, once per device. */
+ #world[data-mode=play] .swing-coach{position:absolute;left:50%;bottom:262px;z-index:8;transform:translateX(-50%);zoom:var(--hud-z,1);display:grid;gap:6px;padding:14px 30px;color:#fff;isolation:isolate;pointer-events:none;font-family:"Saira Condensed",var(--font-ui),sans-serif}
+ #world[data-mode=play] .swing-coach::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);box-shadow:inset 0 0 0 3px var(--hot);transform:skewX(-12deg)}
+ #world[data-mode=play] .swing-coach[hidden]{display:none}
+ #world[data-mode=play] .swing-coach strong{font-size:20px;font-weight:800;font-style:italic;color:var(--hot)}
+ #world[data-mode=play] .swing-coach ol{margin:0;padding-left:22px;display:grid;gap:2px;font-size:17px;font-weight:700}
+ #world[data-mode=play] .swing-coach small{font-size:13px;letter-spacing:.1em;color:var(--soft)}
+ #world[data-mode=play] .swing-coach kbd{padding:0 4px;border:1.5px solid currentColor;border-radius:3px;font:inherit}
  #world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{bottom:183px}
  #world[data-mode=play] .shape-control{left:calc(50% + 200px);bottom:151px;transform:translateX(-100%);display:flex;align-items:center;gap:0;height:28px;padding:0 14px;isolation:isolate}
  #world[data-mode=play] .shape-control::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:skewX(-12deg)}
@@ -590,7 +634,7 @@
  /* Where you are, centred over the left column in its PAUSED panel, and only
     there (the owner, 18 October 2026; it was also over the standings). */
  #app.rh-paused .topbar .rh-pause-head{justify-items:center;text-align:center}
- #app.rh-paused .topbar :is(.rh-resume,#scoreNav,#barTools,.avatar,#dropHelp,#dropMenu){height:52px;padding:0 34px!important;font-size:21px!important}
+ #app.rh-paused .topbar :is(.rh-resume,#scoreNav,#barTools,.avatar,#pauseSettings,#dropHelp,#dropMenu){height:52px;padding:0 34px!important;font-size:21px!important}
  #app.rh-paused .topbar .avatar::after{font-size:21px}
  #app.rh-paused .topbar :is(#dropGraphics,#dropSound,#dropLibrary,.connection,.sim-time){height:38px;font-size:14px!important}
  #app.rh-paused .topbar .rh-pause-extra{margin-left:52px;padding-top:0;gap:6px}
@@ -617,7 +661,13 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
    are 37 tall, 29 up. */
 @container app (min-width:561px) and (min-height:501px){
  #world[data-mode=play] .swing-meter{bottom:80px;width:543px}
- #world[data-mode=play] .swing-meter .sm-head{display:none!important}
+ /* The head row is only its hint now: the swing strip at rest, the meter's own
+    words during a swing ("tap to set the distance"), over the yard marks.
+    Hidden in flight, where the launch numbers have that place (UI/UX pass,
+    21 October 2026: the row was hidden outright, so nothing named Space). */
+ #world[data-mode=play] .swing-meter .sm-head{position:absolute;left:0;right:0;bottom:calc(100% + 30px);display:flex!important;justify-content:center;margin:0;min-height:0}
+ #world[data-mode=play] .swing-meter .sm-head>:not(.sm-hint){display:none!important}
+ #world[data-mode=play].in-flight .swing-meter .sm-head{display:none!important}
  #world[data-mode=play] .rh-launch{bottom:204px}
  #world[data-mode=play] .shape-control,#world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{left:50%;bottom:29px;transform:translateX(-50%);height:auto;padding:0;gap:7px;isolation:auto}
  #world[data-mode=play] .shape-control::before,#world[data-mode=play] .shape-control::after{display:none}

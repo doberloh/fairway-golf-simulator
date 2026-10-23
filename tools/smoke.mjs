@@ -269,11 +269,33 @@ class Trip {
   await this.page.locator('#menuDrop').getByRole('menuitem', {name}).click();
  }
 
+ // THE SETTINGS WINDOW (21 October 2026): Settings in the pause list, then a tab.
+ async settings(tab) {
+  if (!await this.page.locator('.popup[data-popup=settings]').isVisible().catch(() => false)) {
+   await this.chrome();
+   if (!await this.page.locator('#pauseSettings').isVisible()) await this.page.click('#menuNav');
+   await this.page.click('#pauseSettings');
+   await this.until(() => this.page.locator('.popup[data-popup=settings]').isVisible(), 'the Settings window', 5 * SLOW);
+  }
+  await this.page.click(`.popup[data-popup=settings] [data-sw="${tab}"]`);
+ }
+
+ // Out of the monitor screen opened from the round's Settings window: Esc goes
+ // back to the window (22 October 2026), which is then closed too.
+ async leaveMonitor() {
+  await this.key('Escape');
+  const win = this.page.locator('.popup[data-popup=settings]');
+  await this.until(async () => !(await this.drawerOpen()), 'the monitor screen to close', 5 * SLOW);
+  if (await win.isVisible().catch(() => false)) await this.page.getByRole('button', {name: 'Close Settings', exact: true}).click();
+  await this.until(async () => !(await win.isVisible().catch(() => false)), 'the Settings window to close', 5 * SLOW);
+ }
+
  async tool(id) {
   if (await this.page.evaluate(() => document.getElementById('toolsTray')?.hidden !== false)) {
-   // The top bar's Tools button (`chrome` brings the bar up first).
-   await this.chrome();
-   await this.page.locator('#barTools').click();
+   // T on the round screen (the pause list lost its Tools row, 21 October
+   // 2026); the pause list's Tools row on a phone, which keeps it.
+   if (await this.hud1()) { await this.unpause(); await this.key('KeyT'); }
+   else { await this.chrome(); await this.page.locator('#barTools').click(); }
    await this.until(() => this.page.evaluate(() => document.getElementById('toolsTray')?.hidden === false), 'the tools tray', 5 * SLOW);
   }
   // An id, or a selector for a tray button that has none (`[data-panel="bag"]`).
@@ -312,7 +334,9 @@ class Trip {
  async closePanel(title) {
   const where = await this.panelShowing(title);
   if (where === 'window') await this.page.getByRole('button', {name: `Close ${title}`, exact: true}).click();
-  else await this.key('Escape');
+  // A step sheet backs out a step per Escape and closes from its first step
+  // (the owner, 22 October 2026), so press until it is gone.
+  else for (let i = 0; i < 6 && (await this.panelShowing(title)); i++) await this.key('Escape');
   await this.until(async () => !(await this.panelShowing(title)), `"${title}" to close`, 5 * SLOW);
  }
 
@@ -334,7 +358,8 @@ class Trip {
  }
 
  async closeDrawer() {
-  await this.key('Escape');
+  // One Escape per step on a step sheet (see closePanel).
+  for (let i = 0; i < 6 && (await this.drawerOpen()); i++) await this.key('Escape');
   await this.until(async () => !(await this.drawerOpen()), 'the panel to close', 5 * SLOW);
  }
 
@@ -405,7 +430,27 @@ const whereAmI = page => page.evaluate(() => {
 const reliefFirst = async (t, press = sel => t.page.click(sel)) => {
  if (await t.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false)) await press('#reliefTake');
 };
-const fromMenu = (t, entry) => t.page.locator('#mainMenu').getByRole('button', {name: entry}).first().click();
+// EVERY MODE BUT THE RANGE IS IN PLAY (21 October 2026): Endless, the course of
+// the week and Challenges are cards on Play's first step, not menu rows.
+// Play's game types (UI/UX pass V2): a journey names the card it takes.
+const VIA_PLAY = {'Endless': 'Endless', 'Course of the week': 'Course of the week', 'Surprise me': 'Surprise me', 'Saved course': 'Saved course', 'Friend challenge': 'Friend challenge'};
+// The challenges' tabs and cards are on the first step, Challenge: a journey
+// that left it for Golfers (a head-to-head refused alone) goes back first.
+async function chalClick(t, sel) {
+ if (!await t.page.locator(sel).first().isVisible().catch(() => false)) await t.page.locator('#drawer .sx-step[aria-label="Challenge"]').click({timeout: 10000 * SLOW});
+ await t.page.click(sel);
+}
+// A challenge's Start is on its last step, Rules (UI/UX pass V2): go there, then start.
+async function challengeGo(t) {
+ await t.page.locator('#drawer .sx-step[aria-label="Rules"]').click({timeout: 10000 * SLOW});
+ await t.page.click('#challengeGo', {timeout: 10000 * SLOW});
+}
+async function fromMenu(t, entry, press = 'click') {
+ if (!VIA_PLAY[entry]) return t.page.locator('#mainMenu').getByRole('button', {name: entry}).first()[press]();
+ await t.page.locator('#mainMenu').getByRole('button', {name: 'Play'}).first()[press]();
+ await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+ await t.page.locator(`#drawer .sx-card[aria-label^="${VIA_PLAY[entry]}"]`).first()[press]();
+}
 
 // Every control on the play screen that a player can see must be one a player
 // can click. Checked by asking the browser what is actually under the centre of
@@ -772,12 +817,12 @@ const JOURNEYS = [
    const PANELS = [
     ['Saved courses', ['Your courses', 'Save a course', 'Import & export']],
     ['My profile', []],
-    ['Camera & bay', []],
-    ['Graphics', []],
+    ['Settings', []],
     ['Help & controls', ['The essentials', 'Explore the course', 'Controller', 'Made to travel', 'The physics', 'Report a problem', 'Open source & credits']],
     ['Driving range', ['The range', 'Golfers']],
     ['Endless', ['Golfers', 'Landscape']],
-    ['Play', ['Golfers', 'Format', 'Rules', 'Course']],
+    // Play remembers the game type chosen last (Endless, just above): these steps are in every one.
+    ['Play', ['Golfers', 'Format', 'Rules', 'Game']],
    ];
    for (const [entry, tabs] of PANELS) {
     await t.step(`open "${entry}"`, async () => {
@@ -871,8 +916,12 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a cancelled swing hit the ball');
    });
    await t.step('cameras: overview, player, green view, back', async () => {
-    // The cameras are in the Esc list.
-    for (const cam of ['overview', 'player', 'green', 'player']) { await t.chrome(); await t.page.click(`#pauseCams [data-cam=${cam}]`); }
+    // The keys (the pause list's camera chips went on 21 October 2026): C the
+    // overview and back, G the aim point, the green, and back.
+    for (const [code, want] of [['KeyC', 'overview'], ['KeyC', 'player'], ['KeyG', 'target'], ['KeyG', 'green'], ['KeyG', 'player']]) {
+     await t.key(code);
+     await t.until(async () => (await t.page.evaluate(() => window.lab.view())) === want, `${code} to the ${want} camera`, 5 * SLOW);
+    }
    });
    await t.step('a ball in the air clears the screen, and it comes back when the ball settles', async () => {
     await t.swing();
@@ -1023,9 +1072,9 @@ const JOURNEYS = [
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play, on Ultra', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off, on Ultra', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('no lit shader is built during the arrival', async () => {
@@ -1129,9 +1178,9 @@ const JOURNEYS = [
   prepare: page => JOURNEYS.find(j => j.name === 'ball-light-shaders').prepare(page),
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('drop beside the pin', async () => {
@@ -1192,9 +1241,9 @@ const JOURNEYS = [
   },
   async run(t) {
    await menuReady(t);
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('it starts at midday with the floodlights off', async () => {
@@ -1205,8 +1254,7 @@ const JOURNEYS = [
    });
    const casting = () => t.page.evaluate(() => window.lab.floodShadows().live);
    await t.step('Floodlight the course, from the clock: no freeze', async () => {
-    await t.chrome();
-    await t.page.click('#clockButton');
+    await t.settings('time');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight the course'});
     await box.scrollIntoViewIfNeeded();
     // Every frame for three seconds from the click.
@@ -1218,15 +1266,14 @@ const JOURNEYS = [
     await box.setChecked(true);
     const worst = await watch;
     if (worst > 500) throw new Error(`switching the floodlights on froze the picture for ${Math.round(worst)} ms`);
-    await t.page.click('#clockButton');
+    await t.closePanel('Settings');
     await t.unpause();
    });
    await t.step('the lamps nearest the shot cast shadows', async () => {
     await t.until(async () => (await casting()) === 3, 'three lamps casting on Ultra', 15 * SLOW);
    });
    const flip = async on => {
-    await t.menuItem('Graphics & performance');
-    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    await t.settings('graphics');
     // It lives on the window's "Costs a frame" tab.
     await t.press('Costs a frame');
     const box = t.page.getByRole('checkbox', {name: 'Floodlight shadows'});
@@ -1234,7 +1281,7 @@ const JOURNEYS = [
     await box.setChecked(on);
     // The new programs are built before the switch lands, so it takes a moment.
     await t.until(async () => (await casting()) === (on ? 3 : 0), `floodlight shadows ${on ? 'on' : 'off'}`, 20 * SLOW);
-    await t.closePanel('Graphics & performance');
+    await t.closePanel('Settings');
    };
    await t.step('Graphics → Floodlight shadows off', () => flip(false));
    await t.step('and on again', () => flip(true));
@@ -1252,9 +1299,9 @@ const JOURNEYS = [
    const named = (s, n) => s?.profiles.find(p => p.name === n);
    const saved = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
    const groupPanel = async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
    };
    await t.step('the welcome is up, over the menu', () =>
     t.until(() => t.page.evaluate(() => document.getElementById('welcome')?.hidden === false && !document.getElementById('splash')), 'the welcome', 60 * SLOW));
@@ -1442,9 +1489,9 @@ const JOURNEYS = [
     if (got.join() !== want.join()) throw new Error(`the club picker reads ${got.join(', ')}`);
    });
    await t.step('a second golfer joins, and their bag is edited in the round', async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
     await t.press('Add player');
     await t.page.fill('#name1', 'Second');
     await t.page.click('#applyGroup');
@@ -1530,9 +1577,9 @@ const JOURNEYS = [
     if (await barUp()) throw new Error('the relief bar stayed up');
    });
    await t.step('Local Rule E-5, chosen in the Rules step, offers the two-stroke drop', async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
-    await t.press('Rules'); // the Play steps (round 13)
+    // The house rules are on the Golfers & rules screen itself (21 October 2026).
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
@@ -1607,14 +1654,14 @@ const JOURNEYS = [
 
  {
   name: 'surprise-round',
-  what: 'Play → Surprise me & play builds a nine-hole course, and every in-round tool opens',
+  what: 'Play → Surprise me → Tee off builds a nine-hole course, and every in-round tool opens',
   async run(t) {
    await menuReady(t);
    // The button that died once already, along with "Start fresh round" and
    // the course picker, while the panel looked completely normal.
-   await t.step('Play → Surprise me & play', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('Surprise me & play');
+   await t.step('Play → Surprise me → Tee off', async () => {
+    await fromMenu(t, 'Surprise me');
+    await t.press('Tee off on the surprise course');
     await t.inPlay(120 * SLOW);
    });
    await t.step('it is a nine-hole course, on hole one', async () => {
@@ -1654,7 +1701,7 @@ const JOURNEYS = [
    // label the player reads in the top menu.
    // Menu label -> the title of the window it opens. Not always the same:
    // Help opens as "Keys & help" (round 14, frame c-help).
-   for (const [entry, title] of [['Saved courses', 'Saved courses'], ['Graphics & performance', 'Graphics & performance'], ['Help & controls', 'Keys & help']]) {
+   for (const [entry, title] of [['Settings', 'Settings'], ['Help & controls', 'Keys & help']]) {
     await t.step(`menu → ${entry}`, async () => {
      await t.menuItem(entry);
      await t.until(async () => !!(await t.panelShowing(title)), `a window called "${title}"`, 5 * SLOW);
@@ -1693,7 +1740,9 @@ const JOURNEYS = [
     await fromMenu(t, 'Driving range');
     await t.press('Open the driving range');
     await t.inPlay(120 * SLOW);
-    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, open by themselves', 5 * SLOW);
+    // They no longer open by themselves (21 October 2026): R opens them.
+    await t.key('KeyR');
+    await t.until(async () => !!(await t.panelShowing('Range controls')), 'the range controls, from R', 5 * SLOW);
    });
    // The owner's report (16 October 2026): once closed, there was no way back.
    await t.step('closed, the range controls come back from the tool column', async () => {
@@ -1765,8 +1814,10 @@ const JOURNEYS = [
   async run(t) {
    await menuReady(t);
    await t.step('Sound → its window, from the menu', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Sound', exact: true}).click();
-    await t.until(async () => !!(await t.panelShowing('Sound')), 'the sound window', 5 * SLOW);
+    await t.page.locator('#mainMenu').getByRole('button', {name: 'Settings', exact: true}).click();
+    await t.until(() => t.drawerOpen(), 'the settings screen', 5 * SLOW);
+    await t.page.locator('#drawer .st-cat', {hasText: 'SOUND'}).click();
+    await t.until(async () => !!(await t.panelShowing('Sound')), 'the sound settings', 5 * SLOW);
    });
    await t.step('the volume and the switch are kept', async () => {
     await t.page.locator('#sndMaster').evaluate(el => { el.value = '40'; el.dispatchEvent(new Event('input', {bubbles: true})); });
@@ -1977,11 +2028,10 @@ const JOURNEYS = [
    await t.step('the play screen at 150% on 1920x1080', () => play('1920x1080 at 150%'));
    await t.step('200% on 2560x1440, set in Graphics', async () => {
     await t.page.setViewportSize({width: 2560, height: 1440});
-    await t.menuItem('Graphics & performance');
-    await t.until(async () => !!(await t.panelShowing('Graphics & performance')), 'the graphics window', 5 * SLOW);
+    await t.settings('graphics');
     await t.page.$eval('#gfxTextSize', el => { el.value = 200; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); });
     await t.until(async () => Math.abs((await zoom()) - 2) < .01, 'the interface at 200%', 5 * SLOW);
-    await t.closePanel('Graphics & performance');
+    await t.closePanel('Settings');
     await play('2560x1440 at 200%');
    });
    await t.step('the same 200% on a 1080p screen is held to 150%', async () => {
@@ -2007,9 +2057,9 @@ const JOURNEYS = [
    await menuReady(t);
    const tap = sel => t.page.tap(sel);
    await t.step('Endless → Start an endless run', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
-    // Round 14: the run starts from the Golfers step.
-    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
+    await fromMenu(t, 'Endless', 'tap');
+    // Endless is a kind of round in Play (21 October 2026): it starts from the last step, Rules.
+    await t.page.locator('#drawer .sx-steps .sx-step').last().tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
    });
@@ -2250,12 +2300,12 @@ const JOURNEYS = [
     await t.inPlay();
    });
    await t.step('connect the bridge and arm the monitor', async () => {
-    await t.chrome();
-    await t.page.getByRole('button', {name: 'Connect monitor'}).click();
+    // Settings → Launch monitor (the pause list's Connect monitor row went, 21 October 2026).
+    await t.settings('monitor');
     await t.press('Connect bridge');
     await t.until(() => shown('#monState'), 'the monitor strip on the shot controls', 5 * SLOW);
     await t.page.getByLabel(/Arm monitor/).check();
-    await t.key('Escape');
+    await t.leaveMonitor();
     await t.until(async () => (await title()) === 'Ready', 'the panel to say Ready', 5 * SLOW);
    });
    await t.step('armed: the shot controls go and the launch monitor window takes their place', async () => {
@@ -2351,9 +2401,9 @@ const JOURNEYS = [
    const shot = n => JSON.stringify({type: 'shot', requestId: 'mixed-' + n, payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: n, APIversion: '1',
     BallData: {Speed: 140, VLA: 14, HLA: 0, TotalSpin: 3000, SpinAxis: 0}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}});
    const groupPanel = async () => {
-    await t.chrome();await t.page.getByRole('button', {name: 'Players and round'}).first().click();
+    await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the group panel', 5 * SLOW);
-    await t.press('Golfers'); // the Play steps (round 13)
+    // Mid-round the panel is Golfers & rules: the seats and Apply, no steps (21 October 2026).
    };
    await menuReady(t);
    await t.step('connect and arm from the main menu', async () => {
@@ -2450,16 +2500,16 @@ const JOURNEYS = [
     await t.key('Escape');
    });
    await t.step('into a round: the shot panel says Ready, and Tools has the monitor too', async () => {
-    await t.page.locator('#mainMenu').getByRole('button', {name: 'Endless'}).first().tap();
-    // Round 14: the run starts from the Golfers step.
-    await t.page.locator('#drawer .sx-steps').getByRole('button', {name: 'Golfers', exact: true}).tap();
+    await fromMenu(t, 'Endless', 'tap');
+    // Endless is a kind of round in Play (21 October 2026): it starts from the last step, Rules.
+    await t.page.locator('#drawer .sx-steps .sx-step').last().tap();
     await t.page.getByRole('button', {name: 'Start an endless run', exact: true}).tap();
     await t.inPlay();
     await t.until(async () => (await t.page.textContent('#monTitle')) === 'Ready', 'the panel to say Ready', 5 * SLOW);
-    await t.chrome(); await t.page.tap('#barTools');
-    await t.page.getByRole('button', {name: 'Launch monitor', exact: true}).tap();
+    // Settings → Launch monitor (it left Tools for Settings, 21 October 2026).
+    await t.settings('monitor');
     await t.until(() => t.page.evaluate(() => !!document.getElementById('bridgeUrl')), 'the monitor panel from Tools', 5 * SLOW);
-    await t.key('Escape');
+    await t.leaveMonitor();
    });
    await t.step('the address is remembered on this device', async () => {
     await t.page.reload();
@@ -2538,10 +2588,9 @@ const JOURNEYS = [
      await t.until(() => t.page.evaluate(() => !document.getElementById('mainMenu').hidden), 'the main menu', 60 * SLOW);
     }
     await fromMenu(t, 'Challenges');
-    await t.page.click(`[data-chal-tab="${tab}"]`);
-    await t.page.click(`[data-challenge="${id}"]`);
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, `[data-chal-tab="${tab}"]`);
+    await chalClick(t, `[data-challenge="${id}"]`);
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
    };
    await t.step('Challenges → seven tabs, all 36, none locked, the old record already a medal', async () => {
@@ -2549,7 +2598,7 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
     let cards = 0;
     for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
-     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await chalClick(t, `[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
      // The challenge of the week's card sits above the tabs, on every one: count the tab's own.
      cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
@@ -2560,10 +2609,9 @@ const JOURNEYS = [
     if (m?.closest !== 3) throw new Error(`the 9-foot record from before medals is not a gold: ${JSON.stringify(m)}`);
    });
    await t.step('closest to the pin starts on a par 3 of the Challenge Course, with the bar', async () => {
-    await t.page.click('[data-chal-tab="approach"]');
-    await t.page.click('[data-challenge="closest"]');
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="approach"]');
+    await chalClick(t, '[data-challenge="closest"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Ball 1 of 5/), 'the challenge bar on ball 1', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error(`the challenge is on a par ${await t.page.textContent('#holePar')}`);
@@ -2639,7 +2687,7 @@ const JOURNEYS = [
     await t.page.waitForSelector('[data-chal-week]', {timeout: 10000 * SLOW});
     await t.page.click('[data-chal-week]');
     await t.until(() => t.page.evaluate(() => /This week:/.test(document.querySelector('#drawerContent h3')?.textContent || '')), 'the week\'s details', 10 * SLOW);
-    await t.page.click('#challengeGo');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/This week/), 'the bar says this week', 20 * SLOW);
     const s = await t.page.evaluate(() => window.lab.state().challenge);
@@ -2681,23 +2729,22 @@ const JOURNEYS = [
     await t.until(() => t.page.evaluate(() => document.querySelectorAll('.chal-tabs .panel-tab').length === 7), 'the seven tabs', 10 * SLOW);
     let cards = 0;
     for (const tab of ['tee', 'approach', 'range', 'short', 'putting', 'versus', 'rounds']) {
-     await t.page.click(`[data-chal-tab="${tab}"]`);
+     await chalClick(t, `[data-chal-tab="${tab}"]`);
      await t.until(() => t.page.evaluate(id => document.querySelector(`[data-chal-tab="${id}"]`)?.classList.contains('active'), tab), `the ${tab} tab`, 10 * SLOW);
      cards += await t.page.evaluate(() => document.querySelectorAll('.chal-card[data-challenge]').length);
     }
     if (cards !== 36) throw new Error(`${cards} challenge cards`);
    });
    await t.step('a head-to-head alone is refused, with the reason', async () => {
-    await t.page.click('[data-chal-tab="versus"]');
-    await t.page.click('[data-challenge="shootout"]');
-    await t.page.waitForSelector('#challengeGo', {timeout: 10000 * SLOW});
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="versus"]');
+    await chalClick(t, '[data-challenge="shootout"]');
+    await challengeGo(t);
     await t.until(() => t.page.evaluate(() => /two to four/.test(document.getElementById('roundError')?.textContent || '')), 'the refusal', 10 * SLOW);
    });
    await t.step('Every par 3 starts on a par 3 and moves to the next after a ball', async () => {
-    await t.page.click('[data-chal-tab="approach"]');
-    await t.page.click('[data-challenge="par3s"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="approach"]');
+    await chalClick(t, '[data-challenge="par3s"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Ball 1 of 7/), 'the bar on ball 1 of 7', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error('not on a par 3');
@@ -2719,9 +2766,9 @@ const JOURNEYS = [
    await t.step('Bogey-free nine starts as a real round: it saves, with the goal on the bar', async () => {
     await toMenu();
     await fromMenu(t, 'Challenges');
-    await t.page.click('[data-chal-tab="rounds"]');
-    await t.page.click('[data-challenge="bogeyfree"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="rounds"]');
+    await chalClick(t, '[data-challenge="bogeyfree"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Bogey-free nine/), 'the goal on the bar', 20 * SLOW);
     await t.shot();
@@ -2730,9 +2777,9 @@ const JOURNEYS = [
    await t.step('Sudden death starts an endless run with its goal', async () => {
     await toMenu();
     await fromMenu(t, 'Challenges');
-    await t.page.click('[data-chal-tab="rounds"]');
-    await t.page.click('[data-challenge="suddendeath"]');
-    await t.page.click('#challengeGo');
+    await chalClick(t, '[data-chal-tab="rounds"]');
+    await chalClick(t, '[data-challenge="suddendeath"]');
+    await challengeGo(t);
     await t.inPlay(180 * SLOW);
     await t.until(() => bar(/Sudden death/), 'the goal on the bar', 20 * SLOW);
     const g = await t.page.evaluate(() => window.lab.state().goal);
@@ -2796,7 +2843,8 @@ const JOURNEYS = [
    });
    await t.step('the panel, then play it', async () => {
     await fromMenu(t, 'Course of the week');
-    await t.until(async () => /course generator/.test(await t.page.textContent('#drawerContent')), 'the panel', 10 * SLOW);
+    // The week is a course chosen in Play now: its line names the week.
+    await t.until(async () => /WEEK [0-9]+/.test(await t.page.textContent('#drawerContent')), 'Play on the week', 10 * SLOW);
     // Round 14: Play is on the Golfers step; press goes there first.
     await t.press('Play the course of the week');
     await t.inPlay(180 * SLOW);
@@ -2830,8 +2878,7 @@ const JOURNEYS = [
     rules: {tee: 'blue', putting: {mode: 'holeout', one: 3, two: 10, three: 20}, ob: 'stroke', lie: true, input: 'meter', turf: {}},
     log: [{hole: 0, seat: 0, s: shot}, {hole: 0, seat: 0, s: [1, 0, 180000, 0, 3000, 2800, 0, 7000, 0, 500, 260000]}]});
    await t.step('Play → A friend’s challenge, paste the code', async () => {
-    await fromMenu(t, 'Play');
-    await t.press('A friend’s challenge');
+    await fromMenu(t, 'Friend challenge');
     await t.page.fill('#rivalPaste', code);
     await t.press('Read the code');
     await t.until(async () => /Sam shot 38/.test(await t.page.textContent('#drawerContent')), 'the challenge read', 10 * SLOW);

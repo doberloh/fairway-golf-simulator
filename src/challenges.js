@@ -175,6 +175,28 @@ export const CHALLENGES = [
  {id: 'bogeyfree', name: 'Bogey-free nine', group: 'rounds', how: 'Nine holes of stroke play on the Challenge Course\'s nine. Count your bogeys or worse: none is gold.',
   where: 'round', goal: 'bogeyfree', balls: 0, order: 'round', ball: 'round', play: 'round', better: 'low', medals: [2, 1, 0], show: 'count', noun: 'bogeys', long: true},
 ];
+// THE SAME RULES FOR EVERYONE (UI/UX pass V2, 21 October 2026; the owner:
+// "rules should be set so that all users have the same experience"). A
+// challenge's group plays stroke play from the blue tees, every putt holed,
+// out of bounds by the Rules of Golf and the lie penalty on, whatever the
+// player's own house rules or a golfer's usual tee -- so a medal means the
+// same test on every copy of Fairway. The Rules step shows these, unchangeable.
+// PLACED: the blue tees and the lie penalty on are Round's own defaults.
+export const CHALLENGE_RULES = Object.freeze({mode: 'stroke', tee: 'blue', putting: 'holeout', outOfBounds: 'stroke', monitorLie: true});
+export const challengeGroup = players => ({
+ players: players.map(p => ({...p, tee: CHALLENGE_RULES.tee})),
+ mode: CHALLENGE_RULES.mode, tee: CHALLENGE_RULES.tee,
+ outOfBounds: CHALLENGE_RULES.outOfBounds, monitorLie: CHALLENGE_RULES.monitorLie,
+});
+// The rules as the Rules step lists them: a name, the value, a line under it.
+export const CHALLENGE_RULE_ROWS = [
+ ['FORMAT', 'STROKE PLAY', 'Your own score, ball by ball'],
+ ['TEES', 'BLUE', 'Every golfer plays the same tee'],
+ ['PUTTING', 'HOLE OUT', 'Every putt is holed'],
+ ['OUT OF BOUNDS', 'RULES OF GOLF', 'Stroke and distance'],
+ ['LIE PENALTY', 'ON', 'Rough and sand cost ball speed'],
+];
+
 export const challenge = id => CHALLENGES.find(c => c.id === id) || null;
 export const challengesIn = group => CHALLENGES.filter(c => c.group === group);
 // How many strokes a spot may take before it is picked up. PLACED.

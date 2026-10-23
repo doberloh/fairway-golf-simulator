@@ -146,3 +146,31 @@ test('what is left from the aim point to the hole: yards, or feet inside ten met
  assert.equal(leaveText(142 * YARD), '142 YDS TO HOLE');
  assert.equal(leaveText(3), `${(3 / FOOT).toFixed(1)} FT TO HOLE`);
 });
+
+test('a finished round says who won by what its format counts', async () => {
+ const {roundResult} = await import('../src/round-hud.js');
+ const e = [{name: 'Alex', total: 40, seat: 0}, {name: 'Sam', total: 38, seat: 1}, {name: 'Jo', total: 38, seat: 2}];
+ const tie = roundResult({entries: e});
+ assert.equal(tie.headline, 'SAM AND JO TIE');
+ assert.ok(tie.rows.every(r => !r.win));
+ assert.deepEqual(tie.rows.filter(r => r.tie).map(r => r.name), ['Sam', 'Jo']);
+ const one = roundResult({entries: e.slice(0, 2)});
+ assert.equal(one.headline, 'SAM WINS');
+ assert.equal(one.rows[0].name, 'Sam');
+ assert.ok(one.rows[0].win);
+ // Skins: ranked by skins won, whatever the strokes.
+ const sk = roundResult({mode: 'skins', entries: e, skinsWon: [3, 1, 0], carry: 2});
+ assert.equal(sk.headline, 'ALEX WINS THE SKINS');
+ assert.equal(sk.rows[0].name, 'Alex');
+ assert.equal(sk.rows[0].measure, '3 SKINS');
+ assert.match(sk.line, /2 SKINS UNCLAIMED/);
+ const none = roundResult({mode: 'skins', entries: e, skinsWon: [0, 0, 0], carry: 9});
+ assert.equal(none.headline, 'NO SKINS WON');
+ assert.ok(none.rows.every(r => !r.win && !r.tie));
+ // Match play: the team.
+ const m = roundResult({mode: 'match', entries: [{name: 'Alex', team: 'A'}, {name: 'Sam', team: 'B'}], match: {A: 1, B: 4, holesLeft: 2}});
+ assert.equal(m.headline, 'TEAM B WINS');
+ assert.equal(m.line, '3 & 2');
+ assert.equal(m.rows[0].name, 'Sam');
+ assert.equal(roundResult({mode: 'match', entries: [{name: 'A', team: 'A'}], match: {A: 2, B: 2}}).headline, 'ALL SQUARE');
+});

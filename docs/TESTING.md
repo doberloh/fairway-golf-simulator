@@ -46,6 +46,8 @@ and seed, so it can be replayed exactly.
 | Scramble | yes | yes | yes | yes | every split, one team of four included | yes |
 | Skins | refused | yes | yes | yes | all on one side, and split | yes |
 | Stroke with a goal | Sudden death (endless) and Bogey-free nine, 1-4 golfers, golfers coming and going; the goal checked after every hole and through saves |  |  |  |  |  |
+| Course of the week | 18 holes of stroke play, 1-4 golfers, every putting mode; the week kept through a save, and each golfer's best for the week (first finish, only a better round replaces it) |  |  |  |  |  |
+| A friend's challenge | 9 and 18 holes, 1-4 golfers against a friend's card; every golfer's comparison checked after every hole, the final line (beat, wins by, tied), the challenge kept through a save |  |  |  |  |  |
 
 Each under all three putting modes (hole out, dartboard, decimal), both
 out-of-bounds rules, over 3 holes, then 9 and 18 with group changes.
@@ -134,7 +136,10 @@ the courses several suites share.
   `three-namespace`, `flood-shadows`, `instance-cull`, `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights`, `haunts`, `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`.
-- **Cameras and maps** -- `camera-flight`, `approach-camera`, `tv-camera`,
+- **Cameras and maps** -- `waterways-tours` also checks `treeBlocksView` (a tree on
+  the line or filling the frame near the camera is cleared, one behind the ball,
+  behind the camera, far off to the side, or under the line is not);
+  `camera-flight`, `approach-camera`, `tv-camera`,
   `camera-orbit` (the drag round the green and aim point views: no turn
   leaves the view as it was, a turn keeps distance and height, the tilt stops
   at 5 and 85 degrees and turns back at once, the wheel stops at a third and
@@ -153,6 +158,18 @@ the courses several suites share.
   following the week), `ui-kit` (every class `uk-` and every rule scoped to
   `.uk`, no colour on a straightening wrapper, the stylesheet's sizes match the
   rules, the two font files are local woff2 with their licence, text escaped).
+  `ui-settings` also checks every in-round setting is a tab of the one
+  Settings window and only the monitor opens a screen. The smoke harness reaches
+  settings through `t.settings(tab)` (pause → Settings → the tab), Tools with T
+  on the round screen (the pause list's Tools row on a phone), the cameras with
+  C and G, and the mid-round group through *Golfers & rules*.
+  `keys` (UI/UX pass: every key listed once, Tab is the numbers and ? the
+  list, each tool's key matches, the swing strip by input, main.js answers each
+  key, a step passed without what it needs is not ticked, and Esc on a step
+  sheet goes back one step, closing only from the first). The smoke harness's
+  `closePanel`/`closeDrawer` press Escape until the sheet is gone, and
+  `leaveMonitor` closes the Settings window that Esc in the monitor screen goes
+  back to.
   `round-hud` (phase 1: what the round screen's pieces say -- hole slab, conditions,
   club, scores with a real minus, golfer cards, keys, the ball light, the
   camera's name beside the wind, the aim point's distance left to the hole -- and
@@ -163,7 +180,9 @@ the courses several suites share.
   fade, the range's eight tiles being real fields, the choice kept per device;
   birdie or better earning the band, every banner under two seconds with the
   next turn announced as it leaves, the paper card's marks), and `round-hud`'s
-  round-complete helpers (places with ties, XP this round, the handicap line).
+  round-complete helpers (places with ties, XP this round, the handicap line,
+  and `roundResult`: a tie called a tie, skins ranked by skins won, match play
+  by the team and its margin).
   Round 14: the reachability and thumb checks skip a select under a 1.0
   drop-down (`.dd-native`: its field is the control) and measure the whole
   club box (`.club-control`, which opens the bag) rather than `#club`.
@@ -180,9 +199,17 @@ the courses several suites share.
   row, a single line wraps, the keys and pad directions). `ui-lobby` (the
   1.0 lobby: a picker's value and line are cut from the drop-down's own
   option text, every out-of-bounds rule reads as its short name, every format
-  has a tile). `ui-monitor-setup` (the setup screen's steps tick in order
+  has a tile, and Play's steps for each game type: Game, its own step,
+  then Golfers, Format and Rules). `swing-meter` also has `longestReach`,
+  the default aim pulled back to what a full swing carries. `phone-view` holds
+  the phone's lift to the measured layouts and to the views that follow the
+  ball. `waterways-tours`
+  holds a boulder, a house and a log to the same view test as a tree, and free
+  flight to the play view's clearing until it has moved two metres. `challenges` also holds a challenge's
+  group to the fixed rules (blue tees for all, stroke play, Rules of Golf, lie
+  penalty on). `ui-monitor-setup` (the setup screen's steps tick in order
   and never ahead of the bridge, the ball light's words match the round
-  screen's, the last shot in mph, degrees and rpm). `ui-profile-hub` (every
+  screen's, the monitors listed are rēlā's, once each, the last shot in mph, degrees and rpm). `ui-profile-hub` (every
   heading the old profile page writes has a hub tab; the overview's eight
   numbers and their dashes). The `profile`, `bag`, `look` and `level-up`
   journeys press the hub's Locker, Bag and History tabs before reaching in.
