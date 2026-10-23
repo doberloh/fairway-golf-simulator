@@ -684,9 +684,11 @@ row after Save and leave; Esc on a step sheet goes back one step). One commit
 per change; audit 6 looks at each. **Smoke after the V4 changes (22 October):
 37 of 38 journeys green; `phone-portrait` failed once** -- a tap on the course
 did not move the aim on a fresh Endless hole, the picture taken at the hole's
-arrival (no aim line yet) -- and passed 3 of 3 run on its own. Not explained:
-if it comes back, see whether the first tap lands before the arrival lets the
-aim move.
+arrival (no aim line yet) -- and passed 3 of 3 run on its own. Looked into after audit 6: 6 more runs
+alone all passed (9 of 9), and a probe of the arrival found the tap point on
+open course from the first frame (`view.pick` hits ground, no overlay, no
+sheet). Not explained; it may be timing under the full run's load. If it
+comes back, note which frame the tap lands on.
 
 - [ ] **Main menu during a flight lands the ball first** (audit 5: the round
   froze, the menu never came). Built; probed in the capture build: Esc and
