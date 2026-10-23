@@ -653,9 +653,9 @@ are in the archived section of the same name.
 
 **V5 plan** (the owner, 22 October, after audit 6: the leftovers, the upright
 saved course card, then audit 7). Smoke after it: **38 of 38 green**. Audit 7
-(364 screenshots, no console errors) saw every entry below. Open: the owner's
-call on Round complete's held buttons (the narrow band lets a third golfer's
-row show beside them on a long Skins card).
+(364 screenshots, no console errors) saw every entry below. The owner's call on
+Round complete's held buttons (22 October): **keep the narrow band**, though a
+third golfer's row shows beside it on a long Skins card until scrolled.
 
 - [ ] **The empty shelf's Saved course card as wide as the rest on an upright
   phone** (the owner: much skinnier). It took the saved rounds list's class.
