@@ -30,6 +30,26 @@ function withNav(fit,nav){
  return {...fit,cx:fit.cx+x,cz:fit.cz+z,scale,zoom,panX:x,panZ:z,limitX,limitZ};
 }
 
+// THE HOLE'S OWN EXTENT, WORKED OUT ONCE A HOLE (the frame-rate goal, 22
+// October 2026). The hole map is drawn every 60-80 ms, and each draw sampled
+// the fairway 320 times, the green 64 and every hazard 32 to find a box that
+// only the ball's position changes -- a few milliseconds of every fifth frame.
+// The box of everything but the ball is kept per hole and the ball folded in
+// per draw: the same minimum and maximum as before, exactly. The key carries
+// what the range moves (its active green and pin, range.js setActiveGreen);
+// anything that changes a hole's shape builds a new course object.
+const boundsCache=new WeakMap();
+function holeBounds(course){
+ const g=course.green??course.pin,key=`${course.active??''}|${g.x},${g.z}|${course.pin?.x},${course.pin?.z}`;
+ const hit=boundsCache.get(course);if(hit?.key===key)return hit;
+ const points=[...Object.values(course.tees)];
+ for(let i=0;i<=160;i++){const mow=course.mowStart??course.fairwayStart,z=mow+(course.length+8-mow)*i/160;for(const side of [-1,1])points.push({x:course.center(z)+side*fairwayWidth(course,z,course.settings.semiRough,side),z});}
+ for(let i=0;i<64;i++){const a=i*Math.PI/32,r=greenRadius(course,a)+course.settings.fringe+course.settings.semiRough;points.push({x:g.x+Math.cos(a)*r*course.greenAspect,z:g.z+Math.sin(a)*r});}
+ for(const o of [...course.bunkers,...course.ponds])for(let i=0;i<32;i++){const q=ovalRadius(o,i*Math.PI/16);points.push({x:o.x+q.x,z:o.z+q.z});}
+ let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+ for(const p of points){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.z<minZ)minZ=p.z;if(p.z>maxZ)maxZ=p.z;}
+ const b={key,minX,maxX,minZ,maxZ};boundsCache.set(course,b);return b;
+}
 export function mapLayout(course,w,h,full=false,position=course.tee,nav=null,focus=null){
  // FRAMED ON THE GREEN. Once the ball is on the putting surface the hole map is
  // showing 400 yards of fairway you have finished with, and the twenty yards
@@ -43,11 +63,8 @@ export function mapLayout(course,w,h,full=false,position=course.tee,nav=null,foc
  if(full)return withNav({full,w,h,cx:0,cz:0,
   scale:Math.min((w-24)/(course.world.halfX*2),(h-24)/(course.world.halfZ*2)),
   halfX:course.world.halfX,halfZ:course.world.halfZ,hole:course.hole},nav);
- const points=[position,...Object.values(course.tees)];
- for(let i=0;i<=160;i++){const mow=course.mowStart??course.fairwayStart,z=mow+(course.length+8-mow)*i/160;for(const side of [-1,1])points.push({x:course.center(z)+side*fairwayWidth(course,z,course.settings.semiRough,side),z});}
- for(let i=0;i<64;i++){const a=i*Math.PI/32,r=greenRadius(course,a)+course.settings.fringe+course.settings.semiRough;points.push({x:(course.green??course.pin).x+Math.cos(a)*r*course.greenAspect,z:(course.green??course.pin).z+Math.sin(a)*r});}
- for(const o of [...course.bunkers,...course.ponds])for(let i=0;i<32;i++){const q=ovalRadius(o,i*Math.PI/16);points.push({x:o.x+q.x,z:o.z+q.z});}
- const minX=Math.min(...points.map(p=>p.x))-9,maxX=Math.max(...points.map(p=>p.x))+9,minZ=Math.min(...points.map(p=>p.z))-12,maxZ=Math.max(...points.map(p=>p.z))+12;
+ const b=holeBounds(course);
+ const minX=Math.min(b.minX,position.x)-9,maxX=Math.max(b.maxX,position.x)+9,minZ=Math.min(b.minZ,position.z)-12,maxZ=Math.max(b.maxZ,position.z)+12;
  return withNav({full,w,h,cx:(minX+maxX)/2,cz:(minZ+maxZ)/2,
   scale:Math.min((w-24)/(maxX-minX),(h-24)/(maxZ-minZ)),
   halfX:(maxX-minX)/2,halfZ:(maxZ-minZ)/2,hole:course.hole},nav);

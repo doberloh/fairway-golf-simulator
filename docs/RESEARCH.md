@@ -8884,3 +8884,109 @@ tree must reach the line: its top (height x 1.1) above it and its foot less
 than 2 m under. Found on the audit's Midwest seed AUDIT hole 1 (an oak of
 radius 4.8 m 22 m out, 26 degrees left of the look) and the Challenge Course's
 third. Drawing only; the ball still meets the trunk.
+
+## Frame time on Ultra: the frame-rate goal (22 October 2026)
+
+The owner set a goal on 22 October: frame time down by up to 20% on Ultra,
+with the gains carried down to the lower tiers; the look kept close to what it
+was, generated courses unchanged, no new models (a need for lower-polygon
+models is noted, not acted on). GPU runs were allowed for the goal, within
+AGENTS.md's limits (40 runs for this goal, each gated and logged in
+`bench/ab/gpu-runs.jsonl`, local).
+
+### The tools built for it
+
+- **`tools/frame-ab.mjs`** -- two builds alternately (A B B A), each load in a
+  fresh browser, several tees measured from one course load, median of the
+  per-load medians, plus draws, triangles and (`--shots`) the share of pixels
+  changed between builds beside the share between two loads of one build.
+- **`tools/frame-variants.mjs`** -- ideas tried live in one page of the hooked
+  build (`tools/capture/build-hooked.mjs`, `window.__view`), each measured
+  between two measurements of the unchanged frame; `--cpuprofile` adds the
+  DevTools sampling profile of the processor (build with `MINIFY=0`).
+- **`tools/gpu-gate.mjs`** -- the gate every run passes: 30 s of `nvidia-smi`
+  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap.
+- **`tools/devices.mjs`** -- device profiles (below); **`tools/png-diff.mjs`**
+  -- a PNG decoder and changed-pixel count, no dependency.
+
+**The noise floor (run 1).** The baseline build against a copy of itself,
+Ultra, Redwood seed PROFILE, 1600x900 at 2x, tees 1, 5 and 9, two loads each:
+per-tee medians agreed within 1-4%, the mean over the tees within 1.3%; tee 1
+5.2 ms GPU / 6.0 CPU, 68.0 M triangles, 563 draws; tee 5 5.1 / 5.0, 31.0 M,
+517; tee 9 4.7 / 5.4, 61.8 M, 533. Pixels changed between two loads of the same
+build: 2.2-2.9% at tee 1 (wind in the near grass and crowns), 0.6% at tee 5,
+0.2-0.3% at tee 9. So a change has to beat about 2% of frame time to be seen,
+and a picture change has to stand above those shares to be real.
+
+### Devices for the frame tools
+
+This machine cannot be a phone, so a device is its screen (viewport, pixel
+ratio), its processor (Chrome's CPU throttling at the ratio of single-core
+scores) and its graphics, which are NOT emulated: the card's measured time is
+multiplied by the geometric mean of the compute ratio and the memory-bandwidth
+ratio against the RTX 4090. That factor is PLACED -- a frame here is partly
+shading and partly shadow-map and overdraw traffic, and peak figures flatter
+phones against desktops -- so it ranks changes and suggests which tier a
+device can hold; it is never a number to promise. The real check stays a real
+device (TODO, *A real phone, an iPad and a weak laptop*).
+
+| Device | GPU FP32 | Bandwidth | Geekbench 6 single-core |
+| --- | --- | --- | --- |
+| RTX 4090 + Ryzen 9 7950X (this machine) | 82.6 TFLOPS | 1008 GB/s | 2994 |
+| Intel UHD 620 + i5-8250U (weak laptop) | 0.38 | 38 (PLACED: dual-channel DDR4-2400) | 1127 |
+| Apple M1, 8-core GPU | 2.6 | 68 (PLACED: LPDDR4X-4266, 128-bit) | 2340 (PLACED, from memory of Geekbench's chart; not fetched) |
+| Radeon 780M (Ryzen 7 7840U) | 4.1-4.3 (4.2 used) | 120 (PLACED: LPDDR5X-7500, 128-bit) | 2500 (PLACED) |
+| Apple A15, 5-core GPU (iPhone 13) | 1.71 | 34 (PLACED: LPDDR4X-4266, 64-bit) | 2168-2307 (2277 used) |
+| Adreno 740 (Snapdragon 8 Gen 2) | 1.74 | 68 (PLACED: LPDDR5X-8533, 64-bit) | 2004-2012 (2004 used) |
+| Mali-G52 MP2 (Helio G85, budget Android) | 0.072 (low end of a 72-144 GFLOPS range for the G52) | 15 (PLACED: LPDDR4X, 32-bit) | 408-432 (420 used) |
+
+Sources: RTX 4090 82.58 TFLOPS and 1,008 GB/s, hydrahost.com/nvidia/geforce-rtx-4090
+and notebookcheck.net (*NVIDIA GeForce RTX 4090 GPU Benchmarks and Specs*);
+Ryzen 9 7950X single-core 2994, one Geekbench browser upload
+(browser.geekbench.com/v6/cpu/164421), a single run, not an average; A17 Pro
+2.15, Adreno 740 1.74, Mali-G57 MP4 0.40, UHD 620 0.38, from cpu-monkey.com's
+iGPU pages (AIDA64-derived peaks); A15 (5-GPU) 1,713 GFLOPS, cpu-monkey.com's
+A15 comparison pages (640 shaders x 2 x 1.34 GHz agrees); M1 2.6 TFLOPS,
+Apple's own figure as quoted by nanoreview.net; Radeon 780M 4.1-4.3 TFLOPS,
+nanoreview.net; iPhone 13 single-core 2168-2307, Geekbench browser uploads;
+Snapdragon 8 Gen 2 single-core 2004, nanoreview.net, and 2,012 for an iQOO Neo
+9 Pro (gizmochina); i5-8250U single-core 1127, cpu-monkey.com; Helio G85
+single-core 408-432 (median 423), notebookcheck.net and nanoreview.net, and the
+Mali-G52's 72-144 GFLOPS range from a general overview page
+(android-headunits.com/mali-g52-gpu) that does not break out the MP2 -- no
+source gave the MP2 alone. Rejected: one forum's 5.7 TFLOPS for the Adreno 750,
+which nothing else supports. Peak TFLOPS are not comparable across
+architectures; that is part of why the factor is only an estimate.
+
+### Where an Ultra frame goes on this machine (runs 2 and 3)
+
+**The processor sets the frame here, not the card.** In every case the CPU
+time per frame (5.0-6.1 ms) was at or above the graphics time (4.7-5.4 ms),
+and the graphics timer cannot be read as card work when that is so: a
+TIME_ELAPSED query spans the wall-clock gap between its start and end on the
+card, so while the page is still issuing commands the card's "time" includes
+waiting for them. Switching passes off one at a time (`tools/frame-variants.mjs
+--variants tools/variants/ultra.mjs`, Redwood PROFILE, free camera at tees 1
+and 5) gave: every shadow map frozen -32% (tee 1) and -64% (tee 5) graphics,
+-0.6 to -1.0 ms processor; planting hidden -70%; pixel ratio 1.5 -14% at tee 1
+only; bloom off and 4096 maps within noise at tee 1; one cascade frozen alone
+inconsistent (+4% to -25%) -- read as noise on a processor-bound frame.
+
+**What the processor did** (DevTools sampling profile of the unminified build,
+240 frames): `holdFlagsticks` 1.6-1.8 ms a frame, 25-29% of all of it, for a
+loop of nine flagsticks -- the time was its first line, `canvas.clientHeight`,
+which makes the browser work out its styles there and then whenever the page
+has been written to since the last frame; the hole map's outline (`drawMap`,
+and under it `fairwayWidth`, `ovalRadius`, `greenRadius`, `toWorld`) about
+0.9 ms a frame on average; three.js's own submission about 1 ms.
+
+**What wrote to the page every frame** (MutationObserver over 120 frames, and
+DevTools' Performance metrics): 2-3 style recalculations a frame costing 1.7
+ms together, no layouts. Every frame: the map canvas's `data-course-seed`,
+`data-hole-number` and `aria-label` (set on each draw, unchanged), the free
+camera's altitude text, the flag label's `class`, the aim label's `hidden` --
+mostly to the values they already had -- plus the round screen's `--wind`
+custom property, which sits on `#roundHud` and so restyles every piece of
+the round screen it contains. Reading the canvas size from a stored value
+instead (a live patch) took the processor's frame from 5.3 to 3.9 ms (tee 1)
+and 4.8 to 3.3 ms (tee 5).

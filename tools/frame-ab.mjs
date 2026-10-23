@@ -53,6 +53,12 @@ const SPOTS = {
  tee9: {camera: {hole: 8, along: -4, height: 1.8, look: 'pin'}},
  sun: {camera: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'}},
  overview: {view: 'overview'},
+ // THE PLAY CAMERA, behind the ball on the tee: what a round actually draws,
+ // HUD and all. The free camera above redraws the map every frame, which play
+ // does every 60-80 ms, so the two cost differently on the processor.
+ play1: {hole: 0, view: 'player'},
+ play5: {hole: 4, view: 'player'},
+ play9: {hole: 8, view: 'player'},
 };
 const spotNames = String(flag('spots', 'tee1,tee5,tee9')).split(',');
 for (const s of spotNames) if (!SPOTS[s]) throw Error(`No spot ${s}; one of ${Object.keys(SPOTS).join(', ')}`);
@@ -107,6 +113,7 @@ async function measureBuild(file, tag, round) {
   }
   for (const name of spotNames) {
    const s = SPOTS[name];
+   if (s.hole !== undefined) await page.evaluate(n => window.lab.hole(n), s.hole);
    if (s.view) await page.evaluate(v => window.lab.view(v), s.view);
    if (s.camera) await page.evaluate(o => window.lab.camera(o), s.camera);
    await frames(page, SETTLE);

@@ -49,6 +49,25 @@ export function decodePng(buf) {
  return {width, height, data: out};
 }
 
+// A picture of WHERE two screenshots differ: the first, darkened, with every
+// changed pixel in red -- brighter for a larger change. Written as a plain PNG
+// (filter 0, one IDAT), so it needs nothing either.
+export function writeDiffPng(a, b, out, threshold = 24) {
+ const A = decodePng(fs.readFileSync(a)), B = decodePng(fs.readFileSync(b)), {width, height} = A;
+ const raw = Buffer.alloc((width * 3 + 1) * height);
+ for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+  const i = (y * width + x) * 4, o = y * (width * 3 + 1) + 1 + x * 3;
+  const d = Math.abs(A.data[i] - B.data[i]) + Math.abs(A.data[i + 1] - B.data[i + 1]) + Math.abs(A.data[i + 2] - B.data[i + 2]);
+  const grey = (A.data[i] + A.data[i + 1] + A.data[i + 2]) / 9;
+  if (d > threshold) { raw[o] = Math.min(255, 120 + d); raw[o + 1] = raw[o + 2] = 0; } else raw[o] = raw[o + 1] = raw[o + 2] = grey;
+ }
+ const crcTable = Array.from({length: 256}, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+ const crc = buf => { let c = 0xffffffff; for (const v of buf) c = crcTable[(c ^ v) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+ const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type, 'ascii'), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); };
+ const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4); ihdr[8] = 8; ihdr[9] = 2;
+ fs.writeFileSync(out, Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]));
+}
+
 // Pixels whose summed RGB difference exceeds `threshold` (24, as RESEARCH.md's
 // cull comparison of 27 September used), and the mean difference per pixel.
 export function diffPng(a, b, threshold = 24) {

@@ -177,3 +177,35 @@ test('a raster tile stays locked to the course through zoom and pan', () => {
   nav = zoomAbout(m, nav, 90, 120, 1.6);
  }
 });
+
+// THE HOLE'S EXTENT IS KEPT PER HOLE (the frame-rate goal, 22 October 2026):
+// the fairway, green and hazards are sampled once and only the ball is folded
+// in per draw. The layout must be exactly what sampling everything per draw
+// gave -- reproduced here as it was -- from anywhere the ball can be, and must
+// follow a range green that moves.
+import {fairwayWidth, greenRadius, ovalRadius} from '../src/course.js';
+import {setActiveGreen} from '../src/range.js';
+function sampledLayout(course, w, h, position) {
+ const points = [position, ...Object.values(course.tees)];
+ for (let i = 0; i <= 160; i++) { const mow = course.mowStart ?? course.fairwayStart, z = mow + (course.length + 8 - mow) * i / 160; for (const side of [-1, 1]) points.push({x: course.center(z) + side * fairwayWidth(course, z, course.settings.semiRough, side), z}); }
+ for (let i = 0; i < 64; i++) { const a = i * Math.PI / 32, r = greenRadius(course, a) + course.settings.fringe + course.settings.semiRough; points.push({x: (course.green ?? course.pin).x + Math.cos(a) * r * course.greenAspect, z: (course.green ?? course.pin).z + Math.sin(a) * r}); }
+ for (const o of [...course.bunkers, ...course.ponds]) for (let i = 0; i < 32; i++) { const q = ovalRadius(o, i * Math.PI / 16); points.push({x: o.x + q.x, z: o.z + q.z}); }
+ const minX = Math.min(...points.map(p => p.x)) - 9, maxX = Math.max(...points.map(p => p.x)) + 9, minZ = Math.min(...points.map(p => p.z)) - 12, maxZ = Math.max(...points.map(p => p.z)) + 12;
+ return {cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, scale: Math.min((w - 24) / (maxX - minX), (h - 24) / (maxZ - minZ))};
+}
+test('the kept hole extent lays the map out exactly as sampling every draw did', () => {
+ const course = generateWorld({...RANGE_SETTINGS, seed: 'MAPBOUNDS', holes: 3});
+ for (const h of [...course.holes, hole]) {
+  for (const p of [h.tee, h.pin, {x: 0, z: 0}, {x: 80, z: -60}, {x: -140, z: h.length + 90}]) {
+   const got = mapLayout(h, W, H, false, p), want = sampledLayout(h, W, H, p);
+   for (const k of ['cx', 'cz', 'scale']) assert.equal(got[k], want[k], `hole ${h.hole + 1}, ball ${JSON.stringify(p)}: ${k}`);
+  }
+ }
+ for (const g of hole.greens ?? []) {
+  if (g.hidden) continue;
+  setActiveGreen(hole, g.id);
+  const got = mapLayout(hole, W, H, false, hole.tee), want = sampledLayout(hole, W, H, hole.tee);
+  for (const k of ['cx', 'cz', 'scale']) assert.equal(got[k], want[k], `range green ${g.id}: ${k}`);
+ }
+ setActiveGreen(hole, 'centre');
+});

@@ -43,6 +43,8 @@ const SPOTS = {
  tee5: {hole: 4, along: -4, height: 1.8, look: 'pin'},
  tee9: {hole: 8, along: -4, height: 1.8, look: 'pin'},
  sun: {hole: 0, along: 60, height: 3, look: 'sun', pitch: 'sun'},
+ // The play camera behind the ball on that tee (frame-ab.mjs says why).
+ play1: {play: 0}, play5: {play: 4}, play9: {play: 8},
 };
 const spotNames = String(flag('spots', 'tee1,tee5')).split(',');
 const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist',
@@ -87,7 +89,8 @@ try {
  };
  const run = code => page.evaluate(c => { const v = window.__view; return new Function('v', c)(v); }, code);
  for (const spot of spotNames) {
-  await page.evaluate(o => window.lab.camera(o), SPOTS[spot]);
+  if (SPOTS[spot].play !== undefined) { await page.evaluate(n => window.lab.hole(n), SPOTS[spot].play); await page.evaluate(() => window.lab.view('player')); }
+  else await page.evaluate(o => window.lab.camera(o), SPOTS[spot]);
   await frames(page, 30);
   // WHERE THE PROCESSOR'S TIME GOES, from DevTools' sampling profiler over the
   // unchanged frame: self time per function, heaviest first. Build with
