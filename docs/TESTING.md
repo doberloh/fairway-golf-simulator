@@ -15,7 +15,10 @@ changes what it covers.
 
 **The graphics card rule** (AGENTS.md): the smoke test and the profile run only
 when the owner asks in that turn, and never while `nvidia-smi` shows the card
-busy. The Node tests and generator checks can run any time.
+busy. The one exception: a `/goal` whose text says "GPU allowed" may run single
+profile groups (`--only`) without asking, within AGENTS.md's limits (*A `/goal`
+that says "GPU allowed"*); smoke runs are still asked for. The Node tests and
+generator checks can run any time.
 
 **GitHub** runs `npm test`, the ground check, and three smoke journeys (`boot`,
 `range`, `endless-round`) under a software renderer on every push

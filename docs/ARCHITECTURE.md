@@ -48,7 +48,7 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
-| `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first |
+| `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first (a "GPU allowed" `/goal` may run single `--only` groups; AGENTS.md) |
 | `npm run release` | Builds everything, cuts and verifies the zips into `release/` |
 
 Every command is in COMMAND_CHEAT_SHEET.md.
