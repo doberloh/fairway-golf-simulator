@@ -675,6 +675,8 @@ saved course card, then audit 7).
 - [ ] **On an upright phone a putt and a pitch keep the ball clear** (audit 6
   could not check): **seen** -- ball 374 and 466 px, the lie row from 492. The
   studio's map stays whole after the big map (303 px before and after).
+- [ ] **The XP popup hidden under an open sheet** (seen on the Sudden death
+  card: its lines ghosted behind the words). Built; **seen** on that card.
 
 **V4 plan** (from audit 5, the owner's decisions of 22 October: a
 launch-monitor shot while paused may play behind the pause list; a Continue
