@@ -658,6 +658,9 @@ saved course card, then audit 7).
   phone** (the owner: much skinnier). It took the saved rounds list's class.
   Built; **seen** at 390x844 (measured: picture and words 154 px like the
   others).
+- [ ] **A second golfer's Make main profile and Remove as slanted outlines**
+  (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
+  390x844.
 
 **V4 plan** (from audit 5, the owner's decisions of 22 October: a
 launch-monitor shot while paused may play behind the pause list; a Continue
