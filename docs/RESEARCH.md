@@ -9245,3 +9245,34 @@ build (-79.7 degrees) where the old one set it on the round screen. What this
 cannot see: anything that needs the clock running -- a ball in flight, the
 camera moving, shadows refreshed while it moves -- which stays for a person and
 the smoke journeys (TODO).
+
+### The looks in motion, frame for frame (runs 34-35)
+
+`tools/frame-motion.mjs`: the original and final builds (hooked) on a VIRTUAL
+clock -- every animation frame exactly 1/60 s on performance.now and the
+frame's timestamp, and the clock moving only when the tool steps it -- so both
+play the identical round: a driver off tee 1 of Redwood PROFILE (70 m/s, 12
+degrees, 2,700 rpm), the television cameras following it, then the fly-up into
+the overview. Each picture is read from the canvas inside the frame it shows,
+straight after the renderer's own draw call, so shadow maps that wait a few
+frames are seen waiting (a screenshot would let them catch up first).
+
+| Frame | Ultra: pixels changed (mean diff of 255) | Low |
+| --- | --- | --- |
+| shot + 10 | 0.327% (0.161) | 0.035% (0.008) |
+| shot + 40 | 0.196% (0.092) | 0.048% (0.016) |
+| shot + 90 | 0.166% (0.074) | 0.017% (0.011) |
+| shot + 160 | 0.169% (0.097) | 0.022% (0.012) |
+| shot + 260 | 0.115% (0.062) | 0.023% (0.012) |
+| shot + 420 | 0.067% (0.047) | 0.031% (0.081) |
+| overview + 8 | 0.076% (0.051) | 0.033% (0.070) |
+| overview + 20 | 0.087% (0.062) | 0.014% (0.042) |
+| overview + 45 | 0.076% (0.052) | 0.001% (0.003) |
+
+The whole screen after the shot, interface included: 0.116% (Ultra) and 0.111%
+(Low) changed. No page or console error in either build. On Ultra the changed
+pixels are specks on the nearest trees' own shading (the 4096 nearest map), as
+with the clock stopped; the far cascades waiting up to three frames while the
+camera follows the drive changed nothing visible at this threshold. What this
+still cannot stand in for is a person playing and the smoke journeys, which
+walk the menus and every panel (TODO).
