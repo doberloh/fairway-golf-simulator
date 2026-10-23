@@ -278,6 +278,7 @@ const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
 // A sun moved further than this since a far map was drawn redraws it now
 // (scheduleCascades); a quarter of a degree is a minute of the clock.
 const CASCADE_SUN_TURN=Math.cos(.25*Math.PI/180);
+const snapScratch={m:new T.Matrix4(),i:new T.Matrix4(),o:new T.Vector3(),up:new T.Vector3(0,1,0),p:new T.Vector3()};
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
 // nobody looks at closely at night.
@@ -432,7 +433,7 @@ export class GolfView{
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
    lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
-  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
+  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}this.applyNearShadow();
   this.sun.castShadow=false;this.sun.intensity=0;
  }
  // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
@@ -472,13 +473,36 @@ export class GolfView{
    light.shadow.bias=this.quality.shadowBias.constant*CASCADE_BASE_FAR/far;
   });
  }
- // THE FAR SHADOW MAPS ARE REDRAWN EVERY OTHER FRAME (the frame-rate goal,
- // 22 October 2026). Every cascade used to be redrawn every frame, the far two
- // at 6144 on Ultra holding most of the course's trees, for shadows that 100 m
- // and more away cannot change between two frames that anyone could see. Now
- // the nearest map -- the player's own surroundings, swaying trees and the
- // ball -- is drawn every frame and the others take turns, so each is at most
- // one frame old.
+ // THE NEAREST CASCADE'S OWN SIZE (graphics.js `nearShadow`, Ultra): CSM gives
+ // every cascade one size, so the nearest map is reallocated at its own.
+ applyNearShadow(){
+  const near=this.quality.nearShadow,light=this.csm?.lights[0];if(!near||!light)return;
+  light.shadow.radius=near.radius;
+  if(light.shadow.mapSize.x!==near.size){light.shadow.mapSize.set(near.size,near.size);light.shadow.map?.dispose();light.shadow.map=null;this.cascadeForce=true;}
+ }
+ // ...AND ITS OWN TEXEL GRID. CSM snaps each cascade's centre to whole texels
+ // of ITS one size, which is what stops shadows crawling as the camera moves;
+ // a map of another size snapped to that grid moves by part-texels and its
+ // edges shimmer. So the nearest map's centre is snapped again, in the light's
+ // frame, to its own texels: it still only ever moves a whole texel at a time.
+ snapNearCascade(){
+  const near=this.quality.nearShadow,csm=this.csm,light=csm?.lights[0];if(!near||!light||near.size===csm.shadowMapSize)return;
+  const sc=light.shadow.camera,tw=(sc.right-sc.left)/near.size,th=(sc.top-sc.bottom)/near.size;
+  const m=snapScratch.m.lookAt(snapScratch.o,csm.lightDirection,snapScratch.up),inv=snapScratch.i.copy(m).invert();
+  const p=snapScratch.p.copy(light.position).applyMatrix4(inv);
+  p.x=Math.floor(p.x/tw)*tw;p.y=Math.floor(p.y/th)*th;p.applyMatrix4(m);
+  light.position.copy(p);light.target.position.copy(p).add(csm.lightDirection);
+ }
+ // THE FAR SHADOW MAPS ARE REDRAWN LESS OFTEN (the frame-rate goal, 22
+ // October 2026). Every cascade used to be redrawn every frame, the far two at
+ // 6144 on Ultra holding most of the course's trees, for shadows that 100 m and
+ // more away cannot change between two frames that anyone could see. Now the
+ // nearest map -- the player's own surroundings, swaying trees and the ball --
+ // is drawn every frame, the middle one (100-500 m) every other frame and the
+ // far one (past 500 m) every fourth, on a frame the middle one skips: at most
+ // two maps a frame, the middle at most one frame old and the far at most
+ // three. Measured, every fourth instead of every other gave back another
+ // 2-7% of an Ultra frame (RESEARCH.md, *Frame time on Ultra*).
  //
  // A MAP NOT REDRAWN KEEPS ITS OWN MATRICES. Its pixels mean what they meant
  // from where it was drawn, so its shadow camera is not moved (fitCascadeDepth
@@ -498,7 +522,7 @@ export class GolfView{
   this.cascadeForce=false;
   csm.lights.forEach((light,i)=>{
    const s=light.shadow,sc=s.camera,last=light.userData.cascadeDir;
-   let draw=force||i===0||n<3||!s.map||!last||last.dot(dir)<CASCADE_SUN_TURN||f%(n-1)===i-1;
+   let draw=force||i===0||n<3||!s.map||!last||last.dot(dir)<CASCADE_SUN_TURN||(i===n-1?f%4===1:f%2===0);
    if(!draw){
     const fr=csm.frustums[i];
     outer:for(const set of [fr.vertices.near,fr.vertices.far])for(const corner of set){
@@ -715,7 +739,7 @@ export class GolfView{
    this.sun.shadow.needsUpdate=true;
   }
   if(this.scene?.fog){const f=this.quality.fog;this.scene.fog.near=f.near;this.scene.fog.far=f.far;}
-  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}
+  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
   this.applyShadowSpan();
   this.renderer.shadowMap.needsUpdate=true;
   // The constructor calls this before the camera exists, and resize() reaches
@@ -792,6 +816,14 @@ export class GolfView{
   this.addLandscape();
   const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
   const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  // THE GROUND IS DRAWN AFTER EVERYTHING ELSE SOLID (the frame-rate goal, 22
+  // October 2026). three sorts solid things by material before distance, and
+  // the ground's material is made first, so the ground -- the hungriest shader
+  // in the game -- was shaded across the whole screen and then painted over by
+  // every trunk and crown in front of it. Drawn last, the depth test skips it
+  // wherever something already stands: 1-4% of an Ultra frame in a forest,
+  // and the same picture, because solid things are depth-tested either way.
+  this.terrain.renderOrder=1;this.landscape.renderOrder=1;
   this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
   // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
   // buildings shaded the turf but the turf shaded nothing -- a ridge did not
@@ -2642,7 +2674,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // reach does not change, which on High it does not.
    const over=this.config.mode==='overview';
    if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();this.cascadeForce=true;}
-   this.camera.updateMatrixWorld();this.csm.update();this.scheduleCascades();this.fitCascadeDepth();
+   this.camera.updateMatrixWorld();this.csm.update();this.snapNearCascade();this.scheduleCascades();this.fitCascadeDepth();
   }
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here

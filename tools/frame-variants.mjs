@@ -81,6 +81,13 @@ try {
  await page.waitForFunction(() => window.lab && window.lab.course, null, {timeout: 60000});
  await page.evaluate(o => window.lab.course(o), {biome: BIOME, holes: HOLES, seed: SEED});
  await frames(page, 60);
+ // What is built, by group (lab.scene): where the triangles are.
+ if (flag('scene', false)) {
+  const sc = await page.evaluate(() => window.lab.scene());
+  const groups = Object.entries(sc.groups ?? sc).sort((a, b) => (b[1].triangles ?? 0) - (a[1].triangles ?? 0)).slice(0, 15);
+  console.log('\n  built, by group: meshes, instances, triangles');
+  for (const [k, g] of groups) console.log(`   ${k.slice(0, 34).padEnd(34)} ${String(g.meshes).padStart(5)} ${String(g.instances).padStart(8)} ${((g.triangles ?? 0) / 1e6).toFixed(2).padStart(8)} M`);
+ }
  const sample = async () => {
   await frames(page, SETTLE);
   await page.evaluate(() => window.__profStart());

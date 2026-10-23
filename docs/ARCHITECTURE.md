@@ -139,6 +139,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
+- `tools/frame-ab.mjs` (two builds measured alternately, pictures compared), `tools/frame-variants.mjs` (ideas tried live, processor profile, page restyles), `tools/devices.mjs` (device profiles), `tools/gpu-gate.mjs` (the gate for unattended GPU runs), `tools/png-diff.mjs`, `tools/variants/` -- frame time
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
 - `tools/capture/` -- pictures and clips of the game, 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`), and `motion.mjs`, which measures a clip's camera shake from its frames (docs/CAPTURE.md); `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
@@ -239,6 +240,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A light counts only while it and its parents are visible, and every lit shader is built for the count: never parent a light to something that hides (the ball's glow light sits beside the ball). [IT IS NOT A CHILD OF THE BALL]
 - Flagsticks can be drawn larger with distance so they never vanish (Graphics, "Larger flags far away", off by default); drawing only, the ball hits the real stick. [FLAGSTICKS STAY VISIBLE FROM ANYWHERE]
 - A tier's shadow normal offset is at least a texel of its map, or crowns shade themselves in stripes; only a crown of many sprays (the grown trees) gets a thinned twin -- a cartoon crown's comes apart into shards. [A SHADOW'S NORMAL OFFSET GOES WITH ITS TEXEL], [ONLY A CROWN OF MANY SPRAYS]
+- The far shadow cascades are redrawn less often (the middle every other frame, the far every fourth) and Ultra's nearest map has its own size and texel snap; a map not redrawn keeps its own matrices, and anything that moves the cascades sets `cascadeForce`. [THE FAR CASCADES ARE REDRAWN LESS OFTEN]
 - The profiler runs uncapped; a stall it shows may vanish at 60 fps. Check worst frames at normal pacing before acting. [AN UNCAPPED PROFILE SHOWS STALLS]
 
 **Interface and state**
@@ -255,6 +257,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - The smoke harness taps by stamping the moment, never on a frame, and asks the game whether a putt dropped. [A harness tap that has to land]
 - Escape closes what is in front first. [Escape closes what is in front]
 - Anything new that writes a hole's score must wrap itself for the hole-out banner, or that hole-out goes unannounced. [THE HOLE-OUT BANNER WATCHES THE CARD]
+- The frame loop writes to the page only what changed (`setText`, `setHidden`, `setClass`, `setStyle`), and the renderer reads the canvas size through `cssSize()`: a same-value write still restyles the page. [THE FRAME LOOP WRITES TO THE PAGE ONLY WHAT CHANGED]
 - A console full of errors is evidence, not noise. [A CONSOLE FULL OF ERRORS]
 - The studio bar rides above an open panel; anything else pinned to the studio's bottom edge has to join that lift. [THE STUDIO BAR RIDES ABOVE]
 - A leaning picture is an exact clip-path shape (never a skewed layer in an overflow-hidden box, never clipped and skewed both), outlined with `--trace`; a picture over its caption leans from its foot and the caption from its head, one shape; grids gain columns as the screen widens; scroll boxes are padded by the lean. [THE WIDE-SCREEN RULE], [A picture over its caption is one shape]

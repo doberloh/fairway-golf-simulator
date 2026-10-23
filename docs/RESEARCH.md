@@ -8990,3 +8990,73 @@ custom property, which sits on `#roundHud` and so restyles every piece of
 the round screen it contains. Reading the canvas size from a stored value
 instead (a live patch) took the processor's frame from 5.3 to 3.9 ms (tee 1)
 and 4.8 to 3.3 ms (tee 5).
+
+### Checkpoint 2: what the processor fixes and the staggered cascades gave (run 4)
+
+Built (commit ace0cfa): page writes only on change (main.js `setText`,
+`setHidden`, `setClass`, `setStyle`; the wind arrow's `--wind` on the arrows),
+the canvas size kept until a ResizeObserver reports a change (renderer.js
+`cssSize`), the map's still layers kept (renderer.js `mapLayers`, course-map.js
+`holeBounds`), and the far two cascades redrawn on alternate frames with their
+own matrices kept (`scheduleCascades`). `tools/frame-ab.mjs`, Ultra, Redwood
+PROFILE, the PLAY camera behind the ball on tees 1, 5 and 9, A B B A:
+
+| Tee | CPU ms A -> B | GPU ms A -> B | Draws | Triangles |
+| --- | --- | --- | --- | --- |
+| 1 | 4.6 -> 2.6 (-44%) | 6.61 -> 5.91 (-11%) | 597 -> 472 | 82.2 -> 67.0 M |
+| 5 | 1.9 -> 1.5 (-21%) | 3.21 -> 2.98 (-7%) | 528 -> 406 | 32.5 -> 27.1 M |
+| 9 | 4.6 -> 2.3 (-50%) | 5.40 -> 4.92 (-9%) | 557 -> 435 | 67.4 -> 55.1 M |
+
+The frame -- the slower of processor and card, which is what it waits on --
+5.07 -> 4.60 ms averaged over the three tees, -9.2%. Now the card sets it. The
+play camera's processor cost is lower than the free camera's (1.9-4.6 against
+5-6 ms before), because play redraws the map every 60-80 ms, not every frame.
+
+Pixels changed between builds: 1.5-3.5%, against 0.3-1.5% between two loads of
+one build. The difference picture (`tools/png-diff.mjs writeDiffPng`) puts
+every changed pixel on leaf and grass edges, the cloud's outline and the map's
+moving dash -- wind and drift, which differ between any two moments -- and none
+on the ground's shadows or the interface.
+
+### What is left once the card sets the frame (runs 5-7)
+
+Live variants on the checkpoint-2 build, Ultra, Redwood PROFILE, play camera,
+tees 1 and 9; graphics ms change against the frames either side:
+
+| Variant | Tee 1 | Tee 9 |
+| --- | --- | --- |
+| planting hidden (view and shadows) | -72% | (card idle) |
+| planting casts no shadow | -18% | -15% |
+| trees flat-shaded, plain unlit material (diagnostic) | -28% | -27% |
+| ground flat-shaded (diagnostic) | -7% | -8% |
+| ground cover (rough, deadfall) hidden | -6% | -8% |
+| pixel ratio 1.5 (diagnostic) | -12% | -18% |
+| nearest cascade frozen | -9% | -10% |
+| middle cascade frozen | -3% | -3% |
+| far cascade frozen | -1% | -2% |
+| far cascade every 4th frame instead of every 2nd | -7% | -2% |
+| nearest map 4096 | -5% | -5% |
+| nearest map 4096, blur radius 2.67 (same width on the ground) | -4% | -7% |
+| all maps 4096 | -4% | -4% |
+| ground drawn after everything else solid | -1% | -4% |
+| bloom off | -4% | -2% |
+| trees receive no shadow | -2% | -2% |
+| terrain casts no shadow | +2% | +2% |
+
+Built from these: the far cascade every fourth frame, Ultra's nearest map at
+4096 with radius 2.67 (graphics.js `nearShadow`, re-snapped to its own texels,
+renderer.js `snapNearCascade`), and the ground drawn last (`renderOrder` 1 on
+the ground and the landscape; three sorts solid things by material id before
+distance, and the ground's material is made first). NOT built, because they
+change the look: ground cover, pixel ratio, bloom, fewer trees. A constant gust
+in the trees' wind (the gust noise is two octaves of hashing per vertex,
+though it depends only on the tree's root) was tried and its run is void: the
+patched materials failed to compile mid-run, some meshes stopped drawing (draws
+fell 475 -> 399), and the undo threw.
+
+**Where the frame is, then: the trees.** They are about 70% of an Ultra frame
+on Redwood, a third of it their shading and most of the rest their triangles --
+43.6 M triangles built in 81 tree meshes (86,404 instances), 12.1 M more in the
+shadow twins. Fewer triangles per tree is the lever that is left, and that is
+new models: NOTED for the owner (lower-polygon grown trees, especially the
+redwoods' 13-53 thousand triangles each, for Blender), not done.

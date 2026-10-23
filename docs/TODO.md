@@ -604,6 +604,19 @@ are in the archived section of the same name.
 
 ## Graphics
 
+- [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it and run
+  the smoke journeys.** Built and measured with `tools/frame-ab.mjs`, never
+  played by a person, no smoke run (it still needs asking). Check in the game:
+  the pin and aim labels follow the camera and fade as before; the wind arrow
+  turns with the camera; the hole map and the full map draw the course, the
+  aim line, dispersion rings and the ball, and redraw on a new hole, on the
+  range when its green changes, and on zoom and pan; distant shadows while the
+  camera turns fast, follows a drive and cuts to a new hole (the far two
+  cascades are redrawn less often -- the middle every other frame, the far every fourth -- or at once when the view leaves
+  them). On Ultra, the shadows near the ball (the nearest map is 4096 now, its blur kept the same width): that they are as crisp as before, and do not crawl as the camera moves. Smoke journeys to ask for: all, or at least `hud-reachable`,
+  `range`, `endless-round`, `phone-portrait`, `phone-landscape`. RESEARCH.md
+  *Frame time on Ultra*.
+
 - [ ] **Profile the slower descent through the trees** -- `clearCameraTrees`
   does more work now the camera passes through canopies. About a minute for
   `--only views`, asked first; redwood is the one to watch. (was: same heading)
