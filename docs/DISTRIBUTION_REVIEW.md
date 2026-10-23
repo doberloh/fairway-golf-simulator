@@ -1355,3 +1355,30 @@ run before this is released.
 of the single-file plugin, rejected. **`vite-plugin-singlefile` 2.3.4 (17 October
 2026) replaces micromatch with picomatch** and so drops braces; not taken here
 (TODO, *Tools and code*).
+
+## Addendum, 22 October 2026: v0.9.3
+
+**v0.9.3** is published at the owner's request ("merge. make a 0.9.3 and push
+to github"), as "Fairway 0.9.3 (beta)", tag `v0.9.3`, not a pre-release, the
+same six files as 0.9.2, from the merge of `release-0.9.3` into `main`, with its
+notes in `docs/releases/v0.9.3.md` in that commit. It carries the merge of
+`vite-security-fix` (Vite 8.3.3 for the three Dependabot alerts on its dev
+server; *Vite 8.3.3* above) and nothing else: the game's source is 0.9.2's.
+**`GENERATOR_VERSION` 36, `SCHEMA_VERSION` 11 and `PROFILE_VERSION` 3 are
+unchanged**; `node tools/biome-fingerprint.mjs --check` says every biome is
+unchanged. **The package version is 0.9.3**, so 0.9.2's friend-challenge codes
+do not play on it (said in the notes). The website is not redeployed: its
+Download buttons serve 0.9.3 through `releases/latest`, its demo stays on 0.9.1.
+
+The built page is **17,712,352 bytes (7.25 MB gzipped)**, 255 bytes under 0.9.2
+(the newer bundler's minification), still one `fetch(` and no request. The
+zips: Windows 48.3 MB, macOS Apple silicon 34.1 MB, macOS Intel 36.5 MB, Linux
+44.9 MB, each 8 verified files.
+
+**Checked:** `npm test` 1041 of 1041, the build, the fingerprint, and the
+packaged Windows server run from its unzipped download on spare ports
+(19922/19921), which served `Fairway.html` (0.9.3) byte for byte, then
+stopped. **Not run: the smoke journeys** -- the owner chose to
+leave them for later and asked for the release; the page's code is 0.9.2's,
+re-minified by Rolldown 1.2.15 (equivalent rewrites, compared), but no browser
+has played this build.

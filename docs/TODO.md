@@ -624,11 +624,12 @@ are in the archived section of the same name.
   micromatch for picomatch, so braces leaves the tree. Build-time only, but
   it is the plugin the one-file build depends on: upgrading means a build, a
   look at the page and the smoke run. Not done; the owner's call.
-- [ ] **Vite 8.3.3 on `vite-security-fix`: run the smoke journeys before
-  releasing it.** The three Dependabot alerts (launch-editor in the dev
-  server, never shipped) are fixed by it; the newer bundler re-minified the
-  page (equivalent rewrites, 256 bytes smaller). `npm test` and the
-  fingerprint pass; no browser run yet (DISTRIBUTION_REVIEW, *Vite 8.3.3*).
+- [ ] **Vite 8.3.3, released in 0.9.3 without a smoke run: run the smoke
+  journeys.** The three Dependabot alerts (launch-editor in the dev server,
+  never shipped) are fixed by it; the newer bundler re-minified the page
+  (equivalent rewrites, 255 bytes smaller). `npm test` and the fingerprint
+  pass; the owner left the smoke run for later and asked for 0.9.3, so no
+  browser has played this build (DISTRIBUTION_REVIEW, *Vite 8.3.3*, *v0.9.3*).
 
 - [ ] **The test suite's wall time** is set by its slowest file, six over 100 s.
   Underneath: `nearest` is 15% of a generation and walks all holes with no
@@ -947,6 +948,13 @@ green everywhere, and every mode but the range under one Play.
   the cup), the popup's new place in a real round, a level-up crossing inside
   the grouped popup.
 
+## Release 0.9.3 (22 October)
+
+- [ ] **0.9.3 went out without a smoke run.** Vite 8.3.3 only (the three
+  Dependabot alerts); the game's source is 0.9.2's, re-minified by the newer
+  bundler. Run the smoke journeys (*Tools and code*), and the owner's phone
+  and PC testing of 0.9.2 holds for it. Website not redeployed.
+
 ## Release 0.9.2 (22 October)
 
 - [ ] **Owner: play 0.9.2 on a phone and a PC.** Released from the merge of
@@ -1039,6 +1047,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 - [x] **The round matrix plays the course of the week and a friend's challenge**
   (the owner asked for every mode in the simulated rounds): 36 weekly rounds of
   18 holes and 24 friend rounds, checked hole by hole (tests/round-matrix).
+
+## Release 0.9.3 (22 October)
+
+- [x] **v0.9.3 published**, "Fairway 0.9.3 (beta)", at the owner's request:
+  Vite 8.3.3 for the three Dependabot alerts on its dev server; the game as in
+  0.9.2. Generator 36, schema 11, profile 3 unchanged; package 0.9.3. Notes:
+  `docs/releases/v0.9.3.md`. `npm test` 1041; no smoke run. Website not
+  redeployed.
 
 ## Release 0.9.2 (22 October)
 
