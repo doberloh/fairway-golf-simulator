@@ -936,6 +936,15 @@ green everywhere, and every mode but the range under one Play.
   the cup), the popup's new place in a real round, a level-up crossing inside
   the grouped popup.
 
+## Release 0.9.2 (22 October)
+
+- [ ] **Owner: play 0.9.2 on a phone and a PC.** Released from the merge of
+  `release-0.9.2` (the `ui-ux-pass` journey) into `main`; the website is not
+  redeployed (its demo stays on 0.9.1, its Download buttons serve 0.9.2).
+  Smoke 38 of 38 and audit 7 clean; nobody has played it by hand. The UI/UX
+  pass section above lists what each change was seen doing. What was checked
+  is in DISTRIBUTION_REVIEW, *v0.9.2*.
+
 ## Release 0.9.1 (20 October)
 
 - [ ] **Owner: play 0.9.1, which went out unplayed.** Released from the merge
@@ -1019,6 +1028,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
 - [x] **The round matrix plays the course of the week and a friend's challenge**
   (the owner asked for every mode in the simulated rounds): 36 weekly rounds of
   18 holes and 24 friend rounds, checked hole by hole (tests/round-matrix).
+
+## Release 0.9.2 (22 October)
+
+- [x] **v0.9.2 published**, "Fairway 0.9.2 (beta)", at the owner's request:
+  the UI/UX pass (seven audits and their fixes). Generator 36, schema 11,
+  profile 3, all unchanged; the package version is 0.9.2. Notes:
+  `docs/releases/v0.9.2.md`. `npm test` 1041; smoke 38 of 38; the graphics
+  profile unchanged against 0.9.1. The website not redeployed.
 
 ## Release 0.9.1 (20 October)
 
