@@ -1174,7 +1174,7 @@ the ledger entries keyed to the round; the level bar; the handicap the round
 moved, `handicapLine`: the profile summary with and without this round; a
 scramble team's row lists each of its golfers by name), then **one row of
 buttons** (a sheet's buttons are full width, so the row's own rule names them
-`width:auto`; in 0.9.1 they stacked as four bars; since audit 5, 22 October 2026, the row is `position:sticky; bottom:0` on a solid band, because with three golfers in Skins it fell below a 1920x1080 screen): Main menu, New round, Save card, and Challenge a friend, which
+`width:auto`; in 0.9.1 they stacked as four bars; since audit 5, 22 October 2026, the row is `position:sticky; bottom:0` on a solid band, because with three golfers in Skins it fell below a 1920x1080 screen; the band is only as wide as the buttons and in the landscape's own panel colour -- across the card, in a fixed green, it read as a stray dark bar on a short card, a green box on Haunted Hollow): Main menu, New round, Save card, and Challenge a friend, which
 opens the code box under the row (one golfer: sent at once; several: a
 button per golfer). Until 20 October 2026 the XP was a section of its own
 under the standings and each golfer had a send button in a section of its

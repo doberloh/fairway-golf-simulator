@@ -668,6 +668,13 @@ saved course card, then audit 7).
   the shot numbers and tool column). Built; **seen** on the range at
   1920x1080 (left of the marker, under the golfer card) and 1366x768, the
   round's Tools window and a sideways phone measured clear.
+- [ ] **The results' button band only as wide as the buttons, in the
+  landscape's colour** (seen on a Sudden death card: a stray dark bar across
+  the card). Built; **seen** on the Sudden death card. The goal card itself
+  (Sudden death to its end) **seen** in the new layout.
+- [ ] **On an upright phone a putt and a pitch keep the ball clear** (audit 6
+  could not check): **seen** -- ball 374 and 466 px, the lie row from 492. The
+  studio's map stays whole after the big map (303 px before and after).
 
 **V4 plan** (from audit 5, the owner's decisions of 22 October: a
 launch-monitor shot while paused may play behind the pause list; a Continue

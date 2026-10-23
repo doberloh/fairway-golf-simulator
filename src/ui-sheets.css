@@ -1006,7 +1006,9 @@
  /* The buttons stay in reach (audit 5: with three golfers in Skins they were
     below a 1920x1080 screen): held at the foot of the sheet on a solid band
     while the card scrolls under them, back in place at the end. */
- .rh-res-actions{display:flex;gap:12px;flex-wrap:wrap;position:sticky;bottom:0;z-index:3;padding:12px 0 14px;background:linear-gradient(to top,#0b110d 78%,rgba(11,17,13,0))}
+ .rh-res-actions{display:flex;gap:12px;flex-wrap:wrap;position:sticky;bottom:0;z-index:3;justify-self:start;max-width:100%;padding:12px 24px 14px 0;background:linear-gradient(to top,color-mix(in srgb,var(--panel) 92%,black) 78%,transparent)}
+ /* The band only as wide as the buttons (audit 7 look: across the whole card
+    it read as a stray dark bar on a short card). */
  #drawer .rh-results :is(.rh-res-actions,.rh-res-seats)>button{width:auto;flex:0 0 auto;min-width:190px;height:48px;min-height:48px;margin:0;padding:0 28px;font:800 italic 18px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.04em;text-transform:uppercase}
  #drawer .rh-results .rh-res-share>button{width:auto;justify-self:start;padding:0 24px}
  /* The share note at the size of the sheet's other notes (audit 5: small
