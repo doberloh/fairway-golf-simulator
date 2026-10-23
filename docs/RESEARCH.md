@@ -9214,3 +9214,34 @@ frame (slower of processor and card) averaged over the tees: median 5.08 ->
 4.01 ms (**-21.1%**), mean 5.34 -> 3.99 ms (-25.3%), 95th percentile 9.80 ->
 5.10 ms (-48%) -- the old build's slow frames were the processor's (the map
 redrawn every fifth frame, the page restyled), and those are gone.
+
+### The looks, with the clock stopped (runs 30-33)
+
+`tools/frame-look.mjs`: the original build and the final one, each a hooked
+build (the original made by swapping the six changed files back in, SWAP in
+`tools/capture/build-hooked.mjs`), with the renderer handed dt = 0 from before
+the course is built -- clouds where the seed put them, no sway, still water,
+the map's dash at rest. Redwood PROFILE, 1600x900 at 2x, the play camera on
+tee 1 and free poses at tees 5 and 9, facing the sun, and 160 m up over hole 3.
+Two shots of one build ten frames apart: 0.000% of pixels different, every
+tier, so anything left between the builds is the code.
+
+| Tier | Pixels changed, worst pose | Mean difference, worst pose |
+| --- | --- | --- |
+| Ultra | 0.204% (facing the sun) | 0.129 of 255 |
+| High | 0.002% | 0.001 |
+| Medium | 0.004% (tee 1) | 0.010 |
+| Low | 0.006% (tee 1) | 0.017 |
+
+Ultra's few changed pixels are specks on the nearest trees' own shading (the
+difference picture) -- the nearest shadow map at 4096 instead of 6144; on the
+other tiers the frame is, to within a pixel here and there, the same picture.
+
+The interface, the same in both builds on every tier: the pin label shown at
+(580.97, 345.69) px reading "483 YARDS TO HOLE, PLAYS 464, 23 FT down"; the hole
+map labelled "Hole 1 map", hole 1, drawn in 25 sampled colours; no page error
+or console error. The wind arrows carry their bearing on the arrows in the new
+build (-79.7 degrees) where the old one set it on the round screen. What this
+cannot see: anything that needs the clock running -- a ball in flight, the
+camera moving, shadows refreshed while it moves -- which stays for a person and
+the smoke journeys (TODO).

@@ -139,7 +139,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
-- `tools/frame-ab.mjs` (two builds measured alternately, pictures compared), `tools/frame-variants.mjs` (ideas tried live, processor profile, page restyles), `tools/devices.mjs` (device profiles), `tools/gpu-gate.mjs` (the gate for unattended GPU runs), `tools/png-diff.mjs`, `tools/variants/` -- frame time
+- `tools/frame-ab.mjs` (two builds measured alternately, pictures compared), `tools/frame-variants.mjs` (ideas tried live, processor profile, page restyles), `tools/frame-look.mjs` (two hooked builds with the clock stopped: pictures compared exactly, the interface checked), `tools/devices.mjs` (device profiles), `tools/gpu-gate.mjs` (the gate for unattended GPU runs), `tools/png-diff.mjs`, `tools/variants/` -- frame time
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
 - `tools/capture/` -- pictures and clips of the game, 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`), and `motion.mjs`, which measures a clip's camera shake from its frames (docs/CAPTURE.md); `tools/landing-report/` -- the owner's local reports
 - `tools/sound-lab/` -- the owner's listening report, built from `src/sound.js`, and its offline level check
