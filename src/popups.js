@@ -23,7 +23,7 @@ const GRIP = 74;
 const CASCADE = 26;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
-export function createPopups(world, {onChange = () => {}} = {}) {
+export function createPopups(world, {onChange = () => {}, clearOf = ''} = {}) {
  let saved = {}, top = 30;
  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
  const live = new Map();
@@ -52,10 +52,33 @@ export function createPopups(world, {onChange = () => {}} = {}) {
  // the Tools window ran 250 px off the bottom, and a button down there could
  // only be reached by the browser scrolling the whole playing area to it, which
  // slid every panel up under the top bar.
+ // A NEW WINDOW KEEPS OFF THE ROUND'S PIECES (audit 6, 22 October 2026: 92 px
+ // from the edge put the range controls over the shot numbers and the tool
+ // column). `clearOf` names them. Any of them in the right half of the screen,
+ // level with the window, moves its right edge 16 px left of it. On a big
+ // screen a window then too wide to stay right of the middle -- the range
+ // controls, 720 px -- goes left of it instead, where the ball and the aim
+ // line are not -- 130 px short of the middle, so the yards marker over the
+ // aim line stays whole -- and drops below any piece it would cover there (the
+ // range's golfer card). A window the player has placed opens where they left it.
+ const boxes = () => {
+  if (!clearOf) return [];
+  const at = world.getBoundingClientRect();
+  return [...world.querySelectorAll(clearOf)].map(el => el.getBoundingClientRect()).filter(b => b.width > 0 && b.height > 0)
+   .map(b => ({l: b.left - at.left, t: b.top - at.top, r: b.right - at.left, b: b.bottom - at.top}));
+ };
  const cascade = (size, index) => {
-  const {w, h} = area(), step = index * CASCADE;
+  const {w, h} = area(), step = index * CASCADE, near = boxes();
   const tall = Math.min(size.h, Math.max(MIN_H, h - 16));
-  return {x: w - size.w - 92 - step, y: Math.max(8, Math.min(128 + step, h - tall - 8)), w: size.w, h: tall};
+  let y = Math.max(8, Math.min(128 + step, h - tall - 8));
+  const level = b => b.b > y && b.t < y + tall;
+  let x = Math.min(w - 92, ...near.filter(b => b.l > w / 2 && level(b)).map(b => b.l - 16)) - size.w - step;
+  if (w >= 1024 && x < w / 2 && x + size.w > w / 2) {
+   x = Math.max(8, w / 2 - 130 - size.w - step);
+   const over = near.filter(b => b.r > x && b.l < x + size.w && b.t < h / 3 && level(b));
+   if (over.length) y = Math.max(8, Math.min(Math.max(...over.map(b => b.b)) + 12, h - tall - 8));
+  }
+  return {x: Math.max(8, x), y, w: size.w, h: tall};
  };
  // A popup with nowhere remembered steps off the last one opened, so it never
  // lands exactly on the window it was launched from.

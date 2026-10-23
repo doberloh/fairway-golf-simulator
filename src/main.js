@@ -7827,7 +7827,7 @@ try{
  try{const stored=localStorage.getItem('fairway-round-v1');if(stored){const d=JSON.parse(stored);staleGenerator=validateSave(d);pendingRound=Round.restore(d.round);shotLog={uid:pendingRound.uid,list:normaliseShots(d.shots)};settings=d.settings?.range?courseFallback(d.settings):{...DEFAULT_COURSE,...d.settings};if(pendingRound.holes===3){pendingRound=new Round({players:pendingRound.players,mode:pendingRound.mode,holes:9,gimme:pendingRound.gimme});staleGenerator=false;}applyRoundCamera(d.camera);}}catch{pendingRound=null;}
  adoptDeviceBag();syncClubs();delete settings.flightProfile;
  await whileGenerating('Starting Fairway…',()=>loadMenuBackdrop(),true);
- bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:icon});icon();requestAnimationFrame(tick);
+ bind();layout=createLayout($('world'));popups=createPopups($('world'),{onChange:icon,clearOf:'#rhTools,#rhCards,.shot-tiles,.minimap'});icon();requestAnimationFrame(tick);
  openMenu();
  if(!profiles)showWelcome();
  // THE SPLASH WAITS FOR SMOOTH FRAMES. The menu hole's first real frames carry
