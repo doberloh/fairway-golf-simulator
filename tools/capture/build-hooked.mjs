@@ -44,8 +44,10 @@ const hook = {
   return code.replace(LINE, LINE + HOOK);
  },
 };
+// MINIFY=0 keeps function names, so a processor profile of the build
+// (tools/frame-variants.mjs --cpuprofile) names what it measured.
 await build({configFile: 'vite.config.js', plugins: [hook], logLevel: 'warn',
- build: {outDir: OUT, emptyOutDir: true}});
+ build: {outDir: OUT, emptyOutDir: true, ...(process.env.MINIFY === '0' ? {minify: false} : {})}});
 // A swap that never matched a module would build the unchanged game and call it
 // the "after" -- the one mistake a before/after cannot afford.
 if (used.size !== SWAP.size) throw Error(`build-hooked: a SWAP target was never loaded: ${[...SWAP.values()].filter(f => !used.has(f)).join(', ')}`);

@@ -20,6 +20,8 @@ RELEASE_SHA256.txt
 # Scratch screenshots from `node tools/shot-sink.mjs`. Captures a report
 # cites go beside that report, under docs/reports/, which is also local.
 bench/shots/
+# Builds compared, results and the GPU run log of tools/frame-ab.mjs.
+bench/ab/
 
 # Reports, studies and saved sources are made for the owner and stay on this
 # machine (AGENTS.md, *What stays local*). They were

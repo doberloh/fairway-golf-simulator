@@ -263,8 +263,9 @@ ask as above.
   use stays under 10% and the card is below 60 °C (idle here is about 5% and
   44 °C). If not, do not start; pause the goal and say so -- a busy card is the
   owner playing.
-- **One run at a time, at least 5 minutes apart, at most 6 per goal.** Past
-  six, stop and ask.
+- **One run at a time, at least 5 minutes apart, at most 6 per goal** unless
+  the owner names another number when starting it (the 22 October frame-rate
+  goal: 40). Past the cap, stop and ask.
 - **Any trouble ends GPU use for the goal**: a hung run, a driver or WebGL
   error, the temperature jumping. Write down what happened; do not retry.
 - **After every run, leave nothing on the card**: browsers closed, built-in
