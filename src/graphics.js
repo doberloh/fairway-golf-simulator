@@ -199,6 +199,15 @@ export const TIERS = {
   // overflow it, and a program that fails to link draws nothing at all.
   // Resolution and distance cost fill and geometry, not samplers.
   shadow: {size: 6144, radius: 4},
+  // THE NEAREST CASCADE AT 4096, ITS BLUR KEPT (the frame-rate goal, 22
+  // October 2026). The nearest map covers about the first 100 m and is drawn
+  // every frame; at 6144 it was the costliest map of the frame, and 4096 gave
+  // back 4-7% of it (RESEARCH.md, *Frame time on Ultra*). The blur radius is
+  // counted in texels, so it comes down by the same 1.5 to keep each shadow's
+  // soft edge the same width on the ground. The far two keep 6144: they are
+  // drawn every fourth frame (scheduleCascades) and their texels are what
+  // carries a shadow across the far hills.
+  nearShadow: {size: 4096, radius: 2.67},
   // Fog must reach full density before the landscape's outer ring, which sits
   // 13000 m past the course perimeter -- otherwise the terrain runs out while
   // the air is still clear and the edge of the world shows. 9000 leaves a wide

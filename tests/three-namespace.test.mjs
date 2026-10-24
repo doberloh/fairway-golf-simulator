@@ -119,6 +119,9 @@ function markerRig() {
   camera,
   canvas: {clientWidth: 1000, clientHeight: 600},
   course: {toWorld: p => ({x: p.x, z: p.z})},
+  // The renderer reads the canvas's size through this (the frame-rate goal):
+  // with nothing watching the size, it reads the canvas, as here.
+  cssSize: GolfView.prototype.cssSize,
  };
 }
 const project = (point, insets) => GolfView.prototype.projectMarker.call(markerRig(), point, insets);

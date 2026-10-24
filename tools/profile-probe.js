@@ -167,6 +167,12 @@
    fps: at(c, .5) ? 1000 / Math.max(at(c, .5), at(g, .5) ?? 0) : null,
    interval: at(f, .5),
    gpuFrames: g.length, gpuMedian: at(g, .5), gpuP95: at(g, .95),
+   // MEANS TOO (the frame-rate goal, 23 October 2026). Work done on some
+   // frames and not others -- a shadow map every fourth frame -- splits the
+   // frames into heavy and light ones, and a median then sits on whichever
+   // half is larger; the mean is the average cost, the p95 the heavy frame.
+   mean: c.length ? c.reduce((s, v) => s + v, 0) / c.length : null,
+   gpuMean: g.length ? g.reduce((s, v) => s + v, 0) / g.length : null,
    callsPerFrame: state.calls / n, trisPerFrame: state.tris / n,
    programsPerFrame: state.programs / n, texturesPerFrame: state.textures / n,
   };

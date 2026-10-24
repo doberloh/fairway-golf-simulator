@@ -109,6 +109,17 @@ often has the how-to already worked out.
 - **A camera that frames one tee complex from above**, to show the tee stagger
   rather than argue it from numbers. Small. (was: *No picture of a tee complex
   from above*)
+- **Lower-polygon grown trees, made in Blender** -- the owner asked, during
+  the frame-rate goal (22-23 October), that a need for lower-polygon models be
+  noted and not acted on. It is needed: on Redwood the trees are about 70% of
+  an Ultra frame even after the goal's -21%, and nothing that keeps the same
+  models moved them -- not their wind math, not drawing them nearest first,
+  not their shading of hidden crowns (RESEARCH.md, *Frame time on Ultra*).
+  The redwoods are 13-53 thousand triangles a tree (43.6 M built across 81
+  tree meshes on seed PROFILE); a set at roughly a third, kept to the same
+  silhouettes, would be the largest frame win left, on every tier. Large
+  (asset work); vendor/ and tools/build-meshes.mjs, tools/grow.mjs. Claude,
+  23 October 2026.
 
 ## New biomes (9 October)
 

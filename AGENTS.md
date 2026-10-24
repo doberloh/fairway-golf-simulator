@@ -240,17 +240,44 @@ it later.
 The owner plays games on this machine, and test runs on its GPU have crashed it
 twice while they did. **Nothing that draws on the graphics card runs unless the
 owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
-browser pane, `npm run profile`. Earlier permission does not carry over.
+browser pane, `npm run profile`. Earlier permission does not carry over -- the
+one exception is a `/goal` that says so (next section).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.
 - **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
   build`, the fingerprint, the bench) and say so (next-but-one section).
 
+## A `/goal` that says "GPU allowed" is the owner asking
+
+A `/goal` keeps working through turns the owner did not start, so the rule
+above would stop it. **When the owner's goal text says "GPU allowed", short
+profile runs need no asking, for as long as that goal lasts** -- within these
+limits, which the goal cannot widen. Without those words, or outside `/goal`,
+ask as above.
+
+- **Only `node tools/profile.mjs --only <group>`**, about a minute each. Never a full
+  sweep, never the software `weak` group, never `npm run smoke`, Playwright
+  captures or the game in the browser pane -- those are still asked for.
+- **Before every run, read `nvidia-smi` for about 30 seconds**: start only if
+  use stays under 10% and the card is below 60 °C (idle here is about 5% and
+  44 °C). If not, do not start; pause the goal and say so -- a busy card is the
+  owner playing.
+- **One run at a time, at least 5 minutes apart, at most 6 per goal** unless
+  the owner names another number when starting it (the 22 October frame-rate
+  goal: 40). Past the cap, stop and ask.
+- **Any trouble ends GPU use for the goal**: a hung run, a driver or WebGL
+  error, the temperature jumping. Write down what happened; do not retry.
+- **After every run, leave nothing on the card**: browsers closed, built-in
+  browser tabs closed, no profile process left (check).
+- **Log every run** in the goal's notes: time, group, the card's readings
+  before, the result.
+
 ## Ask before a graphics profile; never just run one
 
 `npm run profile` is minutes of a machine at full load, and meaningless while
-anything else uses the GPU. **Ask first, quoting the cost**: about 10 minutes
+anything else uses the GPU. **Ask first, quoting the cost** (a "GPU allowed"
+`/goal` is the only exception, above): about 10 minutes
 for a full sweep, about a minute for one group (`--only tiers`, `views`,
 `biomes`, `ablation`, `pixels`, `water`, `sun` or `weak`).
 

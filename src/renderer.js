@@ -56,7 +56,7 @@ import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
 import {makeGodRays} from './godrays.js';
-import {applyCloudShadows,cloudShadowUniforms} from './cloud-shadows.js';
+import {applyCloudShadows,cloudShadowUniforms,packCloudShadows,allCloudShadows} from './cloud-shadows.js';
 import {makeClouds,applyCloudFade} from './clouds.js';
 import {mistUniforms,applyMistTo,profileFor,mistDensities,bakeWaterField,setWaterField} from './mist.js';
 
@@ -275,6 +275,11 @@ const FLOOD_LAMP_CAP=192;
 // of the way.
 const AERIAL_MAX=.62;
 const CASCADE_SUNWARD=1000,CASCADE_BASE_FAR=2000,fitScratch=new T.Vector3();
+// A sun moved further than this since a far map was drawn redraws it now
+// (scheduleCascades); a quarter of a degree is a minute of the clock.
+const CASCADE_SUN_TURN=Math.cos(.25*Math.PI/180);
+const cloudFrustum=new T.Frustum(),cloudScratch=new T.Matrix4();
+const snapScratch={m:new T.Matrix4(),i:new T.Matrix4(),o:new T.Vector3(),up:new T.Vector3(0,1,0),p:new T.Vector3()};
 // Small maps on purpose: these light a pool of fairway a few dozen metres
 // across, not a whole course, and six of them at 1024 is 24 MB for shadows
 // nobody looks at closely at night.
@@ -407,7 +412,7 @@ function trimToBall(points){
 
 export class GolfView{
  constructor(canvas,quality='medium'){
-  this.canvas=canvas;this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
+  this.canvas=canvas;this.watchCanvasSize();this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.quality=tierOf(quality);this.renderer.shadowMap.enabled=true;this.applyQuality(quality);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
   // The clock is session state, not course state. `hour` is null until a course
   // is built, where the biome's own default supplies the opening light.
   this.daylight={...loadDaylight(),elapsedSinceSave:0};this.solar=null;this.envElevation=null;
@@ -429,7 +434,7 @@ export class GolfView{
    maxFar:this.quality.shadowFar,mode:'custom',customSplitsCallback:this.cascadeSplitter(),shadowMapSize:this.quality.shadow.size,
    shadowBias:this.quality.shadowBias.constant,lightIntensity:intensity,
    lightDirection:sunDir.clone().negate().normalize(),lightMargin:CASCADE_SUNWARD});
-  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}
+  for(const light of this.csm.lights){light.color.copy(color);light.shadow.normalBias=this.quality.shadowBias.normal;light.shadow.radius=this.quality.shadow.radius;}this.applyNearShadow();
   this.sun.castShadow=false;this.sun.intensity=0;
  }
  // EACH CASCADE'S SHADOW BOX REACHES AS DEEP AS ITS SLICE OF THE VIEW.
@@ -453,6 +458,9 @@ export class GolfView{
   const cam=this.camera,v=fitScratch;
   csm.frustums.forEach((f,i)=>{
    const light=csm.lights[i];if(!light)return;
+   // A map not redrawn this frame keeps the box it was drawn with
+   // (scheduleCascades): its matrices are what its pixels mean.
+   if(light.shadow.autoUpdate===false)return;
    const sc=light.shadow.camera;light.updateMatrixWorld();light.target.updateMatrixWorld();light.shadow.updateMatrices(light);
    let deepest=0;
    for(const set of [f.vertices.near,f.vertices.far])for(const corner of set){
@@ -464,6 +472,82 @@ export class GolfView{
    const far=Math.max(CASCADE_BASE_FAR,Math.ceil(deepest+200));
    if(sc.far!==far){sc.far=far;sc.updateProjectionMatrix();}
    light.shadow.bias=this.quality.shadowBias.constant*CASCADE_BASE_FAR/far;
+  });
+ }
+ // THE CLOUD SHADOWS THIS FRAME CAN SHOW (cloud-shadows.js packCloudShadows).
+ // Receivers stand between the lowest and highest ground -- the course and the
+ // distant landscape -- and the tallest tree above it (redwoods reach 186 m;
+ // 250 m covers them, the ball and the floodlight poles), measured once a course.
+ packClouds(){
+  if(!this.receiverSpan){
+   let low=Infinity,high=-Infinity;
+   for(const m of [this.terrain,this.landscape]){const g=m?.geometry;if(!g)continue;if(!g.boundingBox)g.computeBoundingBox();const b=g.boundingBox.clone().applyMatrix4(m.matrixWorld);low=Math.min(low,b.min.y);high=Math.max(high,b.max.y);}
+   this.receiverSpan=isFinite(low)?{low:low-10,high:high+250}:{low:-1e4,high:1e4};
+  }
+  const cam=this.camera;cam.updateMatrixWorld();
+  cloudFrustum.setFromProjectionMatrix(cloudScratch.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse));
+  packCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades,this.cloudUniforms.cloudSun.value,cloudFrustum,this.receiverSpan.low,this.receiverSpan.high);
+ }
+ // THE NEAREST CASCADE'S OWN SIZE (graphics.js `nearShadow`, Ultra): CSM gives
+ // every cascade one size, so the nearest map is reallocated at its own.
+ applyNearShadow(){
+  const near=this.quality.nearShadow,light=this.csm?.lights[0];if(!near||!light)return;
+  light.shadow.radius=near.radius;
+  if(light.shadow.mapSize.x!==near.size){light.shadow.mapSize.set(near.size,near.size);light.shadow.map?.dispose();light.shadow.map=null;this.cascadeForce=true;}
+ }
+ // ...AND ITS OWN TEXEL GRID. CSM snaps each cascade's centre to whole texels
+ // of ITS one size, which is what stops shadows crawling as the camera moves;
+ // a map of another size snapped to that grid moves by part-texels and its
+ // edges shimmer. So the nearest map's centre is snapped again, in the light's
+ // frame, to its own texels: it still only ever moves a whole texel at a time.
+ snapNearCascade(){
+  const near=this.quality.nearShadow,csm=this.csm,light=csm?.lights[0];if(!near||!light||near.size===csm.shadowMapSize)return;
+  const sc=light.shadow.camera,tw=(sc.right-sc.left)/near.size,th=(sc.top-sc.bottom)/near.size;
+  const m=snapScratch.m.lookAt(snapScratch.o,csm.lightDirection,snapScratch.up),inv=snapScratch.i.copy(m).invert();
+  const p=snapScratch.p.copy(light.position).applyMatrix4(inv);
+  p.x=Math.floor(p.x/tw)*tw;p.y=Math.floor(p.y/th)*th;p.applyMatrix4(m);
+  light.position.copy(p);light.target.position.copy(p).add(csm.lightDirection);
+ }
+ // THE FAR SHADOW MAPS ARE REDRAWN LESS OFTEN (the frame-rate goal, 22
+ // October 2026). Every cascade used to be redrawn every frame, the far two at
+ // 6144 on Ultra holding most of the course's trees, for shadows that 100 m and
+ // more away cannot change between two frames that anyone could see. Now the
+ // nearest map -- the player's own surroundings, swaying trees and the ball --
+ // is drawn every frame, and the middle one (100-500 m) and the far one (past
+ // 500 m) every fourth frame each, on different frames: at most two maps a
+ // frame, neither more than three frames old (50 ms at 60 fps), for shadows
+ // where a tree's sway moves them less than a pixel. Measured, every fourth
+ // instead of every other gave back 2-7% of an Ultra frame for the far map and
+ // about as much again for the middle one (RESEARCH.md, *Frame time on Ultra*).
+ //
+ // A MAP NOT REDRAWN KEEPS ITS OWN MATRICES. Its pixels mean what they meant
+ // from where it was drawn, so its shadow camera is not moved (fitCascadeDepth
+ // and the cull skip it) and the ground reads it through the matrix it was
+ // drawn with: an old map lags, it never slides.
+ //
+ // AND IT IS REDRAWN AT ONCE WHEN IT NO LONGER COVERS ITS SLICE of the view --
+ // a camera cut, a fast turn, a flight -- tested exactly: the slice's eight
+ // corners, from this frame's camera, must sit inside the box the map was drawn
+ // in. So a waiting map never leaves ground unshadowed. A sun moved more than a
+ // quarter of a degree (the clock dragged) or a re-split cascade
+ // (`cascadeForce`) redraws everything. `cascadeStagger = false` turns it off,
+ // for measuring.
+ scheduleCascades(){
+  const csm=this.csm,cam=this.camera,v=fitScratch,dir=csm.lightDirection,n=csm.lights.length;
+  const f=this.cascadeFrame=(this.cascadeFrame??0)+1,force=this.cascadeForce||this.cascadeStagger===false;
+  this.cascadeForce=false;
+  csm.lights.forEach((light,i)=>{
+   const s=light.shadow,sc=s.camera,last=light.userData.cascadeDir;
+   let draw=force||i===0||n<3||!s.map||!last||last.dot(dir)<CASCADE_SUN_TURN||f%4===(i===n-1?1:3);
+   if(!draw){
+    const fr=csm.frustums[i];
+    outer:for(const set of [fr.vertices.near,fr.vertices.far])for(const corner of set){
+     v.copy(corner).applyMatrix4(cam.matrixWorld).applyMatrix4(sc.matrixWorldInverse);
+     if(v.x<sc.left||v.x>sc.right||v.y<sc.bottom||v.y>sc.top||-v.z<sc.near||-v.z>sc.far-100){draw=true;break outer;}
+    }
+   }
+   s.autoUpdate=draw;s.needsUpdate=false;
+   if(draw)(light.userData.cascadeDir??=new T.Vector3()).copy(dir);
   });
  }
  // WHERE THE CASCADES SPLIT. three's own 'practical' split, on a 2.5 km reach,
@@ -671,7 +755,7 @@ export class GolfView{
    this.sun.shadow.needsUpdate=true;
   }
   if(this.scene?.fog){const f=this.quality.fog;this.scene.fog.near=f.near;this.scene.fog.far=f.far;}
-  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}
+  for(const light of this.csm?.lights||[]){light.shadow.radius=this.quality.shadow.radius;light.shadow.normalBias=this.quality.shadowBias.normal;}this.applyNearShadow();
   this.applyShadowSpan();
   this.renderer.shadowMap.needsUpdate=true;
   // The constructor calls this before the camera exists, and resize() reaches
@@ -682,6 +766,15 @@ export class GolfView{
  // on-screen box (getBoundingClientRect) is `zoom` times that, and sizing the
  // canvas from it drew the course 1.5 screens tall at 150%. The pixel ratio is
  // refreshed too, because it carries the zoom (pixelCeiling).
+ // THE CANVAS'S SIZE ON THE PAGE, READ ONCE PER CHANGE (the frame-rate goal,
+ // 22 October 2026). The flagsticks, the pin's label and the shot card asked
+ // for it every frame, and asking the page for a size after the interface has
+ // changed makes the browser work its styles out there and then: about 1.4 ms
+ // of every Ultra frame on this machine. A ResizeObserver forgets the stored
+ // size whenever the canvas changes size, so the next read is the page's own
+ // number, exactly as before.
+ watchCanvasSize(){this.canvasCss=null;try{new ResizeObserver(()=>{this.canvasCss=null;}).observe(this.canvas);this.sizeWatched=true;}catch{}}
+ cssSize(){if(this.canvasCss)return this.canvasCss;const c={w:this.canvas.clientWidth,h:this.canvas.clientHeight};if(this.sizeWatched)this.canvasCss=c;return c;}
  resize(){const e=this.canvas.parentElement,w=e.clientWidth,h=e.clientHeight;if(this.quality)this.setResolutionScale(this.resolutionScale??1);this.renderer.setSize(w,h,false);this.fitAspect();this.applyLensShift();this.camera.updateProjectionMatrix();}
  // The picture's shape: the window's, except in a simulator bay, where it is the
  // measured screen's (cameraRig in camera-prefs.js) -- a projector stretches the
@@ -739,6 +832,14 @@ export class GolfView{
   this.addLandscape();
   const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
   const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  // THE GROUND IS DRAWN AFTER EVERYTHING ELSE SOLID (the frame-rate goal, 22
+  // October 2026). three sorts solid things by material before distance, and
+  // the ground's material is made first, so the ground -- the hungriest shader
+  // in the game -- was shaded across the whole screen and then painted over by
+  // every trunk and crown in front of it. Drawn last, the depth test skips it
+  // wherever something already stands: 1-4% of an Ultra frame in a forest,
+  // and the same picture, because solid things are depth-tested either way.
+  this.terrain.renderOrder=1;this.landscape.renderOrder=1;
   this.setGroundCues();this.setTerrainShadows(this.terrainShadows);
   // THE GROUND CASTS ITS OWN SHADOW. It only ever received one, so trees and
   // buildings shaded the turf but the turf shaded nothing -- a ridge did not
@@ -890,10 +991,9 @@ export class GolfView{
    this.cloudUniforms.cloudDepth.value=this.quality.clouds;
    this.cloudUniforms.cloudSun.value.copy(sunDir).normalize();
    this.clouds=makeClouds(this,world.seed);
-   // Share the vectors rather than copying them each frame: moving a cloud then
-   // updates the shadow it casts, with nothing to keep in step.
-   this.cloudUniforms.cloudDiscs.value=this.clouds.discs;
-   this.cloudUniforms.cloudFade.value=this.clouds.fades;
+   // Copied each frame, and only the clouds whose shadow can be seen
+   // (packCloudShadows, in render); every cloud until the first frame.
+   allCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades);this.receiverSpan=null;
    this.group.add(this.clouds.group);
   }else{this.cloudUniforms=null;this.clouds=null;}
   this.registerCascadeMaterials();
@@ -1481,6 +1581,9 @@ export class GolfView{
  // water keeps the same texture and its material is not touched.
  takeProbe(cam,pmrem,b,into=null){
   cam.position.set(b.center?.x??0,b.level+4,b.center?.z??0);
+  // Seen from the pond, not the camera: every cloud's shadow (the next frame
+  // packs them again).
+  if(this.cloudUniforms)allCloudShadows(this.cloudUniforms,this.clouds.discs,this.clouds.fades);
   cam.update(this.renderer,this.scene);
   return pmrem.fromCubemap(this.waterCubeTarget.texture,into);
  }
@@ -1932,7 +2035,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  setDistantFlags(on){this.distantFlags=!!on;}
  // See FLAG_MIN_PX. A few multiplies per hole per frame; nothing is rebuilt.
  holdFlagsticks(){
-  const cam=this.camera,px=Math.max(1,this.canvas.clientHeight)/(2*Math.tan(cam.fov*Math.PI/360)),grow=this.distantFlags===true;
+  const cam=this.camera,px=Math.max(1,this.cssSize().h)/(2*Math.tan(cam.fov*Math.PI/360)),grow=this.distantFlags===true;
   for(const a of this.flagsticks||[]){
    const b=a?.userData.base;if(!b||!a.visible)continue;
    const d=Math.max(1,Math.hypot(cam.position.x-b.x,cam.position.y-b.y-1,cam.position.z-b.z)),perMetre=px/d;
@@ -2283,7 +2386,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const h=this.course;if(!h||!p)return null;
   const w=h.toWorld(p),v=new T.Vector3(w.x,h.height(p.x,p.z),w.z).project(this.camera);
   if(v.z>1||v.z<-1)return null;
-  const c=this.canvas;return {x:(v.x+1)/2*c.clientWidth,y:(1-v.y)/2*c.clientHeight};
+  const c=this.cssSize();return {x:(v.x+1)/2*c.w,y:(1-v.y)/2*c.h};
  }
  summaryOrbit(seconds){
   const h=this.course;if(!h)return;
@@ -2588,15 +2691,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    // three's own, so crossing into or out of it re-splits even when the
    // reach does not change, which on High it does not.
    const over=this.config.mode==='overview';
-   if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();}
-   this.camera.updateMatrixWorld();this.csm.update();this.fitCascadeDepth();
+   if(this.csm.maxFar!==reach||this.csmOverview!==over){this.csm.maxFar=reach;this.csmOverview=over;this.csm.updateFrustums();this.cull?.dirty();this.cascadeForce=true;}
+   this.camera.updateMatrixWorld();this.csm.update();this.snapNearCascade();this.scheduleCascades();this.fitCascadeDepth();
   }
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
   // exactly as three places them when it draws the map.
   if(this.cull){
    const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];
-   for(const l of lights){l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
+   for(const l of lights){if(l.shadow.autoUpdate===false)continue;l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
    // A re-sort changes which trees each map draws, the floodlights' included
    // (they draw what the view does): their shadows are redrawn to match.
    if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights)&&this.floodlit)this.floodShadowDirty=true;
@@ -2608,11 +2711,12 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
     for(const lamp of this.floodLamps||[])if(lamp.castShadow)lamp.shadow.needsUpdate=true;
    }
   }
+  if(this.cloudUniforms)this.packClouds();
   this.bloom?.begin(this.renderer);
   this.renderer.render(this.scene,this.camera);
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
- project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);return{x:(v.x*.5+.5)*this.canvas.clientWidth,y:(-.5*v.y+.5)*this.canvas.clientHeight,visible:v.z<1&&v.z>-1};}
+ project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);const c=this.cssSize();return{x:(v.x*.5+.5)*c.w,y:(-.5*v.y+.5)*c.h,visible:v.z<1&&v.z>-1};}
  // A MARKER THAT CANNOT LEAVE THE SCREEN. `project` answers where a point
  // lands and whether it is in the depth range; it says nothing about the sides,
  // and behind the camera it is worse than useless -- the perspective divide is
@@ -2637,7 +2741,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // Camera space rather than the projected z: three looks down its own -z, so
   // a positive z here is behind the lens, which is the case the flip comes from.
   const behind=v.clone().applyMatrix4(this.camera.matrixWorldInverse).z>0;
-  const ndc=v.project(this.camera),W=this.canvas.clientWidth,H=this.canvas.clientHeight;
+  const ndc=v.project(this.camera),{w:W,h:H}=this.cssSize();
   let x=(ndc.x*.5+.5)*W,y=(-.5*ndc.y+.5)*H;
   if(behind){x=W-x;y=H-y;}              // undo the flip, so the direction is true
   // The free rectangle, and its own centre -- pushing out from the SCREEN
@@ -2665,6 +2769,24 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  }
  pick(clientX,clientY){const r=this.canvas.getBoundingClientRect();this.raycaster.setFromCamera(new T.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);const hit=this.raycaster.intersectObjects(this.targets)[0]?.point;return hit?this.course.toLocal(hit):null;}
 }
+// THE MAP'S STILL LAYERS (the frame-rate goal, 22 October 2026). The hole map
+// is redrawn every 60-80 ms, and every frame in the free camera, and each draw
+// traced every fairway, green, bunker and pond again -- measured at about 0.9
+// ms of every frame on average on this machine, in bursts every fifth frame.
+// What does not move is drawn into two canvases the size of the map's and
+// copied: `base` under the aim line, `over` above it, so the order of every
+// mark is exactly what it was. `key` holds everything they depend on.
+const mapCaches=new WeakMap(),worldKeys=new WeakMap();let worldCount=0;
+const worldKey=world=>{let k=worldKeys.get(world);if(k===undefined){k=++worldCount;worldKeys.set(world,k);}return k;};
+function mapLayers(canvas,key,w,h){
+ let c=mapCaches.get(canvas);
+ if(!c){c={key:null,base:document.createElement('canvas'),over:document.createElement('canvas')};mapCaches.set(canvas,c);}
+ c.fresh=c.key!==key;
+ // Setting the size clears a canvas and resets its drawing state, so each
+ // redraw starts as a new canvas would.
+ if(c.fresh){c.key=key;for(const l of [c.base,c.over]){l.width=w;l.height=h;}}
+ return c;
+}
 export function drawMap(canvas,course,position,candidates=[],full=false,camera=null,aimPoint=null,time=0){
  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,world=course.world;
  // THE BASE COAT IS WHAT YOU SEE AROUND THE HOLE, so it has to be ground.
@@ -2677,13 +2799,26 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // In hole view the surround is the biome's own rough, which is what is
  // actually out there. `mapGround` lets a biome override it without
  // disturbing what its sea looks like.
- ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
- ctx.fillRect(0,0,w,h);
  // The nav rides on the CANVAS beside its transform. Five call sites draw this
  // map from four different places, and threading a pan/zoom argument through
  // all of them is how one of them ends up not having it -- which would read as
  // the map resetting itself in that one mode.
- const transform=mapLayout(course,w,h,full,position,canvas.mapNav,canvas.mapFocus),scale=transform.scale,to=(x,z,hole=course)=>mapPoint(transform,full?hole.toWorld({x,z}):{x,z});canvas.mapTransform=transform;canvas.dataset.courseSeed=world.seed;canvas.dataset.holeNumber=String(course.hole+1);canvas.setAttribute('aria-label',full?`${world.holes.length}-hole course map · ${world.seed}`:`Hole ${course.hole+1} map · ${world.seed} · playing direction up`);
+ const transform=mapLayout(course,w,h,full,position,canvas.mapNav,canvas.mapFocus),scale=transform.scale,to=(x,z,hole=course)=>mapPoint(transform,full?hole.toWorld({x,z}):{x,z});canvas.mapTransform=transform;
+ // Written only when they change: a write to the page, even of the same
+ // value, can make the browser lay the page out again on the next frame.
+ const label=full?`${world.holes.length}-hole course map · ${world.seed}`:`Hole ${course.hole+1} map · ${world.seed} · playing direction up`;
+ if(canvas.dataset.courseSeed!==String(world.seed))canvas.dataset.courseSeed=world.seed;
+ if(canvas.dataset.holeNumber!==String(course.hole+1))canvas.dataset.holeNumber=String(course.hole+1);
+ if(canvas.getAttribute('aria-label')!==label)canvas.setAttribute('aria-label',label);
+ // THE STILL PARTS ARE DRAWN ONCE (mapLayers): the ground, the holes, and over
+ // the aim line the green's heat tile, streams and houses. Redrawn only when
+ // what they show changes; a draw is then two copies, the moving marks and
+ // nothing else.
+ const g=course.green??course.pin;
+ const layers=mapLayers(canvas,`${worldKey(world)}|${course.hole}|${full?1:0}|${canvas.mapHeat!==false?1:0}|${w}x${h}|${transform.cx},${transform.cz},${transform.scale},${transform.focus??''}|${course.active??''}|${g.x},${g.z}|${course.pin?.x},${course.pin?.z}`,w,h);
+ if(layers.fresh){const ctx=layers.base.getContext('2d');
+ ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
+ ctx.fillRect(0,0,w,h);
 
  if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
   // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
@@ -2711,7 +2846,13 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   const centre=hole.green??hole.pin;
   const[gx,gy]=to(centre.x,centre.z,hole);ctx.fillStyle=world.bio.mapTurf?.green??'#b3cc86';ctx.beginPath();for(let i=0;i<64;i++){const a=i/64*TAU,r=greenRadius(hole,a),q=to(centre.x+Math.cos(a)*r*hole.greenAspect,centre.z+Math.sin(a)*r,hole);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.closePath();ctx.fill();ctx.fillStyle=hole.hole===course.hole?'#c76a3d':'#365540';ctx.font='bold '+(full?8:10)+'px '+UI_FONT;ctx.textAlign='center';ctx.fillText(String(hole.hole+1),gx,gy-5);
  }
+ }
+ ctx.drawImage(layers.base,0,0);
+ // What drawing the holes used to leave set, which the strokes below inherit:
+ // the aim line's dashes and the dispersion rings have round ends.
+ ctx.lineJoin='round';ctx.lineCap='round';
  if(aimPoint){const from=to(position.x,position.z),target=to(aimPoint.x,aimPoint.z);ctx.save();ctx.strokeStyle='#fff1ac';ctx.lineWidth=3.5;ctx.setLineDash([8,6]);ctx.lineDashOffset=-time*22;ctx.beginPath();ctx.moveTo(...from);ctx.lineTo(...target);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#294c39';ctx.lineWidth=2;ctx.fillStyle='#ffed9e';ctx.beginPath();ctx.arc(...target,5,0,TAU);ctx.fill();ctx.stroke();ctx.restore();}
+ if(layers.fresh){const ctx=layers.over.getContext('2d');ctx.lineJoin='round';ctx.lineCap='round';
  ctx.save();if(full){ctx.beginPath();ctx.rect(w/2-world.halfX*scale,h/2-world.halfZ*scale,world.halfX*2*scale,world.halfZ*2*scale);ctx.clip();}
  // THE GREEN, READ FROM ABOVE. Only while framed on it: at hole scale the tile
  // would be a few coloured pixels, and every other view already shows the green
@@ -2750,7 +2891,8 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
   ctx.fillStyle='#c8bda4';ctx.strokeStyle='#8d8471';ctx.lineWidth=.6;
   for(const home of world.homes||[]){const q=mapPoint(transform,home);const w=Math.max(2,home.width*scale),d=Math.max(2,home.depth*scale);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(-home.rotation);ctx.fillRect(-w/2,-d/2,w,d);ctx.strokeRect(-w/2,-d/2,w,d);ctx.restore();}
  }
- ctx.restore();
+ ctx.restore();}
+ ctx.drawImage(layers.over,0,0);
  // PER-CLUB DISPERSION, under the ball so the ball is never hidden by it. Each
  // group is the shots that club actually hit: a dot per finish, and a circle at
  // one standard distance from their centre -- about two thirds of the group, not

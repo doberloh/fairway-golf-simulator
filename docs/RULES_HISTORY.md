@@ -183,6 +183,37 @@ gaming. Please dont do that anymore." The rest of that journey (three phases)
 was built, unit-tested and documented with the card untouched, and its in-game
 checks were listed for the owner to run at the end.
 
+Two more crashes followed, and neither was a game. On 13 October a smoke run on
+the software rasteriser (`--software`, chosen because the card showed 95% busy)
+took the machine down in its second journey: the CPU path is not a safe
+alternative, since it pegs the machine for minutes. On 18 October the owner gave
+full GPU permission overnight and went to bed; the PC crashed idle after a
+session of long Playwright sweeps (11 menu screens at every step and two sizes,
+several minutes each) with a game tab also left in the browser pane. The owner:
+"you need to be careful with how much you are doing at once." Permission is not
+safety; every GPU run since has been kept short, single and spaced. (On 16
+October a freeze came ten minutes after a session left the game open in a hidden
+browser-pane tab, which stays loaded for 30 minutes; the app's own graphics
+process had already died nine times since August, so the driver may be unstable
+on its own -- but the tab should not have been there.)
+
+**The "GPU allowed" `/goal` exception, 22 October 2026.** Asked how `/goal` could
+drive a frame-rate push, the owner asked whether the GPU could be used under a
+goal without asking each time. Asking per turn cannot work there: a goal carries
+on through turns the owner did not start, so a goal that measures frame time
+would stall at every measurement. The exception is opt-in per goal (the words
+"GPU allowed" in its text) and built from the incidents above: profile groups
+only (about a minute, the pattern that has never crashed) and never the
+software `weak` group (13 October); an `nvidia-smi` check before every run with
+limits of 10% use and 60 °C, against about 5% and 44 °C idle that day, because a
+busy card was the sign of the owner playing on 14 October; runs 5 minutes apart
+and six per goal, because the 18 October crash came from volume, not from any
+single run; stop on any trouble; close every browser and pane tab after each run
+(16 October). Smoke runs, captures and the pane game stay asked-for: they are
+longer and play the whole game. The limits are placed, not measured -- nobody
+knows the crashes' cause -- so they reduce the risk without removing it, and the
+owner can tighten or loosen them.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

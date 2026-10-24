@@ -8884,3 +8884,395 @@ tree must reach the line: its top (height x 1.1) above it and its foot less
 than 2 m under. Found on the audit's Midwest seed AUDIT hole 1 (an oak of
 radius 4.8 m 22 m out, 26 degrees left of the look) and the Challenge Course's
 third. Drawing only; the ball still meets the trunk.
+
+## Frame time on Ultra: the frame-rate goal (22 October 2026)
+
+The owner set a goal on 22 October: frame time down by up to 20% on Ultra,
+with the gains carried down to the lower tiers; the look kept close to what it
+was, generated courses unchanged, no new models (a need for lower-polygon
+models is noted, not acted on). GPU runs were allowed for the goal, within
+AGENTS.md's limits (40 runs for this goal, each gated and logged in
+`bench/ab/gpu-runs.jsonl`, local).
+
+### The tools built for it
+
+- **`tools/frame-ab.mjs`** -- two builds alternately (A B B A), each load in a
+  fresh browser, several tees measured from one course load, median of the
+  per-load medians, plus draws, triangles and (`--shots`) the share of pixels
+  changed between builds beside the share between two loads of one build.
+- **`tools/frame-variants.mjs`** -- ideas tried live in one page of the hooked
+  build (`tools/capture/build-hooked.mjs`, `window.__view`), each measured
+  between two measurements of the unchanged frame; `--cpuprofile` adds the
+  DevTools sampling profile of the processor (build with `MINIFY=0`).
+- **`tools/gpu-gate.mjs`** -- the gate every run passes: 30 s of `nvidia-smi`
+  under 10% and below 60 °C, 5 minutes since the last run, the goal's cap.
+- **`tools/devices.mjs`** -- device profiles (below); **`tools/png-diff.mjs`**
+  -- a PNG decoder and changed-pixel count, no dependency.
+
+**The noise floor (run 1).** The baseline build against a copy of itself,
+Ultra, Redwood seed PROFILE, 1600x900 at 2x, tees 1, 5 and 9, two loads each:
+per-tee medians agreed within 1-4%, the mean over the tees within 1.3%; tee 1
+5.2 ms GPU / 6.0 CPU, 68.0 M triangles, 563 draws; tee 5 5.1 / 5.0, 31.0 M,
+517; tee 9 4.7 / 5.4, 61.8 M, 533. Pixels changed between two loads of the same
+build: 2.2-2.9% at tee 1 (wind in the near grass and crowns), 0.6% at tee 5,
+0.2-0.3% at tee 9. So a change has to beat about 2% of frame time to be seen,
+and a picture change has to stand above those shares to be real.
+
+### Devices for the frame tools
+
+This machine cannot be a phone, so a device is its screen (viewport, pixel
+ratio), its processor (Chrome's CPU throttling at the ratio of single-core
+scores) and its graphics, which are NOT emulated: the card's measured time is
+multiplied by the geometric mean of the compute ratio and the memory-bandwidth
+ratio against the RTX 4090. That factor is PLACED -- a frame here is partly
+shading and partly shadow-map and overdraw traffic, and peak figures flatter
+phones against desktops -- so it ranks changes and suggests which tier a
+device can hold; it is never a number to promise. The real check stays a real
+device (TODO, *A real phone, an iPad and a weak laptop*).
+
+| Device | GPU FP32 | Bandwidth | Geekbench 6 single-core |
+| --- | --- | --- | --- |
+| RTX 4090 + Ryzen 9 7950X (this machine) | 82.6 TFLOPS | 1008 GB/s | 2994 |
+| Intel UHD 620 + i5-8250U (weak laptop) | 0.38 | 38 (PLACED: dual-channel DDR4-2400) | 1127 |
+| Apple M1, 8-core GPU | 2.6 | 68 (PLACED: LPDDR4X-4266, 128-bit) | 2340 (PLACED, from memory of Geekbench's chart; not fetched) |
+| Radeon 780M (Ryzen 7 7840U) | 4.1-4.3 (4.2 used) | 120 (PLACED: LPDDR5X-7500, 128-bit) | 2500 (PLACED) |
+| Apple A15, 5-core GPU (iPhone 13) | 1.71 | 34 (PLACED: LPDDR4X-4266, 64-bit) | 2168-2307 (2277 used) |
+| Adreno 740 (Snapdragon 8 Gen 2) | 1.74 | 68 (PLACED: LPDDR5X-8533, 64-bit) | 2004-2012 (2004 used) |
+| Mali-G52 MP2 (Helio G85, budget Android) | 0.072 (low end of a 72-144 GFLOPS range for the G52) | 15 (PLACED: LPDDR4X, 32-bit) | 408-432 (420 used) |
+
+Sources: RTX 4090 82.58 TFLOPS and 1,008 GB/s, hydrahost.com/nvidia/geforce-rtx-4090
+and notebookcheck.net (*NVIDIA GeForce RTX 4090 GPU Benchmarks and Specs*);
+Ryzen 9 7950X single-core 2994, one Geekbench browser upload
+(browser.geekbench.com/v6/cpu/164421), a single run, not an average; A17 Pro
+2.15, Adreno 740 1.74, Mali-G57 MP4 0.40, UHD 620 0.38, from cpu-monkey.com's
+iGPU pages (AIDA64-derived peaks); A15 (5-GPU) 1,713 GFLOPS, cpu-monkey.com's
+A15 comparison pages (640 shaders x 2 x 1.34 GHz agrees); M1 2.6 TFLOPS,
+Apple's own figure as quoted by nanoreview.net; Radeon 780M 4.1-4.3 TFLOPS,
+nanoreview.net; iPhone 13 single-core 2168-2307, Geekbench browser uploads;
+Snapdragon 8 Gen 2 single-core 2004, nanoreview.net, and 2,012 for an iQOO Neo
+9 Pro (gizmochina); i5-8250U single-core 1127, cpu-monkey.com; Helio G85
+single-core 408-432 (median 423), notebookcheck.net and nanoreview.net, and the
+Mali-G52's 72-144 GFLOPS range from a general overview page
+(android-headunits.com/mali-g52-gpu) that does not break out the MP2 -- no
+source gave the MP2 alone. Rejected: one forum's 5.7 TFLOPS for the Adreno 750,
+which nothing else supports. Peak TFLOPS are not comparable across
+architectures; that is part of why the factor is only an estimate.
+
+### Where an Ultra frame goes on this machine (runs 2 and 3)
+
+**The processor sets the frame here, not the card.** In every case the CPU
+time per frame (5.0-6.1 ms) was at or above the graphics time (4.7-5.4 ms),
+and the graphics timer cannot be read as card work when that is so: a
+TIME_ELAPSED query spans the wall-clock gap between its start and end on the
+card, so while the page is still issuing commands the card's "time" includes
+waiting for them. Switching passes off one at a time (`tools/frame-variants.mjs
+--variants tools/variants/ultra.mjs`, Redwood PROFILE, free camera at tees 1
+and 5) gave: every shadow map frozen -32% (tee 1) and -64% (tee 5) graphics,
+-0.6 to -1.0 ms processor; planting hidden -70%; pixel ratio 1.5 -14% at tee 1
+only; bloom off and 4096 maps within noise at tee 1; one cascade frozen alone
+inconsistent (+4% to -25%) -- read as noise on a processor-bound frame.
+
+**What the processor did** (DevTools sampling profile of the unminified build,
+240 frames): `holdFlagsticks` 1.6-1.8 ms a frame, 25-29% of all of it, for a
+loop of nine flagsticks -- the time was its first line, `canvas.clientHeight`,
+which makes the browser work out its styles there and then whenever the page
+has been written to since the last frame; the hole map's outline (`drawMap`,
+and under it `fairwayWidth`, `ovalRadius`, `greenRadius`, `toWorld`) about
+0.9 ms a frame on average; three.js's own submission about 1 ms.
+
+**What wrote to the page every frame** (MutationObserver over 120 frames, and
+DevTools' Performance metrics): 2-3 style recalculations a frame costing 1.7
+ms together, no layouts. Every frame: the map canvas's `data-course-seed`,
+`data-hole-number` and `aria-label` (set on each draw, unchanged), the free
+camera's altitude text, the flag label's `class`, the aim label's `hidden` --
+mostly to the values they already had -- plus the round screen's `--wind`
+custom property, which sits on `#roundHud` and so restyles every piece of
+the round screen it contains. Reading the canvas size from a stored value
+instead (a live patch) took the processor's frame from 5.3 to 3.9 ms (tee 1)
+and 4.8 to 3.3 ms (tee 5).
+
+### Checkpoint 2: what the processor fixes and the staggered cascades gave (run 4)
+
+Built (commit ace0cfa): page writes only on change (main.js `setText`,
+`setHidden`, `setClass`, `setStyle`; the wind arrow's `--wind` on the arrows),
+the canvas size kept until a ResizeObserver reports a change (renderer.js
+`cssSize`), the map's still layers kept (renderer.js `mapLayers`, course-map.js
+`holeBounds`), and the far two cascades redrawn on alternate frames with their
+own matrices kept (`scheduleCascades`). `tools/frame-ab.mjs`, Ultra, Redwood
+PROFILE, the PLAY camera behind the ball on tees 1, 5 and 9, A B B A:
+
+| Tee | CPU ms A -> B | GPU ms A -> B | Draws | Triangles |
+| --- | --- | --- | --- | --- |
+| 1 | 4.6 -> 2.6 (-44%) | 6.61 -> 5.91 (-11%) | 597 -> 472 | 82.2 -> 67.0 M |
+| 5 | 1.9 -> 1.5 (-21%) | 3.21 -> 2.98 (-7%) | 528 -> 406 | 32.5 -> 27.1 M |
+| 9 | 4.6 -> 2.3 (-50%) | 5.40 -> 4.92 (-9%) | 557 -> 435 | 67.4 -> 55.1 M |
+
+The frame -- the slower of processor and card, which is what it waits on --
+5.07 -> 4.60 ms averaged over the three tees, -9.2%. Now the card sets it. The
+play camera's processor cost is lower than the free camera's (1.9-4.6 against
+5-6 ms before), because play redraws the map every 60-80 ms, not every frame.
+
+Pixels changed between builds: 1.5-3.5%, against 0.3-1.5% between two loads of
+one build. The difference picture (`tools/png-diff.mjs writeDiffPng`) puts
+every changed pixel on leaf and grass edges, the cloud's outline and the map's
+moving dash -- wind and drift, which differ between any two moments -- and none
+on the ground's shadows or the interface.
+
+### What is left once the card sets the frame (runs 5-7)
+
+Live variants on the checkpoint-2 build, Ultra, Redwood PROFILE, play camera,
+tees 1 and 9; graphics ms change against the frames either side:
+
+| Variant | Tee 1 | Tee 9 |
+| --- | --- | --- |
+| planting hidden (view and shadows) | -72% | (card idle) |
+| planting casts no shadow | -18% | -15% |
+| trees flat-shaded, plain unlit material (diagnostic) | -28% | -27% |
+| ground flat-shaded (diagnostic) | -7% | -8% |
+| ground cover (rough, deadfall) hidden | -6% | -8% |
+| pixel ratio 1.5 (diagnostic) | -12% | -18% |
+| nearest cascade frozen | -9% | -10% |
+| middle cascade frozen | -3% | -3% |
+| far cascade frozen | -1% | -2% |
+| far cascade every 4th frame instead of every 2nd | -7% | -2% |
+| nearest map 4096 | -5% | -5% |
+| nearest map 4096, blur radius 2.67 (same width on the ground) | -4% | -7% |
+| all maps 4096 | -4% | -4% |
+| ground drawn after everything else solid | -1% | -4% |
+| bloom off | -4% | -2% |
+| trees receive no shadow | -2% | -2% |
+| terrain casts no shadow | +2% | +2% |
+
+Built from these: the far cascade every fourth frame, Ultra's nearest map at
+4096 with radius 2.67 (graphics.js `nearShadow`, re-snapped to its own texels,
+renderer.js `snapNearCascade`), and the ground drawn last (`renderOrder` 1 on
+the ground and the landscape; three sorts solid things by material id before
+distance, and the ground's material is made first). NOT built, because they
+change the look: ground cover, pixel ratio, bloom, fewer trees. A constant gust
+in the trees' wind (the gust noise is two octaves of hashing per vertex,
+though it depends only on the tree's root) was tried and its run is void: the
+patched materials failed to compile mid-run, some meshes stopped drawing (draws
+fell 475 -> 399), and the undo threw.
+
+**Where the frame is, then: the trees.** They are about 70% of an Ultra frame
+on Redwood, a third of it their shading and most of the rest their triangles --
+43.6 M triangles built in 81 tree meshes (86,404 instances), 12.1 M more in the
+shadow twins. Fewer triangles per tree is the lever that is left, and that is
+new models: NOTED for the owner (lower-polygon grown trees, especially the
+redwoods' 13-53 thousand triangles each, for Blender), not done.
+
+### Checkpoint 3, and trees nearest-first, tried and rejected (runs 8-9)
+
+**Checkpoint 3** (commit f91cafe: the far cascade every fourth frame, Ultra's
+nearest map 4096 with its blur kept, the ground drawn last), `frame-ab` against
+the original build, play camera: graphics 6.62 -> 5.83 ms (tee 1, -12%), 3.22 ->
+2.80 (tee 5, -13%), 5.41 -> 4.59 (tee 9, -15%); draws -26 to -29%; triangles
+-21 to -23%; the frame 5.08 -> 4.41 ms on average, **-13.3%**. Changed pixels:
+2.1-3.9% against 0.1-0.7% between two loads of one build, every one of them on
+leaf and grass edges, the cloud's outline and the map's dash (the difference
+picture) -- the screenshots were taken at different moments of the wind -- and
+none on the ground's shadows, so the 4096 nearest map is not visible at this
+threshold.
+
+**Trees written nearest the camera first** (instance-cull.js: squares sorted
+by distance within each map group, so crowns in front would fill the depth
+buffer before the ones they hide) measured nothing: graphics 6.09 / 2.82 /
+4.60 ms against checkpoint 3's 5.83 / 2.80 / 4.59, inside the noise. So the
+card is not losing its time to shading hidden crowns; it is the triangles and
+their vertex work. Reverted; recorded so it is not tried again.
+
+### The trees' wind is cheap; the air on every pixel is not (runs 10-11)
+
+**Wind** (run 10): the trees' gust field is two octaves of hashed value noise
+per vertex, though it depends only on each tree's root. Patched to a constant
+gust, and separately to one octave, on every tree material (through each
+material's own `onBeforeCompile`, called with the material as `this`; run 7's
+attempt called it bare, the cascade wrapper threw, and that run is void):
+-1% to +1% at tees 1 and 9, twice each. Not the bottleneck; left alone.
+
+**The air** (run 11; diagnostics that removed the call from every patched
+material): the clouds' shadows, MAX_CLOUDS (16) disc tests on every lit pixel,
+-14 to -16% of the frame; the mist (three octaves of noise, two closed-form
+fog integrals, the water field, the aerial tint) -9 to -11%. Both repeated
+twice at both tees, steady. Two exact reductions followed:
+
+- **The mist's bank noise only while there is a bank** (mist.js): the sheet and
+  the water fog both have density zero from about three hours after sunrise
+  until sunset (`mistAmount` is 0 there), and the three octaves were computed
+  and multiplied by nothing. Now inside `if(sheetDensity>0.||waterDensity>0.)`,
+  a branch on uniforms that every pixel takes alike. The picture is unchanged;
+  the saving is there only when the sheet is gone -- a dawn or evening round
+  pays as before.
+- **Only the clouds whose shadow can fall in view** (cloud-shadows.js
+  `packCloudShadows`, renderer.js `packClouds`): a pixel's shade is the
+  darkest of the clouds' shadows on it, so each frame the clouds whose shadow
+  can reach the view frustum -- the cloud's disc swept down the sun's ray over
+  every height a receiver can have (the lowest ground to the highest plus 250
+  m) -- are packed to the front of the shader's arrays and `cloudCount` ends
+  the loop. The water probes, which look from the pond, put every cloud back
+  first (`allCloudShadows`). `tests/cloud-pack.test.mjs` checks the shade at
+  random points in view is exactly what all sixteen gave, for low and high suns
+  (and fails when the packing is given the sun reversed); on its random skies
+  it leaves out more than three clouds in sixteen on average.
+
+### Checkpoints 4 and 5: -18% and -21% (runs 12-15)
+
+`frame-ab` against the original build, Ultra, Redwood PROFILE, play camera,
+tees 1, 5 and 9, A B B A:
+
+| Build | Tee 1 GPU ms | Tee 5 | Tee 9 | Frame, mean of tees |
+| --- | --- | --- | --- | --- |
+| original | 6.61 | 3.21 | 5.41 | 5.08 ms |
+| + mist branch, clouds packed (run 12) | 5.73 | 2.58 | 4.31 | 4.20 (-16.2%) |
+| + no cloud test in shadow (run 13, checkpoint 4) | 5.66 | 2.55 | 4.28 | 4.17 (-18.1%) |
+| + middle cascade every 4th frame (run 15, checkpoint 5) | 5.28 | 2.50 | 4.29 | 4.02 (**-20.7%**) |
+
+The middle cascade every fourth frame was measured live first (run 14): -4
+to -6% at tee 1, -1 to -2% at tee 5, within noise at tee 9. The aerial tint
+measured as noise and was left. At checkpoint 5 the processor's frame is down
+45-63% and draws 31-35%; changed pixels 2.8-4.5% against 0.3-0.9% between two
+loads of one build, again only on wind, cloud drift and the map's dash.
+`npm test` (1043 tests) passes after updating `tests/three-namespace.test.mjs`'s
+stand-in for the renderer, which needed `cssSize`; the biome fingerprint is
+unchanged for every biome.
+
+### Checkpoint 5 on other landscapes, tiers, devices and views (runs 16-23)
+
+`frame-ab`, checkpoint 5 against the original build, A B B A, play camera at
+tees 1, 5, 9 unless stated; "frame" is the slower of processor and card,
+averaged over the spots:
+
+| Case | Frame A -> B | Change | Notes |
+| --- | --- | --- | --- |
+| Ultra, Pacific Northwest | 1.89 -> 1.50 ms | **-20.8%** | GPU -16 to -20%, draws -30 to -33%, triangles -36% |
+| High, Redwood | 4.75 -> 3.84 | **-19.1%** | High shares Ultra's cascades and clouds |
+| Medium, Redwood | 2.44 -> 2.27 | -7.0% | processor -26% at tee 1; graphics -7% |
+| Low, Redwood | 1.75 -> 1.71 | -2.1% | processor -27% at tee 1; graphics -2% |
+| iPhone 13 profile (Medium, 844x390 at 3x, CPU x1.3) | 2.04 -> 1.96 | -3.5% | estimated device graphics 97 -> 96 ms at tee 1 |
+| weak laptop profile (Low, 1920x1080, CPU x2.7) | 5.10 -> 4.30 | -15.7% | tees 1 and 5; the processor sets this one |
+| budget Android profile (Low, 800x360 at 2x, CPU x7.1) | 27.4 -> 20.3 | -26.1% | tees 1 and 5; processor-bound |
+| Ultra, overview | 13.63 -> 12.46 GPU | -8.6% (frame -13%) | draws -30% |
+| Ultra, facing the sun | 3.84 -> 2.73 GPU | -29% (frame -55% CPU) | god rays in shot |
+
+**What carries down and what does not.** The processor work (page writes,
+canvas size, the map) helps every tier, and on the device profiles whose
+processor is slow -- the weak laptop and the budget phone -- it is most of
+the frame, which is where -16% and -26% come from. The graphics savings were
+all in passes Low and Medium do not have (cascades, cloud shadows, mist), so
+their card time moved only 2-7% (the ground drawn last, which every tier gets).
+
+**The device estimates are weakest where they matter most.** Scaled card
+time (`tools/devices.mjs`) is the card's TIME_ELAPSED, which includes waits
+for the processor when the page is processor-bound: under 7x throttling the
+original build's tee 1 read 29.9 ms of "card" time against 8.3 for the new
+one, because the old frame kept the card waiting on the page. Read the device
+rows for direction, never as milliseconds a phone would show.
+
+**Pictures.** Facing the sun, changed pixels (8.8% against 1.5-3.5% between
+loads) are all on swaying crowns against the sky and the cloud's outline. The
+overview's 18.5% is the camera, not the drawing: the overview camera is still
+easing into place when the screenshot is taken, so the course sits a few
+pixels apart between any two loads (6.9% between two loads of the same new
+build); trees, shadows and cloud shadows match. A screenshot of the overview
+needs the camera settled first -- left as a limit of `frame-ab --shots`.
+
+### Low and Medium: their one sun map (runs 24-25)
+
+Live variants on checkpoint 5, Redwood PROFILE, play camera, tees 1/5/9.
+Frozen, the single sun shadow map gave back 17-22% of Medium's graphics time
+and 17-26% of Low's; redrawn every other frame, Low -7 to -17% (Medium's
+reading was lost: several samples returned no graphics time -- the timer query
+came back empty -- and the others read flat). Hiding the planting took 58-68%
+of Low's frame: the same story as Ultra, the trees are the frame.
+
+**The sun map every other frame was built, measured and REVERTED** (runs
+26-27): redrawn every other frame while the sun's light had not moved, every
+frame otherwise. Against the original build it read Medium -6.9% and Low
+-2.8% -- the same as without it (-7.0%, -2.1%) -- though draws fell 20%. The
+reason is the frame it leaves: half the frames still draw the whole map, so the
+heavy frame, which is the one a display waits for, is exactly as heavy, and a
+median sits on whichever half is larger. It would lower the average only, at
+the price of shadows of swaying trees near the player updating at half rate.
+Not worth it. (Ultra's staggered cascades differ: there every frame draws two
+maps instead of three, so the heavy frame itself got lighter -- its 95th
+percentile graphics time fell 12-21% against the median's 20-22%.) This is
+why `frame-ab` now also reports each spot's mean and 95th percentile.
+
+### The final measurement (runs 28-29)
+
+**What the processor does now** (run 28, DevTools profile of the final build,
+play camera, 600 frames): the page is restyled once a frame for 0.03-0.06 ms
+(it was 2-3 times for 1.7 ms), and most of the processor's frame is inside
+WebGL's uniform uploads (uniformMatrix4fv about 1 ms) -- the page waiting for
+a card that is busy, which an uncapped, card-bound frame always shows and a
+display-paced one hides.
+
+**Final, against the original build** (run 29, frame-ab, Ultra, Redwood
+PROFILE, play camera, tees 1/5/9, A B B A): graphics -20% / -21% / -22%,
+processor -44% / -55% / -64%, draws -31 to -35%, triangles -25 to -28%. The
+frame (slower of processor and card) averaged over the tees: median 5.08 ->
+4.01 ms (**-21.1%**), mean 5.34 -> 3.99 ms (-25.3%), 95th percentile 9.80 ->
+5.10 ms (-48%) -- the old build's slow frames were the processor's (the map
+redrawn every fifth frame, the page restyled), and those are gone.
+
+### The looks, with the clock stopped (runs 30-33)
+
+`tools/frame-look.mjs`: the original build and the final one, each a hooked
+build (the original made by swapping the six changed files back in, SWAP in
+`tools/capture/build-hooked.mjs`), with the renderer handed dt = 0 from before
+the course is built -- clouds where the seed put them, no sway, still water,
+the map's dash at rest. Redwood PROFILE, 1600x900 at 2x, the play camera on
+tee 1 and free poses at tees 5 and 9, facing the sun, and 160 m up over hole 3.
+Two shots of one build ten frames apart: 0.000% of pixels different, every
+tier, so anything left between the builds is the code.
+
+| Tier | Pixels changed, worst pose | Mean difference, worst pose |
+| --- | --- | --- |
+| Ultra | 0.204% (facing the sun) | 0.129 of 255 |
+| High | 0.002% | 0.001 |
+| Medium | 0.004% (tee 1) | 0.010 |
+| Low | 0.006% (tee 1) | 0.017 |
+
+Ultra's few changed pixels are specks on the nearest trees' own shading (the
+difference picture) -- the nearest shadow map at 4096 instead of 6144; on the
+other tiers the frame is, to within a pixel here and there, the same picture.
+
+The interface, the same in both builds on every tier: the pin label shown at
+(580.97, 345.69) px reading "483 YARDS TO HOLE, PLAYS 464, 23 FT down"; the hole
+map labelled "Hole 1 map", hole 1, drawn in 25 sampled colours; no page error
+or console error. The wind arrows carry their bearing on the arrows in the new
+build (-79.7 degrees) where the old one set it on the round screen. What this
+cannot see: anything that needs the clock running -- a ball in flight, the
+camera moving, shadows refreshed while it moves -- which stays for a person and
+the smoke journeys (TODO).
+
+### The looks in motion, frame for frame (runs 34-35)
+
+`tools/frame-motion.mjs`: the original and final builds (hooked) on a VIRTUAL
+clock -- every animation frame exactly 1/60 s on performance.now and the
+frame's timestamp, and the clock moving only when the tool steps it -- so both
+play the identical round: a driver off tee 1 of Redwood PROFILE (70 m/s, 12
+degrees, 2,700 rpm), the television cameras following it, then the fly-up into
+the overview. Each picture is read from the canvas inside the frame it shows,
+straight after the renderer's own draw call, so shadow maps that wait a few
+frames are seen waiting (a screenshot would let them catch up first).
+
+| Frame | Ultra: pixels changed (mean diff of 255) | Low |
+| --- | --- | --- |
+| shot + 10 | 0.327% (0.161) | 0.035% (0.008) |
+| shot + 40 | 0.196% (0.092) | 0.048% (0.016) |
+| shot + 90 | 0.166% (0.074) | 0.017% (0.011) |
+| shot + 160 | 0.169% (0.097) | 0.022% (0.012) |
+| shot + 260 | 0.115% (0.062) | 0.023% (0.012) |
+| shot + 420 | 0.067% (0.047) | 0.031% (0.081) |
+| overview + 8 | 0.076% (0.051) | 0.033% (0.070) |
+| overview + 20 | 0.087% (0.062) | 0.014% (0.042) |
+| overview + 45 | 0.076% (0.052) | 0.001% (0.003) |
+
+The whole screen after the shot, interface included: 0.116% (Ultra) and 0.111%
+(Low) changed. No page or console error in either build. On Ultra the changed
+pixels are specks on the nearest trees' own shading (the 4096 nearest map), as
+with the clock stopped; the far cascades waiting up to three frames while the
+camera follows the drive changed nothing visible at this threshold. What this
+still cannot stand in for is a person playing and the smoke journeys, which
+walk the menus and every panel (TODO).

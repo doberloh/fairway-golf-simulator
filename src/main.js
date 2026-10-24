@@ -4427,7 +4427,10 @@ function setWindArrow(){
  const wind=settings.windDirection||0;
  let bearing=-wind;
  try{bearing=view.cameraHeading()-wind;}catch{}
- hud.style.setProperty('--wind',bearing.toFixed(1)+'deg');
+ // On the arrows themselves, the only things that read it: set on the whole
+ // round screen, every frame, it had the browser restyle every piece of it.
+ const v=bearing.toFixed(1)+'deg';
+ for(const s of hud.querySelectorAll('.rh-sub'))setStyle(s,'--wind',v);
 }
 function mapPixels(e){
  const c=$('map'),r=c.getBoundingClientRect();
@@ -4685,6 +4688,17 @@ function applyHudPalette(screen=(panel==='round'||panel==='course')&&lobbyBiome?
 function applyHudScale(){const t=currentTextSize()/100,z=compactScale(innerWidth,innerHeight,t);$('app').style.setProperty('--hud-z',String(Math.round(z*1e4)/1e4));document.documentElement.style.setProperty('--sheet-z',String(Math.round(z*t*1e4)/1e4));}
 const WIND_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>';
 const setHtml=(el,html)=>{if(el&&el.dataset.html!==html){el.dataset.html=html;el.innerHTML=html;}};
+// WRITTEN ONLY WHEN IT CHANGES (the frame-rate goal, 22 October 2026). The
+// frame loop set these every frame, mostly to what they already were, and a
+// write to the page -- even of the same value -- has the browser work its
+// styles out again: two or three times a frame, 1.7 ms of every Ultra frame on
+// this machine, and the canvas-size reads in the renderer then paid for it
+// inside the frame (RESEARCH.md, *Frame time on Ultra*). Use these in the
+// frame loop, never a bare write.
+const setText=(el,text)=>{if(el&&el.textContent!==text)el.textContent=text;};
+const setHidden=(el,hidden)=>{if(el&&el.hidden!==hidden)el.hidden=hidden;};
+const setClass=(el,name,on)=>{if(el&&el.classList.contains(name)!==!!on)el.classList.toggle(name,!!on);};
+const setStyle=(el,prop,value)=>{if(el&&el.style.getPropertyValue(prop)!==value)el.style.setProperty(prop,value);};
 function drawRoundHud(){
  hud1=hudOn();
  if(!course||!round)return;
@@ -7520,7 +7534,7 @@ function updateClock(){
   $('clockIcon').innerHTML=`<i data-lucide="${PHASE_ICONS[phase]}"></i>`;
   icon();
  }
- $('clockButton').classList.toggle('running',d.rate>0);
+ setClass($('clockButton'),'running',d.rate>0);
  if(!$('clockPop').hidden)syncClockPop();
 }
 
@@ -7633,7 +7647,7 @@ function tick(now){
  if(pad&&focusScope()){menuPad(pad,pressed,now);gamepadLast=pad.buttons.map(b=>b.pressed);}
  else if(pad){if(pressed(9)&&hud1&&appMode==='play'&&!panel){setPause(true);gamepadLast=pad.buttons.map(b=>b.pressed);}if(pressed(1)){if(panel)closePanel();else finishShot();}if(!panel&&!dropState){if(pressed(0))meterPress(performance.now());if(pressed(14))stepShape('curve',-1);if(pressed(15))stepShape('curve',1);if(pressed(12))stepShape('height',1);if(pressed(13))stepShape('height',-1);if(pressed(2))stepShape('spin',1);if(pressed(4))cycleClub(-1);if(pressed(5))cycleClub(1);if(pressed(3))cameraMode(view.config.mode==='overview'?'player':'overview');}gamepadLast=pad.buttons.map(b=>b.pressed);}else gamepadLast=[];
  if(appMode==='menu'&&menuBackdrop)orbitBackdrop();
- if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);$('flightAltitude').textContent=Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground';}
+ if(appMode!=='menu'&&!tour&&!panel&&!dropState&&view.config.mode==='free'){const k=c=>keys.has(c)?1:0;view.moveFree(dt,k('KeyW')-k('KeyS')-(Math.abs(pad?.axes[1]||0)>.15?pad.axes[1]:0),k('KeyD')-k('KeyA')+(Math.abs(pad?.axes[0]||0)>.15?pad.axes[0]:0),k('KeyR')-k('KeyF'),keys.has('ShiftLeft')||keys.has('ShiftRight'));view.rotateFree((k('ArrowLeft')-k('ArrowRight'))*dt*260+(Math.abs(pad?.axes[2]||0)>.15?-pad.axes[2]*dt*260:0),(k('ArrowDown')-k('ArrowUp'))*dt*220+(Math.abs(pad?.axes[3]||0)>.15?pad.axes[3]*dt*220:0));drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,true,view.camera.position,flight||dropState?null:aimPoint,view.elapsed);setText($('flightAltitude'),Math.round(view.camera.position.y-world.height(view.camera.position.x,view.camera.position.z))+' m above ground');}
  if(appMode==='play'&&!panel&&!dropState&&!flight&&!round.holeComplete&&view.config.mode!=='free'){const held=c=>keys.has(c)||tapped.has(c);let turn=(held('ArrowRight')?1:0)-(held('ArrowLeft')?1:0),power=(held('ArrowUp')?1:0)-(held('ArrowDown')?1:0);if(pad){if(Math.abs(pad.axes[0])>.15)turn+=pad.axes[0];if(Math.abs(pad.axes[1])>.15)power-=pad.axes[1];}if(!power)reachHeldFor=0;if(swing)turn=power=0;if(turn||power){if(turn)aimTurned=true;aim+=aimDelta(turn,dt*18);if(power)walkReach(power,dt);touchAim();updateAim();view.setCamera(round.position,aim);}}
  // THE SWING METER moves on the clock, not on frames (swing-meter.js); this only
  // draws where it is and lets the clock finish a swing nobody tapped.
@@ -7660,7 +7674,7 @@ function tick(now){
  if(summaryCamera&&!flight){holeSummary+=dt;view.summaryOrbit(holeSummary);}
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
- if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);$('flightAltitude').textContent='Hole flyover · Circling the hole';drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
+ if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);setText($('flightAltitude'),'Hole flyover · Circling the hole');drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
  if(flight){const heardFrom=flight.elapsed;flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;playFlightSounds(flight,heardFrom);const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
   // The drawn ball skips a little while it rolls (roll-hop.js); `p` itself, which
   // the trail and the camera use, is the simulated position, untouched.
@@ -7715,18 +7729,18 @@ function tick(now){
  // The narrow-screen rule hides this marker, which is right everywhere except
  // on the green, where it is the only distance there is. The class is what
  // lets the stylesheet tell those two apart.
- flagEl.classList.toggle('putting',!!ballOnGreen);
+ setClass(flagEl,'putting',!!ballOnGreen);
  if(ballOnGreen&&worldLabels){
   const m=view.projectMarker(pinTop,hudInsets(now));
-  flagEl.style.left=m.x+'px';flagEl.style.top=m.y+'px';
-  flagEl.style.visibility='visible';
-  flagEl.classList.toggle('edge',m.clamped);
-  flagEl.style.setProperty('--point',m.angle.toFixed(1)+'deg');
+  setStyle(flagEl,'left',m.x+'px');setStyle(flagEl,'top',m.y+'px');
+  setStyle(flagEl,'visibility','visible');
+  setClass(flagEl,'edge',m.clamped);
+  setStyle(flagEl,'--point',m.angle.toFixed(1)+'deg');
  }else{
   const label=view.project(pinTop);
-  flagEl.style.left=label.x+'px';flagEl.style.top=label.y+'px';
-  flagEl.style.visibility=label.visible&&worldLabels?'visible':'hidden';
-  flagEl.classList.remove('edge');
+  setStyle(flagEl,'left',label.x+'px');setStyle(flagEl,'top',label.y+'px');
+  setStyle(flagEl,'visibility',label.visible&&worldLabels?'visible':'hidden');
+  setClass(flagEl,'edge',false);
  }
  // THE LAUNCH NUMBERS (round 13, frame c-flight): a thin strip above the meter
  // while the ball is in the air, fading as it lands -- gone before the next shot.
@@ -7734,7 +7748,7 @@ function tick(now){
   const on=!!(ls&&hud1&&flight&&!flight.replay&&sh&&Number.isFinite(sh.speed)&&!flight.result?.puttStroke&&flight.elapsed<(flight.result?.hang||0));
   if(ls){if(on&&ls.launchFor!==flight){ls.launchFor=flight;const axis=Number(sh.spinAxis)||0;
     ls.innerHTML=[[(sh.speed/MPH).toFixed(1),'MPH'],[(Number(sh.vla)||0).toFixed(1)+'°','LAUNCH'],[Math.round(Number(sh.spin)||0),'RPM'],[Math.abs(axis).toFixed(1)+(axis<0?' L':axis>0?' R':''),'AXIS']].map(([v,k])=>`<span><b>${v}</b><small>${k}</small></span>`).join('');}
-   ls.classList.toggle('on',on);}}
+   setClass(ls,'on',on);}}
  // The rise to the hole, beside its distance (round 13: it left the top left).
  if($('pinRise')){const r=(course.height(pin.x,pin.z)-course.height(round.position.x,round.position.z))*3.28084;setHtml($('pinRise'),`${r<-.5?'↘':r>.5?'↗':'→'} ${Math.abs(r).toFixed(0)} FT`);}
  // THE AIM POINT, read where you are looking rather than in a bar at the bottom.
@@ -7759,21 +7773,21 @@ function tick(now){
   const quiet=!rangeMode&&!tour&&(holeQuietFrom===null||!$('turnFlash')?.hidden||(turnFlashHole!==holeKey&&now-holeQuietFrom<HOLE_QUIET_WAIT));
   const recent=now-aimTouchedAt<AIM_LABEL_HOLD;
   const show=!!a&&worldLabels&&(!nearPin||recent)&&!dropState&&!quiet;
-  $('aimLabel').hidden=!show;
+  setHidden($('aimLabel'),!show);
   // THE TWO LABELS TAKE TURNS (10 October 2026, the owner's call). They sat side
   // by side and from the tee often on top of each other -- "340 YARDS TO HOLE"
   // over "257 TO AIM POINT". Now the pin's distance is the one at rest; moving
   // the aim fades it out and the aim point's in, and a moment after the aim
   // stops the two change back. The stylesheet does the fading.
   const aiming=show&&recent;
-  $('aimLabel').classList.toggle('faded',!aiming);
-  flagEl.classList.toggle('faded',aiming||quiet);
+  setClass($('aimLabel'),'faded',!aiming);
+  setClass(flagEl,'faded',aiming||quiet);
   if(show){
    const q=view.project({x:a.x,y:course.height(a.x,a.z)+.15,z:a.z});
-   $('aimLabel').style.left=q.x+'px';$('aimLabel').style.top=q.y+'px';
-   $('aimLabel').style.visibility=q.visible?'visible':'hidden';
+   setStyle($('aimLabel'),'left',q.x+'px');setStyle($('aimLabel'),'top',q.y+'px');
+   setStyle($('aimLabel'),'visibility',q.visible?'visible':'hidden');
    const d=Math.hypot(a.x-round.position.x,a.z-round.position.z);
-   $('aimLabelDistance').textContent=d<10?`${(d/.3048).toFixed(1)} ft`:String(Math.round(d/YARD));
+   setText($('aimLabelDistance'),d<10?`${(d/.3048).toFixed(1)} ft`:String(Math.round(d/YARD)));
    // RISE TO THE AIM POINT, in feet, the same convention the map footer uses
    // for the pin. Shown even at zero rather than appearing past a threshold:
    // the aim point moves continuously, and a readout that blinks in and out
@@ -7781,14 +7795,14 @@ function tick(now){
    // is happening. `course.height` is hole-local, which is what `a` already is.
    if($('aimLabelRise')){
     const rise=(course.height(a.x,a.z)-course.height(round.position.x,round.position.z))*3.28084;
-    $('aimLabelRise').textContent=`${rise<-.5?'↘':rise>.5?'↗':'→'} ${Math.abs(rise).toFixed(0)} FT`;
+    setText($('aimLabelRise'),`${rise<-.5?'↘':rise>.5?'↗':'→'} ${Math.abs(rise).toFixed(0)} FT`);
    }
    // WHAT IS LEFT FROM THE AIM POINT TO THE HOLE (owner, 20 October 2026), so
    // the leave is read without doing the subtraction. Pin and aim are both
    // hole-local; feet inside ten metres, as the other two distances switch.
    if($('aimLabelLeave')){
     const left=Math.hypot(a.x-pin.x,a.z-pin.z);
-    $('aimLabelLeave').textContent=leaveText(left);
+    setText($('aimLabelLeave'),leaveText(left));
    }
   }
  }
