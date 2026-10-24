@@ -1409,3 +1409,31 @@ six smoke journeys passed on the branch's build (`hud-reachable`, `range`,
 also covers 0.9.3's Vite 8.3.3 bundle for those journeys; the old and new
 builds compared frame for frame with the clock stopped and in motion. **Not
 run:** the other smoke journeys. **Not played by a person.**
+
+## Addendum, 23 October 2026: Lakeshore Dunes (branch, not released)
+
+The tenth biome, on the `lakeshore-dunes-biome` branch. Not merged, not
+released. What it changes for distribution:
+
+- **The built page is 18,407,153 bytes (7.64 MB gzipped), 689,620 bytes
+  (3.9%) over 0.9.4.** Nearly all of it is the model module
+  (`src/asset-meshes.js`, 14,690.1 to 15,353.5 KB): 17 models built in
+  Blender (dune grass, cottonwood, black oak, sugar maple, juniper,
+  driftwood; docs/BLENDER_ASSETS.md). Every one of the existing 255 model
+  parts came through the ingest byte-identical.
+- **No new dependency and nothing fetched.** Blender is a tool used to write
+  committed `.glb` files, like `tools/grow.mjs`; it is not in the build. The
+  models are this project's own work under MIT (ATTRIBUTION.md, *Built in
+  Blender*). The page still has one `fetch(` (the manifest, served copies
+  only) and the four smoke journeys run on it (`boot`, `weekly`, `studio`,
+  `surprise-round`) saw no request.
+- **`GENERATOR_VERSION` 36 and `SCHEMA_VERSION` 11 are unchanged**: the
+  biome fingerprint shows all nine existing biomes unchanged and the new one
+  new, and a new option in the existing biome choice is not a change of shape
+  (the Giant Redwood and Haunted Hollow precedent).
+- **The course of the week does not change for any week before Monday 9
+  November 2026**, when Lakeshore Dunes takes its first turn (weekly.js
+  `WEEKLY_ROTATION`). Copies older than this branch keep the nine-landscape
+  rotation after that date, so from week 149 an old copy and a new one show
+  different landscapes for the same week; a release before then keeps that
+  to players who have not updated.

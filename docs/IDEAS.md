@@ -119,13 +119,25 @@ often has the how-to already worked out.
   tree meshes on seed PROFILE); a set at roughly a third, kept to the same
   silhouettes, would be the largest frame win left, on every tier. Large
   (asset work); vendor/ and tools/build-meshes.mjs, tools/grow.mjs. Claude,
-  23 October 2026.
+  23 October 2026. *Cheaper since the same evening*: Blender is installed and
+  a headless pipeline exists (`tools/blender/`, docs/BLENDER_ASSETS.md), built
+  for Lakeshore Dunes. A redwood remake would be a new pack script there;
+  Blender may use the graphics card without asking (AGENTS.md).
+
+- **Cart paths.** A paved path winding from each green to the next tee
+  through the rough, as in the owner's Harbor Shores photograph: a ribbon
+  painted in the ground shader with its own lie (a path is "cart path" relief
+  under the Rules), routed with the green-to-tee walk the router already
+  measures. Medium: it is generation (a new surface, the fingerprint, old
+  saves) and a new relief rule. Kept out of the Lakeshore Dunes goal on
+  purpose. Claude, from the owner's goal text, 23 October 2026.
 
 ## New biomes (9 October)
 
 Sixteen landscapes the owner and Claude drew up together, with what each would
 cost, cheapest first within each group. Haunted Hollow was picked first and
-built. A biome is one record in `src/biomes.js` (PROJECT_HANDOFF *Adding a
+built. Lakeshore Dunes, not on this list, was asked for by the owner on 23
+October 2026 from a photograph of Harbor Shores and built. A biome is one record in `src/biomes.js` (PROJECT_HANDOFF *Adding a
 biome*), so "settings only" means one record plus a course-name list and a mist
 profile. "Unused models" means the model is already in `vendor/` and goes in
 through `PICK` in `tools/build-meshes.mjs`; check it in `npm run assets` before

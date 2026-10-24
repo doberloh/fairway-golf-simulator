@@ -689,3 +689,24 @@ peak or single-run figures; the device estimates they feed are PLACED.
   configurations; the low end was used for the MP2, which no source gave alone.
 - Read and not used: a forum post's 5.7 TFLOPS for the Adreno 750, which no
   other source supported.
+
+## Lakeshore Dunes (23 October 2026)
+
+Behind RESEARCH, *Lakeshore Dunes, the tenth biome*, and LANDSCAPE_RESEARCH's
+Lakeshore Dunes row.
+
+- Wikipedia, *The Golf Club at Harbor Shores* -- https://en.wikipedia.org/wiki/The_Golf_Club_at_Harbor_Shores -- opened 1 July 2010, par 71, 6,734 yd; the four landscapes (1-6 inland, 7-9 dunes, 10-13 woodland, 14-18 river); the Jean Klock Park ruling; Senior PGA Championship every other year from 2012.
+- nicklaus.com course page -- https://nicklaus.com/?p=3137 -- 6,852 yd, par 71; holes 1-6 wetlands, 7-9 dunes, 10-13 woods (via search summary).
+- Senior PGA Championship, *Harbor Shores* -- https://www.srpgachampionship.com/harbor-shores -- the 7th: dogleg right from an island tee, green about 25 ft up the dune, 436 yd; the 9th 578 yd.
+- golfpass scorecard -- https://www.golfpass.com/courses/24395-harbor-shores/scorecard-and-layout -- 430 and 560 yd from the Black tees for the 7th and 9th (the yardages differ by tee and source).
+- Golf Digest, *The Golf Club at Harbor Shores* -- https://www.golfdigest.com/courses/mi/golf-club-harbor-shores -- three holes along Lake Michigan as the highlight (via search summary).
+- Wikipedia, *Warren Dunes State Park* -- https://en.wikipedia.org/wiki/Warren_Dunes_State_Park -- Tower Hill 240 ft (73 m) above the lake; michigantrailmaps.com and others give 260 ft. The lower, more widely repeated figure was followed.
+- NPS, Indiana Dunes, *Plant Succession* -- https://www.nps.gov/indu/learn/nature/plant-succession.htm -- the foredune built by grass catching sand, marram as the main builder, cottonwood surviving burial, black oak on the older dunes.
+- NPS, *Jack Pines on Lake Michigan's Southern Shore* -- https://www.nps.gov/articles/000/jack-pines-on-lake-michigan-s-southern-shore.htm -- jack pine after cottonwood and before oak, near the shore.
+- MNFI, *Open Dunes* -- https://mnfi.anr.msu.edu/communities/description/10699/open-dunes -- sand reed where erosion is active, little bluestem on settled sand, sand cherry and common juniper less frequent, creeping juniper on stable crests (via search summary; the page itself returned empty to the fetch tool).
+- MNFI, *Wooded Dune and Swale Complex* -- https://mnfi.anr.msu.edu/communities/description/10679/wooded-dune-and-swale-complex -- open dune to grassland to shrubs to forest inland, northern hardwoods on the farther ridges (via search summary).
+- Wikipedia, *Ammophila breviligulata* -- https://en.wikipedia.org/wiki/Ammophila_breviligulata -- 0.3-0.9 m tall, seed head to 25 cm in late July and August, rhizomes 1.8-3.0 m a year, up to 100 stems a clump. The page also quotes 25-35 cm for the seed head; the 25 cm figure was followed.
+- Michigan DNR, *Cottonwood* -- https://www.michigan.gov/dnr/education/michigan-species/plants-trees/cottonwood -- 70-100 ft (via search summary; the page refused the fetch with HTTP 403). Native Plant Trust, *Populus deltoides* -- https://plantfinder.nativeplanttrust.org/plant/Populus-deltoides -- 50-100 ft tall, 30-60 ft spread. University of Minnesota -- https://trees.umn.edu/eastern-cottonwood-populus-deltoides -- 80-100 ft by 35-60 ft.
+- NOAA GLERL, southern Lake Michigan water quality -- https://repository.library.noaa.gov/view/noaa/68352 -- Secchi depth 6 m (1985-89), 7 m (1995-98), 18 m (2007-10); south-east nearshore spring Secchi depth about a fifth of offshore (via search summary).
+- Read and not used: the NPS West Beach Succession Trail brochure and the MNFI Open Dunes PDF abstract (both PDFs the tools here could not turn into text; the HTML pages above cover the same ground); a Prezi student page on dune succession (weakly sourced).
+- Course-name and title words were searched with "golf" before use: no course turned up for Beacon Dunes, Sandcherry, Beachgrass, Sandreed, Foredune, Lakewind, Seiche, Breakwater, Plover, Jackpine, Wavecrest, Gullwing, Pierhead, Duneline, Bearberry, Puccoon, Silverweed, Sailcloth, Driftline, Freighter, Lightkeeper, Sandwort, Lakelight, Duneshade, Shorebird or Freshwater (Sundown and Ripple turned up nothing either). Dropped because a course has the name: Black Oak (Black Oak Golf Club, golfadvisor.com/courses/32114), Starboard (Harborside International's Starboard Course, Chicago), Lakebreeze (Lake Breeze Golf Club, Winneconne, Wisconsin), Shoal (Shoal Creek), Agate (Agate Beach Golf Course, Oregon), Lakeshore (Lakeshore Golf Course, Durham, North Carolina, golfnow.com/courses/1033147) -- the biome keeps Lakeshore Dunes as its landscape's name, as Links does, but no course is named from it. Undertow is a disc-golf driver, not a course, and was kept.

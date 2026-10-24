@@ -9276,3 +9276,179 @@ with the clock stopped; the far cascades waiting up to three frames while the
 camera follows the drive changed nothing visible at this threshold. What this
 still cannot stand in for is a person playing and the smoke journeys, which
 walk the menus and every panel (TODO).
+
+## Lakeshore Dunes, the tenth biome (23 October 2026)
+
+Asked for by the owner under a `/goal`, from an aerial photograph of a hole at
+Harbor Shores (Benton Harbor, Michigan): bright fairways in wide ribbons between
+tall grassed dunes with raw sand cut into them, dense leafy woods on the high
+ground, a calm freshwater lake along one edge, lakefront houses on the ridge,
+warm low summer light. **Fictional, not a replica**: no routing, hole, name or
+surveyed figure of the real course is used (LANDSCAPE_RESEARCH.md says the same
+for every biome). The biome is called **Lakeshore Dunes** and its course
+**Beacon Dunes** -- both **PLACED** by Claude because the goal left the name
+blank; the owner can rename them (`PALETTES.lakeshore` in biomes.js).
+
+### What the real place is
+
+- **The course** (Wikipedia, *The Golf Club at Harbor Shores*; golfpass and
+  nicklaus.com listings): a Jack Nicklaus Signature design, opened 1 July 2010,
+  par 71, 6,734 yd from the longest tees (Nicklaus's own page says 6,852). The
+  scorecard splits it into four landscapes: holes 1-6 inland and wetland, **7-9
+  "play through dunes"** nearest Lake Michigan, 10-13 woodland, 14-18 on the
+  Paw Paw River. Three of the dune holes use part of the public Jean Klock
+  Park, which the Michigan Supreme Court allowed. The 7th (about 430-436 yd)
+  climbs to a green **about 25 ft (7.6 m) up** the dune; the 8th runs along a
+  sandy ridge to a green tucked into the dunes. Hosted the Senior PGA
+  Championship every other year from 2012.
+- **How high the dunes are nearby**: Tower Hill in Warren Dunes State Park,
+  about 25 km south in the same county, stands **240 ft (73 m)** above the lake
+  in most sources (260 ft in others; the lower, more often repeated figure is
+  followed). Those are the biggest dunes on this shore; the ridges round a golf
+  hole are a fraction of that.
+
+### Freshwater dune ecology (the order a walk inland meets it)
+
+Lake Michigan's dunes are the place where plant succession was first described
+(Henry Cowles, *Botanical Gazette*, 1899). The National Park Service's Indiana
+Dunes pages and Michigan Natural Features Inventory (MNFI) give the same order:
+
+1. **Beach**, bare sand.
+2. **Foredune**, a long narrow ridge parallel to the shore, built by grass
+   catching blown sand. **American beachgrass (marram, *Ammophila
+   breviligulata*)** is the main builder: leaves **0.3-0.9 m** (1-3 ft) tall,
+   long and narrow; a spike-like seed head up to **25 cm** in late July and
+   August; it spreads by rhizomes **1.8-3.0 m a year** and puts up to **100
+   stems a clump**; it thrives on burial and weakens once the sand stops moving.
+   Where erosion is active **sand reed (*Calamovilfa longifolia*)** joins it.
+3. **Cottonwood** (*Populus deltoides*) on the foredune: it sprouts in a
+   sheltered low spot and, once a few feet tall, survives burial -- buried stems
+   turn into roots and new stems come up. Mature trees **21-30 m** tall (70-100
+   ft, Michigan DNR via search; Native Plant Trust 15-30 m) with a crown
+   **9-18 m** across, narrow and conical when young, broad and open with age.
+4. **Stabilised dune grassland and shrubs**: **little bluestem
+   (*Schizachyrium scoparium*)** dominates where the sand has settled; **sand
+   cherry** and **common juniper** are less frequent dominants; **creeping
+   juniper** and other low evergreens sit on the most stable crests (MNFI).
+5. **Jack pine** on younger unstable dunes near the shore, after cottonwood and
+   before the oaks (NPS, *Jack Pines on Lake Michigan's Southern Shore*).
+6. **Oak forest**: **black oak** is the most conspicuous tree of the older
+   dunes, with many other mostly deciduous trees; farther back, northern
+   hardwoods (maple, beech) take over (MNFI, wooded dune and swale). This is
+   the "dense leafy woodland on the high ground" in the owner's photograph.
+
+**Blowouts** are where wind breaks through the grass and scoops sand out of a
+dune face; they show as raw sand bowls in otherwise grassed ridges. No figure
+for their size was found; anything the generator does with them is **PLACED**.
+
+### The lake and the light
+
+- **Water**: open southern Lake Michigan cleared from a Secchi depth of **6 m**
+  (1985-89) to **18 m** (2007-10) after the quagga mussel invasion (NOAA GLERL
+  report via search); the south-east nearshore stays murkier, its spring Secchi
+  depth about **a fifth** of offshore. So: clear, but not the island's
+  turquoise. No published colour was found; the tint is **PLACED** from the
+  photograph's light blue to grey-blue.
+- **Sun**: Benton Harbor is at about **42.1 °N**. The midsummer noon sun stands
+  90 - 42.1 + 23.44 = **71.3 degrees** up, and on a June evening it sets well
+  north of west after 21:00 local time. The game does not model latitude: a
+  biome's `sun` field is a mood number (`peakElevation = 35 + 0.6 x sun`,
+  daylight.js), and every biome's figure is placed. This one is set for a long
+  warm evening rather than for the true noon peak (below).
+
+### What was built, and the numbers it was tuned to
+
+Everything in this subsection is **PLACED** unless it cites the research
+above: a look matched to the owner's photograph and to the shore's plants.
+
+**The record** (biomes.js `lakeshore`). Palette: fairway `#5aa443` (brighter
+and more saturated than any parkland fairway, as in the photograph), rough
+`#6f8a44` with the Cartoon rough lift toward `#a2b46a` instead of the default
+olive; sand `#eadcb6`; water `#5d97b3`, murk 0.65. Altitude 180 m (the lake's
+surface is about 177 m), 23 °C (a July evening), `sun` 20 -- a peak of 47
+degrees in the game's own day, not the true 71.3 (daylight.js does not model
+latitude). Fog: haze 0.6, sheet 0.3, water 0.75.
+
+**The rough went from golden to green in two passes.** First looks (rough
+`#8c9852`, blade tint `#8ea254`, the default olive lift) read as dry prairie --
+the Links look the owner's photograph is not. Rough `#7f9549` then `#6f8a44`,
+blades `#7f9c4a` and the greener lift fixed it.
+
+**The dunes: height against blind tee shots.** First shape base 22, severity
+40, reach 40 was barely taller than Links; base 34, severity 45, reach 30 gave
+the photograph's ridges right beside the fairway but made one tee shot in ten
+blind. Swept on 45 courses (`bench --tier full --set biome=lakeshore blind
+tees`; the nine-biome average is 3.2% of tee shots blocked by over a metre):
+
+| base / severity / reach | blind over 1 m | over 3 m | tees needing earthwork |
+| --- | --- | --- | --- |
+| 34 / 45 / 30 | 10.4% | 5.2% | 5.9% |
+| 30 / 40 / 34 (chosen) | 5.9% | 3.7% | 3.0% |
+| 26 / 40 / 38 | 4.4% | 3.0% | 1.5% |
+| 34 / 45 / 40 | 6.7% | 3.7% | 2.2% |
+
+30 / 40 / 34 keeps dunes that read as dunes at about twice the parkland rate
+of blind drives. Lower would be fairer and flatter; the owner can move it.
+
+**Blowouts** (src/blowouts.js). Coverage is set by where the noise's 0.5
+contour falls (`amount`): over open ground 0.25 is 6% sand, 0.3 is 12%, 0.35
+is 19%, 0.45 is 39%. With the gate (none within 6 m of a corridor envelope,
+fading in over 16 m) and the water clearance (12 m), 0.29 gives **8.3-9.4% of
+the dune rough** on three seeds. The first gate (14 m, fading over 22) put
+almost every blowout out of sight of play; 0.33 at the new gate (12-14%) read
+as a sandy landscape from above, so it came down. A patch is about 38 m across
+before warping. Building the field costs about 43 ms on a 9-hole course.
+
+**Woods behind the dunes** (`woods: {from: 12, to: 60, floor: .3}`). The first
+cut, from 30 to 95 m with a floor of 0.18, left almost no trees at all, because
+trees only stand within about 135 m of a corridor anyway; the band was moved in
+and the plant count raised (`treeDensity` 3.6, then 4.6, then 5.4) so the woods
+behind hold. A 9-hole course with the tree setting at 60 plants about 2,900
+plants, three fifths of them dune grass and junipers (S1, BEACON).
+
+**The plant mix**: cottonwood 17%, dune grass 34%, black oak 17%, sugar maple
+9%, pine 5%, creeping juniper 12%, common juniper 6%. The shared Kenney `oak`
+and `maple` were dropped for this biome after the first look: the broadleaf
+family includes the cube-crowned `tree_blocks` and `tree_plateau`, which jar
+against everything else here, and changing that family would change six other
+biomes. So the black oak and sugar maple are their own species, built in
+Blender.
+
+**The models** (docs/BLENDER_ASSETS.md). First attempts that were rejected on
+the contact sheet: the **cottonwood** was an umbrella pine (a trunk 2.6% of
+its height, long straight limbs, leaves only at their ends) -- now a trunk
+3.4% of its height forking at a quarter to a third, ascending limbs, foliage
+along their upper halves; the **dune grass** was scattered weeds (90 blades
+leaning out up to 0.55 of their height) -- now 160-220 stiffer blades in
+tussocks, straw on the top 40-58%; the **juniper mats** looked like lily pads
+(12-15 flat plates) -- now 26-34 small rounded lumps. Sizes in the game: dune
+grass patches 0.4-0.9 m tall and 2-4.6 m across (from the ground-plant
+spread), cottonwood and oak 14-28 m (`canopy`), driftwood 0.25-0.5 m thick.
+
+**A sea along one edge had a far shore.** The distant landscape rings lift
+hills out of every side (`ringLift`), and on the lake side that put a range a
+kilometre offshore, so the lake read as a wide river. landscape-edge.js now
+fades the lift to nothing toward an edge coast; Links has a ring lift of zero,
+so it is unchanged.
+
+**What it costs.** Frame (`profile --only biomes`, high tier, RTX 4090, card
+idle): **2.94 ms GPU and 2.7 ms CPU median**, 221 draws, 11.8 M triangles --
+between Links (3.22 GPU) and Midwest (2.02), far below Redwood (6.07). The
+built page: +689,620 bytes (3.9%), nearly all models. Generation: a 9-hole
+course in about 1.3 s in Node.
+
+**Decisions the goal left open, made by Claude and PLACED:**
+
+- **Names**: Lakeshore Dunes, course title Beacon Dunes, tag "Freshwater dunes,
+  summer woods and an inland sea." Searched with "golf" first (REFERENCES).
+- **The course of the week**: appending the biome to the rotation would have
+  changed every week's landscape -- this week's mid-week, under bests saved for
+  it. Instead every week before 149 keeps its old landscape and Lakeshore Dunes
+  debuts on Monday 9 November 2026 (weekly.js `WEEKLY_ROTATION`). If the
+  release lands later, the debut should move with it.
+- **Globetrotter** said "finish a round in all nine landscapes" with a goal of
+  9. It now says "nine different landscapes" and keeps its goal, so nobody's
+  progress or award moves; making it ten would have taken it back from no one
+  but raised the bar for everyone still working on it.
+- **Blowouts play as sand** (the bunker lie), the way a waste area is sand.
+- **Out of scope by the goal**: cart paths (IDEAS.md).

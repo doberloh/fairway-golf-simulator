@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isoWeek, weekIndex, weekSeed, weekKey, weeklyBiome, weeklySettings, recordWeekly, normaliseWeekly, bestEverWeekly} from '../src/weekly.js';
+import {isoWeek, weekIndex, weekSeed, weekKey, weeklyBiome, weeklySettings, recordWeekly, normaliseWeekly, bestEverWeekly, biomeForWeek, WEEKLY_ROTATION} from '../src/weekly.js';
 import {BIOME_KEYS, GENERATOR_VERSION} from '../src/settings-schema.js';
 import {Round} from '../src/game.js';
 
@@ -24,10 +24,32 @@ test('a week has one course: its seed, its landscape, eighteen holes at the defa
  assert.equal(a.seed, 'WEEK-2026-42');
  assert.equal(a.holes, 18);
  assert.equal(weekKey(at('2026-10-14')), `WEEK-2026-42@g${GENERATOR_VERSION}`);
- // Nine weeks running visit all nine landscapes.
- const seen = new Set(Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 9, 12 + 7 * i, 12))));
- assert.equal(seen.size, BIOME_KEYS.length);
+ // Before Lakeshore Dunes' debut, nine weeks running visit the nine.
+ const seen = new Set(Array.from({length: 9}, (_, i) => weeklyBiome(new Date(2026, 6, 6 + 7 * i, 12))));
+ assert.equal(seen.size, 9);
+ // From it, ten weeks running visit all ten.
+ const after = new Set(Array.from({length: 10}, (_, i) => weeklyBiome(new Date(2026, 10, 9 + 7 * i, 12))));
+ assert.equal(after.size, BIOME_KEYS.length);
  assert.equal(weekSeed({year: 2027, week: 3}), 'WEEK-2027-03');
+});
+
+// A NEW LANDSCAPE NEVER RESHUFFLES THE PAST (weekly.js WEEKLY_ROTATION): every
+// week before its debut has exactly the landscape it had when there were
+// nine, the debut week is the newcomer's, and the week after shows what the
+// debut week would have shown.
+test('the tenth landscape joins on its own week and moves no earlier week', () => {
+ const old = w => ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'][((w % 9) + 9) % 9];
+ assert.deepEqual(WEEKLY_ROTATION.nine, BIOME_KEYS.slice(0, 9), 'the old rotation is the first nine keys, in order');
+ for (let w = -60; w < 149; w++) assert.equal(biomeForWeek(w, WEEKLY_ROTATION), old(w), `week ${w}`);
+ assert.equal(weekIndex(at('2026-11-09')), 149);
+ assert.equal(weeklyBiome(at('2026-11-09')), 'lakeshore');
+ assert.equal(weeklyBiome(at('2026-11-08')), old(148), 'the Sunday before is still the old rotation');
+ assert.equal(weeklyBiome(at('2026-11-16')), old(149), 'the week after shows what the debut week would have');
+ // Then a ten-week cycle, each landscape once.
+ for (let w = 149; w < 189; w++) assert.equal(biomeForWeek(w + 10, WEEKLY_ROTATION), biomeForWeek(w, WEEKLY_ROTATION));
+ // The splash runs the same function from its source text (vite.config.js).
+ const copy = new Function(`return ${biomeForWeek.toString()}`)();
+ for (let w = 100; w < 200; w++) assert.equal(copy(w, JSON.parse(JSON.stringify(WEEKLY_ROTATION))), biomeForWeek(w, WEEKLY_ROTATION));
 });
 
 test('a week\'s best is kept, and only a better round replaces it', () => {

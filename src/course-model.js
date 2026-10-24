@@ -37,10 +37,11 @@ export const MODEL_COLOURS = {
  island: ['#e3d49a', '#8fd06a', '#bdf08e', '#3f7a3a', '#2fa6c8'],
  redwood: ['#4a5a34', '#86b85e', '#b4e084', '#2a2a1a', '#4a8aa8'],
  autumn: ['#8a7a3a', '#a8c86a', '#d0e894', '#b8622a', '#4a94b8'],
+ lakeshore: ['#a9a866', '#8fd46a', '#bdf08e', '#3f7a32', '#5a9fc0'],
 };
-export const MODEL_TREES = {midwest: 'round', desert: 'cactus', links: 'round', mountain: 'cone', haunted: 'dead', pnw: 'cone', island: 'palm', redwood: 'cone', autumn: 'round'};
-const RELIEF = {midwest: 5, desert: 6, links: 5.5, mountain: 13, haunted: 6, pnw: 8, island: 4, redwood: 8, autumn: 6};
-const DENSITY = {midwest: 1, desert: .3, links: .35, mountain: 1.1, haunted: 1, pnw: 1.4, island: .6, redwood: 1.5, autumn: 1.1};
+export const MODEL_TREES = {midwest: 'round', desert: 'cactus', links: 'round', mountain: 'cone', haunted: 'dead', pnw: 'cone', island: 'palm', redwood: 'cone', autumn: 'round', lakeshore: 'round'};
+const RELIEF = {midwest: 5, desert: 6, links: 5.5, mountain: 13, haunted: 6, pnw: 8, island: 4, redwood: 8, autumn: 6, lakeshore: 7};
+const DENSITY = {midwest: 1, desert: .3, links: .35, mountain: 1.1, haunted: 1, pnw: 1.4, island: .6, redwood: 1.5, autumn: 1.1, lakeshore: .9};
 const TREE_PALETTE = {autumn: ['#c8642a', '#e0a030', '#a83a24', '#7c8f3a'], haunted: ['#6a5a74', '#7d6c86', '#58485f'], desert: ['#4f7a3e', '#5f8a4a']};
 
 // The model's units: the course is scaled so it fits 200 x 120 (the mockup's

@@ -123,7 +123,7 @@ the courses several suites share.
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
-  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly`, `rival`, `player-colours`, `bag`,
+  `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `rival`, `player-colours`, `bag`,
   `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
 - **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
   `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
@@ -134,7 +134,8 @@ the courses several suites share.
   `course-variety`, `course-living`, `course-names`, `atmosphere-routing`,
   `exotic-shapes`, `fairway-features`, `green-*`, `bunker-ground`,
   `tee-corridor`, `water-*`, `waterways-tours`, `vegetation-variety`,
-  `generation-steps`, `parallel-ground`, `settings-schema`, `haunted-props`.
+  `generation-steps`, `parallel-ground`, `settings-schema`, `haunted-props`,
+  `blowouts` (Lakeshore Dunes' sand: the field baked on the atlas grid and read back as a linear filter reads it, the gate off the playing lines, water clearance, about a tenth of the dune rough, nothing planted on it, no other biome building a field, and the ground shader asking the same questions in the same order -- a structure check, since no test runs the shader).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
   `ground-shader-structure`, `green-cue-wiring`, `glsl-reserved`,
   `three-namespace`, `flood-shadows`, `instance-cull`, `occlusion`, `clouds`,

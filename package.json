@@ -18,7 +18,8 @@
     "assets": "node tools/asset-preview.mjs && vite build --config vite.assets.config.js",
     "sheet": "vite build --config vite.sheet.config.js",
     "grove": "node tools/grow.mjs && node tools/asset-preview.mjs grown-redwood-forest && vite build --config vite.assets.config.js && vite build --config vite.sheet.config.js",
-    "bridge:debug": "node bridge/server.mjs --debug"
+    "bridge:debug": "node bridge/server.mjs --debug",
+    "blender": "node tools/blender/run.mjs"
   },
   "dependencies": {
     "lucide": "1.44.0",

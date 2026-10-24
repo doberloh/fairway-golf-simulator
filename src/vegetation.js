@@ -5,7 +5,7 @@ import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS} from './species.js';
-import {launchCorridors,blocksLaunch} from './course.js';
+import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
 
@@ -43,7 +43,9 @@ function texture(kind){
 // low clump about a metre and a half across and its fronds reach further
 // sideways than up, so scaling it to t.h the way a tree is scaled gives a
 // ten-metre bush.
-const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern']);
+// The dune grass and the creeping juniper (built in Blender) join them: a
+// beachgrass patch is two to five metres across and under a metre tall.
+const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern','dunegrass','juniper']);
 
 // NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
 //
@@ -121,10 +123,14 @@ function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
- const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636'};
+ const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55'};
  // Bark is one brown unless a species says otherwise. The dead trees do: a
  // haunted wood is told apart by its bark, since it has no leaves to do it.
- const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45'};
+ const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b'};
+ // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
+ // does: its blade tips are a second part, straw over green, which is what
+ // American beachgrass looks like by midsummer.
+ const accents={dunegrass:'#c9b67c'};
  const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
@@ -157,7 +163,7 @@ function addModelSpecies(view,kind,trees){
   if(biomeOf(world.settings.biome).leafFall&&kind!=='spruce')leaf.setHSL((kind==='maple'?.0:kind==='aspen'?.11:.055)+t.shade*.035,.62+t.shade*.18,.35+t.shade*.12);
   else leaf.offsetHSL((rng()-.5)*.045,(rng()-.5)*.12,(rng()-.5)*.10);
   entries.push({model,owner:t,matrix:dummy.matrix.clone(),
-   color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:leaf}});
+   color:{leaf,bark:barkBase.clone().offsetHSL(0,(rng()-.5)*.10,(rng()-.5)*.10),stone,dirt,accent:accents[kind]?new T.Color(accents[kind]).offsetHSL(0,(rng()-.5)*.08,(rng()-.5)*.08):leaf}});
  }
  // White materials: the instance colour carries the whole tint, so one material
  // per role serves every biome.
@@ -326,6 +332,7 @@ export function addVegetation(view){
  for(const kind of new Set(view.world.trees.map(t=>t.kind)))addSpecies(view,kind,view.world.trees.filter(t=>t.kind===kind));
 
  addDeadfall(view);
+ addDriftwood(view);
  addGroundCover(view);
  addNearbyGrass(view);
 }
@@ -415,6 +422,45 @@ function addDeadfall(view) {
   return materials.get(role);
  };
  instanceModels(group, entries, materialFor, ({mesh, matrices, owners}) => addViewBlockers(view, mesh, matrices, owners));
+}
+
+// DRIFTWOOD ON THE BEACH (Lakeshore Dunes): bleached logs the lake has thrown
+// up, built in Blender (tools/blender/lakeshore.py, Blender_Driftwood_*).
+// Decoration like the forest floor -- the course never hears of it and
+// nothing collides with it -- so it is placed here, from its own random
+// stream, and moves no generated ground. Only on the beach band: open sand
+// between the waterline and the height where the beach stops (BEACH_RISE),
+// where a lake actually leaves its wood. Sizes are PLACED: 0.25-0.5 m thick,
+// three to five metres long by the models' own proportions.
+function addDriftwood(view){
+ const {world}=view,per=biomeOf(world.settings.biome).driftwood;
+ if(!per||!world.bio.sea)return;
+ const models=familyModels('driftwood');
+ if(!models.length)return;
+ const group=new T.Group();group.name='Driftwood';view.group.add(group);
+ const rng=random(world.seed+':driftwood'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
+ const count=per*world.holes.length,entries=[];
+ const bleached=new T.Color('#b9b2a4'),dirt=new T.Color(world.bio.sand||'#e0d6b4');
+ // The beach is a thin band -- about 1.4% of the ground within 320 m of the
+ // coast on BEACON -- so for a sea along one edge, which is on the +x side
+ // (course.js `land`), the tries stay within reach of it rather than spending
+ // most of themselves inland. (A count of the drawn logs reads low: the
+ // instance cull keeps only those in view.)
+ const x0=world.bio.edgeCoast?world.halfX-320:-world.halfX,x1=world.halfX+(world.bio.edgeCoast?120:0);
+ for(let i=0;i<count*400&&entries.length<count;i++){
+  const x=x0+rng()*(x1-x0),z=(rng()-.5)*world.halfZ*2,y=world.height(x,z);
+  if(y<.08||y>BEACH_RISE||world.surface(x,z)!=='sand')continue;
+  const model=models[Math.floor(rng()*models.length)],size=.25+rng()*.25;
+  dummy.position.set(x,y-size*.15,z);
+  dummy.rotation.set((rng()-.5)*.08,rng()*6.28,(rng()-.5)*.08);
+  dummy.scale.set(size,size,size);
+  dummy.updateMatrix();
+  const wood=bleached.clone().offsetHSL((rng()-.5)*.02,(rng()-.5)*.08,(rng()-.5)*.12);
+  entries.push({model,owner:viewBlocker(x,y,z,size*4,size),matrix:dummy.matrix.clone(),
+   color:{bark:wood,leaf:wood,stone:wood,dirt,accent:wood}});
+ }
+ const material=new T.MeshToonMaterial({color:'#ffffff'});
+ instanceModels(group,entries,()=>material,({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners));
 }
 
 function finishBlade(){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([-.5,-.5,0,.5,-.5,0,0,.5,.24,0,-.4,.12],3));g.setIndex([0,1,3,1,2,3,2,0,3]);g.computeVertexNormals();return g;}

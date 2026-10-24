@@ -6,6 +6,7 @@ import {fairwayWidth,teePad,TEE_PAD,TEE_APRON,TEE_APRON_SCALE,TEE_ROUND,BEACH_RI
 import {CUP_RADIUS} from './physics.js';
 import {biomeOf} from './biomes.js';
 import {occlusionAtlas} from './occlusion.js';
+import {BLOWOUT_NEAR,BLOWOUT_RAMP,BLOWOUT_WATER} from './blowouts.js';
 
 // LOCAL RELIEF: how high a point stands above the ground AROUND it.
 //
@@ -171,6 +172,10 @@ export function groundMaterial(view,palette){
  // Kept for the forest floor (U6, vegetation.js), which grows where the canopy is.
  view.groundOcclusion={occ,Sx,Sz,ex:extent.x,ez:extent.y};
  for(let k=0;k<Sx*Sz;k++){coverBytes[k*4]=Math.round(occ[k]*255);coverBytes[k*4+1]=Math.round(owners[k*4+1]*255);}
+ // Blue: Lakeshore Dunes' blowout field, the very bytes course.js plays
+ // (blowouts.js), on the same grid -- it was baked from this atlas's size.
+ const blow=w.blowouts&&w.blowouts.Sx===Sx&&w.blowouts.Sz===Sz?w.blowouts.data:null;
+ if(blow)for(let k=0;k<Sx*Sz;k++)coverBytes[k*4+2]=blow[k];
  const coverTex=new T.DataTexture(coverBytes,Sx,Sz,T.RGBAFormat,T.UnsignedByteType);
  coverTex.minFilter=coverTex.magFilter=T.LinearFilter;coverTex.needsUpdate=true;view.resources.push(coverTex);
  m.onBeforeCompile=shader=>{
@@ -178,7 +183,7 @@ export function groundMaterial(view,palette){
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamSegments:{value:streamTexture},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},holes:{value:view.holeAtlas},curveSpan:{value:span},curves:{value:texture(curves,512,N,true)},outer:{value:texture(outer,512,N,true)},banks:{value:view.bankAtlas},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
-   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0}});
+   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},seaBeach:{value:bio.sea?1:0},blowoutOn:{value:blow?1:0}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -188,7 +193,7 @@ export function groundMaterial(view,palette){
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
 varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,holes,curves,outer,banks;
 // A texel of the per-hole table (HOLE_ATLAS): column, then the hole's row.
-vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_ATLAS.width}.,row));}uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach;
+vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_ATLAS.width}.,row));}uniform vec2 extent;uniform sampler2D streamSegments;uniform float streamCount;uniform float rows,curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn;
  uniform vec3 bankTint;
  uniform vec3 tint_rough,tint_semi,tint_fairway,tint_fringe,tint_green,tint_sand,rock;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
@@ -341,6 +346,9 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
   turf=mix(turf,tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y));
   if(groundPoint.y<${BEACH_RISE.toFixed(2)})kind=5.;
  }
+ // How near water this fragment is, for the blowouts below: the hole's ponds
+ // and lakes (the hazard loop) and its creek (the channel block).
+ float waterNear=1e4,streamNear=1e4;
  // Signed distances to the mown boundary and to the fairway. mownEdge is exact
  // and drives the softened classification; mownTaper rounds the corner where a
  // corridor's side meets its end and drives the bank's width taper.
@@ -359,7 +367,7 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
  // fairway stops behind it. The margin uniform is the hole's own semi-rough
  // width, the same number course.js uses, so the painted edge and the lie the
  // ball gets agree -- what goes wrong every time these two are set apart.
- if(meta.y>.5){float ps=min(min(hz.z,hz.w),10.);vec3 pb=shoreBands(ps,mownTaper,16.);
+ if(meta.y>.5){waterNear=min(waterNear,hd);float ps=min(min(hz.z,hz.w),10.);vec3 pb=shoreBands(ps,mownTaper,16.);
   // OUTSIDE the shore band, not under it. Measured from the water edge the band
   // was mostly hidden beneath the wet and damp soil painted over it, so only
   // whatever was left of it showed -- which reads as the semi-rough butting
@@ -383,6 +391,10 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
   // The band fades out well inside the valley shoulder, so the owner atlas
   // never clips a visible edge.
   float edge=ch.x,chw=max(ch.y,.6);
+  // As far as the channel's own valley reaches, which is how far course.js's
+  // streams.at sees it: a creek counts within BLOWOUT_WATER or its valley,
+  // whichever is shorter, in both places.
+  if(edge<min(${BLOWOUT_WATER.toFixed(1)},ch.w))streamNear=edge;
   vec3 b=shoreBands(chw,mownTaper,max(ch.w,8.)*.8);
   // Same rule as a pond: the semi-rough comes round to the bank and the mown
   // corridor stops behind it, rather than the fairway running into the channel.
@@ -411,6 +423,21 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
   }
   turf=shoreTint(turf,edge,chw,b);
   if(edge<b.y)kind=6.;
+ }
+ // BLOWOUTS (Lakeshore Dunes): open sand torn into the dune rough. LAST of the
+ // classification, so only ground still rough here can take it -- the beach,
+ // bunkers, ponds and every shore and creek band have already claimed theirs.
+ // course.js asks the same questions: rough, clear of water by BLOWOUT_WATER,
+ // then the field. The field is the cover texture's blue channel, the very
+ // bytes the lie reads, gated by the distance outside the corridor exactly as
+ // blowoutGate does it, sand at 0.5. The colour fades over a short band; the
+ // kind flips at 0.5 only. Inside the atlas only: the distant landscape rings
+ // wear this material too, and past the atlas's edge a clamped texture
+ // stretches its last texels outward into long white streaks.
+ if(blowoutOn>.5&&kind<.5&&waterNear>=${BLOWOUT_WATER.toFixed(1)}&&streamNear>=${BLOWOUT_WATER.toFixed(1)}&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
+  float blowField=texture2D(cover,(wp/extent+1.)*.5).b*smoothstep(${BLOWOUT_NEAR.toFixed(1)},${(BLOWOUT_NEAR+BLOWOUT_RAMP).toFixed(1)},holeDistance(owner.r,wp));
+  turf=mix(turf,tint_sand,smoothstep(.44,.56,blowField));
+  if(blowField>=.5)kind=5.;
  }
  // LOCAL RELIEF, BAKED. Crowns lift and hollows darken at a fifteen metre radius
  // -- the size of the thing a golfer is trying to read. It replaces a

@@ -118,6 +118,20 @@ export const NAME_WORDS = {
  // Halloween words. Each was searched with "golf" (9 October 2026); Scarecrow
  // and Phantom were dropped -- Scarecrow is a real course at Gamble Sands, and
  // there is a Phantom Lake Golf Club.
+ // Lake Michigan's shore: its dune plants, its water and its harbours. Each
+ // was searched with "golf" (23 October 2026, REFERENCES); Black Oak,
+ // Starboard, Lakebreeze, Shoal, Agate and Lakeshore were dropped -- each is
+ // a real course or the start of a famous one.
+ lakeshore: [
+  ['Beacon', 'Beachgrass', 'Sandreed', 'Sandcherry', 'Foredune', 'Blowout',
+   'Lakewind', 'Seiche', 'Breakwater', 'Pierhead', 'Jackpine', 'Plover',
+   'Sandbar', 'Freshwater', 'Duneline', 'Wavecrest', 'Bearberry', 'Puccoon',
+   'Silverweed', 'Shorebird', 'Gullwing', 'Sundown', 'Ripple', 'Sailcloth',
+   'Driftline', 'Undertow', 'Freighter', 'Lightkeeper', 'Sandwort', 'Lakelight'],
+  ['Dunes', 'Bluff', 'Point', 'Beach', 'Ridge', 'Swale', 'Strand', 'Landing',
+   'Pier', 'Light', 'Hollow', 'Reach', 'Bay', 'Bowl', 'Crest', 'Overlook',
+   'Sands', 'Woods', 'Narrows', 'Cove'],
+ ],
  haunted: [
   ['Gloaming', 'Wraith', 'Spectre', 'Banshee', 'Cobweb', 'Bogle', 'Wisp',
    'Lychgate', 'Crypt', 'Shroud', 'Cauldron', 'Gourd', 'Pumpkin', 'Hobgoblin',

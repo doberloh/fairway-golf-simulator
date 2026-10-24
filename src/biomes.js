@@ -106,6 +106,18 @@ const DEFAULTS = {
  speckleRock: false,   // rock mottling through the turf
  altitudeRock: false,  // bare rock high up, snow higher still
  litter: true,         // needle and leaf litter in the rough
+ // Raw sand where wind has torn the grass off a dune: how much of the rough
+ // well away from play (course.js `blowoutField`) is open sand. Paint and lie
+ // read the same field, so a ball that lands on it plays from sand. Zero is
+ // none, and a biome with none builds no field at all.
+ blowouts: 0,
+ // Bleached logs washed up on the beach, per hole, drawn by vegetation.js.
+ // Decoration only, like the forest floor: nothing collides with them.
+ driftwood: 0,
+ // Trees thinned near the holes and massed farther back: {from, to, floor},
+ // the chance a tree is kept rising from `floor` at `from` metres outside the
+ // corridor to certainty at `to`. Null keeps every biome's own planting.
+ woods: null,
 };
 
 // Only what differs from the defaults above.
@@ -216,6 +228,35 @@ const TRAITS = {
   // haunted. Bramble is the bush family in a dark thorny brown.
   plants: [['gnarled', .30], ['snag', .18], ['deadwillow', .16], ['deadoak', .12],
    ['bramble', .24]]},
+ // LAKESHORE DUNES (23 October 2026, the owner's photograph of a Harbor
+ // Shores dune hole; RESEARCH, *Lakeshore Dunes, the tenth biome*).
+ //
+ // Links is the nearest relative and the difference is the point: a Lake
+ // Michigan dune is GREEN. Beachgrass with straw tips over the rough instead
+ // of golden fescue, a summer woodland of cottonwood, oak and maple behind,
+ // and a freshwater lake along one edge -- calm, light blue-grey, a beach and
+ // no surf. The dunes are taller than links ground and rise faster off the
+ // corridors (`hills`), and wind-torn sand shows in their faces (`blowouts`).
+ //
+ // Every number here is PLACED: a look matched to the photograph and to what
+ // grows on the shore, not a measurement of anywhere.
+ lakeshore: {bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
+  sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
+  scatter: {rocks: 40, grass: 320000, tufts: 1600, tallGrass: true,
+   rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#7f9c4a',
+   flowers: ['#e8b93a', '#c9a0d0']},
+  spray: '#d9cfa0', sunColor: '#ffe2b8', cover: 'prairie', roughTint: '#a2b46a',
+  // Woods behind the dunes, so the plant count runs high; a third of it is
+  // dune grass, which threads between the trunks and costs no room.
+  treeDensity: 5.4, canopy: {min: 14, range: 14}, farCanopy: {min: 12, range: 14},
+  waterTint: '#5d97b3', waterMurk: .65,
+  blowouts: .29, driftwood: 6,
+  // Open dune beside the holes, woods behind (the photograph's high ground).
+  woods: {from: 12, to: 60, floor: .3},
+  // Cottonwood leads the list, so it is the tree that stands in a fairway
+  // when a hole gets a feature tree -- the dune's own pioneer.
+  plants: [['cottonwood', .17], ['dunegrass', .34], ['blackoak', .17], ['sugarmaple', .09],
+   ['pine', .05], ['juniper', .12], ['commonjuniper', .06]]},
 };
 
 const PALETTES = {
@@ -227,7 +268,11 @@ const PALETTES = {
  island:{name:'Island',title:'Leeward Cay',tag:'White coral sand and turquoise shallows.',rough:'#829549',semi:'#5a944c',fairway:'#4b9b58',fringe:'#82b76d',green:'#a4ce83',tree:'#3d803f',sky:'#b0dfec',sand:'#fff0d3',water:'#12a9b0',rock:'#70756a',altitude:8,temperature:28,treeKind:'palm',sun:47},
  redwood:{name:'Giant Redwood',title:'Cathedral Grove',tag:'Ancient trunks. Deep shade and wet air.',rough:'#39492c',semi:'#35602f',fairway:'#3d6f33',fringe:'#497a38',green:'#6d9445',tree:'#1b3324',sky:'#96a5a4',sand:'#cdc3a7',water:'#1c3f3c',rock:'#5f6a63',altitude:60,temperature:13,treeKind:'pine',sun:18},
  autumn:{name:'Autumn',title:'Copper Hollow',tag:'Copper canopies in the afternoon sun.',rough:'#a19957',semi:'#748347',fairway:'#709245',fringe:'#99aa66',green:'#b2c280',tree:'#b76427',sky:'#e1cfb5',sand:'#e8d7b4',water:'#627967',rock:'#827463',altitude:350,temperature:17,treeKind:'oak',sun:19},
- haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#3c2856',semi:'#553c7c',fairway:'#7f55b8',fringe:'#9270c6',green:'#86c24f',tree:'#2a2030',sky:'#a4949a',sand:'#b9b2a6',water:'#1f3d2e',rock:'#4f4a58',altitude:200,temperature:9,treeKind:'oak',sun:10}
+ haunted:{name:'Haunted Hollow',title:'Gloaming Moor',tag:'Bare branches and low fog in the last of the light.',rough:'#3c2856',semi:'#553c7c',fairway:'#7f55b8',fringe:'#9270c6',green:'#86c24f',tree:'#2a2030',sky:'#a4949a',sand:'#b9b2a6',water:'#1f3d2e',rock:'#4f4a58',altitude:200,temperature:9,treeKind:'oak',sun:10},
+ // Altitude is Lake Michigan's surface, about 177 m; 23 C a July evening on
+ // its south-east shore. `sun` 20 is a long warm evening rather than the true
+ // 71-degree midsummer noon at 42 N (RESEARCH).
+ lakeshore:{name:'Lakeshore Dunes',title:'Beacon Dunes',tag:'Freshwater dunes, summer woods and an inland sea.',rough:'#6f8a44',semi:'#5e9440',fairway:'#5aa443',fringe:'#79b354',green:'#93c766',tree:'#3f6e2c',sky:'#c4d7e3',sand:'#eadcb6',water:'#4f88a3',rock:'#8a8a7a',altitude:180,temperature:23,treeKind:'oak',sun:20}
 };
 
 // THE INTERFACE WEARS THE BIOME (the 1.0 interface, approved 17 October 2026).
@@ -252,6 +297,9 @@ const INTERFACE = {
  redwood:  {panel: 'rgba(36,12,14,.88)', a1: '#f87171', a2: '#9f1239', hot: '#fde68a', soft: '#e6b3b3', onHot: '#2a0a0e'},
  autumn:   {panel: 'rgba(40,24,8,.88)',  a1: '#fbbf24', a2: '#c2410c', hot: '#ffffff', soft: '#ecc9a0', onHot: '#2a1606'},
  haunted:  {panel: 'rgba(26,12,42,.9)',  a1: '#c084fc', a2: '#7c3aed', hot: '#fb923c', soft: '#cdb4f0', onHot: '#1a0a2e'},
+ // Lake blue and dune sand: not from a mockup (the biome came after them),
+ // so PLACED to the same pattern, and held to the contrast test like the rest.
+ lakeshore:{panel: 'rgba(8,30,42,.88)',  a1: '#7dd3fc', a2: '#0e7490', hot: '#fde68a', soft: '#b4d6e2', onHot: '#05202c'},
 };
 
 // Merged once. `scatter` and `hills` are replaced wholesale rather than merged

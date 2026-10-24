@@ -28,7 +28,7 @@ A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
 with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
-landscape holding 9 or 18 holes, in one of nine biomes, Cartoon art style only.
+landscape holding 9 or 18 holes, in one of ten biomes, Cartoon art style only.
 Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
 match play, scramble, skins, endless; a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
@@ -64,7 +64,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/terrain-grid.js` -- the adaptive ground mesh and its contact heights; `src/landscape-edge.js` -- distant terrain
 - `src/ground.js` -- the ground material and the GPU data textures it reads
 - `src/streams.js`, `src/lakes.js`, `src/water-bodies.js` -- rivers and creeks, large lakes, water for the renderer
-- `src/homes.js`, `src/vegetation.js` -- houses; trees, shrubs, grass and rocks
+- `src/homes.js`, `src/vegetation.js` -- houses; trees, shrubs, grass and rocks, and Lakeshore Dunes' beach driftwood
+- `src/blowouts.js` -- Lakeshore Dunes' wind-torn sand in the dune rough: one baked field the lie and the ground shader both read; tests/blowouts.test.mjs
 - `src/course-names.js` -- seeded course names
 
 **Moving a ball**
@@ -138,6 +139,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `bridge/server.mjs` -- the launch-monitor bridge; `tools/build-server.mjs` compiles it per platform
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
 - `tools/build-meshes.mjs`, `tools/grow.mjs`, `tools/bake-*.mjs` -- model ingest and growing trees
+- `tools/blender/` -- models built in Blender, headless, from committed scripts (`run.mjs <pack> --render`; shared helpers `fairway_blender.py`; the Lakeshore pack `lakeshore.py`), written to `vendor/blender-<pack>/` as `Blender_*.glb` (docs/BLENDER_ASSETS.md)
 - `tools/bench.mjs`, `tools/metrics.mjs`, `tools/biome-fingerprint.mjs`, `tools/profile.mjs`, `tools/smoke.mjs` -- measurement and checks
 - `tools/frame-ab.mjs` (two builds measured alternately, pictures compared), `tools/frame-variants.mjs` (ideas tried live, processor profile, page restyles), `tools/frame-look.mjs` (two hooked builds with the clock stopped: pictures compared exactly, the interface checked), `tools/frame-motion.mjs` (the same round frame for frame on a virtual clock, a shot and a camera flight), `tools/devices.mjs` (device profiles), `tools/gpu-gate.mjs` (the gate for unattended GPU runs), `tools/png-diff.mjs`, `tools/variants/` -- frame time
 - `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
@@ -202,14 +204,15 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - Tees are re-sited after the land exists; face them after siting, and check blindness on terrain that includes the pads. [Tees are sited, not placed]
 - Never assume a canopy height; ask `canopyTop` (redwoods reach 186 m). [NEVER ASSUME A CANOPY HEIGHT]
 - An InstancedMesh that moves must set `userData.noCull`, or the instance cull puts it back where it was built. [ANYTHING INSTANCED THAT MOVES]
-- A new biome is one record plus three tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), and the tool fixture lists. [per-biome tables still live outside the record]
+- A new biome is one record plus tables outside it: course-name words, a fog profile (missing, it silently takes Midwest's), the tool fixture lists, the tiny models' tables, the ambience, the capture list, and a debut week in the course of the week's rotation. [Per-biome tables still live outside the record]
+- Blowouts are one baked field read by both `surface()` and the ground shader: rough only, painted last, clear of water, inside the atlas. [BLOWOUTS ARE ONE BAKED FIELD]
 - Graphics tiers never touch a played surface; two players on different tiers hit the same trees. [GRAPHICS TIERS MAY NOT TOUCH]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]
 - The range's greens are a list that `greenDistance` and the ground shader both loop over -- keep the two the same rule; one cup is live at a time (`course.pin`). [THE RANGE'S GREENS ARE A LIST]
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
 - A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test; a challenge is set up only through `planChallenge`/`playContext`. [A practice challenge is not a round]
 - Rounds with a goal are real rounds (`round.goal`); the goal never changes play, and a sudden-death run is never finished. [Rounds with a goal are real rounds]
-- The course of the week is the date plus `DEFAULT_COURSE`, `BIOME_KEYS` order and the generator; changing any changes it on every copy. [The course of the week is the date]
+- The course of the week is the date plus `DEFAULT_COURSE`, `WEEKLY_ROTATION` and the generator; changing any changes it on every copy, and a new landscape joins on a debut week, never by being appended. [The course of the week is the date]
 - The challenge of the week is the date plus `WEEKLY_POOLS`; a pool row is never edited once shipped -- a new pool starts at a future week. [The challenge of the week is the date]
 - A friend's challenge plays only on the same version (package.json plus commit) and re-flies its shots: `gridShot` stays before `simulateShot`, and anything new `simulateShot` reads must travel in the code. [A friend's challenge is the version]
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]

@@ -74,6 +74,19 @@ educational, and commercial purposes. Support by crediting 'Kenney' or
 Universal dedication and asks that support go through
 [Patreon](https://www.patreon.com/quaternius).
 
+## Built in Blender, which is this project's own work
+
+`vendor/blender-lakeshore/` (Lakeshore Dunes' dune grass, cottonwoods, black
+oaks, sugar maples, junipers and driftwood, 23 October 2026) is written by
+`tools/blender/lakeshore.py` and `tools/blender/fairway_blender.py`, this
+project's own scripts, run in Blender. Every vertex comes from those scripts;
+nothing is imported, no texture is used, and no Blender asset library is
+touched. Blender itself (GPL) is a tool here, not a dependency: it is not in
+the game, the build or the tests, and what a GPL program outputs is not
+covered by its licence. So these models are under this repository's MIT
+licence like the rest of its code. Every such model is named `Blender_*`
+(docs/BLENDER_ASSETS.md).
+
 ## What actually ships
 
 Not the packs. `tools/build-meshes.mjs` reads the vendored `.glb` files and
@@ -86,7 +99,7 @@ emits `src/asset-meshes.js`, which carries **geometry only**:
   instead of importing somebody else's art direction along with the mesh.
 - Positions are quantised to int16 against a model normalised to unit height and
   centred on x/z; normals to int8.
-- 144 of the 938 models under `vendor/` are used (counted by `npm run assets`; this line said 152 of 733 until 9 October, which no longer matched). The rest are not shipped. A family may
+- 161 models are used (`node tools/build-meshes.mjs`, 23 October 2026): the 144 of 938 under `vendor/` that `npm run assets` counted before, and the 17 of the Blender-built Lakeshore pack. (This line said 152 of 733 until 9 October, which no longer matched.) The rest are not shipped. A family may
   keep only part of a model: the redwood and fir crowns ship as leaf geometry with
   their trunks dropped, because the trunk under them is drawn rather than imported.
 - The **house models are the one exception to materials being discarded**: unlike

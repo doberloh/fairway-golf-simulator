@@ -1,8 +1,8 @@
 // THE COURSE OF THE WEEK (Phase 7, 14 October 2026; the agreed spec, 8.2).
 //
 // The same course on every copy of Fairway, with no server: its seed is made
-// from the year and the week, and its landscape rotates through all nine, one a
-// week. Eighteen holes at the default settings. Pure; the menu tile and the
+// from the year and the week, and its landscape rotates through every one, one
+// a week. Eighteen holes at the default settings. Pure; the menu tile and the
 // round live in main.js.
 //
 // SAME WEEK, SAME COURSE -- ON THE SAME GENERATOR. The seed only fixes the
@@ -37,7 +37,40 @@ export function weekIndex(date = new Date()) {
 }
 export const weekSeed = ({year, week}) => `WEEK-${year}-${String(week).padStart(2, '0')}`;
 export const weekKey = (date = new Date(), generator = GENERATOR_VERSION) => `${weekSeed(isoWeek(date))}@g${generator}`;
-export const weeklyBiome = (date = new Date()) => BIOME_KEYS[((weekIndex(date) % BIOME_KEYS.length) + BIOME_KEYS.length) % BIOME_KEYS.length];
+// A NEW LANDSCAPE JOINS ON A WEEK OF ITS OWN, NEVER BY RESHUFFLING THE PAST.
+//
+// The landscape was simply `BIOME_KEYS[week % count]`, so adding a tenth
+// biome would have changed the course of EVERY week -- this one included,
+// mid-week, under a best already saved for it (a week's bests are keyed by
+// week and generator, not by landscape) -- and every earlier week shown on
+// The week's page. Instead the rotation is a list of eras: every week before
+// an era's first week keeps the rotation it always had, and the new landscape
+// takes its era's first week as its debut, the rest following on in the order
+// they would have come. Lakeshore Dunes debuts on Monday 9 November 2026,
+// week 149 -- PLACED by Claude (23 October 2026), two and a half weeks out so
+// a release can reach players first. If the release lands after that Monday,
+// move `debut` on to a week after it, or players updating mid-week see the
+// week's course change under them (TODO).
+//
+// Plain data and a function with no imports, so vite.config.js can write both
+// into the start splash, which picks the week's colours before anything loads.
+export const WEEKLY_ROTATION = {
+ nine: ['pnw', 'desert', 'mountain', 'links', 'midwest', 'island', 'redwood', 'autumn', 'haunted'],
+ eras: [{debut: 149, biome: 'lakeshore'}],
+};
+export function biomeForWeek(w, rotation) {
+ let keys = rotation.nine, start = 0, lead = null;
+ for (const era of rotation.eras) {
+  if (w < era.debut) break;
+  // The order the old rotation would have shown from the debut week on, with
+  // the newcomer in front of it.
+  const at = (((era.debut - start) % keys.length) + keys.length) % keys.length;
+  keys = [era.biome, ...keys.slice(at), ...keys.slice(0, at)];
+  start = era.debut; lead = era.biome;
+ }
+ return lead === null ? keys[((w % keys.length) + keys.length) % keys.length] : keys[(w - start) % keys.length];
+}
+export const weeklyBiome = (date = new Date()) => biomeForWeek(weekIndex(date), WEEKLY_ROTATION);
 // The week's course: the defaults, its seed and landscape, eighteen holes.
 export function weeklySettings(date = new Date()) {
  return validateSettings({...DEFAULT_COURSE, seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18});

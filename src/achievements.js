@@ -31,7 +31,7 @@ export const ACHIEVEMENTS = [
  {id: 'night-owl', name: 'Night Owl', how: 'Finish a round under the floodlights.', xp: 100, title: 'Night Owl'},
  {id: 'fog-walker', name: 'Fog Walker', how: 'Finish a round in Giant Redwood.', xp: 75, title: 'Fog Walker'},
  {id: 'ghost-hunter', name: 'Ghost Hunter', how: 'Finish a round in Haunted Hollow.', xp: 75, title: 'Ghost Hunter'},
- {id: 'globetrotter', name: 'Globetrotter', how: 'Finish a round in all nine landscapes.', xp: 250, title: 'Globetrotter', progress: 'biomes', goal: 9},
+ {id: 'globetrotter', name: 'Globetrotter', how: 'Finish a round in nine different landscapes.', xp: 250, title: 'Globetrotter', progress: 'biomes', goal: 9},
  {id: 'centurion', name: 'Centurion', how: 'Finish 100 rounds.', xp: 300, title: 'Centurion', progress: 'rounds', goal: 100},
  {id: 'streak', name: 'Streak', how: 'Finish the course of the week four weeks running.', xp: 150, progress: 'streak', goal: 4},
  {id: 'on-the-dot', name: 'On the Dot', how: 'Land 50 shots on the number.', xp: 100, title: 'On the Dot', counter: 'onNumber', goal: 50},

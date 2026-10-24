@@ -83,6 +83,9 @@ function fingerprint(biome) {
  // Haunted Hollow's solid pumpkins and toadstools. Empty everywhere else, so
  // adding this line moved no other biome's hash.
  for (const p of w.props || []) h.update(`P${p.model},${n(p.x)},${n(p.z)},${n(p.h)},${n(p.reach)},${p.lantern};`);
+ // Lakeshore Dunes' blowouts: the baked sand field itself, every byte. Null
+ // everywhere else, so this moved no other biome's hash either.
+ if (w.blowouts) h.update(`B${w.blowouts.Sx}x${w.blowouts.Sz}:${crypto.createHash('sha1').update(w.blowouts.data).digest('hex')};`);
   for (const st of w.streams.streams) {
    h.update(`s${st.kind},${st.end},${st.points.length};`);
    for (const p of st.points) h.update(`${n(p.x)},${n(p.z)},${n(p.level)},${n(p.width)};`);

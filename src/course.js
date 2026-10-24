@@ -14,6 +14,7 @@ import {GROUND_PLANTS,crownFraction,crownRadius,PROP_MODELS} from './species.js'
 // here, and because range.js documents a cycle that this quietly removes.
 export {BIOMES, biomeOf} from './biomes.js';
 import {BIOMES, biomeOf} from './biomes.js';
+import {blowoutField,isBlowout,BLOWOUT_WATER} from './blowouts.js';
 // FNV-1a-style string seed hash, then Mulberry32: Tommy Ettinger (CC0),
 // JavaScript variant published by bryc (MIT fallback). See THIRD_PARTY_NOTICES.txt.
 // Seeded generation lives in course-plan.js so the scorecard and the course
@@ -1791,6 +1792,10 @@ export function* generateWorldSteps(settings={},options={}){
   ?makeGroundGridPooled(analyticHeight,halfX+150,halfZ+150,3,refineCell,options.gridPool)
   :makeGroundGridSteps(analyticHeight,halfX+150,halfZ+150,3,refineCell));
  const height=(x,z)=>groundHeight(groundGrid,x,z,analyticHeight);
+ // Lakeshore Dunes' wind-torn sand (blowouts.js), baked on the ground atlas's
+ // own grid so the shader paints exactly what `surface` plays. Null for every
+ // biome without blowouts, which therefore builds nothing and moves nothing.
+ const blowouts=bio.blowouts>0?blowoutField(s.seed,groundGrid.halfX,groundGrid.halfZ,bio.blowouts):null;
  // The sited pads, so a measurement can report what the generator decided
  // rather than trying to infer it back out of the terrain.
  const teeSites=teePads.map(p=>({hole:p.h.hole,x:p.x,z:p.z,rz:p.rz,level:p.y,
@@ -1864,6 +1869,10 @@ export function* generateWorldSteps(settings={},options={}){
   // a fifth of every island hole into sand, and a green shaped down near the sea
   // would have become a bunker.
   if(bio.sea&&found==='rough'&&y<waterLevel+BEACH_RISE)return 'sand';
+  // A blowout: rough only, clear of the hole's ponds and lakes and of a creek
+  // within its own valley, then the field -- the questions ground.js asks.
+  if(blowouts&&found==='rough'&&!(st&&st.edge<Math.min(BLOWOUT_WATER,st.bank))
+   &&!n.h.ponds.some(p=>ovalDistance(n.p.x,n.p.z,p)<BLOWOUT_WATER)&&isBlowout(blowouts,x,z,n.d))return 'sand';
   return found==='fairway'&&besideWater(x,z,n,st)?'semi':found;
  }
  yield phaseAt(4);
@@ -1913,6 +1922,11 @@ export function* generateWorldSteps(settings={},options={}){
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
+  // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
+  // mostly turned away, so the ground beside play stays open dune and the
+  // trees mass up farther back. Ground plants are exempt. The draw is taken
+  // only when a biome sets `woods`, so no other biome's planting moves.
+  if(bio.woods&&!GROUND_PLANTS.has(kind)&&rng()>bio.woods.floor+(1-bio.woods.floor)*smooth((n.d-bio.woods.from)/(bio.woods.to-bio.woods.from)))continue;
   const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
   // The soft edge. Drawn before anything else is decided about this candidate,
   // so a rejection here costs one number and not a whole tree's worth of them.
@@ -2187,7 +2201,7 @@ export function* generateWorldSteps(settings={},options={}){
  const straw=trees.filter(t=>['pine','spruce','cedar'].includes(t.kind)&&t.shade<.72).map(t=>({x:t.x,z:t.z,rx:t.r*(1.1+t.shade),rz:t.r*(.85+t.shade),phase:t.shade*6.28}));
  const coverCells=new Map();for(const patch of straw){for(let x=Math.floor((patch.x-patch.rx*1.1)/24);x<=Math.floor((patch.x+patch.rx*1.1)/24);x++)for(let z=Math.floor((patch.z-patch.rz*1.1)/24);z<=Math.floor((patch.z+patch.rz*1.1)/24);z++){const key=x+','+z;if(!coverCells.has(key))coverCells.set(key,[]);coverCells.get(key).push(patch);}}
  const groundCover=(x,z)=>(coverCells.get(Math.floor(x/24)+','+Math.floor(z/24))||[]).some(p=>insideOval(x,z,p))?'straw':bio.cover;
- const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,streams,footprint,groundGrid,groundCover,straw,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
+ const world={teeSites,lakeOwner,largeLakes,homes,rocks,props,streams,footprint,groundGrid,groundCover,straw,blowouts,settings:s,bio,holes,halfX,halfZ,waterLevel,height,surface,trees,nearby,nearest,land,seed:s.seed,ecology:bio.plants.map(([kind])=>kind)};
  for(const h of holes){h.world=world;h.residentialOB=!!s.residentialOB;h.height=(x,z)=>{const p=h.toWorld({x,z});return height(p.x,p.z);};h.surface=(x,z)=>{const p=h.toWorld({x,z});return surface(p.x,p.z);};h.trees=trees.filter(t=>t.hole===h.hole).map(t=>({...t,...h.toLocal(t)}));}
  return world;
 }
