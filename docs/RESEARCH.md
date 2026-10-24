@@ -9276,3 +9276,82 @@ with the clock stopped; the far cascades waiting up to three frames while the
 camera follows the drive changed nothing visible at this threshold. What this
 still cannot stand in for is a person playing and the smoke journeys, which
 walk the menus and every panel (TODO).
+
+## Lakeshore Dunes, the tenth biome (23 October 2026)
+
+Asked for by the owner under a `/goal`, from an aerial photograph of a hole at
+Harbor Shores (Benton Harbor, Michigan): bright fairways in wide ribbons between
+tall grassed dunes with raw sand cut into them, dense leafy woods on the high
+ground, a calm freshwater lake along one edge, lakefront houses on the ridge,
+warm low summer light. **Fictional, not a replica**: no routing, hole, name or
+surveyed figure of the real course is used (LANDSCAPE_RESEARCH.md says the same
+for every biome). The biome is called **Lakeshore Dunes** and its course
+**Beacon Dunes** -- both **PLACED** by Claude because the goal left the name
+blank; the owner can rename them (`PALETTES.lakeshore` in biomes.js).
+
+### What the real place is
+
+- **The course** (Wikipedia, *The Golf Club at Harbor Shores*; golfpass and
+  nicklaus.com listings): a Jack Nicklaus Signature design, opened 1 July 2010,
+  par 71, 6,734 yd from the longest tees (Nicklaus's own page says 6,852). The
+  scorecard splits it into four landscapes: holes 1-6 inland and wetland, **7-9
+  "play through dunes"** nearest Lake Michigan, 10-13 woodland, 14-18 on the
+  Paw Paw River. Three of the dune holes use part of the public Jean Klock
+  Park, which the Michigan Supreme Court allowed. The 7th (about 430-436 yd)
+  climbs to a green **about 25 ft (7.6 m) up** the dune; the 8th runs along a
+  sandy ridge to a green tucked into the dunes. Hosted the Senior PGA
+  Championship every other year from 2012.
+- **How high the dunes are nearby**: Tower Hill in Warren Dunes State Park,
+  about 25 km south in the same county, stands **240 ft (73 m)** above the lake
+  in most sources (260 ft in others; the lower, more often repeated figure is
+  followed). Those are the biggest dunes on this shore; the ridges round a golf
+  hole are a fraction of that.
+
+### Freshwater dune ecology (the order a walk inland meets it)
+
+Lake Michigan's dunes are the place where plant succession was first described
+(Henry Cowles, *Botanical Gazette*, 1899). The National Park Service's Indiana
+Dunes pages and Michigan Natural Features Inventory (MNFI) give the same order:
+
+1. **Beach**, bare sand.
+2. **Foredune**, a long narrow ridge parallel to the shore, built by grass
+   catching blown sand. **American beachgrass (marram, *Ammophila
+   breviligulata*)** is the main builder: leaves **0.3-0.9 m** (1-3 ft) tall,
+   long and narrow; a spike-like seed head up to **25 cm** in late July and
+   August; it spreads by rhizomes **1.8-3.0 m a year** and puts up to **100
+   stems a clump**; it thrives on burial and weakens once the sand stops moving.
+   Where erosion is active **sand reed (*Calamovilfa longifolia*)** joins it.
+3. **Cottonwood** (*Populus deltoides*) on the foredune: it sprouts in a
+   sheltered low spot and, once a few feet tall, survives burial -- buried stems
+   turn into roots and new stems come up. Mature trees **21-30 m** tall (70-100
+   ft, Michigan DNR via search; Native Plant Trust 15-30 m) with a crown
+   **9-18 m** across, narrow and conical when young, broad and open with age.
+4. **Stabilised dune grassland and shrubs**: **little bluestem
+   (*Schizachyrium scoparium*)** dominates where the sand has settled; **sand
+   cherry** and **common juniper** are less frequent dominants; **creeping
+   juniper** and other low evergreens sit on the most stable crests (MNFI).
+5. **Jack pine** on younger unstable dunes near the shore, after cottonwood and
+   before the oaks (NPS, *Jack Pines on Lake Michigan's Southern Shore*).
+6. **Oak forest**: **black oak** is the most conspicuous tree of the older
+   dunes, with many other mostly deciduous trees; farther back, northern
+   hardwoods (maple, beech) take over (MNFI, wooded dune and swale). This is
+   the "dense leafy woodland on the high ground" in the owner's photograph.
+
+**Blowouts** are where wind breaks through the grass and scoops sand out of a
+dune face; they show as raw sand bowls in otherwise grassed ridges. No figure
+for their size was found; anything the generator does with them is **PLACED**.
+
+### The lake and the light
+
+- **Water**: open southern Lake Michigan cleared from a Secchi depth of **6 m**
+  (1985-89) to **18 m** (2007-10) after the quagga mussel invasion (NOAA GLERL
+  report via search); the south-east nearshore stays murkier, its spring Secchi
+  depth about **a fifth** of offshore. So: clear, but not the island's
+  turquoise. No published colour was found; the tint is **PLACED** from the
+  photograph's light blue to grey-blue.
+- **Sun**: Benton Harbor is at about **42.1 °N**. The midsummer noon sun stands
+  90 - 42.1 + 23.44 = **71.3 degrees** up, and on a June evening it sets well
+  north of west after 21:00 local time. The game does not model latitude: a
+  biome's `sun` field is a mood number (`peakElevation = 35 + 0.6 x sun`,
+  daylight.js), and every biome's figure is placed. This one is set for a long
+  warm evening rather than for the true noon peak (below).
