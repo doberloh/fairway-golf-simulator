@@ -83,6 +83,7 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | `node tools/capture/screens.mjs [screen…]` | The 1.0 interface, screen by screen, at 4K |
 | `node tools/capture/clips.mjs [clip…]` | The clips, recorded frame by frame at 3840x2160 and 60 fps: an 80 Mbit/s MP4 master and the website's 1080p WebM, each checked to play |
 | `node tools/capture/angles.mjs <biome> <seed> [holes]` | Small test pictures from many views, for choosing a camera |
+| `node tools/capture/showcase.mjs <biome> <seed> [holes]` | A one-page showcase of a landscape for the owner (`docs/reports/<biome>-showcase.html`, local): holes at noon and golden hour, the coast, a close look at its ground, an overview, its 4K stills and Blender sheet if made, and any page error seen while capturing |
 | `node tools/capture/contact-sheet.mjs <folder>` / `frame-grab.mjs <video> <s>` | One image of a whole set; one frame of a clip |
 | `node tools/capture/motion.mjs <video.webm> [74-130]` | How much a clip's camera shakes, measured from its frames (CPU only); under about 0.012 is smooth |
 | `node tools/capture/gallery.mjs` / `features.mjs [name…]` | The 0.x website's pictures (superseded by times and screens) |
