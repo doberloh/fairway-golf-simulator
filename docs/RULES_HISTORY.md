@@ -214,6 +214,19 @@ longer and play the whole game. The limits are placed, not measured -- nobody
 knows the crashes' cause -- so they reduce the risk without removing it, and the
 owner can tighten or loosen them.
 
+**The Blender exception, 23 October 2026.** The owner installed Blender so
+Claude could build models (first for a Lake Michigan dunes biome, and the
+lower-polygon redwoods in IDEAS.md). The first check ran it headless with
+Cycles on the CPU, kept off the card under the rule above; the owner: "when we
+are using blender you dont need to leave it off the GPU that would make it
+worthless." Blender is therefore exempt from asking, in turns and goals alike.
+It is not the game, so none of the crashes involved it, but the limits carry
+their lessons: the `nvidia-smi` check (14 October, gaming), one short job at a
+time rather than a long batch (18 October, volume), and nothing left running
+(16 October). The busy threshold is about 30%, not the goal's 10%, because
+the desktop alone (Chrome, Spotify, the vendor overlays) read 7-25% that
+evening; it is placed, and the owner can move it.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

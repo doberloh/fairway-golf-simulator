@@ -241,10 +241,18 @@ The owner plays games on this machine, and test runs on its GPU have crashed it
 twice while they did. **Nothing that draws on the graphics card runs unless the
 owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
 browser pane, `npm run profile`. Earlier permission does not carry over -- the
-one exception is a `/goal` that says so (next section).
+exceptions are Blender (below) and a `/goal` that says so (next section).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
   start, even with permission; say so and wait.
+- **Blender may use the graphics card without asking**, in any turn or goal
+  (the owner, 23 October 2026: keeping it off the GPU would make it worthless).
+  It is asset work, not the game, so the crashes above do not describe it --
+  but keep their lessons: read `nvidia-smi` first and do not start while a game
+  is running (a game in its process list, or the card above about 30% -- PLACED;
+  the desktop alone read 7-25% that day); one Blender process at a time, each
+  job minutes rather than a long batch; and close Blender before the turn ends.
+  Smoke, captures, the pane game and profiles are unchanged.
 - **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
   build`, the fingerprint, the bench) and say so (next-but-one section).
 
