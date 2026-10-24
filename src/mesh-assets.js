@@ -204,7 +204,10 @@ export const FAMILY_OF = {
  // Lakeshore Dunes: built in Blender (tools/blender/lakeshore.py). The
  // creeping juniper mats and the common juniper's vase are two families
  // because one is sized by its spread and the other by its height.
- cottonwood: 'cottonwood', dunegrass: 'dunegrass', juniper: 'juniper', commonjuniper: 'juniperbush',
+ // Black oak and sugar maple are their own species here rather than `oak`
+ // and `maple`, which six biomes draw from the Kenney broadleaf family.
+ cottonwood: 'cottonwood', blackoak: 'blackoak', sugarmaple: 'sugarmaple',
+ dunegrass: 'dunegrass', juniper: 'juniper', commonjuniper: 'juniperbush',
 };
 
 // Builds one InstancedMesh per (model, role). Instances carry their own colour,

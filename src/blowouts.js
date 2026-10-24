@@ -28,8 +28,8 @@ import {ownerAtlasSize} from './owner-atlas.js';
 
 // How far outside the corridor envelope a blowout may start, and over how far
 // it fades in. PLACED: the corridor envelope already runs well past the mown
-// edge, so 14 m outside it is open dune, not the first cut of rough.
-export const BLOWOUT_NEAR = 14, BLOWOUT_RAMP = 22;
+// edge, so 6 m outside it is open dune, not the first cut of rough.
+export const BLOWOUT_NEAR = 6, BLOWOUT_RAMP = 16;
 // And how far clear of water. The ground shader paints a band of wet soil
 // round every pond, lake and creek (a look only; the lie there stays rough),
 // and sand under that band would be painted soil and played as sand. So
@@ -101,4 +101,8 @@ export function blowoutGate(d) {
 }
 
 // Is this rough point open sand? `d` is nearest().d, signed.
-export const isBlowout = (field, x, z, d) => !!field && blowoutAt(field, x, z) * blowoutGate(d) >= .5;
+// Only inside the field's own extent, as the shader asks: beyond it a clamped
+// read would stretch the edge texels outward (into streaks, on the distant
+// landscape rings, which wear the ground material).
+export const isBlowout = (field, x, z, d) => !!field && Math.abs(x) < field.ex && Math.abs(z) < field.ez
+ && blowoutAt(field, x, z) * blowoutGate(d) >= .5;

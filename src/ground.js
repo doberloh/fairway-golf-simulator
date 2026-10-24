@@ -431,8 +431,10 @@ vec4 holeTexel(float col,float row){return texture2D(holes,vec2((col+.5)/${HOLE_
  // then the field. The field is the cover texture's blue channel, the very
  // bytes the lie reads, gated by the distance outside the corridor exactly as
  // blowoutGate does it, sand at 0.5. The colour fades over a short band; the
- // kind flips at 0.5 only.
- if(blowoutOn>.5&&kind<.5&&waterNear>=${BLOWOUT_WATER.toFixed(1)}&&streamNear>=${BLOWOUT_WATER.toFixed(1)}){
+ // kind flips at 0.5 only. Inside the atlas only: the distant landscape rings
+ // wear this material too, and past the atlas's edge a clamped texture
+ // stretches its last texels outward into long white streaks.
+ if(blowoutOn>.5&&kind<.5&&waterNear>=${BLOWOUT_WATER.toFixed(1)}&&streamNear>=${BLOWOUT_WATER.toFixed(1)}&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   float blowField=texture2D(cover,(wp/extent+1.)*.5).b*smoothstep(${BLOWOUT_NEAR.toFixed(1)},${(BLOWOUT_NEAR+BLOWOUT_RAMP).toFixed(1)},holeDistance(owner.r,wp));
   turf=mix(turf,tint_sand,smoothstep(.44,.56,blowField));
   if(blowField>=.5)kind=5.;

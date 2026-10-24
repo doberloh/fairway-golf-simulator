@@ -31,6 +31,29 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## Lakeshore Dunes (branch `lakeshore-dunes-biome`, 23 October 2026)
+
+- [ ] **The tenth biome is built and has not been played.** A Lake Michigan
+  dunes course after the owner's Harbor Shores photograph (RESEARCH.md
+  *Lakeshore Dunes, the tenth biome*; models in docs/BLENDER_ASSETS.md). Seen
+  only in captures (noon, golden hour, the beach, an overview, the 4K
+  `times.mjs` set) and through four smoke journeys (`boot`, `weekly`,
+  `studio`, `surprise-round`); nobody has played a round on it. Check in a
+  round: a ball in a **blowout** plays from sand and the sand drawn is where
+  the lie says (rough only, never within 6 m of the corridor or 12 m of
+  water); the **driftwood** on the beach; the dune grass and juniper sizes
+  beside a fairway; the lake running to the horizon with no far shore; the
+  Lakeshore course-of-the-week card, splash colours and tiny course model.
+- [ ] **Its names are placed** -- Lakeshore Dunes / Beacon Dunes and the tag
+  (biomes.js `PALETTES.lakeshore`); the goal left them for the owner.
+- [ ] **Its debut week is placed: Monday 9 November 2026, week 149**
+  (weekly.js `WEEKLY_ROTATION`). If the release goes out after that Monday,
+  move the debut to a week after the release, or players who update mid-week
+  see the week's course change under them.
+- [ ] **One drive in seventeen is blind** on it (5.9% of tee shots blocked by
+  over a metre, against 3.2% over the other nine): the price of dunes beside
+  the fairways. The sweep is in RESEARCH; lower `hills` if it plays unfair.
+
 ## The 1.0 interface (branch `ui-1-0`)
 
 The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17

@@ -80,4 +80,8 @@ test('the ground shader paints a blowout last, from the cover texture, by the sa
  assert.match(src, /if\(blowField>=\.5\)kind=5\.;/);
  assert.match(src, /waterNear=min\(waterNear,hd\);/);
  assert.match(src, /coverBytes\[k\*4\+2\]=blow\[k\]/);
+ assert.match(src, /abs\(wp\.x\)<extent\.x&&abs\(wp\.y\)<extent\.y\)\{/, 'inside the atlas only, as isBlowout');
+ const f = blowoutField('B1', 300, 300, .99);
+ assert.equal(isBlowout(f, 301, 0, 500), false);
+ assert.equal(isBlowout(f, 0, -300.5, 500), false);
 });

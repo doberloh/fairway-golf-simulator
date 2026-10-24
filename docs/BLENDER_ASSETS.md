@@ -47,7 +47,7 @@ vendor/**/*.glb          --(node tools/build-meshes.mjs)-->  src/asset-meshes.js
    `GROUND_PLANTS` (species.js). Spread-sized families go in `SPREAD_SIZED`.
 
 The `.glb` files are **committed**: they are small (the Lakeshore pack is
-about 590 KB), and committing them means a clone without Blender still runs
+about 1 MB), and committing them means a clone without Blender still runs
 `build-meshes` and gets the same `src/asset-meshes.js`. Blender is not a
 dependency of the game, the build or the tests, only of remaking these models.
 The scripts draw every random number from `random.Random(<model name>)`, so a
@@ -101,19 +101,24 @@ it).
 
 ### lakeshore (23 October 2026)
 
-`tools/blender/lakeshore.py`, 12 models, for Lakeshore Dunes:
+`tools/blender/lakeshore.py`, 17 models, for Lakeshore Dunes:
 
 | Model | Species (family) | What it is | Vertices after export |
 | --- | --- | --- | --- |
 | `Blender_DuneGrass_1`-`_3` | `dunegrass` (`dunegrass`) | A patch of American beachgrass: 10-14 tussocks of 16 blades, green below and straw at the tips (the accent role), 2-2.7 m across | 2,240-2,940 |
 | `Blender_Cottonwood_1`-`_3` | `cottonwood` (`cottonwood`) | Heavy trunk forking a quarter to a third of the way up into 3-4 ascending limbs, crown a ragged open cluster of foliage lumps | 2,841-3,599 |
+| `Blender_BlackOak_1`-`_3` | `blackoak` (`blackoak`) | Black oak: a crooked trunk forking low into wandering limbs, a wide dense dark crown, 15-19 m | 2,482-3,490 |
+| `Blender_SugarMaple_1`, `_2` | `sugarmaple` (`sugarmaple`) | Sugar maple: a straight trunk well up into a dense egg-shaped crown | 1,585 |
 | `Blender_Juniper_1`, `_2` | `juniper` (`juniper`) | Creeping juniper mats, about 3.5 m across | 312-408 |
 | `Blender_Juniper_3` | `commonjuniper` (`juniperbush`) | A common juniper's low vase | 348 |
 | `Blender_Driftwood_1`-`_3` | beach decoration (`driftwood`) | Bleached logs, one with its root wad, 3-4 m long | 200-452 |
 
-Together they added 373.9 KB to the module (`src/asset-meshes.js`, 14,690.1
-to 15,064.0 KB), about 2% of the built page. What was tried and changed is in
+Together they added 663.4 KB to the module (`src/asset-meshes.js`, 14,690.1
+to 15,353.5 KB), about 3.6% of the built page. What was tried and changed is in
 RESEARCH.md: the first cottonwood was an umbrella pine (thin trunk, leaves
 only at the limb ends), the first grass was scattered weeds (too few blades,
 leaning too far), and the first juniper mats looked like lily pads (a few flat
-plates rather than many rounded lumps).
+plates rather than many rounded lumps). The black oak and sugar maple came
+second, after the first look in the game: the shared Kenney broadleaf family
+(`oak`, `maple`) includes cube-crowned trees that jarred here, and changing
+that family would change six other biomes.

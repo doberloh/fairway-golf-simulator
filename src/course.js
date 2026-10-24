@@ -1922,6 +1922,11 @@ export function* generateWorldSteps(settings={},options={}){
  // imported so the generator does not depend on the flight model.
  const trunkGirth=t=>GROUND_PLANTS.has(t.kind)?0:Math.min(t.h*.027,3.6);
  for(let i=0;i<count*6&&trees.length<count;i++){const x=(rng()-.5)*halfX*2,z=(rng()-.5)*halfZ*2,n=nearest(x,z),kind=pick();if(homes.some(home=>Math.hypot(home.x-x,home.z-z)<Math.max(home.width,home.depth)+5)||surface(x,z)!=='rough'||n.d>135+30*Math.sin(x/95+phase)*Math.cos(z/140)||height(x,z)<.8)continue;if(rng()>(.64+.3*Math.sin(x/55+phase)*Math.cos(z/67)))continue;
+  // WOODS BEHIND THE DUNES (biomes.js `woods`): a tree near the holes is
+  // mostly turned away, so the ground beside play stays open dune and the
+  // trees mass up farther back. Ground plants are exempt. The draw is taken
+  // only when a biome sets `woods`, so no other biome's planting moves.
+  if(bio.woods&&!GROUND_PLANTS.has(kind)&&rng()>bio.woods.floor+(1-bio.woods.floor)*smooth((n.d-bio.woods.from)/(bio.woods.to-bio.woods.from)))continue;
   const small=GROUND_PLANTS.has(kind),h=(small?.8+rng()*2.1:kind==='cactus'?4+rng()*5:kind==='ocotillo'?2+rng()*3:kind==='hala'?5+rng()*5:kind==='palo'||kind==='mesquite'?5+rng()*6:bio.farCanopy.min+rng()*bio.farCanopy.range)*(small?1:heightScale[kind]??1),r=small?1+rng()*1.3:kind==='aspen'?2+rng()*2:kind==='palo'||kind==='mesquite'?4+rng()*3:3+rng()*4;
   // The soft edge. Drawn before anything else is decided about this candidate,
   // so a rejection here costs one number and not a whole tree's worth of them.

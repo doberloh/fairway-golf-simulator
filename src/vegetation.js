@@ -123,10 +123,10 @@ function addModelSpecies(view,kind,trees){
  const {world,group}=view,rng=random(world.seed+':models:'+kind);
  const models=familyModels(FAMILY_OF[kind]);
  if(!models.length)return false;
- const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55'};
+ const shades={cedar:'#35694a',pine:'#4a7041',spruce:'#2c5349',aspen:'#91ac58',maple:'#658d36',alder:'#64833d',oak:'#487039',palm:'#5f8f4a',cactus:'#6f8f5e',shrub:'#5d7a43',gorse:'#7f8d3f',heather:'#8a7596',naupaka:'#428546',fern:'#4a7b4a',bramble:'#4f4636',cottonwood:'#5f8f38',blackoak:'#3e6a2f',sugarmaple:'#557f33',dunegrass:'#6f9a45',juniper:'#3d6550',commonjuniper:'#3f6a55'};
  // Bark is one brown unless a species says otherwise. The dead trees do: a
  // haunted wood is told apart by its bark, since it has no leaves to do it.
- const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a'};
+ const barks={aspen:'#d5d2b5',gnarled:'#463d38',snag:'#8a8984',deadwillow:'#4b4540',deadoak:'#574c45',cottonwood:'#8b847a',blackoak:'#4e4640',sugarmaple:'#6e655b'};
  // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
  // does: its blade tips are a second part, straw over green, which is what
  // American beachgrass looks like by midsummer.
@@ -441,8 +441,14 @@ function addDriftwood(view){
  const rng=random(world.seed+':driftwood'),dummy=new T.Object3D();dummy.rotation.order='YXZ';
  const count=per*world.holes.length,entries=[];
  const bleached=new T.Color('#b9b2a4'),dirt=new T.Color(world.bio.sand||'#e0d6b4');
+ // The beach is a thin band -- about 1.4% of the ground within 320 m of the
+ // coast on BEACON -- so for a sea along one edge, which is on the +x side
+ // (course.js `land`), the tries stay within reach of it rather than spending
+ // most of themselves inland. (A count of the drawn logs reads low: the
+ // instance cull keeps only those in view.)
+ const x0=world.bio.edgeCoast?world.halfX-320:-world.halfX,x1=world.halfX+(world.bio.edgeCoast?120:0);
  for(let i=0;i<count*400&&entries.length<count;i++){
-  const x=(rng()-.5)*world.halfX*2,z=(rng()-.5)*world.halfZ*2,y=world.height(x,z);
+  const x=x0+rng()*(x1-x0),z=(rng()-.5)*world.halfZ*2,y=world.height(x,z);
   if(y<.08||y>BEACH_RISE||world.surface(x,z)!=='sand')continue;
   const model=models[Math.floor(rng()*models.length)],size=.25+rng()*.25;
   dummy.position.set(x,y-size*.15,z);

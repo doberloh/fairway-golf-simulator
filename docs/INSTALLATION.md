@@ -76,6 +76,7 @@ Install a maintained Node.js release **22.12 or newer**, with npm, from the [off
 - **macOS:** install the matching Node package, then open Terminal.
 - **Linux:** use the installation method offered by Node for your architecture/distribution, then open a terminal. Check the version rather than assuming the distribution’s default package is recent enough.
 - **ChromeOS:** enable the Linux development environment, move/extract the source under Linux files, and follow the Linux commands in Terminal. Availability and managed-device restrictions are described in [Google’s Linux setup guide](https://support.google.com/chromebook/answer/9145439?hl=en). Run the finished app in Chrome on ChromeOS; a browser inside the Linux environment can have different graphics limitations. If localhost forwarding fails, copy `dist/index.html` into Downloads and use the portable route or serve it from another computer.
+- **Blender (optional, only to remake models):** some models are built by scripts run in Blender (docs/BLENDER_ASSETS.md). Building, testing and playing never need it -- the models it wrote are committed. To change one, install Blender from blender.org; `tools/blender/run.mjs` finds it in its usual install folder, or set `BLENDER` to its path.
 - **Phones/tablets:** build on Windows, macOS or Linux, then serve the result using the next section. Installing Node or vendor monitor software on the phone/tablet is not part of this project’s supported workflow.
 
 Check the tools:

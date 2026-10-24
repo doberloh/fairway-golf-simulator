@@ -109,6 +109,8 @@ const PICK = {
  // to remake or extend them. Material names are already roles, so no override.
  dunegrass: ['blender:Blender_DuneGrass_1', 'blender:Blender_DuneGrass_2', 'blender:Blender_DuneGrass_3'],
  cottonwood: ['blender:Blender_Cottonwood_1', 'blender:Blender_Cottonwood_2', 'blender:Blender_Cottonwood_3'],
+ blackoak: ['blender:Blender_BlackOak_1', 'blender:Blender_BlackOak_2', 'blender:Blender_BlackOak_3'],
+ sugarmaple: ['blender:Blender_SugarMaple_1', 'blender:Blender_SugarMaple_2'],
  juniper: ['blender:Blender_Juniper_1', 'blender:Blender_Juniper_2'],
  juniperbush: ['blender:Blender_Juniper_3'],
  driftwood: ['blender:Blender_Driftwood_1', 'blender:Blender_Driftwood_2', 'blender:Blender_Driftwood_3'],

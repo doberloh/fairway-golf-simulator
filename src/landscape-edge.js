@@ -16,7 +16,14 @@ import {biomeOf} from './biomes.js';
 // vertex, so the join to the course is unchanged.
 export function landscapeGeometry(w){
  const g=w.groundGrid,edge=[];for(let i=0;i<g.nx;i++)edge.push(i);for(let j=0;j<g.nz;j++)edge.push(j*(g.nx+1)+g.nx);for(let i=g.nx;i>0;i--)edge.push(g.nz*(g.nx+1)+i);for(let j=g.nz;j>0;j--)edge.push(j*(g.nx+1));
- const count=edge.length,lift=biomeOf(w.settings.biome).ringLift;
+ const bio=biomeOf(w.settings.biome),count=edge.length,lift=bio.ringLift;
+ // A SEA ALONG ONE EDGE HAS NO FAR SHORE. The rings lift hills out of every
+ // side, and on the water side that put a range of hills a kilometre out of
+ // Lakeshore Dunes' lake, so it read as a wide river. Toward the coast (+x,
+ // where course.js `land` sends an edgeCoast biome under water) the lift fades
+ // to nothing. Links has an edge coast too but a ring lift of zero, so it is
+ // unchanged.
+ const shore=bio.edgeCoast?(x=>1-T.MathUtils.smoothstep(x,w.halfX-260,w.halfX+40)):(()=>1);
  // A point on the perimeter at a fractional position t (0..count, wrapping).
  const perimeter=t=>{
   const i=Math.floor(t)%count,f=t-Math.floor(t),a=edge[i],b=edge[(i+1)%count];
@@ -41,7 +48,7 @@ export function landscapeGeometry(w){
    for(let j=0;j<n;j++){
     const t=j/n*count,[x0,z0]=perimeter(t),r=Math.hypot(x0,z0),x=x0+x0/r*distance,z=z0+z0/r*distance;
     const ridge=Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
-    positions.push(x,w.height(x,z)+lift*ridge*fade,z);ts.push(t);along.push(t);out.push(distance);
+    positions.push(x,w.height(x,z)+lift*ridge*fade*shore(x),z);ts.push(t);along.push(t);out.push(distance);
    }
   }
   rings.push({first,ts});

@@ -114,6 +114,10 @@ const DEFAULTS = {
  // Bleached logs washed up on the beach, per hole, drawn by vegetation.js.
  // Decoration only, like the forest floor: nothing collides with them.
  driftwood: 0,
+ // Trees thinned near the holes and massed farther back: {from, to, floor},
+ // the chance a tree is kept rising from `floor` at `from` metres outside the
+ // corridor to certainty at `to`. Null keeps every biome's own planting.
+ woods: null,
 };
 
 // Only what differs from the defaults above.
@@ -236,21 +240,23 @@ const TRAITS = {
  //
  // Every number here is PLACED: a look matched to the photograph and to what
  // grows on the shore, not a measurement of anywhere.
- lakeshore: {bank: '#a39a72', hills: {base: 22, severity: 40, reach: 40}, ringLift: 90,
+ lakeshore: {bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
   sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
   scatter: {rocks: 40, grass: 320000, tufts: 1600, tallGrass: true,
-   rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#8ea254',
+   rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#7f9c4a',
    flowers: ['#e8b93a', '#c9a0d0']},
-  spray: '#d9cfa0', sunColor: '#ffe2b8', cover: 'prairie',
+  spray: '#d9cfa0', sunColor: '#ffe2b8', cover: 'prairie', roughTint: '#a2b46a',
   // Woods behind the dunes, so the plant count runs high; a third of it is
   // dune grass, which threads between the trunks and costs no room.
-  treeDensity: 3.6, canopy: {min: 14, range: 14}, farCanopy: {min: 12, range: 14},
+  treeDensity: 5.4, canopy: {min: 14, range: 14}, farCanopy: {min: 12, range: 14},
   waterTint: '#5d97b3', waterMurk: .65,
-  blowouts: .3, driftwood: 6,
+  blowouts: .29, driftwood: 6,
+  // Open dune beside the holes, woods behind (the photograph's high ground).
+  woods: {from: 12, to: 60, floor: .3},
   // Cottonwood leads the list, so it is the tree that stands in a fairway
   // when a hole gets a feature tree -- the dune's own pioneer.
-  plants: [['cottonwood', .2], ['dunegrass', .34], ['oak', .18], ['maple', .08],
-   ['pine', .06], ['juniper', .09], ['commonjuniper', .05]]},
+  plants: [['cottonwood', .17], ['dunegrass', .34], ['blackoak', .17], ['sugarmaple', .09],
+   ['pine', .05], ['juniper', .12], ['commonjuniper', .06]]},
 };
 
 const PALETTES = {
@@ -266,7 +272,7 @@ const PALETTES = {
  // Altitude is Lake Michigan's surface, about 177 m; 23 C a July evening on
  // its south-east shore. `sun` 20 is a long warm evening rather than the true
  // 71-degree midsummer noon at 42 N (RESEARCH).
- lakeshore:{name:'Lakeshore Dunes',title:'Beacon Dunes',tag:'Freshwater dunes, summer woods and an inland sea.',rough:'#8c9852',semi:'#5e9440',fairway:'#5aa443',fringe:'#79b354',green:'#93c766',tree:'#3f6e2c',sky:'#c4d7e3',sand:'#eadcb6',water:'#4f88a3',rock:'#8a8a7a',altitude:180,temperature:23,treeKind:'oak',sun:20}
+ lakeshore:{name:'Lakeshore Dunes',title:'Beacon Dunes',tag:'Freshwater dunes, summer woods and an inland sea.',rough:'#6f8a44',semi:'#5e9440',fairway:'#5aa443',fringe:'#79b354',green:'#93c766',tree:'#3f6e2c',sky:'#c4d7e3',sand:'#eadcb6',water:'#4f88a3',rock:'#8a8a7a',altitude:180,temperature:23,treeKind:'oak',sun:20}
 };
 
 // THE INTERFACE WEARS THE BIOME (the 1.0 interface, approved 17 October 2026).

@@ -14,6 +14,10 @@
 #   Blender_Cottonwood_*  Eastern cottonwood: 21-30 m, a heavy trunk forking
 #                         low into a few big limbs, the crown broad, open and
 #                         ragged with sky through it.
+#   Blender_BlackOak_*    Black oak, the tree of the older dunes: crooked,
+#                         forking low, a wide dense dark crown.
+#   Blender_SugarMaple_*  Sugar maple, the northern hardwood behind them: a
+#                         straight trunk into a dense egg-shaped crown.
 #   Blender_Juniper_*     Creeping juniper mats on the settled crests, and one
 #                         common juniper, a low vase of dark blue-green.
 #   Blender_Driftwood_*   Bleached logs on the beach, one with its root wad.
@@ -134,6 +138,74 @@ def cottonwood(height, limbs, lean_seed):
     return build
 
 
+def black_oak(height, limbs):
+    """Black oak, the tree of the older dunes: shorter than a cottonwood, a
+    crooked trunk forking low into wandering limbs, the crown wide, dense and
+    dark. On the dunes they grow gnarled rather than tall."""
+    def build(mesh, rng):
+        fork = height * rng.uniform(0.3, 0.38)
+        base_r = height * 0.04
+        lean = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), 0)).normalized() * height * 0.05
+        trunk = sweep_points(Vector((0, 0, -0.3)), Vector((0, 0, fork)) + lean, lean * 0.6, 5, rng,
+                             kink=height * 0.012)
+        tube(mesh, trunk, [base_r * (1.35 if i == 0 else 1.0) * (1 - 0.15 * i / 5) for i in range(6)], 8,
+             'bark', rng, wobble=0.1, smooth=False, cap_end=False)
+        top = trunk[-1]
+        crown_w = height * rng.uniform(0.34, 0.4)
+        spin = rng.uniform(0, math.tau)
+        clusters = []
+        for i in range(limbs):
+            a = spin + i / limbs * math.tau + rng.uniform(-0.4, 0.4)
+            reach = crown_w * rng.uniform(0.6, 0.92)
+            rise = height * rng.uniform(0.26, 0.42)
+            end = top + Vector((math.cos(a) * reach, math.sin(a) * reach, rise))
+            # Crooked: oaks wander where cottonwoods sweep.
+            pts = sweep_points(top, end, Vector((0, 0, rise * 0.15)), 5, rng, kink=height * 0.02)
+            r0 = base_r * rng.uniform(0.5, 0.62)
+            tube(mesh, pts, [r0 * (1 - 0.65 * k / 5) for k in range(6)], 6, 'bark', rng, wobble=0.08,
+                 smooth=False)
+            clusters += [(end, 0.12), (pts[3] + Vector((0, 0, height * 0.04)), 0.11), (pts[2], 0.09)]
+        crest = top + lean * 0.4 + Vector((0, 0, height * 0.55))
+        tube(mesh, [top, top.lerp(crest, 0.5), crest], [base_r * 0.5, base_r * 0.33, base_r * 0.18], 6,
+             'bark', rng, smooth=False)
+        clusters += [(crest, 0.13), (top.lerp(crest, 0.6), 0.12)]
+        for at, frac in clusters:
+            # Denser than the cottonwood: three lumps a cluster, rounder, so
+            # the crown reads as one dark mass with a broken edge.
+            for _ in range(3):
+                sz = height * frac * rng.uniform(0.8, 1.1)
+                off = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 0.5))) * sz * 0.7
+                lump(mesh, at + off, (sz, sz, sz * 0.85), 'leaf', rng, subdiv=2, jitter=0.16)
+    return build
+
+
+def sugar_maple(height):
+    """Sugar maple, the northern hardwood farther back from the shore: one
+    straight trunk running well up into a dense egg-shaped crown."""
+    def build(mesh, rng):
+        base_r = height * 0.028
+        top = Vector((rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3), height * 0.78))
+        trunk = sweep_points(Vector((0, 0, -0.3)), top, Vector((0, 0, 0)), 6, rng, kink=height * 0.004)
+        tube(mesh, trunk, [base_r * (1.3 if i == 0 else 1.0) * (1 - 0.7 * i / 6) for i in range(7)], 8, 'bark',
+             rng, wobble=0.06, smooth=False)
+        # A few limbs out of the trunk into the crown, mostly hidden by it.
+        for i in range(5):
+            s = trunk[rng.choice((2, 3, 4))]
+            a = rng.uniform(0, math.tau)
+            tip = s + Vector((math.cos(a) * height * 0.16, math.sin(a) * height * 0.16, height * 0.14))
+            tube(mesh, [s, tip], [base_r * 0.45, base_r * 0.18], 5, 'bark', rng, smooth=False)
+        # The crown: lumps over an egg, centred two-thirds of the way up.
+        centre = Vector((top.x * 0.6, top.y * 0.6, height * 0.62))
+        rx, rz = height * 0.24, height * 0.34
+        for i in range(30):
+            u, v = rng.uniform(0, math.tau), math.acos(rng.uniform(-0.8, 1.0))
+            d = Vector((math.cos(u) * math.sin(v) * rx, math.sin(u) * math.sin(v) * rx, math.cos(v) * rz))
+            sz = height * rng.uniform(0.09, 0.13)
+            lump(mesh, centre + d * rng.uniform(0.62, 0.9), (sz, sz, sz * 0.9), 'leaf', rng, subdiv=2,
+                 jitter=0.16)
+    return build
+
+
 def juniper(radius, height, lumps, vase=False):
     def build(mesh, rng):
         for i in range(lumps):
@@ -200,6 +272,11 @@ MODELS = [
     ('Blender_Cottonwood_1', cottonwood(25.0, 3, 1)),
     ('Blender_Cottonwood_2', cottonwood(23.0, 4, 2)),
     ('Blender_Cottonwood_3', cottonwood(27.0, 3, 3)),
+    ('Blender_BlackOak_1', black_oak(17.0, 5)),
+    ('Blender_BlackOak_2', black_oak(15.0, 4)),
+    ('Blender_BlackOak_3', black_oak(19.0, 6)),
+    ('Blender_SugarMaple_1', sugar_maple(22.0)),
+    ('Blender_SugarMaple_2', sugar_maple(20.0)),
     ('Blender_Juniper_1', juniper(1.6, 0.45, 26)),
     ('Blender_Juniper_2', juniper(2.0, 0.5, 34)),
     ('Blender_Juniper_3', juniper(0.8, 1.3, 14, vase=True)),
