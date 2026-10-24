@@ -969,9 +969,19 @@ green everywhere, and every mode but the range under one Play.
   the cup), the popup's new place in a real round, a level-up crossing inside
   the grouped popup.
 
+## Release 0.9.4 (23 October)
+
+- [ ] **Owner: play 0.9.4 on Ultra and Low.** Released from the merge of
+  `release-0.9.4` (the `frame-rate` journey) into `main`; what to look at is in
+  *Frame-rate goal* under *Graphics*. Six smoke journeys passed; the rest were
+  not run. Website redeployed with it.
+
 ## Release 0.9.3 (22 October)
 
-- [ ] **0.9.3 went out without a smoke run.** Vite 8.3.3 only (the three
+- [ ] **0.9.3 went out without a smoke run.** (23 October: six journeys --
+  `hud-reachable`, `range`, `endless-round`, `floodlit-night`,
+  `phone-portrait`, `phone-landscape` -- passed on 0.9.4's build, which carries
+  the same Vite 8.3.3; the rest still to run.) Vite 8.3.3 only (the three
   Dependabot alerts); the game's source is 0.9.2's, re-minified by the newer
   bundler. Run the smoke journeys (*Tools and code*), and the owner's phone
   and PC testing of 0.9.2 holds for it. Website not redeployed.
@@ -1062,6 +1072,14 @@ and only on the same version of Fairway. `src/rival.js`, wired in main.js
   a kept challenge (the 20 newest are kept, the oldest drop off).
 
 # Done
+
+## Release 0.9.4 (23 October)
+
+- [x] **v0.9.4 published**, "Fairway 0.9.4 (beta)", at the owner's request:
+  the `frame-rate` journey (Ultra frames about 21% faster, the frame tools).
+  Generator 36, schema 11, profile 3 unchanged; package 0.9.4. Notes:
+  `docs/releases/v0.9.4.md`. `npm test` 1043; six smoke journeys passed.
+  Website redeployed.
 
 ## UI/UX pass (branch `ui-ux-pass`, 21 October)
 

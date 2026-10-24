@@ -1382,3 +1382,30 @@ stopped. **Not run: the smoke journeys** -- the owner chose to
 leave them for later and asked for the release; the page's code is 0.9.2's,
 re-minified by Rolldown 1.2.15 (equivalent rewrites, compared), but no browser
 has played this build.
+
+## Addendum, 23 October 2026: v0.9.4
+
+**v0.9.4** is published at the owner's request ("Lets merge all of this code in
+and build a new minor version 0.9.4 ... push to github ... push the new game
+version to the live site"), as "Fairway 0.9.4 (beta)", tag `v0.9.4`, not a
+pre-release, the same six files as 0.9.3, from the merge of `release-0.9.4`
+into `main`, with its notes in `docs/releases/v0.9.4.md` in that commit. It
+carries the merge of `frame-rate` (the frame-rate goal: Ultra frames about 21%
+faster; RESEARCH.md *Frame time on Ultra*). **`GENERATOR_VERSION` 36,
+`SCHEMA_VERSION` 11 and `PROFILE_VERSION` 3 are unchanged**; the biome
+fingerprint is unchanged. **The package version is 0.9.4**, so 0.9.3's
+friend-challenge codes do not play on it (said in the notes). The website is
+redeployed after the release, so its demo moves to 0.9.4.
+
+The built page is **17,717,533 bytes (7.27 MB gzipped)**, about 5 KB over
+0.9.3 (the frame-rate code and its comments), still one `fetch(` and no
+request. The zips: Windows 48.3 MB, macOS Apple silicon 34.1 MB, macOS Intel
+36.5 MB, Linux 44.9 MB, each 8 verified files; the source zip 9.3 MB, 353
+files.
+
+**Checked:** `npm test` (1043) and the biome fingerprint on the merged code;
+six smoke journeys passed on the branch's build (`hud-reachable`, `range`,
+`endless-round`, `floodlit-night`, `phone-portrait`, `phone-landscape`), which
+also covers 0.9.3's Vite 8.3.3 bundle for those journeys; the old and new
+builds compared frame for frame with the clock stopped and in motion. **Not
+run:** the other smoke journeys. **Not played by a person.**
