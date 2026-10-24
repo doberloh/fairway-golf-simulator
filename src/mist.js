@@ -57,6 +57,9 @@ const PROFILES = {
  // Haunted Hollow: the most of everything. Fog is most of what the biome is,
  // and it pools in the hollows and over the black water.
  haunted: {haze: 1, sheet: 1, water: 1},
+ // A summer evening by a big lake: a soft warm haze over everything and a
+ // little lying on the water, never a sheet in the dune hollows. PLACED.
+ lakeshore: {haze: .6, sheet: .3, water: .75},
  // Dry air. A little distance haze for depth and nothing on the ground at all --
  // pooled fog over a saguaro would read as a mistake, not as weather.
  desert: {haze: .26, sheet: 0, water: 0},

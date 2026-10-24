@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { GENERATOR_VERSION, SCHEMA_VERSION, BIOME_KEYS } from './src/settings-schema.js';
 import { BIOMES } from './src/biomes.js';
-import { weekIndex, isoWeek } from './src/weekly.js';
+import { weekIndex, isoWeek, biomeForWeek, WEEKLY_ROTATION } from './src/weekly.js';
 
 // A NAME FOR EACH BUILD, SO A BUG REPORT CAN BE TIED TO A TREE.
 //
@@ -46,7 +46,7 @@ const versions = {
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const splash = {
   name: 'fairway-splash',
-  transformIndexHtml: () => [{tag: 'script', children: `window.__FAIRWAY_SPLASH__=(()=>{const DAY=86400000;return {keys:${JSON.stringify(BIOME_KEYS)},ui:${JSON.stringify(Object.fromEntries(BIOME_KEYS.map(k => [k, {...BIOMES[k].ui, name: BIOMES[k].name}])))},version:${JSON.stringify(pkg.version)},weekIndex:${weekIndex.toString()},isoWeek:${isoWeek.toString()}};})();`, injectTo: 'head-prepend'}],
+  transformIndexHtml: () => [{tag: 'script', children: `window.__FAIRWAY_SPLASH__=(()=>{const DAY=86400000;return {keys:${JSON.stringify(BIOME_KEYS)},ui:${JSON.stringify(Object.fromEntries(BIOME_KEYS.map(k => [k, {...BIOMES[k].ui, name: BIOMES[k].name}])))},version:${JSON.stringify(pkg.version)},weekIndex:${weekIndex.toString()},isoWeek:${isoWeek.toString()},rotation:${JSON.stringify(WEEKLY_ROTATION)},biomeForWeek:${biomeForWeek.toString()}};})();`, injectTo: 'head-prepend'}],
 };
 
 export default defineConfig({

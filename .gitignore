@@ -85,3 +85,7 @@ vendor/baked_assets/
 *.pfx
 .npmrc
 .claude/settings.local.json
+
+# Python bytecode Blender writes beside tools/blender/*.py when one
+# imports the shared helpers.
+__pycache__/

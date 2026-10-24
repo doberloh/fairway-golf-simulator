@@ -613,7 +613,7 @@ export function bounces(lab,what,{speed=18,angle=40,...o}={}){
 }
 
 // ---------------------------------------------------------------- ambience
-// Nine biomes, each a mix. tempC drives the crickets' chirp rate (Dolbear's
+// Ten biomes, each a mix. tempC drives the crickets' chirp rate (Dolbear's
 // law); trees decides how the wind sounds in the leaves; birds weights the
 // species; water, planes and insects are per-minute-ish weights.
 export const SCENES={
@@ -625,6 +625,7 @@ export const SCENES={
  island:{label:'Island: Leeward Cay',tempC:28,wind:11,trees:'palm',birds:{songbird:3,dove:3,gull:1},water:{surf:.8,lake:.4},planes:{jet:.4,prop:.8},insects:{cicada:.3},howl:1,verb:.06},
  redwood:{label:'Giant Redwood: Cathedral Grove',tempC:13,wind:4,trees:'conifer',birds:{songbird:2,whistler:1,raven:1,woodpecker:1},water:{stream:.5},planes:{jet:.3},insects:{},howl:.6,verb:.35},
  autumn:{label:'Autumn: Copper Hollow',tempC:17,wind:10,trees:'dry',birds:{crow:2,songbird:1,geese:.7,woodpecker:.5},water:{lake:.5},planes:{jet:.8},insects:{},howl:1,verb:.12},
+ lakeshore:{label:'Lakeshore Dunes: Beacon Dunes',tempC:23,wind:10,trees:'broad',birds:{gull:2,songbird:3,whistler:1,dove:1},water:{lake:1,surf:.3},planes:{jet:.8,prop:.5},insects:{cicada:.4},howl:1.1,verb:.08},
  haunted:{label:'Haunted Hollow: Gloaming Moor',tempC:9,wind:14,trees:'bare',birds:{owl:2,crow:2,raven:1},water:{lake:.3},planes:{},insects:{},howl:2.6,verb:.3,dusk:true},
 };
 // Dolbear (1897): chirps per minute = 4 x (temperature F) - 160, for the
