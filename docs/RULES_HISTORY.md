@@ -227,6 +227,16 @@ time rather than a long batch (18 October, volume), and nothing left running
 the desktop alone (Chrome, Spotify, the vendor overlays) read 7-25% that
 evening; it is placed, and the owner can move it.
 
+**The realistic-graphics goal, 24 October 2026.** The owner drafted a `/goal`
+to replace the Cartoon look with realistic graphics, to run with nobody at the
+computer, and lifted the asking for everything on the card for that goal:
+smoke, captures, the pane game, full profiles and Blender. The section above
+says a goal cannot widen its limits, which an agent reading AGENTS.md every
+message could take as overruling the goal's own words, so the owner added the
+line that this one goal carries its own limits in its text. That text (drafted
+in the local, git-ignored docs/reports/) is the authority for that goal only;
+every other goal and turn keeps the limits above.
+
 ## The graphics profile
 
 A full `npm run profile` sweep is about 10 minutes: 27 cases on the real GPU at

@@ -280,6 +280,8 @@ ask as above.
   browser tabs closed, no profile process left (check).
 - **Log every run** in the goal's notes: time, group, the card's readings
   before, the result.
+- The realistic-graphics goal (24 October 2026) has its own GPU limits, in its
+  goal text.
 
 ## Ask before a graphics profile; never just run one
 
