@@ -604,12 +604,15 @@ are in the archived section of the same name.
 
 ## Graphics
 
-- [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it and run
-  the smoke journeys.** Measured with `tools/frame-ab.mjs` against the original
+- [ ] **Frame-rate goal (branch `frame-rate`, 22-23 October): play it.**
+  Smoke journeys run with the owner's go-ahead (23 October), one at a time,
+  the card checked before each: `hud-reachable`, `range`, `endless-round`,
+  `floodlit-night`, `phone-portrait`, `phone-landscape` -- **all six passed**;
+  the other journeys not run. Measured with `tools/frame-ab.mjs` against the original
   build: Ultra -21% on Redwood and Pacific Northwest, High -19%, Medium -7%,
   Low -2% at the card (their processor -18 to -27%); the cheap-laptop and
   budget-phone profiles -16% and -26% (RESEARCH.md *Frame time on Ultra*).
-  Never played by a person; no smoke run (it still needs asking). Check in the
+  Never played by a person. Check in the
   game: the pin and aim labels follow the camera and fade as before; the wind
   arrow turns with the camera; the hole map and the full map draw the course,
   the aim line, dispersion rings and the ball, and redraw on a new hole, on the
@@ -619,9 +622,8 @@ are in the archived section of the same name.
   them); on Ultra, the shadows near the ball (the nearest map is 4096 now, its
   blur kept the same width) -- as crisp as before, not crawling as the camera
   moves; cloud shadows drifting across the course, and the dawn mist (both now
-  skip work only where it cannot change a pixel). Smoke journeys to ask for:
-  all, or at least `hud-reachable`, `range`, `endless-round`,
-  `floodlit-night`, `phone-portrait`, `phone-landscape`.
+  skip work only where it cannot change a pixel). Before merging, the rest of
+  the smoke journeys are worth asking for (about 5 minutes for all).
 
 - [ ] **Profile the slower descent through the trees** -- `clearCameraTrees`
   does more work now the camera passes through canopies. About a minute for
