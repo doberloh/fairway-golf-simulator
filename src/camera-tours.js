@@ -84,15 +84,21 @@ export function makeHoleTour(h) {
  // canopy over it. Sampling along the arc AND a little to each side of it is what
  // keeps the clearance honest -- points alone let it fall to 19 m on mountains.
  const step = Math.PI * 2 / RING;
+ // AND THE TREES THEMSELVES, asked rather than assumed (canopyTop): the
+ // cartoon overhaul's stands grow taller than the 29 m CLEARANCE was set
+ // for, and the test that flies a full forest came within 3.9 m of a crown.
+ // Only the trees near the ring are asked -- a stand puts 16,000 on a course.
+ const near = (h.world?.trees || []).filter(t => Math.abs(Math.hypot(t.x - centre.x, t.z - centre.z) - radius) < 60);
  let ring = Array.from({length: RING}, (_, i) => {
-  let high = -Infinity;
+  let high = -Infinity, crowns = -Infinity;
   for (const along of [-.5, -.25, 0, .25, .5])
    for (const out of [-10, 0, 10]) {
     const a = (i + along) * step;
     const p = {x: centre.x + Math.sin(a) * (radius + out), z: centre.z + Math.cos(a) * (radius + out)};
     high = Math.max(high, terrain(p.x, p.z));
+    if (near.length) crowns = Math.max(crowns, canopyTop(near, p.x, p.z));
    }
-  return Math.max(ground + lift, high + CLEARANCE);
+  return Math.max(ground + lift, high + CLEARANCE, crowns + 8);
  });
  for (let pass = 0; pass < 6; pass++)
   ring = ring.map((v, i) => {

@@ -73,12 +73,24 @@ export function extract(file, roleOf = ROLE_OF) {
    const index = prim.indices !== undefined ? accessor(json, bin, prim.indices) : null;
    const uv = prim.attributes.TEXCOORD_0 !== undefined && json.materials?.[prim.material]?.pbrMetallicRoughness?.baseColorTexture
     ? accessor(json, bin, prim.attributes.TEXCOORD_0) : null;
-   const group = byRole.get(role) || {position: [], normal: [], index: [], uv: []};
+   // THE CARTOON PAINT (tools/blender/cartoon.py): a colour per vertex, RGB a
+   // halved multiplier on the role's colour and alpha the wind flex. Read
+   // whenever a model carries it; build-meshes decides whether to ship it.
+   const colorAcc = prim.attributes.COLOR_0 !== undefined ? json.accessors[prim.attributes.COLOR_0] : null;
+   const color = colorAcc ? accessor(json, bin, prim.attributes.COLOR_0) : null;
+   const colorPer = colorAcc ? COUNT[colorAcc.type] : 0;
+   const colorScale = colorAcc ? {5126: 1, 5121: 1 / 255, 5123: 1 / 65535}[colorAcc.componentType] ?? 1 : 1;
+   const group = byRole.get(role) || {position: [], normal: [], index: [], uv: [], color: []};
    const base = group.position.length / 3;
+   // A painted primitive after unpainted ones: those earlier vertices read as
+   // unpainted (a 1x multiplier, still) rather than shifting every colour.
+   if (color) while (group.color.length < base * 4) group.color.push(.5, .5, .5, 0);
    for (let i = 0; i < position.length; i += 3) {
     group.position.push(position[i] * s[0] + t[0], position[i + 1] * s[1] + t[1], position[i + 2] * s[2] + t[2]);
     group.normal.push(normal ? normal[i] : 0, normal ? normal[i + 1] : 1, normal ? normal[i + 2] : 0);
     if (uv) group.uv.push(uv[(i / 3) * 2], uv[(i / 3) * 2 + 1]);
+    if (color) { const c = (i / 3) * colorPer; group.color.push(color[c] * colorScale, color[c + 1] * colorScale, color[c + 2] * colorScale, colorPer > 3 ? color[c + 3] * colorScale : 0); }
+    else if (group.color.length) group.color.push(.5, .5, .5, 0);
    }
    if (index) for (const v of index) group.index.push(base + v);
    else for (let i = 0; i < position.length / 3; i++) group.index.push(base + i);

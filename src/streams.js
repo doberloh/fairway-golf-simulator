@@ -92,7 +92,18 @@ export function downhillProfile(points,height,maxCut=MAX_CUT){
    if(trimmedHead)t=Math.min(t,run[i]/FADE);
    if(trimmedTail)t=Math.min(t,(total-run[i])/FADE);
    p.taper=Math.max(0,Math.min(1,t))**.7;
-   p.width*=Math.max(.08,p.taper);p.depth*=p.taper;
+   // Never narrower than the ground mesh can carry (its finest cells are half
+   // a metre): a 0.2 m trickle fell between vertices, so the ground drawn and
+   // played there stood above its own water. Was 8% of the width.
+   p.width=Math.max(p.width*p.taper,Math.min(p.width,1.2));p.depth*=p.taper;
+   // AND ITS WATER RISES TO MEET THE GROUND (the cartoon overhaul, generator
+   // 37). The carve fades with the taper but the level did not: a faded head
+   // kept the level the full channel needed, as much as MAX_CUT below the
+   // ground beside it, so its last stations were water lying under a hillside
+   // -- invisible on smooth hills, and 8.7 m under a links dune crest once the
+   // dunes grew (tests/course-living.test.mjs). Across the fade the level now
+   // eases up to the surveyed ground, which is already a freeboard below it.
+   p.level=Math.max(p.level,best.values[i]+(p.level-best.values[i])*p.taper);
   });
  }
  best.trimmedHead=trimmedHead;best.trimmedTail=trimmedTail;

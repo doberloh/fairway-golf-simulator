@@ -86,12 +86,16 @@ export function surfaceTextures(biome,kind){
 // swaying thing samples it at its root, grass and trees alike, so a front bends
 // the rough and then the trees as it passes. Earlier versions were one sine
 // wave at 50 m/s (everything in step) and then round patches (no front).
-export function windMaterial(material,view,strength=1,ground=false,crown=false,leaf=true,rooted=false){
+// `flexed`: a painted model (tools/blender/cartoon.py) whose vertices say how
+// freely each moves (`flex`, 0 rooted to 1 a leaf tip). The rustle on top of
+// the bend follows it, so a crown's outer lobes flutter and its core holds
+// still, instead of every leaf vertex shivering alike.
+export function windMaterial(material,view,strength=1,ground=false,crown=false,leaf=true,rooted=false,flexed=false){
  material.onBeforeCompile=shader=>{
   shader.uniforms.foliageTime=view.foliageTime;shader.uniforms.breeze=view.breeze;
   shader.uniforms.windVec=view.windVec;shader.uniforms.sway=view.sway??{value:1};
   shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
-uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;${rooted?'\nattribute vec4 treeRoot;':''}
+uniform float foliageTime; uniform float breeze; uniform vec2 windVec; uniform float sway;${rooted?'\nattribute vec4 treeRoot;':''}${flexed?'\nattribute float flex;':''}
 /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float gustHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(gustHash(i),gustHash(i+vec2(1.,0.)),f.x),mix(gustHash(i+vec2(0.,1.)),gustHash(i+vec2(1.,1.)),f.x),f.y);}`);
   // Displaced in world units AFTER instancing.
@@ -125,7 +129,7 @@ float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mi
    mvPosition.xyz=root+rel;
    ${leaf?`// Leaves rustle on top: centimetres, fast, varying smoothly through the
    // crown so it shimmers without coming loose from the branches.
-   float rustle=sin(foliageTime*7.3+dot(mvPosition.xyz,vec3(1.9,1.3,2.3)))*.04*(.4+gust)*breeze*sway*up;
+   float rustle=sin(foliageTime*7.3+dot(mvPosition.xyz,vec3(1.9,1.3,2.3)))*.04*(.4+gust)*breeze*sway*${flexed?'(.25+1.5*flex)':'up'};
    mvPosition.xyz+=vec3(across.x,.4,across.y)*rustle;`:''}`
    :`float beat=foliageTime*${ground?'2.4':'1.8'}+phase;
    float push=.25+.95*gust+(.12+.3*gust)*sin(beat);
@@ -138,5 +142,5 @@ float gustNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mi
                  +across*(sin(beat*1.7+phase)*(.1+.2*gust)*breeze*lever);`}
   #endif
   mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);
- };material.customProgramCacheKey=()=>`breeze-wind-v3-${strength}-${ground}-${crown}-${leaf}-${rooted}`;return material;
+ };material.customProgramCacheKey=()=>`breeze-wind-v3-${strength}-${ground}-${crown}-${leaf}-${rooted}-${flexed}`;return material;
 }

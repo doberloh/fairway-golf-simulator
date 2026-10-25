@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateWorld} from '../src/course.js';
 import {simulateShot} from '../src/physics.js';
+import {allows} from '../src/grounds.js';
 
 let estate;
 const built=()=>estate??=generateWorld({seed:'HOMES-QA',biome:'midwest',holes:9,homes:true,homeDensity:100,trees:0,water:0});
@@ -49,7 +50,9 @@ test('houses cost nothing by default, and only cost a stroke when the rule is on
 test('houses keep their siting rules, and sit on a foundation that reaches the ground',()=>{
  const w=built();
  for(const home of w.homes){
-  assert.equal(w.surface(home.x,home.z),'rough');
+  // Natural ground a tree could stand on: rough, or since the cartoon
+  // overhaul hardpan, native grass, heather or fallen needles.
+  assert(allows(w.surface(home.x,home.z),'trees'),`a house on ${w.surface(home.x,home.z)}`);
   assert(home.footing>=.45,'every house needs a foundation deep enough to meet its lowest corner');
   assert(['gable','hip','saltbox','lshape'].includes(home.form));
   assert(w.trees.every(t=>Math.hypot(t.x-home.x,t.z-home.z)>=Math.max(home.width,home.depth)+5));

@@ -2,9 +2,10 @@ import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared} from './camera
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {random} from './course.js';
-import {FAMILY_OF,familyModels,modelRadius,instanceModels} from './mesh-assets.js';
+import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
 import {GROUND_PLANTS} from './species.js';
+import {allows} from './grounds.js';
 import {launchCorridors,blocksLaunch,BEACH_RISE} from './course.js';
 import {windMaterial,toonRamp} from './textures.js';
 import {biomeOf} from './biomes.js';
@@ -45,7 +46,9 @@ function texture(kind){
 // ten-metre bush.
 // The dune grass and the creeping juniper (built in Blender) join them: a
 // beachgrass patch is two to five metres across and under a metre tall.
-const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern','dunegrass','juniper']);
+// The cartoon overhaul's low, wide shrubs too: a heather mat is half a metre
+// tall and two across, so sized by its height it came out metres wide.
+const SPREAD_SIZED=new Set(['swordfern','salal','sorrel','fern','dunegrass','juniper','heatherbush','naupakabush','fernbush','bramblebush']);
 
 // NO LEVEL OF DETAIL, BECAUSE IT WAS MEASURED UNNECESSARY.
 //
@@ -130,7 +133,9 @@ function addModelSpecies(view,kind,trees){
  // The ACCENT is the leaf colour unless a species says otherwise. Dune grass
  // does: its blade tips are a second part, straw over green, which is what
  // American beachgrass looks like by midsummer.
- const accents={dunegrass:'#c9b67c'};
+ // The cartoon aspen's accent is the dark "eyes" on its pale trunk.
+ // The cartoon shrubs' flowers and berries (tools/blender/cartoon_shrubs.py).
+ const accents={dunegrass:'#c9b67c',aspen:'#3b3430',gorse:'#e8c33a',heather:'#a86aa8',naupaka:'#efece0',bramble:'#2c1f2e'};
  const leafBase=new T.Color(shades[kind]||'#5b7f44'),barkBase=new T.Color(barks[kind]||'#6b5942');
  const stone=new T.Color(world.bio.rock||'#8a8577'),dirt=new T.Color(world.bio.rough||'#7e8a5a');
  const dummy=new T.Object3D();dummy.rotation.order='YXZ';
@@ -176,13 +181,28 @@ function addModelSpecies(view,kind,trees){
  // physics collides with still agrees with the one drawn. A cactus does not
  // move at all.
  const sway=STILL.has(kind)?0:CONIFERS.has(kind)?.7:1;
- const materialFor=role=>{
-  if(!materials.has(role))materials.set(role,sway&&['leaf','bark','accent'].includes(role)
-   ?windMaterial(new T.MeshToonMaterial({color:'#ffffff'}),view,sway,false,true,role!=='bark')
-   :new T.MeshToonMaterial({color:'#ffffff'}));
-  return materials.get(role);
+ // A PAINTED MODEL (the cartoon overhaul, tools/blender/cartoon.py) carries
+ // its own shading -- a dark core, light tips -- as vertex colour, and its
+ // foliage normals are bent toward the crown's centre, so it is lit through
+ // the scene's one soft ramp like the ground it stands on. The pack models
+ // keep the material they always had (no ramp: three's flat 0.7 floor) until
+ // each is replaced.
+ const materialFor=(role,variant,painted)=>{
+  const key=role+(painted?'|painted':'');
+  if(!materials.has(key)){
+   const base=painted?new T.MeshToonMaterial({color:'#ffffff',vertexColors:true,gradientMap:toonRamp(view)}):new T.MeshToonMaterial({color:'#ffffff'});
+   materials.set(key,sway&&['leaf','bark','accent'].includes(role)?windMaterial(base,view,sway,false,true,role!=='bark',false,painted):base);
+  }
+  return materials.get(key);
  };
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
+  // A PAINTED CROWN DOES NOT RECEIVE THE SHADOW MAP (the cartoon overhaul).
+  // Its paint and its normals, bent toward the crown's centre, already shade
+  // it as one body; sampled against the shadow map as well, those bent
+  // normals put the shadow lookup on the wrong side of its own lobes and the
+  // crown comes up speckled with acne (seen on the first in-game round). It
+  // still casts its shadow on the ground and everything else.
+  if(mesh.geometry.attributes.flex&&mesh.userData.role==='leaf')mesh.receiveShadow=false;
   const hidden=new Uint8Array(matrices.length);mesh.userData.cullHidden=hidden;
   view.treeInstances.push({mesh,matrices,owners,hidden});
  });
@@ -382,7 +402,7 @@ function addDeadfall(view) {
   } else {
    x = (rng() - .5) * world.halfX * 2; z = (rng() - .5) * world.halfZ * 2;
   }
-  if (world.surface(x, z) !== 'rough' || world.nearest(x, z).d < 8) continue;
+  if (!allows(world.surface(x, z), 'trees') || world.nearest(x, z).d < 8) continue;
   // Deadfall is knee height, so this only ever bites close to a tee -- which
   // is the one place a log in the shot path is worth removing.
   if (blocksLaunch(launch, x, z, world.height(x, z), world.height(x, z) + 1.6)) continue;
@@ -479,31 +499,46 @@ function addGroundCover(view){
              :new T.MeshStandardMaterial({color:c,roughness:1,...opts});};
  const instance=(geo,material,matrices,colors,cast=true)=>{if(!matrices.length){geo.dispose();material.dispose();return;}const mesh=new T.InstancedMesh(geo,material,matrices.length);matrices.forEach((m,i)=>{mesh.setMatrixAt(i,m);if(colors)mesh.setColorAt(i,colors[i]);});mesh.castShadow=cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();group.add(mesh);return mesh;};
  // Boulders, scrub and flowering/seeded grasses are biome-specific.
- const STONES=4,rocks=Array.from({length:STONES},()=>[]),rockColors=Array.from({length:STONES},()=>[]),rockOwners=Array.from({length:STONES},()=>[]),grass=[],grassColors=[],flowers=[],flowerColors=[];
+ const grass=[],grassColors=[],flowers=[],flowerColors=[];
  // READ, DO NOT INVENT. Boulders are generated in course.js and live on the
  // world, because a rock the generator does not know about is a rock physics
  // cannot collide with -- which is what they were until they moved. Placing
  // them here again would put a second set of stones in different places.
- for(const r of world.rocks||[]){
-  dummy.position.set(r.x,r.y+r.scale*.25,r.z);
-  dummy.rotation.set(r.rot[0],r.rot[1],r.rot[2]);
-  dummy.scale.set(r.sx,r.sy,r.sz);
-  dummy.updateMatrix();rockOwners[r.shape].push(viewBlocker(r.x,r.y,r.z,2*Math.max(r.sx,r.sz),r.scale*.25+r.sy));rocks[r.shape].push(dummy.matrix.clone());rockColors[r.shape].push(color.set(world.bio.rock).multiplyScalar(.82+rng()*.4).clone());}
- // A single icosahedron for every boulder is the other half of why scree reads
- // as one chunk repeated. Build a few distinct stones and deal rocks between
- // them; each gets its own material because instance() disposes the material it
- // is handed when a bucket comes up empty.
- for(let k=0;k<STONES;k++){
-  const stone=new T.IcosahedronGeometry(1,real?2:0),p=stone.attributes.position,f1=1.7+k*2.3,f2=2.6+k*1.7;
-  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
-   const r=1+(real?.1:.26)*Math.sin(x*f1+z*f2+k)*Math.cos(y*f2-z*f1)+(real?.07:.17)*Math.cos(z*(f1+2.9)+x*f2-k*1.7);
-   p.setXYZ(i,x*r,y*r,z*r);}
-  stone.computeVertexNormals();
-  addViewBlockers(view,instance(stone,mat('#fff',{flatShading:!real}),rocks[k],rockColors[k]),rocks[k],rockOwners[k]);
+ //
+ // THE CARTOON BOULDERS (the cartoon overhaul; tools/blender/cartoon_rocks.py)
+ // replace four squashed icosahedra that read as grey gems. A biome's stone is
+ // its own geology (`rockStyle`: round granite, angular talus, layered
+ // sandstone) and the generator's `shape` (0-3) picks which of four. Each is
+ // fitted to the collider the generator built: its bottom at centre - sy, its
+ // top at the stone's `top` (centre + sy), its half-widths sx and sz -- so a
+ // ball hits the stone it sees. A model rests on its flat base, so it turns
+ // about the vertical with only a slight tilt, where a round gem could be
+ // tumbled any way. The upward faces are the accent: moss or lichen where the
+ // biome names one (`rockMoss`), the stone otherwise. One draw per stone from
+ // `rng`, as before, so the grass after it is where it was.
+ {
+  const bioR=biomeOf(world.settings.biome),style=bioR.rockStyle||'round',family='boulder'+style;
+  const models=familyModels(family),entries=[];
+  const stoneBase=new T.Color(world.bio.rock),moss=bioR.rockMoss?new T.Color(bioR.rockMoss):null;
+  for(const r of world.rocks||[]){
+   const tint=rng(),model=models[r.shape%models.length];
+   if(!model)continue;
+   const {rx,rz}=modelExtents(model);
+   dummy.position.set(r.x,r.y+r.scale*.25-r.sy,r.z);
+   dummy.rotation.set((r.rot[0]-.5)*.12,r.rot[1],(r.rot[2]-.5)*.12);
+   dummy.scale.set(r.sx/rx,2*r.sy,r.sz/rz);
+   dummy.updateMatrix();
+   const stone=stoneBase.clone().multiplyScalar(.82+tint*.4);
+   entries.push({model,owner:viewBlocker(r.x,r.y,r.z,2*Math.max(r.sx,r.sz),r.scale*.25+r.sy),matrix:dummy.matrix.clone(),
+    color:{stone,accent:moss?moss.clone().lerp(stone,.25):stone,bark:stone,leaf:stone,dirt:stone}});
+  }
+  const materials=new Map();
+  instanceModels(group,entries,(role,variant,painted)=>{const key=painted?'p':'f';if(!materials.has(key))materials.set(key,new T.MeshToonMaterial({color:'#ffffff',vertexColors:!!painted,gradientMap:ramp??toonRamp(view)}));return materials.get(key);},
+   ({mesh,matrices,owners})=>addViewBlockers(view,mesh,matrices,owners));
  }
  const grassCount=Math.round(biomeOf(world.settings.biome).scatter.grass*(view.quality?.grass??1));
- for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;if(world.surface(x,z)!=='rough'||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng());dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
- for(const t of world.trees.filter(t=>['gorse','heather','palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
+ for(let i=0;i<grassCount;i++){const x=(rng()-.5)*world.halfX*1.96,z=(rng()-.5)*world.halfZ*1.96;const at=world.surface(x,z);if(!allows(at,'grass')||world.groundCover(x,z)==='straw'||onShoreBank(world,x,z))continue;const patch=.5+.3*Math.sin(x/17+Math.sin(z/24))+.2*Math.cos(z/11);if(rng()>patch)continue;const h=(biomeOf(world.settings.biome).scatter.bladeLength)*(.4+rng())*(at==='native'?1.9:1);dummy.position.set(x,world.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(biomeOf(world.settings.biome).scatter.bladeWidth,h,biomeOf(world.settings.biome).scatter.bladeWidth);dummy.updateMatrix();grass.push(dummy.matrix.clone());color.set(biomeOf(world.settings.biome).scatter.bladeTint||world.bio.rough).lerp(new T.Color('#d9ce85'),rng()*.3).multiplyScalar(.9+rng()*.35);grassColors.push(color.clone());if(['midwest','mountain','links','desert'].includes(world.settings.biome)&&rng()<.16){dummy.position.y+=h*.8;dummy.scale.set(.1,.08,.1);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#93d4de':biomeOf(world.settings.biome).scatter.flowers[rng()>.5?0:1]));}}
+ for(const t of world.trees.filter(t=>['palo'].includes(t.kind)))for(let j=0;j<24;j++){const a=rng()*6.28,r=Math.sqrt(rng())*t.r*.85;dummy.position.set(t.x+Math.cos(a)*r,t.y+t.h*.6+Math.sqrt(Math.max(0,1-r*r/t.r**2))*t.h*.17,t.z+Math.sin(a)*r);dummy.scale.set(.12,.1,.12);dummy.updateMatrix();flowers.push(dummy.matrix.clone());flowerColors.push(new T.Color(blue?'#92d6c7':t.kind==='heather'?'#af80aa':'#e4c855'));}
  const blade=new T.BufferGeometry();blade.setAttribute('position',new T.Float32BufferAttribute([-.16,0,0,0,1,0,.08,0,0,0,0,-.12,0,.85,0,0,0,.12,-.1,0,-.1,.3,.65,.1,.08,0,.08],3));groundShaded(blade,[.62,.95,.62,.62,.95,.62,.62,.95,.62]);instance(blade,groundLit(windMaterial(mat('#fff',{side:T.DoubleSide,vertexColors:true}),view,.22,true)),grass,grassColors,false);instance(new T.IcosahedronGeometry(1,0),windMaterial(mat('#fff'),view,.16),flowers,flowerColors,false);
 }
 
@@ -583,7 +618,7 @@ function addNearbyGrass(view){
   for(let i=0;i<490;i++){
    const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,roll=rng(),frond=i<400;
    if(Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||roll>canopy(x,z)*(frond?1.9:1.1))continue;
-   if(w.surface(x,z)!=='rough'||onShoreBank(w,x,z,false))continue;
+   if(!allows(w.surface(x,z),'trees')||onShoreBank(w,x,z,false))continue;
    const s=frond?.6+rng()*.9:.35+rng()*1.3;
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,frond?0:(rng()-.5)*.12);dummy.scale.set(frond?s:s,frond?s*(.7+rng()*.6):1,frond?s:1);dummy.updateMatrix();
    if(frond){fronds.setMatrixAt(nf,dummy.matrix);color.copy(tint).lerp(new T.Color('#7fa24a'),.12+rng()*.38);fronds.setColorAt(nf++,color);}
@@ -608,8 +643,8 @@ function addNearbyGrass(view){
   // that cost a full instance each and read as noise on a surface whose job is
   // to be visibly BETWEEN fairway and rough. The mown-height difference is the
   // information; geometry on top of it was not adding any.
-  for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(surface!=='rough'||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
-   const tall=biomeOf(w.settings.biome).scatter.tallGrass,height=tall?.6+rng()*.65:.09+rng()*.17;
+  for(let i=0;i<count;i++){const x=(tx+rng())*tileSize,z=(tz+rng())*tileSize,surface=w.surface(x,z);if(!allows(surface,'grass')||w.groundCover(x,z)==='straw'||Math.abs(x)>w.halfX||Math.abs(z)>w.halfZ||onShoreBank(w,x,z,false))continue;
+   const tall=biomeOf(w.settings.biome).scatter.tallGrass||surface==='native',height=tall?.6+rng()*.65:.09+rng()*.17;
    dummy.position.set(x,w.height(x,z),z);dummy.rotation.set(0,rng()*6.28,0);dummy.scale.set(tall?1:.8,height,tall?1:.8);dummy.updateMatrix();
    mesh.setMatrixAt(kept,dummy.matrix);
    color.set(tall?'#bd9e5f':w.bio.rough).lerp(new T.Color(tall?'#e8d797':'#aebd69'),rng()*.35);

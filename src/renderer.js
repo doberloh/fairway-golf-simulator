@@ -8,7 +8,8 @@ import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
 import {LineMaterial} from 'three/addons/lines/LineMaterial.js';
 import {aimTarget,createShotEffects} from './shot-visuals.js';
 import {makeCameraFlight,holeEstablishingPose,FLIGHT_FLOOR,ARRIVE_HOLD} from './camera-tours.js';
-import {mapLayout,mapPoint,tilePlacement} from './course-map.js';
+import {mapLayout,mapPoint,mapPosition,tilePlacement} from './course-map.js';
+import {GROUNDS} from './grounds.js';
 import {clubColour} from './dispersion.js';
 import {greenHeatTile} from './green-map.js';
 import {createGreenReading} from './green-reading.js';
@@ -893,7 +894,7 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
-  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0});
+  this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:this.quality.farPainted??0});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -2819,8 +2820,17 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  if(layers.fresh){const ctx=layers.base.getContext('2d');
  ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
  ctx.fillRect(0,0,w,h);
+ // THE OVERHAUL'S GROUND TYPES ON THE HOLE MAP: rock, hardpan, heather and
+ // the rest in their map colours (grounds.js `map`), from the lie itself --
+ // `surface` asked over a grid across the canvas -- so the map shows where a
+ // ball would play from rock. Only the still layer, so only when it changes.
+ if(!full&&(world.wild||world.fallenField)){
+  const N=96,tile=document.createElement('canvas');tile.width=tile.height=N;const tc=tile.getContext('2d'),img=tc.createImageData(N,N),col=new T.Color();
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const q=mapPosition(transform,(i+.5)/N*w,(j+.5)/N*h),p=course.toWorld(q),g=GROUNDS[world.surface(p.x,p.z)];if(!g)continue;col.set(g.map);img.data.set([col.r*255,col.g*255,col.b*255,255],(j*N+i)*4);}
+  tc.putImageData(img,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(tile,0,0,w,h);
+ }
 
- if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
+ if(full){if(!world.mapBackground){const tile=document.createElement('canvas');tile.width=tile.height=150;const c=tile.getContext('2d'),img=c.createImageData(150,150);for(let j=0;j<150;j++)for(let i=0;i<150;i++){const x=(i/149*2-1)*world.halfX,z=(j/149*2-1)*world.halfZ,y=world.land(x,z),color=new T.Color(y<0?'#6eb8c0':world.bio.shoreSand&&y<2?'#e9dec0':GROUNDS[world.surface(x,z)]?.map??world.bio.rough).multiplyScalar(.9+Math.min(Math.max(y,0),80)/500).convertLinearToSRGB(),k=(j*150+i)*4;img.data.set([color.r*255,color.g*255,color.b*255,255],k);}c.putImageData(img,0,0);world.mapBackground=tile;}
   // PLACED THROUGH `tilePlacement`, LIKE EVERY OTHER TILE ON THIS MAP.
   //
   // This used to be drawn at `w/2 - halfX*scale`, which silently assumes the

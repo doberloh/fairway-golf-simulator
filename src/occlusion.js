@@ -59,7 +59,11 @@ export function occlusionAtlas(world, ex, ez, Sx, Sz) {
   // height, capped. Treated as the trunk's radius at the ground.
   const girth = Math.min((t.h || 8) * .027, 3.6), crown = crownRadius(t) || t.r || 3;
   splat(open, Sx, Sz, ex, ez, t.x, t.z, girth * .5, girth * .5 + 2 + girth * .8, .7);
-  splat(open, Sx, Sz, ex, ez, t.x, t.z, crown * .25, crown * 1.1, .22);
+  // An uncleared stand's floor (stands.js, the cartoon overhaul) is a deep
+  // shade, not a lone tree's pool: wider and stronger, so the pools join and
+  // the woods read as woods from the fairway. PLACED: .38 out to 1.7 crowns.
+  if (t.stand) splat(open, Sx, Sz, ex, ez, t.x, t.z, crown * .4, crown * 1.7, .38);
+  else splat(open, Sx, Sz, ex, ez, t.x, t.z, crown * .25, crown * 1.1, .22);
  }
  for (const r of world.rocks || []) {
   if (Math.abs(r.x) > ex + 12 || Math.abs(r.z) > ez + 12) continue;

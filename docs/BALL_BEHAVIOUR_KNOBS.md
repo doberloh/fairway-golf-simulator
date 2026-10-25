@@ -28,7 +28,18 @@ on the hops and roll that follow. Enforced in `physics.js`; see the
 
 ## Per-surface contact table — `CONTACT` in `src/physics.js`
 
-One row per surface: green, fringe, fairway, tee, semi, rough, sand.
+One row per surface: green, fringe, fairway, tee, semi, rough, sand -- and,
+on the `cartoon-overhaul` branch, one per ground type (rock, coral, scree,
+hardpan, waste sand, pine straw, leaves, heather, native grass). **Those rows
+are not edited here**: physics writes them from `src/grounds.js`, which holds
+every number for each type in one place -- `contact` (this table's knobs,
+with `ground` and `canopy` instead of `plough`), `roll` (the rolling
+deceleration, m/s², against rough's 3.8; not scaled by the turf roll
+sliders), `slide` (skid friction), `lie` (the share of ball speed kept),
+`hop`, `relief`, `sound`, `killsSpin`. All PLACED; `tests/grounds.test.mjs`
+holds the orderings (rock bounces hardest, heather deadest, hardpan runs, no
+restitution over 0.24). To make a ball run further on hardpan, lower its
+`roll`; to make rock kick less, lower its `cor`.
 
 | knob | what it physically is | raise it and… | lower it and… |
 |---|---|---|---|

@@ -24,6 +24,47 @@ export function routeHoles(holes,s,random){
    // collision volume, which moved the next hole, which rerouted the course.
    local.push({...(h.green??h.pin),r:(h.greenSize*h.greenAspect*1.2)+s.fringe+s.semiRough});
    let chosen=null;
+   // SIDE BY SIDE, BUILT (the cartoon overhaul; `routeParallel`). Random
+   // placements seldom land beside an earlier hole close enough to share a
+   // fairway, because the clearance test rejects most that try. So a links is
+   // also offered, for each hole, a tee on the line running beside any earlier
+   // hole -- either way along it, either side of it, as close as the clearance
+   // allows (stepped out 4 m at a time from 30 m) -- where that line passes
+   // within `pull.walk` of the last green and at least 80% of the shorter hole
+   // runs beside the other. Par 3s neither take nor give one: their fairways
+   // are too short to share. A back-nine hole running home beside its
+   // front-nine partner (10 by 9, 11 by 8 ...) may walk 1.6 times as far and
+   // scores twice the pull. The Old Course is this shape: out along the shore
+   // and back beside itself. Built from geometry, not drawn, so it takes
+   // nothing from the routing stream, and the routing trial with the most
+   // such holes is favoured by the same weight each. PLACED: the walk, the
+   // 80%, 250 m, 1.6, the doubled pull and the steps.
+   const pull=biomeOf(s.biome).routeParallel;
+   if(i&&pull&&h.length>=250){
+    const partner=i>=Math.ceil(holes.length/2)?holes.length-1-i:-1,from=placed.at(-1).pin,rMax=Math.max(...local.map(p=>p.r)),homeWeight=footprint.kind==='ribbon'?0:i>holes.length-4?.45:.05,guide=footprint.points[Math.round((i+1)/holes.length*64)];
+    for(const [j,o] of placed.entries()){
+     const fx=Math.sin(o.rot),fz=Math.cos(o.rot),len=holes[j].length,oMax=Math.max(...o.points.map(p=>p.r)),t=(from.x-o.origin.x)*fx+(from.z-o.origin.z)*fz;
+     for(const dir of [1,-1]){
+      // Room left beside hole j, running this way from the point level with the green.
+      if(len<250||(dir>0?len-t:t)<Math.min(h.length,len)*.8)continue;
+      const rot=o.rot+(dir>0?0:Math.PI),c=Math.cos(rot),sn=Math.sin(rot);
+      for(const side of [-1,1]){
+       let L=30,origin=null,points=null;
+       for(;L<=rMax+oMax+s.spacing+2;L+=4){
+        const at={x:o.origin.x+fx*t+side*L*fz,z:o.origin.z+fz*t-side*L*fx};
+        if(Math.hypot(at.x-from.x,at.z-from.z)>pull.walk*(j===partner?1.6:1))continue;
+        const pts=local.map(p=>({x:at.x+p.x*c+p.z*sn,z:at.z-p.x*sn+p.z*c,r:p.r}));
+        let hit=false;outer:for(const p of pts)for(const q of samples){const d=p.r+q.r+s.spacing;if((p.x-q.x)**2+(p.z-q.z)**2<d*d){hit=true;break outer;}}
+        if(!hit){origin=at;points=pts;break;}
+       }
+       if(!origin)continue;
+       const walk=Math.hypot(origin.x-from.x,origin.z-from.z),end=points.at(-1),mid=points[Math.floor(points.length/2)];
+       const score=footprint.distance(mid)*2.3+footprint.distance(end)*1.7+Math.hypot(end.x-guide.x,end.z-guide.z)*.45+Math.hypot(end.x,end.z)*homeWeight+walk*.9-pull.weight*(j===partner&&dir<0?2:1);
+       if(!chosen||score<chosen.score)chosen={origin,rot,points,pin:end,score,walk,beside:true};
+      }
+     }
+    }
+   }
    for(let k=0;k<(i?150:1);k++){
     const previous=placed.at(-1),a=i?rng()*Math.PI*2:0,walk=i?(i%3===0?biomeOf(s.biome).hop:58)+rng()*55+Math.max(0,k-115)*5:0;
     // Walked from the CENTRE of the last green, not from its cup. A hole location
@@ -36,14 +77,28 @@ export function routeHoles(holes,s,random){
     let collision=false;outer:for(const p of points)for(const q of samples){const d=p.r+q.r+s.spacing;if((p.x-q.x)**2+(p.z-q.z)**2<d*d){collision=true;break outer;}}
     if(collision)continue;
     const end=points.at(-1),mid=points[Math.floor(points.length/2)],homeWeight=footprint.kind==='ribbon'?0:i>holes.length-4?.45:.05;
-    const guide=footprint.points[Math.round((i+1)/holes.length*64)],score=footprint.kind==='square'?Math.max(Math.abs(mid.x),Math.abs(mid.z))*.7+Math.hypot(end.x,end.z)*homeWeight+walk*.9:footprint.distance(mid)*2.3+footprint.distance(end)*1.7+Math.hypot(end.x-guide.x,end.z-guide.z)*.45+Math.hypot(end.x,end.z)*homeWeight+walk*.9+rng()*45;
+    const guide=footprint.points[Math.round((i+1)/holes.length*64)];let score=footprint.kind==='square'?Math.max(Math.abs(mid.x),Math.abs(mid.z))*.7+Math.hypot(end.x,end.z)*homeWeight+walk*.9:footprint.distance(mid)*2.3+footprint.distance(end)*1.7+Math.hypot(end.x-guide.x,end.z-guide.z)*.45+Math.hypot(end.x,end.z)*homeWeight+walk*.9+rng()*45;
+    // OUT AND BACK, SIDE BY SIDE (the cartoon overhaul; a links' `routeParallel`):
+    // a placement running alongside an earlier hole, close enough for their
+    // fairways to meet (course.js shareFairways), scores better -- the Old
+    // Course's shape. No random draw, so a biome without it routes as before.
+    if(pull){
+     const dx=end.x-points[0].x,dz=end.z-points[0].z,dl=Math.hypot(dx,dz)||1;
+     for(const prev of placed){
+      const px=prev.pin.x-prev.points[0].x,pz=prev.pin.z-prev.points[0].z,pl=Math.hypot(px,pz)||1;
+      if(Math.abs((dx*px+dz*pz)/(dl*pl))<.8)continue;
+      let near=Infinity;for(const q of prev.points)near=Math.min(near,Math.hypot(q.x-mid.x,q.z-mid.z)-q.r-mid.r);
+      if(near<pull.gap){score-=pull.weight;break;}
+     }
+    }
     if(!chosen||score<chosen.score)chosen={origin,rot,points,pin:end,score,walk};
    }
    if(!chosen){const previous=placed.at(-1),origin={x:Math.max(...samples.map(p=>p.x+p.r))+Math.max(...local.map(p=>Math.abs(p.x)+p.r))+s.spacing+25,z:(previous.green??previous.pin).z-h.length/2},rot=0;chosen={origin,rot,points:local.map(p=>({...p,x:p.x+origin.x,z:p.z+origin.z})),pin:{x:origin.x+h.pin.x,z:origin.z+h.pin.z},score:1e6,walk:350};penalty+=1e6;}
    placed.push(chosen);samples.push(...chosen.points);penalty+=chosen.walk||0;
   }
   const xs=samples.map(p=>p.x),zs=samples.map(p=>p.z),bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
-  const score=(bounds.maxX-bounds.minX)*(bounds.maxZ-bounds.minZ)/1800+penalty+Math.hypot((placed.at(-1).green??placed.at(-1).pin).x,(placed.at(-1).green??placed.at(-1).pin).z)*2;
+  const pull=biomeOf(s.biome).routeParallel,pairs=pull?placed.filter(p=>p.beside).length*pull.weight:0;
+  const score=(bounds.maxX-bounds.minX)*(bounds.maxZ-bounds.minZ)/1800+penalty-pairs+Math.hypot((placed.at(-1).green??placed.at(-1).pin).x,(placed.at(-1).green??placed.at(-1).pin).z)*2;
   if(!best||score<best.score)best={placed,bounds,score};
  }
  const dx=(best.bounds.minX+best.bounds.maxX)/2,dz=(best.bounds.minZ+best.bounds.maxZ)/2;

@@ -3,6 +3,7 @@ import {bounceScale,tiltScale,gripScale,firmnessApplies,firmnessValue,NORMAL_FIR
 import {CUP_RADIUS as CUP_R,CUP_DEPTH} from './cup.js';
 import {bounce as compliantBounce,dampingFor} from './contact.js';
 import {NO_TRUNK} from './species.js';
+import {GROUNDS} from './grounds.js';
 // Restitution -> damping, remembered. The solve is sixty runs of a full contact,
 // and the same handful of (restitution, friction) pairs recur all shot long.
 const DAMPING=new Map();
@@ -157,6 +158,13 @@ const CONTACT={
  rough:  {cor:0.0843,tilt:0.085,mu:0.5225,plough:ploughOf('rough'),spin:2.5},
  sand:  {cor:0.0462,tilt:0.0,mu:0.665,plough:ploughOf('sand'),spin:2.5},
 };
+// THE OVERHAUL'S GROUND TYPES (grounds.js): rock, scree, hardpan, pine straw,
+// heather and the rest, each with its own bounce. Their rows are written here
+// from that one table, so the ladders above stay exactly as fitted.
+for(const [k,g] of Object.entries(GROUNDS)){
+ GROUND[k]=g.contact.ground;CANOPY[k]=g.contact.canopy;
+ CONTACT[k]={cor:g.contact.cor,tilt:g.contact.tilt,mu:g.contact.mu,plough:ploughOf(k),spin:g.contact.spin};
+}
 export const GROUND_ORDER=['fairway','tee','semi','rough','fringe','green'];
 export const CANOPY_ORDER=['green','fairway','tee','fringe','semi','rough','sand'];
 export const ploughParts=s=>({ground:GROUND[s],canopy:CANOPY[s],total:ploughOf(s)});
@@ -827,7 +835,8 @@ export function simulateShot(shot,course,options={}){
    // quarter of a yard on flat sand, the owner's "checks back in a bunker". With
    // nothing left to turn it, a ball in sand stops where the sand stops it, and
    // a face it landed on can only roll it back by gravity.
-   if(surface==='sand'){nextOmega=[0,0,0];spin=0;}
+   // Open waste sand (grounds.js `killsSpin`) takes it the same way.
+   if(surface==='sand'||GROUNDS[surface]?.killsSpin){nextOmega=[0,0,0];spin=0;}
    bounces++;
    const rebound=v.reduce((sum,a,i)=>sum+a*groundNormal[i],0);
    if(rebound<.65){rolling=true;const settleCross=cross(nextOmega,groundNormal),settleSlip=v.map((a,i)=>a-rebound*groundNormal[i]-R*settleCross[i]);v=v.map((a,i)=>a-rebound*groundNormal[i]-settleSlip[i]/3.5);v[1]=0;w=[R*settleCross[0],R*settleCross[2]];}

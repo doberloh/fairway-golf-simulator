@@ -195,15 +195,49 @@ test('small crowns are drawn thinned, every held crown exactly once, and none ne
  cull.tune({farTrees: null});
 });
 
-test('a cartoon crown is never thinned: its twin comes apart into shards', async () => {
+// The cartoon overhaul's crowns have thousands of triangles -- far over
+// TWIN_MIN_TRIANGLES -- but are a few dozen lobes, so they are never THINNED:
+// a painted tree ships its own far twin from Blender (the same lobes,
+// faceted), swapped by `farPainted` alone.
+test('a cartoon crown is never thinned: it swaps only to the twin it ships', async () => {
+ const {modelParts} = await import('../src/mesh-assets.js');
+ const parts = modelParts('Blender_Oak_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ const twin = modelParts('Blender_Oak_1_Far');
+ assert.ok(twin && twin[leaf].role === 'leaf', 'the oak ships a far twin, part for part');
+ assert.ok(twin[leaf].geometry.index.count < parts[leaf].geometry.index.count / 6, 'at a fraction of the triangles');
+ const build = opts => {
+  const group = new T.Group(), m = new T.Matrix4(), n = 200;
+  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
+  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeScale(15, 15, 15).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 300));
+  mesh.userData = {model: 'Blender_Oak_1', part: leaf, role: 'leaf'};
+  group.add(mesh);
+  const cull = cullInstances(group, opts);
+  cull.update(camera(), null);
+  return {group, cull};
+ };
+ // The grown trees' line alone never touches it.
+ const a = build({farTrees: .15});
+ assert.ok(!a.group.children.some(o => o.name === 'far trees'), 'farTrees swapped a painted crown');
+ // Its own line swaps it, and only ever to the shipped twin.
+ const b = build({farPainted: .15});
+ const far = b.group.children.find(o => o.name === 'far trees');
+ assert.ok(far, 'farPainted made no far mesh');
+ assert.equal(far.geometry, twin[leaf].geometry, 'the far mesh is not the shipped twin');
+ assert.ok(b.cull.stats().thinCrowns > 0, 'nothing far enough to swap');
+});
+
+// Kept from before the shipped twins: without a twin of its own, a crown with
+// paint is never thinned by the grown trees' arithmetic.
+test('a painted crown without a shipped twin is never thinned into shards', async () => {
  const {modelParts} = await import('../src/mesh-assets.js');
  const {TWIN_MIN_TRIANGLES} = await import('../src/instance-cull.js');
- const parts = modelParts('tree_oak'), leaf = parts.findIndex(p => p.role === 'leaf');
- assert.ok(parts[leaf].geometry.index.count / 3 < TWIN_MIN_TRIANGLES, 'the Kenney oak is a few dozen triangles');
+ const parts = modelParts('Blender_Gorse_1'), leaf = parts.findIndex(p => p.role === 'leaf');
+ assert.ok(parts[leaf].geometry.index.count / 3 >= TWIN_MIN_TRIANGLES, 'the cartoon gorse has more triangles than the twin threshold');
+ assert.ok(parts[leaf].geometry.attributes.flex, 'and carries its paint');
  const group = new T.Group(), m = new T.Matrix4(), n = 200;
  const mesh = new T.InstancedMesh(parts[leaf].geometry, new T.MeshBasicMaterial(), n);
  for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m.makeScale(15, 15, 15).setPosition((i % 10) * 40 - 200, 0, Math.floor(i / 10) * 80));
- mesh.castShadow = true; mesh.userData = {model: 'tree_oak', part: leaf, role: 'leaf'};
+ mesh.castShadow = true; mesh.userData = {model: 'Blender_Gorse_1', part: leaf, role: 'leaf'};
  group.add(mesh);
  const cull = cullInstances(group, {farTrees: .15, thinShadowsFrom: 1}), cam = camera();
  cull.update(cam, null);

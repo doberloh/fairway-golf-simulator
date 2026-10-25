@@ -118,36 +118,115 @@ const DEFAULTS = {
  // the chance a tree is kept rising from `floor` at `from` metres outside the
  // corridor to certainty at `to`. Null keeps every biome's own planting.
  woods: null,
+ // The forest painted on the hills past the course (ground.js; rendering
+ // only): {cover 0..1 of the country, colors [three leaf colours], size
+ // metres between crowns, line the height it stops below}. Null: bare hills.
+ farForest: null,
+ // Uncleared forest or thicket round the property and between the holes
+ // (stands.js). Null: the open scatter alone, as before the overhaul.
+ stands: null,
+ // THE COUNTRY BETWEEN THE HOLES (the cartoon overhaul; landforms.js): which
+ // landform recipe adds its relief and ground types, and its numbers. Null
+ // is the old rolling hills alone. `kinds` names the ground types (grounds.js)
+ // of channels a and b and the floor; `gates` how far outside the corridor
+ // envelope each starts ({near, ramp} metres); `reach` how far from a
+ // corridor the relief takes to grow (the hills' own when absent). Every
+ // number in the recipes below is PLACED (RESEARCH, *The overhaul's
+ // landforms*).
+ landform: null,
+ // Fallen needles or leaves under the trees, played as their own ground: the
+ // species that drop them and the ground type they make.
+ fallen: {from: ['pine', 'spruce', 'cedar'], kind: 'pinestraw'},
+ // The boulders' geology (tools/blender/cartoon_rocks.py): 'round' granite,
+ // 'angular' talus or 'layered' sandstone; and the moss or lichen on their
+ // tops, or null for bare stone. A look only.
+ rockStyle: 'round', rockMoss: null,
 };
 
 // Only what differs from the defaults above.
 const TRAITS = {
- pnw: {bank: '#526343', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420, treeDensity: 4,
+ pnw: {farForest: {cover: .85, size: 10, colors: ['#2f5a2c', '#3c6b33', '#4d7a3a']},
+  bank: '#526343', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420, treeDensity: 4,
+  // Mossy basalt outcrops breaking through the forest.
+  landform: {type: 'crags', scale: 170, height: 22, steps: 2, from: .6, to: .95, cluster: .6, reach: 80,
+   kinds: {a: 'rock'}, gates: {a: {near: 14, ramp: 16}}},
+  rockStyle: 'angular', rockMoss: '#5d7a3e',
+  stands: {edge: 50, wobble: 22, ramp: 20, patch: .18, scale: 260, near: 40, spacing: 9, share: .6},
   plants: [['pine', .38], ['cedar', .3], ['alder', .17], ['fern', .15]]},
- desert: {bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240,
+ desert: {farForest: {cover: .35, size: 7, colors: ['#6c7146', '#7c7a4c', '#5e6640']},
+  bank: '#b49a73', hills: {base: 25, severity: 75, reach: 90}, ringLift: 240,
   scatter: {rocks: 500, grass: 12000, tufts: 150, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
   sandLand: true, dust: true, spray: '#ead9a7', warm: true, arid: true, speckleRock: true, litter: false,
   treeDensity: 1.25, waterMurk: .15, canopy: {min: 4, range: 5},
+  // Troon North and Sedona: turf ribbons in bare desert, sandstone mesas and
+  // buttes with cliffs, dry washes; past a narrow band of rough, hardpan.
+  landform: {type: 'mesas', cell: 280, chance: .42, radius: [34, 80], height: [22, 48],
+   wash: 260, washWidth: .018, washDepth: 1.4, reach: 85,
+   kinds: {a: 'rock', b: 'waste', floor: 'hardpan'},
+   gates: {a: {near: 8, ramp: 10}, b: {near: 12, ramp: 10}, floor: {near: 5, ramp: 6}}},
+  fallen: null,
+  rockStyle: 'layered',
+  // A mesquite bosque and cholla thicket where the desert was never cleared
+  // -- the Sonoran Desert's densest country lies along its washes.
+  stands: {edge: 75, wobble: 30, ramp: 25, patch: .14, scale: 220, near: 45, spacing: 10, share: .55,
+   plants: [['mesquite', .38], ['palo', .27], ['cactus', .25], ['ocotillo', .1]]},
   plants: [['cactus', .3], ['palo', .22], ['mesquite', .18], ['ocotillo', .16], ['agave', .14]]},
- mountain: {bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950,
+ mountain: {farForest: {cover: .8, size: 9, line: 520, colors: ['#284c35', '#335c3c', '#466d3f']},
+  bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950,
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
   altitudeRock: true, treeDensity: 3.8,
+  // Banff: cliff bands rising off the valley floor the holes share; scree at
+  // each band's foot; the forest thinning on the crags.
+  landform: {type: 'crags', scale: 300, height: 70, steps: 4, from: .45, cluster: .42, scree: true, reach: 120,
+   kinds: {a: 'rock', b: 'scree'}, gates: {a: {near: 14, ramp: 18}, b: {near: 10, ramp: 14}}},
+  rockStyle: 'angular', rockMoss: '#9aa087',
+  // A wall of spruce and pine round every fairway (the owner's photograph).
+  stands: {edge: 45, wobble: 18, ramp: 18, patch: .2, scale: 240, near: 35, spacing: 8, share: .6,
+   plants: [['spruce', .55], ['pine', .3], ['aspen', .15]]},
   plants: [['spruce', .4], ['pine', .28], ['aspen', .22], ['shrub', .1]]},
- links: {bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0,
+ links: {farForest: {cover: .3, size: 6, colors: ['#5b6a33', '#6d7a3a', '#8a8a3e']},
+  bank: '#9c905e', hills: {base: 14, severity: 35, reach: 42}, ringLift: 0,
   sea: true, scatter: {rocks: 160, grass: 400000, tufts: 1600, tallGrass: true,
    rockScale: 1, bladeLength: 1.25, bladeWidth: 1.4, bladeTint: '#c2a05c',
    flowers: ['#ddc252', '#ae79a6']},
   dust: true, spray: '#ead9a7', arid: true, treeDensity: 1.1, edgeCoast: true,
   cover: 'prairie', waterMurk: .8,
+  // Marram on rumpled dune crests, heather on the settled ground behind.
+  // The Old Course and Chambers Bay: fairways 1.3 times as wide, holes routed
+  // out and back side by side (routing.js), and fairways that meet where
+  // they do (course.js shareFairways). PLACED, all of it.
+  fairwayScale: 1.3, sharedFairways: {gap: 85, cos: .9, run: 80, ease: 60}, routeParallel: {gap: 60, weight: 600, walk: 130},
+  landform: {type: 'dunes', scale: 150, hummock: 38, height: 5, marram: .55, heather: .6,
+   kinds: {a: 'native', b: 'heather'}, gates: {a: {near: 9, ramp: 14}, b: {near: 8, ramp: 12}}},
+  fallen: null,
+  rockMoss: '#a8a06c',
+  // Gorse thickets on the dunes beyond the holes (Bandon, the Old Course's
+  // whins). Bushes, so they need no room of their own.
+  stands: {edge: 70, wobble: 30, ramp: 25, patch: .12, scale: 200, near: 40, spacing: 8, share: 0,
+   plants: [['gorse', .8], ['shrub', .2]]},
   plants: [['gorse', .5], ['heather', .42], ['shrub', .08]]},
- midwest: {bank: '#697348',
+ midwest: {farForest: {cover: .55, size: 12, colors: ['#3d6630', '#4c7536', '#5d833c']},
+  bank: '#697348',
+  // Restored prairie drifting through the out-of-play ground.
+  landform: {type: 'prairie', swale: 4, cover: .56, kinds: {a: 'native'}, gates: {a: {near: 24, ramp: 22}}},
+  rockMoss: '#8c9a58',
+  // Woodlots of oak and maple left round the farmland.
+  stands: {edge: 60, wobble: 25, ramp: 25, patch: .15, scale: 260, near: 45, spacing: 11, share: .6,
+   plants: [['oak', .5], ['maple', .35], ['aspen', .15]]},
   plants: [['oak', .5], ['aspen', .18], ['maple', .22], ['shrub', .1]]},
- island: {bank: '#aaad7a', ringLift: 0, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
+ island: {farForest: {cover: .8, size: 10, colors: ['#3f7a35', '#4d8a3a', '#62983f']},
+  bank: '#aaad7a', ringLift: 0, hop: 155, shoreSand: true, mapWater: '#6eb8c0',
   coastal: true, sea: true, inlandWater: false, litter: false,
+  // Teeth of the Dog: coral ironshore just above the beach.
+  landform: {type: 'coral', low: 1.0, high: 3.4, kinds: {a: 'coral'}, gates: {a: {near: 3, ramp: 4}}},
+  fallen: null,
+  // Uncleared coastal jungle: palms and hala, naupaka below.
+  stands: {edge: 50, wobble: 22, ramp: 20, patch: .15, scale: 220, near: 35, spacing: 8, share: .55,
+   plants: [['palm', .5], ['hala', .35], ['naupaka', .15]]},
   plants: [['palm', .45], ['hala', .25], ['naupaka', .3]]},
  // MOODY IS A SET OF NUMBERS, NOT A MATERIAL.
  //
@@ -158,7 +237,8 @@ const TRAITS = {
  //
  // The landform is PNW's, deliberately: the owner asked for the same country,
  // and the difference should be what grows on it.
- redwood: {bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
+ redwood: {farForest: {cover: .95, size: 12, colors: ['#26432a', '#2f4f2e', '#3a5a33']},
+  bank: '#40412f', hills: {base: 45, severity: 0, reach: 70}, ringLift: 420,
   // Forty-six metres to 380 FEET. A coast redwood is the tallest living thing
   // there is, and at the usual 13-to-29 it is just a pine with a dark tint --
   // the height is most of what makes the grove. The floor stays low so a grove
@@ -176,6 +256,11 @@ const TRAITS = {
    rockScale: 1.3, bladeLength: .8, bladeWidth: .9, bladeTint: '#46603a',
    flowers: ['#d8d2a6', '#9fb07c']},
   deadfall: 520,
+  rockStyle: 'angular', rockMoss: '#4c6a3a',
+  // Mossy outcrops in the grove; duff under the giants plays as pine straw.
+  landform: {type: 'crags', scale: 180, height: 16, steps: 2, from: .6, to: .95, cluster: .62, reach: 80,
+   kinds: {a: 'rock'}, gates: {a: {near: 14, ramp: 16}}},
+  fallen: {from: ['redwood', 'fir', 'hemlock', 'redcedar'], kind: 'pinestraw'},
   // EVERY PLANT HERE IS GROWN, not imported -- see tools/grow.mjs. That let
   // the mix become a real forest rather than three species: giants, the firs
   // and hemlocks between them, a cedar and tanoak mid-storey, seedlings, and
@@ -184,8 +269,17 @@ const TRAITS = {
   plants: [['redwood', .25], ['fir', .13], ['hemlock', .07],
    ['redcedar', .07, .45], ['tanoak', .05, .18], ['seedling', .05, .045],
    ['swordfern', .19], ['salal', .11], ['sorrel', .08]]},
- autumn: {bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
+ autumn: {farForest: {cover: .9, size: 11, colors: ['#b8482c', '#d67c34', '#cfa443', '#3f5a34']},
+  bank: '#81724e', leafFall: true, leafLitter: true, spray: '#db9851',
   sunColor: '#ffcc8e', treeDensity: 3.6, waterTint: '#819eae',
+  // New England: low granite ledges among the hardwoods, leaves under them.
+  landform: {type: 'crags', scale: 150, height: 9, steps: 2, from: .6, to: .94, cluster: .58, summitRock: .6, reach: 70,
+   kinds: {a: 'rock'}, gates: {a: {near: 12, ramp: 14}}},
+  fallen: {from: ['maple', 'oak', 'aspen'], kind: 'litter'},
+  rockMoss: '#7f8a48',
+  // The autumn hillside of the owner's photograph: closed hardwood forest.
+  stands: {edge: 50, wobble: 22, ramp: 20, patch: .2, scale: 240, near: 35, spacing: 9, share: .6,
+   plants: [['maple', .42], ['oak', .25], ['aspen', .2], ['spruce', .13]]},
   plants: [['maple', .36], ['oak', .25], ['aspen', .24], ['spruce', .15]]},
  // HAUNTED HOLLOW: THE REDWOOD TRICK AGAIN, WITH NOTHING ALIVE IN IT.
  //
@@ -206,7 +300,8 @@ const TRAITS = {
  // bunkers and green-black water. Pumpkins and toadstools are three to five
  // times life size and solid (`props`), most pumpkins are carved lanterns that
  // light up at dusk, and ghosts drift over the holes (`ghosts`).
- haunted: {bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
+ haunted: {farForest: {cover: .7, size: 9, colors: ['#3b3140', '#4a3c45', '#2e2a33']},
+  bank: '#3a2f3f', hills: {base: 30, severity: 20, reach: 70}, ringLift: 160,
   canopy: {min: 9, range: 13}, farCanopy: {min: 8, range: 12}, treeDensity: 3.2,
   waterTint: '#2f6b46', waterMurk: .25, spray: '#6a5a7a', sunColor: '#ffc29a',
   leafLitter: true,
@@ -214,6 +309,7 @@ const TRAITS = {
    rockScale: 1.2, bladeLength: .75, bladeWidth: .8, bladeTint: '#5a3f7a',
    flowers: ['#e0812c', '#8fd14f']},
   deadfall: 300,
+  rockStyle: 'angular',
   floor: [['stump', .5], ['log', .5]],
   props: {pumpkin: 26, toadstool: 18, lanterns: .6},
   ghosts: 2,
@@ -223,9 +319,14 @@ const TRAITS = {
   moon: {size: 2.3, low: '#ff8a2a', high: '#ffe2b0', day: .25},
   bats: 1, wisps: 3,
   mapTurf: {semi: '#8f78b3', fairway: '#7f55b8', green: '#8fcb55'},
+  // A moor: dead heather in dark drifts.
+  landform: {type: 'moor', tussock: 3, cover: .5, kinds: {a: 'heather'}, gates: {a: {near: 9, ramp: 14}}},
+  fallen: null,
   // Bramble rather than heather under them: heather's purple and its blossom
   // read as bright pink blocks against dead grass, which is cheerful, not
   // haunted. Bramble is the bush family in a dark thorny brown.
+  // A thicket of dead and gnarled wood round the moor.
+  stands: {edge: 60, wobble: 25, ramp: 22, patch: .15, scale: 200, near: 40, spacing: 9, share: .5},
   plants: [['gnarled', .30], ['snag', .18], ['deadwillow', .16], ['deadoak', .12],
    ['bramble', .24]]},
  // LAKESHORE DUNES (23 October 2026, the owner's photograph of a Harbor
@@ -240,7 +341,8 @@ const TRAITS = {
  //
  // Every number here is PLACED: a look matched to the photograph and to what
  // grows on the shore, not a measurement of anywhere.
- lakeshore: {bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
+ lakeshore: {farForest: {cover: .75, size: 11, colors: ['#3b6a2e', '#4a7a34', '#5a873b']},
+  bank: '#a39a72', hills: {base: 30, severity: 40, reach: 34}, ringLift: 90,
   sea: true, edgeCoast: true, shoreSand: true, mapWater: '#4f8aa6',
   scatter: {rocks: 40, grass: 320000, tufts: 1600, tallGrass: true,
    rockScale: .8, bladeLength: 1.05, bladeWidth: 1.2, bladeTint: '#7f9c4a',
@@ -253,8 +355,15 @@ const TRAITS = {
   blowouts: .29, driftwood: 6,
   // Open dune beside the holes, woods behind (the photograph's high ground).
   woods: {from: 12, to: 60, floor: .3},
+  // Marram on the dune crests. No channel b: the blowouts own the cover
+  // texture's blue channel here (ground.js).
+  landform: {type: 'dunes', scale: 130, hummock: 34, height: 4, marram: .52, heather: 0,
+   kinds: {a: 'native'}, gates: {a: {near: 8, ramp: 14}}},
   // Cottonwood leads the list, so it is the tree that stands in a fairway
   // when a hole gets a feature tree -- the dune's own pioneer.
+  // The woods behind the dunes, closed.
+  stands: {edge: 70, wobble: 25, ramp: 25, patch: .12, scale: 240, near: 50, spacing: 10, share: .6,
+   plants: [['blackoak', .4], ['cottonwood', .3], ['sugarmaple', .3]]},
   plants: [['cottonwood', .17], ['dunegrass', .34], ['blackoak', .17], ['sugarmaple', .09],
    ['pine', .05], ['juniper', .12], ['commonjuniper', .06]]},
 };

@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateShot, YARD, MPH} from '../src/physics.js';
 import {turfConfig} from '../src/turf.js';
+import {GROUNDS} from '../src/grounds.js';
 import {bagClubs, CLUB_KINDS, stockBag, spinForPower} from '../src/clubs.js';
 import {startSwing, tap, advance, markerAt, swingLaunch, shapedLaunch, strikeZone, strikeEffect, fullCarry,
  speedForCarry, carryShare, lieFactor, LIE_SPEED, DIFFICULTIES, OVERSWING, OVERSWING_CARRY, MISS_AT, RUN_UP,
@@ -26,7 +27,11 @@ const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ:
 const fly = shot => simulateShot({origin: {x: 0, z: 0}, aim: 0, ...shot}, flat);
 
 test('the lie table is one rule: semi 96%, rough 90%, sand 80%, everything else full', () => {
- assert.deepEqual(LIE_SPEED, {semi: .96, rough: .9, sand: .8});
+ // The cartoon overhaul's ground types (grounds.js) each bring a row of their
+ // own; the turf's rows are unchanged.
+ const turf = Object.fromEntries(Object.entries(LIE_SPEED).filter(([k]) => !GROUNDS[k]));
+ assert.deepEqual(turf, {semi: .96, rough: .9, sand: .8});
+ for (const k of Object.keys(GROUNDS)) assert.equal(LIE_SPEED[k], GROUNDS[k].lie, k);
  for (const s of ['tee', 'fairway', 'fringe', 'green']) assert.equal(lieFactor(s), 1, s);
  assert.equal(lieFactor('sand'), .8, 'sand was softened from 72% to 80% on 14 October 2026');
 });

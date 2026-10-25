@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {familyModels,modelExtents,meshAtlas,atlasCount,instanceModels} from './mesh-assets.js';
 import {toonRamp} from './textures.js';
+import {allows} from './grounds.js';
 import {biomeOf} from './biomes.js';
 import {addViewBlockers} from './vegetation.js';
 import {viewBlocker} from './camera-tours.js';
@@ -13,7 +14,7 @@ const FORMS=['gable','hip','saltbox','lshape'];
 // blocksView), passed in rather than imported because course.js imports this.
 export function generateHomes(s,holes,height,surface,random,viewBlocked=null){if(!s.homes)return[];const rng=random(s.seed+':homes'),homes=[];
  for(const h of holes)for(let z=45;z<h.length-42;z+=45)for(const side of [-1,1]){if(rng()*100>s.homeDensity)continue;const p=h.toWorld({x:h.center(z)+side*(h.width(z)+s.semiRough+s.homeSetback+13),z:z+(rng()-.5)*12}),target=h.toWorld({x:h.center(z),z}),rotation=Math.atan2(target.x-p.x,target.z-p.z),c=Math.cos(rotation),sn=Math.sin(rotation),width=16+rng()*9,depth=13+rng()*6,corners=[[-width/2-4,-depth/2-4],[-width/2-4,depth/2+4],[width/2+4,-depth/2-4],[width/2+4,depth/2+4],[0,0]].map(([x,z])=>({x:p.x+x*c+z*sn,z:p.z-x*sn+z*c}));
-  if(corners.some(q=>surface(q.x,q.z)!=='rough')||holes.some(other=>{const q=other.toLocal(p);return Math.hypot(q.x-(other.green??other.pin).x,q.z-(other.green??other.pin).z)<other.greenSize*other.greenAspect+30||Object.values(other.tees).some(t=>Math.hypot(q.x-t.x,q.z-t.z)<28);})||homes.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<42))continue;
+  if(corners.some(q=>!allows(surface(q.x,q.z),'trees'))||holes.some(other=>{const q=other.toLocal(p);return Math.hypot(q.x-(other.green??other.pin).x,q.z-(other.green??other.pin).z)<other.greenSize*other.greenAspect+30||Object.values(other.tees).some(t=>Math.hypot(q.x-t.x,q.z-t.z)<28);})||homes.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<42))continue;
   const levels=corners.map(q=>height(q.x,q.z));// Scaled with the footprint, not raised arbitrarily. The probe box grew from
   // about 16x15 m to 28x24 m, so holding the old 2.5 m drop would have been a
   // far STRICTER gradient than before and starved the steep biomes: mountain

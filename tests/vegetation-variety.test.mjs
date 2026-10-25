@@ -13,15 +13,26 @@ const build=(settings={})=>{
  return {world,view,meshes};
 };
 
+// The cartoon overhaul's boulders are models (tools/blender/cartoon_rocks.py),
+// four per geology: the stones must still be several distinct shapes, painted,
+// and each drawn to the collider the generator built for it.
 test('boulders are several distinct stones, not one icosahedron repeated',()=>{
- const {meshes}=build();
- // The stones are non-indexed icosahedra: twenty faces, sixty vertices.
- const stones=meshes.filter(m=>!m.geometry.index&&m.geometry.attributes.position.count===60&&m.count>0);
+ const {world,meshes}=build();
+ const stones=meshes.filter(m=>/^Blender_Boulder/.test(m.userData.model||'')&&m.userData.role==='stone'&&m.count>0);
  assert(stones.length>1,`rocks collapsed back to ${stones.length} shape(s)`);
- // Equal vertex counts are not equal shapes, so compare the actual vertex rings.
- const signature=m=>{const p=m.geometry.attributes.position;let sum=0;
-  for(let i=0;i<p.count;i++)sum+=Math.hypot(p.getX(i),p.getY(i),p.getZ(i));return (sum/p.count).toFixed(5);};
- assert.equal(new Set(stones.map(signature)).size,stones.length,'stone meshes share a geometry');
+ assert.equal(new Set(stones.map(m=>m.geometry.uuid)).size,stones.length,'stone meshes share a geometry');
+ assert(stones.every(m=>m.geometry.attributes.color),'the boulders carry their paint');
+ // Drawn where they collide: a stone's top is its collider's top.
+ const bbox=new T.Box3(),inst=new T.Matrix4(),p=new T.Vector3();
+ for(const m of stones){
+  m.geometry.computeBoundingBox();
+  for(let i=0;i<Math.min(m.count,20);i++){
+   m.getMatrixAt(i,inst);p.setFromMatrixPosition(inst);
+   const top=bbox.copy(m.geometry.boundingBox).applyMatrix4(inst).max.y;
+   const r=world.rocks.reduce((b,q)=>Math.hypot(q.x-p.x,q.z-p.z)<Math.hypot(b.x-p.x,b.z-p.z)?q:b);
+   assert(Math.abs(top-r.top)<.25*r.scale+.05,`a stone drawn to ${top.toFixed(2)} m collides to ${r.top.toFixed(2)} m`);
+  }
+ }
 });
 
 test('a stand of conifers draws on several models and varies each one',()=>{

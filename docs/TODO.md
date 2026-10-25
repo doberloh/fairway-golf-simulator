@@ -31,6 +31,48 @@ and thirteen entries that were ideas rather than work moved there, each with
 its "was:" pointer. An entry here is something wrong, unfinished, or owed a
 check.
 
+## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
+
+The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
+
+- [ ] **The new trees have been seen only in captures, not played.**
+  Broadleaves (oak, maple, aspen, alder) and conifers (spruce, pine, cedar),
+  built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
+  packs*). Check in a round: crowns light as one soft body with no speckle;
+  trunks are brown, not black; the wind moves the outer lobes more than the
+  core; a ball hits a trunk where one is drawn; nothing pops at distance; the
+  frame rate on Low and on a phone (each crown is now thousands of triangles
+  where Kenney's were tens -- measured in the overhaul's frame-rate phase).
+- [ ] **The new ground types have not been played** (generator 37; PLAYING.md,
+  RESEARCH *The overhaul's ground types*). Seen in captures and measured in
+  Node only. Check in a round, on each landscape: the lie box names the
+  ground (Rock, Hardpan, Heather...); a ball kicks off rock and runs, stops in
+  heather, takes no spin in waste sand; the hole map shows them; the painted
+  edge and the lie agree (drop a ball either side of a rock edge); no tree
+  stands on a cliff face; Mountain's crags and the Desert's mesas never
+  intrude on a hole; the 18-hole wait is not noticeably longer (it is 0.1-1.3 s
+  in Node). All their numbers are placed: retune by feel in `src/grounds.js`.
+- [ ] **Shared links fairways have not been seen in the game** (generator 38;
+  RESEARCH *Shared links fairways*). Judged only from overhead maps drawn in
+  Node (`tools/surface-map.mjs`). Check on North Sea Links, 18 holes: the
+  merged fairways read as one sweep from the tee, not a strip bolted on; the
+  aim line and the hole map still make clear which way the hole goes; a ball
+  in the shared ground lies as fairway; the mowing stripes run sensibly where
+  two holes meet. If the routing feels cramped or the merges too big, the
+  four numbers are in the Links record in `src/biomes.js`.
+- [ ] **The uncleared stands have been seen only in captures, not played**
+  (generator 39; RESEARCH *The overhaul's stands*). Check in a round: a ball
+  hit into a stand finds a lie and can be played out; the camera following a
+  ball into the woods does not sit inside a crown; the far twins do not pop
+  as you walk toward a stand (Ultra swaps below 3% of the screen, High 5%);
+  nothing hitches when you turn; the painted forest on the far hills joins
+  the last real trees without a visible line, and does not crawl or shimmer
+  as the camera moves (it was only seen in still captures). **Frame-time spikes got worse** on several
+  landscapes in the profile (95th percentile Mountain 22 ms against 12,
+  Autumn 26 against 15, on an RTX 4090) -- probably the cull re-copying many
+  more instances; the frame-rate phase owes a fix and a measurement on main
+  and on a weak card.
+
 ## Lakeshore Dunes (branch `lakeshore-dunes-biome`, 23 October 2026)
 
 - [ ] **The tenth biome is built and has not been played.** A Lake Michigan

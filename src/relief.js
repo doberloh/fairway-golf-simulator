@@ -16,6 +16,7 @@
 // can be tested against a drawn map. Sources and every placed number are in
 // RESEARCH.md, *Penalty relief*.
 
+import {GROUNDS} from './grounds.js';
 const INCH = 0.0254;
 // A club-length is the player's longest club other than the putter. A typical
 // driver is 45.5 inches; the Equipment Rules allow 48 and Model Local Rule G-10
@@ -36,8 +37,11 @@ export const OB_RULES = {
 // Where a lie stands among the places a golfer would rather drop. The game
 // picks the best spot it can for the player inside each relief area -- the
 // rules let them drop anywhere in it -- and a better lie wins over a few yards.
-const LIE = {green: 0, fairway: 0, fringe: 1, tee: 1, semi: 2, rough: 3, sand: 4};
-const lieRank = s => LIE[s] ?? 5;
+// The overhaul's ground types (grounds.js) carry their own rank: hardpan
+// beside semi-rough, pine straw beside rough, rock and heather beside sand.
+const LIE = {green: 0, fairway: 0, fringe: 1, tee: 1, semi: 2, rough: 3, sand: 4,
+ ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.relief]))};
+export const lieRank = s => LIE[s] ?? 5;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
 // WHERE THE BALL LAST CROSSED THE EDGE. The path is walked back from where it

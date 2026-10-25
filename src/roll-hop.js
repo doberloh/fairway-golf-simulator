@@ -18,6 +18,8 @@
 // OFF BY DEFAULT (6 October): `ROLL_HOP.enabled = true` below turns it on, or
 // `lab.rollHop(true)` in a running game.
 
+import {GROUNDS} from './grounds.js';
+
 export const ROLL_HOP = {
  // OFF BY DEFAULT since 6 October, at the owner's request: kept, tuned, and
  // waiting to be revisited. `true` here, or lab.rollHop(true), brings it back.
@@ -27,7 +29,9 @@ export const ROLL_HOP = {
  // (First placed at rough 24 mm, fairway 10, green 0.6, full height at 6 m/s
  // and nothing below 0.35, 5 hops a second -- too subtle to see.) A ball is
  // 42.7 mm across.
- height: {rough: .05, semi: .05, fairway: .08, tee: .03, fringe: .03, green: .01, sand: 0},
+ height: {rough: .05, semi: .05, fairway: .08, tee: .03, fringe: .03, green: .01, sand: 0,
+  // The overhaul's ground types (grounds.js `hop`): rock kicks highest.
+  ...Object.fromEntries(Object.entries(GROUNDS).map(([k, g]) => [k, g.hop]))},
  // Rolling speed (m/s) at which hops reach full height and frequency, and below
  // which there are none.
  fullSpeed: 3.5, minSpeed: 1.5,

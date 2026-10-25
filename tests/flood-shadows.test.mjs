@@ -24,8 +24,10 @@ const groundSamplers = () => {
 const OTHERS = 2;
 
 test('the ground shader declares the samplers this budget was measured with', () => {
- // owners, cover, holes, curves, outer, banks, streamSegments. If this number
+ // owners, cover, holes, curves, banks, detail, streamSegments. If this number
  // changes, re-measure (bench/shots/flood-samplers.mjs) before changing it.
+ // (The cartoon overhaul packed `outer` into `curves` and spent the unit on
+ // `detail`, the turf detail atlas, so the count and the budget held.)
  assert.equal(groundSamplers(), 7);
 });
 

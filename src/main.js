@@ -42,6 +42,7 @@ import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievement
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
 import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {surfaceLabel,isGround,GROUNDS} from './grounds.js';
 import {puttingConfig,scoreText,sumScores} from './putting.js';
 import {createLayout} from './layout.js';
 import {loadPlaces,savePlaces,placeFrom,placeIn,clampBox} from './hud-places.js';
@@ -1010,7 +1011,7 @@ function recordProfileShot(result,before){
  // it stopped -- within 5% of the aim distance of the aim point; once a hole,
  // never for a putt. On the range, that alone, as a capped trickle.
  const L=lastShot,putt=before.lie==='green'||L?.kind==='putter';
- const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what))||result.end;
+ const landed=(result.contacts||[]).find(c=>Number.isFinite(c.x)&&(['green','fringe','fairway','tee','semi','rough','sand'].includes(c.what)||isGround(c.what)))||result.end;
  const on=!result.hazard&&!putt&&onTheNumber(landed,L?.aimAt,L?.aimDist);
  const xpBefore=prof.xp||0;
  if(range){if(on){const got=rangeXp(prof);if(got)queueXpGain(prof,[{label:'On the number',xp:got}],xpBefore,1);}}
@@ -1390,7 +1391,7 @@ function updateHUD(){
  // function -- read before it, `ballOnGreen` is the previous pass's answer and
  // the map frames the green one update after the ball arrives on it.
  if($('map'))$('map').mapFocus=onGreen()?'green':null;
-$('lieLabel').textContent=lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
+$('lieLabel').textContent=surfaceLabel(lie);
  const rise=(course.height(course.pin.x,course.pin.z)-course.height(round.position.x,round.position.z))*3.28084;$('elevationLabel').textContent=`${rise<0?'↘':'↗'} ${Math.abs(rise).toFixed(0)} ft`;
  $('pinDistance').textContent=distance()<10?(distance()/.3048).toFixed(1):Math.round(distance()/YARD);if($('pinUnit'))$('pinUnit').textContent=distance()<10?'FEET TO HOLE':'YARDS TO HOLE';drawPlaysLike();setWindArrow();
  for(const b of $('aimPad').querySelectorAll('button'))b.disabled=!canNudgeAim();
@@ -1726,7 +1727,7 @@ function stepShape(which,dir,wrap=true){
 function drawLie(){
  if(!course||!round)return;
  const lie=currentLie(),f=onMat()?1:lieFactor(lie);
- const name=onMat()?'Mat':lie==='tee'?'Tee box':lie==='semi'?'Semi-rough':lie[0].toUpperCase()+lie.slice(1);
+ const name=onMat()?'Mat':surfaceLabel(lie);
  const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
  const meter=$('lieReadout');
  if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
@@ -2931,7 +2932,7 @@ function reliefGround(){
   blocked:(x,z)=>{const cx=Math.floor(x/10),cz=Math.floor(z/10);for(let i=cx-2;i<=cx+2;i++)for(let j=cz-2;j<=cz+2;j++)for(const s of cells.get(i+','+j)||[])if(Math.hypot(x-s.x,z-s.z)<s.r)return true;return false;},
  };
 }
-const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||s}`;};
+const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||(isGround(s)?GROUNDS[s].word:s)}`;};
 function beginRelief(){
  if(!round.relief)return;
  endPick();reliefBack=0;

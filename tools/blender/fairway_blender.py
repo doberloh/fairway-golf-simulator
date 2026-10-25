@@ -207,11 +207,12 @@ def sweep_points(start, end, bend, steps, rng=None, kink=0.0):
 
 # ---------------------------------------------------------------- output
 
-def export_pack(models, out_dir, render=None, figure=1.8):
+def export_pack(models, out_dir, render=None, figure=1.8, gltf_options=None):
     """Write each (name, builder) as <out_dir>/<name>.glb; optionally a sheet.
 
     `builder(mesh, rng)` fills a Mesh; the seed is derived from the name, so
-    adding a model never changes another one."""
+    adding a model never changes another one. `gltf_options` adds to the
+    exporter's arguments (the cartoon packs export their vertex paint)."""
     os.makedirs(out_dir, exist_ok=True)
     built = []
     for name, builder in models:
@@ -225,7 +226,7 @@ def export_pack(models, out_dir, render=None, figure=1.8):
         path = os.path.join(out_dir, name + '.glb')
         bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
                                   export_yup=True, export_apply=True, export_texcoords=False,
-                                  export_normals=True, export_materials='EXPORT')
+                                  export_normals=True, export_materials='EXPORT', **(gltf_options or {}))
         stats = (len(obj.data.vertices), len(obj.data.polygons))
         print(f'BUILT {name}: {stats[0]} vertices, {stats[1]} faces, roles {mesh.roles}')
         built.append((name, builder))

@@ -78,6 +78,8 @@ export const TIERS = {
   // *Distant crowns drawn thinned* and *Low and Medium trees: striped crowns
   // and shards*.
   farTrees: .15,
+  // The painted trees' shipped twins (the cartoon overhaul), at the same line.
+  farPainted: .15,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -125,6 +127,7 @@ export const TIERS = {
   thinShadowsFrom: Infinity,
   // As low.
   farTrees: .15,
+  farPainted: .15,
   godRays: 0,
   clouds: 0,
   mist: 0,
@@ -166,6 +169,9 @@ export const TIERS = {
   // 167 more draw calls there and 50-60 everywhere -- each far mesh is a draw
   // in the picture and in every cascade. Processor time for no graphics time.
   farTrees: 0,
+  // Painted trees below 5% of the screen's height draw their shipped twin
+  // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
+  farPainted: .05,
   // Shafts are composited additively over the finished frame, so this is how
   // bright they get, not how much of the picture they replace.
   godRays: .85,
@@ -233,6 +239,13 @@ export const TIERS = {
   // instruction is that Ultra stays amazing, and the swap bought at most a
   // millisecond, from one kind of tee.
   farTrees: 0,
+  // PAINTED TREES (the cartoon overhaul) DO swap on Ultra, set aside from
+  // "every crown on Ultra is the whole tree" for the stands: thousands of
+  // crowns at once. A twin is the same lobes in the same places, faceted
+  // (tools/blender/cartoon.py `far_twin`), drawn only below 3% of the
+  // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
+  // *Rules set aside*.
+  farPainted: .03,
   // Zoomed all the way out the whole course should keep its shadows. The
   // cascades stop at shadowFar to hold resolution up close, but in overview
   // there is no close, so they stretch to cover everything instead.
@@ -393,5 +406,6 @@ export function needsRebuild(a, b) {
  // material in it, so turning them on or off needs the scene built again.
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
-  (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0);
+  (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
+  (x.farPainted ?? 0) !== (y.farPainted ?? 0);
 }

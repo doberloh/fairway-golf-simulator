@@ -170,7 +170,33 @@ export const SCHEMA_VERSION=11;
 //     needing work 32 -> 14, no invariant broken). The green's bumps scale
 //     with it (course-plan.js GREEN_REF), so putting slopes are unchanged:
 //     median 1.03% before and after, 90th percentile 1.68 -> 1.67%.
-export const GENERATOR_VERSION=36;
+// 37: the cartoon overhaul's country between the holes (landforms.js, 25
+//     October 2026, branch cartoon-overhaul): every biome but Lakeshore's
+//     beach gets a landform recipe -- crags and cliff bands on Mountain,
+//     outcrops in the forests, granite ledges in Autumn, mesas and washes in
+//     the Desert, marram dunes on Links, prairie in the Midwest, coral on the
+//     Island coast, a heather moor in Haunted Hollow -- whose relief rises
+//     between the holes and whose ground types (grounds.js: rock, scree,
+//     hardpan, waste sand, heather, native grass, coral) play as their own
+//     surfaces. Fallen needles and leaves became played ground too, and trees,
+//     boulders, props and houses keep to what each ground allows. Every
+//     biome's ground moved.
+// 38: shared links fairways (the cartoon overhaul, the owner's addendum, 25
+//     October 2026): Links fairways are cut 1.3 times as wide, the routing
+//     offers each hole a place running beside an earlier one (a back-nine
+//     hole beside its front-nine partner first), and where two run side by
+//     side within 85 m their fairways widen to meet (course.js
+//     shareFairways). Only Links' ground moved.
+// 39: uncleared stands (the cartoon overhaul, the owner's addendum, 25
+//     October 2026; stands.js): dense forest, bosque or gorse thicket round
+//     every property and in patches between the holes, planted from a hashed
+//     grid after the open scatter. Every landscape but the Giant Redwood
+//     moved: its new trees, the needles and leaves under them, and what
+//     anchors to trees (deadfall, Haunted Hollow's toadstools).
+// 40: the stands' second round: their edges 15-20 m nearer play, and stand
+//     trees 1.2 times as tall and wide as the open scatter's. Every landscape
+//     with a stand moved.
+export const GENERATOR_VERSION=40;
 
 // Held here rather than imported so this module stays free of cycles with
 // course.js. tests/settings-schema.test.mjs asserts both lists stay in step.

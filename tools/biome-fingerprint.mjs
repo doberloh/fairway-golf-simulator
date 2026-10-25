@@ -86,6 +86,10 @@ function fingerprint(biome) {
  // Lakeshore Dunes' blowouts: the baked sand field itself, every byte. Null
  // everywhere else, so this moved no other biome's hash either.
  if (w.blowouts) h.update(`B${w.blowouts.Sx}x${w.blowouts.Sz}:${crypto.createHash('sha1').update(w.blowouts.data).digest('hex')};`);
+ // The cartoon overhaul's ground-type fields (landforms.js) and the fallen
+ // needles or leaves: every byte, since the lie reads them directly.
+ if (w.wild) h.update(`W${w.wild.Sx}x${w.wild.Sz}:${crypto.createHash('sha1').update(w.wild.a).update(w.wild.b).digest('hex')};`);
+ if (w.fallenField) h.update(`F${crypto.createHash('sha1').update(w.fallenField.g).digest('hex')};`);
   for (const st of w.streams.streams) {
    h.update(`s${st.kind},${st.end},${st.points.length};`);
    for (const p of st.points) h.update(`${n(p.x)},${n(p.z)},${n(p.level)},${n(p.width)};`);

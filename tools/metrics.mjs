@@ -1,5 +1,6 @@
 import {greenApproaches, GREEN} from '../src/course.js';
 import {GROUND_PLANTS} from '../src/species.js';
+import {allows} from '../src/grounds.js';
 // What a generated course is measured on.
 //
 // EVERY METRIC IMPORTS ITS GEOMETRY FROM `src`. It never reimplements it.
@@ -65,7 +66,12 @@ export const METRICS = {
    // is and makes a surround look emptier than it is.
    const series = {teeSurround: [], greenBack: [], greenApproach: []};
    const counts = {holes: 0, tees: 0, greens: 0};
-   const trunked = w.trees.filter(t => !GROUND_PLANTS.has(t.kind));
+   // The OPEN SCATTER only: an uncleared stand (src/stands.js, the cartoon
+   // overhaul) stands well back from every tee and green by design, and
+   // counted in the average it made every tee look clear-cut beside it --
+   // 35 courses broke this rule on the day stands arrived, with the tee
+   // surrounds unchanged.
+   const trunked = w.trees.filter(t => !GROUND_PLANTS.has(t.kind) && !t.stand);
    // THE STANDARD FIXTURES BUILD COURSES WITH `trees: 0`, because every other
    // metric measures terrain and routing, where planting is irrelevant and
    // costs time. So this one reports NOTHING rather than a shelf of zeros that
@@ -80,7 +86,7 @@ export const METRICS = {
    let n = 0, rough = 0;
    for (let i = 0; i < 20000; i++) {
     const x = (rnd() - .5) * w.halfX * 2, z = (rnd() - .5) * w.halfZ * 2;
-    n++; if (w.surface(x, z) === 'rough') rough++;
+    n++; if (allows(w.surface(x, z), 'trees')) rough++;
    }
    const roughHa = (w.halfX * 2) * (w.halfZ * 2) * (rough / n) / 1e4;
    const average = roughHa > 0 ? trunked.length / roughHa : 0;
@@ -92,7 +98,7 @@ export const METRICS = {
     for (const c of centres) for (let i = 0; i < 400; i++) {
      const a = rnd() * 6.283, r = Math.sqrt(rnd()) * radius;
      samples++;
-     if (w.surface(c.x + Math.cos(a) * r, c.z + Math.sin(a) * r) === 'rough') roughHits++;
+     if (allows(w.surface(c.x + Math.cos(a) * r, c.z + Math.sin(a) * r), 'trees')) roughHits++;
     }
     const area = centres.length * Math.PI * radius * radius / 1e4 * (roughHits / samples);
     if (!area) return null;

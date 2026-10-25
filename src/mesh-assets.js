@@ -42,9 +42,23 @@ export function modelParts(name) {
    for (let i = 0; i < uv.length; i++) uv[i] = packed[i] / 65535 * span;
    geometry.setAttribute('uv', new T.BufferAttribute(uv, 2));
   }
+  // THE CARTOON PAINT (tools/blender/cartoon.py): RGB a multiplier on the
+  // colour the role is painted with -- stored halved, so a byte of 128 is
+  // "as painted" -- and alpha how freely the vertex moves in the wind. As
+  // `color` it multiplies the instance colour in every stock shader; `flex`
+  // is read by the wind (textures.js windMaterial).
+  if (p.paintAt !== undefined) {
+   const bytes4 = new Uint8Array(buffer, p.paintAt, p.count * 4), color = new Float32Array(p.count * 3), flex = new Float32Array(p.count);
+   for (let i = 0; i < p.count; i++) {
+    color[i * 3] = bytes4[i * 4] / 127.5; color[i * 3 + 1] = bytes4[i * 4 + 1] / 127.5; color[i * 3 + 2] = bytes4[i * 4 + 2] / 127.5;
+    flex[i] = bytes4[i * 4 + 3] / 255;
+   }
+   geometry.setAttribute('color', new T.BufferAttribute(color, 3));
+   geometry.setAttribute('flex', new T.BufferAttribute(flex, 1));
+  }
   geometry.setIndex(new T.BufferAttribute(new Uint16Array(buffer, p.indexAt, p.index).slice(), 1));
   geometry.computeBoundingSphere();
-  return {role: p.role, geometry};
+  return {role: p.role, geometry, painted: p.paintAt !== undefined};
  });
  cache.set(name, parts);
  return parts;
@@ -67,12 +81,23 @@ export function modelParts(name) {
 // Everything that is not foliage is shared with the full model as it is: the
 // trunk is about 5% of a grown tree and the part a player looks at.
 const farCache = new Map();
+//
+// A PAINTED MODEL SHIPS ITS TWIN (the cartoon overhaul): its crown is thirty
+// soft lobes, not thousands of sprays, so thinning would leave bubbles
+// floating apart. Blender builds it again with every lobe an icosahedron
+// (`<name>_Far`, tools/blender/cartoon.py `far_twin`) -- the same lobes in
+// the same places, a twelfth of the triangles, kilobytes rather than the
+// megabytes of a grown tree's twin. Part for part, the twin replaces the
+// whole model, trunk included.
+export const hasShippedTwin = name => !!MESH_MODELS[name + '_Far'];
 export function farParts(name, keep = 1 / 3) {
  const key = name + '|' + keep;
  if (farCache.has(key)) return farCache.get(key);
  const parts = modelParts(name);
  if (!parts) return null;
- const far = parts.map(p => p.role === 'leaf' ? {role: p.role, geometry: thinSprays(p.geometry, keep)} : p);
+ const shipped = hasShippedTwin(name) ? modelParts(name + '_Far') : null;
+ const far = shipped && shipped.length === parts.length && shipped.every((p, i) => p.role === parts[i].role) ? shipped
+  : parts.map(p => p.role === 'leaf' ? {role: p.role, geometry: thinSprays(p.geometry, keep)} : p);
  farCache.set(key, far);
  return far;
 }
@@ -181,7 +206,8 @@ export function familyModels(family) {
 // no counterpart in these packs, and a wrong silhouette is worse than a simple
 // one.
 export const FAMILY_OF = {
- pine: 'conifer', spruce: 'conifer', cedar: 'conifer',
+ // The cartoon overhaul's conifers (tools/blender/cartoon_conifer.py).
+ pine: 'pinetree', spruce: 'sprucetree', cedar: 'cedartree',
  // The redwood grove's species are whole grown trees -- trunk, limbs and
  // foliage in one model -- so nothing is borrowed and nothing is drawn.
  // `redcedar` rather than `cedar` because Pacific Northwest plants `cedar` and
@@ -189,7 +215,9 @@ export const FAMILY_OF = {
  redwood: 'redwood', fir: 'dougfir', hemlock: 'hemlock',
  redcedar: 'redcedar', tanoak: 'tanoak', seedling: 'seedling',
  swordfern: 'swordfern', salal: 'salal', sorrel: 'sorrel',
- oak: 'broadleaf', maple: 'broadleaf', aspen: 'broadleaf', alder: 'broadleaf',
+ // The cartoon overhaul's broadleaves (tools/blender/cartoon_broadleaf.py), one
+ // family per species since each has its own shape.
+ oak: 'oaktree', maple: 'mapletree', aspen: 'aspentree', alder: 'aldertree',
  palm: 'palm',
  cactus: 'cactus',
  // Desert trees have no leafy counterpart in the packs; the arid dead-tree
@@ -200,7 +228,9 @@ export const FAMILY_OF = {
  // Haunted Hollow: everything is dead. `deadoak` shares the desert's dead
  // hardwoods; the other three are families of their own.
  gnarled: 'gnarled', snag: 'snag', deadwillow: 'deadwillow', deadoak: 'arid',
- shrub: 'bush', gorse: 'bush', heather: 'bush', naupaka: 'bush', fern: 'bush', bramble: 'bush',
+ // The cartoon overhaul's shrubs (tools/blender/cartoon_shrubs.py): six
+ // plants that were one Kenney `bush` family, each its own now.
+ shrub: 'shrubbush', gorse: 'gorsebush', heather: 'heatherbush', naupaka: 'naupakabush', fern: 'fernbush', bramble: 'bramblebush',
  // Lakeshore Dunes: built in Blender (tools/blender/lakeshore.py). The
  // creeping juniper mats and the common juniper's vase are two families
  // because one is sized by its spread and the other by its height.
@@ -229,7 +259,9 @@ export function instanceModels(group, entries, materialFor, onMesh) {
  const meshes = [];
  for (const {part, model, partIndex, variant, matrices, colors, owners} of buckets.values()) {
   if (!matrices.length) continue;
-  const mesh = new T.InstancedMesh(part.geometry, materialFor(part.role, variant), matrices.length);
+  // `painted`: the part carries the cartoon paint, so its material must read
+  // vertex colours -- a third argument every materialFor can ignore.
+  const mesh = new T.InstancedMesh(part.geometry, materialFor(part.role, variant, !!part.painted), matrices.length);
   matrices.forEach((m, i) => { mesh.setMatrixAt(i, m); mesh.setColorAt(i, colors[i]); });
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
   mesh.castShadow = true; mesh.receiveShadow = true;

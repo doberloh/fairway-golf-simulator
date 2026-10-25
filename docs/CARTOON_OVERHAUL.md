@@ -17,10 +17,10 @@ When the owner comes back to play it, it should look familiar, and much better.
 | Phase | State |
 | --- | --- |
 | 0. Plan and baselines | done: captures of `main`, generation times, the bench, this plan |
-| 1. Tools | in progress |
-| 2. Landscape generation | not started |
-| 3. Ground textures | not started |
-| 4. Assets, biome by biome | not started |
+| 1. Tools | the Blender library and paint pipeline done (`cartoon.py`, `inspect.mjs`, paint carried into the game); more as needed |
+| 2. Landscape generation | done (three rounds): a landform recipe per landscape, nine ground types that play (`src/grounds.js`, `src/landforms.js`), generator 37; shared links fairways (three rounds), generator 38; uncleared stands and the far forest (five rounds), generator 40; the long-grass library next |
+| 3. Ground textures | done (three rounds): the turf detail atlas, the ground types' painted patterns |
+| 4. Assets, biome by biome | in progress: broadleaves, conifers and boulders in the game (three rounds each) |
 | 5. Rendering and lighting | not started |
 | 6. Frame-rate pass | not started |
 | 7. Hand-over and showcase | not started |
@@ -35,6 +35,13 @@ graphics rules may be set aside where they block the look; nothing else may.
 | Rule | Why it was set aside | What changed | How to restore |
 | --- | --- | --- | --- |
 | *Landscapes stay as they are for a seed* (the spirit of GENERATOR_VERSION discipline, AGENTS.md *Two version numbers*) | The overhaul exists to redesign every landscape | A seed makes a different course on this branch than on main. GENERATOR_VERSION is still bumped for each change, so an older save is flagged. AGENTS.md says so in *On the cartoon-overhaul branch, landscapes are meant to change* | Rewrite that AGENTS.md section before any merge to main |
+
+| *Unmown ground is rough* -- every planting rule asked `surface === 'rough'` (trees, boulders, Haunted Hollow's props, houses, deadfall, grass), and the tests held it | Ground between the holes is now nine types of its own (rock, hardpan, heather...) | Each rule asks `allows(surface, what)` (grounds.js): rough allows everything, rock and scree no trees, a wash nothing tall. Tests updated to ask the same: course-living, homes, haunted-props, landscape | Make every ground type answer like rough in `ALLOWS`, or drop the recipes |
+| *A stream's faded end keeps its full channel's water level and narrows to 8% of its width* (streams.js `downhillProfile`) | The new dune crests stood a faded creek head 8.7 m under the ground: water lying on a dune | Across a fade the level rises toward the surveyed ground, and the channel narrows to no less than 1.2 m (the ground mesh's finest cells are 0.5 m). Every biome's creeks moved a little at their ends | Revert those two lines in `downhillProfile` |
+| Three collider and prop tests' setups (solid-colliders' wall shot, haunted-props' pumpkin roll) | The new ground decided their results, not what they test: a prairie swale rolled a wall shot into the wall, the next house down a denser street was hit, a pumpkin's run-up crossed heather and a pond | The wall shot is lofted 4 degrees and fired with only its house standing; the pumpkin's whole run-up must be rough | Revert the test edits (and generator 37) |
+
+| *Every crown on Ultra is the whole tree* (graphics.js, Ultra's `farTrees: 0`, the owner's "Ultra stays amazing") | The stands put 10,000-16,000 painted crowns on a course; drawn whole that is tens of millions of triangles | Painted trees swap to their shipped far twin (the same lobes, faceted) below 3% of the screen's height on Ultra, 5% on High (`farPainted`); the grown trees keep `farTrees: 0` | Set Ultra's `farPainted` to 0 |
+| *The tee surround is never a clear-cut* (tools/metrics.mjs `teeSurroundClearCut`, tests/tee-corridor.test.mjs) measured every trunked tree against rough alone | A stand stands back from every tee by design, so counted in the average it made every tee look bare (35 courses failed with the surrounds unchanged); its needles turn rough into pine straw | Both measure the open scatter alone (`!t.stand`), per hectare of ground that can hold a tree (`allows(s, 'trees')`); the corridor test counts the open scatter against its target | Drop the `stand` filters (and the stands) |
 
 (More rows are added as each is set aside, in the same commit as the change.)
 
@@ -150,6 +157,7 @@ unless a source is given, and is listed in RESEARCH.md.
 | --- | --- |
 | `tools/capture/overhaul.mjs` | The fixed views of any landscape from any build (above); gated and logged on the graphics card |
 | `tools/gen-time.mjs` | How long an 18-hole course takes to generate, per landscape |
+| `tools/surface-map.mjs` | A course's surfaces and ground types from above, 2 m a pixel, on the CPU -- for judging routing and shared fairways |
 | `tools/gpu-gate.mjs` `foreignJobs` | Waits while a Playwright browser or Blender that is not ours is on the card (the realistic-graphics goal runs in another folder) |
 
 ## Rounds
@@ -158,3 +166,131 @@ Each asset, texture and lighting change goes through at least three rounds:
 research, make, render, judge beside the references and the last round, write
 down what is wrong, redo. The rounds are recorded below as they happen, with
 their pictures kept under `bench/shots/overhaul/` for the showcase.
+
+**Order.** The plan's phases put assets after landscape and ground. The first
+two tree packs went first anyway, because the paint pipeline (Blender to the
+game) had to be proved before anything else was built on it, and trees were
+the biggest single complaint. Landscape generation comes next.
+
+### Broadleaves (oak, maple, aspen, alder) -- three rounds, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Oaks were flat pancakes on thin stems (acacias); aspens and alders stacked balls (topiary); paint too timid to see | -- |
+| 2 | Oaks mushroom-capped (a smooth lid); aspens upright lozenges (a cypress) | One dome per oak over a trunk twice as thick, limbs showing; one crown per aspen and alder; paint range doubled |
+| 3 | (sheet) good; (game) trunks nearly black at the foot, crowns speckled with shadow acne | Lobes standing proud of the oak's dome; rounder, smaller aspen lobes; trunk paint lifted; painted crowns no longer receive the shadow map |
+
+### Conifers (spruce, pine, cedar) -- three rounds, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Spruces clip-art Christmas trees (thin skirts, arrowhead tips); pines bonsai | -- |
+| 2 | Spruce and cedar skirts still star-pointed; spruce tops showing trunk between tiers | Thicker skirts, fewer tiers, a tapering top; twice the pine pads, bigger, merged into one flat-topped crown |
+| 3 | (game) pines read as stylised umbrella pines -- kept; Mountain's lodgepole may want a narrower form (later) | Each bough a rounded scallop; upper tiers overlap |
+
+Pictures: `bench/shots/overhaul/rounds/broadleaf-r1..3.png`, `conifer-r1..3.png`;
+in the game `bench/shots/overhaul/trees-r3/` and `trees-r4/` against `main/`.
+
+### Landforms and ground types -- three rounds, in the game
+
+Recipes, numbers and measurements: RESEARCH *The overhaul's landforms* and
+*The overhaul's ground types*; how it works: PROCEDURAL_GENERATION *The
+country between the holes*; the invariant: PROJECT_HANDOFF *THE GROUND TYPES
+ARE ONE BAKED FIELD TOO*.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Crags covered a fifth of the forest courses (the ridged field sits near its crest); flat rock decals beside fairways where the fade had squashed a crag; slopes banded like agate; rock textured as brickwork; white scree ribbons; orange pine-straw rings; a wireframe crack net on hardpan; saturated heather blocks | -- |
+| 2 | (Mountain, Desert, Links) much better; strata still thin lines like contours; heather still hard purple | Cluster mask; rock decided from the finished slope; terraces read through noise; warped 9 m rock planes; darker scree; duller straw; faint warped cracks; wider soft edges |
+| 3 | (all ten seen) heather a little grey -- wants its plants (asset phase) | Strata as broad bands of tone; heather muted and soft-clumped |
+
+Pictures: `bench/shots/overhaul/land-r1/`, `land-r2/`, `land-r3/` against
+`main/`. Not played: the new lies are seen only in pictures and in Node
+(TODO).
+
+### Ground textures (turf detail) -- three rounds, in the game
+
+`tools/turf-detail.mjs` paints the turf detail atlas (RESEARCH *The overhaul's
+turf detail*); the ground types' own patterns are in ground.js `groundPaint`.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Rough strokes read as dirt specks; nap as static; stone pitted like rivets | -- |
+| 2 | (game) mown detail invisible | Light blades with small dark feet, 1,500 clumps; nap at 60%; no pits |
+| 3 | (game) good; hardpan's cracks large and bold | Fairway .16, green .10, grit .24; hardpan plates halved and faint |
+
+Pictures: `bench/shots/overhaul/rounds/turf-r1..2.png`, in the game
+`turf-r2/`, `turf-r3/`.
+
+### Boulders -- three rounds, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Round stones threw spikes (bevel overran the hull) | -- |
+| 2 | Round stones coarse, capped in moss; sandstone beds all one size | Round stones as a lumpy sphere flattened underneath |
+| 3 | (game) good: red sandstone hoodoos in the Desert, lichened talus on Mountain | Smoother, crown moss only, beds varied, blocks seated |
+
+Pictures: `bench/shots/overhaul/rounds/rocks-r1..3.png`, in the game `rocks-r3/`.
+
+## The owner's addendum (25 October 2026)
+
+Mid-goal the owner asked for more (the full words are in the local brief):
+**ten rounds per asset** (everything already at three goes round again); a
+**library of brush, bushes and long grass** for every landscape; **thick
+brush or uncleared forest** on parts of every course, the perimeter above all,
+with something of the kind even in the desert; on **links**, **large shared
+fairways** (Chambers Bay) and long grass, thicker ground-cover bushes and
+rocks between the holes; and no expense spared on extra assets anywhere. The
+work below is reorganised around it: each new asset family and landscape
+feature has its rounds table, and the earlier tables continue to round 10.
+
+### Shrubs -- three rounds so far, in the game
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Heather big blobs; naupaka mushroom trees; fern sparse; bramble little trees | -- |
+| 2 | Bramble canes like poles; naupaka a pancake | Heather a mat of shoots; naupaka a filled dome; fern denser; bramble a core under arches |
+| 3 | (game) Links shrubs small and sparse | Naupaka a full dome; bramble arches low and leafed |
+
+Pictures: `bench/shots/overhaul/rounds/shrubs-r1..3.png`, in the game `shrubs-r3/`.
+
+### Shared links fairways -- three rounds, generator 38
+
+Judged from above (`node tools/surface-map.mjs <seed> 18 <out.png> links`, on
+the CPU), against the Old Course's shared 1st/18th (about 118 m) and Chambers
+Bay's 26-96 m fairways (RESEARCH, *Shared links fairways*).
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | Widening alone shared 0-3 holes a course; random routing seldom sets holes close and parallel. At a 95 m reach, square "rungs" between holes that only glanced past each other | Routing offers each long hole a tee beside an earlier one, at the least clearance |
+| 2 | Doglegs failed the parallel test; a pond the neighbour's ground would later lose blocked the strip; par 3s took the side-by-side places | Parallel judged where the fairways lie; such ponds ignored, every hole's pond in the strip counted; par 3s neither take nor give a place; back nine paired with the front |
+| 3 | Rungs still cut square; shares too wide | Fairways 1.3 times as wide; reach 85 m, parallel within 26 degrees, runs of 80 m, 60 m tapers. Four to six of 18 holes share |
+
+Pictures: `bench/shots/overhaul/links-share/`. Not yet seen in the game.
+
+### Uncleared stands and the far forest -- five rounds, generator 40
+
+Dense forest, bosque or thicket on every course but the Giant Redwood
+(src/stands.js; RESEARCH, *The overhaul's stands*), judged against the
+owner's three photographs. Painted trees now ship far twins
+(BLENDER_ASSETS, *The cartoon packs*) so the stands can be drawn.
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 1 | (before) An even orchard thinning to nothing 135 m out; bare hills | A rim and patches of stand on every course but Redwood. In the game: PNW and Mountain read as forest cut for the holes, but as single trees on bare ground, the edge far back, the hills beyond bare, and the Desert's bosque a dead orchard of the old procedural mesquite |
+
+Pictures: `bench/shots/overhaul/stands/` (from above), `stands-r1/` (in the
+game). Next: closer and closed edges, a dark forest floor, forest on the far
+hills, the desert pack.
+
+Rounds 2-5 of the stands (continuing the table above):
+
+| Round | What was wrong | What changed |
+| --- | --- | --- |
+| 2 | Edges far back; single trees on bare ground | Edges 15-20 m nearer play; stand trees 1.2 times as big; a deeper, wider shade under a stand (generator 40) |
+| 3 | Bare hills past the course | The far forest, painted on the landscape rings (ground.js `farForest`) |
+| 4 | Mountain's faces stretched the crowns into scales; Autumn flat salmon from afar | No canopy on steep ground; a fourth colour; darker far average |
+| 5 | Autumn still uniform at distance | Groves of one colour about 70 m across, which survive distance |
+
+Pictures: `stands-r2/` to `stands-r5/`. Next: fewer, smaller evergreen
+blotches in Autumn's far hills; the desert's bosque waits for the desert pack.

@@ -36,17 +36,43 @@ export {ROLE_OF, ROLES} from './mesh-read.mjs';
 
 // Which models we actually take, and what each stands in for in the game.
 const PICK = {
- conifer: ['tree_pineTallA', 'tree_pineTallB', 'tree_pineTallC', 'tree_pineTallD',
-  'tree_pineRoundA', 'tree_pineRoundC', 'tree_pineRoundE',
-  'tree_pineSmallA', 'tree_pineSmallC', 'tree_pineDefaultA', 'tree_pineDefaultB'],
- broadleaf: ['tree_oak', 'tree_default', 'tree_detailed', 'tree_fat', 'tree_tall',
-  'tree_thin', 'tree_simple', 'tree_small', 'tree_blocks', 'tree_plateau'],
+ // THE CARTOON OVERHAUL'S CONIFERS (tools/blender/cartoon_conifer.py),
+ // replacing Kenney's stacked-cone conifer family.
+ // THE CARTOON BOULDERS (tools/blender/cartoon_rocks.py), one family per
+ // geology, picked by a biome's `rockStyle`; four each, the generator's
+ // `shape` choosing.
+ boulderround: ['blender:Blender_BoulderRound_1', 'blender:Blender_BoulderRound_2', 'blender:Blender_BoulderRound_3', 'blender:Blender_BoulderRound_4'],
+ boulderangular: ['blender:Blender_BoulderAngular_1', 'blender:Blender_BoulderAngular_2', 'blender:Blender_BoulderAngular_3', 'blender:Blender_BoulderAngular_4'],
+ boulderlayered: ['blender:Blender_BoulderLayered_1', 'blender:Blender_BoulderLayered_2', 'blender:Blender_BoulderLayered_3', 'blender:Blender_BoulderLayered_4'],
+ sprucetree: ['blender:Blender_Spruce_1', 'blender:Blender_Spruce_2', 'blender:Blender_Spruce_3'],
+ pinetree: ['blender:Blender_Pine_1', 'blender:Blender_Pine_2', 'blender:Blender_Pine_3'],
+ cedartree: ['blender:Blender_Cedar_1', 'blender:Blender_Cedar_2', 'blender:Blender_Cedar_3'],
+ // THE CARTOON OVERHAUL'S BROADLEAVES (tools/blender/cartoon_broadleaf.py),
+ // replacing Kenney's broadleaf family -- the cube- and plateau-crowned trees
+ // -- for every landscape that plants oak, maple, aspen or alder.
+ oaktree: ['blender:Blender_Oak_1', 'blender:Blender_Oak_2', 'blender:Blender_Oak_3'],
+ mapletree: ['blender:Blender_Maple_1', 'blender:Blender_Maple_2', 'blender:Blender_Maple_3'],
+ aspentree: ['blender:Blender_Aspen_1', 'blender:Blender_Aspen_2', 'blender:Blender_Aspen_3'],
+ aldertree: ['blender:Blender_Alder_1', 'blender:Blender_Alder_2'],
+ // THE FAR TWINS (cartoon.py `far_twin`): each painted tree again at a
+ // twelfth of its triangles, never planted -- src/mesh-assets.js `farParts`
+ // hands one out where a crown is small on screen (instance-cull.js).
+ fartwin: ['Spruce_1', 'Spruce_2', 'Spruce_3', 'Pine_1', 'Pine_2', 'Pine_3', 'Cedar_1', 'Cedar_2', 'Cedar_3',
+  'Oak_1', 'Oak_2', 'Oak_3', 'Maple_1', 'Maple_2', 'Maple_3', 'Aspen_1', 'Aspen_2', 'Aspen_3', 'Alder_1', 'Alder_2']
+  .map(n => `blender:Blender_${n}_Far`),
  palm: ['tree_palm', 'tree_palmBend', 'tree_palmShort', 'tree_palmTall'],
  cactus: ['cactus_short', 'cactus_tall', 'Cactus_1', 'Cactus_2', 'Cactus_3', 'Cactus_4', 'Cactus_5'],
  rock: ['rock_largeA', 'rock_largeB', 'rock_largeC', 'rock_largeD', 'rock_largeE', 'rock_largeF',
   'rock_smallA', 'rock_smallB', 'rock_smallC', 'rock_smallD', 'rock_smallE',
   'rock_tallA', 'rock_tallB', 'rock_tallC', 'rock_tallD', 'rock_tallE'],
- bush: ['plant_bush', 'plant_bushDetailed', 'plant_bushLarge', 'plant_bushSmall'],
+ // THE CARTOON OVERHAUL'S SHRUBS (tools/blender/cartoon_shrubs.py), replacing
+ // the one Kenney bush family six species shared.
+ shrubbush: ['blender:Blender_Shrub_1', 'blender:Blender_Shrub_2', 'blender:Blender_Shrub_3'],
+ gorsebush: ['blender:Blender_Gorse_1', 'blender:Blender_Gorse_2', 'blender:Blender_Gorse_3'],
+ heatherbush: ['blender:Blender_Heather_1', 'blender:Blender_Heather_2', 'blender:Blender_Heather_3'],
+ naupakabush: ['blender:Blender_Naupaka_1', 'blender:Blender_Naupaka_2', 'blender:Blender_Naupaka_3'],
+ fernbush: ['blender:Blender_Fern_1', 'blender:Blender_Fern_2', 'blender:Blender_Fern_3'],
+ bramblebush: ['blender:Blender_Bramble_1', 'blender:Blender_Bramble_2', 'blender:Blender_Bramble_3'],
  grass: ['grass', 'grass_large', 'grass_leafs'],
  flower: ['flower_purpleA', 'flower_redA', 'flower_yellowA'],
  // Quaternius (OBJ). Taken only where the Kenney kit has no counterpart: its
@@ -225,6 +251,16 @@ for (const [family, entries] of Object.entries(PICK)) {
    }
    const index = new Uint16Array(g.index);
    const part = {role, count, index: index.length, positionAt: push(position), normalAt: push(normal), indexAt: push(index)};
+   // THE CARTOON PAINT (tools/blender/cartoon.py), four bytes a vertex: RGB a
+   // halved multiplier on the role's colour, alpha the wind flex. Only from
+   // models built in Blender -- a pack model with colours of its own would
+   // otherwise start carrying them, and every other model's bytes must stay
+   // as they were.
+   if (hit.pack.startsWith('blender-') && g.color?.length === count * 4) {
+    const paint = new Uint8Array(count * 4);
+    for (let i = 0; i < paint.length; i++) paint[i] = Math.max(0, Math.min(255, Math.round(g.color[i] * 255)));
+    part.paintAt = push(paint);
+   }
    if (TEXTURED_FAMILIES.has(family) && g.uv && g.uv.length === count * 2) {
    // A TILING UV DOES NOT FIT IN 0..1, which is what this used to assume.
    // House UVs are atlas coordinates and never leave the unit square, so

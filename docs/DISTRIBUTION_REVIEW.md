@@ -156,7 +156,10 @@ The imported-material footprint of the shipped HTML is **four PNGs, 12 KB each,
 64 KB in total**: Kenney house colour atlases (`colormap` plus three
 variations), CC0. Kenney's licence text states the content is free to use in
 personal, educational **and commercial** projects, with credit appreciated and
-not required. Quaternius ships the CC0 1.0 dedication. (From 17 October 2026
+not required. Quaternius ships the CC0 1.0 dedication. (On the
+`cartoon-overhaul` branch the page also carries one image that is not
+imported: the turf detail atlas, a 906 KB PNG painted by this repository's
+own `tools/turf-detail.mjs` -- nothing to license.) (From 17 October 2026
 the page also carries two font files, about 35 KB, under the SIL Open Font
 License: see *No fonts ship* below, now *One font ships*.)
 
@@ -166,8 +169,10 @@ and repainted from the biome palette. Verified this pass rather than assumed:
 - **No texturecan textures ship**, and none are present in the tree. ATTRIBUTION
   flags them as the one asset whose terms were never checked; they are ez-tree's
   bark maps, and no bark image is taken because trunks are painted.
-- **No ez-tree leaf sprite ships.** `broadleaf` appears 14 times in the build as
-  a species *family* name, not as the sprite file.
+- **No ez-tree leaf sprite ships.** `broadleaf` appeared 14 times in the build
+  as a species *family* name, not as the sprite file. (On the
+  `cartoon-overhaul` branch that family is gone: its trees are built in
+  Blender from this repository's scripts.)
 - **One font ships, from the `ui-1-0` branch (17 October 2026) on.** Until
   then none did: `--font-display` and `--font-ui` are system stacks and there
   was no `@font-face`. The 1.0 interface embeds **Saira Condensed** (SIL Open
@@ -1437,3 +1442,22 @@ released. What it changes for distribution:
   rotation after that date, so from week 149 an old copy and a new one show
   different landscapes for the same week; a release before then keeps that
   to players who have not updated.
+
+## Addendum, 25 October 2026: the cartoon overhaul (branch, not released)
+
+The `cartoon-overhaul` branch (docs/CARTOON_OVERHAUL.md). Not merged, not
+released. What it changes for distribution so far:
+
+- **The built page is 23,506,100 bytes (10.81 MB gzipped)** at generator 39,
+  against 18,407,153 for Lakeshore Dunes. The growth is the remade models
+  (`src/asset-meshes.js` 19,084.8 KB: painted Blender trees, shrubs and
+  boulders, each painted tree with a shipped far twin of about a twelfth of
+  its triangles -- 330 KB for all twenty) and the turf detail atlas
+  (`src/turf-detail.js`, about 906 KB, a generated PNG). The owner allowed
+  the single file to grow for the new graphics.
+- **Nothing fetched, no new dependency.** Every model is made by a committed
+  Blender script (tools/blender/cartoon_*.py) and committed as `.glb`; the
+  turf atlas by `tools/turf-detail.mjs`.
+- **`GENERATOR_VERSION` is 39** (landforms and ground types 37, shared links
+  fairways 38, uncleared stands 39); a save from main is told its course was
+  rebuilt (`showVersionNotice`). `SCHEMA_VERSION` is unchanged.
